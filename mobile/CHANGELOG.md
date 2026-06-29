@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.443+447 (2026-06-26)
+
+### Fal & Tarot — UX ve sosyal paylaşım
+
+- **Günlük fal:** «Bugünün enerjisi ve sürpriz mesajın» başlık çubuğunun altına taşındı
+- **Falını Aç:** 3 kart animasyonu büyük orijinal kart boyutunda; mistik ambient müzik
+- **Sonuç:** Daha okunabilir tipografi; «Sesli dinle» (TTS) butonu
+- **Paylaş:** Benzer falların üstüne alındı; otomatik paylaşım varsayılanı Canlifal sosyal (herkese açık)
+- **Tür sayfaları:** Fal adı + açıklama en üstte (Tarot, Kahve falı vb.)
+- **Kahve falı:** Fincan/tabağ üzerindeki Kamera/Galeri etiketleri kaldırıldı
+- **Hub burç kartı:** Doğum tarihi/saati → burç + «Falına bak»; eksikse otomatik form; profile kayıt
+
 ## 1.0.442+446 (2026-06-26)
 
 ### Sesli oda — Faz 1–12 düzeltmeleri

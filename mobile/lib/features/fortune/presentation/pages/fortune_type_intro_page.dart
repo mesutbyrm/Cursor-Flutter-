@@ -12,6 +12,7 @@ import '../services/fortune_reading_coordinator.dart';
 import '../widgets/fortune_image_capture_panel.dart';
 import '../widgets/fortune_mystic_bar_button.dart';
 import '../widgets/fortune_mystic_title_bar.dart';
+import '../widgets/fortune_type_context_header.dart';
 import '../widgets/fortune_popular_readings_section.dart';
 import '../widgets/premium_2026/cinematic_fortune_hero.dart';
 import '../widgets/premium_2026/fortune_type_immersive_scaffold.dart';
@@ -127,13 +128,14 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
         child: Column(
           children: [
             FortuneMysticTitleBar(
-              title: showcase.numberedTitle,
+              title: type.title,
               onBack: () => context.pop(),
               trailing: FortuneMysticBarButton(
                 icon: Icons.auto_awesome,
                 onPressed: _canOpen && !_opening ? _openFortune : () {},
               ),
             ),
+            FortuneTypeContextHeader(type: type),
             Expanded(
               child: SingleChildScrollView(
                 controller: _scroll,
@@ -146,6 +148,7 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
                       type: type,
                       scrollParallax: _scrollParallax,
                       height: 320,
+                      showTitle: false,
                     ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:canlifal_social/core/performance/effects_perf.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../domain/entities/fortune_type_entity.dart';
 import '../../data/fortune_type_images.dart';
+import '../../services/fortune_ambient_audio.dart';
 import '../premium_2026/cinematic_fortune_hero.dart';
 
 /// Falını Aç — kısa kamera zoom, kozmik patlama.
@@ -16,6 +18,7 @@ Future<void> runPremiumFortuneOpenTransition({
   required Future<void> Function() onOpen,
 }) async {
   HapticFeedback.mediumImpact();
+  unawaited(FortuneAmbientAudio.playOpening());
   final overlay = Overlay.of(context);
   late OverlayEntry entry;
   var dismissed = false;

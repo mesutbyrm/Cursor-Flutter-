@@ -472,26 +472,6 @@ class _PhotoSlot extends StatelessWidget {
                         ),
                       ),
                     ),
-                  Positioned(
-                    left: 10,
-                    right: 10,
-                    bottom: 10,
-                    child: Row(
-                      children: [
-                        _MiniAction(
-                          icon: Icons.photo_camera_rounded,
-                          label: 'Kamera',
-                          onTap: onTap,
-                        ),
-                        const SizedBox(width: 8),
-                        _MiniAction(
-                          icon: Icons.photo_library_rounded,
-                          label: 'Galeri',
-                          onTap: onTap,
-                        ),
-                      ],
-                    ),
-                  ),
                   if (hasImage)
                     Positioned(
                       top: 8,
@@ -519,50 +499,6 @@ class _PhotoSlot extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _MiniAction extends StatelessWidget {
-  const _MiniAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Material(
-        color: Colors.black.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: Colors.white, size: 16),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

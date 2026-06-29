@@ -15,9 +15,11 @@ enum FortuneAutoShareMode {
       };
 
   static FortuneAutoShareMode fromKey(String? raw) => switch (raw) {
+        'off' => FortuneAutoShareMode.off,
         'profile' => FortuneAutoShareMode.profileOnly,
         'followers' => FortuneAutoShareMode.followers,
         'public' => FortuneAutoShareMode.public,
+        null => FortuneAutoShareMode.public,
         _ => FortuneAutoShareMode.off,
       };
 

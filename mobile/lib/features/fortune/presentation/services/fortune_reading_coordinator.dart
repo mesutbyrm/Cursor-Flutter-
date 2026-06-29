@@ -13,10 +13,12 @@ import '../../domain/entities/fortune_type_entity.dart';
 import '../../domain/repositories/fortune_repository.dart';
 import '../providers/fortune_api_providers.dart';
 import '../providers/fortune_access_providers.dart';
+import '../providers/fortune_birth_profile_provider.dart';
 import '../widgets/fortune_image_capture_panel.dart';
 import '../widgets/premium_ai/premium_fortune_open_button.dart';
 import '../../domain/fortune_access_config.dart';
 import 'fortune_access_gate.dart';
+import 'fortune_ambient_audio.dart';
 import 'fortune_reading_service.dart';
 import 'fortune_share_handler.dart';
 
@@ -92,8 +94,8 @@ class FortuneReadingCoordinator {
     final resolvedYesNo = type.kind == FortuneSessionKind.yesNo
         ? (yesNoChoice ?? _rng.nextBool())
         : yesNoChoice;
-    final resolvedBirth =
-        birthDate ??
+    final resolvedBirth = birthDate ??
+        await _resolveBirthDate(ref, type) ??
         (type.kind == FortuneSessionKind.numberInput
             ? DateTime(1995, 6, 15)
             : null);
@@ -101,6 +103,7 @@ class FortuneReadingCoordinator {
     final imageHint = _imageHint(type, images);
 
     var loadingCancelled = false;
+    unawaited(FortuneAmbientAudio.playOpening());
     showPremiumFortuneLoading(
       context: context,
       title: _loadingTitle(type, images),
@@ -112,6 +115,7 @@ class FortuneReadingCoordinator {
     void dismissLoading() {
       if (loadingDismissed || !context.mounted) return;
       loadingDismissed = true;
+      unawaited(FortuneAmbientAudio.fadeOutAndStop());
       Navigator.of(context, rootNavigator: true).maybePop();
     }
 
@@ -285,6 +289,23 @@ class FortuneReadingCoordinator {
       context.push('/fortune/${type.slug}/result', extra: finalResult);
     }
     return finalResult;
+  }
+
+  static Future<DateTime?> _resolveBirthDate(
+    WidgetRef ref,
+    FortuneTypeEntity type,
+  ) async {
+    if (type.kind != FortuneSessionKind.zodiacWheel &&
+        type.slug != 'yildiz-haritasi' &&
+        type.slug != 'burc-yorumu') {
+      return null;
+    }
+    try {
+      final profile = await ref.read(fortuneBirthProfileProvider.future);
+      return profile?.birthDate;
+    } catch (_) {
+      return null;
+    }
   }
 
   static Future<({String text, String? fortuneId})?> _streamWithGuards({

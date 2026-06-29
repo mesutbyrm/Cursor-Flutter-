@@ -13,6 +13,7 @@ import '../widgets/ultra_premium/ultra_fortune_cosmic_background.dart';
 import '../widgets/ultra_premium/ultra_fortune_daily_energy.dart';
 import '../widgets/ultra_premium/ultra_fortune_hero_section.dart';
 import '../widgets/ultra_premium/ultra_fortune_prophecy_card.dart';
+import '../widgets/fortune_zodiac_hub_card.dart';
 import '../widgets/ultra_premium/ultra_fortune_tokens.dart';
 import '../widgets/ultra_premium/ultra_fortune_types_section.dart';
 
@@ -32,6 +33,10 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
   void initState() {
     super.initState();
     _scrollParallax.bind(_scrollController);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      maybePromptFortuneBirthOnHub(context, ref);
+    });
   }
 
   @override
@@ -65,6 +70,7 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
             slivers: [
               const SliverToBoxAdapter(child: UltraFortuneAppBar()),
               const SliverToBoxAdapter(child: UltraFortuneHeroSection()),
+              const SliverToBoxAdapter(child: FortuneZodiacHubCard()),
               const SliverToBoxAdapter(
                 child: LazyScreenSection(
                   delay: LazyLoadPerf.fortuneProphecy,

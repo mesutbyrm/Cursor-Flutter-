@@ -85,6 +85,8 @@ class ProfileRemoteDataSource {
     String? username,
     String? currentPassword,
     String? newPassword,
+    String? birthDate,
+    String? birthTime,
   }) async {
     final res = await _dio.safePatch<Map<String, dynamic>>(
       ApiEndpoints.me,
@@ -101,6 +103,8 @@ class ProfileRemoteDataSource {
         'username': ?username,
         'currentPassword': ?currentPassword,
         'newPassword': ?newPassword,
+        if (birthDate != null && birthDate.isNotEmpty) 'birthDate': birthDate,
+        if (birthTime != null && birthTime.isNotEmpty) 'birthTime': birthTime,
       },
     );
     final body = res.data ?? {};

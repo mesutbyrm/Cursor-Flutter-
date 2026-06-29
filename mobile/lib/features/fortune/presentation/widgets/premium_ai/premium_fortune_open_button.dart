@@ -171,8 +171,8 @@ class _PremiumFortuneLoadingOverlayState extends State<PremiumFortuneLoadingOver
                 animation: _spin,
                 builder: (_, _) {
                   return SizedBox(
-                    width: 120,
-                    height: 120,
+                    width: 220,
+                    height: 200,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
@@ -180,10 +180,12 @@ class _PremiumFortuneLoadingOverlayState extends State<PremiumFortuneLoadingOver
                           Transform.rotate(
                             angle: _spin.value * math.pi * 2 + i * 2.1,
                             child: Transform.translate(
-                              offset: Offset(0, -36 + i * 4.0),
+                              offset: Offset(0, -52 + i * 6.0),
                               child: _TarotCardFace(
                                 accent: widget.accent,
                                 label: ['I', 'X', 'III'][i],
+                                width: 96 - i * 4.0,
+                                height: 142 - i * 6.0,
                               ),
                             ),
                           ),
@@ -234,18 +236,25 @@ class _PremiumFortuneLoadingOverlayState extends State<PremiumFortuneLoadingOver
 }
 
 class _TarotCardFace extends StatelessWidget {
-  const _TarotCardFace({required this.accent, required this.label});
+  const _TarotCardFace({
+    required this.accent,
+    required this.label,
+    this.width = 96,
+    this.height = 142,
+  });
 
   final Color accent;
   final String label;
+  final double width;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 44,
-      height: 64,
+      width: width,
+      height: height,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(14),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -258,17 +267,17 @@ class _TarotCardFace extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: accent.withValues(alpha: 0.4),
-            blurRadius: 12,
+            blurRadius: 16,
           ),
         ],
       ),
       alignment: Alignment.center,
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.w900,
-          fontSize: 16,
+          fontSize: width * 0.22,
         ),
       ),
     );

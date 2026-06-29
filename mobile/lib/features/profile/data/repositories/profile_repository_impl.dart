@@ -41,6 +41,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
     String? username,
     String? currentPassword,
     String? newPassword,
+    String? birthDate,
+    String? birthTime,
   }) =>
       _remote.updateMe(
         displayName: displayName,
@@ -49,6 +51,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
         username: username,
         currentPassword: currentPassword,
         newPassword: newPassword,
+        birthDate: birthDate,
+        birthTime: birthTime,
       );
 
   @override

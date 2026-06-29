@@ -18,6 +18,8 @@ abstract class ProfileRepository {
     String? username,
     String? currentPassword,
     String? newPassword,
+    String? birthDate,
+    String? birthTime,
   });
   Future<ProfileStatsEntity> myStats();
   Future<List<GiftReceivedSummaryEntity>> giftsReceivedSummary();

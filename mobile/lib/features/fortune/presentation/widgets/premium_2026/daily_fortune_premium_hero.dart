@@ -1,11 +1,9 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:canlifal_social/core/performance/animation_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../data/fortune_type_images.dart';
 import '../premium_ai/fortune_image_shimmer.dart';
@@ -130,61 +128,6 @@ class _DailyFortunePremiumHeroState extends State<DailyFortunePremiumHero>
                 child: Transform.translate(
                   offset: Offset(0, parallax * 0.5),
                   child: _TarotCardStack(glow: glow),
-                ),
-              ),
-              Positioned(
-                left: 20,
-                right: 20,
-                bottom: 20,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: glow.withValues(alpha: 0.35),
-                        ),
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.white.withValues(alpha: 0.12),
-                            Colors.black.withValues(alpha: 0.3),
-                          ],
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Bugünün enerjisi ve',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.playfairDisplay(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          ShaderMask(
-                            shaderCallback: (b) => LinearGradient(
-                              colors: [glow, const Color(0xFFC084FC)],
-                            ).createShader(b),
-                            child: Text(
-                              'sürpriz mesajın',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.playfairDisplay(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ),
               ),
             ],

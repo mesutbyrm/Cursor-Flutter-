@@ -6,7 +6,9 @@ import '../../../domain/entities/fortune_type_entity.dart';
 import '../../services/fortune_share_handler.dart';
 import '../fortune_mystic_bar_button.dart';
 import '../fortune_mystic_title_bar.dart';
+import '../fortune_listen_button.dart';
 import '../fortune_share_sheet.dart';
+import '../fortune_type_context_header.dart';
 import '../premium_2026/fortune_browse_carousel.dart';
 import '../premium_2026/fortune_premium_result_card.dart';
 import '../premium_2026/fortune_similar_section.dart';
@@ -79,38 +81,30 @@ class _FortuneInlineResultExperienceState
           Column(
             children: [
               FortuneMysticTitleBar(
-                title: 'Fal Sonucu',
+                title: result.type.title,
                 onBack: widget.onNewReading ?? () => Navigator.of(context).maybePop(),
                 trailing: FortuneMysticBarButton(
                   icon: Icons.ios_share_rounded,
                   onPressed: _openShareSheet,
                 ),
               ),
+              FortuneTypeContextHeader(type: result.type),
               Expanded(
                 child: PremiumFortuneResultCanvas(
                   result: result,
                   scrollController: _scroll,
-                  appBarTitle: 'Fal Sonucu',
+                  appBarTitle: result.type.title,
                   showTopBar: false,
                   showHero: false,
                   useBackground: false,
                   header: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                     child: FortunePremiumResultCard(result: result),
                   ),
+                  listenButton: FortuneListenButton(result: result),
                   footer: Column(
                     children: [
                       const SizedBox(height: 20),
-                      FortuneSimilarSection(
-                        currentSlug: result.type.slug,
-                        onOpen: widget.onOpenType,
-                      ),
-                      const SizedBox(height: 20),
-                      FortuneBrowseCarousel(
-                        excludeSlug: result.type.slug,
-                        onOpen: widget.onOpenType,
-                      ),
-                      const SizedBox(height: 24),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: FilledButton.icon(
@@ -125,6 +119,16 @@ class _FortuneInlineResultExperienceState
                             ),
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 20),
+                      FortuneSimilarSection(
+                        currentSlug: result.type.slug,
+                        onOpen: widget.onOpenType,
+                      ),
+                      const SizedBox(height: 20),
+                      FortuneBrowseCarousel(
+                        excludeSlug: result.type.slug,
+                        onOpen: widget.onOpenType,
                       ),
                       const SizedBox(height: 32),
                     ],

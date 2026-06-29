@@ -11,6 +11,7 @@ import '../../domain/entities/fortune_type_entity.dart';
 import '../services/fortune_reading_coordinator.dart';
 import '../widgets/fortune_mystic_bar_button.dart';
 import '../widgets/fortune_mystic_title_bar.dart';
+import '../widgets/fortune_type_context_header.dart';
 import '../widgets/premium_2026/daily_fortune_premium_hero.dart';
 import '../widgets/premium_2026/fortune_type_immersive_scaffold.dart';
 import '../widgets/premium_ai/fortune_inline_result_experience.dart';
@@ -106,6 +107,11 @@ class _DailyFortuneOpenPageState extends ConsumerState<DailyFortuneOpenPage> {
                       onPressed: _openWeb,
                     )
                   : null,
+            ),
+            FortuneTypeContextHeader(
+              type: type,
+              titleOverride: 'Günlük Fal',
+              subtitle: 'Bugünün enerjisi ve sürpriz mesajın',
             ),
             Expanded(
               child: SingleChildScrollView(

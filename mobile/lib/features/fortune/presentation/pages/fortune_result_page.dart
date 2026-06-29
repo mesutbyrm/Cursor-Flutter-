@@ -9,6 +9,8 @@ import '../widgets/fortune_share_sheet.dart';
 import '../widgets/premium_2026/fortune_browse_carousel.dart';
 import '../widgets/premium_2026/fortune_premium_result_card.dart';
 import '../widgets/premium_2026/fortune_similar_section.dart';
+import '../widgets/fortune_listen_button.dart';
+import '../widgets/fortune_type_context_header.dart';
 import '../widgets/premium_2026/fortune_type_immersive_scaffold.dart';
 import '../widgets/premium_ai/fortune_result_action_panel.dart';
 import '../widgets/premium_ai/fortune_share_story_card.dart';
@@ -104,24 +106,48 @@ class _FortuneResultPageState extends ConsumerState<FortuneResultPage> {
         children: [
           FortuneTypeImmersiveScaffold(
             type: result.type,
-            child: PremiumFortuneResultCanvas(
-              result: result,
-              scrollController: _scroll,
-              appBarTitle: 'Fal Sonucu',
-              onShare: _openShareSheet,
-              header: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: FortunePremiumResultCard(result: result),
-              ),
-              footer: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  FortuneSimilarSection(currentSlug: result.type.slug),
-                  const SizedBox(height: 20),
-                  FortuneBrowseCarousel(excludeSlug: result.type.slug),
-                  const SizedBox(height: 16),
-                ],
-              ),
+            child: Column(
+              children: [
+                FortuneTypeContextHeader(type: result.type),
+                Expanded(
+                  child: PremiumFortuneResultCanvas(
+                    result: result,
+                    scrollController: _scroll,
+                    appBarTitle: result.type.title,
+                    onShare: _openShareSheet,
+                    header: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: FortunePremiumResultCard(result: result),
+                    ),
+                    listenButton: FortuneListenButton(result: result),
+                    footer: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: FilledButton.icon(
+                            onPressed: _openShareSheet,
+                            icon: const Icon(Icons.ios_share_rounded),
+                            label: const Text('Paylaş'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: result.type.accent,
+                              minimumSize: const Size.fromHeight(50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        FortuneSimilarSection(currentSlug: result.type.slug),
+                        const SizedBox(height: 20),
+                        FortuneBrowseCarousel(excludeSlug: result.type.slug),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           Positioned(

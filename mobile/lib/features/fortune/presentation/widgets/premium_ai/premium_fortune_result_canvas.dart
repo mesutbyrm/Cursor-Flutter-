@@ -25,6 +25,7 @@ class PremiumFortuneResultCanvas extends StatefulWidget {
     this.useBackground = true,
     this.header,
     this.footer,
+    this.listenButton,
   });
 
   final FortuneReadingResult result;
@@ -37,6 +38,7 @@ class PremiumFortuneResultCanvas extends StatefulWidget {
   final bool useBackground;
   final Widget? header;
   final Widget? footer;
+  final Widget? listenButton;
 
   @override
   State<PremiumFortuneResultCanvas> createState() =>
@@ -187,7 +189,7 @@ class _PremiumFortuneResultCanvasState extends State<PremiumFortuneResultCanvas>
                             style: TextStyle(
                               color: glow.withValues(alpha: 0.9),
                               fontWeight: FontWeight.w900,
-                              fontSize: 14,
+                              fontSize: 15,
                               letterSpacing: 0.6,
                             ),
                           ),
@@ -259,6 +261,10 @@ class _PremiumFortuneResultCanvasState extends State<PremiumFortuneResultCanvas>
                                 ),
                             ],
                           ),
+                        ],
+                        if (widget.listenButton != null) ...[
+                          const SizedBox(height: 16),
+                          widget.listenButton!,
                         ],
                         if (widget.footer != null) widget.footer!,
                       ],
@@ -358,9 +364,11 @@ class _AnimatedSectionBlock extends StatelessWidget {
     final label = FortuneReadingHeadlines.sectionLabel(section.key);
     final icon = FortuneReadingHeadlines.sectionIcon(section.key);
     final bodyStyle = TextStyle(
-      color: Colors.white.withValues(alpha: 0.9),
-      fontSize: 14,
-      height: 1.55,
+      color: Colors.white.withValues(alpha: 0.94),
+      fontSize: 16,
+      height: 1.68,
+      letterSpacing: 0.15,
+      fontWeight: FontWeight.w500,
     );
 
     return AnimatedOpacity(
@@ -388,7 +396,7 @@ class _AnimatedSectionBlock extends StatelessWidget {
                         style: TextStyle(
                           color: accent.withValues(alpha: 0.95),
                           fontWeight: FontWeight.w900,
-                          fontSize: 13,
+                          fontSize: 14,
                           letterSpacing: 0.5,
                         ),
                       ),
