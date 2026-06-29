@@ -12,10 +12,12 @@ final adminVoiceRoomSettingsProvider =
   }
   final dio = ref.watch(dioProvider);
   try {
-    final res = await dio.safeGet<dynamic>(ApiEndpoints.adminVoiceRoomSettings);
+    final res = await dio
+        .safeGet<dynamic>(ApiEndpoints.adminVoiceRoomSettings)
+        .timeout(const Duration(seconds: 8), onTimeout: () => throw ApiException('timeout', statusCode: 408));
     return _unwrapMap(res.data);
   } on ApiException catch (e) {
-    if (e.statusCode == 403 || e.statusCode == 404) return const {};
+    if (e.statusCode == 403 || e.statusCode == 404 || e.statusCode == 408) return const {};
     rethrow;
   }
 });
