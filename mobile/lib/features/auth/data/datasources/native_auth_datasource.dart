@@ -30,7 +30,8 @@ class NativeAuthDataSource {
 
     GoogleSignInAccount? account;
     try {
-      account = await googleSignIn.signIn();
+      account = await googleSignIn.signInSilently();
+      account ??= await googleSignIn.signIn();
     } on PlatformException catch (e) {
       debugPrint('Google signIn PlatformException: ${e.code} ${e.message}');
       final code = e.code.toLowerCase();

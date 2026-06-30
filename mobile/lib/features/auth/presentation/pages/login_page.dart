@@ -57,7 +57,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       topTitle: 'Hoş geldin',
       topSubtitle: sessionChecking
           ? 'Oturum kontrol ediliyor…'
-          : 'Sesli odalara katıl, fal dünyasını keşfet.',
+          : 'Google ile hızlı giriş veya e-posta ile devam edin.',
       child: Form(
         key: _form,
         child: Column(

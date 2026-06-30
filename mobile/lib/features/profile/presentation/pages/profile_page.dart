@@ -22,6 +22,7 @@ import '../premium_2026/profile_lazy_sections.dart';
 import '../premium_2026/profile_screen_builder.dart';
 import '../premium_2026/widgets/profile_header.dart';
 import '../premium_2026/widgets/profile_quick_actions.dart';
+import '../widgets/profile_guest_sign_in_card.dart';
 
 /// Profil — Premium 2026 kişisel kontrol merkezi.
 class ProfilePage extends ConsumerWidget {
@@ -30,6 +31,7 @@ class ProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
+    final guest = ref.watch(guestModeProvider);
     final top = MediaQuery.paddingOf(context).top;
 
     Future<void> refresh() async {
@@ -74,6 +76,9 @@ class ProfilePage extends ConsumerWidget {
               ),
             ),
             data: (user) {
+              if (user == null && guest) {
+                return const ProfileGuestSignInCard();
+              }
               if (user == null) {
                 return const Center(
                   child: DiscoverEmptyState(

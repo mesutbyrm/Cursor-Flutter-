@@ -183,6 +183,11 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     }
   }
 
+  Future<void> _afterAuthSuccess(UserEntity? user) async {
+    if (user == null || user.id.isEmpty) return;
+    unawaited(OneSignalBootstrap.login(user.id));
+  }
+
   Future<void> login(String identifier, String password) async {
     await _runUserAction(() async {
       state = await AsyncValue.guard(() async {
@@ -195,10 +200,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
           message: 'Giriş zaman aşımına uğradı',
         );
         final resolved = await _withSiteProfile(u);
-        // OneSignal'e kullanıcıyı kaydet — push bildirimleri için zorunlu
-        if (resolved?.id != null && resolved!.id.isNotEmpty) {
-          unawaited(OneSignalBootstrap.login(resolved.id));
-        }
+        await _afterAuthSuccess(resolved);
         return resolved;
       });
       _clearGuestModeOnSuccess();
@@ -231,7 +233,9 @@ class AuthController extends AsyncNotifier<UserEntity?> {
           timeout: _actionTimeout,
           message: 'Kayıt zaman aşımına uğradı',
         );
-        return _withSiteProfile(u);
+        final resolved = await _withSiteProfile(u);
+        await _afterAuthSuccess(resolved);
+        return resolved;
       });
       _clearGuestModeOnSuccess();
     });
@@ -245,7 +249,9 @@ class AuthController extends AsyncNotifier<UserEntity?> {
           timeout: _actionTimeout,
           message: 'Google girişi zaman aşımına uğradı',
         );
-        return _withSiteProfile(u);
+        final resolved = await _withSiteProfile(u);
+        await _afterAuthSuccess(resolved);
+        return resolved;
       });
       _clearGuestModeOnSuccess();
     });
@@ -259,7 +265,9 @@ class AuthController extends AsyncNotifier<UserEntity?> {
           timeout: _actionTimeout,
           message: 'TikTok girişi zaman aşımına uğradı',
         );
-        return _withSiteProfile(u);
+        final resolved = await _withSiteProfile(u);
+        await _afterAuthSuccess(resolved);
+        return resolved;
       });
       _clearGuestModeOnSuccess();
     });

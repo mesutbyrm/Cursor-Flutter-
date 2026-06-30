@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.454+458 (2026-06-30)
+
+### Google ile giriş
+
+- **Birincil giriş:** Giriş ekranında Google butonu öne çıkarıldı (beyaz CTA)
+- **Oturum sonrası:** Google / TikTok / kayıt sonrası OneSignal push kaydı
+- **Sessiz giriş:** Daha önce Google ile girmiş kullanıcılar için `signInSilently` denemesi
+- **Misafir profil:** Profilde «Google ile Giriş yap» kartı
+- **Önceki sürüm özellikleri:** Sesli oda moderasyon menüsü, site admin, CDN müzik, duyuru bandı (1.0.453)
+
 ## 1.0.453+457 (2026-06-26)
 
 ### Sesli oda — moderasyon, admin, müzik, duyuru
