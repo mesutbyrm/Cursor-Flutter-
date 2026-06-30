@@ -172,8 +172,12 @@ class LiveGiftsRemoteDataSource {
       fallback: 'Yayıncı',
     );
 
-    final giftName = _resolveGiftName(json, giftId);
-    if (!_isValidLabel(giftName)) return null;
+    // İsim geçersizse (ikon URL'i, JSON parçası, çok uzun metin) hediyeyi
+    // DÜŞÜRME — güvenli varsayılan adla göster; animasyon yine çalışsın.
+    var giftName = _resolveGiftName(json, giftId);
+    if (!_isValidLabel(giftName)) {
+      giftName = LiveGiftCatalog.displayNameOverrides[giftId] ?? 'Hediye';
+    }
 
     final qtyRaw = asInt(pick(json, ['quantity', 'count', 'amount']));
     final qty = qtyRaw > 0 ? qtyRaw : 1;
