@@ -4364,6 +4364,7 @@ class VoiceRoomMusicSessionState {
 class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState> {
   Object? _detachedKeepAlive;
   Timer? _syncTimer;
+  bool _syncing = false;
 
   @override
   VoiceRoomMusicSessionState build() {
@@ -4492,14 +4493,17 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
   void _ensureBackgroundSync(VoiceRoomEntity room) {
     _syncTimer?.cancel();
     _syncTimer = Timer.periodic(const Duration(seconds: 18), (_) async {
-      if (state.dismissed || state.room?.id != room.id) return;
+      if (_syncing || state.dismissed || state.room?.id != room.id) return;
+      _syncing = true;
       try {
         await ref
             .read(voiceRoomLiveProvider(room.liveKey).notifier)
             .refresh(includeDj: true);
         final live = ref.read(voiceRoomLiveProvider(room.liveKey));
         state = state.copyWith(dj: live.dj);
-      } catch (_) {}
+      } catch (_) {} finally {
+        _syncing = false;
+      }
     });
   }
 

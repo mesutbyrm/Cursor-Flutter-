@@ -103,6 +103,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _isMicMuted = false;
   var _micAutoMutedByMusic = false;
   var _leaving = false;
+  var _musicSearchOpen = false;
   LiveGiftEvent? _fullscreenGift;
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
@@ -1167,9 +1168,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       final q = next.pendingMusicSearchQuery;
       if (q != null &&
           prev?.pendingMusicSearchQuery != q &&
-          mounted) {
+          mounted &&
+          !_musicSearchOpen) {
         final skipPayment = next.pendingMusicSearchSkipPayment;
         final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+        _musicSearchOpen = true;
         ctrl.clearPendingMusicSearch();
         unawaited(
           showMusicSearchPickerSheet(
@@ -1188,7 +1191,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 SnackBar(content: Text(err)),
               );
             },
-          ),
+          ).whenComplete(() => _musicSearchOpen = false),
         );
       }
 

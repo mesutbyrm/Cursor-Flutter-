@@ -736,6 +736,7 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
   String? _currentSource;
   audio.MediaItem? _currentMediaItem;
   VoiceRoomMusicDiagnostics _diagnostics = const VoiceRoomMusicDiagnostics();
+  final _subs = <StreamSubscription<dynamic>>[];
 
   VoiceRoomMusicControlDelegate? get _delegate => _delegateProvider();
 
@@ -876,7 +877,7 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
   }
 
   void _init() {
-    _player.durationStream.listen((duration) {
+    _subs.add(_player.durationStream.listen((duration) {
       final d = duration ?? Duration.zero;
       VoiceRoomMusicPipelineLog.durationValue(
         durationMs: duration?.inMilliseconds,
@@ -894,8 +895,8 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
           durationMs: d.inMilliseconds,
         );
       }
-    });
-    _player.positionStream.listen((position) {
+    }));
+    _subs.add(_player.positionStream.listen((position) {
       final clamped = VoicePlaybackLimits.clampPosition(position);
       if (clamped != position && _player.playing) {
         unawaited(_player.seek(clamped));
@@ -905,12 +906,12 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
         return;
       }
       _emitPlayback(_playbackValue.value.copyWith(position: position));
-    });
-    _player.playingStream.listen((playing) {
+    }));
+    _subs.add(_player.playingStream.listen((playing) {
       _emitPlayback(_playbackValue.value.copyWith(playing: playing));
       _broadcastPlaybackState();
-    });
-    _player.processingStateStream.listen((state) {
+    }));
+    _subs.add(_player.processingStateStream.listen((state) {
       _refreshDiagnostics();
       VoiceRoomMusicPipelineLog.playState(
         playing: _player.playing,
@@ -928,8 +929,8 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
       } else {
         _broadcastPlaybackState(processingState: _mapProcessingState(state));
       }
-    });
-    _player.playbackEventStream.listen(
+    }));
+    _subs.add(_player.playbackEventStream.listen(
       (event) {
         if (event.processingState == ja.ProcessingState.completed) return;
         VoiceRoomMusicPipelineLog.playbackEvent(
@@ -953,8 +954,8 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
           url: _currentSource,
         );
       },
-    );
-    _player.playerStateStream.listen((state) {
+    ));
+    _subs.add(_player.playerStateStream.listen((state) {
       _refreshDiagnostics();
       VoiceRoomMusicPipelineLog.playerStateStreamEvent(
         playing: state.playing,
@@ -962,8 +963,8 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
         positionMs: _player.position.inMilliseconds,
         url: _currentSource,
       );
-    });
-    _player.errorStream.listen((Object error) {
+    }));
+    _subs.add(_player.errorStream.listen((Object error) {
       _diagnostics = _diagnostics.copyWith(
         lastError: error.toString(),
         lastPhase: 'errorStream',
@@ -979,7 +980,7 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
         phase: 'errorStream',
         url: _currentSource,
       );
-    });
+    }));
   }
 
   Future<void> playSource(
@@ -1267,6 +1268,10 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
   }
 
   Future<void> disposeHandler() async {
+    for (final sub in _subs) {
+      await sub.cancel();
+    }
+    _subs.clear();
     await stopLocal();
     await _player.dispose();
     _playbackValue.dispose();

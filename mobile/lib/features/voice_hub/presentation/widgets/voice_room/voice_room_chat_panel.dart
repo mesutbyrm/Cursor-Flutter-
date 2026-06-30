@@ -21,6 +21,22 @@ class VoiceRoomChatPanel extends StatelessWidget {
         ? messages.sublist(messages.length - 40)
         : messages;
 
+    if (visible.isEmpty) {
+      return SizedBox(
+        height: maxHeight,
+        child: Center(
+          child: Text(
+            'Henüz mesaj yok',
+            style: TextStyle(
+              fontSize: 11,
+              fontStyle: FontStyle.italic,
+              color: Colors.white.withValues(alpha: 0.4),
+            ),
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       height: maxHeight,
       child: ListView.builder(
