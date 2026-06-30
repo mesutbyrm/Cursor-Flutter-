@@ -151,7 +151,7 @@ class ProfileLazyAdmin extends ConsumerWidget {
       child: Consumer(
         builder: (context, ref, _) {
           final staff = ref.watch(staffAccessProvider);
-          if (!staff.canManagePayments) return const SizedBox.shrink();
+          if (!staff.showAdminPanel) return const SizedBox.shrink();
           return const ProfileAdminCard();
         },
       ),

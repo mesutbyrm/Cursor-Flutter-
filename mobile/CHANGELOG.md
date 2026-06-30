@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.453+457 (2026-06-26)
+
+### Sesli oda — moderasyon, admin, müzik, duyuru
+
+- **Oda menüsü (Yetki Ver üstü):** Sessize alınmış kullanıcılar, banlanmış kullanıcılar, sohbeti temizle
+- **Site admin (`admin`):** profil admin paneli geri; tüm oda yetkileri (staff moderatör değil)
+- **Müzik:** arka plan `just_audio` + YouTube CDN/proxy; videolu isteklerde WebView şerit
+- **Giriş bandı:** herkesin odaya girişi üstten kayan şerit
+- **`!duyuru`:** sağdan sola tek geçiş, tekrar gösterilmez
+
 ## 1.0.452+456 (2026-06-26)
 
 ### Sesli oda müzik — YouTube IFrame embed

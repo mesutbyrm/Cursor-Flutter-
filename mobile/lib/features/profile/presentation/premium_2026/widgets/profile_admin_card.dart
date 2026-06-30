@@ -20,12 +20,12 @@ class ProfileAdminCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final access = ref.watch(staffAccessProvider);
-    if (!access.canManagePayments) return const SizedBox.shrink();
+    if (!access.showAdminPanel) return const SizedBox.shrink();
 
     final pending = ref.watch(adminPendingPaymentsCountProvider);
 
     ref.listen<StaffAccess>(staffAccessProvider, (prev, next) {
-      if (next.canManagePayments && prev?.canManagePayments != true) {
+      if (next.showAdminPanel && prev?.showAdminPanel != true) {
         ref.invalidate(adminPaymentRequestsProvider);
         ref.invalidate(adminPaymentNotificationsProvider);
         ref.invalidate(adminSitePaymentSettingsProvider);

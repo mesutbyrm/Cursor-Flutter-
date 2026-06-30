@@ -1,3 +1,4 @@
+import '../../../../core/auth/staff_roles.dart';
 import '../../../../core/auth/voice_staff_rank.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -54,6 +55,22 @@ class VoiceRoomPermissions {
       );
     }
 
+    if (StaffRoles.isSiteAdminUser(role: user.role, username: user.username)) {
+      return const VoiceRoomPermissions(
+        isSiteAdmin: true,
+        isRoomOwner: true,
+        canModerate: true,
+        canManageDj: true,
+        canChangeBackground: true,
+        canMuteUsers: true,
+        canKickUsers: true,
+        canBanUsers: true,
+        canMuteRoom: true,
+        canGiveVoice: true,
+        canManageRoom: true,
+      );
+    }
+
     if (server != null && server.canModerate) {
       return VoiceRoomPermissions(
         isSiteAdmin: server.isGlobalAdmin,
@@ -80,7 +97,11 @@ class VoiceRoomPermissions {
       chatRole: selfPresence?.chatRole ?? server?.role,
     );
     final staffPower = VoiceStaffRankParser.powerLevel(rank);
-    final isSiteAdmin = server?.isGlobalAdmin == true ||
+    final isSiteAdmin = StaffRoles.isSiteAdminUser(
+          role: user.role,
+          username: user.username,
+        ) ||
+        server?.isGlobalAdmin == true ||
         staffPower >= VoiceStaffRankParser.powerLevel(VoiceStaffRank.admin) ||
         selfPresence?.chatRole == 'admin' ||
         selfPresence?.chatRole == 'superadmin';

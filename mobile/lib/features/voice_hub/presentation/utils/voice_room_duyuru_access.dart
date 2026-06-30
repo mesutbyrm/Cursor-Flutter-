@@ -6,7 +6,7 @@ abstract final class VoiceRoomDuyuruAccess {
   static const int jetonCost = 5;
   /// 0 = otomatik gizleme yok (Faz 10).
   static const Duration displayTtl = Duration.zero;
-  static const int scrollPasses = 2;
+  static const int scrollPasses = 1;
 
   static bool isAdminFree(VoiceRoomPermissions perms) =>
       perms.isSiteAdmin || perms.canModerate || perms.isRoomOwner;

@@ -12,11 +12,13 @@ class VoiceRoomDuyuruTicker extends StatefulWidget {
     required this.text,
     this.scrollPasses = VoiceRoomDuyuruAccess.scrollPasses,
     this.ttl = VoiceRoomDuyuruAccess.displayTtl,
+    this.onScrollComplete,
   });
 
   final String text;
   final int scrollPasses;
   final Duration ttl;
+  final VoidCallback? onScrollComplete;
 
   @override
   State<VoiceRoomDuyuruTicker> createState() => _VoiceRoomDuyuruTickerState();
@@ -92,6 +94,10 @@ class _VoiceRoomDuyuruTickerState extends State<VoiceRoomDuyuruTicker>
       _passesDone++;
       if (_passesDone >= widget.scrollPasses) {
         _scroll!.stop();
+        if (mounted) {
+          setState(() => _visible = false);
+          widget.onScrollComplete?.call();
+        }
         return;
       }
       _scroll!.forward(from: 0);

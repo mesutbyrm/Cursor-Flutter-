@@ -21,6 +21,30 @@ abstract final class StaffRoles {
 
   static const managerUsernames = {'admin', 'yonetici'};
 
+  /// Site yöneticisi kullanıcı adı (`admin` — IRC staff moderatörü değil).
+  static const siteAdminUsernames = {'admin'};
+
+  static bool isSiteAdminUser({String? role, String? username}) {
+    final u = username?.toLowerCase().trim() ?? '';
+    if (siteAdminUsernames.contains(u)) return true;
+    final r = role?.toLowerCase().trim() ?? '';
+    return r == 'admin' ||
+        r == 'super_admin' ||
+        r == 'superadmin' ||
+        r == 'founder';
+  }
+
+  /// Profil admin paneli — site admin veya ödeme yöneticisi.
+  static bool canAccessAdminPanel({
+    String? role,
+    String? username,
+    bool? walletIsAdmin,
+  }) {
+    if (walletIsAdmin == true) return true;
+    if (isSiteAdminUser(role: role, username: username)) return true;
+    return isAdminOrManager(role: role, username: username);
+  }
+
   static bool isStaff(String? role) {
     if (role == null) return false;
     return staff.contains(role.toLowerCase().trim());

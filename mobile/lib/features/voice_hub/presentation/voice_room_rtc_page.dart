@@ -1544,6 +1544,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           VoiceRoomDuyuruTicker(
                             key: ValueKey(live.moderatorAnnouncement),
                             text: live.moderatorAnnouncement!,
+                            onScrollComplete: () => ref
+                                .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+                                .clearModeratorAnnouncement(),
                           ),
                         VoiceRoomSeatVideoStrip(roomKey: _liveRoomKey),
                         RoomVideoOverlay(

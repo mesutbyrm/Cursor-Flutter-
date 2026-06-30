@@ -8,24 +8,32 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 class StaffAccess {
   const StaffAccess({
     required this.canManagePayments,
+    required this.isSiteAdmin,
+    required this.showAdminPanel,
     this.siteRole,
   });
 
   final bool canManagePayments;
+  final bool isSiteAdmin;
+  final bool showAdminPanel;
   final String? siteRole;
 
   String get roleLabel {
     if (siteRole != null && siteRole!.isNotEmpty) {
       return StaffRoles.labelTr(siteRole!);
     }
-    return 'Yönetici';
+    return isSiteAdmin ? 'Site Admin' : 'Yönetici';
   }
 }
 
 final staffAccessProvider = Provider<StaffAccess>((ref) {
   final user = ref.watch(authControllerProvider).valueOrNull;
   if (user == null) {
-    return const StaffAccess(canManagePayments: false);
+    return const StaffAccess(
+      canManagePayments: false,
+      isSiteAdmin: false,
+      showAdminPanel: false,
+    );
   }
 
   final walletRole = ref.watch(
@@ -36,11 +44,21 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
   final siteRole = walletRole?.trim().isNotEmpty == true ? walletRole : authRole;
   final username = user.username;
 
-  final canManage = wallet?.canManagePayments ??
+  final isSiteAdmin = wallet?.isAdmin == true ||
+      StaffRoles.isSiteAdminUser(role: siteRole, username: username);
+
+  final canManagePayments = isSiteAdmin ||
+      wallet?.canManagePayments == true ||
       StaffRoles.isAdminOrManager(
         role: siteRole,
         username: username,
       );
+
+  final showAdminPanel = StaffRoles.canAccessAdminPanel(
+    role: siteRole,
+    username: username,
+    walletIsAdmin: wallet?.isAdmin,
+  );
 
   String? effectiveRole = siteRole?.trim().isNotEmpty == true
       ? siteRole!.toLowerCase().trim()
@@ -49,9 +67,14 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
       StaffRoles.managerUsernames.contains(username.toLowerCase().trim())) {
     effectiveRole = username.toLowerCase().trim();
   }
+  if (isSiteAdmin && effectiveRole == null) {
+    effectiveRole = 'admin';
+  }
 
   return StaffAccess(
-    canManagePayments: canManage,
+    canManagePayments: canManagePayments,
+    isSiteAdmin: isSiteAdmin,
+    showAdminPanel: showAdminPanel,
     siteRole: effectiveRole,
   );
 });

@@ -13,8 +13,10 @@ import '../utils/voice_music_access.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
+import 'voice_moderation_user_picker_sheet.dart';
 import 'voice_room_authority_sheet.dart';
 import 'voice_room_hub_settings.dart';
+import 'voice_room_muted_users_sheet.dart';
 import 'voice_room_sheets.dart';
 import 'voice_youtube_song_sheet.dart';
 
@@ -217,6 +219,54 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
               _UserHeader(user: user, role: role),
               if (canManageAuthority) ...[
                 const SizedBox(height: 14),
+                _ModerationMenuButton(
+                  icon: Icons.volume_off_rounded,
+                  label: 'Sessize alınmış kullanıcılar',
+                  onTap: () {
+                    Navigator.pop(context);
+                    showVoiceMutedUsersSheet(
+                      context: context,
+                      ref: ref,
+                      roomKey: room.liveKey,
+                      presence: live.presence,
+                      perms: perms,
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                _ModerationMenuButton(
+                  icon: Icons.block_rounded,
+                  label: 'Banlanmış kullanıcılar',
+                  onTap: () {
+                    Navigator.pop(context);
+                    showVoiceModerationUserPicker(
+                      context: context,
+                      ref: ref,
+                      room: room,
+                      perms: perms,
+                      action: VoiceModerationPickerAction.unban,
+                      presence: live.presence,
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                _ModerationMenuButton(
+                  icon: Icons.cleaning_services_rounded,
+                  label: 'Sohbeti temizle',
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final err = await ref
+                        .read(voiceRoomLiveProvider(room.liveKey).notifier)
+                        .clearChatAsModerator();
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(err ?? 'Sohbet temizlendi'),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
                 FilledButton.icon(
                   style: FilledButton.styleFrom(
                     backgroundColor: VoiceRoomTokens.neonPurple.withValues(alpha: 0.85),
@@ -321,6 +371,36 @@ class _UserHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ModerationMenuButton extends StatelessWidget {
+  const _ModerationMenuButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.white,
+        minimumSize: const Size.fromHeight(46),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.28)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      onPressed: onTap,
+      icon: Icon(icon, size: 20),
+      label: Text(
+        label,
+        style: const TextStyle(fontWeight: FontWeight.w800),
+      ),
     );
   }
 }

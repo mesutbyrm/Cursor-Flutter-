@@ -66,6 +66,9 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
           VoiceRoomDuyuruTicker(
             key: ValueKey(live.moderatorAnnouncement),
             text: live.moderatorAnnouncement!,
+            onScrollComplete: () => ref
+                .read(voiceRoomLiveProvider(liveKey).notifier)
+                .clearModeratorAnnouncement(),
           ),
         VoiceRoomSeatVideoStrip(roomKey: liveKey),
       ],

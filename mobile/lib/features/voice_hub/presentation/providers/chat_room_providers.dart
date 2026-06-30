@@ -97,7 +97,10 @@ final voiceRoomDjStreamLoaderProvider = Provider<VoiceRoomDjStreamLoader>((
 });
 
 final voiceRoomDjPlayerProvider = Provider<VoiceRoomDjPlayer>((ref) {
-  final p = VoiceRoomDjPlayer();
+  final p = VoiceRoomDjPlayer(
+    ref.watch(youtubeStreamResolverProvider),
+    ref.watch(voiceRoomDjStreamLoaderProvider),
+  );
   ref.onDispose(p.dispose);
   return p;
 });
@@ -292,6 +295,7 @@ class VoiceRoomLiveController
   final Set<String> _shownEntranceKeys = {};
   final Set<String> _knownPresenceIds = {};
   final Set<String> _shownMusicRequestFlashKeys = {};
+  final Set<String> _seenDuyuruKeys = {};
   String? _presenceNickname;
   var _presenceJoined = false;
   var _voiceJoined = false;
@@ -508,9 +512,19 @@ class VoiceRoomLiveController
     );
     if (VoiceStaffChatStyle.isStaffEntry(content: name, user: userRef)) {
       _showStaffEnterBanner(name, user: userRef);
-    } else {
-      _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.join, '$name giriş yaptı.');
+      return;
     }
+    final line = VoiceOfficialJoin.formatEntranceBanner(
+      '$name giriş yaptı',
+      roomName: _roomMeta.nameTr,
+    );
+    if (line.isEmpty || !_markEntranceOnce(line)) return;
+    state = state.copyWith(enterBanner: line);
+    _enterBannerTimer?.cancel();
+    _enterBannerTimer = Timer(const Duration(seconds: 10), () {
+      if (!_sessionActive) return;
+      state = state.copyWith(clearEnterBanner: true);
+    });
   }
 
   void _showStaffEnterBanner(String name, {ChatRoomUserRef? user}) {
@@ -634,7 +648,6 @@ class VoiceRoomLiveController
       if (VoiceRoomBasicMode.musicEnabled) {
         final player = ref.read(voiceRoomDjPlayerProvider);
         player.onTrackComplete = () => unawaited(_onDjTrackComplete());
-        player.onUnplayable = () => unawaited(_handleUnplayableEmbed());
         _wireMusicControls();
       }
       if (VoiceRoomBasicMode.premiumEnabled) {
@@ -647,7 +660,6 @@ class VoiceRoomLiveController
     _startGiftSocket();
     final player = ref.read(voiceRoomDjPlayerProvider);
     player.onTrackComplete = () => unawaited(_onDjTrackComplete());
-    player.onUnplayable = () => unawaited(_handleUnplayableEmbed());
     _wireMusicControls();
     unawaited(_loadGiftLeaderboard());
   }
@@ -903,6 +915,9 @@ class VoiceRoomLiveController
     if (videoId != null && videoId.isNotEmpty) return true;
     if (sync?.currentVideoId?.trim().isNotEmpty == true) return true;
     if (dj.nowPlaying?.resolvedVideoId?.trim().isNotEmpty == true) return true;
+    if (dj.nowPlaying?.youtubeUrl?.trim().isNotEmpty == true) return true;
+    if (sync?.streamUrl?.trim().isNotEmpty == true) return true;
+    if (dj.musicUrl?.trim().isNotEmpty == true) return true;
     return false;
   }
 
@@ -1530,18 +1545,20 @@ class VoiceRoomLiveController
   }
 
   void _showModeratorAnnouncement(String text) {
+    final key = text.trim().toLowerCase();
+    if (key.isEmpty || _seenDuyuruKeys.contains(key)) return;
+    _seenDuyuruKeys.add(key);
     _announcementTimer?.cancel();
     _pinnedAnnouncementTimer?.cancel();
     state = state.copyWith(
-      moderatorAnnouncement: text,
+      moderatorAnnouncement: text.trim(),
       clearPinnedAnnouncement: true,
     );
-    if (VoiceRoomDuyuruAccess.displayTtl > Duration.zero) {
-      _announcementTimer = Timer(VoiceRoomDuyuruAccess.displayTtl, () {
-        if (!_sessionActive) return;
-        state = state.copyWith(clearModeratorAnnouncement: true);
-      });
-    }
+  }
+
+  void clearModeratorAnnouncement() {
+    _announcementTimer?.cancel();
+    state = state.copyWith(clearModeratorAnnouncement: true);
   }
 
   void showModerationToast(String text) {
@@ -2443,16 +2460,15 @@ class VoiceRoomLiveController
     }
 
     final effectiveDj = dj;
-    final videoId = YoutubeVideoId.normalize(
-          sync?.currentVideoId ?? effectiveDj.nowPlaying?.resolvedVideoId,
-        ) ??
-        YoutubeVideoId.fromDj(
-          currentVideoId: sync?.currentVideoId,
-          nowPlayingUrl: effectiveDj.nowPlaying?.youtubeUrl,
-        );
-    final withVideo = effectiveDj.nowPlaying?.isVideoRequest == true;
+    final videoId = YoutubeVideoId.fromDj(
+      currentVideoId: sync?.currentVideoId,
+      nowPlayingUrl: effectiveDj.nowPlaying?.youtubeUrl,
+    );
     final shouldPlay = (sync?.isPlaying ?? effectiveDj.playing) &&
         _hasDjPlayableSource(effectiveDj, sync: sync, videoId: videoId);
+    final withVideo = effectiveDj.nowPlaying?.isVideoRequest == true &&
+        videoId != null &&
+        videoId.isNotEmpty;
     final startPos = Duration(
       milliseconds: VoicePlaybackLimits.clampPositionMs(
         sync?.resolvedPositionMs() ?? 0,
@@ -2461,7 +2477,7 @@ class VoiceRoomLiveController
     final sig = _djPlaybackSignature(effectiveDj, muted: muted);
     final sameTrack = sig == _lastDjPlaybackSignature;
 
-    if (shouldPlay && videoId != null) {
+    if (shouldPlay) {
       await VoiceRoomMusicAudioSession.activateForPlayback();
       if (withVideo) {
         _syncRoomVideo(effectiveDj, sync: sync);
@@ -2471,14 +2487,22 @@ class VoiceRoomLiveController
       if (!sameTrack) {
         await player.stop();
       }
+      final resolvedStream = await _resolveDjStreamUrl(effectiveDj, sync: sync);
+      var serverUrl = sync?.streamUrl ?? effectiveDj.musicUrl;
+      if (serverUrl != null &&
+          YoutubeStreamResolver.isYoutubeStreamApiUrl(serverUrl)) {
+        serverUrl = resolvedStream;
+      }
       await player.sync(
+        musicUrl: resolvedStream ?? effectiveDj.musicUrl,
+        resolveSeed: effectiveDj.playbackResolveSeed,
+        fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
         nowPlaying: effectiveDj.nowPlaying,
         playing: true,
         muted: muted,
-        startPosition: startPos,
-        videoId: videoId,
-        withVideo: withVideo,
-        musicUrl: sync?.embedUrl ?? effectiveDj.musicUrl,
+        serverStreamUrl: resolvedStream ?? serverUrl,
+        preResolvedStream: resolvedStream,
+        startPosition: sameTrack ? startPos : startPos,
       );
       _lastDjPlaybackSignature = sig;
       return effectiveDj;
