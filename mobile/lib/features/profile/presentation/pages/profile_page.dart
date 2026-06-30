@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -32,6 +33,8 @@ class ProfilePage extends ConsumerWidget {
     final top = MediaQuery.paddingOf(context).top;
 
     Future<void> refresh() async {
+      HapticFeedback.mediumImpact();
+      SystemSound.play(SystemSoundType.click);
       ref.invalidate(profileStatsProvider);
       ref.invalidate(userLevelProvider);
       ref.invalidate(giftsReceivedSummaryProvider);

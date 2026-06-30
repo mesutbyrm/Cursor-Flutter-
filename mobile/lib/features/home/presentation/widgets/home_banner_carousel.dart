@@ -5,7 +5,6 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
-import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../providers/home_providers.dart';
 import '../theme/home_palette.dart';
@@ -32,14 +31,9 @@ class _HomeBannerCarouselState extends ConsumerState<HomeBannerCarousel> {
     final banners = ref.watch(homeBannersProvider);
 
     return banners.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20),
-        child: PremiumSkeleton(
-          width: double.infinity,
-          height: 200,
-          borderRadius: BorderRadius.all(Radius.circular(HomePalette.radiusCard)),
-        ),
-      ),
+      // Yüklenirken boş dikdörtgen (200px) yer tutmasın — banner hazır olunca
+      // görünür; üstte kalıcı boşluk oluşmaz.
+      loading: () => const SizedBox.shrink(),
       error: (_, _) => const SizedBox.shrink(),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
