@@ -6,6 +6,7 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/repositories/notifications_repository.dart';
 import '../../data/datasources/notifications_remote_datasource.dart';
 import '../../data/repositories/notifications_repository_impl.dart';
+import 'notifications_list_notifier.dart';
 
 final notificationsRemoteProvider =
     Provider<NotificationsRemoteDataSource>((ref) {
@@ -28,9 +29,20 @@ final notificationsListProvider =
 
 /// Okunmamış bildirim sayısı (üst bar rozeti).
 final notificationsUnreadCountProvider = Provider<int>((ref) {
-  final list = ref.watch(notificationsListProvider);
-  return list.maybeWhen(
-    data: (items) => items.where((n) => !n.read).length,
-    orElse: () => 0,
-  );
+  final fromList = ref.watch(notificationsListProvider);
+  final fromNotifier = ref.watch(notificationsListNotifierProvider);
+  final items = fromNotifier.valueOrNull?.all ??
+      fromList.valueOrNull ??
+      const <AppNotificationEntity>[];
+  return items.where((n) => !n.read).length;
 });
+
+/// Bildirim rozeti sıfırlama — liste + sunucu senkronu.
+Future<void> markAllNotificationsRead(WidgetRef ref) async {
+  ref.read(notificationsListNotifierProvider.notifier).markAllReadLocally();
+  try {
+    await ref.read(notificationsRepositoryProvider).markAllRead();
+  } catch (_) {}
+  ref.invalidate(notificationsListProvider);
+  ref.invalidate(notificationsListNotifierProvider);
+}

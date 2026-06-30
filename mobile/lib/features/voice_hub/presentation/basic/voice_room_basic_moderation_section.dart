@@ -60,8 +60,6 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
           ),
         ),
         VoiceRoomStaffJoinBanner(
-          events: live.realtimeEvents,
-          messages: live.messages,
           enterBanner: live.enterBanner,
         ),
         if (live.moderatorAnnouncement?.trim().isNotEmpty == true)

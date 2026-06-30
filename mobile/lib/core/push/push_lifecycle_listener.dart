@@ -162,15 +162,17 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
       final count = requests.length;
       if (_lastPendingCount >= 0 && count > _lastPendingCount) {
         final newCount = count - _lastPendingCount;
-        unawaited(
-          PushNotificationService.instance.showLocal(
-            id: 9001,
-            title: 'Yeni Ödeme Talebi',
-            body: '$newCount yeni ödeme talebi bekliyor',
-            payload: '/admin',
-            urgent: true,
-          ),
-        );
+        if (!OneSignalBootstrap.isReady) {
+          unawaited(
+            PushNotificationService.instance.showLocal(
+              id: 9001,
+              title: 'Yeni Ödeme Talebi',
+              body: '$newCount yeni ödeme talebi bekliyor',
+              payload: '/admin',
+              urgent: true,
+            ),
+          );
+        }
       }
       _lastPendingCount = count;
     } catch (_) {}

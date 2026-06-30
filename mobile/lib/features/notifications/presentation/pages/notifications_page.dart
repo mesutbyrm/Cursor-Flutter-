@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,6 +46,10 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     Future<void>.delayed(LazyLoadPerf.notificationsList, () {
       if (mounted) setState(() => _listReady = true);
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_markAllRead(silent: true));
+    });
   }
 
   @override
@@ -58,21 +64,14 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     ref.invalidate(notificationsListProvider);
   }
 
-  Future<void> _markAllRead() async {
-    ref.read(notificationsListNotifierProvider.notifier).markAllReadLocally();
-    try {
-      await ref.read(notificationsRepositoryProvider).markAllRead();
+  Future<void> _markAllRead({bool silent = false}) async {
+    await markAllNotificationsRead(ref);
+    if (!silent) {
       await _refresh();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tüm bildirimler okundu')),
       );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiException.userMessage(e))),
-      );
-      await _refresh();
     }
   }
 
@@ -162,7 +161,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       onRefresh: _refresh,
       actions: [
         TextButton(
-          onPressed: _markAllRead,
+          onPressed: () => _markAllRead(),
           child: const Text('Tümünü oku'),
         ),
         DiscoverIconButton(

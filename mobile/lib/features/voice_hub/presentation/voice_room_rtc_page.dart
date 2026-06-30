@@ -1539,8 +1539,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           remoteAgoraUid: _agora.remoteUid,
                         ),
                         VoiceRoomStaffJoinBanner(
-                          events: live.realtimeEvents,
-                          messages: live.messages,
                           enterBanner: live.enterBanner,
                         ),
                         if (live.moderatorAnnouncement?.trim().isNotEmpty == true)

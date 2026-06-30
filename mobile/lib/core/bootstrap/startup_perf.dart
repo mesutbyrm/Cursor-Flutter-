@@ -35,12 +35,12 @@ abstract final class LazyLoadPerf {
   // Profil — Jeton/CFC/takipçi/gönderiler anında başlar (Görev 15)
   static const profileStats = Duration.zero;
   static const profileWallet = Duration.zero;
-  static const profilePremium = Duration(milliseconds: 240);
-  static const profilePublisher = Duration(milliseconds: 320);
-  static const profileTeller = Duration(milliseconds: 400);
-  static const profileAdmin = Duration(milliseconds: 480);
+  static const profilePremium = Duration.zero;
+  static const profilePublisher = Duration.zero;
+  static const profileTeller = Duration.zero;
+  static const profileAdmin = Duration.zero;
   static const profileContent = Duration.zero;
-  static const profileSettings = Duration(milliseconds: 640);
+  static const profileSettings = Duration.zero;
 
   // Canlı yayın listesi
   static const liveList = Duration(milliseconds: 120);

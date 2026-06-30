@@ -346,15 +346,22 @@ Future<void> showFortuneBirthProfileSheet(
 }
 
 /// Hub açılışında doğum bilgisi yoksa bir kez sheet göster.
+final _fortuneBirthPromptShown = <String>{};
+
 void maybePromptFortuneBirthOnHub(
   BuildContext context,
   WidgetRef ref,
 ) {
   final me = ref.read(authControllerProvider).valueOrNull;
   if (me == null) return;
+  if (_fortuneBirthPromptShown.contains(me.id)) return;
 
-  ref.read(fortuneBirthProfileProvider.future).then((profile) {
+  ref.read(fortuneBirthProfileProvider.future).then((profile) async {
     if (!context.mounted || profile != null) return;
-    showFortuneBirthProfileSheet(context, ref);
+    final store = await ref.read(fortuneBirthProfileStoreProvider.future);
+    if (store.read(me.id) != null) return;
+    if (!context.mounted) return;
+    _fortuneBirthPromptShown.add(me.id);
+    await showFortuneBirthProfileSheet(context, ref);
   });
 }

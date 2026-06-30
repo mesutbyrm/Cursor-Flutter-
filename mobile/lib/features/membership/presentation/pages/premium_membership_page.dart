@@ -24,11 +24,12 @@ final _membershipRemoteProvider = Provider<MembershipRemoteDataSource>((ref) {
 });
 
 final membershipCatalogProvider =
-    FutureProvider.autoDispose<MembershipCatalogEntity>((ref) async {
+    FutureProvider<MembershipCatalogEntity>((ref) async {
+  ref.keepAlive();
   WalletBalances wallet;
   try {
     wallet = await ref.watch(walletBalancesProvider.future).timeout(
-          const Duration(seconds: 15),
+          const Duration(seconds: 6),
         );
   } catch (_) {
     wallet = const WalletBalances();

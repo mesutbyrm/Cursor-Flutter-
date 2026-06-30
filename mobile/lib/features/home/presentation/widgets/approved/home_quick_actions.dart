@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../voice_hub/presentation/utils/open_voice_chat_room_flow.dart';
 import '../../theme/home_approved_design.dart';
 
-/// Ana sayfa hızlı erişim — sesli oda, fal, jeton, odalar.
-class HomeQuickActions extends ConsumerWidget {
+/// Ana sayfa hızlı erişim — sesli oda, sosyal, fal & tarot, oyunlar.
+class HomeQuickActions extends StatelessWidget {
   const HomeQuickActions({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         HomeApprovedDesign.hPad,
@@ -31,10 +29,10 @@ class HomeQuickActions extends ConsumerWidget {
           const SizedBox(width: 8),
           Expanded(
             child: _ActionChip(
-              icon: Icons.auto_awesome_rounded,
-              label: 'Fal',
+              icon: Icons.groups_rounded,
+              label: 'Sosyal',
               colors: const [Color(0xFF2563EB), Color(0xFF7C3AED)],
-              onTap: () => context.push('/fortune'),
+              onTap: () => context.go('/social'),
             ),
           ),
           const SizedBox(width: 8),
@@ -49,10 +47,10 @@ class HomeQuickActions extends ConsumerWidget {
           const SizedBox(width: 8),
           Expanded(
             child: _ActionChip(
-              icon: Icons.add_circle_outline_rounded,
-              label: 'Oda Aç',
+              icon: Icons.sports_esports_rounded,
+              label: 'Oyunlar',
               colors: const [Color(0xFF059669), Color(0xFF10B981)],
-              onTap: () => showOpenVoiceChatRoomFlow(context, ref),
+              onTap: () => context.push('/games-hub'),
             ),
           ),
         ],

@@ -18,7 +18,6 @@ class GameCenterPage extends ConsumerWidget {
     final leaderboard = ref.watch(
       gameCenterLeaderboardProvider(LeaderboardPeriod.weekly),
     );
-    final liveRooms = ref.watch(gameCenterLiveRoomsProvider);
 
     return DiscoverSubPage(
       title: 'Oyun Merkezi',
@@ -49,36 +48,9 @@ class GameCenterPage extends ConsumerWidget {
               onSpin: () => context.push('/games-hub/wheel'),
             ),
             const SizedBox(height: 22),
-            GameCenterSectionHeader(
-              title: 'Popüler Oyunlar',
-              trailing: TextButton(
-                onPressed: () => context.push('/games-hub/leaderboard'),
-                child: const Text('Liderlik'),
-              ),
-            ),
-            GameCenterPopularRow(
-              items: GameCenterCatalog.popular,
-              onTap: (item) => _openGame(context, ref, item),
-            ),
-            const SizedBox(height: 20),
-            GameCenterSectionHeader(title: 'Canlı Oyunlar'),
-            ...GameCenterCatalog.live.map((item) {
-              final roomCount = liveRooms.valueOrNull
-                  ?.where((r) => r.gameId.contains(item.id.split('-').first))
-                  .length;
-              return GameCenterLiveCard(
-                item: item,
-                playerCount: roomCount ?? item.liveCount,
-                onJoin: () => _openLiveGame(context, ref, item),
-              );
-            }),
-            const SizedBox(height: 8),
-            GameCenterSectionHeader(title: 'Ödüllü Oyunlar'),
-            ...GameCenterCatalog.rewarded.map(
-              (item) => GameCenterRewardCard(
-                item: item,
-                onTap: () => _openGame(context, ref, item),
-              ),
+            const GameCenterEmptyState(
+              message:
+                  'Oyun merkezi şu an güncelleniyor. Yakında yeni oyunlar eklenecek.',
             ),
             const SizedBox(height: 16),
             _LeaderboardTeaser(

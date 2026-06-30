@@ -87,8 +87,8 @@ class HomeGameCenterSection extends ConsumerWidget {
                           Text(
                             jeton.when(
                               data: (b) => '${formatter.format(b)} Jeton',
-                              loading: () => 'Jeton yükleniyor…',
-                              error: (_, _) => 'Kader Çarkı, Quiz, Tavla ve daha fazlası',
+                              loading: () => 'Yakında yeni oyunlar',
+                              error: (_, _) => 'Liderlik tablosu ve ödüller',
                             ),
                             style: const TextStyle(
                               fontSize: 12,
@@ -115,68 +115,7 @@ class HomeGameCenterSection extends ConsumerWidget {
           isLoading: leaderboard.isLoading,
           onSeeAll: () => context.push('/games-hub/leaderboard'),
         ),
-        const SizedBox(height: 14),
-        SizedBox(
-          height: 88,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-            itemCount: GameCenterCatalog.popular.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (_, i) {
-              final game = GameCenterCatalog.popular[i];
-              return _QuickGameChip(
-                game: game,
-                onTap: () => context.push(game.route),
-              );
-            },
-          ),
-        ),
       ],
-    );
-  }
-}
-
-class _QuickGameChip extends StatelessWidget {
-  const _QuickGameChip({required this.game, required this.onTap});
-
-  final GameCenterItem game;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 76,
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-        decoration: BoxDecoration(
-          color: game.gradient.first.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-          border: Border.all(
-            color: game.gradient.first.withValues(alpha: 0.35),
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(game.icon, color: game.gradient.first, size: 24),
-            const SizedBox(height: 6),
-            Text(
-              game.title,
-              maxLines: 2,
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                color: HomeApprovedDesign.textPrimary,
-                height: 1.1,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

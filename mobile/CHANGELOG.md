@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.450+454 (2026-06-26)
+
+### Bildirimler, ana sayfa, oyunlar, profil, sesli oda
+
+- **Bildirimler:** çift kayıt birleştirme; liste + zil rozeti senkronu; bildirimler açılınca / zile basınca tümü okundu
+- **Ana sayfa:** Fal → **Sosyal**, Oda Aç → **Oyunlar**; «+6 Daha Fazla Fal» Fal & Tarot altına alındı
+- **Oyun merkezi:** tüm oyun kartları kaldırıldı (yakında mesajı)
+- **Profil:** lazy bölüm gecikmeleri kaldırıldı; admin için profilde ödeme onay/red kuyruğu
+- **Gold üyelik:** katalog provider kalıcı; cüzdan bekleme süresi kısaltıldı
+- **Fal & Tarot:** her fal/burç otomatik sosyal paylaşım (kapalı değilse); doğum tarihi bir kez sorulur
+- **Sesli oda:** yetkili giriş tek satır + oda adı; normal kullanıcı «X giriş yaptı»; arka plan galeri/kamera yükleme düzeltmesi
+
 ## 1.0.449+453 (2026-06-26)
 
 ### Sesli odalar — hız, giriş, müzik, arka plan

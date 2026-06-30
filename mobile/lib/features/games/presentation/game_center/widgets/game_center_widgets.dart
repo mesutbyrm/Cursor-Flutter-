@@ -551,3 +551,42 @@ class GameCenterLoadingBody extends StatelessWidget {
     );
   }
 }
+
+/// Oyun listesi boşken gösterilen durum.
+class GameCenterEmptyState extends StatelessWidget {
+  const GameCenterEmptyState({super.key, required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: context.colors.surface.withValues(alpha: 0.65),
+        border: Border.all(color: context.colors.outline.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.sports_esports_outlined,
+            size: 40,
+            color: context.colors.onSurfaceMuted,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: context.colors.onSurfaceMuted,
+              fontSize: 14,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

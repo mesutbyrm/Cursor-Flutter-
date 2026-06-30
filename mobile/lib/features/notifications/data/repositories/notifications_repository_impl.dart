@@ -38,8 +38,20 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
 
     void addAll(Iterable<AppNotificationEntity> items) {
       for (final n in items) {
-        final key = n.id.isNotEmpty ? n.id : '${n.title}_${n.createdAt}';
-        byId.putIfAbsent(key, () => n);
+        final fingerprint = _notificationFingerprint(n);
+        final idKey = n.id.trim();
+        if (idKey.isNotEmpty) {
+          final existing = byId[idKey];
+          if (existing != null) {
+            if (!existing.read && n.read) {
+              byId[idKey] = n;
+            }
+            continue;
+          }
+          byId[idKey] = n;
+          continue;
+        }
+        byId.putIfAbsent(fingerprint, () => n);
       }
     }
 
@@ -66,7 +78,7 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       (pair[1] as List<ProfileActivityItemEntity>).map(_activityToNotification),
     );
 
-    final list = byId.values.toList()
+    final list = _dedupeMergedNotifications(byId.values.toList())
       ..sort((a, b) {
         final at = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
         final bt = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
@@ -74,6 +86,37 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       });
 
     return list;
+  }
+
+  static String _notificationFingerprint(AppNotificationEntity n) {
+    final created = n.createdAt?.toIso8601String() ?? '';
+    return [
+      n.type?.toLowerCase().trim() ?? '',
+      n.title.trim().toLowerCase(),
+      n.body?.trim().toLowerCase() ?? '',
+      n.targetId?.trim() ?? '',
+      n.targetPath?.trim() ?? '',
+      created,
+    ].join('|');
+  }
+
+  static List<AppNotificationEntity> _dedupeMergedNotifications(
+    List<AppNotificationEntity> items,
+  ) {
+    final seenIds = <String>{};
+    final seenFingerprints = <String>{};
+    final out = <AppNotificationEntity>[];
+    for (final item in items) {
+      final id = item.id.trim();
+      if (id.isNotEmpty && !seenIds.add(id)) continue;
+      final fingerprint = _notificationFingerprint(item);
+      if (fingerprint.replaceAll('|', '').isNotEmpty &&
+          !seenFingerprints.add(fingerprint)) {
+        continue;
+      }
+      out.add(item);
+    }
+    return out;
   }
 
   static Map<String, dynamic> _encodeNotification(AppNotificationEntity n) => {

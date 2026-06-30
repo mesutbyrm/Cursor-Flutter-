@@ -293,6 +293,7 @@ class VoiceRoomLiveController
   var _pollTick = 0;
   String? _lastDjPlaybackSignature;
   final Set<String> _shownEntranceKeys = {};
+  final Set<String> _knownPresenceIds = {};
   final Set<String> _shownMusicRequestFlashKeys = {};
   String? _presenceNickname;
   var _presenceJoined = false;
@@ -476,6 +477,58 @@ class VoiceRoomLiveController
     if (_shownEntranceKeys.contains(key)) return false;
     _shownEntranceKeys.add(key);
     return true;
+  }
+
+  void _syncPresenceJoinAnnouncements(List<ChatRoomPresence> merged) {
+    final previous = _knownPresenceIds;
+    final nextIds = merged.map((p) => p.id).where((id) => id.isNotEmpty).toSet();
+    if (previous.isEmpty) {
+      _knownPresenceIds
+        ..clear()
+        ..addAll(nextIds);
+      return;
+    }
+    for (final user in merged) {
+      if (user.id.isEmpty || previous.contains(user.id)) continue;
+      _announcePresenceJoin(user);
+    }
+    _knownPresenceIds
+      ..clear()
+      ..addAll(nextIds);
+  }
+
+  void _announcePresenceJoin(ChatRoomPresence user) {
+    final name = user.displayName.trim().isNotEmpty
+        ? user.displayName.trim()
+        : user.name.trim();
+    if (name.isEmpty) return;
+    final userRef = ChatRoomUserRef(
+      id: user.id,
+      name: user.name,
+      nickname: user.nickname,
+      image: user.image,
+      chatRole: user.chatRole,
+    );
+    if (VoiceStaffChatStyle.isStaffEntry(content: name, user: userRef)) {
+      _showStaffEnterBanner(name, user: userRef);
+    } else {
+      _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.join, '$name giriş yaptı.');
+    }
+  }
+
+  void _showStaffEnterBanner(String name, {ChatRoomUserRef? user}) {
+    final line = VoiceStaffChatStyle.formatStaffEntryLine(
+      name,
+      user: user,
+      roomName: _roomMeta.nameTr,
+    );
+    if (!_markEntranceOnce(line)) return;
+    state = state.copyWith(enterBanner: line);
+    _enterBannerTimer?.cancel();
+    _enterBannerTimer = Timer(const Duration(seconds: 10), () {
+      if (!_sessionActive) return;
+      state = state.copyWith(clearEnterBanner: true);
+    });
   }
 
   Object? _roomKeepAliveLink;
@@ -954,6 +1007,9 @@ class VoiceRoomLiveController
         loading: false,
         clearError: true,
       );
+      _knownPresenceIds
+        ..clear()
+        ..addAll(merged.map((p) => p.id).where((id) => id.isNotEmpty));
       ref
           .read(voiceRoomDiagnosticProvider.notifier)
           .setPresence(joined: true, count: merged.length);
@@ -1130,18 +1186,6 @@ class VoiceRoomLiveController
           onMessage: (msg) {
             if (msg.kind == ChatMessageKind.systemJoin) {
               _pushBasicChatEvent(msg);
-              if (VoiceStaffChatStyle.isStaffEntry(
-                content: msg.content,
-                user: msg.user,
-              )) {
-                if (_markEntranceOnce(msg.content)) {
-                  final line = VoiceStaffChatStyle.formatStaffEntryLine(
-                    msg.user?.displayName ?? msg.content,
-                    user: msg.user,
-                  );
-                  state = state.copyWith(enterBanner: line);
-                }
-              }
               return;
             }
             if (VoiceRoomBasicMode.enabled && !VoiceRoomBasicMode.premiumEnabled) {
@@ -1165,6 +1209,7 @@ class VoiceRoomLiveController
           onPresence: (users) {
             final merged = _mergePresenceStable(users, source: 'sse');
             _detectMicChanges(merged);
+            _syncPresenceJoinAnnouncements(merged);
             final wasSse = state.sseConnected;
             state = state.copyWith(
               presence: merged,
@@ -1315,17 +1360,14 @@ class VoiceRoomLiveController
       }
       case 'ENTRY_ANNOUNCEMENT': {
         final name = payload['userName']?.toString() ?? 'Kullanıcı';
-        final symbol = payload['roleSymbol']?.toString() ?? '';
         final entry = payload['entryType']?.toString() ?? '';
-        final banner =
-            '$symbol $name odaya katıldı${entry.isNotEmpty ? ' ($entry)' : ''}';
-        state = state.copyWith(enterBanner: banner.trim());
-        _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.join, banner.trim());
-        _enterBannerTimer?.cancel();
-        _enterBannerTimer = Timer(const Duration(seconds: 10), () {
-          if (!_sessionActive) return;
-          state = state.copyWith(clearEnterBanner: true);
-        });
+        final userRef = ChatRoomUserRef(
+          id: payload['userId']?.toString() ?? '',
+          name: name,
+          nickname: payload['userNickname']?.toString(),
+          chatRole: entry.isNotEmpty ? entry.toLowerCase() : null,
+        );
+        _showStaffEnterBanner(name, user: userRef);
         return;
       }
       case 'ROOM_MUTED':
@@ -1412,6 +1454,7 @@ class VoiceRoomLiveController
       source: 'sse_user_join',
     );
     _detectMicChanges(merged);
+    _syncPresenceJoinAnnouncements(merged);
     state = state.copyWith(
       presence: merged,
       sseConnected: true,
@@ -1420,40 +1463,6 @@ class VoiceRoomLiveController
     ref
         .read(voiceRoomDiagnosticProvider.notifier)
         .setPresence(joined: true, count: merged.length);
-    for (final user in users) {
-      final name = user.displayName.trim().isNotEmpty
-          ? user.displayName.trim()
-          : user.name.trim();
-      if (name.isEmpty) continue;
-      final userRef = ChatRoomUserRef(
-        id: user.id,
-        name: user.name,
-        nickname: user.nickname,
-        image: user.image,
-        chatRole: user.chatRole,
-      );
-      final isStaff = VoiceStaffChatStyle.isStaffEntry(
-        content: '${user.roleSymbol ?? ''} $name',
-        user: userRef,
-      );
-      if (isStaff) {
-        final line = VoiceStaffChatStyle.formatStaffEntryLine(name, user: userRef);
-        _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.join, line);
-        if (_markEntranceOnce(line)) {
-          state = state.copyWith(enterBanner: line);
-          _enterBannerTimer?.cancel();
-          _enterBannerTimer = Timer(const Duration(seconds: 10), () {
-            if (!_sessionActive) return;
-            state = state.copyWith(clearEnterBanner: true);
-          });
-        }
-      } else {
-        _notifyRealtimeIfBasic(
-          VoiceRoomRealtimeKind.join,
-          '$name giriş yaptı.',
-        );
-      }
-    }
   }
 
   void _handleSseUserLeave(Map<String, dynamic> payload) {
@@ -2845,6 +2854,12 @@ class VoiceRoomLiveController
     for (final m in merged) {
       if (prevIds.contains(m.id)) continue;
       if (m.kind != ChatMessageKind.systemJoin) continue;
+      if (VoiceStaffChatStyle.isStaffEntry(
+        content: m.content,
+        user: m.user,
+      )) {
+        continue;
+      }
       _pushRealtimeEvent(VoiceRoomRealtimeKind.join, m.content.trim());
       if (!VoiceOfficialJoin.isEntranceWorthy(
         content: m.content,

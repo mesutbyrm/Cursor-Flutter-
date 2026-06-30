@@ -139,7 +139,11 @@ class _NotificationBadge extends ConsumerWidget {
     return _IconBadge(
       icon: Icons.notifications_none_rounded,
       badge: unreadNotif,
-      onTap: () => context.push('/notifications'),
+      onTap: () async {
+        await markAllNotificationsRead(ref);
+        if (!context.mounted) return;
+        context.push('/notifications');
+      },
     );
   }
 }

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/profile/presentation/providers/profile_providers.dart';
 import '../../features/social/presentation/providers/user_social_posts_notifier.dart';
-import 'network_perf.dart';
 
 /// Profil — Jeton, CFC, takipçi, gönderiler birbirini beklemez.
 abstract final class ProfileLoadPerf {
@@ -15,10 +14,8 @@ abstract final class ProfileLoadPerf {
   }
 
   static Future<void> _warm(WidgetRef ref, String userId) async {
-    await NetworkPerf.waitSilent([
-      ref.read(walletBalancesProvider.future),
-      ref.read(profileStatsProvider.future),
-      ref.read(userSocialPostsNotifierProvider(userId).future),
-    ]);
+    unawaited(ref.read(walletBalancesProvider.future));
+    unawaited(ref.read(profileStatsProvider.future));
+    unawaited(ref.read(userSocialPostsNotifierProvider(userId).future));
   }
 }

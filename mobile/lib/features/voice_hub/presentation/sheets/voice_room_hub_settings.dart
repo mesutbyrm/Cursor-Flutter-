@@ -341,7 +341,7 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
   @override
   Widget build(BuildContext context) {
     final ui = ref.watch(voiceRoomUiProvider);
-    final canBg = widget.perms.canChangeBackground;
+    final canBg = widget.perms.canChangeBackground || widget.isOwner;
 
     final tiles = <({IconData icon, String label, VoidCallback onTap})>[
       (
@@ -386,7 +386,10 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
         (
           icon: Icons.wallpaper_rounded,
           label: 'Arka plan',
-          onTap: _loadBackgrounds,
+          onTap: () {
+            Navigator.pop(context);
+            showVoiceRoomBackgroundSheet(context, ref, room: widget.room);
+          },
         ),
       (
         icon: ui.headphonesOn
@@ -521,6 +524,7 @@ class _VoiceRoomBackgroundSheetState
         'fileName': fileName,
         'contentType': contentType,
         'isPublic': true,
+        'folder': 'voice-room-backgrounds',
       },
     );
     final map = presigned.data is Map
@@ -530,7 +534,9 @@ class _VoiceRoomBackgroundSheetState
       map.addAll(Map<String, dynamic>.from(map['data'] as Map));
     }
     final uploadUrl = map['uploadUrl']?.toString();
-    final cloudPath = map['cloud_storage_path']?.toString();
+    final cloudPath = map['cloud_storage_path']?.toString() ??
+        map['publicUrl']?.toString() ??
+        map['url']?.toString();
     if (uploadUrl == null ||
         uploadUrl.isEmpty ||
         cloudPath == null ||
@@ -557,6 +563,18 @@ class _VoiceRoomBackgroundSheetState
     return '${Env.siteOrigin}/api/upload/get-url?path=${Uri.encodeComponent(cloudPath)}';
   }
 
+  Future<void> _pickFromCamera() async {
+    if (_uploading) return;
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      maxWidth: 1920,
+      maxHeight: 1080,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    await _applyUploadedFile(File(picked.path));
+  }
+
   static String _contentType(String path) {
     final lower = path.toLowerCase();
     if (lower.endsWith('.png')) return 'image/png';
@@ -573,9 +591,13 @@ class _VoiceRoomBackgroundSheetState
       imageQuality: 85,
     );
     if (picked == null) return;
+    await _applyUploadedFile(File(picked.path));
+  }
+
+  Future<void> _applyUploadedFile(File file) async {
     setState(() => _uploading = true);
     try {
-      final url = await _uploadFile(File(picked.path));
+      final url = await _uploadFile(file);
       final err = await ref
           .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
           .setRoomBackground(url);
@@ -622,6 +644,12 @@ class _VoiceRoomBackgroundSheetState
               ),
             ),
             const Spacer(),
+            OutlinedButton.icon(
+              onPressed: _uploading ? null : _pickFromCamera,
+              icon: const Icon(Icons.photo_camera_rounded),
+              label: const Text('Kamera'),
+            ),
+            const SizedBox(height: 10),
             FilledButton.icon(
               onPressed: _uploading ? null : _pickFromGallery,
               icon: _uploading

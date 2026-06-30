@@ -16,7 +16,7 @@ class FortuneShareHandler {
   Future<void> autoShareIfEnabled(FortuneReadingResult result) async {
     final mode = await _ref.read(fortuneAutoShareModeProvider.future);
     if (mode == FortuneAutoShareMode.off) return;
-    await _share(result, mode);
+    await _share(result, FortuneAutoShareMode.public);
   }
 
   Future<void> shareToSocialFeed(FortuneReadingResult result) =>

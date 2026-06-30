@@ -2,24 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../domain/entities/chat_room_message.dart';
-import '../../../domain/entities/chat_room_presence.dart';
-import '../../../domain/entities/voice_room_realtime_event.dart';
-import '../../../domain/voice_official_join.dart';
 import '../../theme/voice_room_tokens.dart';
-import '../../utils/voice_staff_chat_style.dart';
 
 /// Yetkili giriş — koltuk altı sağdan sola kayan bant (tüm kullanıcılar).
 class VoiceRoomStaffJoinBanner extends StatefulWidget {
   const VoiceRoomStaffJoinBanner({
     super.key,
-    required this.events,
-    required this.messages,
-    this.enterBanner,
+    required this.enterBanner,
   });
 
-  final List<VoiceRoomRealtimeEvent> events;
-  final List<ChatRoomMessage> messages;
   final String? enterBanner;
 
   @override
@@ -44,8 +35,6 @@ class _VoiceRoomStaffJoinBannerState extends State<VoiceRoomStaffJoinBanner>
   _StaffJoinLine? _active;
   AnimationController? _scroll;
   String? _lastBanner;
-  int _lastEventCount = 0;
-  int _lastJoinMsgCount = 0;
   double _segmentWidth = 0;
 
   static const _style = TextStyle(
@@ -54,6 +43,8 @@ class _VoiceRoomStaffJoinBannerState extends State<VoiceRoomStaffJoinBanner>
     color: Colors.white,
     letterSpacing: 0.2,
   );
+
+  static const _accent = VoiceRoomTokens.gold;
 
   @override
   void dispose() {
@@ -64,90 +55,23 @@ class _VoiceRoomStaffJoinBannerState extends State<VoiceRoomStaffJoinBanner>
   @override
   void didUpdateWidget(covariant VoiceRoomStaffJoinBanner oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _collectNewEntries();
+    _collectFromBanner();
   }
 
   @override
   void initState() {
     super.initState();
-    _collectNewEntries();
+    _collectFromBanner();
   }
 
-  void _collectNewEntries() {
+  void _collectFromBanner() {
     final banner = widget.enterBanner?.trim();
-    if (banner != null && banner.isNotEmpty && banner != _lastBanner) {
-      _lastBanner = banner;
-      _enqueueFromRaw(banner);
-    }
-
-    if (widget.events.length > _lastEventCount) {
-      final fresh = widget.events.take(widget.events.length - _lastEventCount);
-      _lastEventCount = widget.events.length;
-      for (final e in fresh) {
-        if (e.kind == VoiceRoomRealtimeKind.join &&
-            VoiceStaffChatStyle.isStaffEntry(content: e.message)) {
-          _enqueueFromRaw(e.message);
-        }
-      }
-    }
-
-    final joins = widget.messages
-        .where((m) => m.kind == ChatMessageKind.systemJoin)
-        .toList();
-    if (joins.length > _lastJoinMsgCount) {
-      final fresh = joins.skip(_lastJoinMsgCount);
-      _lastJoinMsgCount = joins.length;
-      for (final m in fresh) {
-        if (VoiceStaffChatStyle.isStaffEntry(
-          content: m.content,
-          user: m.user,
-        )) {
-          _enqueueFromRaw(m.content, user: m.user);
-        }
-      }
-    }
-  }
-
-  void _enqueueFromRaw(String raw, {ChatRoomUserRef? user}) {
-    final key = VoiceOfficialJoin.entranceDedupeKey(raw);
+    if (banner == null || banner.isEmpty || banner == _lastBanner) return;
+    _lastBanner = banner;
+    final key = banner.toLowerCase();
     if (!_seen.add(key)) return;
-    final line = _parseStaffLine(raw, user: user);
-    _queue.add(line);
+    _queue.add(_StaffJoinLine(line: banner, accent: _accent));
     if (_active == null) _showNext();
-  }
-
-  _StaffJoinLine _parseStaffLine(String raw, {ChatRoomUserRef? user}) {
-    var name = user?.displayName ?? '';
-    if (name.isEmpty) {
-      name = VoiceOfficialJoin.formatEntranceBanner(raw)
-          .replaceAll('📣 ', '')
-          .trim();
-      final parsed = RegExp(
-        r'^(.+?)\s+(odaya|giriş|katıldı|girdi)',
-        caseSensitive: false,
-      ).firstMatch(name);
-      if (parsed != null) {
-        name = parsed.group(1)?.trim() ?? name;
-      } else if (name.contains(' — ')) {
-        name = name.split(' — ').first.trim();
-      }
-      name = name
-          .replaceFirst(RegExp(r'^[~&@%+]\s*'), '')
-          .replaceFirst(
-            RegExp(
-              r'^(ADMIN|MODERATOR|MOD|KURUCU|YETKİLİ|YETKILI|SOP)\s+',
-              caseSensitive: false,
-            ),
-            '',
-          )
-          .trim();
-    }
-
-    final accent = VoiceStaffChatStyle.accentForUser(user);
-    return _StaffJoinLine(
-      line: VoiceStaffChatStyle.formatStaffEntryLine(name, user: user),
-      accent: accent,
-    );
   }
 
   Future<void> _showNext() async {
@@ -163,13 +87,14 @@ class _VoiceRoomStaffJoinBannerState extends State<VoiceRoomStaffJoinBanner>
     if (!mounted || _active == null) return;
     final line = _active!.line;
     final painter = TextPainter(
-      text: TextSpan(text: '$line     ', style: _style),
+      text: TextSpan(text: line, style: _style),
       maxLines: 1,
       textDirection: TextDirection.ltr,
     )..layout();
-    _segmentWidth = painter.width;
+    _segmentWidth = painter.width + 48;
     final viewport = context.size?.width ?? 320;
-    final durationMs = (_segmentWidth * 22).clamp(4500, 14000).round();
+    final travel = _segmentWidth + viewport;
+    final durationMs = (travel * 18).clamp(4500, 14000).round();
     _scroll = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: durationMs),
@@ -191,26 +116,22 @@ class _VoiceRoomStaffJoinBannerState extends State<VoiceRoomStaffJoinBanner>
 
   @override
   Widget build(BuildContext context) {
-    _collectNewEntries();
+    _collectFromBanner();
     final line = _active;
     if (line == null || _scroll == null) {
       return const SizedBox.shrink();
     }
 
-    final label = line.line;
+    final viewport = context.size?.width ?? 320;
     final marquee = AnimatedBuilder(
       animation: _scroll!,
       builder: (context, _) {
-        final dx = -_scroll!.value * _segmentWidth;
+        final start = viewport;
+        final end = -_segmentWidth;
+        final dx = start + (end - start) * _scroll!.value;
         return Transform.translate(
           offset: Offset(dx, 0),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('$label     ', style: _style),
-              Text('$label     ', style: _style),
-            ],
-          ),
+          child: Text(line.line, style: _style, maxLines: 1),
         );
       },
     );
