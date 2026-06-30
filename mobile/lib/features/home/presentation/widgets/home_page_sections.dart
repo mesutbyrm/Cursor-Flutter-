@@ -33,67 +33,67 @@ abstract final class HomePageSections {
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
-          delay: Duration.zero,
+          delay: StartupPerf.homeLiveSectionDelay,
           child: LiveBroadcastSection(),
         ),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
-          delay: Duration.zero,
+          delay: StartupPerf.homeVoiceSectionDelay,
           child: VoiceRoomSection(),
         ),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
-          delay: Duration.zero,
+          delay: StartupPerf.homePsychicsSectionDelay,
           child: PsychicsHomeSection(),
         ),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
-          delay: Duration.zero,
+          delay: StartupPerf.homeFortuneSectionDelay,
           child: FortuneSection(),
         ),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
-          delay: Duration.zero,
+          delay: StartupPerf.homeFortuneSectionDelay,
           child: MoreFortunesButton(),
         ),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
-          delay: Duration.zero,
+          delay: StartupPerf.homeStoriesSectionDelay,
           child: StoriesSection(),
         ),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
-          delay: Duration.zero,
+          delay: StartupPerf.homeHoroscopeSectionDelay,
           child: HomeHoroscopeSection(),
         ),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
-          delay: Duration.zero,
+          delay: StartupPerf.homeTrendingSectionDelay,
           child: TrendingVideoSection(),
         ),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
-          delay: Duration.zero,
+          delay: StartupPerf.homeDiscoverSectionDelay,
           child: DiscoverSection(),
         ),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
-          delay: Duration.zero,
+          delay: StartupPerf.homeGoldSectionDelay,
           child: GoldSection(),
         ),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
-          delay: Duration.zero,
+          delay: StartupPerf.homeGameSectionDelay,
           child: HomeGameCenterSection(),
         ),
       ),

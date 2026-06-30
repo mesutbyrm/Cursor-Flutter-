@@ -471,8 +471,8 @@ class WalletRemoteDataSource {
               msg.toLowerCase().contains('bekleyen') &&
               msg.toLowerCase().contains('talep')) {
             throw ApiException(
-              'Zaten bekleyen bir jeton ödeme talebiniz var. '
-              'Önceki talebin onaylanmasını bekleyin veya destek ile iletişime geçin.',
+              'Zaten bekleyen bir ödeme talebiniz var. Jeton mağazasındaki '
+              '"Talepleri iptal et" ile temizleyip yeniden deneyin.',
               statusCode: code,
             );
           }

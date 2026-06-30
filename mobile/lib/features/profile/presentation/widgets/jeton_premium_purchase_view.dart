@@ -339,6 +339,7 @@ class _JetonPremiumPurchaseViewState
               _PendingPaymentBanner(
                 request: pendingJeton.first,
                 staffCanManage: staff.canManagePayments,
+                totalPending: pendingJeton.length,
               ),
             ],
             const SizedBox(height: 20),
@@ -534,10 +535,12 @@ class _PendingPaymentBanner extends ConsumerWidget {
   const _PendingPaymentBanner({
     required this.request,
     required this.staffCanManage,
+    this.totalPending = 1,
   });
 
   final CfcPaymentRequestEntity request;
   final bool staffCanManage;
+  final int totalPending;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -555,13 +558,20 @@ class _PendingPaymentBanner extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Bekleyen ödeme talebiniz var',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                Text(
+                  totalPending > 1
+                      ? '$totalPending bekleyen ödeme talebiniz var'
+                      : 'Bekleyen ödeme talebiniz var',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${request.displayLine}\nOnay sonrası jetonlar hesabınıza yansır.',
+                  totalPending > 1
+                      ? '${request.displayLine}\nYeni alım için bekleyen taleplerin tümünü temizleyin.'
+                      : '${request.displayLine}\nOnay sonrası jetonlar hesabınıza yansır.',
                   style: TextStyle(
                     fontSize: 12.5,
                     height: 1.4,
@@ -575,13 +585,20 @@ class _PendingPaymentBanner extends ConsumerWidget {
                   children: [
                     TextButton.icon(
                       onPressed: () async {
+                        final cancelAll = totalPending > 1;
                         final ok = await showDialog<bool>(
                           context: context,
                           builder: (ctx) => AlertDialog(
-                            title: const Text('Talebi iptal et'),
-                            content: const Text(
-                              'Bekleyen jeton ödeme talebiniz silinecek. '
-                              'Yeni bir ödeme bildirimi gönderebilirsiniz.',
+                            title: Text(
+                              cancelAll ? 'Talepleri iptal et' : 'Talebi iptal et',
+                            ),
+                            content: Text(
+                              cancelAll
+                                  ? 'Bekleyen $totalPending jeton ödeme talebinizin '
+                                      'tümü silinecek. Yeni bir ödeme bildirimi '
+                                      'gönderebilirsiniz.'
+                                  : 'Bekleyen jeton ödeme talebiniz silinecek. '
+                                      'Yeni bir ödeme bildirimi gönderebilirsiniz.',
                             ),
                             actions: [
                               TextButton(
@@ -597,9 +614,13 @@ class _PendingPaymentBanner extends ConsumerWidget {
                         );
                         if (ok != true || !context.mounted) return;
                         try {
-                          await ref
-                              .read(paymentRequestsNotifierProvider.notifier)
-                              .cancelPending(request.id);
+                          final notifier =
+                              ref.read(paymentRequestsNotifierProvider.notifier);
+                          if (cancelAll) {
+                            await notifier.cancelAllPending();
+                          } else {
+                            await notifier.cancelPending(request.id);
+                          }
                           ref.invalidate(notificationsListProvider);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -621,7 +642,11 @@ class _PendingPaymentBanner extends ConsumerWidget {
                         }
                       },
                       icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                      label: const Text('Talebi iptal et'),
+                      label: Text(
+                        totalPending > 1
+                            ? 'Talepleri iptal et ($totalPending)'
+                            : 'Talebi iptal et',
+                      ),
                     ),
                     if (staffCanManage)
                       TextButton.icon(

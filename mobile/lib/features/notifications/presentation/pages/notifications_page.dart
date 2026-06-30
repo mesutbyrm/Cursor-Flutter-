@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,10 +44,8 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     Future<void>.delayed(LazyLoadPerf.notificationsList, () {
       if (mounted) setState(() => _listReady = true);
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      unawaited(_markAllRead(silent: true));
-    });
+    // Sayfaya girince otomatik hepsini okundu YAPMA — kullanıcı hangisine
+    // tıklarsa o okundu olur (Instagram davranışı). Toplu okuma için "Tümünü oku".
   }
 
   @override
@@ -180,6 +176,47 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   }
 }
 
+/// Bildirim tipine göre Instagram tarzı renkli ikon.
+(IconData, Color) _notificationVisual(String? type, BuildContext context) {
+  final t = (type ?? '').toLowerCase();
+  if (t.contains('like') || t.contains('begeni') || t.contains('beğeni')) {
+    return (Icons.favorite_rounded, const Color(0xFFFF3B6B));
+  }
+  if (t.contains('comment') || t.contains('yorum')) {
+    return (Icons.chat_bubble_rounded, const Color(0xFF4F9DFF));
+  }
+  if (t.contains('follow') || t.contains('takip')) {
+    return (Icons.person_add_rounded, const Color(0xFF7B5CFF));
+  }
+  if (t.contains('gift') || t.contains('hediye')) {
+    return (Icons.card_giftcard_rounded, const Color(0xFFFFB020));
+  }
+  if (t.contains('payment') ||
+      t.contains('odeme') ||
+      t.contains('ödeme') ||
+      t.contains('cfc') ||
+      t.contains('jeton')) {
+    return (Icons.account_balance_wallet_rounded, const Color(0xFF22C55E));
+  }
+  if (t.contains('live') ||
+      t.contains('yayin') ||
+      t.contains('yayın') ||
+      t.contains('voice') ||
+      t.contains('oda')) {
+    return (Icons.podcasts_rounded, const Color(0xFFFF4D4D));
+  }
+  if (t.contains('fortune') ||
+      t.contains('fal') ||
+      t.contains('psychic') ||
+      t.contains('seans')) {
+    return (Icons.auto_awesome_rounded, const Color(0xFFFFD54F));
+  }
+  if (t.contains('message') || t.contains('mesaj')) {
+    return (Icons.mail_rounded, const Color(0xFF4F9DFF));
+  }
+  return (Icons.notifications_rounded, const Color(0xFF7B5CFF));
+}
+
 class _NotificationsListView extends StatelessWidget {
   const _NotificationsListView({
     required this.state,
@@ -220,6 +257,7 @@ class _NotificationsListView extends StatelessWidget {
           );
         }
         final n = items[i];
+        final (icon, accent) = _notificationVisual(n.type, context);
         return ListPerf.repaint(
           Material(
             color: Colors.transparent,
@@ -228,22 +266,30 @@ class _NotificationsListView extends StatelessWidget {
               onTap: () => onTap(n),
               child: ProGlassListTile(
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        gradient: n.read ? null : context.colors.brandGradient,
+                        shape: BoxShape.circle,
+                        gradient: n.read
+                            ? null
+                            : LinearGradient(
+                                colors: [
+                                  accent,
+                                  accent.withValues(alpha: 0.65),
+                                ],
+                              ),
                         color: n.read
                             ? Colors.white.withValues(alpha: 0.06)
                             : null,
                       ),
                       child: Icon(
-                        Icons.notifications_rounded,
+                        icon,
                         size: 20,
-                        color:
-                            n.read ? context.colors.onSurfaceMuted : Colors.white,
+                        color: n.read
+                            ? context.colors.onSurfaceMuted
+                            : Colors.white,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -274,13 +320,31 @@ class _NotificationsListView extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Text(
-                      fmt.format((n.createdAt ?? DateTime.now()).toLocal()),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: context.colors.onSurfaceMuted
-                            .withValues(alpha: 0.85),
-                      ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          fmt.format((n.createdAt ?? DateTime.now()).toLocal()),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: context.colors.onSurfaceMuted
+                                .withValues(alpha: 0.85),
+                          ),
+                        ),
+                        if (!n.read) ...[
+                          const SizedBox(height: 6),
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: accent,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),

@@ -25,7 +25,8 @@ class ChatPage extends ConsumerStatefulWidget {
   ConsumerState<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends ConsumerState<ChatPage> {
+class _ChatPageState extends ConsumerState<ChatPage>
+    with WidgetsBindingObserver {
   final _text = TextEditingController();
   final _scroll = ScrollController();
   var _peerTyping = false;
@@ -34,22 +35,31 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _scroll.addListener(_onScroll);
-    _poll = Timer.periodic(const Duration(seconds: 8), (_) {
+    // Poll: forceRefresh KAPALI — etag/cache kullanır, gereksiz ağ yükü olmaz (hız).
+    _poll = Timer.periodic(const Duration(seconds: 6), (_) {
       if (!mounted) return;
       ref
           .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
-          .refresh(silent: true, forceRefresh: true);
+          .refresh(silent: true);
     });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _poll?.cancel();
     _scroll.removeListener(_onScroll);
     _text.dispose();
     _scroll.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    // Klavye açılınca/kapanınca en son mesaj görünür kalsın.
+    _scrollToEnd();
   }
 
   void _onScroll() {
@@ -62,14 +72,15 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   }
 
   void _scrollToEnd() {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
+    // En son mesaj anında görünsün — yavaş animate yerine doğrudan en alta atla.
+    // İki kez (layout büyüyebilir): ilk frame + sonraki frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scroll.hasClients) return;
-      final max = _scroll.position.maxScrollExtent;
-      await _scroll.animateTo(
-        max,
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeOutCubic,
-      );
+      _scroll.jumpTo(_scroll.position.maxScrollExtent);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_scroll.hasClients) return;
+        _scroll.jumpTo(_scroll.position.maxScrollExtent);
+      });
     });
   }
 
@@ -92,6 +103,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      // Composer her zaman klavyenin üstünde kalsın.
+      resizeToAvoidBottomInset: true,
       body: DiscoverBackground(
         child: Column(
           children: [

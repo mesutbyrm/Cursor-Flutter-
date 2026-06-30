@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:canlifal_social/core/bootstrap/app_startup_log.dart';
@@ -46,7 +47,12 @@ class _HomePageState extends ConsumerState<HomePage> {
     super.dispose();
   }
 
-  Future<void> _onRefresh() => refreshHomeData(ref);
+  Future<void> _onRefresh() {
+    // Yenileme anında haptic + tıklama sesi geri bildirimi.
+    HapticFeedback.mediumImpact();
+    SystemSound.play(SystemSoundType.click);
+    return refreshHomeData(ref);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +63,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           ? HomeApprovedDesign.background
           : context.colors.scaffoldBackground,
       body: RefreshIndicator(
+        displacement: 28,
         color: context.isDarkTheme
             ? HomeApprovedDesign.purple
             : context.colors.primary,
