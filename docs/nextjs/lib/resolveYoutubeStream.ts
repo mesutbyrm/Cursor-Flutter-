@@ -1,5 +1,6 @@
 /**
- * YouTube watch URL → doğrudan ses akışı (Piped API).
+ * YouTube watch URL → doğrudan ses akışı.
+ * Öncelik (mirror API): yt-dlp `-f bestaudio -g` → Piped API yedek.
  * api/src/lib/chatRoomStore.ts resolveYoutubeStreamUrl ile uyumlu.
  */
 

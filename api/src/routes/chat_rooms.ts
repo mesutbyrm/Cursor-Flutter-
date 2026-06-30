@@ -37,6 +37,7 @@ import {
   searchYoutube,
   resolveYoutubeStreamUrl,
   advanceMusicQueue,
+  completeMusicQueue,
   skipMusicQueue,
   removeMusicQueueItem,
   clearMusicQueue,
@@ -328,6 +329,7 @@ chatRoomsRouter.post("/rooms/:roomId/song-request", requireAuth, async (req, res
         ? req.body.message
         : null;
   const priority = req.body?.priority === true;
+  const skipPayment = req.body?.skipPayment === true;
   const result = await requestMusicQueue(roomId, user, {
     title,
     youtubeUrl,
@@ -338,6 +340,7 @@ chatRoomsRouter.post("/rooms/:roomId/song-request", requireAuth, async (req, res
     songName: typeof req.body?.songName === "string" ? req.body.songName : title,
     duration: typeof req.body?.duration === "string" ? req.body.duration : null,
     priority,
+    skipPayment,
   });
   if (!result.ok) {
     const code =
@@ -408,7 +411,7 @@ chatRoomsRouter.post(
     if (!getChatRoom(roomId)) {
       return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
     }
-    await advanceMusicQueue(roomId);
+    await completeMusicQueue(roomId);
     const user = await loadUser(req.userId);
     emitChatRoomDjUpdate(roomId);
     return res.status(200).json({
@@ -535,6 +538,7 @@ chatRoomsRouter.post("/rooms/:roomId/music-queue", requireAuth, async (req, res)
         ? req.body.message
         : null;
   const priority = req.body?.priority === true;
+  const skipPayment = req.body?.skipPayment === true;
   const result = await requestMusicQueue(roomId, user, {
     title,
     youtubeUrl,
@@ -545,6 +549,7 @@ chatRoomsRouter.post("/rooms/:roomId/music-queue", requireAuth, async (req, res)
     songName: typeof req.body?.songName === "string" ? req.body.songName : title,
     duration: typeof req.body?.duration === "string" ? req.body.duration : null,
     priority,
+    skipPayment,
   });
   if (!result.ok) {
     const code =
@@ -654,6 +659,7 @@ chatRoomsRouter.get("/rooms/:roomId/stream", optionalAuth, async (req, res) => {
         lastDjSig = sig;
         send({
           type: "dj",
+          event: "QUEUE_UPDATED",
           roomId: resolveRoomId(roomId),
           playing: dj.playing,
           isPlaying: dj.playing,

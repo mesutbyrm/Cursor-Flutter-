@@ -11,7 +11,8 @@ function watchUrl(videoIdOrUrl: string): string {
 
 /**
  * yt-dlp ile güncel ses akış URL'si (googlevideo).
- * Üretimde `yt-dlp` PATH'te olmalı; yoksa null döner (Piped yedek).
+ * Üretim: `yt-dlp -f bestaudio -g "https://www.youtube.com/watch?v=…"`
+ * PATH'te yoksa null (Piped yedek devreye girer).
  */
 export async function resolveStreamViaYtdlp(
   videoIdOrUrl: string,
@@ -22,8 +23,8 @@ export async function resolveStreamViaYtdlp(
       "yt-dlp",
       [
         "-f",
-        "bestaudio[ext=m4a]/bestaudio/best",
-        "--get-url",
+        "bestaudio",
+        "-g",
         "--no-playlist",
         "--no-warnings",
         input,

@@ -829,6 +829,7 @@ export async function addTextMessage(
           songName: hit.title,
           duration: hit.duration ?? null,
           priority: false,
+          skipPayment: true,
         });
         if (result.ok) {
           return pushMessage(roomId, {
@@ -1233,6 +1234,7 @@ export async function requestMusicQueue(
     songName?: string | null;
     duration?: string | null;
     priority?: boolean;
+    skipPayment?: boolean;
   },
 ) {
   const room = getChatRoom(roomId);
@@ -1246,8 +1248,9 @@ export async function requestMusicQueue(
   const platformSettings = await getVoiceRoomSettings();
   const dbUser = await loadUser(user.id);
   if (!dbUser) return { ok: false as const, error: "Oturum gerekli" };
+  const skipPayment = input.skipPayment === true;
   const cost = settings.musicRequestCost || platformSettings.musicRequestCost;
-  if (dbUser.coins < cost) {
+  if (!skipPayment && dbUser.coins < cost) {
     return {
       ok: false as const,
       error:
@@ -1274,29 +1277,33 @@ export async function requestMusicQueue(
   const songName = (input.songName ?? input.title).trim() || "Şarkı";
   const artist = input.artist?.trim() || null;
 
-  const updated = await prisma.user.update({
-    where: { id: user.id },
-    data: { coins: { decrement: cost } },
-  });
-  const newBalance = updated.coins;
-  await logJetonDebit({
-    roomId,
-    user,
-    amount: cost,
-    balanceAfter: newBalance,
-    songName,
-  });
-
+  let newBalance = dbUser.coins;
+  let musicSplit: Awaited<ReturnType<typeof applyMusicPayout>> | null = null;
   const roomType = getRoomType(room);
-  const musicSplit = await applyMusicPayout({
-    roomId: resolveRoomId(roomId),
-    roomType,
-    requesterId: user.id,
-    ownerId: room.ownerId ?? null,
-    totalCost: cost,
-    songName,
-    settings: platformSettings,
-  });
+  if (!skipPayment) {
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: { coins: { decrement: cost } },
+    });
+    newBalance = updated.coins;
+    await logJetonDebit({
+      roomId,
+      user,
+      amount: cost,
+      balanceAfter: newBalance,
+      songName,
+    });
+
+    musicSplit = await applyMusicPayout({
+      roomId: resolveRoomId(roomId),
+      roomType,
+      requesterId: user.id,
+      ownerId: room.ownerId ?? null,
+      totalCost: cost,
+      songName,
+      settings: platformSettings,
+    });
+  }
 
   const key = resolveRoomId(roomId);
   const djNow = djByRoom.get(key);
@@ -1369,6 +1376,15 @@ export async function requestMusicQueue(
     user: item.requestedBy,
   });
 
+  if (skipPayment) {
+    pushMessage(key, {
+      id: randomUUID(),
+      content: `[SONG_REQUEST_FREE] ${videoId}|${item.title}|||`,
+      createdAt: new Date().toISOString(),
+      user: item.requestedBy,
+    });
+  }
+
   await tryStartMusicFromQueue(roomId);
   const dj = djByRoom.get(key);
   return {
@@ -1380,12 +1396,16 @@ export async function requestMusicQueue(
     newBalance,
     musicUrl: dj?.musicUrl ?? null,
     playing: dj?.playing ?? false,
-    revenue: {
-      total: cost,
-      roomType,
-      ownerNet: musicSplit.ownerNet,
-      siteAmount: musicSplit.siteAmount,
-    },
+    ...(musicSplit
+      ? {
+          revenue: {
+            total: cost,
+            roomType,
+            ownerNet: musicSplit.ownerNet,
+            siteAmount: musicSplit.siteAmount,
+          },
+        }
+      : {}),
   };
 }
 
@@ -1588,12 +1608,13 @@ export async function tryStartMusicFromQueue(roomId: string) {
   }
   const next = toApiMusicItem(nextRow);
   const videoId = next.youtubeId ?? extractYoutubeId(next.youtubeUrl);
-  const watchUrl = videoId ? youtubeWatchUrl(videoId) : next.youtubeUrl.trim();
+  const watch = videoId ? youtubeWatchUrl(videoId) : next.youtubeUrl.trim();
   const stream = videoId ? await resolveYoutubeStreamUrl(videoId) : null;
-  if (!stream) return current ?? null;
+  const playbackUrl = stream ?? watch;
+  if (!playbackUrl) return current ?? null;
   const nextDj = markDjPlaying(normalizeDjState(current), {
     activeDjId: next.requestedBy.id,
-    musicUrl: stream,
+    musicUrl: playbackUrl,
     playing: true,
     currentVideoId: videoId,
     positionMs: 0,
@@ -1601,6 +1622,11 @@ export async function tryStartMusicFromQueue(roomId: string) {
   });
   djByRoom.set(key, nextDj);
   return nextDj;
+}
+
+/** Parça bitti — kuyruğu ilerlet ve sonraki parçayı başlat (yetki kontrolü yok). */
+export async function completeMusicQueue(roomId: string) {
+  return advanceMusicQueue(roomId);
 }
 
 export async function advanceMusicQueue(roomId: string, user?: User) {
