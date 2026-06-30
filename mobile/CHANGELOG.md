@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.451+455 (2026-06-26)
+
+### Sesli oda — !istek web parity
+
+- **!istek Tarkan dudu dudu:** YouTube arama + `song-request` otomatik; arama popup yalnızca boş `!istek` için
+- **Kuyruk:** çalan parça varken yeni istek sıraya alınır; mevcut parça yeniden başlamaz
+- **Sıra:** ardışık istekler tek tek işlenir (çökme önleme)
+- **Parça bitince:** `music-queue/complete` sonrası sıradaki otomatik çalar
+- **Ses modu:** istek yolu videolu zorlaması kaldırıldı (daha hızlı, daha kararlı)
+
 ## 1.0.450+454 (2026-06-26)
 
 ### Bildirimler, ana sayfa, oyunlar, profil, sesli oda

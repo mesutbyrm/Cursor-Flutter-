@@ -607,7 +607,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
               if (!mounted) return;
               final err = await ctrl.submitSelectedSong(
                 hit,
-                withVideo: true,
+                withVideo: false,
                 skipPayment: skipPayment,
               );
               if (!mounted || err == null) return;

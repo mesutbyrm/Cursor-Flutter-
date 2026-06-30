@@ -303,6 +303,9 @@ class VoiceRoomLiveController
   var _giftSocketStarted = false;
   var _sessionActive = true;
   var _autoSeatAttempted = false;
+  final List<String> _istekSubmitQueue = [];
+  var _istekSubmitRunning = false;
+  var _trackCompleteBusy = false;
 
   String? _effectiveNickname(UserEntity? user) {
     final server = state.myNickname?.trim();
@@ -1871,6 +1874,8 @@ class VoiceRoomLiveController
   }
 
   Future<void> _onDjTrackComplete() async {
+    if (_trackCompleteBusy) return;
+    _trackCompleteBusy = true;
     try {
       VoiceRoomDebugLog.log('music.track_complete.advance');
       final videoCtrl = ref.read(roomVideoControllerProvider(_roomKey).notifier);
@@ -1911,6 +1916,8 @@ class VoiceRoomLiveController
       }
     } catch (e) {
       VoiceRoomDebugLog.log('music.track_complete.fail', {'error': '$e'});
+    } finally {
+      _trackCompleteBusy = false;
     }
   }
 
@@ -2573,6 +2580,14 @@ class VoiceRoomLiveController
     final alreadyQueued = dj.musicQueue.any(
       (q) => q.youtubeUrl.contains(payload.videoId),
     );
+    final currentlyPlaying = _isMusicCurrentlyPlaying();
+    if (currentlyPlaying) {
+      if (alreadyQueued) return;
+      dj = dj.copyWith(musicQueue: [...dj.musicQueue, item]);
+      _commitDjUi(dj);
+      unawaited(_syncMusicFromServerIfNeeded(force: true));
+      return;
+    }
     final queue = alreadyQueued ? dj.musicQueue : [...dj.musicQueue, item];
     dj = dj.copyWith(
       musicQueue: queue,
@@ -2585,6 +2600,48 @@ class VoiceRoomLiveController
     _commitDjUi(dj);
     unawaited(_playDjInBackground(dj));
     unawaited(_syncMusicFromServerIfNeeded(force: true));
+  }
+
+  bool _isMusicCurrentlyPlaying() {
+    final player = ref.read(voiceRoomDjPlayerProvider);
+    return state.dj.playing ||
+        player.playback.value.playing ||
+        state.dj.nowPlaying != null;
+  }
+
+  void _enqueueIstekSubmit(String title) {
+    final q = title.trim();
+    if (q.isEmpty) return;
+    _istekSubmitQueue.add(q);
+    unawaited(_drainIstekSubmitQueue());
+  }
+
+  Future<void> _drainIstekSubmitQueue() async {
+    if (_istekSubmitRunning) return;
+    _istekSubmitRunning = true;
+    try {
+      while (_istekSubmitQueue.isNotEmpty) {
+        final title = _istekSubmitQueue.removeAt(0);
+        state = state.copyWith(sending: true, clearError: true);
+        _showMusicRequestFlashLine('🔍 «$title» aranıyor…');
+        VoiceRoomDebugLog.log('music.istek.auto', {'song': title, 'room': _roomKey});
+        final err = await _submitMusicRequestByTitle(
+          title,
+          skipPayment: true,
+          priority: false,
+          withVideo: false,
+        );
+        if (err != null && err.isNotEmpty) {
+          state = state.copyWith(sending: false, error: err);
+          _showMusicRequestFlashLine('⚠️ $err');
+          continue;
+        }
+        state = state.copyWith(sending: false, clearError: true);
+        _showMusicRequestFlashLine('✅ «$title» kuyruğa eklendi');
+      }
+    } finally {
+      _istekSubmitRunning = false;
+    }
   }
 
   void _onMusicRelatedChatMessage(ChatRoomMessage msg) {
@@ -2665,6 +2722,7 @@ class VoiceRoomLiveController
     String title, {
     bool priority = true,
     bool skipPayment = false,
+    bool withVideo = false,
   }) async {
     final q = title.trim();
     if (q.length < 2) return 'Şarkı adı çok kısa.';
@@ -2712,7 +2770,7 @@ class VoiceRoomLiveController
               duration: hit.duration,
               priority: priority,
               skipPayment: true,
-              withVideo: true,
+              withVideo: withVideo,
             )
             .timeout(
               const Duration(seconds: 45),
@@ -2775,37 +2833,46 @@ class VoiceRoomLiveController
             .map((e) => e.id == nowPlaying!.id ? nowPlaying : e)
             .toList();
       }
-      if (skipPayment && nowPlaying != null) {
+      if (skipPayment && withVideo && nowPlaying != null) {
         nowPlaying = nowPlaying.asVideoRequest();
         queue = queue
             .map((e) => e.id == nowPlaying!.id ? nowPlaying : e)
             .toList();
       }
 
-      final shouldPlay = result.playing ||
-          result.queuePosition == 1 ||
-          queue.isNotEmpty;
+      final currentlyPlaying = _isMusicCurrentlyPlaying();
+      final queuePos = result.queuePosition ?? 0;
+      final isQueuedOnly = currentlyPlaying && queuePos > 1;
+      final shouldPlay = !currentlyPlaying &&
+          (result.playing || queuePos <= 1 || queue.isNotEmpty);
 
-      var dj = state.dj.copyWith(
-        musicQueue: queue,
-        nowPlaying: nowPlaying,
-        playing: shouldPlay,
-        musicUrl: result.musicUrl ?? nowPlaying?.youtubeUrl,
-      );
-      dj = _djWithQueuePlaybackFallback(dj);
-      if (dj.musicUrl == null || dj.musicUrl!.isEmpty) {
-        final yt = dj.nowPlaying?.youtubeUrl ?? '';
-        if (yt.isNotEmpty) {
-          dj = dj.copyWith(musicUrl: yt);
+      var dj = isQueuedOnly
+          ? state.dj.copyWith(musicQueue: queue)
+          : state.dj.copyWith(
+              musicQueue: queue,
+              nowPlaying: nowPlaying,
+              playing: shouldPlay,
+              musicUrl: result.musicUrl ?? nowPlaying?.youtubeUrl,
+            );
+      if (!isQueuedOnly) {
+        dj = _djWithQueuePlaybackFallback(dj);
+        if (dj.musicUrl == null || dj.musicUrl!.isEmpty) {
+          final yt = dj.nowPlaying?.youtubeUrl ?? '';
+          if (yt.isNotEmpty) {
+            dj = dj.copyWith(musicUrl: yt);
+          }
         }
       }
       _prefetchYoutubePlayback(dj);
       _lastDjPlaybackSignature = '';
       state = state.copyWith(dj: dj);
-      if (shouldPlay) {
+      if (shouldPlay && !isQueuedOnly) {
         await _playDjInBackground(dj);
       }
       unawaited(_syncMusicFromServerIfNeeded(force: true));
+      if (isQueuedOnly && queuePos > 1) {
+        _showMusicRequestFlashLine('🔢 Sıra: #$queuePos');
+      }
       return null;
     } on TimeoutException {
       return await _recoverMusicRequestAfterTimeout(title);
@@ -3073,21 +3140,25 @@ class VoiceRoomLiveController
 
     if (VoiceMusicSync.isIstekCommand(trimmed)) {
       final song = VoiceMusicSync.parseIstekSongTitle(trimmed);
-      if (song == null && !VoiceMusicSync.isBareIstekCommand(trimmed)) {
-        state = state.copyWith(error: 'Kullanım: !istek veya !istek Sanatçı - Şarkı');
+      if (VoiceMusicSync.isBareIstekCommand(trimmed)) {
+        VoiceRoomDebugLog.log('music.istek.picker', {'room': _roomKey});
+        ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
+        state = state.copyWith(
+          pendingMusicSearchQuery: '',
+          pendingMusicSearchSkipPayment: true,
+          clearError: true,
+          clearMusicRequestFlash: true,
+        );
         return;
       }
-      VoiceRoomDebugLog.log('music.istek.search', {'song': song ?? '', 'room': _roomKey});
-      ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
-      if (song != null && song.isNotEmpty) {
-        unawaited(_postChatLineOnly(trimmed));
+      if (song == null || song.isEmpty) {
+        state = state.copyWith(
+          error: 'Kullanım: !istek veya !istek Sanatçı - Şarkı',
+        );
+        return;
       }
-      state = state.copyWith(
-        pendingMusicSearchQuery: song ?? '',
-        pendingMusicSearchSkipPayment: true,
-        clearError: true,
-        clearMusicRequestFlash: true,
-      );
+      ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
+      _enqueueIstekSubmit(song);
       return;
     }
 
@@ -4058,21 +4129,28 @@ class VoiceRoomLiveController
             .map((e) => e.id == nowPlaying!.id ? nowPlaying : e)
             .toList();
       }
-      final shouldPlay =
-          result.playing ||
-          result.queuePosition == 1 ||
-          (queue.isNotEmpty && nowPlaying != null);
+      final currentlyPlaying = _isMusicCurrentlyPlaying();
+      final queuePos = result.queuePosition ?? 0;
+      final isQueuedOnly = currentlyPlaying && queuePos > 1;
+      final shouldPlay = !currentlyPlaying &&
+          (result.playing ||
+              queuePos <= 1 ||
+              (queue.isNotEmpty && nowPlaying != null));
 
-      var dj = state.dj.copyWith(
-        musicQueue: queue,
-        nowPlaying: nowPlaying,
-        playing: shouldPlay,
-        musicUrl: result.musicUrl ?? nowPlaying?.youtubeUrl,
-        clearMusicUrl:
-            result.musicUrl == null &&
-            nowPlaying?.id != state.dj.nowPlaying?.id,
-      );
-      if (result.musicUrl != null && result.musicUrl!.isNotEmpty) {
+      var dj = isQueuedOnly
+          ? state.dj.copyWith(musicQueue: queue)
+          : state.dj.copyWith(
+              musicQueue: queue,
+              nowPlaying: nowPlaying,
+              playing: shouldPlay,
+              musicUrl: result.musicUrl ?? nowPlaying?.youtubeUrl,
+              clearMusicUrl:
+                  result.musicUrl == null &&
+                  nowPlaying?.id != state.dj.nowPlaying?.id,
+            );
+      if (!isQueuedOnly &&
+          result.musicUrl != null &&
+          result.musicUrl!.isNotEmpty) {
         dj = ChatRoomDjState(
           djUsers: dj.djUsers,
           activeDjId: dj.activeDjId,
@@ -4091,12 +4169,15 @@ class VoiceRoomLiveController
           maxDj: dj.maxDj,
         );
       }
-      dj = _djWithQueuePlaybackFallback(dj);
+      if (!isQueuedOnly) {
+        dj = _djWithQueuePlaybackFallback(dj);
+      }
       _prefetchYoutubePlayback(dj);
       _commitDjUi(dj);
-      unawaited(_playDjInBackground(dj));
-      if (!shouldPlay) {
-        unawaited(_syncMusicFromServerIfNeeded());
+      if (shouldPlay && !isQueuedOnly) {
+        unawaited(_playDjInBackground(dj));
+      } else {
+        unawaited(_syncMusicFromServerIfNeeded(force: true));
       }
       if (result.queuePosition != null && result.queuePosition! > 1) {
         return 'Sıranız: #${result.queuePosition}';

@@ -1181,7 +1181,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               if (!mounted) return;
               final err = await ctrl.submitSelectedSong(
                 hit,
-                withVideo: true,
+                withVideo: false,
                 skipPayment: skipPayment,
               );
               if (!mounted || err == null) return;

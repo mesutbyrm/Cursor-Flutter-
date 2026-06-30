@@ -30,6 +30,13 @@ void main() {
       );
     });
 
+    test('parses free-form query without dash', () {
+      expect(
+        VoiceMusicSync.parseIstekSongTitle('!istek Tarkan dudu dudu'),
+        'Tarkan dudu dudu',
+      );
+    });
+
     test('returns null when song title missing', () {
       expect(VoiceMusicSync.parseIstekSongTitle('!istek'), isNull);
     });
