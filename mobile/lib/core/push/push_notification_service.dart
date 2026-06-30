@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -96,9 +97,14 @@ class PushNotificationService {
     if (payload == null || payload.isEmpty) return;
     if (payload.startsWith('{')) {
       try {
-        // payload JSON hedefi (opsiyonel)
-        return;
+        final decoded = jsonDecode(payload);
+        if (decoded is Map) {
+          PushNavigationHandler.handleNotificationTap(
+            decoded.map((k, v) => MapEntry(k.toString(), v)),
+          );
+        }
       } catch (_) {}
+      return;
     }
     PushNavigationHandler.navigateToPath(payload);
   }
@@ -134,11 +140,11 @@ class PushNotificationService {
 
   Future<void> bindOpenedAppHandlers(FirebaseMessaging messaging) async {
     FirebaseMessaging.onMessageOpenedApp.listen((msg) {
-      PushNavigationHandler.handleAdditionalData(msg.data);
+      PushNavigationHandler.handleNotificationTap(msg.data);
     });
     final initial = await messaging.getInitialMessage();
     if (initial != null) {
-      PushNavigationHandler.handleAdditionalData(initial.data);
+      PushNavigationHandler.handleNotificationTap(initial.data);
     }
   }
 

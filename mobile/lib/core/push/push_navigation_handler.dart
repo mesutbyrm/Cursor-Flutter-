@@ -17,6 +17,7 @@ class PushNavigationHandler {
   static void Function(PsychicSessionUpdatePayload cancelled)? onSessionCancelled;
   static void Function(PsychicSessionEndedPayload ended)? onSessionEnded;
   static final List<Map<String, dynamic>> _bufferedFortunePayloads = [];
+  static final List<Map<String, dynamic>> _bufferedTapPayloads = [];
 
   static void install(
     GoRouter router, {
@@ -33,6 +34,7 @@ class PushNavigationHandler {
     onSessionCancelled = onSessionCancelledData;
     onSessionEnded = onSessionEndedData;
     _drainBufferedFortunePayloads();
+    _drainBufferedTapPayloads();
   }
 
   static void _drainBufferedFortunePayloads() {
@@ -41,6 +43,15 @@ class PushNavigationHandler {
     _bufferedFortunePayloads.clear();
     for (final data in copy) {
       handleFortuneInviteData(data, notifyReceived: false);
+    }
+  }
+
+  static void _drainBufferedTapPayloads() {
+    if (_bufferedTapPayloads.isEmpty) return;
+    final copy = List<Map<String, dynamic>>.from(_bufferedTapPayloads);
+    _bufferedTapPayloads.clear();
+    for (final data in copy) {
+      handleNotificationTap(data);
     }
   }
 
@@ -100,13 +111,25 @@ class PushNavigationHandler {
     return true;
   }
 
-  static void handleAdditionalData(Map<String, dynamic>? data) {
+  /// Bildirime tıklanınca — ağır liste yenilemesi yapmadan hedef sayfaya git.
+  static void handleNotificationTap(Map<String, dynamic>? data) {
+    if (data == null || data.isEmpty) return;
     if (handleFortuneInviteData(data, notifyReceived: false)) return;
-    onPushReceived?.call();
 
     final router = _router;
-    if (router == null || data == null || data.isEmpty) return;
+    if (router == null) {
+      _bufferedTapPayloads.add(Map<String, dynamic>.from(data));
+      return;
+    }
+    _navigateFromData(router, data);
+  }
 
+  /// Geriye dönük — tıklama yolu.
+  static void handleAdditionalData(Map<String, dynamic>? data) {
+    handleNotificationTap(data);
+  }
+
+  static void _navigateFromData(GoRouter router, Map<String, dynamic> data) {
     final type = [
       data['type'],
       data['event'],

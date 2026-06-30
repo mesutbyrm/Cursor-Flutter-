@@ -46,21 +46,15 @@ class FirebaseBootstrap {
 
       await PushNotificationService.instance.init();
 
-      if (!kIsWeb && !OneSignalBootstrap.isReady) {
+      if (messaging != null) {
         messaging!.onTokenRefresh.listen((token) {
           debugPrint('FCM token refreshed: ${token.substring(0, 12)}…');
           OneSignalBootstrap.onPushTokenChanged?.call();
         });
-      } else if (messaging != null) {
-        messaging!.onTokenRefresh.listen((token) {
-          debugPrint('FCM token refreshed: ${token.substring(0, 12)}…');
-          OneSignalBootstrap.onPushTokenChanged?.call();
-        });
-        await PushNotificationService.instance.bindOpenedAppHandlers(messaging!);
       }
 
-      // OneSignal aktifse FCM doğrudan dinlenmiyor — çift bildirim önlenir
-      if (!OneSignalBootstrap.isReady) {
+      // OneSignal aktifse FCM dinleyicileri kapalı — çift bildirim / çift tıklama önlenir
+      if (!OneSignalBootstrap.isReady && messaging != null) {
         await PushNotificationService.instance.bindForegroundFcm(messaging!);
       }
 

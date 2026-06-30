@@ -38,7 +38,7 @@ class OneSignalBootstrap {
       });
 
       OneSignal.Notifications.addClickListener((event) {
-        PushNavigationHandler.handleAdditionalData(
+        PushNavigationHandler.handleNotificationTap(
           event.notification.additionalData,
         );
       });
@@ -58,9 +58,9 @@ class OneSignalBootstrap {
               data,
               notifyReceived: false,
             );
-        if (isFortuneInvite) {
-          event.preventDefault();
-        } else {
+        // preventDefault olmadan display() çağrılırsa Android'de çift bildirim oluşur.
+        event.preventDefault();
+        if (!isFortuneInvite) {
           event.notification.display();
           PushNavigationHandler.onPushReceived?.call();
         }

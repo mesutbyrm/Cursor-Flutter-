@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -71,11 +73,11 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     }
   }
 
-  Future<void> _onNotificationTap(
+  void _onNotificationTap(
     AppNotificationEntity n,
     GoRouter router,
     bool staffCanManage,
-  ) async {
+  ) {
     final invite = psychicInviteFromNotification(n);
     if (invite != null) {
       final uid = ref.read(authControllerProvider).valueOrNull?.id;
@@ -106,9 +108,9 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
 
     if (!n.read) {
       ref.read(notificationsListNotifierProvider.notifier).markOneReadLocally(n.id);
-      try {
-        await ref.read(notificationsRepositoryProvider).markRead(n.id);
-      } catch (_) {}
+      unawaited(
+        ref.read(notificationsRepositoryProvider).markRead(n.id).catchError((_) {}),
+      );
     }
   }
 

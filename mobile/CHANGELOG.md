@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.455+459 (2026-06-30)
+
+### Bildirimler — çift bildirim ve tıklama hızı
+
+- **Çift bildirim:** OneSignal ön planda `preventDefault` + tek `display()`; FCM tıklama dinleyicisi OneSignal aktifken kapatıldı
+- **Tıklama hızı:** Bildirime tıklayınca ağır liste yenilemesi yapılmıyor; hedef sayfaya anında gidiliyor
+- **Soğuk açılış:** Router hazır olana kadar tıklama payload'ı buffer'lanıyor, shell açılınca otomatik yönlendirme
+- **Uygulama içi liste:** Okundu işareti arka planda; navigasyon bekletilmiyor
+
 ## 1.0.454+458 (2026-06-30)
 
 ### Google ile giriş
