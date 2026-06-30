@@ -27,6 +27,7 @@ COPY . .
 RUN npm run build
 
 ENV NODE_ENV=production
-EXPOSE 4000
+EXPOSE 3000
 
-CMD ["node", "dist/index.js"]
+# Başlangıçta DB migration uygula, sonra sunucuyu başlat.
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
