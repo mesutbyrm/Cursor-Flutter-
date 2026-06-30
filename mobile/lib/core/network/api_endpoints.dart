@@ -334,6 +334,8 @@ abstract final class ApiEndpoints {
 
   /// Geriye dönük
   static const adminPaymentRequests = '/api/admin/payment-requests';
+  static const adminDismissPendingPayments =
+      '/api/admin/payment-requests/dismiss-pending';
   static const adminNotifications = '/api/admin/notifications';
   static const adminPaymentNotifications = '/api/admin/payment-notifications';
   static const adminPaymentsStream = '/api/admin/payments/stream';

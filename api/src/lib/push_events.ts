@@ -4,9 +4,7 @@ import {
   PAYMENT_ALERT_EMAIL,
   sendPaymentAdminEmail,
 } from "./payment_admin_email";
-
-const STAFF_ROLES = ["admin", "yonetici", "moderator", "destek", "yardim"] as const;
-const PAYMENT_FALLBACK_EMAIL = process.env.PAYMENT_ALERT_EMAIL ?? "mesutbyrm1@gmail.com";
+import { listPaymentAlertUserIds } from "./adminPaymentBootstrap";
 /** Yeni DM — alıcıya anında push */
 export async function notifyDirectMessage(input: {
   conversationId: string;
@@ -44,14 +42,7 @@ export async function notifyStaffPaymentPending(input: {
   senderInfo?: string | null;
   notes?: string | null;
 }) {
-  const staffByRole = await prisma.user.findMany({
-    where: { role: { in: [...STAFF_ROLES] } },
-    select: { id: true },
-  });
-  const staffByUsername = await prisma.user.findMany({
-    where: { username: { in: ["admin", "yonetici"] } },
-    select: { id: true },
-  });
+  const staffByRole = await listPaymentAlertUserIds();
   const isJeton = input.requestType === "jeton";
   const title = "Yeni ödeme bildirimi alındı";
   const amountText =
@@ -72,11 +63,10 @@ export async function notifyStaffPaymentPending(input: {
     method: input.method,
   };
 
-  const notifyIds = new Set([
-    ...staffByRole.map((s) => s.id),
-    ...staffByUsername.map((s) => s.id),
-  ]);
+  const notifyIds = new Set<string>(staffByRole);
 
+  const PAYMENT_FALLBACK_EMAIL =
+    process.env.PAYMENT_ALERT_EMAIL ?? "mesutbyrm1@gmail.com";
   // Admin e-posta hesabı staff listesinde değilse uygulama içi bildirim de gönder.
   const alertUser = await prisma.user.findUnique({
     where: { email: PAYMENT_FALLBACK_EMAIL },

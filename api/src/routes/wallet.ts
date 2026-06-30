@@ -3,6 +3,12 @@ import { prisma } from "../lib/prisma";
 import { jsonError } from "../lib/jsonError";
 import { createNotification } from "../lib/notifications";
 import { notifyStaffPaymentPending } from "../lib/push_events";
+import {
+  dismissAllPendingPaymentRequests,
+  ensureAdminUsers,
+  listPaymentAlertUserIds,
+} from "../lib/adminPaymentBootstrap";
+import { staffAccessPayload } from "../lib/staffAccess";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireStaff, isStaffRole } from "../middleware/requireStaff";
 
@@ -175,7 +181,7 @@ walletRouter.get("/me", requireAuth, async (req, res) => {
     name: user.displayName,
     username: user.username ?? user.email.split("@")[0],
     image: user.avatarUrl,
-    role: user.role,
+    ...staffAccessPayload(user),
     credits: user.coins,
     jetonBalance: user.coins,
     cfcBalance: user.cfcBalance,
@@ -197,7 +203,7 @@ walletRouter.get("/user/credits", requireAuth, async (req, res) => {
     withdrawalLimit: 0,
     membership: user.membership,
     membershipExpiresAt: user.membershipExpiresAt?.toISOString() ?? null,
-    role: user.role,
+    ...staffAccessPayload(user),
     jeton: user.coins,
     cfc: user.cfcBalance,
   });
@@ -213,7 +219,7 @@ walletRouter.get("/wallet", requireAuth, async (req, res) => {
     jetonBalance: user.coins,
     cfc: user.cfcBalance,
     cfcBalance: user.cfcBalance,
-    role: user.role,
+    ...staffAccessPayload(user),
   });
 });
 
@@ -759,6 +765,40 @@ walletRouter.get(
       }
       void tick();
     }, 5000);
+  },
+);
+
+/** POST /api/admin/payment-requests/dismiss-pending — tüm bekleyen talepleri kapat */
+walletRouter.post(
+  "/admin/payment-requests/dismiss-pending",
+  requireAuth,
+  requireStaff,
+  async (req, res) => {
+    const count = await dismissAllPendingPaymentRequests(req.userId);
+    return res.status(200).json({
+      success: true,
+      dismissed: count,
+      message:
+        count > 0
+          ? `${count} bekleyen talep kapatıldı`
+          : "Bekleyen talep yok",
+    });
+  },
+);
+
+/** POST /api/admin/bootstrap — admin rolü + bekleyen talep temizliği (tek seferlik) */
+walletRouter.post(
+  "/admin/bootstrap",
+  requireAuth,
+  requireStaff,
+  async (_req, res) => {
+    const promoted = await ensureAdminUsers();
+    const dismissed = await dismissAllPendingPaymentRequests(null);
+    return res.status(200).json({
+      success: true,
+      promoted,
+      dismissed,
+    });
   },
 );
 

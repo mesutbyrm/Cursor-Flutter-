@@ -31,14 +31,16 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
   final walletRole = ref.watch(
     walletBalancesProvider.select((w) => w.valueOrNull?.role),
   );
+  final wallet = ref.watch(walletBalancesProvider).valueOrNull;
   final authRole = user.role;
   final siteRole = walletRole?.trim().isNotEmpty == true ? walletRole : authRole;
   final username = user.username;
 
-  final canManage = StaffRoles.isAdminOrManager(
-    role: siteRole,
-    username: username,
-  );
+  final canManage = wallet?.canManagePayments ??
+      StaffRoles.isAdminOrManager(
+        role: siteRole,
+        username: username,
+      );
 
   String? effectiveRole = siteRole?.trim().isNotEmpty == true
       ? siteRole!.toLowerCase().trim()

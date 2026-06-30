@@ -37,6 +37,7 @@ import { liveFalRequestsRouter } from "./routes/live_fal_requests";
 import { shortVideosRouter } from "./routes/short_videos";
 import { voiceRoomSettingsRouter } from "./routes/voice_room_settings";
 import { initGiftSocket } from "./socket/giftHub";
+import { runAdminPaymentBootstrap } from "./lib/adminPaymentBootstrap";
 import path from "node:path";
 
 const app = express();
@@ -113,4 +114,5 @@ initGiftSocket(server);
 server.listen(port, () => {
   console.log(`Canlifal API http://localhost:${port}/api/v1`);
   console.log(`Gift Socket.IO path /socket.io`);
+  void runAdminPaymentBootstrap();
 });

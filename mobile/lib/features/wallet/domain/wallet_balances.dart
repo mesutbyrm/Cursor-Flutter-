@@ -13,6 +13,9 @@ class WalletBalances extends Equatable {
     this.membership,
     this.membershipExpiresAt,
     this.fortuneAdCredits,
+    this.canManagePayments,
+    this.isAdminFlag,
+    this.isStaffFlag,
   });
 
   static const empty = WalletBalances();
@@ -26,6 +29,9 @@ class WalletBalances extends Equatable {
     String? membership,
     String? membershipExpiresAt,
     int? fortuneAdCredits,
+    bool? canManagePayments,
+    bool? isAdminFlag,
+    bool? isStaffFlag,
   }) {
     return WalletBalances(
       jeton: jeton ?? this.jeton,
@@ -36,6 +42,9 @@ class WalletBalances extends Equatable {
       membership: membership ?? this.membership,
       membershipExpiresAt: membershipExpiresAt ?? this.membershipExpiresAt,
       fortuneAdCredits: fortuneAdCredits ?? this.fortuneAdCredits,
+      canManagePayments: canManagePayments ?? this.canManagePayments,
+      isAdminFlag: isAdminFlag ?? this.isAdminFlag,
+      isStaffFlag: isStaffFlag ?? this.isStaffFlag,
     );
   }
 
@@ -73,6 +82,9 @@ class WalletBalances extends Equatable {
       membershipExpiresAt:
           pick(json, ['membershipExpiresAt', 'membership_expires_at'])?.toString(),
       fortuneAdCredits: fortuneAdCredits,
+      canManagePayments: pick(json, ['canManagePayments']) == true,
+      isAdminFlag: pick(json, ['isAdmin']) == true,
+      isStaffFlag: pick(json, ['isStaff']) == true,
     );
   }
 
@@ -84,6 +96,9 @@ class WalletBalances extends Equatable {
   final String? membership;
   final String? membershipExpiresAt;
   final int? fortuneAdCredits;
+  final bool? canManagePayments;
+  final bool? isAdminFlag;
+  final bool? isStaffFlag;
 
   /// Kalan üyelik günü (`membershipExpiresAt` ISO).
   int? get membershipDaysRemaining {
@@ -97,6 +112,7 @@ class WalletBalances extends Equatable {
   }
 
   bool get isStaff {
+    if (isStaffFlag == true) return true;
     final r = role?.toLowerCase().trim() ?? '';
     return const {
       'admin',
@@ -104,8 +120,13 @@ class WalletBalances extends Equatable {
       'moderator',
       'destek',
       'yardim',
+      'super_admin',
+      'superadmin',
+      'founder',
     }.contains(r);
   }
+
+  bool get isAdmin => isAdminFlag == true || role?.toLowerCase().trim() == 'admin';
 
   @override
   List<Object?> get props => [
@@ -116,5 +137,8 @@ class WalletBalances extends Equatable {
         withdrawalLimit,
         membership,
         fortuneAdCredits,
+        canManagePayments,
+        isAdminFlag,
+        isStaffFlag,
       ];
 }

@@ -6,9 +6,18 @@ abstract final class StaffRoles {
     'moderator',
     'destek',
     'yardim',
+    'super_admin',
+    'superadmin',
+    'founder',
   };
 
-  static const adminOrManager = {'admin', 'yonetici'};
+  static const adminOrManager = {
+    'admin',
+    'yonetici',
+    'super_admin',
+    'superadmin',
+    'founder',
+  };
 
   static const managerUsernames = {'admin', 'yonetici'};
 
@@ -32,6 +41,9 @@ abstract final class StaffRoles {
       'moderator' => 'Moderatör',
       'destek' => 'Destek',
       'yardim' => 'Yardım',
+      'super_admin' => 'Süper Admin',
+      'superadmin' => 'Süper Admin',
+      'founder' => 'Kurucu',
       _ => role,
     };
   }

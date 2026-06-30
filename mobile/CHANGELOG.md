@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.451+455 (2026-06-26)
+
+### Admin — ödeme talepleri
+
+- **Admin paneli:** `admin` kullanıcı adı tam yetki; API `canManagePayments` / `isAdmin` bayrakları
+- **Bekleyen talepler:** «Tüm bekleyenleri kapat» — toplu red (admin uç noktası)
+- **Bildirimler:** yeni ödeme talepleri yalnızca admin/yönetici hesaplarına
+
 ## 1.0.450+454 (2026-06-26)
 
 ### Bildirimler, ana sayfa, oyunlar, profil, sesli oda

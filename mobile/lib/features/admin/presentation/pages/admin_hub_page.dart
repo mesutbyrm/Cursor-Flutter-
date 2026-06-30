@@ -105,6 +105,12 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                     icon: Icons.refresh_rounded,
                     onPressed: _refreshAll,
                   ),
+                  if (pendingCount > 0)
+                    DiscoverIconButton(
+                      icon: Icons.clear_all_rounded,
+                      tooltip: 'Tüm bekleyenleri kapat',
+                      onPressed: () => _dismissAllPending(context),
+                    ),
                 ],
               ),
             ),
@@ -199,6 +205,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                     async: pending,
                     onReview: _review,
                     onRefresh: _refreshAll,
+                    onDismissAll: () => _dismissAllPending(context),
                   ),
                   _PaymentNotificationsTab(
                     async: notifs,
@@ -213,6 +220,55 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
         ),
       ),
     );
+  }
+
+  Future<void> _dismissAllPending(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Tüm bekleyen talepleri kapat'),
+        content: const Text(
+          'Bekleyen jeton ve CFC ödeme taleplerinin tamamı reddedilecek. '
+          'Kullanıcılar yeni talep gönderebilir.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Hepsini kapat'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+
+    try {
+      final res = await ref.read(dioProvider).safePost<dynamic>(
+        ApiEndpoints.adminDismissPendingPayments,
+      );
+      final dismissed = (res.data is Map ? res.data['dismissed'] : null) as num?;
+      _refreshAll();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              dismissed != null && dismissed > 0
+                  ? '${dismissed.toInt()} bekleyen talep kapatıldı'
+                  : 'Bekleyen talep yok',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
   }
 
   Future<void> _review(
@@ -324,11 +380,13 @@ class _PendingPaymentsTab extends StatelessWidget {
     required this.async,
     required this.onReview,
     required this.onRefresh,
+    required this.onDismissAll,
   });
 
   final AsyncValue<List<Map<String, dynamic>>> async;
   final void Function(BuildContext, String, String) onReview;
   final VoidCallback onRefresh;
+  final VoidCallback onDismissAll;
 
   static Future<void> _showReceipt(BuildContext context, String url) async {
     final isPdf = url.toLowerCase().contains('.pdf');
@@ -397,10 +455,17 @@ class _PendingPaymentsTab extends StatelessWidget {
           }
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-            itemCount: rows.length,
-            separatorBuilder: (_, _) => SizedBox(height: 10),
+            itemCount: rows.length + 1,
+            separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 12 : 10),
             itemBuilder: (ctx, i) {
-              final r = rows[i];
+              if (i == 0) {
+                return OutlinedButton.icon(
+                  onPressed: onDismissAll,
+                  icon: const Icon(Icons.clear_all_rounded, size: 18),
+                  label: Text('Tüm bekleyenleri kapat (${rows.length})'),
+                );
+              }
+              final r = rows[i - 1];
               final id = r['id']?.toString() ?? '';
               final user = r['user'] is Map
                   ? Map<String, dynamic>.from(r['user'] as Map)
