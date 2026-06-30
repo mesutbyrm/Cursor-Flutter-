@@ -295,7 +295,8 @@ class VoiceRoomLiveController
   final Set<String> _shownEntranceKeys = {};
   final Set<String> _knownPresenceIds = {};
   final Set<String> _shownMusicRequestFlashKeys = {};
-  final Set<String> _seenDuyuruKeys = {};
+  String? _lastDuyuruText;
+  DateTime? _lastDuyuruShownAt;
   String? _presenceNickname;
   var _presenceJoined = false;
   var _voiceJoined = false;
@@ -1546,8 +1547,15 @@ class VoiceRoomLiveController
 
   void _showModeratorAnnouncement(String text) {
     final key = text.trim().toLowerCase();
-    if (key.isEmpty || _seenDuyuruKeys.contains(key)) return;
-    _seenDuyuruKeys.add(key);
+    if (key.isEmpty) return;
+    final now = DateTime.now();
+    if (_lastDuyuruText == key &&
+        _lastDuyuruShownAt != null &&
+        now.difference(_lastDuyuruShownAt!) < const Duration(seconds: 3)) {
+      return;
+    }
+    _lastDuyuruText = key;
+    _lastDuyuruShownAt = now;
     _announcementTimer?.cancel();
     _pinnedAnnouncementTimer?.cancel();
     state = state.copyWith(

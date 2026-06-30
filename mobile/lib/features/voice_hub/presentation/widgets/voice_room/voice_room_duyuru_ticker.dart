@@ -81,6 +81,13 @@ class _VoiceRoomDuyuruTickerState extends State<VoiceRoomDuyuruTicker>
     final needsScroll = _segmentWidth > viewport * 0.45;
     _scroll?.dispose();
     if (!needsScroll) {
+      final holdMs = (6000 * widget.scrollPasses).clamp(8000, 16000);
+      _hideTimer?.cancel();
+      _hideTimer = Timer(Duration(milliseconds: holdMs), () {
+        if (!mounted) return;
+        setState(() => _visible = false);
+        widget.onScrollComplete?.call();
+      });
       setState(() {});
       return;
     }

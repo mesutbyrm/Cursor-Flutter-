@@ -19,4 +19,10 @@ abstract class MessagesRepository {
   });
 
   Future<ConversationEntity> startConversation(String recipientId);
+
+  Future<void> deleteMessage(
+    String conversationId,
+    String messageId, {
+    String? currentUserId,
+  });
 }

@@ -11,6 +11,7 @@ class ConversationEntity extends Equatable {
     this.avatarUrl,
     this.unreadCount = 0,
     this.isOnline = false,
+    this.lastMessageAt,
   });
 
   final String id;
@@ -19,10 +20,11 @@ class ConversationEntity extends Equatable {
   final String? avatarUrl;
   final int unreadCount;
   final bool isOnline;
+  final DateTime? lastMessageAt;
 
   @override
   List<Object?> get props =>
-      [id, title, subtitle, avatarUrl, unreadCount, isOnline];
+      [id, title, subtitle, avatarUrl, unreadCount, isOnline, lastMessageAt];
 }
 
 class MessageEntity extends Equatable {

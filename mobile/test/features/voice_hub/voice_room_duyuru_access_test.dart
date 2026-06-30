@@ -20,6 +20,10 @@ void main() {
       expect(VoiceRoomDuyuruAccess.validateMessage('kısa'), isNull);
     });
 
+    test('scrollPasses defaults to 2', () {
+      expect(VoiceRoomDuyuruAccess.scrollPasses, 2);
+    });
+
     test('admin free, member pays jeton', () {
       const adminPerms = VoiceRoomPermissions(
         isSiteAdmin: true,

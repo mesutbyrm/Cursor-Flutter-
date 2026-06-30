@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/scroll_perf.dart';
-import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../providers/conversations_list_notifier.dart';
 
-/// Konuşma listesi — cache-first; yalnızca liste provider'ını izler.
+/// WhatsApp tarzı konuşma listesi.
 class ConversationsListSliver extends ConsumerWidget {
   const ConversationsListSliver({super.key});
 
@@ -18,6 +17,21 @@ class ConversationsListSliver extends ConsumerWidget {
     await ref.read(conversationsListNotifierProvider.notifier).refresh(
           forceRefresh: true,
         );
+  }
+
+  String _formatTime(DateTime? dt) {
+    if (dt == null) return '';
+    final local = dt.toLocal();
+    final now = DateTime.now();
+    if (local.year == now.year &&
+        local.month == now.month &&
+        local.day == now.day) {
+      return DateFormat.Hm('tr').format(local);
+    }
+    if (now.difference(local).inDays < 7) {
+      return DateFormat.E('tr').format(local);
+    }
+    return DateFormat('d MMM', 'tr').format(local);
   }
 
   @override
@@ -47,7 +61,7 @@ class ConversationsListSliver extends ConsumerWidget {
               );
             }
             return SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 32),
               sliver: SliverList.builder(
                 itemCount: items.length + (state.hasMore ? 1 : 0),
                 itemBuilder: (ctx, i) {
@@ -64,74 +78,100 @@ class ConversationsListSliver extends ConsumerWidget {
                     );
                   }
                   final c = items[i];
+                  final unread = c.unreadCount > 0;
                   return ScrollPerf.item(
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: ProGlassListTile(
+                    Material(
+                      color: unread
+                          ? const Color(0xFF005C4B).withValues(alpha: 0.12)
+                          : Colors.transparent,
+                      child: InkWell(
                         onTap: () => context.push('/chat/${c.id}'),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: context.colors.brandGradient,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 12,
+                          ),
+                          child: Row(
+                            children: [
+                              UserAvatar(url: c.avatarUrl, radius: 28),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      c.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontWeight: unread
+                                            ? FontWeight.w800
+                                            : FontWeight.w600,
+                                        fontSize: 17,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      c.subtitle ?? '',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: unread
+                                            ? Colors.white.withValues(alpha: 0.92)
+                                            : Colors.white.withValues(alpha: 0.62),
+                                        fontSize: 15,
+                                        fontWeight: unread
+                                            ? FontWeight.w600
+                                            : FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              child: UserAvatar(url: c.avatarUrl, radius: 26),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              const SizedBox(width: 8),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    c.title,
+                                    _formatTime(c.lastMessageAt),
                                     style: TextStyle(
-                                      fontWeight: c.unreadCount > 0
-                                          ? FontWeight.w800
-                                          : FontWeight.w600,
-                                      fontSize: 16,
+                                      fontSize: 12,
+                                      color: unread
+                                          ? const Color(0xFF25D366)
+                                          : Colors.white.withValues(alpha: 0.5),
+                                      fontWeight: unread
+                                          ? FontWeight.w700
+                                          : FontWeight.w400,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    c.subtitle ?? '',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: context.colors.onSurfaceMuted,
-                                      fontSize: 13,
+                                  if (unread) ...[
+                                    const SizedBox(height: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF25D366),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        c.unreadCount > 99
+                                            ? '99+'
+                                            : '${c.unreadCount}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ],
                               ),
-                            ),
-                            if (c.unreadCount > 0)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: context.colors.brandGradient,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  '${c.unreadCount}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              )
-                            else
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                color: context.colors.onSurfaceMuted
-                                    .withValues(alpha: 0.6),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),

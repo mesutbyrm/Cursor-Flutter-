@@ -172,6 +172,22 @@ class MessagesRemoteDataSource {
     );
   }
 
+  Future<void> deleteMessage(String peerUserId, String messageId) async {
+    if (messageId.isEmpty) return;
+    try {
+      await _dio.safeDelete(
+        Env.useMobileAuth
+            ? ApiEndpoints.messageWithId(peerUserId, messageId)
+            : '${ApiEndpoints.conversationMessages(peerUserId)}/$messageId',
+      );
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 405 || e.statusCode == 501) {
+        return;
+      }
+      rethrow;
+    }
+  }
+
   /// Profilden sohbet — mobil API doğrudan userId ile çalışır.
   Future<ConversationEntity> startConversation(String recipientId) async {
     if (Env.useMobileAuth) {

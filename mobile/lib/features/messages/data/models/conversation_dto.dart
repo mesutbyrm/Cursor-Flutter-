@@ -14,6 +14,7 @@ abstract class ConversationDto with _$ConversationDto {
     String? avatarUrl,
     @Default(0) int unreadCount,
     @Default(false) bool isOnline,
+    DateTime? lastMessageAt,
   }) = _ConversationDto;
 
   const ConversationDto._();
@@ -24,10 +25,14 @@ abstract class ConversationDto with _$ConversationDto {
     final peerId = pick(peerMap, ['id', 'userId'])?.toString() ?? '';
 
     var subtitle = pick(json, ['lastMessage', 'preview', 'subtitle'])?.toString();
+    DateTime? lastMessageAt;
     final lastMsg = pick(json, ['lastMessage']);
     if (lastMsg is Map) {
-      subtitle = pick(asJsonMap(lastMsg), ['content', 'text'])?.toString() ??
-          subtitle;
+      final lm = asJsonMap(lastMsg);
+      subtitle = pick(lm, ['content', 'text'])?.toString() ?? subtitle;
+      lastMessageAt = DateTime.tryParse(
+        pick(lm, ['createdAt', 'created_at', 'timestamp'])?.toString() ?? '',
+      );
     }
 
     return ConversationDto(
@@ -46,6 +51,10 @@ abstract class ConversationDto with _$ConversationDto {
       ]) as String?,
       unreadCount: asInt(pick(json, ['unreadCount', 'unread', 'badge'])),
       isOnline: asBool(pick(json, ['isOnline', 'online', 'is_online'])),
+      lastMessageAt: lastMessageAt ??
+          DateTime.tryParse(
+            pick(json, ['updatedAt', 'updated_at'])?.toString() ?? '',
+          ),
     );
   }
 
@@ -56,5 +65,6 @@ abstract class ConversationDto with _$ConversationDto {
         avatarUrl: avatarUrl,
         unreadCount: unreadCount,
         isOnline: isOnline,
+        lastMessageAt: lastMessageAt,
       );
 }

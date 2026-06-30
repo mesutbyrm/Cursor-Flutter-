@@ -221,6 +221,38 @@ messagesRouter.post("/:peerUserId", requireAuth, async (req, res) => {
   });
 });
 
+/** DELETE /api/messages/:peerUserId/:messageId — kendi mesajını sil */
+messagesRouter.delete("/:peerUserId/:messageId", requireAuth, async (req, res) => {
+  const userId = req.userId!;
+  const peerUserId = req.params.peerUserId.trim();
+  const messageId = req.params.messageId.trim();
+  if (RESERVED_PEER.has(peerUserId) || !messageId) {
+    return res.status(404).json({ error: "Bulunamadı" });
+  }
+
+  const conv = await prisma.conversation.findFirst({
+    where: {
+      OR: [
+        { userAId: userId, userBId: peerUserId },
+        { userAId: peerUserId, userBId: userId },
+      ],
+    },
+  });
+  if (!conv) {
+    return res.status(404).json({ error: "Sohbet bulunamadı" });
+  }
+
+  const msg = await prisma.directMessage.findFirst({
+    where: { id: messageId, conversationId: conv.id, senderId: userId },
+  });
+  if (!msg) {
+    return res.status(404).json({ error: "Mesaj bulunamadı" });
+  }
+
+  await prisma.directMessage.delete({ where: { id: messageId } });
+  return res.status(200).json({ success: true });
+});
+
 function conversationPayload(c: {
   id: string;
   title: string;

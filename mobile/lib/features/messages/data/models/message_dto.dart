@@ -32,13 +32,6 @@ abstract class MessageDto with _$MessageDto {
       'userId',
     ])?.toString();
 
-    var delivery = MessageDeliveryStatus.sent;
-    if (readAt != null || statusRaw == 'read') {
-      delivery = MessageDeliveryStatus.read;
-    } else if (deliveredAt != null || statusRaw == 'delivered') {
-      delivery = MessageDeliveryStatus.delivered;
-    }
-
     var isMine = asBool(pick(json, ['isMine', 'mine', 'fromMe', 'is_mine']));
     if (!isMine &&
         currentUserId != null &&
@@ -46,6 +39,16 @@ abstract class MessageDto with _$MessageDto {
         senderId != null &&
         senderId.isNotEmpty) {
       isMine = senderId == currentUserId;
+    }
+
+    var delivery = MessageDeliveryStatus.sent;
+    final readFlag = asBool(pick(json, ['read', 'isRead', 'seen']));
+    if (readAt != null || readFlag || statusRaw == 'read') {
+      delivery = MessageDeliveryStatus.read;
+    } else if (deliveredAt != null || statusRaw == 'delivered') {
+      delivery = MessageDeliveryStatus.delivered;
+    } else if (isMine && readFlag == false) {
+      delivery = MessageDeliveryStatus.delivered;
     }
 
     return MessageDto(

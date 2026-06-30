@@ -123,7 +123,17 @@ class _ChatMessagesListPaneState extends ConsumerState<ChatMessagesListPane> {
         }
         final idx = msgs.hasMore ? i - 1 : i;
         return ScrollPerf.item(
-          ChatMessageBubble(message: msgs.rows[idx]),
+          ChatMessageBubble(
+            message: msgs.rows[idx],
+            onDelete: msgs.rows[idx].isMine
+                ? () => ref
+                    .read(
+                      chatMessagesListNotifierProvider(widget.conversationId)
+                          .notifier,
+                    )
+                    .deleteMessage(msgs.rows[idx].id)
+                : null,
+          ),
         );
       },
     );

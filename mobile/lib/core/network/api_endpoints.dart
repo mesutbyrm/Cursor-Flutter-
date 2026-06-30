@@ -42,6 +42,8 @@ abstract final class ApiEndpoints {
   /// DM sohbet listesi (Bearer).
   static const messages = '/api/messages';
   static String messagesWithUser(String userId) => '/api/messages/$userId';
+  static String messageWithId(String userId, String messageId) =>
+      '/api/messages/$userId/$messageId';
   static const messagesRequest = '/api/messages/request';
 
   /// Eski konuşma API (self-hosted).

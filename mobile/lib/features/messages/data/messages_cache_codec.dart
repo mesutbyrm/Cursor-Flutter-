@@ -7,6 +7,7 @@ Map<String, dynamic> encodeConversation(ConversationEntity c) => {
       'avatarUrl': c.avatarUrl,
       'unreadCount': c.unreadCount,
       'isOnline': c.isOnline,
+      'lastMessageAt': c.lastMessageAt?.toIso8601String(),
     };
 
 ConversationEntity decodeConversation(Map<String, dynamic> json) {
@@ -17,6 +18,7 @@ ConversationEntity decodeConversation(Map<String, dynamic> json) {
     avatarUrl: json['avatarUrl']?.toString(),
     unreadCount: (json['unreadCount'] as num?)?.toInt() ?? 0,
     isOnline: json['isOnline'] == true,
+    lastMessageAt: DateTime.tryParse(json['lastMessageAt']?.toString() ?? ''),
   );
 }
 

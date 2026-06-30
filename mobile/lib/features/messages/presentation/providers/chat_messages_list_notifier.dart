@@ -68,7 +68,7 @@ class ChatMessagesListNotifier
 
   Future<void> refresh({
     bool silent = false,
-    bool forceRefresh = false,
+    bool forceRefresh = true,
   }) async {
     final id = arg;
     if (!silent) {
@@ -90,6 +90,26 @@ class ChatMessagesListNotifier
             .clamp(0, cur.all.length),
       ),
     );
+  }
+
+  Future<void> deleteMessage(String messageId) async {
+    if (messageId.isEmpty) return;
+    final cur = state.valueOrNull;
+    if (cur != null) {
+      state = AsyncValue.data(
+        cur.copyWith(
+          all: cur.all.where((m) => m.id != messageId).toList(),
+        ),
+      );
+    }
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    try {
+      await ref.read(messagesRepositoryProvider).deleteMessage(
+            arg,
+            messageId,
+            currentUserId: userId,
+          );
+    } catch (_) {}
   }
 }
 

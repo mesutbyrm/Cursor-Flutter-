@@ -1,6 +1,20 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.456+460 (2026-06-30)
+
+### Mesajlar — WhatsApp tarzı + gelmeme düzeltmesi
+
+- **Gelen mesaj:** Sohbet açıkken 4 sn'de bir zorunlu yenileme; 15 dk cache kaldırıldı
+- **WhatsApp UI:** Yeşil/gri balonlar, 16px yazı, tek/çift tik (iletildi / görüldü)
+- **Silme:** Kendi mesajına uzun bas → Sil (sunucu + yerel)
+- **Liste:** Saat, okunmamış yeşil rozet, WhatsApp tarzı satır
+
+### Sesli oda — !duyuru
+
+- **2 geçiş:** Kayan bant 2 kez geçer, kısa metinlerde de otomatik kapanır
+- **Sıradaki duyuru:** Önceki bittikten sonra yeni duyuru gösterilebilir
+
 ## 1.0.455+459 (2026-06-30)
 
 ### Bildirimler — çift bildirim ve tıklama hızı

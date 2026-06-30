@@ -37,12 +37,18 @@ class _ChatPageState extends ConsumerState<ChatPage>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _scroll.addListener(_onScroll);
-    // Poll: forceRefresh KAPALI — etag/cache kullanır, gereksiz ağ yükü olmaz (hız).
-    _poll = Timer.periodic(const Duration(seconds: 6), (_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref
           .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
-          .refresh(silent: true);
+          .refresh(silent: true, forceRefresh: true);
+      ref.invalidate(conversationsProvider);
+    });
+    _poll = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted) return;
+      ref
+          .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
+          .refresh(silent: true, forceRefresh: true);
     });
   }
 

@@ -1,73 +1,121 @@
 import 'package:flutter/material.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
-import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../../domain/entities/message_entities.dart';
 
+/// WhatsApp tarzı mesaj balonu — daha büyük yazı, okundu/görüldü tikleri.
 class ChatMessageBubble extends StatelessWidget {
-  const ChatMessageBubble({super.key, required this.message});
+  const ChatMessageBubble({
+    super.key,
+    required this.message,
+    this.onDelete,
+  });
 
   final MessageEntity message;
+  final VoidCallback? onDelete;
+
+  static const _mineColor = Color(0xFF005C4B);
+  static const _theirsColor = Color(0xFF1F2C34);
 
   @override
   Widget build(BuildContext context) {
     final m = message;
     return Align(
       alignment: m.isMine ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.sizeOf(context).width * 0.78,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          gradient: m.isMine ? context.colors.brandGradient : null,
-          color: m.isMine
-              ? null
-              : const Color(0xFF16162A).withValues(alpha: 0.92),
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(m.isMine ? 16 : 4),
-            bottomRight: Radius.circular(m.isMine ? 4 : 16),
+      child: GestureDetector(
+        onLongPress: () => _showActions(context),
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 3),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.sizeOf(context).width * 0.82,
           ),
-          border: m.isMine
-              ? null
-              : Border.all(
-                  color: AppThemeColors.accentPurple.withValues(alpha: 0.25),
+          padding: const EdgeInsets.fromLTRB(12, 8, 10, 6),
+          decoration: BoxDecoration(
+            color: m.isMine ? _mineColor : _theirsColor,
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(14),
+              topRight: const Radius.circular(14),
+              bottomLeft: Radius.circular(m.isMine ? 14 : 4),
+              bottomRight: Radius.circular(m.isMine ? 4 : 14),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                m.text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  height: 1.38,
+                  letterSpacing: 0.1,
                 ),
+              ),
+              const SizedBox(height: 2),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (m.createdAt != null)
+                    Text(
+                      DateFormat.Hm('tr').format(m.createdAt!.toLocal()),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.white.withValues(alpha: 0.72),
+                      ),
+                    ),
+                  if (m.isMine) ...[
+                    const SizedBox(width: 4),
+                    MessageReadTicks(status: m.deliveryStatus),
+                  ],
+                ],
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  void _showActions(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF111827),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) => SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              m.text,
-              style: TextStyle(
-                color: m.isMine ? Colors.white : context.colors.onSurface,
-                height: 1.35,
+            ListTile(
+              leading: const Icon(Icons.copy_rounded, color: Colors.white70),
+              title: const Text('Kopyala', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: message.text));
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Mesaj kopyalandı')),
+                );
+              },
+            ),
+            if (onDelete != null)
+              ListTile(
+                leading: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                title: const Text('Sil', style: TextStyle(color: Colors.redAccent)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  onDelete!();
+                },
               ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (m.createdAt != null)
-                  Text(
-                    DateFormat.Hm('tr').format(m.createdAt!),
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: (m.isMine ? Colors.white : context.colors.onSurfaceMuted)
-                          .withValues(alpha: 0.65),
-                    ),
-                  ),
-                if (m.isMine) ...[
-                  const SizedBox(width: 4),
-                  MessageReadTicks(status: m.deliveryStatus),
-                ],
-              ],
-            ),
           ],
         ),
       ),
@@ -82,15 +130,24 @@ class MessageReadTicks extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = switch (status) {
-      MessageDeliveryStatus.read => AppThemeColors.accentCyan,
-      MessageDeliveryStatus.delivered => Colors.white.withValues(alpha: 0.75),
-      MessageDeliveryStatus.sending => Colors.white.withValues(alpha: 0.45),
-      MessageDeliveryStatus.sent => Colors.white.withValues(alpha: 0.55),
+    final (icon, color) = switch (status) {
+      MessageDeliveryStatus.read => (
+          Icons.done_all_rounded,
+          const Color(0xFF53BDEB),
+        ),
+      MessageDeliveryStatus.delivered => (
+          Icons.done_all_rounded,
+          Colors.white.withValues(alpha: 0.72),
+        ),
+      MessageDeliveryStatus.sending => (
+          Icons.access_time_rounded,
+          Colors.white.withValues(alpha: 0.55),
+        ),
+      MessageDeliveryStatus.sent => (
+          Icons.done_rounded,
+          Colors.white.withValues(alpha: 0.65),
+        ),
     };
-    final icon = status == MessageDeliveryStatus.read
-        ? Icons.done_all_rounded
-        : Icons.done_rounded;
-    return Icon(icon, size: 14, color: color);
+    return Icon(icon, size: 16, color: color);
   }
 }

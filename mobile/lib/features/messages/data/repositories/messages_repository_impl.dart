@@ -1,6 +1,7 @@
 import '../../domain/entities/message_entities.dart';
 import '../../domain/repositories/messages_repository.dart';
 import '../datasources/messages_remote_datasource.dart';
+import '../deleted_messages_store.dart';
 import '../messages_cache_codec.dart';
 import '../../../../core/offline/api_cache_store.dart';
 import '../../../../core/offline/cache_first_loader.dart';
@@ -47,12 +48,16 @@ class MessagesRepositoryImpl implements MessagesRepository {
       cacheKey: key,
       maxAge: MessagesLoadPerf.threadMaxAge,
       forceRefresh: forceRefresh,
-      refreshInBackground: false,
-      fetch: () => _remote.messages(
-        conversationId,
-        currentUserId: currentUserId,
-        forceRefresh: forceRefresh,
-      ),
+      refreshInBackground: true,
+      fetch: () async {
+        final remote = await _remote.messages(
+          conversationId,
+          currentUserId: currentUserId,
+          forceRefresh: true,
+        );
+        final hidden = await DeletedMessagesStore.read(currentUserId ?? '');
+        return remote.where((m) => !hidden.contains(m.id)).toList();
+      },
       encode: (list) => CacheFirstLoader.encodeList(
         [for (final m in list) encodeMessage(m)],
       ),
@@ -78,4 +83,17 @@ class MessagesRepositoryImpl implements MessagesRepository {
   @override
   Future<ConversationEntity> startConversation(String recipientId) =>
       _remote.startConversation(recipientId);
+
+  @override
+  Future<void> deleteMessage(
+    String conversationId,
+    String messageId, {
+    String? currentUserId,
+  }) async {
+    await _remote.deleteMessage(conversationId, messageId);
+    final uid = currentUserId ?? '';
+    await DeletedMessagesStore.add(uid, messageId);
+    await ApiCacheStore.clear(MessagesLoadPerf.threadKey(uid, conversationId));
+    await ApiCacheStore.clear(MessagesLoadPerf.conversationsKey(uid));
+  }
 }
