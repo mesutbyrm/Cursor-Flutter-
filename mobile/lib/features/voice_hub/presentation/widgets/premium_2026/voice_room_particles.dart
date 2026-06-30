@@ -45,8 +45,8 @@ class _VoiceRoomParticlesState extends State<VoiceRoomParticles>
   }
 }
 
-class _ParticlesPainter extends CustomPainter {
-  _ParticlesPainter(this.field, this.tick) : super(repaint: tick);
+class _ParticlesPainter extends CustomPainter with PaintLayerDelegate {
+  _ParticlesPainter(this.field, this.tick);
 
   final PrecomputedDriftParticles field;
   final Animation<double> tick;
@@ -69,5 +69,5 @@ class _ParticlesPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _ParticlesPainter old) => true;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

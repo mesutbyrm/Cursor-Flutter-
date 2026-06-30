@@ -35,6 +35,12 @@ abstract final class AnimationPerf {
   }
 }
 
+/// paintLayer delegeleri — shouldRepaint tip güvenliği.
+mixin PaintLayerDelegate on CustomPainter {
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
 /// Scroll parallax — sayfa setState yerine yalnızca dinleyen katman rebuild olur.
 class ScrollParallaxNotifier extends ChangeNotifier {
   ScrollParallaxNotifier({this.threshold = AnimationPerf.scrollParallaxThreshold});
@@ -176,13 +182,15 @@ class FloatingEmojiPaintLayerState extends State<FloatingEmojiPaintLayer>
   Widget build(BuildContext context) {
     if (!widget.enabled) return const SizedBox.shrink();
     return IgnorePointer(
-      child: AnimationPerf.paintLayer(
-        repaint: _tick,
-        painter: _FloatEmojiPainter(
-          particles: _particles,
-          tick: _tick,
-          bottomFraction: widget.bottomFraction,
-          heightFraction: widget.heightFraction,
+      child: RepaintBoundary(
+        child: CustomPaint(
+          size: Size.infinite,
+          painter: _FloatEmojiPainter(
+            particles: _particles,
+            tick: _tick,
+            bottomFraction: widget.bottomFraction,
+            heightFraction: widget.heightFraction,
+          ),
         ),
       ),
     );
@@ -197,7 +205,7 @@ class _FloatEmoji {
   final double phase;
 }
 
-class _FloatEmojiPainter extends CustomPainter {
+class _FloatEmojiPainter extends CustomPainter with PaintLayerDelegate {
   _FloatEmojiPainter({
     required this.particles,
     required this.tick,
@@ -210,11 +218,15 @@ class _FloatEmojiPainter extends CustomPainter {
   final double bottomFraction;
   final double heightFraction;
 
+  static const _maxTextCacheEntries = 64;
   static final _textCache = <String, TextPainter>{};
 
   TextPainter _emojiPainter(String emoji, double fontSize, double opacity) {
     final bucket = (opacity * 8).floor().clamp(0, 8);
     final key = '$emoji@${fontSize.toStringAsFixed(0)}@$bucket';
+    if (_textCache.length > _maxTextCacheEntries) {
+      _textCache.clear();
+    }
     return _textCache.putIfAbsent(key, () {
       final alpha = bucket / 8;
       final tp = TextPainter(
@@ -246,10 +258,9 @@ class _FloatEmojiPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _FloatEmojiPainter old) => true;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-/// Önceden hesaplanmış yıldız alanı — paint() içinde Random yok.
 class StarPoint {
   const StarPoint({
     required this.x,
@@ -347,8 +358,11 @@ class _RepaintListenablePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) => delegate.paint(canvas, size);
 
   @override
-  bool shouldRepaint(covariant _RepaintListenablePainter old) =>
-      delegate.shouldRepaint(old.delegate);
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    if (oldDelegate is! _RepaintListenablePainter) return true;
+    if (oldDelegate.delegate.runtimeType != delegate.runtimeType) return true;
+    return delegate.shouldRepaint(oldDelegate.delegate);
+  }
 
   @override
   bool? hitTest(Offset position) => delegate.hitTest(position);

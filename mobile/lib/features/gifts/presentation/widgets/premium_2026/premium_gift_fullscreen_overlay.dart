@@ -12,6 +12,30 @@ import '../../../../live/presentation/gifts/widgets/floating_gift_particles.dart
 import '../gift_animation_player.dart';
 import 'gift_coin_burst_overlay.dart';
 
+/// Hediye tam ekran animasyonu — hata sesli odayı çökertmesin.
+class SafePremiumGiftFullscreenOverlay extends StatelessWidget {
+  const SafePremiumGiftFullscreenOverlay({
+    super.key,
+    this.event,
+    this.onDismissed,
+  });
+
+  final LiveGiftEvent? event;
+  final VoidCallback? onDismissed;
+
+  @override
+  Widget build(BuildContext context) {
+    if (event == null) return const SizedBox.shrink();
+    return RepaintBoundary(
+      child: PremiumGiftFullscreenOverlay(
+        key: ValueKey('gift-fs-${event!.id}'),
+        event: event,
+        onDismissed: onDismissed,
+      ),
+    );
+  }
+}
+
 /// TikTok Live — tam ekran hediye + combo + neon + parçacık + jeton.
 class PremiumGiftFullscreenOverlay extends StatefulWidget {
   const PremiumGiftFullscreenOverlay({

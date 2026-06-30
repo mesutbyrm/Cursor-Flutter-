@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.457+461 (2026-06-30)
+
+### Sesli oda — hediye animasyonu çökme düzeltmesi
+
+- **Kök neden:** `_RepaintListenablePainter` / `_FloatEmojiPainter` tip uyuşmazlığı hediye atınca oda arayüzünü düşürüyordu
+- **Düzeltme:** Emoji parçacık katmanı doğrudan CustomPaint; shouldRepaint tip güvenli
+- **Bellek:** Emoji TextPainter önbelleği sınırlandı (siyah ekran / yavaş açılış riski azaltıldı)
+- **SafePremiumGiftFullscreenOverlay:** Hediye katmanı RepaintBoundary ile izole
+
 ## 1.0.456+460 (2026-06-30)
 
 ### Mesajlar — WhatsApp tarzı + gelmeme düzeltmesi

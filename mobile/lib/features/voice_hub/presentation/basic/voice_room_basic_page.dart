@@ -785,7 +785,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
               onFinished: (id) =>
                   ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
             ),
-            PremiumGiftFullscreenOverlay(event: _fullscreenGift),
+            SafePremiumGiftFullscreenOverlay(event: _fullscreenGift),
             if (_showVipEntrance && user != null)
               VipEntranceOverlay(
                 tier: ref.watch(vipTierProvider),

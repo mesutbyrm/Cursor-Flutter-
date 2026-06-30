@@ -131,15 +131,19 @@ class _FxParticle {
   double life;
 }
 
-class _FxPainter extends CustomPainter {
+class _FxPainter extends CustomPainter with PaintLayerDelegate {
   _FxPainter(this.particles);
 
   final List<_FxParticle> particles;
 
+  static const _maxTextCacheEntries = 48;
   static final _textCache = <String, TextPainter>{};
 
   TextPainter _emoji(String emoji, double fontSize) {
     final key = '$emoji@${fontSize.toStringAsFixed(0)}';
+    if (_textCache.length > _maxTextCacheEntries) {
+      _textCache.clear();
+    }
     return _textCache.putIfAbsent(key, () {
       final tp = TextPainter(
         text: TextSpan(text: emoji, style: TextStyle(fontSize: fontSize)),
@@ -159,5 +163,5 @@ class _FxPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _FxPainter oldDelegate) => true;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
