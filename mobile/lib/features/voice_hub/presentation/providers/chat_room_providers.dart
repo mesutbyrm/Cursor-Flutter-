@@ -2505,6 +2505,12 @@ class VoiceRoomLiveController
         startPosition: sameTrack ? startPos : startPos,
       );
       _lastDjPlaybackSignature = sig;
+      // Sunucu akış üretemediyse (yt-dlp/Piped başarısız) oynatma sessizce
+      // başlamaz — kullanıcıya bildir ve sıradaki şarkıya geç.
+      if (!player.playback.value.playing &&
+          player.diagnostics.value.lastPhase == 'sync_verify_failed') {
+        unawaited(_handleUnplayableEmbed());
+      }
       return effectiveDj;
     }
 

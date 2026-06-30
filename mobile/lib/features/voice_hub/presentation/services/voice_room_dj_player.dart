@@ -462,7 +462,7 @@ class VoiceRoomDjPlayer {
         }
 
         final started = await handler.waitUntilPlaying(
-          timeout: const Duration(seconds: 90),
+          timeout: const Duration(seconds: 30),
           startupLogAt: const Duration(seconds: 3),
         );
         diagnostics.value = handler.diagnostics.copyWith(
