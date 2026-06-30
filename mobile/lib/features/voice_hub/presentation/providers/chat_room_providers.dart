@@ -97,10 +97,7 @@ final voiceRoomDjStreamLoaderProvider = Provider<VoiceRoomDjStreamLoader>((
 });
 
 final voiceRoomDjPlayerProvider = Provider<VoiceRoomDjPlayer>((ref) {
-  final p = VoiceRoomDjPlayer(
-    ref.watch(youtubeStreamResolverProvider),
-    ref.watch(voiceRoomDjStreamLoaderProvider),
-  );
+  final p = VoiceRoomDjPlayer();
   ref.onDispose(p.dispose);
   return p;
 });
@@ -637,6 +634,7 @@ class VoiceRoomLiveController
       if (VoiceRoomBasicMode.musicEnabled) {
         final player = ref.read(voiceRoomDjPlayerProvider);
         player.onTrackComplete = () => unawaited(_onDjTrackComplete());
+        player.onUnplayable = () => unawaited(_handleUnplayableEmbed());
         _wireMusicControls();
       }
       if (VoiceRoomBasicMode.premiumEnabled) {
@@ -649,6 +647,7 @@ class VoiceRoomLiveController
     _startGiftSocket();
     final player = ref.read(voiceRoomDjPlayerProvider);
     player.onTrackComplete = () => unawaited(_onDjTrackComplete());
+    player.onUnplayable = () => unawaited(_handleUnplayableEmbed());
     _wireMusicControls();
     unawaited(_loadGiftLeaderboard());
   }
@@ -902,12 +901,29 @@ class VoiceRoomLiveController
     String? videoId,
   }) {
     if (videoId != null && videoId.isNotEmpty) return true;
-    if (sync?.streamUrl?.trim().isNotEmpty == true) return true;
-    if (dj.musicUrl?.trim().isNotEmpty == true) return true;
-    if (dj.playbackResolveSeed?.trim().isNotEmpty == true) return true;
-    if (dj.youtubeFallbackSource?.trim().isNotEmpty == true) return true;
-    if (dj.nowPlaying?.youtubeUrl.trim().isNotEmpty == true) return true;
+    if (sync?.currentVideoId?.trim().isNotEmpty == true) return true;
+    if (dj.nowPlaying?.resolvedVideoId?.trim().isNotEmpty == true) return true;
     return false;
+  }
+
+  Future<void> _handleUnplayableEmbed() async {
+    _showMusicRequestFlashLine(
+      '⚠️ Bu şarkı çalınamıyor, lütfen başka bir şarkı deneyin.',
+    );
+    if (!_canControlMusic() && !_canStopMusic()) return;
+    try {
+      final result = await ref.read(chatRoomRemoteProvider).clearMusicQueue(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+          );
+      if (result.autoAdvanced) {
+        await refresh();
+      } else {
+        await _handleMusicStoppedFromSse();
+      }
+    } catch (_) {
+      await _handleMusicStoppedFromSse();
+    }
   }
 
   void _patchHubPresenceCount(int count) {
@@ -2364,7 +2380,6 @@ class VoiceRoomLiveController
     if (likes != null) {
       state = state.copyWith(musicLikeCount: likes);
     }
-    unawaited(ref.read(voiceRoomSseAudioPlayerProvider).handleDjEvent(map));
     final sync = RoomPlaybackSync.fromPayload(map);
     _syncRoomVideo(dj, sync: sync);
     final ui = ref.read(voiceRoomUiProvider);
@@ -2428,13 +2443,16 @@ class VoiceRoomLiveController
     }
 
     final effectiveDj = dj;
-    final videoId = YoutubeVideoId.fromDj(
-      currentVideoId: sync?.currentVideoId,
-      nowPlayingUrl: effectiveDj.nowPlaying?.youtubeUrl,
-    );
+    final videoId = YoutubeVideoId.normalize(
+          sync?.currentVideoId ?? effectiveDj.nowPlaying?.resolvedVideoId,
+        ) ??
+        YoutubeVideoId.fromDj(
+          currentVideoId: sync?.currentVideoId,
+          nowPlayingUrl: effectiveDj.nowPlaying?.youtubeUrl,
+        );
+    final withVideo = effectiveDj.nowPlaying?.isVideoRequest == true;
     final shouldPlay = (sync?.isPlaying ?? effectiveDj.playing) &&
         _hasDjPlayableSource(effectiveDj, sync: sync, videoId: videoId);
-    final withVideo = videoId != null;
     final startPos = Duration(
       milliseconds: VoicePlaybackLimits.clampPositionMs(
         sync?.resolvedPositionMs() ?? 0,
@@ -2443,7 +2461,7 @@ class VoiceRoomLiveController
     final sig = _djPlaybackSignature(effectiveDj, muted: muted);
     final sameTrack = sig == _lastDjPlaybackSignature;
 
-    if (shouldPlay) {
+    if (shouldPlay && videoId != null) {
       await VoiceRoomMusicAudioSession.activateForPlayback();
       if (withVideo) {
         _syncRoomVideo(effectiveDj, sync: sync);
@@ -2453,38 +2471,15 @@ class VoiceRoomLiveController
       if (!sameTrack) {
         await player.stop();
       }
-      final resolvedStream = await _resolveDjStreamUrl(effectiveDj, sync: sync);
-      var serverUrl = sync?.streamUrl ?? effectiveDj.musicUrl;
-      if (serverUrl != null &&
-          YoutubeStreamResolver.isYoutubeStreamApiUrl(serverUrl)) {
-        serverUrl = resolvedStream;
-      }
-      final audioOk = await player.sync(
-        musicUrl: resolvedStream ?? effectiveDj.musicUrl,
-        resolveSeed: effectiveDj.playbackResolveSeed,
-        fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
+      await player.sync(
         nowPlaying: effectiveDj.nowPlaying,
         playing: true,
         muted: muted,
-        serverStreamUrl: resolvedStream ?? serverUrl,
-        preResolvedStream: resolvedStream,
-        startPosition: sameTrack ? startPos : startPos,
+        startPosition: startPos,
+        videoId: videoId,
+        withVideo: withVideo,
+        musicUrl: sync?.embedUrl ?? effectiveDj.musicUrl,
       );
-      if (!audioOk && resolvedStream == null && effectiveDj.nowPlaying != null) {
-        VoiceRoomDebugLog.musicError(
-          phase: 'applyDjPlayback.unresolved',
-          url: effectiveDj.musicUrl,
-          videoId: ChatRoomDjState.videoIdFromLoose(
-            effectiveDj.nowPlaying!.youtubeUrl,
-          ),
-        );
-      }
-      if (!audioOk && withVideo) {
-        VoiceRoomDebugLog.log('music.audio_failed_video_only', {
-          'room': _roomKey,
-          'videoId': videoId,
-        });
-      }
       _lastDjPlaybackSignature = sig;
       return effectiveDj;
     }

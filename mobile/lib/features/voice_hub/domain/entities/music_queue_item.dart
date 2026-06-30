@@ -16,6 +16,8 @@ class MusicQueueItem extends Equatable {
     this.duration,
     this.requestType,
     this.withVideo = false,
+    this.videoIdField,
+    this.embedUrl,
   });
 
   factory MusicQueueItem.fromJson(Map<String, dynamic> json) {
@@ -49,6 +51,8 @@ class MusicQueueItem extends Equatable {
       duration: json['duration']?.toString(),
       requestType: _parseRequestType(json),
       withVideo: _isVideoRequest(json),
+      videoIdField: videoId,
+      embedUrl: json['embedUrl']?.toString(),
     );
   }
 
@@ -81,8 +85,19 @@ class MusicQueueItem extends Equatable {
   final String? duration;
   final String? requestType;
   final bool withVideo;
+  final String? videoIdField;
+  final String? embedUrl;
 
   bool get isVideoRequest => requestType == 'video' || withVideo;
+
+  /// YouTube video kimliği — SSE `videoId` veya watch URL'den.
+  String? get resolvedVideoId {
+    final direct = videoIdField?.trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+    final match = RegExp(r'(?:v=|youtu\.be/|embed/)([A-Za-z0-9_-]{6,})')
+        .firstMatch(youtubeUrl);
+    return match?.group(1);
+  }
   bool get isAudioRequest => requestType == 'audio' || !isVideoRequest;
 
   /// İstemci video isteği gönderdiğinde sunucu bayrağı eksikse tamamlar.
@@ -101,6 +116,8 @@ class MusicQueueItem extends Equatable {
       duration: duration,
       requestType: 'video',
       withVideo: true,
+      videoIdField: videoIdField ?? resolvedVideoId,
+      embedUrl: embedUrl,
     );
   }
 
@@ -125,6 +142,8 @@ class MusicQueueItem extends Equatable {
         duration,
         requestType,
         withVideo,
+        videoIdField,
+        embedUrl,
       ];
 }
 

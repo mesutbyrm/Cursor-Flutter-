@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.452+456 (2026-06-26)
+
+### Sesli oda müzik — YouTube IFrame embed
+
+- **youtube_player_iframe:** stream / yt-dlp / googlevideo çözümleme kaldırıldı; tek `YoutubePlayerController`
+- **SSE senkron:** `videoId` + `elapsedSeconds` ile `loadVideoById(startSeconds: …)` — geç katılan kaldığı saniyeden başlar
+- **Aynı videoId:** oynatıcı yeniden yüklenmez (yeniden başlamaz)
+- **Ses modu:** 1×1 görünmez embed; **video modu:** koltuk altı şerit
+- **Çalınamayan video:** uyarı + yetkili ise `DELETE /music` ile sıradaki
+
 ## 1.0.451+455 (2026-06-26)
 
 ### Admin — ödeme talepleri

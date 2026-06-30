@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../presentation/services/voice_room_dj_player.dart';
+import '../../../presentation/providers/chat_room_providers.dart';
 import '../../../video/presentation/room_video_controller.dart';
-import '../../../video/presentation/widgets/youtube_video_background.dart';
+import 'voice_room_youtube_embed_host.dart';
 
-/// Koltukların hemen altında tam genişlik, kenarsız YouTube oynatıcı.
+/// Koltuk altı video şeridi + ses modunda görünmez embed oynatıcı.
 class VoiceRoomSeatVideoStrip extends ConsumerWidget {
   const VoiceRoomSeatVideoStrip({
     super.key,
@@ -16,42 +18,36 @@ class VoiceRoomSeatVideoStrip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final video = ref.watch(roomVideoControllerProvider(roomKey));
-    if (!video.hasActiveVideo) return const SizedBox.shrink();
+    final player = ref.watch(voiceRoomDjPlayerProvider);
 
-    final width = MediaQuery.sizeOf(context).width;
-    final height = (width * 9 / 16).clamp(52.0, 96.0);
+    return ValueListenableBuilder<VoiceRoomEmbedUiState>(
+      valueListenable: player.embedUi,
+      builder: (context, ui, _) {
+        final hasTrack = ui.videoId?.trim().isNotEmpty == true;
+        if (!hasTrack && !video.hasActiveVideo) {
+          return const SizedBox.shrink();
+        }
 
-    return SizedBox(
-      width: width,
-      height: height,
-      child: ClipRect(
-        child: OverflowBox(
-          alignment: Alignment.center,
-          minWidth: width,
-          maxWidth: width,
-          minHeight: height,
-          maxHeight: height,
-          child: SizedBox(
+        if (video.hasActiveVideo && ui.showVideo) {
+          final width = MediaQuery.sizeOf(context).width;
+          final height = (width * 9 / 16).clamp(52.0, 96.0);
+          return SizedBox(
             width: width,
             height: height,
-            child: _SeatVideoPlayer(roomKey: roomKey),
-          ),
-        ),
-      ),
-    );
-  }
-}
+            child: ClipRect(
+              child: VoiceRoomYoutubeEmbedHost(
+                roomKey: roomKey,
+                compact: true,
+              ),
+            ),
+          );
+        }
 
-class _SeatVideoPlayer extends ConsumerWidget {
-  const _SeatVideoPlayer({required this.roomKey});
-
-  final String roomKey;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return YoutubeVideoBackground(
-      roomKey: roomKey,
-      compact: true,
+        return VoiceRoomYoutubeEmbedHost(
+          roomKey: roomKey,
+          compact: false,
+        );
+      },
     );
   }
 }

@@ -1,217 +1,111 @@
 import 'dart:async';
 
-import 'package:audio_service/audio_service.dart' as audio;
 import 'package:flutter/foundation.dart';
-import 'package:just_audio/just_audio.dart' as ja;
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
-import '../../../../core/config/env.dart';
 import '../../data/services/voice_room_debug_log.dart';
-import '../../data/services/voice_room_music_pipeline_log.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
-import '../../data/youtube_stream_resolver.dart';
 import '../../domain/entities/music_queue_item.dart';
-import '../../domain/voice_playback_limits.dart';
-import '../audio/voice_room_dj_stream_loader.dart';
+import '../../video/domain/youtube_video_id.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import 'voice_room_music_control_delegate.dart';
 
-/// Oda arka plan müziği — DJ API `musicUrl` ile senkron (web iframe yerine stream).
-///
-/// Yığın: [just_audio] + [audio_service] (just_audio_background ile aynı bildirim modeli).
+/// Oda müziği — tek YouTube IFrame oynatıcı (stream / yt-dlp yok).
 class VoiceRoomDjPlayer {
-  VoiceRoomDjPlayer(this._resolver, this._streamLoader);
+  YoutubePlayerController? _controller;
+  StreamSubscription<YoutubePlayerValue>? _valueSub;
+  StreamSubscription<YoutubeVideoState>? _videoStateSub;
+  Timer? _progressTimer;
+  String? _loadedVideoId;
+  var _showVideo = false;
+  var _muted = false;
+  void Function()? _onTrackComplete;
+  void Function()? _onUnplayable;
 
-  final YoutubeStreamResolver _resolver;
-  final VoiceRoomDjStreamLoader _streamLoader;
-  Future<VoiceRoomAudioHandler>? _handlerFuture;
-  VoiceRoomAudioHandler? _handler;
   final ValueNotifier<VoiceRoomDjPlayback> playback =
       ValueNotifier(const VoiceRoomDjPlayback());
   final ValueNotifier<VoiceRoomMusicDiagnostics> diagnostics =
       ValueNotifier(const VoiceRoomMusicDiagnostics());
-  String? _currentKey;
-  String? _currentVideoId;
-  bool _muted = false;
-  void Function()? _onTrackComplete;
-  StreamSubscription<VoiceRoomDjPlayback>? _playbackSub;
+  final ValueNotifier<VoiceRoomEmbedUiState> embedUi =
+      ValueNotifier(const VoiceRoomEmbedUiState());
+
   VoiceRoomMusicControlDelegate? controlDelegate;
+
+  YoutubePlayerController get youtubeController => _ensureController();
+
+  bool get showVideo => _showVideo;
+
+  String? get loadedVideoId => _loadedVideoId;
 
   void Function()? get onTrackComplete => _onTrackComplete;
 
-  set onTrackComplete(void Function()? value) {
-    _onTrackComplete = value;
-    _handler?.onTrackComplete = value;
-  }
+  set onTrackComplete(void Function()? value) => _onTrackComplete = value;
 
-  Future<VoiceRoomAudioHandler> _ensureHandler() {
-    final existing = _handlerFuture;
+  set onUnplayable(void Function()? value) => _onUnplayable = value;
+
+  YoutubePlayerController _ensureController() {
+    final existing = _controller;
     if (existing != null) return existing;
-    return _handlerFuture = _initHandler();
-  }
 
-  Future<VoiceRoomAudioHandler?> _handlerIfReady() async {
-    final existing = _handler;
-    if (existing != null) return existing;
-    final pending = _handlerFuture;
-    if (pending == null) return null;
-    try {
-      return await pending;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<VoiceRoomAudioHandler> _initHandler() async {
-    await VoiceRoomMusicAudioSession.ensureConfigured();
-    try {
-      final handler = await audio.AudioService.init(
-        builder: () => VoiceRoomAudioHandler(
-          onTrackComplete: _onTrackComplete,
-          delegateProvider: () => controlDelegate,
-        ),
-        config: const audio.AudioServiceConfig(
-          androidNotificationChannelId: 'com.mesutbyrm.canlifal.voice_music',
-          androidNotificationChannelName: 'Canlifal sesli oda müziği',
-          androidNotificationChannelDescription:
-              'Sesli sohbet odası DJ müziği ve medya kontrolleri',
-          androidStopForegroundOnPause: false,
-          preloadArtwork: true,
-          fastForwardInterval: Duration(seconds: 10),
-          rewindInterval: Duration(seconds: 10),
-        ),
-      );
-      _wireHandler(handler);
-      return handler;
-    } catch (e, st) {
-      VoiceRoomDebugLog.musicError(
-        phase: 'AudioService.init',
-        error: e,
-      );
-      debugPrint('AudioService.init fallback: $e\n$st');
-      final handler = VoiceRoomAudioHandler(
-        onTrackComplete: _onTrackComplete,
-        delegateProvider: () => controlDelegate,
-      );
-      _wireHandler(handler);
-      return handler;
-    }
-  }
-
-  void _wireHandler(VoiceRoomAudioHandler handler) {
-    _handler = handler;
-    handler.onDiagnosticsChanged = (value) {
-      diagnostics.value = value;
-    };
-    _playbackSub?.cancel();
-    _playbackSub = handler.playbackValueStream.listen((value) {
-      playback.value = value;
-    });
-  }
-
-  /// Sunucu yt-dlp / stream URL — doğrudan oynat (YouTube çözümleme yok).
-  Future<bool> playServerStream({
-    required String streamUrl,
-    required bool playing,
-    Duration startPosition = Duration.zero,
-    MusicQueueItem? nowPlaying,
-    bool muted = false,
-    String? videoId,
-  }) async {
-    _muted = muted;
-    if (!playing) {
-      await stop();
-      return false;
-    }
-    final resolvedVideoId = videoId ??
-        VoiceRoomMusicPipelineLog.videoIdFromUrl(nowPlaying?.youtubeUrl ?? '') ??
-        ChatRoomDjState.videoIdFromLoose(streamUrl);
-    var url = streamUrl.trim();
-    if (YoutubeStreamResolver.needsResolveBeforePlay(url)) {
-      final resolved = await _resolveSource(url);
-      if (resolved == null || !resolved.startsWith('http')) {
-        VoiceRoomDebugLog.musicError(
-          phase: 'playServerStream.unresolved',
-          url: url,
-          videoId: resolvedVideoId,
-        );
-        return false;
-      }
-      url = resolved.trim();
-    }
-    if (YoutubeStreamResolver.isYoutubeStreamApiUrl(url)) {
-      VoiceRoomDebugLog.musicError(
-        phase: 'playServerStream.unresolved_api',
-        url: url,
-        videoId: resolvedVideoId,
-      );
-      return false;
-    }
-    if (!url.startsWith('http')) {
-      VoiceRoomMusicPipelineLog.nullMusicUrl(
-        reason: 'playServerStream_invalid_url',
-        caller: 'VoiceRoomDjPlayer.playServerStream',
-        detail: streamUrl,
-      );
-      VoiceRoomDebugLog.musicError(
-        phase: 'playServerStream_invalid_url',
-        url: streamUrl,
-        videoId: resolvedVideoId,
-      );
-      return false;
-    }
-
-    final handlerReady = await _handlerIfReady();
-    if (resolvedVideoId != null &&
-        resolvedVideoId.isNotEmpty &&
-        resolvedVideoId == _currentVideoId &&
-        handlerReady != null &&
-        handlerReady.isPlaying &&
-        !_muted) {
-      VoiceRoomDebugLog.log('music.player.same_track', {
-        'videoId': resolvedVideoId,
-      });
-      if (startPosition > Duration.zero) {
-        await handlerReady.seek(startPosition);
-      }
-      return true;
-    }
-
-    VoiceRoomMusicPipelineLog.beforeSetAudioSource(
-      sourceUrl: url,
-      sourceType: 'server_stream',
-      metadataTitle: nowPlaying?.title,
+    final ctrl = YoutubePlayerController(
+      params: const YoutubePlayerParams(
+        mute: false,
+        showControls: false,
+        showFullscreenButton: false,
+        enableCaption: false,
+        playsInline: true,
+        strictRelatedVideos: true,
+        loop: false,
+      ),
     );
-    await VoiceRoomMusicAudioSession.ensureConfigured();
-    final playable = await _streamLoader.preparePlaybackSource(url);
-    if (playable == null || playable.isEmpty) return false;
-    final targets = await _streamLoader.buildPlaybackTargets(playable);
-    if (targets.isEmpty) return false;
-    final handler = await _ensureHandler();
-    final ok = await _attemptPlay(
-      handler: handler,
-      targets: targets,
-      nowPlaying: nowPlaying,
-      musicUrl: url,
-      candidate: streamUrl,
-      videoId: resolvedVideoId,
+    _controller = ctrl;
+    _valueSub = ctrl.listen(_onYoutubeValue);
+    _videoStateSub = ctrl.videoStateStream.listen(_onVideoState);
+    return ctrl;
+  }
+
+  void _onYoutubeValue(YoutubePlayerValue value) {
+    if (value.hasError) {
+      _handleUnplayable(value.error);
+      return;
+    }
+
+    final playing = value.playerState == PlayerState.playing ||
+        value.playerState == PlayerState.buffering;
+    playback.value = playback.value.copyWith(playing: playing);
+
+    if (value.playerState == PlayerState.ended) {
+      VoiceRoomDebugLog.log('music.embed.ended', {'videoId': _loadedVideoId});
+      _onTrackComplete?.call();
+    }
+  }
+
+  void _onVideoState(YoutubeVideoState state) {
+    final durationMs = _controller?.metadata.duration.inMilliseconds ?? 0;
+    playback.value = playback.value.copyWith(
+      position: state.position,
+      duration: durationMs > 0
+          ? Duration(milliseconds: durationMs)
+          : playback.value.duration,
     );
-    if (ok && startPosition > Duration.zero) {
-      await handler.seek(startPosition);
-    }
-    return ok;
   }
 
-  static String? _absolutizeStreamUrl(String? raw) {
-    final trimmed = raw?.trim() ?? '';
-    if (trimmed.isEmpty) return null;
-    if (trimmed.startsWith('http')) return trimmed;
-    if (trimmed.startsWith('/')) {
-      final base = Env.apiBaseUrl.replaceAll(RegExp(r'/$'), '');
-      return '$base$trimmed';
-    }
-    return null;
+  void _handleUnplayable(Object? error) {
+    VoiceRoomDebugLog.musicError(phase: 'embed.unplayable', error: error);
+    embedUi.value = embedUi.value.copyWith(unplayable: true);
+    diagnostics.value = diagnostics.value.copyWith(
+      lastError: 'Bu şarkı çalınamıyor',
+      lastPhase: 'unplayable',
+    );
+    unawaited(_controller?.pauseVideo());
+    _onUnplayable?.call();
   }
 
+  void clearUnplayable() {
+    embedUi.value = embedUi.value.copyWith(unplayable: false);
+  }
+
+  /// SSE / DJ senkron — `videoId` + `startSeconds` (elapsedSeconds).
   Future<bool> sync({
     String? musicUrl,
     String? resolveSeed,
@@ -222,438 +116,239 @@ class VoiceRoomDjPlayer {
     String? serverStreamUrl,
     String? preResolvedStream,
     Duration? startPosition,
+    String? videoId,
+    bool withVideo = false,
   }) async {
-    final direct = _absolutizeStreamUrl(serverStreamUrl ?? musicUrl);
-    if (direct != null && direct.startsWith('http')) {
-      if (YoutubeStreamResolver.isYoutubeStreamApiUrl(direct)) {
-        final resolved = await _resolveSource(direct);
-        if (resolved != null &&
-            resolved.startsWith('http') &&
-            !YoutubeStreamResolver.isYoutubeStreamApiUrl(resolved)) {
-          return playServerStream(
-            streamUrl: resolved,
-            playing: playing,
-            startPosition: startPosition ?? Duration.zero,
-            nowPlaying: nowPlaying,
-            muted: muted,
-            videoId: ChatRoomDjState.videoIdFromLoose(direct),
-          );
-        }
-      } else if (!ChatRoomDjState.isEphemeralStreamUrl(direct)) {
-        final ok = await playServerStream(
-          streamUrl: direct,
-          playing: playing,
-          startPosition: startPosition ?? Duration.zero,
-          nowPlaying: nowPlaying,
-          muted: muted,
-        );
-        if (ok) return true;
-      }
-    }
     _muted = muted;
+    _showVideo = withVideo;
 
     if (!playing) {
       await stop();
       return false;
     }
 
-    await VoiceRoomMusicAudioSession.ensureConfigured();
+    final id = YoutubeVideoId.normalize(
+          videoId ??
+              nowPlaying?.resolvedVideoId ??
+              ChatRoomDjState.videoIdFromLoose(
+                musicUrl ?? serverStreamUrl ?? fallbackYoutubeUrl ?? '',
+              ),
+        ) ??
+        YoutubeVideoId.normalize(nowPlaying?.youtubeUrl);
 
-    Future<bool> tryDirect(String url, {String? videoId}) async {
-      if (YoutubeStreamResolver.isYoutubeStreamApiUrl(url) ||
-          YoutubeStreamResolver.isYoutubePageUrl(url)) {
-        return false;
-      }
-      return playServerStream(
-        streamUrl: url,
-        playing: true,
-        startPosition: startPosition ?? Duration.zero,
-        nowPlaying: nowPlaying,
-        muted: muted,
-        videoId: videoId,
+    if (id == null || id.isEmpty) {
+      VoiceRoomDebugLog.musicError(
+        phase: 'embed.missing_video_id',
+        url: musicUrl,
       );
-    }
-
-    final pre = preResolvedStream?.trim();
-    if (pre != null && pre.isNotEmpty) {
-      if (await tryDirect(
-        pre,
-        videoId: ChatRoomDjState.videoIdFromLoose(pre),
-      )) {
-        return true;
-      }
-    }
-
-    if (direct != null && direct.startsWith('http')) {
-      if (YoutubeStreamResolver.isYoutubeStreamApiUrl(direct)) {
-        final resolved = await _resolveSource(direct);
-        if (resolved != null &&
-            resolved.startsWith('http') &&
-            !YoutubeStreamResolver.isYoutubeStreamApiUrl(resolved) &&
-            await tryDirect(
-              resolved,
-              videoId: ChatRoomDjState.videoIdFromLoose(direct),
-            )) {
-          return true;
-        }
-      } else if (await tryDirect(
-        direct,
-        videoId: ChatRoomDjState.videoIdFromLoose(direct),
-      )) {
-        return true;
-      }
-    }
-
-    final handler = await _ensureHandler();
-
-    final candidates = <String>[];
-    void addCandidate(String? url) {
-      final trimmed = url?.trim();
-      if (trimmed == null || trimmed.isEmpty) return;
-      if (ChatRoomDjState.isEphemeralStreamUrl(trimmed)) return;
-      if (YoutubeStreamResolver.isYoutubeStreamApiUrl(trimmed)) return;
-      if (!candidates.contains(trimmed)) candidates.add(trimmed);
-    }
-
-    addCandidate(pre);
-    addCandidate(resolveSeed);
-    addCandidate(fallbackYoutubeUrl);
-    if (nowPlaying != null) {
-      addCandidate(nowPlaying.youtubeUrl);
-      final videoId = VoiceRoomMusicPipelineLog.videoIdFromUrl(
-            nowPlaying.youtubeUrl,
-          ) ??
-          ChatRoomDjState.videoIdFromLoose(nowPlaying.youtubeUrl);
-      if (videoId != null) {
-        addCandidate('https://www.youtube.com/watch?v=$videoId');
-      }
-    }
-    addCandidate(musicUrl);
-    addCandidate(serverStreamUrl);
-
-    if (candidates.isEmpty) {
-      VoiceRoomMusicPipelineLog.nullMusicUrl(
-        reason: 'sync_no_candidates_use_server_stream',
-        caller: 'VoiceRoomDjPlayer.sync',
-        playing: playing,
-        hasNowPlaying: nowPlaying != null,
-      );
+      await stop();
       return false;
     }
 
-    for (var attempt = 0; attempt < 2; attempt++) {
-      if (attempt > 0) {
-        for (final c in candidates) {
-          _resolver.invalidate(c);
-          _streamLoader.invalidate(c);
-        }
-        await Future<void>.delayed(const Duration(milliseconds: 400));
-      }
+    await VoiceRoomMusicAudioSession.ensureConfigured();
+    await VoiceRoomMusicAudioSession.activateForPlayback();
 
-      for (final candidate in candidates) {
-        final resolved = await _resolveSource(candidate);
-        if (resolved == null || resolved.isEmpty) continue;
+    final startSec =
+        (startPosition?.inSeconds ?? 0).toDouble().clamp(0.0, 86400.0);
+    final ctrl = _ensureController();
 
-        final playable = await _streamLoader.preparePlaybackSource(resolved);
-        if (playable == null || playable.isEmpty) continue;
+    embedUi.value = VoiceRoomEmbedUiState(
+      showVideo: withVideo,
+      videoId: id,
+      unplayable: false,
+    );
 
-        final targets = await _streamLoader.buildPlaybackTargets(playable);
-        if (targets.isEmpty) continue;
-
-        if (await _attemptPlay(
-          handler: handler,
-          targets: targets,
-          nowPlaying: nowPlaying,
-          musicUrl: musicUrl,
-          candidate: candidate,
-          videoId: ChatRoomDjState.videoIdFromLoose(candidate),
-        )) {
-          if (startPosition != null && startPosition > Duration.zero) {
-            await handler.seek(startPosition);
-          }
-          return true;
-        }
-      }
-    }
-
-    debugPrint('DJ: oynatılamadı — sunucu stream gerekli');
-    return false;
-  }
-
-  Future<String?> _resolveSource(String musicUrl) async {
-    final trimmed = musicUrl.trim();
-    if (ChatRoomDjState.isEphemeralStreamUrl(trimmed)) {
-      final watch = ChatRoomDjState.youtubePlaybackSeed(trimmed);
-      if (watch != null) return _resolver.resolvePlayableUrl(watch);
-      return null;
-    }
-    if (trimmed.contains('/api/chat/youtube-audio')) {
-      return trimmed;
-    }
-    if (YoutubeStreamResolver.isYoutubeStreamApiUrl(trimmed)) {
-      final absolute = _absolutizeStreamUrl(trimmed) ?? trimmed;
-      return _resolver.resolvePlayableUrl(absolute);
-    }
-    if (trimmed.startsWith('/')) {
-      final absolute = _absolutizeStreamUrl(trimmed);
-      if (absolute == null) return null;
-      if (YoutubeStreamResolver.isYoutubeStreamApiUrl(absolute)) {
-        return _resolver.resolvePlayableUrl(absolute);
-      }
-      if (YoutubeStreamResolver.needsResolveBeforePlay(absolute)) {
-        return _resolver.resolvePlayableUrl(absolute);
-      }
-      return absolute;
-    }
-    return _resolver.resolvePlayableUrl(trimmed);
-  }
-
-  Future<bool> _attemptPlay({
-    required VoiceRoomAudioHandler handler,
-    required List<String> targets,
-    required MusicQueueItem? nowPlaying,
-    required String? musicUrl,
-    required String candidate,
-    String? videoId,
-  }) async {
-    final startedAt = DateTime.now();
-    for (final target in targets) {
-      if (_currentKey == target &&
-          videoId != null &&
-          videoId.isNotEmpty &&
-          videoId == _currentVideoId &&
-          handler.isPlaying &&
-          !_muted) {
-        await handler.publishMediaSessionIfNeeded();
-        return true;
-      }
-      try {
-        await VoiceRoomMusicAudioSession.activateForPlayback();
-        _currentKey = target;
-        _currentVideoId = videoId;
-        VoiceRoomMusicPipelineLog.playEntered(sourceUrl: target);
-        await handler.playSource(
-          target,
-          metadata: VoiceRoomAudioMetadata.fromQueueItem(
-            nowPlaying,
-            fallbackUrl: candidate,
-          ),
-          inputMusicUrl: musicUrl,
-          candidateLabel: candidate,
-          deferMediaSession: true,
-        );
-        await handler.setVolume(_muted ? 0.0 : 1.0);
-
-        final elapsedMs = DateTime.now().difference(startedAt).inMilliseconds;
-        if (elapsedMs >= 3000 && !handler.isPlaying) {
-          VoiceRoomMusicPipelineLog.playResult(
-            started: false,
-            url: target,
-            processingState: handler.diagnostics.processingState,
-            playing: handler.isPlaying,
-            durationMs: handler.currentDurationMs,
-            detail: 'startup_3s_no_audio',
-          );
-          VoiceRoomDebugLog.musicError(
-            phase: 'startup_3s_no_audio',
-            url: target,
-            videoId: videoId,
-          );
-        }
-
-        final started = await handler.waitUntilPlaying(
-          timeout: const Duration(seconds: 90),
-          startupLogAt: const Duration(seconds: 3),
-        );
-        diagnostics.value = handler.diagnostics.copyWith(
-          serverMusicUrl: musicUrl,
-          playbackSource: candidate,
-          resolvedStreamUrl: target,
-          muted: _muted,
-          lastPhase: started ? 'sync_ok' : 'sync_verify_failed',
-        );
-        if (started) {
-          await handler.publishMediaSessionIfNeeded();
-          VoiceRoomDebugLog.musicStart(
-            videoId: videoId,
-            title: nowPlaying?.title,
-            streamUrl: target,
-          );
-          debugPrint('DJ play ok: $target');
-          return true;
-        }
-        _currentKey = null;
-        _currentVideoId = null;
-        await handler.invalidateLoadedSource();
-        VoiceRoomMusicPipelineLog.playResult(
-          started: false,
-          url: target,
-          processingState: handler.diagnostics.processingState,
-          playing: handler.isPlaying,
-          durationMs: handler.currentDurationMs,
-          detail: 'waitUntilPlaying_failed',
-        );
-        VoiceRoomDebugLog.musicError(
-          phase: 'waitUntilPlaying_failed',
-          url: target,
-          videoId: videoId,
-        );
-      } on ja.PlayerException catch (e, st) {
-        VoiceRoomMusicPipelineLog.justAudioError(
-          e,
-          st,
-          phase: 'sync_PlayerException',
-          url: target,
-        );
-        VoiceRoomDebugLog.musicError(
-          phase: 'sync_PlayerException',
-          error: e,
-          url: target,
-          videoId: videoId,
-        );
-        debugPrint('DJ play error ($target): $e');
-        _currentKey = null;
-        _currentVideoId = null;
-        await handler.invalidateLoadedSource();
-      } catch (e, st) {
-        VoiceRoomMusicPipelineLog.justAudioError(
-          e,
-          st,
-          phase: 'sync',
-          url: target,
-        );
-        VoiceRoomDebugLog.musicError(
-          phase: 'sync',
-          error: e,
-          url: target,
-          videoId: videoId,
-        );
-        debugPrint('DJ play error ($target): $e');
-        _currentKey = null;
-        _currentVideoId = null;
-        await handler.invalidateLoadedSource();
-      }
-    }
-    return false;
-  }
-
-  Future<void> setMuted(bool muted) async {
-    _muted = muted;
-    try {
-      final handler = await _handlerIfReady();
-      if (handler == null) return;
-      await handler.setVolume(muted ? 0.0 : 1.0);
+    if (_loadedVideoId == id) {
       if (muted) {
-        await handler.pauseLocal();
-      } else if (_currentKey != null) {
-        await handler.playLocal();
+        await ctrl.mute();
+      } else {
+        await ctrl.unMute();
       }
-    } catch (e) {
-      debugPrint('DJ mute: $e');
+      final currentSec = playback.value.position.inSeconds.toDouble();
+      if ((startSec - currentSec).abs() > 2.5) {
+        await ctrl.seekTo(seconds: startSec.toDouble(), allowSeekAhead: true);
+      }
+      if (ctrl.value.playerState != PlayerState.playing &&
+          ctrl.value.playerState != PlayerState.buffering) {
+        await ctrl.playVideo();
+      }
+      diagnostics.value = diagnostics.value.copyWith(
+        playbackSource: 'embed:$id',
+        isPlaying: true,
+        muted: muted,
+        lastPhase: 'embed_resync',
+      );
+      return true;
     }
+
+    _loadedVideoId = id;
+    clearUnplayable();
+    VoiceRoomDebugLog.log('music.embed.load', {
+      'videoId': id,
+      'startSec': startSec,
+      'withVideo': withVideo,
+    });
+
+    await ctrl.loadVideoById(videoId: id, startSeconds: startSec.toDouble());
+    if (muted) {
+      await ctrl.mute();
+    } else {
+      await ctrl.unMute();
+    }
+
+    diagnostics.value = diagnostics.value.copyWith(
+      playbackSource: 'embed:$id',
+      isPlaying: true,
+      muted: muted,
+      lastPhase: 'embed_load',
+      serverMusicUrl: musicUrl,
+    );
+    return true;
+  }
+
+  Future<bool> playServerStream({
+    required String streamUrl,
+    required bool playing,
+    Duration startPosition = Duration.zero,
+    MusicQueueItem? nowPlaying,
+    bool muted = false,
+    String? videoId,
+  }) {
+    return sync(
+      musicUrl: streamUrl,
+      nowPlaying: nowPlaying,
+      playing: playing,
+      muted: muted,
+      startPosition: startPosition,
+      videoId: videoId,
+      withVideo: nowPlaying?.isVideoRequest == true,
+    );
   }
 
   Future<void> pauseLocal() async {
-    try {
-      final handler = await _handlerIfReady();
-      if (handler == null) return;
-      await handler.pauseLocal();
-    } catch (e) {
-      debugPrint('DJ pauseLocal: $e');
-    }
-  }
-
-  Future<void> pause() async {
-    try {
-      final handler = await _handlerIfReady();
-      if (handler == null) return;
-      await handler.pauseLocal();
-    } catch (e) {
-      debugPrint('DJ pause: $e');
-    }
+    await _controller?.pauseVideo();
+    playback.value = playback.value.copyWith(playing: false);
   }
 
   Future<void> resumeLocal() async {
-    if (_currentKey == null) return;
-    try {
-      await VoiceRoomMusicAudioSession.activateForPlayback();
-      final handler = await _handlerIfReady() ?? await _ensureHandler();
-      await handler.setVolume(_muted ? 0.0 : 1.0);
-      await handler.playLocal();
-    } catch (e) {
-      debugPrint('DJ resumeLocal: $e');
-    }
-  }
-
-  Future<void> resume() async => resumeLocal();
-
-  Future<void> seekTo(Duration position) async {
-    try {
-      final handler = await _handlerIfReady();
-      if (handler == null) return;
-      await handler.seek(position);
-    } catch (e) {
-      debugPrint('DJ seekTo: $e');
-    }
-  }
-
-  Future<void> setVolumeLevel(double volume) async {
-    final clamped = volume.clamp(0.0, 1.0);
-    _muted = clamped <= 0;
-    try {
-      final handler = await _handlerIfReady();
-      if (handler == null) return;
-      await handler.setVolume(clamped);
-    } catch (e) {
-      debugPrint('DJ setVolume: $e');
-    }
+    await _controller?.playVideo();
   }
 
   Future<void> seekToStart() async {
-    try {
-      final handler = await _handlerIfReady();
-      if (handler == null) return;
-      await handler.seek(Duration.zero);
-    } catch (e) {
-      debugPrint('DJ seekToStart: $e');
+    await _controller?.seekTo(seconds: 0, allowSeekAhead: true);
+  }
+
+  Future<bool> setMuted(bool muted) async {
+    _muted = muted;
+    final ctrl = _controller;
+    if (ctrl == null) return true;
+    if (muted) {
+      await ctrl.mute();
+    } else {
+      await ctrl.unMute();
     }
+    diagnostics.value = diagnostics.value.copyWith(muted: muted);
+    return true;
+  }
+
+  /// Web müzik barı ses kaydırıcısı — 0 = mute, >0 = unmute.
+  Future<void> setVolumeLevel(double level) async {
+    await setMuted(level <= 0.01);
   }
 
   Future<void> stop() async {
-    _currentKey = null;
-    _currentVideoId = null;
-    _muted = false;
-    VoiceRoomDebugLog.musicStop(reason: 'player.stop');
+    _progressTimer?.cancel();
+    _loadedVideoId = null;
+    _showVideo = false;
+    embedUi.value = const VoiceRoomEmbedUiState();
+    final ctrl = _controller;
+    if (ctrl != null) {
+      await ctrl.pauseVideo();
+      await ctrl.stopVideo();
+    }
     playback.value = const VoiceRoomDjPlayback();
-    diagnostics.value = const VoiceRoomMusicDiagnostics();
-    try {
-      final handler = await _handlerIfReady();
-      if (handler == null) return;
-      await handler.stop();
-    } catch (_) {}
+    diagnostics.value = diagnostics.value.copyWith(
+      isPlaying: false,
+      lastPhase: 'stopped',
+    );
   }
 
   Future<void> shutdown() async {
-    VoiceRoomMusicPipelineLog.audioService(
-      action: 'shutdown.before',
-      playing: playback.value.playing,
-      processingState: diagnostics.value.lastPhase,
-    );
-    controlDelegate = null;
-    onTrackComplete = null;
     await stop();
-    try {
-      await audio.AudioService.stop();
-    } catch (_) {}
-    VoiceRoomMusicPipelineLog.audioService(action: 'shutdown.after');
+    await _valueSub?.cancel();
+    _valueSub = null;
+    await _videoStateSub?.cancel();
+    _videoStateSub = null;
+    await _controller?.close();
+    _controller = null;
+    _onTrackComplete = null;
+    _onUnplayable = null;
   }
 
   void dispose() {
     unawaited(shutdown());
-    unawaited(_handler?.disposeHandler() ?? Future<void>.value());
-    unawaited(_playbackSub?.cancel());
     playback.dispose();
     diagnostics.dispose();
+    embedUi.dispose();
+  }
+}
+
+class VoiceRoomEmbedUiState {
+  const VoiceRoomEmbedUiState({
+    this.showVideo = false,
+    this.videoId,
+    this.unplayable = false,
+  });
+
+  final bool showVideo;
+  final String? videoId;
+  final bool unplayable;
+
+  VoiceRoomEmbedUiState copyWith({
+    bool? showVideo,
+    String? videoId,
+    bool clearVideoId = false,
+    bool? unplayable,
+  }) {
+    return VoiceRoomEmbedUiState(
+      showVideo: showVideo ?? this.showVideo,
+      videoId: clearVideoId ? null : (videoId ?? this.videoId),
+      unplayable: unplayable ?? this.unplayable,
+    );
+  }
+}
+
+class VoiceRoomDjPlayback {
+  const VoiceRoomDjPlayback({
+    this.position = Duration.zero,
+    this.duration = Duration.zero,
+    this.playing = false,
+  });
+
+  final Duration position;
+  final Duration duration;
+  final bool playing;
+
+  VoiceRoomDjPlayback copyWith({
+    Duration? position,
+    Duration? duration,
+    bool? playing,
+  }) {
+    return VoiceRoomDjPlayback(
+      position: position ?? this.position,
+      duration: duration ?? this.duration,
+      playing: playing ?? this.playing,
+    );
+  }
+
+  double get progress {
+    if (duration.inMilliseconds <= 0) return 0;
+    return (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0);
+  }
+
+  Duration get remaining {
+    if (duration <= position) return Duration.zero;
+    return duration - position;
   }
 }
 
@@ -699,720 +394,5 @@ class VoiceRoomMusicDiagnostics {
       lastError: lastError ?? this.lastError,
       lastPhase: lastPhase ?? this.lastPhase,
     );
-  }
-}
-
-class VoiceRoomAudioHandler extends audio.BaseAudioHandler
-    with audio.SeekHandler {
-  VoiceRoomAudioHandler({
-    this.onTrackComplete,
-    required VoiceRoomMusicControlDelegate? Function() delegateProvider,
-  }) : _delegateProvider = delegateProvider {
-    _init();
-  }
-
-  final ja.AudioPlayer _player = ja.AudioPlayer();
-  final ValueNotifier<VoiceRoomDjPlayback> _playbackValue =
-      ValueNotifier(const VoiceRoomDjPlayback());
-  final StreamController<VoiceRoomDjPlayback> _playbackController =
-      StreamController<VoiceRoomDjPlayback>.broadcast();
-  final VoiceRoomMusicControlDelegate? Function() _delegateProvider;
-
-  Stream<VoiceRoomDjPlayback> get playbackValueStream =>
-      _playbackController.stream;
-
-  bool get isPlaying => _player.playing;
-  bool get hasLoadedSource => _currentSource != null;
-  int? get currentDurationMs {
-    final d = _player.duration;
-    if (d == null) return null;
-    return d.inMilliseconds;
-  }
-  VoiceRoomMusicDiagnostics get diagnostics => _diagnostics;
-
-  void Function()? onTrackComplete;
-  void Function(VoiceRoomMusicDiagnostics diagnostics)? onDiagnosticsChanged;
-  bool _completionFired = false;
-  String? _currentSource;
-  audio.MediaItem? _currentMediaItem;
-  VoiceRoomMusicDiagnostics _diagnostics = const VoiceRoomMusicDiagnostics();
-
-  VoiceRoomMusicControlDelegate? get _delegate => _delegateProvider();
-
-  void _publishDiagnostics() {
-    onDiagnosticsChanged?.call(_diagnostics);
-  }
-
-  bool _mediaSessionPublished = false;
-
-  Future<bool> waitUntilPlaying({
-    required Duration timeout,
-    Duration startupLogAt = const Duration(seconds: 3),
-  }) async {
-    final deadline = DateTime.now().add(timeout);
-    final startupLogDeadline = DateTime.now().add(startupLogAt);
-    var startupLogged = false;
-    var loadingSince = DateTime.now();
-    var seenNonIdle = false;
-    while (DateTime.now().isBefore(deadline)) {
-      _refreshDiagnostics();
-      final state = _player.processingState;
-      if (state != ja.ProcessingState.idle) seenNonIdle = true;
-      if (state == ja.ProcessingState.loading) {
-        if (DateTime.now().difference(loadingSince).inSeconds >= 12) {
-          VoiceRoomMusicPipelineLog.playResult(
-            started: false,
-            url: _currentSource ?? '(none)',
-            processingState: state.name,
-            playing: _player.playing,
-            durationMs: currentDurationMs,
-            detail: 'loading_timeout_12s',
-          );
-          return false;
-        }
-      } else {
-        loadingSince = DateTime.now();
-      }
-      // URL yükleme hatası: loading/buffering sonrası idle'a dönüş → hemen başarısız say.
-      if (seenNonIdle && state == ja.ProcessingState.idle && !_player.playing) {
-        VoiceRoomMusicPipelineLog.playResult(
-          started: false,
-          url: _currentSource ?? '(none)',
-          processingState: state.name,
-          playing: false,
-          durationMs: currentDurationMs,
-          detail: 'idle_after_load',
-        );
-        return false;
-      }
-      if (_player.playing &&
-          (state == ja.ProcessingState.ready ||
-              state == ja.ProcessingState.buffering)) {
-        VoiceRoomMusicPipelineLog.playResult(
-          started: true,
-          url: _currentSource ?? '(none)',
-          processingState: state.name,
-          playing: true,
-          durationMs: currentDurationMs,
-        );
-        return true;
-      }
-      if (!startupLogged && DateTime.now().isAfter(startupLogDeadline)) {
-        startupLogged = true;
-        VoiceRoomMusicPipelineLog.playResult(
-          started: false,
-          url: _currentSource ?? '(none)',
-          processingState: state.name,
-          playing: _player.playing,
-          durationMs: currentDurationMs,
-          detail: 'startup_3s_check',
-        );
-      }
-      if (state == ja.ProcessingState.completed) {
-        return false;
-      }
-      await Future<void>.delayed(const Duration(milliseconds: 120));
-    }
-    _refreshDiagnostics();
-    final state = _player.processingState;
-    final ok = _player.playing &&
-        (state == ja.ProcessingState.ready ||
-            state == ja.ProcessingState.buffering);
-    VoiceRoomMusicPipelineLog.playResult(
-      started: ok,
-      url: _currentSource ?? '(none)',
-      processingState: state.name,
-      playing: _player.playing,
-      durationMs: currentDurationMs,
-      detail: ok ? null : 'deadline',
-    );
-    return ok;
-  }
-
-  Future<void> publishMediaSessionIfNeeded() async {
-    if (_mediaSessionPublished) return;
-    final item = _currentMediaItem;
-    if (item == null) return;
-    _mediaSessionPublished = true;
-    mediaItem.add(item);
-    queue.add([item]);
-    _broadcastPlaybackState();
-    VoiceRoomMusicPipelineLog.audioService(
-      action: 'mediaItem.publish.after_play',
-      title: item.title,
-      playing: _player.playing,
-      processingState: _player.processingState.name,
-      durationMs: currentDurationMs,
-    );
-  }
-
-  Future<void> invalidateLoadedSource() async {
-    _currentSource = null;
-    _currentMediaItem = null;
-    _completionFired = false;
-    _mediaSessionPublished = false;
-    try {
-      await _player.stop();
-    } catch (_) {}
-    _emitPlayback(const VoiceRoomDjPlayback());
-    mediaItem.add(null);
-    queue.add(const []);
-    _broadcastPlaybackState(
-      processingState: audio.AudioProcessingState.idle,
-    );
-    VoiceRoomMusicPipelineLog.audioService(
-      action: 'invalidateLoadedSource',
-      playing: false,
-      processingState: 'idle',
-    );
-  }
-
-  void _refreshDiagnostics() {
-    _diagnostics = _diagnostics.copyWith(
-      processingState: _player.processingState.name,
-      isPlaying: _player.playing,
-    );
-    _publishDiagnostics();
-  }
-
-  void _init() {
-    _player.durationStream.listen((duration) {
-      final d = duration ?? Duration.zero;
-      VoiceRoomMusicPipelineLog.durationValue(
-        durationMs: duration?.inMilliseconds,
-        url: _currentSource,
-        source: 'durationStream',
-      );
-      _emitPlayback(_playbackValue.value.copyWith(duration: d));
-      final current = _currentMediaItem;
-      if (current != null && d > Duration.zero) {
-        _currentMediaItem = current.copyWith(duration: d);
-        mediaItem.add(_currentMediaItem);
-        VoiceRoomMusicPipelineLog.audioService(
-          action: 'mediaItem.duration',
-          title: current.title,
-          durationMs: d.inMilliseconds,
-        );
-      }
-    });
-    _player.positionStream.listen((position) {
-      final clamped = VoicePlaybackLimits.clampPosition(position);
-      if (clamped != position && _player.playing) {
-        unawaited(_player.seek(clamped));
-        if (clamped >= VoicePlaybackLimits.maxPlaybackDuration) {
-          onTrackComplete?.call();
-        }
-        return;
-      }
-      _emitPlayback(_playbackValue.value.copyWith(position: position));
-    });
-    _player.playingStream.listen((playing) {
-      _emitPlayback(_playbackValue.value.copyWith(playing: playing));
-      _broadcastPlaybackState();
-    });
-    _player.processingStateStream.listen((state) {
-      _refreshDiagnostics();
-      VoiceRoomMusicPipelineLog.playState(
-        playing: _player.playing,
-        processingState: state.name,
-        positionMs: _player.position.inMilliseconds,
-        url: _currentSource,
-      );
-      if (state == ja.ProcessingState.completed && !_completionFired) {
-        _completionFired = true;
-        _emitPlayback(_playbackValue.value.copyWith(playing: false));
-        _broadcastPlaybackState(
-          processingState: audio.AudioProcessingState.completed,
-        );
-        onTrackComplete?.call();
-      } else {
-        _broadcastPlaybackState(processingState: _mapProcessingState(state));
-      }
-    });
-    _player.playbackEventStream.listen(
-      (event) {
-        if (event.processingState == ja.ProcessingState.completed) return;
-        VoiceRoomMusicPipelineLog.playbackEvent(
-          processingState: event.processingState.name,
-          playing: _player.playing,
-          positionMs: event.updatePosition.inMilliseconds,
-          bufferedMs: event.bufferedPosition.inMilliseconds,
-          durationMs: event.duration?.inMilliseconds,
-          url: _currentSource,
-        );
-      },
-      onError: (Object e, StackTrace st) {
-        _diagnostics = _diagnostics.copyWith(
-          lastError: e.toString(),
-          lastPhase: 'playbackEventStream',
-        );
-        VoiceRoomMusicPipelineLog.justAudioError(
-          e,
-          st,
-          phase: 'playbackEventStream',
-          url: _currentSource,
-        );
-      },
-    );
-    _player.playerStateStream.listen((state) {
-      _refreshDiagnostics();
-      VoiceRoomMusicPipelineLog.playerStateStreamEvent(
-        playing: state.playing,
-        processingState: state.processingState.name,
-        positionMs: _player.position.inMilliseconds,
-        url: _currentSource,
-      );
-    });
-    _player.errorStream.listen((Object error) {
-      _diagnostics = _diagnostics.copyWith(
-        lastError: error.toString(),
-        lastPhase: 'errorStream',
-      );
-      VoiceRoomDebugLog.musicError(
-        phase: 'errorStream',
-        error: error,
-        url: _currentSource,
-      );
-      VoiceRoomMusicPipelineLog.justAudioError(
-        error,
-        StackTrace.current,
-        phase: 'errorStream',
-        url: _currentSource,
-      );
-    });
-  }
-
-  Future<void> playSource(
-    String source, {
-    required VoiceRoomAudioMetadata metadata,
-    String? inputMusicUrl,
-    String? candidateLabel,
-    bool deferMediaSession = false,
-  }) async {
-    if (YoutubeStreamResolver.isYoutubeStreamApiUrl(source)) {
-      throw StateError('youtube-stream API URL cannot be played directly');
-    }
-    _completionFired = false;
-    final needsReload = _currentSource != source ||
-        _player.processingState == ja.ProcessingState.idle ||
-        _player.processingState == ja.ProcessingState.completed;
-    if (needsReload) {
-      _currentSource = source;
-      final item = metadata.toMediaItem(source);
-      final sourceType = source.startsWith('/') ? 'file' : 'uri';
-      VoiceRoomMusicPipelineLog.beforeSetAudioSource(
-        sourceUrl: source,
-        sourceType: sourceType,
-        metadataTitle: metadata.title,
-      );
-      VoiceRoomMusicPipelineLog.compareFields(
-        stage: 'pre_setAudioSource',
-        roomId: 'local',
-        serverMusicUrl: inputMusicUrl ?? candidateLabel,
-        playbackSource: candidateLabel ?? inputMusicUrl,
-        resolvedStreamUrl: source,
-        videoId: VoiceRoomMusicPipelineLog.videoIdFromUrl(
-          candidateLabel ?? inputMusicUrl ?? '',
-        ),
-      );
-      final useYtHeaders = !source.startsWith('/') &&
-          VoiceRoomDjStreamLoader.needsStreamHeaders(source);
-      final audioSource = source.startsWith('/')
-          ? ja.AudioSource.file(source, tag: item)
-          : ja.AudioSource.uri(
-              Uri.parse(source),
-              tag: item,
-              headers: useYtHeaders
-                  ? VoiceRoomDjStreamLoader.youtubeStreamHeaders
-                  : null,
-            );
-      await _player.stop();
-      _diagnostics = _diagnostics.copyWith(
-        resolvedStreamUrl: source,
-        playbackSource: candidateLabel ?? inputMusicUrl,
-        serverMusicUrl: inputMusicUrl,
-        lastPhase: 'setAudioSource',
-      );
-      _publishDiagnostics();
-      try {
-        await _player.setAudioSource(audioSource);
-        final dur = _player.duration;
-        VoiceRoomMusicPipelineLog.setAudioSourceResult(
-          url: source,
-          ok: true,
-          processingState: _player.processingState.name,
-          durationMs: dur?.inMilliseconds,
-          playing: _player.playing,
-        );
-        _currentMediaItem = item;
-        if (!deferMediaSession) {
-          await publishMediaSessionIfNeeded();
-        } else {
-          VoiceRoomMusicPipelineLog.audioService(
-            action: 'mediaItem.deferred',
-            title: metadata.title,
-            processingState: _player.processingState.name,
-            durationMs: dur?.inMilliseconds,
-          );
-        }
-      } on ja.PlayerException catch (e, st) {
-        VoiceRoomMusicPipelineLog.setAudioSourceResult(
-          url: source,
-          ok: false,
-          error: e.toString(),
-        );
-        VoiceRoomDebugLog.musicError(
-          phase: 'setAudioSource',
-          error: e,
-          url: source,
-        );
-        VoiceRoomMusicPipelineLog.justAudioError(
-          e,
-          st,
-          phase: 'setAudioSource',
-          url: source,
-        );
-        rethrow;
-      } catch (e, st) {
-        VoiceRoomMusicPipelineLog.setAudioSourceResult(
-          url: source,
-          ok: false,
-          error: e.toString(),
-        );
-        VoiceRoomDebugLog.musicError(
-          phase: 'setAudioSource',
-          error: e,
-          url: source,
-        );
-        VoiceRoomMusicPipelineLog.justAudioError(
-          e,
-          st,
-          phase: 'setAudioSource',
-          url: source,
-        );
-        rethrow;
-      }
-      _emitPlayback(
-        VoiceRoomDjPlayback(
-          duration: _player.duration ?? Duration.zero,
-        ),
-      );
-    }
-    await _playWhenReady();
-  }
-
-  /// `setAudioSource` sonrası loading'de takılı kalırsa ready olunca oynat.
-  Future<void> _playWhenReady() async {
-    if (_player.playing &&
-        (_player.processingState == ja.ProcessingState.ready ||
-            _player.processingState == ja.ProcessingState.buffering)) {
-      return;
-    }
-    if (_player.processingState == ja.ProcessingState.ready) {
-      await playLocal();
-      return;
-    }
-
-    StreamSubscription<ja.PlayerState>? sub;
-    try {
-      sub = _player.playerStateStream.listen((state) {
-        if (state.processingState == ja.ProcessingState.ready &&
-            !state.playing &&
-            _currentSource != null) {
-          unawaited(playLocal());
-        }
-      });
-      await _player.processingStateStream
-          .firstWhere(
-            (s) =>
-                s == ja.ProcessingState.ready ||
-                s == ja.ProcessingState.completed,
-          )
-          .timeout(const Duration(seconds: 45));
-      if (!_player.playing &&
-          _player.processingState == ja.ProcessingState.ready) {
-        await playLocal();
-      }
-    } on TimeoutException {
-      if (!_player.playing &&
-          _player.processingState == ja.ProcessingState.ready) {
-        await playLocal();
-      }
-    } finally {
-      await sub?.cancel();
-    }
-  }
-
-  Future<void> playLocal() async {
-    VoiceRoomMusicPipelineLog.playEntered(
-      sourceUrl: _currentSource ?? '(none)',
-    );
-    try {
-      await _player.play();
-      _refreshDiagnostics();
-      VoiceRoomMusicPipelineLog.playState(
-        playing: _player.playing,
-        processingState: _player.processingState.name,
-        positionMs: _player.position.inMilliseconds,
-        durationMs: currentDurationMs,
-        url: _currentSource,
-        source: 'playLocal',
-      );
-      VoiceRoomMusicPipelineLog.audioService(
-        action: 'playLocal',
-        title: _currentMediaItem?.title,
-        playing: _player.playing,
-        processingState: _player.processingState.name,
-        positionMs: _player.position.inMilliseconds,
-        durationMs: currentDurationMs,
-      );
-    } on ja.PlayerException catch (e, st) {
-      _diagnostics = _diagnostics.copyWith(
-        lastError: e.toString(),
-        lastPhase: 'play()',
-      );
-      VoiceRoomMusicPipelineLog.justAudioError(
-        e,
-        st,
-        phase: 'play()',
-        url: _currentSource,
-      );
-      rethrow;
-    }
-    _broadcastPlaybackState();
-  }
-
-  Future<void> pauseLocal() async {
-    await _player.pause();
-    _broadcastPlaybackState();
-  }
-
-  Future<void> setVolume(double volume) async {
-    await _player.setVolume(volume.clamp(0.0, 1.0));
-  }
-
-  @override
-  Future<void> play() async {
-    final delegate = _delegate;
-    if (delegate?.syncServerControls == true && delegate?.onPlay != null) {
-      await delegate!.onPlay!();
-      return;
-    }
-    await playLocal();
-  }
-
-  @override
-  Future<void> pause() async {
-    final delegate = _delegate;
-    if (delegate?.syncServerControls == true && delegate?.onPause != null) {
-      await delegate!.onPause!();
-      return;
-    }
-    await pauseLocal();
-  }
-
-  @override
-  Future<void> seek(Duration position) async {
-    await _player.seek(position);
-    _emitPlayback(_playbackValue.value.copyWith(position: position));
-    _broadcastPlaybackState();
-  }
-
-  @override
-  Future<void> stop() async {
-    final delegate = _delegate;
-    if (delegate?.onStop != null) {
-      await delegate!.onStop!();
-      return;
-    }
-    await stopLocal();
-  }
-
-  Future<void> stopLocal() async {
-    _currentSource = null;
-    _completionFired = false;
-    _currentMediaItem = null;
-    _mediaSessionPublished = false;
-    await _player.stop();
-    _emitPlayback(const VoiceRoomDjPlayback());
-    mediaItem.add(null);
-    queue.add(const []);
-    playbackState.add(
-      playbackState.value.copyWith(
-        processingState: audio.AudioProcessingState.idle,
-        playing: false,
-        updatePosition: Duration.zero,
-      ),
-    );
-  }
-
-  @override
-  Future<void> skipToNext() async {
-    final delegate = _delegate;
-    if (delegate?.onSkipToNext != null) {
-      await delegate!.onSkipToNext!();
-      return;
-    }
-    await super.skipToNext();
-  }
-
-  @override
-  Future<void> skipToPrevious() async {
-    final delegate = _delegate;
-    if (delegate?.onSkipToPrevious != null) {
-      await delegate!.onSkipToPrevious!();
-      return;
-    }
-    await seek(Duration.zero);
-  }
-
-  Future<void> disposeHandler() async {
-    await stopLocal();
-    await _player.dispose();
-    _playbackValue.dispose();
-    await _playbackController.close();
-  }
-
-  void _emitPlayback(VoiceRoomDjPlayback value) {
-    _playbackValue.value = value;
-    if (!_playbackController.isClosed) {
-      _playbackController.add(value);
-    }
-  }
-
-  void _broadcastPlaybackState({audio.AudioProcessingState? processingState}) {
-    final playing = _player.playing;
-    final controls = <audio.MediaControl>[
-      audio.MediaControl.skipToPrevious,
-      playing ? audio.MediaControl.pause : audio.MediaControl.play,
-      audio.MediaControl.skipToNext,
-      audio.MediaControl.stop,
-    ];
-    playbackState.add(
-      playbackState.value.copyWith(
-        controls: controls,
-        systemActions: const {
-          audio.MediaAction.seek,
-          audio.MediaAction.seekForward,
-          audio.MediaAction.seekBackward,
-        },
-        androidCompactActionIndices: const [0, 1, 2],
-        processingState:
-            processingState ?? _mapProcessingState(_player.processingState),
-        playing: playing,
-        updatePosition: _player.position,
-        bufferedPosition: _player.bufferedPosition,
-        speed: _player.speed,
-      ),
-    );
-  }
-
-  audio.AudioProcessingState _mapProcessingState(ja.ProcessingState state) {
-    switch (state) {
-      case ja.ProcessingState.idle:
-        return audio.AudioProcessingState.idle;
-      case ja.ProcessingState.loading:
-        return audio.AudioProcessingState.loading;
-      case ja.ProcessingState.buffering:
-        return audio.AudioProcessingState.buffering;
-      case ja.ProcessingState.ready:
-        return audio.AudioProcessingState.ready;
-      case ja.ProcessingState.completed:
-        return audio.AudioProcessingState.completed;
-    }
-  }
-}
-
-class VoiceRoomAudioMetadata {
-  const VoiceRoomAudioMetadata({
-    required this.id,
-    required this.title,
-    this.artist,
-    this.artUri,
-    this.duration,
-  });
-
-  factory VoiceRoomAudioMetadata.fromQueueItem(
-    MusicQueueItem? item, {
-    required String fallbackUrl,
-  }) {
-    return VoiceRoomAudioMetadata(
-      id: item?.id ?? fallbackUrl,
-      title: item?.title.trim().isNotEmpty == true
-          ? item!.title.trim()
-          : 'Canlifal oda müziği',
-      artist: item?.artistLine.trim().isNotEmpty == true
-          ? item!.artistLine.trim()
-          : 'Canlifal',
-      artUri: item?.thumbUrl != null && item!.thumbUrl!.trim().isNotEmpty
-          ? Uri.tryParse(item.thumbUrl!.trim())
-          : null,
-      duration: _parseDuration(item?.duration),
-    );
-  }
-
-  final String id;
-  final String title;
-  final String? artist;
-  final Uri? artUri;
-  final Duration? duration;
-
-  audio.MediaItem toMediaItem(String source) {
-    return audio.MediaItem(
-      id: source,
-      title: title,
-      artist: artist,
-      album: 'Canlifal Sesli Oda',
-      duration: duration,
-      artUri: artUri,
-      extras: {'queueId': id},
-    );
-  }
-
-  static Duration? _parseDuration(String? raw) {
-    final value = raw?.trim();
-    if (value == null || value.isEmpty || !value.contains(':')) return null;
-    final parts = value.split(':').map((e) => int.tryParse(e) ?? 0).toList();
-    if (parts.length == 2) {
-      return Duration(minutes: parts[0], seconds: parts[1]);
-    }
-    if (parts.length == 3) {
-      return Duration(hours: parts[0], minutes: parts[1], seconds: parts[2]);
-    }
-    return null;
-  }
-}
-
-class VoiceRoomDjPlayback {
-  const VoiceRoomDjPlayback({
-    this.position = Duration.zero,
-    this.duration = Duration.zero,
-    this.playing = false,
-  });
-
-  final Duration position;
-  final Duration duration;
-  final bool playing;
-
-  VoiceRoomDjPlayback copyWith({
-    Duration? position,
-    Duration? duration,
-    bool? playing,
-  }) {
-    return VoiceRoomDjPlayback(
-      position: position ?? this.position,
-      duration: duration ?? this.duration,
-      playing: playing ?? this.playing,
-    );
-  }
-
-  double get progress {
-    if (duration.inMilliseconds <= 0) return 0;
-    return (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0);
-  }
-
-  Duration get remaining {
-    if (duration <= position) return Duration.zero;
-    return duration - position;
   }
 }
