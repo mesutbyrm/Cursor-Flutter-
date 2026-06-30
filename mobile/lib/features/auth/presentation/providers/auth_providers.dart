@@ -197,7 +197,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
         final resolved = await _withSiteProfile(u);
         // OneSignal'e kullanıcıyı kaydet — push bildirimleri için zorunlu
         if (resolved?.id != null && resolved!.id.isNotEmpty) {
-          await OneSignalBootstrap.login(resolved.id);
+          unawaited(OneSignalBootstrap.login(resolved.id));
         }
         return resolved;
       });
