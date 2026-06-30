@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-06-30 14:54 UTC
+Oluşturulma: 2026-06-30 16:39 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -11,7 +11,7 @@ Base: `main`
 |--------|------|
 | Kapatılan PR | 0 |
 | Silinen remote dal | 0 |
-| Kalan açık PR | 0 |
+| Kalan açık PR | 2 |
 | Korunan / aktif dal | 0 |
 
 ## Kapatılan PR'lar
@@ -30,7 +30,8 @@ Base: `main`
 
 | PR | Head | Base | Not |
 |----|------|------|-----|
-| — | — | — | — |
+| #185 | perf/instagram-optimization | main | draft=false | fix(voice): sesli sohbet hataları düzeltildi |
+| #185 | perf/instagram-optimization | main | draft=false | fix(voice): sesli sohbet hataları düzeltildi |
 
 ## Aktif / korunan dallar
 
