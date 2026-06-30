@@ -70,6 +70,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Disk alanı aç (runner ön-yüklü gereksiz paketler)
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}
+        run: |
+          echo "Önce:"; df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /opt/ghc \
+            /usr/local/share/powershell /usr/share/swift /opt/hostedtoolcache/CodeQL \
+            /usr/local/lib/node_modules || true
+          sudo docker image prune --all --force || true
+          echo "Sonra:"; df -h / | tail -1
+
       - name: Opsiyonel depolama temizliği
         if: github.event_name == 'workflow_dispatch' && inputs.run_cleanup == true
         continue-on-error: true
