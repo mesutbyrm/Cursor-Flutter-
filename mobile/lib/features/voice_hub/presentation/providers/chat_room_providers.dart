@@ -3538,6 +3538,24 @@ class VoiceRoomLiveController
     }
   }
 
+  Future<String?> unmuteUserModeration({required String userId}) async {
+    final perms = _permissions();
+    if (!perms.canMuteUsers && !perms.isRoomOwner && !perms.canModerate) {
+      return 'Susturma kaldırma yetkiniz yok.';
+    }
+    try {
+      await ref.read(chatRoomRemoteProvider).unmuteUser(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            userId: userId,
+          );
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
   Future<void> _postChatLineOnly(String content) async {
     final user = ref.read(authControllerProvider).valueOrNull;
     try {
