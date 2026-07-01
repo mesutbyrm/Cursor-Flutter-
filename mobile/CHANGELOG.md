@@ -1,6 +1,42 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.458+462 (2026-06-30)
+
+### Claude + Cursor birleşik sürüm (tam APK)
+
+Bu APK, `main` dalındaki **tüm Claude commit'lerini** ve son Cursor düzeltmelerini içerir.
+
+**Claude — bildirim & mesaj**
+- Bildirimler Instagram tarzı (renkli ikon, okunmamış nokta, tıklanan okundu)
+- Mesaj composer klavye üstü, hızlı scroll, typing altyapısı
+
+**Claude — performans & ana sayfa**
+- Profil stats/wallet RepaintBoundary
+- Ana sayfa hızlandırma, jeton bekleyen talep temizleme
+- Instagram seviyesi performans optimizasyonları
+
+**Claude — sesli oda & müzik**
+- Sesli oda hata düzeltmeleri, ProviderScope modal fix
+- El kaldırma/onay, platform oda ayarları (backend maliyet)
+- Müzik: CDN fallback, video her şarkıda, proxy düzeltmeleri
+- Emoji picker, closeMusicPlayer, şarkı isteği modal fix
+
+**Claude — admin & ödeme**
+- Admin timeout, ödeme bildirimi poll (30s + push)
+- Ödeme gönderiminde admin bildirimi
+
+**Claude — diğer**
+- FCM stale token deregistration (OneSignal)
+- Bildirim yönlendirme (ses odası, follow, mention, like)
+- CI disk alanı fix
+
+**Cursor (üzerine) — 1.0.455–1.0.457**
+- Çift bildirim / hızlı bildirim tıklama
+- WhatsApp mesaj UI, silme, mesaj gelme (forceRefresh)
+- !duyuru 2 geçiş
+- Hediye animasyonu painter çökmesi düzeltmesi
+
 ## 1.0.457+461 (2026-06-30)
 
 ### Sesli oda — hediye animasyonu çökme düzeltmesi
