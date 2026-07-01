@@ -1,8 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../domain/entities/short_upload_draft.dart';
-import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_providers.dart';
 import '../studio/short_studio_providers.dart';
 
