@@ -55,7 +55,7 @@ function videoPayload(
       avatarUrl: string | null;
     };
   },
-  extras?: { likedByMe?: boolean; viewedByMe?: boolean },
+  extras?: { likedByMe?: boolean; viewedByMe?: boolean; savedByMe?: boolean },
 ) {
   return {
     id: v.id,
@@ -73,6 +73,7 @@ function videoPayload(
     author: authorPayload(v.user),
     likedByMe: extras?.likedByMe ?? false,
     viewedByMe: extras?.viewedByMe ?? false,
+    savedByMe: extras?.savedByMe ?? false,
   };
 }
 
@@ -371,15 +372,29 @@ shortVideosRouter.get("/:id/stream", optionalAuth, async (req, res) => {
   const key = storageKeyFromPublicUrl(video.videoUrl);
   if (!key) return fail(res, 404, "NOT_FOUND", "Video dosyası bulunamadı");
 
-  const obj = await getShortMediaObject(key);
+  const range = typeof req.headers.range === "string" ? req.headers.range : undefined;
+  const obj = await getShortMediaObject(key, range);
   if (!obj) return fail(res, 404, "NOT_FOUND", "Video dosyası bulunamadı");
 
   res.setHeader("Content-Type", obj.contentType);
   res.setHeader("Cache-Control", "public, max-age=3600");
+  res.setHeader("Accept-Ranges", "bytes");
+  if (obj.isPartial && obj.contentRange) {
+    res.statusCode = 206;
+    res.setHeader("Content-Range", obj.contentRange);
+  }
   if (obj.contentLength != null) {
     res.setHeader("Content-Length", String(obj.contentLength));
   }
-  res.setHeader("Accept-Ranges", "bytes");
+
+  obj.body.on("error", () => {
+    if (!res.headersSent) res.statusCode = 500;
+    res.end();
+  });
+  res.on("close", () => {
+    const b = obj.body as NodeJS.ReadableStream & { destroy?: () => void };
+    if (typeof b.destroy === "function") b.destroy();
+  });
   obj.body.pipe(res);
 });
 

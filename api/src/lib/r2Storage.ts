@@ -75,10 +75,16 @@ export async function uploadShortMedia(params: {
   };
 }
 
-export async function getShortMediaObject(key: string): Promise<{
+export async function getShortMediaObject(
+  key: string,
+  range?: string,
+): Promise<{
   body: NodeJS.ReadableStream;
   contentType: string;
   contentLength?: number;
+  contentRange?: string;
+  totalLength?: number;
+  isPartial: boolean;
 } | null> {
   const client = r2Client();
   const bucket = process.env.R2_BUCKET_NAME?.trim() ?? "canlifal-shorts";
@@ -86,13 +92,19 @@ export async function getShortMediaObject(key: string): Promise<{
   if (client) {
     try {
       const out = await client.send(
-        new GetObjectCommand({ Bucket: bucket, Key: key }),
+        new GetObjectCommand({
+          Bucket: bucket,
+          Key: key,
+          ...(range ? { Range: range } : {}),
+        }),
       );
       if (!out.Body) return null;
       return {
         body: out.Body as NodeJS.ReadableStream,
         contentType: out.ContentType ?? "application/octet-stream",
         contentLength: out.ContentLength,
+        contentRange: out.ContentRange,
+        isPartial: !!out.ContentRange,
       };
     } catch {
       return null;
@@ -103,10 +115,34 @@ export async function getShortMediaObject(key: string): Promise<{
   try {
     const data = await fs.readFile(localPath);
     const { Readable } = await import("node:stream");
+    const contentType = key.endsWith(".mp4") ? "video/mp4" : "image/jpeg";
+    const total = data.length;
+
+    // Range: bytes=start-end (end isteğe bağlı)
+    const m = range?.match(/bytes=(\d*)-(\d*)/);
+    if (m) {
+      const start = m[1] ? parseInt(m[1], 10) : 0;
+      const end = m[2] ? parseInt(m[2], 10) : total - 1;
+      if (start >= 0 && start < total && end >= start) {
+        const clampedEnd = Math.min(end, total - 1);
+        const chunk = data.subarray(start, clampedEnd + 1);
+        return {
+          body: Readable.from(chunk),
+          contentType,
+          contentLength: chunk.length,
+          contentRange: `bytes ${start}-${clampedEnd}/${total}`,
+          totalLength: total,
+          isPartial: true,
+        };
+      }
+    }
+
     return {
       body: Readable.from(data),
-      contentType: key.endsWith(".mp4") ? "video/mp4" : "image/jpeg",
-      contentLength: data.length,
+      contentType,
+      contentLength: total,
+      totalLength: total,
+      isPartial: false,
     };
   } catch {
     return null;
