@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.460+464 (2026-06-26)
+
+### Kısa video — Video Stüdyosu ve etkileşim düzeltmeleri
+
+- **Video Stüdyosu:** Galeri seçimi → kırp/döndür/kapak (video_editor + FFmpeg) → yazı & emoji sticker → yayın ekranı
+- **Yayın:** Açıklama (@mention, #hashtag önerileri), müzik arama, seslendirme kaydı, konum, gizlilik & yorum ayarları, duet izni
+- **R2 yükleme:** Presigned `upload-url` + `register`; başarısız olursa multipart `/upload` fallback
+- **Feed düzeltmeleri:** Beğeni/kaydet/paylaş/yorum gerçek API + SnackBar hata; çift dokunuş kalp animasyonu; güvenli sayaç formatı (NaN/Infinity yok)
+- **Paylaş:** WhatsApp, Telegram, kopyala, sistem paylaşımı
+- **Hashtag sayfası:** `/shorts/hashtag/:name` grid + feed derin bağlantı
+- **Profil:** Kullanıcı profilinde kısa videolar grid bölümü
+
 ## 1.0.459+463 (2026-06-26)
 
 ### Kısa video / Keşfet — tam `/api/short-videos` entegrasyonu
