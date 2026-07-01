@@ -259,6 +259,12 @@ videoStreamsRouter.post("/:id/like", requireAuth, async (req, res) => {
   }
   const amount = Math.min(10, Math.max(1, Number(req.body?.count ?? 1)));
   const likeCount = addStreamLike(streamId, amount);
+  // Tüm izleyiciler /signals poll'undan güncel toplamı alıp senkronlansın.
+  pushStreamSignal(streamId, req.userId!, "like", {
+    likeCount,
+    total: likeCount,
+    delta: amount,
+  });
   return ok(res, { likeCount, count: likeCount, success: true });
 });
 
