@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.463+467 (2026-06-26)
+
+### Kısa video — Faz 2 taslak + trend sıralama + Faz 1 iyileştirmeler
+
+- **Trend videolar üstte:** Ana sayfa ve Keşfet ekranında trend videolar ilk sırada
+- **Taslak kaydetme:** Video Stüdyosu yayın ekranından «Taslak»; girişte kayıtlı taslaklar listesi, devam et / sil
+- **Takip senkronu:** Feed aksiyon şeridinde yazar avatarında takip (+) butonu
+- **Ön yükleme:** Sonraki videolar disk önbelleğine indirilir (daha hızlı geçiş)
+- **Hashtag:** Keşfet chip'leri ilgili hashtag sayfasına yönlendirir
+
 ## 1.0.462+466 (2026-06-26)
 
 ### Sesli oda — Oda Yönetim paneli

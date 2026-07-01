@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/providers/auth_selectors.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +32,7 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
   final _descCtrl = TextEditingController();
   CancelToken? _cancelToken;
   var _uploading = false;
+  var _savingDraft = false;
   var _progress = 0.0;
   String? _error;
   List<ShortVideoAuthor> _mentionHits = const [];
@@ -111,6 +113,30 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
   Future<void> _searchMusic(String q) async {
     final list = await ref.read(shortsRepositoryProvider).searchMusic(q);
     if (mounted) setState(() => _musicHits = list);
+  }
+
+  Future<void> _saveDraft() async {
+    if (_savingDraft || _uploading) return;
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null || userId.isEmpty) {
+      showShortsSnackBar(context, 'Taslak kaydetmek için giriş yapın.');
+      return;
+    }
+    setState(() => _savingDraft = true);
+    try {
+      final draft = ref.read(shortUploadDraftProvider).copyWith(
+            description: _descCtrl.text.trim(),
+          );
+      ref.read(shortUploadDraftProvider.notifier).patch((_) => draft);
+      await ref.read(shortUploadDraftProvider.notifier).saveDraft(userId);
+      ref.invalidate(shortSavedDraftsProvider(userId));
+      if (!mounted) return;
+      showShortsSnackBar(context, 'Taslak kaydedildi.');
+    } catch (e) {
+      if (mounted) showShortsSnackBar(context, 'Taslak kaydedilemedi: $e');
+    } finally {
+      if (mounted) setState(() => _savingDraft = false);
+    }
   }
 
   Future<void> _publish() async {
@@ -205,6 +231,16 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
         ),
         title: const Text('Yayınla'),
         actions: [
+          TextButton(
+            onPressed: (_uploading || _savingDraft) ? null : _saveDraft,
+            child: _savingDraft
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Taslak'),
+          ),
           TextButton(
             onPressed: _uploading ? null : _publish,
             child: const Text('Paylaş', style: TextStyle(fontWeight: FontWeight.w800)),

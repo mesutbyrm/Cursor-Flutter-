@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/shorts_api_message.dart';
@@ -118,6 +119,23 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
     context.push('/user/$uid');
   }
 
+  Future<void> _toggleFollow() async {
+    final uid = video.userId.isNotEmpty
+        ? video.userId
+        : (video.author?.id ?? '');
+    if (uid.isEmpty) return;
+    final wasFollowing = video.authorFollowedByMe;
+    widget.onVideoUpdated(video.copyWith(authorFollowedByMe: !wasFollowing));
+    await _runInteraction(() async {
+      final repo = ref.read(profileRepositoryProvider);
+      if (wasFollowing) {
+        await repo.unfollow(uid);
+      } else {
+        await repo.follow(uid);
+      }
+    }, errorPrefix: 'Takip');
+  }
+
   void _moreMenu() {
     showModalBottomSheet<void>(
       context: context,
@@ -182,13 +200,39 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
           onTap: _moreMenu,
         ),
         const SizedBox(height: 16),
-        GestureDetector(
-          onTap: _openProfile,
-          child: CircleAvatar(
-            radius: 22,
-            backgroundColor: Colors.white24,
-            child: Icon(Icons.person, color: Colors.white.withValues(alpha: 0.9)),
-          ),
+        Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.bottomCenter,
+          children: [
+            GestureDetector(
+              onTap: _openProfile,
+              child: CircleAvatar(
+                radius: 22,
+                backgroundColor: Colors.white24,
+                child: Icon(
+                  Icons.person,
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
+              ),
+            ),
+            if (!video.authorFollowedByMe)
+              Positioned(
+                bottom: -6,
+                child: GestureDetector(
+                  onTap: _toggleFollow,
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.black, width: 2),
+                    ),
+                    child: const Icon(Icons.add, size: 14, color: Colors.white),
+                  ),
+                ),
+              ),
+          ],
         ),
       ],
     );

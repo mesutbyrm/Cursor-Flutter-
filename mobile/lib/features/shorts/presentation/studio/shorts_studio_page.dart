@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:canlifal_social/core/providers/auth_selectors.dart';
 import 'package:canlifal_social/core/theme/app_colors.dart';
 
+import '../../data/short_upload_draft_store.dart';
+import '../../domain/entities/short_upload_draft.dart';
 import '../utils/shorts_api_message.dart';
 import 'short_studio_providers.dart';
 import 'studio_compose_page.dart';
@@ -30,14 +32,54 @@ class _ShortsStudioPageState extends ConsumerState<ShortsStudioPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final draft = ref.read(shortUploadDraftProvider);
-      if (draft.sourcePath != null) {
-        setState(() => _step = _StudioStep.edit);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
+  }
+
+  Future<void> _bootstrap() async {
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null || userId.isEmpty) {
+      if (mounted) showShortsSnackBar(context, 'Video yüklemek için giriş yapın.');
+      if (mounted) context.pop();
+      return;
+    }
+
+    final draft = ref.read(shortUploadDraftProvider);
+    if (draft.sourcePath != null) {
+      if (mounted) setState(() => _step = _StudioStep.edit);
+      return;
+    }
+
+    final metas = await ShortUploadDraftStore.instance.listForUser(userId);
+    if (!mounted) return;
+    if (metas.isNotEmpty) {
+      final action = await showModalBottomSheet<Object?>(
+        context: context,
+        backgroundColor: const Color(0xFF121218),
+        isScrollControlled: true,
+        builder: (ctx) => _DraftEntrySheet(metas: metas),
+      );
+      if (!mounted) return;
+      if (action == 'new') {
+        await _pickFromGallery();
+      } else if (action is String && action != 'new') {
+        final loaded = await ShortUploadDraftStore.instance.load(action);
+        if (!mounted) return;
+        if (loaded == null) {
+          showShortsSnackBar(context, 'Taslak dosyası bulunamadı.');
+          await _pickFromGallery();
+          return;
+        }
+        ref.read(shortUploadDraftProvider.notifier).loadDraft(loaded);
+        setState(() => _step = loaded.editedPath != null
+            ? _StudioStep.compose
+            : _StudioStep.edit);
       } else {
-        _pickFromGallery();
+        context.pop();
       }
-    });
+      return;
+    }
+
+    await _pickFromGallery();
   }
 
   Future<void> _pickFromGallery() async {
@@ -120,5 +162,75 @@ class _ShortsStudioPageState extends ConsumerState<ShortsStudioPage> {
         ),
       _ => const SizedBox.shrink(),
     };
+  }
+}
+
+class _DraftEntrySheet extends ConsumerWidget {
+  const _DraftEntrySheet({required this.metas});
+
+  final List<ShortSavedDraftMeta> metas;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Taslaklar',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: metas.length,
+                separatorBuilder: (_, _) => const Divider(height: 1),
+                itemBuilder: (context, i) {
+                  final meta = metas[i];
+                  final saved = DateTime.fromMillisecondsSinceEpoch(meta.savedAtMs);
+                  return ListTile(
+                    leading: const Icon(Icons.drafts_outlined, color: Colors.white70),
+                    title: Text(
+                      meta.previewLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      '${saved.day}.${saved.month}.${saved.year} ${saved.hour.toString().padLeft(2, '0')}:${saved.minute.toString().padLeft(2, '0')}',
+                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.white54),
+                      onPressed: () async {
+                        await ShortUploadDraftStore.instance.delete(meta.id);
+                        ref.invalidate(
+                          shortSavedDraftsProvider(meta.userId),
+                        );
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                    ),
+                    onTap: () => Navigator.pop(context, meta.id),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              onPressed: () => Navigator.pop(context, 'new'),
+              icon: const Icon(Icons.add),
+              label: const Text('Yeni video'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

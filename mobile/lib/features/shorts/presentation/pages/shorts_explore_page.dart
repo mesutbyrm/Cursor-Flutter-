@@ -120,34 +120,6 @@ class _ExploreBody extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
-          if (page.trendingHashtags.isNotEmpty) ...[
-            const _SectionTitle('Trend Hashtag\'ler'),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final tag in page.trendingHashtags)
-                  _HashtagChip(hashtag: tag),
-              ],
-            ),
-            const SizedBox(height: 20),
-          ],
-          if (page.popularMusic.isNotEmpty) ...[
-            const _SectionTitle('Popüler Müzikler'),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 88,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: page.popularMusic.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 10),
-                itemBuilder: (context, i) =>
-                    _MusicTile(music: page.popularMusic[i]),
-              ),
-            ),
-            const SizedBox(height: 20),
-          ],
           const _SectionTitle('Trend Videolar'),
           const SizedBox(height: 8),
           if (page.videos.isEmpty)
@@ -174,6 +146,34 @@ class _ExploreBody extends ConsumerWidget {
               itemBuilder: (context, i) =>
                   _VideoTile(video: page.videos[i]),
             ),
+          const SizedBox(height: 20),
+          if (page.trendingHashtags.isNotEmpty) ...[
+            const _SectionTitle('Trend Hashtag\'ler'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final tag in page.trendingHashtags)
+                  _HashtagChip(hashtag: tag),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+          if (page.popularMusic.isNotEmpty) ...[
+            const _SectionTitle('Popüler Müzikler'),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 88,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: page.popularMusic.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (context, i) =>
+                    _MusicTile(music: page.popularMusic[i]),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -209,7 +209,9 @@ class _HashtagChip extends StatelessWidget {
       label: Text('#${hashtag.name}'),
       backgroundColor: Colors.white.withValues(alpha: 0.08),
       labelStyle: const TextStyle(color: Colors.white),
-      onPressed: () => context.push('/shorts'),
+      onPressed: () => context.push(
+        '/shorts/hashtag/${Uri.encodeComponent(hashtag.name)}',
+      ),
     );
   }
 }

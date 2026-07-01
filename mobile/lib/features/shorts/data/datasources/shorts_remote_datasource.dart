@@ -82,12 +82,23 @@ class ShortsRemoteDataSource {
 
   ShortVideoEntity _videoFrom(Map<String, dynamic> json) {
     final authorRaw = pick(json, ['author', 'user']);
-    final author = authorRaw is Map
-        ? _authorFrom(asJsonMap(authorRaw))
+    final authorMap = authorRaw is Map ? asJsonMap(authorRaw) : null;
+    final author = authorMap != null
+        ? _authorFrom(authorMap)
         : ShortVideoAuthor(
             id: (pick(json, ['userId']) ?? '').toString(),
             username: 'kullanici',
           );
+
+    final authorFollowedByMe = asBool(
+      pick(json, [
+        'authorFollowedByMe',
+        'author_followed_by_me',
+        'isFollowingAuthor',
+      ]),
+    ) ||
+        (authorMap != null &&
+            asBool(pick(authorMap, ['isFollowing', 'following', 'followedByMe'])));
 
     final createdRaw = pick(json, ['createdAt', 'created_at']);
     DateTime? createdAt;
@@ -116,6 +127,7 @@ class ShortsRemoteDataSource {
       likedByMe: asBool(pick(json, ['likedByMe', 'liked_by_me'])),
       viewedByMe: asBool(pick(json, ['viewedByMe', 'viewed_by_me'])),
       savedByMe: asBool(pick(json, ['savedByMe', 'saved_by_me'])),
+      authorFollowedByMe: authorFollowedByMe,
       hashtags: _hashtagsFrom(pick(json, ['hashtags', 'tags'])),
       music: _musicFrom(pick(json, ['music'])),
       allowDuet: pick(json, ['allowDuet', 'allow_duet']) != false,

@@ -58,6 +58,7 @@ class ShortVideoEntity extends Equatable {
     this.likedByMe = false,
     this.viewedByMe = false,
     this.savedByMe = false,
+    this.authorFollowedByMe = false,
     this.hashtags = const [],
     this.music,
     this.allowDuet = true,
@@ -80,6 +81,7 @@ class ShortVideoEntity extends Equatable {
   final bool likedByMe;
   final bool viewedByMe;
   final bool savedByMe;
+  final bool authorFollowedByMe;
   final List<String> hashtags;
   final ShortVideoMusic? music;
   final bool allowDuet;
@@ -94,6 +96,7 @@ class ShortVideoEntity extends Equatable {
     bool? likedByMe,
     bool? viewedByMe,
     bool? savedByMe,
+    bool? authorFollowedByMe,
   }) {
     return ShortVideoEntity(
       id: id,
@@ -112,6 +115,7 @@ class ShortVideoEntity extends Equatable {
       likedByMe: likedByMe ?? this.likedByMe,
       viewedByMe: viewedByMe ?? this.viewedByMe,
       savedByMe: savedByMe ?? this.savedByMe,
+      authorFollowedByMe: authorFollowedByMe ?? this.authorFollowedByMe,
       hashtags: hashtags,
       music: music,
       allowDuet: allowDuet,
@@ -137,6 +141,7 @@ class ShortVideoEntity extends Equatable {
         likedByMe,
         viewedByMe,
         savedByMe,
+        authorFollowedByMe,
         hashtags,
         music,
         allowDuet,

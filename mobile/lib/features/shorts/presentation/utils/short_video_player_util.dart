@@ -41,7 +41,7 @@ Future<VideoPlayerController> createShortVideoController({
         controller = VideoPlayerController.networkUrl(Uri.parse(playUrl));
         unawaited(cache.prefetch(playUrl));
       }
-      await controller.initialize().timeout(const Duration(seconds: 25));
+      await controller.initialize().timeout(const Duration(seconds: 12));
       if (controller.value.hasError) {
         throw StateError(controller.value.errorDescription ?? 'player_error');
       }
@@ -56,22 +56,32 @@ Future<VideoPlayerController> createShortVideoController({
   throw lastError ?? StateError('Video oynatılamadı');
 }
 
+/// Sonraki videoları disk önbelleğine indirir — tam oynatıcı açmaz.
 Future<void> preloadShortVideoUrl(
   String url, {
   String? videoId,
   Dio? dio,
 }) async {
   if (url.isEmpty) return;
-  VideoPlayerController? controller;
-  try {
-    controller = await createShortVideoController(
-      url: url,
-      videoId: videoId,
-      dio: dio,
-    );
-  } catch (_) {
-    // Ön yükleme isteğe bağlı; oynatma sırasında tekrar denenir.
-  } finally {
-    await controller?.dispose();
+  final cache = VideoCacheService.instance;
+  final candidates = <String>[url.trim()];
+  if (dio != null) {
+    try {
+      final resolver = ShortVideoUrlResolver(dio);
+      final resolved = await resolver.resolvePlayUrls(
+        videoUrl: url,
+        videoId: videoId,
+      );
+      for (final u in resolved) {
+        if (!candidates.contains(u)) candidates.add(u);
+      }
+    } catch (_) {}
+  }
+  for (final playUrl in candidates) {
+    if (playUrl.isEmpty) continue;
+    try {
+      await cache.prefetch(playUrl);
+      return;
+    } catch (_) {}
   }
 }

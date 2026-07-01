@@ -86,6 +86,7 @@ class ShortTextOverlay extends Equatable {
   }
 
   Map<String, dynamic> toJson() => {
+        'id': id,
         'text': text,
         'x': position.dx,
         'y': position.dy,
@@ -97,6 +98,26 @@ class ShortTextOverlay extends Equatable {
         'fontFamily': fontFamily,
         'hasShadow': hasShadow,
       };
+
+  factory ShortTextOverlay.fromJson(Map<String, dynamic> json) {
+    return ShortTextOverlay(
+      id: (json['id'] ?? '').toString(),
+      text: (json['text'] ?? '').toString(),
+      position: Offset(
+        (json['x'] as num?)?.toDouble() ?? 0,
+        (json['y'] as num?)?.toDouble() ?? 0,
+      ),
+      fontSize: (json['fontSize'] as num?)?.toDouble() ?? 24,
+      color: Color((json['color'] as num?)?.toInt() ?? Colors.white.toARGB32()),
+      backgroundColor: json['backgroundColor'] != null
+          ? Color((json['backgroundColor'] as num).toInt())
+          : null,
+      rotation: (json['rotation'] as num?)?.toDouble() ?? 0,
+      scale: (json['scale'] as num?)?.toDouble() ?? 1,
+      fontFamily: json['fontFamily']?.toString(),
+      hasShadow: json['hasShadow'] != false,
+    );
+  }
 
   @override
   List<Object?> get props =>
@@ -133,12 +154,26 @@ class ShortStickerOverlay extends Equatable {
   }
 
   Map<String, dynamic> toJson() => {
+        'id': id,
         'emoji': emoji,
         'x': position.dx,
         'y': position.dy,
         'scale': scale,
         'rotation': rotation,
       };
+
+  factory ShortStickerOverlay.fromJson(Map<String, dynamic> json) {
+    return ShortStickerOverlay(
+      id: (json['id'] ?? '').toString(),
+      emoji: (json['emoji'] ?? '').toString(),
+      position: Offset(
+        (json['x'] as num?)?.toDouble() ?? 0,
+        (json['y'] as num?)?.toDouble() ?? 0,
+      ),
+      scale: (json['scale'] as num?)?.toDouble() ?? 1,
+      rotation: (json['rotation'] as num?)?.toDouble() ?? 0,
+    );
+  }
 
   @override
   List<Object?> get props => [id, emoji, position, scale, rotation];
@@ -266,4 +301,131 @@ class ShortUploadDraft extends Equatable {
         visibility,
         commentSetting,
       ];
+
+  Map<String, dynamic> toJson() => {
+        'sourcePath': sourcePath,
+        'editedPath': editedPath,
+        'thumbnailPath': thumbnailPath,
+        'coverTimeMs': coverTimeMs,
+        'brightness': brightness,
+        'contrast': contrast,
+        'saturation': saturation,
+        'playbackSpeed': playbackSpeed,
+        'muted': muted,
+        'textOverlays': textOverlays.map((e) => e.toJson()).toList(),
+        'stickerOverlays': stickerOverlays.map((e) => e.toJson()).toList(),
+        'musicId': musicId,
+        'musicTitle': musicTitle,
+        'musicStartSec': musicStartSec,
+        'musicVolume': musicVolume,
+        'videoVolume': videoVolume,
+        'voiceoverPath': voiceoverPath,
+        'description': description,
+        'mentionUserIds': mentionUserIds,
+        'visibility': visibility.wireValue,
+        'commentSetting': commentSetting.wireValue,
+        'allowDuet': allowDuet,
+        'locationLabel': locationLabel,
+        'locationLat': locationLat,
+        'locationLng': locationLng,
+      };
+
+  factory ShortUploadDraft.fromJson(Map<String, dynamic> json) {
+    ShortVisibility parseVisibility(String? raw) {
+      return ShortVisibility.values.firstWhere(
+        (v) => v.wireValue == raw,
+        orElse: () => ShortVisibility.everyone,
+      );
+    }
+
+    ShortCommentSetting parseComment(String? raw) {
+      return ShortCommentSetting.values.firstWhere(
+        (v) => v.wireValue == raw,
+        orElse: () => ShortCommentSetting.everyone,
+      );
+    }
+
+    final textRaw = json['textOverlays'];
+    final stickerRaw = json['stickerOverlays'];
+
+    return ShortUploadDraft(
+      sourcePath: json['sourcePath']?.toString(),
+      editedPath: json['editedPath']?.toString(),
+      thumbnailPath: json['thumbnailPath']?.toString(),
+      coverTimeMs: (json['coverTimeMs'] as num?)?.toInt() ?? 0,
+      brightness: (json['brightness'] as num?)?.toDouble() ?? 0,
+      contrast: (json['contrast'] as num?)?.toDouble() ?? 1,
+      saturation: (json['saturation'] as num?)?.toDouble() ?? 1,
+      playbackSpeed: (json['playbackSpeed'] as num?)?.toDouble() ?? 1,
+      muted: json['muted'] == true,
+      textOverlays: textRaw is List
+          ? textRaw
+              .whereType<Map>()
+              .map((e) => ShortTextOverlay.fromJson(Map<String, dynamic>.from(e)))
+              .toList()
+          : const [],
+      stickerOverlays: stickerRaw is List
+          ? stickerRaw
+              .whereType<Map>()
+              .map((e) =>
+                  ShortStickerOverlay.fromJson(Map<String, dynamic>.from(e)))
+              .toList()
+          : const [],
+      musicId: json['musicId']?.toString(),
+      musicTitle: json['musicTitle']?.toString(),
+      musicStartSec: (json['musicStartSec'] as num?)?.toDouble() ?? 0,
+      musicVolume: (json['musicVolume'] as num?)?.toDouble() ?? 1,
+      videoVolume: (json['videoVolume'] as num?)?.toDouble() ?? 1,
+      voiceoverPath: json['voiceoverPath']?.toString(),
+      description: (json['description'] ?? '').toString(),
+      mentionUserIds: json['mentionUserIds'] is List
+          ? (json['mentionUserIds'] as List).map((e) => e.toString()).toList()
+          : const [],
+      visibility: parseVisibility(json['visibility']?.toString()),
+      commentSetting: parseComment(json['commentSetting']?.toString()),
+      allowDuet: json['allowDuet'] != false,
+      locationLabel: json['locationLabel']?.toString(),
+      locationLat: (json['locationLat'] as num?)?.toDouble(),
+      locationLng: (json['locationLng'] as num?)?.toDouble(),
+    );
+  }
+}
+
+/// Kayıtlı taslak meta bilgisi.
+class ShortSavedDraftMeta extends Equatable {
+  const ShortSavedDraftMeta({
+    required this.id,
+    required this.userId,
+    required this.savedAtMs,
+    required this.previewLabel,
+    this.thumbnailPath,
+  });
+
+  final String id;
+  final String userId;
+  final int savedAtMs;
+  final String previewLabel;
+  final String? thumbnailPath;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'userId': userId,
+        'savedAtMs': savedAtMs,
+        'previewLabel': previewLabel,
+        'thumbnailPath': thumbnailPath,
+      };
+
+  factory ShortSavedDraftMeta.fromJson(Map<String, dynamic> json) {
+    return ShortSavedDraftMeta(
+      id: (json['id'] ?? '').toString(),
+      userId: (json['userId'] ?? '').toString(),
+      savedAtMs: (json['savedAtMs'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
+      previewLabel: (json['previewLabel'] ?? 'Taslak').toString(),
+      thumbnailPath: json['thumbnailPath']?.toString(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, userId, savedAtMs, previewLabel, thumbnailPath];
 }

@@ -33,6 +33,12 @@ abstract final class HomePageSections {
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
+          delay: StartupPerf.homeTrendingSectionDelay,
+          child: TrendingVideoSection(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
           delay: StartupPerf.homeLiveSectionDelay,
           child: LiveBroadcastSection(),
         ),
@@ -71,12 +77,6 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homeHoroscopeSectionDelay,
           child: HomeHoroscopeSection(),
-        ),
-      ),
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeTrendingSectionDelay,
-          child: TrendingVideoSection(),
         ),
       ),
       const SliverToBoxAdapter(
