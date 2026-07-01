@@ -8,6 +8,8 @@ import '../../domain/entities/short_explore_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../../domain/repositories/shorts_repository.dart';
 
+export 'shorts_explore_providers.dart';
+
 final shortsRemoteProvider = Provider<ShortsRemoteDataSource>((ref) {
   return ShortsRemoteDataSource(ref.watch(dioProvider));
 });
@@ -104,82 +106,6 @@ final shortsFeedProvider = AsyncNotifierProvider.family<
 
 final shortsFeedTabProvider =
     StateProvider<ShortsFeedTab>((ref) => ShortsFeedTab.forYou);
-
-class ShortsExploreNotifier extends AsyncNotifier<ShortExplorePage> {
-  String? _cursor;
-  bool _hasMore = true;
-  bool _loadingMore = false;
-  String? _query;
-
-  @override
-  Future<ShortExplorePage> build() async {
-    _cursor = null;
-    _hasMore = true;
-    _query = null;
-    return ref.read(shortsRepositoryProvider).fetchExplore();
-  }
-
-  Future<void> search(String query) async {
-    _query = query.trim().isEmpty ? null : query.trim();
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      _cursor = null;
-      _hasMore = true;
-      return ref
-          .read(shortsRepositoryProvider)
-          .fetchExplore(query: _query);
-    });
-  }
-
-  Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      _cursor = null;
-      _hasMore = true;
-      return ref
-          .read(shortsRepositoryProvider)
-          .fetchExplore(query: _query);
-    });
-  }
-
-  Future<void> loadMore() async {
-    final cur = state.valueOrNull;
-    if (cur == null || !_hasMore || _loadingMore) return;
-    _loadingMore = true;
-    try {
-      final page = await ref.read(shortsRepositoryProvider).fetchExplore(
-            query: _query,
-            cursor: _cursor,
-          );
-      if (page.videos.isEmpty) {
-        _hasMore = false;
-        return;
-      }
-      _cursor = page.nextCursor;
-      _hasMore = page.hasMore;
-      state = AsyncValue.data(
-        ShortExplorePage(
-          videos: [...cur.videos, ...page.videos],
-          trendingHashtags: page.trendingHashtags.isNotEmpty
-              ? page.trendingHashtags
-              : cur.trendingHashtags,
-          popularMusic: page.popularMusic.isNotEmpty
-              ? page.popularMusic
-              : cur.popularMusic,
-          nextCursor: page.nextCursor,
-          hasMore: page.hasMore,
-        ),
-      );
-    } finally {
-      _loadingMore = false;
-    }
-  }
-}
-
-final shortsExploreProvider =
-    AsyncNotifierProvider<ShortsExploreNotifier, ShortExplorePage>(
-  ShortsExploreNotifier.new,
-);
 
 final userShortVideosProvider = FutureProvider.family<
     List<ShortVideoEntity>, ({String userId, ShortUserVideosTab tab})>(

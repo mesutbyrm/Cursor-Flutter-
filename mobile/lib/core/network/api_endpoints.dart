@@ -549,6 +549,8 @@ abstract final class ApiEndpoints {
   // --- Kısa videolar (TikTok tarzı, R2 CDN) ---
   static const shortVideos = '/api/short-videos';
   static const shortVideosExplore = '/api/short-videos/explore';
+  static const shortVideosRecommend = '/api/short-videos/recommend';
+  static const shortVideosExploreNearby = '/api/short-videos/explore/nearby';
   static const shortVideosViewedMe = '/api/short-videos/viewed/me';
   static const shortVideosUpload = '/api/short-videos/upload';
   static const shortVideosUploadUrl = '/api/short-videos/upload-url';

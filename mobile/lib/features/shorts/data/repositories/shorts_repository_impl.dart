@@ -28,8 +28,34 @@ class ShortsRepositoryImpl implements ShortsRepository {
     String? query,
     String? cursor,
     int limit = 12,
+    String? section,
+    String? location,
+    double? lat,
+    double? lng,
+    String? source,
   }) =>
-      _remote.fetchExplore(query: query, cursor: cursor, limit: limit);
+      _remote.fetchExplore(
+        query: query,
+        cursor: cursor,
+        limit: limit,
+        section: section,
+        location: location,
+        lat: lat,
+        lng: lng,
+        source: source,
+      );
+
+  @override
+  Future<ShortExplorePage> fetchExploreHub({
+    String? locationLabel,
+    double? lat,
+    double? lng,
+  }) =>
+      _remote.fetchExploreHub(
+        locationLabel: locationLabel,
+        lat: lat,
+        lng: lng,
+      );
 
   @override
   Future<ShortVideoEntity> fetchVideo(String videoId) =>

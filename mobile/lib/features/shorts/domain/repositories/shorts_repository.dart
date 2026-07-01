@@ -29,6 +29,17 @@ abstract class ShortsRepository {
     String? query,
     String? cursor,
     int limit = 12,
+    String? section,
+    String? location,
+    double? lat,
+    double? lng,
+    String? source,
+  });
+
+  Future<ShortExplorePage> fetchExploreHub({
+    String? locationLabel,
+    double? lat,
+    double? lng,
   });
 
   Future<ShortVideoEntity> fetchVideo(String videoId);

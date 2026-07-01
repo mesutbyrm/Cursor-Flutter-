@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.465+469 (2026-06-26)
+
+### Kısa video — Faz 4 Keşfet
+
+- **Sana özel:** Keşfet üstünde yatay öneri şeridi + Akışa git
+- **Yapay zekâ önerileri:** `/recommend` ve explore `source=ai` ile AI şeridi
+- **Konuma göre:** Şehir seçimi (SharedPreferences) + yakın video listesi
+- **Trend videolar / hashtag / müzik:** Geliştirilmiş bölümler, müzik kullanım sayısı
+- **Keşfet hub:** Paralel API birleştirme (trend + forYou + AI + konum)
+
 ## 1.0.464+468 (2026-06-26)
 
 ### Kısa video — Faz 3 sosyal özellikler

@@ -219,6 +219,11 @@ class ShortsRemoteDataSource {
     String? query,
     String? cursor,
     int limit = 12,
+    String? section,
+    String? location,
+    double? lat,
+    double? lng,
+    String? source,
   }) async {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.shortVideosExplore,
@@ -226,16 +231,174 @@ class ShortsRemoteDataSource {
         'limit': limit,
         if (query != null && query.trim().isNotEmpty) 'q': query.trim(),
         if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+        if (section != null && section.isNotEmpty) 'section': section,
+        if (location != null && location.isNotEmpty) 'location': location,
+        if (lat != null) 'lat': lat,
+        if (lng != null) 'lng': lng,
+        if (source != null && source.isNotEmpty) 'source': source,
       },
     );
-    final m = _unwrap(res.data);
+    return _explorePageFromResponse(_unwrap(res.data));
+  }
+
+  Future<ShortExplorePage> fetchExploreHub({
+    String? locationLabel,
+    double? lat,
+    double? lng,
+  }) async {
+    final trendFuture = fetchExplore(limit: 24);
+    final forYouFuture = fetchFeed(tab: ShortsFeedTab.forYou, limit: 12);
+    final aiFuture = _fetchAiRecommendations(limit: 12);
+    final nearbyFuture = (locationLabel != null && locationLabel.isNotEmpty) ||
+            lat != null ||
+            lng != null
+        ? _fetchLocationVideos(
+            location: locationLabel,
+            lat: lat,
+            lng: lng,
+            limit: 12,
+          )
+        : Future.value(const <ShortVideoEntity>[]);
+
+    final results = await Future.wait([
+      trendFuture.catchError((_) => const ShortExplorePage(videos: [])),
+      forYouFuture.catchError(
+        (_) => (
+          videos: <ShortVideoEntity>[],
+          nextCursor: null,
+          hasMore: false,
+        ),
+      ),
+      aiFuture.catchError((_) => const <ShortVideoEntity>[]),
+      nearbyFuture,
+    ]);
+
+    final trend = results[0] as ShortExplorePage;
+    final forYouPage =
+        results[1] as ({List<ShortVideoEntity> videos, String? nextCursor, bool hasMore});
+    final aiList = results[2] as List<ShortVideoEntity>;
+    final nearbyList = results[3] as List<ShortVideoEntity>;
+
+    var forYou = trend.forYouVideos.isNotEmpty
+        ? trend.forYouVideos
+        : forYouPage.videos;
+    var ai = trend.aiRecommendedVideos.isNotEmpty
+        ? trend.aiRecommendedVideos
+        : aiList;
+    if (ai.isEmpty && forYou.isNotEmpty) {
+      ai = forYou.take(8).toList();
+    }
+    if (forYou.isEmpty && ai.isNotEmpty) {
+      forYou = ai;
+    }
+
+    final locationVideos = trend.locationVideos.isNotEmpty
+        ? trend.locationVideos
+        : nearbyList;
+
+    return trend.copyWith(
+      forYouVideos: _dedupeVideos(forYou),
+      aiRecommendedVideos: _dedupeVideos(ai),
+      locationVideos: _dedupeVideos(locationVideos),
+      locationLabel: locationLabel ?? trend.locationLabel,
+    );
+  }
+
+  Future<List<ShortVideoEntity>> _fetchAiRecommendations({int limit = 12}) async {
+    for (final path in [
+      ApiEndpoints.shortVideosRecommend,
+      ApiEndpoints.shortVideosExplore,
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          path,
+          query: {
+            'limit': limit,
+            'source': 'ai',
+            'recommendation': 'ai',
+          },
+        );
+        final list = _videosFromExplorePayload(_unwrap(res.data));
+        if (list.isNotEmpty) return list;
+      } catch (_) {}
+    }
+    return const [];
+  }
+
+  Future<List<ShortVideoEntity>> _fetchLocationVideos({
+    String? location,
+    double? lat,
+    double? lng,
+    int limit = 12,
+  }) async {
+    for (final entry in [
+      (path: ApiEndpoints.shortVideosExploreNearby, extra: <String, dynamic>{}),
+      (path: ApiEndpoints.shortVideosExplore, extra: {'section': 'nearby'}),
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          entry.path,
+          query: {
+            'limit': limit,
+            if (location != null && location.isNotEmpty) 'location': location,
+            if (lat != null) 'lat': lat,
+            if (lng != null) 'lng': lng,
+            ...entry.extra,
+          },
+        );
+        final list = _videosFromExplorePayload(_unwrap(res.data));
+        if (list.isNotEmpty) return list;
+      } catch (_) {}
+    }
+    return const [];
+  }
+
+  List<ShortVideoEntity> _dedupeVideos(List<ShortVideoEntity> input) {
+    final seen = <String>{};
+    final out = <ShortVideoEntity>[];
+    for (final v in input) {
+      if (v.id.isEmpty || !seen.add(v.id)) continue;
+      out.add(v);
+    }
+    return out;
+  }
+
+  List<ShortVideoEntity> _videosFromExplorePayload(Map<String, dynamic>? m) {
+    if (m == null) return const [];
+    final raw = pick(m, [
+      'videos',
+      'forYouVideos',
+      'for_you',
+      'recommended',
+      'aiVideos',
+      'aiRecommended',
+      'ai_recommended',
+      'locationVideos',
+      'nearbyVideos',
+      'nearby',
+      'items',
+    ]);
+    return _videosFrom(raw);
+  }
+
+  ShortExplorePage _explorePageFromResponse(Map<String, dynamic>? m) {
     if (m == null) {
       return const ShortExplorePage(videos: []);
     }
     final hashtagsRaw = m['trendingHashtags'] ?? m['hashtags'];
     final musicRaw = m['popularMusic'] ?? m['music'];
     return ShortExplorePage(
-      videos: _videosFrom(m['videos']),
+      videos: _videosFrom(m['videos'] ?? m['trendVideos'] ?? m['trending']),
+      forYouVideos: _videosFrom(
+        m['forYouVideos'] ?? m['for_you'] ?? m['recommended'] ?? m['personalized'],
+      ),
+      aiRecommendedVideos: _videosFrom(
+        m['aiVideos'] ?? m['aiRecommended'] ?? m['ai_recommended'],
+      ),
+      locationVideos: _videosFrom(
+        m['locationVideos'] ?? m['nearbyVideos'] ?? m['nearby'],
+      ),
+      locationLabel: pick(m, ['locationLabel', 'location', 'city'])?.toString(),
       trendingHashtags: hashtagsRaw is List
           ? asJsonList(hashtagsRaw)
               .map((j) => _hashtagFrom(asJsonMap(j)))

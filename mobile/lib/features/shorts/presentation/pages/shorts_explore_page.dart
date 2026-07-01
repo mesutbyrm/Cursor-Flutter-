@@ -6,9 +6,11 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/short_explore_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
+import '../providers/shorts_explore_providers.dart';
 import '../providers/shorts_providers.dart';
+import '../utils/shorts_count_format.dart';
 
-/// Keşfet — trend videolar, hashtag'ler ve popüler müzikler.
+/// Keşfet — trend, sana özel, AI, konum, hashtag ve müzik.
 class ShortsExplorePage extends ConsumerStatefulWidget {
   const ShortsExplorePage({super.key});
 
@@ -29,9 +31,85 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
     ref.read(shortsExploreProvider.notifier).search(_searchCtrl.text);
   }
 
+  Future<void> _pickLocation() async {
+    final current = ref.read(shortExploreLocationProvider).valueOrNull;
+    final ctrl = TextEditingController(text: current?.label ?? '');
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: const Color(0xFF121218),
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            16 + MediaQuery.viewInsetsOf(ctx).bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Konum seç',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: ctrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Şehir veya bölge',
+                  filled: true,
+                  fillColor: Colors.white10,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final city in ['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya'])
+                    ActionChip(
+                      label: Text(city),
+                      onPressed: () => Navigator.pop(ctx, city),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+                child: const Text('Kaydet'),
+              ),
+              if (current != null)
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, '__clear__'),
+                  child: const Text('Konumu kaldır'),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+    if (!mounted || picked == null) return;
+    if (picked == '__clear__') {
+      await ref.read(shortExploreLocationProvider.notifier).clear();
+    } else if (picked.isNotEmpty) {
+      await ref.read(shortExploreLocationProvider.notifier).setLocation(picked);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final explore = ref.watch(shortsExploreProvider);
+    final location = ref.watch(shortExploreLocationProvider).valueOrNull;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0E0E0E),
@@ -93,7 +171,11 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
               data: (page) => RefreshIndicator(
                 onRefresh: () =>
                     ref.read(shortsExploreProvider.notifier).refresh(),
-                child: _ExploreBody(page: page),
+                child: _ExploreBody(
+                  page: page,
+                  locationLabel: location?.label ?? page.locationLabel,
+                  onPickLocation: _pickLocation,
+                ),
               ),
             ),
           ),
@@ -104,9 +186,15 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
 }
 
 class _ExploreBody extends ConsumerWidget {
-  const _ExploreBody({required this.page});
+  const _ExploreBody({
+    required this.page,
+    required this.locationLabel,
+    required this.onPickLocation,
+  });
 
   final ShortExplorePage page;
+  final String? locationLabel;
+  final VoidCallback onPickLocation;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -120,6 +208,29 @@ class _ExploreBody extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
+          if (page.forYouVideos.isNotEmpty) ...[
+            _SectionHeader(
+              title: 'Sana Özel',
+              subtitle: 'İlgi alanlarına göre öneriler',
+              icon: Icons.auto_awesome,
+              actionLabel: 'Akışa git',
+              onAction: () => context.push('/shorts'),
+            ),
+            const SizedBox(height: 8),
+            _HorizontalVideoStrip(videos: page.forYouVideos),
+            const SizedBox(height: 20),
+          ],
+          if (page.aiRecommendedVideos.isNotEmpty) ...[
+            _SectionHeader(
+              title: 'Yapay Zekâ Önerileri',
+              subtitle: 'AI ile kişiselleştirilmiş seçimler',
+              icon: Icons.psychology_alt_outlined,
+              badge: 'AI',
+            ),
+            const SizedBox(height: 8),
+            _HorizontalVideoStrip(videos: page.aiRecommendedVideos),
+            const SizedBox(height: 20),
+          ],
           const _SectionTitle('Trend Videolar'),
           const SizedBox(height: 8),
           if (page.videos.isEmpty)
@@ -133,19 +244,7 @@ class _ExploreBody extends ConsumerWidget {
               ),
             )
           else
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 9 / 14,
-              ),
-              itemCount: page.videos.length,
-              itemBuilder: (context, i) =>
-                  _VideoTile(video: page.videos[i]),
-            ),
+            _VideoGrid(videos: page.videos),
           const SizedBox(height: 20),
           if (page.trendingHashtags.isNotEmpty) ...[
             const _SectionTitle('Trend Hashtag\'ler'),
@@ -161,7 +260,7 @@ class _ExploreBody extends ConsumerWidget {
             const SizedBox(height: 20),
           ],
           if (page.popularMusic.isNotEmpty) ...[
-            const _SectionTitle('Popüler Müzikler'),
+            const _SectionTitle('Trend Müzikler'),
             const SizedBox(height: 8),
             SizedBox(
               height: 88,
@@ -169,13 +268,110 @@ class _ExploreBody extends ConsumerWidget {
                 scrollDirection: Axis.horizontal,
                 itemCount: page.popularMusic.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 10),
-                itemBuilder: (context, i) =>
-                    _MusicTile(music: page.popularMusic[i]),
+                itemBuilder: (context, i) => _MusicTile(music: page.popularMusic[i]),
               ),
             ),
+            const SizedBox(height: 20),
           ],
+          Row(
+            children: [
+              const Expanded(
+                child: _SectionTitle('Konuma Göre'),
+              ),
+              TextButton.icon(
+                onPressed: onPickLocation,
+                icon: const Icon(Icons.place_outlined, size: 18),
+                label: Text(locationLabel ?? 'Konum seç'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (page.locationVideos.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Text(
+                locationLabel != null
+                    ? '$locationLabel için video bulunamadı'
+                    : 'Yakındaki videolar için konum seçin',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white54),
+              ),
+            )
+          else
+            _HorizontalVideoStrip(videos: page.locationVideos),
         ],
       ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    this.badge,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final String? badge;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: AppColors.accentPink, size: 22),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  ),
+                  if (badge != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentPurple.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        badge!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              Text(
+                subtitle,
+                style: const TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+        if (actionLabel != null && onAction != null)
+          TextButton(onPressed: onAction, child: Text(actionLabel!)),
+      ],
     );
   }
 }
@@ -198,6 +394,50 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
+class _HorizontalVideoStrip extends StatelessWidget {
+  const _HorizontalVideoStrip({required this.videos});
+
+  final List<ShortVideoEntity> videos;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 180,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: videos.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
+        itemBuilder: (context, i) => SizedBox(
+          width: 110,
+          child: _VideoTile(video: videos[i], compact: true),
+        ),
+      ),
+    );
+  }
+}
+
+class _VideoGrid extends StatelessWidget {
+  const _VideoGrid({required this.videos});
+
+  final List<ShortVideoEntity> videos;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 9 / 14,
+      ),
+      itemCount: videos.length,
+      itemBuilder: (context, i) => _VideoTile(video: videos[i]),
+    );
+  }
+}
+
 class _HashtagChip extends StatelessWidget {
   const _HashtagChip({required this.hashtag});
 
@@ -207,6 +447,12 @@ class _HashtagChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return ActionChip(
       label: Text('#${hashtag.name}'),
+      avatar: hashtag.videosCount > 0
+          ? Text(
+              formatShortCount(hashtag.videosCount),
+              style: const TextStyle(fontSize: 10, color: Colors.white54),
+            )
+          : null,
       backgroundColor: Colors.white.withValues(alpha: 0.08),
       labelStyle: const TextStyle(color: Colors.white),
       onPressed: () => context.push(
@@ -223,67 +469,76 @@ class _MusicTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 200,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: music.coverUrl != null && music.coverUrl!.isNotEmpty
-                ? CanlifalNetworkImage(
-                    url: music.coverUrl!,
-                    width: 48,
-                    height: 48,
-                    fit: BoxFit.cover,
-                  )
-                : Container(
-                    width: 48,
-                    height: 48,
-                    color: Colors.white12,
-                    child: const Icon(Icons.music_note, color: Colors.white54),
-                  ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  music.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-                if (music.artist != null)
+    return GestureDetector(
+      onTap: () => context.push('/shorts/upload'),
+      child: Container(
+        width: 200,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: music.coverUrl != null && music.coverUrl!.isNotEmpty
+                  ? CanlifalNetworkImage(
+                      url: music.coverUrl!,
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      width: 48,
+                      height: 48,
+                      color: Colors.white12,
+                      child: const Icon(Icons.music_note, color: Colors.white54),
+                    ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                   Text(
-                    music.artist!,
+                    music.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white54, fontSize: 11),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
                   ),
-              ],
+                  if (music.artist != null)
+                    Text(
+                      music.artist!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white54, fontSize: 11),
+                    ),
+                  if (music.usageCount > 0)
+                    Text(
+                      '${formatShortCount(music.usageCount)} video',
+                      style: const TextStyle(color: Colors.white38, fontSize: 10),
+                    ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
 class _VideoTile extends StatelessWidget {
-  const _VideoTile({required this.video});
+  const _VideoTile({required this.video, this.compact = false});
 
   final ShortVideoEntity video;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -291,7 +546,7 @@ class _VideoTile extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push('/shorts?videoId=${video.id}'),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(compact ? 10 : 14),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -305,21 +560,36 @@ class _VideoTile extends StatelessWidget {
                 ),
               ),
             Positioned(
-              left: 8,
-              right: 8,
-              bottom: 8,
-              child: Text(
-                video.description?.trim().isNotEmpty == true
-                    ? video.description!.trim()
-                    : '@${video.author?.username ?? 'video'}',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
-                ),
+              left: 6,
+              right: 6,
+              bottom: 6,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!compact && video.viewsCount > 0)
+                    Text(
+                      '${formatShortCount(video.viewsCount)} izlenme',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 10,
+                        shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+                      ),
+                    ),
+                  Text(
+                    video.description?.trim().isNotEmpty == true
+                        ? video.description!.trim()
+                        : '@${video.author?.username ?? 'video'}',
+                    maxLines: compact ? 1 : 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

@@ -41,21 +41,66 @@ class ShortMusicEntity extends Equatable {
 class ShortExplorePage extends Equatable {
   const ShortExplorePage({
     required this.videos,
+    this.forYouVideos = const [],
+    this.aiRecommendedVideos = const [],
+    this.locationVideos = const [],
+    this.locationLabel,
     this.trendingHashtags = const [],
     this.popularMusic = const [],
     this.nextCursor,
     this.hasMore = false,
   });
 
+  /// Trend videolar (Keşfet grid).
   final List<ShortVideoEntity> videos;
+  /// Sana özel öneriler.
+  final List<ShortVideoEntity> forYouVideos;
+  /// Yapay zekâ tabanlı öneriler.
+  final List<ShortVideoEntity> aiRecommendedVideos;
+  /// Konuma göre videolar.
+  final List<ShortVideoEntity> locationVideos;
+  final String? locationLabel;
   final List<ShortHashtagEntity> trendingHashtags;
   final List<ShortMusicEntity> popularMusic;
   final String? nextCursor;
   final bool hasMore;
 
+  ShortExplorePage copyWith({
+    List<ShortVideoEntity>? videos,
+    List<ShortVideoEntity>? forYouVideos,
+    List<ShortVideoEntity>? aiRecommendedVideos,
+    List<ShortVideoEntity>? locationVideos,
+    String? locationLabel,
+    List<ShortHashtagEntity>? trendingHashtags,
+    List<ShortMusicEntity>? popularMusic,
+    String? nextCursor,
+    bool? hasMore,
+  }) {
+    return ShortExplorePage(
+      videos: videos ?? this.videos,
+      forYouVideos: forYouVideos ?? this.forYouVideos,
+      aiRecommendedVideos: aiRecommendedVideos ?? this.aiRecommendedVideos,
+      locationVideos: locationVideos ?? this.locationVideos,
+      locationLabel: locationLabel ?? this.locationLabel,
+      trendingHashtags: trendingHashtags ?? this.trendingHashtags,
+      popularMusic: popularMusic ?? this.popularMusic,
+      nextCursor: nextCursor ?? this.nextCursor,
+      hasMore: hasMore ?? this.hasMore,
+    );
+  }
+
   @override
-  List<Object?> get props =>
-      [videos, trendingHashtags, popularMusic, nextCursor, hasMore];
+  List<Object?> get props => [
+        videos,
+        forYouVideos,
+        aiRecommendedVideos,
+        locationVideos,
+        locationLabel,
+        trendingHashtags,
+        popularMusic,
+        nextCursor,
+        hasMore,
+      ];
 }
 
 class ShortProfileStats extends Equatable {
