@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.467+471 (2026-06-26)
+
+### Kısa video — Faz 6 Premium Görünüm
+
+- **Material 3 / 2026:** Keşfet ve hashtag AMOLED uyumlu tema renkleri
+- **Glassmorphism:** Feed cam üst bar, arama alanı, müzik kartları, aksiyon rail
+- **Shimmer / Skeleton:** Feed, keşfet grid ve şerit yükleme iskeletleri
+- **Hero animasyonları:** Grid/ana sayfa → feed kapak geçişi (`HeroShortThumb`)
+- **120 Hz kaydırma:** `PremiumMotion` + `ScrollPerf.shortsFeed` cache
+- **Platform animasyonları:** iOS/Android tab eğrileri, `flutter_animate` beğeni kalbi
+- **Premium bottom sheet:** Paylaşım ve yorum sheet'leri cam tema ile
+
 ## 1.0.466+470 (2026-06-26)
 
 ### Kısa video — Faz 5 Profesyonel özellikler

@@ -172,3 +172,116 @@ class PremiumMessageListSkeleton extends StatelessWidget {
     );
   }
 }
+
+/// Kısa video feed tam ekran iskeleti.
+class PremiumShortFeedSkeleton extends StatelessWidget {
+  const PremiumShortFeedSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: Colors.black,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Center(
+            child: PremiumSkeleton(
+              width: MediaQuery.sizeOf(context).width * 0.72,
+              height: MediaQuery.sizeOf(context).height * 0.55,
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          Positioned(
+            left: 16,
+            right: 72,
+            bottom: MediaQuery.paddingOf(context).bottom + 32,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                PremiumSkeleton(width: 120, height: 14),
+                const SizedBox(height: 8),
+                PremiumSkeleton(width: double.infinity, height: 12),
+                const SizedBox(height: 6),
+                PremiumSkeleton(width: 180, height: 12),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Keşfet / hashtag 2 sütun grid iskeleti.
+class PremiumShortGridSkeleton extends StatelessWidget {
+  const PremiumShortGridSkeleton({super.key, this.count = 6});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 9 / 14,
+      ),
+      itemCount: count,
+      itemBuilder: (_, _) => const PremiumSkeleton(
+        width: double.infinity,
+        height: double.infinity,
+        borderRadius: BorderRadius.all(Radius.circular(14)),
+      ),
+    );
+  }
+}
+
+/// Yatay kısa video şeridi iskeleti.
+class PremiumShortStripSkeleton extends StatelessWidget {
+  const PremiumShortStripSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 180,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 4,
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
+        itemBuilder: (_, _) => const PremiumSkeleton(
+          width: 110,
+          height: 180,
+          borderRadius: BorderRadius.all(Radius.circular(10)),
+        ),
+      ),
+    );
+  }
+}
+
+/// Keşfet sayfası tam yükleme iskeleti.
+class PremiumShortExploreSkeleton extends StatelessWidget {
+  const PremiumShortExploreSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      physics: const NeverScrollableScrollPhysics(),
+      children: const [
+        PremiumSkeleton(width: double.infinity, height: 48),
+        SizedBox(height: 20),
+        PremiumShortStripSkeleton(),
+        SizedBox(height: 20),
+        PremiumShortStripSkeleton(),
+        SizedBox(height: 20),
+        PremiumShortGridSkeleton(count: 4),
+      ],
+    );
+  }
+}

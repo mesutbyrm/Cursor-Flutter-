@@ -3,13 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../core/ui/premium/premium_skeleton.dart';
+import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../../domain/repositories/shorts_repository.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/short_video_player_util.dart';
 import '../widgets/short_video_page_tile.dart';
+import '../widgets/shorts_premium_theme.dart';
 
 /// TikTok tarzı dikey kısa video akışı — For You / Takip sekmeleri.
 class ShortsFeedPage extends ConsumerStatefulWidget {
@@ -98,13 +101,11 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
     final top = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: ShortsPremiumTheme.feedBackground(context),
       body: feed.when(
         loading: () => Stack(
           children: [
-            Center(
-              child: CircularProgressIndicator(color: AppColors.accentPurple),
-            ),
+            const PremiumShortFeedSkeleton(),
             _topBar(context, top, tab),
           ],
         ),
@@ -119,7 +120,7 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
                     Text(
                       e.toString(),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white70),
+                      style: TextStyle(color: context.colors.onSurfaceMuted),
                     ),
                     const SizedBox(height: 16),
                     FilledButton(
@@ -138,11 +139,14 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
           if (videos.isEmpty) {
             return Stack(
               children: [
-                const Center(
+                Center(
                   child: Text(
                     'Henüz kısa video yok.\nİlk videoyu sen yükle!',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white70, height: 1.4),
+                    style: TextStyle(
+                      color: context.colors.onSurfaceMuted,
+                      height: 1.4,
+                    ),
                   ),
                 ),
                 _topBar(context, top, tab),
@@ -182,11 +186,14 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
               PageView.builder(
                 controller: _pageCtrl,
                 scrollDirection: Axis.vertical,
+                physics: PremiumMotion.pagePhysics,
                 itemCount: _localVideos.length,
                 onPageChanged: (i) => _onPageChanged(i, _localVideos, tab),
                 itemBuilder: (context, i) {
                   if ((i - _index).abs() > 1) {
-                    return const ColoredBox(color: Colors.black);
+                    return ColoredBox(
+                      color: ShortsPremiumTheme.feedBackground(context),
+                    );
                   }
                   final video = _localVideos[i];
                   return ShortVideoPageTile(
@@ -207,46 +214,53 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
 
   Widget _topBar(BuildContext context, double top, ShortsFeedTab tab) {
     return Positioned(
-      top: top + 4,
+      top: 0,
       left: 0,
       right: 0,
-      child: Column(
-        children: [
-          Row(
+      child: ShortsPremiumTheme.feedTopBar(
+        context: context,
+        child: Padding(
+          padding: EdgeInsets.only(top: top + 4),
+          child: Column(
             children: [
-              IconButton(
-                onPressed: () => context.pop(),
-                icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => context.pop(),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => context.push('/shorts/explore'),
+                    icon: const Icon(Icons.search_rounded, color: Colors.white),
+                  ),
+                  IconButton(
+                    onPressed: () => context.push('/shorts/upload'),
+                    icon: const Icon(Icons.video_call_outlined,
+                        color: Colors.white),
+                  ),
+                ],
               ),
-              const Spacer(),
-              IconButton(
-                onPressed: () => context.push('/shorts/explore'),
-                icon: const Icon(Icons.search_rounded, color: Colors.white),
-              ),
-              IconButton(
-                onPressed: () => context.push('/shorts/upload'),
-                icon: const Icon(Icons.video_call_outlined, color: Colors.white),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _FeedTabChip(
+                    label: 'Sana Özel',
+                    selected: tab == ShortsFeedTab.forYou,
+                    onTap: () => _onTabChanged(ShortsFeedTab.forYou),
+                  ),
+                  const SizedBox(width: 20),
+                  _FeedTabChip(
+                    label: 'Takip',
+                    selected: tab == ShortsFeedTab.following,
+                    onTap: () => _onTabChanged(ShortsFeedTab.following),
+                  ),
+                ],
               ),
             ],
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _FeedTabChip(
-                label: 'Sana Özel',
-                selected: tab == ShortsFeedTab.forYou,
-                onTap: () => _onTabChanged(ShortsFeedTab.forYou),
-              ),
-              const SizedBox(width: 20),
-              _FeedTabChip(
-                label: 'Takip',
-                selected: tab == ShortsFeedTab.following,
-                onTap: () => _onTabChanged(ShortsFeedTab.following),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -265,12 +279,17 @@ class _FeedTabChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final curve = Theme.of(context).platform == TargetPlatform.iOS
+        ? Curves.easeOutCubic
+        : PremiumMotion.easeOut;
+
     return GestureDetector(
       onTap: onTap,
       child: Column(
         children: [
-          Text(
-            label,
+          AnimatedDefaultTextStyle(
+            duration: PremiumMotion.fast,
+            curve: curve,
             style: TextStyle(
               color: selected
                   ? Colors.white
@@ -278,10 +297,12 @@ class _FeedTabChip extends StatelessWidget {
               fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
               fontSize: 15,
             ),
+            child: Text(label),
           ),
           const SizedBox(height: 4),
           AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
+            duration: PremiumMotion.fast,
+            curve: curve,
             width: selected ? 28 : 0,
             height: 3,
             decoration: BoxDecoration(

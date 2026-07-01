@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/content/content_guard.dart';
+import '../../../../core/ui/premium/premium_bottom_sheet.dart';
 import '../../../../core/providers/auth_selectors.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
@@ -16,14 +17,9 @@ Future<int?> showShortCommentsSheet(
   ShortVideoEntity video, {
   ValueChanged<int>? onCountChanged,
 }) {
-  return showModalBottomSheet<int>(
+  return showPremiumBottomSheet<int>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: const Color(0xFF121218),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-    ),
-    builder: (ctx) => _ShortCommentsSheet(
+    child: _ShortCommentsSheet(
       video: video,
       onCountChanged: onCountChanged,
     ),

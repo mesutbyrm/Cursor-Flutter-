@@ -3,12 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/performance/effects_perf.dart';
+import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../core/ui/premium/premium_bottom_sheet.dart';
+import '../../../../core/ui/premium/premium_skeleton.dart';
+import '../../../../core/ui/premium_2026/premium_motion.dart';
+import '../../../../core/ui/pro_glass/pro_glass.dart';
+import '../../../../core/widgets/hero_tags.dart';
 import '../../domain/entities/short_explore_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_explore_providers.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/shorts_count_format.dart';
+import '../widgets/shorts_premium_theme.dart';
 
 /// Keşfet — trend, sana özel, AI, konum, hashtag ve müzik.
 class ShortsExplorePage extends ConsumerStatefulWidget {
@@ -34,17 +41,14 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
   Future<void> _pickLocation() async {
     final current = ref.read(shortExploreLocationProvider).valueOrNull;
     final ctrl = TextEditingController(text: current?.label ?? '');
-    final picked = await showModalBottomSheet<String>(
+    final picked = await showPremiumBottomSheet<String>(
       context: context,
-      backgroundColor: const Color(0xFF121218),
-      isScrollControlled: true,
-      builder: (ctx) {
-        return Padding(
+      child: Padding(
           padding: EdgeInsets.fromLTRB(
             16,
+            0,
             16,
-            16,
-            16 + MediaQuery.viewInsetsOf(ctx).bottom,
+            16 + MediaQuery.viewInsetsOf(context).bottom,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -52,20 +56,14 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
             children: [
               const Text(
                 'Konum seç',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: ctrl,
-                style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: 'Şehir veya bölge',
                   filled: true,
-                  fillColor: Colors.white10,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -79,24 +77,23 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
                   for (final city in ['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya'])
                     ActionChip(
                       label: Text(city),
-                      onPressed: () => Navigator.pop(ctx, city),
+                      onPressed: () => Navigator.pop(context, city),
                     ),
                 ],
               ),
               const SizedBox(height: 12),
               FilledButton(
-                onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+                onPressed: () => Navigator.pop(context, ctrl.text.trim()),
                 child: const Text('Kaydet'),
               ),
               if (current != null)
                 TextButton(
-                  onPressed: () => Navigator.pop(ctx, '__clear__'),
+                  onPressed: () => Navigator.pop(context, '__clear__'),
                   child: const Text('Konumu kaldır'),
                 ),
             ],
           ),
-        );
-      },
+        ),
     );
     if (!mounted || picked == null) return;
     if (picked == '__clear__') {
@@ -112,9 +109,11 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
     final location = ref.watch(shortExploreLocationProvider).valueOrNull;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0E0E0E),
+      backgroundColor: ShortsPremiumTheme.chromeBackground(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: const Text('Keşfet'),
         actions: [
           IconButton(
@@ -128,32 +127,29 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: TextField(
-              controller: _searchCtrl,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Video, hashtag veya müzik ara...',
-                hintStyle: const TextStyle(color: Colors.white38),
-                prefixIcon: const Icon(Icons.search, color: Colors.white54),
-                filled: true,
-                fillColor: Colors.white.withValues(alpha: 0.08),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
+            child: ProGlassCard(
+              tier: GlassTier.static,
+              padding: EdgeInsets.zero,
+              animateIn: false,
+              borderRadius: BorderRadius.circular(14),
+              child: TextField(
+                controller: _searchCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Video, hashtag veya müzik ara...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: InputBorder.none,
+                  suffixIcon: IconButton(
+                    onPressed: _search,
+                    icon: const Icon(Icons.arrow_forward_rounded),
+                  ),
                 ),
-                suffixIcon: IconButton(
-                  onPressed: _search,
-                  icon: const Icon(Icons.arrow_forward_rounded),
-                ),
+                onSubmitted: (_) => _search(),
               ),
-              onSubmitted: (_) => _search(),
             ),
           ),
           Expanded(
             child: explore.when(
-              loading: () => Center(
-                child: CircularProgressIndicator(color: AppColors.accentPurple),
-              ),
+              loading: () => const PremiumShortExploreSkeleton(),
               error: (e, _) => Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -207,6 +203,7 @@ class _ExploreBody extends ConsumerWidget {
       },
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        physics: PremiumMotion.listPhysics,
         children: [
           if (page.forYouVideos.isNotEmpty) ...[
             _SectionHeader(
@@ -326,7 +323,7 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: AppColors.accentPink, size: 22),
+        Icon(icon, color: context.accentPink, size: 22),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -347,8 +344,8 @@ class _SectionHeader extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.accentPurple.withValues(alpha: 0.35),
-                        borderRadius: BorderRadius.circular(999),
+                        color: context.accentPurple.withValues(alpha: 0.35),
+                        borderRadius: ShortsPremiumTheme.chipRadius,
                       ),
                       child: Text(
                         badge!,
@@ -405,6 +402,7 @@ class _HorizontalVideoStrip extends StatelessWidget {
       height: 180,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        physics: PremiumMotion.listPhysics,
         itemCount: videos.length,
         separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, i) => SizedBox(
@@ -453,7 +451,7 @@ class _HashtagChip extends StatelessWidget {
               style: const TextStyle(fontSize: 10, color: Colors.white54),
             )
           : null,
-      backgroundColor: Colors.white.withValues(alpha: 0.08),
+      backgroundColor: context.colors.surfaceElevated,
       labelStyle: const TextStyle(color: Colors.white),
       onPressed: () => context.push(
         '/shorts/hashtag/${Uri.encodeComponent(hashtag.name)}',
@@ -469,66 +467,71 @@ class _MusicTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return SizedBox(
+      width: 200,
+      child: ProGlassCard(
+      tier: GlassTier.static,
+      padding: const EdgeInsets.all(10),
+      animateIn: false,
+      borderRadius: BorderRadius.circular(12),
       onTap: () => context.push('/shorts/upload'),
-      child: Container(
-        width: 200,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: music.coverUrl != null && music.coverUrl!.isNotEmpty
-                  ? CanlifalNetworkImage(
-                      url: music.coverUrl!,
-                      width: 48,
-                      height: 48,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(
-                      width: 48,
-                      height: 48,
-                      color: Colors.white12,
-                      child: const Icon(Icons.music_note, color: Colors.white54),
-                    ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: music.coverUrl != null && music.coverUrl!.isNotEmpty
+                ? CanlifalNetworkImage(
+                    url: music.coverUrl!,
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                  )
+                : Container(
+                    width: 48,
+                    height: 48,
+                    color: context.colors.surface,
+                    child: Icon(Icons.music_note,
+                        color: context.colors.onSurfaceMuted),
+                  ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  music.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+                if (music.artist != null)
                   Text(
-                    music.title,
+                    music.artist!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                    style: TextStyle(
+                      color: context.colors.onSurfaceMuted,
+                      fontSize: 11,
                     ),
                   ),
-                  if (music.artist != null)
-                    Text(
-                      music.artist!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white54, fontSize: 11),
+                if (music.usageCount > 0)
+                  Text(
+                    '${formatShortCount(music.usageCount)} video',
+                    style: TextStyle(
+                      color: context.colors.onSurfaceMuted.withValues(alpha: 0.7),
+                      fontSize: 10,
                     ),
-                  if (music.usageCount > 0)
-                    Text(
-                      '${formatShortCount(music.usageCount)} video',
-                      style: const TextStyle(color: Colors.white38, fontSize: 10),
-                    ),
-                ],
-              ),
+                  ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
       ),
     );
   }
@@ -543,56 +546,61 @@ class _VideoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final thumb = video.thumbnailUrl;
-    return GestureDetector(
-      onTap: () => context.push('/shorts?videoId=${video.id}'),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(compact ? 10 : 14),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (thumb != null && thumb.isNotEmpty)
-              CanlifalNetworkImage(url: thumb, fit: BoxFit.cover)
-            else
-              const ColoredBox(
-                color: Color(0xFF1A0F3D),
-                child: Center(
-                  child: Icon(Icons.play_circle_outline, color: Colors.white54),
+    final radius = compact ? 10.0 : 14.0;
+    return HeroShortThumb(
+      videoId: video.id,
+      child: GestureDetector(
+        onTap: () => context.push('/shorts?videoId=${video.id}'),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(radius),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (thumb != null && thumb.isNotEmpty)
+                CanlifalNetworkImage(url: thumb, fit: BoxFit.cover)
+              else
+                ColoredBox(
+                  color: context.colors.surfaceElevated,
+                  child: Center(
+                    child: Icon(Icons.play_circle_outline,
+                        color: context.colors.onSurfaceMuted),
+                  ),
                 ),
-              ),
-            Positioned(
-              left: 6,
-              right: 6,
-              bottom: 6,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (!compact && video.viewsCount > 0)
+              Positioned(
+                left: 6,
+                right: 6,
+                bottom: 6,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!compact && video.viewsCount > 0)
+                      Text(
+                        '${formatShortCount(video.viewsCount)} izlenme',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                          shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+                        ),
+                      ),
                     Text(
-                      '${formatShortCount(video.viewsCount)} izlenme',
+                      video.description?.trim().isNotEmpty == true
+                          ? video.description!.trim()
+                          : '@${video.author?.username ?? 'video'}',
+                      maxLines: compact ? 1 : 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 10,
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                         shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
                       ),
                     ),
-                  Text(
-                    video.description?.trim().isNotEmpty == true
-                        ? video.description!.trim()
-                        : '@${video.author?.username ?? 'video'}',
-                    maxLines: compact ? 1 : 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

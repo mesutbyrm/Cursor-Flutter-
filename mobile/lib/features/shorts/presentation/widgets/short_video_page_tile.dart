@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/firebase/firebase_bootstrap.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/performance/list_perf.dart';
+import '../../../../core/widgets/hero_tags.dart';
+import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/short_video_player_util.dart';
@@ -258,19 +261,19 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
           ),
         if (_showHeart)
           Center(
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.6, end: 1.2),
-              duration: const Duration(milliseconds: 400),
-              builder: (context, scale, child) => Transform.scale(
-                scale: scale,
-                child: child,
-              ),
-              child: Icon(
-                Icons.favorite,
-                size: 96,
-                color: Colors.redAccent.withValues(alpha: 0.9),
-              ),
-            ),
+            child: Icon(
+              Icons.favorite,
+              size: 96,
+              color: Colors.redAccent.withValues(alpha: 0.92),
+            )
+                .animate()
+                .scale(
+                  begin: const Offset(0.55, 0.55),
+                  end: const Offset(1.15, 1.15),
+                  duration: PremiumMotion.medium,
+                  curve: PremiumMotion.spring,
+                )
+                .fadeOut(delay: 350.ms, duration: 200.ms),
           ),
         ],
       ),
@@ -279,7 +282,7 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
 
   Widget _thumbnailOrBlack(ShortVideoEntity video, {bool showError = false}) {
     final thumb = video.thumbnailUrl;
-    return ColoredBox(
+    final content = ColoredBox(
       color: Colors.black,
       child: thumb != null && thumb.isNotEmpty
           ? CanlifalNetworkImage(
@@ -292,6 +295,7 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
             )
           : _centerMsg(showError),
     );
+    return HeroShortThumb(videoId: video.id, child: content);
   }
 
   Widget _centerMsg(bool showError) {

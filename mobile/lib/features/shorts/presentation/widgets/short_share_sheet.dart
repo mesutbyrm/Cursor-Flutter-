@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/firebase/firebase_bootstrap.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/ui/premium/premium_bottom_sheet.dart';
 import '../../../social/presentation/providers/social_providers.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../pages/shorts_feed_page.dart';
@@ -27,14 +28,9 @@ Future<void> showShortShareSheet(
     link,
   ].join('\n');
 
-  return showModalBottomSheet<void>(
+  return showPremiumBottomSheet<void>(
     context: context,
-    backgroundColor: const Color(0xFF121218),
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-    ),
-    builder: (ctx) => _ShortShareSheetBody(
+    child: _ShortShareSheetBody(
       videoId: videoId,
       link: link,
       text: text,

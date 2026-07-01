@@ -43,3 +43,27 @@ class HeroPostImage extends StatelessWidget {
     return Hero(tag: HeroTags.postImage(postId), child: child);
   }
 }
+
+/// Kısa video kapak Hero sarmalayıcı — grid/keşfet → feed geçişi.
+class HeroShortThumb extends StatelessWidget {
+  const HeroShortThumb({
+    super.key,
+    required this.videoId,
+    required this.child,
+  });
+
+  final String videoId;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (videoId.trim().isEmpty) return child;
+    return Hero(
+      tag: HeroTags.shortThumb(videoId),
+      child: Material(
+        color: Colors.transparent,
+        child: child,
+      ),
+    );
+  }
+}

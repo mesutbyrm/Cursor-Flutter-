@@ -34,6 +34,7 @@ abstract final class ScrollPerf {
         ScrollSurface.chat => chatCacheExtent,
         ScrollSurface.grid => gridCacheExtent,
         ScrollSurface.horizontal => horizontalCacheExtent,
+        ScrollSurface.shortsFeed => feedCacheExtent * 1.5,
         ScrollSurface.standard => cacheExtent,
       };
 
@@ -70,4 +71,5 @@ enum ScrollSurface {
   chat,
   grid,
   horizontal,
+  shortsFeed,
 }

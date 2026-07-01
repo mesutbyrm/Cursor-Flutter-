@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../core/widgets/hero_tags.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../domain/entities/home_trend_video_entity.dart';
 import '../providers/home_providers.dart';
@@ -102,23 +103,25 @@ class _TrendVideoCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    if (video.thumbnailUrl != null)
-                      CanlifalNetworkImage(
-                        url: video.thumbnailUrl!,
-                        fit: BoxFit.cover,
-                      )
-                    else
-                      Container(
-                        color: const Color(0xFF1A0E38),
-                        child: Icon(
-                          Icons.play_circle_fill_rounded,
-                          size: 40,
-                          color: Colors.white.withValues(alpha: 0.35),
+                child: HeroShortThumb(
+                  videoId: video.id,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (video.thumbnailUrl != null)
+                        CanlifalNetworkImage(
+                          url: video.thumbnailUrl!,
+                          fit: BoxFit.cover,
+                        )
+                      else
+                        Container(
+                          color: const Color(0xFF1A0E38),
+                          child: Icon(
+                            Icons.play_circle_fill_rounded,
+                            size: 40,
+                            color: Colors.white.withValues(alpha: 0.35),
+                          ),
                         ),
-                      ),
                     if (video.badge != null)
                       Positioned(
                         left: 8,
@@ -165,6 +168,7 @@ class _TrendVideoCard extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
                 ),
               ),
               Container(

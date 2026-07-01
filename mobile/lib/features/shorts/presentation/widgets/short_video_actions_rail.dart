@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../../core/firebase/firebase_bootstrap.dart';
+import '../../../../core/performance/effects_perf.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -393,14 +394,19 @@ class _ActionButton extends StatelessWidget {
       onTap: onTap,
       child: Column(
         children: [
-          Container(
-            width: 48,
-            height: 48,
+          EffectsPerf.chromeBar(
+            context: context,
+            sigma: 8,
+            borderRadius: BorderRadius.circular(24),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.35),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: color, size: 26),
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: Icon(icon, color: color, size: 26),
+            ),
           ),
           const SizedBox(height: 4),
           Text(
