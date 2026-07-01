@@ -182,6 +182,29 @@ jobs:
             echo "GOOGLE_SERVICES_JSON_BASE64 not set — skipping Firebase config"
           fi
 
+      - name: Release keystore (Google Sign-In SHA-1 tutarlılığı)
+        working-directory: ${{ github.workspace }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -eu
+          if [ -n "${ANDROID_KEYSTORE_BASE64:-}" ]; then
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | tr -d '\n\r\t ' | base64 -d \
+              > mobile/android/app/release.keystore
+            cat > mobile/android/key.properties <<EOF
+          storeFile=release.keystore
+          storePassword=${ANDROID_KEYSTORE_PASSWORD}
+          keyAlias=${ANDROID_KEY_ALIAS}
+          keyPassword=${ANDROID_KEY_PASSWORD}
+          EOF
+            echo "Release keystore hazır — sabit SHA-1 ile imzalanacak."
+          else
+            echo "ANDROID_KEYSTORE_BASE64 yok — debug imza (Google girişi çalışmayabilir)."
+          fi
+
       - name: flutter build apk --release (Gate 9)
         run: |
           set -eux

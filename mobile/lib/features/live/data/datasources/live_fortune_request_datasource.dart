@@ -50,15 +50,18 @@ class LiveFortuneRequestDataSource {
     required String question,
     required String fortuneType,
     required LiveFortunePriority priority,
+    int? jetonCost,
   }) async {
     final id = streamId.trim();
+    // Serbest miktar (20-1000) — verilmezse öncelik kademesinden türetilir.
+    final cost = (jetonCost ?? priority.jetonCost).clamp(20, 1000);
     final body = {
       'displayName': displayName.trim(),
       'question': question.trim(),
       'fortuneType': fortuneType,
       'type': fortuneType,
       'priority': priority.name,
-      'jetonCost': priority.jetonCost,
+      'jetonCost': cost,
     };
 
     final primaryPath = ApiEndpoints.videoStreamFortuneRequests(id);

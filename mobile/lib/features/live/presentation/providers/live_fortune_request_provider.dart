@@ -80,6 +80,7 @@ class LiveFortuneRequestsNotifier
     required String question,
     required String fortuneType,
     required LiveFortunePriority priority,
+    int? jetonCost,
   }) async {
     state = state.copyWith(submitting: true, clearError: true);
     try {
@@ -90,6 +91,7 @@ class LiveFortuneRequestsNotifier
             question: question,
             fortuneType: fortuneType,
             priority: priority,
+            jetonCost: jetonCost,
           )
           .timeout(
             const Duration(seconds: 15),

@@ -21,6 +21,7 @@ class LiveFortuneRequestForm extends StatefulWidget {
     required String question,
     required String fortuneType,
     required LiveFortunePriority priority,
+    required int jetonCost,
   }) onSubmit;
 
   final String? initialFortuneType;
@@ -35,6 +36,7 @@ class _LiveFortuneRequestFormState extends State<LiveFortuneRequestForm> {
   final _question = TextEditingController();
   var _fortuneType = 'tarot';
   var _priority = LiveFortunePriority.standard;
+  var _jetonAmount = 100.0; // 20-1000 serbest miktar
   var _loading = false;
 
   @override
@@ -62,7 +64,7 @@ class _LiveFortuneRequestFormState extends State<LiveFortuneRequestForm> {
       return;
     }
 
-    final cost = _priority.jetonCost;
+    final cost = _jetonAmount.round();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -93,6 +95,7 @@ class _LiveFortuneRequestFormState extends State<LiveFortuneRequestForm> {
         question: q,
         fortuneType: _fortuneType,
         priority: _priority,
+        jetonCost: cost,
       );
       if (!mounted) return;
       if (success) {
@@ -171,12 +174,50 @@ class _LiveFortuneRequestFormState extends State<LiveFortuneRequestForm> {
                     .map(
                       (p) => DropdownMenuItem(
                         value: p,
-                        child: Text('${p.label} — ${p.jetonCost} Jeton'),
+                        child: Text(p.label),
                       ),
                     )
                     .toList(),
                 onChanged: (v) =>
                     setState(() => _priority = v ?? LiveFortunePriority.standard),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Text(
+                    'İstek Jetonu',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${_jetonAmount.round()} Jeton',
+                    style: const TextStyle(
+                      color: Color(0xFFFFD54F),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              Slider(
+                value: _jetonAmount,
+                min: 20,
+                max: 1000,
+                divisions: 98, // 20'şer adım (20,30,...1000 ≈ 10'luk)
+                activeColor: const Color(0xFF7C3AED),
+                label: '${_jetonAmount.round()} Jeton',
+                onChanged: (v) => setState(() => _jetonAmount = v),
+              ),
+              Text(
+                'Daha yüksek jeton, falının yayıncı sırasında öne çıkmasını sağlar (20-1000).',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 10,
+                ),
               ),
               if (balance != null) ...[
                 const SizedBox(height: 6),

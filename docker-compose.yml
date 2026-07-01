@@ -10,6 +10,30 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U canlifal"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    # Gizli değerler (.env): JWT, GOOGLE_CLIENT_ID, LIVEKIT, ONESIGNAL, ödeme
+    # bilgileri vb. — repoya KOYMA, sunucuda api/.env olarak tut.
+    env_file:
+      - ./api/.env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: postgresql://canlifal:canlifal@db:5432/canlifal
+    ports:
+      - "3000:3000"
 
 volumes:
   pgdata:
