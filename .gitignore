@@ -8,6 +8,7 @@ mobile/android/app/google-services.json
 
 # Yerel CI/Android SDK kurulumu (depoya eklenmez)
 /android-sdk-ci/
+.android-sdk/
 
 # Flutter/Dart artefaktları (kök veya mobile/)
 .dart_tool/
