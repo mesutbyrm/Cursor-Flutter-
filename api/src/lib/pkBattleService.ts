@@ -683,6 +683,9 @@ export function legacyPkRowFromBattle(
     leftScore,
     rightScore,
     winner,
+    // Bu stream davetin hangi tarafı — rakip (opponent) ise kabul/red gösterilir.
+    isChallenger,
+    isOpponent: !isChallenger,
     createdAt: battle.createdAt,
     endedAt: battle.endTime,
     secondsLeft: battle.secondsLeft,

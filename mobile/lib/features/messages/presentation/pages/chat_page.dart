@@ -31,12 +31,25 @@ class _ChatPageState extends ConsumerState<ChatPage>
   final _scroll = ScrollController();
   var _peerTyping = false;
   Timer? _poll;
+  Timer? _typingPoll;
+  DateTime? _lastTypedAt;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _scroll.addListener(_onScroll);
+    _text.addListener(_onTextChanged);
+    // "Yazıyor" senkronu — 2.5sn'de bir kendi durumunu gönder + karşıyı oku.
+    _typingPoll = Timer.periodic(const Duration(milliseconds: 2500), (_) async {
+      if (!mounted) return;
+      final recentlyTyped = _lastTypedAt != null &&
+          DateTime.now().difference(_lastTypedAt!) < const Duration(seconds: 4);
+      final peer = await ref
+          .read(messagesRepositoryProvider)
+          .pingTyping(widget.conversationId, selfTyping: recentlyTyped);
+      if (mounted && peer != _peerTyping) setState(() => _peerTyping = peer);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref
@@ -56,10 +69,16 @@ class _ChatPageState extends ConsumerState<ChatPage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _poll?.cancel();
+    _typingPoll?.cancel();
     _scroll.removeListener(_onScroll);
+    _text.removeListener(_onTextChanged);
     _text.dispose();
     _scroll.dispose();
     super.dispose();
+  }
+
+  void _onTextChanged() {
+    if (_text.text.trim().isNotEmpty) _lastTypedAt = DateTime.now();
   }
 
   @override

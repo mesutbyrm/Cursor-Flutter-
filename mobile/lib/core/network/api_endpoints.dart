@@ -527,6 +527,9 @@ abstract final class ApiEndpoints {
   static String conversationMessages(String id) =>
       '/api/messages/conversations/$id/messages';
 
+  static String conversationTyping(String id) =>
+      '/api/messages/conversations/$id/typing';
+
   static const notifications = '/api/notifications';
   static const notificationsPaymentClear = '/api/notifications/payment';
   static String notificationRead(String id) => '/api/notifications/$id/read';

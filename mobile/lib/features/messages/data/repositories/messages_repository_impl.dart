@@ -96,4 +96,8 @@ class MessagesRepositoryImpl implements MessagesRepository {
     await ApiCacheStore.clear(MessagesLoadPerf.threadKey(uid, conversationId));
     await ApiCacheStore.clear(MessagesLoadPerf.conversationsKey(uid));
   }
+
+  @override
+  Future<bool> pingTyping(String conversationId, {bool selfTyping = true}) =>
+      _remote.pingTyping(conversationId, selfTyping: selfTyping);
 }

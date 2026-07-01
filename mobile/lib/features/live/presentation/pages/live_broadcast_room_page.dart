@@ -514,8 +514,27 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     _signalService?.onSignal = (sig) {
       if (!mounted) return;
       handleLiveLikeSignal(ref, streamId: streamId, signal: sig);
+      _handlePkSignal(streamId, sig);
     };
     _signalService?.start(streamId: streamId);
+  }
+
+  /// PK skor sinyali — anlık senkron (poll'u beklemeden).
+  void _handlePkSignal(String streamId, Map<String, dynamic> sig) {
+    final type = (sig['type'] ?? sig['event'] ?? '').toString().toLowerCase();
+    if (type != 'pk' && type != 'pkbattle' && type != 'pk_battle') return;
+    final payload = sig['payload'] is Map
+        ? Map<String, dynamic>.from(sig['payload'] as Map)
+        : sig;
+    final battle = payload['battle'] ?? payload['pk'];
+    if (battle is Map) {
+      ref
+          .read(liveVideoPkProvider(streamId).notifier)
+          .applyRemoteBattle(Map<String, dynamic>.from(battle));
+    } else {
+      // Payload battle taşımıyorsa provider'ı tazele.
+      ref.read(liveVideoPkProvider(streamId).notifier).refresh();
+    }
   }
 
   Future<void> _onChatModeration(LiveRoomChatMessage message) async {
@@ -644,6 +663,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     final notifier = ref.read(liveRoomInteractionProvider(streamId).notifier);
     notifier.triggerApplause();
     notifier.triggerEmojiRain();
+  }
+
+  /// PK aktif/beklemede VEYA misafir modu → ekran üst/alt bölünür.
+  bool _isSplitStage(LiveBroadcastSession s, String pkStatus) {
+    final pkOn = pkStatus == 'active' || pkStatus == 'pending';
+    final guestOn = _resolveGuestLayout() != LiveGuestLayout.solo;
+    return pkOn || guestOn;
   }
 
   LiveGuestLayout _resolveGuestLayout() {
@@ -1239,7 +1265,26 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         body: Stack(
           fit: StackFit.expand,
           children: [
-            Positioned.fill(child: _videoLayer(s)),
+            // PK veya misafir modunda ekran üst/alt bölünür: üst yarı video/PK
+            // alanı, alt yarı hediye + chat. Normal yayında tam ekran video.
+            if (_isSplitStage(s, pkStatus))
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: MediaQuery.sizeOf(context).height * 0.5,
+                child: _videoLayer(s),
+              )
+            else
+              Positioned.fill(child: _videoLayer(s)),
+            if (_isSplitStage(s, pkStatus))
+              Positioned(
+                top: MediaQuery.sizeOf(context).height * 0.5,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: const ColoredBox(color: Colors.black),
+              ),
             const LiveImmersiveScrim(),
             LiveFloatingHeartsOverlay(
               key: _heartsKey,
@@ -1320,21 +1365,29 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                   if (hasStream && pkState?.battle != null && pkStatus == 'pending')
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                      child: LivePkScoreBar(
-                        leftScore: pkState!.leftScore,
-                        rightScore: pkState.rightScore,
-                        status: pkStatus,
-                        isHost: s.isHost,
-                        onAccept: !s.isHost
-                            ? () => ref
-                                .read(liveVideoPkProvider(streamId).notifier)
-                                .accept()
-                            : null,
-                        onReject: !s.isHost
-                            ? () => ref
-                                .read(liveVideoPkProvider(streamId).notifier)
-                                .reject()
-                            : null,
+                      child: Builder(
+                        builder: (_) {
+                          // Davetin rakip tarafı kabul/red edebilir. Canlı yayın
+                          // PK'sında rakip de kendi yayınının host'udur; bu yüzden
+                          // !isHost yerine isOpponent kullanılır.
+                          final canRespond = pkState!.isOpponent;
+                          return LivePkScoreBar(
+                            leftScore: pkState.leftScore,
+                            rightScore: pkState.rightScore,
+                            status: pkStatus,
+                            isHost: s.isHost,
+                            onAccept: canRespond
+                                ? () => ref
+                                    .read(liveVideoPkProvider(streamId).notifier)
+                                    .accept()
+                                : null,
+                            onReject: canRespond
+                                ? () => ref
+                                    .read(liveVideoPkProvider(streamId).notifier)
+                                    .reject()
+                                : null,
+                          );
+                        },
                       ),
                     )
                   else if (s.isHost)

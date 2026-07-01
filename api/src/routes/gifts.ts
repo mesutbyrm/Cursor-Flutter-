@@ -4,6 +4,7 @@ import { prisma } from "../lib/prisma";
 import { fail, ok } from "../lib/response";
 import { optionalAuth } from "../middleware/optionalAuth";
 import { applyPkGift } from "../lib/pkBattleService";
+import { pushStreamSignal } from "../lib/liveStreamExtrasStore";
 import { getChatRoom, getRoomType } from "../lib/chatRoomStore";
 import {
   applyGiftPayout,
@@ -222,6 +223,7 @@ export async function sendStreamGift(
     for (const ev of pkResult.events) {
       emitPkBattleEvent(pkResult.battle, ev, { gift: pkResult.gift });
     }
+    emitPkStreamSignal(pkResult.battle, userId ?? "system");
   }
 
   return res.status(200).json({
@@ -232,6 +234,16 @@ export async function sendStreamGift(
     streamerBalance: totalCost,
     pkBattle: pkResult?.battle ?? null,
   });
+}
+
+/// PK skor güncellemesini her iki yayına da /signals kanalından yayar —
+/// Flutter canlı yayın istemcisi anlık senkronlanır (socket yerine poll).
+function emitPkStreamSignal(battle: Record<string, unknown>, fromUserId: string) {
+  const a = battle.liveStreamId;
+  const b = battle.opponentLiveStreamId;
+  const payload = { battle, pk: battle } as Record<string, unknown>;
+  if (typeof a === "string" && a) pushStreamSignal(a, fromUserId, "pk", payload);
+  if (typeof b === "string" && b) pushStreamSignal(b, fromUserId, "pk", payload);
 }
 
 /** GET /api/video-streams/:streamId/gifts */
@@ -427,6 +439,7 @@ export async function sendRoomGift(
     for (const ev of pkResult.events) {
       emitPkBattleEvent(pkResult.battle, ev, { gift: pkResult.gift });
     }
+    emitPkStreamSignal(pkResult.battle, userId ?? "system");
   }
 
   return res.status(200).json({
