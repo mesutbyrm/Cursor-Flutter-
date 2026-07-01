@@ -46,11 +46,91 @@ class LiveGuestGrid extends ConsumerWidget {
       return _soloView();
     }
 
-    final cross = layout.crossAxisCount;
     final slots = grid.slots.length >= layout.seats
         ? grid.slots.take(layout.seats).toList()
         : _buildSlots(layout.seats);
 
+    Widget cell(int i) {
+      final slot = i < slots.length ? slots[i] : LiveGuestSlot(index: i);
+      return _SlotCell(
+        slot: slot,
+        isHost: isHost,
+        agora: agora,
+        trtc: trtc,
+        localPreviewKey: i == 0 ? localPreviewKey : null,
+        hostAvatarUrl: hostAvatarUrl,
+        hostName: hostName,
+        remoteUid: slot.agoraUid ?? (i == 1 ? remoteUid : null),
+        remoteUserId: i == 1 ? remoteUserId : null,
+        pinned: grid.pinnedIndex == i,
+        onInvite: onInviteSlot == null ? null : () => onInviteSlot!(i),
+        onAction: onGuestAction == null
+            ? null
+            : (action) => onGuestAction!(i, action),
+      );
+    }
+
+    const gap = SizedBox(width: 3, height: 3);
+
+    // 2'li: yan yana 2 eşit dikdörtgen.
+    if (layout == LiveGuestLayout.duo) {
+      return Row(
+        children: [
+          Expanded(child: cell(0)),
+          gap,
+          Expanded(child: cell(1)),
+        ],
+      );
+    }
+
+    // 3'lü: sol yarı yayıncı (tam yükseklik), sağ yarı dikey 2 parça.
+    if (layout == LiveGuestLayout.trio) {
+      return Row(
+        children: [
+          Expanded(child: cell(0)),
+          gap,
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(child: cell(1)),
+                gap,
+                Expanded(child: cell(2)),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    // 4'lü: eşit 2x2.
+    if (layout == LiveGuestLayout.quad) {
+      return Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: cell(0)),
+                gap,
+                Expanded(child: cell(1)),
+              ],
+            ),
+          ),
+          gap,
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: cell(2)),
+                gap,
+                Expanded(child: cell(3)),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    // 6 / 9: eşit grid.
+    final cross = layout.crossAxisCount;
     return GridView.builder(
       physics: const NeverScrollableScrollPhysics(),
       padding: EdgeInsets.zero,
@@ -58,28 +138,10 @@ class LiveGuestGrid extends ConsumerWidget {
         crossAxisCount: cross,
         mainAxisSpacing: 3,
         crossAxisSpacing: 3,
-        childAspectRatio: cross == 1 ? 0.72 : (cross == 3 ? 0.62 : 0.55),
+        childAspectRatio: cross == 3 ? 0.62 : 0.55,
       ),
       itemCount: layout.seats,
-      itemBuilder: (context, i) {
-        final slot = i < slots.length ? slots[i] : LiveGuestSlot(index: i);
-        return _SlotCell(
-          slot: slot,
-          isHost: isHost,
-          agora: agora,
-          trtc: trtc,
-          localPreviewKey: i == 0 ? localPreviewKey : null,
-          hostAvatarUrl: hostAvatarUrl,
-          hostName: hostName,
-          remoteUid: slot.agoraUid ?? (i == 1 ? remoteUid : null),
-          remoteUserId: i == 1 ? remoteUserId : null,
-          pinned: grid.pinnedIndex == i,
-          onInvite: onInviteSlot == null ? null : () => onInviteSlot!(i),
-          onAction: onGuestAction == null
-              ? null
-              : (action) => onGuestAction!(i, action),
-        );
-      },
+      itemBuilder: (context, i) => cell(i),
     );
   }
 
