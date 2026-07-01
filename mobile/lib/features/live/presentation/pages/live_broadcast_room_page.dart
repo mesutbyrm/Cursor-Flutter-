@@ -293,6 +293,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     required String question,
     required String fortuneType,
     required LiveFortunePriority priority,
+    int? jetonCost,
   }) async {
     try {
       final row =
@@ -301,6 +302,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                 question: question,
                 fortuneType: fortuneType,
                 priority: priority,
+                jetonCost: jetonCost,
               );
       if (row != null) {
         ref.refreshWalletCache(force: true);
@@ -367,6 +369,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
               required question,
               required fortuneType,
               required priority,
+              required jetonCost,
             }) async {
               final success = await _submitStreamFortuneRequest(
                 streamId: streamId,
@@ -374,6 +377,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                 question: question,
                 fortuneType: fortuneType,
                 priority: priority,
+                jetonCost: jetonCost,
               );
               if (success && ctx.mounted) Navigator.pop(ctx, true);
               return success;
@@ -1541,6 +1545,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                                           required question,
                                           required fortuneType,
                                           required priority,
+                                          required jetonCost,
                                         }) =>
                                             _submitStreamFortuneRequest(
                                               streamId: streamId,
@@ -1548,12 +1553,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                                               question: question,
                                               fortuneType: fortuneType,
                                               priority: priority,
+                                              jetonCost: jetonCost,
                                             )
                                       : ({
                                           required displayName,
                                           required question,
                                           required fortuneType,
                                           required priority,
+                                          required jetonCost,
                                         }) async =>
                                             false,
                                 ),

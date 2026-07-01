@@ -24,6 +24,7 @@ class LiveRoomChatFalPanel extends StatefulWidget {
     required String question,
     required String fortuneType,
     required LiveFortunePriority priority,
+    required int jetonCost,
   }) onSubmitFortuneRequest;
   final int? balance;
   final String? initialFortuneType;

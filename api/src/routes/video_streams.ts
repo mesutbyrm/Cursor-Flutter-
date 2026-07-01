@@ -489,7 +489,10 @@ videoStreamsRouter.post("/:id/fortune-requests", requireAuth, async (req, res) =
     vip: 2500,
     super: 2500,
   };
-  const jetonCost = Number(req.body?.jetonCost ?? costMap[priority] ?? 500);
+  // Fal isteği jeton aralığı: 20 - 1000 (serbest miktar). İstemci jetonCost
+  // gönderir; göndermezse öncelik kademesinden türetilir ve aralığa sıkıştırılır.
+  const rawCost = Number(req.body?.jetonCost ?? costMap[priority] ?? 20);
+  const jetonCost = Math.min(1000, Math.max(20, Math.round(rawCost) || 20));
 
   if (!displayName || displayName.length < 2) {
     return fail(res, 400, "VALIDATION_ERROR", "Görünecek isim gerekli");
