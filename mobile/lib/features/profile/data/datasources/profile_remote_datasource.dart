@@ -31,7 +31,8 @@ class ProfileRemoteDataSource {
     final body = res.data ?? {};
     final u = pick(body, ['user', 'data', 'profile']);
     final map = u is Map ? asJsonMap(u) : body;
-    return UserDto.fromJson(map).toEntity();
+    final dto = UserDto.fromJson(map);
+    return _entityFromDto(dto, {...body, ...map});
   }
 
   static bool looksLikeUsernameKey(String id) {
@@ -51,7 +52,25 @@ class ProfileRemoteDataSource {
     if (err != null) {
       throw ApiException(err.toString());
     }
-    return UserDto.fromSiteProfileMap(body).toEntity();
+    return _entityFromDto(UserDto.fromSiteProfileMap(body), body);
+  }
+
+  UserEntity _entityFromDto(UserDto dto, Map<String, dynamic> sources) {
+    final verified =
+        pick(sources, ['isVerified', 'verified', 'is_verified']) == true;
+    return UserEntity(
+      id: dto.id,
+      username: dto.username,
+      email: dto.email,
+      displayName: dto.displayName,
+      avatarUrl: dto.avatarUrl,
+      bio: dto.bio,
+      followersCount: dto.followersCount,
+      followingCount: dto.followingCount,
+      isFollowing: dto.isFollowing,
+      isVerified: verified,
+      coinBalance: dto.coinBalance,
+    );
   }
 
   Future<void> follow(String userId) async {

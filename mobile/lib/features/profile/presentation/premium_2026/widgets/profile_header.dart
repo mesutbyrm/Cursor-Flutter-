@@ -71,6 +71,7 @@ class ProfileHeader extends ConsumerWidget {
                   level: level,
                   isVip: state.isVip,
                   isBroadcaster: state.liveStreams > 0,
+                  isVerified: user.isVerified,
                   onTap: onAvatarTap ?? onEdit,
                 )),
               ),
@@ -81,6 +82,7 @@ class ProfileHeader extends ConsumerWidget {
             displayName: user.display,
             username: user.username,
             bio: user.bio,
+            isVerified: user.isVerified,
           ),
         ],
       ).animate().fadeIn(duration: 320.ms),
@@ -137,6 +139,7 @@ class _AvatarWithBadges extends StatelessWidget {
     required this.level,
     required this.isVip,
     required this.isBroadcaster,
+    required this.isVerified,
     this.onTap,
   });
 
@@ -144,6 +147,7 @@ class _AvatarWithBadges extends StatelessWidget {
   final int level;
   final bool isVip;
   final bool isBroadcaster;
+  final bool isVerified;
   final VoidCallback? onTap;
 
   @override
@@ -169,11 +173,12 @@ class _AvatarWithBadges extends StatelessWidget {
             ),
             child: UserAvatar(url: url, radius: ProfilePremiumTheme.avatarSize / 2),
           ),
-          Positioned(
-            right: 4,
-            bottom: 6,
-            child: _BadgeDot(Icons.verified_rounded, Colors.cyanAccent),
-          ),
+          if (isVerified)
+            Positioned(
+              right: 4,
+              bottom: 6,
+              child: _BadgeDot(Icons.verified_rounded, Colors.cyanAccent),
+            ),
           Positioned(
             left: -4,
             bottom: 12,
@@ -253,11 +258,13 @@ class _NameBlock extends StatelessWidget {
     required this.displayName,
     required this.username,
     this.bio,
+    this.isVerified = false,
   });
 
   final String displayName;
   final String username;
   final String? bio;
+  final bool isVerified;
 
   @override
   Widget build(BuildContext context) {
@@ -265,17 +272,28 @@ class _NameBlock extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Column(
         children: [
-          Text(
-            displayName,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.5,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  displayName,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ),
+              if (isVerified) ...[
+                const SizedBox(width: 6),
+                const Icon(Icons.verified_rounded, color: Color(0xFF29B6F6), size: 22),
+              ],
+            ],
           ),
           const SizedBox(height: 4),
           Text(

@@ -6,19 +6,21 @@ class ShortVideoAuthor extends Equatable {
     required this.username,
     this.displayName,
     this.avatarUrl,
+    this.isVerified = false,
   });
 
   final String id;
   final String username;
   final String? displayName;
   final String? avatarUrl;
+  final bool isVerified;
 
   String get label => displayName?.trim().isNotEmpty == true
       ? displayName!.trim()
       : username;
 
   @override
-  List<Object?> get props => [id, username, displayName, avatarUrl];
+  List<Object?> get props => [id, username, displayName, avatarUrl, isVerified];
 }
 
 class ShortVideoMusic extends Equatable {

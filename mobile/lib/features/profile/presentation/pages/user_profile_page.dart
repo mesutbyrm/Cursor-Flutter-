@@ -12,7 +12,8 @@ import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_glass.dart';
-import '../../../shorts/presentation/widgets/user_shorts_videos_section.dart';
+import '../../../shorts/presentation/providers/shorts_providers.dart';
+import '../../../shorts/presentation/widgets/shorts_profile_content.dart';
 import '../widgets/user_posts_timeline.dart';
 
 class UserProfilePage extends ConsumerWidget {
@@ -32,8 +33,8 @@ class UserProfilePage extends ConsumerWidget {
     final isSelf = me != null && me.id == userId;
 
     return DiscoverSubPage(
-      title: 'Kullanıcı',
-      subtitle: 'Profil detayı',
+      title: 'Profil',
+      subtitle: 'Kısa videolar ve paylaşımlar',
       actions: [
         DiscoverIconButton(
           icon: Icons.flag_outlined,
@@ -104,10 +105,21 @@ class UserProfilePage extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 52),
-              Text(
-                user.display,
-                textAlign: TextAlign.center,
-                style: ProfileTypography.displayName(context),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      user.display,
+                      textAlign: TextAlign.center,
+                      style: ProfileTypography.displayName(context),
+                    ),
+                  ),
+                  if (user.isVerified) ...[
+                    const SizedBox(width: 6),
+                    const ShortsVerifiedBadge(size: 20),
+                  ],
+                ],
               ),
               const SizedBox(height: 4),
               Text(
@@ -116,29 +128,10 @@ class UserProfilePage extends ConsumerWidget {
                 style: ProfileTypography.username(context),
               ),
               const SizedBox(height: 18),
-              ProfileGlass(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _Stat(
-                        label: 'Takipçi',
-                        value: profileFormatCount(user.followersCount),
-                      ),
-                    ),
-                    Container(
-                      width: 1,
-                      height: 44,
-                      color: context.colors.divider.withValues(alpha: 0.65),
-                    ),
-                    Expanded(
-                      child: _Stat(
-                        label: 'Takip',
-                        value: profileFormatCount(user.followingCount),
-                      ),
-                    ),
-                  ],
-                ),
+              ShortsProfileStatsRow(
+                userId: userId,
+                fallbackFollowers: user.followersCount,
+                fallbackFollowing: user.followingCount,
               ),
               const SizedBox(height: 18),
               if (!isSelf) ...[
@@ -154,6 +147,7 @@ class UserProfilePage extends ConsumerWidget {
                             await repo.follow(user.id);
                           }
                           ref.invalidate(userProfileProvider(userId));
+                          ref.invalidate(shortVideoProfileStatsProvider(userId));
                         },
                         style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(52),
@@ -166,7 +160,7 @@ class UserProfilePage extends ConsumerWidget {
                           ),
                         ),
                         child: Text(
-                          user.isFollowing ? 'Takipten çık' : 'Takip et',
+                          user.isFollowing ? 'Takibi bırak' : 'Takip et',
                           style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 15,
@@ -201,17 +195,16 @@ class UserProfilePage extends ConsumerWidget {
                 ),
               ] else
                 FilledButton(
-                  onPressed: null,
+                  onPressed: () => context.go('/profile'),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
-                    disabledBackgroundColor:
-                        context.colors.surfaceContainer,
+                    backgroundColor: context.colors.surfaceContainer,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                   child: const Text(
-                    'Bu sizin profiliniz',
+                    'Profilimi düzenle',
                     style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                   ),
                 ),
@@ -226,31 +219,18 @@ class UserProfilePage extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: 22),
-              UserShortsVideosSection(userId: userId),
+              ShortsProfileTabs(
+                userId: userId,
+                showLikedTab: isSelf,
+                showSavedTab: isSelf,
+              ),
+              const SizedBox(height: 22),
               const ProfileSectionTitle(title: 'Paylaşımlar'),
               UserPostsTimeline(userId: userId, focusPostId: focusPostId),
             ],
           );
         },
       ),
-    );
-  }
-}
-
-class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(value, style: ProfileTypography.statValue(context)),
-        const SizedBox(height: 6),
-        Text(label, style: ProfileTypography.statLabel(context)),
-      ],
     );
   }
 }

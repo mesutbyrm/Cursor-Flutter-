@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.464+468 (2026-06-26)
+
+### Kısa video — Faz 3 sosyal özellikler
+
+- **TikTok/Instagram profil:** Video | Takipçi | Takip | Beğeni istatistik satırı; 3 sütunlu video grid
+- **Sekmeler:** Videolar, Beğenilen, Kaydedilen (kendi profil + diğer kullanıcı profili)
+- **Takip et / Takibi bırak:** Profil ve feed senkronu
+- **Doğrulanmış rozet:** API `isVerified` ile profil, feed ve yazar satırında
+- **Bildirim merkezi:** Kısa video beğeni/yorum/takip bildirimleri `/shorts?videoId=` veya profile yönlendirir
+- **Kendi profil:** İçeriklerim sekmelerine Beğenilen + Kaydedilen; Taslaklar gerçek liste
+
 ## 1.0.463+467 (2026-06-26)
 
 ### Kısa video — Faz 2 taslak + trend sıralama + Faz 1 iyileştirmeler

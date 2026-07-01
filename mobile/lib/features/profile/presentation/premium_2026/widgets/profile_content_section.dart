@@ -15,6 +15,8 @@ import '../../../../fortune/presentation/providers/fortune_api_providers.dart';
 import '../../../../shorts/domain/entities/short_video_entity.dart';
 import '../../../../shorts/domain/repositories/shorts_repository.dart';
 import '../../../../shorts/presentation/providers/shorts_providers.dart';
+import '../../../../shorts/presentation/studio/short_studio_providers.dart';
+import '../../../../shorts/presentation/widgets/shorts_profile_content.dart';
 import '../../../domain/entities/profile_stats_entity.dart';
 import '../../providers/broadcast_history_notifier.dart';
 import '../../widgets/premium/profile_glass.dart';
@@ -38,7 +40,7 @@ class _ProfileContentSectionState extends ConsumerState<ProfileContentSection>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 6, vsync: this);
+    _tabs = TabController(length: 8, vsync: this);
     _tabIndex = TabIndexListenable(_tabs);
   }
 
@@ -67,6 +69,8 @@ class _ProfileContentSectionState extends ConsumerState<ProfileContentSection>
             unselectedLabelColor: Colors.white54,
             tabs: const [
               Tab(text: 'Videolar'),
+              Tab(text: 'Beğenilen'),
+              Tab(text: 'Kaydedilen'),
               Tab(text: 'Fallarım'),
               Tab(text: 'Canlı Yayınlarım'),
               Tab(text: 'İzlediklerim'),
@@ -79,11 +83,13 @@ class _ProfileContentSectionState extends ConsumerState<ProfileContentSection>
             listenable: _tabIndex,
             builder: (context, _) {
               return switch (_tabIndex.index) {
-                1 => _FortunesTab(),
-                2 => _LiveStreamsTab(),
-                3 => _WatchedTab(),
-                4 => _FavoritesTab(),
-                5 => _DraftsTab(),
+                1 => _ShortsLikedTab(userId: widget.userId),
+                2 => _ShortsSavedTab(userId: widget.userId),
+                3 => _FortunesTab(),
+                4 => _LiveStreamsTab(),
+                5 => _WatchedTab(),
+                6 => _FavoritesTab(),
+                7 => _DraftsTab(userId: widget.userId),
                 _ => _VideosTab(userId: widget.userId),
               };
             },
@@ -112,7 +118,55 @@ class _VideosTab extends ConsumerWidget {
         if (videos.isEmpty) {
           return const _EmptyMessage('Henüz video yok');
         }
-        return _ShortsGrid(videos: videos);
+        return ShortsProfileGrid(videos: videos);
+      },
+    );
+  }
+}
+
+class _ShortsLikedTab extends ConsumerWidget {
+  const _ShortsLikedTab({required this.userId});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final videosAsync = ref.watch(
+      userShortVideosProvider((userId: userId, tab: ShortUserVideosTab.liked)),
+    );
+
+    return videosAsync.when(
+      loading: () => const _ContentSkeleton(),
+      error: (_, _) => const _EmptyMessage('Beğenilen videolar yüklenemedi'),
+      data: (videos) {
+        if (videos.isEmpty) {
+          return const _EmptyMessage('Henüz beğenilen video yok');
+        }
+        return ShortsProfileGrid(videos: videos);
+      },
+    );
+  }
+}
+
+class _ShortsSavedTab extends ConsumerWidget {
+  const _ShortsSavedTab({required this.userId});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final videosAsync = ref.watch(
+      userShortVideosProvider((userId: userId, tab: ShortUserVideosTab.saved)),
+    );
+
+    return videosAsync.when(
+      loading: () => const _ContentSkeleton(),
+      error: (_, _) => const _EmptyMessage('Kaydedilen videolar yüklenemedi'),
+      data: (videos) {
+        if (videos.isEmpty) {
+          return const _EmptyMessage('Henüz kaydedilen video yok');
+        }
+        return ShortsProfileGrid(videos: videos);
       },
     );
   }
@@ -342,35 +396,84 @@ class _FavoritesTab extends ConsumerWidget {
   }
 }
 
-class _DraftsTab extends StatelessWidget {
+class _DraftsTab extends ConsumerWidget {
+  const _DraftsTab({required this.userId});
+
+  final String userId;
+
   @override
-  Widget build(BuildContext context) {
-    return ProfileGlass(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Icon(
-            Icons.drive_file_rename_outline_rounded,
-            size: 40,
-            color: Colors.white.withValues(alpha: 0.4),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Taslak videolarınız burada görünür',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.7),
-              fontWeight: FontWeight.w600,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final draftsAsync = ref.watch(shortSavedDraftsProvider(userId));
+
+    return draftsAsync.when(
+      loading: () => const _ContentSkeleton(),
+      error: (_, _) => const _EmptyMessage('Taslaklar yüklenemedi'),
+      data: (drafts) {
+        if (drafts.isEmpty) {
+          return ProfileGlass(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.drive_file_rename_outline_rounded,
+                  size: 40,
+                  color: Colors.white.withValues(alpha: 0.4),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Taslak videolarınız burada görünür',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () => context.push('/shorts/upload'),
+                  icon: const Icon(Icons.upload_rounded, size: 18),
+                  label: const Text('Video Yükle'),
+                ),
+              ],
             ),
+          );
+        }
+        return LazyNestedGridView(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 1.2,
           ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: () => context.push('/shorts/upload'),
-            icon: const Icon(Icons.upload_rounded, size: 18),
-            label: const Text('Video Yükle'),
-          ),
-        ],
-      ),
+          itemCount: drafts.length,
+          itemBuilder: (context, index) {
+            final draft = drafts[index];
+            return GestureDetector(
+              onTap: () => context.push('/shorts/upload'),
+              child: ProfileGlass(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.movie_creation_outlined, color: Colors.white54),
+                    const Spacer(),
+                    Text(
+                      draft.previewLabel,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

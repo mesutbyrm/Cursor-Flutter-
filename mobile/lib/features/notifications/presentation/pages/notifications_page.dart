@@ -181,6 +181,9 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
 /// Bildirim tipine göre Instagram tarzı renkli ikon.
 (IconData, Color) _notificationVisual(String? type, BuildContext context) {
   final t = (type ?? '').toLowerCase();
+  if (t.contains('short') || t.contains('shorts') || t.contains('reels')) {
+    return (Icons.play_circle_fill_rounded, const Color(0xFFFF4081));
+  }
   if (t.contains('like') || t.contains('begeni') || t.contains('beğeni')) {
     return (Icons.favorite_rounded, const Color(0xFFFF3B6B));
   }

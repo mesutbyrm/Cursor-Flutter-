@@ -3,12 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../../core/widgets/user_avatar.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_providers.dart';
-import '../utils/shorts_api_message.dart';
 import '../utils/shorts_count_format.dart';
 import 'short_comments_sheet.dart';
 import 'short_share_sheet.dart';
+import 'shorts_profile_content.dart';
 
 class ShortVideoActionsRail extends ConsumerStatefulWidget {
   const ShortVideoActionsRail({
@@ -133,6 +134,7 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
       } else {
         await repo.follow(uid);
       }
+      ref.invalidate(shortVideoProfileStatsProvider(uid));
     }, errorPrefix: 'Takip');
   }
 
@@ -206,13 +208,9 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
           children: [
             GestureDetector(
               onTap: _openProfile,
-              child: CircleAvatar(
+              child: UserAvatar(
+                url: video.author?.avatarUrl,
                 radius: 22,
-                backgroundColor: Colors.white24,
-                child: Icon(
-                  Icons.person,
-                  color: Colors.white.withValues(alpha: 0.9),
-                ),
               ),
             ),
             if (!video.authorFollowedByMe)
@@ -303,13 +301,21 @@ class ShortVideoInfoOverlay extends StatelessWidget {
         if (author != null)
           GestureDetector(
             onTap: onAuthorTap,
-            child: Text(
-              '@${author.username}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: 15,
-              ),
+            child: Row(
+              children: [
+                Text(
+                  '@${author.username}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
+                ),
+                if (author.isVerified) ...[
+                  const SizedBox(width: 4),
+                  const ShortsVerifiedBadge(size: 16),
+                ],
+              ],
             ),
           ),
         if (video.music != null) ...[

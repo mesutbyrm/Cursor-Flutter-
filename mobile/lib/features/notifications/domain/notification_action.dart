@@ -11,7 +11,18 @@ void navigateFromNotification(
   final path = n.targetPath?.trim();
   if (path != null && path.isNotEmpty) {
     if (path.startsWith('http://') || path.startsWith('https://')) {
-      _pushInAppPath(router, Uri.parse(path).path);
+      final uri = Uri.parse(path);
+      final shortsId = _shortVideoIdFromUri(uri);
+      if (shortsId != null) {
+        router.push('/shorts?videoId=$shortsId');
+        return;
+      }
+      _pushInAppPath(router, uri.path);
+      return;
+    }
+    final shortsId = _shortVideoIdFromPath(path);
+    if (shortsId != null) {
+      router.push('/shorts?videoId=$shortsId');
       return;
     }
     if (path.startsWith('/user/') && n.targetId != null) {
@@ -32,6 +43,31 @@ void navigateFromNotification(
   }
 }
 
+String? _shortVideoIdFromPath(String path) {
+  final uri = Uri.tryParse(path.startsWith('/') ? path : '/$path');
+  if (uri == null) return null;
+  return _shortVideoIdFromUri(uri);
+}
+
+String? _shortVideoIdFromUri(Uri uri) {
+  if (uri.pathSegments.contains('shorts') ||
+      uri.path.contains('/short-videos/')) {
+    final fromQuery = uri.queryParameters['videoId'] ??
+        uri.queryParameters['video_id'] ??
+        uri.queryParameters['id'];
+    if (fromQuery != null && fromQuery.isNotEmpty) return fromQuery;
+    final segments = uri.pathSegments;
+    final idx = segments.indexWhere(
+      (s) => s == 'shorts' || s == 'short-videos',
+    );
+    if (idx >= 0 && idx + 1 < segments.length) {
+      final id = segments[idx + 1];
+      if (id.isNotEmpty && id != 'explore' && id != 'upload') return id;
+    }
+  }
+  return null;
+}
+
 void _pushInAppPath(GoRouter router, String path) {
   final p = path.startsWith('/') ? path : '/$path';
   const tabRoots = {'/feed', '/live', '/social', '/messages', '/profile'};
@@ -50,6 +86,17 @@ String? _routeFromTypeAndText(
   final title = n.title.toLowerCase();
   final body = (n.body ?? '').toLowerCase();
   final text = '$title $body';
+
+  if (_isShortVideoNotification(type, text, n)) {
+    final videoId = n.targetId;
+    if (videoId != null && videoId.isNotEmpty) {
+      return '/shorts?videoId=$videoId';
+    }
+    final fromPath = n.targetPath != null
+        ? _shortVideoIdFromPath(n.targetPath!)
+        : null;
+    if (fromPath != null) return '/shorts?videoId=$fromPath';
+  }
 
   switch (type) {
     case 'cfc_payment':
@@ -109,12 +156,33 @@ String? _routeFromTypeAndText(
       }
       return '/voice-rooms';
     case 'follow':
-    case 'comment':
-    case 'like':
       if (n.targetId != null && n.targetId!.isNotEmpty) {
         return '/user/${n.targetId}';
       }
       return '/social';
+    case 'comment':
+    case 'like':
+      if (_isShortVideoNotification(type, text, n)) {
+        if (n.targetId != null && n.targetId!.isNotEmpty) {
+          return '/shorts?videoId=${n.targetId}';
+        }
+      }
+      if (n.targetId != null && n.targetId!.isNotEmpty) {
+        return '/user/${n.targetId}';
+      }
+      return '/social';
+    case 'short_video_like':
+    case 'short_video_comment':
+    case 'short_video_follow':
+    case 'shorts_like':
+    case 'shorts_comment':
+    case 'shorts_follow':
+    case 'short_video':
+    case 'shorts':
+      if (n.targetId != null && n.targetId!.isNotEmpty) {
+        return '/shorts?videoId=${n.targetId}';
+      }
+      return '/shorts';
     case 'mention':
       if (n.targetPath != null && n.targetPath!.contains('voice-room')) {
         return n.targetPath!;
@@ -163,8 +231,32 @@ String? _routeFromTypeAndText(
     }
     return '/messages';
   }
+  if (text.contains('kısa video') ||
+      text.contains('short') ||
+      text.contains('reels') ||
+      text.contains('tiktok')) {
+    if (n.targetId != null && n.targetId!.isNotEmpty) {
+      return '/shorts?videoId=${n.targetId}';
+    }
+    return '/shorts';
+  }
 
   return null;
+}
+
+bool _isShortVideoNotification(
+  String type,
+  String text,
+  AppNotificationEntity n,
+) {
+  if (type.contains('short') || type.contains('shorts')) return true;
+  if (text.contains('kısa video') ||
+      text.contains('short') ||
+      text.contains('reels')) {
+    return true;
+  }
+  final path = n.targetPath?.toLowerCase() ?? '';
+  return path.contains('/shorts') || path.contains('short-videos');
 }
 
 bool _isPendingPayment(String text) {

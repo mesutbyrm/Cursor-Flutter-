@@ -9,6 +9,7 @@ import '../../../../core/performance/profile_load_perf.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../../shorts/presentation/widgets/shorts_profile_content.dart';
 import '../providers/profile_providers.dart';
 import 'profile_screen_builder.dart';
 import 'profile_screen_state.dart';
@@ -41,14 +42,25 @@ class ProfileLazyStats extends ConsumerWidget {
         base.user.followersCount <= 0;
 
     return RepaintBoundary(
-      child: ProfileStats(
-        state: state,
-        followersLoading: followersLoading,
-        onFollowersTap: () =>
-            context.push('/profile/followers?userId=${user.id}'),
-        onFollowingTap: () =>
-            context.push('/profile/following?userId=${user.id}'),
-        onVisitorsTap: () => context.push('/profile/visitors'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ShortsProfileStatsRow(
+            userId: user.id,
+            fallbackFollowers: user.followersCount,
+            fallbackFollowing: user.followingCount,
+          ),
+          const SizedBox(height: 12),
+          ProfileStats(
+            state: state,
+            followersLoading: followersLoading,
+            onFollowersTap: () =>
+                context.push('/profile/followers?userId=${user.id}'),
+            onFollowingTap: () =>
+                context.push('/profile/following?userId=${user.id}'),
+            onVisitorsTap: () => context.push('/profile/visitors'),
+          ),
+        ],
       ),
     );
   }

@@ -48,6 +48,7 @@ class ShortsRemoteDataSource {
       username: username,
       displayName: pick(m, ['displayName', 'name'])?.toString(),
       avatarUrl: pick(m, ['avatarUrl', 'avatar', 'image'])?.toString(),
+      isVerified: asBool(pick(m, ['isVerified', 'verified', 'is_verified'])),
     );
   }
 
