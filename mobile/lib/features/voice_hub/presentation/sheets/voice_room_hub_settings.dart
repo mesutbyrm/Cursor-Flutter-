@@ -21,8 +21,8 @@ import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
+import 'voice_room_management_panel.dart';
 import 'voice_room_sheets.dart';
-import 'voice_youtube_song_sheet.dart';
 
 Future<void> showVoiceRoomBackgroundSheet(
   BuildContext context,
@@ -106,24 +106,6 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
     } finally {
       if (mounted) setState(() => _loadingBg = false);
     }
-  }
-
-  void _openRoomSettings() {
-    Navigator.pop(context);
-    showVoiceRoomSettingsSheet(
-      context,
-      ref,
-      room: widget.room,
-      isOwner: widget.isOwner,
-      perms: widget.perms,
-      presence: widget.live.presence,
-      onUserTap: widget.onUserTap,
-    );
-  }
-
-  void _openSongRequest() {
-    Navigator.pop(context);
-    showVoiceYoutubeSongSheet(context, ref, room: widget.room);
   }
 
   Future<void> _changeNickname() async {
@@ -249,95 +231,6 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
     );
   }
 
-  void _openDjManage() {
-    final canManage = widget.perms.canManageDj ||
-        widget.perms.canManageRoom ||
-        widget.perms.isRoomOwner ||
-        widget.perms.isSiteAdmin ||
-        widget.isOwner;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.55,
-        minChildSize: 0.4,
-        maxChildSize: 0.85,
-        builder: (_, scroll) => VoiceGlass(
-          borderRadius: 24,
-          padding: const EdgeInsets.fromLTRB(12, 16, 12, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'DJ Yönetimi (${widget.live.dj.djCount}/${widget.live.dj.maxDj})',
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
-              ),
-              const SizedBox(height: 8),
-              if (!canManage)
-                Text(
-                  'DJ eklemek için oda sahibi veya moderatör olun',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
-                  ),
-                ),
-              Expanded(
-                child: LazyListView(
-                  controller: scroll,
-                  itemCount: widget.live.presence.length,
-                  itemBuilder: (context, index) {
-                    final u = widget.live.presence[index];
-                    final isDj = widget.live.dj.djUsers.any((d) => d.id == u.id);
-                    return ListTile(
-                      leading: VoiceNeonAvatar(url: u.image, size: 40),
-                      title: Text(u.displayName),
-                      subtitle: Text(isDj ? 'DJ' : (u.chatRole ?? 'dinleyici')),
-                      trailing: canManage
-                          ? IconButton(
-                              icon: Icon(
-                                isDj ? Icons.remove_circle_outline : Icons.add_circle_outline,
-                                color: isDj ? AppThemeColors.liveRed : AppThemeColors.onlineGreen,
-                              ),
-                              onPressed: () async {
-                                final ctrl = ref.read(
-                                  voiceRoomLiveProvider(widget.room.liveKey).notifier,
-                                );
-                                final err = isDj
-                                    ? await ctrl.removeRoomDj(u.id)
-                                    : await ctrl.addRoomDj(u.id);
-                                if (context.mounted) {
-                                  if (err != null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(err)),
-                                    );
-                                  } else {
-                                    Navigator.pop(ctx);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          isDj
-                                              ? '${u.displayName} DJ listesinden çıkarıldı'
-                                              : '${u.displayName} DJ yapıldı',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                            )
-                          : null,
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final ui = ref.watch(voiceRoomUiProvider);
@@ -346,13 +239,19 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
     final tiles = <({IconData icon, String label, VoidCallback onTap})>[
       (
         icon: Icons.settings_rounded,
-        label: 'Oda ayarları',
-        onTap: _openRoomSettings,
-      ),
-      (
-        icon: Icons.queue_music_rounded,
-        label: 'Şarkı isteği',
-        onTap: _openSongRequest,
+        label: 'Oda yönetimi',
+        onTap: () {
+          Navigator.pop(context);
+          showVoiceRoomManagementPanel(
+            context,
+            ref,
+            room: widget.room,
+            live: widget.live,
+            perms: widget.perms,
+            isOwner: widget.isOwner,
+            onUserTap: widget.onUserTap,
+          );
+        },
       ),
       (
         icon: Icons.badge_rounded,
@@ -363,11 +262,6 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
         icon: Icons.terminal_rounded,
         label: 'Komutlar',
         onTap: _openRoomCommands,
-      ),
-      (
-        icon: Icons.headphones_rounded,
-        label: 'DJ yönetimi',
-        onTap: _openDjManage,
       ),
       (
         icon: Icons.people_rounded,
@@ -398,14 +292,6 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
         label: 'Hoparlör',
         onTap: () =>
             ref.read(voiceRoomUiProvider.notifier).toggleHeadphones(),
-      ),
-      (
-        icon: ui.backgroundMusicEnabled
-            ? Icons.music_note_rounded
-            : Icons.music_off_rounded,
-        label: 'Oda müziği',
-        onTap: () =>
-            ref.read(voiceRoomUiProvider.notifier).toggleBackgroundMusic(),
       ),
     ];
 
@@ -551,11 +437,16 @@ class _VoiceRoomBackgroundSheetState
       ),
     );
     try {
-      await putDio.put<void>(
+      final putRes = await putDio.put<dynamic>(
         uploadUrl,
         data: bytes,
         options: Options(headers: {'Content-Type': contentType}),
       );
+      if (putRes.statusCode == null ||
+          putRes.statusCode! < 200 ||
+          putRes.statusCode! >= 300) {
+        throw const ApiException('Görsel yüklenemedi');
+      }
     } finally {
       putDio.close(force: true);
     }

@@ -3738,6 +3738,24 @@ class VoiceRoomLiveController
     }
   }
 
+  Future<String?> setRoomPassword({String? password}) async {
+    final perms = _permissions();
+    if (!perms.isRoomOwner && !perms.canManageRoom && !perms.isSiteAdmin) {
+      return 'Oda şifresi ayarlama yetkiniz yok.';
+    }
+    try {
+      await ref.read(chatRoomRemoteProvider).updateRoomSettings(
+            roomKey: _roomKey.isNotEmpty ? _roomKey : _roomMeta.id,
+            alternateKey: _roomMeta.slug,
+            password: password,
+            removePassword: password == null || password.isEmpty,
+          );
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
   Future<List<String>> fetchBackgrounds() =>
       ref.read(chatRoomRemoteProvider).fetchBackgrounds();
 

@@ -14,11 +14,13 @@ class VoiceRoomJoinToastStack extends StatefulWidget {
     required this.events,
     required this.messages,
     this.maxVisible = 5,
+    this.enabled = true,
   });
 
   final List<VoiceRoomRealtimeEvent> events;
   final List<ChatRoomMessage> messages;
   final int maxVisible;
+  final bool enabled;
 
   @override
   State<VoiceRoomJoinToastStack> createState() => _VoiceRoomJoinToastStackState();
@@ -59,6 +61,7 @@ class _VoiceRoomJoinToastStackState extends State<VoiceRoomJoinToastStack> {
   }
 
   void _collectNewEntries() {
+    if (!widget.enabled) return;
     if (widget.events.length > _lastEventCount) {
       final fresh = widget.events.take(widget.events.length - _lastEventCount);
       _lastEventCount = widget.events.length;

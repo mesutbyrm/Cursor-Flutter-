@@ -10,9 +10,7 @@ class VoiceLiveActionBar2026 extends StatelessWidget {
     required this.micEnabled,
     required this.onMic,
     required this.onGift,
-    required this.onMusicRequest,
-    required this.onMusicAudio,
-    required this.onMusicVideo,
+    required this.onSettings,
     required this.onToggleAudioOutput,
     required this.headphonesOn,
     required this.onInvite,
@@ -23,9 +21,7 @@ class VoiceLiveActionBar2026 extends StatelessWidget {
   final bool headphonesOn;
   final VoidCallback onMic;
   final VoidCallback onGift;
-  final VoidCallback onMusicRequest;
-  final VoidCallback onMusicAudio;
-  final VoidCallback onMusicVideo;
+  final VoidCallback onSettings;
   final VoidCallback onToggleAudioOutput;
   final VoidCallback onInvite;
 
@@ -34,9 +30,7 @@ class VoiceLiveActionBar2026 extends StatelessWidget {
     return VoiceRoomBottomActionBar(
       headphonesOn: headphonesOn,
       onToggleAudioOutput: onToggleAudioOutput,
-      onMusicRequest: onMusicRequest,
-      onMusicAudio: onMusicAudio,
-      onMusicVideo: onMusicVideo,
+      onSettings: onSettings,
       micOn: micOn,
       micEnabled: micEnabled,
       onMicToggle: onMic,

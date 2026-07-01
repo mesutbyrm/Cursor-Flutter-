@@ -41,7 +41,7 @@ import '../sheets/voice_room_menu_sheet.dart';
 import 'voice_room_basic_premium_section.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
-import '../sheets/voice_youtube_song_sheet.dart';
+import '../sheets/voice_room_management_panel.dart';
 import '../utils/voice_music_access.dart';
 import '../widgets/premium_2026/voice_live_action_bar_2026.dart';
 import '../widgets/premium_2026/voice_live_header_2026.dart';
@@ -420,6 +420,23 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     if (leave == true && mounted) await _leaveRoom();
   }
 
+  void _openManagementPanel(
+    VoiceRoomEntity room,
+    VoiceRoomLiveState live,
+    VoiceRoomPermissions perms,
+    bool isOwner,
+  ) {
+    showVoiceRoomManagementPanel(
+      context,
+      ref,
+      room: room,
+      live: live,
+      perms: perms,
+      isOwner: isOwner,
+      onUserTap: (u) => _openUser(u, room, perms),
+    );
+  }
+
   void _openTools(
     VoiceRoomEntity room,
     VoiceRoomLiveState live,
@@ -762,22 +779,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     micEnabled: _audioReady && !_audioJoining,
                     onMic: _toggleMic,
                     onGift: () => _openGiftShop(room, live.presence),
-                    onMusicRequest: () => showVoiceYoutubeSongSheet(
-                      context,
-                      ref,
-                      room: room,
-                    ),
-                    onMusicAudio: () => showVoiceYoutubeSongSheet(
-                      context,
-                      ref,
-                      room: room,
-                      preferVideo: false,
-                    ),
-                    onMusicVideo: () => showVoiceYoutubeSongSheet(
-                      context,
-                      ref,
-                      room: room,
-                      preferVideo: true,
+                    onSettings: () => _openManagementPanel(
+                      room,
+                      live,
+                      perms,
+                      isOwner,
                     ),
                     headphonesOn: ui.headphonesOn,
                     onToggleAudioOutput: _toggleSpeaker,

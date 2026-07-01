@@ -47,6 +47,7 @@ import 'providers/voice_room_ui_provider.dart';
 import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'sheets/voice_room_speak_queue_sheet.dart';
+import 'sheets/voice_room_management_panel.dart';
 import 'sheets/voice_room_menu_sheet.dart';
 import 'sheets/voice_room_moderation_sheet.dart';
 import 'sheets/voice_room_sheets.dart';
@@ -61,7 +62,6 @@ import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
 import 'widgets/voice_room/voice_room_spec_footer.dart';
 import 'sheets/voice_room_commands_panel.dart';
-import 'sheets/voice_youtube_song_sheet.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
 import 'utils/kick_strike_ui.dart';
@@ -858,6 +858,24 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     );
   }
 
+  void _openManagementPanel(
+    BuildContext context, {
+    required VoiceRoomEntity room,
+    required VoiceRoomLiveState live,
+    required VoiceRoomPermissions perms,
+    required bool isOwner,
+  }) {
+    showVoiceRoomManagementPanel(
+      context,
+      ref,
+      room: room,
+      live: live,
+      perms: perms,
+      isOwner: isOwner,
+      onUserTap: _openUser,
+    );
+  }
+
   void _openHubSettings(
     BuildContext context, {
     required VoiceRoomEntity room,
@@ -1439,7 +1457,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           onGallery: perms.canChangeBackground
                               ? () => _pickBackground(context, room)
                               : null,
-                          onSettings: () => _openHubSettings(
+                          onSettings: () => _openManagementPanel(
                             context,
                             room: room,
                             live: live,
@@ -1643,22 +1661,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   onMicToggle: _toggleMic,
                   micOn: !_isMicMuted,
                   micEnabled: _audioReady,
-                  onMusicRequest: () => showVoiceYoutubeSongSheet(
+                  onSettings: () => _openManagementPanel(
                     context,
-                    ref,
                     room: room,
-                  ),
-                  onMusicAudio: () => showVoiceYoutubeSongSheet(
-                    context,
-                    ref,
-                    room: room,
-                    preferVideo: false,
-                  ),
-                  onMusicVideo: () => showVoiceYoutubeSongSheet(
-                    context,
-                    ref,
-                    room: room,
-                    preferVideo: true,
+                    live: live,
+                    perms: perms,
+                    isOwner: isOwner,
                   ),
                   onGift: () => _openGiftShop(
                     context,
@@ -1672,6 +1680,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   messages: live.messages,
                   onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
                   onChanged: _onChatChanged,
+                  joinNotificationsEnabled: ui.chatNotificationSoundEnabled,
                 ),
               ],
             ),

@@ -9,16 +9,15 @@ import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../theme/voice_room_tokens.dart';
-import '../utils/voice_music_access.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import 'voice_moderation_user_picker_sheet.dart';
 import 'voice_room_authority_sheet.dart';
 import 'voice_room_hub_settings.dart';
+import 'voice_room_management_panel.dart';
 import 'voice_room_muted_users_sheet.dart';
 import 'voice_room_sheets.dart';
-import 'voice_youtube_song_sheet.dart';
 
 /// Faz 3 — 3 nokta menüsü: kullanıcı + yetki + Material 3 büyük kartlar.
 Future<void> showVoiceRoomMenuSheet(
@@ -69,16 +68,8 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).valueOrNull;
-    final dj = live.dj;
     final pk = ref.watch(pkBattleRemoteProvider);
     final pkActive = pk != null && !pk.isEnded;
-    final isDj = user != null &&
-        (room.djUserIds.contains(user.id) ||
-            dj.djUsers.any((u) => u.id == user.id));
-    final showDj = VoiceMusicAccess.canShowDjMusicPanel(
-      perms: perms,
-      isDj: isDj,
-    );
     final role = VoiceRoomMenuRole.label(perms, user: user, live: live);
     final canManageAuthority = perms.isSiteAdmin ||
         perms.isRoomOwner ||
@@ -112,16 +103,16 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
       _MenuAction(
         icon: Icons.tune_rounded,
         color: VoiceRoomTokens.neonBlue,
-        tooltip: 'Oda ayarları',
+        tooltip: 'Oda yönetimi',
         onTap: () {
           Navigator.pop(context);
-          showVoiceRoomSettingsSheet(
+          showVoiceRoomManagementPanel(
             context,
             ref,
             room: room,
-            isOwner: isOwner,
+            live: live,
             perms: perms,
-            presence: live.presence,
+            isOwner: isOwner,
             onUserTap: onUserTap,
           );
         },
@@ -133,42 +124,6 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
         onTap: () {
           Navigator.pop(context);
           showVoiceEffectsSheet(context, ref);
-        },
-      ),
-      _MenuAction(
-        icon: Icons.music_note_rounded,
-        color: VoiceRoomTokens.gold,
-        tooltip: 'Şarkı isteği',
-        onTap: () {
-          Navigator.pop(context);
-          showVoiceYoutubeSongSheet(
-            context,
-            ref,
-            room: room,
-            perms: perms,
-          );
-        },
-      ),
-      _MenuAction(
-        icon: Icons.headphones_rounded,
-        color: const Color(0xFF7B2FF7),
-        tooltip: 'DJ paneli',
-        enabled: showDj,
-        onTap: () {
-          if (!showDj) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('DJ paneli için yetkiniz yok')),
-            );
-            return;
-          }
-          Navigator.pop(context);
-          showVoiceMusicControlHub(
-            context,
-            ref,
-            room: room,
-            perms: perms,
-            isOwner: isOwner,
-          );
         },
       ),
       _MenuAction(

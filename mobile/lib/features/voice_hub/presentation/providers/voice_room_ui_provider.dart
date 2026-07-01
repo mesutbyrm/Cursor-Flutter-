@@ -19,6 +19,7 @@ class VoiceRoomUiState {
     this.listenerMessagesEnabled = true,
     this.giftAnimationsEnabled = true,
     this.backgroundMusicEnabled = true,
+    this.chatNotificationSoundEnabled = true,
     this.autoOpenMic = false,
   });
 
@@ -29,6 +30,7 @@ class VoiceRoomUiState {
   final bool listenerMessagesEnabled;
   final bool giftAnimationsEnabled;
   final bool backgroundMusicEnabled;
+  final bool chatNotificationSoundEnabled;
   final bool autoOpenMic;
 
   VoiceRoomUiState copyWith({
@@ -39,6 +41,7 @@ class VoiceRoomUiState {
     bool? listenerMessagesEnabled,
     bool? giftAnimationsEnabled,
     bool? backgroundMusicEnabled,
+    bool? chatNotificationSoundEnabled,
     bool? autoOpenMic,
   }) {
     return VoiceRoomUiState(
@@ -52,6 +55,8 @@ class VoiceRoomUiState {
           giftAnimationsEnabled ?? this.giftAnimationsEnabled,
       backgroundMusicEnabled:
           backgroundMusicEnabled ?? this.backgroundMusicEnabled,
+      chatNotificationSoundEnabled: chatNotificationSoundEnabled ??
+          this.chatNotificationSoundEnabled,
       autoOpenMic: autoOpenMic ?? this.autoOpenMic,
     );
   }
@@ -85,6 +90,10 @@ class VoiceRoomUiNotifier extends Notifier<VoiceRoomUiState> {
 
   void toggleBackgroundMusic() => state = state.copyWith(
         backgroundMusicEnabled: !state.backgroundMusicEnabled,
+      );
+
+  void toggleChatNotificationSound() => state = state.copyWith(
+        chatNotificationSoundEnabled: !state.chatNotificationSoundEnabled,
       );
 
   void toggleAutoOpenMic() =>

@@ -5,15 +5,13 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 import '../../theme/voice_room_tokens.dart';
 
-/// Faz 6 — Alt menü: Hoparlör/Kulaklık · Müzik İste · Mikrofon · Hediye · Davet.
+/// Alt menü: Hoparlör/Kulaklık · Ayarlar · Mikrofon · Hediye · Davet.
 class VoiceRoomBottomActionBar extends StatelessWidget {
   const VoiceRoomBottomActionBar({
     super.key,
     required this.headphonesOn,
     required this.onToggleAudioOutput,
-    required this.onMusicRequest,
-    required this.onMusicAudio,
-    required this.onMusicVideo,
+    required this.onSettings,
     required this.micOn,
     required this.micEnabled,
     required this.onMicToggle,
@@ -23,9 +21,7 @@ class VoiceRoomBottomActionBar extends StatelessWidget {
 
   final bool headphonesOn;
   final VoidCallback onToggleAudioOutput;
-  final VoidCallback onMusicRequest;
-  final VoidCallback onMusicAudio;
-  final VoidCallback onMusicVideo;
+  final VoidCallback onSettings;
   final bool micOn;
   final bool micEnabled;
   final VoidCallback onMicToggle;
@@ -57,11 +53,7 @@ class VoiceRoomBottomActionBar extends StatelessWidget {
                   headphonesOn: headphonesOn,
                   onTap: onToggleAudioOutput,
                 ),
-                _MusicRequestAction(
-                  onMainTap: onMusicRequest,
-                  onAudioTap: onMusicAudio,
-                  onVideoTap: onMusicVideo,
-                ),
+                _SettingsAction(onTap: onSettings),
                 Expanded(
                   child: Center(
                     child: _CenterMicButton(
@@ -84,6 +76,42 @@ class VoiceRoomBottomActionBar extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsAction extends StatelessWidget {
+  const _SettingsAction({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          width: 56,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.settings_rounded, color: VoiceRoomTokens.neonBlue, size: 24),
+              const SizedBox(height: 2),
+              Text(
+                'Ayarlar',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white.withValues(alpha: 0.85),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -126,94 +154,6 @@ class _SpeakerAction extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MusicRequestAction extends StatelessWidget {
-  const _MusicRequestAction({
-    required this.onMainTap,
-    required this.onAudioTap,
-    required this.onVideoTap,
-  });
-
-  final VoidCallback onMainTap;
-  final VoidCallback onAudioTap;
-  final VoidCallback onVideoTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 78,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onMainTap,
-              borderRadius: BorderRadius.circular(12),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                child: Column(
-                  children: [
-                    Text('🎵', style: TextStyle(fontSize: 20, height: 1)),
-                    SizedBox(height: 2),
-                    Text(
-                      'Müzik İste',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 7,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _ModeChip(label: 'Sesli', onTap: onAudioTap),
-              const SizedBox(width: 3),
-              _ModeChip(label: 'Videolu', onTap: onVideoTap),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ModeChip extends StatelessWidget {
-  const _ModeChip({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.22),
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 7,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
           ),
         ),
       ),

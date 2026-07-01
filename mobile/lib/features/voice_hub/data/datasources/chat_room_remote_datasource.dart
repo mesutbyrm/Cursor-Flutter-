@@ -685,6 +685,37 @@ class ChatRoomRemoteDataSource {
     return fallback;
   }
 
+  Future<void> updateRoomSettings({
+    required String roomKey,
+    String? alternateKey,
+    String? password,
+    bool removePassword = false,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final data = <String, dynamic>{};
+      if (removePassword) {
+        data['password'] = null;
+        data['entryPassword'] = null;
+      } else if (password != null && password.isNotEmpty) {
+        data['password'] = password;
+        data['entryPassword'] = password;
+      }
+      if (data.isEmpty) return;
+      try {
+        await _dio.safePatch<dynamic>(
+          '/api/chat/rooms/$key/settings',
+          data: data,
+        );
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        await _dio.safePatch<dynamic>(
+          '/api/chat/rooms/$key',
+          data: data,
+        );
+      }
+    });
+  }
+
   Future<void> setRoomBackground({
     required String roomKey,
     String? alternateKey,

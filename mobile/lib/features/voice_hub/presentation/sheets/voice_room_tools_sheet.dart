@@ -11,8 +11,7 @@ import '../providers/chat_room_providers.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
-import 'voice_room_hub_settings.dart';
-import 'voice_youtube_song_sheet.dart';
+import 'voice_room_management_panel.dart';
 
 /// Sağ kenar «‹» — kurallar, komutlar, jeton, yasaklı kelimeler.
 Future<void> showVoiceRoomToolsSheet(
@@ -122,27 +121,15 @@ class _VoiceRoomToolsSheet extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.music_note_rounded, color: VoiceRoomTokens.neonPurple),
-              title: const Text('Şarkı isteği (ücretli)'),
-              subtitle: const Text('Müzik veya sanatçı ara, sıraya ekle'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {
-                Navigator.pop(context);
-                showVoiceYoutubeSongSheet(context, ref, room: room);
-              },
-            ),
             if (canModerate) ...[
               const SizedBox(height: 16),
               _BannedWordsSection(room: room),
             ],
-            const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: () {
                 Navigator.pop(context);
                 final live = ref.read(voiceRoomLiveProvider(room.liveKey));
-                showVoiceRoomHubSettingsSheet(
+                showVoiceRoomManagementPanel(
                   context,
                   ref,
                   room: room,
@@ -152,7 +139,7 @@ class _VoiceRoomToolsSheet extends ConsumerWidget {
                 );
               },
               icon: const Icon(Icons.settings_rounded),
-              label: const Text('Gelişmiş oda ayarları'),
+              label: const Text('Oda yönetim paneli'),
             ),
           ],
         ),

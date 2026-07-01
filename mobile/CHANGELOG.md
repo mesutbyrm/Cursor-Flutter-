@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.462+466 (2026-06-26)
+
+### Sesli oda — Oda Yönetim paneli
+
+- **Alt bar:** Kulaklık yanındaki «Müzik İste» kaldırıldı → **Ayarlar** butonu
+- **Oda Yönetim paneli:** Sohbet, Kullanıcılar, Oda yönetimi, Cezalar
+- **Sohbet:** odayı sessize al, bildirim sesi, mesaj temizle, sahiplik devri, takma ad
+- **Kullanıcılar:** sustur, kick, engelle (ban), +v / @ / & yetki, yetki kaldır, ban kaldır
+- **Oda:** arkaplan yükleme düzeltmesi, VIP oda şifresi (`/settings` API)
+- Ayarlar/menü/araçlardan müzik isteği ve DJ kısayolları kaldırıldı
+
 ## 1.0.461+465 (2026-06-26)
 
 ### Kısa video — CI / FFmpeg düzeltmesi

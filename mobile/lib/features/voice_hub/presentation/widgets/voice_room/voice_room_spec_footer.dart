@@ -21,9 +21,7 @@ class VoiceRoomSpecFooter extends StatelessWidget {
     required this.onMicToggle,
     required this.micOn,
     required this.micEnabled,
-    required this.onMusicRequest,
-    required this.onMusicAudio,
-    required this.onMusicVideo,
+    required this.onSettings,
     required this.onGift,
     required this.onInvite,
     this.presence = const [],
@@ -32,6 +30,7 @@ class VoiceRoomSpecFooter extends StatelessWidget {
     this.messages = const [],
     this.onEmojiTap,
     this.onChanged,
+    this.joinNotificationsEnabled = true,
   });
 
   final TextEditingController controller;
@@ -42,9 +41,7 @@ class VoiceRoomSpecFooter extends StatelessWidget {
   final VoidCallback onMicToggle;
   final bool micOn;
   final bool micEnabled;
-  final VoidCallback onMusicRequest;
-  final VoidCallback onMusicAudio;
-  final VoidCallback onMusicVideo;
+  final VoidCallback onSettings;
   final VoidCallback onGift;
   final VoidCallback onInvite;
   final List<ChatRoomPresence> presence;
@@ -53,6 +50,7 @@ class VoiceRoomSpecFooter extends StatelessWidget {
   final List<ChatRoomMessage> messages;
   final VoidCallback? onEmojiTap;
   final ValueChanged<String>? onChanged;
+  final bool joinNotificationsEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -148,13 +146,12 @@ class VoiceRoomSpecFooter extends StatelessWidget {
             VoiceRoomJoinToastStack(
               events: events,
               messages: messages,
+              enabled: joinNotificationsEnabled,
             ),
             VoiceRoomBottomActionBar(
               headphonesOn: headphonesOn,
               onToggleAudioOutput: onToggleAudioOutput,
-              onMusicRequest: onMusicRequest,
-              onMusicAudio: onMusicAudio,
-              onMusicVideo: onMusicVideo,
+              onSettings: onSettings,
               micOn: micOn,
               micEnabled: micEnabled,
               onMicToggle: onMicToggle,
