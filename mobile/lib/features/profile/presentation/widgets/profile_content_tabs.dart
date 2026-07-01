@@ -9,8 +9,65 @@ import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../fortune/domain/entities/user_fortune_entity.dart';
 import '../../../fortune/presentation/providers/fortune_api_providers.dart';
 import '../../../shorts/domain/entities/short_video_entity.dart';
+import '../../../shorts/domain/repositories/shorts_repository.dart';
 import '../../../shorts/presentation/providers/shorts_providers.dart';
-import 'user_posts_tiktok_grid.dart';
+class _VideosTab extends ConsumerWidget {
+  const _VideosTab({required this.userId});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final videosAsync = ref.watch(
+      userShortVideosProvider((userId: userId, tab: ShortUserVideosTab.videos)),
+    );
+
+    return videosAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(24),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      error: (_, _) => const Padding(
+        padding: EdgeInsets.all(16),
+        child: Text('Videolar yüklenemedi'),
+      ),
+      data: (videos) {
+        if (videos.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: Text('Henüz video yok')),
+          );
+        }
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 2,
+            mainAxisSpacing: 2,
+            childAspectRatio: 9 / 16,
+          ),
+          itemCount: videos.length,
+          itemBuilder: (context, index) {
+            final video = videos[index];
+            final thumb = video.thumbnailUrl;
+            return GestureDetector(
+              onTap: () => context.push('/shorts?videoId=${video.id}'),
+              child: DecoratedBox(
+                decoration: const BoxDecoration(color: Color(0xFF1A0F3D)),
+                child: thumb != null && thumb.isNotEmpty
+                    ? CanlifalNetworkImage(url: thumb, fit: BoxFit.cover)
+                    : const Center(
+                        child: Icon(Icons.play_circle_outline_rounded),
+                      ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
 
 /// TikTok tarzı profil sekmeleri: videolar, fallar, izlediklerim.
 class ProfileContentTabs extends ConsumerStatefulWidget {
@@ -69,7 +126,7 @@ class _ProfileContentTabsState extends ConsumerState<ProfileContentTabs>
               case 2:
                 return const _WatchedTab();
               default:
-                return UserPostsTikTokGrid(userId: widget.userId);
+                return _VideosTab(userId: widget.userId);
             }
           },
         ),
@@ -191,7 +248,7 @@ class _WatchedTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final thumb = video.thumbnailUrl;
     return GestureDetector(
-      onTap: () => context.push('/shorts'),
+      onTap: () => context.push('/shorts?videoId=${video.id}'),
       child: DecoratedBox(
         decoration: BoxDecoration(color: const Color(0xFF1A0F3D)),
         child: thumb != null && thumb.isNotEmpty

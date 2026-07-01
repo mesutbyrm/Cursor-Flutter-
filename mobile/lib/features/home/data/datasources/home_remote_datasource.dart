@@ -75,11 +75,25 @@ class HomeRemoteDataSource {
   }
 
   Future<List<HomeTrendVideoEntity>> fetchTrendVideos() async {
-    // Öncelik: kullanıcıların yüklediği kısa videolar (R2/CDN).
+    // Keşfet API — trend videolar + hashtag/müzik meta.
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.shortVideosExplore,
+        query: {'limit': 12},
+      );
+      final m = _unwrapExploreBody(res.data);
+      final shorts = _shortVideosFromExplore(m)
+          .map(_mapShortVideoToTrend)
+          .where((v) => v.id.isNotEmpty && !v.isYoutubeSource)
+          .toList();
+      if (shorts.isNotEmpty) return shorts;
+    } catch (_) {}
+
+    // Yedek: ana akış.
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.shortVideos,
-        query: {'limit': 12},
+        query: {'limit': 12, 'tab': 'foryou'},
       );
       final shorts = _shortVideosFromBody(res.data)
           .map(_mapShortVideoToTrend)
@@ -113,6 +127,22 @@ class HomeRemoteDataSource {
     final data = m['success'] == true && m['data'] is Map
         ? asJsonMap(m['data'])
         : m;
+    final raw = data['videos'];
+    if (raw is List) return raw;
+    return const [];
+  }
+
+  Map<String, dynamic>? _unwrapExploreBody(dynamic body) {
+    if (body is! Map) return null;
+    final m = asJsonMap(body);
+    if (m['success'] == true && m['data'] is Map) {
+      return asJsonMap(m['data']);
+    }
+    return m;
+  }
+
+  List<dynamic> _shortVideosFromExplore(Map<String, dynamic>? data) {
+    if (data == null) return const [];
     final raw = data['videos'];
     if (raw is List) return raw;
     return const [];

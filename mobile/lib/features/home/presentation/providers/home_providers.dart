@@ -4,6 +4,7 @@ import '../../../../core/performance/network_perf.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../social/presentation/providers/social_providers.dart';
+import '../../../shorts/domain/repositories/shorts_repository.dart';
 import '../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../data/datasources/home_remote_datasource.dart';
 import '../../data/repositories/home_repository_impl.dart';
@@ -80,6 +81,7 @@ Future<void> refreshHomeData(WidgetRef ref) async {
   ref.invalidate(homeTrendVideosProvider);
   ref.invalidate(socialStoryRingsProvider);
   ref.invalidate(shortsFeedProvider);
+  ref.invalidate(shortsExploreProvider);
 
   await NetworkPerf.parallel([
     ref.refresh(homeBannersProvider.future),
@@ -92,6 +94,7 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(homeFortuneCardsProvider.future),
     ref.refresh(homeTrendVideosProvider.future),
     ref.refresh(socialStoryRingsProvider.future),
-    ref.refresh(shortsFeedProvider.future),
+    ref.refresh(shortsFeedProvider(ShortsFeedTab.forYou).future),
+    ref.refresh(shortsExploreProvider.future),
   ]);
 }

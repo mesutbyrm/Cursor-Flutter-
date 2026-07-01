@@ -48,6 +48,7 @@ import '../../features/social/presentation/pages/social_create_post_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
 import '../../features/shorts/presentation/pages/shorts_feed_page.dart';
 import '../../features/shorts/presentation/pages/shorts_upload_page.dart';
+import '../../features/shorts/presentation/pages/shorts_explore_page.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/messages/presentation/pages/conversations_page.dart';
 import '../../features/moderation/domain/entities/report_target.dart';
@@ -661,6 +662,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           ),
         ),
         routes: [
+          GoRoute(
+            path: 'explore',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const ShortsExplorePage(),
+            ),
+          ),
           GoRoute(
             path: 'upload',
             pageBuilder: (context, state) => AppPageTransitions.cupertinoSheet(

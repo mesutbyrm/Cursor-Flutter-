@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.459+463 (2026-06-26)
+
+### Kısa video / Keşfet — tam `/api/short-videos` entegrasyonu
+
+- **Akış:** `Sana Özel` / `Takip` sekmeleri (`?tab=foryou|following`), derin bağlantı (`/shorts?videoId=`)
+- **Keşfet ekranı:** `GET /explore` — trend videolar, hashtag'ler, popüler müzikler + arama
+- **Etkileşimler:** kaydet, paylaş (API + `canlifal.com/shorts?videoId=`), yorum yanıtları / beğeni / silme
+- **Profil:** Videolar sekmesi artık `/api/short-videos/user/:id?tab=videos` kullanıyor
+- **Ana sayfa:** Trend videolar `GET /explore` üzerinden yükleniyor
+
 ## 1.0.458+462 (2026-06-30)
 
 ### Claude + Cursor birleşik sürüm (tam APK)

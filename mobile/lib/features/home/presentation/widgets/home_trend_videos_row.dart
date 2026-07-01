@@ -27,7 +27,7 @@ class HomeTrendVideosRow extends ConsumerWidget {
             HomeSectionHeader(
               title: 'Trend Videolar',
               leadingDotColor: const Color(0xFFFF4FD8),
-              onTrailing: () => context.push('/shorts'),
+              onTrailing: () => context.push('/shorts/explore'),
             ),
             SizedBox(
               height: 168,

@@ -548,20 +548,42 @@ abstract final class ApiEndpoints {
 
   // --- Kısa videolar (TikTok tarzı, R2 CDN) ---
   static const shortVideos = '/api/short-videos';
+  static const shortVideosExplore = '/api/short-videos/explore';
   static const shortVideosViewedMe = '/api/short-videos/viewed/me';
   static const shortVideosUpload = '/api/short-videos/upload';
+  static const shortVideosUploadUrl = '/api/short-videos/upload-url';
+  static const shortVideosRegister = '/api/short-videos/register';
+  static const shortVideosMusic = '/api/short-videos/music';
+  static const shortVideosHashtagsTrending =
+      '/api/short-videos/hashtags/trending';
+  static const shortVideosHashtagsSearch = '/api/short-videos/hashtags/search';
+  static const shortVideosMentionsSearch = '/api/short-videos/mentions/search';
 
   /// Görsel fal — presigned yükleme (kahve fincanı, el falı vb.).
   static const uploadPresigned = '/api/upload/presigned';
 
   /// R2/S3 depolama yolu için imzalı okuma URL'i.
   static const uploadGetUrl = '/api/upload/get-url';
+  static String shortVideo(String id) => '/api/short-videos/$id';
   static String shortVideoLike(String id) => '/api/short-videos/$id/like';
+  static String shortVideoSave(String id) => '/api/short-videos/$id/save';
+  static String shortVideoShare(String id) => '/api/short-videos/$id/share';
   static String shortVideoComments(String id) =>
       '/api/short-videos/$id/comments';
+  static String shortVideoComment(String videoId, String commentId) =>
+      '/api/short-videos/$videoId/comments/$commentId';
+  static String shortVideoCommentLike(String videoId, String commentId) =>
+      '/api/short-videos/$videoId/comments/$commentId/like';
+  static String shortVideoCommentPin(String videoId, String commentId) =>
+      '/api/short-videos/$videoId/comments/$commentId/pin';
   static String shortVideoView(String id) => '/api/short-videos/$id/view';
   static String shortVideoStream(String id) => '/api/short-videos/$id/stream';
   static String shortVideoDelete(String id) => '/api/short-videos/$id';
+  static String shortVideoDuets(String id) => '/api/short-videos/$id/duets';
   static String shortVideosByUser(String userId) =>
       '/api/short-videos/user/$userId';
+  static String shortVideosProfile(String userId) =>
+      '/api/short-videos/profile/$userId';
+  static String shortVideosHashtag(String name) =>
+      '/api/short-videos/hashtags/$name';
 }

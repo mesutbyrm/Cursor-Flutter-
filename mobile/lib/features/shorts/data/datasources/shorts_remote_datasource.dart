@@ -5,7 +5,9 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/short_comment_entity.dart';
+import '../../domain/entities/short_explore_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
+import '../../domain/repositories/shorts_repository.dart';
 
 class ShortsRemoteDataSource {
   ShortsRemoteDataSource(this._dio);
@@ -17,6 +19,10 @@ class ShortsRemoteDataSource {
     final m = Map<String, dynamic>.from(body);
     if (m['success'] == true && m['data'] is Map) {
       return Map<String, dynamic>.from(m['data']);
+    }
+    if (m['success'] == false) {
+      final err = m['error']?.toString();
+      if (err != null && err.isNotEmpty) throw ApiException(err);
     }
     return m;
   }
@@ -32,6 +38,35 @@ class ShortsRemoteDataSource {
       displayName: pick(m, ['displayName', 'name'])?.toString(),
       avatarUrl: pick(m, ['avatarUrl', 'avatar', 'image'])?.toString(),
     );
+  }
+
+  ShortVideoMusic? _musicFrom(dynamic raw) {
+    if (raw is! Map) return null;
+    final m = asJsonMap(raw);
+    final id = (pick(m, ['id']) ?? '').toString();
+    if (id.isEmpty) return null;
+    return ShortVideoMusic(
+      id: id,
+      title: (pick(m, ['title', 'name']) ?? 'Müzik').toString(),
+      artist: pick(m, ['artist', 'author'])?.toString(),
+      coverUrl: pick(m, ['coverUrl', 'cover_url', 'thumbnailUrl'])?.toString(),
+      audioUrl: pick(m, ['audioUrl', 'audio_url', 'url'])?.toString(),
+    );
+  }
+
+  List<String> _hashtagsFrom(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .map((e) {
+          if (e is String) return e;
+          if (e is Map) {
+            return pick(asJsonMap(e), ['name', 'tag', 'hashtag'])?.toString();
+          }
+          return e?.toString();
+        })
+        .whereType<String>()
+        .where((s) => s.isNotEmpty)
+        .toList();
   }
 
   ShortVideoEntity _videoFrom(Map<String, dynamic> json) {
@@ -58,6 +93,8 @@ class ShortsRemoteDataSource {
       viewsCount: asInt(pick(json, ['viewsCount', 'views_count'])),
       likesCount: asInt(pick(json, ['likesCount', 'likes_count'])),
       commentsCount: asInt(pick(json, ['commentsCount', 'comments_count'])),
+      sharesCount: asInt(pick(json, ['sharesCount', 'shares_count'])),
+      savesCount: asInt(pick(json, ['savesCount', 'saves_count'])),
       durationSec: () {
         final v = pick(json, ['durationSec', 'duration_sec']);
         if (v is num) return v.toDouble();
@@ -67,18 +104,74 @@ class ShortsRemoteDataSource {
       author: author,
       likedByMe: asBool(pick(json, ['likedByMe', 'liked_by_me'])),
       viewedByMe: asBool(pick(json, ['viewedByMe', 'viewed_by_me'])),
+      savedByMe: asBool(pick(json, ['savedByMe', 'saved_by_me'])),
+      hashtags: _hashtagsFrom(pick(json, ['hashtags', 'tags'])),
+      music: _musicFrom(pick(json, ['music'])),
+      allowDuet: pick(json, ['allowDuet', 'allow_duet']) != false,
+      duetOfId: pick(json, ['duetOfId', 'duet_of_id'])?.toString(),
     );
+  }
+
+  ShortCommentEntity _commentFrom(Map<String, dynamic> json) {
+    final createdRaw = pick(json, ['createdAt']);
+    final repliesRaw = pick(json, ['replies']);
+    final replies = repliesRaw is List
+        ? asJsonList(repliesRaw)
+            .map((j) => _commentFrom(asJsonMap(j)))
+            .where((c) => c.id.isNotEmpty)
+            .toList()
+        : const <ShortCommentEntity>[];
+
+    return ShortCommentEntity(
+      id: (pick(json, ['id']) ?? '').toString(),
+      content: (pick(json, ['content', 'text']) ?? '').toString(),
+      createdAt:
+          DateTime.tryParse(createdRaw?.toString() ?? '') ?? DateTime.now(),
+      author: _authorFrom(json),
+      likesCount: asInt(pick(json, ['likesCount', 'likes_count'])),
+      likedByMe: asBool(pick(json, ['likedByMe', 'liked_by_me'])),
+      isPinned: asBool(pick(json, ['isPinned', 'is_pinned'])),
+      parentId: pick(json, ['parentId', 'parent_id'])?.toString(),
+      repliesCount: asInt(pick(json, ['repliesCount', 'replies_count'])),
+      replies: replies,
+    );
+  }
+
+  ShortHashtagEntity _hashtagFrom(Map<String, dynamic> json) {
+    return ShortHashtagEntity(
+      name: (pick(json, ['name', 'tag', 'hashtag']) ?? '').toString(),
+      videosCount: asInt(pick(json, ['videosCount', 'videos_count', 'count'])),
+      viewsCount: asInt(pick(json, ['viewsCount', 'views_count'])),
+    );
+  }
+
+  ShortMusicEntity _musicEntityFrom(Map<String, dynamic> json) {
+    return ShortMusicEntity(
+      id: (pick(json, ['id']) ?? '').toString(),
+      title: (pick(json, ['title', 'name']) ?? 'Müzik').toString(),
+      artist: pick(json, ['artist', 'author'])?.toString(),
+      coverUrl: pick(json, ['coverUrl', 'cover_url', 'thumbnailUrl'])?.toString(),
+      audioUrl: pick(json, ['audioUrl', 'audio_url', 'url'])?.toString(),
+      usageCount: asInt(pick(json, ['usageCount', 'usage_count', 'count'])),
+    );
+  }
+
+  List<ShortVideoEntity> _videosFrom(dynamic raw) {
+    if (raw is! List) return const [];
+    return asJsonList(raw).map(_videoFrom).where((v) => v.id.isNotEmpty).toList();
   }
 
   Future<({List<ShortVideoEntity> videos, String? nextCursor, bool hasMore})>
       fetchFeed({
     String? cursor,
     int limit = 10,
+    ShortsFeedTab tab = ShortsFeedTab.forYou,
   }) async {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.shortVideos,
       query: {
         'limit': limit,
+        'tab': tab == ShortsFeedTab.following ? 'following' : 'foryou',
         if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
       },
     );
@@ -90,15 +183,59 @@ class ShortsRemoteDataSource {
         hasMore: false,
       );
     }
-    final raw = m['videos'];
-    final videos = raw is List
-        ? asJsonList(raw).map(_videoFrom).where((v) => v.id.isNotEmpty).toList()
-        : <ShortVideoEntity>[];
+    final videos = _videosFrom(m['videos']);
     return (
       videos: videos,
       nextCursor: m['nextCursor']?.toString(),
       hasMore: m['hasMore'] == true || m['nextCursor'] != null,
     );
+  }
+
+  Future<ShortExplorePage> fetchExplore({
+    String? query,
+    String? cursor,
+    int limit = 12,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.shortVideosExplore,
+      query: {
+        'limit': limit,
+        if (query != null && query.trim().isNotEmpty) 'q': query.trim(),
+        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+      },
+    );
+    final m = _unwrap(res.data);
+    if (m == null) {
+      return const ShortExplorePage(videos: []);
+    }
+    final hashtagsRaw = m['trendingHashtags'] ?? m['hashtags'];
+    final musicRaw = m['popularMusic'] ?? m['music'];
+    return ShortExplorePage(
+      videos: _videosFrom(m['videos']),
+      trendingHashtags: hashtagsRaw is List
+          ? asJsonList(hashtagsRaw)
+              .map((j) => _hashtagFrom(asJsonMap(j)))
+              .where((h) => h.name.isNotEmpty)
+              .toList()
+          : const [],
+      popularMusic: musicRaw is List
+          ? asJsonList(musicRaw)
+              .map((j) => _musicEntityFrom(asJsonMap(j)))
+              .where((m) => m.id.isNotEmpty)
+              .toList()
+          : const [],
+      nextCursor: m['nextCursor']?.toString(),
+      hasMore: m['hasMore'] == true || m['nextCursor'] != null,
+    );
+  }
+
+  Future<ShortVideoEntity> fetchVideo(String videoId) async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.shortVideo(videoId));
+    final m = _unwrap(res.data);
+    final raw = m != null ? pick(m, ['video', 'item']) : null;
+    if (raw is Map) return _videoFrom(asJsonMap(raw));
+    if (m != null && m.containsKey('id')) return _videoFrom(m);
+    throw ApiException('Video bulunamadı.');
   }
 
   Future<ShortVideoEntity> uploadVideo({
@@ -143,12 +280,36 @@ class ShortsRemoteDataSource {
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.shortVideoLike(videoId),
     );
-    final m = _unwrap(res.data) ?? (res.data is Map ? asJsonMap(res.data) : null);
+    final m =
+        _unwrap(res.data) ?? (res.data is Map ? asJsonMap(res.data) : null);
     if (m == null) return (liked: true, likesCount: 0);
     return (
       liked: asBool(pick(m, ['liked', 'isLiked', 'likedByMe'])),
       likesCount: asInt(pick(m, ['likesCount', 'likeCount', 'likes'])),
     );
+  }
+
+  Future<({bool saved, int savesCount})> toggleSave(String videoId) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.shortVideoSave(videoId),
+    );
+    final m =
+        _unwrap(res.data) ?? (res.data is Map ? asJsonMap(res.data) : null);
+    if (m == null) return (saved: true, savesCount: 0);
+    return (
+      saved: asBool(pick(m, ['saved', 'isSaved', 'savedByMe'])),
+      savesCount: asInt(pick(m, ['savesCount', 'saveCount', 'saves'])),
+    );
+  }
+
+  Future<int> recordShare(String videoId) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.shortVideoShare(videoId),
+    );
+    final m =
+        _unwrap(res.data) ?? (res.data is Map ? asJsonMap(res.data) : null);
+    if (m == null) return 0;
+    return asInt(pick(m, ['sharesCount', 'shareCount', 'shares']));
   }
 
   Future<List<ShortCommentEntity>> fetchComments(String videoId) async {
@@ -158,43 +319,53 @@ class ShortsRemoteDataSource {
     final m = _unwrap(res.data);
     final raw = m?['comments'];
     if (raw is! List) return const [];
-    return asJsonList(raw).map((j) {
-      final createdRaw = pick(j, ['createdAt']);
-      return ShortCommentEntity(
-        id: (pick(j, ['id']) ?? '').toString(),
-        content: (pick(j, ['content', 'text']) ?? '').toString(),
-        createdAt: DateTime.tryParse(createdRaw?.toString() ?? '') ??
-            DateTime.now(),
-        author: _authorFrom(j),
-      );
-    }).where((c) => c.id.isNotEmpty).toList();
+    return asJsonList(raw)
+        .map((j) => _commentFrom(asJsonMap(j)))
+        .where((c) => c.id.isNotEmpty)
+        .toList();
   }
 
   Future<({ShortCommentEntity comment, int commentsCount})> addComment(
     String videoId,
-    String content,
-  ) async {
+    String content, {
+    String? parentId,
+  }) async {
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.shortVideoComments(videoId),
-      data: {'content': content.trim()},
+      data: {
+        'content': content.trim(),
+        if (parentId != null && parentId.isNotEmpty) 'parentId': parentId,
+      },
     );
     final m = _unwrap(res.data);
     if (m == null) throw ApiException('Yorum yanıtı okunamadı.');
     final raw = pick(m, ['comment']);
     if (raw is! Map) throw ApiException('Yorum yanıtı okunamadı.');
-    final j = asJsonMap(raw);
-    final comment = ShortCommentEntity(
-      id: (pick(j, ['id']) ?? '').toString(),
-      content: (pick(j, ['content']) ?? content).toString(),
-      createdAt: DateTime.tryParse(
-            pick(j, ['createdAt'])?.toString() ?? '',
-          ) ??
-          DateTime.now(),
-      author: _authorFrom(j),
-    );
     return (
-      comment: comment,
+      comment: _commentFrom(asJsonMap(raw)),
       commentsCount: asInt(pick(m, ['commentsCount'])),
+    );
+  }
+
+  Future<void> deleteComment(String videoId, String commentId) async {
+    await _dio.safeDelete(
+      ApiEndpoints.shortVideoComment(videoId, commentId),
+    );
+  }
+
+  Future<({bool liked, int likesCount})> toggleCommentLike(
+    String videoId,
+    String commentId,
+  ) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.shortVideoCommentLike(videoId, commentId),
+    );
+    final m =
+        _unwrap(res.data) ?? (res.data is Map ? asJsonMap(res.data) : null);
+    if (m == null) return (liked: true, likesCount: 0);
+    return (
+      liked: asBool(pick(m, ['liked', 'isLiked', 'likedByMe'])),
+      likesCount: asInt(pick(m, ['likesCount', 'likeCount', 'likes'])),
     );
   }
 
@@ -206,7 +377,8 @@ class ShortsRemoteDataSource {
       ApiEndpoints.shortVideoView(videoId),
       data: {'watchedSec': watchedSec},
     );
-    final m = _unwrap(res.data) ?? (res.data is Map ? asJsonMap(res.data) : null);
+    final m =
+        _unwrap(res.data) ?? (res.data is Map ? asJsonMap(res.data) : null);
     if (m == null) return (counted: false, viewsCount: 0);
     return (
       counted: asBool(pick(m, ['counted'])),
@@ -218,14 +390,36 @@ class ShortsRemoteDataSource {
     await _dio.safeDelete(ApiEndpoints.shortVideoDelete(videoId));
   }
 
-  Future<List<ShortVideoEntity>> fetchByUser(String userId) async {
+  Future<List<ShortVideoEntity>> fetchByUser(
+    String userId, {
+    ShortUserVideosTab tab = ShortUserVideosTab.videos,
+  }) async {
+    final tabName = switch (tab) {
+      ShortUserVideosTab.liked => 'liked',
+      ShortUserVideosTab.saved => 'saved',
+      _ => 'videos',
+    };
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.shortVideosByUser(userId),
+      query: {'tab': tabName},
     );
     final m = _unwrap(res.data);
-    final raw = m?['videos'];
-    if (raw is! List) return const [];
-    return asJsonList(raw).map(_videoFrom).where((v) => v.id.isNotEmpty).toList();
+    return _videosFrom(m?['videos']);
+  }
+
+  Future<ShortProfileStats> fetchProfileStats(String userId) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.shortVideosProfile(userId),
+    );
+    final m = _unwrap(res.data);
+    if (m == null) return const ShortProfileStats();
+    return ShortProfileStats(
+      videosCount: asInt(pick(m, ['videosCount', 'videoCount'])),
+      totalLikes: asInt(pick(m, ['totalLikes', 'likesCount'])),
+      followersCount: asInt(pick(m, ['followersCount', 'followerCount'])),
+      followingCount: asInt(pick(m, ['followingCount'])),
+      isFollowing: asBool(pick(m, ['isFollowing', 'following'])),
+    );
   }
 
   Future<List<ShortVideoEntity>> fetchViewedByMe({int limit = 20}) async {
@@ -234,9 +428,58 @@ class ShortsRemoteDataSource {
       query: {'limit': limit},
     );
     final m = _unwrap(res.data);
-    final raw = m?['videos'];
+    return _videosFrom(m?['videos']);
+  }
+
+  Future<List<ShortVideoEntity>> fetchDuets(String videoId) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.shortVideoDuets(videoId),
+    );
+    final m = _unwrap(res.data);
+    return _videosFrom(m?['duets'] ?? m?['videos']);
+  }
+
+  Future<List<ShortHashtagEntity>> searchHashtags(String query) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.shortVideosHashtagsSearch,
+      query: {'q': query.trim()},
+    );
+    final m = _unwrap(res.data);
+    final raw = m?['hashtags'] ?? m?['items'];
     if (raw is! List) return const [];
-    return asJsonList(raw).map(_videoFrom).where((v) => v.id.isNotEmpty).toList();
+    return asJsonList(raw)
+        .map((j) => _hashtagFrom(asJsonMap(j)))
+        .where((h) => h.name.isNotEmpty)
+        .toList();
+  }
+
+  Future<List<ShortHashtagEntity>> fetchTrendingHashtags() async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.shortVideosHashtagsTrending,
+    );
+    final m = _unwrap(res.data);
+    final raw = m?['hashtags'] ?? m?['items'];
+    if (raw is! List) return const [];
+    return asJsonList(raw)
+        .map((j) => _hashtagFrom(asJsonMap(j)))
+        .where((h) => h.name.isNotEmpty)
+        .toList();
+  }
+
+  Future<List<ShortMusicEntity>> searchMusic(String query) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.shortVideosMusic,
+      query: {
+        if (query.trim().isNotEmpty) 'q': query.trim(),
+      },
+    );
+    final m = _unwrap(res.data);
+    final raw = m?['music'] ?? m?['items'] ?? m?['tracks'];
+    if (raw is! List) return const [];
+    return asJsonList(raw)
+        .map((j) => _musicEntityFrom(asJsonMap(j)))
+        .where((m) => m.id.isNotEmpty)
+        .toList();
   }
 
   static String _videoExtension(String path) {

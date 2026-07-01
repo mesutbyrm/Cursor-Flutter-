@@ -10,6 +10,7 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/providers/auth_selectors.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../domain/repositories/shorts_repository.dart';
 import '../providers/shorts_providers.dart';
 import '../../../home/presentation/providers/home_providers.dart';
 
@@ -122,7 +123,10 @@ class _ShortsUploadPageState extends ConsumerState<ShortsUploadPage> {
             thumbnailPath: _thumbPath,
             description: _descCtrl.text,
           );
-      await ref.read(shortsFeedProvider.notifier).refresh();
+      await ref
+          .read(shortsFeedProvider(ShortsFeedTab.forYou).notifier)
+          .refresh();
+      ref.invalidate(shortsExploreProvider);
       ref.invalidate(homeTrendVideosProvider);
       if (!mounted) return;
       context.pop();

@@ -10,12 +10,11 @@ import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../favorites/presentation/providers/favorites_providers.dart';
-import '../../../../feed/domain/entities/post_entity.dart';
 import '../../../../fortune/domain/entities/user_fortune_entity.dart';
 import '../../../../fortune/presentation/providers/fortune_api_providers.dart';
 import '../../../../shorts/domain/entities/short_video_entity.dart';
+import '../../../../shorts/domain/repositories/shorts_repository.dart';
 import '../../../../shorts/presentation/providers/shorts_providers.dart';
-import '../../../../social/presentation/providers/user_social_posts_notifier.dart';
 import '../../../domain/entities/profile_stats_entity.dart';
 import '../../providers/broadcast_history_notifier.dart';
 import '../../widgets/premium/profile_glass.dart';
@@ -102,152 +101,19 @@ class _VideosTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final postsAsync = ref.watch(userSocialPostsNotifierProvider(userId));
+    final videosAsync = ref.watch(
+      userShortVideosProvider((userId: userId, tab: ShortUserVideosTab.videos)),
+    );
 
-    return postsAsync.when(
+    return videosAsync.when(
       loading: () => const _ContentSkeleton(),
       error: (_, _) => const _EmptyMessage('Videolar yüklenemedi'),
-      data: (posts) {
-        if (posts.isEmpty) {
+      data: (videos) {
+        if (videos.isEmpty) {
           return const _EmptyMessage('Henüz video yok');
         }
-        return _VideoGrid(posts: posts);
+        return _ShortsGrid(videos: videos);
       },
-    );
-  }
-}
-
-class _VideoGrid extends StatelessWidget {
-  const _VideoGrid({required this.posts});
-
-  final List<PostEntity> posts;
-
-  @override
-  Widget build(BuildContext context) {
-    return LazyNestedGridView(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-        childAspectRatio: 9 / 14,
-      ),
-      itemCount: posts.length,
-      itemBuilder: (context, index) => _VideoCard(post: posts[index]),
-    );
-  }
-}
-
-class _VideoCard extends StatelessWidget {
-  const _VideoCard({required this.post});
-
-  final PostEntity post;
-
-  @override
-  Widget build(BuildContext context) {
-    final thumb = post.mediaUrl;
-    final views = post.viewsCount > 0 ? post.viewsCount : post.viewCount;
-    final date = post.createdAt != null
-        ? DateFormat('d MMM yyyy', 'tr').format(post.createdAt!.toLocal())
-        : '';
-
-    return GestureDetector(
-      onTap: () => context.push('/social'),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: DecoratedBox(
-          decoration: const BoxDecoration(color: Color(0xFF1A0F3D)),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (thumb != null && thumb.isNotEmpty)
-                CanlifalNetworkImage(url: thumb, fit: BoxFit.cover)
-              else
-                Center(
-                  child: Icon(
-                    Icons.play_circle_outline_rounded,
-                    color: Colors.white.withValues(alpha: 0.5),
-                    size: 36,
-                  ),
-                ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.85),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          _MiniStat(Icons.visibility_rounded, views),
-                          const SizedBox(width: 8),
-                          _MiniStat(Icons.favorite_rounded, post.likesCount),
-                          const SizedBox(width: 8),
-                          _MiniStat(
-                            Icons.chat_bubble_outline_rounded,
-                            post.commentsCount,
-                          ),
-                        ],
-                      ),
-                      if (date.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          date,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MiniStat extends StatelessWidget {
-  const _MiniStat(this.icon, this.value);
-
-  final IconData icon;
-  final int value;
-
-  @override
-  Widget build(BuildContext context) {
-    if (value <= 0) return const SizedBox.shrink();
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 10, color: Colors.white),
-        const SizedBox(width: 2),
-        Text(
-          '$value',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 9,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -531,7 +397,7 @@ class _ShortsGrid extends StatelessWidget {
         final video = videos[index];
         final thumb = video.thumbnailUrl;
         return GestureDetector(
-          onTap: () => context.push('/shorts'),
+          onTap: () => context.push('/shorts?videoId=${video.id}'),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(14),
             child: DecoratedBox(

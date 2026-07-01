@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../domain/entities/short_video_entity.dart';
+import '../pages/shorts_feed_page.dart';
 import '../providers/shorts_providers.dart';
 import 'short_comments_sheet.dart';
 
@@ -35,9 +36,16 @@ class ShortVideoActionsRail extends ConsumerWidget {
         ),
         const SizedBox(height: 18),
         _ActionButton(
+          icon: video.savedByMe ? Icons.bookmark : Icons.bookmark_border,
+          label: _formatCount(video.savesCount),
+          color: video.savedByMe ? Colors.amber : Colors.white,
+          onTap: () => _toggleSave(ref),
+        ),
+        const SizedBox(height: 18),
+        _ActionButton(
           icon: Icons.share_outlined,
-          label: 'Paylaş',
-          onTap: () => _share(video),
+          label: _formatCount(video.sharesCount),
+          onTap: () => _share(ref),
         ),
         const SizedBox(height: 18),
         _ActionButton(
@@ -65,6 +73,16 @@ class ShortVideoActionsRail extends ConsumerWidget {
     } catch (_) {}
   }
 
+  Future<void> _toggleSave(WidgetRef ref) async {
+    try {
+      final res =
+          await ref.read(shortsRepositoryProvider).toggleSave(video.id);
+      onVideoUpdated(
+        video.copyWith(savedByMe: res.saved, savesCount: res.savesCount),
+      );
+    } catch (_) {}
+  }
+
   Future<void> _openComments(BuildContext context, WidgetRef ref) async {
     final count = await showShortCommentsSheet(context, ref, video);
     if (count != null) {
@@ -72,11 +90,18 @@ class ShortVideoActionsRail extends ConsumerWidget {
     }
   }
 
-  void _share(ShortVideoEntity v) {
+  Future<void> _share(WidgetRef ref) async {
+    final link = shortVideoShareUrl(video.id);
     final text = [
-      if (v.description?.trim().isNotEmpty == true) v.description!.trim(),
-      v.videoUrl,
+      if (video.description?.trim().isNotEmpty == true) video.description!.trim(),
+      link,
     ].join('\n');
+    try {
+      final shares = await ref.read(shortsRepositoryProvider).recordShare(video.id);
+      if (shares > 0) {
+        onVideoUpdated(video.copyWith(sharesCount: shares));
+      }
+    } catch (_) {}
     SharePlus.instance.share(ShareParams(text: text));
   }
 }
@@ -146,6 +171,40 @@ class ShortVideoInfoOverlay extends StatelessWidget {
               fontSize: 15,
             ),
           ),
+        if (video.music != null) ...[
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.music_note, size: 14, color: Colors.white70),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  video.music!.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (video.hashtags.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 6,
+            children: [
+              for (final tag in video.hashtags.take(4))
+                Text(
+                  '#$tag',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+            ],
+          ),
+        ],
         if (desc != null && desc.isNotEmpty) ...[
           const SizedBox(height: 6),
           Text(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/providers/auth_selectors.dart';
 import '../../domain/entities/short_comment_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_providers.dart';
@@ -39,6 +40,8 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
   var _commentsLoading = true;
   var _commentsCount = 0;
   var _sending = false;
+  String? _replyToId;
+  String? _replyToLabel;
 
   @override
   void initState() {
@@ -76,6 +79,20 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
     super.dispose();
   }
 
+  void _startReply(ShortCommentEntity comment) {
+    setState(() {
+      _replyToId = comment.id;
+      _replyToLabel = comment.author.label;
+    });
+  }
+
+  void _cancelReply() {
+    setState(() {
+      _replyToId = null;
+      _replyToLabel = null;
+    });
+  }
+
   Future<void> _send() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _sending) return;
@@ -84,8 +101,10 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
       final res = await ref.read(shortsRepositoryProvider).addComment(
             widget.video.id,
             text,
+            parentId: _replyToId,
           );
       _controller.clear();
+      _cancelReply();
       setState(() => _commentsCount = res.commentsCount);
       await _loadComments();
     } finally {
@@ -93,9 +112,32 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
     }
   }
 
+  Future<void> _toggleCommentLike(ShortCommentEntity comment) async {
+    try {
+      await ref.read(shortsRepositoryProvider).toggleCommentLike(
+            widget.video.id,
+            comment.id,
+          );
+      await _loadComments();
+    } catch (_) {}
+  }
+
+  Future<void> _deleteComment(ShortCommentEntity comment) async {
+    final me = ref.read(currentUserIdProvider);
+    if (me == null || me != comment.author.id) return;
+    try {
+      await ref.read(shortsRepositoryProvider).deleteComment(
+            widget.video.id,
+            comment.id,
+          );
+      await _loadComments();
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
+    final me = ref.watch(currentUserIdProvider);
     return Padding(
       padding: EdgeInsets.only(bottom: bottom),
       child: SizedBox(
@@ -122,9 +164,25 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
                 ),
               ),
             ),
-            Expanded(
-              child: _buildCommentsList(),
-            ),
+            Expanded(child: _buildCommentsList(me)),
+            if (_replyToLabel != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Yanıt: $_replyToLabel',
+                        style: const TextStyle(color: Colors.white54),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _cancelReply,
+                      icon: const Icon(Icons.close, color: Colors.white54),
+                    ),
+                  ],
+                ),
+              ),
             SafeArea(
               top: false,
               child: Padding(
@@ -136,7 +194,9 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
                         controller: _controller,
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
-                          hintText: 'Yorum yaz...',
+                          hintText: _replyToId != null
+                              ? 'Yanıt yaz...'
+                              : 'Yorum yaz...',
                           hintStyle: const TextStyle(color: Colors.white38),
                           filled: true,
                           fillColor: Colors.white.withValues(alpha: 0.08),
@@ -173,7 +233,7 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
     );
   }
 
-  Widget _buildCommentsList() {
+  Widget _buildCommentsList(String? me) {
     if (_commentsLoading) {
       return const Center(
         child: CircularProgressIndicator(color: Colors.white54),
@@ -200,51 +260,186 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: comments.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
-      itemBuilder: (context, i) {
-        final c = comments[i];
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.white12,
-              backgroundImage: c.author.avatarUrl != null
-                  ? canlifalImageProvider(c.author.avatarUrl!)
-                  : null,
-              child: c.author.avatarUrl == null
-                  ? Text(
-                      c.author.label.characters.first.toUpperCase(),
-                      style: const TextStyle(fontSize: 12),
-                    )
-                  : null,
+      itemBuilder: (context, i) => _CommentTile(
+        comment: comments[i],
+        me: me,
+        onReply: _startReply,
+        onLike: _toggleCommentLike,
+        onDelete: _deleteComment,
+      ),
+    );
+  }
+}
+
+class _CommentTile extends StatelessWidget {
+  const _CommentTile({
+    required this.comment,
+    required this.me,
+    required this.onReply,
+    required this.onLike,
+    required this.onDelete,
+  });
+
+  final ShortCommentEntity comment;
+  final String? me;
+  final ValueChanged<ShortCommentEntity> onReply;
+  final ValueChanged<ShortCommentEntity> onLike;
+  final ValueChanged<ShortCommentEntity> onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _CommentRow(
+          comment: comment,
+          me: me,
+          onReply: onReply,
+          onLike: onLike,
+          onDelete: onDelete,
+        ),
+        if (comment.replies.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 42, top: 8),
+            child: Column(
+              children: [
+                for (final reply in comment.replies)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _CommentRow(
+                      comment: reply,
+                      me: me,
+                      onReply: onReply,
+                      onLike: onLike,
+                      onDelete: onDelete,
+                      compact: true,
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+      ],
+    );
+  }
+}
+
+class _CommentRow extends StatelessWidget {
+  const _CommentRow({
+    required this.comment,
+    required this.me,
+    required this.onReply,
+    required this.onLike,
+    required this.onDelete,
+    this.compact = false,
+  });
+
+  final ShortCommentEntity comment;
+  final String? me;
+  final ValueChanged<ShortCommentEntity> onReply;
+  final ValueChanged<ShortCommentEntity> onLike;
+  final ValueChanged<ShortCommentEntity> onDelete;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          radius: compact ? 14 : 16,
+          backgroundColor: Colors.white12,
+          backgroundImage: comment.author.avatarUrl != null
+              ? canlifalImageProvider(comment.author.avatarUrl!)
+              : null,
+          child: comment.author.avatarUrl == null
+              ? Text(
+                  comment.author.label.characters.first.toUpperCase(),
+                  style: TextStyle(fontSize: compact ? 10 : 12),
+                )
+              : null,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Text(
-                    c.author.label,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                  Expanded(
+                    child: Text(
+                      comment.author.label,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: compact ? 12 : 13,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    c.content,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
-                  ),
+                  if (comment.isPinned)
+                    const Icon(Icons.push_pin, size: 14, color: Colors.amber),
                 ],
               ),
-            ),
-          ],
-        );
-      },
+              const SizedBox(height: 2),
+              Text(
+                comment.content,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: compact ? 13 : 14,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => onLike(comment),
+                    child: Row(
+                      children: [
+                        Icon(
+                          comment.likedByMe
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          size: 14,
+                          color: comment.likedByMe
+                              ? Colors.redAccent
+                              : Colors.white38,
+                        ),
+                        if (comment.likesCount > 0) ...[
+                          const SizedBox(width: 4),
+                          Text(
+                            '${comment.likesCount}',
+                            style: const TextStyle(
+                              color: Colors.white38,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  GestureDetector(
+                    onTap: () => onReply(comment),
+                    child: const Text(
+                      'Yanıtla',
+                      style: TextStyle(color: Colors.white38, fontSize: 11),
+                    ),
+                  ),
+                  if (me != null && me == comment.author.id) ...[
+                    const SizedBox(width: 16),
+                    GestureDetector(
+                      onTap: () => onDelete(comment),
+                      child: const Text(
+                        'Sil',
+                        style: TextStyle(color: Colors.redAccent, fontSize: 11),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

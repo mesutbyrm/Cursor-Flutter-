@@ -24,7 +24,7 @@ class TrendingVideoSection extends ConsumerWidget {
             emoji: '🔥',
             title: 'Trend Videolar',
             actionLabel: 'Tümünü Gör >',
-            onAction: () => context.push('/shorts'),
+            onAction: () => context.push('/shorts/explore'),
           ),
           SizedBox(
             height: HomeApprovedDesign.trendThumb,
