@@ -1,15 +1,24 @@
+import 'package:canlifal_social/core/providers/auth_selectors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:video_player/video_player.dart';
+
+import '../../../../core/firebase/firebase_bootstrap.dart';
+import '../../../moderation/domain/entities/report_target.dart';
+import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_providers.dart';
+import '../utils/short_studio_launch.dart';
 import '../utils/shorts_api_message.dart';
 import '../utils/shorts_count_format.dart';
 import 'short_comments_sheet.dart';
 import 'short_share_sheet.dart';
+import 'short_video_analytics_sheet.dart';
+import 'short_video_pip_overlay.dart';
 import 'shorts_profile_content.dart';
 
 class ShortVideoActionsRail extends ConsumerStatefulWidget {
@@ -17,10 +26,12 @@ class ShortVideoActionsRail extends ConsumerStatefulWidget {
     super.key,
     required this.video,
     required this.onVideoUpdated,
+    this.videoController,
   });
 
   final ShortVideoEntity video;
   final ValueChanged<ShortVideoEntity> onVideoUpdated;
+  final VideoPlayerController? videoController;
 
   @override
   ConsumerState<ShortVideoActionsRail> createState() =>
@@ -40,7 +51,9 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
       if (!mounted) return;
       showShortsSnackBar(
         context,
-        errorPrefix != null ? '$errorPrefix: ${shortsErrorMessage(e)}' : shortsErrorMessage(e),
+        errorPrefix != null
+            ? '$errorPrefix: ${shortsErrorMessage(e)}'
+            : shortsErrorMessage(e),
       );
     }
   }
@@ -57,6 +70,10 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
       final res = await ref.read(shortsRepositoryProvider).toggleLike(video.id);
       widget.onVideoUpdated(
         video.copyWith(likedByMe: res.liked, likesCount: res.likesCount),
+      );
+      await FirebaseBootstrap.logEvent(
+        'short_like',
+        parameters: {'video_id': video.id, 'liked': res.liked},
       );
     }, errorPrefix: 'Beğeni');
   }
@@ -96,6 +113,8 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
       context,
       videoId: video.id,
       description: video.description,
+      video: video,
+      ref: ref,
       onShared: () async {
         try {
           final shares =
@@ -104,6 +123,10 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
             video.copyWith(
               sharesCount: shares > 0 ? shares : video.sharesCount + 1,
             ),
+          );
+          await FirebaseBootstrap.logEvent(
+            'short_share',
+            parameters: {'video_id': video.id},
           );
         } catch (_) {}
       },
@@ -139,7 +162,65 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
     }, errorPrefix: 'Takip');
   }
 
+  void _startDuet() {
+    openShortStudio(
+      GoRouter.of(context),
+      mode: ShortStudioMode.duet,
+      sourceVideoId: video.id,
+    );
+  }
+
+  void _startRemix() {
+    openShortStudio(
+      GoRouter.of(context),
+      mode: ShortStudioMode.remix,
+      sourceVideoId: video.id,
+    );
+  }
+
+  void _activatePip() {
+    final c = widget.videoController;
+    if (c == null) {
+      showShortsSnackBar(context, 'PiP için video oynatıcı hazır değil.');
+      return;
+    }
+    ref.read(shortVideoPipProvider.notifier).activate(
+          video: video,
+          controller: c,
+        );
+    showShortsSnackBar(context, 'Mini oynatıcı açıldı — sürükleyebilirsiniz.');
+  }
+
+  Future<void> _deleteOwnVideo() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Videoyu sil'),
+        content: const Text('Bu video kalıcı olarak silinecek. Emin misiniz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    await _runInteraction(() async {
+      await ref.read(shortsRepositoryProvider).deleteVideo(video.id);
+      ref.invalidate(shortsFeedProvider);
+      if (mounted) showShortsSnackBar(context, 'Video silindi.');
+    }, errorPrefix: 'Silme');
+  }
+
   void _moreMenu() {
+    final me = ref.read(currentUserIdProvider);
+    final isOwner = me != null && me == video.userId;
+
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: const Color(0xFF121218),
@@ -147,6 +228,41 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (video.allowDuet) ...[
+              ListTile(
+                leading: const Icon(Icons.call_split),
+                title: const Text('Düet yap'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _startDuet();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.music_note_outlined),
+                title: const Text('Remix — bu sesi kullan'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _startRemix();
+                },
+              ),
+            ],
+            ListTile(
+              leading: const Icon(Icons.picture_in_picture_alt_outlined),
+              title: const Text('Picture in Picture'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _activatePip();
+              },
+            ),
+            if (isOwner)
+              ListTile(
+                leading: const Icon(Icons.insights_outlined),
+                title: const Text('Video analitikleri'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  showShortVideoAnalyticsSheet(context, ref, video);
+                },
+              ),
             ListTile(
               leading: const Icon(Icons.link),
               title: const Text('Bağlantıyı kopyala'),
@@ -158,8 +274,28 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
             ListTile(
               leading: const Icon(Icons.flag_outlined),
               title: const Text('Bildir'),
-              onTap: () => Navigator.pop(ctx),
+              onTap: () {
+                Navigator.pop(ctx);
+                openReportFlow(
+                  context,
+                  ReportTarget(
+                    type: ReportTargetType.shortVideo,
+                    targetId: video.id,
+                    displayTitle: video.description ?? video.author?.username,
+                    contextLabel: 'Kısa video',
+                  ),
+                );
+              },
             ),
+            if (isOwner)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                title: const Text('Videoyu sil', style: TextStyle(color: Colors.redAccent)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _deleteOwnVideo();
+                },
+              ),
           ],
         ),
       ),
@@ -286,10 +422,12 @@ class ShortVideoInfoOverlay extends StatelessWidget {
     super.key,
     required this.video,
     this.onAuthorTap,
+    this.onDuetTap,
   });
 
   final ShortVideoEntity video;
   final VoidCallback? onAuthorTap;
+  final VoidCallback? onDuetTap;
 
   @override
   Widget build(BuildContext context) {
@@ -299,6 +437,33 @@ class ShortVideoInfoOverlay extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (video.duetOfId != null)
+          GestureDetector(
+            onTap: onDuetTap,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.call_split, size: 14, color: Colors.white),
+                  SizedBox(width: 4),
+                  Text(
+                    'Düet',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         if (author != null)
           GestureDetector(
             onTap: onAuthorTap,

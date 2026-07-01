@@ -206,6 +206,10 @@ class ShortUploadDraft extends Equatable {
     this.locationLabel,
     this.locationLat,
     this.locationLng,
+    this.duetOfId,
+    this.remixOfId,
+    this.sourceLiveClipId,
+    this.sourceVideoTitle,
   });
 
   final String? sourcePath;
@@ -233,6 +237,10 @@ class ShortUploadDraft extends Equatable {
   final String? locationLabel;
   final double? locationLat;
   final double? locationLng;
+  final String? duetOfId;
+  final String? remixOfId;
+  final String? sourceLiveClipId;
+  final String? sourceVideoTitle;
 
   String? get videoPath => editedPath ?? sourcePath;
 
@@ -262,6 +270,10 @@ class ShortUploadDraft extends Equatable {
     String? locationLabel,
     double? locationLat,
     double? locationLng,
+    String? duetOfId,
+    String? remixOfId,
+    String? sourceLiveClipId,
+    String? sourceVideoTitle,
   }) {
     return ShortUploadDraft(
       sourcePath: sourcePath ?? this.sourcePath,
@@ -289,6 +301,10 @@ class ShortUploadDraft extends Equatable {
       locationLabel: locationLabel ?? this.locationLabel,
       locationLat: locationLat ?? this.locationLat,
       locationLng: locationLng ?? this.locationLng,
+      duetOfId: duetOfId ?? this.duetOfId,
+      remixOfId: remixOfId ?? this.remixOfId,
+      sourceLiveClipId: sourceLiveClipId ?? this.sourceLiveClipId,
+      sourceVideoTitle: sourceVideoTitle ?? this.sourceVideoTitle,
     );
   }
 
@@ -328,6 +344,10 @@ class ShortUploadDraft extends Equatable {
         'locationLabel': locationLabel,
         'locationLat': locationLat,
         'locationLng': locationLng,
+        'duetOfId': duetOfId,
+        'remixOfId': remixOfId,
+        'sourceLiveClipId': sourceLiveClipId,
+        'sourceVideoTitle': sourceVideoTitle,
       };
 
   factory ShortUploadDraft.fromJson(Map<String, dynamic> json) {
@@ -387,6 +407,10 @@ class ShortUploadDraft extends Equatable {
       locationLabel: json['locationLabel']?.toString(),
       locationLat: (json['locationLat'] as num?)?.toDouble(),
       locationLng: (json['locationLng'] as num?)?.toDouble(),
+      duetOfId: json['duetOfId']?.toString(),
+      remixOfId: json['remixOfId']?.toString(),
+      sourceLiveClipId: json['sourceLiveClipId']?.toString(),
+      sourceVideoTitle: json['sourceVideoTitle']?.toString(),
     );
   }
 }

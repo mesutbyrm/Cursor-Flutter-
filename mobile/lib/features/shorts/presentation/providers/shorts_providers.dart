@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../data/datasources/shorts_remote_datasource.dart';
 import '../../data/repositories/shorts_repository_impl.dart';
+import '../../domain/entities/short_video_analytics.dart';
 import '../../domain/entities/short_explore_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../../domain/repositories/shorts_repository.dart';
@@ -125,6 +126,14 @@ final shortVideoProfileStatsProvider =
 final viewedShortsProvider =
     FutureProvider.autoDispose<List<ShortVideoEntity>>((ref) async {
   return ref.read(shortsRepositoryProvider).fetchViewedByMe();
+});
+
+final shortVideoAnalyticsProvider =
+    FutureProvider.family<ShortVideoAnalytics, ShortVideoEntity>((ref, video) {
+  return ref.read(shortsRepositoryProvider).fetchVideoAnalytics(
+        video.id,
+        fallback: video,
+      );
 });
 
 final shortVideoDuetsProvider =

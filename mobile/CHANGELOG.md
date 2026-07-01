@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.466+470 (2026-06-26)
+
+### Kısa video — Faz 5 Profesyonel özellikler
+
+- **Düet / Remix:** Menüden düet veya «bu sesi kullan» ile stüdyo açılışı; `duetOfId` / `remixOfId` kayıt
+- **Picture in Picture:** Sürüklenebilir mini oynatıcı overlay
+- **Canlı yayın klipleri:** Yayın geçmişinden kısa videoya dönüştür
+- **Hikâyede paylaş + QR kod:** Paylaşım sheet’inde hikâye ve QR
+- **Video analitikleri:** İçerik sahibi için istatistik paneli
+- **Moderasyon:** Kısa video bildir, yorum sabitle/bildir, sahip silme
+- **Telif + spam/küfür filtresi:** Yayın öncesi telif uyarısı; yorum/açıklama ContentGuard
+
 ## 1.0.465+469 (2026-06-26)
 
 ### Kısa video — Faz 4 Keşfet

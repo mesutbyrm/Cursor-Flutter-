@@ -9,6 +9,7 @@ import 'package:canlifal_social/core/theme/app_colors.dart';
 import '../../data/short_upload_draft_store.dart';
 import '../../domain/entities/short_upload_draft.dart';
 import '../utils/shorts_api_message.dart';
+import '../utils/short_studio_launch.dart';
 import 'short_studio_providers.dart';
 import 'studio_compose_page.dart';
 import 'studio_editor_page.dart';
@@ -18,7 +19,9 @@ enum _StudioStep { pick, edit, compose, publish }
 
 /// TikTok tarzı video stüdyosu — seç → düzenle → yazı/sticker → yayınla.
 class ShortsStudioPage extends ConsumerStatefulWidget {
-  const ShortsStudioPage({super.key});
+  const ShortsStudioPage({super.key, this.launchParams});
+
+  final ShortStudioLaunchParams? launchParams;
 
   @override
   ConsumerState<ShortsStudioPage> createState() => _ShortsStudioPageState();
@@ -43,9 +46,17 @@ class _ShortsStudioPageState extends ConsumerState<ShortsStudioPage> {
       return;
     }
 
+    final launch = widget.launchParams ?? const ShortStudioLaunchParams();
+    await applyStudioLaunchParams(ref, launch);
+
     final draft = ref.read(shortUploadDraftProvider);
     if (draft.sourcePath != null) {
       if (mounted) setState(() => _step = _StudioStep.edit);
+      return;
+    }
+
+    if (launch.mode != ShortStudioMode.normal) {
+      await _pickFromGallery();
       return;
     }
 
@@ -129,19 +140,47 @@ class _ShortsStudioPageState extends ConsumerState<ShortsStudioPage> {
 
     final draft = ref.watch(shortUploadDraftProvider);
     final path = draft.sourcePath;
+    final launchLabel = switch (widget.launchParams?.mode) {
+      ShortStudioMode.duet => 'Düet modu${draft.sourceVideoTitle != null ? ' — ${draft.sourceVideoTitle}' : ''}',
+      ShortStudioMode.remix => 'Remix modu${draft.musicTitle != null ? ' — ${draft.musicTitle}' : ''}',
+      ShortStudioMode.liveClip => 'Canlı yayın klibi',
+      _ => null,
+    };
+
     if (path == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Video Stüdyosu')),
-        body: Center(
-          child: FilledButton(
-            onPressed: _pickFromGallery,
-            child: const Text('Galeriden video seç'),
-          ),
+        body: Column(
+          children: [
+            if (launchLabel != null)
+              MaterialBanner(
+                content: Text(launchLabel),
+                leading: const Icon(Icons.info_outline),
+                actions: const [SizedBox.shrink()],
+              ),
+            Expanded(
+              child: Center(
+                child: FilledButton(
+                  onPressed: _pickFromGallery,
+                  child: const Text('Galeriden video seç'),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    return switch (_step) {
+    return Column(
+      children: [
+        if (launchLabel != null)
+          MaterialBanner(
+            content: Text(launchLabel),
+            leading: const Icon(Icons.info_outline),
+            actions: const [SizedBox.shrink()],
+          ),
+        Expanded(
+          child: switch (_step) {
       _StudioStep.edit => StudioEditorPage(
           onNext: _goCompose,
           onBack: () {
@@ -161,7 +200,10 @@ class _ShortsStudioPageState extends ConsumerState<ShortsStudioPage> {
           },
         ),
       _ => const SizedBox.shrink(),
-    };
+          },
+        ),
+      ],
+    );
   }
 }
 

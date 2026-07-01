@@ -1,3 +1,4 @@
+import '../../domain/entities/short_video_analytics.dart';
 import '../../domain/entities/short_comment_entity.dart';
 import '../../domain/entities/short_explore_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
@@ -159,4 +160,11 @@ class ShortsRepositoryImpl implements ShortsRepository {
   @override
   Future<void> pinComment(String videoId, String commentId) =>
       _remote.pinComment(videoId, commentId);
+
+  @override
+  Future<ShortVideoAnalytics> fetchVideoAnalytics(
+    String videoId, {
+    ShortVideoEntity? fallback,
+  }) =>
+      _remote.fetchVideoAnalytics(videoId, fallback: fallback);
 }

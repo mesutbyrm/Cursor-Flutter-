@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_exception.dart';
@@ -9,6 +10,7 @@ import '../../../../core/performance/list_perf.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../shorts/presentation/utils/short_studio_launch.dart';
 import '../providers/broadcast_history_notifier.dart';
 
 class ProfileBroadcastHistoryPage extends ConsumerStatefulWidget {
@@ -131,6 +133,18 @@ class _ProfileBroadcastHistoryPageState
                               ),
                             ],
                           ),
+                        ),
+                        IconButton(
+                          tooltip: 'Kısa videoya dönüştür',
+                          onPressed: item.id.isEmpty
+                              ? null
+                              : () => openShortStudio(
+                                    GoRouter.of(context),
+                                    mode: ShortStudioMode.liveClip,
+                                    liveClipId: item.id,
+                                    liveClipTitle: item.title,
+                                  ),
+                          icon: const Icon(Icons.movie_creation_outlined),
                         ),
                       ],
                     ),

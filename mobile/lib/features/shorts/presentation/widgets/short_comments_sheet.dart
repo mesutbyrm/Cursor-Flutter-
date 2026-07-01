@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/content/content_guard.dart';
 import '../../../../core/providers/auth_selectors.dart';
+import '../../../moderation/domain/entities/report_target.dart';
+import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../domain/entities/short_comment_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_providers.dart';
@@ -108,6 +111,15 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
   Future<void> _send() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _sending) return;
+    final guardError = ContentGuard.validate(text);
+    if (guardError != null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(guardError)),
+        );
+      }
+      return;
+    }
     setState(() => _sending = true);
     try {
       final res = await ref.read(shortsRepositoryProvider).addComment(
@@ -115,6 +127,7 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
             text,
             parentId: _replyToId,
           );
+      ContentGuard.markSent(text);
       _controller.clear();
       _cancelReply();
       setState(() => _commentsCount = res.commentsCount);
@@ -145,6 +158,28 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
           );
       await _loadComments();
     } catch (_) {}
+  }
+
+  Future<void> _pinComment(ShortCommentEntity comment) async {
+    try {
+      await ref.read(shortsRepositoryProvider).pinComment(
+            widget.video.id,
+            comment.id,
+          );
+      await _loadComments();
+    } catch (_) {}
+  }
+
+  void _reportComment(ShortCommentEntity comment) {
+    openReportFlow(
+      context,
+      ReportTarget(
+        type: ReportTargetType.shortVideo,
+        targetId: widget.video.id,
+        displayTitle: comment.content,
+        contextLabel: 'Yorum: ${comment.id}',
+      ),
+    );
   }
 
   @override
@@ -284,9 +319,12 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
       itemBuilder: (context, i) => _CommentTile(
         comment: comments[i],
         me: me,
+        videoOwnerId: widget.video.userId,
         onReply: _startReply,
         onLike: _toggleCommentLike,
         onDelete: _deleteComment,
+        onPin: _pinComment,
+        onReport: _reportComment,
       ),
     );
   }
@@ -296,28 +334,38 @@ class _CommentTile extends StatelessWidget {
   const _CommentTile({
     required this.comment,
     required this.me,
+    required this.videoOwnerId,
     required this.onReply,
     required this.onLike,
     required this.onDelete,
+    required this.onPin,
+    required this.onReport,
   });
 
   final ShortCommentEntity comment;
   final String? me;
+  final String videoOwnerId;
   final ValueChanged<ShortCommentEntity> onReply;
   final ValueChanged<ShortCommentEntity> onLike;
   final ValueChanged<ShortCommentEntity> onDelete;
+  final ValueChanged<ShortCommentEntity> onPin;
+  final ValueChanged<ShortCommentEntity> onReport;
 
   @override
   Widget build(BuildContext context) {
+    final isOwner = me != null && me == videoOwnerId;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _CommentRow(
           comment: comment,
           me: me,
+          isVideoOwner: isOwner,
           onReply: onReply,
           onLike: onLike,
           onDelete: onDelete,
+          onPin: onPin,
+          onReport: onReport,
         ),
         if (comment.replies.isNotEmpty)
           Padding(
@@ -330,9 +378,12 @@ class _CommentTile extends StatelessWidget {
                     child: _CommentRow(
                       comment: reply,
                       me: me,
+                      isVideoOwner: isOwner,
                       onReply: onReply,
                       onLike: onLike,
                       onDelete: onDelete,
+                      onPin: onPin,
+                      onReport: onReport,
                       compact: true,
                     ),
                   ),
@@ -348,17 +399,23 @@ class _CommentRow extends StatelessWidget {
   const _CommentRow({
     required this.comment,
     required this.me,
+    required this.isVideoOwner,
     required this.onReply,
     required this.onLike,
     required this.onDelete,
+    required this.onPin,
+    required this.onReport,
     this.compact = false,
   });
 
   final ShortCommentEntity comment;
   final String? me;
+  final bool isVideoOwner;
   final ValueChanged<ShortCommentEntity> onReply;
   final ValueChanged<ShortCommentEntity> onLike;
   final ValueChanged<ShortCommentEntity> onDelete;
+  final ValueChanged<ShortCommentEntity> onPin;
+  final ValueChanged<ShortCommentEntity> onReport;
   final bool compact;
 
   @override
@@ -402,7 +459,7 @@ class _CommentRow extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                comment.content,
+                ContentGuard.sanitizeForDisplay(comment.content),
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: compact ? 13 : 14,
@@ -452,6 +509,26 @@ class _CommentRow extends StatelessWidget {
                       child: const Text(
                         'Sil',
                         style: TextStyle(color: Colors.redAccent, fontSize: 11),
+                      ),
+                    ),
+                  ],
+                  if (isVideoOwner) ...[
+                    const SizedBox(width: 16),
+                    GestureDetector(
+                      onTap: () => onPin(comment),
+                      child: Text(
+                        comment.isPinned ? 'Sabitlemeyi kaldır' : 'Sabitle',
+                        style: const TextStyle(color: Colors.amber, fontSize: 11),
+                      ),
+                    ),
+                  ],
+                  if (me != null && me != comment.author.id) ...[
+                    const SizedBox(width: 16),
+                    GestureDetector(
+                      onTap: () => onReport(comment),
+                      child: const Text(
+                        'Bildir',
+                        style: TextStyle(color: Colors.white38, fontSize: 11),
                       ),
                     ),
                   ],

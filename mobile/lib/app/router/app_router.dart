@@ -50,6 +50,7 @@ import '../../features/shorts/presentation/pages/shorts_feed_page.dart';
 import '../../features/shorts/presentation/pages/shorts_explore_page.dart';
 import '../../features/shorts/presentation/pages/short_hashtag_page.dart';
 import '../../features/shorts/presentation/studio/shorts_studio_page.dart';
+import '../../features/shorts/presentation/utils/short_studio_launch.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/messages/presentation/pages/conversations_page.dart';
 import '../../features/moderation/domain/entities/report_target.dart';
@@ -674,7 +675,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'upload',
             pageBuilder: (context, state) => AppPageTransitions.cupertinoSheet(
               key: state.pageKey,
-              child: const ShortsStudioPage(),
+              child: ShortsStudioPage(
+                launchParams: ShortStudioLaunchParams.fromUri(state.uri),
+              ),
             ),
           ),
           GoRoute(

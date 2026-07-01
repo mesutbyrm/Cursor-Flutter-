@@ -6,6 +6,7 @@ enum ReportTargetType {
   liveStream,
   voiceRoom,
   conversation,
+  shortVideo,
 }
 
 /// Rapor formuna taşınan parametreler (`go_router` extra).
@@ -29,6 +30,7 @@ class ReportTarget {
         ReportTargetType.liveStream => 'Canlı yayın',
         ReportTargetType.voiceRoom => 'Sesli oda',
         ReportTargetType.conversation => 'Sohbet',
+        ReportTargetType.shortVideo => 'Kısa video',
       };
 
   String get apiType => switch (type) {
@@ -38,6 +40,7 @@ class ReportTarget {
         ReportTargetType.liveStream => 'live_stream',
         ReportTargetType.voiceRoom => 'voice_room',
         ReportTargetType.conversation => 'conversation',
+        ReportTargetType.shortVideo => 'short_video',
       };
 }
 

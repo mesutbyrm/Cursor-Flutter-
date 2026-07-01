@@ -6,12 +6,14 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/firebase/firebase_bootstrap.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/short_video_player_util.dart';
 import 'short_video_actions_rail.dart';
+import 'short_video_pip_overlay.dart';
 
 class ShortVideoPageTile extends ConsumerStatefulWidget {
   const ShortVideoPageTile({
@@ -130,6 +132,13 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
             viewedByMe: true,
           ),
         );
+        await FirebaseBootstrap.logEvent(
+          'short_view',
+          parameters: {
+            'video_id': widget.video.id,
+            'watched_sec': _watchedSec.round(),
+          },
+        );
       }
     } catch (_) {}
   }
@@ -206,6 +215,9 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
                   : (video.author?.id ?? '');
               if (uid.isNotEmpty) context.push('/user/$uid');
             },
+            onDuetTap: video.duetOfId != null
+                ? () => context.push('/shorts?videoId=${video.duetOfId}')
+                : null,
           ),
         ),
         Positioned(
@@ -213,9 +225,11 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
           bottom: MediaQuery.paddingOf(context).bottom + 40,
           child: ShortVideoActionsRail(
             video: video,
+            videoController: c,
             onVideoUpdated: widget.onVideoUpdated,
           ),
         ),
+        const ShortVideoPipOverlay(),
         if (c != null && c.value.isInitialized)
           Positioned.fill(
             child: GestureDetector(

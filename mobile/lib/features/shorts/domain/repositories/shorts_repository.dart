@@ -1,3 +1,4 @@
+import '../entities/short_video_analytics.dart';
 import '../entities/short_comment_entity.dart';
 import '../entities/short_explore_entity.dart';
 import '../entities/short_video_entity.dart';
@@ -100,4 +101,9 @@ abstract class ShortsRepository {
   Future<List<ShortVideoAuthor>> searchMentions(String query);
 
   Future<void> pinComment(String videoId, String commentId);
+
+  Future<ShortVideoAnalytics> fetchVideoAnalytics(
+    String videoId, {
+    ShortVideoEntity? fallback,
+  });
 }

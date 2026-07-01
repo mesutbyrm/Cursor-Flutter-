@@ -582,6 +582,9 @@ abstract final class ApiEndpoints {
   static String shortVideoStream(String id) => '/api/short-videos/$id/stream';
   static String shortVideoDelete(String id) => '/api/short-videos/$id';
   static String shortVideoDuets(String id) => '/api/short-videos/$id/duets';
+  static String shortVideoAnalytics(String id) =>
+      '/api/short-videos/$id/analytics';
+  static const shortVideosLiveClip = '/api/short-videos/live-clip';
   static String shortVideosByUser(String userId) =>
       '/api/short-videos/user/$userId';
   static String shortVideosProfile(String userId) =>

@@ -136,6 +136,9 @@ class ShortVideoUploadService {
         if (draft.locationLat != null) 'latitude': draft.locationLat,
         if (draft.locationLng != null) 'longitude': draft.locationLng,
         if (draft.mentionUserIds.isNotEmpty) 'mentionUserIds': draft.mentionUserIds,
+        if (draft.duetOfId != null) 'duetOfId': draft.duetOfId,
+        if (draft.remixOfId != null) 'remixOfId': draft.remixOfId,
+        if (draft.sourceLiveClipId != null) 'liveClipId': draft.sourceLiveClipId,
         if (draft.textOverlays.isNotEmpty)
           'textOverlays': draft.textOverlays.map((e) => e.toJson()).toList(),
         if (draft.stickerOverlays.isNotEmpty)

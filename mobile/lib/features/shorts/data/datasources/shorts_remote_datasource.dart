@@ -4,6 +4,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../domain/entities/short_video_analytics.dart';
 import '../../domain/entities/short_comment_entity.dart';
 import '../../domain/entities/short_explore_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
@@ -703,6 +704,32 @@ class ShortsRemoteDataSource {
     await _dio.safePost<dynamic>(
       ApiEndpoints.shortVideoCommentPin(videoId, commentId),
     );
+  }
+
+  Future<ShortVideoAnalytics> fetchVideoAnalytics(
+    String videoId, {
+    ShortVideoEntity? fallback,
+  }) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.shortVideoAnalytics(videoId),
+      );
+      final m = _unwrap(res.data);
+      if (m != null) {
+        return ShortVideoAnalytics.fromJson(videoId, m);
+      }
+    } catch (_) {}
+    if (fallback != null) {
+      return ShortVideoAnalytics.fromVideo(
+        videoId: videoId,
+        viewsCount: fallback.viewsCount,
+        likesCount: fallback.likesCount,
+        commentsCount: fallback.commentsCount,
+        sharesCount: fallback.sharesCount,
+        savesCount: fallback.savesCount,
+      );
+    }
+    return ShortVideoAnalytics(videoId: videoId);
   }
 
   Future<ShortVideoEntity> registerVideo(Map<String, dynamic> body) async {

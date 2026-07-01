@@ -3,11 +3,14 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/content/content_guard.dart';
+import '../../../../core/firebase/firebase_bootstrap.dart';
 import '../../data/services/short_video_upload_service.dart';
 import '../../domain/entities/short_explore_entity.dart';
 import '../../domain/entities/short_upload_draft.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../../domain/repositories/shorts_repository.dart';
+import '../../domain/utils/short_copyright_guard.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/shorts_api_message.dart';
 import 'short_studio_providers.dart';
@@ -148,6 +151,18 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
       setState(() => _error = 'Video dosyası yok.');
       return;
     }
+    final descError = ContentGuard.validate(draft.description, maxLen: 2200);
+    if (descError != null) {
+      setState(() => _error = descError);
+      showShortsSnackBar(context, descError);
+      return;
+    }
+    final copyrightError = ShortCopyrightGuard.validateExternalAudio(null);
+    if (copyrightError != null) {
+      setState(() => _error = copyrightError);
+      showShortsSnackBar(context, copyrightError);
+      return;
+    }
     setState(() {
       _uploading = true;
       _error = null;
@@ -165,6 +180,13 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
       ref.invalidate(shortsFeedProvider);
       ref.invalidate(shortsExploreProvider);
       ref.read(shortsFeedProvider(ShortsFeedTab.forYou).notifier).refresh();
+      await FirebaseBootstrap.logEvent(
+        'short_publish',
+        parameters: {
+          if (draft.duetOfId != null) 'duet_of': draft.duetOfId!,
+          if (draft.remixOfId != null) 'remix_of': draft.remixOfId!,
+        },
+      );
       if (!mounted) return;
       widget.onPublished();
     } catch (e) {
@@ -381,6 +403,14 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
             onChanged: (v) => ref
                 .read(shortUploadDraftProvider.notifier)
                 .patch((d) => d.copyWith(allowDuet: v)),
+          ),
+          const ListTile(
+            leading: Icon(Icons.copyright_outlined, color: Colors.white54),
+            title: Text('Telif koruması'),
+            subtitle: Text(
+              ShortCopyrightGuard.catalogOnlyHint,
+              style: TextStyle(color: Colors.white54, fontSize: 12),
+            ),
           ),
           if (_error != null) ...[
             const SizedBox(height: 12),
