@@ -585,6 +585,11 @@ abstract final class ApiEndpoints {
   static String shortVideoAnalytics(String id) =>
       '/api/short-videos/$id/analytics';
   static const shortVideosLiveClip = '/api/short-videos/live-clip';
+  static const shortVideosSuggestMetadata = '/api/short-videos/suggest-metadata';
+  static const shortVideosMusicRecommend = '/api/short-videos/music/recommend';
+  static String shortVideoSubtitlesGenerate(String id) =>
+      '/api/short-videos/$id/subtitles/generate';
+  static String shortVideoGifts(String id) => '/api/short-videos/$id/gifts';
   static String shortVideosByUser(String userId) =>
       '/api/short-videos/user/$userId';
   static String shortVideosProfile(String userId) =>

@@ -65,6 +65,10 @@ class ShortVideoEntity extends Equatable {
     this.music,
     this.allowDuet = true,
     this.duetOfId,
+    this.replyToVideoId,
+    this.contentRating = 'all',
+    this.aiSummary,
+    this.subtitlesUrl,
   });
 
   final String id;
@@ -88,6 +92,13 @@ class ShortVideoEntity extends Equatable {
   final ShortVideoMusic? music;
   final bool allowDuet;
   final String? duetOfId;
+  final String? replyToVideoId;
+  final String contentRating;
+  final String? aiSummary;
+  final String? subtitlesUrl;
+
+  bool get isMatureContent =>
+      contentRating == 'mature' || contentRating == 'restricted';
 
   ShortVideoEntity copyWith({
     int? viewsCount,
@@ -122,6 +133,10 @@ class ShortVideoEntity extends Equatable {
       music: music,
       allowDuet: allowDuet,
       duetOfId: duetOfId,
+      replyToVideoId: replyToVideoId,
+      contentRating: contentRating,
+      aiSummary: aiSummary,
+      subtitlesUrl: subtitlesUrl,
     );
   }
 
@@ -148,5 +163,9 @@ class ShortVideoEntity extends Equatable {
         music,
         allowDuet,
         duetOfId,
+        replyToVideoId,
+        contentRating,
+        aiSummary,
+        subtitlesUrl,
       ];
 }

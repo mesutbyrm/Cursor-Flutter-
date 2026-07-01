@@ -14,8 +14,10 @@ import '../../../../core/widgets/hero_tags.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_providers.dart';
+import '../providers/shorts_playback_providers.dart';
 import '../utils/short_video_player_util.dart';
-import 'short_video_actions_rail.dart';
+import '../widgets/short_playback_speed_sheet.dart';
+import '../widgets/short_video_actions_rail.dart';
 import 'short_video_pip_overlay.dart';
 
 class ShortVideoPageTile extends ConsumerStatefulWidget {
@@ -63,6 +65,12 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
     }
   }
 
+  void _applyPlaybackSpeed(double speed) {
+    final c = _controller;
+    if (c == null || !c.value.isInitialized) return;
+    c.setPlaybackSpeed(speed);
+  }
+
   Future<void> _init() async {
     setState(() {
       _loading = true;
@@ -80,6 +88,7 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
         return;
       }
       _controller = c;
+      c.setPlaybackSpeed(ref.read(shortPlaybackSpeedProvider));
       setState(() => _loading = false);
       _syncPlayback();
     } catch (_) {
@@ -174,6 +183,14 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
 
   @override
   Widget build(BuildContext context) {
+    final speed = ref.watch(shortPlaybackSpeedProvider);
+    ref.listen<double>(shortPlaybackSpeedProvider, (prev, next) {
+      if (prev != next) _applyPlaybackSpeed(next);
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _applyPlaybackSpeed(speed);
+    });
+
     final video = widget.video;
     final c = _controller;
 
@@ -238,6 +255,7 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
               onDoubleTap: _doubleTapLike,
+              onLongPress: () => showShortPlaybackSpeedSheet(context, ref),
               onTap: () {
                 if (c.value.isPlaying) {
                   c.pause();

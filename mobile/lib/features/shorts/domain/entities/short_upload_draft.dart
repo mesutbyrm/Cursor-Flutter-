@@ -35,6 +35,22 @@ extension ShortCommentSettingWire on ShortCommentSetting {
       };
 }
 
+enum ShortContentRating { all, teen, mature }
+
+extension ShortContentRatingWire on ShortContentRating {
+  String get wireValue => switch (this) {
+        ShortContentRating.all => 'all',
+        ShortContentRating.teen => 'teen',
+        ShortContentRating.mature => 'mature',
+      };
+
+  String get label => switch (this) {
+        ShortContentRating.all => 'Her yaş',
+        ShortContentRating.teen => '13+',
+        ShortContentRating.mature => 'Yetişkin',
+      };
+}
+
 class ShortTextOverlay extends Equatable {
   const ShortTextOverlay({
     required this.id,
@@ -210,6 +226,12 @@ class ShortUploadDraft extends Equatable {
     this.remixOfId,
     this.sourceLiveClipId,
     this.sourceVideoTitle,
+    this.replyToVideoId,
+    this.contentRating = ShortContentRating.all,
+    this.subtitlesSrt,
+    this.aiSummary,
+    this.aiHashtags = const [],
+    this.thumbnailCandidates = const [],
   });
 
   final String? sourcePath;
@@ -241,6 +263,12 @@ class ShortUploadDraft extends Equatable {
   final String? remixOfId;
   final String? sourceLiveClipId;
   final String? sourceVideoTitle;
+  final String? replyToVideoId;
+  final ShortContentRating contentRating;
+  final String? subtitlesSrt;
+  final String? aiSummary;
+  final List<String> aiHashtags;
+  final List<String> thumbnailCandidates;
 
   String? get videoPath => editedPath ?? sourcePath;
 
@@ -274,6 +302,12 @@ class ShortUploadDraft extends Equatable {
     String? remixOfId,
     String? sourceLiveClipId,
     String? sourceVideoTitle,
+    String? replyToVideoId,
+    ShortContentRating? contentRating,
+    String? subtitlesSrt,
+    String? aiSummary,
+    List<String>? aiHashtags,
+    List<String>? thumbnailCandidates,
   }) {
     return ShortUploadDraft(
       sourcePath: sourcePath ?? this.sourcePath,
@@ -305,6 +339,12 @@ class ShortUploadDraft extends Equatable {
       remixOfId: remixOfId ?? this.remixOfId,
       sourceLiveClipId: sourceLiveClipId ?? this.sourceLiveClipId,
       sourceVideoTitle: sourceVideoTitle ?? this.sourceVideoTitle,
+      replyToVideoId: replyToVideoId ?? this.replyToVideoId,
+      contentRating: contentRating ?? this.contentRating,
+      subtitlesSrt: subtitlesSrt ?? this.subtitlesSrt,
+      aiSummary: aiSummary ?? this.aiSummary,
+      aiHashtags: aiHashtags ?? this.aiHashtags,
+      thumbnailCandidates: thumbnailCandidates ?? this.thumbnailCandidates,
     );
   }
 
@@ -348,6 +388,12 @@ class ShortUploadDraft extends Equatable {
         'remixOfId': remixOfId,
         'sourceLiveClipId': sourceLiveClipId,
         'sourceVideoTitle': sourceVideoTitle,
+        'replyToVideoId': replyToVideoId,
+        'contentRating': contentRating.wireValue,
+        'subtitlesSrt': subtitlesSrt,
+        'aiSummary': aiSummary,
+        'aiHashtags': aiHashtags,
+        'thumbnailCandidates': thumbnailCandidates,
       };
 
   factory ShortUploadDraft.fromJson(Map<String, dynamic> json) {
@@ -411,6 +457,19 @@ class ShortUploadDraft extends Equatable {
       remixOfId: json['remixOfId']?.toString(),
       sourceLiveClipId: json['sourceLiveClipId']?.toString(),
       sourceVideoTitle: json['sourceVideoTitle']?.toString(),
+      replyToVideoId: json['replyToVideoId']?.toString(),
+      contentRating: ShortContentRating.values.firstWhere(
+        (v) => v.wireValue == json['contentRating']?.toString(),
+        orElse: () => ShortContentRating.all,
+      ),
+      subtitlesSrt: json['subtitlesSrt']?.toString(),
+      aiSummary: json['aiSummary']?.toString(),
+      aiHashtags: json['aiHashtags'] is List
+          ? (json['aiHashtags'] as List).map((e) => e.toString()).toList()
+          : const [],
+      thumbnailCandidates: json['thumbnailCandidates'] is List
+          ? (json['thumbnailCandidates'] as List).map((e) => e.toString()).toList()
+          : const [],
     );
   }
 }

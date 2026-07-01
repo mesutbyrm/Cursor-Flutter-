@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:canlifal_social/core/providers/auth_selectors.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/content/content_guard.dart';
 import '../../../../core/firebase/firebase_bootstrap.dart';
 import '../../data/services/short_video_upload_service.dart';
+import '../../data/shorts_ai_helper.dart';
 import '../../domain/entities/short_explore_entity.dart';
 import '../../domain/entities/short_upload_draft.dart';
 import '../../domain/entities/short_video_entity.dart';
@@ -38,6 +41,7 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
   var _savingDraft = false;
   var _progress = 0.0;
   String? _error;
+  var _aiLoading = false;
   List<ShortVideoAuthor> _mentionHits = const [];
   List<ShortHashtagEntity> _hashtagHits = const [];
   List<ShortMusicEntity> _musicHits = const [];
@@ -140,6 +144,137 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
     } finally {
       if (mounted) setState(() => _savingDraft = false);
     }
+  }
+
+  Future<void> _runAi(Future<void> Function() action) async {
+    if (_aiLoading || _uploading) return;
+    setState(() => _aiLoading = true);
+    try {
+      await action();
+    } catch (e) {
+      if (mounted) showShortsSnackBar(context, 'AI: $e');
+    } finally {
+      if (mounted) setState(() => _aiLoading = false);
+    }
+  }
+
+  Future<void> _aiSuggestAll() async {
+    await _runAi(() async {
+      final draft = ref.read(shortUploadDraftProvider);
+      final desc = _descCtrl.text.trim();
+      var meta = await ref.read(shortsRepositoryProvider).suggestMetadata(
+            description: desc,
+            liveClipId: draft.sourceLiveClipId,
+          );
+      if (meta.summary == null && meta.hashtags.isEmpty) {
+        meta = ShortsAiHelper.fallbackMetadata(desc);
+      }
+      var descNext = desc;
+      if (meta.summary != null && meta.summary!.isNotEmpty && desc.isEmpty) {
+        descNext = meta.summary!;
+      }
+      for (final tag in meta.hashtags.take(5)) {
+        if (!descNext.contains('#$tag')) {
+          descNext = '$descNext${descNext.isEmpty ? '' : ' '}#$tag';
+        }
+      }
+      _descCtrl.text = descNext.trim();
+      ref.read(shortUploadDraftProvider.notifier).patch(
+            (d) => d.copyWith(
+              description: descNext.trim(),
+              aiSummary: meta.summary,
+              aiHashtags: meta.hashtags,
+              subtitlesSrt: meta.subtitles ?? ShortsAiHelper.fallbackSubtitles(descNext),
+            ),
+          );
+      if (mounted) showShortsSnackBar(context, 'AI önerileri uygulandı.');
+    });
+  }
+
+  Future<void> _aiRecommendMusic() async {
+    await _runAi(() async {
+      final draft = ref.read(shortUploadDraftProvider);
+      final desc = _descCtrl.text.trim();
+      var list = await ref.read(shortsRepositoryProvider).recommendMusic(
+            description: desc,
+            hashtags: draft.aiHashtags,
+          );
+      if (list.isEmpty) {
+        list = await ref.read(shortsRepositoryProvider).searchMusic('');
+      }
+      if (list.isEmpty) {
+        if (mounted) showShortsSnackBar(context, 'Müzik önerisi bulunamadı.');
+        return;
+      }
+      final picked = list.first;
+      ref.read(shortUploadDraftProvider.notifier).patch(
+            (d) => d.copyWith(musicId: picked.id, musicTitle: picked.title),
+          );
+      if (mounted) {
+        showShortsSnackBar(context, 'Önerilen müzik: ${picked.title}');
+      }
+    });
+  }
+
+  Future<void> _aiGenerateThumbnails() async {
+    await _runAi(() async {
+      final path = ref.read(shortUploadDraftProvider).videoPath;
+      if (path == null) {
+        if (mounted) showShortsSnackBar(context, 'Önce video seçin.');
+        return;
+      }
+      final thumbs = await ShortsAiHelper.generateThumbnailCandidates(path);
+      if (thumbs.isEmpty) {
+        if (mounted) showShortsSnackBar(context, 'Kapak oluşturulamadı.');
+        return;
+      }
+      ref.read(shortUploadDraftProvider.notifier).patch(
+            (d) => d.copyWith(
+              thumbnailCandidates: thumbs,
+              thumbnailPath: thumbs.first,
+            ),
+          );
+      if (mounted) {
+        showShortsSnackBar(context, '${thumbs.length} kapak adayı hazır.');
+      }
+    });
+  }
+
+  Future<void> _aiGenerateSubtitles() async {
+    await _runAi(() async {
+      final desc = _descCtrl.text.trim();
+      final srt = ShortsAiHelper.fallbackSubtitles(desc);
+      ref.read(shortUploadDraftProvider.notifier).patch(
+            (d) => d.copyWith(subtitlesSrt: srt),
+          );
+      if (mounted) showShortsSnackBar(context, 'Altyazı taslağı oluşturuldu.');
+    });
+  }
+
+  Future<void> _pickContentRating(ShortContentRating current) async {
+    final picked = await showModalBottomSheet<ShortContentRating>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final v in ShortContentRating.values)
+              ListTile(title: Text(v.label), onTap: () => Navigator.pop(ctx, v)),
+          ],
+        ),
+      ),
+    );
+    if (picked != null) {
+      ref.read(shortUploadDraftProvider.notifier).patch(
+            (d) => d.copyWith(contentRating: picked),
+          );
+    }
+  }
+
+  Future<void> _pickThumbnail(String path) async {
+    ref.read(shortUploadDraftProvider.notifier).patch(
+          (d) => d.copyWith(thumbnailPath: path),
+        );
   }
 
   Future<void> _publish() async {
@@ -315,6 +450,83 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
               items: _hashtagHits.map((h) => '#${h.name}').toList(),
               onTap: (i) => _insertHashtag(_hashtagHits[i].name),
             ),
+          const SizedBox(height: 8),
+          Text(
+            'Yapay zekâ',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ActionChip(
+                avatar: _aiLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.auto_awesome, size: 18),
+                label: const Text('Özet + hashtag'),
+                onPressed: _aiLoading ? null : _aiSuggestAll,
+              ),
+              ActionChip(
+                label: const Text('Altyazı'),
+                onPressed: _aiLoading ? null : _aiGenerateSubtitles,
+              ),
+              ActionChip(
+                label: const Text('Kapak'),
+                onPressed: _aiLoading ? null : _aiGenerateThumbnails,
+              ),
+              ActionChip(
+                label: const Text('Müzik öner'),
+                onPressed: _aiLoading ? null : _aiRecommendMusic,
+              ),
+            ],
+          ),
+          if (draft.aiSummary != null && draft.aiSummary!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'AI özeti: ${draft.aiSummary}',
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
+            ),
+          ],
+          if (draft.thumbnailCandidates.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 72,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: draft.thumbnailCandidates.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (ctx, i) {
+                  final p = draft.thumbnailCandidates[i];
+                  final sel = draft.thumbnailPath == p;
+                  return GestureDetector(
+                    onTap: () => _pickThumbnail(p),
+                    child: Container(
+                      width: 72,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: sel ? Colors.amber : Colors.white24,
+                          width: sel ? 2 : 1,
+                        ),
+                        image: DecorationImage(
+                          image: FileImage(File(p)),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           ListTile(
             leading: const Icon(Icons.music_note_outlined),
@@ -385,6 +597,12 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
             },
           ),
           const Divider(height: 24),
+          ListTile(
+            title: const Text('İçerik derecesi'),
+            subtitle: Text(draft.contentRating.label),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _pickContentRating(draft.contentRating),
+          ),
           ListTile(
             title: const Text('Kimler görebilir'),
             subtitle: Text(draft.visibility.label),

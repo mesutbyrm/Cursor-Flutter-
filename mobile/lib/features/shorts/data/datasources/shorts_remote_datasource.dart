@@ -8,7 +8,9 @@ import '../../domain/entities/short_video_analytics.dart';
 import '../../domain/entities/short_comment_entity.dart';
 import '../../domain/entities/short_explore_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
+import '../../domain/entities/shorts_ai_metadata.dart';
 import '../../domain/repositories/shorts_repository.dart';
+import '../../../live/domain/entities/live_gift_event.dart';
 
 class ShortsRemoteDataSource {
   ShortsRemoteDataSource(this._dio);
@@ -134,6 +136,13 @@ class ShortsRemoteDataSource {
       music: _musicFrom(pick(json, ['music'])),
       allowDuet: pick(json, ['allowDuet', 'allow_duet']) != false,
       duetOfId: pick(json, ['duetOfId', 'duet_of_id'])?.toString(),
+      replyToVideoId:
+          pick(json, ['replyToVideoId', 'reply_to_video_id'])?.toString(),
+      contentRating:
+          (pick(json, ['contentRating', 'content_rating']) ?? 'all').toString(),
+      aiSummary: pick(json, ['aiSummary', 'summary'])?.toString(),
+      subtitlesUrl:
+          pick(json, ['subtitlesUrl', 'subtitles_url'])?.toString(),
     );
   }
 
@@ -742,6 +751,147 @@ class ShortsRemoteDataSource {
     if (raw is Map) return _videoFrom(asJsonMap(raw));
     if (m != null && m.containsKey('id')) return _videoFrom(m);
     throw ApiException('Video kaydı tamamlanamadı.');
+  }
+
+  Future<ShortsAiMetadata> suggestMetadata({
+    String? description,
+    String? videoKey,
+    String? liveClipId,
+  }) async {
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.shortVideosSuggestMetadata,
+        data: {
+          if (description != null && description.trim().isNotEmpty)
+            'description': description.trim(),
+          if (videoKey != null && videoKey.isNotEmpty) 'videoKey': videoKey,
+          if (liveClipId != null && liveClipId.isNotEmpty)
+            'liveClipId': liveClipId,
+        },
+      );
+      final m = _unwrap(res.data);
+      if (m != null) return ShortsAiMetadata.fromJson(m);
+    } catch (_) {}
+    return const ShortsAiMetadata();
+  }
+
+  Future<ShortLiveClipSource> fetchLiveClip({
+    required String liveClipId,
+    String? sessionId,
+    String? roomId,
+  }) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.shortVideosLiveClip,
+      data: {
+        'liveClipId': liveClipId,
+        if (sessionId != null && sessionId.isNotEmpty) 'sessionId': sessionId,
+        if (roomId != null && roomId.isNotEmpty) 'roomId': roomId,
+      },
+    );
+    final m = _unwrap(res.data);
+    if (m == null) throw ApiException('Canlı klip oluşturulamadı.');
+    final clip = ShortLiveClipSource.fromJson(m);
+    if (clip.clipUrl.isEmpty) {
+      throw ApiException('Klip URL alınamadı.');
+    }
+    return clip;
+  }
+
+  Future<List<ShortMusicEntity>> recommendMusic({
+    String? description,
+    List<String> hashtags = const [],
+    String? videoKey,
+  }) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.shortVideosMusicRecommend,
+        query: {
+          if (description != null && description.isNotEmpty)
+            'description': description,
+          if (hashtags.isNotEmpty) 'hashtags': hashtags.join(','),
+          if (videoKey != null && videoKey.isNotEmpty) 'videoKey': videoKey,
+        },
+      );
+      final m = _unwrap(res.data);
+      final raw = m?['music'] ?? m?['recommendedMusic'] ?? m?['items'];
+      if (raw is List) {
+        return asJsonList(raw)
+            .map((j) => _musicEntityFrom(asJsonMap(j)))
+            .where((e) => e.id.isNotEmpty)
+            .toList();
+      }
+    } catch (_) {}
+    return searchMusic(description ?? '');
+  }
+
+  Future<String?> generateSubtitles({
+    required String videoId,
+    String? videoKey,
+  }) async {
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.shortVideoSubtitlesGenerate(videoId),
+        data: {if (videoKey != null) 'videoKey': videoKey},
+      );
+      final m = _unwrap(res.data);
+      return pick(m ?? {}, ['subtitles', 'subtitleText', 'srt'])?.toString();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<LiveGiftEvent?> sendShortGift({
+    required String videoId,
+    required String giftTypeId,
+    required String senderName,
+    int quantity = 1,
+    String? senderId,
+  }) async {
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.shortVideoGifts(videoId),
+        data: {
+          'giftTypeId': giftTypeId,
+          'quantity': quantity,
+          if (senderName.trim().isNotEmpty) 'senderName': senderName.trim(),
+        },
+      );
+      final raw = _unwrap(res.data);
+      if (raw is Map) {
+        return _parseShortGiftEvent(asJsonMap(raw), videoId: videoId);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  LiveGiftEvent? _parseShortGiftEvent(
+    Map<String, dynamic> json, {
+    required String videoId,
+  }) {
+    final giftId = pick(json, ['giftTypeId', 'giftId', 'gift_id'])?.toString();
+    if (giftId == null || giftId.isEmpty) return null;
+    final ts = DateTime.tryParse(
+          pick(json, ['createdAt', 'timestamp'])?.toString() ?? '',
+        ) ??
+        DateTime.now();
+    return LiveGiftEvent(
+      id: pick(json, ['id'])?.toString() ??
+          '$videoId-${ts.millisecondsSinceEpoch}-$giftId',
+      senderId: pick(json, ['senderId', 'userId'])?.toString(),
+      senderName:
+          pick(json, ['senderName', 'sender_name'])?.toString() ?? 'Kullanıcı',
+      receiverName:
+          pick(json, ['receiverName', 'receiver_name'])?.toString() ?? 'Yayıncı',
+      giftId: giftId,
+      giftName: pick(json, ['giftName', 'name'])?.toString() ?? 'Hediye',
+      quantity: () {
+        final q = asInt(pick(json, ['quantity']));
+        return q > 0 ? q : 1;
+      }(),
+      coinCost: asInt(pick(json, ['coinCost', 'totalCost', 'cost'])),
+      timestamp: ts,
+      animationKey: giftId,
+    );
   }
 
   static String _videoExtension(String path) {

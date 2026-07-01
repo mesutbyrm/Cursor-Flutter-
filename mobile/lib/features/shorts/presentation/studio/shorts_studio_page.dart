@@ -143,7 +143,8 @@ class _ShortsStudioPageState extends ConsumerState<ShortsStudioPage> {
     final launchLabel = switch (widget.launchParams?.mode) {
       ShortStudioMode.duet => 'Düet modu${draft.sourceVideoTitle != null ? ' — ${draft.sourceVideoTitle}' : ''}',
       ShortStudioMode.remix => 'Remix modu${draft.musicTitle != null ? ' — ${draft.musicTitle}' : ''}',
-      ShortStudioMode.liveClip => 'Canlı yayın klibi',
+      ShortStudioMode.liveClip => 'Canlı fal / yayın klibi',
+      ShortStudioMode.videoReply => 'Video yanıt${draft.sourceVideoTitle != null ? ' — ${draft.sourceVideoTitle}' : ''}',
       _ => null,
     };
 

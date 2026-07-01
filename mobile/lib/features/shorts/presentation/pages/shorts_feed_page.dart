@@ -10,9 +10,12 @@ import '../../domain/entities/short_video_entity.dart';
 import '../../domain/repositories/shorts_repository.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../providers/shorts_providers.dart';
+import '../providers/shorts_playback_providers.dart';
 import '../utils/short_video_player_util.dart';
+import '../utils/shorts_content_filter.dart';
 import '../widgets/short_video_page_tile.dart';
 import '../widgets/shorts_premium_theme.dart';
+import '../widgets/shorts_safe_settings_sheet.dart';
 
 /// TikTok tarzı dikey kısa video akışı — For You / Takip sekmeleri.
 class ShortsFeedPage extends ConsumerStatefulWidget {
@@ -98,6 +101,8 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
   Widget build(BuildContext context) {
     final tab = ref.watch(shortsFeedTabProvider);
     final feed = ref.watch(shortsFeedProvider(tab));
+    final safe = ref.watch(shortsSafeSettingsProvider).valueOrNull ??
+        const ShortsSafeSettings(restrictedMode: false, hideMature: true);
     final top = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
@@ -154,16 +159,35 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
             );
           }
 
+          final filtered = filterShortsForSafeSettings(videos, safe);
+          if (filtered.isEmpty) {
+            return Stack(
+              children: [
+                Center(
+                  child: Text(
+                    'Güvenlik filtresi nedeniyle gösterilecek video yok.\nAyarları gevşetebilirsiniz.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: context.colors.onSurfaceMuted,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                _topBar(context, top, tab),
+              ],
+            );
+          }
+
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            _handleDeepLink(videos, tab);
+            _handleDeepLink(filtered, tab);
           });
 
-          if (_localVideos.length != videos.length ||
+          if (_localVideos.length != filtered.length ||
               _localVideos.map((v) => v.id).join() !=
-                  videos.map((v) => v.id).join()) {
+                  filtered.map((v) => v.id).join()) {
             _localVideos
               ..clear()
-              ..addAll(videos);
+              ..addAll(filtered);
             if (_pageCtrl != null &&
                 widget.initialVideoId != null &&
                 _localVideos.any((v) => v.id == widget.initialVideoId)) {
@@ -213,6 +237,8 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
   }
 
   Widget _topBar(BuildContext context, double top, ShortsFeedTab tab) {
+    final safe = ref.watch(shortsSafeSettingsProvider).valueOrNull ??
+        const ShortsSafeSettings(restrictedMode: false, hideMature: true);
     return Positioned(
       top: 0,
       left: 0,
@@ -234,6 +260,15 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
                   IconButton(
                     onPressed: () => context.push('/shorts/explore'),
                     icon: const Icon(Icons.search_rounded, color: Colors.white),
+                  ),
+                  IconButton(
+                    onPressed: () => showShortsSafeSettingsSheet(context, ref),
+                    icon: Icon(
+                      safe.restrictedMode
+                          ? Icons.shield_outlined
+                          : Icons.shield_moon_outlined,
+                      color: safe.restrictedMode ? Colors.amber : Colors.white,
+                    ),
                   ),
                   IconButton(
                     onPressed: () => context.push('/shorts/upload'),

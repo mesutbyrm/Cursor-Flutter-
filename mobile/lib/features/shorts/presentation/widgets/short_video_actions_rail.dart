@@ -17,6 +17,7 @@ import '../utils/short_studio_launch.dart';
 import '../utils/shorts_api_message.dart';
 import '../utils/shorts_count_format.dart';
 import 'short_comments_sheet.dart';
+import 'short_gift_sheet.dart';
 import 'short_share_sheet.dart';
 import 'short_video_analytics_sheet.dart';
 import 'short_video_pip_overlay.dart';
@@ -218,6 +219,18 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
     }, errorPrefix: 'Silme');
   }
 
+  void _startVideoReply() {
+    openShortStudio(
+      GoRouter.of(context),
+      mode: ShortStudioMode.videoReply,
+      sourceVideoId: video.id,
+    );
+  }
+
+  Future<void> _openGifts() async {
+    await showShortGiftSheet(context, ref, video);
+  }
+
   void _moreMenu() {
     final me = ref.read(currentUserIdProvider);
     final isOwner = me != null && me == video.userId;
@@ -247,6 +260,14 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
                 },
               ),
             ],
+            ListTile(
+              leading: const Icon(Icons.videocam_outlined),
+              title: const Text('Video ile yanıtla'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _startVideoReply();
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.picture_in_picture_alt_outlined),
               title: const Text('Picture in Picture'),
@@ -319,6 +340,13 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
           icon: Icons.mode_comment_outlined,
           label: formatShortCount(video.commentsCount),
           onTap: _openComments,
+        ),
+        const SizedBox(height: 16),
+        _ActionButton(
+          icon: Icons.card_giftcard_outlined,
+          label: 'Hediye',
+          color: Colors.amber,
+          onTap: _openGifts,
         ),
         const SizedBox(height: 16),
         _ActionButton(
@@ -460,6 +488,33 @@ class ShortVideoInfoOverlay extends StatelessWidget {
                   SizedBox(width: 4),
                   Text(
                     'Düet',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (video.replyToVideoId != null)
+          GestureDetector(
+            onTap: () => context.push('/shorts?videoId=${video.replyToVideoId}'),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.reply_rounded, size: 14, color: Colors.white),
+                  SizedBox(width: 4),
+                  Text(
+                    'Video yanıt',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,

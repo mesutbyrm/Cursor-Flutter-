@@ -67,6 +67,16 @@ class _PsychicSessionEndedHostState extends ConsumerState<PsychicSessionEndedHos
         ),
         content: Text(body),
         actions: [
+          if (event.sessionId.isNotEmpty)
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx, rootNavigator: true).pop(false);
+                ref.read(goRouterProvider).push(
+                      '/shorts/upload?liveClipId=${Uri.encodeComponent(event.sessionId)}&sessionId=${Uri.encodeComponent(event.sessionId)}&liveClipTitle=${Uri.encodeComponent(event.tellerName ?? 'Canlı fal')}',
+                    );
+              },
+              child: const Text('Shorts klip'),
+            ),
           if (event.promptReview &&
               event.tellerId != null &&
               event.tellerId!.isNotEmpty)

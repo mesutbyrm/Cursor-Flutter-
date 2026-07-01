@@ -1,6 +1,21 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.468+472 (2026-06-26)
+
+### Kısa video — Faz 7 AI & sosyal
+
+- **AI altyazı:** Yayın ekranında otomatik altyazı taslağı (API + istemci yedek)
+- **AI hashtag / etiketleme:** Özet + hashtag önerisi (`/suggest-metadata`)
+- **Otomatik kapak:** Videodan 3 küçük resim adayı (FFmpeg kare)
+- **AI video özeti:** Yayın açıklamasına AI özet enjeksiyonu
+- **İçeriğe göre müzik:** `/music/recommend` + katalog yedek
+- **Canlı fal klipleri:** `/live-clip` indirme; seans bitince «Shorts klip»; yayın geçmişi
+- **Shorts hediye (Jeton):** Aksiyon rail + katalog; kısa video API, canlı yedek
+- **Video yanıt:** `replyToVideoId` stüdyo modu; yorum sheet + menü
+- **Oynatma hızı:** 0.5x / 1x / 1.5x / 2x (izleyici uzun bas + editör export)
+- **Çocuk güvenliği:** Kısıtlı mod + yetişkin içerik filtresi (SharedPreferences)
+
 ## 1.0.467+471 (2026-06-26)
 
 ### Kısa video — Faz 6 Premium Görünüm

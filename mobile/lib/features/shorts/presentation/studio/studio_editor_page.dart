@@ -68,7 +68,11 @@ class _StudioEditorPageState extends ConsumerState<StudioEditorPage> {
     if (c == null || _exporting) return;
     setState(() => _exporting = true);
     try {
-      final outPath = await exportEditedShortVideo(c);
+      final draft = ref.read(shortUploadDraftProvider);
+      final outPath = await exportEditedShortVideo(
+        c,
+        playbackSpeed: draft.playbackSpeed,
+      );
       final ms = coverTimeMs(c);
       final thumb = await VideoThumbnail.thumbnailFile(
         video: outPath,
@@ -173,6 +177,11 @@ class _AdjustPanel extends StatelessWidget {
                 label: '1x',
                 selected: draft.playbackSpeed == 1,
                 onTap: () => onChanged(draft.copyWith(playbackSpeed: 1)),
+              ),
+              _SpeedChip(
+                label: '1.5x',
+                selected: draft.playbackSpeed == 1.5,
+                onTap: () => onChanged(draft.copyWith(playbackSpeed: 1.5)),
               ),
               _SpeedChip(
                 label: '2x',

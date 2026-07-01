@@ -143,6 +143,7 @@ class _ProfileBroadcastHistoryPageState
                                     mode: ShortStudioMode.liveClip,
                                     liveClipId: item.id,
                                     liveClipTitle: item.title,
+                                    sessionId: item.id,
                                   ),
                           icon: const Icon(Icons.movie_creation_outlined),
                         ),

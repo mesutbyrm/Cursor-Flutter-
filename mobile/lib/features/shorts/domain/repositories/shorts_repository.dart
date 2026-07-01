@@ -2,10 +2,22 @@ import '../entities/short_video_analytics.dart';
 import '../entities/short_comment_entity.dart';
 import '../entities/short_explore_entity.dart';
 import '../entities/short_video_entity.dart';
+import '../entities/shorts_ai_metadata.dart';
+import '../../../live/domain/entities/live_gift_event.dart';
 
 enum ShortsFeedTab { forYou, following }
 
 enum ShortUserVideosTab { videos, liked, saved }
+
+class ShortGiftSendResult {
+  const ShortGiftSendResult({
+    this.newBalance,
+    this.event,
+  });
+
+  final int? newBalance;
+  final LiveGiftEvent? event;
+}
 
 class ShortVideoFeedPage {
   const ShortVideoFeedPage({
@@ -105,5 +117,36 @@ abstract class ShortsRepository {
   Future<ShortVideoAnalytics> fetchVideoAnalytics(
     String videoId, {
     ShortVideoEntity? fallback,
+  });
+
+  Future<ShortsAiMetadata> suggestMetadata({
+    String? description,
+    String? videoKey,
+    String? liveClipId,
+  });
+
+  Future<ShortLiveClipSource> fetchLiveClip({
+    required String liveClipId,
+    String? sessionId,
+    String? roomId,
+  });
+
+  Future<List<ShortMusicEntity>> recommendMusic({
+    String? description,
+    List<String> hashtags = const [],
+    String? videoKey,
+  });
+
+  Future<String?> generateSubtitles({
+    required String videoId,
+    String? videoKey,
+  });
+
+  Future<ShortGiftSendResult> sendGift({
+    required String videoId,
+    required String giftTypeId,
+    required String senderName,
+    int quantity = 1,
+    String? senderId,
   });
 }

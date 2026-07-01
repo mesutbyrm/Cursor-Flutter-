@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/content/content_guard.dart';
@@ -10,6 +11,7 @@ import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../domain/entities/short_comment_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_providers.dart';
+import '../utils/short_studio_launch.dart';
 
 Future<int?> showShortCommentsSheet(
   BuildContext context,
@@ -240,6 +242,18 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                   child: Row(
                     children: [
+                      IconButton(
+                        tooltip: 'Video ile yanıtla',
+                        onPressed: () {
+                          Navigator.pop(context, _commentsCount);
+                          openShortStudio(
+                            GoRouter.of(context),
+                            mode: ShortStudioMode.videoReply,
+                            sourceVideoId: widget.video.id,
+                          );
+                        },
+                        icon: const Icon(Icons.videocam_outlined, color: Colors.white70),
+                      ),
                       Expanded(
                         child: TextField(
                           controller: _controller,

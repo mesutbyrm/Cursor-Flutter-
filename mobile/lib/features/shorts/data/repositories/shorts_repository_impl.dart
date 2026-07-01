@@ -2,6 +2,7 @@ import '../../domain/entities/short_video_analytics.dart';
 import '../../domain/entities/short_comment_entity.dart';
 import '../../domain/entities/short_explore_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
+import '../../domain/entities/shorts_ai_metadata.dart';
 import '../../domain/repositories/shorts_repository.dart';
 import '../datasources/shorts_remote_datasource.dart';
 
@@ -167,4 +168,65 @@ class ShortsRepositoryImpl implements ShortsRepository {
     ShortVideoEntity? fallback,
   }) =>
       _remote.fetchVideoAnalytics(videoId, fallback: fallback);
+
+  @override
+  Future<ShortsAiMetadata> suggestMetadata({
+    String? description,
+    String? videoKey,
+    String? liveClipId,
+  }) =>
+      _remote.suggestMetadata(
+        description: description,
+        videoKey: videoKey,
+        liveClipId: liveClipId,
+      );
+
+  @override
+  Future<ShortLiveClipSource> fetchLiveClip({
+    required String liveClipId,
+    String? sessionId,
+    String? roomId,
+  }) =>
+      _remote.fetchLiveClip(
+        liveClipId: liveClipId,
+        sessionId: sessionId,
+        roomId: roomId,
+      );
+
+  @override
+  Future<List<ShortMusicEntity>> recommendMusic({
+    String? description,
+    List<String> hashtags = const [],
+    String? videoKey,
+  }) =>
+      _remote.recommendMusic(
+        description: description,
+        hashtags: hashtags,
+        videoKey: videoKey,
+      );
+
+  @override
+  Future<String?> generateSubtitles({
+    required String videoId,
+    String? videoKey,
+  }) =>
+      _remote.generateSubtitles(videoId: videoId, videoKey: videoKey);
+
+  @override
+  Future<ShortGiftSendResult> sendGift({
+    required String videoId,
+    required String giftTypeId,
+    required String senderName,
+    int quantity = 1,
+    String? senderId,
+  }) async {
+    final event = await _remote.sendShortGift(
+      videoId: videoId,
+      giftTypeId: giftTypeId,
+      senderName: senderName,
+      quantity: quantity,
+      senderId: senderId,
+    );
+    return ShortGiftSendResult(event: event);
+  }
 }
