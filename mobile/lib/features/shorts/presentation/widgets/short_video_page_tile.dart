@@ -8,14 +8,16 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/firebase/firebase_bootstrap.dart';
-import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/connectivity/connectivity_service.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/widgets/hero_tags.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
+import '../../data/shorts_offline_action_queue.dart';
 import '../../domain/entities/short_video_entity.dart';
-import '../providers/shorts_providers.dart';
+import '../providers/shorts_offline_sync_provider.dart';
 import '../providers/shorts_playback_providers.dart';
-import '../utils/short_video_player_util.dart';
+import '../providers/shorts_providers.dart';
+import '../providers/shorts_video_pool_provider.dart';
 import '../widgets/short_playback_speed_sheet.dart';
 import '../widgets/short_video_actions_rail.dart';
 import 'short_video_pip_overlay.dart';
@@ -49,6 +51,7 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
   void initState() {
     super.initState();
     _viewSent = widget.video.viewedByMe;
+    ref.read(shortsOfflineSyncProvider);
     _init();
   }
 
@@ -56,7 +59,7 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
   void didUpdateWidget(covariant ShortVideoPageTile oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.video.id != widget.video.id) {
-      _disposeController();
+      _stopViewTracking();
       _viewSent = widget.video.viewedByMe;
       _watchedSec = 0;
       _init();
@@ -65,30 +68,17 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
     }
   }
 
-  void _applyPlaybackSpeed(double speed) {
-    final c = _controller;
-    if (c == null || !c.value.isInitialized) return;
-    c.setPlaybackSpeed(speed);
-  }
-
   Future<void> _init() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = false;
     });
     try {
-      final dio = ref.read(dioProvider);
-      final c = await createShortVideoController(
-        url: widget.video.videoUrl,
-        videoId: widget.video.id,
-        dio: dio,
-      );
-      if (!mounted) {
-        await c.dispose();
-        return;
-      }
+      final pool = ref.read(shortsVideoPoolProvider);
+      final c = await pool.acquire(widget.video);
+      if (!mounted) return;
       _controller = c;
-      c.setPlaybackSpeed(ref.read(shortPlaybackSpeedProvider));
       setState(() => _loading = false);
       _syncPlayback();
     } catch (_) {
@@ -104,8 +94,10 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
   void _syncPlayback() {
     final c = _controller;
     if (c == null || !c.value.isInitialized) return;
+    final pool = ref.read(shortsVideoPoolProvider);
+    final speed = ref.read(shortPlaybackSpeedProvider);
     if (widget.isActive) {
-      c.play();
+      pool.setActive(widget.video.id, playbackSpeed: speed);
       _startViewTracking();
     } else {
       c.pause();
@@ -155,15 +147,9 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
     } catch (_) {}
   }
 
-  void _disposeController() {
-    _stopViewTracking();
-    _controller?.dispose();
-    _controller = null;
-  }
-
   @override
   void dispose() {
-    _disposeController();
+    _stopViewTracking();
     super.dispose();
   }
 
@@ -173,22 +159,38 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
       if (mounted) setState(() => _showHeart = false);
     });
     if (widget.video.likedByMe) return;
+    final optimistic = widget.video.copyWith(
+      likedByMe: true,
+      likesCount: widget.video.likesCount + 1,
+    );
+    widget.onVideoUpdated(optimistic);
     try {
-      final res = await ref.read(shortsRepositoryProvider).toggleLike(widget.video.id);
+      if (!ref.read(isOnlineProvider)) {
+        await ShortsOfflineActionQueue.instance.enqueueLike(
+          widget.video.id,
+          liked: true,
+        );
+        return;
+      }
+      final res =
+          await ref.read(shortsRepositoryProvider).toggleLike(widget.video.id);
       widget.onVideoUpdated(
-        widget.video.copyWith(likedByMe: res.liked, likesCount: res.likesCount),
+        widget.video.copyWith(
+          likedByMe: res.liked,
+          likesCount: res.likesCount,
+        ),
       );
-    } catch (_) {}
+    } catch (_) {
+      widget.onVideoUpdated(widget.video);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final speed = ref.watch(shortPlaybackSpeedProvider);
     ref.listen<double>(shortPlaybackSpeedProvider, (prev, next) {
-      if (prev != next) _applyPlaybackSpeed(next);
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _applyPlaybackSpeed(speed);
+      if (prev != next && widget.isActive) {
+        _controller?.setPlaybackSpeed(next);
+      }
     });
 
     final video = widget.video;
@@ -198,101 +200,101 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
       Stack(
         fit: StackFit.expand,
         children: [
-        if (_loading)
-          _thumbnailOrBlack(video)
-        else if (_error || c == null || !c.value.isInitialized)
-          _thumbnailOrBlack(video, showError: true)
-        else
-          FittedBox(
-            fit: BoxFit.cover,
-            child: SizedBox(
-              width: c.value.size.width,
-              height: c.value.size.height,
-              child: VideoPlayer(c),
+          if (_loading)
+            _thumbnailOrBlack(video)
+          else if (_error || c == null || !c.value.isInitialized)
+            _thumbnailOrBlack(video, showError: true)
+          else
+            FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: c.value.size.width,
+                height: c.value.size.height,
+                child: VideoPlayer(c),
+              ),
+            ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.center,
+                colors: [
+                  Colors.black.withValues(alpha: 0.65),
+                  Colors.transparent,
+                ],
+              ),
             ),
           ),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.bottomCenter,
-              end: Alignment.center,
-              colors: [
-                Colors.black.withValues(alpha: 0.65),
-                Colors.transparent,
-              ],
-            ),
-          ),
-        ),
-        Positioned(
-          left: 14,
-          right: 78,
-          bottom: MediaQuery.paddingOf(context).bottom + 24,
-          child: ShortVideoInfoOverlay(
-            video: video,
-            onAuthorTap: () {
-              final uid = video.userId.isNotEmpty
-                  ? video.userId
-                  : (video.author?.id ?? '');
-              if (uid.isNotEmpty) context.push('/user/$uid');
-            },
-            onDuetTap: video.duetOfId != null
-                ? () => context.push('/shorts?videoId=${video.duetOfId}')
-                : null,
-          ),
-        ),
-        Positioned(
-          right: 10,
-          bottom: MediaQuery.paddingOf(context).bottom + 40,
-          child: ShortVideoActionsRail(
-            video: video,
-            videoController: c,
-            onVideoUpdated: widget.onVideoUpdated,
-          ),
-        ),
-        const ShortVideoPipOverlay(),
-        if (c != null && c.value.isInitialized)
-          Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onDoubleTap: _doubleTapLike,
-              onLongPress: () => showShortPlaybackSpeedSheet(context, ref),
-              onTap: () {
-                if (c.value.isPlaying) {
-                  c.pause();
-                } else {
-                  c.play();
-                }
-                setState(() {});
+          Positioned(
+            left: 14,
+            right: 78,
+            bottom: MediaQuery.paddingOf(context).bottom + 24,
+            child: ShortVideoInfoOverlay(
+              video: video,
+              onAuthorTap: () {
+                final uid = video.userId.isNotEmpty
+                    ? video.userId
+                    : (video.author?.id ?? '');
+                if (uid.isNotEmpty) context.push('/user/$uid');
               },
-              child: Center(
-                child: AnimatedOpacity(
-                  opacity: c.value.isPlaying ? 0 : 0.85,
-                  duration: const Duration(milliseconds: 180),
-                  child: const Icon(
-                    Icons.play_circle_fill,
-                    size: 72,
-                    color: Colors.white70,
+              onDuetTap: video.duetOfId != null
+                  ? () => context.push('/shorts?videoId=${video.duetOfId}')
+                  : null,
+            ),
+          ),
+          Positioned(
+            right: 10,
+            bottom: MediaQuery.paddingOf(context).bottom + 40,
+            child: ShortVideoActionsRail(
+              video: video,
+              videoController: c,
+              onVideoUpdated: widget.onVideoUpdated,
+            ),
+          ),
+          const ShortVideoPipOverlay(),
+          if (c != null && c.value.isInitialized)
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onDoubleTap: _doubleTapLike,
+                onLongPress: () => showShortPlaybackSpeedSheet(context, ref),
+                onTap: () {
+                  if (c.value.isPlaying) {
+                    c.pause();
+                  } else {
+                    c.play();
+                  }
+                  setState(() {});
+                },
+                child: Center(
+                  child: AnimatedOpacity(
+                    opacity: c.value.isPlaying ? 0 : 0.85,
+                    duration: const Duration(milliseconds: 180),
+                    child: const Icon(
+                      Icons.play_circle_fill,
+                      size: 72,
+                      color: Colors.white70,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        if (_showHeart)
-          Center(
-            child: Icon(
-              Icons.favorite,
-              size: 96,
-              color: Colors.redAccent.withValues(alpha: 0.92),
-            )
-                .animate()
-                .scale(
-                  begin: const Offset(0.55, 0.55),
-                  end: const Offset(1.15, 1.15),
-                  duration: PremiumMotion.medium,
-                  curve: PremiumMotion.spring,
-                )
-                .fadeOut(delay: 350.ms, duration: 200.ms),
-          ),
+          if (_showHeart)
+            Center(
+              child: Icon(
+                Icons.favorite,
+                size: 96,
+                color: Colors.redAccent.withValues(alpha: 0.92),
+              )
+                  .animate()
+                  .scale(
+                    begin: const Offset(0.55, 0.55),
+                    end: const Offset(1.15, 1.15),
+                    duration: PremiumMotion.medium,
+                    curve: PremiumMotion.spring,
+                  )
+                  .fadeOut(delay: 350.ms, duration: 200.ms),
+            ),
         ],
       ),
     );

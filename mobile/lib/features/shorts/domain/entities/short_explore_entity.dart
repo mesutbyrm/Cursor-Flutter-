@@ -107,6 +107,7 @@ class ShortProfileStats extends Equatable {
   const ShortProfileStats({
     this.videosCount = 0,
     this.totalLikes = 0,
+    this.totalViews = 0,
     this.followersCount = 0,
     this.followingCount = 0,
     this.isFollowing = false,
@@ -114,11 +115,18 @@ class ShortProfileStats extends Equatable {
 
   final int videosCount;
   final int totalLikes;
+  final int totalViews;
   final int followersCount;
   final int followingCount;
   final bool isFollowing;
 
   @override
-  List<Object?> get props =>
-      [videosCount, totalLikes, followersCount, followingCount, isFollowing];
+  List<Object?> get props => [
+        videosCount,
+        totalLikes,
+        totalViews,
+        followersCount,
+        followingCount,
+        isFollowing,
+      ];
 }

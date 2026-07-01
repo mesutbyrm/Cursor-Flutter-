@@ -43,6 +43,8 @@ function videoPayload(
     viewsCount: number;
     likesCount: number;
     commentsCount: number;
+    sharesCount?: number;
+    savesCount?: number;
     durationSec: number | null;
     createdAt: Date;
     user: {
@@ -64,6 +66,8 @@ function videoPayload(
     viewsCount: v.viewsCount,
     likesCount: v.likesCount,
     commentsCount: v.commentsCount,
+    sharesCount: v.sharesCount ?? 0,
+    savesCount: v.savesCount ?? 0,
     durationSec: v.durationSec,
     createdAt: v.createdAt.toISOString(),
     author: authorPayload(v.user),
@@ -246,6 +250,118 @@ shortVideosRouter.post(
   },
 );
 
+/** GET /api/short-videos/:id — tek video */
+shortVideosRouter.get("/:id", optionalAuth, async (req, res) => {
+  const videoId = req.params.id;
+  const userId = req.userId;
+  const video = await prisma.shortVideo.findUnique({
+    where: { id: videoId },
+    include: { user: true },
+  });
+  if (!video) return fail(res, 404, "NOT_FOUND", "Video bulunamadı");
+  let likedByMe = false;
+  let savedByMe = false;
+  if (userId) {
+    const [like, save] = await Promise.all([
+      prisma.shortVideoLike.findUnique({
+        where: { videoId_userId: { videoId, userId } },
+      }),
+      prisma.shortVideoSave.findUnique({
+        where: { videoId_userId: { videoId, userId } },
+      }),
+    ]);
+    likedByMe = !!like;
+    savedByMe = !!save;
+  }
+  return ok(res, {
+    video: {
+      ...videoPayload(video, { likedByMe }),
+      savedByMe,
+      sharesCount: video.sharesCount,
+      savesCount: video.savesCount,
+    },
+  });
+});
+
+/** POST /api/short-videos/:id/save — kaydet toggle */
+shortVideosRouter.post("/:id/save", requireAuth, async (req, res) => {
+  const videoId = req.params.id;
+  const userId = req.userId!;
+  const video = await prisma.shortVideo.findUnique({ where: { id: videoId } });
+  if (!video) return fail(res, 404, "NOT_FOUND", "Video bulunamadı");
+
+  const existing = await prisma.shortVideoSave.findUnique({
+    where: { videoId_userId: { videoId, userId } },
+  });
+
+  if (existing) {
+    await prisma.$transaction([
+      prisma.shortVideoSave.delete({ where: { id: existing.id } }),
+      prisma.shortVideo.update({
+        where: { id: videoId },
+        data: { savesCount: { decrement: 1 } },
+      }),
+    ]);
+    return ok(res, {
+      saved: false,
+      savesCount: Math.max(0, video.savesCount - 1),
+    });
+  }
+
+  await prisma.$transaction([
+    prisma.shortVideoSave.create({ data: { videoId, userId } }),
+    prisma.shortVideo.update({
+      where: { id: videoId },
+      data: { savesCount: { increment: 1 } },
+    }),
+  ]);
+  return ok(res, { saved: true, savesCount: video.savesCount + 1 });
+});
+
+/** POST /api/short-videos/:id/share — paylaşım sayacı */
+shortVideosRouter.post("/:id/share", requireAuth, async (req, res) => {
+  const videoId = req.params.id;
+  const video = await prisma.shortVideo.findUnique({ where: { id: videoId } });
+  if (!video) return fail(res, 404, "NOT_FOUND", "Video bulunamadı");
+  const updated = await prisma.shortVideo.update({
+    where: { id: videoId },
+    data: { sharesCount: { increment: 1 } },
+  });
+  return ok(res, { sharesCount: updated.sharesCount });
+});
+
+/** GET /api/short-videos/profile/:userId — profil istatistikleri */
+shortVideosRouter.get("/profile/:userId", optionalAuth, async (req, res) => {
+  const userId = req.params.userId;
+  const viewerId = req.userId;
+  const [videosCount, agg, followerCount, followingCount] = await Promise.all([
+    prisma.shortVideo.count({ where: { userId } }),
+    prisma.shortVideo.aggregate({
+      where: { userId },
+      _sum: { likesCount: true, viewsCount: true },
+    }),
+    prisma.follow.count({ where: { followingId: userId } }).catch(() => 0),
+    prisma.follow.count({ where: { followerId: userId } }).catch(() => 0),
+  ]);
+  let isFollowing = false;
+  if (viewerId && viewerId !== userId) {
+    const f = await prisma.follow
+      .findFirst({
+        where: { followerId: viewerId, followingId: userId },
+      })
+      .catch(() => null);
+    isFollowing = !!f;
+  }
+  return ok(res, {
+    videosCount,
+    totalLikes: agg._sum.likesCount ?? 0,
+    totalViews: agg._sum.viewsCount ?? 0,
+    followersCount: followerCount,
+    followingCount: followingCount,
+    isFollowing,
+  });
+});
+
 /** GET /api/short-videos/:id/stream — CDN 404 olduğunda R2 üzerinden oynatma */
 shortVideosRouter.get("/:id/stream", optionalAuth, async (req, res) => {
   const videoId = req.params.id;
@@ -410,7 +526,34 @@ shortVideosRouter.delete("/:id", requireAuth, async (req, res) => {
 /** GET /api/short-videos/user/:userId — profil grid */
 shortVideosRouter.get("/user/:userId", optionalAuth, async (req, res) => {
   const userId = req.params.userId;
+  const tab = typeof req.query.tab === "string" ? req.query.tab : "videos";
   const limit = Math.min(30, Math.max(1, Number(req.query.limit ?? 20)));
+  const viewerId = req.userId;
+
+  if (tab === "liked" && viewerId) {
+    const likes = await prisma.shortVideoLike.findMany({
+      where: { userId: viewerId },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      include: { video: { include: { user: true } } },
+    });
+    return ok(res, {
+      videos: likes.map((l) => videoPayload(l.video, { likedByMe: true })),
+    });
+  }
+
+  if (tab === "saved" && viewerId) {
+    const saves = await prisma.shortVideoSave.findMany({
+      where: { userId: viewerId },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      include: { video: { include: { user: true } } },
+    });
+    return ok(res, {
+      videos: saves.map((s) => videoPayload(s.video, { savedByMe: true })),
+    });
+  }
+
   const rows = await prisma.shortVideo.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },

@@ -6,11 +6,12 @@ import 'package:video_player/video_player.dart';
 import '../../../../core/video/video_cache_service.dart';
 import 'short_video_url_resolver.dart';
 
-/// CDN / imzalı URL / API stream sırasıyla oynatıcı oluşturur.
+/// CDN / imzalı URL / API stream — `fastStart` ile ~300 ms hedef.
 Future<VideoPlayerController> createShortVideoController({
   required String url,
   String? videoId,
   Dio? dio,
+  bool fastStart = false,
 }) async {
   final candidates = <String>[url.trim()];
   if (dio != null) {
@@ -34,14 +35,28 @@ Future<VideoPlayerController> createShortVideoController({
     if (playUrl.isEmpty) continue;
     VideoPlayerController? controller;
     try {
-      final file = await cache.getCachedFile(playUrl);
-      if (file != null && await file.exists()) {
-        controller = VideoPlayerController.file(file);
+      if (fastStart) {
+        final file = await cache.peekCachedFile(playUrl);
+        if (file != null) {
+          controller = VideoPlayerController.file(file);
+        } else {
+          controller = VideoPlayerController.networkUrl(Uri.parse(playUrl));
+          unawaited(cache.prefetch(playUrl));
+        }
       } else {
-        controller = VideoPlayerController.networkUrl(Uri.parse(playUrl));
-        unawaited(cache.prefetch(playUrl));
+        final file = await cache.getCachedFile(playUrl);
+        if (file != null && await file.exists()) {
+          controller = VideoPlayerController.file(file);
+        } else {
+          controller = VideoPlayerController.networkUrl(Uri.parse(playUrl));
+          unawaited(cache.prefetch(playUrl));
+        }
       }
-      await controller.initialize().timeout(const Duration(seconds: 12));
+
+      final timeout = fastStart
+          ? const Duration(milliseconds: 800)
+          : const Duration(seconds: 12);
+      await controller.initialize().timeout(timeout);
       if (controller.value.hasError) {
         throw StateError(controller.value.errorDescription ?? 'player_error');
       }

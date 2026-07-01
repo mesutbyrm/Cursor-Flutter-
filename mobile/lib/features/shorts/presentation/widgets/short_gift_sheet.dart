@@ -13,6 +13,7 @@ import '../../domain/entities/short_video_entity.dart';
 import '../../domain/repositories/shorts_repository.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/shorts_api_message.dart';
+import 'short_gift_burst.dart';
 
 Future<void> showShortGiftSheet(
   BuildContext context,
@@ -99,6 +100,10 @@ class _ShortGiftSheetState extends ConsumerState<_ShortGiftSheet> {
       }
       if (result.newBalance != null) {
         ref.invalidate(coinBalanceProvider);
+      }
+      if (!mounted) return;
+      if (result.event != null) {
+        await showShortGiftBurst(context, gift.id);
       }
       if (!mounted) return;
       Navigator.pop(context);

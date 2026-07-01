@@ -133,6 +133,13 @@ class ShortsProfileStatsRow extends ConsumerWidget {
                 value: formatShortCount(stats.totalLikes),
               ),
             ),
+            _divider(context),
+            Expanded(
+              child: _StatCell(
+                label: 'İzlenme',
+                value: formatShortCount(stats.totalViews),
+              ),
+            ),
           ],
         ),
       ),

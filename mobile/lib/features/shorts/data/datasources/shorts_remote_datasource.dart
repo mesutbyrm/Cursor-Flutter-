@@ -619,6 +619,7 @@ class ShortsRemoteDataSource {
     return ShortProfileStats(
       videosCount: asInt(pick(m, ['videosCount', 'videoCount'])),
       totalLikes: asInt(pick(m, ['totalLikes', 'likesCount'])),
+      totalViews: asInt(pick(m, ['totalViews', 'viewsCount', 'total_views'])),
       followersCount: asInt(pick(m, ['followersCount', 'followerCount'])),
       followingCount: asInt(pick(m, ['followingCount'])),
       isFollowing: asBool(pick(m, ['isFollowing', 'following'])),

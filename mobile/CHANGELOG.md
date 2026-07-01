@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.469+473 (2026-06-26)
+
+### Kısa video — Profesyonel performans & sosyal
+
+- **Video performansı:** Controller pool (5 slot), ±2 PageView, `fastStart` 800ms, disk peek cache, arka plan warm ±2 + preload
+- **Siyah ekran azaltma:** Uzak tile'larda thumbnail önizleme; pool ile yeniden initialize yok
+- **Sponsorlu reklam:** Her 5 videoda 1 modüler slot («Sponsorlu», geçilebilir, AdMob/GAM hazır)
+- **Offline kuyruk:** Beğeni / kaydet çevrimdışı kuyruk + bağlantı gelince senkron
+- **Paylaş:** X, Facebook, Instagram eklendi (WhatsApp, Telegram, QR, link)
+- **Hediye animasyonu:** Jeton gönderiminde tam ekran emoji burst
+- **Profil:** Toplam izlenme istatistiği, Canlı Yayın + Mesaj butonları
+- **API mirror:** save, share, profile stats, single video, liked/saved sekmeleri
+
 ## 1.0.468+472 (2026-06-26)
 
 ### Kısa video — Faz 7 AI & sosyal

@@ -201,7 +201,7 @@ class _ShortShareSheetBodyState extends State<_ShortShareSheetBody> {
             },
           ),
           _ShareTile(
-            icon: Icons.send_outlined,
+            icon: Icons.telegram,
             label: 'Telegram',
             onTap: () async {
               final uri = Uri.parse(
@@ -209,6 +209,51 @@ class _ShortShareSheetBodyState extends State<_ShortShareSheetBody> {
               );
               await launchUrl(uri, mode: LaunchMode.externalApplication);
               if (context.mounted) Navigator.pop(context);
+              widget.onShared();
+            },
+          ),
+          _ShareTile(
+            icon: Icons.alternate_email,
+            label: 'X (Twitter)',
+            onTap: () async {
+              final uri = Uri.parse(
+                'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(widget.text)}',
+              );
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+              if (context.mounted) Navigator.pop(context);
+              widget.onShared();
+            },
+          ),
+          _ShareTile(
+            icon: Icons.facebook,
+            label: 'Facebook',
+            onTap: () async {
+              final uri = Uri.parse(
+                'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(widget.link)}',
+              );
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+              if (context.mounted) Navigator.pop(context);
+              widget.onShared();
+            },
+          ),
+          _ShareTile(
+            icon: Icons.camera_alt_outlined,
+            label: 'Instagram',
+            onTap: () async {
+              await Clipboard.setData(ClipboardData(text: widget.link));
+              final uri = Uri.parse('instagram://story-camera');
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri);
+              } else {
+                await launchUrl(
+                  Uri.parse('https://www.instagram.com/'),
+                  mode: LaunchMode.externalApplication,
+                );
+              }
+              if (context.mounted) {
+                Navigator.pop(context);
+                showShortsSnackBar(context, 'Link kopyalandı — hikâyeye yapıştırın.');
+              }
               widget.onShared();
             },
           ),

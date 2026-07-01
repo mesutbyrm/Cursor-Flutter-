@@ -11,6 +11,8 @@ import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../../core/network/connectivity/connectivity_service.dart';
+import '../../data/shorts_offline_action_queue.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/short_studio_launch.dart';
@@ -69,6 +71,13 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
     );
     widget.onVideoUpdated(optimistic);
     await _runInteraction(() async {
+      if (!ref.read(isOnlineProvider)) {
+        await ShortsOfflineActionQueue.instance.enqueueLike(
+          video.id,
+          liked: optimistic.likedByMe,
+        );
+        return;
+      }
       final res = await ref.read(shortsRepositoryProvider).toggleLike(video.id);
       widget.onVideoUpdated(
         video.copyWith(likedByMe: res.liked, likesCount: res.likesCount),
@@ -78,6 +87,7 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
         parameters: {'video_id': video.id, 'liked': res.liked},
       );
     }, errorPrefix: 'Beğeni');
+    if (mounted && ref.read(isOnlineProvider) == false) return;
   }
 
   Future<void> _toggleSave() async {
@@ -89,6 +99,13 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
     );
     widget.onVideoUpdated(optimistic);
     await _runInteraction(() async {
+      if (!ref.read(isOnlineProvider)) {
+        await ShortsOfflineActionQueue.instance.enqueueSave(
+          video.id,
+          saved: optimistic.savedByMe,
+        );
+        return;
+      }
       final res = await ref.read(shortsRepositoryProvider).toggleSave(video.id);
       widget.onVideoUpdated(
         video.copyWith(savedByMe: res.saved, savesCount: res.savesCount),

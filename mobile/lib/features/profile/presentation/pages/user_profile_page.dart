@@ -171,6 +171,33 @@ class UserProfilePage extends ConsumerWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: OutlinedButton(
+                        onPressed: () => context.push('/canli-falcilar'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(52),
+                          foregroundColor: AppThemeColors.accentPink,
+                          side: BorderSide(
+                            color: AppThemeColors.accentPink.withValues(alpha: 0.65),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text(
+                          'Canlı Yayın',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
                         onPressed: () => context.push('/chat/$userId'),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(52),

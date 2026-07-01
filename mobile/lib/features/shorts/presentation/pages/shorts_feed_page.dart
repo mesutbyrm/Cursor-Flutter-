@@ -7,12 +7,15 @@ import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../domain/entities/short_video_entity.dart';
+import '../../domain/entities/shorts_feed_entry.dart';
 import '../../domain/repositories/shorts_repository.dart';
-import '../../../../core/network/dio_provider.dart';
 import '../providers/shorts_providers.dart';
 import '../providers/shorts_playback_providers.dart';
-import '../utils/short_video_player_util.dart';
+import '../providers/shorts_offline_sync_provider.dart';
+import '../providers/shorts_video_pool_provider.dart';
 import '../utils/shorts_content_filter.dart';
+import '../utils/shorts_feed_entries.dart';
+import '../widgets/short_sponsored_tile.dart';
 import '../widgets/short_video_page_tile.dart';
 import '../widgets/shorts_premium_theme.dart';
 import '../widgets/shorts_safe_settings_sheet.dart';
@@ -30,7 +33,7 @@ class ShortsFeedPage extends ConsumerStatefulWidget {
 class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
   PageController? _pageCtrl;
   var _index = 0;
-  final _localVideos = <ShortVideoEntity>[];
+  final _entries = <ShortsFeedEntry>[];
   var _deepLinkHandled = false;
 
   @override
@@ -39,43 +42,47 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
     super.dispose();
   }
 
+  List<ShortVideoEntity> get _videosOnly =>
+      _entries.map((e) => e.video).whereType<ShortVideoEntity>().toList();
+
   void _ensureController(int count) {
     if (_pageCtrl != null) return;
     var initial = 0;
     if (widget.initialVideoId != null) {
-      final i = _localVideos.indexWhere((v) => v.id == widget.initialVideoId);
+      final i = _entries.indexWhere(
+        (e) => e.video?.id == widget.initialVideoId,
+      );
       if (i >= 0) initial = i;
     }
     _index = initial;
     _pageCtrl = PageController(initialPage: initial);
   }
 
-  void _preloadAround(List<ShortVideoEntity> videos, int i) {
-    final dio = ref.read(dioProvider);
-    for (final offset in [0, 1, 2]) {
-      final j = i + offset;
-      if (j >= 0 && j < videos.length) {
-        preloadShortVideoUrl(
-          videos[j].videoUrl,
-          videoId: videos[j].id,
-          dio: dio,
-        );
-      }
-    }
+  void _warmPool(int index) {
+    final videos = _videosOnly;
+    if (videos.isEmpty) return;
+    final active = _entries[index].video;
+    if (active == null) return;
+    final videoIndex = videos.indexWhere((v) => v.id == active.id);
+    if (videoIndex < 0) return;
+    ref.read(shortsVideoPoolProvider).warm(videos, videoIndex);
   }
 
-  void _onPageChanged(int i, List<ShortVideoEntity> videos, ShortsFeedTab tab) {
+  void _onPageChanged(int i, ShortsFeedTab tab) {
     setState(() => _index = i);
-    _preloadAround(videos, i);
-    if (i >= videos.length - 3) {
+    _warmPool(i);
+    final videos = _videosOnly;
+    if (videos.isNotEmpty && i >= _entries.length - 4) {
       ref.read(shortsFeedProvider(tab).notifier).loadMore();
     }
   }
 
   void _patchVideo(ShortVideoEntity updated, ShortsFeedTab tab) {
     setState(() {
-      final idx = _localVideos.indexWhere((v) => v.id == updated.id);
-      if (idx >= 0) _localVideos[idx] = updated;
+      final idx = _entries.indexWhere((e) => e.video?.id == updated.id);
+      if (idx >= 0 && _entries[idx].video != null) {
+        _entries[idx] = ShortsFeedEntry.video(updated);
+      }
     });
     ref.read(shortsFeedProvider(tab).notifier).patchVideo(updated.id, updated);
   }
@@ -84,7 +91,7 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
     ref.read(shortsFeedTabProvider.notifier).state = tab;
     _pageCtrl?.dispose();
     _pageCtrl = null;
-    _localVideos.clear();
+    _entries.clear();
     _index = 0;
     _deepLinkHandled = false;
   }
@@ -97,8 +104,18 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
     await ref.read(shortsFeedProvider(tab).notifier).ensureVideo(id);
   }
 
+  void _rebuildEntries(List<ShortVideoEntity> videos) {
+    final built = buildShortsFeedEntries(videos);
+    if (_entries.map((e) => e.id).join() != built.map((e) => e.id).join()) {
+      _entries
+        ..clear()
+        ..addAll(built);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.watch(shortsOfflineSyncProvider);
     final tab = ref.watch(shortsFeedTabProvider);
     final feed = ref.watch(shortsFeedProvider(tab));
     final safe = ref.watch(shortsSafeSettingsProvider).valueOrNull ??
@@ -165,12 +182,9 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
               children: [
                 Center(
                   child: Text(
-                    'Güvenlik filtresi nedeniyle gösterilecek video yok.\nAyarları gevşetebilirsiniz.',
+                    'Güvenlik filtresi nedeniyle gösterilecek video yok.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: context.colors.onSurfaceMuted,
-                      height: 1.4,
-                    ),
+                    style: TextStyle(color: context.colors.onSurfaceMuted),
                   ),
                 ),
                 _topBar(context, top, tab),
@@ -182,28 +196,21 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
             _handleDeepLink(filtered, tab);
           });
 
-          if (_localVideos.length != filtered.length ||
-              _localVideos.map((v) => v.id).join() !=
-                  filtered.map((v) => v.id).join()) {
-            _localVideos
-              ..clear()
-              ..addAll(filtered);
-            if (_pageCtrl != null &&
-                widget.initialVideoId != null &&
-                _localVideos.any((v) => v.id == widget.initialVideoId)) {
-              final i =
-                  _localVideos.indexWhere((v) => v.id == widget.initialVideoId);
-              if (i >= 0 && i != _index) {
-                _pageCtrl!.jumpToPage(i);
-                _index = i;
-              }
+          _rebuildEntries(filtered);
+
+          if (_pageCtrl != null &&
+              widget.initialVideoId != null &&
+              _entries.any((e) => e.video?.id == widget.initialVideoId)) {
+            final i =
+                _entries.indexWhere((e) => e.video?.id == widget.initialVideoId);
+            if (i >= 0 && i != _index) {
+              _pageCtrl!.jumpToPage(i);
+              _index = i;
             }
           }
 
-          _ensureController(_localVideos.length);
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _preloadAround(_localVideos, _index);
-          });
+          _ensureController(_entries.length);
+          WidgetsBinding.instance.addPostFrameCallback((_) => _warmPool(_index));
 
           return Stack(
             children: [
@@ -211,15 +218,44 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
                 controller: _pageCtrl,
                 scrollDirection: Axis.vertical,
                 physics: PremiumMotion.pagePhysics,
-                itemCount: _localVideos.length,
-                onPageChanged: (i) => _onPageChanged(i, _localVideos, tab),
+                itemCount: _entries.length,
+                onPageChanged: (i) => _onPageChanged(i, tab),
                 itemBuilder: (context, i) {
-                  if ((i - _index).abs() > 1) {
+                  if ((i - _index).abs() > 2) {
+                    final entry = _entries[i];
+                    if (entry.isVideo && entry.video!.thumbnailUrl != null) {
+                      return ColoredBox(
+                        color: Colors.black,
+                        child: Image.network(
+                          entry.video!.thumbnailUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => ColoredBox(
+                            color: ShortsPremiumTheme.feedBackground(context),
+                          ),
+                        ),
+                      );
+                    }
                     return ColoredBox(
                       color: ShortsPremiumTheme.feedBackground(context),
                     );
                   }
-                  final video = _localVideos[i];
+                  final entry = _entries[i];
+                  if (entry.isAd && entry.ad != null) {
+                    return ShortSponsoredTile(
+                      key: ValueKey(entry.id),
+                      ad: entry.ad!,
+                      isActive: i == _index,
+                      onSkip: () {
+                        if (_pageCtrl != null && i + 1 < _entries.length) {
+                          _pageCtrl!.nextPage(
+                            duration: PremiumMotion.fast,
+                            curve: PremiumMotion.easeOut,
+                          );
+                        }
+                      },
+                    );
+                  }
+                  final video = entry.video!;
                   return ShortVideoPageTile(
                     key: ValueKey(video.id),
                     video: video,

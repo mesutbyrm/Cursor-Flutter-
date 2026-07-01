@@ -443,11 +443,14 @@ model ShortVideo {
   viewsCount    Int                 @default(0)
   likesCount    Int                 @default(0)
   commentsCount Int                 @default(0)
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  sharesCount Int                 @default(0)
+  savesCount  Int                 @default(0)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
   likes         ShortVideoLike[]
   comments      ShortVideoComment[]
   views         ShortVideoView[]
+  saves         ShortVideoSave[]
 
   @@index([userId, createdAt])
   @@index([createdAt])
@@ -477,6 +480,19 @@ model ShortVideoComment {
 
   @@index([videoId, createdAt])
   @@index([userId])
+}
+
+model ShortVideoSave {
+  id        String     @id @default(cuid())
+  videoId   String
+  userId    String
+  video     ShortVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+
+  @@unique([videoId, userId])
+  @@index([videoId])
+  @@index([userId])
+  @@map("short_video_saves")
 }
 
 /// Kullanıcı başına tek izlenme sayımı (≥3 sn).

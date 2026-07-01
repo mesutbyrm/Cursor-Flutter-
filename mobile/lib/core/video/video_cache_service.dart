@@ -21,8 +21,20 @@ class VideoCacheService {
 
   CacheManager get manager => _manager;
 
+  Future<File?> peekCachedFile(String url) async {
+    if (url.trim().isEmpty) return null;
+    try {
+      final info = await _manager.getFileFromCache(url);
+      final file = info?.file;
+      if (file != null && await file.exists()) return file;
+    } catch (_) {}
+    return null;
+  }
+
   Future<File?> getCachedFile(String url) async {
     if (url.trim().isEmpty) return null;
+    final cached = await peekCachedFile(url);
+    if (cached != null) return cached;
     try {
       return await _manager.getSingleFile(url);
     } catch (_) {
