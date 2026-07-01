@@ -18,6 +18,9 @@ class LiveVideoPkState {
 
   String get status => battle?['status']?.toString() ?? '';
 
+  /// Bu yayın davetin rakip (invited) tarafı mı — kabul/red gösterimi için.
+  bool get isOpponent => battle?['isOpponent'] == true;
+
   int get leftScore {
     final v = battle?['score1'] ?? battle?['leftScore'];
     return v is num ? v.toInt() : 0;

@@ -1320,21 +1320,29 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                   if (hasStream && pkState?.battle != null && pkStatus == 'pending')
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                      child: LivePkScoreBar(
-                        leftScore: pkState!.leftScore,
-                        rightScore: pkState.rightScore,
-                        status: pkStatus,
-                        isHost: s.isHost,
-                        onAccept: !s.isHost
-                            ? () => ref
-                                .read(liveVideoPkProvider(streamId).notifier)
-                                .accept()
-                            : null,
-                        onReject: !s.isHost
-                            ? () => ref
-                                .read(liveVideoPkProvider(streamId).notifier)
-                                .reject()
-                            : null,
+                      child: Builder(
+                        builder: (_) {
+                          // Davetin rakip tarafı kabul/red edebilir. Canlı yayın
+                          // PK'sında rakip de kendi yayınının host'udur; bu yüzden
+                          // !isHost yerine isOpponent kullanılır.
+                          final canRespond = pkState!.isOpponent;
+                          return LivePkScoreBar(
+                            leftScore: pkState.leftScore,
+                            rightScore: pkState.rightScore,
+                            status: pkStatus,
+                            isHost: s.isHost,
+                            onAccept: canRespond
+                                ? () => ref
+                                    .read(liveVideoPkProvider(streamId).notifier)
+                                    .accept()
+                                : null,
+                            onReject: canRespond
+                                ? () => ref
+                                    .read(liveVideoPkProvider(streamId).notifier)
+                                    .reject()
+                                : null,
+                          );
+                        },
                       ),
                     )
                   else if (s.isHost)
