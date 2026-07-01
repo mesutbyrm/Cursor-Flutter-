@@ -646,6 +646,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     notifier.triggerEmojiRain();
   }
 
+  /// PK aktif/beklemede VEYA misafir modu → ekran üst/alt bölünür.
+  bool _isSplitStage(LiveBroadcastSession s, String pkStatus) {
+    final pkOn = pkStatus == 'active' || pkStatus == 'pending';
+    final guestOn = _resolveGuestLayout() != LiveGuestLayout.solo;
+    return pkOn || guestOn;
+  }
+
   LiveGuestLayout _resolveGuestLayout() {
     final settings = ref.read(liveBroadcastSettingsProvider);
     if (settings.guestLayout != LiveGuestLayout.solo) {
@@ -1239,7 +1246,26 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         body: Stack(
           fit: StackFit.expand,
           children: [
-            Positioned.fill(child: _videoLayer(s)),
+            // PK veya misafir modunda ekran üst/alt bölünür: üst yarı video/PK
+            // alanı, alt yarı hediye + chat. Normal yayında tam ekran video.
+            if (_isSplitStage(s, pkStatus))
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: MediaQuery.sizeOf(context).height * 0.5,
+                child: _videoLayer(s),
+              )
+            else
+              Positioned.fill(child: _videoLayer(s)),
+            if (_isSplitStage(s, pkStatus))
+              Positioned(
+                top: MediaQuery.sizeOf(context).height * 0.5,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: const ColoredBox(color: Colors.black),
+              ),
             const LiveImmersiveScrim(),
             LiveFloatingHeartsOverlay(
               key: _heartsKey,
