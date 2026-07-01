@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.461+465 (2026-06-26)
+
+### Kısa video — CI / FFmpeg düzeltmesi
+
+- `ffmpeg_kit_flutter_min` → `ffmpeg_kit_flutter_new` (FFmpegKit Maven kaldırılması sonrası Android derleme)
+- Android `minSdk` 24 (FFmpegKit gereksinimi)
+
 ## 1.0.460+464 (2026-06-26)
 
 ### Kısa video — Video Stüdyosu ve etkileşim düzeltmeleri
