@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:share_plus/share_plus.dart';
-import '../../domain/entities/short_video_entity.dart';
-import '../pages/shorts_feed_page.dart';
-import '../providers/shorts_providers.dart';
-import 'short_comments_sheet.dart';
 
-class ShortVideoActionsRail extends ConsumerWidget {
+import '../../domain/entities/short_video_entity.dart';
+import '../providers/shorts_providers.dart';
+import '../utils/shorts_api_message.dart';
+import '../utils/shorts_count_format.dart';
+import 'short_comments_sheet.dart';
+import 'short_share_sheet.dart';
+
+class ShortVideoActionsRail extends ConsumerStatefulWidget {
   const ShortVideoActionsRail({
     super.key,
     required this.video,
@@ -18,91 +20,178 @@ class ShortVideoActionsRail extends ConsumerWidget {
   final ValueChanged<ShortVideoEntity> onVideoUpdated;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ShortVideoActionsRail> createState() =>
+      _ShortVideoActionsRailState();
+}
+
+class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
+  ShortVideoEntity get video => widget.video;
+
+  Future<void> _runInteraction(
+    Future<void> Function() action, {
+    String? errorPrefix,
+  }) async {
+    try {
+      await action();
+    } catch (e) {
+      if (!mounted) return;
+      showShortsSnackBar(
+        context,
+        errorPrefix != null ? '$errorPrefix: ${shortsErrorMessage(e)}' : shortsErrorMessage(e),
+      );
+    }
+  }
+
+  Future<void> _toggleLike() async {
+    final optimistic = video.copyWith(
+      likedByMe: !video.likedByMe,
+      likesCount: video.likedByMe
+          ? (video.likesCount > 0 ? video.likesCount - 1 : 0)
+          : video.likesCount + 1,
+    );
+    widget.onVideoUpdated(optimistic);
+    await _runInteraction(() async {
+      final res = await ref.read(shortsRepositoryProvider).toggleLike(video.id);
+      widget.onVideoUpdated(
+        video.copyWith(likedByMe: res.liked, likesCount: res.likesCount),
+      );
+    }, errorPrefix: 'Beğeni');
+  }
+
+  Future<void> _toggleSave() async {
+    final optimistic = video.copyWith(
+      savedByMe: !video.savedByMe,
+      savesCount: video.savedByMe
+          ? (video.savesCount > 0 ? video.savesCount - 1 : 0)
+          : video.savesCount + 1,
+    );
+    widget.onVideoUpdated(optimistic);
+    await _runInteraction(() async {
+      final res = await ref.read(shortsRepositoryProvider).toggleSave(video.id);
+      widget.onVideoUpdated(
+        video.copyWith(savedByMe: res.saved, savesCount: res.savesCount),
+      );
+    }, errorPrefix: 'Kaydet');
+  }
+
+  Future<void> _openComments() async {
+    final count = await showShortCommentsSheet(
+      context,
+      ref,
+      video,
+      onCountChanged: (c) => widget.onVideoUpdated(
+        video.copyWith(commentsCount: c),
+      ),
+    );
+    if (count != null) {
+      widget.onVideoUpdated(video.copyWith(commentsCount: count));
+    }
+  }
+
+  Future<void> _share() async {
+    await showShortShareSheet(
+      context,
+      videoId: video.id,
+      description: video.description,
+      onShared: () async {
+        try {
+          final shares =
+              await ref.read(shortsRepositoryProvider).recordShare(video.id);
+          widget.onVideoUpdated(
+            video.copyWith(
+              sharesCount: shares > 0 ? shares : video.sharesCount + 1,
+            ),
+          );
+        } catch (_) {}
+      },
+    );
+  }
+
+  void _openProfile() {
+    final uid = video.userId.isNotEmpty
+        ? video.userId
+        : (video.author?.id ?? '');
+    if (uid.isEmpty) {
+      showShortsSnackBar(context, 'Profil bulunamadı.');
+      return;
+    }
+    context.push('/user/$uid');
+  }
+
+  void _moreMenu() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF121218),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.link),
+              title: const Text('Bağlantıyı kopyala'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _share();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.flag_outlined),
+              title: const Text('Bildir'),
+              onTap: () => Navigator.pop(ctx),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         _ActionButton(
           icon: video.likedByMe ? Icons.favorite : Icons.favorite_border,
-          label: _formatCount(video.likesCount),
+          label: formatShortCount(video.likesCount),
           color: video.likedByMe ? Colors.redAccent : Colors.white,
-          onTap: () => _toggleLike(ref),
+          onTap: _toggleLike,
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         _ActionButton(
           icon: Icons.mode_comment_outlined,
-          label: _formatCount(video.commentsCount),
-          onTap: () => _openComments(context, ref),
+          label: formatShortCount(video.commentsCount),
+          onTap: _openComments,
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         _ActionButton(
           icon: video.savedByMe ? Icons.bookmark : Icons.bookmark_border,
-          label: _formatCount(video.savesCount),
+          label: formatShortCount(video.savesCount),
           color: video.savedByMe ? Colors.amber : Colors.white,
-          onTap: () => _toggleSave(ref),
+          onTap: _toggleSave,
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         _ActionButton(
           icon: Icons.share_outlined,
-          label: _formatCount(video.sharesCount),
-          onTap: () => _share(ref),
+          label: formatShortCount(video.sharesCount),
+          onTap: _share,
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         _ActionButton(
-          icon: Icons.person_outline,
-          label: 'Profil',
-          onTap: () => context.push('/user/${video.userId}'),
+          icon: Icons.more_horiz,
+          label: 'Daha',
+          onTap: _moreMenu,
+        ),
+        const SizedBox(height: 16),
+        GestureDetector(
+          onTap: _openProfile,
+          child: CircleAvatar(
+            radius: 22,
+            backgroundColor: Colors.white24,
+            child: Icon(Icons.person, color: Colors.white.withValues(alpha: 0.9)),
+          ),
         ),
       ],
     );
-  }
-
-  String _formatCount(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return '$n';
-  }
-
-  Future<void> _toggleLike(WidgetRef ref) async {
-    try {
-      final res =
-          await ref.read(shortsRepositoryProvider).toggleLike(video.id);
-      onVideoUpdated(
-        video.copyWith(likedByMe: res.liked, likesCount: res.likesCount),
-      );
-    } catch (_) {}
-  }
-
-  Future<void> _toggleSave(WidgetRef ref) async {
-    try {
-      final res =
-          await ref.read(shortsRepositoryProvider).toggleSave(video.id);
-      onVideoUpdated(
-        video.copyWith(savedByMe: res.saved, savesCount: res.savesCount),
-      );
-    } catch (_) {}
-  }
-
-  Future<void> _openComments(BuildContext context, WidgetRef ref) async {
-    final count = await showShortCommentsSheet(context, ref, video);
-    if (count != null) {
-      onVideoUpdated(video.copyWith(commentsCount: count));
-    }
-  }
-
-  Future<void> _share(WidgetRef ref) async {
-    final link = shortVideoShareUrl(video.id);
-    final text = [
-      if (video.description?.trim().isNotEmpty == true) video.description!.trim(),
-      link,
-    ].join('\n');
-    try {
-      final shares = await ref.read(shortsRepositoryProvider).recordShare(video.id);
-      if (shares > 0) {
-        onVideoUpdated(video.copyWith(sharesCount: shares));
-      }
-    } catch (_) {}
-    SharePlus.instance.share(ShareParams(text: text));
   }
 }
 
@@ -139,7 +228,7 @@ class _ActionButton extends StatelessWidget {
             label,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -150,9 +239,14 @@ class _ActionButton extends StatelessWidget {
 }
 
 class ShortVideoInfoOverlay extends StatelessWidget {
-  const ShortVideoInfoOverlay({super.key, required this.video});
+  const ShortVideoInfoOverlay({
+    super.key,
+    required this.video,
+    this.onAuthorTap,
+  });
 
   final ShortVideoEntity video;
+  final VoidCallback? onAuthorTap;
 
   @override
   Widget build(BuildContext context) {
@@ -163,12 +257,15 @@ class ShortVideoInfoOverlay extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (author != null)
-          Text(
-            '@${author.username}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-              fontSize: 15,
+          GestureDetector(
+            onTap: onAuthorTap,
+            child: Text(
+              '@${author.username}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+              ),
             ),
           ),
         if (video.music != null) ...[
@@ -194,12 +291,15 @@ class ShortVideoInfoOverlay extends StatelessWidget {
             spacing: 6,
             children: [
               for (final tag in video.hashtags.take(4))
-                Text(
-                  '#$tag',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
+                GestureDetector(
+                  onTap: () => context.push('/shorts/hashtag/${Uri.encodeComponent(tag)}'),
+                  child: Text(
+                    '#$tag',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
             ],
@@ -219,22 +319,12 @@ class ShortVideoInfoOverlay extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Icon(
-              Icons.play_arrow_rounded,
-              size: 16,
-              color: Colors.white.withValues(alpha: 0.8),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              '${video.viewsCount} izlenme',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.8),
-                fontSize: 12,
-              ),
-            ),
-          ],
+        Text(
+          '${formatShortCount(video.viewsCount)} izlenme',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.8),
+            fontSize: 12,
+          ),
         ),
       ],
     );

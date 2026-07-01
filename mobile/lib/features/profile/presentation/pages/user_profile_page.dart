@@ -12,6 +12,7 @@ import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_glass.dart';
+import '../../../shorts/presentation/widgets/user_shorts_videos_section.dart';
 import '../widgets/user_posts_timeline.dart';
 
 class UserProfilePage extends ConsumerWidget {
@@ -225,6 +226,7 @@ class UserProfilePage extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: 22),
+              UserShortsVideosSection(userId: userId),
               const ProfileSectionTitle(title: 'Paylaşımlar'),
               UserPostsTimeline(userId: userId, focusPostId: focusPostId),
             ],

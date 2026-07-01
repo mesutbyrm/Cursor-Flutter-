@@ -21,11 +21,22 @@ class ShortsRemoteDataSource {
       return Map<String, dynamic>.from(m['data']);
     }
     if (m['success'] == false) {
-      final err = m['error']?.toString();
-      if (err != null && err.isNotEmpty) throw ApiException(err);
+      final err = m['error'];
+      if (err is Map) {
+        final msg = pick(asJsonMap(err), ['message', 'code'])?.toString();
+        if (msg != null && msg.isNotEmpty) throw ApiException(msg);
+      }
+      final errStr = err?.toString();
+      if (errStr != null && errStr.isNotEmpty && !errStr.startsWith('{')) {
+        throw ApiException(errStr);
+      }
+      throw ApiException('İstek başarısız.');
     }
     return m;
   }
+
+  /// Dış servisler için video parse (register yanıtı vb.).
+  ShortVideoEntity parseVideo(Map<String, dynamic> json) => _videoFrom(json);
 
   ShortVideoAuthor _authorFrom(Map<String, dynamic> json) {
     final authorRaw = pick(json, ['author', 'user']);
@@ -282,7 +293,9 @@ class ShortsRemoteDataSource {
     );
     final m =
         _unwrap(res.data) ?? (res.data is Map ? asJsonMap(res.data) : null);
-    if (m == null) return (liked: true, likesCount: 0);
+    if (m == null) {
+      throw ApiException('Beğeni yanıtı okunamadı.');
+    }
     return (
       liked: asBool(pick(m, ['liked', 'isLiked', 'likedByMe'])),
       likesCount: asInt(pick(m, ['likesCount', 'likeCount', 'likes'])),
@@ -295,7 +308,9 @@ class ShortsRemoteDataSource {
     );
     final m =
         _unwrap(res.data) ?? (res.data is Map ? asJsonMap(res.data) : null);
-    if (m == null) return (saved: true, savesCount: 0);
+    if (m == null) {
+      throw ApiException('Kaydetme yanıtı okunamadı.');
+    }
     return (
       saved: asBool(pick(m, ['saved', 'isSaved', 'savedByMe'])),
       savesCount: asInt(pick(m, ['savesCount', 'saveCount', 'saves'])),
@@ -362,7 +377,9 @@ class ShortsRemoteDataSource {
     );
     final m =
         _unwrap(res.data) ?? (res.data is Map ? asJsonMap(res.data) : null);
-    if (m == null) return (liked: true, likesCount: 0);
+    if (m == null) {
+      throw ApiException('Yorum beğeni yanıtı okunamadı.');
+    }
     return (
       liked: asBool(pick(m, ['liked', 'isLiked', 'likedByMe'])),
       likesCount: asInt(pick(m, ['likesCount', 'likeCount', 'likes'])),
@@ -480,6 +497,48 @@ class ShortsRemoteDataSource {
         .map((j) => _musicEntityFrom(asJsonMap(j)))
         .where((m) => m.id.isNotEmpty)
         .toList();
+  }
+
+  Future<List<ShortVideoEntity>> fetchHashtagVideos(String name) async {
+    final encoded = Uri.encodeComponent(name.replaceAll('#', ''));
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.shortVideosHashtag(encoded),
+    );
+    final m = _unwrap(res.data);
+    return _videosFrom(m?['videos']);
+  }
+
+  Future<List<ShortVideoAuthor>> searchMentions(String query) async {
+    if (query.trim().isEmpty) return const [];
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.shortVideosMentionsSearch,
+      query: {'q': query.trim()},
+    );
+    final m = _unwrap(res.data);
+    final raw = m?['users'] ?? m?['mentions'] ?? m?['items'];
+    if (raw is! List) return const [];
+    return asJsonList(raw)
+        .map((j) => _authorFrom(asJsonMap(j)))
+        .where((a) => a.id.isNotEmpty)
+        .toList();
+  }
+
+  Future<void> pinComment(String videoId, String commentId) async {
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.shortVideoCommentPin(videoId, commentId),
+    );
+  }
+
+  Future<ShortVideoEntity> registerVideo(Map<String, dynamic> body) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.shortVideosRegister,
+      data: body,
+    );
+    final m = _unwrap(res.data);
+    final raw = m != null ? pick(m, ['video', 'item']) : null;
+    if (raw is Map) return _videoFrom(asJsonMap(raw));
+    if (m != null && m.containsKey('id')) return _videoFrom(m);
+    throw ApiException('Video kaydı tamamlanamadı.');
   }
 
   static String _videoExtension(String path) {

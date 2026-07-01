@@ -215,3 +215,8 @@ final shortMusicSearchProvider =
     FutureProvider.family<List<ShortMusicEntity>, String>((ref, query) async {
   return ref.read(shortsRepositoryProvider).searchMusic(query);
 });
+
+final shortHashtagVideosProvider =
+    FutureProvider.family<List<ShortVideoEntity>, String>((ref, name) async {
+  return ref.read(shortsRepositoryProvider).fetchHashtagVideos(name);
+});

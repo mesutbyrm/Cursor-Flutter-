@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
@@ -35,6 +36,7 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
   Timer? _viewTimer;
   var _viewSent = false;
   var _watchedSec = 0.0;
+  var _showHeart = false;
 
   @override
   void initState() {
@@ -144,6 +146,20 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
     super.dispose();
   }
 
+  Future<void> _doubleTapLike() async {
+    setState(() => _showHeart = true);
+    Future.delayed(const Duration(milliseconds: 700), () {
+      if (mounted) setState(() => _showHeart = false);
+    });
+    if (widget.video.likedByMe) return;
+    try {
+      final res = await ref.read(shortsRepositoryProvider).toggleLike(widget.video.id);
+      widget.onVideoUpdated(
+        widget.video.copyWith(likedByMe: res.liked, likesCount: res.likesCount),
+      );
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     final video = widget.video;
@@ -182,7 +198,15 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
           left: 14,
           right: 78,
           bottom: MediaQuery.paddingOf(context).bottom + 24,
-          child: ShortVideoInfoOverlay(video: video),
+          child: ShortVideoInfoOverlay(
+            video: video,
+            onAuthorTap: () {
+              final uid = video.userId.isNotEmpty
+                  ? video.userId
+                  : (video.author?.id ?? '');
+              if (uid.isNotEmpty) context.push('/user/$uid');
+            },
+          ),
         ),
         Positioned(
           right: 10,
@@ -196,6 +220,7 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
+              onDoubleTap: _doubleTapLike,
               onTap: () {
                 if (c.value.isPlaying) {
                   c.pause();
@@ -214,6 +239,22 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
                     color: Colors.white70,
                   ),
                 ),
+              ),
+            ),
+          ),
+        if (_showHeart)
+          Center(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.6, end: 1.2),
+              duration: const Duration(milliseconds: 400),
+              builder: (context, scale, child) => Transform.scale(
+                scale: scale,
+                child: child,
+              ),
+              child: Icon(
+                Icons.favorite,
+                size: 96,
+                color: Colors.redAccent.withValues(alpha: 0.9),
               ),
             ),
           ),

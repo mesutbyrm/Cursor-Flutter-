@@ -83,4 +83,10 @@ abstract class ShortsRepository {
   Future<List<ShortHashtagEntity>> fetchTrendingHashtags();
 
   Future<List<ShortMusicEntity>> searchMusic(String query);
+
+  Future<List<ShortVideoEntity>> fetchHashtagVideos(String name);
+
+  Future<List<ShortVideoAuthor>> searchMentions(String query);
+
+  Future<void> pinComment(String videoId, String commentId);
 }

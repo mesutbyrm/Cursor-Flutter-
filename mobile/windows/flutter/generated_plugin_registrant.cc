@@ -21,6 +21,7 @@
 #include <iris_method_channel/iris_method_channel_plugin_c_api.h>
 #include <livekit_client/live_kit_plugin.h>
 #include <permission_handler_windows/permission_handler_windows_plugin.h>
+#include <record_windows/record_windows_plugin_c_api.h>
 #include <rive_common/rive_plugin.h>
 #include <share_plus/share_plus_windows_plugin_c_api.h>
 #include <tencent_rtc_sdk/trtc_plugin_c_api.h>
@@ -58,6 +59,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("LiveKitPlugin"));
   PermissionHandlerWindowsPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("PermissionHandlerWindowsPlugin"));
+  RecordWindowsPluginCApiRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("RecordWindowsPluginCApi"));
   RivePluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("RivePlugin"));
   SharePlusWindowsPluginCApiRegisterWithRegistrar(

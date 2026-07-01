@@ -121,4 +121,16 @@ class ShortsRepositoryImpl implements ShortsRepository {
   @override
   Future<List<ShortMusicEntity>> searchMusic(String query) =>
       _remote.searchMusic(query);
+
+  @override
+  Future<List<ShortVideoEntity>> fetchHashtagVideos(String name) =>
+      _remote.fetchHashtagVideos(name);
+
+  @override
+  Future<List<ShortVideoAuthor>> searchMentions(String query) =>
+      _remote.searchMentions(query);
+
+  @override
+  Future<void> pinComment(String videoId, String commentId) =>
+      _remote.pinComment(videoId, commentId);
 }

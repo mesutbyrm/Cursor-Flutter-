@@ -10,8 +10,9 @@ import '../providers/shorts_providers.dart';
 Future<int?> showShortCommentsSheet(
   BuildContext context,
   WidgetRef ref,
-  ShortVideoEntity video,
-) {
+  ShortVideoEntity video, {
+  ValueChanged<int>? onCountChanged,
+}) {
   return showModalBottomSheet<int>(
     context: context,
     isScrollControlled: true,
@@ -19,14 +20,21 @@ Future<int?> showShortCommentsSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
     ),
-    builder: (ctx) => _ShortCommentsSheet(video: video),
+    builder: (ctx) => _ShortCommentsSheet(
+      video: video,
+      onCountChanged: onCountChanged,
+    ),
   );
 }
 
 class _ShortCommentsSheet extends ConsumerStatefulWidget {
-  const _ShortCommentsSheet({required this.video});
+  const _ShortCommentsSheet({
+    required this.video,
+    this.onCountChanged,
+  });
 
   final ShortVideoEntity video;
+  final ValueChanged<int>? onCountChanged;
 
   @override
   ConsumerState<_ShortCommentsSheet> createState() =>
@@ -73,6 +81,10 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
     }
   }
 
+  void _notifyCount() {
+    widget.onCountChanged?.call(_commentsCount);
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -106,6 +118,7 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
       _controller.clear();
       _cancelReply();
       setState(() => _commentsCount = res.commentsCount);
+      _notifyCount();
       await _loadComments();
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -138,96 +151,104 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
   Widget build(BuildContext context) {
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
     final me = ref.watch(currentUserIdProvider);
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottom),
-      child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * 0.62,
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Yorumlar ($_commentsCount)',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          Navigator.of(context).pop(_commentsCount);
+        }
+      },
+      child: Padding(
+        padding: EdgeInsets.only(bottom: bottom),
+        child: SizedBox(
+          height: MediaQuery.sizeOf(context).height * 0.62,
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-            ),
-            Expanded(child: _buildCommentsList(me)),
-            if (_replyToLabel != null)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Yanıt: $_replyToLabel',
-                        style: const TextStyle(color: Colors.white54),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: _cancelReply,
-                      icon: const Icon(Icons.close, color: Colors.white54),
-                    ),
-                  ],
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Yorumlar ($_commentsCount)',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
                 ),
               ),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          hintText: _replyToId != null
-                              ? 'Yanıt yaz...'
-                              : 'Yorum yaz...',
-                          hintStyle: const TextStyle(color: Colors.white38),
-                          filled: true,
-                          fillColor: Colors.white.withValues(alpha: 0.08),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
+              Expanded(child: _buildCommentsList(me)),
+              if (_replyToLabel != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Yanıt: $_replyToLabel',
+                          style: const TextStyle(color: Colors.white54),
                         ),
-                        onSubmitted: (_) => _send(),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: _sending ? null : _send,
-                      icon: _sending
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.send_rounded, color: Colors.white),
-                    ),
-                  ],
+                      IconButton(
+                        onPressed: _cancelReply,
+                        icon: const Icon(Icons.close, color: Colors.white54),
+                      ),
+                    ],
+                  ),
+                ),
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _controller,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: _replyToId != null
+                                ? 'Yanıt yaz...'
+                                : 'Yorum yaz...',
+                            hintStyle: const TextStyle(color: Colors.white38),
+                            filled: true,
+                            fillColor: Colors.white.withValues(alpha: 0.08),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                          ),
+                          onSubmitted: (_) => _send(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: _sending ? null : _send,
+                        icon: _sending
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.send_rounded, color: Colors.white),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
