@@ -55,7 +55,7 @@ function videoPayload(
       avatarUrl: string | null;
     };
   },
-  extras?: { likedByMe?: boolean; viewedByMe?: boolean },
+  extras?: { likedByMe?: boolean; viewedByMe?: boolean; savedByMe?: boolean },
 ) {
   return {
     id: v.id,
@@ -73,6 +73,7 @@ function videoPayload(
     author: authorPayload(v.user),
     likedByMe: extras?.likedByMe ?? false,
     viewedByMe: extras?.viewedByMe ?? false,
+    savedByMe: extras?.savedByMe ?? false,
   };
 }
 
