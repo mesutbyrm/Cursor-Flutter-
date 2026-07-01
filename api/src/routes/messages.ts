@@ -8,6 +8,27 @@ export const messagesRouter = Router();
 
 const RESERVED_PEER = new Set(["conversations", "request"]);
 
+/// In-memory "yazıyor" durumu: conversationId → { userId → son yazma zamanı(ms) }.
+/// DB migration gerektirmez; 5 sn içinde yazan karşı taraf "yazıyor" sayılır.
+const typingState = new Map<string, Map<string, number>>();
+const TYPING_TTL_MS = 6000;
+
+function markTyping(conversationId: string, userId: string) {
+  const m = typingState.get(conversationId) ?? new Map<string, number>();
+  m.set(userId, Date.now());
+  typingState.set(conversationId, m);
+}
+
+function isPeerTyping(conversationId: string, selfUserId: string): boolean {
+  const m = typingState.get(conversationId);
+  if (!m) return false;
+  const now = Date.now();
+  for (const [uid, at] of m) {
+    if (uid !== selfUserId && now - at < TYPING_TTL_MS) return true;
+  }
+  return false;
+}
+
 async function findOrCreateConversation(userId: string, peerUserId: string) {
   const [userAId, userBId] =
     userId < peerUserId ? [userId, peerUserId] : [peerUserId, userId];
@@ -386,7 +407,31 @@ messagesRouter.get("/conversations/:id/messages", requireAuth, async (req, res) 
     });
   }
 
-  return res.status(200).json({ items, messages: items, data: items });
+  return res.status(200).json({
+    items,
+    messages: items,
+    data: items,
+    peerTyping: isPeerTyping(conv.id, userId),
+  });
+});
+
+/** POST /api/messages/conversations/:id/typing — "yazıyor" işareti */
+messagesRouter.post("/conversations/:id/typing", requireAuth, async (req, res) => {
+  const userId = req.userId!;
+  const conv = await prisma.conversation.findFirst({
+    where: {
+      id: req.params.id,
+      OR: [{ userAId: userId }, { userBId: userId }],
+    },
+  });
+  if (!conv) {
+    return res.status(404).json({ success: false, error: "Sohbet bulunamadı" });
+  }
+  if (req.body?.typing !== false) markTyping(conv.id, userId);
+  return res.status(200).json({
+    success: true,
+    peerTyping: isPeerTyping(conv.id, userId),
+  });
 });
 
 /** POST /api/messages/conversations/:id/messages */

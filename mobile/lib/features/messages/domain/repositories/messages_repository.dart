@@ -25,4 +25,7 @@ abstract class MessagesRepository {
     String messageId, {
     String? currentUserId,
   });
+
+  /// "Yazıyor" işareti gönderir, karşı tarafın yazıp yazmadığını döndürür.
+  Future<bool> pingTyping(String conversationId, {bool selfTyping = true});
 }

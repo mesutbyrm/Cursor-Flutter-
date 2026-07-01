@@ -514,8 +514,27 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     _signalService?.onSignal = (sig) {
       if (!mounted) return;
       handleLiveLikeSignal(ref, streamId: streamId, signal: sig);
+      _handlePkSignal(streamId, sig);
     };
     _signalService?.start(streamId: streamId);
+  }
+
+  /// PK skor sinyali — anlık senkron (poll'u beklemeden).
+  void _handlePkSignal(String streamId, Map<String, dynamic> sig) {
+    final type = (sig['type'] ?? sig['event'] ?? '').toString().toLowerCase();
+    if (type != 'pk' && type != 'pkbattle' && type != 'pk_battle') return;
+    final payload = sig['payload'] is Map
+        ? Map<String, dynamic>.from(sig['payload'] as Map)
+        : sig;
+    final battle = payload['battle'] ?? payload['pk'];
+    if (battle is Map) {
+      ref
+          .read(liveVideoPkProvider(streamId).notifier)
+          .applyRemoteBattle(Map<String, dynamic>.from(battle));
+    } else {
+      // Payload battle taşımıyorsa provider'ı tazele.
+      ref.read(liveVideoPkProvider(streamId).notifier).refresh();
+    }
   }
 
   Future<void> _onChatModeration(LiveRoomChatMessage message) async {

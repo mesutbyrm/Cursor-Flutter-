@@ -172,6 +172,22 @@ class MessagesRemoteDataSource {
     );
   }
 
+  /// "Yazıyor" işareti gönderir ve karşı tarafın yazıp yazmadığını döndürür.
+  /// [selfTyping] false ise yalnızca peerTyping okunur (kendi yazma işaretlenmez).
+  Future<bool> pingTyping(String conversationId, {bool selfTyping = true}) async {
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.conversationTyping(conversationId),
+        data: {'typing': selfTyping},
+      );
+      final data = res.data;
+      if (data is Map) return data['peerTyping'] == true;
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> deleteMessage(String peerUserId, String messageId) async {
     if (messageId.isEmpty) return;
     try {
