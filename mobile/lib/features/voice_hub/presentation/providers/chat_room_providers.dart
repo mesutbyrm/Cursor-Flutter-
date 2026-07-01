@@ -2474,9 +2474,6 @@ class VoiceRoomLiveController
     );
     final shouldPlay = (sync?.isPlaying ?? effectiveDj.playing) &&
         _hasDjPlayableSource(effectiveDj, sync: sync, videoId: videoId);
-    final withVideo = effectiveDj.nowPlaying?.isVideoRequest == true &&
-        videoId != null &&
-        videoId.isNotEmpty;
     final startPos = Duration(
       milliseconds: VoicePlaybackLimits.clampPositionMs(
         sync?.resolvedPositionMs() ?? 0,
@@ -2485,13 +2482,24 @@ class VoiceRoomLiveController
     final sig = _djPlaybackSignature(effectiveDj, muted: muted);
     final sameTrack = sig == _lastDjPlaybackSignature;
 
+    // YouTube kaynağı → in-app IFrame embed (ses/video). Sunucu yt-dlp
+    // çözümlemesi gerekmez (Node-only ortam, 429 riski yok). Video isteğinde
+    // görünür şerit, aksi halde ses-only gizli iframe (RoomVideoState.audioOnly).
+    final hasYoutube = videoId != null && videoId.isNotEmpty;
+
     if (shouldPlay) {
       await VoiceRoomMusicAudioSession.activateForPlayback();
-      if (withVideo) {
+
+      if (hasYoutube) {
+        // just_audio'yu durdur; müzik iframe embed üzerinden çalar.
+        await player.stop();
         _syncRoomVideo(effectiveDj, sync: sync);
-      } else {
-        ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+        _lastDjPlaybackSignature = sig;
+        return effectiveDj;
       }
+
+      // YouTube olmayan direkt ses akışı → just_audio.
+      ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
       if (!sameTrack) {
         await player.stop();
       }
@@ -2513,8 +2521,6 @@ class VoiceRoomLiveController
         startPosition: sameTrack ? startPos : startPos,
       );
       _lastDjPlaybackSignature = sig;
-      // Sunucu akış üretemediyse (yt-dlp/Piped başarısız) oynatma sessizce
-      // başlamaz — kullanıcıya bildir ve sıradaki şarkıya geç.
       if (!player.playback.value.playing &&
           player.diagnostics.value.lastPhase == 'sync_verify_failed') {
         unawaited(_handleUnplayableEmbed());

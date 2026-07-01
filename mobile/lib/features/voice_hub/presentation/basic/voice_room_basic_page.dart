@@ -48,6 +48,7 @@ import '../widgets/premium_2026/voice_live_header_2026.dart';
 import '../widgets/premium_2026/voice_top_spenders_strip.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
+import '../../video/presentation/widgets/youtube_video_background.dart';
 
 /// Aşama 1 — oda listesi, giriş/çıkış, mikrofon, hoparlör, katılımcılar, oda sahibi.
 class VoiceRoomBasicPage extends ConsumerStatefulWidget {
@@ -672,6 +673,13 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
+            // YouTube müzik oynatıcısı — ses-only gizli (1x1) iframe, video
+            // isteğinde görünür kart. yt-dlp/sunucu çözümlemesi gerekmez.
+            Positioned.fill(
+              child: IgnorePointer(
+                child: YoutubeVideoBackground(roomKey: _liveRoomKey),
+              ),
+            ),
             SafeArea(
               bottom: false,
               child: Column(

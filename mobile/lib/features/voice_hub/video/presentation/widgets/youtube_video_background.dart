@@ -284,7 +284,19 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
 
     final web = _webView;
     if (web == null) {
-      return _thumbFallback(video);
+      return video.audioOnly ? const SizedBox.shrink() : _thumbFallback(video);
+    }
+
+    // Ses-only müzik: iframe ağaçta kalır (ses çalar) ama görünmez (1x1).
+    if (video.audioOnly) {
+      return SizedBox(
+        width: 1,
+        height: 1,
+        child: Opacity(
+          opacity: 0,
+          child: IgnorePointer(child: web),
+        ),
+      );
     }
 
     Widget player = RepaintBoundary(

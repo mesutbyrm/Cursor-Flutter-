@@ -16,6 +16,7 @@ class RoomVideoState extends Equatable {
     this.trackStartedAtMs,
     this.nowPlaying,
     this.isDismissing = false,
+    this.audioOnly = false,
   });
 
   final String? videoId;
@@ -27,7 +28,13 @@ class RoomVideoState extends Equatable {
   final MusicQueueItem? nowPlaying;
   final bool isDismissing;
 
+  /// Ses-only müzik — YouTube IFrame gizli (1x1) çalar, video gösterilmez.
+  final bool audioOnly;
+
   bool get hasActiveVideo => YoutubeVideoId.isValid(videoId);
+
+  /// Görünür video şeridi yalnızca video isteğinde gösterilir.
+  bool get showsVideo => hasActiveVideo && !audioOnly;
 
   int resolvedPositionMs({DateTime? now}) {
     if (!isPlaying || trackStartedAtMs == null) return positionMs;
@@ -50,6 +57,7 @@ class RoomVideoState extends Equatable {
     MusicQueueItem? nowPlaying,
     bool clearNowPlaying = false,
     bool? isDismissing,
+    bool? audioOnly,
   }) {
     return RoomVideoState(
       videoId: clearVideoId ? null : (videoId ?? this.videoId),
@@ -62,6 +70,7 @@ class RoomVideoState extends Equatable {
           : (trackStartedAtMs ?? this.trackStartedAtMs),
       nowPlaying: clearNowPlaying ? null : (nowPlaying ?? this.nowPlaying),
       isDismissing: isDismissing ?? this.isDismissing,
+      audioOnly: audioOnly ?? this.audioOnly,
     );
   }
 
@@ -70,12 +79,13 @@ class RoomVideoState extends Equatable {
     RoomPlaybackSync? sync,
   }) {
     final np = dj.nowPlaying;
-    if (np?.isVideoRequest != true) {
+    // Video isteği görünür şerit; diğer YouTube müzik ses-only (gizli iframe).
+    if (np == null) {
       return const RoomVideoState();
     }
     final videoId = YoutubeVideoId.fromDj(
-      currentVideoId: sync?.currentVideoId ?? np?.resolvedVideoId,
-      nowPlayingUrl: np?.youtubeUrl,
+      currentVideoId: sync?.currentVideoId ?? np.resolvedVideoId,
+      nowPlayingUrl: np.youtubeUrl,
     );
     if (videoId == null) {
       return const RoomVideoState();
@@ -83,12 +93,13 @@ class RoomVideoState extends Equatable {
     final playing = sync?.isPlaying ?? dj.playing;
     return RoomVideoState(
       videoId: videoId,
-      title: np?.title,
-      thumbUrl: np?.thumbUrl,
+      title: np.title,
+      thumbUrl: np.thumbUrl,
       isPlaying: playing,
       positionMs: sync?.currentPositionMs ?? 0,
       trackStartedAtMs: sync?.trackStartedAtMs,
       nowPlaying: np,
+      audioOnly: np.isVideoRequest != true,
     );
   }
 
@@ -102,5 +113,6 @@ class RoomVideoState extends Equatable {
         trackStartedAtMs,
         nowPlaying?.id,
         isDismissing,
+        audioOnly,
       ];
 }
