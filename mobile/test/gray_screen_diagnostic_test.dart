@@ -13,6 +13,7 @@ import 'package:canlifal_social/features/messages/presentation/providers/message
 import 'package:canlifal_social/features/notifications/presentation/providers/notifications_providers.dart';
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
 import 'package:canlifal_social/features/shorts/domain/entities/short_video_entity.dart';
+import 'package:canlifal_social/features/shorts/domain/repositories/shorts_repository.dart';
 import 'package:canlifal_social/features/shorts/presentation/providers/shorts_providers.dart';
 import 'package:canlifal_social/features/social/presentation/providers/social_providers.dart';
 import 'package:canlifal_social/features/wallet/domain/wallet_balances.dart';
@@ -214,7 +215,7 @@ class _StubWalletBalancesNotifier extends WalletBalancesNotifier {
 
 class _StubShortsFeedNotifier extends ShortsFeedNotifier {
   @override
-  Future<List<ShortVideoEntity>> build() async => [];
+  Future<List<ShortVideoEntity>> build(ShortsFeedTab tab) async => [];
 }
 
 class _StubPsychicsListController extends PsychicsListController {
