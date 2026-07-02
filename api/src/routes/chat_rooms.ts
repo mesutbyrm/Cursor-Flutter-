@@ -63,6 +63,7 @@ import {
   broadcastPkResult,
   handleVoiceRoomPkAction,
 } from "./pk_battles";
+import { presenceHeartbeat } from "../lib/redis/presence";
 
 export const chatRoomsRouter = Router();
 
@@ -777,6 +778,13 @@ chatRoomsRouter.post("/rooms/:roomId/presence", requireAuth, async (req, res) =>
     joined: joinedRow,
   });
   return res.status(200).json({ users: result.presence });
+});
+
+/** PATCH — presence heartbeat (20 sn önerilir) */
+chatRoomsRouter.patch("/rooms/:roomId/presence", requireAuth, async (req, res) => {
+  const roomId = resolveRoomId(req.params.roomId);
+  await presenceHeartbeat(req.userId!, roomId);
+  return res.status(200).json({ ok: true, roomId });
 });
 
 chatRoomsRouter.delete("/rooms/:roomId/presence", requireAuth, async (req, res) => {

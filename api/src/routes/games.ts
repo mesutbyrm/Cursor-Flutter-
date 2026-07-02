@@ -10,6 +10,8 @@ import {
   type Okey101Move,
   type Okey101State,
 } from "../lib/okey101Engine";
+import { cacheGetOrSet } from "../lib/redis/cache";
+import { RedisKeys, RedisTTL } from "../lib/redis/keys";
 
 interface GameRoom {
   id: string;
@@ -78,8 +80,7 @@ function syncRoomStatus(room: GameRoom) {
 
 export const gamesRouter = Router();
 
-gamesRouter.get("/games", (_req, res) => {
-  const items = [
+const gameCatalog = [
     {
       id: "okey101",
       slug: "okey101",
@@ -110,6 +111,13 @@ gamesRouter.get("/games", (_req, res) => {
       type: "multiplayer",
     },
   ];
+
+gamesRouter.get("/games", async (_req, res) => {
+  const items = await cacheGetOrSet(
+    `${RedisKeys.cache.gameList}:multiplayer`,
+    RedisTTL.gameList,
+    async () => gameCatalog,
+  );
   return ok(res, { items, games: items });
 });
 

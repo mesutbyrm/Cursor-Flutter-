@@ -14,6 +14,8 @@ import {
 import { prisma } from "../lib/prisma";
 import { fail, ok } from "../lib/response";
 import { requireAuth } from "../middleware/requireAuth";
+import { cacheGetOrSet } from "../lib/redis/cache";
+import { RedisKeys, RedisTTL } from "../lib/redis/keys";
 
 function publicProfile(u: {
   id: string;
@@ -98,7 +100,12 @@ export const socialRouter = Router();
 
 socialRouter.get("/trend-videos", async (req, res) => {
   const page = Number(req.query.page ?? 0);
-  return ok(res, { videos: seedPosts, page });
+  const videos = await cacheGetOrSet(
+    `${RedisKeys.cache.trendVideos}:p${page}`,
+    RedisTTL.trendVideos,
+    async () => seedPosts,
+  );
+  return ok(res, { videos, page });
 });
 
 socialRouter.get("/video-streams", async (_req, res) => {

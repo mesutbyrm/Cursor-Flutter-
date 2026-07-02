@@ -17,6 +17,8 @@ import {
   emitGiftRoomEvent,
   emitPkBattleEvent,
 } from "../socket/giftHub";
+import { giftQueueEnqueue } from "../lib/redis/giftQueue";
+import { rateLimitMiddleware } from "../lib/redis/rateLimit";
 
 const platformSchema = z.enum(["mobile", "web", "all"]).optional();
 
@@ -101,6 +103,8 @@ function eventPayload(e: {
 }
 
 export const giftsRouter = Router();
+
+giftsRouter.use(rateLimitMiddleware("gift"));
 
 /** GET /api/gifts?platform=mobile|web */
 giftsRouter.get("/", async (req, res) => {
@@ -207,6 +211,12 @@ export async function sendStreamGift(
   });
 
   const payload = eventPayload(event);
+  void giftQueueEnqueue({
+    id: event.id,
+    streamId,
+    senderId: userId,
+    payload: { giftEventId: event.id, streamId, ...payload },
+  });
   emitGiftEvent(streamId, payload);
 
   const pkResult = await applyPkGift({
@@ -423,6 +433,12 @@ export async function sendRoomGift(
   }
 
   const payload = eventPayload(event);
+  void giftQueueEnqueue({
+    id: event.id,
+    roomId,
+    senderId: userId,
+    payload: { giftEventId: event.id, roomId, ...payload },
+  });
   emitGiftRoomEvent(roomId, payload);
 
   const pkResult = await applyPkGift({

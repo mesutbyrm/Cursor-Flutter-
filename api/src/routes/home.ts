@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { ok } from "../lib/response";
+import { cacheGetOrSet } from "../lib/redis/cache";
+import { RedisKeys, RedisTTL } from "../lib/redis/keys";
 
 const seedBanners = [
   {
@@ -99,20 +101,37 @@ const seedGames = [
 export const homeRouter = Router();
 
 homeRouter.get("/banners", async (_req, res) => {
-  return ok(res, { items: seedBanners });
+  const items = await cacheGetOrSet(
+    `${RedisKeys.cache.homeFeed}:banners`,
+    RedisTTL.homeFeed,
+    async () => seedBanners,
+  );
+  return ok(res, { items });
 });
 
 homeRouter.get("/advisors/online", async (_req, res) => {
-  return ok(res, { items: seedAdvisors });
+  const items = await cacheGetOrSet(
+    RedisKeys.cache.popularFortuneTellers,
+    RedisTTL.homeFeed,
+    async () => seedAdvisors,
+  );
+  return ok(res, { items });
 });
 
 homeRouter.get("/games", async (_req, res) => {
-  return ok(res, { items: seedGames });
+  const items = await cacheGetOrSet(
+    RedisKeys.cache.gameList,
+    RedisTTL.gameList,
+    async () => seedGames,
+  );
+  return ok(res, { items });
 });
 
 homeRouter.get("/daily-rewards", async (_req, res) => {
-  return ok(res, {
-    items: [
+  const items = await cacheGetOrSet(
+    `${RedisKeys.cache.homeFeed}:daily-rewards`,
+    RedisTTL.homeFeed,
+    async () => [
       {
         id: "daily-1",
         title: "Günlük giriş ödülü",
@@ -122,5 +141,6 @@ homeRouter.get("/daily-rewards", async (_req, res) => {
         route: "/fortune/gunluk-fal",
       },
     ],
-  });
+  );
+  return ok(res, { items });
 });

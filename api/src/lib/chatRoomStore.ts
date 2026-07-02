@@ -29,6 +29,16 @@ import {
 } from "./voiceStaffRank";
 import type { RoomType } from "@prisma/client";
 import {
+  presenceHeartbeat,
+  presenceJoinRoom,
+  presenceLeaveRoom,
+} from "./redis/presence";
+import {
+  voiceRoomAddUser,
+  voiceRoomRemoveUser,
+  type VoiceRole,
+} from "./redis/voiceRoomState";
+import {
   getVoiceRoomSettings,
   maxUsersForRoomType,
   parseRoomType,
@@ -421,6 +431,24 @@ export async function joinPresence(
   const wasIn = roomMap(roomId).has(user.id);
   roomMap(roomId).set(user.id, row);
 
+  const canonicalId = resolveRoomId(roomId);
+  const voiceRole: VoiceRole =
+    chatRole === "admin" || chatRole === "owner"
+      ? "admin"
+      : chatRole === "dj"
+        ? "speaker"
+        : "listener";
+  void presenceJoinRoom(canonicalId, user.id, {
+    userId: user.id,
+    displayName: row.name,
+    roomId: canonicalId,
+    lastSeen: Date.now(),
+  });
+  void voiceRoomAddUser(canonicalId, user.id, voiceRole, {
+    displayName: row.name,
+    chatRole,
+  });
+
   let systemMsg: ChatRoomMessageRow | null = null;
   if (!wasIn) {
     const staff = rankPower(priv.rank) >= rankPower("admin");
@@ -441,6 +469,9 @@ export function leavePresence(roomId: string, userId: string) {
   const m = roomMap(roomId);
   const prev = m.get(userId);
   m.delete(userId);
+  const canonicalId = resolveRoomId(roomId);
+  void presenceLeaveRoom(canonicalId, userId);
+  void voiceRoomRemoveUser(canonicalId, userId);
   let systemMsg: ChatRoomMessageRow | null = null;
   if (prev) {
     systemMsg = pushMessage(roomId, {

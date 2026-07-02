@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { User } from "@prisma/client";
 import { prisma } from "./prisma";
 import { logMusicAction } from "./musicActionLog";
+import { musicQueuePush } from "./redis/musicQueue";
 
 export type PersistedMusicQueueItem = {
   id: string;
@@ -142,6 +143,8 @@ export async function appendMusicItem(input: {
       youtubeId: item.youtubeId,
     },
   });
+
+  void musicQueuePush(item.roomId, item as unknown as Record<string, unknown>, "right");
 
   return item;
 }

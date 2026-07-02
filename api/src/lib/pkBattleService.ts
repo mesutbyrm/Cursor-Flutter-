@@ -221,7 +221,7 @@ async function resolveWinStreak(userId: string): Promise<number> {
 }
 
 export async function getActiveBattleForRoom(roomId: string) {
-  const cached = pkCache.get(pkRoomCacheKey(roomId));
+  const cached = await pkCache.getAsync(pkRoomCacheKey(roomId));
   if (cached) return cached.payload;
 
   const battle = await prisma.pKBattle.findFirst({
@@ -242,7 +242,7 @@ export async function getActiveBattleForRoom(roomId: string) {
 }
 
 export async function getActiveBattleForStream(streamId: string) {
-  const cached = pkCache.get(pkStreamCacheKey(streamId));
+  const cached = await pkCache.getAsync(pkStreamCacheKey(streamId));
   if (cached) return cached.payload;
 
   const battle = await prisma.pKBattle.findFirst({

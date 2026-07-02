@@ -8,6 +8,8 @@ import {
   getBroadcastHistory,
   patchActivityMarkAllRead,
 } from "../lib/userProfileApiHandlers";
+import { cacheGetOrSet } from "../lib/redis/cache";
+import { RedisKeys, RedisTTL } from "../lib/redis/keys";
 
 export const profileExtrasRouter = Router();
 
@@ -34,13 +36,21 @@ profileExtrasRouter.get("/search", requireAuth, async (req, res) => {
 
 profileExtrasRouter.get("/lookup/:username", async (req, res) => {
   const username = req.params.username.replace(/^@/, "").trim().toLowerCase();
-  const user = await prisma.user.findFirst({
-    where: { username: { equals: username, mode: "insensitive" } },
-  });
-  if (!user) {
+  const cached = await cacheGetOrSet(
+    `${RedisKeys.cache.profile(username)}`,
+    RedisTTL.profile,
+    async () => {
+      const user = await prisma.user.findFirst({
+        where: { username: { equals: username, mode: "insensitive" } },
+      });
+      if (!user) return null;
+      return { user: publicUserPayload(user) };
+    },
+  );
+  if (!cached) {
     return fail(res, 404, "NOT_FOUND", "Kullanıcı bulunamadı");
   }
-  return ok(res, { user: publicUserPayload(user) });
+  return ok(res, cached);
 });
 
 profileExtrasRouter.get("/me/stats", requireAuth, async (req, res) => {

@@ -18,6 +18,7 @@ import {
 import { jsonError } from "../lib/jsonError";
 import { mobileAuthBody, mobileUserPayload } from "../lib/authMobile";
 import { requireAuth } from "../middleware/requireAuth";
+import { onAuthLogin } from "../lib/authRedisHooks";
 
 const mobileRegisterSchema = z.object({
   email: z.string().email(),
@@ -100,6 +101,10 @@ async function issueTokens(userId: string, device?: { label?: string; platform?:
       deviceLabel: device?.label?.slice(0, 120) ?? null,
       devicePlatform: device?.platform?.slice(0, 64) ?? null,
     },
+  });
+  void onAuthLogin(userId, {
+    platform: device?.platform,
+    displayName: undefined,
   });
   return { accessToken, refreshToken, expiresIn: accessExpiresIn };
 }

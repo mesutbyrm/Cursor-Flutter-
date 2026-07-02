@@ -11,6 +11,7 @@ import { fail, ok } from "../lib/response";
 import { uploadShortMedia, getShortMediaObject, storageKeyFromPublicUrl } from "../lib/r2Storage";
 import { optionalAuth } from "../middleware/optionalAuth";
 import { requireAuth } from "../middleware/requireAuth";
+import { shortsRecordEngagement } from "../lib/redis/shortsTrending";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -328,6 +329,7 @@ shortVideosRouter.post("/:id/share", requireAuth, async (req, res) => {
     where: { id: videoId },
     data: { sharesCount: { increment: 1 } },
   });
+  void shortsRecordEngagement({ videoId, shares: 1 });
   return ok(res, { sharesCount: updated.sharesCount });
 });
 
@@ -427,6 +429,7 @@ shortVideosRouter.post("/:id/like", requireAuth, async (req, res) => {
       data: { likesCount: { increment: 1 } },
     }),
   ]);
+  void shortsRecordEngagement({ videoId, likes: 1 });
   return ok(res, { liked: true, likesCount: video.likesCount + 1 });
 });
 
@@ -520,6 +523,12 @@ shortVideosRouter.post("/:id/view", requireAuth, async (req, res) => {
       where: { id: videoId },
       data: { viewsCount: { increment: 1 } },
     });
+  });
+
+  void shortsRecordEngagement({
+    videoId,
+    views: 1,
+    watchTimeMs: watchedSec * 1000,
   });
 
   return ok(res, { counted: true, viewsCount: updated.viewsCount });

@@ -18,6 +18,7 @@ import {
 } from "../lib/jwt";
 import { fail, ok } from "../lib/response";
 import { requireAuth } from "../middleware/requireAuth";
+import { onAuthLogin, onAuthLogout } from "../lib/authRedisHooks";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -65,6 +66,8 @@ async function issueTokens(userId: string) {
   await prisma.refreshToken.create({
     data: { userId, tokenHash, expiresAt },
   });
+
+  void onAuthLogin(userId);
 
   return { accessToken, refreshToken, expiresIn: accessExpiresIn };
 }
@@ -302,14 +305,19 @@ authRouter.post("/logout", async (req, res) => {
     return fail(res, 400, "VALIDATION_ERROR", "Geçersiz istek");
   }
   const rt = parsed.data.refreshToken;
+  let userId: string | undefined;
   if (rt) {
     const tokenHash = hashToken(rt);
+    const stored = await prisma.refreshToken.findFirst({ where: { tokenHash } });
+    userId = stored?.userId;
     await prisma.refreshToken.deleteMany({ where: { tokenHash } });
   }
+  if (userId) void onAuthLogout(userId);
   return ok(res, { loggedOut: true });
 });
 
 authRouter.post("/logout-all", requireAuth, async (req, res) => {
   await prisma.refreshToken.deleteMany({ where: { userId: req.userId! } });
+  void onAuthLogout(req.userId!);
   return ok(res, { loggedOutAll: true });
 });

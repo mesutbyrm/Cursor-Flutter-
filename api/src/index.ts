@@ -39,6 +39,8 @@ import { gamesRouter } from "./routes/games";
 import { voiceRoomSettingsRouter } from "./routes/voice_room_settings";
 import { initGiftSocket } from "./socket/giftHub";
 import { runAdminPaymentBootstrap } from "./lib/adminPaymentBootstrap";
+import { bootstrapRedisStack, isRedisReady } from "./lib/redis/bootstrap";
+import { rateLimitMiddleware } from "./lib/redis/rateLimit";
 import path from "node:path";
 
 const app = express();
@@ -49,13 +51,20 @@ app.use("/uploads/shorts", express.static(path.join(process.cwd(), "uploads", "s
 
 const v1 = express.Router();
 v1.get("/health", (_req, res) => {
-  res.status(200).json({ success: true, data: { status: "ok" } });
+  res.status(200).json({
+    success: true,
+    data: {
+      status: "ok",
+      redis: isRedisReady() ? "connected" : "fallback",
+    },
+  });
 });
 v1.use("/auth", authRouter);
 v1.use("/users", usersRouter);
 v1.use("/", socialRouter);
 
 app.use("/api/v1", v1);
+app.use("/api/auth", rateLimitMiddleware("login"));
 app.use("/api/auth", authRouter);
 app.use("/api/auth", authMobileRouter);
 app.use("/api/social", socialPostsRouter);
@@ -63,6 +72,7 @@ app.use("/api/gifts", giftsRouter);
 app.use("/api/video-streams", videoStreamsRouter);
 app.use("/api/video-streams", videoStreamGiftsRouter);
 app.use("/api", walletRouter);
+app.use("/api", rateLimitMiddleware("api"));
 app.use("/api", voiceRoomSettingsRouter);
 app.use("/api", socialRouter);
 app.use("/api", homeRouter);
@@ -71,7 +81,7 @@ app.use("/api/users", profileExtrasRouter);
 app.use("/api/user", userFlutterApiRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/devices", devicesRouter);
-app.use("/api/messages", messagesRouter);
+app.use("/api/messages", rateLimitMiddleware("message"), messagesRouter);
 app.use("/api/chat", chatRoomsRouter);
 app.use("/api/music", musicRouter);
 app.use("/api/trtc", trtcRouter);
@@ -116,5 +126,10 @@ initGiftSocket(server);
 server.listen(port, () => {
   console.log(`Canlifal API http://localhost:${port}/api/v1`);
   console.log(`Gift Socket.IO path /socket.io`);
+  void bootstrapRedisStack();
   void runAdminPaymentBootstrap();
+});
+
+process.on("SIGTERM", () => {
+  void import("./lib/redis/bootstrap").then((m) => m.teardownRedisStack());
 });
