@@ -14,7 +14,6 @@ import '../../../../core/widgets/hero_tags.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../data/shorts_offline_action_queue.dart';
 import '../../domain/entities/short_video_entity.dart';
-import '../providers/shorts_offline_sync_provider.dart';
 import '../providers/shorts_playback_providers.dart';
 import '../providers/shorts_providers.dart';
 import '../providers/shorts_video_pool_provider.dart';
@@ -40,19 +39,29 @@ class ShortVideoPageTile extends ConsumerStatefulWidget {
 
 class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
   VideoPlayerController? _controller;
-  var _loading = true;
   var _error = false;
   Timer? _viewTimer;
   var _viewSent = false;
   var _watchedSec = 0.0;
   var _showHeart = false;
+  ProviderSubscription<double>? _speedSub;
+
+  bool get _ready =>
+      _controller != null && _controller!.value.isInitialized && !_error;
 
   @override
   void initState() {
     super.initState();
     _viewSent = widget.video.viewedByMe;
-    ref.read(shortsOfflineSyncProvider);
-    _init();
+    _speedSub = ref.listenManual<double>(
+      shortPlaybackSpeedProvider,
+      (prev, next) {
+        if (prev != next && widget.isActive) {
+          _controller?.setPlaybackSpeed(next);
+        }
+      },
+    );
+    unawaited(_init());
   }
 
   @override
@@ -62,7 +71,9 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
       _stopViewTracking();
       _viewSent = widget.video.viewedByMe;
       _watchedSec = 0;
-      _init();
+      _controller = null;
+      _error = false;
+      unawaited(_init());
     } else if (oldWidget.isActive != widget.isActive) {
       _syncPlayback();
     }
@@ -70,24 +81,25 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
 
   Future<void> _init() async {
     if (!mounted) return;
-    setState(() {
-      _loading = true;
-      _error = false;
-    });
+    _error = false;
     try {
       final pool = ref.read(shortsVideoPoolProvider);
+      final cached = pool.controllerFor(widget.video.id);
+      if (cached != null && cached.value.isInitialized) {
+        _controller = cached;
+        if (mounted) {
+          setState(() {});
+          _syncPlayback();
+        }
+        return;
+      }
       final c = await pool.acquire(widget.video);
       if (!mounted) return;
       _controller = c;
-      setState(() => _loading = false);
+      setState(() {});
       _syncPlayback();
     } catch (_) {
-      if (mounted) {
-        setState(() {
-          _loading = false;
-          _error = true;
-        });
-      }
+      if (mounted) setState(() => _error = true);
     }
   }
 
@@ -113,7 +125,7 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
       _watchedSec += 1;
       if (!_viewSent && _watchedSec >= 3) {
         _viewSent = true;
-        _sendView();
+        unawaited(_sendView());
       }
     });
   }
@@ -149,12 +161,14 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
 
   @override
   void dispose() {
+    _speedSub?.close();
     _stopViewTracking();
+    _controller?.pause();
     super.dispose();
   }
 
   Future<void> _doubleTapLike() async {
-    setState(() => _showHeart = true);
+    if (!_showHeart) setState(() => _showHeart = true);
     Future.delayed(const Duration(milliseconds: 700), () {
       if (mounted) setState(() => _showHeart = false);
     });
@@ -187,48 +201,23 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<double>(shortPlaybackSpeedProvider, (prev, next) {
-      if (prev != next && widget.isActive) {
-        _controller?.setPlaybackSpeed(next);
-      }
-    });
-
     final video = widget.video;
     final c = _controller;
+    final bottom = MediaQuery.paddingOf(context).bottom;
 
     return ListPerf.repaint(
       Stack(
         fit: StackFit.expand,
         children: [
-          if (_loading)
-            _thumbnailOrBlack(video)
-          else if (_error || c == null || !c.value.isInitialized)
-            _thumbnailOrBlack(video, showError: true)
+          if (!_ready)
+            _VideoThumbnailLayer(video: video, showError: _error)
           else
-            FittedBox(
-              fit: BoxFit.cover,
-              child: SizedBox(
-                width: c.value.size.width,
-                height: c.value.size.height,
-                child: VideoPlayer(c),
-              ),
-            ),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.center,
-                colors: [
-                  Colors.black.withValues(alpha: 0.65),
-                  Colors.transparent,
-                ],
-              ),
-            ),
-          ),
+            _VideoSurface(controller: c!),
+          const _BottomGradient(),
           Positioned(
             left: 14,
             right: 78,
-            bottom: MediaQuery.paddingOf(context).bottom + 24,
+            bottom: bottom + 24,
             child: ShortVideoInfoOverlay(
               video: video,
               onAuthorTap: () {
@@ -244,7 +233,7 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
           ),
           Positioned(
             right: 10,
-            bottom: MediaQuery.paddingOf(context).bottom + 40,
+            bottom: bottom + 40,
             child: ShortVideoActionsRail(
               video: video,
               videoController: c,
@@ -252,55 +241,52 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
             ),
           ),
           const ShortVideoPipOverlay(),
-          if (c != null && c.value.isInitialized)
+          if (_ready)
             Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
+              child: _VideoTapLayer(
+                controller: c!,
                 onDoubleTap: _doubleTapLike,
                 onLongPress: () => showShortPlaybackSpeedSheet(context, ref),
-                onTap: () {
-                  if (c.value.isPlaying) {
-                    c.pause();
-                  } else {
-                    c.play();
-                  }
-                  setState(() {});
-                },
-                child: Center(
-                  child: AnimatedOpacity(
-                    opacity: c.value.isPlaying ? 0 : 0.85,
-                    duration: const Duration(milliseconds: 180),
-                    child: const Icon(
-                      Icons.play_circle_fill,
-                      size: 72,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ),
               ),
             ),
-          if (_showHeart)
-            Center(
-              child: Icon(
-                Icons.favorite,
-                size: 96,
-                color: Colors.redAccent.withValues(alpha: 0.92),
-              )
-                  .animate()
-                  .scale(
-                    begin: const Offset(0.55, 0.55),
-                    end: const Offset(1.15, 1.15),
-                    duration: PremiumMotion.medium,
-                    curve: PremiumMotion.spring,
-                  )
-                  .fadeOut(delay: 350.ms, duration: 200.ms),
-            ),
+          if (_showHeart) _DoubleTapHeart(),
         ],
       ),
     );
   }
+}
 
-  Widget _thumbnailOrBlack(ShortVideoEntity video, {bool showError = false}) {
+class _VideoSurface extends StatelessWidget {
+  const _VideoSurface({required this.controller});
+
+  final VideoPlayerController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: FittedBox(
+        fit: BoxFit.cover,
+        child: SizedBox(
+          width: controller.value.size.width,
+          height: controller.value.size.height,
+          child: VideoPlayer(controller),
+        ),
+      ),
+    );
+  }
+}
+
+class _VideoThumbnailLayer extends StatelessWidget {
+  const _VideoThumbnailLayer({
+    required this.video,
+    this.showError = false,
+  });
+
+  final ShortVideoEntity video;
+  final bool showError;
+
+  @override
+  Widget build(BuildContext context) {
     final thumb = video.thumbnailUrl;
     final content = ColoredBox(
       color: Colors.black,
@@ -310,15 +296,22 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
               fit: BoxFit.cover,
               width: double.infinity,
               height: double.infinity,
-              errorWidget: _centerMsg(showError),
-              placeholder: _centerMsg(false),
+              errorWidget: _StatusMessage(showError: showError),
+              placeholder: const SizedBox.shrink(),
             )
-          : _centerMsg(showError),
+          : _StatusMessage(showError: showError),
     );
     return HeroShortThumb(videoId: video.id, child: content);
   }
+}
 
-  Widget _centerMsg(bool showError) {
+class _StatusMessage extends StatelessWidget {
+  const _StatusMessage({required this.showError});
+
+  final bool showError;
+
+  @override
+  Widget build(BuildContext context) {
     if (showError) {
       return const Center(
         child: Text(
@@ -327,8 +320,91 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
         ),
       );
     }
-    return const Center(
-      child: CircularProgressIndicator(color: Colors.white54),
+    return const SizedBox.shrink();
+  }
+}
+
+class _BottomGradient extends StatelessWidget {
+  const _BottomGradient();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.bottomCenter,
+          end: Alignment.center,
+          colors: [
+            Color(0xA6000000),
+            Colors.transparent,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VideoTapLayer extends StatelessWidget {
+  const _VideoTapLayer({
+    required this.controller,
+    required this.onDoubleTap,
+    required this.onLongPress,
+  });
+
+  final VideoPlayerController controller;
+  final VoidCallback onDoubleTap;
+  final VoidCallback onLongPress;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onDoubleTap: onDoubleTap,
+      onLongPress: onLongPress,
+      onTap: () {
+        if (controller.value.isPlaying) {
+          controller.pause();
+        } else {
+          controller.play();
+        }
+      },
+      child: ListenableBuilder(
+        listenable: controller,
+        builder: (context, _) {
+          return Center(
+            child: AnimatedOpacity(
+              opacity: controller.value.isPlaying ? 0 : 0.85,
+              duration: const Duration(milliseconds: 180),
+              child: const Icon(
+                Icons.play_circle_fill,
+                size: 72,
+                color: Colors.white70,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _DoubleTapHeart extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Icon(
+        Icons.favorite,
+        size: 96,
+        color: Colors.redAccent.withValues(alpha: 0.92),
+      )
+          .animate()
+          .scale(
+            begin: const Offset(0.55, 0.55),
+            end: const Offset(1.15, 1.15),
+            duration: PremiumMotion.medium,
+            curve: PremiumMotion.spring,
+          )
+          .fadeOut(delay: 350.ms, duration: 200.ms),
     );
   }
 }

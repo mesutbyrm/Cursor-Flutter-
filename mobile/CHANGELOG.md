@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.470+474 (2026-06-26)
+
+### Kısa video — Performans & kaydırma düzeltmesi
+
+- **PageView yeniden yapı:** Dikey `PageView.builder`, `pageSnapping`, `BouncingScrollPhysics` (hızlı swipe)
+- **Hedefli rebuild:** `shortsFeedIndexProvider` — yalnızca aktif ±1 tile rebuild olur
+- **Controller pool:** Max 3 slot (önceki + aktif + sonraki); LRU ile uzak videolar dispose
+- **Preload:** Kaydırma sırasında pool warm + disk cache prefetch
+- **Siyah ekran azaltma:** Thumbnail anında gösterilir; spinner kaldırıldı
+- **Tek oynatıcı:** Yalnızca aktif video play; diğerleri pause
+- **RepaintBoundary:** Video yüzeyi, placeholder ve feed öğeleri izole
+- **ListenableBuilder:** Play/pause overlay setState'siz güncellenir
+
 ## 1.0.469+473 (2026-06-26)
 
 ### Kısa video — Profesyonel performans & sosyal
