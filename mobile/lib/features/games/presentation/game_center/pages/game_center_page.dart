@@ -47,10 +47,61 @@ class GameCenterPage extends ConsumerWidget {
             GameCenterHeroBanner(
               onSpin: () => context.push('/games-hub/wheel'),
             ),
+            const SizedBox(height: 16),
+            Card(
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () => context.push('/games-hub/okey101'),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF065F46).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.view_module_rounded,
+                          color: Color(0xFF059669),
+                          size: 32,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Okey 101',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                                color: context.colors.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '4 oyunculu · 101 puanla aç · çok oyunculu',
+                              style: TextStyle(
+                                color: context.colors.onSurfaceMuted,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 22),
             const GameCenterEmptyState(
               message:
-                  'Oyun merkezi şu an güncelleniyor. Yakında yeni oyunlar eklenecek.',
+                  'Daha fazla oyun yakında. Okey 101 hazır — hemen oyna!',
             ),
             const SizedBox(height: 16),
             _LeaderboardTeaser(

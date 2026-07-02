@@ -202,7 +202,14 @@ class _GameTile extends ConsumerWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => _showGameActions(context, ref, game),
+        onTap: () {
+          final route = game.route;
+          if (route != null && route.isNotEmpty) {
+            context.push(route);
+            return;
+          }
+          _showGameActions(context, ref, game);
+        },
         child: Padding(
           padding: const EdgeInsets.all(10),
           child: Column(

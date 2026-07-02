@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.472+476 (2026-06-26)
+
+### Okey 101 — çok oyunculu oyun
+
+- **101 Okey:** 2–4 oyuncu, 101 puanla aç, desteden/atıktan çek, taş at
+- **Oyun merkezi + lobide** Okey 101 kartı; `/games-hub/okey101` lobisi
+- **Gerçek tahta UI:** gösterge/okey, rakip el sayıları, el ıstakası, oyun sohbeti
+- **Site API uyumu:** `POST /api/games/rooms`, auto-match, join, move, chat
+- **API mirror:** Tam okey101 motoru + oda yönetimi (`api/src/routes/games.ts`)
+
 ## 1.0.471+475 (2026-06-26)
 
 ### Kısa video — Otomatik oynatma & hızlı kaydırma

@@ -62,9 +62,19 @@ class GameRoomController
   }
 
   Future<void> sendMove(Map<String, dynamic> move) async {
-    state = await AsyncValue.guard(
-      () => ref.read(gameRemoteProvider).sendMove(roomId: arg, move: move),
-    );
+    final previous = state.valueOrNull;
+    try {
+      final snap = await ref.read(gameRemoteProvider).sendMove(
+            roomId: arg,
+            move: move,
+          );
+      state = AsyncValue.data(snap);
+    } catch (e) {
+      if (previous != null) {
+        state = AsyncValue.data(previous);
+      }
+      rethrow;
+    }
   }
 
   Future<void> sendChat(String text) async {

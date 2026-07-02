@@ -81,6 +81,13 @@ const seedGames = [
     accentColor: "#B388FF",
   },
   {
+    id: "okey101",
+    title: "Okey 101",
+    icon: "🀄",
+    route: "/games-hub/okey101",
+    accentColor: "#059669",
+  },
+  {
     id: "missions",
     title: "Günlük Görevler",
     icon: "✅",

@@ -31,8 +31,9 @@ import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
 import '../../features/games/presentation/game_center/pages/game_center_leaderboard_page.dart';
 import '../../features/games/presentation/game_center/pages/game_center_page.dart';
 import '../../features/games/presentation/game_center/pages/game_play_pages.dart';
-import '../../features/games/presentation/pages/game_room_page.dart';
+import '../../features/games/presentation/pages/game_room_router_page.dart';
 import '../../features/games/presentation/pages/games_hub_page.dart';
+import '../../features/games/presentation/okey101/okey101_lobby_page.dart';
 import '../../features/gifts/presentation/pages/gift_send_page.dart';
 import '../../features/live/domain/entities/live_broadcast_session.dart';
 import '../../features/live/domain/entities/live_broadcast_prep_args.dart';
@@ -776,6 +777,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
+            path: 'okey101',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const Okey101LobbyPage(),
+            ),
+          ),
+          GoRoute(
             path: 'lobby',
             pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
               key: state.pageKey,
@@ -789,9 +797,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final id = state.pathParameters['id'] ?? '';
           final title = state.uri.queryParameters['title'];
+          final game = state.uri.queryParameters['game'];
           return AppPageTransitions.fadeSlide(
             key: state.pageKey,
-            child: GameRoomPage(roomId: id, title: title),
+            child: GameRoomRouterPage(
+              roomId: id,
+              title: title,
+              gameHint: game,
+            ),
           );
         },
       ),

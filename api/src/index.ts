@@ -35,6 +35,7 @@ import { fail } from "./lib/response";
 import { pkBattlesRouter } from "./routes/pk_battles";
 import { liveFalRequestsRouter } from "./routes/live_fal_requests";
 import { shortVideosRouter } from "./routes/short_videos";
+import { gamesRouter } from "./routes/games";
 import { voiceRoomSettingsRouter } from "./routes/voice_room_settings";
 import { initGiftSocket } from "./socket/giftHub";
 import { runAdminPaymentBootstrap } from "./lib/adminPaymentBootstrap";
@@ -80,6 +81,7 @@ app.use("/api/reports", reportsRouter);
 app.use("/api/pk", pkBattlesRouter);
 app.use("/api", liveFalRequestsRouter);
 app.use("/api/short-videos", shortVideosRouter);
+app.use("/api", gamesRouter);
 
 /** @deprecated — GET /api/music/search kullanın */
 app.get("/api/youtube/search", requireAuth, async (req, res) => {

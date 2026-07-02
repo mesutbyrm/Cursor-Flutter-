@@ -224,7 +224,10 @@ abstract final class GameCatalogFallback {
     GameCatalogItem(
       id: 'okey101',
       title: 'Okey 101',
+      subtitle: '4 oyuncu · 101 puanla aç',
       kind: GameKind.multiplayer,
+      route: '/games-hub/okey101',
+      icon: Icons.view_module_rounded,
     ),
     GameCatalogItem(
       id: 'connect4',
