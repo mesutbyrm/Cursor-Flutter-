@@ -92,6 +92,7 @@ class _Okey101RoomPageState extends ConsumerState<Okey101RoomPage> {
             selectedTileId: _selectedTileId,
             chatCtrl: _chatCtrl,
             roomId: widget.roomId,
+            localFallback: snapshot.raw['localFallback'] == true,
             onSelectTile: (id) => setState(() => _selectedTileId = id),
             onMove: _move,
           );
@@ -109,6 +110,7 @@ class _Board extends ConsumerWidget {
     required this.selectedTileId,
     required this.chatCtrl,
     required this.roomId,
+    required this.localFallback,
     required this.onSelectTile,
     required this.onMove,
   });
@@ -119,6 +121,7 @@ class _Board extends ConsumerWidget {
   final String? selectedTileId;
   final TextEditingController chatCtrl;
   final String roomId;
+  final bool localFallback;
   final ValueChanged<String?> onSelectTile;
   final Future<void> Function(Map<String, dynamic>) onMove;
 
@@ -140,6 +143,17 @@ class _Board extends ConsumerWidget {
             child: Text(
               game.lastMove!,
               style: const TextStyle(color: Colors.white70, fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        if (localFallback)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            color: Colors.orange.withValues(alpha: 0.25),
+            child: const Text(
+              'Site oyun API uçları henüz hazır değil — yerel oda modu aktif.',
+              style: TextStyle(color: Colors.amber, fontSize: 11),
               textAlign: TextAlign.center,
             ),
           ),

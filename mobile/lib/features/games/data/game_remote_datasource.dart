@@ -1,14 +1,27 @@
 import 'package:dio/dio.dart';
 
 import '../../../core/network/api_endpoints.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import '../domain/game_models.dart';
+import 'okey101_local_session.dart';
+
+typedef UserIdResolver = String? Function();
+typedef DisplayNameResolver = String Function();
 
 class GameRemoteDataSource {
-  GameRemoteDataSource(this._dio);
+  GameRemoteDataSource(
+    this._dio, {
+    UserIdResolver? resolveUserId,
+    DisplayNameResolver? resolveDisplayName,
+  })  : _resolveUserId = resolveUserId ?? (() => null),
+        _resolveDisplayName = resolveDisplayName ?? (() => 'Oyuncu');
 
   final Dio _dio;
+  final UserIdResolver _resolveUserId;
+  final DisplayNameResolver _resolveDisplayName;
+  final _local = Okey101LocalSession.instance;
 
   Future<List<GameCatalogItem>> fetchCatalog() async {
     try {
@@ -24,74 +37,222 @@ class GameRemoteDataSource {
   }
 
   Future<List<GameRoomItem>> fetchRooms() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.gameRooms);
-      return _items(
-        res.data,
-        const ['rooms', 'items', 'data', 'results'],
-      ).map(GameRoomItem.fromJson).where((room) => room.id.isNotEmpty).toList();
-    } catch (_) {
-      return const [];
+    final remote = await _fetchRoomsRemote();
+    final local = _local.openRooms();
+    final byId = {for (final r in remote) r.id: r};
+    for (final room in local) {
+      byId.putIfAbsent(room.id, () => room);
     }
+    return byId.values.toList();
+  }
+
+  Future<List<GameRoomItem>> _fetchRoomsRemote() async {
+    final attempts = <Future<List<GameRoomItem>> Function()>[
+      () async {
+        final res = await _dio.safeGet<dynamic>(ApiEndpoints.gameRooms);
+        return _parseRooms(res.data);
+      },
+      () async {
+        final rooms = <GameRoomItem>[];
+        for (final slug in _okeySlugs('okey101')) {
+          final res = await _dio.safeGet<dynamic>(
+            ApiEndpoints.gameRoomCreate,
+            query: {'slug': slug, 'gameSlug': slug, 'gameId': slug},
+          );
+          rooms.addAll(_parseRooms(res.data));
+        }
+        return rooms;
+      },
+    ];
+
+    for (final attempt in attempts) {
+      try {
+        final rooms = await attempt();
+        if (rooms.isNotEmpty) return rooms;
+      } on ApiException catch (e) {
+        if (e.statusCode == 404 || e.statusCode == 405) continue;
+      } catch (_) {}
+    }
+    return const [];
   }
 
   Future<GameRoomItem?> createRoom(GameCatalogItem game) async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.gameRooms,
-      data: {
-        'gameId': game.id,
-        'type': game.id,
-        'slug': game.id,
-        'title': game.title,
-        if (game.jetonCost > 0) 'jetonCost': game.jetonCost,
-      },
-    );
-    return _roomFromBody(res.data);
+    final payloads = _createPayloads(game);
+    final paths = [ApiEndpoints.gameRooms, ApiEndpoints.gameRoomCreate];
+
+    for (final path in paths) {
+      for (final data in payloads) {
+        try {
+          final res = await _dio.safePost<dynamic>(path, data: data);
+          final room = _roomFromBody(res.data);
+          if (room != null) return room;
+        } on ApiException catch (e) {
+          if (e.statusCode == 404 || e.statusCode == 405) continue;
+          rethrow;
+        }
+      }
+    }
+
+    if (_isOkey101(game.id)) {
+      return _local.createRoom(
+        hostUserId: _userId(),
+        hostName: _resolveDisplayName(),
+        game: game,
+      );
+    }
+    return null;
   }
 
   Future<GameRoomItem?> autoMatch(GameCatalogItem game) async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.gameAutoMatch,
-      data: {'gameId': game.id, 'type': game.id, 'slug': game.id},
-    );
-    return _roomFromBody(res.data);
+    final payloads = _autoMatchPayloads(game);
+    final paths = [ApiEndpoints.gameAutoMatch, ApiEndpoints.gameRoomCreate, ApiEndpoints.gamePlay];
+
+    for (final path in paths) {
+      for (final data in payloads) {
+        try {
+          final res = await _dio.safePost<dynamic>(path, data: data);
+          final room = _roomFromBody(res.data);
+          if (room != null) return room;
+        } on ApiException catch (e) {
+          if (e.statusCode == 404 || e.statusCode == 405) continue;
+          rethrow;
+        }
+      }
+    }
+
+    if (_isOkey101(game.id)) {
+      return _local.autoMatch(
+        userId: _userId(),
+        displayName: _resolveDisplayName(),
+        game: game,
+      );
+    }
+    return null;
   }
 
   Future<GameRoomItem?> joinRoom(String roomId) async {
-    final res = await _dio.safePost<dynamic>(ApiEndpoints.gameRoomJoin(roomId));
-    return _roomFromBody(res.data);
+    if (_local.hasRoom(roomId)) {
+      return _local.joinRoom(
+        roomId: roomId,
+        userId: _userId(),
+        displayName: _resolveDisplayName(),
+      );
+    }
+
+    try {
+      final res = await _dio.safePost<dynamic>(ApiEndpoints.gameRoomJoin(roomId));
+      return _roomFromBody(res.data);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 && _local.hasRoom(roomId)) {
+        return _local.joinRoom(
+          roomId: roomId,
+          userId: _userId(),
+          displayName: _resolveDisplayName(),
+        );
+      }
+      rethrow;
+    }
   }
 
   Future<GameRoomStateSnapshot> fetchRoomState(String roomId) async {
-    try {
-      final res = await _dio.safePost<dynamic>(
+    if (_local.hasRoom(roomId)) {
+      return _snapshotFromRaw(
+        roomId,
+        _local.roomState(roomId, _userId()),
+      );
+    }
+
+    final attempts = <Future<Response<dynamic>> Function()>[
+      () => _dio.safePost<dynamic>(
         ApiEndpoints.gameRoom(roomId),
         data: const {'action': 'state'},
-      );
-      return GameRoomStateSnapshot.fromJson(roomId, _map(res.data));
-    } catch (_) {
-      return GameRoomStateSnapshot(roomId: roomId, status: 'unknown');
+      ),
+      () => _dio.safeGet<dynamic>(ApiEndpoints.gameRoom(roomId)),
+      () => _dio.safePost<dynamic>(
+        ApiEndpoints.gamePlay,
+        data: {'action': 'state', 'roomId': roomId},
+      ),
+    ];
+
+    for (final attempt in attempts) {
+      try {
+        final res = await attempt();
+        return GameRoomStateSnapshot.fromJson(roomId, _map(res.data));
+      } on ApiException catch (e) {
+        if (e.statusCode == 404 || e.statusCode == 405) continue;
+      } catch (_) {}
     }
+
+    if (_local.hasRoom(roomId)) {
+      return _snapshotFromRaw(roomId, _local.roomState(roomId, _userId()));
+    }
+    return GameRoomStateSnapshot(roomId: roomId, status: 'unknown');
   }
 
   Future<GameRoomStateSnapshot> sendMove({
     required String roomId,
     required Map<String, dynamic> move,
   }) async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.gameRoom(roomId),
-      data: {'action': 'move', 'move': move, ...move},
-    );
-    return GameRoomStateSnapshot.fromJson(roomId, _map(res.data));
+    if (_local.hasRoom(roomId)) {
+      return _snapshotFromRaw(
+        roomId,
+        _local.sendMove(roomId: roomId, userId: _userId(), move: move),
+      );
+    }
+
+    final payloads = _movePayloads(move);
+    final paths = <String Function()>[
+      () => ApiEndpoints.gameRoom(roomId),
+      () => ApiEndpoints.gamePlay,
+    ];
+
+    ApiException? lastError;
+    for (final pathFn in paths) {
+      for (final data in payloads) {
+        try {
+          final body = pathFn() == ApiEndpoints.gamePlay
+              ? {...data, 'roomId': roomId, 'gameSlug': 'okey101', 'slug': 'okey101'}
+              : data;
+          final res = await _dio.safePost<dynamic>(pathFn(), data: body);
+          return GameRoomStateSnapshot.fromJson(roomId, _map(res.data));
+        } on ApiException catch (e) {
+          lastError = e;
+          if (e.statusCode == 404 || e.statusCode == 405) continue;
+          rethrow;
+        }
+      }
+    }
+
+    if (_local.hasRoom(roomId)) {
+      return _snapshotFromRaw(
+        roomId,
+        _local.sendMove(roomId: roomId, userId: _userId(), move: move),
+      );
+    }
+    throw lastError ?? const ApiException('Hamle gönderilemedi');
   }
 
   Future<void> sendChat({required String roomId, required String text}) async {
     final message = text.trim();
     if (message.isEmpty) return;
-    await _dio.safePost<dynamic>(
-      ApiEndpoints.gameRoomChat(roomId),
-      data: {'message': message, 'text': message, 'content': message},
-    );
+
+    if (_local.hasRoom(roomId)) {
+      _local.sendChat(roomId: roomId, userId: _userId(), text: message);
+      return;
+    }
+
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.gameRoomChat(roomId),
+        data: {'message': message, 'text': message, 'content': message},
+      );
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 && _local.hasRoom(roomId)) {
+        _local.sendChat(roomId: roomId, userId: _userId(), text: message);
+        return;
+      }
+      rethrow;
+    }
   }
 
   Future<List<GameScoreItem>> fetchLeaderboard({String period = 'weekly'}) async {
@@ -177,6 +338,89 @@ class GameRemoteDataSource {
       ApiEndpoints.tournamentsJoin,
       data: {'tournamentId': tournamentId, 'id': tournamentId},
     );
+  }
+
+  String _userId() => _resolveUserId() ?? 'mobile-player';
+
+  bool _isOkey101(String gameId) {
+    final id = gameId.toLowerCase();
+    return id.contains('okey101') || id == 'yuzbirokey' || id == 'okey-101';
+  }
+
+  List<String> _okeySlugs(String gameId) {
+    return ['okey101', 'yuzbirokey', 'okey-101', gameId];
+  }
+
+  List<Map<String, dynamic>> _createPayloads(GameCatalogItem game) {
+    final slugs = _isOkey101(game.id) ? _okeySlugs(game.id) : [game.id];
+    final payloads = <Map<String, dynamic>>[];
+    for (final slug in slugs) {
+      payloads.addAll([
+        {
+          'gameId': slug,
+          'type': slug,
+          'slug': slug,
+          'gameSlug': slug,
+          'title': game.title,
+          if (game.jetonCost > 0) 'jetonCost': game.jetonCost,
+        },
+        {
+          'action': 'create',
+          'gameId': slug,
+          'slug': slug,
+          'gameSlug': slug,
+          'title': game.title,
+          'maxPlayers': 4,
+        },
+      ]);
+    }
+    return payloads;
+  }
+
+  List<Map<String, dynamic>> _autoMatchPayloads(GameCatalogItem game) {
+    final slugs = _isOkey101(game.id) ? _okeySlugs(game.id) : [game.id];
+    final payloads = <Map<String, dynamic>>[];
+    for (final slug in slugs) {
+      payloads.addAll([
+        {'gameId': slug, 'type': slug, 'slug': slug, 'gameSlug': slug},
+        {
+          'action': 'autoMatch',
+          'gameId': slug,
+          'slug': slug,
+          'gameSlug': slug,
+        },
+        {
+          'action': 'match',
+          'gameSlug': slug,
+          'slug': slug,
+        },
+      ]);
+    }
+    return payloads;
+  }
+
+  List<Map<String, dynamic>> _movePayloads(Map<String, dynamic> move) {
+    final type = move['type']?.toString() ?? '';
+    return [
+      {'action': 'move', 'move': move},
+      {'action': type, ...move},
+      move,
+      {'type': type, 'move': move, 'action': 'move'},
+    ];
+  }
+
+  List<GameRoomItem> _parseRooms(dynamic body) {
+    return _items(
+      body,
+      const ['rooms', 'items', 'data', 'results'],
+    ).map(GameRoomItem.fromJson).where((room) => room.id.isNotEmpty).toList();
+  }
+
+  GameRoomStateSnapshot _snapshotFromRaw(
+    String roomId,
+    Map<String, dynamic> raw,
+  ) {
+    return GameRoomStateSnapshot.fromJson(roomId, raw);
   }
 
   GameRoomItem? _roomFromBody(dynamic body) {

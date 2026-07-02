@@ -155,6 +155,9 @@ abstract final class ApiEndpoints {
   /// Oyunlar ve etkinlikler.
   static const homeGames = '/api/games';
   static const gameRooms = '/api/games/rooms';
+  /// Üretimde oda oluşturma (çoğu sürümde `/rooms` yerine bu uç).
+  static const gameRoomCreate = '/api/games/room';
+  static const gamePlay = '/api/games/play';
   static const gameAutoMatch = '/api/games/auto-match';
   static const gameLeaderboard = '/api/games/leaderboard';
   static const gameHistory = '/api/games/history';

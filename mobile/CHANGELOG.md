@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.473+477 (2026-06-26)
+
+### Okey 101 — 404 düzeltmesi (site API uyumu)
+
+- **Kök neden:** canlifal.com'da `POST /api/games/rooms` 404; oda oluşturma ve hamleler başarısız oluyordu
+- **Üretim yedek uçları:** `POST /api/games/room`, `GET /api/games/room`, `POST /api/games/play` sıralı deneme
+- **Hamle formatı:** `action: move`, düz `action: open` ve alternatif gövdeler
+- **Yerel oda modu:** API 404 ise oturum içi Okey101 motoru (101 aç, çek, at) devreye girer
+- **Slug yedekleri:** `okey101`, `yuzbirokey`, `okey-101`
+
 ## 1.0.472+476 (2026-06-26)
 
 ### Okey 101 — çok oyunculu oyun
