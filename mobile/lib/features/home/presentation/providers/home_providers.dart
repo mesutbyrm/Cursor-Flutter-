@@ -69,21 +69,14 @@ final homeTrendVideosProvider =
 });
 
 /// Tüm ana sayfa verilerini yenile.
+///
+/// `waitSilent`: tek bir isteğin hatası diğerlerini ve göstergeyi kilitlemez.
+/// Genel zaman aşımı: yavaş/askıda kalan bir uç nokta yenileme döngüsünü
+/// sonsuza kadar döndürmesin (kullanıcı "sürekli dönüyor" sorunu).
 Future<void> refreshHomeData(WidgetRef ref) async {
-  ref.invalidate(homeBannersProvider);
-  ref.invalidate(psychicsListControllerProvider);
-  ref.invalidate(homeAdvisorsProvider);
-  ref.invalidate(homeLiveStreamsProvider);
-  ref.invalidate(homeVoiceRoomsProvider);
-  ref.invalidate(homeGamesProvider);
-  ref.invalidate(homeDailyRewardsProvider);
-  ref.invalidate(homeFortuneCardsProvider);
-  ref.invalidate(homeTrendVideosProvider);
-  ref.invalidate(socialStoryRingsProvider);
-  ref.invalidate(shortsFeedProvider);
-  ref.invalidate(shortsExploreProvider);
-
-  await NetworkPerf.parallel([
+  // `ref.refresh(...future)` zaten invalidate edip yeniden getirir;
+  // ayrıca invalidate çağırmak çift fetch'e yol açtığı için kaldırıldı.
+  await NetworkPerf.waitSilent([
     ref.refresh(homeBannersProvider.future),
     ref.refresh(psychicsListControllerProvider.future),
     ref.refresh(homeAdvisorsProvider.future),
@@ -96,5 +89,8 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(socialStoryRingsProvider.future),
     ref.refresh(shortsFeedProvider(ShortsFeedTab.forYou).future),
     ref.refresh(shortsExploreProvider.future),
-  ]);
+  ]).timeout(
+    const Duration(seconds: 12),
+    onTimeout: () {},
+  );
 }
