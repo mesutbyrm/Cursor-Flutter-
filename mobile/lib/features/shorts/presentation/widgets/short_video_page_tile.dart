@@ -14,6 +14,7 @@ import '../../../../core/widgets/hero_tags.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../data/shorts_offline_action_queue.dart';
 import '../../domain/entities/short_video_entity.dart';
+import '../providers/shorts_playback_coordinator.dart';
 import '../providers/shorts_playback_providers.dart';
 import '../providers/shorts_providers.dart';
 import '../providers/shorts_video_pool_provider.dart';
@@ -40,14 +41,18 @@ class ShortVideoPageTile extends ConsumerStatefulWidget {
 class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
   VideoPlayerController? _controller;
   var _error = false;
+  var _hasFrame = false;
   Timer? _viewTimer;
   var _viewSent = false;
   var _watchedSec = 0.0;
   var _showHeart = false;
   ProviderSubscription<double>? _speedSub;
+  ProviderSubscription<int>? _playbackTickSub;
 
   bool get _ready =>
       _controller != null && _controller!.value.isInitialized && !_error;
+
+  bool get _showVideoSurface => _ready && (_hasFrame || widget.isActive);
 
   @override
   void initState() {
@@ -61,6 +66,10 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
         }
       },
     );
+    _playbackTickSub = ref.listenManual<int>(
+      shortsPlaybackTickProvider,
+      (_, __) => _syncPlayback(force: true),
+    );
     unawaited(_init());
   }
 
@@ -68,14 +77,44 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
   void didUpdateWidget(covariant ShortVideoPageTile oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.video.id != widget.video.id) {
+      _detachController();
       _stopViewTracking();
       _viewSent = widget.video.viewedByMe;
       _watchedSec = 0;
-      _controller = null;
+      _hasFrame = false;
       _error = false;
       unawaited(_init());
     } else if (oldWidget.isActive != widget.isActive) {
-      _syncPlayback();
+      _syncPlayback(force: true);
+    }
+  }
+
+  void _detachController() {
+    _controller?.removeListener(_onControllerTick);
+    _controller = null;
+  }
+
+  void _attachController(VideoPlayerController c) {
+    _detachController();
+    _controller = c;
+    c.addListener(_onControllerTick);
+  }
+
+  void _onControllerTick() {
+    if (!mounted) return;
+    final c = _controller;
+    if (c == null) return;
+
+    final frameReady = c.value.isPlaying ||
+        c.value.position > Duration.zero ||
+        c.value.isBuffering;
+
+    if (frameReady && !_hasFrame) {
+      setState(() => _hasFrame = true);
+    }
+
+    if (widget.isActive && c.value.isInitialized && !c.value.isPlaying) {
+      unawaited(c.play());
     }
   }
 
@@ -86,33 +125,38 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
       final pool = ref.read(shortsVideoPoolProvider);
       final cached = pool.controllerFor(widget.video.id);
       if (cached != null && cached.value.isInitialized) {
-        _controller = cached;
+        _attachController(cached);
         if (mounted) {
           setState(() {});
-          _syncPlayback();
+          await _syncPlayback(force: true);
         }
         return;
       }
       final c = await pool.acquire(widget.video);
       if (!mounted) return;
-      _controller = c;
+      _attachController(c);
       setState(() {});
-      _syncPlayback();
+      await _syncPlayback(force: true);
     } catch (_) {
       if (mounted) setState(() => _error = true);
     }
   }
 
-  void _syncPlayback() {
+  Future<void> _syncPlayback({bool force = false}) async {
     final c = _controller;
     if (c == null || !c.value.isInitialized) return;
     final pool = ref.read(shortsVideoPoolProvider);
     final speed = ref.read(shortPlaybackSpeedProvider);
+
     if (widget.isActive) {
-      pool.setActive(widget.video.id, playbackSpeed: speed);
+      await pool.setActive(widget.video.id, playbackSpeed: speed);
       _startViewTracking();
+      if (force && !c.value.isPlaying) {
+        await c.setVolume(1.0);
+        await c.play();
+      }
     } else {
-      c.pause();
+      await c.pause();
       _stopViewTracking();
     }
   }
@@ -162,7 +206,9 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
   @override
   void dispose() {
     _speedSub?.close();
+    _playbackTickSub?.close();
     _stopViewTracking();
+    _controller?.removeListener(_onControllerTick);
     _controller?.pause();
     super.dispose();
   }
@@ -201,6 +247,8 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(shortsActiveVideoIdProvider);
+
     final video = widget.video;
     final c = _controller;
     final bottom = MediaQuery.paddingOf(context).bottom;
@@ -209,7 +257,7 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
       Stack(
         fit: StackFit.expand,
         children: [
-          if (!_ready)
+          if (!_showVideoSurface)
             _VideoThumbnailLayer(video: video, showError: _error)
           else
             _VideoSurface(controller: c!),
@@ -245,6 +293,7 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
             Positioned.fill(
               child: _VideoTapLayer(
                 controller: c!,
+                isActive: widget.isActive,
                 onDoubleTap: _doubleTapLike,
                 onLongPress: () => showShortPlaybackSpeedSheet(context, ref),
               ),
@@ -264,12 +313,15 @@ class _VideoSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
-      child: FittedBox(
-        fit: BoxFit.cover,
-        child: SizedBox(
-          width: controller.value.size.width,
-          height: controller.value.size.height,
-          child: VideoPlayer(controller),
+      child: ColoredBox(
+        color: Colors.black,
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: controller.value.size.width,
+            height: controller.value.size.height,
+            child: VideoPlayer(controller),
+          ),
         ),
       ),
     );
@@ -297,11 +349,29 @@ class _VideoThumbnailLayer extends StatelessWidget {
               width: double.infinity,
               height: double.infinity,
               errorWidget: _StatusMessage(showError: showError),
-              placeholder: const SizedBox.shrink(),
+              placeholder: const _LoadingHint(),
             )
           : _StatusMessage(showError: showError),
     );
     return HeroShortThumb(videoId: video.id, child: content);
+  }
+}
+
+class _LoadingHint extends StatelessWidget {
+  const _LoadingHint();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: SizedBox(
+        width: 28,
+        height: 28,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: Colors.white38,
+        ),
+      ),
+    );
   }
 }
 
@@ -320,7 +390,7 @@ class _StatusMessage extends StatelessWidget {
         ),
       );
     }
-    return const SizedBox.shrink();
+    return const _LoadingHint();
   }
 }
 
@@ -347,11 +417,13 @@ class _BottomGradient extends StatelessWidget {
 class _VideoTapLayer extends StatelessWidget {
   const _VideoTapLayer({
     required this.controller,
+    required this.isActive,
     required this.onDoubleTap,
     required this.onLongPress,
   });
 
   final VideoPlayerController controller;
+  final bool isActive;
   final VoidCallback onDoubleTap;
   final VoidCallback onLongPress;
 
@@ -371,9 +443,10 @@ class _VideoTapLayer extends StatelessWidget {
       child: ListenableBuilder(
         listenable: controller,
         builder: (context, _) {
+          final showPlay = isActive && !controller.value.isPlaying;
           return Center(
             child: AnimatedOpacity(
-              opacity: controller.value.isPlaying ? 0 : 0.85,
+              opacity: showPlay ? 0.85 : 0,
               duration: const Duration(milliseconds: 180),
               child: const Icon(
                 Icons.play_circle_fill,

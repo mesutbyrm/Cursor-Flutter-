@@ -6,13 +6,13 @@ import 'package:video_player/video_player.dart';
 import '../domain/entities/short_video_entity.dart';
 import '../presentation/utils/short_video_player_util.dart';
 
-/// Aktif ±1 video bellekte (max 3 controller); uzaktakiler dispose.
+/// Aktif ±2 video bellekte (max 5 controller); uzaktakiler dispose.
 class ShortsVideoControllerPool {
   ShortsVideoControllerPool(this._dio);
 
   final Dio _dio;
-  static const _maxControllers = 3;
-  static const _warmOffsets = [-1, 0, 1];
+  static const _maxControllers = 5;
+  static const _warmOffsets = [-2, -1, 0, 1, 2];
 
   final _controllers = <String, VideoPlayerController>{};
   final _pending = <String, Future<VideoPlayerController>>{};
@@ -28,8 +28,11 @@ class ShortsVideoControllerPool {
     _touch(id);
 
     final existing = _controllers[id];
-    if (existing != null && existing.value.isInitialized) {
-      return existing;
+    if (existing != null) {
+      if (existing.value.isInitialized) return existing;
+      if (!existing.value.hasError) return existing;
+      await existing.dispose();
+      _controllers.remove(id);
     }
 
     final inflight = _pending[id];
@@ -71,7 +74,7 @@ class ShortsVideoControllerPool {
     }
     _evictExcept(keep);
 
-    for (final offset in [-1, 0, 1, 2]) {
+    for (final offset in [-2, -1, 0, 1, 2, 3]) {
       final i = index + offset;
       if (i < 0 || i >= videos.length) continue;
       unawaited(
@@ -84,7 +87,10 @@ class ShortsVideoControllerPool {
     }
   }
 
-  void setActive(String? videoId, {double playbackSpeed = 1.0}) {
+  Future<void> setActive(
+    String? videoId, {
+    double playbackSpeed = 1.0,
+  }) async {
     _activeId = videoId;
     if (videoId != null) _touch(videoId);
 
@@ -92,11 +98,21 @@ class ShortsVideoControllerPool {
       final c = entry.value;
       if (!c.value.isInitialized) continue;
       if (entry.key == videoId) {
-        c.setPlaybackSpeed(playbackSpeed);
-        c.play();
+        await c.setPlaybackSpeed(playbackSpeed);
+        await c.setVolume(1.0);
+        await c.play();
+        await _ensurePlaying(c);
       } else {
-        c.pause();
+        await c.pause();
       }
+    }
+  }
+
+  Future<void> _ensurePlaying(VideoPlayerController c) async {
+    for (var attempt = 0; attempt < 6; attempt++) {
+      if (c.value.isPlaying) return;
+      await c.play();
+      await Future<void>.delayed(Duration(milliseconds: 40 * (attempt + 1)));
     }
   }
 

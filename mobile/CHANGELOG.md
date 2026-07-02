@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.471+475 (2026-06-26)
+
+### Kısa video — Otomatik oynatma & hızlı kaydırma
+
+- **Otomatik oynatma:** Merkezi playback koordinatörü; sayfa değişince `play()` + 6 denemeli retry
+- **Gri ekran:** Thumbnail ilk kare gelene kadar gösterilir; init timeout 10 sn
+- **Kaydırma:** `PageScrollPhysics` + hızlı snap spring — TikTok tarzı tek sayfa geçişi
+- **Preload:** ±2 video penceresi; pool 5 slot; `allowImplicitScrolling`
+- **Play ikonu:** Yalnızca aktif ve duraklatılmış videoda görünür
+
 ## 1.0.470+474 (2026-06-26)
 
 ### Kısa video — Performans & kaydırma düzeltmesi

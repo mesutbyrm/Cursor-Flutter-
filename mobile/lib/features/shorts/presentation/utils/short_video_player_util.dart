@@ -54,7 +54,7 @@ Future<VideoPlayerController> createShortVideoController({
       }
 
       final timeout = fastStart
-          ? const Duration(milliseconds: 800)
+          ? const Duration(seconds: 10)
           : const Duration(seconds: 12);
       await controller.initialize().timeout(timeout);
       if (controller.value.hasError) {

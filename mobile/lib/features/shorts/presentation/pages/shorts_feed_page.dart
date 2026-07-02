@@ -11,6 +11,7 @@ import '../../domain/entities/shorts_feed_entry.dart';
 import '../../domain/repositories/shorts_repository.dart';
 import '../providers/shorts_feed_index_provider.dart';
 import '../providers/shorts_offline_sync_provider.dart';
+import '../providers/shorts_playback_coordinator.dart';
 import '../providers/shorts_playback_providers.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/shorts_content_filter.dart';
@@ -48,6 +49,8 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
   void _onTabChanged(ShortsFeedTab tab) {
     ref.read(shortsFeedTabProvider.notifier).state = tab;
     ref.invalidate(shortsFeedIndexProvider);
+    ref.invalidate(shortsActiveVideoIdProvider);
+    ref.invalidate(shortsPlaybackTickProvider);
     setState(() {
       _entries.clear();
       _deepLinkHandled = false;

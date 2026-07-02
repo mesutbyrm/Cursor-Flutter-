@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,8 +7,11 @@ import '../../domain/entities/short_video_entity.dart';
 import '../../domain/entities/shorts_feed_entry.dart';
 import '../../domain/repositories/shorts_repository.dart';
 import '../providers/shorts_feed_index_provider.dart';
+import '../providers/shorts_playback_coordinator.dart';
+import '../providers/shorts_playback_providers.dart';
 import '../providers/shorts_providers.dart';
 import '../providers/shorts_video_pool_provider.dart';
+import '../utils/shorts_feed_scroll_physics.dart';
 import '../widgets/short_sponsored_tile.dart';
 import '../widgets/short_video_page_tile.dart';
 import '../widgets/shorts_feed_placeholder_tile.dart';
@@ -28,7 +33,8 @@ class ShortsFeedPageItem extends ConsumerWidget {
   final ValueChanged<ShortVideoEntity> onVideoUpdated;
   final VoidCallback onAdSkip;
 
-  static const _videoWindow = 1;
+  /// Aktif + sonraki/önceki 2 video tam tile (preload).
+  static const _videoWindow = 2;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -100,8 +106,7 @@ class _ShortsFeedPageViewState extends ConsumerState<ShortsFeedPageView> {
     _pageCtrl = PageController(initialPage: widget.initialIndex);
     ref.read(shortsFeedIndexProvider.notifier).state = widget.initialIndex;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _warmPool(widget.initialIndex);
-      _maybeLoadMore(widget.initialIndex);
+      _onIndexChanged(widget.initialIndex, immediate: true);
     });
     _pageCtrl.addListener(_onScroll);
   }
@@ -113,7 +118,7 @@ class _ShortsFeedPageViewState extends ConsumerState<ShortsFeedPageView> {
       final idx = ref.read(shortsFeedIndexProvider);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _warmPool(idx);
-        _maybeLoadMore(idx);
+        _startPlayback(idx);
       });
     }
   }
@@ -124,10 +129,23 @@ class _ShortsFeedPageViewState extends ConsumerState<ShortsFeedPageView> {
     if (page == null) return;
     final target = page.round();
     final current = ref.read(shortsFeedIndexProvider);
-    if (target != current && (page - target).abs() < 0.35) {
-      ref.read(shortsFeedIndexProvider.notifier).state = target;
-      _warmPool(target);
-      _maybeLoadMore(target);
+    if (target != current && (page - target).abs() < 0.5) {
+      _onIndexChanged(target);
+    }
+  }
+
+  void _onIndexChanged(int index, {bool immediate = false}) {
+    ref.read(shortsFeedIndexProvider.notifier).state = index;
+    _warmPool(index);
+    _maybeLoadMore(index);
+    if (immediate) {
+      _startPlayback(index);
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (ref.read(shortsFeedIndexProvider) == index) {
+          _startPlayback(index);
+        }
+      });
     }
   }
 
@@ -142,6 +160,26 @@ class _ShortsFeedPageViewState extends ConsumerState<ShortsFeedPageView> {
     ref.read(shortsVideoPoolProvider).warm(videos, videoIndex);
   }
 
+  void _startPlayback(int index) {
+    final entry = widget.entries.elementAtOrNull(index);
+    final video = entry?.video;
+    if (video == null) return;
+
+    requestShortsPlayback(ref, video.id);
+
+    final pool = ref.read(shortsVideoPoolProvider);
+    final speed = ref.read(shortPlaybackSpeedProvider);
+    unawaited(() async {
+      try {
+        await pool.acquire(video);
+        if (!mounted) return;
+        if (ref.read(shortsFeedIndexProvider) != index) return;
+        pool.setActive(video.id, playbackSpeed: speed);
+        requestShortsPlayback(ref, video.id);
+      } catch (_) {}
+    }());
+  }
+
   void _maybeLoadMore(int index) {
     if (_loadMoreScheduled) return;
     if (index < widget.entries.length - 4) return;
@@ -151,16 +189,12 @@ class _ShortsFeedPageViewState extends ConsumerState<ShortsFeedPageView> {
     });
   }
 
-  void _onPageSettled(int index) {
-    ref.read(shortsFeedIndexProvider.notifier).state = index;
-    _warmPool(index);
-    _maybeLoadMore(index);
-  }
+  void _onPageSettled(int index) => _onIndexChanged(index);
 
   void _skipAd(int index) {
     if (index + 1 < widget.entries.length) {
       _pageCtrl.nextPage(
-        duration: const Duration(milliseconds: 280),
+        duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
       );
     }
@@ -179,11 +213,8 @@ class _ShortsFeedPageViewState extends ConsumerState<ShortsFeedPageView> {
       controller: _pageCtrl,
       scrollDirection: Axis.vertical,
       pageSnapping: true,
-      allowImplicitScrolling: false,
-      physics: const BouncingScrollPhysics(
-        parent: AlwaysScrollableScrollPhysics(),
-        decelerationRate: ScrollDecelerationRate.fast,
-      ),
+      allowImplicitScrolling: true,
+      physics: shortsFeedPagePhysics,
       itemCount: widget.entries.length,
       onPageChanged: _onPageSettled,
       itemBuilder: (context, i) {
