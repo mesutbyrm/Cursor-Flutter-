@@ -283,6 +283,7 @@ ApiException _mapDio(DioException e) {
       statusCode: code,
     );
   }
+  if (code == 405) {
     return ApiException(
       'Bu işlem sunucuda desteklenmiyor (405). Uygulamayı güncelleyin veya web sürümünü deneyin.',
       statusCode: code,
