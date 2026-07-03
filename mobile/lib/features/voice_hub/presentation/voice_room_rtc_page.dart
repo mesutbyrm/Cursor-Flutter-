@@ -20,6 +20,7 @@ import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/presentation/providers/live_providers.dart';
 import '../data/services/voice_room_debug_log.dart';
 import '../domain/voice_official_join.dart';
+import '../../../gifts/domain/gift_revenue_display.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import 'providers/voice_gift_combo_tracker.dart';
@@ -69,11 +70,11 @@ import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_dj_music_slide_panel.dart';
-import 'widgets/voice_room/voice_room_seat_video_strip.dart';
 import 'widgets/voice_room/voice_room_staff_join_banner.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import '../video/presentation/widgets/room_video_overlay.dart';
+import '../video/presentation/widgets/youtube_video_background.dart';
 import '../video/presentation/room_video_controller.dart';
 
 /// Sesli sohbet odası — Agora (App ID only) + canlifal.com chat API.
@@ -404,6 +405,29 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
     ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
     ref.read(voiceGiftFlightQueueProvider.notifier).enqueue(event);
+
+    final room = _effectiveRoom();
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final myId = user?.id?.trim() ?? '';
+    final ownerId = room.ownerId?.trim() ?? '';
+    if (myId.isNotEmpty && ownerId.isNotEmpty && myId == ownerId) {
+      final receiverIsOwner = event.receiverName.trim().toLowerCase() ==
+          (room.ownerName ?? '').trim().toLowerCase();
+      final ownerNet = GiftRevenueDisplay.voiceOwnerDisplayNet(
+        gross: event.coinCost,
+        receiverIsOwner: receiverIsOwner,
+      );
+      if (ownerNet > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${event.senderName} → ${event.receiverName}: +$ownerNet jeton (oda payı)',
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
 
     final showFullscreen = PremiumGiftCatalog2026.triggersFullscreen(
       giftId: event.giftId,
@@ -1367,6 +1391,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: YoutubeVideoBackground(roomKey: _liveRoomKey),
+              ),
+            ),
             Column(
               children: [
                 Expanded(
@@ -1574,7 +1603,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
                                 .clearModeratorAnnouncement(),
                           ),
-                        VoiceRoomSeatVideoStrip(roomKey: _liveRoomKey),
                         RoomVideoOverlay(
                           roomKey: _liveRoomKey,
                           perms: perms,

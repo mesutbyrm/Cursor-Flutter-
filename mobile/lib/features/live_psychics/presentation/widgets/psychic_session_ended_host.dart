@@ -45,14 +45,21 @@ class _PsychicSessionEndedHostState extends ConsumerState<PsychicSessionEndedHos
   ) async {
     final duration = event.durationMinutes;
     final jeton = event.totalJeton;
+    final tips = event.tipsJeton;
     final lines = <String>[
       if (event.message != null && event.message!.trim().isNotEmpty)
         event.message!.trim(),
       if (duration != null && duration > 0) 'Süre: $duration dk',
-      if (jeton != null && jeton > 0) 'Harcanan jeton: $jeton',
+      if (jeton != null && jeton > 0)
+        event.isTeller ? 'Seans geliri: $jeton jeton' : 'Harcanan jeton: $jeton',
+      if (tips != null && tips > 0) 'Bahşiş: $tips jeton',
+      if (event.isTeller && (tips ?? 0) > 0 && (jeton ?? 0) > 0)
+        'Toplam kazanç: ${(jeton ?? 0) + tips!} jeton',
     ];
     final body = lines.isEmpty
-        ? 'Canlı fal seansınız sona erdi.'
+        ? (event.isTeller
+            ? 'Canlı fal seansınız sona erdi.'
+            : 'Canlı fal seansınız sona erdi.')
         : lines.join('\n');
 
     final review = await showDialog<bool>(
@@ -61,13 +68,13 @@ class _PsychicSessionEndedHostState extends ConsumerState<PsychicSessionEndedHos
       useRootNavigator: true,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1A1028),
-        title: const Text(
-          'Seans tamamlandı',
-          style: TextStyle(fontWeight: FontWeight.w800),
+        title: Text(
+          event.isTeller ? 'Seans tamamlandı' : 'Seans tamamlandı',
+          style: const TextStyle(fontWeight: FontWeight.w800),
         ),
         content: Text(body),
         actions: [
-          if (event.sessionId.isNotEmpty)
+          if (!event.isTeller && event.sessionId.isNotEmpty)
             TextButton(
               onPressed: () {
                 Navigator.of(ctx, rootNavigator: true).pop(false);

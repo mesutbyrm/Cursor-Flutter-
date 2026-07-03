@@ -134,6 +134,12 @@ abstract class LivePsychicsRepository {
 
   Future<bool> endSession(String sessionId);
   Future<void> clearRoomSignals(String sessionId);
+  Future<void> sendRoomSignal({
+    required String sessionId,
+    required String type,
+    Map<String, dynamic>? data,
+    String? receiverId,
+  });
   Future<PsychicRoomEntity?> fetchRoom(String sessionId);
   Future<Map<String, dynamic>?> roomAction(
     String sessionId,

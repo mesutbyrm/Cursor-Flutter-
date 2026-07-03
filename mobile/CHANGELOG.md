@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.480+484 (2026-07-03)
+
+### Canlı Falcılar, hediye ve sesli oda
+
+- **Seans kapatma:** Karşı taraf anında kapanır; tek tıkla çıkış; oda sinyali + SSE
+- **Bahşiş:** Falcıya popup; seans sonu kazanç özeti (jeton + bahşiş); danışan her zaman değerlendirebilir
+- **Senkron:** SSE `timer_started` / `time_extended`; oda poll 4 sn
+- **Profil:** Ödül/hediye/yorum API anahtarları düzeltildi; hata mesajları
+- **Hediye jeton:** Canlı yayıncı %50 net; sesli oda oda sahibi/misafir kuralları
+- **Roket:** Premium roket çizimi (araba Lottie yerine)
+- **!istek müzik:** Tek YouTube arka plan; tam genişlik orta; ses açık; çift player kaldırıldı
+
 ## 1.0.479+483 (2026-07-03)
 
 ### Düzeltme — kısa video «Bileşen hatası» (Infinity/NaN toInt)

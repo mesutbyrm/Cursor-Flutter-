@@ -416,8 +416,26 @@ class _ProfileBody extends ConsumerWidget {
           ),
         ],
         reviewsAsync.when(
-          loading: () => const SizedBox.shrink(),
-          error: (_, _) => const SizedBox.shrink(),
+          loading: () => const Padding(
+            padding: EdgeInsets.only(top: 28),
+            child: Center(
+              child: SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
+          error: (e, _) => Padding(
+            padding: const EdgeInsets.only(top: 20),
+            child: Text(
+              'Yorumlar yüklenemedi',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
           data: (reviews) {
             if (reviews.isEmpty) return const SizedBox.shrink();
             return Column(
@@ -490,7 +508,16 @@ class _ProfileBody extends ConsumerWidget {
         ),
         awardsAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (_, _) => const SizedBox.shrink(),
+          error: (e, _) => Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(
+              'Ödüller yüklenemedi',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
           data: (awards) {
             if (awards.isEmpty) return const SizedBox.shrink();
             return Column(
@@ -536,7 +563,16 @@ class _ProfileBody extends ConsumerWidget {
         ),
         giftsAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (_, _) => const SizedBox.shrink(),
+          error: (e, _) => Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(
+              'Hediyeler yüklenemedi',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
           data: (gifts) {
             if (gifts.isEmpty) return const SizedBox.shrink();
             return Column(

@@ -8,6 +8,7 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../gifts/domain/gift_revenue_display.dart';
 import '../../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../../gifts/domain/gift_rarity.dart';
 import '../../../../gifts/domain/premium_gift_catalog_2026.dart';
@@ -264,7 +265,10 @@ class _VoicePremiumGiftPanel2026State
       final roomKey = widget.room.apiRoomKey.isNotEmpty
           ? widget.room.apiRoomKey
           : widget.room.id;
-      await ref.read(chatRoomGiftsRemoteProvider).sendGift(
+      final ownerId = widget.room.ownerId?.trim() ?? '';
+      final receiverIsOwner =
+          ownerId.isNotEmpty && receiver.id.trim() == ownerId;
+      final result = await ref.read(chatRoomGiftsRemoteProvider).sendGift(
             roomId: roomKey,
             giftTypeId: g.id,
             quantity: _qty,
@@ -272,6 +276,8 @@ class _VoicePremiumGiftPanel2026State
             receiverName: receiver.displayName,
             receiverId: receiver.id,
           );
+      final gross = g.price * _qty;
+      final revenue = result.revenue;
       await ref.read(giftSoundServiceProvider).playFor(g.toEntity());
       final raw = LiveGiftEvent(
         id: 'local-${DateTime.now().microsecondsSinceEpoch}',
@@ -284,7 +290,7 @@ class _VoicePremiumGiftPanel2026State
           fallback: LiveGiftCatalog.displayName(g),
         ),
         quantity: _qty,
-        coinCost: g.price * _qty,
+        coinCost: gross,
         timestamp: DateTime.now(),
         combo: _qty,
         rarity: PremiumGiftCatalog2026.rarity(g.id),
@@ -294,10 +300,30 @@ class _VoicePremiumGiftPanel2026State
       if (mounted) {
         widget.onSent(raw);
         widget.onClose();
+        final myId = user?.id?.trim() ?? '';
+        final receiverNet = GiftRevenueDisplay.voiceReceiverNet(
+          gross: gross,
+          receiverIsOwner: receiverIsOwner,
+          revenue: revenue,
+        );
+        final ownerNet = GiftRevenueDisplay.voiceOwnerDisplayNet(
+          gross: gross,
+          receiverIsOwner: receiverIsOwner,
+          revenue: revenue,
+        );
+        var msg = '${raw.giftName} x$_qty gönderildi ($gross jeton)';
+        if (myId.isNotEmpty && myId == receiver.id.trim()) {
+          msg = '${raw.giftName} aldınız — size $receiverNet jeton kaldı';
+        } else if (myId.isNotEmpty &&
+            ownerId.isNotEmpty &&
+            myId == ownerId &&
+            !receiverIsOwner &&
+            ownerNet > 0) {
+          msg =
+              '${raw.giftName} gönderildi — oda payınız +$ownerNet jeton';
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${raw.giftName} x$_qty gönderildi'),
-          ),
+          SnackBar(content: Text(msg)),
         );
       }
     } catch (e) {

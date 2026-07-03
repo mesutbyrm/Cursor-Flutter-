@@ -54,19 +54,25 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
               tellerName: session.psychic.name,
               durationMinutes: session.durationMinutes,
               totalJeton: session.totalJeton,
-              promptReview: peerMsg == null,
+              promptReview: true,
               navigateAfter: true,
             );
           } else {
-            if (peerMsg == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Seans sonlandı')),
+            if (peerMsg == null &&
+                ref.read(psychicSessionEndedProvider) == null) {
+              ref.read(psychicSessionEndedProvider.notifier).state =
+                  PsychicSessionEndedEvent(
+                sessionId: session.sessionId,
+                tellerId: session.psychic.id,
+                tellerName: session.psychic.name,
+                durationMinutes: session.durationMinutes,
+                totalJeton: session.totalJeton,
+                tipsJeton: state.sessionTipsTotal > 0
+                    ? state.sessionTipsTotal
+                    : null,
+                isTeller: true,
+                navigateAfter: true,
               );
-            }
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/canli-falcilar');
             }
           }
         }
@@ -103,13 +109,6 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
         );
         if (ok && context.mounted) {
           await ctrl.leave();
-          if (!session.isClient && context.mounted) {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/canli-falcilar');
-            }
-          }
         }
       },
       child: Scaffold(
@@ -222,7 +221,7 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-            if (state.tipThankYouAmount != null)
+            if (state.tipThankYouAmount != null && session.isClient)
               Positioned.fill(
                 child: ColoredBox(
                   color: Colors.black.withValues(alpha: 0.45),
@@ -244,8 +243,45 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '${state.tipThankYouAmount} jeton bahşiş için teşekkürler!',
+                            '${state.tipThankYouAmount} jeton bahşiş gönderildi — teşekkürler!',
                             textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            if (state.tipReceivedAmount != null && !session.isClient)
+              Positioned.fill(
+                child: ColoredBox(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  child: Center(
+                    child: ProfileGlass(
+                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 22),
+                      borderRadius: 24,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('💝', style: TextStyle(fontSize: 36)),
+                          const SizedBox(height: 10),
+                          Text(
+                            state.tipReceivedFrom?.trim().isNotEmpty == true
+                                ? state.tipReceivedFrom!
+                                : 'Danışan',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 18,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${state.tipReceivedAmount} jeton bahşiş aldınız!',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFFFFD54F),
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ],
                       ),
@@ -296,7 +332,6 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                         );
                         if (ok && context.mounted) {
                           await ctrl.leave();
-                          if (context.mounted) context.pop();
                         }
                       },
                       icon: const Icon(Icons.close_rounded, color: Colors.white),

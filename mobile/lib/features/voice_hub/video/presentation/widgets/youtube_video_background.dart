@@ -104,6 +104,7 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     final msg = message.message.trim();
     if (msg == 'ready') {
       _playerReady = true;
+      unawaited(_runCmd({'action': 'unmute', 'volume': 100}));
       return;
     }
     if (msg == 'ended') {
@@ -287,14 +288,23 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
       return video.audioOnly ? const SizedBox.shrink() : _thumbFallback(video);
     }
 
-    // Ses-only müzik: iframe ağaçta kalır (ses çalar) ama görünmez (1x1).
+    // !istek / müzik — tam genişlik orta arka plan; UI üstünden şeffaf geçer.
     if (video.audioOnly) {
-      return SizedBox(
-        width: 1,
-        height: 1,
+      return IgnorePointer(
         child: Opacity(
-          opacity: 0,
-          child: IgnorePointer(child: web),
+          opacity: 0.35,
+          child: SizedBox.expand(
+            child: FittedBox(
+              fit: BoxFit.cover,
+              clipBehavior: Clip.hardEdge,
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: MediaQuery.sizeOf(context).width,
+                height: MediaQuery.sizeOf(context).width * 9 / 16,
+                child: web,
+              ),
+            ),
+          ),
         ),
       );
     }
@@ -304,44 +314,21 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
         ignoring: true,
         child: widget.compact
             ? SizedBox.expand(child: web)
-            : Center(
-                child: Container(
-                  width: (MediaQuery.sizeOf(context).width * 0.72)
-                      .clamp(220.0, 320.0),
-                  height: (MediaQuery.sizeOf(context).width * 0.72 * 9 / 16)
-                      .clamp(124.0, 180.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.55),
-                        blurRadius: 24,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (_loadFailed) _thumbFallback(video),
-                      Positioned.fill(child: web),
-                      Positioned.fill(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.black.withValues(alpha: 0.12),
-                                Colors.transparent,
-                                Colors.black.withValues(alpha: 0.18),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+            : SizedBox.expand(
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  clipBehavior: Clip.hardEdge,
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    width: MediaQuery.sizeOf(context).width,
+                    height: MediaQuery.sizeOf(context).width * 9 / 16,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (_loadFailed) _thumbFallback(video),
+                        web,
+                      ],
+                    ),
                   ),
                 ),
               ),

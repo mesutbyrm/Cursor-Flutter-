@@ -16,6 +16,7 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/voice_official_join.dart';
+import '../../../gifts/domain/gift_revenue_display.dart';
 import '../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import '../providers/voice_gift_combo_tracker.dart';
@@ -316,6 +317,29 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
     ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
     ref.read(voiceGiftFlightQueueProvider.notifier).enqueue(event);
+
+    final room = _effectiveRoom();
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final myId = user?.id?.trim() ?? '';
+    final ownerId = room.ownerId?.trim() ?? '';
+    if (myId.isNotEmpty && ownerId.isNotEmpty && myId == ownerId) {
+      final receiverIsOwner = event.receiverName.trim().toLowerCase() ==
+          (room.ownerName ?? '').trim().toLowerCase();
+      final ownerNet = GiftRevenueDisplay.voiceOwnerDisplayNet(
+        gross: event.coinCost,
+        receiverIsOwner: receiverIsOwner,
+      );
+      if (ownerNet > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${event.senderName} → ${event.receiverName}: +$ownerNet jeton (oda payı)',
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
 
     final showFullscreen = PremiumGiftCatalog2026.triggersFullscreen(
       giftId: event.giftId,

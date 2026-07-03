@@ -8,9 +8,11 @@ class PsychicSessionEndedEvent {
     this.tellerName,
     this.durationMinutes,
     this.totalJeton,
+    this.tipsJeton,
     this.message,
     this.promptReview = false,
     this.navigateAfter = false,
+    this.isTeller = false,
   });
 
   final String sessionId;
@@ -18,9 +20,11 @@ class PsychicSessionEndedEvent {
   final String? tellerName;
   final int? durationMinutes;
   final int? totalJeton;
+  final int? tipsJeton;
   final String? message;
   final bool promptReview;
   final bool navigateAfter;
+  final bool isTeller;
 }
 
 final psychicSessionEndedProvider =
