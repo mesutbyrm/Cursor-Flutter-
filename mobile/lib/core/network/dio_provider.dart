@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/env.dart';
 import '../performance/json_isolate_perf.dart';
+import 'api.dart';
 import 'api_exception.dart';
 import 'api_endpoints.dart';
 import 'device_headers.dart';
@@ -39,8 +40,8 @@ final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
     BaseOptions(
       baseUrl: Env.apiBaseUrl,
-      connectTimeout: const Duration(seconds: 20),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 20),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -110,6 +111,8 @@ final dioProvider = Provider<Dio>((ref) {
   );
 
   dio.interceptors.add(ApiCacheInterceptor());
+
+  Api.bind(dio);
 
   return dio;
 });

@@ -7,13 +7,27 @@ class Env {
 
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://canlifal.com',
+    defaultValue: 'https://canlifalapi.abacusai.app',
   );
 
-  /// canlifal.com — mobil JWT (`/api/auth/mobile-*`, `/api/me`). WebView OAuth yok.
+  /// Mobil JWT (`/api/auth/mobile-*`, `/api/me`). WebView OAuth yok.
   static bool get useMobileAuth {
     final u = apiBaseUrl.toLowerCase();
-    return u.contains('canlifal.com') && !u.contains('.local');
+    if (u.contains('.local') ||
+        u.contains('127.0.0.1') ||
+        u.contains('localhost')) {
+      return false;
+    }
+    return u.contains('canlifal.com') ||
+        u.contains('canlifalapi.abacusai.app') ||
+        u.contains('abacusai.app');
+  }
+
+  /// `/api` önekli istek tabanı (örn. `…/api/games/rooms`).
+  static String get apiPrefixUrl {
+    final origin = siteOrigin;
+    if (origin.endsWith('/api')) return origin;
+    return '$origin/api';
   }
 
   /// Geriye dönük: canlı site oturumu (JWT ile aynı taban).

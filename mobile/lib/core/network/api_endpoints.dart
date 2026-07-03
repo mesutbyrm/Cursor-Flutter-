@@ -166,7 +166,14 @@ abstract final class ApiEndpoints {
   static const tournaments = '/api/tournaments';
   static const tournamentsJoin = '/api/tournaments/join';
   static String gameRoom(String roomId) => '/api/games/room/$roomId';
-  static String gameRoomJoin(String roomId) => '/api/games/room/$roomId/join';
+  /// Yeni backend: `POST /api/games/room/:id` (gövdesiz katılma).
+  static String gameRoomJoin(String roomId) => '/api/games/room/$roomId';
+  /// Eski sürüm yedeği.
+  static String gameRoomJoinLegacy(String roomId) =>
+      '/api/games/room/$roomId/join';
+
+  /// Sağlık kontrolü — Redis + DB durumu.
+  static const apiHealth = '/api/v1/health';
   static String gameRoomChat(String roomId) => '/api/games/room/$roomId/chat';
   static String gameRoomViewers(String roomId) =>
       '/api/games/room/$roomId/viewers';

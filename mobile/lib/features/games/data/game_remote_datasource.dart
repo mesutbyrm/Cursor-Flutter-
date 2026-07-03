@@ -47,49 +47,51 @@ class GameRemoteDataSource {
   }
 
   Future<List<GameRoomItem>> _fetchRoomsRemote() async {
-    final attempts = <Future<List<GameRoomItem>> Function()>[
-      () async {
-        final res = await _dio.safeGet<dynamic>(ApiEndpoints.gameRooms);
-        return _parseRooms(res.data);
-      },
-      () async {
-        final rooms = <GameRoomItem>[];
-        for (final slug in _okeySlugs('okey101')) {
-          final res = await _dio.safeGet<dynamic>(
-            ApiEndpoints.gameRoomCreate,
-            query: {'slug': slug, 'gameSlug': slug, 'gameId': slug},
-          );
-          rooms.addAll(_parseRooms(res.data));
-        }
-        return rooms;
-      },
-    ];
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.gameRooms);
+      final rooms = _parseRooms(res.data);
+      if (rooms.isNotEmpty) return rooms;
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    } catch (_) {}
 
-    for (final attempt in attempts) {
-      try {
-        final rooms = await attempt();
-        if (rooms.isNotEmpty) return rooms;
-      } on ApiException catch (e) {
-        if (e.statusCode == 404 || e.statusCode == 405) continue;
-      } catch (_) {}
-    }
+    // Eski üretim yedeği
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.gameRoomCreate,
+        query: {'gameType': 'okey101', 'slug': 'okey101'},
+      );
+      return _parseRooms(res.data);
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    } catch (_) {}
+
     return const [];
   }
 
   Future<GameRoomItem?> createRoom(GameCatalogItem game) async {
-    final payloads = _createPayloads(game);
-    final paths = [ApiEndpoints.gameRooms, ApiEndpoints.gameRoomCreate];
+    final gameType = _gameType(game);
+    final attempts = <({String path, Map<String, dynamic> data})>[
+      (path: ApiEndpoints.gameRooms, data: {'gameType': gameType}),
+      ..._legacyCreatePayloads(game).map(
+        (data) => (path: ApiEndpoints.gameRooms, data: data),
+      ),
+      ..._legacyCreatePayloads(game).map(
+        (data) => (path: ApiEndpoints.gameRoomCreate, data: data),
+      ),
+    ];
 
-    for (final path in paths) {
-      for (final data in payloads) {
-        try {
-          final res = await _dio.safePost<dynamic>(path, data: data);
-          final room = _roomFromBody(res.data);
-          if (room != null) return room;
-        } on ApiException catch (e) {
-          if (e.statusCode == 404 || e.statusCode == 405) continue;
-          rethrow;
-        }
+    for (final attempt in attempts) {
+      try {
+        final res = await _dio.safePost<dynamic>(
+          attempt.path,
+          data: attempt.data,
+        );
+        final room = _roomFromBody(res.data);
+        if (room != null) return room;
+      } on ApiException catch (e) {
+        if (e.statusCode == 404 || e.statusCode == 405) continue;
+        rethrow;
       }
     }
 
@@ -104,19 +106,31 @@ class GameRemoteDataSource {
   }
 
   Future<GameRoomItem?> autoMatch(GameCatalogItem game) async {
-    final payloads = _autoMatchPayloads(game);
-    final paths = [ApiEndpoints.gameAutoMatch, ApiEndpoints.gameRoomCreate, ApiEndpoints.gamePlay];
+    final gameType = _gameType(game);
+    final attempts = <({String path, Map<String, dynamic> data})>[
+      (path: ApiEndpoints.gameAutoMatch, data: {'gameType': gameType}),
+      ..._legacyAutoMatchPayloads(game).map(
+        (data) => (path: ApiEndpoints.gameAutoMatch, data: data),
+      ),
+      ..._legacyAutoMatchPayloads(game).map(
+        (data) => (path: ApiEndpoints.gameRoomCreate, data: data),
+      ),
+      ..._legacyAutoMatchPayloads(game).map(
+        (data) => (path: ApiEndpoints.gamePlay, data: data),
+      ),
+    ];
 
-    for (final path in paths) {
-      for (final data in payloads) {
-        try {
-          final res = await _dio.safePost<dynamic>(path, data: data);
-          final room = _roomFromBody(res.data);
-          if (room != null) return room;
-        } on ApiException catch (e) {
-          if (e.statusCode == 404 || e.statusCode == 405) continue;
-          rethrow;
-        }
+    for (final attempt in attempts) {
+      try {
+        final res = await _dio.safePost<dynamic>(
+          attempt.path,
+          data: attempt.data,
+        );
+        final room = _roomFromBody(res.data);
+        if (room != null) return room;
+      } on ApiException catch (e) {
+        if (e.statusCode == 404 || e.statusCode == 405) continue;
+        rethrow;
       }
     }
 
@@ -139,19 +153,30 @@ class GameRemoteDataSource {
       );
     }
 
-    try {
-      final res = await _dio.safePost<dynamic>(ApiEndpoints.gameRoomJoin(roomId));
-      return _roomFromBody(res.data);
-    } on ApiException catch (e) {
-      if (e.statusCode == 404 && _local.hasRoom(roomId)) {
-        return _local.joinRoom(
-          roomId: roomId,
-          userId: _userId(),
-          displayName: _resolveDisplayName(),
-        );
+    final joinPaths = [
+      ApiEndpoints.gameRoomJoin(roomId),
+      ApiEndpoints.gameRoomJoinLegacy(roomId),
+    ];
+
+    for (final path in joinPaths) {
+      try {
+        final res = await _dio.safePost<dynamic>(path);
+        final room = _roomFromBody(res.data);
+        if (room != null) return room;
+      } on ApiException catch (e) {
+        if (e.statusCode == 404 || e.statusCode == 405) continue;
+        if (e.statusCode == 404 && _local.hasRoom(roomId)) {
+          return _local.joinRoom(
+            roomId: roomId,
+            userId: _userId(),
+            displayName: _resolveDisplayName(),
+          );
+        }
+        rethrow;
       }
-      rethrow;
     }
+
+    return null;
   }
 
   Future<GameRoomStateSnapshot> fetchRoomState(String roomId) async {
@@ -163,11 +188,11 @@ class GameRemoteDataSource {
     }
 
     final attempts = <Future<Response<dynamic>> Function()>[
+      () => _dio.safeGet<dynamic>(ApiEndpoints.gameRoom(roomId)),
       () => _dio.safePost<dynamic>(
         ApiEndpoints.gameRoom(roomId),
         data: const {'action': 'state'},
       ),
-      () => _dio.safeGet<dynamic>(ApiEndpoints.gameRoom(roomId)),
       () => _dio.safePost<dynamic>(
         ApiEndpoints.gamePlay,
         data: {'action': 'state', 'roomId': roomId},
@@ -211,7 +236,13 @@ class GameRemoteDataSource {
       for (final data in payloads) {
         try {
           final body = pathFn() == ApiEndpoints.gamePlay
-              ? {...data, 'roomId': roomId, 'gameSlug': 'okey101', 'slug': 'okey101'}
+              ? {
+                  ...data,
+                  'roomId': roomId,
+                  'gameType': 'okey101',
+                  'gameSlug': 'okey101',
+                  'slug': 'okey101',
+                }
               : data;
           final res = await _dio.safePost<dynamic>(pathFn(), data: body);
           return GameRoomStateSnapshot.fromJson(roomId, _map(res.data));
@@ -342,17 +373,20 @@ class GameRemoteDataSource {
 
   String _userId() => _resolveUserId() ?? 'mobile-player';
 
+  String _gameType(GameCatalogItem game) {
+    if (_isOkey101(game.id)) return 'okey101';
+    return game.id.trim().toLowerCase();
+  }
+
   bool _isOkey101(String gameId) {
     final id = gameId.toLowerCase();
     return id.contains('okey101') || id == 'yuzbirokey' || id == 'okey-101';
   }
 
-  List<String> _okeySlugs(String gameId) {
-    return ['okey101', 'yuzbirokey', 'okey-101', gameId];
-  }
-
-  List<Map<String, dynamic>> _createPayloads(GameCatalogItem game) {
-    final slugs = _isOkey101(game.id) ? _okeySlugs(game.id) : [game.id];
+  List<Map<String, dynamic>> _legacyCreatePayloads(GameCatalogItem game) {
+    final slugs = _isOkey101(game.id)
+        ? const ['okey101', 'yuzbirokey', 'okey-101']
+        : [game.id];
     final payloads = <Map<String, dynamic>>[];
     for (final slug in slugs) {
       payloads.addAll([
@@ -377,8 +411,10 @@ class GameRemoteDataSource {
     return payloads;
   }
 
-  List<Map<String, dynamic>> _autoMatchPayloads(GameCatalogItem game) {
-    final slugs = _isOkey101(game.id) ? _okeySlugs(game.id) : [game.id];
+  List<Map<String, dynamic>> _legacyAutoMatchPayloads(GameCatalogItem game) {
+    final slugs = _isOkey101(game.id)
+        ? const ['okey101', 'yuzbirokey', 'okey-101']
+        : [game.id];
     final payloads = <Map<String, dynamic>>[];
     for (final slug in slugs) {
       payloads.addAll([

@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.474+478 (2026-07-03)
+
+### Backend — canlifalapi.abacusai.app (Redis önbellek + oyun odaları)
+
+- **Varsayılan API tabanı:** `https://canlifalapi.abacusai.app` (mobil JWT aynı `/api/auth/mobile-*` uçları)
+- **Merkezi `Api` istemcisi:** Dio paylaşımı, Bearer `setToken`, `GET /api/v1/health` sağlık kontrolü
+- **Oyun odaları:** `POST /api/games/rooms`, `/auto-match`, `POST /api/games/room/:id` katılma, `GET` oda detayı — `gameType` alanı (örn. `okey101`)
+- **Geriye dönük:** Eski `gameId`/`slug` gövdeleri ve yerel Okey101 yedeği korunur
+- **Zaman aşımı:** connect 15 sn, receive 20 sn (Redis önbellekli liste uçları için yeterli)
+
 ## 1.0.473+477 (2026-06-26)
 
 ### Okey 101 — 404 düzeltmesi (site API uyumu)
