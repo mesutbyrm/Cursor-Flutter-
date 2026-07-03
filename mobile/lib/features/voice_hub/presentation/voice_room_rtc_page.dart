@@ -20,7 +20,7 @@ import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/presentation/providers/live_providers.dart';
 import '../data/services/voice_room_debug_log.dart';
 import '../domain/voice_official_join.dart';
-import '../../../gifts/domain/gift_revenue_display.dart';
+import '../../gifts/domain/gift_revenue_display.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import 'providers/voice_gift_combo_tracker.dart';
