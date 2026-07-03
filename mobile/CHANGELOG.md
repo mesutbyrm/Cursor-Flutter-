@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.478+482 (2026-07-03)
+
+### Düzeltme — sesli oda arka plan, !istek müzik, ana sayfa, kısa video
+
+- **Arka plan yükleme:** R2 presigned + `POST /api/upload/get-url`; `canlifal.com` kökenli URL (403 giderildi)
+- **!istek müzik:** Şarkı seçince arama sheet'i kapanır; çalma başlar; başarı/hata snackbar
+- **Ana sayfa:** Canlı önizleme HLS kapatıldı (yalnızca thumbnail); polling 90 sn
+- **Kısa video:** API stream proxy öncelikli; ek URL alanları; init timeout 18 sn
+
 ## 1.0.477+481 (2026-07-03)
 
 ### Performans — ana sayfa & kısa videolar

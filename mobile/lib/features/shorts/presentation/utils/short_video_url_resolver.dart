@@ -43,14 +43,15 @@ class ShortVideoUrlResolver {
 
     add(videoUrl);
 
+    // API proxy — CDN 404 olsa bile çalışır; imzalı URL'den önce dene.
+    if (videoId != null && videoId.trim().isNotEmpty) {
+      add('${Env.siteOrigin}${ApiEndpoints.shortVideoStream(videoId.trim())}');
+    }
+
     final key = storageKeyFromUrl(videoUrl);
     if (key != null) {
       add(await _fetchSignedUrl(key, isPublic: true));
       add(await _fetchSignedUrl(key, isPublic: false));
-    }
-
-    if (videoId != null && videoId.trim().isNotEmpty) {
-      add('${Env.siteOrigin}${ApiEndpoints.shortVideoStream(videoId.trim())}');
     }
 
     return out;

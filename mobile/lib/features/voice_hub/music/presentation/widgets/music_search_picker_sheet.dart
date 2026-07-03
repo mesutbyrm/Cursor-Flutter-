@@ -7,12 +7,12 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../providers/room_music_providers.dart';
 
-/// Web parity — anlık YouTube arama; seçimden sonra sheet açık kalabilir.
+/// Web parity — anlık YouTube arama; seçimden sonra sheet kapanır ve çalma başlar.
 Future<void> showMusicSearchPickerSheet(
   BuildContext context,
   WidgetRef ref, {
   required String query,
-  bool stayOpenOnSelect = true,
+  bool stayOpenOnSelect = false,
   void Function(YoutubeSearchHit hit)? onSelected,
 }) async {
   final container = ProviderScope.containerOf(context);
@@ -39,7 +39,7 @@ Future<void> showMusicSearchPickerSheet(
 class _MusicSearchPicker extends ConsumerStatefulWidget {
   const _MusicSearchPicker({
     required this.initialQuery,
-    this.stayOpenOnSelect = true,
+    this.stayOpenOnSelect = false,
     this.onSelected,
   });
 
@@ -56,6 +56,7 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
   Timer? _debounce;
   var _searchGen = 0;
   var _searching = false;
+  var _submitting = false;
   List<YoutubeSearchHit> _hits = const [];
   String? _error;
   String? _selectedId;
@@ -213,7 +214,7 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
                 ],
               ),
             ),
-            if (_searching)
+            if (_searching || _submitting)
               const LinearProgressIndicator(
                 minHeight: 2,
                 color: Color(0xFF8B5CF6),
@@ -288,16 +289,23 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
           hit: hit,
           compact: i < 3,
           selected: _selectedId == hit.videoId,
-          onTap: () {
-            setState(() {
-              _selectedId = hit.videoId;
-              _selectedTitle = hit.title;
-            });
-            widget.onSelected?.call(hit);
-            if (!widget.stayOpenOnSelect) {
-              Navigator.pop(context);
-            }
-          },
+          onTap: _submitting
+              ? null
+              : () async {
+                  if (_submitting) return;
+                  setState(() {
+                    _selectedId = hit.videoId;
+                    _selectedTitle = hit.title;
+                    _submitting = true;
+                  });
+                  if (!widget.stayOpenOnSelect && context.mounted) {
+                    Navigator.pop(context);
+                  }
+                  widget.onSelected?.call(hit);
+                  if (widget.stayOpenOnSelect && mounted) {
+                    setState(() => _submitting = false);
+                  }
+                },
         );
       },
     );

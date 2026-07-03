@@ -277,7 +277,12 @@ ApiException _mapDio(DioException e) {
     );
   }
 
-  if (code == 405) {
+  if (code == 403) {
+    return ApiException(
+      'Bu işlem için yetkiniz yok veya dosya yüklenemedi. Oturumunuzu kontrol edip tekrar deneyin.',
+      statusCode: code,
+    );
+  }
     return ApiException(
       'Bu işlem sunucuda desteklenmiyor (405). Uygulamayı güncelleyin veya web sürümünü deneyin.',
       statusCode: code,

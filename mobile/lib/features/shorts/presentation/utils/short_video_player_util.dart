@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../../core/config/env.dart';
+import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/video/video_cache_service.dart';
 import 'short_video_url_resolver.dart';
 
@@ -13,8 +15,15 @@ Future<VideoPlayerController> createShortVideoController({
   Dio? dio,
   bool fastStart = false,
 }) async {
-  final candidates = <String>[url.trim()];
-  if (dio != null) {
+  final candidates = <String>[];
+  final trimmed = url.trim();
+  if (trimmed.isNotEmpty) candidates.add(trimmed);
+  if (videoId != null && videoId.trim().isNotEmpty) {
+    candidates.add(
+      '${Env.siteOrigin}${ApiEndpoints.shortVideoStream(videoId.trim())}',
+    );
+  }
+  if (dio != null && (trimmed.isNotEmpty || videoId != null)) {
     final resolver = ShortVideoUrlResolver(dio);
     final resolved = await resolver.resolvePlayUrls(
       videoUrl: url,
@@ -54,8 +63,8 @@ Future<VideoPlayerController> createShortVideoController({
       }
 
       final timeout = fastStart
-          ? const Duration(seconds: 10)
-          : const Duration(seconds: 12);
+          ? const Duration(seconds: 18)
+          : const Duration(seconds: 20);
       await controller.initialize().timeout(timeout);
       if (controller.value.hasError) {
         throw StateError(controller.value.errorDescription ?? 'player_error');

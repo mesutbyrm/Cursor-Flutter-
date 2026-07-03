@@ -1,15 +1,13 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/media/cloud_upload_service.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
-import '../../../../core/config/env.dart';
-import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/widgets/lazy_list_views.dart';
@@ -401,57 +399,13 @@ class _VoiceRoomBackgroundSheetState
   var _uploading = false;
 
   Future<String> _uploadFile(File file) async {
-    final dio = ref.read(dioProvider);
-    final contentType = _contentType(file.path);
-    final fileName = file.path.split(Platform.pathSeparator).last;
-    final presigned = await dio.safePost<dynamic>(
-      ApiEndpoints.uploadPresigned,
-      data: {
-        'fileName': fileName,
-        'contentType': contentType,
-        'isPublic': true,
-        'folder': 'voice-room-backgrounds',
-      },
+    final uploader = CloudMediaUploadService(ref.read(dioProvider));
+    return uploader.uploadImageFile(
+      file,
+      folder: 'voice-room-backgrounds',
+      isPublic: true,
+      requireSiteOrigin: true,
     );
-    final map = presigned.data is Map
-        ? Map<String, dynamic>.from(presigned.data as Map)
-        : <String, dynamic>{};
-    if (map['success'] == true && map['data'] is Map) {
-      map.addAll(Map<String, dynamic>.from(map['data'] as Map));
-    }
-    final uploadUrl = map['uploadUrl']?.toString();
-    final cloudPath = map['cloud_storage_path']?.toString() ??
-        map['publicUrl']?.toString() ??
-        map['url']?.toString();
-    if (uploadUrl == null ||
-        uploadUrl.isEmpty ||
-        cloudPath == null ||
-        cloudPath.isEmpty) {
-      throw const ApiException('Yükleme bağlantısı alınamadı');
-    }
-    final bytes = await file.readAsBytes();
-    final putDio = Dio(
-      BaseOptions(
-        connectTimeout: const Duration(seconds: 45),
-        sendTimeout: const Duration(seconds: 90),
-      ),
-    );
-    try {
-      final putRes = await putDio.put<dynamic>(
-        uploadUrl,
-        data: bytes,
-        options: Options(headers: {'Content-Type': contentType}),
-      );
-      if (putRes.statusCode == null ||
-          putRes.statusCode! < 200 ||
-          putRes.statusCode! >= 300) {
-        throw const ApiException('Görsel yüklenemedi');
-      }
-    } finally {
-      putDio.close(force: true);
-    }
-    if (cloudPath.startsWith('http')) return cloudPath;
-    return '${Env.siteOrigin}/api/upload/get-url?path=${Uri.encodeComponent(cloudPath)}';
   }
 
   Future<void> _pickFromCamera() async {
@@ -464,13 +418,6 @@ class _VoiceRoomBackgroundSheetState
     );
     if (picked == null) return;
     await _applyUploadedFile(File(picked.path));
-  }
-
-  static String _contentType(String path) {
-    final lower = path.toLowerCase();
-    if (lower.endsWith('.png')) return 'image/png';
-    if (lower.endsWith('.webp')) return 'image/webp';
-    return 'image/jpeg';
   }
 
   Future<void> _pickFromGallery() async {

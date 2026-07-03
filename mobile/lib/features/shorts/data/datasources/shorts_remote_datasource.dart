@@ -113,7 +113,19 @@ class ShortsRemoteDataSource {
     return ShortVideoEntity(
       id: (pick(json, ['id']) ?? '').toString(),
       userId: (pick(json, ['userId', 'user_id']) ?? author.id).toString(),
-      videoUrl: (pick(json, ['videoUrl', 'video_url']) ?? '').toString(),
+      videoUrl: (pick(json, [
+            'videoUrl',
+            'video_url',
+            'playbackUrl',
+            'playback_url',
+            'streamUrl',
+            'stream_url',
+            'url',
+            'mediaUrl',
+            'media_url',
+          ]) ??
+          '')
+          .toString(),
       thumbnailUrl: pick(json, ['thumbnailUrl', 'thumbnail_url'])?.toString(),
       description: pick(json, ['description', 'caption'])?.toString(),
       viewsCount: asInt(pick(json, ['viewsCount', 'views_count'])),

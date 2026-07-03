@@ -1199,15 +1199,20 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             query: q,
             onSelected: (hit) async {
               if (!mounted) return;
+              final messenger = ScaffoldMessenger.of(context);
               final err = await ctrl.submitSelectedSong(
                 hit,
                 withVideo: true,
                 skipPayment: skipPayment,
               );
-              if (!mounted || err == null) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(err)),
-              );
+              if (!mounted) return;
+              if (err != null) {
+                messenger.showSnackBar(SnackBar(content: Text(err)));
+              } else {
+                messenger.showSnackBar(
+                  SnackBar(content: Text('«${hit.title}» çalmaya başladı')),
+                );
+              }
             },
           ).whenComplete(() => _musicSearchOpen = false),
         );
