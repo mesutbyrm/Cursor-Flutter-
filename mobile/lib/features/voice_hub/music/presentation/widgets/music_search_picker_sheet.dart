@@ -290,8 +290,8 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
           compact: i < 3,
           selected: _selectedId == hit.videoId,
           onTap: _submitting
-              ? null
-              : () async {
+              ? () {}
+              : () {
                   if (_submitting) return;
                   setState(() {
                     _selectedId = hit.videoId;
