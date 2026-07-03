@@ -23,11 +23,12 @@ class ProfileSettingsSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const ProfileSectionTitle(title: 'Ayarlar'),
-          _Group(
+          const _Group(
             title: 'Görünüm',
-            children: const [
+            children: [
               ThemeModeSelector(),
             ],
+            skipGlass: true,
           ),
           const SizedBox(height: 16),
           _Group(
@@ -121,13 +122,22 @@ class _Group extends StatelessWidget {
   const _Group({
     required this.title,
     required this.children,
+    this.skipGlass = false,
   });
 
   final String title;
   final List<Widget> children;
+  final bool skipGlass;
 
   @override
   Widget build(BuildContext context) {
+    final content = skipGlass
+        ? Column(children: children)
+        : ProfileGlass(
+            padding: EdgeInsets.zero,
+            child: Column(children: children),
+          );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -143,10 +153,7 @@ class _Group extends StatelessWidget {
             ),
           ),
         ),
-        ProfileGlass(
-          padding: EdgeInsets.zero,
-          child: Column(children: children),
-        ),
+        content,
       ],
     );
   }

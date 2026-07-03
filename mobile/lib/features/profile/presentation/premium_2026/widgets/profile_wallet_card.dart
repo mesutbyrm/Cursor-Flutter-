@@ -1,6 +1,5 @@
 import 'package:canlifal_social/core/widgets/lazy_list_views.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../../core/theme/app_theme_colors.dart';
 import '../../widgets/premium/profile_glass.dart';
@@ -109,9 +108,12 @@ class ProfileWalletCard extends StatelessWidget {
                 ),
               ],
             ),
-          ).animate().fadeIn(delay: 120.ms),
+          ),
           const SizedBox(height: 12),
-          LazyNestedGridView(
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            clipBehavior: Clip.hardEdge,
+            child: LazyNestedGridView(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               mainAxisSpacing: 10,
@@ -157,6 +159,7 @@ class ProfileWalletCard extends StatelessWidget {
                   gradient: [const Color(0xFF3A3010), const Color(0xFF181008)],
                 ),
             },
+          ),
           ),
         ],
       ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -28,56 +27,75 @@ class ProfileHeader extends ConsumerWidget {
     final user = state.user;
     final level = state.level.level;
 
+    // Kapak + avatar tek Stack içinde sabit yükseklikte — taşan hit-test alanı yok.
+    final headerHeight = ProfilePremiumTheme.coverHeight +
+        ProfilePremiumTheme.avatarSize * 0.42;
+
     return RepaintBoundary(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              _CoverBanner(),
-              Positioned(
-                top: 12,
-                left: 12,
-                right: 12,
-                child: Row(
-                  children: [
-                    const Spacer(),
-                    const MessagesNotificationsActions(spacing: 6, iconSize: 40),
-                    const SizedBox(width: 6),
-                    _HeaderIcon(Icons.qr_code_2_rounded, () {
-                      SharePlus.instance.share(
-                        ShareParams(
-                          text: 'https://canlifal.com/@${user.username}',
-                          subject: '${user.display} — Canlifal',
-                        ),
-                      );
-                    }),
-                    const SizedBox(width: 6),
-                    _HeaderIcon(Icons.ios_share_rounded, () {
-                      SharePlus.instance.share(
-                        ShareParams(text: 'https://canlifal.com/@${user.username}'),
-                      );
-                    }),
-                  ],
+          SizedBox(
+            height: headerHeight,
+            child: Stack(
+              clipBehavior: Clip.hardEdge,
+              children: [
+                const Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: _CoverBanner(),
                 ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: -ProfilePremiumTheme.avatarSize * 0.52,
-                child: Center(child: _AvatarWithBadges(
-                  url: user.avatarUrl,
-                  level: level,
-                  isVip: state.isVip,
-                  isBroadcaster: state.liveStreams > 0,
-                  isVerified: user.isVerified,
-                  onTap: onAvatarTap ?? onEdit,
-                )),
-              ),
-            ],
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  right: 12,
+                  child: Row(
+                    children: [
+                      const Spacer(),
+                      const MessagesNotificationsActions(
+                        spacing: 6,
+                        iconSize: 40,
+                      ),
+                      const SizedBox(width: 6),
+                      _HeaderIcon(Icons.qr_code_2_rounded, () {
+                        SharePlus.instance.share(
+                          ShareParams(
+                            text: 'https://canlifal.com/@${user.username}',
+                            subject: '${user.display} — Canlifal',
+                          ),
+                        );
+                      }),
+                      const SizedBox(width: 6),
+                      _HeaderIcon(Icons.ios_share_rounded, () {
+                        SharePlus.instance.share(
+                          ShareParams(
+                            text: 'https://canlifal.com/@${user.username}',
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: _AvatarWithBadges(
+                      url: user.avatarUrl,
+                      level: level,
+                      isVip: state.isVip,
+                      isBroadcaster: state.liveStreams > 0,
+                      isVerified: user.isVerified,
+                      onTap: onAvatarTap ?? onEdit,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: ProfilePremiumTheme.avatarSize * 0.58),
+          const SizedBox(height: 12),
           _NameBlock(
             displayName: user.display,
             username: user.username,
@@ -85,12 +103,14 @@ class ProfileHeader extends ConsumerWidget {
             isVerified: user.isVerified,
           ),
         ],
-      ).animate().fadeIn(duration: 320.ms),
+      ),
     );
   }
 }
 
 class _CoverBanner extends StatelessWidget {
+  const _CoverBanner();
+
   @override
   Widget build(BuildContext context) {
     return Hero(
@@ -155,7 +175,7 @@ class _AvatarWithBadges extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Stack(
-        clipBehavior: Clip.none,
+        clipBehavior: Clip.hardEdge,
         children: [
           Container(
             padding: const EdgeInsets.all(4),
