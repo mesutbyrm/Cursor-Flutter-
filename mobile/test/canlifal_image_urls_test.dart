@@ -24,7 +24,10 @@ void main() {
     });
 
     test('thumbnail wraps canlifal.com via _next/image', () {
-      final raw = '${Env.siteOrigin}/uploads/banner.jpg';
+      // Next.js görsel optimizeri yalnızca canlifal.com frontend'inde var;
+      // siteOrigin API host'una (abacusai) işaret etse de bu dal
+      // canlifal.com URL'lerini sarmalı.
+      const raw = 'https://canlifal.com/uploads/banner.jpg';
       final thumb = CanlifalImageUrls.thumbnail(raw, width: 720);
       expect(thumb, contains('/_next/image?url='));
       expect(thumb, contains('w=720'));
