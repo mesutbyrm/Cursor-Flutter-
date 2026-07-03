@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../../core/video/safe_video_layout.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../domain/entities/shorts_feed_entry.dart';
 import '../providers/shorts_playback_providers.dart';
@@ -106,14 +107,7 @@ class _ShortSponsoredTileState extends ConsumerState<ShortSponsoredTile> {
         if (_loading)
           ColoredBox(color: ShortsPremiumTheme.feedBackground(context))
         else if (c != null && c.value.isInitialized)
-          FittedBox(
-            fit: BoxFit.cover,
-            child: SizedBox(
-              width: c.value.size.width,
-              height: c.value.size.height,
-              child: VideoPlayer(c),
-            ),
-          )
+          SafeCoverVideoPlayer(controller: c)
         else
           ColoredBox(color: ShortsPremiumTheme.feedBackground(context)),
         Positioned(

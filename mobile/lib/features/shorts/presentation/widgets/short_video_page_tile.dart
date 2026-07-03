@@ -7,6 +7,7 @@ import 'package:video_player/video_player.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/video/safe_video_layout.dart';
 import '../../../../core/firebase/firebase_bootstrap.dart';
 import '../../../../core/network/connectivity/connectivity_service.dart';
 import '../../../../core/performance/list_perf.dart';
@@ -313,17 +314,7 @@ class _VideoSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
-      child: ColoredBox(
-        color: Colors.black,
-        child: FittedBox(
-          fit: BoxFit.cover,
-          child: SizedBox(
-            width: controller.value.size.width,
-            height: controller.value.size.height,
-            child: VideoPlayer(controller),
-          ),
-        ),
-      ),
+      child: SafeCoverVideoPlayer(controller: controller),
     );
   }
 }

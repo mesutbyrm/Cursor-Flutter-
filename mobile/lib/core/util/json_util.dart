@@ -19,7 +19,15 @@ dynamic pick(Map<String, dynamic> json, List<String> keys) {
 int asInt(dynamic v) {
   if (v == null) return 0;
   if (v is int) return v;
-  if (v is double) return v.round();
+  if (v is double) {
+    if (!v.isFinite) return 0;
+    return v.round();
+  }
+  if (v is num) {
+    final d = v.toDouble();
+    if (!d.isFinite) return 0;
+    return d.round();
+  }
   return int.tryParse(v.toString()) ?? 0;
 }
 

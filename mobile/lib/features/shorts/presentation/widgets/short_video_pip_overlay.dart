@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../../core/video/safe_video_layout.dart';
 import '../../domain/entities/short_video_entity.dart';
 
 class ShortVideoPipState {
@@ -102,14 +103,7 @@ class ShortVideoPipOverlay extends ConsumerWidget {
               fit: StackFit.expand,
               children: [
                 if (c.value.isInitialized)
-                  FittedBox(
-                    fit: BoxFit.cover,
-                    child: SizedBox(
-                      width: c.value.size.width,
-                      height: c.value.size.height,
-                      child: VideoPlayer(c),
-                    ),
-                  )
+                  SafeCoverVideoPlayer(controller: c)
                 else
                   const ColoredBox(color: Colors.black),
                 Positioned(

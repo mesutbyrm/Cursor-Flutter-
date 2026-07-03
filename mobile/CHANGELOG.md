@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.479+483 (2026-07-03)
+
+### Düzeltme — kısa video «Bileşen hatası» (Infinity/NaN toInt)
+
+- **Kök neden:** `VideoPlayer` bazen `Size.zero` / geçersiz boyut döndürüyor; `SizedBox` layout `toInt` hatası veriyordu
+- **`SafeCoverVideoPlayer`:** güvenli boyut + `ListenableBuilder` ile kısa video, sponsorlu ve PiP yüzeyleri
+- **`asInt` / görsel cache:** NaN ve Infinity için savunma
+
 ## 1.0.478+482 (2026-07-03)
 
 ### Düzeltme — sesli oda arka plan, !istek müzik, ana sayfa, kısa video

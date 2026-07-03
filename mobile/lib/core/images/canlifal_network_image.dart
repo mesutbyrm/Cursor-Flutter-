@@ -113,7 +113,9 @@ class CanlifalNetworkImage extends StatelessWidget {
             cachePx != null &&
             w != null &&
             h != null &&
-            w > 0)
+            w > 0 &&
+            w.isFinite &&
+            h.isFinite)
         ? (cachePx * h / w).round()
         : null;
 
