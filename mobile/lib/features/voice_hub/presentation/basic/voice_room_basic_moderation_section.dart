@@ -17,7 +17,6 @@ import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium_2026/voice_web_owner_stage.dart';
 import '../widgets/voice_room/voice_room_duyuru_ticker.dart';
 import '../widgets/voice_room/voice_room_staff_join_banner.dart';
-import '../widgets/voice_room/voice_room_seat_video_strip.dart';
 import 'voice_room_basic_premium_section.dart';
 
 /// Sahne, moderasyon araç çubuğu ve konuşma isteği — temel mod (web parity).
@@ -70,7 +69,6 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
                 .read(voiceRoomLiveProvider(liveKey).notifier)
                 .clearModeratorAnnouncement(),
           ),
-        VoiceRoomSeatVideoStrip(roomKey: liveKey),
       ],
     );
   }

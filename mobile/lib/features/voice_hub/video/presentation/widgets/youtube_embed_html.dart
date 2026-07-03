@@ -63,6 +63,7 @@ abstract final class YoutubeEmbedHtml {
         events: {
           onReady: function(e) {
             post('ready');
+            try { e.target.unMute(); e.target.setVolume(100); } catch (err) {}
             if ($autoplay === 1) e.target.playVideo();
           },
           onStateChange: function(e) {
@@ -93,6 +94,11 @@ abstract final class YoutubeEmbedHtml {
           player.seekTo(cmd.sec || 0, true);
           if (cmd.playing) player.playVideo();
           else player.pauseVideo();
+        } else if (cmd.action === 'unmute') {
+          player.unMute();
+          player.setVolume(cmd.volume != null ? cmd.volume : 100);
+        } else if (cmd.action === 'mute') {
+          player.mute();
         }
         return true;
       } catch (e) { return false; }

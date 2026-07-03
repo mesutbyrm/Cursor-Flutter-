@@ -26,6 +26,7 @@ class PsychicRoomSseService {
   void Function(PsychicChatMessage message)? _onMessage;
   void Function(PsychicRoomEntity room)? _onRoomUpdate;
   void Function(PsychicSessionStatus status)? _onSessionEnded;
+  void Function(int amount, String? fromName)? _onTipReceived;
   var _stopped = false;
   var _reconnectAttempt = 0;
 
@@ -37,6 +38,7 @@ class PsychicRoomSseService {
     void Function(PsychicChatMessage message)? onMessage,
     void Function(PsychicRoomEntity room)? onRoomUpdate,
     void Function(PsychicSessionStatus status)? onSessionEnded,
+    void Function(int amount, String? fromName)? onTipReceived,
   }) async {
     final id = sessionId.trim();
     if (id.isEmpty) return;
@@ -48,6 +50,7 @@ class PsychicRoomSseService {
     _onMessage = onMessage;
     _onRoomUpdate = onRoomUpdate;
     _onSessionEnded = onSessionEnded;
+    _onTipReceived = onTipReceived;
     await _openStream();
   }
 
@@ -139,6 +142,29 @@ class PsychicRoomSseService {
         );
         return;
       }
+      if (type == 'tip' ||
+          type == 'tip_received' ||
+          type == 'bahsis' ||
+          type == 'tip_sent') {
+        final amount = _parseTipAmount(map);
+        if (amount > 0) {
+          final from = map['senderName']?.toString() ??
+              map['clientName']?.toString() ??
+              map['fromName']?.toString();
+          _onTipReceived?.call(amount, from);
+        }
+        return;
+      }
+      if (type == 'timer_started' || type == 'time_extended') {
+        final room = PsychicModel.roomFromJson(
+          map['room'] is Map
+              ? Map<String, dynamic>.from(map['room'] as Map)
+              : map,
+          fallbackId: _sessionId ?? '',
+        );
+        _onRoomUpdate?.call(room);
+        return;
+      }
       final msg = PsychicModel.chatFromJson(map, myUserId: _myUserId);
       if (msg.text.trim().isNotEmpty) {
         _onMessage?.call(msg);
@@ -159,6 +185,12 @@ class PsychicRoomSseService {
       }
       _onRoomUpdate?.call(room);
     } catch (_) {}
+  }
+
+  int _parseTipAmount(Map<String, dynamic> map) {
+    final raw = map['amount'] ?? map['jeton'] ?? map['tipAmount'] ?? map['value'];
+    if (raw is num) return raw.toInt();
+    return int.tryParse(raw?.toString() ?? '') ?? 0;
   }
 
   void _scheduleReconnect() {

@@ -22,6 +22,7 @@ import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_s
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_peer_left_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
 
 class PsychicVideoState {
@@ -36,6 +37,9 @@ class PsychicVideoState {
     this.sendingChat = false,
     this.room,
     this.tipThankYouAmount,
+    this.tipReceivedAmount,
+    this.tipReceivedFrom,
+    this.sessionTipsTotal = 0,
     this.sseConnected = false,
     this.localPreviewKey = 0,
     this.timeUpPending = false,
@@ -51,6 +55,9 @@ class PsychicVideoState {
   final bool sendingChat;
   final PsychicRoomEntity? room;
   final int? tipThankYouAmount;
+  final int? tipReceivedAmount;
+  final String? tipReceivedFrom;
+  final int sessionTipsTotal;
   final bool sseConnected;
   final int localPreviewKey;
   final bool timeUpPending;
@@ -74,6 +81,10 @@ class PsychicVideoState {
     PsychicRoomEntity? room,
     int? tipThankYouAmount,
     bool clearTipThankYou = false,
+    int? tipReceivedAmount,
+    String? tipReceivedFrom,
+    bool clearTipReceived = false,
+    int? sessionTipsTotal,
     bool? sseConnected,
     int? localPreviewKey,
     bool? timeUpPending,
@@ -90,6 +101,12 @@ class PsychicVideoState {
       room: room ?? this.room,
       tipThankYouAmount:
           clearTipThankYou ? null : (tipThankYouAmount ?? this.tipThankYouAmount),
+      tipReceivedAmount: clearTipReceived
+          ? null
+          : (tipReceivedAmount ?? this.tipReceivedAmount),
+      tipReceivedFrom:
+          clearTipReceived ? null : (tipReceivedFrom ?? this.tipReceivedFrom),
+      sessionTipsTotal: sessionTipsTotal ?? this.sessionTipsTotal,
       sseConnected: sseConnected ?? this.sseConnected,
       localPreviewKey: localPreviewKey ?? this.localPreviewKey,
       timeUpPending: timeUpPending ?? this.timeUpPending,
@@ -156,7 +173,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _ping = Timer.periodic(const Duration(seconds: 60), (_) => _sendPing());
 
     _roomPoll?.cancel();
-    _roomPoll = Timer.periodic(const Duration(seconds: 8), (_) {
+    _roomPoll = Timer.periodic(const Duration(seconds: 4), (_) {
       unawaited(_syncRoomInfo());
     });
   }
@@ -276,7 +293,25 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
             if (_disposed || state.leaving) return;
             unawaited(_handleRemoteSessionEnded(status));
           },
+          onTipReceived: (amount, fromName) {
+            if (_disposed || state.leaving) return;
+            _onTipReceived(amount, fromName);
+          },
         );
+  }
+
+  void _onTipReceived(int amount, String? fromName) {
+    if (amount <= 0) return;
+    if (session.isClient) return;
+    final total = state.sessionTipsTotal + amount;
+    state = state.copyWith(
+      tipReceivedAmount: amount,
+      tipReceivedFrom: fromName,
+      sessionTipsTotal: total,
+    );
+    Future<void>.delayed(const Duration(seconds: 4), () {
+      if (!_disposed) state = state.copyWith(clearTipReceived: true);
+    });
   }
 
   void _onSseChatMessage(PsychicChatMessage msg) {
@@ -466,6 +501,18 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       Future<void>.delayed(const Duration(seconds: 3), () {
         if (!_disposed) state = state.copyWith(clearTipThankYou: true);
       });
+      final tellerUid = session.tellerUserId ?? state.room?.tellerUserId;
+      unawaited(
+        ref.read(livePsychicsRepositoryProvider).sendRoomSignal(
+              sessionId: session.sessionId,
+              type: 'tip',
+              data: {
+                'amount': amount,
+                'senderName': ref.read(authControllerProvider).valueOrNull?.display,
+              },
+              receiverId: tellerUid,
+            ),
+      );
     }
     return ok;
   }
@@ -574,34 +621,67 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _roomPoll?.cancel();
     ref.read(psychicSessionCancelSignalProvider.notifier).signal(session.sessionId);
     final user = ref.read(authControllerProvider).valueOrNull;
-    try {
-      await ref.read(livePsychicsRepositoryProvider).roomAction(
-            session.sessionId,
-            'end',
-            extra: {
-              'endedByRole': session.isClient ? 'client' : 'teller',
-              if (user?.id != null) 'endedBy': user!.id,
-            },
-          );
-    } catch (_) {}
-    try {
-      await ref.read(livePsychicsRepositoryProvider).endSession(session.sessionId);
-    } catch (_) {}
-    try {
-      await ref
-          .read(livePsychicsRepositoryProvider)
-          .clearRoomSignals(session.sessionId);
-    } catch (_) {}
-    await ref.read(psychicRoomSseServiceProvider).disconnect();
-    await _agora.leave();
-    await PsychicSessionStore.clear();
+    final tipsTotal = state.sessionTipsTotal;
+    final sessionId = session.sessionId;
+    final isClient = session.isClient;
+
+    unawaited(_agora.leave());
+    unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
+    unawaited(PsychicSessionStore.clear());
     invalidateWalletCacheFromRef(ref);
+
     if (peerEndedMessage != null) {
       ref.read(psychicPeerLeftProvider.notifier).state = PsychicPeerLeftEvent(
-        sessionId: session.sessionId,
+        sessionId: sessionId,
         message: peerEndedMessage,
       );
     }
+
+    if (!isClient && !silent) {
+      ref.read(psychicSessionEndedProvider.notifier).state = PsychicSessionEndedEvent(
+        sessionId: sessionId,
+        tellerId: session.psychic.id,
+        tellerName: session.psychic.name,
+        durationMinutes: session.durationMinutes,
+        totalJeton: session.totalJeton,
+        tipsJeton: tipsTotal > 0 ? tipsTotal : null,
+        isTeller: true,
+        navigateAfter: true,
+      );
+    }
+
+    final repo = ref.read(livePsychicsRepositoryProvider);
+    unawaited(() async {
+      try {
+        await repo.sendRoomSignal(
+          sessionId: sessionId,
+          type: 'session_end',
+          data: {
+            'endedByRole': isClient ? 'client' : 'teller',
+            if (user?.id != null) 'endedBy': user!.id,
+          },
+          receiverId: isClient
+              ? (state.room?.tellerUserId ?? session.tellerUserId)
+              : state.room?.clientId,
+        );
+      } catch (_) {}
+      try {
+        await repo.roomAction(
+          sessionId,
+          'end',
+          extra: {
+            'endedByRole': isClient ? 'client' : 'teller',
+            if (user?.id != null) 'endedBy': user!.id,
+          },
+        );
+      } catch (_) {}
+      try {
+        await repo.endSession(sessionId);
+      } catch (_) {}
+      try {
+        await repo.clearRoomSignals(sessionId);
+      } catch (_) {}
+    }());
   }
 
   Future<UserEntity?> _waitForAuth() async {

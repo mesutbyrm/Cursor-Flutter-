@@ -326,7 +326,10 @@ class LivePsychicsRemoteDataSource {
     if (key.isEmpty) return const [];
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerAwards(key));
-      final items = PsychicModel.itemsFromBody(res.data);
+      final items = PsychicModel.itemsFromBody(
+        res.data,
+        keys: const ['awards', 'items', 'data', 'results'],
+      );
       return items
           .map((m) => PsychicAwardEntity(
                 id: m['id']?.toString() ?? '',
@@ -349,7 +352,10 @@ class LivePsychicsRemoteDataSource {
     if (key.isEmpty) return const [];
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerGifts(key));
-      final items = PsychicModel.itemsFromBody(res.data);
+      final items = PsychicModel.itemsFromBody(
+        res.data,
+        keys: const ['gifts', 'items', 'data', 'results'],
+      );
       return items
           .map((m) => PsychicGiftEntity(
                 senderId: m['senderId']?.toString() ??
@@ -735,6 +741,29 @@ class LivePsychicsRemoteDataSource {
     try {
       await _dio.safeDelete<dynamic>(
         ApiEndpoints.liveFortuneRoomSignalQuery(key),
+      );
+    } catch (_) {}
+  }
+
+  /// Anlık seans sinyali — karşı tarafa hızlı bildirim (bahşiş, sonlandırma).
+  Future<void> sendRoomSignal({
+    required String sessionId,
+    required String type,
+    Map<String, dynamic>? data,
+    String? receiverId,
+  }) async {
+    final key = sessionId.trim();
+    if (key.isEmpty || type.trim().isEmpty) return;
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.liveFortuneRoomSignal,
+        data: {
+          'sessionId': key,
+          'type': type.trim(),
+          if (data != null && data.isNotEmpty) 'data': data,
+          if (receiverId != null && receiverId.trim().isNotEmpty)
+            'receiverId': receiverId.trim(),
+        },
       );
     } catch (_) {}
   }

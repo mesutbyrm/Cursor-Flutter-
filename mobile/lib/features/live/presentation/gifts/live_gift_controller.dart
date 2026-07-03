@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../../gifts/data/gift_sound_service.dart';
+import '../../../gifts/domain/gift_revenue_display.dart';
 import '../../data/datasources/live_gifts_remote_datasource.dart';
 import '../../data/services/live_gift_realtime_service.dart';
 import '../../domain/entities/live_gift_catalog.dart';
@@ -107,11 +108,9 @@ class LiveGiftController extends ChangeNotifier {
         senderId: senderId,
       );
       if (result.newBalance != null) coinBalance = result.newBalance;
-      if (result.streamerBalance != null) {
-        streamerEarnings = result.streamerBalance;
-      } else if (result.event != null) {
-        streamerEarnings = (streamerEarnings ?? 0) + gift.price * quantity;
-      }
+      final gross = gift.price * quantity;
+      streamerEarnings =
+          (streamerEarnings ?? 0) + GiftRevenueDisplay.liveBroadcasterNet(gross);
 
       final base = result.event!;
       final enriched = _applyCombo(
@@ -166,6 +165,9 @@ class LiveGiftController extends ChangeNotifier {
       fullscreenQueue.removeRange(3, fullscreenQueue.length);
     }
     activeFullscreen = enriched;
+    final gross = enriched.coinCost * enriched.quantity;
+    streamerEarnings =
+        (streamerEarnings ?? 0) + GiftRevenueDisplay.liveBroadcasterNet(gross);
     notifyListeners();
 
     final duration = enriched.rarity.fullscreenDuration;
