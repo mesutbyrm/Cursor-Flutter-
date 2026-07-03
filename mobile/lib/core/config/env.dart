@@ -10,10 +10,16 @@ class Env {
     defaultValue: 'https://canlifal.com',
   );
 
-  /// Oyun odası uçları (Redis backend). Ana site farklıysa buradan bağlanır.
+  /// Oyun odası uçları (Redis / Backend-2).
   static const String gamesApiBaseUrl = String.fromEnvironment(
     'GAMES_API_BASE_URL',
     defaultValue: 'https://canlifalapi.abacusai.app',
+  );
+
+  /// Acil gateway yedeği — yalnızca 502/503/504 sonrası tek deneme.
+  static const String gatewayApiBaseUrl = String.fromEnvironment(
+    'GATEWAY_API_BASE_URL',
+    defaultValue: '',
   );
 
   static bool get useSplitGamesApi {

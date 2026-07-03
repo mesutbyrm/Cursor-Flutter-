@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.476+480 (2026-07-03)
+
+### Backend-2 uyumu — doğrudan routing, API Monitor, mock kaldırma
+
+- **Merkezi backend yönlendirme:** `ApiBackendRouter` — her path doğrudan Main (`canlifal.com`) veya Game (`canlifalapi.abacusai.app`) origin'ine gider; gateway yalnızca 502/503/504 acil yedeği
+- **Tek Dio:** `BackendRoutingInterceptor` + `GatewayFallbackInterceptor`; split `gamesDio` kaldırıldı
+- **API Monitor (debug):** Ayarlar → API Monitor — URL, method, backend (Main/Game), status, süre, retry sayısı
+- **Mock/yerel yedek kaldırıldı:** Okey101 yerel oturum, oyun katalog fallback — yalnızca gerçek API; hata durumunda anlamlı exception
+- **Oyun gameType:** okey, okey101, tavla, pişti, tombala slug eşlemesi
+- **Smoke test:** `scripts/api-module-smoke-test.sh` — modül bazlı Main/Game uç doğrulama
+- **Uyumluluk:** Keep-Alive, gzip Accept-Encoding, 15s connect / 20s receive timeout, client GET retry
+
 ## 1.0.475+479 (2026-07-03)
 
 ### Düzeltme — ana sayfa / fal / video / sosyal (404 regresyonu)

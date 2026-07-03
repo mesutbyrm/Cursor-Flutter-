@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -77,6 +78,7 @@ import '../../features/profile/presentation/pages/profile_payment_notice_page.da
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/profile_visitors_page.dart';
 import '../../features/profile/presentation/pages/settings_page.dart';
+import '../../features/debug/presentation/api_monitor_page.dart';
 import '../../features/profile/presentation/pages/active_devices_page.dart';
 import '../../features/profile/presentation/pages/profile_transactions_page.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
@@ -575,6 +577,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/settings/devices',
         builder: (context, state) => const ActiveDevicesPage(),
       ),
+      if (kDebugMode)
+        GoRoute(
+          path: '/debug/api-monitor',
+          builder: (context, state) => const ApiMonitorPage(),
+        ),
       GoRoute(
         path: '/profile/security',
         builder: (context, state) => const ProfileAccountSecurityPage(),

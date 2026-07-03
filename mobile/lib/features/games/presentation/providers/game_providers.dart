@@ -3,21 +3,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
-import '../../../../core/providers/auth_selectors.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/game_remote_datasource.dart';
 import '../../domain/game_models.dart';
 
 final gameRemoteProvider = Provider<GameRemoteDataSource>((ref) {
-  return GameRemoteDataSource(
-    ref.watch(dioProvider),
-    gamesDio: ref.watch(gamesDioProvider),
-    resolveUserId: () => ref.read(currentUserIdProvider),
-    resolveDisplayName: () =>
-        ref.read(authControllerProvider).valueOrNull?.displayName ??
-        ref.read(authControllerProvider).valueOrNull?.username ??
-        'Oyuncu',
-  );
+  return GameRemoteDataSource(ref.watch(dioProvider));
 });
 
 final gameCatalogProvider = FutureProvider<List<GameCatalogItem>>((ref) {

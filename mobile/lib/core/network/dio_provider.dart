@@ -7,12 +7,15 @@ import '../performance/json_isolate_perf.dart';
 import 'api.dart';
 import 'api_exception.dart';
 import 'api_endpoints.dart';
+import 'api_monitor_interceptor.dart';
+import 'backend_routing_interceptor.dart';
 import 'device_headers.dart';
 import 'api_cache_interceptor.dart';
 import 'api_retry_interceptor.dart';
 import 'api_timing_interceptor.dart';
 import 'connectivity/connectivity_service.dart';
 import 'cookie_jar_provider.dart';
+import 'gateway_fallback_interceptor.dart';
 import 'payment_request_interceptor.dart';
 import 'token_storage.dart';
 import 'voice_room_api_log_interceptor.dart';
@@ -35,22 +38,21 @@ String _refreshPath() =>
 
 Dio _createApiDio(
   Ref ref, {
-  required String baseUrl,
-  Dio? tokenRefreshDio,
+  required Dio tokenRefreshDio,
 }) {
   final tokenStorage = ref.watch(tokenStorageProvider);
   final cookieJar = ref.watch(cookieJarProvider);
-  final refreshClient = tokenRefreshDio;
 
   final dio = Dio(
     BaseOptions(
-      baseUrl: baseUrl,
+      baseUrl: Env.apiBaseUrl,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 20),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'Connection': 'keep-alive',
+        'Accept-Encoding': 'gzip, deflate',
       },
       persistentConnection: true,
     ),
@@ -60,9 +62,12 @@ Dio _createApiDio(
     contentLengthIsolateThreshold: JsonIsolatePerf.largeThreshold,
   );
 
+  // Backend seçimi — her istek doğru origin'e gider.
+  dio.interceptors.add(BackendRoutingInterceptor());
   dio.interceptors.add(CookieManager(cookieJar));
   dio.interceptors.add(PaymentRequestInterceptor());
   dio.interceptors.add(VoiceRoomApiLogInterceptor());
+  dio.interceptors.add(ApiMonitorInterceptor());
   dio.interceptors.add(ApiTimingInterceptor());
 
   final connectivity = ref.read(connectivityServiceProvider);
@@ -99,9 +104,8 @@ Dio _createApiDio(
             e.response?.statusCode == 401 &&
             e.requestOptions.path != refreshPath) {
           e.requestOptions.extra['_authRetry'] = true;
-          final refreshDio = refreshClient ?? dio;
           final refreshed = await _tryRefresh(
-            refreshDio,
+            tokenRefreshDio,
             tokenStorage,
             refreshPath,
           );
@@ -119,30 +123,32 @@ Dio _createApiDio(
     ),
   );
 
+  dio.interceptors.add(GatewayFallbackInterceptor(dioGetter: () => dio));
   dio.interceptors.add(ApiCacheInterceptor());
 
   return dio;
 }
 
+/// Tek Dio — path'e göre Main veya Game backend'e yönlendirilir.
 final dioProvider = Provider<Dio>((ref) {
-  final dio = _createApiDio(ref, baseUrl: Env.apiBaseUrl);
+  final refreshOnly = Dio(
+    BaseOptions(
+      baseUrl: Env.apiBaseUrl,
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 20),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    ),
+  );
+  final dio = _createApiDio(ref, tokenRefreshDio: refreshOnly);
   Api.bind(dio);
   return dio;
 });
 
-/// Oyun odası uçları — Redis backend (`canlifalapi.abacusai.app`).
-/// Token yenileme ana API (`canlifal.com`) üzerinden yapılır.
-final gamesDioProvider = Provider<Dio>((ref) {
-  if (!Env.useSplitGamesApi) {
-    return ref.watch(dioProvider);
-  }
-  final main = ref.watch(dioProvider);
-  return _createApiDio(
-    ref,
-    baseUrl: Env.gamesApiBaseUrl,
-    tokenRefreshDio: main,
-  );
-});
+/// Geriye dönük alias — artık [dioProvider] ile aynı (routing interceptor içinde).
+final gamesDioProvider = Provider<Dio>((ref) => ref.watch(dioProvider));
 
 Future<bool> _tryRefresh(
   Dio dio,

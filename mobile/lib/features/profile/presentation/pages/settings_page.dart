@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -119,6 +120,18 @@ class SettingsPage extends ConsumerWidget {
               const SizedBox(height: 20),
               const _SectionLabel('Görünüm'),
               const ThemeModeSelector(),
+              if (kDebugMode) ...[
+                const SizedBox(height: 20),
+                const _SectionLabel('Geliştirici'),
+                ProfileGlass(
+                  padding: EdgeInsets.zero,
+                  child: _SettingsTile(
+                    icon: Icons.monitor_heart_outlined,
+                    label: 'API Monitor',
+                    onTap: () => context.push('/debug/api-monitor'),
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
               const _SectionLabel('Diğer'),
               ProfileGlass(
