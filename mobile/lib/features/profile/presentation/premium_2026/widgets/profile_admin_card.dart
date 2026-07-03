@@ -70,12 +70,6 @@ class ProfileAdminCard extends ConsumerWidget {
         onTap: () => context.push('/admin/reports'),
       ),
       (
-        icon: Icons.support_agent_rounded,
-        label: 'Destek Talepleri',
-        badge: 0,
-        onTap: () => context.push('/profile/help'),
-      ),
-      (
         icon: Icons.gavel_rounded,
         label: 'Moderasyon',
         badge: 0,
@@ -88,7 +82,7 @@ class ProfileAdminCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ProfileSectionTitle(
-            title: 'Yönetim Paneli — ${access.roleLabel}',
+            title: 'Admin Paneli',
             trailing: pending > 0
                 ? Container(
                     padding:
@@ -115,7 +109,22 @@ class ProfileAdminCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                GridView.builder(
+                if (access.roleLabel.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      access.roleLabel,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  clipBehavior: Clip.hardEdge,
+                  child: GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -138,6 +147,7 @@ class ProfileAdminCard extends ConsumerWidget {
                       badge: item.badge > 0 ? item.badge : null,
                     );
                   },
+                ),
                 ),
                 const SizedBox(height: 14),
                 const _ProfileAdminPaymentQueue(),

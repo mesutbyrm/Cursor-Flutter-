@@ -14,7 +14,7 @@ class ProfileGlass extends StatelessWidget {
     this.borderColor,
     this.gradient,
     this.onTap,
-    this.blur = 12,
+    this.blur = 0,
   });
 
   final Widget child;
@@ -30,7 +30,7 @@ class ProfileGlass extends StatelessWidget {
     return ThemedGlassCard(
       padding: padding,
       onTap: onTap,
-      blur: blur,
+      blur: 0,
       borderRadius: BorderRadius.circular(borderRadius),
       child: child,
     );

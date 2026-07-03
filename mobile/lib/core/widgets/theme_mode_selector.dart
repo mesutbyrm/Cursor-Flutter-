@@ -20,6 +20,7 @@ class ThemeModeSelector extends ConsumerWidget {
 
     return ThemedGlassCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
+      blur: 0,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

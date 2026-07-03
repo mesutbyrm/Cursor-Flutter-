@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.481+485 (2026-07-03)
+
+### Profil — düzen ve katman düzeltmesi
+
+- **Katman çakışması:** Tek sütun düzen; cam blur kapatıldı; grid animasyon taşması giderildi
+- **Gruplar:** Cüzdan → Hızlı erişim → İçeriklerim → Ayarlar (Görünüm / Hesap / Keşfet / Destek)
+- **Admin Paneli:** Yönetici ve admin kullanıcılar için üstte; tüm yönetim kısayolları tek başlık altında
+- **Temizlik:** Yinelenen menüler kaldırıldı; çalışmayan «Destek Talepleri» admin linki silindi; Güvenlik `/profile/security`
+
 ## 1.0.480+484 (2026-07-03)
 
 ### Canlı Falcılar, hediye ve sesli oda

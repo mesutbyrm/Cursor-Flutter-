@@ -109,7 +109,6 @@ class ProfileActionTile extends StatelessWidget {
       ),
     )
         .animate(delay: Duration(milliseconds: delayMs))
-        .fadeIn(duration: 280.ms)
-        .scale(begin: const Offset(0.94, 0.94), curve: Curves.easeOutCubic);
+        .fadeIn(duration: 220.ms);
   }
 }

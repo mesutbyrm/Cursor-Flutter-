@@ -15,6 +15,7 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../fortune/presentation/providers/fortune_access_providers.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../providers/profile_providers.dart';
 import '../../../social/presentation/providers/user_social_posts_notifier.dart';
 import '../premium_2026/profile_page_layout.dart';
@@ -92,6 +93,9 @@ class ProfilePage extends ConsumerWidget {
               ProfileLoadPerf.prefetchOnOpen(ref, user.id);
               final onLogout =
                   () => ref.read(authControllerProvider.notifier).logout();
+              final staff = ref.watch(staffAccessProvider);
+              final showPublisher = staff.showAdminPanel ||
+                  staff.canManagePayments;
 
               return CustomScrollView(
                 cacheExtent: ScrollPerf.feedCacheExtent,
@@ -107,6 +111,8 @@ class ProfilePage extends ConsumerWidget {
                           bottom: 120,
                         ),
                         child: ProfilePageLayout(
+                          showAdmin: staff.showAdminPanel,
+                          showPublisher: showPublisher,
                           header: ProfileHeader(
                             state: base,
                             onEdit: () => context.push('/profile/edit'),
@@ -117,9 +123,13 @@ class ProfilePage extends ConsumerWidget {
                           quickActions: const ProfileQuickActions(),
                           wallet: ProfileLazyWallet(base: base),
                           premium: ProfileLazyPremium(base: base),
-                          publisher: const ProfileLazyPublisher(),
+                          publisher: showPublisher
+                              ? const ProfileLazyPublisher()
+                              : const SizedBox.shrink(),
                           teller: const ProfileLazyTeller(),
-                          admin: const ProfileLazyAdmin(),
+                          admin: staff.showAdminPanel
+                              ? const ProfileLazyAdmin()
+                              : const SizedBox.shrink(),
                           content: ProfileLazyContent(userId: user.id),
                           settings: ProfileLazySettings(onLogout: onLogout),
                         ),

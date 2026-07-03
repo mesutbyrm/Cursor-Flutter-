@@ -5,7 +5,7 @@ import '../../../../../core/theme/app_palette.dart';
 import '../../../../../core/widgets/theme_mode_selector.dart';
 import '../../widgets/premium/profile_glass.dart';
 
-/// Ayarlar listesi — tema, güvenlik, çıkış.
+/// Ayarlar — gruplu liste; tema, hesap, keşfet, destek.
 class ProfileSettingsSection extends StatelessWidget {
   const ProfileSettingsSection({
     super.key,
@@ -18,117 +18,136 @@ class ProfileSettingsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
 
-    final items = <({IconData icon, String label, VoidCallback onTap, bool danger})>[
-      (
-        icon: Icons.person_outline_rounded,
-        label: 'Profil Düzenle',
-        onTap: () => context.push('/profile/edit'),
-        danger: false,
-      ),
-      (
-        icon: Icons.shield_outlined,
-        label: 'Hesap Güvenliği',
-        onTap: () => context.push('/settings'),
-        danger: false,
-      ),
-      (
-        icon: Icons.notifications_outlined,
-        label: 'Bildirimler',
-        onTap: () => context.push('/notifications'),
-        danger: false,
-      ),
-      (
-        icon: Icons.lock_outline_rounded,
-        label: 'Gizlilik',
-        onTap: () => context.push('/settings'),
-        danger: false,
-      ),
-      (
-        icon: Icons.bookmark_outline_rounded,
-        label: 'Favoriler',
-        onTap: () => context.push('/favorites'),
-        danger: false,
-      ),
-      (
-        icon: Icons.emoji_events_outlined,
-        label: 'Görevler',
-        onTap: () => context.push('/profile/growth'),
-        danger: false,
-      ),
-      (
-        icon: Icons.military_tech_outlined,
-        label: 'Rozetler',
-        onTap: () => context.push('/profile/growth'),
-        danger: false,
-      ),
-      (
-        icon: Icons.menu_book_rounded,
-        label: 'Blog',
-        onTap: () => context.push('/blog-hub'),
-        danger: false,
-      ),
-      (
-        icon: Icons.nights_stay_outlined,
-        label: 'Rüyalarım',
-        onTap: () => context.push('/dreams-hub'),
-        danger: false,
-      ),
-      (
-        icon: Icons.search_rounded,
-        label: 'Kullanıcı Ara',
-        onTap: () => context.push('/search'),
-        danger: false,
-      ),
-      (
-        icon: Icons.help_outline_rounded,
-        label: 'Yardım',
-        onTap: () => context.push('/profile/help'),
-        danger: false,
-      ),
-      (
-        icon: Icons.info_outline_rounded,
-        label: 'Hakkımızda',
-        onTap: () => context.push('/profile/about'),
-        danger: false,
-      ),
-      (
-        icon: Icons.logout_rounded,
-        label: 'Çıkış',
-        onTap: onLogout ?? () {},
-        danger: true,
-      ),
-    ];
-
     return RepaintBoundary(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const ProfileSectionTitle(title: 'Ayarlar'),
-          const ThemeModeSelector(),
-          const SizedBox(height: 12),
-          ProfileGlass(
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                for (var i = 0; i < items.length; i++) ...[
-                  _SettingsRow(
-                    icon: items[i].icon,
-                    label: items[i].label,
-                    onTap: items[i].onTap,
-                    danger: items[i].danger,
-                  ),
-                  if (i < items.length - 1)
-                    Divider(
-                      height: 1,
-                      indent: 52,
-                      color: palette.divider,
-                    ),
-                ],
-              ],
-            ),
+          _Group(
+            title: 'Görünüm',
+            children: const [
+              ThemeModeSelector(),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _Group(
+            title: 'Hesap',
+            children: [
+              _SettingsRow(
+                icon: Icons.person_outline_rounded,
+                label: 'Profil Düzenle',
+                onTap: () => context.push('/profile/edit'),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              _SettingsRow(
+                icon: Icons.shield_outlined,
+                label: 'Hesap Güvenliği',
+                onTap: () => context.push('/profile/security'),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              _SettingsRow(
+                icon: Icons.notifications_outlined,
+                label: 'Bildirimler',
+                onTap: () => context.push('/notifications'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _Group(
+            title: 'Keşfet',
+            children: [
+              _SettingsRow(
+                icon: Icons.bookmark_outline_rounded,
+                label: 'Favoriler',
+                onTap: () => context.push('/favorites'),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              _SettingsRow(
+                icon: Icons.emoji_events_outlined,
+                label: 'Görevler & Rozetler',
+                onTap: () => context.push('/profile/growth'),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              _SettingsRow(
+                icon: Icons.menu_book_rounded,
+                label: 'Blog',
+                onTap: () => context.push('/blog-hub'),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              _SettingsRow(
+                icon: Icons.nights_stay_outlined,
+                label: 'Rüyalarım',
+                onTap: () => context.push('/dreams-hub'),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              _SettingsRow(
+                icon: Icons.search_rounded,
+                label: 'Kullanıcı Ara',
+                onTap: () => context.push('/search'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _Group(
+            title: 'Destek',
+            children: [
+              _SettingsRow(
+                icon: Icons.help_outline_rounded,
+                label: 'Yardım',
+                onTap: () => context.push('/profile/help'),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              _SettingsRow(
+                icon: Icons.info_outline_rounded,
+                label: 'Hakkımızda',
+                onTap: () => context.push('/profile/about'),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              _SettingsRow(
+                icon: Icons.logout_rounded,
+                label: 'Çıkış',
+                onTap: onLogout ?? () {},
+                danger: true,
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _Group extends StatelessWidget {
+  const _Group({
+    required this.title,
+    required this.children,
+  });
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: context.palette.textSecondary,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
+        ProfileGlass(
+          padding: EdgeInsets.zero,
+          child: Column(children: children),
+        ),
+      ],
     );
   }
 }
