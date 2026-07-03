@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.483+487 (2026-07-03)
+
+### Profil — boş ekran düzeltmesi
+
+- **Boş ekran:** `RefreshIndicator` artık her zaman `CustomScrollView` kullanıyor; yükleme sırasında içerik kaybolmuyor
+- **Oturum:** Yenileme sırasında önceki kullanıcı verisi korunuyor (`valueOrNull`)
+- **Header:** Avatar kapak altına taşmıyor; basit dikey düzen — görünür ve tıklanabilir
+- **ClipRect kaldırıldı:** Bölüm kırpma boş görünüme yol açabiliyordu
+
 ## 1.0.482+486 (2026-07-03)
 
 ### Profil — tıklama ve katman düzeltmesi

@@ -58,11 +58,9 @@ class ProfilePageLayout extends StatelessWidget {
       settings,
     ];
 
-    return ClipRect(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: children,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: children,
     );
   }
 }

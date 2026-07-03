@@ -27,25 +27,16 @@ class ProfileHeader extends ConsumerWidget {
     final user = state.user;
     final level = state.level.level;
 
-    // Kapak + avatar tek Stack içinde sabit yükseklikte — taşan hit-test alanı yok.
-    final headerHeight = ProfilePremiumTheme.coverHeight +
-        ProfilePremiumTheme.avatarSize * 0.42;
-
     return RepaintBoundary(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
-            height: headerHeight,
+            height: ProfilePremiumTheme.coverHeight,
             child: Stack(
               clipBehavior: Clip.hardEdge,
               children: [
-                const Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: _CoverBanner(),
-                ),
+                const Positioned.fill(child: _CoverBanner()),
                 Positioned(
                   top: 12,
                   left: 12,
@@ -77,22 +68,18 @@ class ProfileHeader extends ConsumerWidget {
                     ],
                   ),
                 ),
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Center(
-                    child: _AvatarWithBadges(
-                      url: user.avatarUrl,
-                      level: level,
-                      isVip: state.isVip,
-                      isBroadcaster: state.liveStreams > 0,
-                      isVerified: user.isVerified,
-                      onTap: onAvatarTap ?? onEdit,
-                    ),
-                  ),
-                ),
               ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: _AvatarWithBadges(
+              url: user.avatarUrl,
+              level: level,
+              isVip: state.isVip,
+              isBroadcaster: state.liveStreams > 0,
+              isVerified: user.isVerified,
+              onTap: onAvatarTap ?? onEdit,
             ),
           ),
           const SizedBox(height: 12),
@@ -115,14 +102,14 @@ class _CoverBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Hero(
       tag: 'profile-cover',
-      child: Container(
-        height: ProfilePremiumTheme.coverHeight,
+      child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusLg),
           gradient: ProfilePremiumTheme.coverGradient,
           border: Border.all(color: ProfilePremiumTheme.glassBorder),
         ),
         child: Stack(
+          clipBehavior: Clip.hardEdge,
           children: [
             Positioned(
               right: -30,
@@ -175,14 +162,18 @@ class _AvatarWithBadges extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Stack(
-        clipBehavior: Clip.hardEdge,
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
         children: [
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(
-                colors: [ProfilePremiumTheme.neonPink, ProfilePremiumTheme.neonPurple],
+                colors: [
+                  ProfilePremiumTheme.neonPink,
+                  ProfilePremiumTheme.neonPurple,
+                ],
               ),
               boxShadow: [
                 BoxShadow(
@@ -191,7 +182,10 @@ class _AvatarWithBadges extends StatelessWidget {
                 ),
               ],
             ),
-            child: UserAvatar(url: url, radius: ProfilePremiumTheme.avatarSize / 2),
+            child: UserAvatar(
+              url: url,
+              radius: ProfilePremiumTheme.avatarSize / 2,
+            ),
           ),
           if (isVerified)
             Positioned(
@@ -259,7 +253,9 @@ class _BadgePill extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(999),
-        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 8)],
+        boxShadow: [
+          BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 8),
+        ],
       ),
       child: Text(
         text,
@@ -311,7 +307,11 @@ class _NameBlock extends StatelessWidget {
               ),
               if (isVerified) ...[
                 const SizedBox(width: 6),
-                const Icon(Icons.verified_rounded, color: Color(0xFF29B6F6), size: 22),
+                const Icon(
+                  Icons.verified_rounded,
+                  color: Color(0xFF29B6F6),
+                  size: 22,
+                ),
               ],
             ],
           ),
