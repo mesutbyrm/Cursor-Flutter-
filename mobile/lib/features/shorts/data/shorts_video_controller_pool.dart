@@ -6,13 +6,14 @@ import 'package:video_player/video_player.dart';
 import '../domain/entities/short_video_entity.dart';
 import '../presentation/utils/short_video_player_util.dart';
 
-/// Aktif ±2 video bellekte (max 5 controller); uzaktakiler dispose.
+/// Aktif video + sonraki 3 video bellekte; sonraki videolar öncelikli preload.
 class ShortsVideoControllerPool {
   ShortsVideoControllerPool(this._dio);
 
   final Dio _dio;
-  static const _maxControllers = 5;
-  static const _warmOffsets = [-2, -1, 0, 1, 2];
+  static const _maxControllers = 6;
+  static const _warmOffsets = [1, 2, 3, 0, -1, -2];
+  static const _diskPreloadAhead = [1, 2, 3, 4];
 
   final _controllers = <String, VideoPlayerController>{};
   final _pending = <String, Future<VideoPlayerController>>{};
@@ -61,6 +62,8 @@ class ShortsVideoControllerPool {
   Future<void> warm(List<ShortVideoEntity> videos, int index) async {
     if (videos.isEmpty) return;
     final keep = <String>{};
+
+    // Sonraki videolar önce — TikTok tarzı akıcılık.
     for (final offset in _warmOffsets) {
       final i = index + offset;
       if (i < 0 || i >= videos.length) continue;
@@ -74,7 +77,18 @@ class ShortsVideoControllerPool {
     }
     _evictExcept(keep);
 
-    for (final offset in [-2, -1, 0, 1, 2, 3]) {
+    for (final offset in _diskPreloadAhead) {
+      final i = index + offset;
+      if (i < 0 || i >= videos.length) continue;
+      unawaited(
+        preloadShortVideoUrl(
+          videos[i].videoUrl,
+          videoId: videos[i].id,
+          dio: _dio,
+        ),
+      );
+    }
+    for (final offset in const [-1, -2]) {
       final i = index + offset;
       if (i < 0 || i >= videos.length) continue;
       unawaited(
@@ -109,10 +123,10 @@ class ShortsVideoControllerPool {
   }
 
   Future<void> _ensurePlaying(VideoPlayerController c) async {
-    for (var attempt = 0; attempt < 6; attempt++) {
+    for (var attempt = 0; attempt < 4; attempt++) {
       if (c.value.isPlaying) return;
       await c.play();
-      await Future<void>.delayed(Duration(milliseconds: 40 * (attempt + 1)));
+      await Future<void>.delayed(Duration(milliseconds: 35 * (attempt + 1)));
     }
   }
 

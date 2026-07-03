@@ -8,6 +8,7 @@ import 'package:canlifal_social/core/bootstrap/app_startup_log.dart';
 import 'package:canlifal_social/core/bootstrap/startup_perf.dart';
 import 'package:canlifal_social/core/performance/scroll_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import '../providers/home_bootstrap.dart';
 import '../providers/home_providers.dart';
 import '../providers/home_realtime_bridge.dart';
 import '../theme/home_approved_design.dart';
@@ -32,6 +33,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       AppStartupLog.homeScreenRender('/feed');
+      ref.read(homeBootstrapProvider.future).ignore();
     });
     _realtimeStartTimer = Timer(StartupPerf.homeRealtimeBridgeDelay, () {
       if (!mounted) return;

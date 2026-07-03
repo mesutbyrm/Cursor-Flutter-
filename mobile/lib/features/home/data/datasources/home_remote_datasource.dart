@@ -75,7 +75,19 @@ class HomeRemoteDataSource {
   }
 
   Future<List<HomeTrendVideoEntity>> fetchTrendVideos() async {
-    // Keşfet API — trend videolar + hashtag/müzik meta.
+    // Ana akış önce (daha güvenilir); keşfet yedek.
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.shortVideos,
+        query: {'limit': 12, 'tab': 'foryou'},
+      );
+      final shorts = _shortVideosFromBody(res.data)
+          .map(_mapShortVideoToTrend)
+          .where((v) => v.id.isNotEmpty && !v.isYoutubeSource)
+          .toList();
+      if (shorts.isNotEmpty) return shorts;
+    } catch (_) {}
+
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.shortVideosExplore,
@@ -89,20 +101,6 @@ class HomeRemoteDataSource {
       if (shorts.isNotEmpty) return shorts;
     } catch (_) {}
 
-    // Yedek: ana akış.
-    try {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.shortVideos,
-        query: {'limit': 12, 'tab': 'foryou'},
-      );
-      final shorts = _shortVideosFromBody(res.data)
-          .map(_mapShortVideoToTrend)
-          .where((v) => v.id.isNotEmpty && !v.isYoutubeSource)
-          .toList();
-      if (shorts.isNotEmpty) return shorts;
-    } catch (_) {}
-
-    // Eski trend-videos: YouTube kaynaklarını gösterme.
     for (final path in [ApiEndpoints.trendVideos]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);

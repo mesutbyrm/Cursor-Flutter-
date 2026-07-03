@@ -52,6 +52,23 @@ abstract final class AppPerfMetrics {
   }
 
   /// En yavaş N işlem (API + route + custom).
+  static List<PerfMetricEntry> apiReport({int limit = 30}) {
+    return slowest(limit: limit, group: 'api');
+  }
+
+  static String formatApiReport({int limit = 30}) {
+    final items = apiReport(limit: limit);
+    if (items.isEmpty) return 'Henüz API ölçümü yok.';
+    final buf = StringBuffer('API yükleme süreleri (ms):\n');
+    for (final e in items) {
+      buf.writeln(
+        '- ${e.name}: ${e.durationMs}ms'
+        '${e.statusCode != null ? ' (HTTP ${e.statusCode})' : ''}',
+      );
+    }
+    return buf.toString();
+  }
+
   static List<PerfMetricEntry> slowest({int limit = 20, String? group}) {
     final items = group == null
         ? _completed.toList()

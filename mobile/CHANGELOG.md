@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.477+481 (2026-07-03)
+
+### Performans — ana sayfa & kısa videolar
+
+- **Paralel home bootstrap:** 6 kritik API aynı anda (`homeBootstrapProvider`)
+- **Lazy load:** üst bölüm delay 0 ms; alt bölümler 80–800 ms (önce 900–1350 ms)
+- **Refresh:** yalnızca görünen 6 bölüm; gereksiz shorts/psychics/games istekleri kaldırıldı
+- **keepAlive** home provider cache; shell çift mesaj prefetch kaldırıldı
+- **Canlı önizleme:** eager HLS 5→2 kart
+- **Shorts:** sonraki 3 video öncelikli warm + disk preload +4; pool 6; UI window ±3
+- **Video cache:** 48→64 obje; rapor: `docs/HOME_SHORTS_PERF_REPORT.md`
+
 ## 1.0.476+480 (2026-07-03)
 
 ### Backend-2 uyumu — doğrudan routing, API Monitor, mock kaldırma

@@ -14,7 +14,7 @@ class VideoCacheService {
     Config(
       'canlifal_videos_v2',
       stalePeriod: const Duration(days: 7),
-      maxNrOfCacheObjects: 48,
+      maxNrOfCacheObjects: 64,
       fileService: HttpFileService(),
     ),
   );

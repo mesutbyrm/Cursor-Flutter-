@@ -80,7 +80,7 @@ class LiveBroadcastSection extends ConsumerWidget {
               separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (context, i) => _LiveCard(
                 stream: streams[i],
-                eager: i < 5,
+                eager: i < 2,
                 onTap: () => openLiveStreamNative(context, ref, streams[i]),
               ),
             ),
