@@ -104,7 +104,6 @@ class ProfileQuickActions extends ConsumerWidget {
                 onTap: item.onTap,
                 gradient: item.g,
                 iconColor: item.ic,
-                delayMs: i * 20,
               );
             },
           ),

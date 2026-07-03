@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../profile_theme.dart';
 
@@ -13,7 +12,6 @@ class ProfileActionTile extends StatelessWidget {
     this.onTap,
     this.gradient,
     this.iconColor,
-    this.delayMs = 0,
     this.badge,
   });
 
@@ -22,7 +20,6 @@ class ProfileActionTile extends StatelessWidget {
   final VoidCallback? onTap;
   final List<Color>? gradient;
   final Color? iconColor;
-  final int delayMs;
   final int? badge;
 
   @override
@@ -107,8 +104,6 @@ class ProfileActionTile extends StatelessWidget {
           ),
         ),
       ),
-    )
-        .animate(delay: Duration(milliseconds: delayMs))
-        .fadeIn(duration: 220.ms);
+    );
   }
 }

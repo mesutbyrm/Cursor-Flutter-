@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../profile_theme.dart';
 
@@ -92,10 +91,7 @@ class ProfilePremiumCard extends StatelessWidget {
             ],
           ),
         ),
-      ).animate().fadeIn(delay: 160.ms).shimmer(
-            duration: 1800.ms,
-            color: Colors.white.withValues(alpha: 0.12),
-          ),
+      ),
     );
   }
 }

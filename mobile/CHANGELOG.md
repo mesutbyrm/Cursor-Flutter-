@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.482+486 (2026-07-03)
+
+### Profil — tıklama ve katman düzeltmesi
+
+- **Header:** Avatar taşması sabit yükseklikli Stack içinde; görünmez hit-test katmanı kaldırıldı
+- **İstatistik:** Yinelenen shorts istatistik satırı kaldırıldı (tek satır)
+- **Animasyon:** Profil kartlarındaki fade/slide animasyonları kaldırıldı — dokunma hedefleri kaymıyor
+- **Ayarlar:** Tema seçici çift cam katmanından çıkarıldı
+- **Kırpma:** Bölüm düzeni ClipRect ile sınırlandı
+
 ## 1.0.481+485 (2026-07-03)
 
 ### Profil — düzen ve katman düzeltmesi

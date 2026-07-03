@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../widgets/premium/profile_glass.dart';
 import '../profile_screen_state.dart';
@@ -71,7 +70,7 @@ class ProfileStats extends StatelessWidget {
             ),
           ],
         ),
-      ).animate().fadeIn(delay: 80.ms).slideY(begin: 0.06, end: 0),
+      ),
     );
   }
 
