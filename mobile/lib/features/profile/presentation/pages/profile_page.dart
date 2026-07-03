@@ -95,7 +95,9 @@ class _ProfileScrollBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (auth.hasError && user == null) {
+    final sessionUser = user;
+
+    if (auth.hasError && sessionUser == null) {
       return _profileScroll(
         context,
         [
@@ -113,7 +115,7 @@ class _ProfileScrollBody extends ConsumerWidget {
       );
     }
 
-    if (user == null && auth.isLoading) {
+    if (sessionUser == null && auth.isLoading) {
       return _profileScroll(
         context,
         const [
@@ -125,7 +127,7 @@ class _ProfileScrollBody extends ConsumerWidget {
       );
     }
 
-    if (user == null && guest) {
+    if (sessionUser == null && guest) {
       return _profileScroll(
         context,
         const [
@@ -137,7 +139,7 @@ class _ProfileScrollBody extends ConsumerWidget {
       );
     }
 
-    if (user == null) {
+    if (sessionUser == null) {
       return _profileScroll(
         context,
         const [
@@ -154,7 +156,7 @@ class _ProfileScrollBody extends ConsumerWidget {
       );
     }
 
-    final profileUser = user;
+    final profileUser = sessionUser;
     final base = profileScreenStateFromUser(profileUser);
     ProfileLoadPerf.prefetchOnOpen(ref, profileUser.id);
     final onLogout = () => ref.read(authControllerProvider.notifier).logout();
