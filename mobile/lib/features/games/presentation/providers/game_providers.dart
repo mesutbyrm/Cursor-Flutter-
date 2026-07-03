@@ -11,6 +11,7 @@ import '../../domain/game_models.dart';
 final gameRemoteProvider = Provider<GameRemoteDataSource>((ref) {
   return GameRemoteDataSource(
     ref.watch(dioProvider),
+    gamesDio: ref.watch(gamesDioProvider),
     resolveUserId: () => ref.read(currentUserIdProvider),
     resolveDisplayName: () =>
         ref.read(authControllerProvider).valueOrNull?.displayName ??

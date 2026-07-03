@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.475+479 (2026-07-03)
+
+### Düzeltme — ana sayfa / fal / video / sosyal (404 regresyonu)
+
+- **Kök neden:** Tüm uygulama `canlifalapi.abacusai.app`'e yönlendirilmişti; bu backend yalnızca oyun odaları + sesli sohbet sunuyor (banner, sosyal, kısa video, fal kartları → 404)
+- **Ana API geri:** Varsayılan taban yeniden `https://canlifal.com` (fal, tarot, video, sosyal, auth, sesli oda)
+- **Split games API:** Oyun odaları ayrı `GAMES_API_BASE_URL` (`canlifalapi.abacusai.app`) üzerinden; token yenileme ana API'den
+- **`gamesDioProvider`:** Oda oluştur/katıl/state/hamle Redis backend'e gider; katalog/skorbord canlifal.com'da kalır
+
 ## 1.0.474+478 (2026-07-03)
 
 ### Backend — canlifalapi.abacusai.app (Redis önbellek + oyun odaları)

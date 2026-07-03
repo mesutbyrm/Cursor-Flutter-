@@ -13,12 +13,15 @@ typedef DisplayNameResolver = String Function();
 class GameRemoteDataSource {
   GameRemoteDataSource(
     this._dio, {
+    Dio? gamesDio,
     UserIdResolver? resolveUserId,
     DisplayNameResolver? resolveDisplayName,
-  })  : _resolveUserId = resolveUserId ?? (() => null),
+  })  : _gamesDio = gamesDio ?? _dio,
+        _resolveUserId = resolveUserId ?? (() => null),
         _resolveDisplayName = resolveDisplayName ?? (() => 'Oyuncu');
 
   final Dio _dio;
+  final Dio _gamesDio;
   final UserIdResolver _resolveUserId;
   final DisplayNameResolver _resolveDisplayName;
   final _local = Okey101LocalSession.instance;
@@ -48,7 +51,7 @@ class GameRemoteDataSource {
 
   Future<List<GameRoomItem>> _fetchRoomsRemote() async {
     try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.gameRooms);
+      final res = await _gamesDio.safeGet<dynamic>(ApiEndpoints.gameRooms);
       final rooms = _parseRooms(res.data);
       if (rooms.isNotEmpty) return rooms;
     } on ApiException catch (e) {
@@ -57,7 +60,7 @@ class GameRemoteDataSource {
 
     // Eski üretim yedeği
     try {
-      final res = await _dio.safeGet<dynamic>(
+      final res = await _gamesDio.safeGet<dynamic>(
         ApiEndpoints.gameRoomCreate,
         query: {'gameType': 'okey101', 'slug': 'okey101'},
       );
@@ -83,7 +86,7 @@ class GameRemoteDataSource {
 
     for (final attempt in attempts) {
       try {
-        final res = await _dio.safePost<dynamic>(
+        final res = await _gamesDio.safePost<dynamic>(
           attempt.path,
           data: attempt.data,
         );
@@ -122,7 +125,7 @@ class GameRemoteDataSource {
 
     for (final attempt in attempts) {
       try {
-        final res = await _dio.safePost<dynamic>(
+        final res = await _gamesDio.safePost<dynamic>(
           attempt.path,
           data: attempt.data,
         );
@@ -160,7 +163,7 @@ class GameRemoteDataSource {
 
     for (final path in joinPaths) {
       try {
-        final res = await _dio.safePost<dynamic>(path);
+        final res = await _gamesDio.safePost<dynamic>(path);
         final room = _roomFromBody(res.data);
         if (room != null) return room;
       } on ApiException catch (e) {
@@ -188,12 +191,12 @@ class GameRemoteDataSource {
     }
 
     final attempts = <Future<Response<dynamic>> Function()>[
-      () => _dio.safeGet<dynamic>(ApiEndpoints.gameRoom(roomId)),
-      () => _dio.safePost<dynamic>(
+      () => _gamesDio.safeGet<dynamic>(ApiEndpoints.gameRoom(roomId)),
+      () => _gamesDio.safePost<dynamic>(
         ApiEndpoints.gameRoom(roomId),
         data: const {'action': 'state'},
       ),
-      () => _dio.safePost<dynamic>(
+      () => _gamesDio.safePost<dynamic>(
         ApiEndpoints.gamePlay,
         data: {'action': 'state', 'roomId': roomId},
       ),
@@ -244,7 +247,7 @@ class GameRemoteDataSource {
                   'slug': 'okey101',
                 }
               : data;
-          final res = await _dio.safePost<dynamic>(pathFn(), data: body);
+          final res = await _gamesDio.safePost<dynamic>(pathFn(), data: body);
           return GameRoomStateSnapshot.fromJson(roomId, _map(res.data));
         } on ApiException catch (e) {
           lastError = e;
@@ -273,7 +276,7 @@ class GameRemoteDataSource {
     }
 
     try {
-      await _dio.safePost<dynamic>(
+      await _gamesDio.safePost<dynamic>(
         ApiEndpoints.gameRoomChat(roomId),
         data: {'message': message, 'text': message, 'content': message},
       );

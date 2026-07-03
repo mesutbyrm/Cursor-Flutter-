@@ -33,13 +33,18 @@ bool _isPublicAuthPath(String path) {
 String _refreshPath() =>
     Env.useMobileAuth ? ApiEndpoints.authMobileRefresh : ApiEndpoints.authRefresh;
 
-final dioProvider = Provider<Dio>((ref) {
+Dio _createApiDio(
+  Ref ref, {
+  required String baseUrl,
+  Dio? tokenRefreshDio,
+}) {
   final tokenStorage = ref.watch(tokenStorageProvider);
   final cookieJar = ref.watch(cookieJarProvider);
+  final refreshClient = tokenRefreshDio;
 
   final dio = Dio(
     BaseOptions(
-      baseUrl: Env.apiBaseUrl,
+      baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 20),
       headers: {
@@ -51,7 +56,6 @@ final dioProvider = Provider<Dio>((ref) {
     ),
   );
 
-  // Görev 9 — ≥50 KB JSON yanıtları isolate'te parse (UI thread jank yok).
   dio.transformer = FusedTransformer(
     contentLengthIsolateThreshold: JsonIsolatePerf.largeThreshold,
   );
@@ -95,7 +99,12 @@ final dioProvider = Provider<Dio>((ref) {
             e.response?.statusCode == 401 &&
             e.requestOptions.path != refreshPath) {
           e.requestOptions.extra['_authRetry'] = true;
-          final refreshed = await _tryRefresh(dio, tokenStorage, refreshPath);
+          final refreshDio = refreshClient ?? dio;
+          final refreshed = await _tryRefresh(
+            refreshDio,
+            tokenStorage,
+            refreshPath,
+          );
           if (refreshed) {
             final token = await tokenStorage.readAccess();
             if (token != null && token.isNotEmpty) {
@@ -112,9 +121,27 @@ final dioProvider = Provider<Dio>((ref) {
 
   dio.interceptors.add(ApiCacheInterceptor());
 
-  Api.bind(dio);
-
   return dio;
+}
+
+final dioProvider = Provider<Dio>((ref) {
+  final dio = _createApiDio(ref, baseUrl: Env.apiBaseUrl);
+  Api.bind(dio);
+  return dio;
+});
+
+/// Oyun odası uçları — Redis backend (`canlifalapi.abacusai.app`).
+/// Token yenileme ana API (`canlifal.com`) üzerinden yapılır.
+final gamesDioProvider = Provider<Dio>((ref) {
+  if (!Env.useSplitGamesApi) {
+    return ref.watch(dioProvider);
+  }
+  final main = ref.watch(dioProvider);
+  return _createApiDio(
+    ref,
+    baseUrl: Env.gamesApiBaseUrl,
+    tokenRefreshDio: main,
+  );
 });
 
 Future<bool> _tryRefresh(

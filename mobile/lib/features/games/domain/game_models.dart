@@ -73,20 +73,27 @@ class GameRoomItem extends Equatable {
 
   factory GameRoomItem.fromJson(Map<String, dynamic> json) {
     final game = asJsonMap(pick(json, ['game', 'meta']));
+    final p1 = pick(json, ['player1Id', 'player1']);
+    final p2 = pick(json, ['player2Id', 'player2']);
+    var players = asInt(
+      pick(json, ['playerCount', 'players', 'participantCount']),
+    );
+    if (players == 0) {
+      players = (p1 != null && p1.toString().isNotEmpty ? 1 : 0) +
+          (p2 != null && p2.toString().isNotEmpty ? 1 : 0);
+    }
     return GameRoomItem(
       id: pick(json, ['id', '_id', 'roomId'])?.toString() ?? '',
       title:
           jsonDisplayLabel(pick(json, ['title', 'name'])) ??
           jsonDisplayLabel(pick(game, ['title', 'name'])) ??
-          'Oyun odası',
+          (pick(json, ['gameType', 'gameSlug'])?.toString() ?? 'Oyun odası'),
       gameId:
-          pick(json, ['gameId', 'slug', 'type'])?.toString() ??
+          pick(json, ['gameType', 'gameId', 'slug', 'type'])?.toString() ??
           pick(game, ['id', 'slug'])?.toString() ??
           '',
       status: pick(json, ['status', 'state'])?.toString() ?? 'waiting',
-      playerCount: asInt(
-        pick(json, ['playerCount', 'players', 'participantCount']),
-      ),
+      playerCount: players,
       maxPlayers: asInt(pick(json, ['maxPlayers', 'capacity'])) == 0
           ? 2
           : asInt(pick(json, ['maxPlayers', 'capacity'])),

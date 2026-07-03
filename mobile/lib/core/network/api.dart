@@ -5,7 +5,7 @@ import 'api_endpoints.dart';
 
 /// Merkezi Dio istemcisi — [dioProvider] ile paylaşılır.
 ///
-/// Taban: `https://canlifalapi.abacusai.app/api/...` (origin + `/api` prefix).
+/// Ana site: [Env.apiBaseUrl] · Oyun odaları: [Env.gamesApiBaseUrl]
 abstract final class Api {
   static Dio? _bound;
 

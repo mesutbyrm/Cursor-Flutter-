@@ -7,8 +7,21 @@ class Env {
 
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
+    defaultValue: 'https://canlifal.com',
+  );
+
+  /// Oyun odası uçları (Redis backend). Ana site farklıysa buradan bağlanır.
+  static const String gamesApiBaseUrl = String.fromEnvironment(
+    'GAMES_API_BASE_URL',
     defaultValue: 'https://canlifalapi.abacusai.app',
   );
+
+  static bool get useSplitGamesApi {
+    final main = apiBaseUrl.trim().toLowerCase().replaceAll(RegExp(r'/+$'), '');
+    final games =
+        gamesApiBaseUrl.trim().toLowerCase().replaceAll(RegExp(r'/+$'), '');
+    return games.isNotEmpty && games != main;
+  }
 
   /// Mobil JWT (`/api/auth/mobile-*`, `/api/me`). WebView OAuth yok.
   static bool get useMobileAuth {
