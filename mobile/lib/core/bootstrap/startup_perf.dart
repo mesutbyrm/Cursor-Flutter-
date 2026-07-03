@@ -27,11 +27,8 @@ abstract final class StartupPerf {
   /// Ana sayfa periyodik poll köprüsü.
   static const homeRealtimeBridgeDelay = Duration(seconds: 4);
 
-  // Ana sayfa bölüm kademeleri — hepsi aynı anda API çağırmasın diye yayılır.
-  // Üst (ekranda görünen) bölümler erken, alt bölümler geç yüklenir.
-  // Üst bölümler erken; alt bölümler lazy (scroll ile görünür).
+  // Ana sayfa bölüm kademeleri — üst erken, alt lazy.
   static const homeTrendingSectionDelay = Duration.zero;
-  static const homeLiveSectionDelay = Duration.zero;
   static const homeVoiceSectionDelay = Duration(milliseconds: 80);
   static const homePsychicsSectionDelay = Duration(milliseconds: 160);
   static const homeFortuneSectionDelay = Duration(milliseconds: 240);
