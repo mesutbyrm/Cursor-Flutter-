@@ -49,6 +49,28 @@ abstract final class RootOverlayPurge {
     }
   }
 
+  /// Ekran teşhisi — kök navigator route yığını + overlay/barrier özeti.
+  /// Profil üst üste binme gibi sorunlarda ekran görüntüsünden okunur.
+  static String screenDiagnostics() {
+    final nav = rootNavigatorKey.currentState;
+    if (nav == null) return 'nav=null';
+    final routes = <String>[];
+    nav.popUntil((route) {
+      final modal = route is ModalRoute ? route : null;
+      routes.add(
+        '${route.settings.name ?? route.runtimeType}'
+        '${route.isCurrent ? '*' : ''}'
+        '${modal?.barrierColor != null && modal!.barrierColor!.a > 0 ? '[barrier]' : ''}',
+      );
+      return true;
+    });
+    final blockers = _describeBlockingWidgetsOnScreen();
+    final entries = _describeRootOverlayEntries();
+    return 'routes(${routes.length}): ${routes.join(" > ")}\n'
+        'overlayEntries: ${entries.length}\n'
+        'blockers: ${blockers.isEmpty ? "yok" : blockers.join(" | ")}';
+  }
+
   /// Ekranda dokunmayı engelleyen bir barrier/AbsorbPointer var mı?
   /// (Sekme değişiminde takılı kalan hayalet overlay tespiti — ucuz kontrol.)
   static bool hasBlockingOverlay() {

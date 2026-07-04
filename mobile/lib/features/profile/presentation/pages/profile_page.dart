@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/bootstrap/root_overlay_purge.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/performance/network_perf.dart';
@@ -63,16 +64,27 @@ class ProfilePage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
-        child: RefreshIndicator(
-          color: context.accentPink,
-          backgroundColor: context.colors.surfaceContainer,
-          onRefresh: refresh,
-          child: _ProfileScrollBody(
-            top: top,
-            auth: auth,
-            guest: guest,
-            user: user,
-          ),
+        child: Stack(
+          children: [
+            RefreshIndicator(
+              color: context.accentPink,
+              backgroundColor: context.colors.surfaceContainer,
+              onRefresh: refresh,
+              child: _ProfileScrollBody(
+                top: top,
+                auth: auth,
+                guest: guest,
+                user: user,
+              ),
+            ),
+            // Geçici teşhis: profil üst üste binme kaynağını ekran
+            // görüntüsünden görebilmek için route/overlay yığını.
+            Positioned(
+              top: top + 2,
+              right: 4,
+              child: const _ProfileDiagBadge(),
+            ),
+          ],
         ),
       ),
     );
@@ -211,6 +223,44 @@ class _ProfileScrollBody extends ConsumerWidget {
       cacheExtent: ScrollPerf.feedCacheExtent,
       physics: PremiumMotion.listPhysics,
       slivers: slivers,
+    );
+  }
+}
+
+/// Geçici teşhis rozeti — dokununca route/overlay yığınını gösterir.
+class _ProfileDiagBadge extends StatelessWidget {
+  const _ProfileDiagBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        final diag = RootOverlayPurge.screenDiagnostics();
+        showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Ekran teşhisi'),
+            content: SingleChildScrollView(child: Text(diag)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Kapat'),
+              ),
+            ],
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Text(
+          'teşhis',
+          style: TextStyle(color: Colors.white54, fontSize: 9),
+        ),
+      ),
     );
   }
 }
