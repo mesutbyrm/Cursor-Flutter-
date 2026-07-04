@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/bootstrap/root_overlay_purge.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/performance/network_perf.dart';
@@ -15,7 +14,6 @@ import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../fortune/presentation/providers/fortune_access_providers.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../providers/profile_providers.dart';
@@ -61,30 +59,24 @@ class ProfilePage extends ConsumerWidget {
       ]);
     }
 
+    // Not: DiscoverBackground (immersive gradient + RepaintBoundary alt katman)
+    // bu cihazda önceki karenin izini bırakıp profil bölümlerini üst üste
+    // gösteriyordu (teşhis: routes=1, overlay=0 — yani ikinci sayfa yok,
+    // katman raster hayaleti). Her karede tam temizleyen opak zemin kullanılır.
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: DiscoverBackground(
-        child: Stack(
-          children: [
-            RefreshIndicator(
-              color: context.accentPink,
-              backgroundColor: context.colors.surfaceContainer,
-              onRefresh: refresh,
-              child: _ProfileScrollBody(
-                top: top,
-                auth: auth,
-                guest: guest,
-                user: user,
-              ),
-            ),
-            // Geçici teşhis: profil üst üste binme kaynağını ekran
-            // görüntüsünden görebilmek için route/overlay yığını.
-            Positioned(
-              top: top + 2,
-              right: 4,
-              child: const _ProfileDiagBadge(),
-            ),
-          ],
+      body: ColoredBox(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: RefreshIndicator(
+          color: context.accentPink,
+          backgroundColor: context.colors.surfaceContainer,
+          onRefresh: refresh,
+          child: _ProfileScrollBody(
+            top: top,
+            auth: auth,
+            guest: guest,
+            user: user,
+          ),
         ),
       ),
     );
@@ -223,44 +215,6 @@ class _ProfileScrollBody extends ConsumerWidget {
       cacheExtent: ScrollPerf.feedCacheExtent,
       physics: PremiumMotion.listPhysics,
       slivers: slivers,
-    );
-  }
-}
-
-/// Geçici teşhis rozeti — dokununca route/overlay yığınını gösterir.
-class _ProfileDiagBadge extends StatelessWidget {
-  const _ProfileDiagBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        final diag = RootOverlayPurge.screenDiagnostics();
-        showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Ekran teşhisi'),
-            content: SingleChildScrollView(child: Text(diag)),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Kapat'),
-              ),
-            ],
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: const Text(
-          'teşhis',
-          style: TextStyle(color: Colors.white54, fontSize: 9),
-        ),
-      ),
     );
   }
 }
