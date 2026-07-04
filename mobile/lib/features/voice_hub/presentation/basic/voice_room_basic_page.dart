@@ -50,6 +50,7 @@ import '../widgets/premium_2026/voice_top_spenders_strip.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../video/presentation/widgets/youtube_video_background.dart';
+import '../widgets/voice_room/voice_room_now_playing_bar.dart';
 
 /// Aşama 1 — oda listesi, giriş/çıkış, mikrofon, hoparlör, katılımcılar, oda sahibi.
 class VoiceRoomBasicPage extends ConsumerStatefulWidget {
@@ -772,6 +773,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   // Koltukların altında, kenarlardan sıfır video şeridi.
                   // Ses-only müzikte gizli (1px) kalır, odayı ağırlaştırmaz.
                   YoutubeVideoBackground(roomKey: _liveRoomKey),
+                  // Koltuk altı "şu an çalan şarkı" şeridi (yeşil kutu).
+                  VoiceRoomNowPlayingBar(
+                    roomKey: _liveRoomKey,
+                    canControl: canControlMusic,
+                  ),
                   Expanded(
                     child: VoiceRoomBasicChatFeed(
                       messages: live.messages,
