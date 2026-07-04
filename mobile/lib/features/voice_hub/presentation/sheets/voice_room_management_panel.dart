@@ -6,6 +6,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../vip_gold/domain/voice_room_access.dart';
+import '../../../gifts/presentation/providers/gift_battle_providers.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/voice_room_ban_entry.dart';
 import '../providers/chat_room_providers.dart';
@@ -555,6 +556,16 @@ class _VoiceRoomManagementPanelState
           const ListTile(
             title: Text('Arkaplan değiştirme yetkiniz yok'),
           ),
+        if (isOwner || perms.canManageRoom) ...[
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.local_fire_department_rounded,
+                color: Color(0xFFFF7043)),
+            title: const Text('Hediye Savaşı Başlat'),
+            subtitle: const Text('Koltuktakiler yarışır (1/3/5/10 dk)'),
+            onTap: _startGiftBattle,
+          ),
+        ],
         if (isVip && (isOwner || perms.canManageRoom)) ...[
           const Divider(),
           ListTile(
@@ -566,6 +577,71 @@ class _VoiceRoomManagementPanelState
         ],
       ],
     );
+  }
+
+  Future<void> _startGiftBattle() async {
+    final seated = widget.live.presence
+        .where((p) => p.seatIndex != null && p.id.isNotEmpty)
+        .toList();
+    if (seated.length < 2) {
+      await _snack('Savaş için en az 2 koltukta kullanıcı olmalı');
+      return;
+    }
+    final duration = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: const Color(0xFF12082A),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('Savaş süresi',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16)),
+            ),
+            for (final opt in const [
+              (60, '1 dakika'),
+              (180, '3 dakika'),
+              (300, '5 dakika'),
+              (600, '10 dakika'),
+            ])
+              ListTile(
+                leading: const Icon(Icons.timer_rounded, color: Colors.white70),
+                title: Text(opt.$2, style: const TextStyle(color: Colors.white)),
+                onTap: () => Navigator.pop(ctx, opt.$1),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (duration == null || !mounted) return;
+    try {
+      final contextId = widget.room.apiRoomKey.isNotEmpty
+          ? widget.room.apiRoomKey
+          : widget.room.id;
+      final battle = await ref.read(giftBattleRemoteProvider).startBattle(
+            context: 'voice_room',
+            contextId: contextId,
+            durationSec: duration,
+            participants: [
+              for (final p in seated)
+                (id: p.id, name: p.displayName),
+            ],
+          );
+      if (battle != null) {
+        ref
+            .read(giftBattleProvider(
+                    (context: 'voice_room', contextId: contextId))
+                .notifier)
+            .adopt(battle);
+      }
+      await _snack('Hediye savaşı başladı!');
+    } catch (e) {
+      await _snack(ApiException.userMessage(e));
+    }
   }
 
   Future<void> _pickCatalogBackground() async {
