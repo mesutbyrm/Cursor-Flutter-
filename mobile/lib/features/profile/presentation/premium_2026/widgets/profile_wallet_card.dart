@@ -158,6 +158,7 @@ class ProfileWalletCard extends StatelessWidget {
                   gradient: [const Color(0xFF3A3010), const Color(0xFF181008)],
                 ),
             },
+            ),
           ),
         ],
     );
