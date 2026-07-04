@@ -285,81 +285,59 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
 
     final web = _webView;
     if (web == null) {
-      return video.audioOnly ? const SizedBox.shrink() : _thumbFallback(video);
+      if (video.audioOnly) return const SizedBox.shrink();
+      // Video henüz hazır değil — sınırlı yükseklikli şerit thumb (Column güvenli).
+      final w = MediaQuery.sizeOf(context).width;
+      return SizedBox(
+        width: double.infinity,
+        height: (w * 9 / 16).clamp(140.0, 230.0),
+        child: _thumbFallback(video),
+      );
     }
 
-    // !istek / müzik — tam genişlik orta arka plan; UI üstünden şeffaf geçer.
+    // Ses-only müzik: iframe ağaçta kalır (ses çalar) ama görünmez.
+    // Tam ekran çizim yok — oda hafif kalır.
     if (video.audioOnly) {
-      return IgnorePointer(
+      return SizedBox(
+        height: 1,
+        width: double.infinity,
         child: Opacity(
-          opacity: 0.35,
-          child: SizedBox.expand(
-            child: FittedBox(
-              fit: BoxFit.cover,
-              clipBehavior: Clip.hardEdge,
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: MediaQuery.sizeOf(context).width,
-                height: MediaQuery.sizeOf(context).width * 9 / 16,
-                child: web,
-              ),
-            ),
-          ),
+          opacity: 0,
+          child: IgnorePointer(child: web),
         ),
       );
     }
 
-    Widget player = RepaintBoundary(
+    // Video isteği (!istek video): koltukların altında, kenarlardan sıfır
+    // tam genişlik şerit. Ortada yüzen kart / tam ekran kaplama yok.
+    final width = MediaQuery.sizeOf(context).width;
+    final stripHeight = (width * 9 / 16).clamp(140.0, 230.0);
+    return RepaintBoundary(
       child: IgnorePointer(
-        ignoring: true,
-        child: widget.compact
-            ? SizedBox.expand(child: web)
-            : SizedBox.expand(
-                child: FittedBox(
+        child: SizedBox(
+          width: double.infinity,
+          height: stripHeight,
+          child: ClipRect(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (_loadFailed) _thumbFallback(video),
+                FittedBox(
                   fit: BoxFit.cover,
                   clipBehavior: Clip.hardEdge,
                   alignment: Alignment.center,
                   child: SizedBox(
-                    width: MediaQuery.sizeOf(context).width,
-                    height: MediaQuery.sizeOf(context).width * 9 / 16,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        if (_loadFailed) _thumbFallback(video),
-                        web,
-                      ],
-                    ),
+                    width: width,
+                    height: width * 9 / 16,
+                    child: web,
                   ),
                 ),
-              ),
-      ),
-    );
-
-    if (video.isDismissing) {
-      player = ClipRect(
-        child: Align(
-          alignment: Alignment.centerLeft,
-          widthFactor: 0.0,
-          child: TweenAnimationBuilder<double>(
-            tween: Tween(begin: 1.0, end: 0.0),
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInCubic,
-            builder: (context, factor, child) {
-              return ClipRect(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: factor.clamp(0.0, 1.0),
-                  child: child,
-                ),
-              );
-            },
-            child: player,
+              ],
+            ),
           ),
         ),
-      );
-    }
-
-    return player;
+      ),
+    );
   }
 
   Widget _thumbFallback(RoomVideoState video) {

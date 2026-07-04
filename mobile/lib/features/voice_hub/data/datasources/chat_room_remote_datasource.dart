@@ -463,8 +463,12 @@ class ChatRoomRemoteDataSource {
         addUrl(url);
       }
     } catch (_) {}
+    // API boş/başarısız → yerleşik canlifal.com hazır arka planlarına düş
+    // (kullanıcı her zaman seçim yapabilsin — "backendden resim gelmiyor").
     if (urls.isEmpty) {
-      return const [];
+      for (final url in VoiceRoomBackgroundCatalog.siteDefaults()) {
+        addUrl(url);
+      }
     }
     return urls;
   }
