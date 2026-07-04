@@ -719,13 +719,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
-            // YouTube müzik oynatıcısı — ses-only gizli (1x1) iframe, video
-            // isteğinde görünür kart. yt-dlp/sunucu çözümlemesi gerekmez.
-            Positioned.fill(
-              child: IgnorePointer(
-                child: YoutubeVideoBackground(roomKey: _liveRoomKey),
-              ),
-            ),
             SafeArea(
               bottom: false,
               child: Column(
@@ -776,6 +769,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     perms: perms,
                     user: user,
                   ),
+                  // Koltukların altında, kenarlardan sıfır video şeridi.
+                  // Ses-only müzikte gizli (1px) kalır, odayı ağırlaştırmaz.
+                  YoutubeVideoBackground(roomKey: _liveRoomKey),
                   Expanded(
                     child: VoiceRoomBasicChatFeed(
                       messages: live.messages,

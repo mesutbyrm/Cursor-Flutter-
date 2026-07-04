@@ -41,27 +41,60 @@ class _VoiceCosmicBackgroundState extends State<VoiceCosmicBackground>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        const DecoratedBox(
-          decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
-        ),
-        if (widget.imageUrl != null && widget.imageUrl!.isNotEmpty)
+    final hasImage = widget.imageUrl != null && widget.imageUrl!.isNotEmpty;
+
+    // Özel arka plan görseli: karartma/blend YOK — canlı ve gerçekçi kalsın.
+    // Yalnızca metin/koltuk okunurluğu için ince bir üst+alt geçiş uygulanır,
+    // görselin ortası tamamen açık kalır. Neon orblar ve ağır katman yok.
+    if (hasImage) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          const DecoratedBox(
+            decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
+          ),
           CanlifalNetworkImage(
             key: ValueKey(widget.imageUrl),
             url: widget.imageUrl!,
             fit: BoxFit.cover,
             fadeIn: false,
             placeholder: const DecoratedBox(
-              decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
+              decoration:
+                  BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
             ),
             errorWidget: const DecoratedBox(
-              decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
+              decoration:
+                  BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
             ),
-            color: Colors.black.withValues(alpha: 0.42),
-            colorBlendMode: BlendMode.darken,
           ),
+          const IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0x33000000),
+                    Color(0x00000000),
+                    Color(0x00000000),
+                    Color(0x59000000),
+                  ],
+                  stops: [0.0, 0.22, 0.72, 1.0],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Görsel yok — varsayılan kozmik görünüm (orblar + ince alt geçiş).
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const DecoratedBox(
+          decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
+        ),
         Positioned(
           top: -80,
           right: -40,

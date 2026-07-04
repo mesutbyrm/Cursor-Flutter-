@@ -145,7 +145,9 @@ class CloudMediaUploadService {
     final uri = Uri.tryParse(url);
     if (uri == null) return false;
     final host = uri.host.toLowerCase();
-    return host == 'canlifal.com' || host == 'www.canlifal.com';
+    // canlifal.com ve tüm alt alan adları (cdn., media., www. …) —
+    // R2/CDN genel URL'si doğrudan kabul edilsin, get-url yedeğine düşmesin.
+    return host == 'canlifal.com' || host.endsWith('.canlifal.com');
   }
 
   static String _contentType(String path) {
