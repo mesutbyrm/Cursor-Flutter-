@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../gifts/domain/gift_leaderboard_entry.dart';
@@ -20,7 +21,9 @@ class VoiceTopSpendersStrip extends ConsumerWidget {
     if (leaders.isEmpty) return const SizedBox.shrink();
 
     final top = leaders.take(maxVisible).toList();
-    return ClipRRect(
+    return GestureDetector(
+      onTap: () => context.push('/gifts/leaderboard'),
+      child: ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
@@ -52,9 +55,12 @@ class VoiceTopSpendersStrip extends ConsumerWidget {
                   ),
                 ),
               ),
+              const Icon(Icons.chevron_right_rounded,
+                  size: 18, color: Colors.white54),
             ],
           ),
         ),
+      ),
       ),
     );
   }
