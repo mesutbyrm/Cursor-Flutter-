@@ -3069,16 +3069,13 @@ class VoiceRoomLiveController
       'seat': seatIndex,
       'priority': priority,
     });
-    try {
-      await ref.read(chatRoomRemoteProvider).joinSeat(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            seatIndex: seatIndex,
-            userId: user.id,
-          );
-      await refresh();
-    } catch (e) {
-      await assignSeat(seatIndex: seatIndex);
+    // Manuel "Koltuğa Al" ile AYNI çalışan yolu kullan (voiceSeatRestService
+    // .takeSeat). Eski joinSeat ucu 200 dönüp koltuğa oturtmuyordu; bu yüzden
+    // yetkili otomatik koltuğa geçmiyordu.
+    final err = await assignSeat(seatIndex: seatIndex, userId: user.id);
+    if (err == null) {
+      _autoSeatAttempted = true;
+      return;
     }
     for (final p in state.presence) {
       if (p.id == user.id && p.seatIndex != null) {

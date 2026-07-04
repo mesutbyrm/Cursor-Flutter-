@@ -179,11 +179,17 @@ class VoiceRoomBasicChatFeed extends StatelessWidget {
     required this.messages,
     this.events = const [],
     this.presence = const [],
+    this.onMention,
+    this.onUserPerms,
   });
 
   final List<ChatRoomMessage> messages;
   final List<VoiceRoomRealtimeEvent> events;
   final List<ChatRoomPresence> presence;
+  /// Tek dokunuş — @kullanıcı adı mesaj kutusuna eklenir.
+  final void Function(String userId, String name)? onMention;
+  /// Çift dokunuş — kullanıcı yetkileri (moderasyon) açılır.
+  final void Function(String userId, String name)? onUserPerms;
 
   @override
   Widget build(BuildContext context) {
@@ -230,6 +236,8 @@ class VoiceRoomBasicChatFeed extends StatelessWidget {
                 avatarUrl: msg.user?.id != null
                     ? avatarById[msg.user!.id]
                     : null,
+                onUserTap: onMention,
+                onUserDoubleTap: onUserPerms,
               );
             },
           ),
