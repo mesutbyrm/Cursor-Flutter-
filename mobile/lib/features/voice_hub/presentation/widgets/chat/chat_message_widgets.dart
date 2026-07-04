@@ -15,12 +15,14 @@ class ChatMessageWidget extends StatelessWidget {
     super.key,
     required this.message,
     this.onUserTap,
+    this.onUserDoubleTap,
     this.showAvatar = false,
     this.avatarUrl,
   });
 
   final ChatRoomMessage message;
   final void Function(String userId, String name)? onUserTap;
+  final void Function(String userId, String name)? onUserDoubleTap;
   final bool showAvatar;
   /// Presence'tan çözülen profil resmi — mesajda görsel yoksa kullanılır.
   final String? avatarUrl;
@@ -33,6 +35,7 @@ class ChatMessageWidget extends StatelessWidget {
         child: _ChatMessageBody(
           message: message,
           onUserTap: onUserTap,
+          onUserDoubleTap: onUserDoubleTap,
           showAvatar: showAvatar,
           avatarUrl: avatarUrl,
         ),
@@ -45,12 +48,14 @@ class _ChatMessageBody extends StatelessWidget {
   const _ChatMessageBody({
     required this.message,
     this.onUserTap,
+    this.onUserDoubleTap,
     this.showAvatar = false,
     this.avatarUrl,
   });
 
   final ChatRoomMessage message;
   final void Function(String userId, String name)? onUserTap;
+  final void Function(String userId, String name)? onUserDoubleTap;
   final bool showAvatar;
   final String? avatarUrl;
 
@@ -87,6 +92,8 @@ class _ChatMessageBody extends StatelessWidget {
         rank: rank,
         showIstek: showIstek,
         onTap: user != null ? () => onUserTap?.call(user.id, name) : null,
+        onDoubleTap:
+            user != null ? () => onUserDoubleTap?.call(user.id, name) : null,
         imageUrl: _effectiveImage,
       );
     }
@@ -95,6 +102,8 @@ class _ChatMessageBody extends StatelessWidget {
 
     return GestureDetector(
       onTap: user != null ? () => onUserTap?.call(user.id, name) : null,
+      onDoubleTap:
+          user != null ? () => onUserDoubleTap?.call(user.id, name) : null,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
@@ -147,6 +156,7 @@ class _StaffChatLine extends StatelessWidget {
     required this.rank,
     required this.showIstek,
     this.onTap,
+    this.onDoubleTap,
     this.imageUrl,
   });
 
@@ -158,6 +168,7 @@ class _StaffChatLine extends StatelessWidget {
   final VoiceStaffRank rank;
   final bool showIstek;
   final VoidCallback? onTap;
+  final VoidCallback? onDoubleTap;
 
   Color get _accent => VoiceStaffChatStyle.accentForUser(user);
 
@@ -165,6 +176,7 @@ class _StaffChatLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      onDoubleTap: onDoubleTap,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

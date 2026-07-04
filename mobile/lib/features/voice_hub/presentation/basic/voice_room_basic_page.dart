@@ -493,6 +493,36 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     );
   }
 
+  /// Chat'te isme tek dokunuş → "@kullanıcı adı " mesaj kutusuna eklenir.
+  void _insertMention(String name) {
+    final n = name.trim();
+    if (n.isEmpty) return;
+    final existing = _messageCtrl.text;
+    final needsSpace = existing.isNotEmpty && !existing.endsWith(' ');
+    final mention = '@$n ';
+    _messageCtrl.text = '$existing${needsSpace ? ' ' : ''}$mention';
+    _messageCtrl.selection = TextSelection.fromPosition(
+      TextPosition(offset: _messageCtrl.text.length),
+    );
+  }
+
+  /// Chat'te isme çift dokunuş → kullanıcı yetkileri (moderasyon) açılır.
+  void _openUserById(
+    String userId,
+    VoiceRoomLiveState live,
+    VoiceRoomEntity room,
+    VoiceRoomPermissions perms,
+  ) {
+    ChatRoomPresence? target;
+    for (final p in live.presence) {
+      if (p.id == userId) {
+        target = p;
+        break;
+      }
+    }
+    if (target != null) _openUser(target, room, perms);
+  }
+
   bool _canControlMusic(
     VoiceRoomLiveState live,
     VoiceRoomEntity room,
@@ -783,6 +813,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                       messages: live.messages,
                       events: live.realtimeEvents,
                       presence: live.presence,
+                      onMention: (userId, name) => _insertMention(name),
+                      onUserPerms: (userId, name) =>
+                          _openUserById(userId, live, room, perms),
                     ),
                   ),
                   if (live.error != null)
