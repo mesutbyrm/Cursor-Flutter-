@@ -298,6 +298,8 @@ class VoiceRoomLiveController
   DateTime? _chatClearedWatermark;
   final Set<String> _shownEntranceKeys = {};
   final Set<String> _knownPresenceIds = {};
+  /// Ayrılış duyurusu için son bilinen isimler (id → ad).
+  final Map<String, String> _lastKnownPresenceNames = {};
   final Set<String> _shownMusicRequestFlashKeys = {};
   String? _lastDuyuruText;
   DateTime? _lastDuyuruShownAt;
@@ -497,6 +499,28 @@ class VoiceRoomLiveController
     for (final user in merged) {
       if (user.id.isEmpty || previous.contains(user.id)) continue;
       _announcePresenceJoin(user);
+    }
+    // Ayrılanlar — poll ile (SSE gelmese de) herkes çıkışı görsün.
+    final departedIds = previous.difference(nextIds);
+    if (departedIds.isNotEmpty) {
+      final self = ref.read(authControllerProvider).valueOrNull?.id;
+      for (final id in departedIds) {
+        if (id.isEmpty || id == self) continue;
+        final name = _lastKnownPresenceNames[id];
+        if (name != null && name.isNotEmpty) {
+          _notifyRealtimeIfBasic(
+            VoiceRoomRealtimeKind.leave,
+            '$name odadan ayrıldı',
+          );
+        }
+      }
+    }
+    for (final p in merged) {
+      if (p.id.isEmpty) continue;
+      final n = p.displayName.trim().isNotEmpty
+          ? p.displayName.trim()
+          : p.name.trim();
+      if (n.isNotEmpty) _lastKnownPresenceNames[p.id] = n;
     }
     _knownPresenceIds
       ..clear()

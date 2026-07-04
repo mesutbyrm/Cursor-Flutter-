@@ -288,6 +288,17 @@ class VoiceAgoraEngine {
         ),
       );
       await _engine!.enableAudio();
+      // GameStreaming senaryosu: RTC sesi arka plan medyasıyla (WebView YouTube
+      // müziği) BİRLİKTE çalar; Agora özel ses odağı almaz. Aksi halde
+      // Communication profili odaya katıldıktan ~5-6 sn sonra ses odağını alıp
+      // müziği durduruyordu ("müzik 5-6 sn çalıp duruyor").
+      try {
+        await _engine!.setAudioScenario(
+          AudioScenarioType.audioScenarioGameStreaming,
+        );
+      } catch (e, st) {
+        _logFailure('setAudioScenario', e, st);
+      }
       VoiceRoomDebugLog.log('audio.agora.initialized', {
         'appIdPrefix': appId.length >= 8 ? appId.substring(0, 8) : appId,
       });
