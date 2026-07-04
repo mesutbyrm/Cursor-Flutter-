@@ -295,14 +295,14 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
       );
     }
 
-    // Ses-only müzik: iframe ağaçta kalır (ses çalar) ama görünmez.
-    // Tam ekran çizim yok — oda hafif kalır.
+    // Ses-only müzik: sabit boyutlu gizli WebView — 1px yükseklik klavye/
+    // layout değişiminde Android'de oynatmayı durduruyordu.
     if (video.audioOnly) {
       return SizedBox(
-        height: 1,
-        width: double.infinity,
+        width: 128,
+        height: 128,
         child: Opacity(
-          opacity: 0,
+          opacity: 0.01,
           child: IgnorePointer(child: web),
         ),
       );

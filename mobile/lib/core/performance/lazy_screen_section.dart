@@ -9,11 +9,14 @@ class LazyScreenSection extends StatefulWidget {
     required this.child,
     this.delay = Duration.zero,
     this.placeholder,
+    this.repaintIsolate = true,
   });
 
   final Widget child;
   final Duration delay;
   final Widget? placeholder;
+  /// Profil gibi ekranlarda false — RepaintBoundary raster hayaleti önlenir.
+  final bool repaintIsolate;
 
   @override
   State<LazyScreenSection> createState() => _LazyScreenSectionState();
@@ -46,7 +49,10 @@ class _LazyScreenSectionState extends State<LazyScreenSection> {
     if (!_ready) {
       return widget.placeholder ?? const SizedBox.shrink();
     }
-    return RepaintBoundary(child: widget.child);
+    if (widget.repaintIsolate) {
+      return RepaintBoundary(child: widget.child);
+    }
+    return widget.child;
   }
 }
 

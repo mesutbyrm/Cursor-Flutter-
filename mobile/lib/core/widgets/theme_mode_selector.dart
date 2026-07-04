@@ -6,7 +6,7 @@ import '../providers/amoled_dark_provider.dart';
 import '../storage/theme_preferences.dart';
 import '../theme/app_spacing.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'themed_glass_card.dart';
+import 'package:canlifal_social/features/profile/presentation/widgets/premium/profile_glass.dart';
 
 /// Ayarlar — Açık / Koyu / Sistem tema seçimi (anında uygulanır).
 class ThemeModeSelector extends ConsumerWidget {
@@ -18,9 +18,8 @@ class ThemeModeSelector extends ConsumerWidget {
     final amoled = ref.watch(amoledDarkProvider);
     final c = context.colors;
 
-    return ThemedGlassCard(
+    return ProfileGlass(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      blur: 0,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

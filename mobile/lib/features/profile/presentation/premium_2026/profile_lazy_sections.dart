@@ -40,16 +40,14 @@ class ProfileLazyStats extends ConsumerWidget {
         statsAsync.valueOrNull == null &&
         base.user.followersCount <= 0;
 
-    return RepaintBoundary(
-      child: ProfileStats(
-        state: state,
-        followersLoading: followersLoading,
-        onFollowersTap: () =>
-            context.push('/profile/followers?userId=${user.id}'),
-        onFollowingTap: () =>
-            context.push('/profile/following?userId=${user.id}'),
-        onVisitorsTap: () => context.push('/profile/visitors'),
-      ),
+    return ProfileStats(
+      state: state,
+      followersLoading: followersLoading,
+      onFollowersTap: () =>
+          context.push('/profile/followers?userId=${user.id}'),
+      onFollowingTap: () =>
+          context.push('/profile/following?userId=${user.id}'),
+      onVisitorsTap: () => context.push('/profile/visitors'),
     );
   }
 }
@@ -69,17 +67,15 @@ class ProfileLazyWallet extends ConsumerWidget {
     final state = buildProfileWalletState(base, wallet);
     final cfcLoading = walletAsync.isLoading && wallet == null;
 
-    return RepaintBoundary(
-      child: ProfileWalletCard(
-        state: state,
-        cfcLoading: cfcLoading,
-        onTopUp: () => openJetonStore(context, ref: ref),
-        onCfcTopUp: () => openCfcStore(context, ref: ref),
-        onEarnings: () => context.push('/profile/earnings'),
-        onTransactions: () => context.push('/profile/transactions'),
-        onPaymentNotice: () => context.push('/profile/payment-notice'),
-        onSubscriptions: () => context.push('/wallet'),
-      ),
+    return ProfileWalletCard(
+      state: state,
+      cfcLoading: cfcLoading,
+      onTopUp: () => openJetonStore(context, ref: ref),
+      onCfcTopUp: () => openCfcStore(context, ref: ref),
+      onEarnings: () => context.push('/profile/earnings'),
+      onTransactions: () => context.push('/profile/transactions'),
+      onPaymentNotice: () => context.push('/profile/payment-notice'),
+      onSubscriptions: () => context.push('/wallet'),
     );
   }
 }
@@ -104,6 +100,7 @@ class ProfileLazyPremium extends ConsumerWidget {
 
     return LazyScreenSection(
       delay: LazyLoadPerf.profilePremium,
+      repaintIsolate: false,
       child: ProfilePremiumCard(
         membership: membership,
         daysRemaining: daysRemaining,
@@ -120,6 +117,7 @@ class ProfileLazyPublisher extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return LazyScreenSection(
       delay: LazyLoadPerf.profilePublisher,
+      repaintIsolate: false,
       child: ProfilePublisherCard(
         onHistory: () => context.push('/profile/broadcast-history'),
         onSchedule: () => context.push('/live/schedule'),
@@ -140,6 +138,7 @@ class ProfileLazyTeller extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return LazyScreenSection(
       delay: LazyLoadPerf.profileTeller,
+      repaintIsolate: false,
       child: const ProfileFortuneTellerCard(),
     );
   }
@@ -152,6 +151,7 @@ class ProfileLazyAdmin extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return LazyScreenSection(
       delay: LazyLoadPerf.profileAdmin,
+      repaintIsolate: false,
       child: Consumer(
         builder: (context, ref, _) {
           final staff = ref.watch(staffAccessProvider);
@@ -171,7 +171,7 @@ class ProfileLazyContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ProfileLoadPerf.prefetchOnOpen(ref, userId);
-    // ProfileContentSection kendi kök RepaintBoundary'sine sahip.
+    // ProfileContentSection — opak kartlar, RepaintBoundary yok.
     return ProfileContentSection(userId: userId);
   }
 }
@@ -185,6 +185,7 @@ class ProfileLazySettings extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return LazyScreenSection(
       delay: LazyLoadPerf.profileSettings,
+      repaintIsolate: false,
       child: ProfileSettingsSection(onLogout: onLogout),
     );
   }

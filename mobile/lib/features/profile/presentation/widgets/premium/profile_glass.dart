@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
-import '../../../../../core/widgets/themed_glass_card.dart';
 
 /// Cam efektli kart — profil bileşenleri ([ThemedGlassCard]).
 class ProfileGlass extends StatelessWidget {
@@ -27,12 +26,29 @@ class ProfileGlass extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ThemedGlassCard(
+    final c = context.colors;
+    final radius = BorderRadius.circular(borderRadius);
+    Widget content = Container(
       padding: padding,
-      onTap: onTap,
-      blur: 0,
-      borderRadius: BorderRadius.circular(borderRadius),
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        // Tam opak — yarı saydam cam + RepaintBoundary bazı GPU'larda
+        // önceki kareyi bırakıp profil bölümlerini üst üste gösteriyordu.
+        color: c.surfaceContainer,
+        border: Border.all(color: c.glassBorder, width: 1),
+      ),
       child: child,
+    );
+    if (onTap == null) return content;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: radius,
+        splashColor: c.primary.withValues(alpha: 0.12),
+        highlightColor: c.primary.withValues(alpha: 0.06),
+        child: content,
+      ),
     );
   }
 }

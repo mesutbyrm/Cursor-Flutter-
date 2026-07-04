@@ -1,6 +1,21 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.484+488 (2026-07-04)
+
+### Profil — üst üste binme (raster hayaleti) düzeltmesi
+
+- **Opak kartlar:** Profil cam kartları tam opak `surfaceContainer` — yarı saydam katmanlar kaldırıldı
+- **RepaintBoundary:** Profil bölümlerinden kaldırıldı (GPU'da önceki kare izi bırakıyordu)
+- **Kaydırma:** `CustomScrollView` `clipBehavior: hardEdge` — bölümler üst üste çizilmez
+- **Teşhis rozeti:** Kaldırıldı (#205 ile birlikte; bu sürümde katman düzeltmesi tamamlandı)
+
+### Sesli oda — müzik sohbetten bağımsız
+
+- **WebView boyutu:** Arka plan müziği 128×128 gizli iframe — klavye/layout değişiminde 1px WebView durmuyordu
+- **Poll koruması:** Sunucu geçici `playing:false` döndürse bile yerel çalan parça korunur
+- **Yazarken/beklerken:** Müzik artık sohbet yazımı veya periyodik poll ile kesilmemeli
+
 ## 1.0.483+487 (2026-07-03)
 
 ### Profil — boş ekran düzeltmesi

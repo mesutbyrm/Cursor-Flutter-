@@ -53,11 +53,10 @@ class _ProfileContentSectionState extends ConsumerState<ProfileContentSection>
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const ProfileSectionTitle(title: 'İçeriklerim'),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const ProfileSectionTitle(title: 'İçeriklerim'),
           TabBar(
             controller: _tabs,
             isScrollable: true,
@@ -95,7 +94,6 @@ class _ProfileContentSectionState extends ConsumerState<ProfileContentSection>
             },
           ),
         ],
-      ),
     );
   }
 }

@@ -18,8 +18,7 @@ class ProfileSettingsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
 
-    return RepaintBoundary(
-      child: Column(
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const ProfileSectionTitle(title: 'Ayarlar'),
@@ -113,7 +112,6 @@ class ProfileSettingsSection extends StatelessWidget {
             ],
           ),
         ],
-      ),
     );
   }
 }

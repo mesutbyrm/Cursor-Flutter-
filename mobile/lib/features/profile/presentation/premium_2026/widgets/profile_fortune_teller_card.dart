@@ -52,11 +52,10 @@ class _ApprovedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const ProfileSectionTitle(title: 'Falcı Paneli'),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const ProfileSectionTitle(title: 'Falcı Paneli'),
           ProfileGlass(
             padding: const EdgeInsets.all(20),
             borderRadius: ProfilePremiumTheme.radiusLg,
@@ -193,7 +192,6 @@ class _ApprovedCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
     );
   }
 }

@@ -2073,14 +2073,34 @@ class VoiceRoomLiveController
       musicUrl: mq.musicUrl,
       overwriteNowPlaying: mq.nowPlaying != null,
     );
+    final stabilized = _preserveLocalMusicPlayback(merged, previous: dj);
     VoiceRoomMusicPipelineLog.compareDjState(
       stage: 'mergeMusicQueue',
       roomId: _roomKey,
       endpoint: '/api/chat/rooms/$_roomKey/music-queue',
-      dj: merged,
-      shouldPlay: merged.playing && merged.playbackSource != null,
+      dj: stabilized,
+      shouldPlay: stabilized.playing && stabilized.playbackSource != null,
     );
-    _prefetchYoutubePlayback(merged);
+    _prefetchYoutubePlayback(stabilized);
+    return stabilized;
+  }
+
+  /// Poll/SSE geçici `playing:false` döndüğünde yerel iframe çalmayı korur.
+  ChatRoomDjState _preserveLocalMusicPlayback(
+    ChatRoomDjState merged, {
+    required ChatRoomDjState previous,
+  }) {
+    if (merged.playing) return merged;
+    if (previous.nowPlaying == null) return merged;
+    final sameTrack = merged.nowPlaying?.id == previous.nowPlaying?.id ||
+        (merged.nowPlaying?.youtubeUrl.isNotEmpty == true &&
+            merged.nowPlaying?.youtubeUrl == previous.nowPlaying?.youtubeUrl);
+    if (!sameTrack) return merged;
+    final video = ref.read(roomVideoControllerProvider(_roomKey));
+    if (!video.hasActiveVideo) return merged;
+    if (previous.playing || video.isPlaying) {
+      return merged.copyWith(playing: true);
+    }
     return merged;
   }
 
@@ -2557,6 +2577,17 @@ class VoiceRoomLiveController
         unawaited(_handleUnplayableEmbed());
       }
       return effectiveDj;
+    }
+
+    final roomVideo = ref.read(roomVideoControllerProvider(_roomKey));
+    if (hasYoutube &&
+        roomVideo.hasActiveVideo &&
+        roomVideo.isPlaying &&
+        videoId != null &&
+        roomVideo.videoId == videoId &&
+        effectiveDj.nowPlaying != null) {
+      _lastDjPlaybackSignature = sig;
+      return effectiveDj.copyWith(playing: true);
     }
 
     await player.stop();

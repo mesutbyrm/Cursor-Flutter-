@@ -77,12 +77,11 @@ class ProfileAdminCard extends ConsumerWidget {
       ),
     ];
 
-    return RepaintBoundary(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ProfileSectionTitle(
-            title: 'Admin Paneli',
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ProfileSectionTitle(
+          title: 'Admin Paneli',
             trailing: pending > 0
                 ? Container(
                     padding:
@@ -155,7 +154,6 @@ class ProfileAdminCard extends ConsumerWidget {
             ),
           ),
         ],
-      ),
     );
   }
 }

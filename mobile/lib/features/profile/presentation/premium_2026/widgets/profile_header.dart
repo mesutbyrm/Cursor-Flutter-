@@ -27,8 +27,7 @@ class ProfileHeader extends ConsumerWidget {
     final user = state.user;
     final level = state.level.level;
 
-    return RepaintBoundary(
-      child: Column(
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
@@ -90,7 +89,6 @@ class ProfileHeader extends ConsumerWidget {
             isVerified: user.isVerified,
           ),
         ],
-      ),
     );
   }
 }

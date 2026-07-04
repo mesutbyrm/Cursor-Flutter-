@@ -35,10 +35,9 @@ class ProfileWalletCard extends StatelessWidget {
     final membership = state.membership?.trim();
     final hasPremium = membership != null && membership.isNotEmpty;
 
-    return RepaintBoundary(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
           const ProfileSectionTitle(title: 'Cüzdan'),
           ProfileGlass(
             padding: const EdgeInsets.all(20),
@@ -160,9 +159,7 @@ class ProfileWalletCard extends StatelessWidget {
                 ),
             },
           ),
-          ),
         ],
-      ),
     );
   }
 }

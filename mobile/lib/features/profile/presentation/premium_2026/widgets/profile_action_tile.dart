@@ -30,10 +30,9 @@ class ProfileActionTile extends StatelessWidget {
           ProfilePremiumTheme.deepBg.withValues(alpha: 0.9),
         ];
 
-    return RepaintBoundary(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusSm),
           child: Ink(
@@ -103,7 +102,6 @@ class ProfileActionTile extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }

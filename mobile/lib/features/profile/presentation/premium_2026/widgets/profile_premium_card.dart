@@ -19,9 +19,8 @@ class ProfilePremiumCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final active = membership != null && membership!.trim().isNotEmpty;
 
-    return RepaintBoundary(
-      child: Container(
-        decoration: BoxDecoration(
+    return Container(
+      decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusLg),
           gradient: ProfilePremiumTheme.premiumGradient,
           boxShadow: [
@@ -91,7 +90,6 @@ class ProfilePremiumCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 }

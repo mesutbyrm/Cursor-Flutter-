@@ -23,12 +23,11 @@ class ProfileStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: ProfileGlass(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-        borderRadius: ProfilePremiumTheme.radiusMd,
-        borderColor: ProfilePremiumTheme.glassBorder,
-        child: Row(
+    return ProfileGlass(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      borderRadius: ProfilePremiumTheme.radiusMd,
+      borderColor: ProfilePremiumTheme.glassBorder,
+      child: Row(
           children: [
             Expanded(
               child: _StatCell(
@@ -70,7 +69,6 @@ class ProfileStats extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 
