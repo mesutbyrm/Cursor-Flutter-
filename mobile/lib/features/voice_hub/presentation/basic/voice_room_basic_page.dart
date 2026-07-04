@@ -782,6 +782,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     child: VoiceRoomBasicChatFeed(
                       messages: live.messages,
                       events: live.realtimeEvents,
+                      presence: live.presence,
                     ),
                   ),
                   if (live.error != null)
