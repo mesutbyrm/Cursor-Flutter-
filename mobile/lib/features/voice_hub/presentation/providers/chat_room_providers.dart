@@ -292,6 +292,10 @@ class VoiceRoomLiveController
   final _pollPaused = false;
   var _pollTick = 0;
   String? _lastDjPlaybackSignature;
+  /// Sohbet temizlendiğinde işaretlenen zaman — sonraki poll'de sunucunun
+  /// tekrar döndürdüğü eski mesajlar bu işaretten eski ise gösterilmez
+  /// ("temizle sonrası yazılar geri geliyor" sorunu).
+  DateTime? _chatClearedWatermark;
   final Set<String> _shownEntranceKeys = {};
   final Set<String> _knownPresenceIds = {};
   final Set<String> _shownMusicRequestFlashKeys = {};
@@ -621,7 +625,9 @@ class VoiceRoomLiveController
       final bundle =
           await ref.read(chatRoomRemoteProvider).fetchMessages(_roomKey);
       state = state.copyWith(
-        messages: _mergeMessages(state.messages, bundle.messages),
+        messages: _filterClearedMessages(
+          _mergeMessages(state.messages, bundle.messages),
+        ),
         serverPermissions: bundle.myPermissions ?? state.serverPermissions,
         myNickname: bundle.myNickname ?? state.myNickname,
         roomMuted: bundle.roomMuted ?? state.roomMuted,
@@ -1881,7 +1887,8 @@ class VoiceRoomLiveController
       }
       presence = _mergeSelf(presence);
       final previousMessages = state.messages;
-      final messages = _mergeMessages(previousMessages, fetchedMsgs);
+      final messages =
+          _filterClearedMessages(_mergeMessages(previousMessages, fetchedMsgs));
       _scanEntrancesFromMessages(previousMessages, messages);
       state = state.copyWith(
         messages: messages,
@@ -3047,11 +3054,27 @@ class VoiceRoomLiveController
 
   void _applyLocalChatClear() {
     _shownMusicRequestFlashKeys.clear();
+    // Mevcut en yeni mesaj zamanını işaret al — sunucu poll'de aynı geçmişi
+    // döndürse bile bu işaretten eski mesajlar bir daha eklenmez.
+    DateTime? wm;
+    for (final m in state.messages) {
+      if (wm == null || m.createdAt.isAfter(wm)) wm = m.createdAt;
+    }
+    _chatClearedWatermark = wm ?? DateTime.now();
     state = state.copyWith(
       messages: const [],
       clearMusicRequestFlash: true,
     );
     _triggerChatClearedBanner();
+  }
+
+  /// Temizle işaretinden eski mesajları eler (poll geri getirmesin).
+  List<ChatRoomMessage> _filterClearedMessages(List<ChatRoomMessage> list) {
+    final wm = _chatClearedWatermark;
+    if (wm == null) return list;
+    return list
+        .where((m) => m.createdAt.isAfter(wm) || m.id.startsWith('local-'))
+        .toList();
   }
 
   Future<void> _deliverMentionNotifications({
