@@ -31,10 +31,10 @@ Future<void> showVoiceRoomBackgroundSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => ProviderScope(
-      parent: ProviderScope.containerOf(context),
-      child: _VoiceRoomBackgroundSheet(room: room),
-    ),
+    // Modal zaten kök ProviderScope altında; nested ProviderScope +
+    // containerOf(context) gereksizdi ve pop sonrası defunct context'te
+    // "No ProviderScope found" hatası veriyordu.
+    builder: (ctx) => _VoiceRoomBackgroundSheet(room: room),
   );
 }
 
@@ -51,15 +51,12 @@ Future<void> showVoiceRoomHubSettingsSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => ProviderScope(
-      parent: ProviderScope.containerOf(context),
-      child: _HubSettingsSheet(
-        room: room,
-        live: live,
-        perms: perms,
-        isOwner: isOwner,
-        onUserTap: onUserTap,
-      ),
+    builder: (ctx) => _HubSettingsSheet(
+      room: room,
+      live: live,
+      perms: perms,
+      isOwner: isOwner,
+      onUserTap: onUserTap,
     ),
   );
 }

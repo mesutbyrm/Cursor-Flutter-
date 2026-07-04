@@ -35,7 +35,7 @@ Future<void> showVoiceRoomMenuSheet(
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (ctx) => ProviderScope(
-      parent: ProviderScope.containerOf(context),
+      parent: ProviderScope.containerOf(ctx),
       child: _VoiceRoomMenuSheet(
         room: room,
         live: live,
