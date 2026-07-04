@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 import '../../../../agora/presentation/agora_room_manager.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
+import '../../providers/voice_seat_gift_totals_provider.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/widgets/vip_badge.dart';
 import '../../theme/voice_room_tokens.dart';
@@ -182,6 +184,7 @@ class VoiceMicSeat extends StatelessWidget {
                 : (micOn ? Colors.white : Colors.white54),
           ),
         ),
+        _SeatGiftBadge(receiverName: user!.displayName),
       ],
     );
   }
@@ -310,4 +313,138 @@ class _EmptySeat extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Koltuk altı hediye jeton rozeti — tıklanınca gönderici dökümü açılır.
+class _SeatGiftBadge extends ConsumerWidget {
+  const _SeatGiftBadge({required this.receiverName});
+
+  final String receiverName;
+
+  static String _fmt(int v) {
+    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
+    return '$v';
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final key = receiverName.trim().toLowerCase();
+    final agg = ref.watch(
+      voiceSeatGiftTotalsProvider.select((m) => m[key]),
+    );
+    if (agg == null || agg.totalCoins <= 0) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: GestureDetector(
+        onTap: () => _showSeatGiftBreakdown(context, receiverName, agg),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+          decoration: BoxDecoration(
+            color: const Color(0x33FFC107),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0x66FFC107)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.monetization_on_rounded,
+                  color: Color(0xFFFFD54F), size: 10),
+              const SizedBox(width: 3),
+              Text(
+                _fmt(agg.totalCoins),
+                style: const TextStyle(
+                  color: Color(0xFFFFE082),
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+void _showSeatGiftBreakdown(
+  BuildContext context,
+  String receiverName,
+  SeatGiftAggregate agg,
+) {
+  final contributors = agg.topContributors;
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: const Color(0xFF1E1030),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.monetization_on_rounded,
+                    color: Color(0xFFFFD54F), size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '$receiverName — ${_SeatGiftBadge._fmt(agg.totalCoins)} jeton',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...contributors.take(50).map(
+                  (c) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            c.senderName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${c.giftCount} hediye',
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 11,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          '${_SeatGiftBadge._fmt(c.coins)} 🪙',
+                          style: const TextStyle(
+                            color: Color(0xFFFFE082),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+          ],
+        ),
+      ),
+    ),
+  );
 }

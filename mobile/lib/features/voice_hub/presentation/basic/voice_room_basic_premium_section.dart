@@ -178,13 +178,23 @@ class VoiceRoomBasicChatFeed extends StatelessWidget {
     super.key,
     required this.messages,
     this.events = const [],
+    this.presence = const [],
   });
 
   final List<ChatRoomMessage> messages;
   final List<VoiceRoomRealtimeEvent> events;
+  final List<ChatRoomPresence> presence;
 
   @override
   Widget build(BuildContext context) {
+    // Presence'tan id→profil resmi — mesajda görsel yoksa buradan çözülür.
+    final avatarById = <String, String>{};
+    for (final p in presence) {
+      final img = p.image?.trim();
+      if (p.id.isNotEmpty && img != null && img.isNotEmpty) {
+        avatarById[p.id] = img;
+      }
+    }
     final visible = messages
         .where(
           (m) =>
@@ -216,6 +226,10 @@ class VoiceRoomBasicChatFeed extends StatelessWidget {
               return ChatMessageWidget(
                 key: ValueKey(msg.id),
                 message: msg,
+                showAvatar: true,
+                avatarUrl: msg.user?.id != null
+                    ? avatarById[msg.user!.id]
+                    : null,
               );
             },
           ),

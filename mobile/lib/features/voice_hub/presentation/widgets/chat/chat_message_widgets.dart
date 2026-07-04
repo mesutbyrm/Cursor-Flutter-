@@ -16,11 +16,14 @@ class ChatMessageWidget extends StatelessWidget {
     required this.message,
     this.onUserTap,
     this.showAvatar = false,
+    this.avatarUrl,
   });
 
   final ChatRoomMessage message;
   final void Function(String userId, String name)? onUserTap;
   final bool showAvatar;
+  /// Presence'tan çözülen profil resmi — mesajda görsel yoksa kullanılır.
+  final String? avatarUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +34,7 @@ class ChatMessageWidget extends StatelessWidget {
           message: message,
           onUserTap: onUserTap,
           showAvatar: showAvatar,
+          avatarUrl: avatarUrl,
         ),
       ),
     );
@@ -42,11 +46,20 @@ class _ChatMessageBody extends StatelessWidget {
     required this.message,
     this.onUserTap,
     this.showAvatar = false,
+    this.avatarUrl,
   });
 
   final ChatRoomMessage message;
   final void Function(String userId, String name)? onUserTap;
   final bool showAvatar;
+  final String? avatarUrl;
+
+  String? get _effectiveImage {
+    final a = avatarUrl?.trim();
+    if (a != null && a.isNotEmpty) return a;
+    final u = message.user?.image?.trim();
+    return (u != null && u.isNotEmpty) ? u : null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +87,7 @@ class _ChatMessageBody extends StatelessWidget {
         rank: rank,
         showIstek: showIstek,
         onTap: user != null ? () => onUserTap?.call(user.id, name) : null,
+        imageUrl: _effectiveImage,
       );
     }
 
@@ -92,7 +106,7 @@ class _ChatMessageBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (showAvatar && user != null) ...[
-              UserAvatarWidget(url: user.image, radius: 14),
+              UserAvatarWidget(url: _effectiveImage, radius: 14),
               const SizedBox(width: 8),
             ],
             Expanded(
@@ -133,7 +147,10 @@ class _StaffChatLine extends StatelessWidget {
     required this.rank,
     required this.showIstek,
     this.onTap,
+    this.imageUrl,
   });
+
+  final String? imageUrl;
 
   final String name;
   final String content;
@@ -153,7 +170,9 @@ class _StaffChatLine extends StatelessWidget {
         children: [
           VoiceStaffChatAvatar(
             rank: rank,
-            imageUrl: user?.image,
+            imageUrl: (imageUrl?.trim().isNotEmpty == true)
+                ? imageUrl
+                : user?.image,
             accent: _accent,
             size: 36,
           ),
