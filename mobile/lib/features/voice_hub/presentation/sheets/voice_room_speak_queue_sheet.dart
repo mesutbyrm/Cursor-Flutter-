@@ -25,7 +25,7 @@ void showVoiceSpeakQueueSheet(
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
     builder: (ctx) => ProviderScope(
-      parent: ProviderScope.containerOf(context),
+      parent: ProviderScope.containerOf(ctx),
       child: _SpeakQueueSheet(
         room: room,
         live: live,

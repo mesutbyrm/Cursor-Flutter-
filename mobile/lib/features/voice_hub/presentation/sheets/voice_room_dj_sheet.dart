@@ -22,7 +22,7 @@ Future<void> showVoiceRoomDjSheet(
     context: context,
     barrierColor: Colors.black.withValues(alpha: 0.65),
     builder: (ctx) => ProviderScope(
-      parent: ProviderScope.containerOf(context),
+      parent: ProviderScope.containerOf(ctx),
       child: _DjDialog(
         room: room,
         live: live,

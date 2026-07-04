@@ -229,8 +229,8 @@ Future<void> showVoiceRoomModerationSheet({
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
-    builder: (_) => ProviderScope(
-      parent: ProviderScope.containerOf(context),
+    builder: (ctx) => ProviderScope(
+      parent: ProviderScope.containerOf(ctx),
       child: _VoiceRoomModerationSheet(
         roomKey: roomKey,
         targetUser: targetUser,

@@ -24,7 +24,7 @@ Future<void> showRoomMusicQueueSheet(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
     builder: (ctx) => ProviderScope(
-      parent: ProviderScope.containerOf(context),
+      parent: ProviderScope.containerOf(ctx),
       child: _RoomMusicQueueSheet(
         liveKey: liveKey,
         dj: dj,

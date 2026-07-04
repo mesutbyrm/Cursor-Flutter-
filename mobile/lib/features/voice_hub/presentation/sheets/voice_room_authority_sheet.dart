@@ -41,7 +41,7 @@ Future<void> showVoiceRoomAuthoritySheet(
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (ctx) => ProviderScope(
-      parent: ProviderScope.containerOf(context),
+      parent: ProviderScope.containerOf(ctx),
       child: _VoiceRoomAuthoritySheet(
         room: room,
         live: live,

@@ -35,7 +35,7 @@ Future<void> showVoiceRoomManagementPanel(
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (ctx) => ProviderScope(
-      parent: ProviderScope.containerOf(context),
+      parent: ProviderScope.containerOf(ctx),
       child: _VoiceRoomManagementPanel(
         room: room,
         live: live,
