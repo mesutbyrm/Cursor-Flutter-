@@ -49,6 +49,19 @@ abstract final class RootOverlayPurge {
     }
   }
 
+  /// Ekranda dokunmayı engelleyen bir barrier/AbsorbPointer var mı?
+  /// (Sekme değişiminde takılı kalan hayalet overlay tespiti — ucuz kontrol.)
+  static bool hasBlockingOverlay() {
+    return _describeBlockingWidgetsOnScreen().isNotEmpty;
+  }
+
+  /// Yalnızca engelleyen bir overlay varsa temizle — aksi halde no-op.
+  /// Meşru açık modal yokken güvenle çağrılabilir (örn. sekme geçişi).
+  static int purgeIfBlocked({required String reason}) {
+    if (!hasBlockingOverlay()) return 0;
+    return forcePurgeRootNavigatorOverlay(reason: reason);
+  }
+
   /// Login başarılı + [delay] sonra — tüm barrier içeren overlay entry'leri kaldır.
   static int forcePurgeRootNavigatorOverlay({required String reason}) {
     final nav = rootNavigatorKey.currentState;

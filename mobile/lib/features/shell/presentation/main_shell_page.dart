@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/bootstrap/root_overlay_purge.dart';
 import '../../../core/bootstrap/shell_prefetch.dart';
 import '../../../core/widgets/exit_confirm_dialog.dart';
 import 'shell_ui.dart';
@@ -21,12 +22,23 @@ class MainShellPage extends ConsumerStatefulWidget {
 
 class _MainShellPageState extends ConsumerState<MainShellPage> {
   var _prefetched = false;
+  int? _lastBranchIndex;
 
   void _goBranch(int index) {
     widget.navigationShell.goBranch(
       index,
       initialLocation: index == widget.navigationShell.currentIndex,
     );
+    // Sekme geçişinde ekranda takılı kalmış hayalet barrier'ı temizle
+    // (kararmış sayfa + üstte panel + ölü tıklama sorunu).
+    _schedulePurgeIfBlocked('branch-switch-$index');
+  }
+
+  void _schedulePurgeIfBlocked(String reason) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      RootOverlayPurge.purgeIfBlocked(reason: reason);
+    });
   }
 
   HomeBottomTab _activeTab(int shellIndex) {
@@ -68,6 +80,12 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
         }
       }
     });
+
+    final currentIndex = widget.navigationShell.currentIndex;
+    if (_lastBranchIndex != currentIndex) {
+      _lastBranchIndex = currentIndex;
+      _schedulePurgeIfBlocked('branch-active-$currentIndex');
+    }
 
     final authed = ref.watch(
       authControllerProvider.select((a) => a.valueOrNull),
