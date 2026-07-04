@@ -354,12 +354,17 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
               : Icons.event_seat_rounded,
           label: targetUser.isSpeaker ? 'Koltuktan İndir' : 'Koltuğa Al',
           color: const Color(0xFF3B82F6),
-          onTap: () => _run(context, notifier, () async {
-            final ok = targetUser.isSpeaker
-                ? await notifier.removeFromSeat(targetUser.id)
-                : await notifier.grantVoice(targetUser.id);
-            return ok ? 'Koltuk güncellendi' : 'Hata';
-          }),
+          onTap: () {
+            if (targetUser.isSpeaker) {
+              _run(context, notifier, () async {
+                final ok = await notifier.removeFromSeat(targetUser.id);
+                return ok ? 'Koltuk güncellendi' : 'Hata';
+              });
+            } else {
+              // Boş koltukları göster, seçilene otur.
+              _pickEmptySeatAndAssign(context, ref, roomKey, targetUser.id);
+            }
+          },
         ),
       if (perms.canManageDj || isOwner)
         _ModBox(
@@ -637,6 +642,125 @@ class _ModBox extends StatelessWidget {
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                   height: 1.1,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Kullanıcı yönetimi → "Koltuğa Al": boş koltukları gösterir, seçilene oturtur.
+Future<void> _pickEmptySeatAndAssign(
+  BuildContext context,
+  WidgetRef ref,
+  String roomKey,
+  String userId,
+) async {
+  final live = ref.read(voiceRoomLiveProvider(roomKey));
+  final occupied = <int, ChatRoomPresence>{
+    for (final p in live.presence)
+      if (p.seatIndex != null) p.seatIndex!: p,
+  };
+  const seats = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+
+  final picked = await showModalBottomSheet<int>(
+    context: context,
+    backgroundColor: const Color(0xFF12082A),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Boş koltuğa al',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 14),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 4,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 1.4,
+              children: [
+                for (final seat in seats)
+                  _SeatPickTile(
+                    seat: seat,
+                    occupantName: occupied[seat]?.displayName,
+                    onTap: occupied.containsKey(seat)
+                        ? null
+                        : () => Navigator.pop(ctx, seat),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  if (picked == null || !context.mounted) return;
+  final err = await ref
+      .read(voiceRoomLiveProvider(roomKey).notifier)
+      .assignSeat(seatIndex: picked, userId: userId);
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(err ?? 'Koltuğa alındı')),
+  );
+}
+
+class _SeatPickTile extends StatelessWidget {
+  const _SeatPickTile({
+    required this.seat,
+    required this.occupantName,
+    required this.onTap,
+  });
+
+  final int seat;
+  final String? occupantName;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final busy = onTap == null;
+    return Material(
+      color: busy ? const Color(0x22FFFFFF) : const Color(0x3322C55E),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                busy ? Icons.event_seat : Icons.event_seat_outlined,
+                color: busy ? Colors.white38 : const Color(0xFF4ADE80),
+                size: 20,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                busy ? '$seat • dolu' : '$seat',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: busy ? Colors.white38 : Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
