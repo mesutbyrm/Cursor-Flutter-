@@ -292,8 +292,14 @@ class VoiceRoomLiveController
   final _pollPaused = false;
   var _pollTick = 0;
   String? _lastDjPlaybackSignature;
+  /// Sohbet temizlendiğinde işaretlenen zaman — sonraki poll'de sunucunun
+  /// tekrar döndürdüğü eski mesajlar bu işaretten eski ise gösterilmez
+  /// ("temizle sonrası yazılar geri geliyor" sorunu).
+  DateTime? _chatClearedWatermark;
   final Set<String> _shownEntranceKeys = {};
   final Set<String> _knownPresenceIds = {};
+  /// Ayrılış duyurusu için son bilinen isimler (id → ad).
+  final Map<String, String> _lastKnownPresenceNames = {};
   final Set<String> _shownMusicRequestFlashKeys = {};
   String? _lastDuyuruText;
   DateTime? _lastDuyuruShownAt;
@@ -494,6 +500,28 @@ class VoiceRoomLiveController
       if (user.id.isEmpty || previous.contains(user.id)) continue;
       _announcePresenceJoin(user);
     }
+    // Ayrılanlar — poll ile (SSE gelmese de) herkes çıkışı görsün.
+    final departedIds = previous.difference(nextIds);
+    if (departedIds.isNotEmpty) {
+      final self = ref.read(authControllerProvider).valueOrNull?.id;
+      for (final id in departedIds) {
+        if (id.isEmpty || id == self) continue;
+        final name = _lastKnownPresenceNames[id];
+        if (name != null && name.isNotEmpty) {
+          _notifyRealtimeIfBasic(
+            VoiceRoomRealtimeKind.leave,
+            '$name odadan ayrıldı',
+          );
+        }
+      }
+    }
+    for (final p in merged) {
+      if (p.id.isEmpty) continue;
+      final n = p.displayName.trim().isNotEmpty
+          ? p.displayName.trim()
+          : p.name.trim();
+      if (n.isNotEmpty) _lastKnownPresenceNames[p.id] = n;
+    }
     _knownPresenceIds
       ..clear()
       ..addAll(nextIds);
@@ -621,7 +649,9 @@ class VoiceRoomLiveController
       final bundle =
           await ref.read(chatRoomRemoteProvider).fetchMessages(_roomKey);
       state = state.copyWith(
-        messages: _mergeMessages(state.messages, bundle.messages),
+        messages: _filterClearedMessages(
+          _mergeMessages(state.messages, bundle.messages),
+        ),
         serverPermissions: bundle.myPermissions ?? state.serverPermissions,
         myNickname: bundle.myNickname ?? state.myNickname,
         roomMuted: bundle.roomMuted ?? state.roomMuted,
@@ -1881,7 +1911,8 @@ class VoiceRoomLiveController
       }
       presence = _mergeSelf(presence);
       final previousMessages = state.messages;
-      final messages = _mergeMessages(previousMessages, fetchedMsgs);
+      final messages =
+          _filterClearedMessages(_mergeMessages(previousMessages, fetchedMsgs));
       _scanEntrancesFromMessages(previousMessages, messages);
       state = state.copyWith(
         messages: messages,
@@ -3047,11 +3078,27 @@ class VoiceRoomLiveController
 
   void _applyLocalChatClear() {
     _shownMusicRequestFlashKeys.clear();
+    // Mevcut en yeni mesaj zamanını işaret al — sunucu poll'de aynı geçmişi
+    // döndürse bile bu işaretten eski mesajlar bir daha eklenmez.
+    DateTime? wm;
+    for (final m in state.messages) {
+      if (wm == null || m.createdAt.isAfter(wm)) wm = m.createdAt;
+    }
+    _chatClearedWatermark = wm ?? DateTime.now();
     state = state.copyWith(
       messages: const [],
       clearMusicRequestFlash: true,
     );
     _triggerChatClearedBanner();
+  }
+
+  /// Temizle işaretinden eski mesajları eler (poll geri getirmesin).
+  List<ChatRoomMessage> _filterClearedMessages(List<ChatRoomMessage> list) {
+    final wm = _chatClearedWatermark;
+    if (wm == null) return list;
+    return list
+        .where((m) => m.createdAt.isAfter(wm) || m.id.startsWith('local-'))
+        .toList();
   }
 
   Future<void> _deliverMentionNotifications({
