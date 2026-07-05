@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../domain/pk/pk_leaderboard_models.dart';
 import '../../domain/pk/pk_room_models.dart';
 
 /// PK Faz 2 — birleşik `/api/pk/*` (çoklu misafir & takım) uçları.
@@ -122,6 +123,43 @@ class PkRoomRemoteDataSource {
       if (e is Map) out.add(PkHistoryEntry.fromJson(asJsonMap(e)));
     }
     return out;
+  }
+
+  /// PK liderlik tablosu.
+  Future<List<PkLeaderboardEntry>> leaderboard({
+    String period = 'weekly', // weekly | monthly | season | alltime
+    String metric = 'score', // score | wins
+    int limit = 100,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      '/api/pk/leaderboard',
+      query: {'period': period, 'metric': metric, 'limit': limit},
+    );
+    dynamic raw = res.data;
+    if (raw is Map) {
+      raw = asJsonMap(raw)['entries'] ?? asJsonMap(raw)['data'] ?? asJsonMap(raw)['leaderboard'];
+    }
+    if (raw is! List) return const [];
+    final out = <PkLeaderboardEntry>[];
+    var i = 0;
+    for (final e in raw) {
+      if (e is Map) {
+        i++;
+        out.add(PkLeaderboardEntry.fromJson(asJsonMap(e), i));
+      }
+    }
+    return out;
+  }
+
+  /// PK istatistiklerim (JWT) veya belirli kullanıcının.
+  Future<PkStats> stats({String? userId}) async {
+    final path = userId == null || userId.isEmpty
+        ? '/api/pk/me/stats'
+        : '/api/pk/stats/$userId';
+    final res = await _dio.safeGet<dynamic>(path);
+    final body = res.data;
+    if (body is Map) return PkStats.fromJson(asJsonMap(body));
+    return const PkStats();
   }
 
   PkRoomMatch? _parse(dynamic body) {
