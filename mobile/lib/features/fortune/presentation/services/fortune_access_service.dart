@@ -99,6 +99,15 @@ class FortuneAccessService {
 
   /// Ödüllü reklam izlet, +N fal hakkı ver.
   Future<int> watchAdForCredit({required String slug}) async {
+    final completed = await RewardedAdService.instance.show();
+    if (!completed) {
+      throw StateError('Reklam tamamlanmadı; fal hakkı verilmedi.');
+    }
+    return grantFortuneAdCreditAfterWatch(slug: slug);
+  }
+
+  /// Reklam zaten izlendiyse fal hakkı ver (çift reklam önlenir).
+  Future<int> grantFortuneAdCreditAfterWatch({required String slug}) async {
     final config = await _ref.read(fortuneAccessConfigProvider.future);
     if (!config.adsEnabled) {
       throw StateError('Reklam ödülleri şu an kapalı.');
@@ -106,11 +115,6 @@ class FortuneAccessService {
     final store = await _store();
     if (store.adsWatchedToday >= config.dailyAdLimit) {
       throw StateError('Günlük reklam limitine ulaştınız.');
-    }
-
-    final completed = await RewardedAdService.instance.show();
-    if (!completed) {
-      throw StateError('Reklam tamamlanmadı; fal hakkı verilmedi.');
     }
 
     var earned = config.adCreditsPerAd;

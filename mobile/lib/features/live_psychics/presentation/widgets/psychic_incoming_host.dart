@@ -18,6 +18,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/controllers/
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_invite_coordinator.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_push_payload.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_incoming_call_dialog.dart';
@@ -37,6 +38,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     with WidgetsBindingObserver {
   Timer? _poll;
   Timer? _inviteStatusWatch;
+  StreamSubscription<PsychicRequestEntity>? _liveEventSub;
   var _presenting = false;
   var _inviteDialogVisible = false;
   var _inviteUiReady = false;
@@ -137,6 +139,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   Future<void> _bootstrap() async {
     await _ensureTellerProfile();
     await _connectSse();
+    _attachLiveEventBus();
     _startPoll();
     if (_mayPresentInvites()) {
       unawaited(
@@ -189,6 +192,15 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
           accessToken: tokens.readAccess,
           onRequest: _onSseRequest,
         );
+  }
+
+  void _attachLiveEventBus() {
+    _liveEventSub?.cancel();
+    final bus = ref.read(psychicLiveEventBusProvider);
+    _liveEventSub = bus.stream.listen((req) {
+      if (!mounted) return;
+      _onSseRequest(req);
+    });
   }
 
   void _onSseRequest(PsychicRequestEntity req) {
@@ -404,6 +416,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     _detachRouteListener();
     _poll?.cancel();
     _inviteStatusWatch?.cancel();
+    unawaited(_liveEventSub?.cancel());
     unawaited(_sseService?.disconnect());
     super.dispose();
   }

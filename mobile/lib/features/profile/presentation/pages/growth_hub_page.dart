@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/widgets/cfc_reward_overlay.dart';
 import '../../../fortune/data/services/rewarded_ad_service.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
@@ -240,17 +241,20 @@ class GrowthHubPage extends ConsumerWidget {
         );
         return;
       }
-      final reward = await ref.read(watchAdCreditProvider.future);
+      var reward = 10;
+      try {
+        reward = await ref.read(watchAdCreditProvider.future);
+        if (reward <= 0) reward = 10;
+        ref.invalidate(walletBalancesProvider);
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+        return;
+      }
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            reward > 0
-                ? 'Reklam ödülü işlendi: +$reward'
-                : 'Reklam ödülü işlendi, bakiyeniz yenileniyor.',
-          ),
-        ),
-      );
+      await CfcRewardOverlay.show(context, amount: reward);
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

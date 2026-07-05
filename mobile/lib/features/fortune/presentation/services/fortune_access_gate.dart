@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/api_exception.dart';
 import '../../domain/entities/fortune_type_entity.dart';
 import '../../domain/fortune_access_config.dart';
 import '../providers/fortune_access_providers.dart';
 import '../widgets/fortune_access_sheet.dart';
+import 'ad_reward_celebration.dart';
 import 'fortune_access_service.dart';
 
 /// Fal açmadan önce erişim kapısı — premium / reklam / jeton.
@@ -97,21 +97,12 @@ class FortuneAccessGate {
     FortuneAccessService service,
     String slug,
   ) async {
-    try {
-      await service.watchAdForCredit(slug: slug);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('+1 fal hakkı kazandınız!')),
-        );
-      }
-      return true;
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
-      }
-      return false;
-    }
+    return AdRewardCelebration.watchAndCelebrate(
+      context: context,
+      ref: ref,
+      onAdWatched: () async {
+        await service.grantFortuneAdCreditAfterWatch(slug: slug);
+      },
+    );
   }
 }

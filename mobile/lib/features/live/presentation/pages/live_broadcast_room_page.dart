@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
@@ -96,6 +97,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   var _viewerAudioOn = true;
   VideoWebrtcSignalService? _signalService;
   Timer? _guestJoinPoll;
+  Timer? _fortunePoll;
   Timer? _lazyGiftsTimer;
   Timer? _lazyExtrasTimer;
   final Set<String> _seenGuestJoinIds = {};
@@ -109,6 +111,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final streamId = widget.session.streamId?.trim();
       if (streamId != null && streamId.isNotEmpty) {
+        final hostId = widget.session.hostUserId?.trim();
+        if (hostId != null && hostId.isNotEmpty) {
+          ref.read(liveFortuneHostUserIdProvider(streamId).notifier).state =
+              hostId;
+        }
         ref.read(liveRoomInteractionProvider(streamId).notifier)
           ..reset(initialLikes: 0)
           ..loadInitialLikeCount();
@@ -261,6 +268,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     _lazyGiftsTimer?.cancel();
     _lazyExtrasTimer?.cancel();
     _guestJoinPoll?.cancel();
+    _fortunePoll?.cancel();
     _signalService?.stop();
     if (_remoteUidsListener != null) {
       _agora.remoteUidsNotifier.removeListener(_remoteUidsListener!);
@@ -510,6 +518,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         if (!mounted) return;
         unawaited(
           ref.read(coBroadcastProvider.notifier).refreshStream(streamId),
+        );
+      });
+      unawaited(ref.read(liveFortuneRequestsProvider(streamId).notifier).refresh());
+      _fortunePoll?.cancel();
+      _fortunePoll = Timer.periodic(const Duration(seconds: 8), (_) {
+        if (!mounted) return;
+        unawaited(
+          ref.read(liveFortuneRequestsProvider(streamId).notifier).refresh(),
         );
       });
     }
@@ -1159,6 +1175,34 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
             unawaited(_promptGuestJoinRequest(req));
           }
         }
+      });
+      ref.listen(liveFortuneRequestsProvider(streamId), (prev, next) {
+        final pulse = next.newRequestPulse;
+        if (pulse <= (prev?.newRequestPulse ?? 0)) return;
+        final pending = next.requests
+            .where(
+              (r) =>
+                  r.status == LiveFortuneRequestStatus.pending ||
+                  r.status == LiveFortuneRequestStatus.held,
+            )
+            .toList();
+        if (pending.isEmpty) return;
+        final latest = pending.last;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Yeni fal isteği: ${latest.displayName} — ${latest.fortuneType}',
+              ),
+              action: SnackBarAction(
+                label: 'Gör',
+                onPressed: _openControlCenter,
+              ),
+              duration: const Duration(seconds: 6),
+            ),
+          );
+        });
       });
     }
 

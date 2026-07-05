@@ -8,6 +8,12 @@ import '../../../../core/network/dio_provider.dart';
 import '../../data/datasources/live_fortune_request_datasource.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../domain/utils/live_discover_category.dart';
+import '../../domain/utils/live_fortune_host_bridge.dart';
+import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
+
+/// Yayıncı kullanıcı kimliği — fal davet köprüsü için (SSE'de yoksa).
+final liveFortuneHostUserIdProvider =
+    StateProvider.autoDispose.family<String?, String>((ref, streamId) => null);
 
 class LiveFortuneRequestsState {
   const LiveFortuneRequestsState({
@@ -65,11 +71,24 @@ class LiveFortuneRequestsNotifier
   Future<void> refresh() async {
     state = state.copyWith(loading: true, clearError: true);
     try {
+      final prevIds = state.requests.map((r) => r.id).toSet();
       final items = await _ds.fetchRequests(arg);
+      final newPending = items.where(
+        (r) =>
+            !prevIds.contains(r.id) &&
+            (r.status == LiveFortuneRequestStatus.pending ||
+                r.status == LiveFortuneRequestStatus.held),
+      );
       state = state.copyWith(
         loading: false,
         requests: sortFortuneRequestQueue(items),
+        newRequestPulse: newPending.isNotEmpty
+            ? state.newRequestPulse + newPending.length
+            : state.newRequestPulse,
       );
+      if (newPending.isNotEmpty) {
+        HapticFeedback.heavyImpact();
+      }
     } catch (e) {
       state = state.copyWith(loading: false, error: e.toString());
     }
@@ -145,24 +164,13 @@ class LiveFortuneRequestsNotifier
     _upsert(row, notify: !existed);
   }
 
+  LiveFortuneRequestEntity? latestFromMap(Map<String, dynamic> map) {
+    final row = _parseFortuneRequestFromSse(map);
+    return row.id.isEmpty ? null : row;
+  }
+
   LiveFortuneRequestEntity _parseFortuneRequestFromSse(Map<String, dynamic> map) {
-    final request = map['request'];
-    if (request is Map) {
-      return LiveFortuneRequestEntity.fromJson(
-        Map<String, dynamic>.from(request),
-      );
-    }
-    final data = map['data'];
-    if (data is Map) {
-      final inner = Map<String, dynamic>.from(data);
-      if (inner['request'] is Map) {
-        return LiveFortuneRequestEntity.fromJson(
-          Map<String, dynamic>.from(inner['request'] as Map),
-        );
-      }
-      return LiveFortuneRequestEntity.fromJson(inner);
-    }
-    return LiveFortuneRequestEntity.fromJson(map);
+    return parseLiveFortuneRequestMap(map);
   }
 
   void _upsert(LiveFortuneRequestEntity row, {bool notify = false}) {
@@ -180,6 +188,22 @@ class LiveFortuneRequestsNotifier
     );
     if (notify) {
       HapticFeedback.heavyImpact();
+      _emitHostInvite(row);
+    }
+  }
+
+  void _emitHostInvite(LiveFortuneRequestEntity row) {
+    if (row.status != LiveFortuneRequestStatus.pending &&
+        row.status != LiveFortuneRequestStatus.held) {
+      return;
+    }
+    final hostUid = ref.read(liveFortuneHostUserIdProvider(arg));
+    final invite = liveFortuneRequestToPsychicInvite(
+      row,
+      tellerUserId: hostUid,
+    );
+    if (invite != null) {
+      emitPsychicLiveRequest(ref, invite);
     }
   }
 }

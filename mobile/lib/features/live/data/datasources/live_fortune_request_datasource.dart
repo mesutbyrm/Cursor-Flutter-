@@ -58,6 +58,7 @@ class LiveFortuneRequestDataSource {
     final body = {
       'displayName': displayName.trim(),
       'question': question.trim(),
+      'message': question.trim(),
       'fortuneType': fortuneType,
       'type': fortuneType,
       'priority': priority.name,

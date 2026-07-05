@@ -1,6 +1,20 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.485+489 (2026-07-05)
+
+### Canlı yayın — Fal İste bildirimi
+
+- **Yayıncı uyarısı:** Yeni fal isteği SSE + 8 sn poll ile algılanır; snackbar ve Kontrol merkezi kısayolu
+- **Köprü:** Video-stream fal kuyruğu → falcı davet event bus (uygulama genelinde mor dialog)
+- **API:** Fal isteği gövdesine `message` alanı eklendi (kılavuz uyumu)
+
+### Fal — tam ekran reklam ve CFC ödülü
+
+- **Reklam kapısı:** Fal açılmadan önce tam ekran ödüllü reklam (jeton ile ödeyenler hariç)
+- **CFC overlay:** Reklam bitince ortada şekilli “+10 CFC jeton kazandınız” bildirimi
+- **Büyüme merkezi / fal erişimi:** Ödüllü reklam sonrası aynı overlay
+
 ## 1.0.484+488 (2026-07-04)
 
 ### Profil — üst üste binme (raster hayaleti) düzeltmesi

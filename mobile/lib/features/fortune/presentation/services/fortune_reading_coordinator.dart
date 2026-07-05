@@ -19,6 +19,7 @@ import '../widgets/premium_ai/premium_fortune_open_button.dart';
 import '../../domain/fortune_access_config.dart';
 import 'fortune_access_gate.dart';
 import 'fortune_ambient_audio.dart';
+import 'fortune_fullscreen_ad_gate.dart';
 import 'fortune_reading_service.dart';
 import 'fortune_share_handler.dart';
 
@@ -85,6 +86,16 @@ class FortuneReadingCoordinator {
         }
       }
     }
+
+    final paidWithJeton = accessGrant?.method == FortuneAccessMethod.jeton;
+    if (!await FortuneFullscreenAdGate.showBeforeFortune(
+      context: context,
+      paidWithJeton: paidWithJeton,
+      ref: ref,
+    )) {
+      return null;
+    }
+    if (!context.mounted) return null;
 
     final paymentMethod = accessGrant != null
         ? ref.read(fortuneAccessServiceProvider).paymentMethodFor(accessGrant)

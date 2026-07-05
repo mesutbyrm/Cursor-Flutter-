@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:canlifal_social/core/ui/premium_2026/cosmic_galaxy_background.dart';
 import 'package:canlifal_social/core/widgets/user_avatar.dart';
-import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_admin_ad_panel.dart';
+import 'package:canlifal_social/features/fortune/data/services/rewarded_ad_service.dart';
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/agora/presentation/agora_room_manager.dart';
@@ -16,6 +16,9 @@ final _psychicAdNavProvider =
 final _psychicAdPermissionsProvider =
     StateProvider.autoDispose<bool>((ref) => false);
 
+final _psychicAdLoadingProvider =
+    StateProvider.autoDispose<bool>((ref) => true);
+
 /// Falcı kabul ettikten sonra danışana gösterilen reklam geçişi.
 class PsychicAdScreen extends ConsumerWidget {
   const PsychicAdScreen({super.key, required this.session});
@@ -25,6 +28,7 @@ class PsychicAdScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final permissionsReady = ref.watch(_psychicAdPermissionsProvider);
+    final adLoading = ref.watch(_psychicAdLoadingProvider);
     ref.watch(_psychicAdInitProvider(session));
     final psychic = session.psychic;
 
@@ -81,15 +85,41 @@ class PsychicAdScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                PsychicAdminAdPanel(
-                  countdownSeconds: 4,
-                  onCountdownFinished: () {
-                    ref.read(_psychicAdNavProvider.notifier).state = session;
-                  },
-                  subtitle: permissionsReady
-                      ? 'Canlı fal deneyiminiz birazdan başlayacak!'
-                      : 'Kamera ve mikrofon izni isteniyor…',
-                ),
+                if (adLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 48),
+                      child: Column(
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text(
+                            'Reklam yükleniyor…',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 48),
+                      child: Text(
+                        permissionsReady
+                            ? 'Canlı fal deneyiminiz başlıyor…'
+                            : 'Kamera ve mikrofon izni isteniyor…',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -104,4 +134,16 @@ final _psychicAdInitProvider = FutureProvider.autoDispose
   await PsychicSessionStore.save(session);
   final ok = await AgoraRoomManager.requestPermissions(video: true);
   ref.read(_psychicAdPermissionsProvider.notifier).state = ok;
+
+  final paidWithJeton = session.totalJeton > 0;
+  if (!paidWithJeton) {
+    final watched = await RewardedAdService.instance.show();
+    if (!watched) {
+      ref.read(_psychicAdLoadingProvider.notifier).state = false;
+      return;
+    }
+  }
+
+  ref.read(_psychicAdLoadingProvider.notifier).state = false;
+  ref.read(_psychicAdNavProvider.notifier).state = session;
 });

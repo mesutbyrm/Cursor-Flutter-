@@ -12,6 +12,7 @@ import '../../domain/entities/live_stream_chat_message.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/utils/live_chat_guard.dart';
+import '../../domain/utils/live_fortune_host_bridge.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import 'live_providers.dart';
 import 'live_stream_engagement_provider.dart';
@@ -160,9 +161,29 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         emitPsychicLiveRequest(ref, session);
       },
       onStreamFortuneRequest: (map) {
+        final beforeIds = ref
+            .read(liveFortuneRequestsProvider(streamId))
+            .requests
+            .map((r) => r.id)
+            .toSet();
         ref
             .read(liveFortuneRequestsProvider(streamId).notifier)
             .pushFromSse(map);
+        final row = parseLiveFortuneRequestMap(map);
+        if (row.id.isNotEmpty &&
+            !beforeIds.contains(row.id) &&
+            (row.status == LiveFortuneRequestStatus.pending ||
+                row.status == LiveFortuneRequestStatus.held)) {
+          final hostUid = pickStreamHostUserId(map) ??
+              ref.read(liveFortuneHostUserIdProvider(streamId));
+          final invite = liveFortuneRequestToPsychicInvite(
+            row,
+            tellerUserId: hostUid,
+          );
+          if (invite != null) {
+            emitPsychicLiveRequest(ref, invite);
+          }
+        }
         final merged = ref
             .read(liveFortuneRequestsProvider(streamId).notifier)
             .state
