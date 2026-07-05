@@ -54,6 +54,12 @@ class PkRoomController extends AutoDisposeFamilyNotifier<PkRoomMatch?, String> {
 final pkRoomProvider = AutoDisposeNotifierProviderFamily<PkRoomController,
     PkRoomMatch?, String>(PkRoomController.new);
 
+/// PK geçmişim (galibiyet/mağlubiyet/berabere).
+final pkHistoryProvider =
+    FutureProvider.autoDispose<List<PkHistoryEntry>>((ref) {
+  return ref.read(pkRoomRemoteProvider).history();
+});
+
 /// Bir yayına ait aktif çoklu/takım PK maçı (varsa) — hafif keşif.
 final activePkRoomProvider =
     FutureProvider.autoDispose.family<PkRoomMatch?, String>((ref, streamId) async {

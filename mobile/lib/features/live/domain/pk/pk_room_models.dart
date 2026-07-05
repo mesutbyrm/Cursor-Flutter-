@@ -185,3 +185,51 @@ class PkRoomMatch {
       ? (leftScore + rightScore)
       : activeSeats.fold(0, (sum, s) => sum + s.score);
 }
+
+/// PK geçmişi satırı — `/api/pk/me/history`.
+class PkHistoryEntry {
+  const PkHistoryEntry({
+    required this.id,
+    required this.result,
+    this.mode = PkRoomMode.oneVsOne,
+    this.opponentName,
+    this.myScore = 0,
+    this.opponentScore = 0,
+    this.coins = 0,
+    this.durationSec = 0,
+    this.at,
+  });
+
+  factory PkHistoryEntry.fromJson(Map<String, dynamic> json) {
+    return PkHistoryEntry(
+      id: (pick(json, ['id', 'matchId']) ?? '').toString(),
+      result:
+          (pick(json, ['result', 'outcome']) ?? 'draw').toString().toLowerCase(),
+      mode: PkRoomMode.parse(pick(json, ['mode'])?.toString()),
+      opponentName: pick(json,
+              ['opponentName', 'opponent', 'rightName', 'vs', 'against'])
+          ?.toString(),
+      myScore: asInt(pick(json, ['myScore', 'score', 'leftScore', 'challengerScore'])),
+      opponentScore:
+          asInt(pick(json, ['opponentScore', 'rightScore'])),
+      coins: asInt(pick(json, ['coins', 'totalCoins', 'jeton', 'earned'])),
+      durationSec: asInt(pick(json, ['durationSec', 'duration'])),
+      at: DateTime.tryParse(
+          pick(json, ['at', 'createdAt', 'endedAt', 'date'])?.toString() ?? ''),
+    );
+  }
+
+  final String id;
+  final String result; // win | loss | draw
+  final PkRoomMode mode;
+  final String? opponentName;
+  final int myScore;
+  final int opponentScore;
+  final int coins;
+  final int durationSec;
+  final DateTime? at;
+
+  bool get isWin => result == 'win' || result == 'won';
+  bool get isLoss => result == 'loss' || result == 'lose' || result == 'lost';
+  bool get isDraw => !isWin && !isLoss;
+}
