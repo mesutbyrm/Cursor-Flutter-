@@ -6,7 +6,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/message_entities.dart';
-import '../utils/dm_message_codec.dart';
+import '../../domain/utils/dm_message_codec.dart';
 import '../models/conversation_dto.dart';
 import '../models/message_dto.dart';
 
