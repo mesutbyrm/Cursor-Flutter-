@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.492+496 (2026-07-05)
+
+### PK sistemi — birleşik API entegrasyonu (Faz 1–3)
+
+- **Backend yönlendirme:** `/api/pk/*` istekleri `canlifalapi.abacusai.app` (games backend) üzerinden gider
+- **Faz 1 (1v1):** `POST /api/pk/request`, `respond`, `cancel`, `me/invites`, `active` — canlı PK daveti artık birleşik API ile çalışır; başarısızsa eski video-stream yolu
+- **SSE:** `GET /api/pk/{id}/stream` — skor, süre, Final Sprint, premium çarpan canlı güncelleme (8 sn poll yedek)
+- **Faz 2/3:** Çoklu misafir/takım overlay, liderlik, geçmiş, premium etkinlikler, moderasyon (mevcut UI bağlandı)
+- **Dokümantasyon:** `docs/PK_SYSTEM_FLUTTER_INTEGRATION.md`
+- **Test:** `pk_unified_bridge_test`, `api_backend_router` PK routing testleri; `verify-pk-endpoints.sh` güncellendi
+
 ## 1.0.491+495 (2026-07-05)
 
 ### Canlı yayın PK + admin hediye yönetimi

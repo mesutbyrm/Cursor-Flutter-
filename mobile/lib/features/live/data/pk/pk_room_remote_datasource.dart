@@ -1,17 +1,73 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/pk/pk_event_models.dart';
 import '../../domain/pk/pk_leaderboard_models.dart';
 import '../../domain/pk/pk_room_models.dart';
+import '../../domain/pk/pk_unified_bridge.dart';
 
-/// PK Faz 2 — birleşik `/api/pk/*` (çoklu misafir & takım) uçları.
-/// Mevcut 1v1 PK akışını bozmadan additive çalışır.
+/// Birleşik `/api/pk/*` (Faz 1–3) — 1v1 davet, çoklu misafir, takım, liderlik.
+/// Eski `/api/video-streams/:id/pk-battle` akışını bozmaz; üst katman fallback kullanır.
 class PkRoomRemoteDataSource {
   PkRoomRemoteDataSource(this._dio);
 
   final Dio _dio;
+
+  // --- Faz 1: 1v1 davet / yanıt ---
+
+  /// `POST /api/pk/request` — karşı yayıncıya PK daveti.
+  Future<PkRoomMatch?> request({
+    required String hostStreamId,
+    required String opponentStreamId,
+    int durationSec = 180,
+    PkRoomMode mode = PkRoomMode.oneVsOne,
+  }) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.pkRequest,
+      data: {
+        'hostStreamId': hostStreamId,
+        'opponentStreamId': opponentStreamId,
+        'durationSec': durationSec,
+        'mode': mode.wire,
+      },
+    );
+    return _parse(res.data);
+  }
+
+  /// `POST /api/pk/:id/respond` — kabul veya red.
+  Future<PkRoomMatch?> respond(
+    String id, {
+    required String action, // accept | reject
+  }) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.pkMatchRespond(id),
+      data: {'action': action},
+    );
+    return _parse(res.data);
+  }
+
+  /// Bekleyen davetlerim.
+  Future<List<PkRoomMatch>> myInvites() async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.pkMeInvites);
+    return parsePkMatchList(res.data);
+  }
+
+  /// Aktif maçlarım.
+  Future<List<PkRoomMatch>> myMatches() async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.pkMeMatches);
+    return parsePkMatchList(res.data);
+  }
+
+  /// Bir yayına ait aktif PK (1v1 dahil).
+  Future<PkRoomMatch?> activeForStream(String streamId) async {
+    final matches = await active();
+    return findStreamPkMatch(matches, streamId);
+  }
+
+  // --- Faz 2: çoklu misafir / takım ---
 
   /// Çoklu misafir / takım PK odası aç (host otomatik koltuk 0).
   Future<PkRoomMatch?> createRoom({
@@ -23,7 +79,7 @@ class PkRoomRemoteDataSource {
     String? rightName,
   }) async {
     final res = await _dio.safePost<dynamic>(
-      '/api/pk/room',
+      ApiEndpoints.pkRoom,
       data: {
         'hostStreamId': hostStreamId,
         'mode': mode.wire,
@@ -38,7 +94,7 @@ class PkRoomRemoteDataSource {
 
   /// Oda savaşını başlat (pending → live).
   Future<PkRoomMatch?> start(String id) async {
-    final res = await _dio.safePost<dynamic>('/api/pk/$id/start');
+    final res = await _dio.safePost<dynamic>(ApiEndpoints.pkMatchStart(id));
     return _parse(res.data);
   }
 
@@ -50,7 +106,7 @@ class PkRoomRemoteDataSource {
     String? streamId,
   }) async {
     final res = await _dio.safePost<dynamic>(
-      '/api/pk/$id/seats/join',
+      ApiEndpoints.pkMatchSeatsJoin(id),
       data: {
         if (team != null) 'team': team,
         if (seatIndex != null) 'seatIndex': seatIndex,
@@ -62,53 +118,47 @@ class PkRoomRemoteDataSource {
 
   /// Koltuğu bırak (host bırakamaz).
   Future<PkRoomMatch?> leaveSeat(String id) async {
-    final res = await _dio.safePost<dynamic>('/api/pk/$id/seats/leave');
+    final res = await _dio.safePost<dynamic>(ApiEndpoints.pkMatchSeatsLeave(id));
     return _parse(res.data);
   }
 
   /// Host: bir kullanıcıyı koltuktan çıkar.
   Future<PkRoomMatch?> kickSeat(String id, {required String userId}) async {
     final res = await _dio.safePost<dynamic>(
-      '/api/pk/$id/seats/kick',
+      ApiEndpoints.pkMatchSeatsKick(id),
       data: {'userId': userId},
     );
     return _parse(res.data);
   }
 
-  /// PK durumu (poll).
+  /// PK durumu (poll / bootstrap).
   Future<PkRoomMatch?> getMatch(String id) async {
-    final res = await _dio.safeGet<dynamic>('/api/pk/$id');
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.pkMatch(id));
     return _parse(res.data);
   }
 
-  /// Odayı iptal / bitir.
+  /// Odayı bitir.
   Future<PkRoomMatch?> end(String id) async {
-    final res = await _dio.safePost<dynamic>('/api/pk/$id/end');
+    final res = await _dio.safePost<dynamic>(ApiEndpoints.pkMatchEnd(id));
     return _parse(res.data);
   }
 
+  /// Bekleyen daveti / odayı iptal.
   Future<PkRoomMatch?> cancel(String id) async {
-    final res = await _dio.safePost<dynamic>('/api/pk/$id/cancel');
+    final res = await _dio.safePost<dynamic>(ApiEndpoints.pkMatchCancel(id));
     return _parse(res.data);
   }
 
-  /// Aktif PK maçları (varsa ilgili yayına ait olan).
+  /// Aktif PK maçları.
   Future<List<PkRoomMatch>> active() async {
-    final res = await _dio.safeGet<dynamic>('/api/pk/active');
-    dynamic raw = res.data;
-    if (raw is Map) raw = asJsonMap(raw)['matches'] ?? asJsonMap(raw)['data'];
-    if (raw is! List) return const [];
-    final out = <PkRoomMatch>[];
-    for (final e in raw) {
-      if (e is Map) out.add(PkRoomMatch.fromJson(asJsonMap(e)));
-    }
-    return out;
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.pkActive);
+    return parsePkMatchList(res.data);
   }
 
   /// PK geçmişim (galibiyet/mağlubiyet/berabere).
   Future<List<PkHistoryEntry>> history({int page = 1, int limit = 30}) async {
     final res = await _dio.safeGet<dynamic>(
-      '/api/pk/me/history',
+      ApiEndpoints.pkMeHistory,
       query: {'page': page, 'limit': limit},
     );
     dynamic raw = res.data;
@@ -128,17 +178,19 @@ class PkRoomRemoteDataSource {
 
   /// PK liderlik tablosu.
   Future<List<PkLeaderboardEntry>> leaderboard({
-    String period = 'weekly', // weekly | monthly | season | alltime
-    String metric = 'score', // score | wins
+    String period = 'weekly',
+    String metric = 'score',
     int limit = 100,
   }) async {
     final res = await _dio.safeGet<dynamic>(
-      '/api/pk/leaderboard',
+      ApiEndpoints.pkLeaderboard,
       query: {'period': period, 'metric': metric, 'limit': limit},
     );
     dynamic raw = res.data;
     if (raw is Map) {
-      raw = asJsonMap(raw)['entries'] ?? asJsonMap(raw)['data'] ?? asJsonMap(raw)['leaderboard'];
+      raw = asJsonMap(raw)['entries'] ??
+          asJsonMap(raw)['data'] ??
+          asJsonMap(raw)['leaderboard'];
     }
     if (raw is! List) return const [];
     final out = <PkLeaderboardEntry>[];
@@ -160,7 +212,7 @@ class PkRoomRemoteDataSource {
     int? durationSec,
   }) async {
     final res = await _dio.safePost<dynamic>(
-      '/api/pk/$id/events',
+      ApiEndpoints.pkMatchEvents(id),
       data: {
         'type': type.wire,
         if (multiplier != null) 'multiplier': multiplier,
@@ -178,10 +230,12 @@ class PkRoomRemoteDataSource {
 
   /// Maçın etkinlik geçmişi (aktif/bitmiş).
   Future<List<PkMatchEvent>> events(String id) async {
-    final res = await _dio.safeGet<dynamic>('/api/pk/$id/events');
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.pkMatchEvents(id));
     dynamic raw = res.data;
     if (raw is Map) {
-      raw = asJsonMap(raw)['events'] ?? asJsonMap(raw)['data'] ?? asJsonMap(raw)['items'];
+      raw = asJsonMap(raw)['events'] ??
+          asJsonMap(raw)['data'] ??
+          asJsonMap(raw)['items'];
     }
     if (raw is! List) return const [];
     final out = <PkMatchEvent>[];
@@ -194,8 +248,8 @@ class PkRoomRemoteDataSource {
   /// PK istatistiklerim (JWT) veya belirli kullanıcının.
   Future<PkStats> stats({String? userId}) async {
     final path = userId == null || userId.isEmpty
-        ? '/api/pk/me/stats'
-        : '/api/pk/stats/$userId';
+        ? ApiEndpoints.pkMeStats
+        : ApiEndpoints.pkStatsUser(userId);
     final res = await _dio.safeGet<dynamic>(path);
     final body = res.data;
     if (body is Map) return PkStats.fromJson(asJsonMap(body));
@@ -204,14 +258,13 @@ class PkRoomRemoteDataSource {
 
   // --- Moderasyon (admin/yönetici) ---
 
-  /// Bir kullanıcıyı PK sisteminden yasakla.
   Future<void> banUser({
     required String userId,
     String? reason,
     int? durationSec,
   }) async {
     await _dio.safePost<dynamic>(
-      '/api/pk/admin/ban',
+      ApiEndpoints.pkAdminBan,
       data: {
         'userId': userId,
         if (reason != null && reason.isNotEmpty) 'reason': reason,
@@ -220,30 +273,42 @@ class PkRoomRemoteDataSource {
     );
   }
 
-  /// Yasağı kaldır.
   Future<void> unban(String userId) async {
-    await _dio.safePost<dynamic>('/api/pk/admin/unban/$userId');
+    await _dio.safePost<dynamic>(ApiEndpoints.pkAdminUnban(userId));
   }
 
-  /// Aktif ban listesi (ham map — esnek).
   Future<List<Map<String, dynamic>>> bans() async {
-    final res = await _dio.safeGet<dynamic>('/api/pk/admin/bans');
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.pkAdminBans);
     dynamic raw = res.data;
     if (raw is Map) {
-      raw = asJsonMap(raw)['bans'] ?? asJsonMap(raw)['data'] ?? asJsonMap(raw)['items'];
+      raw = asJsonMap(raw)['bans'] ??
+          asJsonMap(raw)['data'] ??
+          asJsonMap(raw)['items'];
     }
     if (raw is! List) return const [];
     return [for (final e in raw) if (e is Map) asJsonMap(e)];
   }
 
-  /// Bir maçı zorla bitir.
   Future<void> forceEnd(String matchId) async {
-    await _dio.safePost<dynamic>('/api/pk/admin/$matchId/force-end');
+    await _dio.safePost<dynamic>(ApiEndpoints.pkAdminForceEnd(matchId));
   }
 
-  /// Bir kullanıcıyı koltuktan zorla çıkar.
   Future<void> forceKick(String matchId, String userId) async {
-    await _dio.safePost<dynamic>('/api/pk/admin/$matchId/force-kick/$userId');
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.pkAdminForceKick(matchId, userId),
+    );
+  }
+
+  /// Birleşik API kullanılabilir mi? (404 değilse true).
+  Future<bool> isUnifiedApiAvailable() async {
+    try {
+      await _dio.safeGet<dynamic>(ApiEndpoints.pkActive);
+      return true;
+    } on ApiException catch (e) {
+      return e.statusCode != 404;
+    } catch (_) {
+      return false;
+    }
   }
 
   PkRoomMatch? _parse(dynamic body) {

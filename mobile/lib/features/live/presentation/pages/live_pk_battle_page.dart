@@ -21,6 +21,8 @@ import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_winner_celebr
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_stream_entity.dart';
+import '../../domain/pk/pk_unified_bridge.dart';
+import '../providers/pk_room_providers.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import '../widgets/broadcast_room/live_pk_score_bar.dart';
 import '../widgets/premium_2026/live_gift_animation_stack.dart';
@@ -45,6 +47,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   var _lastGiftSideLeft = true;
   var _agoraReady = false;
   Timer? _pkPollTimer;
+  String? _unifiedMatchId;
 
   String? get _streamId => widget.session.streamId?.trim();
 
@@ -61,7 +64,14 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     await _initAgoraPreview();
 
     final remote = ref.read(pkBattleRemoteProvider.notifier);
-    await remote.loadStreamBattle(streamId);
+    final unified = await ref.read(pkRoomRemoteProvider).activeForStream(streamId);
+    if (unified != null) {
+      _unifiedMatchId = unified.id;
+      ref.read(pkRoomProvider(unified.id).notifier).adopt(unified);
+      remote.ingestSseBattle(pkRoomMatchToBattleRemote(unified, myStreamId: streamId));
+    } else {
+      await remote.loadStreamBattle(streamId);
+    }
     remote.connectSocket(streamId: streamId, battleId: ref.read(pkBattleRemoteProvider)?.id);
 
     ref.read(liveGiftSocketBridgeProvider).connect(
@@ -126,6 +136,19 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   }
 
   Future<void> _accept() async {
+    final unifiedId = _unifiedMatchId;
+    if (unifiedId != null && unifiedId.isNotEmpty) {
+      final m = await ref.read(pkUnifiedInviteProvider).respond(
+            matchId: unifiedId,
+            accept: true,
+          );
+      if (m != null) {
+        ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(
+              pkRoomMatchToBattleRemote(m, myStreamId: _streamId),
+            );
+      }
+      return;
+    }
     final id = ref.read(pkBattleRemoteProvider)?.id;
     final streamId = _streamId;
     if (id == null || streamId == null || streamId.isEmpty) return;
@@ -136,6 +159,12 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   }
 
   Future<void> _reject() async {
+    final unifiedId = _unifiedMatchId;
+    if (unifiedId != null && unifiedId.isNotEmpty) {
+      await ref.read(pkUnifiedInviteProvider).respond(matchId: unifiedId, accept: false);
+      if (mounted) context.pop();
+      return;
+    }
     final id = ref.read(pkBattleRemoteProvider)?.id;
     final streamId = _streamId;
     if (id == null || streamId == null || streamId.isEmpty) return;
@@ -147,6 +176,11 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   }
 
   Future<void> _end() async {
+    final unifiedId = _unifiedMatchId;
+    if (unifiedId != null && unifiedId.isNotEmpty) {
+      await ref.read(pkUnifiedInviteProvider).end(unifiedId);
+      return;
+    }
     final id = ref.read(pkBattleRemoteProvider)?.id;
     final streamId = _streamId;
     if (id == null || streamId == null || streamId.isEmpty) return;

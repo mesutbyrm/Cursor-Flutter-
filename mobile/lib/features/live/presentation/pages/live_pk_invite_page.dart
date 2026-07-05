@@ -3,11 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
-import '../../domain/entities/live_broadcast_session.dart';
-import '../../domain/entities/live_stream_entity.dart';
 import '../../../voice_hub/domain/pk/pk_duration_options.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_duration_picker.dart';
+import '../../domain/entities/live_broadcast_session.dart';
+import '../../domain/entities/live_stream_entity.dart';
+import '../providers/pk_room_providers.dart';
 import '../providers/live_providers.dart';
 
 /// Canlı yayın PK daveti — karşı yayıncı seçimi.
@@ -52,16 +53,25 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
       _error = null;
     });
     try {
-      final battle = await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
+      // Birleşik PK API (Faz 1) — öncelikli; başarısızsa eski video-stream yolu.
+      final invited = await ref.read(pkUnifiedInviteProvider).inviteStream(
             streamId: streamId,
             opponentStreamId: opponent.id,
             durationSeconds: _durationSeconds,
           );
-      if (!mounted) return;
-      if (battle == null) {
-        setState(() => _error = 'PK daveti gönderilemedi');
-        return;
+      if (invited == null) {
+        final legacy = await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
+              streamId: streamId,
+              opponentStreamId: opponent.id,
+              durationSeconds: _durationSeconds,
+            );
+        if (legacy == null) {
+          if (!mounted) return;
+          setState(() => _error = 'PK daveti gönderilemedi');
+          return;
+        }
       }
+      if (!mounted) return;
       context.push(
         '/live/pk',
         extra: {

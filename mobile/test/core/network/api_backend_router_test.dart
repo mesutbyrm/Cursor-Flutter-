@@ -69,5 +69,21 @@ void main() {
         ApiBackendKind.game,
       );
     });
+
+    test('birleşik PK uçları Game backend', () {
+      expect(ApiBackendRouter.resolve('/api/pk/active'), ApiBackendKind.game);
+      expect(
+        ApiBackendRouter.resolve('/api/pk/request', method: 'POST'),
+        ApiBackendKind.game,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/pk/cm123/stream'),
+        ApiBackendKind.game,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/pk/leaderboard?period=weekly'),
+        ApiBackendKind.game,
+      );
+    });
   });
 }
