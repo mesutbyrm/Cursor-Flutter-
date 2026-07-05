@@ -78,14 +78,9 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- Impeller, bazı MIUI/Xiaomi GPU'larında pushed route dönüşünde
-             önceki karenin katmanını temizlemeyip profil bölümlerini üst üste
-             gösteriyor (raster hayaleti). Skia (legacy) motoru bu artefaktı
-             çözer; opak zemin/RepaintBoundary kaldırma yalnızca semptomu
-             azaltan geçici çözümlerdi. -->
         <meta-data
             android:name="io.flutter.embedding.android.EnableImpeller"
-            android:value="false" />
+            android:value="true" />
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713"/>
