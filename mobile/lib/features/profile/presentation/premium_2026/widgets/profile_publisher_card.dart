@@ -44,29 +44,39 @@ class ProfilePublisherCard extends StatelessWidget {
       (Icons.dashboard_rounded, 'Panele Git', onPanel ?? () => context.push('/live/type')),
     ];
 
+    // Not: shrinkWrap GridView, CustomScrollView içindeki bir Column'da
+    // yüksekliğini yanlış ölçüp içeriğini taşırıp alt bölümlerle üst üste
+    // binebiliyordu (yalnızca admin'de görünen bu panelde). Deterministik,
+    // kaydırmasız Wrap + sabit oranlı kutular kullanılır.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const ProfileSectionTitle(title: 'Yayıncı Paneli'),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 0.9,
-          ),
-          itemCount: items.length,
-          itemBuilder: (context, i) {
-            final (icon, label, tap) = items[i];
-            return ProfileActionTile(
-              icon: icon,
-              label: label,
-              onTap: tap,
-              gradient: [
-                ProfilePremiumTheme.neonPurple.withValues(alpha: 0.35),
-                ProfilePremiumTheme.deepBg,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const spacing = 10.0;
+            const cols = 3;
+            final tileW =
+                (constraints.maxWidth - spacing * (cols - 1)) / cols;
+            final tileH = tileW / 0.9;
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: [
+                for (final (icon, label, tap) in items)
+                  SizedBox(
+                    width: tileW,
+                    height: tileH,
+                    child: ProfileActionTile(
+                      icon: icon,
+                      label: label,
+                      onTap: tap,
+                      gradient: [
+                        ProfilePremiumTheme.neonPurple.withValues(alpha: 0.35),
+                        ProfilePremiumTheme.deepBg,
+                      ],
+                    ),
+                  ),
               ],
             );
           },
