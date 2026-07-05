@@ -1,4 +1,3 @@
-import 'package:canlifal_social/core/widgets/lazy_list_views.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_theme_colors.dart';
@@ -109,56 +108,64 @@ class ProfileWalletCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            clipBehavior: Clip.hardEdge,
-            child: LazyNestedGridView(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 2.4,
-            ),
-            itemCount: 6,
-            itemBuilder: (context, index) => switch (index) {
-              0 => ProfileActionTile(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const spacing = 10.0;
+              const cols = 2;
+              final tileW =
+                  (constraints.maxWidth - spacing * (cols - 1)) / cols;
+              final tileH = tileW / 2.4;
+              final tiles = <Widget>[
+                ProfileActionTile(
                   icon: Icons.add_card_rounded,
                   label: 'Jeton Yükle',
                   onTap: onTopUp,
                   gradient: [const Color(0xFF4A3818), const Color(0xFF1A1408)],
                 ),
-              1 => ProfileActionTile(
+                ProfileActionTile(
                   icon: Icons.diamond_outlined,
                   label: 'CFC Yükle',
                   onTap: onCfcTopUp,
                   gradient: [const Color(0xFF183050), const Color(0xFF081018)],
                 ),
-              2 => ProfileActionTile(
+                ProfileActionTile(
                   icon: Icons.trending_up_rounded,
                   label: 'Kazançlar',
                   onTap: onEarnings,
                   gradient: [const Color(0xFF1A3040), const Color(0xFF081018)],
                 ),
-              3 => ProfileActionTile(
+                ProfileActionTile(
                   icon: Icons.receipt_long_rounded,
                   label: 'İşlem Geçmişi',
                   onTap: onTransactions,
                   gradient: [const Color(0xFF281838), const Color(0xFF100818)],
                 ),
-              4 => ProfileActionTile(
+                ProfileActionTile(
                   icon: Icons.payment_rounded,
                   label: 'Ödeme Bildirimi',
                   onTap: onPaymentNotice,
                   gradient: [const Color(0xFF301828), const Color(0xFF140810)],
                 ),
-              _ => ProfileActionTile(
+                ProfileActionTile(
                   icon: Icons.workspace_premium_rounded,
                   label: 'Abonelikler',
                   onTap: onSubscriptions,
                   gradient: [const Color(0xFF3A3010), const Color(0xFF181008)],
                 ),
+              ];
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+                  for (final tile in tiles)
+                    SizedBox(
+                      width: tileW,
+                      height: tileH,
+                      child: tile,
+                    ),
+                ],
+              );
             },
-            ),
           ),
         ],
     );

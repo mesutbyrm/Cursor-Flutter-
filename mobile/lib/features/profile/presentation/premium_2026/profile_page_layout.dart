@@ -38,10 +38,6 @@ class ProfilePageLayout extends StatelessWidget {
       const SizedBox(height: 16),
       stats,
       const SizedBox(height: 20),
-      if (showAdmin) ...[
-        admin,
-        const SizedBox(height: 22),
-      ],
       wallet,
       const SizedBox(height: 22),
       premium,
@@ -49,12 +45,16 @@ class ProfilePageLayout extends StatelessWidget {
       quickActions,
       const SizedBox(height: 22),
       teller,
+      content,
+      const SizedBox(height: 22),
       if (showPublisher) ...[
         publisher,
         const SizedBox(height: 22),
       ],
-      content,
-      const SizedBox(height: 22),
+      if (showAdmin) ...[
+        admin,
+        const SizedBox(height: 22),
+      ],
       settings,
     ];
 

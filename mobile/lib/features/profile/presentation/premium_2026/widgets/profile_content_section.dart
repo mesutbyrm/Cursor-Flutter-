@@ -53,10 +53,12 @@ class _ProfileContentSectionState extends ConsumerState<ProfileContentSection>
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const ProfileSectionTitle(title: 'İçeriklerim'),
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ProfileSectionTitle(title: 'İçeriklerim'),
           TabBar(
             controller: _tabs,
             isScrollable: true,
@@ -94,6 +96,7 @@ class _ProfileContentSectionState extends ConsumerState<ProfileContentSection>
             },
           ),
         ],
+      ),
     );
   }
 }
@@ -116,7 +119,7 @@ class _VideosTab extends ConsumerWidget {
         if (videos.isEmpty) {
           return const _EmptyMessage('Henüz video yok');
         }
-        return ShortsProfileGrid(videos: videos);
+        return ShortsProfileGrid(videos: videos, nestedInProfileScroll: true);
       },
     );
   }
@@ -140,7 +143,7 @@ class _ShortsLikedTab extends ConsumerWidget {
         if (videos.isEmpty) {
           return const _EmptyMessage('Henüz beğenilen video yok');
         }
-        return ShortsProfileGrid(videos: videos);
+        return ShortsProfileGrid(videos: videos, nestedInProfileScroll: true);
       },
     );
   }
@@ -164,7 +167,7 @@ class _ShortsSavedTab extends ConsumerWidget {
         if (videos.isEmpty) {
           return const _EmptyMessage('Henüz kaydedilen video yok');
         }
-        return ShortsProfileGrid(videos: videos);
+        return ShortsProfileGrid(videos: videos, nestedInProfileScroll: true);
       },
     );
   }
@@ -486,7 +489,10 @@ class _ShortsGrid extends StatelessWidget {
     if (videos.isEmpty) {
       return const _EmptyMessage('Henüz izlenen video yok');
     }
-    return LazyNestedGridView(
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      addRepaintBoundaries: false,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         crossAxisSpacing: 8,
@@ -523,7 +529,10 @@ class _ContentSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      child: LazyNestedGridView(
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        addRepaintBoundaries: false,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
           crossAxisSpacing: 8,

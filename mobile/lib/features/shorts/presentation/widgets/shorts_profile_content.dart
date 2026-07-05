@@ -338,12 +338,34 @@ class ShortsProfileVideoGrid extends ConsumerWidget {
 }
 
 class ShortsProfileGrid extends StatelessWidget {
-  const ShortsProfileGrid({super.key, required this.videos});
+  const ShortsProfileGrid({
+    super.key,
+    required this.videos,
+    this.nestedInProfileScroll = false,
+  });
 
   final List<ShortVideoEntity> videos;
+  /// Profil CustomScrollView içindeyse shrinkWrap zorunlu.
+  final bool nestedInProfileScroll;
 
   @override
   Widget build(BuildContext context) {
+    if (nestedInProfileScroll) {
+      return GridView.builder(
+        padding: EdgeInsets.zero,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 4,
+          mainAxisSpacing: 4,
+          childAspectRatio: 9 / 14,
+        ),
+        itemCount: videos.length,
+        addRepaintBoundaries: false,
+        itemBuilder: (context, i) => _VideoTile(video: videos[i]),
+      );
+    }
     return GridView.builder(
       padding: EdgeInsets.zero,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -353,23 +375,32 @@ class ShortsProfileGrid extends StatelessWidget {
         childAspectRatio: 9 / 14,
       ),
       itemCount: videos.length,
-      itemBuilder: (context, i) {
-        final v = videos[i];
-        return GestureDetector(
-          onTap: () => context.push('/shorts?videoId=${v.id}'),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: v.thumbnailUrl != null && v.thumbnailUrl!.isNotEmpty
-                ? CanlifalNetworkImage(url: v.thumbnailUrl!, fit: BoxFit.cover)
-                : const ColoredBox(
-                    color: Color(0xFF1A0F3D),
-                    child: Center(
-                      child: Icon(Icons.play_circle_outline, color: Colors.white54),
-                    ),
-                  ),
-          ),
-        );
-      },
+      itemBuilder: (context, i) => _VideoTile(video: videos[i]),
+    );
+  }
+}
+
+class _VideoTile extends StatelessWidget {
+  const _VideoTile({required this.video});
+
+  final ShortVideoEntity video;
+
+  @override
+  Widget build(BuildContext context) {
+    final v = video;
+    return GestureDetector(
+      onTap: () => context.push('/shorts?videoId=${v.id}'),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: v.thumbnailUrl != null && v.thumbnailUrl!.isNotEmpty
+            ? CanlifalNetworkImage(url: v.thumbnailUrl!, fit: BoxFit.cover)
+            : const ColoredBox(
+                color: Color(0xFF1A0F3D),
+                child: Center(
+                  child: Icon(Icons.play_circle_outline, color: Colors.white54),
+                ),
+              ),
+      ),
     );
   }
 }
