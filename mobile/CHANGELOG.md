@@ -1,6 +1,20 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.491+495 (2026-07-05)
+
+### Canlı yayın PK + admin hediye yönetimi
+
+- **PK daveti:** Canlı yayında «PK Başlat» artık `/live/pk-invite` sayfasını açar (stub mesaj kaldırıldı)
+- **Hediye yönetimi:** Admin paneli ve profil admin kartına «Hediye Yönetimi / Katalog» kısayolu eklendi (`/admin/gifts`)
+
+## 1.0.490+494 (2026-07-05)
+
+### Profil — admin Beğenilen/Kaydedilen çökmesi (asıl düzeltme)
+
+- **Kök neden:** Videolar/Beğenilen/Kaydedilen sekmeleri `shrinkWrap` olmayan `GridView` kullanıyordu; admin’de üstteki paneller yüklenince layout çöküyordu
+- **Düzeltme:** Profil scroll içinde `nestedInProfileScroll` grid; cüzdan `Wrap`; admin/yayıncı paneli içeriklerin **altına** taşındı; `RepaintBoundary` raster hayaleti kaldırıldı
+
 ## 1.0.489+493 (2026-07-05)
 
 ### Profil — admin sayfası bozulması

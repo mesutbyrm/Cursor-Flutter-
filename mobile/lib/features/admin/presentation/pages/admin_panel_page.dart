@@ -185,6 +185,17 @@ class _AdminPanelPageState extends ConsumerState<AdminPanelPage> {
                         onTap: () => context.push('/admin/users'),
                       ),
                     ]),
+                    if (access.isSiteAdmin) ...[
+                      const SizedBox(height: 20),
+                      _SectionTitle('Hediye & içerik'),
+                      _ActionGrid(items: [
+                        _PanelItem(
+                          icon: Icons.card_giftcard_rounded,
+                          label: 'Hediye kataloğu',
+                          onTap: () => context.push('/admin/gifts'),
+                        ),
+                      ]),
+                    ],
                   ],
                 ),
               ),

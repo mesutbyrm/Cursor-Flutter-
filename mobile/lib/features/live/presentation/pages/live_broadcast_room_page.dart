@@ -774,9 +774,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
 
   Future<void> _openPkPanel() async {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('PK daveti bu sürümde kullanılamıyor.')),
-    );
+    await context.push('/live/pk-invite', extra: widget.session);
   }
 
   Future<void> _openHostTools() async {
