@@ -7,6 +7,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../vip_gold/domain/voice_room_access.dart';
 import '../../../gifts/presentation/providers/gift_battle_providers.dart';
+import '../../../gifts/presentation/providers/gift_goal_providers.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/voice_room_ban_entry.dart';
 import '../providers/chat_room_providers.dart';
@@ -565,6 +566,12 @@ class _VoiceRoomManagementPanelState
             subtitle: const Text('Koltuktakiler yarışır (1/3/5/10 dk)'),
             onTap: _startGiftBattle,
           ),
+          ListTile(
+            leading: const Icon(Icons.flag_rounded, color: Color(0xFF66E36F)),
+            title: const Text('Hediye Hedefi Belirle'),
+            subtitle: const Text('Toplanınca kutlama tetiklenir'),
+            onTap: _startGiftGoal,
+          ),
         ],
         if (isVip && (isOwner || perms.canManageRoom)) ...[
           const Divider(),
@@ -642,6 +649,68 @@ class _VoiceRoomManagementPanelState
     } catch (e) {
       await _snack(ApiException.userMessage(e));
     }
+  }
+
+  Future<void> _startGiftGoal() async {
+    final target = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: const Color(0xFF12082A),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('Hedef jeton miktarı',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16)),
+            ),
+            for (final opt in const [
+              (10000, '10K jeton'),
+              (50000, '50K jeton'),
+              (100000, '100K jeton'),
+              (500000, '500K jeton'),
+            ])
+              ListTile(
+                leading:
+                    const Icon(Icons.flag_rounded, color: Color(0xFF66E36F)),
+                title: Text(opt.$2, style: const TextStyle(color: Colors.white)),
+                onTap: () => Navigator.pop(ctx, opt.$1),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (target == null || !mounted) return;
+    try {
+      final contextId = widget.room.apiRoomKey.isNotEmpty
+          ? widget.room.apiRoomKey
+          : widget.room.id;
+      final goal = await ref.read(giftGoalRemoteProvider).createGoal(
+            context: 'voice_room',
+            contextId: contextId,
+            title: 'Hedef: ${_fmtCoins(target)} jeton',
+            targetAmount: target,
+          );
+      if (goal != null) {
+        ref
+            .read(giftGoalProvider(
+                    (context: 'voice_room', contextId: contextId))
+                .notifier)
+            .adopt(goal);
+      }
+      await _snack('Hediye hedefi belirlendi!');
+    } catch (e) {
+      await _snack(ApiException.userMessage(e));
+    }
+  }
+
+  static String _fmtCoins(int v) {
+    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(0)}M';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)}K';
+    return '$v';
   }
 
   Future<void> _pickCatalogBackground() async {
