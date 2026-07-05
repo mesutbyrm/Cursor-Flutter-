@@ -49,6 +49,7 @@ import '../../features/live/presentation/pages/live_swipe_viewer_page.dart';
 import '../../features/social/presentation/pages/social_create_post_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
 import '../../features/gifts/presentation/pages/gift_collection_page.dart';
+import '../../features/gifts/presentation/pages/gift_hub_page.dart';
 import '../../features/gifts/presentation/pages/gift_leaderboard_center_page.dart';
 import '../../features/shorts/presentation/pages/shorts_feed_page.dart';
 import '../../features/shorts/presentation/pages/shorts_explore_page.dart';
@@ -670,6 +671,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const GiftLeaderboardCenterPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/gifts/hub',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const GiftHubPage(),
         ),
       ),
       GoRoute(
