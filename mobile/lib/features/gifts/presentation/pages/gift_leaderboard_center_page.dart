@@ -39,11 +39,7 @@ class GiftLeaderboardCenterPage extends ConsumerWidget {
         backgroundColor: const Color(0xFF12082A),
         title: const Text('Hediye Liderlik Merkezi'),
         actions: [
-          IconButton(
-            tooltip: 'Hediye Merkezi',
-            icon: const Icon(Icons.workspaces_rounded),
-            onPressed: () => context.push('/gifts/hub'),
-          ),
+          _HubButton(),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(96),
@@ -151,6 +147,49 @@ class GiftLeaderboardCenterPage extends ConsumerWidget {
         ),
         side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
       ),
+    );
+  }
+}
+
+/// Hediye Merkezi butonu — alınabilir görev varsa kırmızı nokta bildirimi.
+class _HubButton extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final claimable = ref.watch(giftMissionsProvider).maybeWhen(
+          data: (list) => list.where((m) => m.canClaim).length,
+          orElse: () => 0,
+        );
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        IconButton(
+          tooltip: 'Hediye Merkezi',
+          icon: const Icon(Icons.workspaces_rounded),
+          onPressed: () => context.push('/gifts/hub'),
+        ),
+        if (claimable > 0)
+          Positioned(
+            top: 10,
+            right: 8,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF4D4D),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '$claimable',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
