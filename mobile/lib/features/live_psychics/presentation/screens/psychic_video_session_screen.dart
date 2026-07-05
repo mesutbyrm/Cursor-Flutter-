@@ -47,19 +47,7 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
             ref.read(psychicPeerLeftProvider.notifier).state = null;
           }
           if (session.isClient) {
-            ref.read(psychicSessionEndedProvider.notifier).state =
-                PsychicSessionEndedEvent(
-              sessionId: session.sessionId,
-              tellerId: session.psychic.id,
-              tellerName: session.psychic.name,
-              durationMinutes: session.durationMinutes,
-              totalJeton: session.totalJeton,
-              promptReview: true,
-              navigateAfter: true,
-            );
-          } else {
-            if (peerMsg == null &&
-                ref.read(psychicSessionEndedProvider) == null) {
+            if (ref.read(psychicSessionEndedProvider) == null) {
               ref.read(psychicSessionEndedProvider.notifier).state =
                   PsychicSessionEndedEvent(
                 sessionId: session.sessionId,
@@ -67,13 +55,26 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                 tellerName: session.psychic.name,
                 durationMinutes: session.durationMinutes,
                 totalJeton: session.totalJeton,
-                tipsJeton: state.sessionTipsTotal > 0
-                    ? state.sessionTipsTotal
-                    : null,
-                isTeller: true,
+                promptReview: true,
                 navigateAfter: true,
+                message: peerMsg,
               );
             }
+          } else if (ref.read(psychicSessionEndedProvider) == null) {
+            ref.read(psychicSessionEndedProvider.notifier).state =
+                PsychicSessionEndedEvent(
+              sessionId: session.sessionId,
+              tellerId: session.psychic.id,
+              tellerName: session.psychic.name,
+              durationMinutes: session.durationMinutes,
+              totalJeton: session.totalJeton,
+              tipsJeton: state.sessionTipsTotal > 0
+                  ? state.sessionTipsTotal
+                  : null,
+              isTeller: true,
+              navigateAfter: true,
+              message: peerMsg,
+            );
           }
         }
       }

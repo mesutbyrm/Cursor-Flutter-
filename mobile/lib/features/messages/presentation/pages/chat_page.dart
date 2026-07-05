@@ -69,8 +69,19 @@ class _ChatPageState extends ConsumerState<ChatPage>
       _loadPeerMeta();
       ref
           .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
-          .refresh(silent: true, forceRefresh: true);
+          .refresh(silent: true, forceRefresh: false);
+      unawaited(
+        ref
+            .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
+            .refresh(silent: true, forceRefresh: true),
+      );
       ref.invalidate(conversationsProvider);
+      unawaited(
+        ref.read(conversationsListNotifierProvider.notifier).refresh(
+              silent: true,
+              forceRefresh: true,
+            ),
+      );
     });
     _poll = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted) return;

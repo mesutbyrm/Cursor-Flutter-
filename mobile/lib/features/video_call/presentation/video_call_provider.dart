@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/presentation/providers/auth_providers.dart';
 import '../../live_psychics/domain/entities/psychic_request_entity.dart';
 import '../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import '../data/video_call_invitation_service.dart';
@@ -68,6 +69,10 @@ class VideoCallNotifier extends Notifier<VideoCallState> {
   }
 
   void _onIncoming(VideoCallInvitation invite) {
+    if (invite.category == 'dm_voice') {
+      final selfId = ref.read(authControllerProvider).valueOrNull?.id;
+      if (selfId != null && invite.callerId == selfId) return;
+    }
     if (state.active?.callId == invite.callId) return;
     if (state.active == null) {
       state = state.copyWith(active: invite);

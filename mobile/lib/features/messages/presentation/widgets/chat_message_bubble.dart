@@ -37,6 +37,7 @@ class ChatMessageBubble extends StatelessWidget {
         Align(
           alignment: m.isMine ? Alignment.centerRight : Alignment.centerLeft,
           child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onLongPress: () => _showActions(context),
             child: Container(
               margin: const EdgeInsets.symmetric(vertical: 3),
@@ -139,7 +140,7 @@ class ChatMessageBubble extends StatelessWidget {
   }
 
   void _showActions(BuildContext context) {
-    if (onReply == null || onForward == null) return;
+    if (onReply == null && onForward == null && onDelete == null) return;
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: const Color(0xFF111827),
@@ -150,22 +151,24 @@ class ChatMessageBubble extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.reply_rounded, color: Colors.white70),
-              title: const Text('Yanıtla', style: TextStyle(color: Colors.white)),
-              onTap: () {
-                Navigator.pop(ctx);
-                onReply!();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.forward_rounded, color: Colors.white70),
-              title: const Text('İlet', style: TextStyle(color: Colors.white)),
-              onTap: () {
-                Navigator.pop(ctx);
-                onForward!();
-              },
-            ),
+            if (onReply != null)
+              ListTile(
+                leading: const Icon(Icons.reply_rounded, color: Colors.white70),
+                title: const Text('Yanıtla', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  onReply!();
+                },
+              ),
+            if (onForward != null)
+              ListTile(
+                leading: const Icon(Icons.forward_rounded, color: Colors.white70),
+                title: const Text('İlet', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  onForward!();
+                },
+              ),
             ListTile(
               leading: const Icon(Icons.copy_rounded, color: Colors.white70),
               title: const Text('Kopyala', style: TextStyle(color: Colors.white)),

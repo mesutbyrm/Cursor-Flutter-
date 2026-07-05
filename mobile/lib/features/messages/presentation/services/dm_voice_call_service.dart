@@ -9,6 +9,24 @@ import '../../../video_call/presentation/video_call_provider.dart';
 import '../../domain/utils/dm_message_codec.dart';
 import '../providers/messages_providers.dart';
 
+/// Bekleyen giden DM araması — kabul sinyali gelince sesli görüşme açılır.
+class DmOutgoingCallState {
+  const DmOutgoingCallState({
+    required this.callId,
+    required this.peerUserId,
+    required this.peerName,
+    required this.channelId,
+  });
+
+  final String callId;
+  final String peerUserId;
+  final String peerName;
+  final String channelId;
+}
+
+final dmOutgoingCallProvider =
+    StateProvider<DmOutgoingCallState?>((ref) => null);
+
 /// Gold üyeler için DM sesli arama — mesaj sinyali + gelen arama UI.
 class DmVoiceCallService {
   DmVoiceCallService(this._ref);
@@ -27,23 +45,20 @@ class DmVoiceCallService {
   }) async {
     final selfId = _ref.read(authControllerProvider).valueOrNull?.id;
     if (selfId == null || peerUserId.isEmpty) return;
+    if (peerUserId == selfId) return;
 
     final callId = 'dm-${DateTime.now().millisecondsSinceEpoch}';
     final channelId = channelFor(selfId, peerUserId);
     final signal = DmMessageCodec.callInvite(callId: callId, channelId: channelId);
 
-    await _ref.read(messagesRepositoryProvider).sendCallSignal(peerUserId, signal);
-
-    final invite = VideoCallInvitation(
+    _ref.read(dmOutgoingCallProvider.notifier).state = DmOutgoingCallState(
       callId: callId,
-      callerId: selfId,
-      callerName: peerName,
-      callerAvatarUrl: peerAvatarUrl,
-      category: 'dm_voice',
-      sessionId: channelId,
-      receivedAt: DateTime.now(),
+      peerUserId: peerUserId,
+      peerName: peerName,
+      channelId: channelId,
     );
-    _ref.read(videoCallInvitationServiceProvider).enqueue(invite);
+
+    await _ref.read(messagesRepositoryProvider).sendCallSignal(peerUserId, signal);
   }
 
   void handleRawMessage({
@@ -59,7 +74,7 @@ class DmVoiceCallService {
 
     switch (signal) {
       case DmCallInviteSignal():
-        if (peerUserId.isEmpty) return;
+        if (peerUserId.isEmpty || peerUserId == selfId) return;
         _ref.read(videoCallInvitationServiceProvider).enqueue(
               VideoCallInvitation(
                 callId: signal.callId,
@@ -72,9 +87,22 @@ class DmVoiceCallService {
               ),
             );
       case DmCallAcceptSignal():
-        // Arayan taraf kabulü işler — chat_page dinleyicisi açar.
-        break;
+        final pending = _ref.read(dmOutgoingCallProvider);
+        if (pending != null && pending.callId == signal.callId) {
+          _ref.read(dmOutgoingCallAcceptedProvider.notifier).state =
+              DmOutgoingCallState(
+            callId: pending.callId,
+            peerUserId: pending.peerUserId,
+            peerName: pending.peerName,
+            channelId: pending.channelId,
+          );
+          _ref.read(dmOutgoingCallProvider.notifier).state = null;
+        }
       case DmCallRejectSignal():
+        final pending = _ref.read(dmOutgoingCallProvider);
+        if (pending != null && pending.callId == signal.callId) {
+          _ref.read(dmOutgoingCallProvider.notifier).state = null;
+        }
         _ref
             .read(videoCallProvider.notifier)
             .respond(signal.callId, VideoCallResponse.reject);
@@ -99,7 +127,15 @@ class DmVoiceCallService {
     }
     _ref.read(videoCallProvider.notifier).respond(invite.callId, response);
   }
+
+  void clearOutgoing() {
+    _ref.read(dmOutgoingCallProvider.notifier).state = null;
+  }
 }
+
+/// Arayan taraf kabul aldı — [DmVoiceCallHost] sesli görüşmeyi açar.
+final dmOutgoingCallAcceptedProvider =
+    StateProvider<DmOutgoingCallState?>((ref) => null);
 
 final dmVoiceCallServiceProvider = Provider<DmVoiceCallService>((ref) {
   return DmVoiceCallService(ref);

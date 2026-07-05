@@ -20,6 +20,7 @@ import '../../features/live_psychics/presentation/diagnostics/psychic_invite_dia
 import '../../features/live_psychics/presentation/providers/psychic_push_payload.dart';
 import '../../features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
 import '../../features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
+import '../../features/messages/presentation/providers/conversations_list_notifier.dart';
 import '../../features/messages/presentation/providers/messages_providers.dart';
 import '../../features/notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
@@ -229,6 +230,12 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
     ref.invalidate(notificationsListProvider);
     ref.invalidate(notificationsListNotifierProvider);
     ref.invalidate(conversationsProvider);
+    unawaited(
+      ref.read(conversationsListNotifierProvider.notifier).refresh(
+            silent: true,
+            forceRefresh: true,
+          ),
+    );
     ref.invalidate(adminPaymentNotificationsProvider);
     ref.invalidate(adminPaymentRequestsProvider);
     // Push gelince admin bekleyen talep sayısını hemen kontrol et.
