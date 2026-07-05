@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/images/canlifal_network_image.dart';
 import '../../domain/gift_collection.dart';
@@ -29,6 +30,14 @@ class GiftCollectionPage extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: const Color(0xFF12082A),
         title: Text(_isSelf ? 'Destekçi Profilim' : 'Destekçi Profili'),
+        actions: [
+          if (_isSelf)
+            IconButton(
+              tooltip: 'Hediye Geçmişim',
+              icon: const Icon(Icons.history_rounded),
+              onPressed: () => context.push('/gifts/history'),
+            ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
