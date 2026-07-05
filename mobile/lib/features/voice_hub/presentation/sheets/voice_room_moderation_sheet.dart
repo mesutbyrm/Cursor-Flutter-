@@ -6,6 +6,8 @@ import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../vip_gold/domain/voice_room_access.dart';
+import '../../../gifts/presentation/providers/gift_insights_providers.dart';
+import '../../../gifts/presentation/widgets/supporter_badge_pill.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
 import '../utils/voice_room_permissions.dart';
@@ -484,13 +486,24 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  targetUser.username,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      targetUser.username,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    if (targetUser.id.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: _TargetSupporterBadge(userId: targetUser.id),
+                      ),
+                  ],
                 ),
               ),
             ],
@@ -597,6 +610,20 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
             : const Color(0xFF6C3FC5),
       ),
     );
+  }
+}
+
+/// Hedef kullanıcının destekçi rozeti (tıklanan kişi başına tek fetch).
+class _TargetSupporterBadge extends ConsumerWidget {
+  const _TargetSupporterBadge({required this.userId});
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(supporterBadgeProvider(userId));
+    final tier = async.asData?.value?.current;
+    if (tier == null || tier.code.isEmpty) return const SizedBox.shrink();
+    return SupporterBadgePill(code: tier.code, label: tier.label, compact: true);
   }
 }
 

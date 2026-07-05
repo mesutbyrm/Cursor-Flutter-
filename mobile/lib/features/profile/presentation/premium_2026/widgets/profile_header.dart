@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../gifts/presentation/providers/gift_insights_providers.dart';
+import '../../../../gifts/presentation/widgets/supporter_badge_pill.dart';
 import '../../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../profile_screen_state.dart';
@@ -88,7 +91,26 @@ class ProfileHeader extends ConsumerWidget {
             bio: user.bio,
             isVerified: user.isVerified,
           ),
+          const SizedBox(height: 8),
+          const Center(child: _SelfSupporterBadge()),
         ],
+    );
+  }
+}
+
+/// Kendi destekçi rozetim — profile başlığında; profil sayfasına götürür.
+class _SelfSupporterBadge extends ConsumerWidget {
+  const _SelfSupporterBadge();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(supporterBadgeProvider(null));
+    final badge = async.asData?.value;
+    final tier = badge?.current;
+    if (tier == null || tier.code.isEmpty) return const SizedBox.shrink();
+    return GestureDetector(
+      onTap: () => context.push('/gifts/collection'),
+      child: SupporterBadgePill(code: tier.code, label: tier.label),
     );
   }
 }
