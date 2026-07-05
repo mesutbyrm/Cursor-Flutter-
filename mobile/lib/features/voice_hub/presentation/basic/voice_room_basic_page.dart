@@ -51,6 +51,7 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../video/presentation/widgets/youtube_video_background.dart';
 import '../widgets/voice_room/voice_room_now_playing_bar.dart';
+import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
 
 /// Aşama 1 — oda listesi, giriş/çıkış, mikrofon, hoparlör, katılımcılar, oda sahibi.
 class VoiceRoomBasicPage extends ConsumerStatefulWidget {
@@ -807,6 +808,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   VoiceRoomNowPlayingBar(
                     roomKey: _liveRoomKey,
                     canControl: canControlMusic,
+                  ),
+                  // Aktif hediye savaşı — canlı skor + geri sayım.
+                  GiftBattleStrip(
+                    context: 'voice_room',
+                    contextId: _liveRoomKey,
                   ),
                   Expanded(
                     child: VoiceRoomBasicChatFeed(
