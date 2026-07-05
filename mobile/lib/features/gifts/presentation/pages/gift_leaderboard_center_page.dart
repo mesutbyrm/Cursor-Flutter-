@@ -38,6 +38,13 @@ class GiftLeaderboardCenterPage extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: const Color(0xFF12082A),
         title: const Text('Hediye Liderlik Merkezi'),
+        actions: [
+          IconButton(
+            tooltip: 'Hediye Merkezi',
+            icon: const Icon(Icons.workspaces_rounded),
+            onPressed: () => context.push('/gifts/hub'),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(96),
           child: Column(

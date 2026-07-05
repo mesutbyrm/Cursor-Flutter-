@@ -54,6 +54,7 @@ import '../widgets/voice_room/voice_room_now_playing_bar.dart';
 import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../../gifts/presentation/widgets/first_gifter_badge.dart';
 import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
+import '../../../gifts/presentation/widgets/gift_live_feed_strip.dart';
 
 /// Aşama 1 — oda listesi, giriş/çıkış, mikrofon, hoparlör, katılımcılar, oda sahibi.
 class VoiceRoomBasicPage extends ConsumerStatefulWidget {
@@ -823,6 +824,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   ),
                   // Efsane İlk Destekçi rozeti (varsa).
                   FirstGifterBadge(
+                    context: 'voice_room',
+                    contextId: _liveRoomKey,
+                  ),
+                  // Canlı hediye akışı şeridi (gizli hediyeler hariç).
+                  GiftLiveFeedStrip(
                     context: 'voice_room',
                     contextId: _liveRoomKey,
                   ),

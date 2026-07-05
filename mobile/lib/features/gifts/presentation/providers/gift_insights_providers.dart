@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../data/gift_insights_remote_datasource.dart';
 import '../../domain/gift_collection.dart';
+import '../../domain/gift_feed_item.dart';
 import '../../domain/gift_leaderboard_entry.dart';
+import '../../domain/gift_mission.dart';
+import '../../domain/gift_sender_map.dart';
 import '../../domain/supporter_badge.dart';
 
 final giftInsightsRemoteProvider = Provider<GiftInsightsRemoteDataSource>((ref) {
@@ -91,4 +94,39 @@ final firstGifterProvider =
         context: key.context,
         contextId: key.contextId,
       );
+});
+
+/// Canlı hediye akışı. Anahtar boşsa genel akış.
+typedef GiftFeedKey = ({String? context, String? contextId});
+
+final giftFeedProvider = FutureProvider.autoDispose
+    .family<List<GiftFeedItem>, GiftFeedKey>((ref, key) {
+  return ref.read(giftInsightsRemoteProvider).fetchFeed(
+        context: key.context,
+        contextId: key.contextId,
+      );
+});
+
+/// Gönderen haritası filtresi (dönem + kapsam).
+typedef GiftMapKey = ({String period, String scope});
+
+final giftSenderMapProvider =
+    FutureProvider.autoDispose.family<GiftSenderMap, GiftMapKey>((ref, key) {
+  return ref
+      .read(giftInsightsRemoteProvider)
+      .fetchSenderMap(period: key.period, scope: key.scope);
+});
+
+/// Bana özel hediye önerileri.
+final giftRecommendationsProvider = FutureProvider.autoDispose
+    .family<List<GiftRecommendation>, String?>((ref, context) {
+  return ref
+      .read(giftInsightsRemoteProvider)
+      .fetchRecommendations(context: context);
+});
+
+/// Günlük görevler (tanım + bugünkü ilerleme birleşik).
+final giftMissionsProvider =
+    FutureProvider.autoDispose<List<GiftMission>>((ref) {
+  return ref.read(giftInsightsRemoteProvider).fetchMissions();
 });
