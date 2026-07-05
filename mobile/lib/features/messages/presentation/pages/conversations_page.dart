@@ -25,7 +25,7 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
-    _poll = Timer.periodic(const Duration(seconds: 20), (_) {
+    _poll = Timer.periodic(const Duration(seconds: 12), (_) {
       if (!mounted) return;
       ref.read(conversationsListNotifierProvider.notifier).refresh(
             silent: true,

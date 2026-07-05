@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.487+491 (2026-07-05)
+
+### Kritik düzeltmeler — mesajlar ve canlı falcılar
+
+- **DM sesli arama:** Kendini arama hatası giderildi; giden aramada yerel gelen çağrı UI kaldırıldı
+- **Alıntı (yanıtla):** Mesaja uzun basınca yanıtla menüsü tekrar çalışır
+- **Mesaj gecikmesi:** Uygulama genelinde 8 sn DM poll + push’ta liste/rozet yenileme; okunmamış rozeti anında güncellenir
+- **Sohbet açılışı:** Önbellekten hızlı açılış; dokununca mesaj ön-yükleme
+- **Canlı fal sonlandırma:** Tek taraftan kapatınca karşı taraf da anında çıkar (falcı + danışan)
+- **Seans başlangıcı:** RTC + SSE paralel; falcı tarafında süre otomatik başlar
+
 ## 1.0.486+490 (2026-07-05)
 
 ### Mesajlar — WhatsApp tarzı iyileştirmeler

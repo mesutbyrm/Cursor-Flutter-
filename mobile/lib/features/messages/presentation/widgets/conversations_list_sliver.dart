@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +11,7 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/message_entities.dart';
+import '../providers/chat_messages_list_notifier.dart';
 import '../providers/conversations_list_notifier.dart';
 import '../providers/messages_providers.dart';
 import 'chat_message_actions.dart';
@@ -134,7 +137,16 @@ class ConversationsListSliver extends ConsumerWidget {
                           ? const Color(0xFF005C4B).withValues(alpha: 0.12)
                           : Colors.transparent,
                       child: InkWell(
-                        onTap: () => context.push('/chat/${c.id}'),
+                        onTap: () {
+                          unawaited(
+                            ref
+                                .read(
+                                  chatMessagesListNotifierProvider(c.id).notifier,
+                                )
+                                .refresh(silent: true, forceRefresh: false),
+                          );
+                          context.push('/chat/${c.id}');
+                        },
                         onLongPress: () => _showPeerActions(context, ref, c),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(

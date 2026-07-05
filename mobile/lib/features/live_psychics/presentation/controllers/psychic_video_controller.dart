@@ -151,9 +151,23 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     await PsychicSessionStore.save(session);
     await _syncRoomInfo(startTimerIfTeller: true);
     _startTimers();
-    await _joinRtc();
-    await _connectRoomSse();
+    await Future.wait([
+      _joinRtc(),
+      _connectRoomSse(),
+    ]);
     _startChatPoll();
+    if (!session.isClient && !state.timerStarted) {
+      unawaited(_ensureTimerStarted());
+    }
+  }
+
+  Future<void> _ensureTimerStarted() async {
+    if (_disposed || state.leaving || state.timerStarted) return;
+    final result = await ref
+        .read(livePsychicsRepositoryProvider)
+        .roomAction(session.sessionId, 'start_timer');
+    if (_disposed || result == null) return;
+    await _syncRoomInfo();
   }
 
   void _startTimers() {
@@ -435,6 +449,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         'uid': cred.uid,
       });
       state = state.copyWith(rtcReady: true, clearRtcError: true);
+      if (!session.isClient && !state.timerStarted) {
+        unawaited(_ensureTimerStarted());
+      }
     } catch (e) {
       LiveDebugLog.log('psychic.agora.join.fail', {
         'sessionId': session.sessionId,
@@ -452,6 +469,23 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     final msg = session.isClient
         ? 'Falcı görüşmeyi sonlandırdı.'
         : 'Kullanıcı görüşmeyi sonlandırdı.';
+    if (ref.read(psychicSessionEndedProvider) == null) {
+      ref.read(psychicSessionEndedProvider.notifier).state =
+          PsychicSessionEndedEvent(
+        sessionId: session.sessionId,
+        tellerId: session.psychic.id,
+        tellerName: session.psychic.name,
+        durationMinutes: session.durationMinutes,
+        totalJeton: session.totalJeton,
+        tipsJeton: !session.isClient && state.sessionTipsTotal > 0
+            ? state.sessionTipsTotal
+            : null,
+        isTeller: !session.isClient,
+        promptReview: session.isClient,
+        navigateAfter: true,
+        message: msg,
+      );
+    }
     ref.read(psychicPeerLeftProvider.notifier).state = PsychicPeerLeftEvent(
       sessionId: session.sessionId,
       message: msg,
@@ -624,33 +658,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     final tipsTotal = state.sessionTipsTotal;
     final sessionId = session.sessionId;
     final isClient = session.isClient;
-
-    unawaited(_agora.leave());
-    unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
-    unawaited(PsychicSessionStore.clear());
-    invalidateWalletCacheFromRef(ref);
-
-    if (peerEndedMessage != null) {
-      ref.read(psychicPeerLeftProvider.notifier).state = PsychicPeerLeftEvent(
-        sessionId: sessionId,
-        message: peerEndedMessage,
-      );
-    }
-
-    if (!isClient && !silent) {
-      ref.read(psychicSessionEndedProvider.notifier).state = PsychicSessionEndedEvent(
-        sessionId: sessionId,
-        tellerId: session.psychic.id,
-        tellerName: session.psychic.name,
-        durationMinutes: session.durationMinutes,
-        totalJeton: session.totalJeton,
-        tipsJeton: tipsTotal > 0 ? tipsTotal : null,
-        isTeller: true,
-        navigateAfter: true,
-      );
-    }
-
     final repo = ref.read(livePsychicsRepositoryProvider);
+
+    // Karşı tarafa önce sinyal gönder — RTC kapanmadan SSE ile haber ver.
     unawaited(() async {
       try {
         await repo.sendRoomSignal(
@@ -682,6 +692,32 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         await repo.clearRoomSignals(sessionId);
       } catch (_) {}
     }());
+
+    unawaited(_agora.leave());
+    unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
+    unawaited(PsychicSessionStore.clear());
+
+    if (peerEndedMessage != null) {
+      ref.read(psychicPeerLeftProvider.notifier).state = PsychicPeerLeftEvent(
+        sessionId: sessionId,
+        message: peerEndedMessage,
+      );
+    }
+
+    if (!isClient && !silent) {
+      ref.read(psychicSessionEndedProvider.notifier).state = PsychicSessionEndedEvent(
+        sessionId: sessionId,
+        tellerId: session.psychic.id,
+        tellerName: session.psychic.name,
+        durationMinutes: session.durationMinutes,
+        totalJeton: session.totalJeton,
+        tipsJeton: tipsTotal > 0 ? tipsTotal : null,
+        isTeller: true,
+        navigateAfter: true,
+      );
+    }
+
+    invalidateWalletCacheFromRef(ref);
   }
 
   Future<UserEntity?> _waitForAuth() async {

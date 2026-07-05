@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/message_entities.dart';
+import 'conversations_list_notifier.dart';
 import '../../domain/repositories/messages_repository.dart';
 import '../../data/datasources/messages_remote_datasource.dart';
 import '../../data/repositories/messages_repository_impl.dart';
@@ -31,10 +32,5 @@ final chatMessagesProvider =
 
 /// Tüm sohbetlerdeki okunmamış mesaj toplamı (alt bar rozeti).
 final messagesUnreadCountProvider = Provider<int>((ref) {
-  final list = ref.watch(conversationsProvider);
-  return list.maybeWhen(
-    data: (items) =>
-        items.fold<int>(0, (sum, c) => sum + c.unreadCount),
-    orElse: () => 0,
-  );
+  return ref.watch(conversationsUnreadTotalProvider);
 });
