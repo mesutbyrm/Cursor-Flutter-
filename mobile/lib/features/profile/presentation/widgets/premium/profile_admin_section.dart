@@ -94,7 +94,53 @@ class ProfileAdminSection extends ConsumerWidget {
             ],
           ),
         ),
-        SizedBox(height: 20),
+        if (access.isSiteAdmin) ...[
+          ProfileGlass(
+            onTap: () => context.push('/admin/gifts'),
+            padding: const EdgeInsets.all(16),
+            borderColor: AppThemeColors.accentPurple.withValues(alpha: 0.4),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppThemeColors.accentPurple.withValues(alpha: 0.5),
+                        AppThemeColors.accentPink.withValues(alpha: 0.35),
+                      ],
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.card_giftcard_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Hediye Yönetimi',
+                        style: ProfileTypography.cardTitle(context),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Katalog, istatistik ve gelir kuralları',
+                        style: ProfileTypography.cardSubtitle(context),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded),
+              ],
+            ),
+          ),
+          SizedBox(height: 20),
+        ],
       ],
     );
   }
