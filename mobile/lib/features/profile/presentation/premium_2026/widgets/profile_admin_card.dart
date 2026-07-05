@@ -120,33 +120,35 @@ class ProfileAdminCard extends ConsumerWidget {
                       ),
                     ),
                   ),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  clipBehavior: Clip.hardEdge,
-                  child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 0.92,
-                  ),
-                  itemCount: items.length,
-                  itemBuilder: (context, i) {
-                    final item = items[i];
-                    return ProfileActionTile(
-                      icon: item.icon,
-                      label: item.label,
-                      onTap: item.onTap,
-                      gradient: [
-                        AppThemeColors.liveRed.withValues(alpha: 0.35),
-                        ProfilePremiumTheme.deepBg,
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    const spacing = 10.0;
+                    const cols = 3;
+                    final tileW =
+                        (constraints.maxWidth - spacing * (cols - 1)) / cols;
+                    final tileH = tileW / 0.92;
+                    return Wrap(
+                      spacing: spacing,
+                      runSpacing: spacing,
+                      children: [
+                        for (final item in items)
+                          SizedBox(
+                            width: tileW,
+                            height: tileH,
+                            child: ProfileActionTile(
+                              icon: item.icon,
+                              label: item.label,
+                              onTap: item.onTap,
+                              gradient: [
+                                AppThemeColors.liveRed.withValues(alpha: 0.35),
+                                ProfilePremiumTheme.deepBg,
+                              ],
+                              badge: item.badge > 0 ? item.badge : null,
+                            ),
+                          ),
                       ],
-                      badge: item.badge > 0 ? item.badge : null,
                     );
                   },
-                ),
                 ),
                 const SizedBox(height: 14),
                 const _ProfileAdminPaymentQueue(),

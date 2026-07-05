@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.489+493 (2026-07-05)
+
+### Profil — admin sayfası bozulması
+
+- **Kök neden:** Admin panelindeki `shrinkWrap GridView`, ~3 sn sonra (ödeme kuyruğu / istatistik yüklenince) Beğenilen-Kaydedilen bölümünü çökertip tek mor kare bırakıyordu
+- **Düzeltme:** `ProfileAdminCard` ve `ProfileQuickActions` → `LayoutBuilder` + `Wrap` (Yayıncı Paneli ile aynı desen)
+
 ## 1.0.488+492 (2026-07-05)
 
 ### Derleme düzeltmesi
