@@ -29,6 +29,47 @@ Future<void> main() async {
     ..maximumSizeBytes = 80 << 20;
   AppStartupLog.log('main() begin');
 
+  // Bir alt-ağaç build hatası verdiğinde (özellikle profil admin bölümü),
+  // release'de varsayılan gri/donuk kutu yerine okunabilir hata göster.
+  // Hem kalıcı UX iyileştirmesi hem de teşhis: ekran görüntüsünden hata okunur.
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    final msg = details.exceptionAsString();
+    return Material(
+      color: const Color(0xFF1A0808),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.bug_report_rounded,
+                        color: Color(0xFFFF6E6E), size: 20),
+                    SizedBox(width: 8),
+                    Text('Bir bölüm yüklenemedi',
+                        style: TextStyle(
+                            color: Color(0xFFFF9E9E),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  msg,
+                  style: const TextStyle(
+                      color: Color(0xCCFFFFFF), fontSize: 11, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  };
+
   try {
     await NetworkPerf.parallel([
       LocalCache.init().catchError((Object e) {
