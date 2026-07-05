@@ -92,15 +92,3 @@ final conversationsListNotifierProvider =
     AsyncNotifierProvider<ConversationsListNotifier, ConversationsListState>(
   ConversationsListNotifier.new,
 );
-
-/// Okunmamış toplam — tam liste üzerinden (lazy görünümden bağımsız).
-final conversationsUnreadTotalProvider = Provider<int>((ref) {
-  return ref.watch(conversationsListNotifierProvider).maybeWhen(
-        data: (s) => s.all.fold<int>(0, (sum, c) => sum + c.unreadCount),
-        orElse: () => ref.watch(conversationsProvider).maybeWhen(
-              data: (items) =>
-                  items.fold<int>(0, (sum, c) => sum + c.unreadCount),
-              orElse: () => 0,
-            ),
-      );
-});

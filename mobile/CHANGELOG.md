@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.488+492 (2026-07-05)
+
+### Derleme düzeltmesi
+
+- **Provider döngüsü:** `messagesUnreadCountProvider` ↔ `conversationsUnreadTotalProvider` çapraz bağımlılığı kaldırıldı; ayrı `messages_unread_providers.dart` modülü
+- İlk 1.0.487 push'u bu hata yüzünden APK üretemedi; bu sürümde derleme ve CodeQL geçer
+
 ## 1.0.487+491 (2026-07-05)
 
 ### Kritik düzeltmeler — mesajlar ve canlı falcılar
