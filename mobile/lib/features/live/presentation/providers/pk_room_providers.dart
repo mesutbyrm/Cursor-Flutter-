@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../data/pk/pk_room_remote_datasource.dart';
+import '../../domain/pk/pk_leaderboard_models.dart';
 import '../../domain/pk/pk_room_models.dart';
 
 final pkRoomRemoteProvider = Provider<PkRoomRemoteDataSource>((ref) {
@@ -53,6 +54,22 @@ class PkRoomController extends AutoDisposeFamilyNotifier<PkRoomMatch?, String> {
 
 final pkRoomProvider = AutoDisposeNotifierProviderFamily<PkRoomController,
     PkRoomMatch?, String>(PkRoomController.new);
+
+/// PK liderlik filtresi (period, metric).
+typedef PkLeaderboardKey = ({String period, String metric});
+
+final pkLeaderboardProvider = FutureProvider.autoDispose
+    .family<List<PkLeaderboardEntry>, PkLeaderboardKey>((ref, key) {
+  return ref
+      .read(pkRoomRemoteProvider)
+      .leaderboard(period: key.period, metric: key.metric);
+});
+
+/// PK istatistiklerim (userId null) veya belirli kullanıcının.
+final pkStatsProvider =
+    FutureProvider.autoDispose.family<PkStats, String?>((ref, userId) {
+  return ref.read(pkRoomRemoteProvider).stats(userId: userId);
+});
 
 /// PK geçmişim (galibiyet/mağlubiyet/berabere).
 final pkHistoryProvider =
