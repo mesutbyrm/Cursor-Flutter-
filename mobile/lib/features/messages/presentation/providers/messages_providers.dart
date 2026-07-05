@@ -7,6 +7,8 @@ import '../../domain/repositories/messages_repository.dart';
 import '../../data/datasources/messages_remote_datasource.dart';
 import '../../data/repositories/messages_repository_impl.dart';
 
+export 'messages_unread_providers.dart';
+
 final messagesRemoteProvider = Provider<MessagesRemoteDataSource>((ref) {
   return MessagesRemoteDataSource(ref.watch(dioProvider));
 });
@@ -28,6 +30,4 @@ final chatMessagesProvider =
         currentUserId: userId,
       );
 });
-
-export 'messages_unread_providers.dart';
 
