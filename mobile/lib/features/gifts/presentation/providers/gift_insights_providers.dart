@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../data/gift_insights_remote_datasource.dart';
+import '../../domain/gift_collection.dart';
 import '../../domain/gift_leaderboard_entry.dart';
+import '../../domain/supporter_badge.dart';
 
 final giftInsightsRemoteProvider = Provider<GiftInsightsRemoteDataSource>((ref) {
   return GiftInsightsRemoteDataSource(ref.watch(dioProvider));
@@ -59,5 +61,34 @@ final giftLeaderboardProvider = FutureProvider.autoDispose
         period: filter.period,
         scope: filter.scope,
         context: filter.context,
+      );
+});
+
+/// Kendi destekçi rozetim (userId boş) veya belirli kullanıcının rozeti.
+final supporterBadgeProvider = FutureProvider.autoDispose
+    .family<SupporterBadge?, String?>((ref, userId) {
+  return ref.read(giftInsightsRemoteProvider).fetchBadge(userId: userId);
+});
+
+/// Bir kullanıcının hediye koleksiyonu.
+final giftCollectionProvider = FutureProvider.autoDispose
+    .family<GiftCollection, String>((ref, userId) {
+  return ref.read(giftInsightsRemoteProvider).fetchCollection(userId);
+});
+
+/// Bir kullanıcının hediye albümü.
+final giftAlbumProvider =
+    FutureProvider.autoDispose.family<GiftAlbum, String>((ref, userId) {
+  return ref.read(giftInsightsRemoteProvider).fetchAlbum(userId);
+});
+
+/// Bir bağlamdaki Efsane İlk Destekçi.
+typedef FirstGifterKey = ({String context, String contextId});
+
+final firstGifterProvider =
+    FutureProvider.autoDispose.family<FirstGifter?, FirstGifterKey>((ref, key) {
+  return ref.read(giftInsightsRemoteProvider).fetchFirstGifter(
+        context: key.context,
+        contextId: key.contextId,
       );
 });
