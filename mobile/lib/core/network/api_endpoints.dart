@@ -305,6 +305,34 @@ abstract final class ApiEndpoints {
 
   static const pkHistory = '/api/pk/history';
 
+  /// Birleşik PK (Faz 1–3) — `canlifalapi.abacusai.app` üzerinden yönlendirilir.
+  static const pkActive = '/api/pk/active';
+  static const pkRequest = '/api/pk/request';
+  static const pkRoom = '/api/pk/room';
+  static const pkMeHistory = '/api/pk/me/history';
+  static const pkMeStats = '/api/pk/me/stats';
+  static const pkMeInvites = '/api/pk/me/invites';
+  static const pkMeMatches = '/api/pk/me/matches';
+  static const pkLeaderboard = '/api/pk/leaderboard';
+
+  static String pkMatch(String matchId) => '/api/pk/$matchId';
+  static String pkMatchStream(String matchId) => '/api/pk/$matchId/stream';
+  static String pkMatchRespond(String matchId) => '/api/pk/$matchId/respond';
+  static String pkMatchCancel(String matchId) => '/api/pk/$matchId/cancel';
+  static String pkMatchEnd(String matchId) => '/api/pk/$matchId/end';
+  static String pkMatchStart(String matchId) => '/api/pk/$matchId/start';
+  static String pkMatchSeatsJoin(String matchId) => '/api/pk/$matchId/seats/join';
+  static String pkMatchSeatsLeave(String matchId) => '/api/pk/$matchId/seats/leave';
+  static String pkMatchSeatsKick(String matchId) => '/api/pk/$matchId/seats/kick';
+  static String pkMatchEvents(String matchId) => '/api/pk/$matchId/events';
+  static String pkStatsUser(String userId) => '/api/pk/stats/$userId';
+  static const pkAdminBan = '/api/pk/admin/ban';
+  static String pkAdminUnban(String userId) => '/api/pk/admin/unban/$userId';
+  static const pkAdminBans = '/api/pk/admin/bans';
+  static String pkAdminForceEnd(String matchId) => '/api/pk/admin/$matchId/force-end';
+  static String pkAdminForceKick(String matchId, String userId) =>
+      '/api/pk/admin/$matchId/force-kick/$userId';
+
   /// Merkezi PK daveti — oda uçları 404 ise fallback.
   static const pkBattles = '/api/pk/battles';
 

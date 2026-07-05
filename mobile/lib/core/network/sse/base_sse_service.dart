@@ -42,6 +42,9 @@ abstract class BaseSseService {
     );
   }
 
+  /// Alt sınıflar farklı origin kullanabilir (ör. PK → games backend).
+  Dio connectionDio() => createSseDio();
+
   /// Alt sınıf SSE path'ini döner (ör. `/api/chat/rooms/{id}/stream`).
   String streamPath();
 
@@ -107,7 +110,7 @@ abstract class BaseSseService {
       headers['Authorization'] = 'Bearer ${token.trim()}';
     }
 
-    _dio = createSseDio();
+    _dio = connectionDio();
     _cancel = CancelToken();
     try {
       final res = await _dio!.get<ResponseBody>(
