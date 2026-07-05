@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/pk/pk_room_models.dart';
 import '../../providers/pk_room_providers.dart';
+import 'pk_event_banner.dart';
 import 'pk_room_control_bar.dart';
 import 'pk_room_score_overlay.dart';
 
@@ -38,6 +39,7 @@ class PkRoomLiveSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         PkRoomScoreOverlay(matchId: matchId),
+        PkEventBanner(matchId: matchId),
         PkRoomControlBar(
           matchId: matchId,
           myUserId: myUserId,

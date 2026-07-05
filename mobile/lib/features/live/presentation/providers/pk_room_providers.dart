@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../data/pk/pk_room_remote_datasource.dart';
+import '../../domain/pk/pk_event_models.dart';
 import '../../domain/pk/pk_leaderboard_models.dart';
 import '../../domain/pk/pk_room_models.dart';
 
@@ -54,6 +55,45 @@ class PkRoomController extends AutoDisposeFamilyNotifier<PkRoomMatch?, String> {
 
 final pkRoomProvider = AutoDisposeNotifierProviderFamily<PkRoomController,
     PkRoomMatch?, String>(PkRoomController.new);
+
+/// Bir maçtaki aktif premium etkinlik (çarpan) — 2 sn poll.
+class PkActiveEventController
+    extends AutoDisposeFamilyNotifier<PkMatchEvent?, String> {
+  Timer? _timer;
+
+  @override
+  PkMatchEvent? build(String matchId) {
+    ref.onDispose(() => _timer?.cancel());
+    if (matchId.isNotEmpty) {
+      _timer?.cancel();
+      unawaited(_tick());
+      _timer = Timer.periodic(const Duration(seconds: 2), (_) => _tick());
+    }
+    return null;
+  }
+
+  Future<void> _tick() async {
+    try {
+      final list = await ref.read(pkRoomRemoteProvider).events(arg);
+      PkMatchEvent? active;
+      for (final e in list) {
+        if (e.isLive) {
+          active = e;
+          break;
+        }
+      }
+      state = active;
+    } catch (_) {}
+  }
+
+  /// Etkinlik başlatıldıktan sonra anında göster.
+  void adopt(PkMatchEvent event) {
+    if (event.isLive) state = event;
+  }
+}
+
+final pkActiveEventProvider = AutoDisposeNotifierProviderFamily<
+    PkActiveEventController, PkMatchEvent?, String>(PkActiveEventController.new);
 
 /// PK liderlik filtresi (period, metric).
 typedef PkLeaderboardKey = ({String period, String metric});
