@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/network/api_exception.dart';
+import '../../../domain/pk/pk_event_models.dart';
 import '../../../domain/pk/pk_room_models.dart';
 import '../../providers/pk_room_providers.dart';
 
@@ -71,6 +72,8 @@ class _PkRoomControlBarState extends ConsumerState<PkRoomControlBar> {
           () => _run(() => ref.read(pkRoomRemoteProvider).end(widget.matchId))));
       buttons.add(_btn('Koltukları Yönet', Icons.manage_accounts_rounded,
           const Color(0xFF7C3AED), () => _openManage(match)));
+      buttons.add(_btn('Etkinlik', Icons.auto_awesome_rounded,
+          const Color(0xFFFFD54F), _openEvents));
     }
     if (!isHost) {
       if (mySeat == null && !match.isCompleted) {
@@ -143,6 +146,63 @@ class _PkRoomControlBarState extends ConsumerState<PkRoomControlBar> {
           team: team,
           streamId: widget.myStreamId,
         ));
+  }
+
+  Future<void> _openEvents() async {
+    final type = await showModalBottomSheet<PkEventType>(
+      context: context,
+      backgroundColor: const Color(0xFF12082A),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('Premium Etkinlik Başlat',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16)),
+            ),
+            for (final t in PkEventType.values)
+              ListTile(
+                leading: Text(t.emoji, style: const TextStyle(fontSize: 22)),
+                title: Text(t.label,
+                    style: const TextStyle(color: Colors.white)),
+                subtitle: Text(
+                  switch (t) {
+                    PkEventType.luckyGift => 'x2 · 30 sn',
+                    PkEventType.goldenMinute => 'x3 · 60 sn',
+                    PkEventType.doubleScore => 'x2 · 60 sn',
+                    PkEventType.finalFrenzy => 'x5 · 30 sn',
+                  },
+                  style: TextStyle(color: t.color, fontSize: 12),
+                ),
+                onTap: () => Navigator.pop(ctx, t),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (type == null) return;
+    try {
+      final event =
+          await ref.read(pkRoomRemoteProvider).triggerEvent(widget.matchId, type: type);
+      if (event != null) {
+        ref.read(pkActiveEventProvider(widget.matchId).notifier).adopt(event);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${type.label} başladı!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
   }
 
   Future<void> _openManage(PkRoomMatch match) async {

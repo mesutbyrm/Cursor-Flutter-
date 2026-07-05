@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../domain/pk/pk_event_models.dart';
 import '../../domain/pk/pk_leaderboard_models.dart';
 import '../../domain/pk/pk_room_models.dart';
 
@@ -147,6 +148,45 @@ class PkRoomRemoteDataSource {
         i++;
         out.add(PkLeaderboardEntry.fromJson(asJsonMap(e), i));
       }
+    }
+    return out;
+  }
+
+  /// Oda sahibi: premium maç-içi etkinlik başlat.
+  Future<PkMatchEvent?> triggerEvent(
+    String id, {
+    required PkEventType type,
+    int? multiplier,
+    int? durationSec,
+  }) async {
+    final res = await _dio.safePost<dynamic>(
+      '/api/pk/$id/events',
+      data: {
+        'type': type.wire,
+        if (multiplier != null) 'multiplier': multiplier,
+        if (durationSec != null) 'durationSec': durationSec,
+      },
+    );
+    final body = res.data;
+    if (body is Map) {
+      final m = asJsonMap(body);
+      final data = m['event'] is Map ? asJsonMap(m['event']) : m;
+      return PkMatchEvent.fromJson(data);
+    }
+    return null;
+  }
+
+  /// Maçın etkinlik geçmişi (aktif/bitmiş).
+  Future<List<PkMatchEvent>> events(String id) async {
+    final res = await _dio.safeGet<dynamic>('/api/pk/$id/events');
+    dynamic raw = res.data;
+    if (raw is Map) {
+      raw = asJsonMap(raw)['events'] ?? asJsonMap(raw)['data'] ?? asJsonMap(raw)['items'];
+    }
+    if (raw is! List) return const [];
+    final out = <PkMatchEvent>[];
+    for (final e in raw) {
+      if (e is Map) out.add(PkMatchEvent.fromJson(asJsonMap(e)));
     }
     return out;
   }
