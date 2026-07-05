@@ -89,6 +89,8 @@ class LiveGiftController extends ChangeNotifier {
     required String senderName,
     String? senderId,
     int quantity = 1,
+    String? toUserId,
+    String? pkMatchId,
   }) async {
     final streamId = _streamId;
     if (streamId == null || streamId.isEmpty || sending) return;
@@ -106,6 +108,8 @@ class LiveGiftController extends ChangeNotifier {
         unitPrice: gift.price,
         quantity: quantity,
         senderId: senderId,
+        toUserId: toUserId,
+        pkMatchId: pkMatchId,
       );
       if (result.newBalance != null) coinBalance = result.newBalance;
       final gross = gift.price * quantity;

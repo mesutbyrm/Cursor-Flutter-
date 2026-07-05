@@ -89,6 +89,8 @@ class LiveGiftsRemoteDataSource {
     required int unitPrice,
     int quantity = 1,
     String? senderId,
+    String? toUserId,
+    String? pkMatchId,
   }) async {
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamGifts(streamId),
@@ -98,6 +100,9 @@ class LiveGiftsRemoteDataSource {
         'platform': GiftPlatform.mobile.queryValue,
         if (senderName.trim().isNotEmpty) 'senderName': senderName.trim(),
         if (receiverName.trim().isNotEmpty) 'receiverName': receiverName.trim(),
+        // PK Faz 2: belirli bir koltuk misafirine hediye → puan o koltuğa/takıma.
+        if (toUserId != null && toUserId.isNotEmpty) 'toUserId': toUserId,
+        if (pkMatchId != null && pkMatchId.isNotEmpty) 'pkMatchId': pkMatchId,
       },
     );
     final raw = _unwrap(res.data);

@@ -103,6 +103,27 @@ class PkRoomRemoteDataSource {
     return out;
   }
 
+  /// PK geçmişim (galibiyet/mağlubiyet/berabere).
+  Future<List<PkHistoryEntry>> history({int page = 1, int limit = 30}) async {
+    final res = await _dio.safeGet<dynamic>(
+      '/api/pk/me/history',
+      query: {'page': page, 'limit': limit},
+    );
+    dynamic raw = res.data;
+    if (raw is Map) {
+      raw = asJsonMap(raw)['history'] ??
+          asJsonMap(raw)['matches'] ??
+          asJsonMap(raw)['data'] ??
+          asJsonMap(raw)['items'];
+    }
+    if (raw is! List) return const [];
+    final out = <PkHistoryEntry>[];
+    for (final e in raw) {
+      if (e is Map) out.add(PkHistoryEntry.fromJson(asJsonMap(e)));
+    }
+    return out;
+  }
+
   PkRoomMatch? _parse(dynamic body) {
     if (body is Map) {
       final m = asJsonMap(body);

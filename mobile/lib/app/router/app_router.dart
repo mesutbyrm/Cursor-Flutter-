@@ -51,6 +51,7 @@ import '../../features/social/presentation/pages/social_page.dart';
 import '../../features/gifts/presentation/pages/gift_collection_page.dart';
 import '../../features/gifts/presentation/pages/admin_gift_management_page.dart';
 import '../../features/gifts/presentation/pages/gift_history_page.dart';
+import '../../features/live/presentation/pages/pk_room_history_page.dart';
 import '../../features/gifts/presentation/pages/gift_hub_page.dart';
 import '../../features/gifts/presentation/pages/gift_leaderboard_center_page.dart';
 import '../../features/shorts/presentation/pages/shorts_feed_page.dart';
@@ -680,6 +681,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const AdminGiftManagementPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/pk/history',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const PkRoomHistoryPage(),
         ),
       ),
       GoRoute(
