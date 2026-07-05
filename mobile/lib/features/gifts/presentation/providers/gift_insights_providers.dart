@@ -4,6 +4,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../data/gift_insights_remote_datasource.dart';
 import '../../domain/gift_collection.dart';
 import '../../domain/gift_feed_item.dart';
+import '../../domain/gift_history_item.dart';
 import '../../domain/gift_leaderboard_entry.dart';
 import '../../domain/gift_mission.dart';
 import '../../domain/gift_sender_map.dart';
@@ -129,4 +130,10 @@ final giftRecommendationsProvider = FutureProvider.autoDispose
 final giftMissionsProvider =
     FutureProvider.autoDispose<List<GiftMission>>((ref) {
   return ref.read(giftInsightsRemoteProvider).fetchMissions();
+});
+
+/// Hediye geçmişim; anahtar = yön (all | sent | received).
+final giftHistoryProvider = FutureProvider.autoDispose
+    .family<List<GiftHistoryItem>, String>((ref, direction) {
+  return ref.read(giftInsightsRemoteProvider).fetchHistory(direction: direction);
 });

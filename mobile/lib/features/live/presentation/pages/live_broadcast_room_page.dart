@@ -19,6 +19,9 @@ import '../../../live_psychics/presentation/widgets/psychic_booking_sheet.dart';
 import '../../../live_psychics/presentation/widgets/psychic_broadcast_side_rail.dart';
 import '../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../gifts/presentation/widgets/first_gifter_badge.dart';
+import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
+import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
 import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
@@ -1332,7 +1335,22 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
               Positioned(
                 left: 12,
                 bottom: 200,
-                child: LiveGiftLeaderboard(streamId: streamId),
+                child: SizedBox(
+                  width: MediaQuery.sizeOf(context).width * 0.66,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      GiftBattleStrip(
+                          context: 'live_stream', contextId: streamId),
+                      GiftGoalBar(
+                          context: 'live_stream', contextId: streamId),
+                      FirstGifterBadge(
+                          context: 'live_stream', contextId: streamId),
+                      LiveGiftLeaderboard(streamId: streamId),
+                    ],
+                  ),
+                ),
               ),
             SafeArea(
               child: Column(

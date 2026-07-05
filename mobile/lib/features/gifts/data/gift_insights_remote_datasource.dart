@@ -4,6 +4,7 @@ import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import '../domain/gift_collection.dart';
 import '../domain/gift_feed_item.dart';
+import '../domain/gift_history_item.dart';
 import '../domain/gift_leaderboard_entry.dart';
 import '../domain/gift_mission.dart';
 import '../domain/gift_sender_map.dart';
@@ -212,6 +213,36 @@ class GiftInsightsRemoteDataSource {
     final out = <GiftMission>[];
     for (final e in raw) {
       if (e is Map) out.add(GiftMission.fromJson(asJsonMap(e)));
+    }
+    return out;
+  }
+
+  /// Hediye geçmişim (gönderilen/alınan/iade/iptal).
+  Future<List<GiftHistoryItem>> fetchHistory({
+    String direction = 'all', // all | sent | received
+    String? status,
+    int page = 1,
+    int limit = 50,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      '/api/gifts/insights/me/history',
+      query: {
+        if (direction != 'all') 'direction': direction,
+        if (status != null) 'status': status,
+        'page': page,
+        'limit': limit,
+      },
+    );
+    dynamic raw = res.data;
+    if (raw is Map) {
+      raw = asJsonMap(raw)['items'] ??
+          asJsonMap(raw)['data'] ??
+          asJsonMap(raw)['history'];
+    }
+    if (raw is! List) return const [];
+    final out = <GiftHistoryItem>[];
+    for (final e in raw) {
+      if (e is Map) out.add(GiftHistoryItem.fromJson(asJsonMap(e)));
     }
     return out;
   }
