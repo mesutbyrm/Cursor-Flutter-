@@ -2,7 +2,9 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
+import '../domain/gift_collection.dart';
 import '../domain/gift_leaderboard_entry.dart';
+import '../domain/supporter_badge.dart';
 
 /// Premium Gift Ecosystem — insights uçları (liderlik, koleksiyon, rozet…).
 /// Backend: `/api/gifts/insights/*`.
@@ -59,5 +61,47 @@ class GiftInsightsRemoteDataSource {
               badge: entry.badge,
             );
     }).toList();
+  }
+
+  /// Destekçi rozeti (Bronz → Efsane). userId null ise kendi rozetim.
+  Future<SupporterBadge?> fetchBadge({String? userId}) async {
+    final path = userId == null || userId.isEmpty
+        ? '/api/gifts/insights/me/badge'
+        : '/api/gifts/insights/badge/$userId';
+    final res = await _dio.safeGet<dynamic>(path);
+    final body = res.data;
+    if (body is Map) return SupporterBadge.fromJson(asJsonMap(body));
+    return null;
+  }
+
+  /// Hediye koleksiyonu (gönderilen/alınan, tamamlanma %).
+  Future<GiftCollection> fetchCollection(String userId) async {
+    final res =
+        await _dio.safeGet<dynamic>('/api/gifts/insights/collection/$userId');
+    final body = res.data;
+    if (body is Map) return GiftCollection.fromJson(asJsonMap(body));
+    return const GiftCollection();
+  }
+
+  /// Hediye albümü (alınan benzersiz hediyeler).
+  Future<GiftAlbum> fetchAlbum(String userId) async {
+    final res =
+        await _dio.safeGet<dynamic>('/api/gifts/insights/album/$userId');
+    final body = res.data;
+    if (body is Map) return GiftAlbum.fromJson(asJsonMap(body));
+    return const GiftAlbum();
+  }
+
+  /// Efsane İlk Destekçi rozeti — bir bağlamdaki ilk hediyeyi gönderen.
+  Future<FirstGifter?> fetchFirstGifter({
+    required String context,
+    required String contextId,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      '/api/gifts/insights/first-gifter/$context/$contextId',
+    );
+    final body = res.data;
+    if (body is Map) return FirstGifter.fromResponse(asJsonMap(body));
+    return null;
   }
 }

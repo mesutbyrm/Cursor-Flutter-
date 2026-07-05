@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../domain/gift_leaderboard_entry.dart';
@@ -170,7 +171,7 @@ class _RankRow extends StatelessWidget {
     final loc = [entry.city, entry.country]
         .where((e) => e != null && e.trim().isNotEmpty)
         .join(', ');
-    return Container(
+    final container = Container(
       margin: const EdgeInsets.symmetric(vertical: 3),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -278,6 +279,14 @@ class _RankRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+
+    if (entry.userId == null || entry.userId!.trim().isEmpty) return container;
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () =>
+          context.push('/gifts/collection?userId=${entry.userId}'),
+      child: container,
     );
   }
 

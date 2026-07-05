@@ -52,6 +52,7 @@ import '../../../../core/navigation/wallet_navigation.dart';
 import '../../video/presentation/widgets/youtube_video_background.dart';
 import '../widgets/voice_room/voice_room_now_playing_bar.dart';
 import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
+import '../../../gifts/presentation/widgets/first_gifter_badge.dart';
 import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
 
 /// Aşama 1 — oda listesi, giriş/çıkış, mikrofon, hoparlör, katılımcılar, oda sahibi.
@@ -817,6 +818,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   ),
                   // Aktif hediye hedefi — ilerleme çubuğu + kutlama.
                   GiftGoalBar(
+                    context: 'voice_room',
+                    contextId: _liveRoomKey,
+                  ),
+                  // Efsane İlk Destekçi rozeti (varsa).
+                  FirstGifterBadge(
                     context: 'voice_room',
                     contextId: _liveRoomKey,
                   ),
