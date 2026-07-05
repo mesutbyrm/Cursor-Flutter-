@@ -50,6 +50,7 @@ import '../providers/live_video_pk_provider.dart';
 import '../widgets/live_tiktok/live_background_picker_sheet.dart';
 import '../widgets/live_tiktok/live_guest_grid.dart';
 import '../widgets/broadcast_room/live_pk_score_bar.dart';
+import '../widgets/pk/pk_room_live_section.dart';
 import '../providers/live_fortune_request_provider.dart';
 import '../providers/live_stream_quality_provider.dart';
 import '../widgets/broadcast_room/live_fortune_request_form.dart';
@@ -1392,6 +1393,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                       FirstGifterBadge(
                           context: 'live_stream', contextId: streamId),
                       LiveGiftLeaderboard(streamId: streamId),
+                      PkRoomLiveSection(
+                        streamId: streamId,
+                        myUserId: user?.id ?? '',
+                      ),
                     ],
                   ),
                 ),
