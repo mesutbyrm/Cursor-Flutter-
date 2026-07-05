@@ -95,6 +95,12 @@ class PkActiveEventController
 final pkActiveEventProvider = AutoDisposeNotifierProviderFamily<
     PkActiveEventController, PkMatchEvent?, String>(PkActiveEventController.new);
 
+/// Aktif PK banları (admin) — ham map listesi.
+final pkBansProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
+  return ref.read(pkRoomRemoteProvider).bans();
+});
+
 /// PK liderlik filtresi (period, metric).
 typedef PkLeaderboardKey = ({String period, String metric});
 

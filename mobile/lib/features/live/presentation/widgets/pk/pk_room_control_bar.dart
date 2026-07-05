@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/network/api_exception.dart';
+import '../../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../domain/pk/pk_event_models.dart';
 import '../../../domain/pk/pk_room_models.dart';
 import '../../providers/pk_room_providers.dart';
@@ -74,6 +75,16 @@ class _PkRoomControlBarState extends ConsumerState<PkRoomControlBar> {
           const Color(0xFF7C3AED), () => _openManage(match)));
       buttons.add(_btn('Etkinlik', Icons.auto_awesome_rounded,
           const Color(0xFFFFD54F), _openEvents));
+    }
+    // Site admin/yönetici: host olmasa da zorla bitir.
+    final isStaff = ref.watch(staffAccessProvider).isSiteAdmin;
+    if (isStaff && !isHost && match.isLive) {
+      buttons.add(_btn('Zorla Bitir', Icons.gavel_rounded,
+          const Color(0xFFFF6E6E),
+          () => _run(() async {
+                await ref.read(pkRoomRemoteProvider).forceEnd(widget.matchId);
+                return null;
+              })));
     }
     if (!isHost) {
       if (mySeat == null && !match.isCompleted) {
