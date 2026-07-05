@@ -56,12 +56,9 @@ class ChatMessagesListNotifier
           currentUserId: userId,
           forceRefresh: forceRefresh,
         );
-    var visible = ListPerf.defaultPageSize.clamp(0, all.length);
+    var visible = all.length;
     if (previous != null && all.length > previous.all.length) {
-      visible = (previous.visibleCount + (all.length - previous.all.length))
-          .clamp(visible, all.length);
-    } else if (previous != null) {
-      visible = previous.visibleCount.clamp(visible, all.length);
+      visible = all.length;
     }
     return ChatMessagesListState(all: all, visibleCount: visible);
   }

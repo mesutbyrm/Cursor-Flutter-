@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.486+490 (2026-07-05)
+
+### Mesajlar — WhatsApp tarzı iyileştirmeler
+
+- **Yazı boyutu:** Konuşma listesi ve balonlarda daha büyük, okunaklı fontlar
+- **Yazıyor göstergesi:** Karşı taraf yazarken isim + «yazıyor…»
+- **Hızlı yanıtlar:** Gelen son mesajın altında öneri chip’leri
+- **Uzun basma:** Sohbet listesi / başlıkta sohbet silme veya engelleme
+- **Yanıtla / ilet:** Mesaja uzun basınca alıntı veya başka sohbete iletme
+- **Ses:** Her gelen/giden mesajda bildirim sesi
+- **Son mesaj:** Sohbet açılınca en alta kaydırma (tüm mesajlar görünür)
+- **Gold sesli arama:** Mesajlar ekranından sesli arama; karşı taraf kabul/red/engelleyebilir
+
 ## 1.0.485+489 (2026-07-05)
 
 ### Canlı yayın — Fal İste bildirimi

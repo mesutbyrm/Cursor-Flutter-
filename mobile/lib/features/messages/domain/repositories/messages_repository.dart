@@ -16,7 +16,17 @@ abstract class MessagesRepository {
     String conversationId,
     String text, {
     String? currentUserId,
+    String? replyId,
+    String? replyText,
+    bool forward = false,
+    String? forwardFrom,
   });
+
+  Future<void> blockUser(String blockedUserId);
+
+  Future<void> hideConversation(String peerUserId, {String? currentUserId});
+
+  Future<void> sendCallSignal(String peerUserId, String signal);
 
   Future<ConversationEntity> startConversation(String recipientId);
 

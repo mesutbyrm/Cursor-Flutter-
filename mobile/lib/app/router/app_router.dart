@@ -63,6 +63,7 @@ import '../../features/shorts/presentation/studio/shorts_studio_page.dart';
 import '../../features/shorts/presentation/utils/short_studio_launch.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/messages/presentation/pages/conversations_page.dart';
+import '../../features/messages/presentation/pages/dm_voice_call_page.dart';
 import '../../features/moderation/domain/entities/report_target.dart';
 import '../../features/moderation/presentation/pages/report_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
@@ -642,6 +643,19 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return ChatPage(conversationId: id);
+        },
+      ),
+      GoRoute(
+        path: '/dm-voice-call',
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra is Map) {
+            return DmVoiceCallPage(
+              peerName: extra['peerName']?.toString() ?? 'Arama',
+              channelId: extra['channelId']?.toString() ?? '',
+            );
+          }
+          return const DmVoiceCallPage(peerName: 'Arama', channelId: '');
         },
       ),
       GoRoute(

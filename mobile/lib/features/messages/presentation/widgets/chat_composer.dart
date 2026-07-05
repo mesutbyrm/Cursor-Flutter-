@@ -76,10 +76,10 @@ class ChatComposer extends StatelessWidget {
                 maxLines: 4,
                 style: TextStyle(
                   color: context.colors.onSurface,
-                  fontSize: 16,
+                  fontSize: 17,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Mesaj yaz...',
+                  hintText: 'Mesaj yazın',
                   hintStyle: TextStyle(
                     color: context.colors.onSurfaceMuted.withValues(alpha: 0.8),
                   ),

@@ -2,8 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
+import '../../messages/presentation/pages/dm_voice_call_page.dart';
+import '../../messages/presentation/services/dm_voice_call_service.dart';
 import '../data/video_call_invitation_service.dart';
 import '../domain/video_call_invitation.dart';
 import 'video_call_provider.dart';
@@ -69,7 +72,9 @@ class _IncomingVideoCallScreenState extends ConsumerState<IncomingVideoCallScree
           children: [
             const SizedBox(height: 48),
             Text(
-              'Gelen görüntülü arama',
+              invite.category == 'dm_voice'
+                  ? 'Gelen sesli arama'
+                  : 'Gelen görüntülü arama',
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.85),
                 fontSize: 16,
@@ -162,7 +167,9 @@ class _IncomingVideoCallScreenState extends ConsumerState<IncomingVideoCallScree
                     onTap: () => widget.onResponse(VideoCallResponse.busy),
                   ),
                   _ActionButton(
-                    icon: Icons.videocam_rounded,
+                    icon: invite.category == 'dm_voice'
+                        ? Icons.call_rounded
+                        : Icons.videocam_rounded,
                     label: 'Kabul',
                     color: const Color(0xFF00E676),
                     onTap: () => widget.onResponse(VideoCallResponse.accept),
@@ -240,7 +247,27 @@ class VideoCallIncomingHost extends ConsumerWidget {
         if (active != null && !callState.presenting)
           IncomingVideoCallScreen(
             invitation: active,
-            onResponse: (r) {
+            onResponse: (r) async {
+              if (active.category == 'dm_voice') {
+                await ref.read(dmVoiceCallServiceProvider).respondToCall(
+                      invite: active,
+                      response: r,
+                      peerUserId: active.callerId,
+                    );
+                if (r == VideoCallResponse.accept &&
+                    active.sessionId != null &&
+                    context.mounted) {
+                  ref.read(videoCallProvider.notifier).setPresenting(true);
+                  context.push(
+                    '/dm-voice-call',
+                    extra: {
+                      'peerName': active.callerName,
+                      'channelId': active.sessionId!,
+                    },
+                  );
+                }
+                return;
+              }
               ref.read(videoCallProvider.notifier).respond(active.callId, r);
             },
           ),

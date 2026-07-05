@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../utils/dm_message_codec.dart';
+
 /// Mesaj iletim durumu (WhatsApp / Instagram DM tarzı).
 enum MessageDeliveryStatus { sending, sent, delivered, read }
 
@@ -34,6 +36,9 @@ class MessageEntity extends Equatable {
     required this.isMine,
     this.createdAt,
     this.deliveryStatus = MessageDeliveryStatus.sent,
+    this.replyTo,
+    this.forwardedFrom,
+    this.rawText,
   });
 
   final String id;
@@ -41,7 +46,11 @@ class MessageEntity extends Equatable {
   final bool isMine;
   final DateTime? createdAt;
   final MessageDeliveryStatus deliveryStatus;
+  final DmReplyMeta? replyTo;
+  final String? forwardedFrom;
+  final String? rawText;
 
   @override
-  List<Object?> get props => [id, text, isMine, createdAt, deliveryStatus];
+  List<Object?> get props =>
+      [id, text, isMine, createdAt, deliveryStatus, replyTo, forwardedFrom];
 }

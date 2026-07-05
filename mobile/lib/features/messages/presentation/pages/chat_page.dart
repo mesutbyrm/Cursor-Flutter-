@@ -2,18 +2,29 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../../core/performance/list_perf.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../../core/widgets/user_avatar.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../vip_gold/domain/vip_tier.dart';
+import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
+import '../../data/services/dm_message_sound_service.dart';
+import '../../domain/entities/message_entities.dart';
+import '../../domain/utils/dm_message_codec.dart';
 import '../providers/chat_messages_list_notifier.dart';
+import '../providers/conversations_list_notifier.dart';
 import '../providers/messages_providers.dart';
+import '../services/dm_voice_call_service.dart';
 import '../widgets/chat_composer_bar.dart';
+import '../widgets/chat_message_actions.dart';
 import '../widgets/chat_messages_list_pane.dart';
+import '../widgets/chat_reply_preview_bar.dart';
 import '../widgets/chat_typing_indicator.dart';
 
 class ChatPage extends ConsumerStatefulWidget {
@@ -33,6 +44,10 @@ class _ChatPageState extends ConsumerState<ChatPage>
   Timer? _poll;
   Timer? _typingPoll;
   DateTime? _lastTypedAt;
+  MessageEntity? _replyTarget;
+  MessageEntity? _forwardTarget;
+  String? _peerName;
+  String? _peerAvatar;
 
   @override
   void initState() {
@@ -40,7 +55,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
     WidgetsBinding.instance.addObserver(this);
     _scroll.addListener(_onScroll);
     _text.addListener(_onTextChanged);
-    // "Yazıyor" senkronu — 2.5sn'de bir kendi durumunu gönder + karşıyı oku.
     _typingPoll = Timer.periodic(const Duration(milliseconds: 2500), (_) async {
       if (!mounted) return;
       final recentlyTyped = _lastTypedAt != null &&
@@ -52,6 +66,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      _loadPeerMeta();
       ref
           .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
           .refresh(silent: true, forceRefresh: true);
@@ -63,6 +78,19 @@ class _ChatPageState extends ConsumerState<ChatPage>
           .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
           .refresh(silent: true, forceRefresh: true);
     });
+  }
+
+  void _loadPeerMeta() {
+    final list = ref.read(conversationsListNotifierProvider).valueOrNull;
+    final peer = list?.all
+        .where((c) => c.id == widget.conversationId)
+        .firstOrNull;
+    if (peer != null) {
+      setState(() {
+        _peerName = peer.title;
+        _peerAvatar = peer.avatarUrl;
+      });
+    }
   }
 
   @override
@@ -82,14 +110,11 @@ class _ChatPageState extends ConsumerState<ChatPage>
   }
 
   @override
-  void didChangeMetrics() {
-    // Klavye açılınca/kapanınca en son mesaj görünür kalsın.
-    _scrollToEnd();
-  }
+  void didChangeMetrics() => _scrollToEnd();
 
   void _onScroll() {
     if (!_scroll.hasClients) return;
-    if (_scroll.position.pixels <= ListPerf.preloadThresholdPx) {
+    if (_scroll.position.pixels <= 80) {
       ref
           .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
           .loadOlder();
@@ -97,8 +122,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
   }
 
   void _scrollToEnd() {
-    // En son mesaj anında görünsün — yavaş animate yerine doğrudan en alta atla.
-    // İki kez (layout büyüyebilir): ilk frame + sonraki frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scroll.hasClients) return;
       _scroll.jumpTo(_scroll.position.maxScrollExtent);
@@ -109,14 +132,41 @@ class _ChatPageState extends ConsumerState<ChatPage>
     });
   }
 
+  void _onIncomingMessage(MessageEntity message) {
+    final raw = message.rawText ?? message.text;
+    if (DmMessageCodec.isSystemPayload(raw)) {
+      ref.read(dmVoiceCallServiceProvider).handleRawMessage(
+            peerUserId: widget.conversationId,
+            peerName: _peerName ?? 'Kullanıcı',
+            peerAvatarUrl: _peerAvatar,
+            rawContent: raw,
+          );
+      return;
+    }
+    unawaited(DmMessageSoundService.instance.playIncoming());
+  }
+
   Future<void> _sendMessage(String text) async {
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    final reply = _replyTarget;
+    final forward = _forwardTarget;
     await ref.read(messagesRepositoryProvider).sendMessage(
           widget.conversationId,
           text,
           currentUserId: userId,
+          replyId: reply?.id,
+          replyText: reply?.text,
+          forward: forward != null,
+          forwardFrom: forward != null
+              ? (forward.isMine ? 'Siz' : (_peerName ?? 'Kullanıcı'))
+              : null,
         );
     _text.clear();
+    setState(() {
+      _replyTarget = null;
+      _forwardTarget = null;
+    });
+    await DmMessageSoundService.instance.playOutgoing();
     await ref
         .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
         .refresh(forceRefresh: true);
@@ -124,11 +174,129 @@ class _ChatPageState extends ConsumerState<ChatPage>
     _scrollToEnd();
   }
 
+  Future<void> _startVoiceCall() async {
+    final tier = ref.read(vipTierProvider);
+    if (tier.index < VipTier.gold.index) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sesli arama Gold üyelere özeldir.'),
+        ),
+      );
+      context.push('/vip-gold');
+      return;
+    }
+    await ref.read(dmVoiceCallServiceProvider).startOutgoingCall(
+          peerUserId: widget.conversationId,
+          peerName: _peerName ?? 'Kullanıcı',
+          peerAvatarUrl: _peerAvatar,
+        );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Sesli arama isteği gönderildi')),
+    );
+  }
+
+  Future<void> _showPeerActions() async {
+    final name = _peerName ?? 'Kullanıcı';
+    await showConversationPeerActions(
+      context: context,
+      peerName: name,
+      onDeleteChat: () async {
+        final uid = ref.read(authControllerProvider).valueOrNull?.id;
+        await ref.read(messagesRepositoryProvider).hideConversation(
+              widget.conversationId,
+              currentUserId: uid,
+            );
+        ref.invalidate(conversationsProvider);
+        if (mounted) Navigator.pop(context);
+      },
+      onBlock: () async {
+        try {
+          await ref
+              .read(messagesRepositoryProvider)
+              .blockUser(widget.conversationId);
+          final uid = ref.read(authControllerProvider).valueOrNull?.id;
+          await ref.read(messagesRepositoryProvider).hideConversation(
+                widget.conversationId,
+                currentUserId: uid,
+              );
+          ref.invalidate(conversationsProvider);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('$name engellendi')),
+            );
+            Navigator.pop(context);
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(ApiException.userMessage(e))),
+            );
+          }
+        }
+      },
+    );
+  }
+
+  Future<void> _pickForwardTarget(MessageEntity message) async {
+    final conversations =
+        ref.read(conversationsListNotifierProvider).valueOrNull?.all ??
+            const [];
+    if (!mounted) return;
+    final targetId = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: const Color(0xFF111827),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const ListTile(
+              title: Text('İletilecek sohbet',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.person_outline, color: Colors.white70),
+              title: const Text('Kendime kaydet',
+                  style: TextStyle(color: Colors.white)),
+              onTap: () => Navigator.pop(ctx, ref.read(authControllerProvider).valueOrNull?.id),
+            ),
+            ...conversations.map(
+              (c) => ListTile(
+                leading: UserAvatar(url: c.avatarUrl, radius: 18),
+                title: Text(c.title, style: const TextStyle(color: Colors.white)),
+                onTap: () => Navigator.pop(ctx, c.id),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (targetId == null || targetId.isEmpty) return;
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    await ref.read(messagesRepositoryProvider).sendMessage(
+          targetId,
+          message.text,
+          currentUserId: userId,
+          forward: true,
+          forwardFrom: message.isMine ? 'Siz' : (_peerName ?? 'Kullanıcı'),
+        );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mesaj iletildi')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final peerLabel = _peerName ?? 'Sohbet';
+    final typingLabel = _peerTyping ? '$peerLabel yazıyor' : null;
+    final isGold = ref.watch(vipTierProvider).index >= VipTier.gold.index;
+
+    ref.listen(conversationsListNotifierProvider, (_, __) => _loadPeerMeta());
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      // Composer her zaman klavyenin üstünde kalsın.
       resizeToAvoidBottomInset: true,
       body: DiscoverBackground(
         child: Column(
@@ -136,31 +304,45 @@ class _ChatPageState extends ConsumerState<ChatPage>
             SizedBox(height: MediaQuery.paddingOf(context).top + 4),
             ProGlassTopBar(
               child: Padding(
-                padding: const EdgeInsets.only(left: 4, right: 12),
+                padding: const EdgeInsets.only(left: 4, right: 8),
                 child: Row(
                   children: [
                     DiscoverIconButton(
                       icon: Icons.arrow_back_ios_new_rounded,
                       onPressed: () => Navigator.of(context).maybePop(),
                     ),
+                    GestureDetector(
+                      onLongPress: _showPeerActions,
+                      child: UserAvatar(url: _peerAvatar, radius: 20),
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: DiscoverTabHeader(
-                        title: 'Sohbet',
-                        subtitle: 'Çevrimiçi',
-                        actions: [
-                          DiscoverIconButton(
-                            icon: Icons.flag_outlined,
-                            tooltip: 'Sohbeti bildir',
-                            onPressed: () => openReportFlow(
-                              context,
-                              ReportTarget(
-                                type: ReportTargetType.conversation,
-                                targetId: widget.conversationId,
-                                displayTitle: 'Sohbet',
+                      child: GestureDetector(
+                        onLongPress: _showPeerActions,
+                        child: DiscoverTabHeader(
+                          title: peerLabel,
+                          subtitle: typingLabel ?? 'Mesajlar',
+                          actions: [
+                            if (isGold)
+                              DiscoverIconButton(
+                                icon: Icons.call_rounded,
+                                tooltip: 'Sesli ara',
+                                onPressed: _startVoiceCall,
+                              ),
+                            DiscoverIconButton(
+                              icon: Icons.flag_outlined,
+                              tooltip: 'Sohbeti bildir',
+                              onPressed: () => openReportFlow(
+                                context,
+                                ReportTarget(
+                                  type: ReportTargetType.conversation,
+                                  targetId: widget.conversationId,
+                                  displayTitle: peerLabel,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -172,9 +354,21 @@ class _ChatPageState extends ConsumerState<ChatPage>
                 conversationId: widget.conversationId,
                 scrollController: _scroll,
                 onScrollToEnd: _scrollToEnd,
+                onReply: (m) => setState(() {
+                  _replyTarget = m;
+                  _forwardTarget = null;
+                }),
+                onForward: _pickForwardTarget,
+                onQuickReply: (t) => _sendMessage(t),
+                onIncomingMessage: _onIncomingMessage,
               ),
             ),
-            if (_peerTyping) const ChatTypingIndicator(),
+            if (_peerTyping) ChatTypingIndicator(label: peerLabel),
+            if (_replyTarget != null)
+              ChatReplyPreviewBar(
+                message: _replyTarget!,
+                onClear: () => setState(() => _replyTarget = null),
+              ),
             ChatComposerBar(
               controller: _text,
               onSend: _sendMessage,

@@ -7,17 +7,15 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../domain/entities/message_entities.dart';
 import '../providers/conversations_list_notifier.dart';
+import '../providers/messages_providers.dart';
+import 'chat_message_actions.dart';
 
 /// WhatsApp tarzı konuşma listesi.
 class ConversationsListSliver extends ConsumerWidget {
   const ConversationsListSliver({super.key});
-
-  Future<void> _refresh(WidgetRef ref) async {
-    await ref.read(conversationsListNotifierProvider.notifier).refresh(
-          forceRefresh: true,
-        );
-  }
 
   String _formatTime(DateTime? dt) {
     if (dt == null) return '';
@@ -32,6 +30,57 @@ class ConversationsListSliver extends ConsumerWidget {
       return DateFormat.E('tr').format(local);
     }
     return DateFormat('d MMM', 'tr').format(local);
+  }
+
+  Future<void> _refresh(WidgetRef ref) async {
+    await ref.read(conversationsListNotifierProvider.notifier).refresh(
+          forceRefresh: true,
+        );
+  }
+
+  Future<void> _showPeerActions(
+    BuildContext context,
+    WidgetRef ref,
+    ConversationEntity c,
+  ) async {
+    await showConversationPeerActions(
+      context: context,
+      peerName: c.title,
+      onDeleteChat: () async {
+        final uid = ref.read(authControllerProvider).valueOrNull?.id;
+        await ref.read(messagesRepositoryProvider).hideConversation(
+              c.id,
+              currentUserId: uid,
+            );
+        await ref
+            .read(conversationsListNotifierProvider.notifier)
+            .refresh(forceRefresh: true);
+      },
+      onBlock: () async {
+        try {
+          await ref.read(messagesRepositoryProvider).blockUser(c.id);
+          final uid = ref.read(authControllerProvider).valueOrNull?.id;
+          await ref.read(messagesRepositoryProvider).hideConversation(
+                c.id,
+                currentUserId: uid,
+              );
+          await ref
+              .read(conversationsListNotifierProvider.notifier)
+              .refresh(forceRefresh: true);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${c.title} engellendi')),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(ApiException.userMessage(e))),
+            );
+          }
+        }
+      },
+    );
   }
 
   @override
@@ -86,6 +135,7 @@ class ConversationsListSliver extends ConsumerWidget {
                           : Colors.transparent,
                       child: InkWell(
                         onTap: () => context.push('/chat/${c.id}'),
+                        onLongPress: () => _showPeerActions(context, ref, c),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -107,7 +157,7 @@ class ConversationsListSliver extends ConsumerWidget {
                                         fontWeight: unread
                                             ? FontWeight.w800
                                             : FontWeight.w600,
-                                        fontSize: 17,
+                                        fontSize: 18,
                                         color: Colors.white,
                                       ),
                                     ),
@@ -120,7 +170,7 @@ class ConversationsListSliver extends ConsumerWidget {
                                         color: unread
                                             ? Colors.white.withValues(alpha: 0.92)
                                             : Colors.white.withValues(alpha: 0.62),
-                                        fontSize: 15,
+                                        fontSize: 16,
                                         fontWeight: unread
                                             ? FontWeight.w600
                                             : FontWeight.w400,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../domain/entities/message_entities.dart';
 import '../providers/chat_messages_list_notifier.dart';
 import '../widgets/chat_message_bubble.dart';
 
@@ -13,11 +14,19 @@ class ChatMessagesListPane extends ConsumerStatefulWidget {
     required this.conversationId,
     required this.scrollController,
     required this.onScrollToEnd,
+    this.onReply,
+    this.onForward,
+    this.onQuickReply,
+    this.onIncomingMessage,
   });
 
   final String conversationId;
   final ScrollController scrollController;
   final VoidCallback onScrollToEnd;
+  final ValueChanged<MessageEntity>? onReply;
+  final ValueChanged<MessageEntity>? onForward;
+  final ValueChanged<String>? onQuickReply;
+  final ValueChanged<MessageEntity>? onIncomingMessage;
 
   @override
   ConsumerState<ChatMessagesListPane> createState() =>
@@ -26,6 +35,7 @@ class ChatMessagesListPane extends ConsumerStatefulWidget {
 
 class _ChatMessagesListPaneState extends ConsumerState<ChatMessagesListPane> {
   ProviderSubscription<AsyncValue<ChatMessagesListState>>? _msgSub;
+  final Set<String> _notifiedIds = {};
 
   @override
   void initState() {
@@ -33,9 +43,24 @@ class _ChatMessagesListPaneState extends ConsumerState<ChatMessagesListPane> {
     _msgSub = ref.listenManual(
       chatMessagesListNotifierProvider(widget.conversationId),
       (previous, next) {
-        next.whenData((_) => widget.onScrollToEnd());
+        next.whenData((state) {
+          widget.onScrollToEnd();
+          _notifyIncoming(previous?.valueOrNull, state);
+        });
       },
     );
+  }
+
+  void _notifyIncoming(ChatMessagesListState? prev, ChatMessagesListState next) {
+    final handler = widget.onIncomingMessage;
+    if (handler == null) return;
+    final prevIds = prev?.all.map((m) => m.id).toSet() ?? {};
+    for (final m in next.all) {
+      if (!m.isMine && !_notifiedIds.contains(m.id) && !prevIds.contains(m.id)) {
+        _notifiedIds.add(m.id);
+        handler(m);
+      }
+    }
   }
 
   @override
@@ -91,10 +116,12 @@ class _ChatMessagesListPaneState extends ConsumerState<ChatMessagesListPane> {
       );
     }
 
+    final lastIncomingIndex = msgs.rows.lastIndexWhere((m) => !m.isMine);
+
     return ListView.builder(
       cacheExtent: ScrollPerf.chatCacheExtent,
       controller: widget.scrollController,
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       physics: ScrollPerf.feedPhysics,
       addAutomaticKeepAlives: false,
       addRepaintBoundaries: false,
@@ -122,17 +149,27 @@ class _ChatMessagesListPaneState extends ConsumerState<ChatMessagesListPane> {
           );
         }
         final idx = msgs.hasMore ? i - 1 : i;
+        final row = msgs.rows[idx];
         return ScrollPerf.item(
           ChatMessageBubble(
-            message: msgs.rows[idx],
-            onDelete: msgs.rows[idx].isMine
+            message: row,
+            onDelete: row.isMine
                 ? () => ref
                     .read(
                       chatMessagesListNotifierProvider(widget.conversationId)
                           .notifier,
                     )
-                    .deleteMessage(msgs.rows[idx].id)
+                    .deleteMessage(row.id)
                 : null,
+            onReply: widget.onReply == null
+                ? null
+                : () => widget.onReply!(row),
+            onForward: widget.onForward == null
+                ? null
+                : () => widget.onForward!(row),
+            showQuickReplies:
+                !row.isMine && idx == lastIncomingIndex && widget.onQuickReply != null,
+            onQuickReply: widget.onQuickReply,
           ),
         );
       },

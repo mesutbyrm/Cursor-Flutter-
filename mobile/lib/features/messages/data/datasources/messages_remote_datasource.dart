@@ -6,6 +6,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/message_entities.dart';
+import '../utils/dm_message_codec.dart';
 import '../models/conversation_dto.dart';
 import '../models/message_dto.dart';
 
@@ -145,6 +146,8 @@ class MessagesRemoteDataSource {
                   currentUserId: currentUserId,
                 ))
             .map((d) => d.toEntity())
+            .where((m) =>
+                !DmMessageCodec.isSystemPayload(m.rawText ?? m.text))
             .toList();
       }
     }
@@ -153,22 +156,57 @@ class MessagesRemoteDataSource {
       return asJsonList(body)
           .map((j) => MessageDto.fromApiMap(j, currentUserId: currentUserId))
           .map((d) => d.toEntity())
+          .where((m) => !DmMessageCodec.isSystemPayload(m.rawText ?? m.text))
           .toList();
     }
     return null;
   }
 
-  Future<void> send(String peerUserId, String text) async {
+  Future<void> send(
+    String peerUserId,
+    String text, {
+    String? replyId,
+    String? replyText,
+    bool forward = false,
+    String? forwardFrom,
+  }) async {
+    var payload = text;
+    if (replyId != null && replyText != null) {
+      payload = DmMessageCodec.wrapReply(
+        replyId: replyId,
+        replyText: replyText,
+        body: text,
+      );
+    } else if (forward) {
+      payload = DmMessageCodec.wrapForward(
+        body: text,
+        fromLabel: forwardFrom ?? 'İletilen mesaj',
+      );
+    }
     if (Env.useMobileAuth) {
       await _dio.safePost(
         ApiEndpoints.messagesWithUser(peerUserId),
-        data: {'content': text},
+        data: {'content': payload},
       );
       return;
     }
     await _dio.safePost(
       ApiEndpoints.conversationMessages(peerUserId),
-      data: {'text': text, 'content': text},
+      data: {'text': payload, 'content': payload},
+    );
+  }
+
+  Future<void> blockUser(String blockedUserId) async {
+    await _dio.safePost(
+      ApiEndpoints.userBlocked,
+      data: {'blockedUserId': blockedUserId},
+    );
+  }
+
+  Future<void> unblockUser(String blockedUserId) async {
+    await _dio.safeDelete(
+      ApiEndpoints.userBlocked,
+      data: {'blockedUserId': blockedUserId},
     );
   }
 

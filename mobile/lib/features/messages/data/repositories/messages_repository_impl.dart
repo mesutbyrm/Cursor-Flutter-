@@ -1,6 +1,7 @@
 import '../../domain/entities/message_entities.dart';
 import '../../domain/repositories/messages_repository.dart';
 import '../datasources/messages_remote_datasource.dart';
+import '../hidden_conversations_store.dart';
 import '../deleted_messages_store.dart';
 import '../messages_cache_codec.dart';
 import '../../../../core/offline/api_cache_store.dart';
@@ -23,7 +24,11 @@ class MessagesRepositoryImpl implements MessagesRepository {
       maxAge: MessagesLoadPerf.conversationsMaxAge,
       forceRefresh: forceRefresh,
       refreshInBackground: false,
-      fetch: () => _remote.conversations(forceRefresh: forceRefresh),
+      fetch: () async {
+        final remote = await _remote.conversations(forceRefresh: forceRefresh);
+        final hidden = await HiddenConversationsStore.read(cacheUserId ?? '');
+        return remote.where((c) => !hidden.contains(c.id)).toList();
+      },
       encode: (list) => CacheFirstLoader.encodeList(
         [for (final c in list) encodeConversation(c)],
       ),
@@ -73,12 +78,42 @@ class MessagesRepositoryImpl implements MessagesRepository {
     String conversationId,
     String text, {
     String? currentUserId,
+    String? replyId,
+    String? replyText,
+    bool forward = false,
+    String? forwardFrom,
   }) async {
-    await _remote.send(conversationId, text);
+    await _remote.send(
+      conversationId,
+      text,
+      replyId: replyId,
+      replyText: replyText,
+      forward: forward,
+      forwardFrom: forwardFrom,
+    );
     final uid = currentUserId ?? '';
     await ApiCacheStore.clear(MessagesLoadPerf.threadKey(uid, conversationId));
     await ApiCacheStore.clear(MessagesLoadPerf.conversationsKey(uid));
   }
+
+  @override
+  Future<void> blockUser(String blockedUserId) =>
+      _remote.blockUser(blockedUserId);
+
+  @override
+  Future<void> hideConversation(
+    String peerUserId, {
+    String? currentUserId,
+  }) async {
+    final uid = currentUserId ?? '';
+    await HiddenConversationsStore.hide(uid, peerUserId);
+    await ApiCacheStore.clear(MessagesLoadPerf.conversationsKey(uid));
+    await ApiCacheStore.clear(MessagesLoadPerf.threadKey(uid, peerUserId));
+  }
+
+  @override
+  Future<void> sendCallSignal(String peerUserId, String signal) =>
+      _remote.send(peerUserId, signal);
 
   @override
   Future<ConversationEntity> startConversation(String recipientId) =>

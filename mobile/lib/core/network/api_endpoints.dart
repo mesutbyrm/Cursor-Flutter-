@@ -533,6 +533,9 @@ abstract final class ApiEndpoints {
   static String followers(String userId) => '/api/users/$userId/followers';
   static String following(String userId) => '/api/users/$userId/following';
 
+  /// Engellenen kullanıcılar — kılavuz §9.2 UserRepository.
+  static const userBlocked = '/api/user/blocked';
+
   static const conversations = messages;
   static String conversationMessages(String id) =>
       '/api/messages/conversations/$id/messages';

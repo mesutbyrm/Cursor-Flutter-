@@ -22,12 +22,14 @@ class ChatTypingIndicator extends StatelessWidget {
           const SizedBox(width: 4),
           _Dot(delay: 300),
           const SizedBox(width: 8),
-          Text(
-            '$label…',
-            style: TextStyle(
-              color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+          Expanded(
+            child: Text(
+              '$label…',
+              style: TextStyle(
+                color: context.colors.onSurfaceMuted.withValues(alpha: 0.92),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
