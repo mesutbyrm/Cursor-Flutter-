@@ -97,6 +97,10 @@ final conversationsListNotifierProvider =
 final conversationsUnreadTotalProvider = Provider<int>((ref) {
   return ref.watch(conversationsListNotifierProvider).maybeWhen(
         data: (s) => s.all.fold<int>(0, (sum, c) => sum + c.unreadCount),
-        orElse: () => ref.watch(messagesUnreadCountProvider),
+        orElse: () => ref.watch(conversationsProvider).maybeWhen(
+              data: (items) =>
+                  items.fold<int>(0, (sum, c) => sum + c.unreadCount),
+              orElse: () => 0,
+            ),
       );
 });
