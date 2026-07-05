@@ -202,6 +202,50 @@ class PkRoomRemoteDataSource {
     return const PkStats();
   }
 
+  // --- Moderasyon (admin/yönetici) ---
+
+  /// Bir kullanıcıyı PK sisteminden yasakla.
+  Future<void> banUser({
+    required String userId,
+    String? reason,
+    int? durationSec,
+  }) async {
+    await _dio.safePost<dynamic>(
+      '/api/pk/admin/ban',
+      data: {
+        'userId': userId,
+        if (reason != null && reason.isNotEmpty) 'reason': reason,
+        if (durationSec != null) 'durationSec': durationSec,
+      },
+    );
+  }
+
+  /// Yasağı kaldır.
+  Future<void> unban(String userId) async {
+    await _dio.safePost<dynamic>('/api/pk/admin/unban/$userId');
+  }
+
+  /// Aktif ban listesi (ham map — esnek).
+  Future<List<Map<String, dynamic>>> bans() async {
+    final res = await _dio.safeGet<dynamic>('/api/pk/admin/bans');
+    dynamic raw = res.data;
+    if (raw is Map) {
+      raw = asJsonMap(raw)['bans'] ?? asJsonMap(raw)['data'] ?? asJsonMap(raw)['items'];
+    }
+    if (raw is! List) return const [];
+    return [for (final e in raw) if (e is Map) asJsonMap(e)];
+  }
+
+  /// Bir maçı zorla bitir.
+  Future<void> forceEnd(String matchId) async {
+    await _dio.safePost<dynamic>('/api/pk/admin/$matchId/force-end');
+  }
+
+  /// Bir kullanıcıyı koltuktan zorla çıkar.
+  Future<void> forceKick(String matchId, String userId) async {
+    await _dio.safePost<dynamic>('/api/pk/admin/$matchId/force-kick/$userId');
+  }
+
   PkRoomMatch? _parse(dynamic body) {
     if (body is Map) {
       final m = asJsonMap(body);
