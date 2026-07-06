@@ -29,6 +29,7 @@ import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../agora/presentation/agora_room_manager.dart';
 import '../../../agora/presentation/providers/agora_providers.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
+import '../../data/host_live_stream_recovery.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_guest_layout.dart';
@@ -84,7 +85,8 @@ class LiveBroadcastRoomPage extends ConsumerStatefulWidget {
       _LiveBroadcastRoomPageState();
 }
 
-class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
+class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
+    with WidgetsBindingObserver {
   final _agora = AgoraRoomManager();
   var _rtcReady = false;
   String? _rtcError;
@@ -105,10 +107,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   final Set<String> _seenVipEntrances = {};
   String? _vipBannerName;
   VoidCallback? _remoteUidsListener;
+  VoidCallback? _remoteVideoListener;
+  var _hostAway = false;
+  DateTime? _graceEndsAt;
+  var _hostAwayViewerNotified = false;
+  var _hadHostVideo = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final streamId = widget.session.streamId?.trim();
       if (streamId != null && streamId.isNotEmpty) {
@@ -156,6 +164,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     debugPrint('[Agora] error: $e');
     if (_isBenignAgoraError(e)) return;
     if (!mounted) return;
+    if (widget.session.isHost && !_leaving) {
+      unawaited(_enterHostGracePeriod(notifyViewers: true));
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Bağlantı hatası: yeniden deneniyor...')),
     );
@@ -179,6 +191,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     _remoteUidsListener ??= _onRemoteUidsChanged;
     _agora.remoteUidsNotifier.addListener(_remoteUidsListener!);
     _onRemoteUidsChanged();
+    if (!widget.session.isHost) {
+      _remoteVideoListener ??= _onHostVideoAvailabilityChanged;
+      _agora.remoteVideoAvailable.addListener(_remoteVideoListener!);
+      _onHostVideoAvailabilityChanged();
+    }
     final quality = ref.read(liveStreamQualityProvider);
     unawaited(_agora.setStreamQuality(quality));
   }
@@ -266,6 +283,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _lazyGiftsTimer?.cancel();
     _lazyExtrasTimer?.cancel();
     _guestJoinPoll?.cancel();
@@ -274,18 +292,29 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     if (_remoteUidsListener != null) {
       _agora.remoteUidsNotifier.removeListener(_remoteUidsListener!);
     }
-    _guestJoinPoll?.cancel();
+    if (_remoteVideoListener != null) {
+      _agora.remoteVideoAvailable.removeListener(_remoteVideoListener!);
+    }
     _chat.dispose();
     if (!_leaving &&
         widget.session.isHost &&
         widget.session.streamId?.isNotEmpty == true) {
-      final streamId = widget.session.streamId!;
-      unawaited(
-        ref.read(liveRepositoryProvider).endVideoStream(streamId).catchError((_) {}),
-      );
+      unawaited(HostLiveStreamRecovery.save(widget.session));
     }
     _agora.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!widget.session.isHost || _leaving) return;
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      unawaited(_enterHostGracePeriod(notifyViewers: false));
+    } else if (state == AppLifecycleState.resumed && _hostAway) {
+      unawaited(_resumeHostBroadcast());
+    }
   }
 
   bool _isFortuneBroadcast(LiveBroadcastSession s) {
@@ -457,6 +486,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     final streamId = widget.session.streamId;
     if (widget.session.isHost && streamId != null && streamId.isNotEmpty) {
       try {
+        await ref.read(liveRemoteProvider).sendStreamMessage(
+              streamId: streamId,
+              content: 'Yayın kapandı.',
+            );
+      } catch (_) {}
+      try {
         await ref.read(liveRepositoryProvider).endVideoStream(streamId);
       } catch (e) {
         if (context.mounted) {
@@ -469,6 +504,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           );
         }
       }
+      await HostLiveStreamRecovery.clear();
     }
     ref.invalidate(liveStreamsProvider);
     if (!context.mounted) return;
@@ -477,6 +513,102 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     } else {
       context.go('/feed');
     }
+  }
+
+  Future<void> _enterHostGracePeriod({required bool notifyViewers}) async {
+    if (!widget.session.isHost || _leaving || _hostAway) return;
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    _hostAway = true;
+    _graceEndsAt = DateTime.now().add(HostLiveStreamRecovery.gracePeriod);
+    await HostLiveStreamRecovery.save(widget.session);
+    if (_agora.inChannel) {
+      await _agora.leave();
+    }
+    if (notifyViewers) {
+      try {
+        await ref.read(liveRemoteProvider).sendStreamMessage(
+              streamId: streamId,
+              content:
+                  'Yayıncının internet bağlantısı koptu. Yayın 5 dakika daha açık kalacak.',
+            );
+      } catch (_) {}
+    }
+    if (mounted) setState(() => _rtcReady = false);
+  }
+
+  Future<void> _resumeHostBroadcast() async {
+    if (!widget.session.isHost || _leaving) return;
+    final endsAt = _graceEndsAt;
+    if (endsAt != null && DateTime.now().isAfter(endsAt)) {
+      _hostAway = false;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Yeniden bağlanma süresi doldu.')),
+        );
+      }
+      return;
+    }
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    try {
+      final meta = await ref.read(liveRemoteProvider).fetchStream(streamId);
+      if (meta != null && !meta.isLive) {
+        await HostLiveStreamRecovery.clear();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Yayın sona ermiş.')),
+          );
+        }
+        return;
+      }
+      final user = ref.read(authControllerProvider).valueOrNull;
+      if (user == null) return;
+      final cred = await ref.read(agoraRemoteProvider).fetchToken(
+            channelName: streamId,
+            role: 'host',
+          );
+      await _agora.join(credentials: cred, isHost: true);
+      await _agora.setCameraEnabled(widget.session.initialCameraOn);
+      _agora.setMicEnabled(widget.session.initialMicOn);
+      try {
+        await ref.read(liveRemoteProvider).notifyLiveStarted(streamId);
+      } catch (_) {}
+      _hostAway = false;
+      _onRtcJoinSuccess(user);
+      await HostLiveStreamRecovery.clear();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Yayına kaldığınız yerden devam ediliyor.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
+  }
+
+  void _onHostVideoAvailabilityChanged() {
+    if (widget.session.isHost || _leaving) return;
+    final available = _agora.remoteVideoAvailable.value;
+    if (available) {
+      _hadHostVideo = true;
+      return;
+    }
+    if (!_hadHostVideo || _hostAwayViewerNotified) return;
+    _hostAwayViewerNotified = true;
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Yayıncının internet bağlantısı koptu. Yayın 5 dakika daha açık kalacak.',
+        ),
+        duration: Duration(seconds: 8),
+      ),
+    );
   }
 
   LiveRoomInteractionNotifier? _interactionNotifier() {
@@ -1115,7 +1247,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
               );
             },
             onToggleAudio: () => setState(() => _viewerAudioOn = !_viewerAudioOn),
-            onExit: () => unawaited(_confirmEnd(context)),
+            onExit: () => unawaited(_exitBroadcast(context)),
             audioOn: _viewerAudioOn,
           ),
         ],
@@ -1228,7 +1360,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
             barrierDismissible: false,
             builder: (ctx) => AlertDialog(
               title: const Text('Yayın sona erdi'),
-              content: const Text('Yayıncı yayını kapattı.'),
+              content: const Text('Yayın kapandı.'),
               actions: [
                 FilledButton(
                   onPressed: () => Navigator.pop(ctx),
@@ -1303,7 +1435,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       canPop: widget.embeddedInSwipe,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        await _confirmEnd(context);
+        if (s.isHost) {
+          await _exitBroadcast(context);
+        }
       },
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -1410,7 +1544,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                       following: interaction.following,
                       followLoading: interaction.followLoading,
                       onFollow: _onFollow,
-                      onClose: () => _confirmEnd(context),
+                      onClose: () => unawaited(_exitBroadcast(context)),
                       onViewersTap: hasStream
                           ? () => showLiveViewersSheet(
                                 context,
@@ -1423,7 +1557,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                           ? () => _openHostProfile(context, s)
                           : null,
                       onBack: widget.embeddedInSwipe
-                          ? () => unawaited(_confirmEnd(context))
+                          ? () => unawaited(_exitBroadcast(context))
                           : null,
                     ),
                   ),
@@ -1777,11 +1911,57 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                             ),
                       );
                     },
-                    onEnd: s.isHost ? () => _confirmEnd(context) : null,
+                    onEnd: s.isHost ? () => unawaited(_exitBroadcast(context)) : null,
                   ),
                 ],
               ),
             ),
+            if (_hostAway && s.isHost)
+              Positioned.fill(
+                child: ColoredBox(
+                  color: Colors.black.withValues(alpha: 0.72),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.wifi_off_rounded, color: Colors.white70, size: 48),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Bağlantı koptu',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Yayın 5 dakika daha açık. Geri döndüğünüzde devam edebilirsiniz.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          FilledButton.icon(
+                            onPressed: () => unawaited(_resumeHostBroadcast()),
+                            icon: const Icon(Icons.refresh_rounded),
+                            label: const Text('Yayına devam et'),
+                          ),
+                          const SizedBox(height: 10),
+                          TextButton(
+                            onPressed: () => unawaited(_exitBroadcast(context)),
+                            child: const Text('Yayını bitir'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             if (giftCtrl.panelOpen && user != null && broadcastSettings.giftsEnabled)
               Positioned(
                 left: 0,
@@ -1799,29 +1979,5 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         ),
       ),
     );
-  }
-
-  Future<void> _confirmEnd(BuildContext context) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A2E),
-        title: const Text('Yayını bitir?'),
-        content: const Text('Canlı yayından çıkmak istediğine emin misin?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.liveRed),
-            child: const Text('Bitir'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !context.mounted) return;
-    await _exitBroadcast(context);
   }
 }
