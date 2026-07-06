@@ -75,7 +75,6 @@ import 'widgets/voice_room/voice_room_staff_join_banner.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import '../video/presentation/widgets/room_video_overlay.dart';
-import '../video/presentation/widgets/youtube_video_background.dart';
 import '../video/presentation/room_video_controller.dart';
 
 /// Sesli sohbet odası — Agora (App ID only) + canlifal.com chat API.
@@ -1230,7 +1229,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               final messenger = ScaffoldMessenger.of(context);
               final err = await ctrl.submitSelectedSong(
                 hit,
-                withVideo: true,
+                withVideo: false,
                 skipPayment: skipPayment,
               );
               if (!mounted) return;
@@ -1395,11 +1394,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
-            Positioned.fill(
-              child: IgnorePointer(
-                child: YoutubeVideoBackground(roomKey: _liveRoomKey),
-              ),
-            ),
             Column(
               children: [
                 Expanded(

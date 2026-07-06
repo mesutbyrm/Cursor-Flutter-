@@ -49,7 +49,7 @@ import '../widgets/premium_2026/voice_live_header_2026.dart';
 import '../widgets/premium_2026/voice_top_spenders_strip.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
-import '../../video/presentation/widgets/youtube_video_background.dart';
+import '../../video/presentation/room_video_controller.dart';
 import '../widgets/voice_room/voice_room_now_playing_bar.dart';
 import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../../gifts/presentation/widgets/first_gifter_badge.dart';
@@ -685,7 +685,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
               final messenger = ScaffoldMessenger.of(context);
               final err = await ctrl.submitSelectedSong(
                 hit,
-                withVideo: true,
+                withVideo: false,
                 skipPayment: skipPayment,
               );
               if (!mounted) return;
@@ -804,9 +804,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     perms: perms,
                     user: user,
                   ),
-                  // Koltukların altında, kenarlardan sıfır video şeridi.
-                  // Ses-only müzikte gizli (1px) kalır, odayı ağırlaştırmaz.
-                  YoutubeVideoBackground(roomKey: _liveRoomKey),
+                  // Müzik yalnızca ses — video şeridi kaldırıldı (donma önlenir).
                   // Koltuk altı "şu an çalan şarkı" şeridi (yeşil kutu).
                   VoiceRoomNowPlayingBar(
                     roomKey: _liveRoomKey,

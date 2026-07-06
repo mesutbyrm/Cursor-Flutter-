@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.497+501 (2026-07-06)
+
+### Sesli oda müzik — video yok, sadece ses + kuyruk
+
+- **Şarkı isteği:** Video/WebView kapatıldı; müzik `just_audio` ile arka planda çalar (donma/kasma azaltıldı)
+- **Görünüm:** Çalan parça + isteyen kişi + sıradaki şarkılar alt bantta gösterilir; video şeridi yok
+- **Tüm istekler:** `withVideo: false` — ses modu varsayılan
+
+### Oda arka planı
+
+- **Kayıt:** `/settings` hem `background` hem `backgroundImage` alanı gönderir
+- **Liste:** API + 30 yerleşik `voice-bg-*` birleşik; picker’da thumbnail önbelleği
+
 ## 1.0.496+500 (2026-07-06)
 
 ### Performans — Instagram seviyesi hedef (Görev 20)

@@ -548,6 +548,7 @@ class _VoiceRoomBackgroundSheetState
                         borderRadius: BorderRadius.circular(10),
                         child: CanlifalNetworkImage(
                           url: url,
+                          thumbnailWidth: 180,
                           fit: BoxFit.cover,
                         ),
                       ),
