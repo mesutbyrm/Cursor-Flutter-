@@ -63,8 +63,8 @@ abstract final class LazyLoadPerf {
 
   // Sesli oda listesi
   static const voiceRoomList = Duration.zero;
-  static const voiceRoomPresence = Duration(milliseconds: 450);
-  static const voiceRoomLiveStreams = Duration(milliseconds: 900);
+  static const voiceRoomPresence = Duration.zero;
+  static const voiceRoomLiveStreams = Duration(milliseconds: 200);
 
   // Fal hub
   static const fortuneHero = Duration.zero;

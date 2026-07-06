@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +16,7 @@ import '../providers/shorts_offline_sync_provider.dart';
 import '../providers/shorts_playback_coordinator.dart';
 import '../providers/shorts_playback_providers.dart';
 import '../providers/shorts_providers.dart';
+import '../providers/shorts_video_pool_provider.dart';
 import '../utils/shorts_content_filter.dart';
 import '../utils/shorts_feed_entries.dart';
 import '../widgets/shorts_feed_page_view.dart';
@@ -181,6 +184,9 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
 
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _handleDeepLink(filtered, tab);
+            if (filtered.isNotEmpty) {
+              unawaited(ref.read(shortsVideoPoolProvider).warm(filtered, 0));
+            }
           });
 
           _rebuildEntries(filtered);

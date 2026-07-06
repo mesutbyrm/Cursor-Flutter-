@@ -6,6 +6,8 @@ import '../../../features/messages/presentation/providers/conversations_list_not
 import '../../../features/messages/presentation/providers/messages_providers.dart';
 import '../../../features/notifications/presentation/providers/notifications_providers.dart';
 import '../../../features/profile/presentation/providers/profile_providers.dart';
+import '../../../features/shorts/domain/repositories/shorts_repository.dart';
+import '../../../features/shorts/presentation/providers/shorts_providers.dart';
 import 'startup_perf.dart';
 import '../performance/voice_room_entry_perf.dart';
 
@@ -21,6 +23,7 @@ void prefetchShellData(
       ref.read(walletBalancesProvider.future).ignore();
       ref.read(profileStatsProvider.future).ignore();
       ref.read(jetonPackagesProvider.future).ignore();
+      ref.read(shortsFeedProvider(ShortsFeedTab.forYou).future).ignore();
       try {
         ref.read(conversationsProvider.future).ignore();
         ref.read(conversationsListNotifierProvider.notifier).refresh(

@@ -173,9 +173,8 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
   @override
   Widget build(BuildContext context) {
     final metrics = _metrics(context);
-    final coinBalance =
-        (ref.watch(coinBalanceProvider) ??
-            ref.watch(currentUserCoinBalanceProvider));
+    final coinBalance = ref.watch(coinBalanceProvider.select((v) => v)) ??
+        ref.watch(currentUserCoinBalanceProvider.select((v) => v));
     final name = ref.watch(
       authControllerProvider.select((a) => a.valueOrNull?.display ?? 'Misafir'),
     );

@@ -68,6 +68,7 @@ abstract final class ApiCachePolicy {
     _TtlRule(prefix: '/api/banners', ttl: Duration(minutes: 5)),
     _TtlRule(prefix: '/api/homepage', ttl: Duration(minutes: 5)),
     _TtlRule(prefix: '/api/advisors', ttl: Duration(minutes: 2)),
+    _TtlRule(prefix: '/api/short-videos', ttl: Duration(seconds: 25)),
     _TtlRule(prefix: '/api/fortune-tellers', ttl: Duration(minutes: 2)),
     _TtlRule(prefix: '/api/users/me/stats', ttl: Duration(minutes: 2)),
     _TtlRule(prefix: '/api/users/me/activity', ttl: Duration(minutes: 2)),

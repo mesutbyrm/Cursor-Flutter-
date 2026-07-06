@@ -6,14 +6,14 @@ import 'package:video_player/video_player.dart';
 import '../domain/entities/short_video_entity.dart';
 import '../presentation/utils/short_video_player_util.dart';
 
-/// Aktif video + sonraki 3 video bellekte; sonraki videolar öncelikli preload.
+/// Aktif + önceki + sonraki video (3 adet) bellekte; TikTok tarzı preload.
 class ShortsVideoControllerPool {
   ShortsVideoControllerPool(this._dio);
 
   final Dio _dio;
-  static const _maxControllers = 6;
-  static const _warmOffsets = [1, 2, 3, 0, -1, -2];
-  static const _diskPreloadAhead = [1, 2, 3, 4];
+  static const _maxControllers = 3;
+  static const _warmOffsets = [-1, 0, 1];
+  static const _diskPreloadAhead = [1];
 
   final _controllers = <String, VideoPlayerController>{};
   final _pending = <String, Future<VideoPlayerController>>{};
@@ -78,17 +78,6 @@ class ShortsVideoControllerPool {
     _evictExcept(keep);
 
     for (final offset in _diskPreloadAhead) {
-      final i = index + offset;
-      if (i < 0 || i >= videos.length) continue;
-      unawaited(
-        preloadShortVideoUrl(
-          videos[i].videoUrl,
-          videoId: videos[i].id,
-          dio: _dio,
-        ),
-      );
-    }
-    for (final offset in const [-1, -2]) {
       final i = index + offset;
       if (i < 0 || i >= videos.length) continue;
       unawaited(

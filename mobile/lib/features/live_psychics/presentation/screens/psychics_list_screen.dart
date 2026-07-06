@@ -20,7 +20,9 @@ class PsychicsListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final listAsync = ref.watch(psychicsListControllerProvider);
-    final approved = ref.watch(approvedPsychicProvider);
+    final approved = ref.watch(
+      approvedPsychicProvider.select((a) => (a.isApprovedTeller, a.profile)),
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0618),
@@ -28,18 +30,20 @@ class PsychicsListScreen extends ConsumerWidget {
         title: const Text('Canlı Falcılar'),
         backgroundColor: Colors.transparent,
         actions: [
-          if (approved.isApprovedTeller)
+          if (approved.$1)
             TextButton.icon(
                       onPressed: () => context.push('/canli-falcilar/dashboard'),
               icon: const Icon(Icons.dashboard_outlined, color: Colors.white),
               label: const Text('Falcı Paneli'),
             )
-          else if (ref.watch(authControllerProvider).valueOrNull != null)
+          else if (ref.watch(
+                authControllerProvider.select((a) => a.valueOrNull != null),
+              ))
             TextButton.icon(
               onPressed: () => context.push('/falci-ol'),
               icon: const Icon(Icons.workspace_premium_rounded, color: Colors.white),
               label: Text(
-                approved.profile != null && !approved.profile!.isApproved
+                approved.$2 != null && !approved.$2!.isApproved
                     ? 'Başvuru'
                     : 'Falcı Ol',
               ),

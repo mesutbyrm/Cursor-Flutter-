@@ -33,8 +33,8 @@ class ShortsFeedPageItem extends ConsumerWidget {
   final ValueChanged<ShortVideoEntity> onVideoUpdated;
   final VoidCallback onAdSkip;
 
-  /// Aktif + sonraki/önceki 3 video tam tile (preload).
-  static const _videoWindow = 3;
+  /// Aktif + önceki + sonraki — yalnızca 3 tam tile.
+  static const _videoWindow = 1;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.499+503 (2026-07-06)
+
+### Performans — Principal audit (özellik yok)
+
+- **Kısa video:** Controller pool 3 video (önceki/aktif/sonraki); tile penceresi daraltıldı; gereksiz Riverpod rebuild kaldırıldı
+- **Ağ:** `/api/short-videos` HTTP cache 25 sn; shell prefetch For You feed
+- **Sesli oda:** Presence anında, canlı liste lazy 200 ms; keşfet jeton `select()`
+- **Falcılar:** AppBar `select()` — liste gövdesi izole
+- **Rapor:** `PERFORMANCE_AUDIT.md`
+
 ## 1.0.498+502 (2026-07-06)
 
 ### Jeton / CFC — bekleyen ödeme

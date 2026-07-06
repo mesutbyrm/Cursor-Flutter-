@@ -106,15 +106,19 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
     final c = _controller;
     if (c == null) return;
 
-    final frameReady = c.value.isPlaying ||
-        c.value.position > Duration.zero ||
-        c.value.isBuffering;
-
-    if (frameReady && !_hasFrame) {
-      setState(() => _hasFrame = true);
+    if (!_hasFrame) {
+      final frameReady = c.value.isPlaying ||
+          c.value.position > Duration.zero ||
+          (c.value.isInitialized && !c.value.hasError);
+      if (frameReady) {
+        setState(() => _hasFrame = true);
+      }
     }
 
-    if (widget.isActive && c.value.isInitialized && !c.value.isPlaying) {
+    if (widget.isActive &&
+        c.value.isInitialized &&
+        !c.value.isPlaying &&
+        !c.value.isBuffering) {
       unawaited(c.play());
     }
   }
@@ -248,8 +252,6 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(shortsActiveVideoIdProvider);
-
     final video = widget.video;
     final c = _controller;
     final bottom = MediaQuery.paddingOf(context).bottom;
@@ -314,7 +316,12 @@ class _VideoSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
-      child: SafeCoverVideoPlayer(controller: controller),
+      child: ListenableBuilder(
+        listenable: controller,
+        builder: (context, _) {
+          return SafeCoverVideoPlayer(controller: controller);
+        },
+      ),
     );
   }
 }
