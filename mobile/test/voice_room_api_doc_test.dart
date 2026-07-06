@@ -25,6 +25,14 @@ void main() {
         ChatRoomRemoteDataSource.messagesPath('room123'),
         '/api/chat/rooms/room123/messages',
       );
+      expect(
+        ChatRoomRemoteDataSource.backgroundsPath(),
+        '/api/chat/rooms/backgrounds',
+      );
+      expect(
+        ChatRoomRemoteDataSource.roomBackgroundPath('room123'),
+        '/api/chat/rooms/room123/background',
+      );
     });
   });
 

@@ -452,6 +452,11 @@ class ChatRoomRemoteDataSource {
       if (seen.add(trimmed)) urls.add(trimmed);
     }
 
+    // Web ile aynı yerleşik arka planlar her zaman listede.
+    for (final url in VoiceRoomBackgroundCatalog.siteDefaults()) {
+      addUrl(url);
+    }
+
     try {
       final res = await _dio.safeGet<dynamic>(
         backgroundsPath(),
@@ -463,13 +468,6 @@ class ChatRoomRemoteDataSource {
         addUrl(url);
       }
     } catch (_) {}
-    // API boş/başarısız → yerleşik canlifal.com hazır arka planlarına düş
-    // (kullanıcı her zaman seçim yapabilsin — "backendden resim gelmiyor").
-    if (urls.isEmpty) {
-      for (final url in VoiceRoomBackgroundCatalog.siteDefaults()) {
-        addUrl(url);
-      }
-    }
     return urls;
   }
 
@@ -726,9 +724,31 @@ class ChatRoomRemoteDataSource {
     required String backgroundImage,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final settingsPayload = {'background': backgroundImage};
+      final legacyPayload = {'backgroundImage': backgroundImage};
+      try {
+        // Üretim: kılavuz §9 — PATCH /settings { background }
+        await _dio.safePatch<dynamic>(
+          '/api/chat/rooms/$key/settings',
+          data: settingsPayload,
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
+      try {
+        // Yerel mirror / eski uç
+        await _dio.safePatch<dynamic>(
+          roomBackgroundPath(key),
+          data: legacyPayload,
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
       await _dio.safePatch<dynamic>(
-        roomBackgroundPath(key),
-        data: {'backgroundImage': backgroundImage},
+        '/api/chat/rooms/$key',
+        data: {...settingsPayload, ...legacyPayload},
       );
     });
   }

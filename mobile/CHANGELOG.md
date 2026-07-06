@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.495+499 (2026-07-06)
+
+### Sesli oda arka planı — 404 düzeltmesi
+
+- **Kök neden:** Arka plan kaydı `PATCH /api/chat/rooms/{id}/background` ile yapılıyordu; üretimde bu uç yok (404). Kılavuzdaki `PATCH /settings` + `background` alanı kullanılmalıydı
+- **Düzeltme:** Önce `/settings` (`background`), sonra eski `/background` ve oda PATCH fallback zinciri
+- **Hazır arka planlar:** API'deki tüm odaların görselleri + yerleşik `voice-bg-*` listesi birleştirilir; arka plan sayfasında ızgara seçim + galeri/kamera yükleme
+
 ## 1.0.494+498 (2026-07-06)
 
 ### Admin hediye — «İstenen kaynak bulunamadı» düzeltmesi
