@@ -28,6 +28,7 @@ import 'providers/voice_gift_leaderboard_provider.dart';
 import '../../auth/domain/entities/user_entity.dart';
 import '../../agora/presentation/agora_room_manager.dart';
 import '../../agora/presentation/providers/agora_providers.dart';
+import '../domain/entities/chat_room_dj_state.dart';
 import '../domain/entities/chat_room_message.dart';
 import '../domain/entities/chat_room_presence.dart';
 import '../domain/entities/chat_room_sse_event.dart';
@@ -1101,7 +1102,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         _liveRoomKey.isNotEmpty ? _liveRoomKey : widget.room.id,
       ),
     );
-    final live = ref.watch(voiceRoomLiveProvider(_liveRoomKey));
+    ref.watch(
+      voiceRoomLiveProvider(_liveRoomKey).select(_RtcLiveShell.fromState),
+    );
+    final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
     final diagnostic = ref.watch(voiceRoomDiagnosticProvider);
     final ui = ref.watch(voiceRoomUiProvider);
     final flightQueue = ref.watch(voiceGiftFlightQueueProvider);
@@ -1595,14 +1599,27 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         VoiceRoomStaffJoinBanner(
                           enterBanner: live.enterBanner,
                         ),
-                        if (live.moderatorAnnouncement?.trim().isNotEmpty == true)
-                          VoiceRoomDuyuruTicker(
-                            key: ValueKey(live.moderatorAnnouncement),
-                            text: live.moderatorAnnouncement!,
-                            onScrollComplete: () => ref
-                                .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
-                                .clearModeratorAnnouncement(),
-                          ),
+                        Consumer(
+                          builder: (context, ref, _) {
+                            final ann = ref.watch(
+                              voiceRoomLiveProvider(_liveRoomKey).select(
+                                (s) => s.moderatorAnnouncement,
+                              ),
+                            );
+                            if (ann?.trim().isNotEmpty != true) {
+                              return const SizedBox.shrink();
+                            }
+                            return VoiceRoomDuyuruTicker(
+                              key: ValueKey(ann),
+                              text: ann!,
+                              onScrollComplete: () => ref
+                                  .read(
+                                    voiceRoomLiveProvider(_liveRoomKey).notifier,
+                                  )
+                                  .clearModeratorAnnouncement(),
+                            );
+                          },
+                        ),
                         RoomVideoOverlay(
                           roomKey: _liveRoomKey,
                           perms: perms,
@@ -1627,42 +1644,72 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           ),
                         Expanded(
                           child: RepaintBoundary(
-                            child: VoiceWebChatOverlay(
-                              messages: live.messages,
-                              hideOfficialJoinInChat: true,
-                              maxHeight: chatH,
-                              embedded: true,
-                              welcomeMarquee: null,
-                              roomName: room.nameTr,
-                              pinnedAnnouncement: live.pinnedAnnouncement,
-                              scrollController: _chatScrollCtrl,
-                              scrollToLatest: _scrollChatToLatest,
-                              onUserTap: (id, name, msg) => _openUserFromChat(
-                                id,
-                                name,
-                                msg,
-                                room: room,
-                                live: live,
-                                perms: perms,
-                                isOwner: isOwner,
-                              ),
+                            child: Consumer(
+                              builder: (context, ref, _) {
+                                final chat = ref.watch(
+                                  voiceRoomLiveProvider(_liveRoomKey).select(
+                                    (s) => (
+                                      messages: s.messages,
+                                      pinned: s.pinnedAnnouncement,
+                                      typing: s.isAnyoneTyping,
+                                      typingUsers: s.typingUsers,
+                                    ),
+                                  ),
+                                );
+                                return Column(
+                                  children: [
+                                    Expanded(
+                                      child: VoiceWebChatOverlay(
+                                        messages: chat.messages,
+                                        hideOfficialJoinInChat: true,
+                                        maxHeight: chatH,
+                                        embedded: true,
+                                        welcomeMarquee: null,
+                                        roomName: room.nameTr,
+                                        pinnedAnnouncement: chat.pinned,
+                                        scrollController: _chatScrollCtrl,
+                                        scrollToLatest: _scrollChatToLatest,
+                                        onUserTap: (id, name, msg) =>
+                                            _openUserFromChat(
+                                          id,
+                                          name,
+                                          msg,
+                                          room: room,
+                                          live: ref.read(
+                                            voiceRoomLiveProvider(_liveRoomKey),
+                                          ),
+                                          perms: perms,
+                                          isOwner: isOwner,
+                                        ),
+                                      ),
+                                    ),
+                                    if (chat.typing)
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          12,
+                                          0,
+                                          12,
+                                          4,
+                                        ),
+                                        child: Text(
+                                          '${chat.typingUsers.join(', ')} yazıyor…',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.white.withValues(
+                                              alpha: 0.65,
+                                            ),
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              },
                             ),
                           ),
                         ),
-                        if (live.isAnyoneTyping)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
-                            child: Text(
-                              '${live.typingUsers.join(', ')} yazıyor…',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.white.withValues(alpha: 0.65),
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ),
                                       ],
                                     );
                                   },
@@ -1685,35 +1732,44 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     ),
                   ),
                 ),
-                VoiceRoomSpecFooter(
-                  controller: _messageCtrl,
-                  focusNode: _messageFocus,
-                  onSend: () => _sendChatMessage(room),
-                  onToggleAudioOutput: _toggleHeadphones,
-                  headphonesOn: ui.headphonesOn,
-                  onMicToggle: _toggleMic,
-                  micOn: !_isMicMuted,
-                  micEnabled: _audioReady,
-                  onSettings: () => _openManagementPanel(
-                    context,
-                    room: room,
-                    live: live,
-                    perms: perms,
-                    isOwner: isOwner,
-                  ),
-                  onGift: () => _openGiftShop(
-                    context,
-                    room: room,
-                    presence: live.presence,
-                  ),
-                  onInvite: () => unawaited(_shareRoom()),
-                  presence: live.presence,
-                  selfUserId: user?.id,
-                  events: live.realtimeEvents,
-                  messages: live.messages,
-                  onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
-                  onChanged: _onChatChanged,
-                  joinNotificationsEnabled: ui.chatNotificationSoundEnabled,
+                Consumer(
+                  builder: (context, ref, _) {
+                    final footerLive = ref.watch(
+                      voiceRoomLiveProvider(_liveRoomKey).select(
+                        (s) => (s.messages, s.realtimeEvents, s.presence),
+                      ),
+                    );
+                    return VoiceRoomSpecFooter(
+                      controller: _messageCtrl,
+                      focusNode: _messageFocus,
+                      onSend: () => _sendChatMessage(room),
+                      onToggleAudioOutput: _toggleHeadphones,
+                      headphonesOn: ui.headphonesOn,
+                      onMicToggle: _toggleMic,
+                      micOn: !_isMicMuted,
+                      micEnabled: _audioReady,
+                      onSettings: () => _openManagementPanel(
+                        context,
+                        room: room,
+                        live: ref.read(voiceRoomLiveProvider(_liveRoomKey)),
+                        perms: perms,
+                        isOwner: isOwner,
+                      ),
+                      onGift: () => _openGiftShop(
+                        context,
+                        room: room,
+                        presence: footerLive.$3,
+                      ),
+                      onInvite: () => unawaited(_shareRoom()),
+                      presence: footerLive.$3,
+                      selfUserId: user?.id,
+                      events: footerLive.$2,
+                      messages: footerLive.$1,
+                      onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
+                      onChanged: _onChatChanged,
+                      joinNotificationsEnabled: ui.chatNotificationSoundEnabled,
+                    );
+                  },
                 ),
               ],
             ),
@@ -1747,4 +1803,63 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       ),
     );
   }
+}
+
+/// Yeni sohbet mesajı geldiğinde koltuk/arka plan yeniden çizilmez.
+@immutable
+class _RtcLiveShell {
+  const _RtcLiveShell({
+    required this.presence,
+    required this.dj,
+    required this.serverPermissions,
+    required this.backgroundUrl,
+    required this.loading,
+    required this.error,
+    required this.enterBanner,
+    required this.realtimeEvents,
+  });
+
+  factory _RtcLiveShell.fromState(VoiceRoomLiveState s) => _RtcLiveShell(
+        presence: s.presence,
+        dj: s.dj,
+        serverPermissions: s.serverPermissions,
+        backgroundUrl: s.backgroundUrl,
+        loading: s.loading,
+        error: s.error,
+        enterBanner: s.enterBanner,
+        realtimeEvents: s.realtimeEvents,
+      );
+
+  final List<ChatRoomPresence> presence;
+  final ChatRoomDjState dj;
+  final ChatRoomMyPermissions? serverPermissions;
+  final String? backgroundUrl;
+  final bool loading;
+  final String? error;
+  final String? enterBanner;
+  final List<VoiceRoomRealtimeEvent> realtimeEvents;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _RtcLiveShell &&
+      identical(presence, other.presence) &&
+      dj == other.dj &&
+      serverPermissions == other.serverPermissions &&
+      backgroundUrl == other.backgroundUrl &&
+      loading == other.loading &&
+      error == other.error &&
+      enterBanner == other.enterBanner &&
+      identical(realtimeEvents, other.realtimeEvents);
+
+  @override
+  int get hashCode => Object.hash(
+        presence,
+        dj,
+        serverPermissions,
+        backgroundUrl,
+        loading,
+        error,
+        enterBanner,
+        realtimeEvents,
+      );
 }

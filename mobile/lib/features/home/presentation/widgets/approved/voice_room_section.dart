@@ -277,6 +277,9 @@ class _VoiceRoomCard extends StatelessWidget {
                                 child: ClipOval(
                                   child: CanlifalNetworkImage(
                                     url: avatars[i],
+                                    width: 18,
+                                    height: 18,
+                                    thumbnailWidth: 48,
                                     fit: BoxFit.cover,
                                   ),
                                 ),

@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.496+500 (2026-07-06)
+
+### Performans — Instagram seviyesi hedef (Görev 20)
+
+- **Soğuk açılış:** OneSignal, Firebase ve crash SDK `runApp` sonrasına alındı; cookie jar depolama ile paralel init
+- **Keşfet:** Header blur kaldırıldı, oda listesi 30 sn poll kapatıldı (SSE presence), filtre önbelleği, kapak prefetch
+- **Görseller:** Discover/grid/kart arka planlarında `thumbnailWidth` — tam ekran decode yerine karo boyutu
+- **Sesli oda:** Sohbet mesajları izole `Consumer` + `_RtcLiveShell` select — yeni mesajda koltuk/arka plan yeniden çizilmez
+- **SSE poll:** Bağlıyken yenileme aralığı 90–180 sn; DJ yokken her iki tick'te bir
+- **Router:** Ajans durumu değişince tüm GoRouter yeniden oluşturulmaz
+
 ## 1.0.495+499 (2026-07-06)
 
 ### Sesli oda arka planı — 404 düzeltmesi

@@ -47,44 +47,53 @@ class _VoiceCosmicBackgroundState extends State<VoiceCosmicBackground>
     // Yalnızca metin/koltuk okunurluğu için ince bir üst+alt geçiş uygulanır,
     // görselin ortası tamamen açık kalır. Neon orblar ve ağır katman yok.
     if (hasImage) {
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          const DecoratedBox(
-            decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
-          ),
-          CanlifalNetworkImage(
-            key: ValueKey(widget.imageUrl),
-            url: widget.imageUrl!,
-            fit: BoxFit.cover,
-            fadeIn: false,
-            placeholder: const DecoratedBox(
-              decoration:
-                  BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
-            ),
-            errorWidget: const DecoratedBox(
-              decoration:
-                  BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
-            ),
-          ),
-          const IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0x33000000),
-                    Color(0x00000000),
-                    Color(0x00000000),
-                    Color(0x59000000),
-                  ],
-                  stops: [0.0, 0.22, 0.72, 1.0],
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
+          final h = constraints.maxHeight;
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              const DecoratedBox(
+                decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
+              ),
+              CanlifalNetworkImage(
+                key: ValueKey(widget.imageUrl),
+                url: widget.imageUrl!,
+                width: w,
+                height: h,
+                thumbnailWidth: 720,
+                fit: BoxFit.cover,
+                fadeIn: false,
+                placeholder: const DecoratedBox(
+                  decoration:
+                      BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
+                ),
+                errorWidget: const DecoratedBox(
+                  decoration:
+                      BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
                 ),
               ),
-            ),
-          ),
-        ],
+              const IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0x33000000),
+                        Color(0x00000000),
+                        Color(0x00000000),
+                        Color(0x59000000),
+                      ],
+                      stops: [0.0, 0.22, 0.72, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       );
     }
 
