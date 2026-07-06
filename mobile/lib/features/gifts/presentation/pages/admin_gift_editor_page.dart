@@ -516,8 +516,9 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
                   spacing: 6,
                   children: [
                     if (onPickGallery != null)
-                      _miniBtn('Galeri', onPickGallery),
-                    if (onPickFile != null) _miniBtn('Dosya', onPickFile),
+                      _miniBtn('Galeri', onPickGallery, disabled: uploading),
+                    if (onPickFile != null)
+                      _miniBtn('Dosya', onPickFile, disabled: uploading),
                     if (url != null)
                       _miniBtn('Kaldır', () {
                         setState(() {
@@ -543,9 +544,9 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
     );
   }
 
-  Widget _miniBtn(String label, VoidCallback onTap) {
+  Widget _miniBtn(String label, VoidCallback onTap, {bool disabled = false}) {
     return OutlinedButton(
-      onPressed: uploading ? null : onTap,
+      onPressed: disabled ? null : onTap,
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(0, 30),
         padding: const EdgeInsets.symmetric(horizontal: 10),
