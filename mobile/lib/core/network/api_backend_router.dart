@@ -15,6 +15,7 @@ abstract final class ApiBackendRouter {
     final p = _normalizePath(path);
     if (p == '/api/v1/health') return ApiBackendKind.game;
     if (_isPkBackendPath(p)) return ApiBackendKind.game;
+    if (_isAdminGiftsBackendPath(p)) return ApiBackendKind.game;
     if (_isGameBackendPath(p, method)) return ApiBackendKind.game;
     return ApiBackendKind.main;
   }
@@ -29,6 +30,10 @@ abstract final class ApiBackendRouter {
 
   /// Birleşik PK sistemi (Faz 1–3) — `canlifalapi.abacusai.app`.
   static bool _isPkBackendPath(String path) => path.startsWith('/api/pk');
+
+  /// Admin hediye kataloğu CRUD + yükleme — `canlifalapi.abacusai.app`.
+  static bool _isAdminGiftsBackendPath(String path) =>
+      path.startsWith('/api/admin/gifts');
 
   /// Oyun **odası** uçları — Redis backend (Backend-2).
   static bool _isGameBackendPath(String path, String method) {

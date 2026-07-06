@@ -85,5 +85,28 @@ void main() {
         ApiBackendKind.game,
       );
     });
+
+    test('admin hediye uçları Game backend', () {
+      expect(
+        ApiBackendRouter.resolve('/api/admin/gifts'),
+        ApiBackendKind.game,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/admin/gifts/upload-url', method: 'POST'),
+        ApiBackendKind.game,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/admin/gifts/statistics'),
+        ApiBackendKind.game,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/admin/gifts/revenue/rules'),
+        ApiBackendKind.game,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/admin/gifts/abc123', method: 'PATCH'),
+        ApiBackendKind.game,
+      );
+    });
   });
 }

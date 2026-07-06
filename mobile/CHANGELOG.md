@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.494+498 (2026-07-06)
+
+### Admin hediye — «İstenen kaynak bulunamadı» düzeltmesi
+
+- **Kök neden:** `/api/admin/gifts/*` uçları `canlifal.com`'da 404; gerçek API `canlifalapi.abacusai.app` üzerinde
+- **Düzeltme:** Admin hediye listesi, ekleme, güncelleme, yükleme ve istatistik istekleri games backend'e yönlendirildi (PK ile aynı desen)
+
 ## 1.0.493+497 (2026-07-06)
 
 ### Admin — tam özellikli hediye ekleme formu
