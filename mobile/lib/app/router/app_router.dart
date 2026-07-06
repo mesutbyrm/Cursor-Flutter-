@@ -49,7 +49,9 @@ import '../../features/live/presentation/pages/live_swipe_viewer_page.dart';
 import '../../features/social/presentation/pages/social_create_post_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
 import '../../features/gifts/presentation/pages/gift_collection_page.dart';
+import '../../features/gifts/domain/admin_gift_type.dart';
 import '../../features/gifts/presentation/pages/admin_gift_management_page.dart';
+import '../../features/gifts/presentation/pages/admin_gift_editor_page.dart';
 import '../../features/gifts/presentation/pages/gift_history_page.dart';
 import '../../features/live/presentation/pages/pk_leaderboard_page.dart';
 import '../../features/live/presentation/pages/pk_moderation_page.dart';
@@ -698,6 +700,27 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           child: const AdminGiftManagementPage(),
         ),
+        routes: [
+          GoRoute(
+            path: 'new',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const AdminGiftEditorPage(),
+            ),
+          ),
+          GoRoute(
+            path: ':giftId/edit',
+            pageBuilder: (context, state) {
+              final gift = state.extra;
+              return AppPageTransitions.fadeSlide(
+                key: state.pageKey,
+                child: AdminGiftEditorPage(
+                  gift: gift is AdminGiftType ? gift : null,
+                ),
+              );
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: '/pk/leaderboard',

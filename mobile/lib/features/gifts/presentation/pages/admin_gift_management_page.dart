@@ -1,8 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/images/canlifal_network_image.dart';
 import '../../../../core/network/api_exception.dart';
@@ -56,7 +54,7 @@ class AdminGiftManagementPage extends ConsumerWidget {
               builder: (_, __) => tab.index == 0
                   ? FloatingActionButton.extended(
                       backgroundColor: const Color(0xFF7C3AED),
-                      onPressed: () => _openEditor(ctx, ref, null),
+                      onPressed: () => ctx.push('/admin/gifts/new'),
                       icon: const Icon(Icons.add),
                       label: const Text('Yeni Hediye'),
                     )
@@ -75,17 +73,8 @@ class AdminGiftManagementPage extends ConsumerWidget {
     );
   }
 
-  static Future<void> _openEditor(
-    BuildContext context,
-    WidgetRef ref,
-    AdminGiftType? gift,
-  ) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: const Color(0xFF12082A),
-      isScrollControlled: true,
-      builder: (_) => _GiftEditorSheet(gift: gift),
-    );
+  static void _openEditor(BuildContext context, AdminGiftType gift) {
+    context.push('/admin/gifts/${gift.id}/edit', extra: gift);
   }
 }
 
@@ -190,6 +179,27 @@ class _GiftRow extends ConsumerWidget {
                         ],
                       ],
                     ),
+                    if (gift.isPremium ||
+                        gift.comboEnabled ||
+                        gift.isFullscreen ||
+                        !gift.isActive)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Wrap(
+                          spacing: 4,
+                          runSpacing: 2,
+                          children: [
+                            if (gift.isPremium)
+                              _badge('Premium', const Color(0xFFFFD54F)),
+                            if (gift.comboEnabled)
+                              _badge('Combo', const Color(0xFF66E36F)),
+                            if (gift.isFullscreen)
+                              _badge('Tam ekran', const Color(0xFF3D7BFF)),
+                            if (!gift.isActive)
+                              _badge('Pasif', const Color(0xFFFF6E6E)),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -197,7 +207,7 @@ class _GiftRow extends ConsumerWidget {
                 icon: const Icon(Icons.edit_rounded,
                     color: Color(0xFFB388FF), size: 20),
                 onPressed: () =>
-                    AdminGiftManagementPage._openEditor(context, ref, gift),
+                    AdminGiftManagementPage._openEditor(context, gift),
               ),
               IconButton(
                 icon: const Icon(Icons.delete_outline_rounded,
@@ -244,6 +254,20 @@ class _GiftRow extends ConsumerWidget {
               style: const TextStyle(color: Color(0xCCFFFFFF), fontSize: 9.5)),
         ],
       ),
+    );
+  }
+
+  Widget _badge(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.6)),
+      ),
+      child: Text(label,
+          style: TextStyle(
+              color: color, fontSize: 9, fontWeight: FontWeight.w800)),
     );
   }
 
@@ -617,207 +641,6 @@ class _RevenueRuleCard extends ConsumerWidget {
         decoration: InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(color: Color(0x99FFFFFF)),
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Oluştur / Düzenle
-// ---------------------------------------------------------------------------
-class _GiftEditorSheet extends ConsumerStatefulWidget {
-  const _GiftEditorSheet({this.gift});
-  final AdminGiftType? gift;
-
-  @override
-  ConsumerState<_GiftEditorSheet> createState() => _GiftEditorSheetState();
-}
-
-class _GiftEditorSheetState extends ConsumerState<_GiftEditorSheet> {
-  late final TextEditingController _name;
-  late final TextEditingController _nameEn;
-  late final TextEditingController _price;
-  late final TextEditingController _icon;
-  late final TextEditingController _category;
-  late final TextEditingController _tier;
-  bool _saving = false;
-  bool _uploading = false;
-  String? _thumbnailUrl;
-
-  @override
-  void initState() {
-    super.initState();
-    final g = widget.gift;
-    _name = TextEditingController(text: g?.name ?? '');
-    _nameEn = TextEditingController(text: g?.nameEn ?? '');
-    _price = TextEditingController(text: g != null ? '${g.price}' : '');
-    _icon = TextEditingController(text: g?.icon ?? '');
-    _category = TextEditingController(text: g?.category ?? '');
-    _tier = TextEditingController(text: g?.tier ?? '');
-    _thumbnailUrl = g?.thumbnailUrl;
-  }
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _nameEn.dispose();
-    _price.dispose();
-    _icon.dispose();
-    _category.dispose();
-    _tier.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickThumbnail() async {
-    final picker = ImagePicker();
-    final img = await picker.pickImage(source: ImageSource.gallery);
-    if (img == null) return;
-    setState(() => _uploading = true);
-    try {
-      final url = await ref
-          .read(adminGiftRemoteProvider)
-          .uploadAsset(File(img.path), kind: 'thumbnail');
-      if (url != null) setState(() => _thumbnailUrl = url);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _uploading = false);
-    }
-  }
-
-  Future<void> _save() async {
-    final name = _name.text.trim();
-    final price = int.tryParse(_price.text.trim());
-    if (name.isEmpty || price == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('İsim ve geçerli jeton fiyatı gerekli.')),
-      );
-      return;
-    }
-    setState(() => _saving = true);
-    final body = <String, dynamic>{
-      'name': name,
-      'nameEn': _nameEn.text.trim().isEmpty ? name : _nameEn.text.trim(),
-      'price': price,
-      if (_icon.text.trim().isNotEmpty) 'icon': _icon.text.trim(),
-      if (_category.text.trim().isNotEmpty) 'category': _category.text.trim(),
-      if (_tier.text.trim().isNotEmpty) 'tier': _tier.text.trim(),
-      if (_thumbnailUrl != null) 'thumbnailCloudPath': _thumbnailUrl,
-    };
-    try {
-      final remote = ref.read(adminGiftRemoteProvider);
-      if (widget.gift == null) {
-        await remote.createGift(body);
-      } else {
-        await remote.updateGift(widget.gift!.id, body);
-      }
-      ref.invalidate(adminGiftListProvider);
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bottom = MediaQuery.viewInsetsOf(context).bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottom),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.gift == null ? 'Yeni Hediye' : 'Hediyeyi Düzenle',
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 17),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: _uploading ? null : _pickThumbnail,
-                  child: Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A1030),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0x33FFFFFF)),
-                    ),
-                    child: _uploading
-                        ? const Center(child: CircularProgressIndicator())
-                        : (_thumbnailUrl != null && _thumbnailUrl!.startsWith('http')
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: CanlifalNetworkImage(
-                                    url: _thumbnailUrl!, fit: BoxFit.cover),
-                              )
-                            : const Icon(Icons.add_photo_alternate_rounded,
-                                color: Color(0xFFB388FF))),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _field(_icon, 'İkon (emoji, ör. 💎)'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            _field(_name, 'İsim (TR)'),
-            _field(_nameEn, 'İsim (EN)'),
-            _field(_price, 'Jeton fiyatı', number: true),
-            _field(_category, 'Kategori (ör. luxury)'),
-            _field(_tier, 'Kademe (ör. elmas)'),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: _saving ? null : _save,
-                style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF7C3AED)),
-                child: _saving
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : Text(widget.gift == null ? 'Ekle' : 'Kaydet'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _field(TextEditingController c, String label, {bool number = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: TextField(
-        controller: c,
-        keyboardType: number ? TextInputType.number : TextInputType.text,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Color(0x99FFFFFF)),
-          enabledBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Color(0x33FFFFFF))),
-          focusedBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF7C3AED))),
         ),
       ),
     );
