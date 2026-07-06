@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-07-05 22:19 UTC
+Oluşturulma: 2026-07-06 07:54 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -9,8 +9,8 @@ Base: `main`
 
 | Metrik | Adet |
 |--------|------|
-| Kapatılan PR | 1 |
-| Silinen remote dal | 0 |
+| Kapatılan PR | 0 |
+| Silinen remote dal | 1 |
 | Kalan açık PR | 0 |
 | Korunan / aktif dal | 0 |
 
@@ -18,13 +18,13 @@ Base: `main`
 
 | PR | Neden |
 |----|-------|
-| #227 | cursor/* obsolete PR (0 gün, main doğrudan geliştirme) |
+| — | — |
 
 ## Silinen dallar (cursor/*)
 
 | Dal | Neden |
 |-----|-------|
-| — | — |
+| cursor/admin-gift-full-editor-d83a | merged into main |
 
 ## Kalan açık PR'lar
 
