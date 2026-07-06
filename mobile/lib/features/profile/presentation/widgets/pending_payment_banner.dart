@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
-import '../../../admin/presentation/providers/admin_providers.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../providers/payment_requests_notifier.dart';

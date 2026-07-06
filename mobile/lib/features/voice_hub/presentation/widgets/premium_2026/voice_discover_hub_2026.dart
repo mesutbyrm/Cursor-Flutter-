@@ -1175,9 +1175,10 @@ class _LiveStreamCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const cardWidth = 200.0;
     final name = stream.streamerName ?? stream.title;
     return SizedBox(
-      width: 200,
+      width: cardWidth,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -1201,8 +1202,8 @@ class _LiveStreamCard extends StatelessWidget {
                 if (stream.thumbnailUrl != null && stream.thumbnailUrl!.isNotEmpty)
                   CanlifalNetworkImage(
                     url: stream.thumbnailUrl!,
-                    width: width,
-                    thumbnailWidth: (width * 1.5).round().clamp(160, 400),
+                    width: cardWidth,
+                    thumbnailWidth: (cardWidth * 1.5).round().clamp(160, 400),
                     fit: BoxFit.cover,
                   )
                 else
