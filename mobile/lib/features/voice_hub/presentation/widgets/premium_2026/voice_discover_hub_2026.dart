@@ -1,12 +1,9 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/ui/platform_blur.dart';
 import '../../../../../core/ui/premium_2026/liquid_glass.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_visual.dart';
@@ -53,6 +50,11 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
   final _scroll = ScrollController();
   String _tab = 'discover';
   int _visibleRooms = ListPerf.defaultPageSize;
+  List<VoiceRoomEntity>? _cachedFiltered;
+  List<VoiceRoomEntity>? _cachedRoomsRef;
+  String _cachedTab = '';
+  String _cachedSearch = '';
+  Map<String, int>? _cachedCatCounts;
 
   static const _tabs = [
     _DiscoverTab(id: 'discover', label: 'Keşfet', icon: Icons.explore_rounded),
@@ -110,6 +112,12 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
 
   List<VoiceRoomEntity> get _filtered {
     final q = _searchCtrl.text.trim().toLowerCase();
+    if (_cachedFiltered != null &&
+        identical(_cachedRoomsRef, widget.rooms) &&
+        _cachedTab == _tab &&
+        _cachedSearch == q) {
+      return _cachedFiltered!;
+    }
     var list = widget.rooms;
     if (q.isNotEmpty) {
       list = list
@@ -121,7 +129,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
           )
           .toList();
     }
-    return switch (_tab) {
+    final result = switch (_tab) {
       'popular' => list..sort((a, b) => b.displayOnline.compareTo(a.displayOnline)),
       'vip' => list.where((r) => r.isVipGoldRoom).toList(),
       'pk' => list.where((r) {
@@ -139,6 +147,12 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
       'live' => list.where((r) => r.displayOnline > 0).toList(),
       _ => list,
     };
+    _cachedRoomsRef = widget.rooms;
+    _cachedTab = _tab;
+    _cachedSearch = q;
+    _cachedFiltered = result;
+    _cachedCatCounts = null;
+    return result;
   }
 
   _DiscoverMetrics _metrics(BuildContext context) {
@@ -471,6 +485,13 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
   }
 
   int _roomCountForCat(String id) {
+    _cachedCatCounts ??= {
+      for (final c in _gridCats) c.id: _computeCatCount(c.id),
+    };
+    return _cachedCatCounts![id] ?? 0;
+  }
+
+  int _computeCatCount(String id) {
     return switch (id) {
       'vip' => widget.rooms.where((r) => r.isVipGoldRoom).length,
       'pk' => widget.rooms.where((r) {
@@ -548,12 +569,7 @@ class _DiscoverHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeBackdropFilter(
-      filter: ImageFilter.blur(
-        sigmaX: DiscoverPremiumVisual.glassBlur,
-        sigmaY: DiscoverPremiumVisual.glassBlur,
-      ),
-      child: Container(
+    return Container(
           padding: EdgeInsets.fromLTRB(horizontalPad, 8, horizontalPad - 4, 10),
           decoration: BoxDecoration(
             color: DiscoverPremiumVisual.glassFill,
@@ -655,7 +671,6 @@ class _DiscoverHeader extends StatelessWidget {
           ),
         ],
       ),
-    ),
     );
   }
 }
@@ -1053,7 +1068,12 @@ class _PopularRoomCard extends StatelessWidget {
                       fit: StackFit.expand,
                       children: [
                         if (bg != null && bg.isNotEmpty)
-                          CanlifalNetworkImage(url: bg, fit: BoxFit.cover)
+                          CanlifalNetworkImage(
+                            url: bg,
+                            width: width,
+                            thumbnailWidth: (width * 1.5).round().clamp(160, 400),
+                            fit: BoxFit.cover,
+                          )
                         else
                           const DecoratedBox(
                             decoration: BoxDecoration(
@@ -1181,6 +1201,8 @@ class _LiveStreamCard extends StatelessWidget {
                 if (stream.thumbnailUrl != null && stream.thumbnailUrl!.isNotEmpty)
                   CanlifalNetworkImage(
                     url: stream.thumbnailUrl!,
+                    width: width,
+                    thumbnailWidth: (width * 1.5).round().clamp(160, 400),
                     fit: BoxFit.cover,
                   )
                 else

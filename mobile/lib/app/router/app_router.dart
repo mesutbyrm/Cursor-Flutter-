@@ -137,7 +137,7 @@ final shellSessionProvider = StateProvider<int>((ref) => 0);
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   ref.watch(shellSessionProvider);
-  ref.watch(approvedAgencyProvider);
+  // Ajans onayı değişince tüm router'ı yeniden oluşturma — redirect içinde okunur.
 
   Future<ApprovedPsychicState> readApprovedTellerState() async {
     var approved = ref.read(approvedPsychicProvider);

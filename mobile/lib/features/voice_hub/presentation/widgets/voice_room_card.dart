@@ -54,7 +54,18 @@ class VoiceRoomCard extends StatelessWidget {
               children: [
                 if (bg != null && bg.isNotEmpty)
                   Positioned.fill(
-                    child: CanlifalNetworkImage(url: bg, fit: BoxFit.cover),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final w = constraints.maxWidth;
+                        return CanlifalNetworkImage(
+                          url: bg,
+                          width: w,
+                          height: constraints.maxHeight,
+                          thumbnailWidth: (w * 1.2).round().clamp(200, 480),
+                          fit: BoxFit.cover,
+                        );
+                      },
+                    ),
                   )
                 else
                   const Positioned.fill(

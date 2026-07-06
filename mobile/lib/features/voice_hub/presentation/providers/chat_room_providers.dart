@@ -1711,11 +1711,15 @@ class VoiceRoomLiveController
     final sse = sseConnected ?? state.sseConnected;
     final active = musicActive ??
         (state.dj.playing || state.dj.nowPlaying != null);
-    final interval = sse ? (active ? 30 : 60) : 12;
+    // SSE varken mesaj poll zaten kapalı; DJ yokken daha seyrek yenile.
+    final interval = sse
+        ? (active ? 90 : 180)
+        : 12;
     _poll = Timer.periodic(Duration(seconds: interval), (_) {
       if (_pollPaused) return;
       _pollTick++;
       final djActive = state.dj.playing || state.dj.nowPlaying != null;
+      if (sse && !djActive && _pollTick % 2 != 0) return;
       final fullDj = !sse || (djActive && (_pollTick % 3 == 0));
       unawaited(refresh(includeDj: fullDj));
     });

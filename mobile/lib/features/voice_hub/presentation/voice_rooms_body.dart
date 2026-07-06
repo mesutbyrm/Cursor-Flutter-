@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/images/canlifal_image_prefetch.dart';
 import '../../../core/bootstrap/startup_perf.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/ui/premium_2026/premium_immersive_background.dart';
@@ -34,11 +35,11 @@ class VoiceRoomsBody extends ConsumerStatefulWidget {
 
 class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     with AutomaticKeepAliveClientMixin {
-  Timer? _roomListRefresh;
   Timer? _presenceTimer;
   Timer? _liveStreamsTimer;
   var _presenceReady = false;
   var _liveStreamsReady = false;
+  var _prefetchedRoomImages = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -55,9 +56,21 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     _liveStreamsTimer = Timer(LazyLoadPerf.voiceRoomLiveStreams, () {
       if (mounted) setState(() => _liveStreamsReady = true);
     });
-    _roomListRefresh = Timer.periodic(const Duration(seconds: 30), (_) {
+  }
+
+  void _prefetchDiscoverImages(List<VoiceRoomEntity> rooms) {
+    if (_prefetchedRoomImages || !mounted) return;
+    _prefetchedRoomImages = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.invalidate(voiceRoomsProvider);
+      final urls = rooms
+          .map((r) => r.backgroundImageUrl)
+          .whereType<String>()
+          .where((u) => u.trim().isNotEmpty)
+          .take(12);
+      unawaited(
+        prefetchCanlifalImages(context, urls: urls, thumbnailWidth: 240),
+      );
     });
   }
 
@@ -65,7 +78,6 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
   void dispose() {
     _presenceTimer?.cancel();
     _liveStreamsTimer?.cancel();
-    _roomListRefresh?.cancel();
     super.dispose();
   }
 
@@ -106,6 +118,7 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
 
         final ordered = _orderedRooms(list, ref.watch(myVoiceRoomProvider));
         final live = liveStreams.valueOrNull ?? const [];
+        _prefetchDiscoverImages(ordered);
 
         return PremiumImmersiveBackground(
           child: RefreshIndicator(

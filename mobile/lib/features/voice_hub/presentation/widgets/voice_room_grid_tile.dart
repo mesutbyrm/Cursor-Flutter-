@@ -85,7 +85,18 @@ class VoiceRoomGridTile extends StatelessWidget {
                       child: _OnlineBadge(count: room.displayOnline),
                     ),
                   if (bg != null && bg.isNotEmpty)
-                    CanlifalNetworkImage(url: bg, fit: BoxFit.cover)
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final w = constraints.maxWidth;
+                        return CanlifalNetworkImage(
+                          url: bg,
+                          width: w,
+                          height: constraints.maxHeight,
+                          thumbnailWidth: (w * 1.2).round().clamp(96, 240),
+                          fit: BoxFit.cover,
+                        );
+                      },
+                    )
                   else
                     const DecoratedBox(
                       decoration: BoxDecoration(
@@ -276,7 +287,13 @@ class _MiniAvatar extends StatelessWidget {
       ),
       child: ClipOval(
         child: url != null && url!.isNotEmpty
-            ? CanlifalNetworkImage(url: url!, fit: BoxFit.cover)
+            ? CanlifalNetworkImage(
+                url: url!,
+                width: 14,
+                height: 14,
+                thumbnailWidth: 48,
+                fit: BoxFit.cover,
+              )
             : ColoredBox(
                 color: context.colors.surfaceContainer,
                 child: Icon(

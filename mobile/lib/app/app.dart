@@ -74,15 +74,19 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = ref.watch(authControllerProvider);
+    final authLoading =
+        ref.watch(authControllerProvider.select((a) => a.isLoading));
+    final authHasValue =
+        ref.watch(authControllerProvider.select((a) => a.hasValue));
+    final authed =
+        ref.watch(authControllerProvider.select((a) => a.valueOrNull != null));
     final guest = ref.watch(guestModeProvider);
     final themeMode = ref.watch(themeModeProvider);
     final amoledDark = ref.watch(amoledDarkProvider);
     final darkTheme = amoledDark ? AppTheme.amoled() : AppTheme.dark();
 
     final bootstrapDone =
-        !auth.isLoading || auth.hasValue || _bootstrapCapReached;
-    final authed = auth.valueOrNull != null;
+        !authLoading || authHasValue || _bootstrapCapReached;
     final showMainShell = bootstrapDone && (authed || guest);
 
     if (!bootstrapDone) {

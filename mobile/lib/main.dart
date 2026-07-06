@@ -10,10 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'app/app.dart';
 import 'core/bootstrap/app_deferred_bootstrap.dart';
 import 'core/bootstrap/app_startup_log.dart';
-import 'core/crash/crash_reporting_bootstrap.dart';
-import 'core/firebase/firebase_bootstrap.dart';
 import 'core/network/cookie_jar_provider.dart';
-import 'core/onesignal/onesignal_bootstrap.dart';
 import 'core/offline/api_cache_store.dart';
 import 'core/performance/app_perf_metrics.dart';
 import 'core/performance/network_perf.dart';
@@ -70,6 +67,7 @@ Future<void> main() async {
     );
   };
 
+  PersistCookieJar? jar;
   try {
     await NetworkPerf.parallel([
       LocalCache.init().catchError((Object e) {
@@ -81,33 +79,28 @@ Future<void> main() async {
       ApiCacheStore.init().catchError((Object e) {
         debugPrint('ApiCacheStore init failed: $e');
       }),
+      () async {
+        try {
+          final supportDir = await getApplicationSupportDirectory();
+          jar = PersistCookieJar(
+            storage: FileStorage('${supportDir.path}/canlifal_cookies'),
+            persistSession: true,
+          );
+          await jar!.forceInit();
+        } catch (e) {
+          debugPrint('Cookie jar init failed: $e');
+          jar = PersistCookieJar();
+        }
+      }(),
     ]);
   } catch (e) {
     debugPrint('Local storage init failed: $e');
   }
 
-  await OneSignalBootstrap.init();
-  AppStartupLog.log('OneSignal init done');
-  await FirebaseBootstrap.init();
-  AppStartupLog.log('Firebase init done');
-  await CrashReportingBootstrap.init();
-  AppStartupLog.log('Crash reporting init done');
-
   GoogleFonts.config.allowRuntimeFetching = false;
   AppPerfMetrics.end('cold_start');
 
-  PersistCookieJar? jar;
-  try {
-    final supportDir = await getApplicationSupportDirectory();
-    jar = PersistCookieJar(
-      storage: FileStorage('${supportDir.path}/canlifal_cookies'),
-      persistSession: true,
-    );
-    await jar.forceInit();
-  } catch (e) {
-    debugPrint('Cookie jar init failed: $e');
-    jar = PersistCookieJar();
-  }
+  jar ??= PersistCookieJar();
 
   runZonedGuarded(
     () {
