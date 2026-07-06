@@ -12,6 +12,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../agora/domain/entities/agora_credentials.dart';
 import '../../../agora/presentation/agora_room_manager.dart';
 import '../../../agora/presentation/providers/agora_providers.dart';
+import '../../data/host_live_stream_recovery.dart';
 import '../../domain/entities/live_broadcast_prep_args.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_guest_layout.dart';
@@ -48,6 +49,8 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
   String? _localBackgroundPath;
   String? _orphanStreamId;
   LiveGuestLayout _guestLayout = LiveGuestLayout.solo;
+  LiveBroadcastSession? _resumableSession;
+  var _checkingResume = true;
 
   LiveBroadcastPrepArgs get _args =>
       widget.args ?? const LiveBroadcastPrepArgs(category: 'Sohbet');
@@ -56,7 +59,59 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
   void initState() {
     super.initState();
     _title.text = '${_args.category} yayını';
-    WidgetsBinding.instance.addPostFrameCallback((_) => _initPreview());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initPreview();
+      unawaited(_checkResumableStream());
+    });
+  }
+
+  Future<void> _checkResumableStream() async {
+    try {
+      final saved = await HostLiveStreamRecovery.loadIfValid();
+      if (saved == null || !mounted) return;
+      final streamId = saved.streamId?.trim();
+      if (streamId == null || streamId.isEmpty) return;
+      final meta = await ref.read(liveRemoteProvider).fetchStream(streamId);
+      if (meta != null && meta.isLive) {
+        setState(() => _resumableSession = saved);
+      } else {
+        await HostLiveStreamRecovery.clear();
+      }
+    } finally {
+      if (mounted) setState(() => _checkingResume = false);
+    }
+  }
+
+  Future<void> _resumeSavedStream() async {
+    final session = _resumableSession;
+    if (session == null) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return;
+    setState(() => _starting = true);
+    try {
+      final streamId = session.streamId!.trim();
+      final cred = await ref
+          .read(agoraRemoteProvider)
+          .fetchToken(channelName: streamId, role: 'host');
+      _navigatedToRoom = true;
+      await context.push(
+        '/live/room',
+        extra: session.copyWith(agora: cred, hostUserId: user.id),
+      );
+      await HostLiveStreamRecovery.clear();
+      if (mounted) {
+        _resumableSession = null;
+        if (context.canPop()) context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _starting = false);
+    }
   }
 
   @override
@@ -511,6 +566,49 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                         ],
                       ),
                       const SizedBox(height: 18),
+                      if (_resumableSession != null) ...[
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Text(
+                                'Yarım kalan yayınınız var',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '${_resumableSession!.title} · 5 dk içinde devam edebilirsiniz',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  fontSize: 12.5,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              FilledButton.icon(
+                                onPressed: _starting ? null : _resumeSavedStream,
+                                icon: const Icon(Icons.play_arrow_rounded),
+                                label: const Text('Yayına devam et'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ] else if (_checkingResume)
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 12),
+                          child: LinearProgressIndicator(minHeight: 2),
+                        ),
                       SizedBox(
                         height: 54,
                         child: FilledButton(

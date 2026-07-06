@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.498+502 (2026-07-06)
+
+### Jeton / CFC — bekleyen ödeme
+
+- **Banner:** Jeton ve CFC yükleme sayfalarında bekleyen ödeme talebi üstte gösterilir
+- **İptal:** Kullanıcı tek tıkla talebi (veya tümünü) iptal edebilir; CFC geçmiş satırlarında da iptal
+
+### Canlı yayın — kapatma ve bağlantı kopması
+
+- **Kapat tuşu:** Onay diyaloğu olmadan yayın anında sonlanır; sohbete «Yayın kapandı» mesajı gider
+- **İzleyici:** Yayın bitince «Yayın kapandı» bildirimi; yayıncı kopunca 5 dk uyarısı
+- **Grace period:** Yayıncı bağlantısı kesilince yayın 5 dk açık kalır; hazırlık ekranından veya odadan devam
+
 ## 1.0.497+501 (2026-07-06)
 
 ### Sesli oda müzik — video yok, sadece ses + kuyruk

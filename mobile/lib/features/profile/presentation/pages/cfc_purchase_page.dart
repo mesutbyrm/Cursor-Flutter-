@@ -15,6 +15,7 @@ import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/cfc_balance_header.dart';
 import '../widgets/cfc_native_checkout.dart';
+import '../widgets/pending_payment_banner.dart';
 import '../widgets/currency_usage_card.dart';
 
 /// CFC (CanlıFal Coin) yükleme — yalnızca CFC, jeton değil.
@@ -32,6 +33,9 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.invalidate(paymentRequestsNotifierProvider);
+    });
   }
 
   @override
@@ -60,6 +64,10 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
     final config = ref.watch(paymentConfigProvider);
     final wallet = ref.watch(walletBalancesProvider);
     final history = ref.watch(paymentRequestsNotifierProvider);
+    final pendingCfc = history.valueOrNull
+            ?.where((r) => r.isCfc && r.status.toLowerCase() == 'pending')
+            .toList() ??
+        const [];
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -110,6 +118,14 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                 ),
                 const SizedBox(height: 16),
                 const CurrencyUsageCard.cfc(),
+                if (pendingCfc.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  PendingPaymentBanner(
+                    request: pendingCfc.first,
+                    kind: PendingPaymentKind.cfc,
+                    totalPending: pendingCfc.length,
+                  ),
+                ],
                 const SizedBox(height: 20),
                 ProGlassCard(
                   blur: 14,
@@ -173,13 +189,14 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
 
 }
 
-class _HistoryTile extends StatelessWidget {
+class _HistoryTile extends ConsumerWidget {
   const _HistoryTile({required this.row});
 
   final CfcPaymentRequestEntity row;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPending = row.status.toLowerCase() == 'pending';
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: ProGlassListTile(
@@ -203,6 +220,28 @@ class _HistoryTile extends StatelessWidget {
                 ],
               ),
             ),
+            if (isPending)
+              TextButton(
+                onPressed: () async {
+                  try {
+                    await ref
+                        .read(paymentRequestsNotifierProvider.notifier)
+                        .cancelPending(row.id);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Talep iptal edildi.')),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(ApiException.userMessage(e))),
+                      );
+                    }
+                  }
+                },
+                child: const Text('İptal'),
+              ),
             Icon(
               _statusIcon(row.status),
               color: _statusColor(row.status),
