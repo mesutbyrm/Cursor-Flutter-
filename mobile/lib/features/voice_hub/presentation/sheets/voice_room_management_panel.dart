@@ -738,7 +738,11 @@ class _VoiceRoomManagementPanelState
               onTap: () => Navigator.pop(ctx, urls[i]),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: CanlifalNetworkImage(url: urls[i], fit: BoxFit.cover),
+                child: CanlifalNetworkImage(
+                  url: urls[i],
+                  thumbnailWidth: 240,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),

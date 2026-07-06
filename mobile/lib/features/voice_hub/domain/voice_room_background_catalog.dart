@@ -8,7 +8,7 @@ abstract final class VoiceRoomBackgroundCatalog {
     return base;
   }
 
-  static const int count = 20;
+  static const int count = 30;
 
   static List<String> siteDefaults() {
     return List.generate(

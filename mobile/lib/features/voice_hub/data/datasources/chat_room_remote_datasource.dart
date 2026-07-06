@@ -460,7 +460,7 @@ class ChatRoomRemoteDataSource {
     try {
       final res = await _dio.safeGet<dynamic>(
         backgroundsPath(),
-        query: {'limit': VoiceRoomBackgroundCatalog.count},
+        query: {'limit': 64},
       );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['backgrounds'] ?? map['items'] ?? map['data'];
@@ -724,7 +724,10 @@ class ChatRoomRemoteDataSource {
     required String backgroundImage,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final settingsPayload = {'background': backgroundImage};
+      final settingsPayload = {
+        'background': backgroundImage,
+        'backgroundImage': backgroundImage,
+      };
       final legacyPayload = {'backgroundImage': backgroundImage};
       try {
         // Üretim: kılavuz §9 — PATCH /settings { background }

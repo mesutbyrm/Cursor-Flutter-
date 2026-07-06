@@ -121,6 +121,33 @@ class MusicQueueItem extends Equatable {
     );
   }
 
+  /// Sesli odada yalnızca ses — video modu kapatılır.
+  MusicQueueItem asAudioRequest() {
+    if (!isVideoRequest) return this;
+    return MusicQueueItem(
+      id: id,
+      title: title,
+      youtubeUrl: youtubeUrl,
+      createdAt: createdAt,
+      thumbUrl: thumbUrl,
+      requestedBy: requestedBy,
+      giftTo: giftTo,
+      note: note,
+      uploader: uploader,
+      duration: duration,
+      requestType: 'audio',
+      withVideo: false,
+      videoIdField: videoIdField ?? resolvedVideoId,
+      embedUrl: embedUrl,
+    );
+  }
+
+  String? get requesterLabel {
+    final by = requestedBy?.displayName.trim();
+    if (by != null && by.isNotEmpty) return by;
+    return null;
+  }
+
   String get artistLine {
     final parts = <String>[];
     if (uploader != null && uploader!.isNotEmpty) parts.add(uploader!);

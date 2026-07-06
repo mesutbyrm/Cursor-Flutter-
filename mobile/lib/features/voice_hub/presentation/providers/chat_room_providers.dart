@@ -2221,12 +2221,6 @@ class VoiceRoomLiveController
         }
       }
       if (withVideo) {
-        final videoState = ref.read(roomVideoControllerProvider(_roomKey));
-        if (videoState.hasActiveVideo) {
-          await ref
-              .read(roomVideoControllerProvider(_roomKey).notifier)
-              .dismissAnimated();
-        }
         ref.read(voiceRoomMusicSessionProvider.notifier).onMusicStartedFromServer();
       }
       final result = await ref.read(enqueueSongUseCaseProvider)(
@@ -2245,12 +2239,8 @@ class VoiceRoomLiveController
       }
       var queue = result.queue;
       var nowPlaying = result.item ?? (queue.isNotEmpty ? queue.first : null);
-      if (withVideo && nowPlaying != null) {
-        nowPlaying = nowPlaying.asVideoRequest();
-        queue = queue
-            .map((e) => e.id == nowPlaying!.id ? nowPlaying : e)
-            .toList();
-      }
+      nowPlaying = nowPlaying?.asAudioRequest();
+      queue = queue.map((e) => e.asAudioRequest()).toList();
       final queuePosition = result.queuePosition ?? 0;
       final player = ref.read(voiceRoomDjPlayerProvider);
       final currentlyPlaying = state.dj.playing ||
@@ -2300,19 +2290,12 @@ class VoiceRoomLiveController
     return item ?? fallback;
   }
 
-  /// SSE nowPlaying bazen withVideo düşürür — istemci video modunu korur.
+  /// SSE nowPlaying — sesli odada video modu kullanılmaz.
   MusicQueueItem _mergeNowPlayingFromSse(
     Map<String, dynamic> json, {
     MusicQueueItem? previous,
   }) {
-    final incoming = MusicQueueItem.fromJson(json);
-    if (incoming.isVideoRequest) return incoming;
-    if (previous == null || !previous.isVideoRequest) return incoming;
-    final sameTrack = incoming.id == previous.id ||
-        (incoming.youtubeUrl.isNotEmpty &&
-            incoming.youtubeUrl == previous.youtubeUrl);
-    if (!sameTrack) return incoming;
-    return incoming.asVideoRequest();
+    return MusicQueueItem.fromJson(json).asAudioRequest();
   }
 
   Future<void> _handleMusicStoppedFromSse() async {
@@ -2545,15 +2528,7 @@ class VoiceRoomLiveController
     if (shouldPlay) {
       await VoiceRoomMusicAudioSession.activateForPlayback();
 
-      if (hasYoutube) {
-        // just_audio'yu durdur; müzik iframe embed üzerinden çalar.
-        await player.stop();
-        _syncRoomVideo(effectiveDj, sync: sync);
-        _lastDjPlaybackSignature = sig;
-        return effectiveDj;
-      }
-
-      // YouTube olmayan direkt ses akışı → just_audio.
+      // Sesli oda: YouTube dahil tüm müzik just_audio — WebView/video yok (donma önlenir).
       ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
       if (!sameTrack) {
         await player.stop();
@@ -2817,7 +2792,7 @@ class VoiceRoomLiveController
               duration: hit.duration,
               priority: priority,
               skipPayment: true,
-              withVideo: true,
+              withVideo: false,
             )
             .timeout(
               const Duration(seconds: 45),
