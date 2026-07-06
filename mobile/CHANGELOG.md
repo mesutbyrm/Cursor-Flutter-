@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.493+497 (2026-07-06)
+
+### Admin — tam özellikli hediye ekleme formu
+
+- **Yeni ekran:** `/admin/gifts/new` ve düzenleme — tüm alanlar tek formda
+- **Medya yükleme:** Görsel (PNG/WebP), Thumbnail, Animasyon (MP4/WebM/SVGA/Lottie/GIF/Rive), Ses (MP3/WAV)
+- **Alanlar:** TR/EN isim, jeton fiyatı, kategori, kademe, animasyon türü & süresi, efekt rengi (hex)
+- **Anahtarlar:** Combo destekli, Premium, Tam ekran, Aktif/Pasif
+- Katalog satırında Premium / Combo / Tam ekran / Pasif rozetleri
+
 ## 1.0.492+496 (2026-07-05)
 
 ### PK sistemi — birleşik API entegrasyonu (Faz 1–3)

@@ -146,8 +146,12 @@ class AdminGiftRemoteDataSource {
     if (f.endsWith('.gif')) return 'image/gif';
     if (f.endsWith('.webp')) return 'image/webp';
     if (f.endsWith('.mp4')) return 'video/mp4';
+    if (f.endsWith('.webm')) return 'video/webm';
     if (f.endsWith('.json')) return 'application/json';
+    if (f.endsWith('.riv')) return 'application/octet-stream';
+    if (f.endsWith('.svga')) return 'application/octet-stream';
     if (f.endsWith('.mp3')) return 'audio/mpeg';
+    if (f.endsWith('.wav')) return 'audio/wav';
     return 'application/octet-stream';
   }
 }
