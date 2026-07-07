@@ -11,6 +11,7 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/presentation/widgets/auth_shell.dart';
+import '../providers/profile_hub_providers.dart';
 import '../providers/profile_providers.dart';
 
 class ProfileEditPage extends ConsumerStatefulWidget {
@@ -24,6 +25,8 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
   final _displayCtrl = TextEditingController();
   final _usernameCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
+  final _cityCtrl = TextEditingController();
+  final _zodiacCtrl = TextEditingController();
   final _avatarUrlCtrl = TextEditingController();
   var _saving = false;
   String? _localAvatarDataUrl;
@@ -38,6 +41,11 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
       _usernameCtrl.text = user.username;
       _bioCtrl.text = user.bio ?? '';
       _avatarUrlCtrl.text = user.avatarUrl ?? '';
+      final ext = ref.read(profileExtendedProvider).valueOrNull;
+      if (ext != null) {
+        _cityCtrl.text = ext.city ?? '';
+        _zodiacCtrl.text = ext.zodiacSign ?? '';
+      }
     });
   }
 
@@ -46,6 +54,8 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
     _displayCtrl.dispose();
     _usernameCtrl.dispose();
     _bioCtrl.dispose();
+    _cityCtrl.dispose();
+    _zodiacCtrl.dispose();
     _avatarUrlCtrl.dispose();
     super.dispose();
   }
@@ -85,7 +95,19 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
             bio: _bioCtrl.text.trim(),
             avatarUrl: avatar,
           );
+      try {
+        await ref.read(profileRemoteProvider).updateProfile(
+              displayName: _displayCtrl.text.trim(),
+              bio: _bioCtrl.text.trim(),
+              avatarUrl: avatar,
+              city: _cityCtrl.text.trim().isEmpty ? null : _cityCtrl.text.trim(),
+              zodiacSign:
+                  _zodiacCtrl.text.trim().isEmpty ? null : _zodiacCtrl.text.trim(),
+            );
+      } catch (_) {}
       await ref.read(authControllerProvider.notifier).refreshMe();
+      ref.invalidate(profileExtendedProvider);
+      ref.invalidate(profileUserStatisticsProvider);
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e) {
@@ -187,6 +209,22 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
                       decoration: authInputDecoration(
                         labelText: 'Hakkında',
                         prefixIcon: Icons.notes_rounded,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _cityCtrl,
+                      decoration: authInputDecoration(
+                        labelText: 'Şehir',
+                        prefixIcon: Icons.location_city_rounded,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _zodiacCtrl,
+                      decoration: authInputDecoration(
+                        labelText: 'Burç',
+                        prefixIcon: Icons.star_outline_rounded,
                       ),
                     ),
                   ],

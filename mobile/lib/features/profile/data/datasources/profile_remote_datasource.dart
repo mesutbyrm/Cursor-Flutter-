@@ -16,6 +16,7 @@ import '../../../wallet/domain/wallet_balances.dart';
 import '../jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
+import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 
@@ -138,6 +139,98 @@ class ProfileRemoteDataSource {
     } catch (_) {
       return const ProfileStatsEntity();
     }
+  }
+
+  Future<ProfileExtendedEntity> extendedProfile() async {
+    Object? lastError;
+    for (final path in [ApiEndpoints.userSiteProfile, ApiEndpoints.me]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final body = res.data;
+        if (body is Map) {
+          final map = asJsonMap(body);
+          if (map['error'] != null) continue;
+          return ProfileExtendedEntity.fromJson(map);
+        }
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (lastError != null) throw ApiException.userMessage(lastError);
+    return const ProfileExtendedEntity();
+  }
+
+  Future<ProfileUserStatisticsEntity> userStatistics() async {
+    for (final path in [
+      ApiEndpoints.userStatistics,
+      ApiEndpoints.userStats,
+      ApiEndpoints.meStats,
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final body = res.data;
+        if (body is Map) {
+          return ProfileUserStatisticsEntity.fromJson(asJsonMap(body));
+        }
+      } catch (_) {}
+    }
+    return const ProfileUserStatisticsEntity();
+  }
+
+  Future<int> fetchDailyStreak() async {
+    for (final path in [ApiEndpoints.userXp, ApiEndpoints.dailyMissions]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final body = res.data;
+        if (body is Map) {
+          final m = asJsonMap(body);
+          final data = m['data'] is Map ? asJsonMap(m['data']) : m;
+          final streak = asInt(pick(data, [
+            'dailyStreak',
+            'loginStreak',
+            'currentStreak',
+            'streak',
+          ]));
+          if (streak > 0) return streak;
+        }
+      } catch (_) {}
+    }
+    return 0;
+  }
+
+  Future<void> deleteAvatar() async {
+    await _dio.safePatch<Map<String, dynamic>>(
+      ApiEndpoints.me,
+      data: {'image': null, 'avatarUrl': null},
+    );
+  }
+
+  Future<UserEntity> updateProfile({
+    String? displayName,
+    String? bio,
+    String? avatarUrl,
+    String? phone,
+    String? birthDate,
+    String? birthTime,
+    String? zodiacSign,
+    String? city,
+  }) async {
+    final res = await _dio.safePatch<Map<String, dynamic>>(
+      ApiEndpoints.userSiteProfile,
+      data: {
+        if (displayName != null) ...{'name': displayName, 'displayName': displayName},
+        'bio': ?bio,
+        if (avatarUrl != null) ...{'image': avatarUrl, 'avatarUrl': avatarUrl},
+        'phone': ?phone,
+        if (birthDate != null && birthDate.isNotEmpty) 'birthDate': birthDate,
+        if (birthTime != null && birthTime.isNotEmpty) 'birthTime': birthTime,
+        'zodiacSign': ?zodiacSign,
+        'city': ?city,
+      },
+    );
+    final body = res.data ?? {};
+    final data = body['data'] is Map ? asJsonMap(body['data']) : body;
+    return UserDto.fromApiMap(data).toEntity();
   }
 
   /// Ziyaretçi sayısı — stats API boş dönerse yedek.

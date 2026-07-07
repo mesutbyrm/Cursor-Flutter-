@@ -30,6 +30,9 @@ abstract final class ApiEndpoints {
   static const meBroadcastHistory = '/api/users/me/broadcast-history';
   static const meActivity = '/api/users/me/activity';
   static const meProfileVisitors = '/api/users/me/profile-visitors';
+  static const userStats = '/api/user/stats';
+  static const userStatistics = '/api/user/statistics';
+  static const userXp = '/api/user/xp';
 
   // --- Eski / self-hosted (geriye dönük) ---
   static const authLogin = '/api/auth/login';

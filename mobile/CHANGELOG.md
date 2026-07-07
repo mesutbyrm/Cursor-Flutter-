@@ -1,6 +1,20 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.504+508 (2026-07-07)
+
+### Profil Hub — tam backend entegrasyonu
+
+- **Yeni düzen:** Referans profil ekranı — başlık, jeton/elmas/beğeni/seri kartı, VIP banner, hızlı menü
+- **Hakkımda + İstatistikler:** `GET /api/user/profile`, `/api/user/statistics`, fal geçmişi
+- **Rozetler + Hediyeler:** `/api/user/achievements`, `/api/users/me/gifts-received`
+- **Hizmetlerim:** Ana sayfa fal kartları + fal geçmişi sayıları (dinamik)
+- **QR Kodum:** `/profile/qr` — `qr_flutter`, paylaş ve kaydet
+- **Avatar:** Alt sayfa (görüntüle/değiştir/kamera/galeri/sil) + R2 presigned yükleme
+- **Profil düzenle:** Şehir ve burç alanları; `PATCH /api/user/profile`
+- **Gerçek zamanlı:** Bildirim tetiklemeli + 45sn periyodik cüzdan/profil yenileme
+- **Pull-to-refresh:** Tüm hub provider'ları invalidate
+
 ## 1.0.503+507 (2026-07-07)
 
 ### Sesli Odalar — Premium FX katmanı

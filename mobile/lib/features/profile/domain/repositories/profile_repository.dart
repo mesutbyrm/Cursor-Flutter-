@@ -1,6 +1,7 @@
 import '../../../../core/pagination/paged_result.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
+import '../entities/profile_extended_entity.dart';
 import '../entities/profile_stats_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../entities/jeton_package_entity.dart';
@@ -22,6 +23,9 @@ abstract class ProfileRepository {
     String? birthTime,
   });
   Future<ProfileStatsEntity> myStats();
+  Future<ProfileExtendedEntity> extendedProfile();
+  Future<ProfileUserStatisticsEntity> userStatistics();
+  Future<void> deleteAvatar();
   Future<List<GiftReceivedSummaryEntity>> giftsReceivedSummary();
   Future<List<BroadcastHistoryItemEntity>> broadcastHistory();
   Future<PagedResult<BroadcastHistoryItemEntity>> broadcastHistoryPage({
