@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/images/canlifal_network_image.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../../../vip_gold/presentation/providers/vip_membership_provider.dart';
+import 'voice_rooms_hero.dart';
 import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
@@ -13,31 +15,38 @@ class VoiceRoomsAppBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authControllerProvider).valueOrNull;
-    final userName = user?.display ?? VoiceRoomsMockData.userName;
-    final vipLevel = ref.watch(vipTierProvider).index + 1;
-    final notificationCount = ref.watch(notificationsUnreadCountProvider);
-    final avatarUrl = user?.avatarUrl;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        VoiceRoomsUiTokens.padScreenH,
-        8,
-        VoiceRoomsUiTokens.padScreenH,
-        4,
+    final userName = ref.watch(
+      authControllerProvider.select(
+        (a) => a.valueOrNull?.display ?? VoiceRoomsMockData.userName,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _ProfileAvatar(
-            userName: userName,
-            vipLevel: vipLevel,
-            avatarUrl: avatarUrl,
-          ),
-          const SizedBox(width: VoiceRoomsUiTokens.gapMd),
-          const Expanded(child: _TitleBlock()),
-          _ActionIcons(notificationCount: notificationCount),
-        ],
+    );
+    final vipLevel = ref.watch(vipTierProvider.select((t) => t.index + 1));
+    final notificationCount = ref.watch(notificationsUnreadCountProvider);
+    final avatarUrl = ref.watch(
+      authControllerProvider.select((a) => a.valueOrNull?.avatarUrl),
+    );
+
+    return RepaintBoundary(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          VoiceRoomsUiTokens.padScreenH,
+          8,
+          VoiceRoomsUiTokens.padScreenH,
+          4,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ProfileAvatar(
+              userName: userName,
+              vipLevel: vipLevel,
+              avatarUrl: avatarUrl,
+            ),
+            const SizedBox(width: VoiceRoomsUiTokens.gapMd),
+            const Expanded(child: _TitleBlock()),
+            _ActionIcons(notificationCount: notificationCount),
+          ],
+        ),
       ),
     );
   }
@@ -56,10 +65,11 @@ class _ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final url = avatarUrl?.trim() ?? '';
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Hero(
+        VoiceRoomsHero(
           tag: 'voice_rooms_profile',
           child: Container(
             width: 48,
@@ -72,24 +82,26 @@ class _ProfileAvatar extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.25),
                 width: 2,
               ),
-              image: avatarUrl != null && avatarUrl!.trim().isNotEmpty
-                  ? DecorationImage(
-                      image: NetworkImage(avatarUrl!),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
             ),
+            clipBehavior: Clip.antiAlias,
             alignment: Alignment.center,
-            child: avatarUrl == null || avatarUrl!.trim().isEmpty
-                ? Text(
+            child: url.isNotEmpty
+                ? CanlifalNetworkImage(
+                    url: url,
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                    thumbnailWidth: 96,
+                    fadeIn: false,
+                  )
+                : Text(
                     userName.characters.first,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
                       fontSize: 20,
                     ),
-                  )
-                : null,
+                  ),
           ),
         ),
         Positioned(

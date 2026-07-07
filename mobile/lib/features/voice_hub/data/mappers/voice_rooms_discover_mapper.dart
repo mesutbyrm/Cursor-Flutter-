@@ -117,6 +117,7 @@ abstract final class VoiceRoomsDiscoverMapper {
             ? VoiceRoomsUiTokens.onlineGreen
             : VoiceRoomsUiTokens.textMuted,
         avatarColor: theme,
+        avatarUrl: r.ownerAvatarUrl ?? r.backgroundImageUrl,
       );
     }).toList();
   }

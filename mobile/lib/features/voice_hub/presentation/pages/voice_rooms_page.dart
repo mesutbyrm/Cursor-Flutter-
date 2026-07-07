@@ -1,13 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/images/canlifal_image_prefetch.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
-import '../../domain/repositories/voice_rooms_discover_repository.dart';
+import '../performance/voice_rooms_perf.dart';
 import '../providers/voice_rooms_discover_providers.dart';
 import '../widgets/voice_rooms_ui/voice_rooms_ui.dart';
 
-/// Sesli Odalar ana ekranı — Premium 2026 UI (Abacus AI API).
+/// Sesli Odalar ana ekranı — Premium 2026 UI + TikTok seviyesi performans.
 class VoiceRoomsPage extends ConsumerStatefulWidget {
   const VoiceRoomsPage({super.key});
 
@@ -15,16 +18,96 @@ class VoiceRoomsPage extends ConsumerStatefulWidget {
   ConsumerState<VoiceRoomsPage> createState() => _VoiceRoomsPageState();
 }
 
-class _VoiceRoomsPageState extends ConsumerState<VoiceRoomsPage> {
+class _VoiceRoomsPageState extends ConsumerState<VoiceRoomsPage>
+    with AutomaticKeepAliveClientMixin {
+  final _scroll = ScrollController();
   VoiceRoomsNavItem _nav = VoiceRoomsNavItem.voice;
+  var _prefetchedImages = false;
+  var _sidebarReady = false;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_onScroll);
+    Future<void>.delayed(VoiceRoomsPerf.sidebarLazyDelay, () {
+      if (mounted) setState(() => _sidebarReady = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _scroll.removeListener(_onScroll);
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scroll.hasClients) return;
+    final pos = _scroll.position;
+    if (pos.pixels < pos.maxScrollExtent - VoiceRoomsPerf.scrollPreloadPx) {
+      return;
+    }
+    ref.read(voiceRoomsDiscoverProvider.notifier).loadMoreNearby();
+  }
+
+  void _prefetchRoomImages(List<VoiceRoomEntity> rooms) {
+    if (_prefetchedImages || !mounted) return;
+    _prefetchedImages = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final urls = rooms
+          .map((r) => r.backgroundImageUrl ?? r.ownerAvatarUrl)
+          .whereType<String>()
+          .where((u) => u.trim().isNotEmpty)
+          .take(VoiceRoomsPerf.imagePrefetchMax);
+      unawaited(
+        prefetchCanlifalImages(
+          context,
+          urls: urls,
+          thumbnailWidth: VoiceRoomsPerf.imageThumbnailWidth,
+        ),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final discover = ref.watch(voiceRoomsDiscoverProvider);
-    final notifier = ref.read(voiceRoomsDiscoverProvider.notifier);
+    super.build(context);
+
+    ref.listen(
+      voiceRoomsDiscoverProvider.select((s) => s.allRooms),
+      (prev, next) {
+        if (next.isNotEmpty && next != prev) {
+          _prefetchRoomImages(next);
+        }
+      },
+    );
+
     final width = MediaQuery.sizeOf(context).width;
     final wide = width >= 720;
-    final bootstrapping = discover.isBootstrapping && discover.categories.isEmpty;
+    final bootstrapping = ref.watch(
+      voiceRoomsDiscoverProvider.select(
+        (s) => s.isBootstrapping && s.categories.isEmpty,
+      ),
+    );
+    final nearbyRooms = ref.watch(
+      voiceRoomsDiscoverProvider.select((s) => s.nearbyRooms),
+    );
+    final isLoadingMore = ref.watch(
+      voiceRoomsDiscoverProvider.select((s) => s.isLoadingMore),
+    );
+    final allRooms = ref.watch(
+      voiceRoomsDiscoverProvider.select((s) => s.allRooms),
+    );
+
+    final sidebarPad = wide
+        ? (width - VoiceRoomsUiTokens.padScreenH * 2) * 3 / 8 +
+            VoiceRoomsUiTokens.gapLg +
+            VoiceRoomsUiTokens.padScreenH
+        : 0.0;
 
     return Theme(
       data: Theme.of(context).copyWith(
@@ -43,87 +126,104 @@ class _VoiceRoomsPageState extends ConsumerState<VoiceRoomsPage> {
               child: RefreshIndicator(
                 color: VoiceRoomsUiTokens.purpleGlow,
                 backgroundColor: VoiceRoomsUiTokens.bgAmoled,
-                onRefresh: notifier.refresh,
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: (n) {
-                    if (n is ScrollEndNotification || n is ScrollUpdateNotification) {
-                      final m = n.metrics;
-                      if (m.pixels >= m.maxScrollExtent - 280) {
-                        notifier.loadMoreNearby();
-                      }
-                    }
-                    return false;
-                  },
-                  child: CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(
-                      parent: BouncingScrollPhysics(),
+                onRefresh: ref.read(voiceRoomsDiscoverProvider.notifier).refresh,
+                child: CustomScrollView(
+                  controller: _scroll,
+                  physics: VoiceRoomsPerf.scrollPhysics,
+                  scrollCacheExtent: VoiceRoomsPerf.scrollCacheExtent,
+                  slivers: [
+                    const SliverToBoxAdapter(child: VoiceRoomsAppBar()),
+                    const SliverToBoxAdapter(child: VoiceRoomsCategorySection()),
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                    const SliverToBoxAdapter(child: VoiceRoomsFeaturedSection()),
+                    const SliverToBoxAdapter(child: VoiceRoomsPopularSection()),
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: VoiceRoomsUiTokens.gapSm),
                     ),
-                    slivers: [
-                      const SliverToBoxAdapter(child: VoiceRoomsAppBar()),
-                      if (bootstrapping)
-                        const SliverToBoxAdapter(
-                          child: VoiceRoomsCategorySkeleton(),
+                    if (bootstrapping)
+                      const SliverToBoxAdapter(child: VoiceRoomsNearbySkeleton())
+                    else ...[
+                      if (wide)
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: VoiceRoomsUiTokens.padScreenH,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Expanded(
+                                  flex: 5,
+                                  child: VoiceRoomsNearbyTabsSection(),
+                                ),
+                                const SizedBox(width: VoiceRoomsUiTokens.gapLg),
+                                Expanded(
+                                  flex: 3,
+                                  child: _sidebarReady
+                                      ? const VoiceRoomsSidebarSection()
+                                      : const VoiceRoomsSidebarSkeleton(),
+                                ),
+                              ],
+                            ),
+                          ),
                         )
                       else
-                        SliverToBoxAdapter(
-                          child: CategorySelector(
-                            categories: discover.categories,
-                            selectedIndex: discover.categoryIndex,
-                            onSelected: notifier.selectCategory,
+                        const SliverToBoxAdapter(
+                          child: VoiceRoomsNearbyTabsSection(),
+                        ),
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: VoiceRoomsUiTokens.gapMd),
+                      ),
+                      SliverPadding(
+                        padding: EdgeInsets.only(
+                          left: VoiceRoomsUiTokens.padScreenH,
+                          right: wide
+                              ? sidebarPad
+                              : VoiceRoomsUiTokens.padScreenH,
+                        ),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              if (index >= nearbyRooms.length) {
+                                return const _NearbyLoadMoreShimmer();
+                              }
+                              final room = nearbyRooms[index];
+                              return RepaintBoundary(
+                                key: ValueKey('nearby_${room.id}'),
+                                child: NearbyRoomTileCard(
+                                  room: room,
+                                  onJoin: () => _openRoom(
+                                    context,
+                                    allRooms,
+                                    room.id,
+                                  ),
+                                ),
+                              );
+                            },
+                            childCount:
+                                nearbyRooms.length + (isLoadingMore ? 1 : 0),
+                            addAutomaticKeepAlives: true,
+                            addRepaintBoundaries: false,
                           ),
                         ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                      if (bootstrapping)
-                        const SliverToBoxAdapter(
-                          child: VoiceRoomsFeaturedSkeleton(),
-                        )
-                      else
-                        SliverToBoxAdapter(
-                          child: FeaturedBanner(items: discover.featured),
-                        ),
-                      if (bootstrapping)
-                        const SliverToBoxAdapter(
-                          child: VoiceRoomsPopularSkeleton(),
-                        )
-                      else
-                        SliverToBoxAdapter(
-                          child: PopularRoomsCarousel(rooms: discover.popular),
-                        ),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: bootstrapping
-                              ? (wide
-                                  ? _WideSkeleton()
-                                  : const _NarrowSkeleton())
-                              : wide
-                                  ? _WideContent(
-                                      discover: discover,
-                                      onTabChanged: (i) => notifier
-                                          .selectNearbyTab(_tabFromIndex(i)),
-                                      onJoinNearby: (item) => _openRoom(
-                                        context,
-                                        ref,
-                                        discover.allRooms,
-                                        item.id,
-                                      ),
-                                    )
-                                  : _NarrowContent(
-                                      discover: discover,
-                                      onTabChanged: (i) => notifier
-                                          .selectNearbyTab(_tabFromIndex(i)),
-                                      onJoinNearby: (item) => _openRoom(
-                                        context,
-                                        ref,
-                                        discover.allRooms,
-                                        item.id,
-                                      ),
-                                    ),
-                        ),
                       ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 140)),
+                      if (!wide)
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              VoiceRoomsUiTokens.padScreenH,
+                              VoiceRoomsUiTokens.gapLg,
+                              VoiceRoomsUiTokens.padScreenH,
+                              0,
+                            ),
+                            child: _sidebarReady
+                                ? const VoiceRoomsSidebarSection()
+                                : const VoiceRoomsSidebarSkeleton(),
+                          ),
+                        ),
                     ],
-                  ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 140)),
+                  ],
                 ),
               ),
             ),
@@ -143,12 +243,8 @@ class _VoiceRoomsPageState extends ConsumerState<VoiceRoomsPage> {
     );
   }
 
-  VoiceRoomsNearbyTab _tabFromIndex(int i) =>
-      VoiceRoomsNearbyTab.values[i.clamp(0, VoiceRoomsNearbyTab.values.length - 1)];
-
   void _openRoom(
     BuildContext context,
-    WidgetRef ref,
     List<VoiceRoomEntity> rooms,
     String roomId,
   ) {
@@ -164,34 +260,29 @@ class _VoiceRoomsPageState extends ConsumerState<VoiceRoomsPage> {
   }
 }
 
-class _WideSkeleton extends StatelessWidget {
+class _NearbyLoadMoreShimmer extends StatelessWidget {
+  const _NearbyLoadMoreShimmer();
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: VoiceRoomsUiTokens.padScreenH),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Expanded(flex: 5, child: VoiceRoomsNearbySkeleton()),
-          SizedBox(width: VoiceRoomsUiTokens.gapLg),
-          Expanded(flex: 3, child: VoiceRoomsSidebarSkeleton()),
-        ],
-      ),
+    return const Padding(
+      padding: EdgeInsets.only(bottom: VoiceRoomsUiTokens.gapMd),
+      child: _ShimmerTile(),
     );
   }
 }
 
-class _NarrowSkeleton extends StatelessWidget {
-  const _NarrowSkeleton();
+class _ShimmerTile extends StatelessWidget {
+  const _ShimmerTile();
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
-      children: [
-        VoiceRoomsNearbySkeleton(),
-        SizedBox(height: VoiceRoomsUiTokens.gapLg),
-        VoiceRoomsSidebarSkeleton(),
-      ],
+    return Container(
+      height: 88,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(VoiceRoomsUiTokens.radiusMd),
+        color: const Color(0xFF141414),
+      ),
     );
   }
 }
@@ -201,157 +292,66 @@ class _AmbientBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        const ColoredBox(color: VoiceRoomsUiTokens.bgAmoled),
-        Positioned(
-          top: -100,
-          right: -60,
-          child: Container(
-            width: 240,
-            height: 240,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: VoiceRoomsUiTokens.purpleGlow.withValues(alpha: 0.22),
-                  blurRadius: 120,
-                  spreadRadius: 30,
-                ),
-              ],
-            ),
-          ),
-        ),
-        Positioned(
-          top: 280,
-          left: -80,
-          child: Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: VoiceRoomsUiTokens.magenta.withValues(alpha: 0.12),
-                  blurRadius: 100,
-                  spreadRadius: 20,
-                ),
-              ],
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 120,
-          right: -40,
-          child: Container(
-            width: 160,
-            height: 160,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: VoiceRoomsUiTokens.blue.withValues(alpha: 0.10),
-                  blurRadius: 90,
-                  spreadRadius: 16,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _WideContent extends StatelessWidget {
-  const _WideContent({
-    required this.discover,
-    required this.onTabChanged,
-    required this.onJoinNearby,
-  });
-
-  final VoiceRoomsDiscoverViewState discover;
-  final ValueChanged<int> onTabChanged;
-  final ValueChanged<NearbyRoomItem> onJoinNearby;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: VoiceRoomsUiTokens.padScreenH),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return RepaintBoundary(
+      child: Stack(
         children: [
-          Expanded(
-            flex: 5,
-            child: NearbyRoomsList(
-              rooms: discover.nearbyRooms,
-              tabs: VoiceRoomsMockData.nearbyTabs,
-              selectedTab: discover.nearbyTab.index,
-              onTabChanged: onTabChanged,
-              isLoadingMore: discover.isLoadingMore,
-              onJoin: onJoinNearby,
+          const ColoredBox(color: VoiceRoomsUiTokens.bgAmoled),
+          Positioned(
+            top: -100,
+            right: -60,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: VoiceRoomsUiTokens.purpleGlow.withValues(alpha: 0.22),
+                    blurRadius: 120,
+                    spreadRadius: 30,
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(width: VoiceRoomsUiTokens.gapLg),
-          Expanded(
-            flex: 3,
-            child: Column(
-              children: [
-                const MyRoomCard(),
-                const SizedBox(height: VoiceRoomsUiTokens.gapMd),
-                TrendingTopicsCard(topics: discover.trends),
-                const SizedBox(height: VoiceRoomsUiTokens.gapMd),
-                ActiveSpeakersCard(speakers: discover.speakers),
-              ],
+          Positioned(
+            top: 280,
+            left: -80,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: VoiceRoomsUiTokens.magenta.withValues(alpha: 0.12),
+                    blurRadius: 100,
+                    spreadRadius: 20,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 120,
+            right: -40,
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: VoiceRoomsUiTokens.blue.withValues(alpha: 0.10),
+                    blurRadius: 90,
+                    spreadRadius: 16,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _NarrowContent extends StatelessWidget {
-  const _NarrowContent({
-    required this.discover,
-    required this.onTabChanged,
-    required this.onJoinNearby,
-  });
-
-  final VoiceRoomsDiscoverViewState discover;
-  final ValueChanged<int> onTabChanged;
-  final ValueChanged<NearbyRoomItem> onJoinNearby;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        NearbyRoomsList(
-          rooms: discover.nearbyRooms,
-          tabs: VoiceRoomsMockData.nearbyTabs,
-          selectedTab: discover.nearbyTab.index,
-          onTabChanged: onTabChanged,
-          isLoadingMore: discover.isLoadingMore,
-          onJoin: onJoinNearby,
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            VoiceRoomsUiTokens.padScreenH,
-            VoiceRoomsUiTokens.gapLg,
-            VoiceRoomsUiTokens.padScreenH,
-            0,
-          ),
-          child: Column(
-            children: [
-              const MyRoomCard(),
-              const SizedBox(height: VoiceRoomsUiTokens.gapMd),
-              TrendingTopicsCard(topics: discover.trends),
-              const SizedBox(height: VoiceRoomsUiTokens.gapMd),
-              ActiveSpeakersCard(speakers: discover.speakers),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

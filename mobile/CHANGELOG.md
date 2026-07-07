@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.502+506 (2026-07-07)
+
+### Sesli Odalar — TikTok seviyesi performans
+
+- **İlk kare:** Progressive bootstrap (odalar önce, trend/konuşmacı arka planda) + cache-first
+- **Scroll:** `SliverList` lazy yükleme, `shrinkWrap` kaldırıldı; scroll jank kaynakları (`TweenAnimationBuilder`) temizlendi
+- **Rebuild:** Riverpod `select` ile bölüm bazlı izolasyon; `AutomaticKeepAliveClientMixin`
+- **GPU:** `RepaintBoundary`, Hero flight cache, ambient arka plan izolasyonu
+- **Görseller:** `CanlifalNetworkImage` + `prefetchCanlifalImages` ön yükleme
+
 ## 1.0.501+505 (2026-07-07)
 
 ### Sesli Odalar — Abacus AI API entegrasyonu (UI aynı)

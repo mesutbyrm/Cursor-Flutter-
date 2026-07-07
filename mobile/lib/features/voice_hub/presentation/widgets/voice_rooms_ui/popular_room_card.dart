@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'voice_rooms_hero.dart';
 import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
@@ -19,7 +20,7 @@ class PopularRoomCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Hero(
+    return VoiceRoomsHero(
       tag: 'popular_${room.id}',
       child: Material(
         color: Colors.transparent,
@@ -27,8 +28,7 @@ class PopularRoomCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(VoiceRoomsUiTokens.radiusLg),
           splashColor: room.themeColor.withValues(alpha: 0.25),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 280),
+          child: Container(
             width: width,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(VoiceRoomsUiTokens.radiusLg),

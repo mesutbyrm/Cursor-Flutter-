@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../performance/voice_rooms_perf.dart';
 import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
+import 'voice_rooms_hero.dart';
 
 class FeaturedBanner extends StatelessWidget {
   const FeaturedBanner({super.key, required this.items});
@@ -18,6 +20,7 @@ class FeaturedBanner extends StatelessWidget {
       height: 148,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
+        scrollCacheExtent: VoiceRoomsPerf.scrollCacheExtent,
         padding: const EdgeInsets.symmetric(
           horizontal: VoiceRoomsUiTokens.padScreenH,
         ),
@@ -30,7 +33,12 @@ class FeaturedBanner extends StatelessWidget {
                   ? 0
                   : VoiceRoomsUiTokens.gapMd,
             ),
-            child: _FeaturedCard(item: item, width: cardWidth.clamp(160, 280)),
+            child: RepaintBoundary(
+              child: _FeaturedCard(
+                item: item,
+                width: cardWidth.clamp(160, 280),
+              ),
+            ),
           );
         },
       ),
@@ -46,7 +54,7 @@ class _FeaturedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Hero(
+    return VoiceRoomsHero(
       tag: 'featured_${item.id}',
       child: Material(
         color: Colors.transparent,
@@ -54,8 +62,7 @@ class _FeaturedCard extends StatelessWidget {
           onTap: () {},
           borderRadius: BorderRadius.circular(VoiceRoomsUiTokens.radiusLg),
           splashColor: item.glowColor.withValues(alpha: 0.2),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
+          child: Container(
             width: width,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(VoiceRoomsUiTokens.radiusLg),

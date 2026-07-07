@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
@@ -8,6 +10,9 @@ import '../../data/repositories/voice_rooms_discover_repository_impl.dart';
 import '../../domain/repositories/voice_rooms_discover_repository.dart';
 import '../../presentation/widgets/voice_rooms_ui/voice_rooms_mock_data.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+
+export '../../domain/repositories/voice_rooms_discover_repository.dart'
+    show VoiceRoomsNearbyTab;
 
 final voiceRoomsDiscoverRemoteProvider =
     Provider<VoiceRoomsDiscoverRemoteDataSource>((ref) {
@@ -101,19 +106,25 @@ class VoiceRoomsDiscoverNotifier extends StateNotifier<VoiceRoomsDiscoverViewSta
   VoiceRoomsDiscoverNotifier(this._repo) : super(const VoiceRoomsDiscoverViewState());
 
   final VoiceRoomsDiscoverRepository _repo;
+  var _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   Future<void> bootstrap({bool forceRefresh = false}) async {
-    state = state.copyWith(isBootstrapping: true, clearError: true);
+    if (!forceRefresh || state.categories.isEmpty) {
+      state = state.copyWith(isBootstrapping: true, clearError: true);
+    }
     try {
       final categoryId = state.selectedCategoryId;
-      final results = await Future.wait([
-        _repo.fetchDiscoverBundle(categoryId: categoryId, forceRefresh: forceRefresh),
-        _repo.fetchTrends(forceRefresh: forceRefresh),
-        _repo.fetchActiveSpeakers(forceRefresh: forceRefresh),
-      ]);
-      final bundle = results[0] as VoiceRoomsDiscoverBundle;
-      final trends = results[1] as List<TrendingTopicItem>;
-      final speakers = results[2] as List<ActiveSpeakerItem>;
+      final bundle = await _repo.fetchDiscoverBundle(
+        categoryId: categoryId,
+        forceRefresh: forceRefresh,
+      );
+      if (_disposed) return;
       final nearby = _repo.mapNearbyPage(
         rooms: bundle.allRooms,
         tab: state.nearbyTab,
@@ -125,8 +136,6 @@ class VoiceRoomsDiscoverNotifier extends StateNotifier<VoiceRoomsDiscoverViewSta
         featured: bundle.featured,
         popular: bundle.popular,
         allRooms: bundle.allRooms,
-        trends: trends,
-        speakers: speakers,
         nearbyRooms: nearby,
         nearbyPage: 0,
         hasMoreNearby: _repo.hasMoreNearby(
@@ -136,7 +145,9 @@ class VoiceRoomsDiscoverNotifier extends StateNotifier<VoiceRoomsDiscoverViewSta
         ),
         clearError: true,
       );
+      unawaited(_loadSecondary(forceRefresh: forceRefresh));
     } catch (e) {
+      if (_disposed) return;
       state = state.copyWith(
         isBootstrapping: false,
         error: e.toString(),
@@ -144,15 +155,29 @@ class VoiceRoomsDiscoverNotifier extends StateNotifier<VoiceRoomsDiscoverViewSta
     }
   }
 
+  Future<void> _loadSecondary({bool forceRefresh = false}) async {
+    try {
+      final results = await Future.wait([
+        _repo.fetchTrends(forceRefresh: forceRefresh),
+        _repo.fetchActiveSpeakers(forceRefresh: forceRefresh),
+      ]);
+      if (_disposed) return;
+      state = state.copyWith(
+        trends: results[0] as List<TrendingTopicItem>,
+        speakers: results[1] as List<ActiveSpeakerItem>,
+      );
+    } catch (_) {}
+  }
+
   Future<void> selectCategory(int index) async {
     if (index == state.categoryIndex) return;
-    state = state.copyWith(categoryIndex: index, isBootstrapping: true);
+    state = state.copyWith(categoryIndex: index);
     await bootstrap(forceRefresh: true);
   }
 
   Future<void> selectNearbyTab(VoiceRoomsNearbyTab tab) async {
     if (tab == state.nearbyTab) return;
-    state = state.copyWith(nearbyTab: tab, isBootstrapping: true);
+    state = state.copyWith(nearbyTab: tab);
     try {
       final nearby = _repo.mapNearbyPage(
         rooms: state.allRooms,
@@ -160,7 +185,6 @@ class VoiceRoomsDiscoverNotifier extends StateNotifier<VoiceRoomsDiscoverViewSta
         page: 0,
       );
       state = state.copyWith(
-        isBootstrapping: false,
         nearbyRooms: nearby,
         nearbyPage: 0,
         hasMoreNearby: _repo.hasMoreNearby(
@@ -170,7 +194,7 @@ class VoiceRoomsDiscoverNotifier extends StateNotifier<VoiceRoomsDiscoverViewSta
         ),
       );
     } catch (e) {
-      state = state.copyWith(isBootstrapping: false, error: e.toString());
+      state = state.copyWith(error: e.toString());
     }
   }
 
@@ -179,7 +203,6 @@ class VoiceRoomsDiscoverNotifier extends StateNotifier<VoiceRoomsDiscoverViewSta
       return;
     }
     state = state.copyWith(isLoadingMore: true);
-    await Future<void>.delayed(const Duration(milliseconds: 180));
     final nextPage = state.nearbyPage + 1;
     final nearby = _repo.mapNearbyPage(
       rooms: state.allRooms,
@@ -204,6 +227,7 @@ class VoiceRoomsDiscoverNotifier extends StateNotifier<VoiceRoomsDiscoverViewSta
 final voiceRoomsDiscoverProvider =
     StateNotifierProvider<VoiceRoomsDiscoverNotifier, VoiceRoomsDiscoverViewState>(
   (ref) {
+    ref.keepAlive();
     final notifier = VoiceRoomsDiscoverNotifier(
       ref.watch(voiceRoomsDiscoverRepositoryProvider),
     );

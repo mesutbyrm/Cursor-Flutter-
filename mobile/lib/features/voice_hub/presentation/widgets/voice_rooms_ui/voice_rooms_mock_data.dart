@@ -74,6 +74,7 @@ class NearbyRoomItem {
     required this.viewers,
     required this.ringColor,
     required this.avatarColor,
+    this.avatarUrl,
   });
 
   final String id;
@@ -84,6 +85,7 @@ class NearbyRoomItem {
   final String viewers;
   final Color ringColor;
   final Color avatarColor;
+  final String? avatarUrl;
 }
 
 class TrendingTopicItem {

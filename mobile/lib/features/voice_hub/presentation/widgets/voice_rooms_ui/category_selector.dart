@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../performance/voice_rooms_perf.dart';
 import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
@@ -22,6 +23,7 @@ class CategorySelector extends StatelessWidget {
       height: 88,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
+        scrollCacheExtent: VoiceRoomsPerf.scrollCacheExtent,
         padding: const EdgeInsets.symmetric(
           horizontal: VoiceRoomsUiTokens.padScreenH,
         ),
@@ -35,10 +37,12 @@ class CategorySelector extends StatelessWidget {
                   ? 0
                   : VoiceRoomsUiTokens.gapMd,
             ),
-            child: _CategoryChip(
-              item: item,
-              active: active,
-              onTap: () => onSelected(index),
+            child: RepaintBoundary(
+              child: _CategoryChip(
+                item: item,
+                active: active,
+                onTap: () => onSelected(index),
+              ),
             ),
           );
         },
