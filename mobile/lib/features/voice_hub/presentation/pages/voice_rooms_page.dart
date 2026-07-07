@@ -292,66 +292,12 @@ class _AmbientBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Stack(
-        children: [
-          const ColoredBox(color: VoiceRoomsUiTokens.bgAmoled),
-          Positioned(
-            top: -100,
-            right: -60,
-            child: Container(
-              width: 240,
-              height: 240,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: VoiceRoomsUiTokens.purpleGlow.withValues(alpha: 0.22),
-                    blurRadius: 120,
-                    spreadRadius: 30,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            top: 280,
-            left: -80,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: VoiceRoomsUiTokens.magenta.withValues(alpha: 0.12),
-                    blurRadius: 100,
-                    spreadRadius: 20,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 120,
-            right: -40,
-            child: Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: VoiceRoomsUiTokens.blue.withValues(alpha: 0.10),
-                    blurRadius: 90,
-                    spreadRadius: 16,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+    return const Stack(
+      fit: StackFit.expand,
+      children: [
+        VoiceDynamicGradientBackground(),
+        VoiceRoomParticleField(),
+      ],
     );
   }
 }

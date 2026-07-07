@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../performance/voice_rooms_perf.dart';
+import 'voice_rooms_fx.dart';
 import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
@@ -34,9 +35,12 @@ class FeaturedBanner extends StatelessWidget {
                   : VoiceRoomsUiTokens.gapMd,
             ),
             child: RepaintBoundary(
-              child: _FeaturedCard(
-                item: item,
-                width: cardWidth.clamp(160, 280),
+              child: VoiceNeonCard(
+                glowColor: item.glowColor,
+                child: _FeaturedCard(
+                  item: item,
+                  width: cardWidth.clamp(160, 280),
+                ),
               ),
             ),
           );

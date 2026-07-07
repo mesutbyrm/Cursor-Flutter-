@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'voice_rooms_fx.dart';
 import '../../performance/voice_rooms_perf.dart';
 import 'voice_rooms_mock_data.dart';
-import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
 
 class CategorySelector extends StatelessWidget {
@@ -102,10 +102,11 @@ class _CategoryChip extends StatelessWidget {
                       : null,
                 ),
                 child: Center(
-                  child: VoiceRoomsSvgIcons.icon(
-                    item.iconKey,
-                    size: 22,
-                    color: active ? Colors.white : item.colors.first,
+                  child: VoicePremiumCategoryIcon(
+                    iconKey: item.iconKey,
+                    colors: item.colors,
+                    active: active,
+                    showLottie: item.iconKey == 'music' && active,
                   ),
                 ),
               ),

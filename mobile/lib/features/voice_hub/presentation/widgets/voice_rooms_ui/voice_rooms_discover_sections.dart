@@ -26,11 +26,13 @@ class VoiceRoomsCategorySection extends ConsumerWidget {
     final selectedIndex = ref.watch(
       voiceRoomsDiscoverProvider.select((s) => s.categoryIndex),
     );
-    return VoiceRoomsPerf.section(
-      CategorySelector(
-        categories: categories,
-        selectedIndex: selectedIndex,
-        onSelected: ref.read(voiceRoomsDiscoverProvider.notifier).selectCategory,
+    return VoiceRoomsFx.sectionEnter(
+      VoiceRoomsPerf.section(
+        CategorySelector(
+          categories: categories,
+          selectedIndex: selectedIndex,
+          onSelected: ref.read(voiceRoomsDiscoverProvider.notifier).selectCategory,
+        ),
       ),
     );
   }
@@ -52,7 +54,10 @@ class VoiceRoomsFeaturedSection extends ConsumerWidget {
     final items = ref.watch(
       voiceRoomsDiscoverProvider.select((s) => s.featured),
     );
-    return VoiceRoomsPerf.section(FeaturedBanner(items: items));
+    return VoiceRoomsFx.sectionEnter(
+      VoiceRoomsPerf.section(FeaturedBanner(items: items)),
+      delayMs: 60,
+    );
   }
 }
 
@@ -72,7 +77,10 @@ class VoiceRoomsPopularSection extends ConsumerWidget {
     final rooms = ref.watch(
       voiceRoomsDiscoverProvider.select((s) => s.popular),
     );
-    return VoiceRoomsPerf.section(PopularRoomsCarousel(rooms: rooms));
+    return VoiceRoomsFx.sectionEnter(
+      VoiceRoomsPerf.section(PopularRoomsCarousel(rooms: rooms)),
+      delayMs: 120,
+    );
   }
 }
 
@@ -87,16 +95,19 @@ class VoiceRoomsSidebarSection extends ConsumerWidget {
     final speakers = ref.watch(
       voiceRoomsDiscoverProvider.select((s) => s.speakers),
     );
-    return VoiceRoomsPerf.section(
-      Column(
-        children: [
-          const MyRoomCard(),
-          const SizedBox(height: VoiceRoomsUiTokens.gapMd),
-          TrendingTopicsCard(topics: trends),
-          const SizedBox(height: VoiceRoomsUiTokens.gapMd),
-          ActiveSpeakersCard(speakers: speakers),
-        ],
+    return VoiceRoomsFx.sectionEnter(
+      VoiceRoomsPerf.section(
+        Column(
+          children: [
+            const MyRoomCard(),
+            const SizedBox(height: VoiceRoomsUiTokens.gapMd),
+            TrendingTopicsCard(topics: trends),
+            const SizedBox(height: VoiceRoomsUiTokens.gapMd),
+            ActiveSpeakersCard(speakers: speakers),
+          ],
+        ),
       ),
+      delayMs: 180,
     );
   }
 }

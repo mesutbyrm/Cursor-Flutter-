@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/images/canlifal_network_image.dart';
+import 'voice_rooms_fx.dart';
 import 'voice_rooms_hero.dart';
 import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
 
-/// Yakındaki oda listesi satır kartı — RepaintBoundary + Hero cache.
+/// Yakındaki oda listesi satır kartı — neon, canlı glow, ses seviyesi.
 class NearbyRoomTileCard extends StatelessWidget {
   const NearbyRoomTileCard({
     super.key,
@@ -19,128 +20,148 @@ class NearbyRoomTileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLive = room.ringColor == VoiceRoomsUiTokens.onlineGreen;
     return RepaintBoundary(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onJoin,
-          borderRadius: BorderRadius.circular(VoiceRoomsUiTokens.radiusMd),
-          splashColor: VoiceRoomsUiTokens.purpleGlow.withValues(alpha: 0.15),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: VoiceRoomsUiTokens.gapMd),
-            padding: const EdgeInsets.all(12),
-            decoration: VoiceRoomsUiTokens.glass(radius: VoiceRoomsUiTokens.radiusMd),
-            child: Row(
-              children: [
-                VoiceRoomsHero(
-                  tag: 'nearby_avatar_${room.id}',
-                  child: _RoomAvatar(room: room),
-                ),
-                const SizedBox(width: VoiceRoomsUiTokens.gapMd),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        room.title,
-                        style: const TextStyle(
-                          color: VoiceRoomsUiTokens.textPrimary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        room.subtitle,
-                        style: const TextStyle(
-                          color: VoiceRoomsUiTokens.textSecondary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 4,
-                        children: room.tags
-                            .map(
-                              (t) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
+      child: VoiceNeonCard(
+        glowColor: room.ringColor,
+        radius: VoiceRoomsUiTokens.radiusMd,
+        enabled: isLive,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onJoin,
+            borderRadius: BorderRadius.circular(VoiceRoomsUiTokens.radiusMd),
+            splashColor: VoiceRoomsUiTokens.purpleGlow.withValues(alpha: 0.15),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: VoiceRoomsUiTokens.gapMd),
+              padding: const EdgeInsets.all(12),
+              decoration: VoiceRoomsUiTokens.glass(radius: VoiceRoomsUiTokens.radiusMd),
+              child: Row(
+                children: [
+                  VoiceRoomsHero(
+                    tag: 'nearby_avatar_${room.id}',
+                    child: _RoomAvatar(room: room, isLive: isLive),
+                  ),
+                  const SizedBox(width: VoiceRoomsUiTokens.gapMd),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                room.title,
+                                style: const TextStyle(
+                                  color: VoiceRoomsUiTokens.textPrimary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.06),
-                                  borderRadius: BorderRadius.circular(
-                                    VoiceRoomsUiTokens.radiusPill,
-                                  ),
-                                ),
-                                child: Text(
-                                  t,
-                                  style: const TextStyle(
-                                    color: VoiceRoomsUiTokens.textSecondary,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            )
-                            .toList(),
+                            ),
+                            if (isLive) ...[
+                              const SizedBox(width: 6),
+                              VoiceMicLevelBars(
+                                width: 24,
+                                height: 12,
+                                color: room.ringColor,
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          room.subtitle,
+                          style: const TextStyle(
+                            color: VoiceRoomsUiTokens.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 4,
+                          children: room.tags
+                              .map(
+                                (t) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.06),
+                                    borderRadius: BorderRadius.circular(
+                                      VoiceRoomsUiTokens.radiusPill,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    t,
+                                    style: const TextStyle(
+                                      color: VoiceRoomsUiTokens.textSecondary,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          VoiceRoomsSvgIcons.icon(
+                            'location',
+                            size: 11,
+                            color: VoiceRoomsUiTokens.textMuted,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            room.distance,
+                            style: const TextStyle(
+                              color: VoiceRoomsUiTokens.textMuted,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          VoiceRoomsSvgIcons.icon(
+                            'eye',
+                            size: 11,
+                            color: VoiceRoomsUiTokens.textMuted,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            room.viewers,
+                            style: const TextStyle(
+                              color: VoiceRoomsUiTokens.textMuted,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      _JoinButton(onTap: onJoin),
                     ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        VoiceRoomsSvgIcons.icon(
-                          'location',
-                          size: 11,
-                          color: VoiceRoomsUiTokens.textMuted,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          room.distance,
-                          style: const TextStyle(
-                            color: VoiceRoomsUiTokens.textMuted,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        VoiceRoomsSvgIcons.icon(
-                          'eye',
-                          size: 11,
-                          color: VoiceRoomsUiTokens.textMuted,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          room.viewers,
-                          style: const TextStyle(
-                            color: VoiceRoomsUiTokens.textMuted,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _JoinButton(onTap: onJoin),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -150,14 +171,15 @@ class NearbyRoomTileCard extends StatelessWidget {
 }
 
 class _RoomAvatar extends StatelessWidget {
-  const _RoomAvatar({required this.room});
+  const _RoomAvatar({required this.room, required this.isLive});
 
   final NearbyRoomItem room;
+  final bool isLive;
 
   @override
   Widget build(BuildContext context) {
     final url = room.avatarUrl?.trim();
-    return Container(
+    final avatar = Container(
       width: 56,
       height: 56,
       decoration: BoxDecoration(
@@ -185,6 +207,12 @@ class _RoomAvatar extends StatelessWidget {
                 fontSize: 20,
               ),
             ),
+    );
+    return VoiceLiveAvatarGlow(
+      live: isLive,
+      glowColor: room.ringColor,
+      size: 56,
+      child: avatar,
     );
   }
 }

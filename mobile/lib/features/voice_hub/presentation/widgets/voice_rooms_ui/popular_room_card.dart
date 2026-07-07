@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'voice_rooms_fx.dart';
 import 'voice_rooms_hero.dart';
 import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_svg_icons.dart';
@@ -20,7 +21,9 @@ class PopularRoomCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return VoiceRoomsHero(
+    return VoiceNeonCard(
+      glowColor: room.themeColor,
+      child: VoiceRoomsHero(
       tag: 'popular_${room.id}',
       child: Material(
         color: Colors.transparent,
@@ -147,6 +150,7 @@ class PopularRoomCard extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

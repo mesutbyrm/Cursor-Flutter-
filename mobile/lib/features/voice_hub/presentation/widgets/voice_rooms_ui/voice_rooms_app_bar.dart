@@ -6,6 +6,7 @@ import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import 'voice_rooms_hero.dart';
+import 'voice_rooms_fx.dart';
 import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
@@ -156,11 +157,7 @@ class _TitleBlock extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 6),
-            VoiceRoomsSvgIcons.icon(
-              'soundwave',
-              size: 20,
-              color: VoiceRoomsUiTokens.purpleGlow,
-            ),
+            const VoiceSoundWaveBars(size: 20),
           ],
         ),
         const SizedBox(height: 4),

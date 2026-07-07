@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'voice_rooms_fx.dart';
 import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_ui_tokens.dart';
-import 'voice_glass_container.dart';
 
 class TrendingTopicsCard extends StatelessWidget {
   const TrendingTopicsCard({super.key, required this.topics});
@@ -11,9 +11,10 @@ class TrendingTopicsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return VoiceGlassContainer(
+    return VoiceGlassFxContainer(
       radius: VoiceRoomsUiTokens.radiusLg,
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+      glowColor: VoiceRoomsUiTokens.magenta,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

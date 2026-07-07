@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'voice_rooms_fx.dart';
 import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
-import 'voice_glass_container.dart';
 
 class ActiveSpeakersCard extends StatelessWidget {
   const ActiveSpeakersCard({super.key, required this.speakers});
@@ -12,19 +12,27 @@ class ActiveSpeakersCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return VoiceGlassContainer(
+    return VoiceGlassFxContainer(
       radius: VoiceRoomsUiTokens.radiusLg,
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+      glowColor: VoiceRoomsUiTokens.purpleGlow,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'En Aktif Konuşmacılar',
-            style: TextStyle(
-              color: VoiceRoomsUiTokens.textPrimary,
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'En Aktif Konuşmacılar',
+                  style: TextStyle(
+                    color: VoiceRoomsUiTokens.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const VoiceLottieAccent(size: 20),
+            ],
           ),
           const SizedBox(height: 10),
           ...speakers.map(_SpeakerRow.new),
@@ -76,6 +84,7 @@ class _SpeakerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isTop = speaker.rank <= 2;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -99,23 +108,28 @@ class _SpeakerRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: speaker.avatarColor,
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.2),
+          VoiceLiveAvatarGlow(
+            live: isTop,
+            glowColor: _rankColor,
+            size: 36,
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: speaker.avatarColor,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.2),
+                ),
               ),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              speaker.name.characters.first,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: 14,
+              alignment: Alignment.center,
+              child: Text(
+                speaker.name.characters.first,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                ),
               ),
             ),
           ),
@@ -132,6 +146,14 @@ class _SpeakerRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          if (isTop) ...[
+            VoiceMicLevelBars(
+              width: 22,
+              height: 12,
+              color: VoiceRoomsUiTokens.onlineGreen,
+            ),
+            const SizedBox(width: 6),
+          ],
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [

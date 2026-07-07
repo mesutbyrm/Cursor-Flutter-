@@ -1,6 +1,20 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.503+507 (2026-07-07)
+
+### Sesli Odalar — Premium FX katmanı
+
+- **Ses dalgası:** `VoiceSoundWaveBars` — AppBar, aktif kategori
+- **Canlı glow:** `VoiceLiveAvatarGlow` — online odalar ve top konuşmacılar
+- **Mikrofon seviyesi:** `VoiceMicLevelBars` — canlı oda / konuşmacı satırları
+- **Partikül + gradient:** `VoiceRoomParticleField`, `VoiceDynamicGradientBackground`
+- **3D neon kartlar:** `VoiceNeonCard` — popüler, öne çıkan, yakın odalar
+- **Glassmorphism:** `VoiceGlassFxContainer` — trend + konuşmacı kartları
+- **Lottie:** `VoiceLottieAccent` — müzik kategorisi, konuşmacı başlığı
+- **Geçişler:** `VoiceRoomsFx.sectionEnter` — akıcı fade/slide giriş animasyonları
+- **Premium ikonlar:** `VoicePremiumCategoryIcon` — neon mikrofon / kategori
+
 ## 1.0.502+506 (2026-07-07)
 
 ### Sesli Odalar — TikTok seviyesi performans
