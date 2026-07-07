@@ -15,5 +15,6 @@ export 'voice_glass_container.dart';
 export 'voice_rooms_app_bar.dart';
 export 'voice_rooms_bottom_nav.dart';
 export 'voice_rooms_mock_data.dart';
+export 'voice_rooms_skeleton.dart';
 export 'voice_rooms_svg_icons.dart';
 export 'voice_rooms_ui_tokens.dart';

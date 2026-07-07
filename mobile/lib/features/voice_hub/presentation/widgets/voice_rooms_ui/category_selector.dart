@@ -7,10 +7,12 @@ import 'voice_rooms_ui_tokens.dart';
 class CategorySelector extends StatelessWidget {
   const CategorySelector({
     super.key,
+    required this.categories,
     required this.selectedIndex,
     required this.onSelected,
   });
 
+  final List<VoiceCategoryItem> categories;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
 
@@ -23,13 +25,13 @@ class CategorySelector extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
           horizontal: VoiceRoomsUiTokens.padScreenH,
         ),
-        itemCount: VoiceRoomsMockData.categories.length,
+        itemCount: categories.length,
         itemBuilder: (context, index) {
-          final item = VoiceRoomsMockData.categories[index];
+          final item = categories[index];
           final active = index == selectedIndex;
           return Padding(
             padding: EdgeInsets.only(
-              right: index == VoiceRoomsMockData.categories.length - 1
+              right: index == categories.length - 1
                   ? 0
                   : VoiceRoomsUiTokens.gapMd,
             ),

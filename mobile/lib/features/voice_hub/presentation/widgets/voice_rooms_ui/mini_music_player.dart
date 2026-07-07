@@ -1,23 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../providers/chat_room_providers.dart';
 import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
 
-class MiniMusicPlayer extends StatefulWidget {
+class MiniMusicPlayer extends ConsumerStatefulWidget {
   const MiniMusicPlayer({super.key});
 
   @override
-  State<MiniMusicPlayer> createState() => _MiniMusicPlayerState();
+  ConsumerState<MiniMusicPlayer> createState() => _MiniMusicPlayerState();
 }
 
-class _MiniMusicPlayerState extends State<MiniMusicPlayer> {
+class _MiniMusicPlayerState extends ConsumerState<MiniMusicPlayer> {
   var _expanded = true;
-  var _playing = true;
   var _liked = false;
 
   @override
   Widget build(BuildContext context) {
+    final session = ref.watch(voiceRoomMusicSessionProvider);
+    final hasLive = session.hasActiveMusic && session.room != null;
+    final room = session.room;
+    final dj = session.dj;
+    final nowPlaying = dj.nowPlaying;
+
+    final title = hasLive ? room!.displayTitle : VoiceRoomsMockData.musicTitle;
+    final artist = hasLive
+        ? (nowPlaying?.requestedBy?.name.trim().isNotEmpty == true
+            ? '${nowPlaying!.requestedBy!.name} çalıyor'
+            : VoiceRoomsMockData.musicArtist)
+        : VoiceRoomsMockData.musicArtist;
+    final track = hasLive
+        ? (nowPlaying?.title.trim().isNotEmpty == true
+            ? nowPlaying!.title
+            : VoiceRoomsMockData.musicTrack)
+        : VoiceRoomsMockData.musicTrack;
+    final playing = hasLive ? dj.playing : true;
+
     final bottom = MediaQuery.paddingOf(context).bottom;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 280),
@@ -71,9 +91,17 @@ class _MiniMusicPlayerState extends State<MiniMusicPlayer> {
                   VoiceRoomsUiTokens.purpleGlow,
                   blur: 12,
                 ),
+                image: nowPlaying?.thumbUrl?.trim().isNotEmpty == true
+                    ? DecorationImage(
+                        image: NetworkImage(nowPlaying!.thumbUrl!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
               alignment: Alignment.center,
-              child: VoiceRoomsSvgIcons.icon('music', size: 18, color: Colors.white),
+              child: nowPlaying?.thumbUrl?.trim().isNotEmpty == true
+                  ? null
+                  : VoiceRoomsSvgIcons.icon('music', size: 18, color: Colors.white),
             ),
           ),
           const SizedBox(width: 10),
@@ -86,7 +114,7 @@ class _MiniMusicPlayerState extends State<MiniMusicPlayer> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${VoiceRoomsMockData.musicTitle} — ${VoiceRoomsMockData.musicArtist}',
+                    '$title — $artist',
                     style: const TextStyle(
                       color: VoiceRoomsUiTokens.textPrimary,
                       fontSize: 11,
@@ -96,7 +124,7 @@ class _MiniMusicPlayerState extends State<MiniMusicPlayer> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    VoiceRoomsMockData.musicTrack,
+                    track,
                     style: const TextStyle(
                       color: VoiceRoomsUiTokens.textMuted,
                       fontSize: 10,
@@ -132,7 +160,15 @@ class _MiniMusicPlayerState extends State<MiniMusicPlayer> {
           ),
           const SizedBox(width: 4),
           GestureDetector(
-            onTap: () => setState(() => _playing = !_playing),
+            onTap: () async {
+              if (!hasLive || room == null) return;
+              final ctrl = ref.read(voiceRoomLiveProvider(room.liveKey).notifier);
+              if (dj.playing) {
+                await ctrl.pauseMusic();
+              } else {
+                await ctrl.resumeMusic();
+              }
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 36,
@@ -144,7 +180,7 @@ class _MiniMusicPlayerState extends State<MiniMusicPlayer> {
               ),
               child: Center(
                 child: VoiceRoomsSvgIcons.icon(
-                  _playing ? 'play' : 'play',
+                  playing ? 'play' : 'play',
                   size: 18,
                   color: Colors.white,
                 ),

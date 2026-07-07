@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.501+505 (2026-07-07)
+
+### Sesli Odalar — Abacus AI API entegrasyonu (UI aynı)
+
+- **Veri katmanı:** Repository + RemoteDataSource + Mapper; `CacheFirstLoader` offline önbellek
+- **Riverpod:** `voiceRoomsDiscoverProvider` — kategori, odalar, trend, konuşmacı, sayfalama
+- **API:** `/api/chat/rooms`, `/api/trends`, `/api/leaderboards`; mini player `voiceRoomMusicSessionProvider`
+- **UX:** Skeleton + shimmer yükleme, sonsuz kaydırma (yakındaki odalar), pull-to-refresh
+- **Görsel:** Hiçbir UI bileşeni değiştirilmedi — yalnızca veri bağlandı
+
 ## 1.0.500+504 (2026-07-07)
 
 ### Sesli Odalar — Premium 2026 UI (mock)

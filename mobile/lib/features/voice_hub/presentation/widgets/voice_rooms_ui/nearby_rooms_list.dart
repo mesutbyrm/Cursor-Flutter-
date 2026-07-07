@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import 'nearby_room_tile_card.dart';
 import 'voice_rooms_mock_data.dart';
@@ -7,12 +8,20 @@ import 'voice_rooms_ui_tokens.dart';
 class NearbyRoomsList extends StatelessWidget {
   const NearbyRoomsList({
     super.key,
+    required this.rooms,
+    required this.tabs,
     required this.selectedTab,
     required this.onTabChanged,
+    this.isLoadingMore = false,
+    this.onJoin,
   });
 
+  final List<NearbyRoomItem> rooms;
+  final List<String> tabs;
   final int selectedTab;
   final ValueChanged<int> onTabChanged;
+  final bool isLoadingMore;
+  final ValueChanged<NearbyRoomItem>? onJoin;
 
   @override
   Widget build(BuildContext context) {
@@ -25,13 +34,11 @@ class NearbyRoomsList extends StatelessWidget {
             horizontal: VoiceRoomsUiTokens.padScreenH,
           ),
           child: Row(
-            children: List.generate(VoiceRoomsMockData.nearbyTabs.length, (i) {
+            children: List.generate(tabs.length, (i) {
               final active = i == selectedTab;
               return Padding(
                 padding: EdgeInsets.only(
-                  right: i == VoiceRoomsMockData.nearbyTabs.length - 1
-                      ? 0
-                      : VoiceRoomsUiTokens.gapSm,
+                  right: i == tabs.length - 1 ? 0 : VoiceRoomsUiTokens.gapSm,
                 ),
                 child: GestureDetector(
                   onTap: () => onTabChanged(i),
@@ -58,7 +65,7 @@ class NearbyRoomsList extends StatelessWidget {
                           : null,
                     ),
                     child: Text(
-                      VoiceRoomsMockData.nearbyTabs[i],
+                      tabs[i],
                       style: TextStyle(
                         color: active
                             ? Colors.white
@@ -80,9 +87,27 @@ class NearbyRoomsList extends StatelessWidget {
           padding: const EdgeInsets.symmetric(
             horizontal: VoiceRoomsUiTokens.padScreenH,
           ),
-          itemCount: VoiceRoomsMockData.nearbyRooms.length,
+          itemCount: rooms.length + (isLoadingMore ? 1 : 0),
           itemBuilder: (context, index) {
-            final room = VoiceRoomsMockData.nearbyRooms[index];
+            if (index >= rooms.length) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: VoiceRoomsUiTokens.gapMd),
+                child: Container(
+                  height: 88,
+                  decoration: BoxDecoration(
+                    borderRadius:
+                        BorderRadius.circular(VoiceRoomsUiTokens.radiusMd),
+                    color: const Color(0xFF141414),
+                  ),
+                )
+                    .animate(onPlay: (c) => c.repeat())
+                    .shimmer(
+                      duration: 1400.ms,
+                      color: VoiceRoomsUiTokens.purpleGlow.withValues(alpha: 0.14),
+                    ),
+              );
+            }
+            final room = rooms[index];
             return TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: 1),
               duration: Duration(milliseconds: 280 + index * 40),
@@ -94,7 +119,10 @@ class NearbyRoomsList extends StatelessWidget {
                   child: child,
                 ),
               ),
-              child: NearbyRoomTileCard(room: room, onJoin: () {}),
+              child: NearbyRoomTileCard(
+                room: room,
+                onJoin: () => onJoin?.call(room),
+              ),
             );
           },
         ),

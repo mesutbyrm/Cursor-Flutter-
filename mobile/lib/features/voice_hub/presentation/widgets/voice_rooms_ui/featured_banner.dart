@@ -5,7 +5,9 @@ import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
 
 class FeaturedBanner extends StatelessWidget {
-  const FeaturedBanner({super.key});
+  const FeaturedBanner({super.key, required this.items});
+
+  final List<FeaturedRoomItem> items;
 
   @override
   Widget build(BuildContext context) {
@@ -19,12 +21,12 @@ class FeaturedBanner extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
           horizontal: VoiceRoomsUiTokens.padScreenH,
         ),
-        itemCount: VoiceRoomsMockData.featured.length,
+        itemCount: items.length,
         itemBuilder: (context, index) {
-          final item = VoiceRoomsMockData.featured[index];
+          final item = items[index];
           return Padding(
             padding: EdgeInsets.only(
-              right: index == VoiceRoomsMockData.featured.length - 1
+              right: index == items.length - 1
                   ? 0
                   : VoiceRoomsUiTokens.gapMd,
             ),

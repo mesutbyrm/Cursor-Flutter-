@@ -6,7 +6,9 @@ import 'voice_rooms_ui_tokens.dart';
 import 'voice_glass_container.dart';
 
 class ActiveSpeakersCard extends StatelessWidget {
-  const ActiveSpeakersCard({super.key});
+  const ActiveSpeakersCard({super.key, required this.speakers});
+
+  final List<ActiveSpeakerItem> speakers;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +27,7 @@ class ActiveSpeakersCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          ...VoiceRoomsMockData.activeSpeakers.map(_SpeakerRow.new),
+          ...speakers.map(_SpeakerRow.new),
           const SizedBox(height: 6),
           Material(
             color: Colors.transparent,

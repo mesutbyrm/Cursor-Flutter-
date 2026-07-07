@@ -226,6 +226,7 @@ abstract final class ApiEndpoints {
 
   /// Ana sayfa trend videolar (canlifal.com).
   static const trendVideos = '/api/trend-videos';
+  static const trends = '/api/trends';
 
   /// Geriye dönük (self-hosted seed).
   static const socialAnnouncements = '/api/social/announcements';

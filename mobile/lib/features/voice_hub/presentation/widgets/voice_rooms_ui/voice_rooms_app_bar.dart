@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
 
-class VoiceRoomsAppBar extends StatelessWidget {
+class VoiceRoomsAppBar extends ConsumerWidget {
   const VoiceRoomsAppBar({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authControllerProvider).valueOrNull;
+    final userName = user?.display ?? VoiceRoomsMockData.userName;
+    final vipLevel = ref.watch(vipTierProvider).index + 1;
+    final notificationCount = ref.watch(notificationsUnreadCountProvider);
+    final avatarUrl = user?.avatarUrl;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         VoiceRoomsUiTokens.padScreenH,
@@ -19,10 +29,14 @@ class VoiceRoomsAppBar extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _ProfileAvatar(),
+          _ProfileAvatar(
+            userName: userName,
+            vipLevel: vipLevel,
+            avatarUrl: avatarUrl,
+          ),
           const SizedBox(width: VoiceRoomsUiTokens.gapMd),
           const Expanded(child: _TitleBlock()),
-          _ActionIcons(),
+          _ActionIcons(notificationCount: notificationCount),
         ],
       ),
     );
@@ -30,6 +44,16 @@ class VoiceRoomsAppBar extends StatelessWidget {
 }
 
 class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({
+    required this.userName,
+    required this.vipLevel,
+    this.avatarUrl,
+  });
+
+  final String userName;
+  final int vipLevel;
+  final String? avatarUrl;
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -48,16 +72,24 @@ class _ProfileAvatar extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.25),
                 width: 2,
               ),
+              image: avatarUrl != null && avatarUrl!.trim().isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(avatarUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
             alignment: Alignment.center,
-            child: Text(
-              VoiceRoomsMockData.userName.characters.first,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: 20,
-              ),
-            ),
+            child: avatarUrl == null || avatarUrl!.trim().isEmpty
+                ? Text(
+                    userName.characters.first,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20,
+                    ),
+                  )
+                : null,
           ),
         ),
         Positioned(
@@ -76,7 +108,7 @@ class _ProfileAvatar extends StatelessWidget {
                 ),
               ),
               child: Text(
-                'VIP ${VoiceRoomsMockData.vipLevel}',
+                'VIP $vipLevel',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 9,
@@ -135,14 +167,18 @@ class _TitleBlock extends StatelessWidget {
 }
 
 class _ActionIcons extends StatelessWidget {
+  const _ActionIcons({required this.notificationCount});
+
+  final int notificationCount;
+
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _IconButton(iconKey: 'search'),
-        _IconButton(iconKey: 'trophy'),
-        _NotificationButton(),
+        const _IconButton(iconKey: 'search'),
+        const _IconButton(iconKey: 'trophy'),
+        _NotificationButton(count: notificationCount),
       ],
     );
   }
@@ -175,6 +211,10 @@ class _IconButton extends StatelessWidget {
 }
 
 class _NotificationButton extends StatelessWidget {
+  const _NotificationButton({required this.count});
+
+  final int count;
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -193,29 +233,31 @@ class _NotificationButton extends StatelessWidget {
                 size: 22,
                 color: VoiceRoomsUiTokens.textPrimary,
               ),
-              Positioned(
-                top: -4,
-                right: -6,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: VoiceRoomsUiTokens.badgeRed,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: VoiceRoomsUiTokens.glowShadow(
-                      VoiceRoomsUiTokens.badgeRed,
-                      blur: 8,
+              if (count > 0)
+                Positioned(
+                  top: -4,
+                  right: -6,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: VoiceRoomsUiTokens.badgeRed,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: VoiceRoomsUiTokens.glowShadow(
+                        VoiceRoomsUiTokens.badgeRed,
+                        blur: 8,
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    '${VoiceRoomsMockData.notificationCount}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w800,
+                    child: Text(
+                      count > 99 ? '99+' : '$count',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

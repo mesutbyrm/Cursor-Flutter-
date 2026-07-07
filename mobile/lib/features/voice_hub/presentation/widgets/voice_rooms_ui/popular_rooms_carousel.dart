@@ -6,7 +6,9 @@ import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
 
 class PopularRoomsCarousel extends StatelessWidget {
-  const PopularRoomsCarousel({super.key});
+  const PopularRoomsCarousel({super.key, required this.rooms});
+
+  final List<PopularRoomItem> rooms;
 
   @override
   Widget build(BuildContext context) {
@@ -74,12 +76,12 @@ class PopularRoomsCarousel extends StatelessWidget {
             padding: const EdgeInsets.symmetric(
               horizontal: VoiceRoomsUiTokens.padScreenH,
             ),
-            itemCount: VoiceRoomsMockData.popularRooms.length,
+            itemCount: rooms.length,
             itemBuilder: (context, index) {
-              final room = VoiceRoomsMockData.popularRooms[index];
+              final room = rooms[index];
               return Padding(
                 padding: EdgeInsets.only(
-                  right: index == VoiceRoomsMockData.popularRooms.length - 1
+                  right: index == rooms.length - 1
                       ? 0
                       : VoiceRoomsUiTokens.gapMd,
                 ),

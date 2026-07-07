@@ -5,7 +5,9 @@ import 'voice_rooms_ui_tokens.dart';
 import 'voice_glass_container.dart';
 
 class TrendingTopicsCard extends StatelessWidget {
-  const TrendingTopicsCard({super.key});
+  const TrendingTopicsCard({super.key, required this.topics});
+
+  final List<TrendingTopicItem> topics;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +26,7 @@ class TrendingTopicsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          ...VoiceRoomsMockData.trendingTopics.map(
+          ...topics.map(
             (topic) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Material(
