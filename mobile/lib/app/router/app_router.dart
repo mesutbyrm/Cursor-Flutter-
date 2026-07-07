@@ -80,6 +80,7 @@ import '../../features/profile/presentation/pages/profile_broadcast_history_page
 import '../../features/profile/presentation/pages/profile_broadcaster_stats_page.dart';
 import '../../features/profile/presentation/pages/profile_earnings_page.dart';
 import '../../features/profile/presentation/pages/profile_edit_page.dart';
+import '../../features/profile/presentation/profile_hub/profile_qr_page.dart';
 import '../../features/profile/presentation/pages/profile_equipment_page.dart';
 import '../../features/profile/presentation/pages/profile_follow_list_page.dart';
 import '../../features/profile/presentation/pages/profile_gifts_page.dart';
@@ -530,6 +531,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/invite-friends',
         builder: (context, state) => const InviteFriendsPage(),
+      ),
+      GoRoute(
+        path: '/profile/qr',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const ProfileQrPage(),
+        ),
       ),
       GoRoute(
         path: '/profile/edit',

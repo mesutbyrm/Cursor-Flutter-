@@ -4,6 +4,7 @@ import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../../../core/pagination/paged_result.dart';
+import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
@@ -148,6 +149,34 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     return stats;
   }
+
+  @override
+  Future<ProfileExtendedEntity> extendedProfile() async {
+    final ext = await _remote.extendedProfile();
+    if (ext.dailyStreak > 0) return ext;
+    final streak = await _remote.fetchDailyStreak();
+    if (streak <= 0) return ext;
+    return ProfileExtendedEntity(
+      city: ext.city,
+      zodiacSign: ext.zodiacSign,
+      birthDate: ext.birthDate,
+      birthTime: ext.birthTime,
+      joinedAt: ext.joinedAt,
+      phone: ext.phone,
+      isOnline: ext.isOnline,
+      dailyStreak: streak,
+      vipLevel: ext.vipLevel,
+      coverImage: ext.coverImage,
+      raw: ext.raw,
+    );
+  }
+
+  @override
+  Future<ProfileUserStatisticsEntity> userStatistics() =>
+      _remote.userStatistics();
+
+  @override
+  Future<void> deleteAvatar() => _remote.deleteAvatar();
 
   @override
   Future<List<GiftReceivedSummaryEntity>> giftsReceivedSummary() =>
