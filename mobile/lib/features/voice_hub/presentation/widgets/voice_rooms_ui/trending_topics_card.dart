@@ -1,0 +1,68 @@
+import 'package:flutter/material.dart';
+
+import 'voice_rooms_mock_data.dart';
+import 'voice_rooms_ui_tokens.dart';
+import 'voice_glass_container.dart';
+
+class TrendingTopicsCard extends StatelessWidget {
+  const TrendingTopicsCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return VoiceGlassContainer(
+      radius: VoiceRoomsUiTokens.radiusLg,
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Trend Konular',
+            style: TextStyle(
+              color: VoiceRoomsUiTokens.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...VoiceRoomsMockData.trendingTopics.map(
+            (topic) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {},
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            topic.tag,
+                            style: const TextStyle(
+                              color: VoiceRoomsUiTokens.purpleGlow,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          topic.views,
+                          style: const TextStyle(
+                            color: VoiceRoomsUiTokens.textMuted,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

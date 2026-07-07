@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.500+504 (2026-07-07)
+
+### Sesli Odalar — Premium 2026 UI (mock)
+
+- **Yeni ekran:** Referans görsele uygun `VoiceRoomsPage` — AMOLED siyah, mor gradient, cam/glow
+- **Bileşenler:** AppBar, kategori seçici, öne çıkan banner, popüler carousel, yakındaki odalar, Odalarım, trend konular, aktif konuşmacılar, mini müzik çalar, özel bottom nav
+- **Teknik:** Hardcoded veri, SVG ikonlar, `ListView.builder`, reusable kartlar, responsive (mobil/tablet)
+- **Rota:** `/voice-rooms` — henüz API bağlı değil
+
 ## 1.0.499+503 (2026-07-06)
 
 ### Performans — Principal audit (özellik yok)
