@@ -20,10 +20,12 @@ class VoiceRoomSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rooms = ref.watch(homeVoiceRoomsProvider);
+    final rooms = ref.watch(
+      homeVoiceRoomsProvider.select((a) => (a.isLoading, a.hasError, a.valueOrNull, a.error)),
+    );
 
-    return rooms.when(
-      loading: () => Column(
+    if (rooms.$1) {
+      return Column(
         children: [
           HomeSectionTitle(
             emoji: '🎙️',
@@ -48,16 +50,17 @@ class VoiceRoomSection extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-      error: (e, _) => _emptyState(context, ref, message: ApiException.userMessage(e)),
-      data: (items) {
-        if (items.isEmpty) {
-          return _emptyState(context, ref);
-        }
-        final sorted = sortVoiceRoomsByPopularity(items).take(12).toList();
-        return _content(context, ref, sorted);
-      },
-    );
+      );
+    }
+    if (rooms.$2) {
+      return _emptyState(context, ref, message: ApiException.userMessage(rooms.$4!));
+    }
+    final items = rooms.$3 ?? const <VoiceRoomEntity>[];
+    if (items.isEmpty) {
+      return _emptyState(context, ref);
+    }
+    final sorted = sortVoiceRoomsByPopularity(items).take(12).toList();
+    return _content(context, ref, sorted);
   }
 
   static Widget _content(

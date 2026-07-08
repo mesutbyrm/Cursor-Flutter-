@@ -15,9 +15,9 @@ import '../../features/shell/presentation/app_bottom_nav_host.dart';
 import '../../features/messages/presentation/widgets/dm_realtime_listener.dart';
 import '../../features/messages/presentation/widgets/dm_voice_call_host.dart';
 import '../../features/video_call/presentation/incoming_video_call_screen.dart';
-import '../../features/voice_hub/presentation/providers/voice_rooms_presence_provider.dart';
 import '../../features/voice_hub/presentation/widgets/voice_room/voice_room_global_music_bar.dart';
 import '../router/app_router.dart';
+import '../../core/bootstrap/voice_rooms_presence_scope.dart';
 
 /// MaterialApp.router [builder] içeriği — [ListenableBuilder] kullanmaz.
 ///
@@ -98,7 +98,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
 
   @override
   Widget build(BuildContext context) {
-    final router = ref.watch(goRouterProvider);
+    final router = ref.read(goRouterProvider);
     if (!identical(router, _router)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _attachRouter(router);
@@ -122,9 +122,8 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
       body = AppBottomNavHost(location: location, child: body);
     }
 
-    // SSE presence — keşfet online sayıları; açılışta geciktirilir.
     if (!isAuthRoute && _realtimeReady) {
-      ref.watch(voiceRoomsPresenceProvider);
+      body = VoiceRoomsPresenceScope(child: body);
     }
 
     return Stack(

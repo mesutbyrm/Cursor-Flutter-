@@ -1,6 +1,22 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.505+509 (2026-07-08)
+
+### Performans — web seviyesi açılış ve akıcılık
+
+- **Kabuk prefetch:** Kademeli API yükleme (T+0 / +450 / +900 / +1400 ms) — soğuk açılış ağ tıkanıklığı azaltıldı
+- **Ana sayfa bootstrap:** 7 paralel görev; canlı falcılar `homeOnlinePsychicsProvider` paylaşımlı cache
+- **Riverpod:** `keepAlive` (advisors, games, daily rewards, shorts feed); `select` ile bölüm izolasyonu
+- **Kabuk:** `VoiceRoomsPresenceScope` — presence SSE kabuk rebuild'ini keser
+- **Sesli odalar:** `addAutomaticKeepAlives: false`, `DeferredTickerMode` ambient FX
+- **Kısa video:** Önceki + sonraki disk preload `[-1, 1]`; placeholder `CanlifalNetworkImage`
+- **Görseller:** Profil kapak, shorts placeholder, paylaşım kartı cache
+- **Canlı falcılar:** Skeleton loader, paylaşımlı provider, statik arka plan ilk karede
+- **Realtime poll:** 90 s → 120 s
+
+Detay: `docs/PERFORMANCE_OPTIMIZATION_REPORT.md`
+
 ## 1.0.504+508 (2026-07-07)
 
 ### Profil Hub — tam backend entegrasyonu

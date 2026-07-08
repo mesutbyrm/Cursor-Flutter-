@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/domain/entities/user_entity.dart';
@@ -192,10 +194,12 @@ class _CoverBanner extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               if (coverUrl != null && coverUrl!.isNotEmpty)
-                Image.network(
-                  coverUrl!,
+                CanlifalNetworkImage(
+                  url: coverUrl!,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _gradient(),
+                  width: double.infinity,
+                  height: double.infinity,
+                  thumbnailWidth: 1080,
                 )
               else
                 _gradient(),

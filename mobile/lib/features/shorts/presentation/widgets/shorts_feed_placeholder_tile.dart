@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+
 import '../../../../core/widgets/hero_tags.dart';
 import '../../domain/entities/shorts_feed_entry.dart';
 import 'shorts_premium_theme.dart';
@@ -20,13 +22,12 @@ class ShortsFeedPlaceholderTile extends StatelessWidget {
     Widget body = ColoredBox(
       color: Colors.black,
       child: thumb != null && thumb.isNotEmpty
-          ? Image.network(
-              thumb,
+          ? CanlifalNetworkImage(
+              url: thumb,
               fit: BoxFit.cover,
               width: double.infinity,
               height: double.infinity,
-              gaplessPlayback: true,
-              errorBuilder: (_, __, ___) => const _BlackFill(),
+              thumbnailWidth: 720,
             )
           : const _BlackFill(),
     );

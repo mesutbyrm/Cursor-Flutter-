@@ -12,6 +12,15 @@ abstract final class StartupPerf {
   /// Kabuk prefetch — bildirim, cüzdan, mesajlar (jeton gecikmesiz).
   static const shellPrefetchDelay = Duration.zero;
 
+  /// Kabuk prefetch kademe 2 — mesajlar / sohbet listesi.
+  static const shellPrefetchTier2Delay = Duration(milliseconds: 450);
+
+  /// Kabuk prefetch kademe 3 — kısa video feed.
+  static const shellPrefetchTier3Delay = Duration(milliseconds: 900);
+
+  /// Kabuk prefetch kademe 4 — jeton mağazası (düşük öncelik).
+  static const shellPrefetchTier4Delay = Duration(milliseconds: 1400);
+
   /// SSE presence + psikolog/ajans yenileme.
   static const shellRealtimeDelay = Duration(seconds: 3);
 

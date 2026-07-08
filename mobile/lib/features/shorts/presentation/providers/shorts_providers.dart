@@ -37,6 +37,7 @@ class ShortsFeedNotifier
 
   @override
   Future<List<ShortVideoEntity>> build(ShortsFeedTab tab) async {
+    ref.keepAlive();
     _cursor = null;
     _hasMore = true;
     final page = await ref

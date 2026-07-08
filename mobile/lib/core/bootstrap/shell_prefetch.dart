@@ -11,7 +11,12 @@ import '../../../features/shorts/presentation/providers/shorts_providers.dart';
 import 'startup_perf.dart';
 import '../performance/voice_room_entry_perf.dart';
 
-/// Ana kabuk açıldığında sık kullanılan verileri arka planda önceden yükler.
+/// Ana kabuk açıldığında sık kullanılan verileri kademeli önceden yükler.
+///
+/// Kademe 1 (T+0): bildirim, cüzdan, profil istatistikleri, TRTC ön ısıtma.
+/// Kademe 2 (T+450ms): sohbet listesi.
+/// Kademe 3 (T+900ms): shorts For You feed.
+/// Kademe 4 (T+1400ms): jeton paketleri.
 void prefetchShellData(
   WidgetRef ref, {
   Duration delay = StartupPerf.shellPrefetchDelay,
@@ -22,8 +27,11 @@ void prefetchShellData(
       ref.read(notificationsListProvider.future).ignore();
       ref.read(walletBalancesProvider.future).ignore();
       ref.read(profileStatsProvider.future).ignore();
-      ref.read(jetonPackagesProvider.future).ignore();
-      ref.read(shortsFeedProvider(ShortsFeedTab.forYou).future).ignore();
+    }),
+  );
+
+  unawaited(
+    Future<void>.delayed(StartupPerf.shellPrefetchTier2Delay, () {
       try {
         ref.read(conversationsProvider.future).ignore();
         ref.read(conversationsListNotifierProvider.notifier).refresh(
@@ -31,6 +39,18 @@ void prefetchShellData(
               forceRefresh: false,
             );
       } catch (_) {}
+    }),
+  );
+
+  unawaited(
+    Future<void>.delayed(StartupPerf.shellPrefetchTier3Delay, () {
+      ref.read(shortsFeedProvider(ShortsFeedTab.forYou).future).ignore();
+    }),
+  );
+
+  unawaited(
+    Future<void>.delayed(StartupPerf.shellPrefetchTier4Delay, () {
+      ref.read(jetonPackagesProvider.future).ignore();
     }),
   );
 }
