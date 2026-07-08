@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.1+2 (2026-07-08)
+
+### Android production — R8, boyut ve Play Console uyarıları
+
+- **R8:** `minifyEnabled` + `shrinkResources` + `proguard-android-optimize` + genişletilmiş ProGuard kuralları
+- **Dart:** `--obfuscate` + `--split-debug-info` (Play Console kod karartma uyarısı)
+- **AGP 8.13**, Gradle 8.14, Kotlin 2.2.21
+- **AAB splits:** dil / yoğunluk / ABI ayrımı
+- **Manifest:** `largeHeap` kaldırıldı, `extractNativeLibs=false`, ağ güvenliği
+- **multidex** kaldırıldı (minSdk 24 + R8)
+- Betik: `scripts/build-play-aab.sh`
+
 ## 1.0.506+510 (2026-07-08)
 
 ### Canlı Falcılar — senkron ve kapanma düzeltmeleri

@@ -4,13 +4,9 @@ import java.io.FileInputStream
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Release imzalama — android/key.properties varsa kullanılır (CI'da secret'tan
-// üretilir). Yoksa debug imzaya düşülür (yerel geliştirme). Google Sign-In
-// SHA-1 tutarlılığı için release'de sabit keystore şarttır.
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 val hasReleaseKeystore = keystorePropertiesFile.exists()
@@ -20,7 +16,7 @@ if (hasReleaseKeystore) {
 
 android {
     namespace = "com.mesutbyrm.canlifal"
-    compileSdk = maxOf(flutter.compileSdkVersion, 36)
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -35,14 +31,23 @@ android {
 
     defaultConfig {
         applicationId = "com.mesutbyrm.canlifal"
-        minSdk = maxOf(flutter.minSdkVersion, 24)
-        targetSdk = flutter.targetSdkVersion
+        minSdk = 24
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        multiDexEnabled = true
         ndk {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a")
         }
+    }
+
+    buildFeatures {
+        buildConfig = false
+    }
+
+    bundle {
+        language { enableSplit = true }
+        density { enableSplit = true }
+        abi { enableSplit = true }
     }
 
     packaging {
@@ -51,7 +56,7 @@ android {
                 "**/libliteavsdk.so",
                 "**/libc++_shared.so",
             )
-            useLegacyPackaging = true
+            useLegacyPackaging = false
         }
     }
 
@@ -68,15 +73,17 @@ android {
 
     buildTypes {
         release {
-            // Sabit release keystore varsa onunla imzala (Google Sign-In SHA-1
-            // tutarlılığı); yoksa yerel geliştirme için debug.
             signingConfig = if (hasReleaseKeystore) {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")
             }
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            isDebuggable = false
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -90,9 +97,7 @@ flutter {
 }
 
 dependencies {
-    // flutter_local_notifications release derlemesi için zorunlu
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
-    // MusicPipeline ExoPlayer URL doğrulama (just_audio ile aynı motor)
     implementation("androidx.media3:media3-exoplayer:1.5.1")
 }
 
