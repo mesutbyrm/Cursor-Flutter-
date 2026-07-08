@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_close_dialog.dart';
@@ -37,51 +36,38 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
       if (next.timeUpPending && session.isClient) {
         ctrl.handleClientTimeUp(context);
       }
-      if (next.leaving && prev?.leaving != true) {
-        if (context.mounted) {
-          final peerMsg = ref.read(psychicPeerLeftProvider)?.message;
-          if (peerMsg != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(peerMsg)),
-            );
-            ref.read(psychicPeerLeftProvider.notifier).state = null;
-          }
-          if (session.isClient) {
-            if (ref.read(psychicSessionEndedProvider) == null) {
-              ref.read(psychicSessionEndedProvider.notifier).state =
-                  PsychicSessionEndedEvent(
-                sessionId: session.sessionId,
-                tellerId: session.psychic.id,
-                tellerName: session.psychic.name,
-                durationMinutes: session.durationMinutes,
-                totalJeton: session.totalJeton,
-                promptReview: true,
-                navigateAfter: true,
-                message: peerMsg,
-              );
-            }
-          } else if (ref.read(psychicSessionEndedProvider) == null) {
-            ref.read(psychicSessionEndedProvider.notifier).state =
-                PsychicSessionEndedEvent(
-              sessionId: session.sessionId,
-              tellerId: session.psychic.id,
-              tellerName: session.psychic.name,
-              durationMinutes: session.durationMinutes,
-              totalJeton: session.totalJeton,
-              tipsJeton: state.sessionTipsTotal > 0
-                  ? state.sessionTipsTotal
-                  : null,
-              isTeller: true,
-              navigateAfter: true,
-              message: peerMsg,
-            );
-          }
+      if (next.leaving && prev?.leaving != true && context.mounted) {
+        final peerMsg = ref.read(psychicPeerLeftProvider)?.message;
+        if (peerMsg != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(peerMsg)),
+          );
+          ref.read(psychicPeerLeftProvider.notifier).clear();
+        }
+        if (ref.read(psychicSessionEndedProvider) == null) {
+          ref.read(psychicSessionEndedProvider.notifier).state =
+              PsychicSessionEndedEvent(
+            sessionId: session.sessionId,
+            tellerId: session.psychic.id,
+            tellerName: session.psychic.name,
+            durationMinutes: session.durationMinutes,
+            totalJeton: session.totalJeton,
+            tipsJeton: !session.isClient && state.sessionTipsTotal > 0
+                ? state.sessionTipsTotal
+                : null,
+            isTeller: !session.isClient,
+            promptReview: session.isClient,
+            navigateAfter: true,
+            message: peerMsg,
+          );
         }
       }
     });
 
-    ref.listen<String?>(psychicSessionCancelSignalProvider, (prev, sessionId) {
-      if (sessionId != session.sessionId) return;
+    ref.listen<PsychicSessionCancelEvent?>(psychicSessionCancelSignalProvider,
+        (prev, event) {
+      if (event == null || event.sessionId != session.sessionId) return;
+      if (prev?.seq == event.seq) return;
       final leaving = ref.read(psychicVideoControllerProvider(session)).leaving;
       if (leaving) return;
       final msg = session.isClient
@@ -92,6 +78,7 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
 
     ref.listen<PsychicPeerLeftEvent?>(psychicPeerLeftProvider, (prev, next) {
       if (next == null || next.sessionId != session.sessionId) return;
+      if (prev?.seq == next.seq) return;
       if (ref.read(psychicVideoControllerProvider(session)).leaving) return;
       unawaited(ctrl.leave(silent: true, peerEndedMessage: next.message));
     });

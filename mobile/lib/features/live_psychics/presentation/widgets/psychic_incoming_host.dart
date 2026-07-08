@@ -473,16 +473,19 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
         _tellerProfileId = null;
       }
     });
-    ref.listen<String?>(psychicSessionCancelSignalProvider, (prev, sessionId) {
-      if (sessionId == null) return;
-      if (_activePresentingSessionId == sessionId ||
-          ref.read(psychicIncomingQueueProvider).any((r) => r.sessionId == sessionId)) {
-        if (_presenting && _activePresentingSessionId == sessionId) {
+    ref.listen<PsychicSessionCancelEvent?>(psychicSessionCancelSignalProvider,
+        (prev, event) {
+      if (event == null) return;
+      if (_activePresentingSessionId == event.sessionId ||
+          ref
+              .read(psychicIncomingQueueProvider)
+              .any((r) => r.sessionId == event.sessionId)) {
+        if (_presenting && _activePresentingSessionId == event.sessionId) {
           _dismissActiveInvite();
         } else {
-          ref.read(psychicIncomingQueueProvider.notifier).remove(sessionId);
+          ref.read(psychicIncomingQueueProvider.notifier).remove(event.sessionId);
           ref.read(psychicDismissedSessionsProvider.notifier).update(
-                (s) => {...s, sessionId},
+                (s) => {...s, event.sessionId},
               );
         }
       }

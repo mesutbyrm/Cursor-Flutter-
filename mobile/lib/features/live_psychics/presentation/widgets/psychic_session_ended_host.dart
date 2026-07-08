@@ -25,15 +25,29 @@ class _PsychicSessionEndedHostState extends ConsumerState<PsychicSessionEndedHos
       if (next == null || _showing || !mounted) return;
       _showing = true;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        if (!mounted) return;
-        final root = Navigator.of(context, rootNavigator: true).context;
-        await _showSummary(root, next);
-        if (!mounted) return;
-        if (next.navigateAfter) {
-          ref.read(goRouterProvider).go('/canli-falcilar');
+        if (!mounted) {
+          _showing = false;
+          return;
         }
-        ref.read(psychicSessionEndedProvider.notifier).state = null;
-        _showing = false;
+        try {
+          if (next.navigateAfter) {
+            ref.read(goRouterProvider).go('/canli-falcilar');
+          }
+
+          final rootCtx = rootNavigatorKey.currentContext;
+          if (rootCtx != null && rootCtx.mounted) {
+            await _showSummary(rootCtx, next);
+          }
+        } catch (_) {
+          if (next.navigateAfter && mounted) {
+            ref.read(goRouterProvider).go('/canli-falcilar');
+          }
+        } finally {
+          if (mounted) {
+            ref.read(psychicSessionEndedProvider.notifier).state = null;
+          }
+          _showing = false;
+        }
       });
     });
     return widget.child;
@@ -57,20 +71,18 @@ class _PsychicSessionEndedHostState extends ConsumerState<PsychicSessionEndedHos
         'Toplam kazanç: ${(jeton ?? 0) + tips!} jeton',
     ];
     final body = lines.isEmpty
-        ? (event.isTeller
-            ? 'Canlı fal seansınız sona erdi.'
-            : 'Canlı fal seansınız sona erdi.')
+        ? 'Canlı fal seansınız sona erdi.'
         : lines.join('\n');
 
     final review = await showDialog<bool>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       useRootNavigator: true,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1A1028),
-        title: Text(
-          event.isTeller ? 'Seans tamamlandı' : 'Seans tamamlandı',
-          style: const TextStyle(fontWeight: FontWeight.w800),
+        title: const Text(
+          'Seans tamamlandı',
+          style: TextStyle(fontWeight: FontWeight.w800),
         ),
         content: Text(body),
         actions: [

@@ -108,6 +108,9 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
           }
         },
         onSessionEndedData: (ended) {
+          ref
+              .read(psychicSessionCancelSignalProvider.notifier)
+              .signal(ended.sessionId);
           ref.read(psychicSessionEndedProvider.notifier).state =
               PsychicSessionEndedEvent(
             sessionId: ended.sessionId,
@@ -123,6 +126,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
                     : null,
             message: ended.message,
             promptReview: true,
+            navigateAfter: true,
           );
           ref.refreshWalletCache(force: true);
         },
