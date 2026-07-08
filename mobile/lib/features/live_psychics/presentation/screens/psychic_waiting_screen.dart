@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:canlifal_social/app/router/app_router.dart';
 import 'package:canlifal_social/core/network/token_storage.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/ui/premium/live_badge.dart';
@@ -124,7 +125,8 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
 
   void _handleRoomStatus(PsychicSessionStatus status) {
     if (status == PsychicSessionStatus.rejected ||
-        status == PsychicSessionStatus.cancelled) {
+        status == PsychicSessionStatus.cancelled ||
+        status == PsychicSessionStatus.ended) {
       unawaited(_onRejected());
       return;
     }
@@ -145,7 +147,8 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     if (status == null) return;
 
     if (status.status == PsychicSessionStatus.rejected ||
-        status.status == PsychicSessionStatus.cancelled) {
+        status.status == PsychicSessionStatus.cancelled ||
+        status.status == PsychicSessionStatus.ended) {
       await _onRejected();
       return;
     }
@@ -175,6 +178,12 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     ref.read(psychicWaitingNavProvider.notifier).state = activeSession;
   }
 
+  void _navigateExit() {
+    final psychicId = session.psychic.id;
+    ref.read(psychicWaitingExitProvider.notifier).state = psychicId;
+    ref.read(goRouterProvider).go('/canli-falcilar/$psychicId');
+  }
+
   Future<void> _onRejected() async {
     if (state.closed) return;
     state = state.copyWith(phase: PsychicWaitingPhase.rejected, closed: true);
@@ -185,12 +194,12 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     invalidateWalletCacheFromRef(ref);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
         'Falcı görüşmeyi iptal etti — jetonlar iade edilir';
-    ref.read(psychicWaitingExitProvider.notifier).state = session.psychic.id;
+    _navigateExit();
   }
 
   void acknowledgeExit() {
     if (!state.closed) return;
-    ref.read(psychicWaitingExitProvider.notifier).state = session.psychic.id;
+    _navigateExit();
   }
 
   Future<void> _onExpired() async {
@@ -206,7 +215,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     invalidateWalletCacheFromRef(ref);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
         'Falcı yanıt vermedi — süre doldu, jetonlar iade edildi';
-    ref.read(psychicWaitingExitProvider.notifier).state = session.psychic.id;
+    _navigateExit();
   }
 
   Future<void> cancel(BuildContext context) async {
@@ -238,7 +247,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     await ref.read(psychicRoomSseServiceProvider).disconnect();
     await PsychicSessionStore.clear();
     invalidateWalletCacheFromRef(ref);
-    ref.read(psychicWaitingExitProvider.notifier).state = session.psychic.id;
+    _navigateExit();
   }
 
   @override
@@ -286,12 +295,13 @@ class PsychicWaitingScreen extends ConsumerWidget {
       ref.read(psychicWaitingExitProvider.notifier).state = null;
     });
 
-    ref.listen<String?>(psychicSessionCancelSignalProvider, (prev, sessionId) {
-      if (sessionId == session.sessionId) {
-        ref
-            .read(psychicWaitingControllerProvider(session).notifier)
-            .onRemoteCancelled();
-      }
+    ref.listen<PsychicSessionCancelEvent?>(psychicSessionCancelSignalProvider,
+        (prev, event) {
+      if (event == null || event.sessionId != session.sessionId) return;
+      if (prev?.seq == event.seq) return;
+      ref
+          .read(psychicWaitingControllerProvider(session).notifier)
+          .onRemoteCancelled();
     });
 
     return PopScope(

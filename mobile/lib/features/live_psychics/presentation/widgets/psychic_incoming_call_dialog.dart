@@ -164,8 +164,12 @@ class _PsychicIncomingCallDialogState
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<String?>(psychicSessionCancelSignalProvider, (prev, sessionId) {
-      if (sessionId != widget.sessionId || !mounted) return;
+    ref.listen<PsychicSessionCancelEvent?>(psychicSessionCancelSignalProvider,
+        (prev, event) {
+      if (event == null || event.sessionId != widget.sessionId || !mounted) {
+        return;
+      }
+      if (prev?.seq == event.seq) return;
       Navigator.pop(
         context,
         const PsychicIncomingDialogClose(

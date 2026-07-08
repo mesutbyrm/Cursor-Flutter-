@@ -132,13 +132,18 @@ class PsychicRoomSseService {
       final type = (map['type'] ?? eventName ?? '').toString().toLowerCase();
       if (type == 'ended' ||
           type == 'session_ended' ||
+          type == 'session_end' ||
+          type == 'expired' ||
+          type == 'session_expired' ||
           type == 'cancelled' ||
           type == 'session_cancelled' ||
           type == 'rejected') {
         _onSessionEnded?.call(
           type.contains('cancel') || type == 'rejected'
               ? PsychicSessionStatus.cancelled
-              : PsychicSessionStatus.ended,
+              : type.contains('expir')
+                  ? PsychicSessionStatus.expired
+                  : PsychicSessionStatus.ended,
         );
         return;
       }

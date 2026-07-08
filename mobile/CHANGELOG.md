@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.506+510 (2026-07-08)
+
+### Canlı Falcılar — senkron ve kapanma düzeltmeleri
+
+- **Seans senkronu:** Oda poll artık `ended/cancelled/rejected/expired` durumlarını algılıyor; SSE `session_end` tipi destekleniyor
+- **Kapanma:** Seans bitince otomatik `/canli-falcilar` navigasyonu (push + manuel çıkış); özet diyaloğu güvenli `try/finally`
+- **İptal sinyali:** Tekrarlayan iptal olayları `seq` ile her zaman tetikleniyor
+- **Bekleme ekranı:** Red/süre dolumu sonrası otomatik çıkış (Tamam zorunluluğu kaldırıldı)
+- **Falcı dialog:** Danışan iptalinde gelen çağrı diyaloğu anında kapanıyor
+
 ## 1.0.505+509 (2026-07-08)
 
 ### Performans — web seviyesi açılış ve akıcılık

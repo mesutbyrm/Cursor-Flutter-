@@ -132,6 +132,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   Timer? _ping;
   Timer? _roomPoll;
   var _disposed = false;
+  var _remoteEndHandled = false;
 
   AgoraRoomManager get agora => _agora;
 
@@ -198,6 +199,25 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     final previousRoomId = state.room?.roomId;
     final info = await repo.fetchRoom(session.sessionId);
     if (_disposed || info == null) return;
+
+    if (info.status == PsychicSessionStatus.cancelled ||
+        info.status == PsychicSessionStatus.rejected ||
+        info.status == PsychicSessionStatus.ended ||
+        info.status == PsychicSessionStatus.expired) {
+      unawaited(_handleRemoteSessionEnded(info.status));
+      return;
+    }
+
+    final statusResult = await repo.fetchSessionStatus(session.sessionId);
+    if (_disposed) return;
+    if (statusResult != null &&
+        (statusResult.status == PsychicSessionStatus.cancelled ||
+            statusResult.status == PsychicSessionStatus.rejected ||
+            statusResult.status == PsychicSessionStatus.ended ||
+            statusResult.status == PsychicSessionStatus.expired)) {
+      unawaited(_handleRemoteSessionEnded(statusResult.status));
+      return;
+    }
 
     final wasTimerStarted = state.timerStarted;
     final maxMinutes =
@@ -465,7 +485,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   Future<void> retryRtc() => _rejoinRtc();
 
   Future<void> _handleRemoteSessionEnded(PsychicSessionStatus status) async {
-    if (_disposed || state.leaving) return;
+    if (_disposed || state.leaving || _remoteEndHandled) return;
+    _remoteEndHandled = true;
     final msg = session.isClient
         ? 'Falcı görüşmeyi sonlandırdı.'
         : 'Kullanıcı görüşmeyi sonlandırdı.';
@@ -486,10 +507,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         message: msg,
       );
     }
-    ref.read(psychicPeerLeftProvider.notifier).state = PsychicPeerLeftEvent(
-      sessionId: session.sessionId,
-      message: msg,
-    );
+    ref.read(psychicPeerLeftProvider.notifier).notifyPeerLeft(
+          sessionId: session.sessionId,
+          message: msg,
+        );
     await leave(silent: true, peerEndedMessage: msg);
   }
 
@@ -698,21 +719,22 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     unawaited(PsychicSessionStore.clear());
 
     if (peerEndedMessage != null) {
-      ref.read(psychicPeerLeftProvider.notifier).state = PsychicPeerLeftEvent(
-        sessionId: sessionId,
-        message: peerEndedMessage,
-      );
+      ref.read(psychicPeerLeftProvider.notifier).notifyPeerLeft(
+            sessionId: sessionId,
+            message: peerEndedMessage,
+          );
     }
 
-    if (!isClient && !silent) {
+    if (!silent && ref.read(psychicSessionEndedProvider) == null) {
       ref.read(psychicSessionEndedProvider.notifier).state = PsychicSessionEndedEvent(
         sessionId: sessionId,
         tellerId: session.psychic.id,
         tellerName: session.psychic.name,
         durationMinutes: session.durationMinutes,
         totalJeton: session.totalJeton,
-        tipsJeton: tipsTotal > 0 ? tipsTotal : null,
-        isTeller: true,
+        tipsJeton: !isClient && tipsTotal > 0 ? tipsTotal : null,
+        isTeller: !isClient,
+        promptReview: isClient,
         navigateAfter: true,
       );
     }
