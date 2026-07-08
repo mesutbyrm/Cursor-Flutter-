@@ -1,0 +1,6 @@
+# Kopyalayın: cp key.properties.example key.properties
+# release.keystore dosyasını android/app/ altına koyun.
+storeFile=release.keystore
+storePassword=YOUR_STORE_PASSWORD
+keyAlias=YOUR_KEY_ALIAS
+keyPassword=YOUR_KEY_PASSWORD
