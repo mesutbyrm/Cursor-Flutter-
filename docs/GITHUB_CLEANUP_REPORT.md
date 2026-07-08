@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-07-08 10:01 UTC
+Oluşturulma: 2026-07-08 14:49 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -24,7 +24,7 @@ Base: `main`
 
 | Dal | Neden |
 |-----|-------|
-| cursor/perf-optimization-d83a | merged into main |
+| cursor/live-psychics-sync-fix-d83a | merged into main |
 
 ## Kalan açık PR'lar
 
