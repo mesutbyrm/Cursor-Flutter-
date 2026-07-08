@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/performance/app_perf_metrics.dart';
+import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
 import '../../../social/presentation/providers/social_providers.dart';
 import 'home_providers.dart';
 
@@ -22,6 +23,7 @@ Future<void> prefetchHomeCriticalSections(Ref ref) async {
     _measureFuture(ref, 'home.voice_rooms', homeVoiceRoomsProvider),
     _measureFuture(ref, 'home.fortune_cards', homeFortuneCardsProvider),
     _measureFuture(ref, 'home.story_rings', socialStoryRingsProvider),
+    _measureFuture(ref, 'home.psychics', homeOnlinePsychicsProvider),
   ];
   await Future.wait(tasks);
   if (kDebugMode) {

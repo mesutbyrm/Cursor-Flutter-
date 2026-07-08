@@ -18,10 +18,12 @@ class LiveBroadcastSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final streams = ref.watch(homeLiveStreamsProvider);
+    final streams = ref.watch(
+      homeLiveStreamsProvider.select((a) => (a.isLoading, a.hasError, a.valueOrNull, a.error)),
+    );
 
-    return streams.when(
-      loading: () => Column(
+    if (streams.$1) {
+      return Column(
         children: [
           HomeSectionTitle(
             emoji: '🔥',
@@ -46,15 +48,22 @@ class LiveBroadcastSection extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-      error: (e, _) => _emptyOrError(context, ApiException.userMessage(e)),
-      data: (items) {
-        final live = items.where((s) => s.isLive).toList();
-        final list = live.isNotEmpty ? live : items;
-        if (list.isEmpty) return _emptyOrError(context, null);
-        return _content(context, ref, list.take(12).toList());
-      },
-    );
+      );
+    }
+    if (streams.$2) {
+      return _emptyOrError(
+        context,
+        ApiException.userMessage(streams.$4 ?? 'Yüklenemedi'),
+      );
+    }
+    final items = streams.$3;
+    if (items == null || items.isEmpty) {
+      return _emptyOrError(context, null);
+    }
+    final live = items.where((s) => s.isLive).toList();
+    final list = live.isNotEmpty ? live : items;
+    if (list.isEmpty) return _emptyOrError(context, null);
+    return _content(context, ref, list.take(12).toList());
   }
 
   static Widget _content(

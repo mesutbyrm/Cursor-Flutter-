@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../domain/entities/short_video_entity.dart';
 import '../pages/shorts_feed_page.dart';
@@ -45,10 +46,12 @@ class ShortStoryShareCard extends StatelessWidget {
             if (video.thumbnailUrl != null && video.thumbnailUrl!.isNotEmpty)
               ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                child: Image.network(
-                  video.thumbnailUrl!,
+                child: CanlifalNetworkImage(
+                  url: video.thumbnailUrl!,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  width: double.infinity,
+                  height: double.infinity,
+                  thumbnailWidth: 540,
                 ),
               ),
             DecoratedBox(

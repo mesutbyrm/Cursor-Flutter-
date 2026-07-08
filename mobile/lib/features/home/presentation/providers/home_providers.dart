@@ -42,6 +42,7 @@ final homeFortuneCardsProvider =
 
 final homeAdvisorsProvider =
     FutureProvider<List<OnlineAdvisorEntity>>((ref) async {
+  _keepHomeCacheAlive(ref);
   return ref.watch(homeRepositoryProvider).fetchOnlineAdvisors();
 });
 
@@ -58,11 +59,13 @@ final homeVoiceRoomsProvider =
 });
 
 final homeGamesProvider = FutureProvider<List<HomeGameEntity>>((ref) async {
+  _keepHomeCacheAlive(ref);
   return ref.watch(homeRepositoryProvider).fetchGames();
 });
 
 final homeDailyRewardsProvider =
     FutureProvider<List<DailyRewardEntity>>((ref) async {
+  _keepHomeCacheAlive(ref);
   return ref.watch(homeRepositoryProvider).fetchDailyRewards();
 });
 

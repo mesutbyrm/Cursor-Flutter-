@@ -6,7 +6,18 @@ import '../../data/repositories/live_psychics_repository_impl.dart';
 import '../../data/services/fortune_teller_profile_resolver.dart';
 import '../../data/services/psychic_incoming_sse_service.dart';
 import '../../data/services/psychic_room_sse_service.dart';
+import '../../domain/entities/psychic_entity.dart';
 import '../../domain/repositories/live_psychics_repository.dart';
+
+/// Ana sayfa — çevrimiçi falcılar (bootstrap + section paylaşımlı cache).
+final homeOnlinePsychicsProvider =
+    FutureProvider<List<PsychicEntity>>((ref) async {
+  ref.keepAlive();
+  final repo = ref.watch(livePsychicsRepositoryProvider);
+  final all = await repo.fetchPsychics(page: 1, limit: 20, onlineOnly: true);
+  final online = all.where((p) => p.isOnline).toList();
+  return online.isNotEmpty ? online : all;
+});
 
 final livePsychicsRemoteProvider = Provider<LivePsychicsRemoteDataSource>((ref) {
   return LivePsychicsRemoteDataSource(ref.watch(dioProvider));

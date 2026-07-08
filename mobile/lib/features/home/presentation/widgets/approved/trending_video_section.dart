@@ -15,10 +15,12 @@ class TrendingVideoSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final videos = ref.watch(homeTrendVideosProvider);
+    final videos = ref.watch(
+      homeTrendVideosProvider.select((a) => (a.isLoading, a.hasError, a.valueOrNull)),
+    );
 
-    return videos.when(
-      loading: () => Column(
+    if (videos.$1) {
+      return Column(
         children: [
           HomeSectionTitle(
             emoji: '🔥',
@@ -45,13 +47,12 @@ class TrendingVideoSection extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-      error: (_, _) => const SizedBox.shrink(),
-      data: (items) {
-        if (items.isEmpty) return const SizedBox.shrink();
-        return _content(context, items);
-      },
-    );
+      );
+    }
+    if (videos.$2) return const SizedBox.shrink();
+    final items = videos.$3;
+    if (items == null || items.isEmpty) return const SizedBox.shrink();
+    return _content(context, items);
   }
 
   static Widget _content(BuildContext context, List<HomeTrendVideoEntity> videos) {

@@ -8,6 +8,7 @@ import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/live_badge.dart';
 import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/psychic_entity.dart';
 import '../controllers/psychics_list_controller.dart';
@@ -52,9 +53,19 @@ class PsychicsListScreen extends ConsumerWidget {
       ),
       extendBodyBehindAppBar: true,
       body: CosmicGalaxyBackground(
+        animate: false,
         child: SafeArea(
           child: listAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              itemCount: 6,
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              itemBuilder: (_, _) => const PremiumSkeleton(
+                height: 88,
+                width: double.infinity,
+                borderRadius: BorderRadius.all(Radius.circular(16)),
+              ),
+            ),
             error: (e, _) => Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -70,7 +81,9 @@ class PsychicsListScreen extends ConsumerWidget {
               ),
             ),
             data: (state) {
-              final authed = ref.watch(authControllerProvider).valueOrNull != null;
+              final authed = ref.watch(
+                authControllerProvider.select((a) => a.valueOrNull != null),
+              );
               if (!authed) {
                 return Center(
                   child: Text(

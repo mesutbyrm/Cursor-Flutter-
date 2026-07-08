@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/images/canlifal_image_prefetch.dart';
+import '../../../../core/performance/animation_perf.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import '../performance/voice_rooms_perf.dart';
@@ -202,7 +203,7 @@ class _VoiceRoomsPageState extends ConsumerState<VoiceRoomsPage>
                             },
                             childCount:
                                 nearbyRooms.length + (isLoadingMore ? 1 : 0),
-                            addAutomaticKeepAlives: true,
+                            addAutomaticKeepAlives: false,
                             addRepaintBoundaries: false,
                           ),
                         ),
@@ -292,12 +293,15 @@ class _AmbientBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Stack(
-      fit: StackFit.expand,
-      children: [
-        VoiceDynamicGradientBackground(),
-        VoiceRoomParticleField(),
-      ],
+    return const DeferredTickerMode(
+      delay: Duration(milliseconds: 200),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          VoiceDynamicGradientBackground(),
+          VoiceRoomParticleField(),
+        ],
+      ),
     );
   }
 }

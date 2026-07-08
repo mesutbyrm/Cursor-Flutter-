@@ -10,21 +10,13 @@ import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_e
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
-final _homeOnlinePsychicsProvider =
-    FutureProvider.autoDispose<List<PsychicEntity>>((ref) async {
-  final repo = ref.watch(livePsychicsRepositoryProvider);
-  final all = await repo.fetchPsychics(page: 1, limit: 20, onlineOnly: true);
-  final online = all.where((p) => p.isOnline).toList();
-  return online.isNotEmpty ? online : all;
-});
-
 /// Ana sayfa — çevrimiçi falcılar yatay liste.
 class PsychicsHomeSection extends ConsumerWidget {
   const PsychicsHomeSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final psychics = ref.watch(_homeOnlinePsychicsProvider);
+    final psychics = ref.watch(homeOnlinePsychicsProvider);
 
     return psychics.when(
       loading: () => Column(
