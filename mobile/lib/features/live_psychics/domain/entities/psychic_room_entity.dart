@@ -33,12 +33,20 @@ class PsychicRoomEntity extends Equatable {
   final bool isTeller;
 
   int get remainingSeconds {
-    if (!timerStarted || timerStartedAt == null) return maxMinutes * 60;
+    if (!timerStarted) return maxMinutes * 60;
     final total = maxMinutes * 60;
-    final elapsed = elapsedSeconds > 0
-        ? elapsedSeconds
-        : DateTime.now().difference(timerStartedAt!).inSeconds;
-    return total - elapsed;
+    if (elapsedSeconds > 0) {
+      return (total - elapsedSeconds).clamp(0, total);
+    }
+    if (timerStartedAt != null) {
+      final started = timerStartedAt!.isUtc
+          ? timerStartedAt!
+          : timerStartedAt!.toUtc();
+      final elapsed =
+          DateTime.now().toUtc().difference(started).inSeconds;
+      return (total - elapsed).clamp(0, total);
+    }
+    return total;
   }
 
   PsychicRoomEntity copyWith({

@@ -33,11 +33,14 @@ import '../../data/host_live_stream_recovery.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_guest_layout.dart';
+import '../../domain/pk/pk_unified_bridge.dart';
 import '../../domain/utils/live_fortune_type_slug.dart';
 import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import '../gifts/widgets/floating_gift_particles.dart';
+import '../gifts/widgets/gift_center_toast_stack.dart';
 import '../gifts/widgets/gift_notification_stack.dart';
+import '../providers/pk_room_providers.dart';
 import '../providers/live_providers.dart';
 import '../../data/services/video_webrtc_signal_service.dart';
 import '../providers/co_broadcast_provider.dart';
@@ -103,8 +106,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Timer? _fortunePoll;
   Timer? _lazyGiftsTimer;
   Timer? _lazyExtrasTimer;
+  Timer? _coBroadcastPoll;
+  Timer? _pkInvitePoll;
   final Set<String> _seenGuestJoinIds = {};
+  final Set<String> _seenPkInviteIds = {};
   final Set<String> _seenVipEntrances = {};
+  var _coHostUpgraded = false;
   String? _vipBannerName;
   VoidCallback? _remoteUidsListener;
   VoidCallback? _remoteVideoListener;
@@ -288,6 +295,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _lazyExtrasTimer?.cancel();
     _guestJoinPoll?.cancel();
     _fortunePoll?.cancel();
+    _coBroadcastPoll?.cancel();
+    _pkInvitePoll?.cancel();
     _signalService?.stop();
     if (_remoteUidsListener != null) {
       _agora.remoteUidsNotifier.removeListener(_remoteUidsListener!);
@@ -648,7 +657,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   void _initStreamExtras() {
     final streamId = widget.session.streamId?.trim();
     if (streamId == null || streamId.isEmpty) return;
+
     if (widget.session.isHost) {
+      final layout = widget.session.guestLayout;
+      if (layout != LiveGuestLayout.solo) {
+        final settings = ref.read(liveBroadcastSettingsProvider.notifier);
+        settings.toggleCoBroadcast(true);
+        settings.toggleGuests(true);
+        settings.setGuestLayout(layout);
+        ref.read(liveGuestGridProvider.notifier).setLayout(layout);
+      }
       unawaited(ref.read(coBroadcastProvider.notifier).refresh());
       unawaited(ref.read(coBroadcastProvider.notifier).refreshStream(streamId));
       _guestJoinPoll?.cancel();
@@ -660,13 +678,27 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       });
       unawaited(ref.read(liveFortuneRequestsProvider(streamId).notifier).refresh());
       _fortunePoll?.cancel();
-      _fortunePoll = Timer.periodic(const Duration(seconds: 8), (_) {
+      _fortunePoll = Timer.periodic(const Duration(seconds: 3), (_) {
         if (!mounted) return;
         unawaited(
           ref.read(liveFortuneRequestsProvider(streamId).notifier).refresh(),
         );
       });
+    } else {
+      _coBroadcastPoll?.cancel();
+      _coBroadcastPoll = Timer.periodic(const Duration(seconds: 4), (_) {
+        if (!mounted) return;
+        unawaited(_syncCoBroadcastGuest(streamId));
+      });
+      unawaited(_syncCoBroadcastGuest(streamId));
     }
+
+    _pkInvitePoll?.cancel();
+    _pkInvitePoll = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted) return;
+      unawaited(_pollPkInvites(streamId));
+    });
+    unawaited(_pollPkInvites(streamId));
     _signalService = ref.read(videoWebrtcSignalServiceProvider);
     _signalService?.onSignal = (sig) {
       if (!mounted) return;
@@ -717,11 +749,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final streamId = widget.session.streamId?.trim();
     if (streamId == null || streamId.isEmpty || widget.session.isHost) return;
     final settings = ref.read(liveBroadcastSettingsProvider);
-    if (!settings.guestsEnabled) {
+    if (!settings.guestsEnabled && !settings.coBroadcastEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Yayıncı konuk almayı kapattı')),
+        const SnackBar(
+          content: Text(
+            'Yayıncı konuk almayı kapattı — yine de istek gönderiliyor…',
+          ),
+        ),
       );
-      return;
     }
     try {
       await ref.read(coBroadcastProvider.notifier).requestJoin(streamId);
@@ -790,6 +825,147 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               action: 'reject',
               userId: userId,
             );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
+  }
+
+  Future<void> _syncCoBroadcastGuest(String streamId) async {
+    if (widget.session.isHost || _coHostUpgraded || _leaving) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return;
+    try {
+      await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
+      final approved = ref.read(coBroadcastProvider).coBroadcasters.any((c) {
+        final uid = c['userId']?.toString() ?? c['id']?.toString();
+        final status = (c['status'] ?? c['state'] ?? 'approved').toString();
+        return uid == user.id &&
+            (status == 'approved' ||
+                status == 'active' ||
+                status == 'joined');
+      });
+      if (approved) {
+        await _upgradeToCoHost(streamId, user);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _upgradeToCoHost(String streamId, UserEntity user) async {
+    if (_coHostUpgraded || widget.session.isHost || !_rtcReady) return;
+    try {
+      final cred = await ref.read(agoraRemoteProvider).fetchToken(
+            channelName: streamId,
+            role: 'host',
+          );
+      await _agora.leave();
+      await _agora.join(credentials: cred, isHost: true);
+      await _agora.setCameraEnabled(true);
+      _agora.setMicEnabled(true);
+      _coHostUpgraded = true;
+      ref.read(liveGuestGridProvider.notifier).addGuest(
+            slotIndex: _nextEmptyGuestSlot(),
+            userId: user.id,
+            displayName: user.display,
+          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Misafir yayınına geçildi — kamera açık')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
+  }
+
+  Future<void> _pollPkInvites(String streamId) async {
+    if (_leaving) return;
+    try {
+      await ref.read(liveVideoPkProvider(streamId).notifier).refresh();
+      final battle = ref.read(liveVideoPkProvider(streamId)).battle;
+      if (battle != null) {
+        _maybeShowPkInvite(streamId, battle);
+      }
+      final invites = await ref.read(pkPendingInvitesProvider.future);
+      for (final inv in invites) {
+        if (!inv.isPending) continue;
+        if (inv.hostStreamId == streamId) continue;
+        final map = pkRoomMatchToBattleMap(inv, myStreamId: streamId);
+        _maybeShowPkInvite(streamId, map);
+      }
+    } catch (_) {}
+  }
+
+  void _maybeShowPkInvite(String streamId, Map<String, dynamic> battle) {
+    final status = battle['status']?.toString() ?? '';
+    if (status != 'pending') return;
+    final id = battle['id']?.toString() ?? '';
+    if (id.isEmpty || !_seenPkInviteIds.add(id)) return;
+    final hostStream = battle['hostStreamId']?.toString();
+    if (hostStream != null && hostStream.isNotEmpty && hostStream == streamId) {
+      return;
+    }
+    unawaited(_showIncomingLivePkInvite(streamId, id, battle));
+  }
+
+  Future<void> _showIncomingLivePkInvite(
+    String streamId,
+    String battleId,
+    Map<String, dynamic> battle,
+  ) async {
+    if (!mounted) return;
+    final challenger = battle['leftName']?.toString() ??
+        battle['challengerName']?.toString() ??
+        'Yayıncı';
+    final accept = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0F2E),
+        title: const Text('PK Daveti', style: TextStyle(color: Colors.white)),
+        content: Text(
+          '$challenger size PK daveti gönderdi.\nKabul ediyor musunuz?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Reddet'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Kabul Et'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || accept == null) return;
+    try {
+      if (battle['unifiedPk'] == true) {
+        await ref.read(pkUnifiedInviteProvider).respond(
+              matchId: battleId,
+              accept: accept,
+            );
+      } else {
+        final pk = ref.read(liveVideoPkProvider(streamId).notifier);
+        if (accept) {
+          await pk.accept();
+        } else {
+          await pk.reject();
+        }
+      }
+      if (accept && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('PK başlatılıyor…')),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -1483,6 +1659,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               applauseToken: interaction.applauseToken,
             ),
             FloatingGiftParticles(key: _particlesKey),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: GiftCenterToastStack(events: giftCtrl.notifications),
+              ),
+            ),
             Positioned.fill(
               child: IgnorePointer(
                 child: LiveGiftAnimationStack(

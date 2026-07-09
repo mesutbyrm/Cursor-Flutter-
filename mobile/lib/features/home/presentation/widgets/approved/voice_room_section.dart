@@ -24,7 +24,7 @@ class VoiceRoomSection extends ConsumerWidget {
       homeVoiceRoomsProvider.select((a) => (a.isLoading, a.hasError, a.valueOrNull, a.error)),
     );
 
-    if (rooms.$1) {
+    if (rooms.$1 && rooms.$3 == null) {
       return Column(
         children: [
           HomeSectionTitle(

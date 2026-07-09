@@ -7,12 +7,10 @@ import '../../../../core/network/live_debug_log.dart';
 import '../../../../core/performance/network_perf.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../../../core/network/token_storage.dart';
-import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/utils/live_chat_guard.dart';
-import '../../domain/utils/live_fortune_host_bridge.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import 'live_providers.dart';
 import 'live_stream_engagement_provider.dart';
@@ -157,33 +155,13 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       onModeratorUpdated: (userId, isModerator) {
         _applyModeratorFlag(userId: userId, isModerator: isModerator);
       },
-      onFortuneRequest: (session) {
-        emitPsychicLiveRequest(ref, session);
+      onFortuneRequest: (_) {
+        // Canlı yayın fal kuyruğu — ayrı provider ile yönetilir.
       },
       onStreamFortuneRequest: (map) {
-        final beforeIds = ref
-            .read(liveFortuneRequestsProvider(streamId))
-            .requests
-            .map((r) => r.id)
-            .toSet();
         ref
             .read(liveFortuneRequestsProvider(streamId).notifier)
             .pushFromSse(map);
-        final row = parseLiveFortuneRequestMap(map);
-        if (row.id.isNotEmpty &&
-            !beforeIds.contains(row.id) &&
-            (row.status == LiveFortuneRequestStatus.pending ||
-                row.status == LiveFortuneRequestStatus.held)) {
-          final hostUid = pickStreamHostUserId(map) ??
-              ref.read(liveFortuneHostUserIdProvider(streamId));
-          final invite = liveFortuneRequestToPsychicInvite(
-            row,
-            tellerUserId: hostUid,
-          );
-          if (invite != null) {
-            emitPsychicLiveRequest(ref, invite);
-          }
-        }
         final merged = ref
             .read(liveFortuneRequestsProvider(streamId).notifier)
             .state

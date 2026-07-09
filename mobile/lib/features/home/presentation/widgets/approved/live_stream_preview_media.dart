@@ -1,10 +1,12 @@
+import 'dart:async';
+
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../../live/domain/entities/live_stream_entity.dart';
 
-/// Ana sayfa canlı kartı — HLS varsa video, yoksa thumbnail + LIVE animasyonu.
+/// Ana sayfa canlı kartı — varsayılan thumbnail; HLS yalnızca [eager] ise.
 class LiveStreamPreviewMedia extends StatefulWidget {
   const LiveStreamPreviewMedia({
     super.key,
@@ -22,6 +24,7 @@ class LiveStreamPreviewMedia extends StatefulWidget {
 class _LiveStreamPreviewMediaState extends State<LiveStreamPreviewMedia>
     with SingleTickerProviderStateMixin {
   VideoPlayerController? _controller;
+  VideoPlayerController? _initController;
   late final AnimationController _pulse;
 
   @override
@@ -31,26 +34,62 @@ class _LiveStreamPreviewMediaState extends State<LiveStreamPreviewMedia>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
-    _initVideo();
+    if (widget.eager) {
+      unawaited(_initVideo());
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant LiveStreamPreviewMedia oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.eager && !oldWidget.eager) {
+      unawaited(_initVideo());
+    } else if (!widget.eager && oldWidget.eager) {
+      _disposeController();
+    } else if (widget.stream.id != oldWidget.stream.id) {
+      _disposeController();
+      if (widget.eager) unawaited(_initVideo());
+    }
   }
 
   Future<void> _initVideo() async {
     final url = widget.stream.playbackUrl?.trim();
-    if (url == null || url.isEmpty) return;
+    if (url == null || url.isEmpty || !widget.eager) return;
+    final c = VideoPlayerController.networkUrl(Uri.parse(url));
+    _initController = c;
     try {
-      final c = VideoPlayerController.networkUrl(Uri.parse(url));
       await c.initialize();
+      if (!mounted || _initController != c) {
+        await c.dispose();
+        return;
+      }
       await c.setLooping(true);
       await c.setVolume(0);
-      if (widget.eager) await c.play();
-      if (mounted) setState(() => _controller = c);
-    } catch (_) {}
+      await c.play();
+      if (!mounted || _initController != c) {
+        await c.dispose();
+        return;
+      }
+      setState(() => _controller = c);
+    } catch (_) {
+      if (_initController == c) _initController = null;
+      await c.dispose();
+    }
+  }
+
+  void _disposeController() {
+    final pending = _initController;
+    _initController = null;
+    if (pending != null) unawaited(pending.dispose());
+    final active = _controller;
+    _controller = null;
+    if (active != null) unawaited(active.dispose());
   }
 
   @override
   void dispose() {
     _pulse.dispose();
-    _controller?.dispose();
+    _disposeController();
     super.dispose();
   }
 
@@ -77,8 +116,8 @@ class _LiveStreamPreviewMediaState extends State<LiveStreamPreviewMedia>
           CanlifalNetworkImage(
             url: thumb,
             fit: BoxFit.cover,
-            thumbnailWidth: widget.eager ? 480 : 320,
-            fadeIn: !widget.eager,
+            thumbnailWidth: 320,
+            fadeIn: true,
             errorWidget: _placeholder(),
           ),
           _liveShimmer(),

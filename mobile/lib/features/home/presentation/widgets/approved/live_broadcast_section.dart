@@ -22,7 +22,7 @@ class LiveBroadcastSection extends ConsumerWidget {
       homeLiveStreamsProvider.select((a) => (a.isLoading, a.hasError, a.valueOrNull, a.error)),
     );
 
-    if (streams.$1) {
+    if (streams.$1 && streams.$3 == null) {
       return Column(
         children: [
           HomeSectionTitle(

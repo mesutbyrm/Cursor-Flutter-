@@ -1,9 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../core/config/env.dart';
-import '../../../live/presentation/providers/live_providers.dart';
 import 'home_providers.dart';
 
 /// Socket.IO olaylarında ana sayfa listelerini yeniler.
@@ -24,14 +21,14 @@ class HomeRealtimeBridge {
     if (!Env.useNextAuth) return;
     _disposed = false;
     _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 120), (_) => _tick());
+    _pollTimer = Timer.periodic(const Duration(seconds: 180), (_) => _tick());
   }
 
   void _tick() {
     if (_disposed || _pollTimer == null) return;
-    _ref.invalidate(homeLiveStreamsProvider);
-    _ref.invalidate(homeVoiceRoomsProvider);
-    _ref.invalidate(liveStreamsProvider);
+    // invalidate yerine refresh — önceki veri korunur, iskelet flash olmaz.
+    unawaited(_ref.refresh(homeLiveStreamsProvider.future));
+    unawaited(_ref.refresh(homeVoiceRoomsProvider.future));
     // voiceRoomsProvider: SSE presence (voiceRoomsPresenceProvider) ile güncellenir.
   }
 

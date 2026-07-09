@@ -70,10 +70,12 @@ Map<String, dynamic> pkRoomMatchToBattleMap(
       leftSeat.any((s) => s.streamId == myStreamId);
 
   final isOpponent = myStreamId != null &&
-      myStreamId.isNotEmpty &&
-      match.hostStreamId != null &&
-      match.hostStreamId != myStreamId &&
-      match.isPending;
+      myStreamId!.trim().isNotEmpty &&
+      match.isPending &&
+      (match.hostStreamId == null ||
+          match.hostStreamId != myStreamId!.trim()) &&
+      (match.seats.any((s) => s.streamId == myStreamId!.trim()) ||
+          match.hostStreamId != myStreamId!.trim());
 
   return {
     'id': match.id,

@@ -153,6 +153,10 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
       _remote.clearRoomSignals(sessionId);
 
   @override
+  Future<List<Map<String, dynamic>>> fetchRoomSignals(String sessionId) =>
+      _remote.fetchRoomSignals(sessionId);
+
+  @override
   Future<void> sendRoomSignal({
     required String sessionId,
     required String type,

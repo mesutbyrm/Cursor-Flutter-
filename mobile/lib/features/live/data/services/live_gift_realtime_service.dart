@@ -22,7 +22,7 @@ class LiveGiftRealtimeService {
     stop();
     _streamId = streamId;
     _since = DateTime.now().subtract(const Duration(minutes: 2));
-    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) => _poll());
+    _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) => _poll());
     _poll();
   }
 

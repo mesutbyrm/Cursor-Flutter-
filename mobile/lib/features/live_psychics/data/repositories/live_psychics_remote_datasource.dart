@@ -734,6 +734,30 @@ class LivePsychicsRemoteDataSource {
     }
   }
 
+  /// GET `/api/room/signal?sessionId=` — bahşiş vb. yedek kanal (SSE kaçarsa).
+  Future<List<Map<String, dynamic>>> fetchRoomSignals(String sessionId) async {
+    final key = sessionId.trim();
+    if (key.isEmpty) return const [];
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.liveFortuneRoomSignalQuery(key),
+      );
+      final body = res.data;
+      if (body is List) {
+        return body.whereType<Map>().map((e) => asJsonMap(e)).toList();
+      }
+      if (body is Map) {
+        final map = asJsonMap(body);
+        final raw = map['signals'] ?? map['items'] ?? map['data'];
+        if (raw is List) {
+          return raw.whereType<Map>().map((e) => asJsonMap(e)).toList();
+        }
+        if (map['type'] != null) return [map];
+      }
+    } catch (_) {}
+    return const [];
+  }
+
   /// WebRTC sinyal temizliği — TRTC birincil; `/api/room/signal` yedek kanal.
   Future<void> clearRoomSignals(String sessionId) async {
     final key = sessionId.trim();
