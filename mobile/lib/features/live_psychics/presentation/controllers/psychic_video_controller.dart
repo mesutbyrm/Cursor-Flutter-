@@ -682,41 +682,43 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     final repo = ref.read(livePsychicsRepositoryProvider);
 
     // Karşı tarafa önce sinyal gönder — RTC kapanmadan SSE ile haber ver.
-    unawaited(() async {
-      try {
-        await repo.sendRoomSignal(
-          sessionId: sessionId,
-          type: 'session_end',
-          data: {
-            'endedByRole': isClient ? 'client' : 'teller',
-            if (user?.id != null) 'endedBy': user!.id,
-          },
-          receiverId: isClient
-              ? (state.room?.tellerUserId ?? session.tellerUserId)
-              : state.room?.clientId,
-        );
-      } catch (_) {}
-      try {
-        await repo.roomAction(
-          sessionId,
-          'end',
-          extra: {
-            'endedByRole': isClient ? 'client' : 'teller',
-            if (user?.id != null) 'endedBy': user!.id,
-          },
-        );
-      } catch (_) {}
-      try {
-        await repo.endSession(sessionId);
-      } catch (_) {}
-      try {
-        await repo.clearRoomSignals(sessionId);
-      } catch (_) {}
-    }());
+    try {
+      await repo.sendRoomSignal(
+        sessionId: sessionId,
+        type: 'session_end',
+        data: {
+          'endedByRole': isClient ? 'client' : 'teller',
+          if (user?.id != null) 'endedBy': user!.id,
+        },
+        receiverId: isClient
+            ? (state.room?.tellerUserId ?? session.tellerUserId)
+            : state.room?.clientId,
+      );
+    } catch (_) {}
+    try {
+      await repo.roomAction(
+        sessionId,
+        'end',
+        extra: {
+          'endedByRole': isClient ? 'client' : 'teller',
+          if (user?.id != null) 'endedBy': user!.id,
+        },
+      );
+    } catch (_) {}
+    try {
+      await repo.endSession(sessionId);
+    } catch (_) {}
+    try {
+      await repo.clearRoomSignals(sessionId);
+    } catch (_) {}
 
-    unawaited(_agora.leave());
-    unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
-    unawaited(PsychicSessionStore.clear());
+    try {
+      await _agora.leave();
+    } catch (_) {}
+    try {
+      await ref.read(psychicRoomSseServiceProvider).disconnect();
+    } catch (_) {}
+    await PsychicSessionStore.clear();
 
     if (peerEndedMessage != null) {
       ref.read(psychicPeerLeftProvider.notifier).notifyPeerLeft(

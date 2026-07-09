@@ -29,12 +29,14 @@ class _JoinLine {
     required this.roleLabel,
     required this.roleColor,
     required this.icon,
+    required this.isLeave,
   });
 
   final String name;
   final String roleLabel;
   final Color roleColor;
   final IconData icon;
+  final bool isLeave;
 }
 
 class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
@@ -46,6 +48,7 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
   Animation<double>? _fade;
   int _lastEventCount = 0;
   int _lastJoinMsgCount = 0;
+  int _lastLeaveMsgCount = 0;
 
   @override
   void dispose() {
@@ -80,7 +83,9 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
       for (final e in fresh) {
         if (e.kind == VoiceRoomRealtimeKind.join &&
             !_isStaffJoin(e.message, null)) {
-          _enqueue(_parseLine(e.message, user: null));
+          _enqueue(_parseLine(e.message, user: null, isLeave: false));
+        } else if (e.kind == VoiceRoomRealtimeKind.leave) {
+          _enqueue(_parseLine(e.message, user: null, isLeave: true));
         }
       }
     }
@@ -93,13 +98,28 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
       _lastJoinMsgCount = joins.length;
       for (final m in fresh) {
         if (!_isStaffJoin(m.content, m.user)) {
-          _enqueue(_parseLine(m.content, user: m.user));
+          _enqueue(_parseLine(m.content, user: m.user, isLeave: false));
         }
+      }
+    }
+
+    final leaves = widget.messages
+        .where((m) => m.kind == ChatMessageKind.systemLeave)
+        .toList();
+    if (leaves.length > _lastLeaveMsgCount) {
+      final fresh = leaves.skip(_lastLeaveMsgCount);
+      _lastLeaveMsgCount = leaves.length;
+      for (final m in fresh) {
+        _enqueue(_parseLine(m.content, user: m.user, isLeave: true));
       }
     }
   }
 
-  _JoinLine _parseLine(String raw, {ChatRoomUserRef? user}) {
+  _JoinLine _parseLine(
+    String raw, {
+    ChatRoomUserRef? user,
+    required bool isLeave,
+  }) {
     final text = raw.trim();
     var roleLabel = 'Üye';
     var roleColor = VoiceRoomTokens.neonBlue;
@@ -122,8 +142,9 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
     return _JoinLine(
       name: name.isEmpty ? 'Kullanıcı' : name,
       roleLabel: roleLabel,
-      roleColor: roleColor,
-      icon: icon,
+      roleColor: isLeave ? Colors.white54 : roleColor,
+      icon: isLeave ? Icons.logout_rounded : icon,
+      isLeave: isLeave,
     );
   }
 
@@ -245,11 +266,13 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
                             ),
                           ),
                           const TextSpan(text: ' '),
-                          const TextSpan(
-                            text: 'odaya giriş yaptı',
+                          TextSpan(
+                            text: line.isLeave ? 'çıkış yaptı' : 'giriş yaptı',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
-                              color: Colors.white70,
+                              color: line.isLeave
+                                  ? Colors.white54
+                                  : Colors.white70,
                             ),
                           ),
                         ],

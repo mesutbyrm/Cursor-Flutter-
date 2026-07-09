@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter/services.dart';
@@ -7,9 +8,10 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../theme/voice_room_tokens.dart';
+import 'voice_online_gift_box.dart';
 
-/// Web sohbet odası üst bar — oda adı, ID, çevrimiçi, galeri, ayarlar, çıkış.
-class VoiceWebRoomHeader extends StatelessWidget {
+/// Web sohbet odası üst bar — oda adı, ID, çevrimiçi kutusu, galeri, ayarlar, çıkış.
+class VoiceWebRoomHeader extends ConsumerWidget {
   const VoiceWebRoomHeader({
     super.key,
     required this.room,
@@ -38,7 +40,7 @@ class VoiceWebRoomHeader extends StatelessWidget {
   final bool verified;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final shortId = room.apiRoomKey.length > 10
         ? room.apiRoomKey.substring(0, 10)
         : room.apiRoomKey;
@@ -124,7 +126,10 @@ class VoiceWebRoomHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              _OnlineChip(count: onlineCount, onTap: onAudience),
+              VoiceOnlineGiftBox(
+                onlineCount: onlineCount,
+                onTap: onAudience,
+              ),
               const SizedBox(width: 4),
               _GlassIconBtn(
                 icon: Icons.ios_share_rounded,

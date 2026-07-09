@@ -50,7 +50,6 @@ class VoiceLiveHeader2026 extends StatelessWidget {
     final shortId = room.apiRoomKey.length > 8
         ? room.apiRoomKey.substring(0, 8)
         : room.apiRoomKey;
-    final onlineLabel = _formatCount(onlineCount);
 
     return ClipRect(
       child: BackdropFilter(
@@ -113,18 +112,12 @@ class VoiceLiveHeader2026 extends StatelessWidget {
                           ],
                         ],
                       ),
-                      GestureDetector(
-                        onTap: onAudience,
-                        behavior: HitTestBehavior.opaque,
-                        child: Text(
-                          'ID $shortId · $onlineLabel çevrimiçi',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: onlineCount > 0
-                                ? AppThemeColors.onlineGreen
-                                : context.colors.onSurfaceMuted,
-                          ),
+                      Text(
+                        'ID $shortId',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: context.colors.onSurfaceMuted,
                         ),
                       ),
                     ],

@@ -72,6 +72,7 @@ import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_dj_music_slide_panel.dart';
+import 'widgets/voice_room/voice_room_join_entry_strip.dart';
 import 'widgets/voice_room/voice_room_staff_join_banner.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
@@ -1593,6 +1594,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         ),
                         VoiceRoomStaffJoinBanner(
                           enterBanner: live.enterBanner,
+                        ),
+                        VoiceRoomJoinEntryStrip(
+                          events: live.realtimeEvents,
+                          messages: live.messages,
                         ),
                         Consumer(
                           builder: (context, ref, _) {

@@ -46,7 +46,7 @@ import '../sheets/voice_room_management_panel.dart';
 import '../utils/voice_music_access.dart';
 import '../widgets/premium_2026/voice_live_action_bar_2026.dart';
 import '../widgets/premium_2026/voice_live_header_2026.dart';
-import '../widgets/premium_2026/voice_top_spenders_strip.dart';
+import '../widgets/premium_2026/voice_online_gift_box.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../widgets/voice_room/voice_room_now_playing_bar.dart';
@@ -783,7 +783,18 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
-                  child: const VoiceTopSpendersStrip(),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: VoiceOnlineGiftBox(
+                      onlineCount: online,
+                      onTap: () => showVoiceSpeakerListSheet(
+                        context,
+                        presence: live.presence,
+                        room: room,
+                        onUserTap: (u) => _openUser(u, room, perms),
+                      ),
+                    ),
+                  ),
                 ),
                 if (live.roomMuted)
                   _Banner(message: 'Oda susturulmuş (yalnızca yetkililer konuşabilir)'),

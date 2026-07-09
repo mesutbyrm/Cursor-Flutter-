@@ -39,6 +39,7 @@ class _VoiceRoomJoinToastStackState extends State<VoiceRoomJoinToastStack> {
   final _timers = <String, Timer>{};
   var _lastEventCount = 0;
   var _lastJoinMsgCount = 0;
+  var _lastLeaveMsgCount = 0;
 
   @override
   void dispose() {
@@ -68,7 +69,9 @@ class _VoiceRoomJoinToastStackState extends State<VoiceRoomJoinToastStack> {
       for (final e in fresh) {
         if (e.kind == VoiceRoomRealtimeKind.join &&
             !VoiceStaffChatStyle.isStaffEntry(content: e.message)) {
-          _enqueueFromRaw(e.message, user: null);
+          _enqueueFromRaw(e.message, user: null, isLeave: false);
+        } else if (e.kind == VoiceRoomRealtimeKind.leave) {
+          _enqueueFromRaw(e.message, user: null, isLeave: true);
         }
       }
     }
@@ -86,16 +89,30 @@ class _VoiceRoomJoinToastStackState extends State<VoiceRoomJoinToastStack> {
         )) {
           continue;
         }
-        _enqueueFromRaw(m.content, user: m.user);
+        _enqueueFromRaw(m.content, user: m.user, isLeave: false);
+      }
+    }
+
+    final leaves = widget.messages
+        .where((m) => m.kind == ChatMessageKind.systemLeave)
+        .toList();
+    if (leaves.length > _lastLeaveMsgCount) {
+      final fresh = leaves.skip(_lastLeaveMsgCount);
+      _lastLeaveMsgCount = leaves.length;
+      for (final m in fresh) {
+        _enqueueFromRaw(m.content, user: m.user, isLeave: true);
       }
     }
   }
 
-  void _enqueueFromRaw(String raw, {ChatRoomUserRef? user}) {
-    if (VoiceStaffChatStyle.isStaffEntry(content: raw, user: user)) return;
+  void _enqueueFromRaw(String raw, {ChatRoomUserRef? user, required bool isLeave}) {
+    if (!isLeave &&
+        VoiceStaffChatStyle.isStaffEntry(content: raw, user: user)) {
+      return;
+    }
     final name = _parseName(raw, user: user);
     if (name.isEmpty) return;
-    final line = '$name giriş yaptı.';
+    final line = isLeave ? '$name çıkış yaptı.' : '$name giriş yaptı.';
     final key = VoiceOfficialJoin.entranceDedupeKey(raw);
     if (!_seen.add(key)) return;
     final id = '${DateTime.now().microsecondsSinceEpoch}_$name';

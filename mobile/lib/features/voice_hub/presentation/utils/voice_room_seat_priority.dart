@@ -132,7 +132,7 @@ abstract final class VoiceRoomSeatPriority {
     return tier;
   }
 
-  /// Admin, kurucu, moderatör (&/@) ve DJ odaya girince otomatik koltuk.
+  /// Oda sahibi, site admin, kanal yetkilileri ve DJ odaya girince otomatik koltuk.
   static bool shouldAutoSit(int tier) =>
       tier >= tierOp || tier == tierDj;
 

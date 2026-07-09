@@ -379,6 +379,10 @@ class AgoraRoomManager {
     await _engine!.muteAllRemoteVideoStreams(false);
     await _engine!.enableLocalVideo(true);
     await _engine!.enableLocalAudio(true);
+    await _applyEncoderPreset(LiveStreamQualityPreset.q360);
+    await _engine!.setParameters(
+      '{"che.audio.lowlatency":true,"che.video.lowlatency":true}',
+    );
   }
 
   /// Sesli oda — video açık katılım (koltuk / yayıncı).

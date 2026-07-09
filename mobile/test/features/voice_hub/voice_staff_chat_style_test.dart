@@ -44,7 +44,7 @@ void main() {
       );
       expect(
         VoiceStaffChatStyle.formatStaffEntryLine('Mesut', user: user),
-        '👑 Admin Mesut giriş yaptı',
+        'Mesut giriş yaptı',
       );
       expect(
         VoiceStaffChatStyle.formatStaffEntryLine(
@@ -52,7 +52,7 @@ void main() {
           user: user,
           roomName: 'Test Oda',
         ),
-        '👑 Admin Mesut, Test Oda giriş yaptı',
+        'Mesut Test Oda odasına giriş yaptı',
       );
     });
 

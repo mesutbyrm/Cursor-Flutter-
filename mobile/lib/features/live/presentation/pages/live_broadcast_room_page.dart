@@ -296,10 +296,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       _agora.remoteVideoAvailable.removeListener(_remoteVideoListener!);
     }
     _chat.dispose();
-    if (!_leaving &&
-        widget.session.isHost &&
-        widget.session.streamId?.isNotEmpty == true) {
-      unawaited(HostLiveStreamRecovery.save(widget.session));
+    if (!_leaving) {
+      if (widget.session.isHost &&
+          widget.session.streamId?.isNotEmpty == true) {
+        unawaited(HostLiveStreamRecovery.save(widget.session));
+      } else if (_agora.inChannel) {
+        unawaited(_agora.leave());
+      }
     }
     _agora.dispose();
     super.dispose();
@@ -482,7 +485,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (_leaving) return;
     _leaving = true;
     ref.read(liveGiftControllerProvider).detach();
-    await _agora.leave();
+    try {
+      await _agora.leave();
+    } catch (_) {}
     final streamId = widget.session.streamId;
     if (widget.session.isHost && streamId != null && streamId.isNotEmpty) {
       try {
@@ -1435,9 +1440,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       canPop: widget.embeddedInSwipe,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        if (s.isHost) {
-          await _exitBroadcast(context);
-        }
+        await _exitBroadcast(context);
       },
       child: Scaffold(
         backgroundColor: Colors.black,

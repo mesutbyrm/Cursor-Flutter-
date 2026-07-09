@@ -460,7 +460,7 @@ class ChatRoomRemoteDataSource {
     try {
       final res = await _dio.safeGet<dynamic>(
         backgroundsPath(),
-        query: {'limit': 64},
+        query: {'limit': 128},
       );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['backgrounds'] ?? map['items'] ?? map['data'];

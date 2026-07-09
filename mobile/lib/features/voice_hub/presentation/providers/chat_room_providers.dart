@@ -510,7 +510,7 @@ class VoiceRoomLiveController
         if (name != null && name.isNotEmpty) {
           _notifyRealtimeIfBasic(
             VoiceRoomRealtimeKind.leave,
-            '$name odadan ayrıldı',
+            '$name çıkış yaptı',
           );
         }
       }
@@ -3056,11 +3056,15 @@ class VoiceRoomLiveController
       _autoSeatAttempted = true;
       return;
     }
+    // İzinler veya presence gecikirse bir sonraki poll'da tekrar dene.
     for (final p in state.presence) {
       if (p.id == user.id && p.seatIndex != null) {
         _autoSeatAttempted = true;
         break;
       }
+    }
+    if (self?.seatIndex == null) {
+      _autoSeatAttempted = false;
     }
   }
 

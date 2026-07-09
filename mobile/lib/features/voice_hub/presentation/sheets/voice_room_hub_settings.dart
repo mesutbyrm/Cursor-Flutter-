@@ -530,31 +530,31 @@ class _VoiceRoomBackgroundSheetState
               )
             else if (_presets.isNotEmpty) ...[
               const SizedBox(height: 12),
-              SizedBox(
-                height: 200,
-                child: GridView.builder(
-                  padding: EdgeInsets.zero,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                  ),
-                  itemCount: _presets.length,
-                  itemBuilder: (_, i) {
-                    final url = _presets[i];
-                    return GestureDetector(
-                      onTap: _uploading ? null : () => _applyPreset(url),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: CanlifalNetworkImage(
-                          url: url,
-                          thumbnailWidth: 180,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    );
-                  },
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 0.75,
                 ),
+                itemCount: _presets.length,
+                itemBuilder: (_, i) {
+                  final url = _presets[i];
+                  return GestureDetector(
+                    onTap: _uploading ? null : () => _applyPreset(url),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: CanlifalNetworkImage(
+                        url: url,
+                        thumbnailWidth: 180,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
             const SizedBox(height: 16),

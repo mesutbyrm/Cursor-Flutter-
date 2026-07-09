@@ -1,6 +1,22 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.5+6 (2026-07-09)
+
+### Sesli sohbet odaları
+
+- **Otomatik koltuk:** oda sahibi, kanal yetkilileri ve admin girişte koltuğa oturur (yeniden deneme düzeltmesi)
+- **Giriş/çıkış bildirimleri:** herkes «kullanıcı giriş yaptı» / «çıkış yaptı» görür; yetkililer koltuk altında «kullanıcı oda adı odasına giriş yaptı» bandı
+- **Çevrimiçi kutusu:** hediye atanlar çoktan aza sıralı; koltuk üstü sıralama şeridi kaldırıldı
+- **Koltuk hediyeleri:** puan koltuk altında; tıklanınca gönderenler listelenir
+- **Arka planlar:** sunucudan tüm liste + galeriden özel yükleme
+
+### Performans ve stabilite
+
+- **Canlı fal seansı:** kapanışta Agora/SSE/API temizliği beklenir; uygulama kapanmaya zorlanmaz
+- **Canlı yayın:** izleyici geri tuşu ile çıkış; dispose’da Agora bırakılır
+- **Kamera gecikmesi:** iki yönlü görüşmede düşük gecikme (360p + low-latency)
+
 ## 1.0.4+5 (2026-07-09)
 
 ### Özellik sadeleştirme

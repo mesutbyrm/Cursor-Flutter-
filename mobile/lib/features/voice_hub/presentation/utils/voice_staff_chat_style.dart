@@ -115,12 +115,11 @@ abstract final class VoiceStaffChatStyle {
     final clean = name.trim();
     final displayName =
         clean.isEmpty ? 'Kullanıcı' : (clean.length > 28 ? '${clean.substring(0, 26)}…' : clean);
-    final role = entryRoleLabel(user);
     final room = roomName?.trim();
     if (room != null && room.isNotEmpty) {
-      return '${entryEmoji(user)} $role $displayName, $room giriş yaptı';
+      return '$displayName $room odasına giriş yaptı';
     }
-    return '${entryEmoji(user)} $role $displayName giriş yaptı';
+    return '$displayName giriş yaptı';
   }
 
   /// Yetkili giriş animasyonu — VIP/Gold hariç.
