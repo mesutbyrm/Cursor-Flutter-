@@ -210,7 +210,7 @@ class VoiceAgoraEngine {
           channelId: joinChannel,
           uid: joinUid,
           options: ChannelMediaOptions(
-            channelProfile: ChannelProfileType.channelProfileCommunication,
+            channelProfile: ChannelProfileType.channelProfileLiveBroadcasting,
             clientRoleType: clientRole,
             publishMicrophoneTrack: publishMic,
             autoSubscribeAudio: true,
@@ -287,7 +287,7 @@ class VoiceAgoraEngine {
       await _engine!.initialize(
         RtcEngineContext(
           appId: appId,
-          channelProfile: ChannelProfileType.channelProfileCommunication,
+          channelProfile: ChannelProfileType.channelProfileLiveBroadcasting,
         ),
       );
       await _engine!.enableAudio();
@@ -323,9 +323,21 @@ class VoiceAgoraEngine {
     try {
       if (enabled && !_publishMic) {
         await engine.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
+        await engine.updateChannelMediaOptions(
+          options: const ChannelMediaOptions(
+            clientRoleType: ClientRoleType.clientRoleBroadcaster,
+            publishMicrophoneTrack: true,
+          ),
+        );
         _publishMic = true;
       } else if (!enabled && _publishMic) {
         await engine.muteLocalAudioStream(true);
+        await engine.updateChannelMediaOptions(
+          options: const ChannelMediaOptions(
+            clientRoleType: ClientRoleType.clientRoleAudience,
+            publishMicrophoneTrack: false,
+          ),
+        );
         await engine.setClientRole(role: ClientRoleType.clientRoleAudience);
         _publishMic = false;
         _micOn = false;
@@ -333,9 +345,9 @@ class VoiceAgoraEngine {
       }
       await engine.muteLocalAudioStream(!enabled);
       _micOn = enabled;
-      _publishMic = enabled || _publishMic;
     } catch (e, st) {
       _logFailure('setMicEnabled', e, st);
+      rethrow;
     }
   }
 

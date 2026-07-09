@@ -67,24 +67,25 @@ class VoiceRoomAudioCoordinator {
   Future<void> _setMicEnabledSafe(bool enabled) async {
     final op = _micOp;
     try {
+      final channel = _lastRoomId?.trim();
+      if (channel == null || channel.isEmpty) return;
+
       if (enabled) {
-        if (!_agora.inChannel && _lastRoomId != null) {
-          final ds = _remote;
-          final channel = _lastRoomId!;
-          if (ds != null) {
-            await ds.joinVoiceSession(channel);
-          }
-          await _agora.joinVoice(channel, publishMic: true);
-          _engine = VoiceAudioEngineKind.agora;
-        } else {
-          await _agora.setMicEnabled(true);
+        final ds = _remote;
+        if (ds != null) {
+          await ds.joinVoiceSession(channel);
         }
+        // Host token gerekir — tam yeniden bağlan.
+        await _agora.joinVoice(channel, publishMic: true);
+        _engine = VoiceAudioEngineKind.agora;
         return;
       }
-      await _agora.setMicEnabled(false);
+
+      if (_agora.inChannel) {
+        await _agora.setMicEnabled(false);
+      }
       final ds = _remote;
-      final channel = _lastRoomId;
-      if (ds != null && channel != null && channel.isNotEmpty) {
+      if (ds != null) {
         try {
           await ds.leaveVoiceSession(channel);
         } catch (_) {}
@@ -95,6 +96,7 @@ class VoiceRoomAudioCoordinator {
         'error': e.toString(),
         'stack': st.toString(),
       });
+      rethrow;
     } finally {
       if (identical(_micOp, op)) _micOp = null;
     }
