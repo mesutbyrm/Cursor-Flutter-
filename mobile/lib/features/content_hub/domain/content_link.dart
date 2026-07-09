@@ -18,52 +18,6 @@ class ContentLink {
 abstract final class ContentHubCatalog {
   static const sections = <(String, List<ContentLink>)>[
     (
-      'Blog & Astroloji',
-      [
-        ContentLink(
-          title: 'Blog',
-          subtitle: 'Makaleler ve rehberler',
-          path: '/blog',
-          icon: Icons.menu_book_rounded,
-        ),
-        ContentLink(
-          title: 'Burçlar',
-          subtitle: 'Burç yazıları',
-          path: '/blog/burclar',
-          icon: Icons.star_rounded,
-        ),
-      ],
-    ),
-    (
-      'Rüya',
-      [
-        ContentLink(
-          title: 'Rüya tabiri',
-          subtitle: 'Rüya yorumları',
-          path: '/ruya',
-          icon: Icons.nights_stay_rounded,
-        ),
-        ContentLink(
-          title: 'Rüya sözlüğü',
-          subtitle: 'Semboller ve anlamlar',
-          path: '/ruya-sozlugu',
-          icon: Icons.auto_stories_rounded,
-        ),
-        ContentLink(
-          title: 'Rüya trendleri',
-          subtitle: 'Popüler rüyalar',
-          path: '/ruya-trendleri',
-          icon: Icons.trending_up_rounded,
-        ),
-        ContentLink(
-          title: 'Rüya takvimi',
-          subtitle: 'Günlük rüya enerjisi',
-          path: '/ruya-takvimi',
-          icon: Icons.calendar_month_rounded,
-        ),
-      ],
-    ),
-    (
       'Fal & topluluk',
       [
         ContentLink(

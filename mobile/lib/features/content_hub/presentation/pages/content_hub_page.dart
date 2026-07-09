@@ -8,7 +8,7 @@ import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../shell/presentation/widgets/branch_role_actions.dart';
 import '../../domain/content_link.dart';
 
-/// Blog, rüya ve fal içerikleri — yalnızca native ekranlara yönlendirir (WebView yok).
+/// Fal ve topluluk içerikleri — yalnızca native ekranlara yönlendirir (WebView yok).
 class ContentHubPage extends ConsumerWidget {
   const ContentHubPage({super.key});
 

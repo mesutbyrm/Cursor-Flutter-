@@ -14,7 +14,6 @@ import 'approved/trending_video_section.dart';
 import 'approved/voice_room_section.dart';
 import 'home_banner_carousel.dart';
 import 'home_deferred_section.dart';
-import 'home_game_center_section.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 
 /// Ana sayfa bölümleri — küçük widget'lar, RepaintBoundary ile izole repaint.
@@ -89,12 +88,6 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homeGoldSectionDelay,
           child: GoldSection(),
-        ),
-      ),
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeGameSectionDelay,
-          child: HomeGameCenterSection(),
         ),
       ),
       SliverToBoxAdapter(child: SizedBox(height: 72 + bottomInset)),

@@ -70,13 +70,6 @@ class ProfileQuickActions extends ConsumerWidget {
         g: [AppColors.accentPink.withValues(alpha: 0.5), const Color(0xFF1A1028)],
         ic: null,
       ),
-      (
-        icon: Icons.celebration_rounded,
-        label: 'Etkinlikler',
-        onTap: () => context.push('/games'),
-        g: [const Color(0xFF203050), const Color(0xFF101820)],
-        ic: null,
-      ),
     ];
 
     return Column(

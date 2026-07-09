@@ -3,19 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/theme_mode_provider.dart';
 import '../providers/amoled_dark_provider.dart';
-import '../storage/theme_preferences.dart';
 import '../theme/app_spacing.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:canlifal_social/features/profile/presentation/widgets/premium/profile_glass.dart';
 
-/// Ayarlar — Açık / Koyu / Sistem tema seçimi (anında uygulanır).
+enum _DarkThemeChoice { standard, amoled }
+
+/// Ayarlar — yalnızca Koyu ve AMOLED Koyu tema seçimi.
 class ThemeModeSelector extends ConsumerWidget {
   const ThemeModeSelector({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mode = ref.watch(themeModeProvider);
     final amoled = ref.watch(amoledDarkProvider);
+    final selected = amoled ? _DarkThemeChoice.amoled : _DarkThemeChoice.standard;
     final c = context.colors;
 
     return ProfileGlass(
@@ -37,74 +38,40 @@ class ThemeModeSelector extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          SegmentedButton<ThemeMode>(
-            segments: [
+          SegmentedButton<_DarkThemeChoice>(
+            segments: const [
               ButtonSegment(
-                value: ThemeMode.light,
-                label: Text(ThemePreferences.label(ThemeMode.light)),
-                icon: const Icon(Icons.light_mode_rounded, size: 18),
+                value: _DarkThemeChoice.standard,
+                label: Text('Koyu'),
+                icon: Icon(Icons.dark_mode_rounded, size: 18),
               ),
               ButtonSegment(
-                value: ThemeMode.dark,
-                label: Text(ThemePreferences.label(ThemeMode.dark)),
-                icon: const Icon(Icons.dark_mode_rounded, size: 18),
-              ),
-              ButtonSegment(
-                value: ThemeMode.system,
-                label: Text(
-                  ThemePreferences.label(ThemeMode.system),
-                  style: const TextStyle(fontSize: 11),
-                ),
-                icon: const Icon(Icons.brightness_auto_rounded, size: 18),
+                value: _DarkThemeChoice.amoled,
+                label: Text('AMOLED Koyu'),
+                icon: Icon(Icons.contrast_rounded, size: 18),
               ),
             ],
-            selected: {mode},
-            onSelectionChanged: (selected) {
-              ref.read(themeModeProvider.notifier).setMode(selected.first);
+            selected: {selected},
+            onSelectionChanged: (choice) {
+              final pick = choice.first;
+              ref.read(themeModeProvider.notifier).setMode(ThemeMode.dark);
+              ref
+                  .read(amoledDarkProvider.notifier)
+                  .setEnabled(pick == _DarkThemeChoice.amoled);
             },
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            _hint(mode),
+            selected == _DarkThemeChoice.amoled
+                ? 'Saf siyah arka plan — OLED ekranlarda daha az pil tüketimi.'
+                : 'Cam efektli koyu tema — gece ve yayın için optimize.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: c.onSurfaceMuted,
                   height: 1.35,
                 ),
           ),
-          if (mode != ThemeMode.light) ...[
-            const SizedBox(height: AppSpacing.md),
-            SwitchListTile.adaptive(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                'AMOLED Koyu',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: c.onSurface,
-                    ),
-              ),
-              subtitle: Text(
-                'Saf siyah arka plan — OLED ekranlarda daha az pil tüketimi',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: c.onSurfaceMuted,
-                      height: 1.35,
-                    ),
-              ),
-              value: amoled,
-              onChanged: (v) =>
-                  ref.read(amoledDarkProvider.notifier).setEnabled(v),
-            ),
-          ],
         ],
       ),
     );
   }
-
-  String _hint(ThemeMode mode) => switch (mode) {
-        ThemeMode.light =>
-          'Açık tema: modern, ferah arayüz. Gündüz kullanımı için idealdir.',
-        ThemeMode.dark =>
-          'Koyu tema: cam efektli premium görünüm. Gece ve yayın için optimize.',
-        ThemeMode.system =>
-          'Telefonunuzun açık veya koyu ayarını otomatik takip eder.',
-      };
 }

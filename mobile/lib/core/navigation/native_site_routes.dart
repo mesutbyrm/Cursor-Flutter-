@@ -36,16 +36,6 @@ void openNativeSitePath(BuildContext context, String path) {
     context.push(p.startsWith('/') ? p : '/$p');
     return;
   }
-  if (p == '/games-hub' ||
-      p == '/oyunlar' ||
-      p == '/games' ||
-      p.startsWith('/oyunlar/') ||
-      p.startsWith('/mini-games/') ||
-      p.startsWith('/tournaments') ||
-      p.startsWith('/turnuvalar')) {
-    context.push('/games-hub');
-    return;
-  }
   if (p == '/live' || p.startsWith('/live')) {
     context.go('/live');
     return;
@@ -75,17 +65,15 @@ void openNativeSitePath(BuildContext context, String path) {
     context.push('/celebrities-hub');
     return;
   }
-  if (p == '/blog-hub' || p.startsWith('/blog')) {
-    context.push('/blog-hub');
+  if (p.startsWith('/blog')) {
     return;
   }
-  if (p == '/dreams-hub' ||
-      p.startsWith('/ruya-sozlugu') ||
+  if (p.startsWith('/ruya-sozlugu') ||
       p.startsWith('/ruya-trendleri') ||
       p.startsWith('/ruya-takvimi') ||
       p.startsWith('/ruya-istatistikleri') ||
-      p.startsWith('/ruya-yarismasi')) {
-    context.push('/dreams-hub');
+      p.startsWith('/ruya-yarismasi') ||
+      p == '/dreams-hub') {
     return;
   }
   if (p.startsWith('/ruya') || p.contains('ruya-yorumu')) {

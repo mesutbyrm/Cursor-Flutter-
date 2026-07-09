@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../theme/home_approved_design.dart';
 
-/// Ana sayfa hızlı erişim — sesli oda, sosyal, fal & tarot, oyunlar.
+/// Ana sayfa hızlı erişim — sesli oda, sosyal, fal & tarot.
 class HomeQuickActions extends StatelessWidget {
   const HomeQuickActions({super.key});
 
@@ -42,15 +42,6 @@ class HomeQuickActions extends StatelessWidget {
               label: 'Fal & Tarot',
               colors: const [Color(0xFF2563EB), Color(0xFF7C3AED)],
               onTap: () => context.go('/fortune'),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _ActionChip(
-              icon: Icons.sports_esports_rounded,
-              label: 'Oyunlar',
-              colors: const [Color(0xFF059669), Color(0xFF10B981)],
-              onTap: () => context.push('/games-hub'),
             ),
           ),
         ],

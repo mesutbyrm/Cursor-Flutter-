@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.4+5 (2026-07-09)
+
+### Özellik sadeleştirme
+
+- **Oyunlar / Oyun Merkezi kaldırıldı** — ana sayfa, keşfet, profil ve `/games-hub` rotaları
+- **Blog ve Rüyalarım kaldırıldı** — profil ayarları ve `/blog-hub`, `/dreams-hub` rotaları
+- **Tema:** yalnızca **Koyu** ve **AMOLED Koyu**; açık ve sistem teması kaldırıldı
+
 ## 1.0.3+4 (2026-07-09)
 
 ### APK / AAB boyut optimizasyonu

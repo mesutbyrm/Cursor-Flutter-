@@ -61,9 +61,8 @@ abstract final class ThemePreferences {
       };
 
   static ThemeMode _decode(String? raw) => switch (raw) {
-        'light' => ThemeMode.light,
-        'system' => ThemeMode.system,
         'dark' => ThemeMode.dark,
-        _ => ThemeMode.dark,
+        // Eski açık/sistem tercihleri artık desteklenmiyor — koyu temaya taşınır.
+        'light' || 'system' || _ => ThemeMode.dark,
       };
 }

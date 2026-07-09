@@ -69,18 +69,6 @@ class ProfileSettingsSection extends StatelessWidget {
               ),
               Divider(height: 1, indent: 52, color: palette.divider),
               _SettingsRow(
-                icon: Icons.menu_book_rounded,
-                label: 'Blog',
-                onTap: () => context.push('/blog-hub'),
-              ),
-              Divider(height: 1, indent: 52, color: palette.divider),
-              _SettingsRow(
-                icon: Icons.nights_stay_outlined,
-                label: 'Rüyalarım',
-                onTap: () => context.push('/dreams-hub'),
-              ),
-              Divider(height: 1, indent: 52, color: palette.divider),
-              _SettingsRow(
                 icon: Icons.search_rounded,
                 label: 'Kullanıcı Ara',
                 onTap: () => context.push('/search'),

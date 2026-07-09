@@ -38,13 +38,6 @@ class HomeFanClubItem {
 abstract final class HomeSiteCatalog {
   static const discoverTiles = <HomeDiscoverTile>[
     HomeDiscoverTile(
-      id: 'games',
-      label: 'Oyunlar',
-      icon: Icons.sports_esports_rounded,
-      gradient: [Color(0xFF3B82F6), Color(0xFF1E3A8A)],
-      route: '/games-hub',
-    ),
-    HomeDiscoverTile(
       id: 'trends',
       label: 'Trendler',
       icon: Icons.local_fire_department_rounded,

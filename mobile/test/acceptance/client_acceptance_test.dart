@@ -34,15 +34,15 @@ void main() {
       await ThemePreferences.init();
     });
 
-    test('açık/koyu/sistem teması kaydedilir ve okunur', () async {
-      await ThemePreferences.saveThemeMode(ThemeMode.light);
-      expect(ThemePreferences.loadThemeMode(), ThemeMode.light);
-
+    test('koyu tema kaydedilir; eski açık/sistem tercihi koyuya taşınır', () async {
       await ThemePreferences.saveThemeMode(ThemeMode.dark);
       expect(ThemePreferences.loadThemeMode(), ThemeMode.dark);
 
+      await ThemePreferences.saveThemeMode(ThemeMode.light);
+      expect(ThemePreferences.loadThemeMode(), ThemeMode.dark);
+
       await ThemePreferences.saveThemeMode(ThemeMode.system);
-      expect(ThemePreferences.loadThemeMode(), ThemeMode.system);
+      expect(ThemePreferences.loadThemeMode(), ThemeMode.dark);
     });
 
     test('AMOLED bayrağı kalıcıdır', () async {
