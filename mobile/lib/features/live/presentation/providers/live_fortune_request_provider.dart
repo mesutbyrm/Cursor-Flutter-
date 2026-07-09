@@ -8,6 +8,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../data/datasources/live_fortune_request_datasource.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../domain/utils/live_discover_category.dart';
+import '../../domain/utils/live_fortune_host_bridge.dart';
 
 /// Yayıncı kullanıcı kimliği — fal davet köprüsü için (SSE'de yoksa).
 final liveFortuneHostUserIdProvider =
