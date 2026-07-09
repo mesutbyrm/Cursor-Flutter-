@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.2+3 (2026-07-09)
+
+### Play Console — ön plan hizmeti beyanı
+
+- **Manifest:** `FOREGROUND_SERVICE_MEDIA_PROJECTION` eklendi (Agora/TRTC ekran paylaşımı SDK birleşimi)
+- **Rehber:** `docs/PLAY_FOREGROUND_SERVICE_DECLARATION.md` — Play Console’da kamera, mikrofon, medya oynatma ve medya yansıtma beyanı adımları
+
 ## 1.0.1+2 (2026-07-08)
 
 ### Android production — R8, boyut ve Play Console uyarıları
