@@ -8,8 +8,6 @@ import '../../../../core/network/dio_provider.dart';
 import '../../data/datasources/live_fortune_request_datasource.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../domain/utils/live_discover_category.dart';
-import '../../domain/utils/live_fortune_host_bridge.dart';
-import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
 
 /// Yayıncı kullanıcı kimliği — fal davet köprüsü için (SSE'de yoksa).
 final liveFortuneHostUserIdProvider =
@@ -197,14 +195,7 @@ class LiveFortuneRequestsNotifier
         row.status != LiveFortuneRequestStatus.held) {
       return;
     }
-    final hostUid = ref.read(liveFortuneHostUserIdProvider(arg));
-    final invite = liveFortuneRequestToPsychicInvite(
-      row,
-      tellerUserId: hostUid,
-    );
-    if (invite != null) {
-      emitPsychicLiveRequest(ref, invite);
-    }
+    // Canlı yayın fal kuyruğu — 1:1 falcı diyaloğuna yönlendirme yapılmaz.
   }
 }
 

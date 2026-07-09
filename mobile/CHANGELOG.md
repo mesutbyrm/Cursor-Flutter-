@@ -1,6 +1,25 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.9+11 (2026-07-09)
+
+### Ana sayfa performans
+- Canlı/ses/trend bölümleri yenilemede eski veriyi korur (iskelet flash yok)
+- Ana sayfa canlı kartları yalnızca thumbnail — HLS önizleme bellek sızıntısı giderildi
+- Arka plan yenileme 180 sn + `refresh` (invalidate yerine)
+
+### Canlı falcılar
+- Bahşiş: GET `/api/room/signal` yedek poll (falcı görür)
+- Süre: sunucu `elapsedSeconds` öncelikli; oda poll 3 sn
+- Bağlantı: RTC + SSE paralel bootstrap
+
+### Canlı yayın
+- Hediye ortada: «kullanıcı yayıncıya hediye (jeton) gönderdi»
+- Hediye poll 2 sn; emoji/görünüm güncellendi
+- Fal isteği: yanlış 1:1 falcı köprüsü kaldırıldı; host poll 3 sn
+- Misafir/çoklu yayın: onay sonrası Agora host rolü
+- PK: gelen davet popup + 4 sn poll
+
 ## 1.0.8+10 (2026-07-09)
 
 ### Kritik — Agora ses motoru (-8)

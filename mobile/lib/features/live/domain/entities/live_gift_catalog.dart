@@ -37,12 +37,17 @@ class LiveGiftCatalog {
 
   static const emojiById = <String, String>{
     'gul': '🌹',
-    'kalp': '💖',
-    'yildiz': '⭐',
+    'kalp': '💝',
+    'yildiz': '✨',
     'tac': '👑',
-    'roket': '🚗',
+    'roket': '🚀',
     'elmas': '💎',
-    'galaksi': '🌌',
+    'galaksi': '🪐',
+    'aslan': '🦁',
+    'araba': '🏎️',
+    'yat': '🛥️',
+    'cicek': '🌸',
+    'ates': '🔥',
   };
 
   static String displayName(LiveVideoGiftType gift) {

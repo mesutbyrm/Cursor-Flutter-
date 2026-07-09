@@ -131,8 +131,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   Timer? _chatPoll;
   Timer? _ping;
   Timer? _roomPoll;
+  Timer? _signalPoll;
   var _disposed = false;
   var _remoteEndHandled = false;
+  final _seenSignalIds = <String>{};
 
   AgoraRoomManager get agora => _agora;
 
@@ -150,8 +152,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       'isClient': session.isClient,
     });
     await PsychicSessionStore.save(session);
-    await _syncRoomInfo(startTimerIfTeller: true);
     _startTimers();
+    unawaited(_syncRoomInfo(startTimerIfTeller: true));
     await Future.wait([
       _joinRtc(),
       _connectRoomSse(),
@@ -176,7 +178,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _tick = Timer.periodic(const Duration(seconds: 1), (_) {
       if (_disposed || state.leaving) return;
       if (!state.timerStarted) return;
-      final secs = state.room?.remainingSeconds ?? state.remaining.inSeconds - 1;
+      final room = state.room;
+      final secs = room != null && room.timerStarted
+          ? room.remainingSeconds
+          : state.remaining.inSeconds - 1;
       if (secs <= 0) {
         unawaited(_onTimeUp());
         return;
@@ -188,9 +193,46 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _ping = Timer.periodic(const Duration(seconds: 60), (_) => _sendPing());
 
     _roomPoll?.cancel();
-    _roomPoll = Timer.periodic(const Duration(seconds: 4), (_) {
+    _roomPoll = Timer.periodic(const Duration(seconds: 3), (_) {
       unawaited(_syncRoomInfo());
     });
+
+    _signalPoll?.cancel();
+    if (!session.isClient) {
+      _signalPoll = Timer.periodic(const Duration(seconds: 3), (_) {
+        unawaited(_pollRoomSignals());
+      });
+      unawaited(_pollRoomSignals());
+    }
+  }
+
+  Future<void> _pollRoomSignals() async {
+    if (_disposed || state.leaving || session.isClient) return;
+    final repo = ref.read(livePsychicsRepositoryProvider);
+    final signals = await repo.fetchRoomSignals(session.sessionId);
+    if (_disposed) return;
+    for (final sig in signals) {
+      final id = sig['id']?.toString() ??
+          '${sig['type']}_${sig['createdAt'] ?? sig['timestamp']}';
+      if (id.isEmpty || !_seenSignalIds.add(id)) continue;
+      final type = (sig['type'] ?? '').toString().toLowerCase();
+      if (!type.contains('tip') && !type.contains('bahsis')) continue;
+      final data = sig['data'] is Map
+          ? Map<String, dynamic>.from(sig['data'] as Map)
+          : sig;
+      final amountRaw = data['amount'] ??
+          data['jeton'] ??
+          data['tipAmount'] ??
+          data['value'] ??
+          sig['amount'];
+      final amount = amountRaw is num
+          ? amountRaw.round()
+          : int.tryParse('$amountRaw') ?? 0;
+      final from = data['fromName']?.toString() ??
+          data['senderName']?.toString() ??
+          data['from']?.toString();
+      _onTipReceived(amount, from);
+    }
   }
 
   Future<void> _syncRoomInfo({bool startTimerIfTeller = false}) async {
@@ -626,6 +668,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   Future<void> _onTimeUp() async {
     _tick?.cancel();
+    _signalPoll?.cancel();
     if (_disposed || state.leaving) return;
     if (session.isClient) {
       state = state.copyWith(timeUpPending: true);
@@ -767,6 +810,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _chatPoll?.cancel();
     _ping?.cancel();
     _roomPoll?.cancel();
+    _signalPoll?.cancel();
     unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
     _agora.dispose();
     super.dispose();

@@ -19,7 +19,7 @@ class TrendingVideoSection extends ConsumerWidget {
       homeTrendVideosProvider.select((a) => (a.isLoading, a.hasError, a.valueOrNull)),
     );
 
-    if (videos.$1) {
+    if (videos.$1 && videos.$3 == null) {
       return Column(
         children: [
           HomeSectionTitle(

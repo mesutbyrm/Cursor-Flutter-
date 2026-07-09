@@ -190,8 +190,7 @@ class LiveGiftController extends ChangeNotifier {
   }
 
   bool _isDisplayable(LiveGiftEvent e) {
-    bool ok(String s) =>
-        s.isNotEmpty && !s.startsWith('{') && !s.contains('https://');
+    bool ok(String s) => s.trim().isNotEmpty && !s.startsWith('{');
     return ok(e.senderName) && ok(e.receiverName) && ok(e.giftName);
   }
 
