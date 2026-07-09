@@ -20,7 +20,7 @@ class FortuneTypeShowcase {
   String get numberedTitle => '$index. ${type.title}';
 
   static String imageAssetForSlug(String slug) =>
-      'assets/fortune/$slug.png';
+      'assets/fortune/$slug.webp';
 
   static FortuneTypeShowcase? forSlug(String slug) {
     final type = FortuneCatalog.bySlug(slug);

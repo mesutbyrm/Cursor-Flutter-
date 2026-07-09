@@ -36,7 +36,8 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+            // Play Store hedefi: yalnızca 64-bit ARM (~%40 daha küçük APK; minSdk 24).
+            abiFilters += listOf("arm64-v8a")
         }
     }
 
@@ -55,6 +56,31 @@ android {
             pickFirsts += listOf(
                 "**/libliteavsdk.so",
                 "**/libc++_shared.so",
+            )
+            // ffmpeg_kit / plugin AAR'ları tüm ABI'leri getirir; yalnızca arm64 bırak.
+            excludes += listOf(
+                "lib/armeabi-v7a/**",
+                "lib/x86/**",
+                "lib/x86_64/**",
+                "lib/armeabi-v7a/libliteavsdk.so",
+                "lib/x86_64/libliteavsdk.so",
+                // Agora AI/eklenti modülleri (~45MB) — temel ses/video RTC yeterli.
+                "**/libagora_clear_vision_extension.so",
+                "**/libagora_lip_sync_extension.so",
+                "**/libagora_spatial_audio_extension.so",
+                "**/libagora_ai_noise_suppression_extension.so",
+                "**/libagora_ai_noise_suppression_ll_extension.so",
+                "**/libagora_segmentation_extension.so",
+                "**/libagora_face_capture_extension.so",
+                "**/libagora_ai_echo_cancellation_extension.so",
+                "**/libagora_audio_beauty_extension.so",
+                "**/libagora_ai_echo_cancellation_ll_extension.so",
+                "**/libagora_content_inspect_extension.so",
+                "**/libagora_video_av1_encoder_extension.so",
+                "**/libagora_video_quality_analyzer_extension.so",
+                "**/libagora_face_detection_extension.so",
+                "**/libagora_screen_capture_extension.so",
+                "**/libagora_ffmpeg.so",
             )
             useLegacyPackaging = false
         }
@@ -99,6 +125,11 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     implementation("androidx.media3:media3-exoplayer:1.5.1")
+}
+
+// Agora ekran paylaşımı modülü (~15MB + MEDIA_PROJECTION) — sesli oda için gerekmez.
+configurations.configureEach {
+    exclude(group = "io.agora.rtc", module = "full-screen-sharing-special")
 }
 
 if (file("google-services.json").exists()) {

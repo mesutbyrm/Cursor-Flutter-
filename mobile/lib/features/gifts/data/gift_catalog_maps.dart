@@ -24,15 +24,6 @@ abstract final class GiftCatalogMaps {
     'yat': 'assets/gifts/lottie/star.json',
   };
 
-  static const riveAssetByKey = <String, String>{
-    'rive:diamond': 'assets/gifts/rive/diamond.riv',
-    'rive:lion': 'assets/gifts/rive/diamond.riv',
-    'diamond': 'assets/gifts/rive/diamond.riv',
-    'elmas': 'assets/gifts/rive/diamond.riv',
-    'lion': 'assets/gifts/rive/diamond.riv',
-    'aslan': 'assets/gifts/rive/diamond.riv',
-  };
-
   static const svgaAssetByKey = <String, String>{
     'svga:galaxy': 'assets/gifts/svga/galaxy.svga',
     'galaxy': 'assets/gifts/svga/galaxy.svga',
@@ -59,17 +50,19 @@ abstract final class GiftCatalogMaps {
     'yacht': '🛥️',
   };
 
-  /// Premium 2026 — painter fallback (asset yok veya SVGA/Rive eksik).
+  /// Premium 2026 — painter fallback (asset yok veya SVGA eksik).
   static bool usePremiumPainter(GiftEntity gift) {
     final id = gift.id.toLowerCase();
     if (id == 'galaksi' ||
         id == 'aslan' ||
         id == 'yat' ||
         id == 'roket' ||
-        id == 'rocket') {
+        id == 'rocket' ||
+        id == 'elmas' ||
+        id == 'diamond' ||
+        id == 'kristal') {
       return true;
     }
-    if (id == 'elmas') return riveAsset(gift) == null;
     return false;
   }
 
@@ -77,12 +70,6 @@ abstract final class GiftCatalogMaps {
     final ref = gift.animationRef;
     if (ref == null) return lottieAssetByKey[gift.id];
     return lottieAssetByKey[ref] ?? lottieAssetByKey[gift.id];
-  }
-
-  static String? riveAsset(GiftEntity gift) {
-    final ref = gift.animationRef;
-    if (ref == null) return riveAssetByKey[gift.id];
-    return riveAssetByKey[ref] ?? riveAssetByKey[gift.id];
   }
 
   static String? svgaAsset(GiftEntity gift) {
@@ -95,10 +82,12 @@ abstract final class GiftCatalogMaps {
       emojiById[gift.id] ?? emojiById[gift.animationRef ?? ''] ?? '🎁';
 
   static GiftAnimationKind resolvedKind(GiftEntity gift) {
+    if (gift.animationKind == GiftAnimationKind.rive) {
+      return GiftAnimationKind.lottie;
+    }
     if (gift.animationKind != GiftAnimationKind.lottie) {
       return gift.animationKind;
     }
-    if (riveAsset(gift) != null) return GiftAnimationKind.rive;
     if (svgaAsset(gift) != null) return GiftAnimationKind.svga;
     if (lottieAsset(gift) != null) return GiftAnimationKind.lottie;
     return GiftAnimationKind.none;

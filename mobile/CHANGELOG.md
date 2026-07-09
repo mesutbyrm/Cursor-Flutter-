@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.3+4 (2026-07-09)
+
+### APK / AAB boyut optimizasyonu
+
+- **arm64-v8a tek ABI** — 32-bit ve x86 native kütüphaneler paket dışı (~%60 küçülme)
+- **Fal görselleri:** PNG → WebP (~30MB tasarruf)
+- **Rive kaldırıldı** — hediyeler Lottie / premium painter (~46MB native)
+- **FFmpeg:** `full-gpl` → `min-gpl` (Shorts stüdyo export)
+- **Agora:** AI/eklenti `.so` modülleri paket dışı; ekran paylaşımı modülü hariç
+- **CI:** `--target-platform android-arm64` + obfuscate + tree-shake-icons
+- Örnek: APK ~385MB → ~158MB; AAB ~373MB → ~101MB (Play’de cihaz başı indirme daha da küçük)
+
 ## 1.0.2+3 (2026-07-09)
 
 ### Play Console — ön plan hizmeti beyanı

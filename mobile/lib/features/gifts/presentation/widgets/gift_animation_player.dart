@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
-import 'package:rive/rive.dart' hide LinearGradient;
 
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../data/gift_cache_service.dart';
@@ -69,9 +68,8 @@ class GiftAnimationPlayer extends StatelessWidget {
               size: size,
               repeat: repeat,
             ),
-          GiftAnimationKind.rive => _RivePlayer(
-              asset: GiftCatalogMaps.riveAsset(g),
-              emoji: emoji,
+          GiftAnimationKind.rive => PremiumGiftIcon(
+              giftId: canonical,
               size: size,
             ),
           GiftAnimationKind.svga => _SvgaPlayer(
@@ -122,33 +120,6 @@ class _LottiePlayer extends StatelessWidget {
       fit: BoxFit.contain,
       errorBuilder: (_, _, _) =>
           Text(emoji, style: TextStyle(fontSize: size * 0.45)),
-    );
-  }
-}
-
-class _RivePlayer extends StatelessWidget {
-  const _RivePlayer({
-    required this.asset,
-    required this.emoji,
-    required this.size,
-  });
-
-  final String? asset;
-  final String emoji;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final path = asset;
-    if (path == null || path.isEmpty) {
-      return Text(emoji, style: TextStyle(fontSize: size * 0.45));
-    }
-    return RiveAnimation.asset(
-      path,
-      fit: BoxFit.contain,
-      placeHolder: Center(
-        child: Text(emoji, style: TextStyle(fontSize: size * 0.4)),
-      ),
     );
   }
 }

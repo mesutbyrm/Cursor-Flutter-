@@ -8,7 +8,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   cloud_firestore
   connectivity_plus
   desktop_webview_window
-  ffmpeg_kit_flutter_new
+  ffmpeg_kit_flutter_new_min_gpl
   file_selector_windows
   firebase_auth
   firebase_core
@@ -20,7 +20,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   livekit_client
   permission_handler_windows
   record_windows
-  rive_common
   share_plus
   tencent_rtc_sdk
   url_launcher_windows

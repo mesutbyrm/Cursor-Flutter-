@@ -53,21 +53,21 @@ abstract final class FortuneTypeImages {
   };
 
   static const _assetFiles = <String, String>{
-    'tarot': 'tarot.png',
-    'kahve-fali': 'kahve-fali.png',
-    'ask-fali': 'ask-fali.png',
-    'yildiz-haritasi': 'yildiz-haritasi.png',
-    'el-fali': 'el-fali.png',
-    'katina': 'katina.png',
-    'iskambil': 'iskambil.png',
-    'melek-kartlari': 'melek-kartlari.png',
-    'numeroloji': 'numeroloji.png',
-    'ruya-tabiri': 'ruya-tabiri.png',
-    'cin-fali': 'cin-fali.png',
-    'istihare': 'pendul.png',
-    'aura': 'runik.png',
-    'evet-hayir': 'evet-hayir.png',
-    'gunluk-fal': 'tarot.png',
+    'tarot': 'tarot.webp',
+    'kahve-fali': 'kahve-fali.webp',
+    'ask-fali': 'ask-fali.webp',
+    'yildiz-haritasi': 'yildiz-haritasi.webp',
+    'el-fali': 'el-fali.webp',
+    'katina': 'katina.webp',
+    'iskambil': 'iskambil.webp',
+    'melek-kartlari': 'melek-kartlari.webp',
+    'numeroloji': 'numeroloji.webp',
+    'ruya-tabiri': 'ruya-tabiri.webp',
+    'cin-fali': 'cin-fali.webp',
+    'istihare': 'pendul.webp',
+    'aura': 'runik.webp',
+    'evet-hayir': 'evet-hayir.webp',
+    'gunluk-fal': 'tarot.webp',
   };
 
   static const _photoIds = <String, String>{
