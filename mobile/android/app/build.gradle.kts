@@ -65,6 +65,7 @@ android {
                 "lib/armeabi-v7a/libliteavsdk.so",
                 "lib/x86_64/libliteavsdk.so",
                 // Agora AI/eklenti modülleri (~45MB) — temel ses/video RTC yeterli.
+                // libagora_ffmpeg.so DAHİL EDİLMELİ — libagora-rtc-sdk.so buna bağlıdır.
                 "**/libagora_clear_vision_extension.so",
                 "**/libagora_lip_sync_extension.so",
                 "**/libagora_spatial_audio_extension.so",
@@ -80,7 +81,6 @@ android {
                 "**/libagora_video_quality_analyzer_extension.so",
                 "**/libagora_face_detection_extension.so",
                 "**/libagora_screen_capture_extension.so",
-                "**/libagora_ffmpeg.so",
             )
             useLegacyPackaging = false
         }

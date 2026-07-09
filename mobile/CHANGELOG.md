@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.7+8 (2026-07-09)
+
+### Kritik — ses açılınca çökme
+
+- **Agora `libagora_ffmpeg.so`:** APK boyut optimizasyonunda yanlışlıkla hariç tutulmuştu; `libagora-rtc-sdk.so` bu kütüphaneye bağlı — ses açılınca `UnsatisfiedLinkError` ile çöküyordu
+- Gradle `packaging.jniLibs.excludes` listesinden `libagora_ffmpeg.so` kaldırıldı (yalnızca isteğe bağlı AI/eklenti `.so` dosyaları hariç kalır)
+
 ## 1.0.6+7 (2026-07-09)
 
 ### Sesli sohbet — çökme ve hediye
