@@ -324,7 +324,7 @@ class VoiceAgoraEngine {
       if (enabled && !_publishMic) {
         await engine.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
         await engine.updateChannelMediaOptions(
-          options: const ChannelMediaOptions(
+          const ChannelMediaOptions(
             clientRoleType: ClientRoleType.clientRoleBroadcaster,
             publishMicrophoneTrack: true,
           ),
@@ -333,7 +333,7 @@ class VoiceAgoraEngine {
       } else if (!enabled && _publishMic) {
         await engine.muteLocalAudioStream(true);
         await engine.updateChannelMediaOptions(
-          options: const ChannelMediaOptions(
+          const ChannelMediaOptions(
             clientRoleType: ClientRoleType.clientRoleAudience,
             publishMicrophoneTrack: false,
           ),

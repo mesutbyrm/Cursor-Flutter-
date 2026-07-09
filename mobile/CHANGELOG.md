@@ -1,13 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
-## 1.0.8+9 (2026-07-09)
+## 1.0.8+10 (2026-07-09)
 
 ### Kritik — Agora ses motoru (-8)
 
 - **AgoraRtcException(-8):** Sesli oda `channelProfileCommunication` ile `setClientRole` çağırıyordu; bu profilde rol değişimi desteklenmez
 - Ses motoru `channelProfileLiveBroadcasting` (canlı yayın) profiline geçirildi — `AgoraRoomManager` ile aynı
 - Mikrofon aç/kapa: `updateChannelMediaOptions` + host token ile tam yeniden bağlanma
+- Derleme: `updateChannelMediaOptions` pozisyonel argüman düzeltmesi
+
+## 1.0.8+9 (2026-07-09)
 
 ## 1.0.7+8 (2026-07-09)
 
