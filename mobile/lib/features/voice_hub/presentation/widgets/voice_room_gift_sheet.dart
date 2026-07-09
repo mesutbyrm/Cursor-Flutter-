@@ -158,6 +158,7 @@ Future<void> showVoiceRoomGiftPickerLegacy(
                                   final raw = LiveGiftEvent(
                                     id: 'local-${DateTime.now().microsecondsSinceEpoch}',
                                     senderId: user?.id,
+                                    receiverId: room.ownerId,
                                     senderName: user?.display ?? 'Sen',
                                     receiverName:
                                         room.ownerName ?? 'Oda sahibi',

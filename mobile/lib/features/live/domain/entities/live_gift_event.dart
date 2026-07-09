@@ -15,6 +15,7 @@ class LiveGiftEvent extends Equatable {
     required this.coinCost,
     required this.timestamp,
     this.senderId,
+    this.receiverId,
     this.combo = 1,
     this.iconUrl,
     this.animationKey,
@@ -25,6 +26,7 @@ class LiveGiftEvent extends Equatable {
 
   final String id;
   final String? senderId;
+  final String? receiverId;
   final String senderName;
   final String receiverName;
   final String giftId;
@@ -48,6 +50,7 @@ class LiveGiftEvent extends Equatable {
   List<Object?> get props => [
         id,
         senderId,
+        receiverId,
         senderName,
         receiverName,
         giftId,

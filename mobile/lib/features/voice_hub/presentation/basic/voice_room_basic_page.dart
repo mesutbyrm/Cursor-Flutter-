@@ -287,8 +287,15 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         return;
       }
     }
-    _audio!.setMicEnabled(!muted);
-    if (mounted) setState(() => _isMicMuted = muted);
+    try {
+      _audio!.setMicEnabled(!muted);
+      if (mounted) setState(() => _isMicMuted = muted);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
   }
 
   void _onChatChanged(String text) {
@@ -315,11 +322,12 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
   void _onGiftEvent(LiveGiftEvent raw) {
     if (!mounted) return;
+    final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
+    ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
+
     final ui = ref.read(voiceRoomUiProvider);
     if (!ui.giftAnimationsEnabled) return;
 
-    final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
-    ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
     ref.read(voiceGiftFlightQueueProvider.notifier).enqueue(event);
 
     final room = _effectiveRoom();

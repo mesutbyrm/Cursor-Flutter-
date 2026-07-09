@@ -204,6 +204,7 @@ class LiveGiftsRemoteDataSource {
     return LiveGiftEvent(
       id: id,
       senderId: _resolvePersonId(json),
+      receiverId: _resolveReceiverId(json),
       senderName: sender,
       receiverName: receiver,
       giftId: giftId,
@@ -274,6 +275,25 @@ class LiveGiftsRemoteDataSource {
     final flat = pick(json, ['senderId', 'userId', 'fromUserId'])?.toString();
     if (flat != null && flat.isNotEmpty) return flat;
     for (final k in ['sender', 'user', 'fromUser']) {
+      final o = json[k];
+      if (o is Map) {
+        final id = pick(asJsonMap(o), ['id', 'userId'])?.toString();
+        if (id != null && id.isNotEmpty) return id;
+      }
+    }
+    return null;
+  }
+
+  String? _resolveReceiverId(Map<String, dynamic> json) {
+    final flat = pick(json, [
+      'receiverId',
+      'receiverUserId',
+      'toUserId',
+      'streamerId',
+      'hostId',
+    ])?.toString();
+    if (flat != null && flat.isNotEmpty) return flat;
+    for (final k in ['receiver', 'streamer', 'host', 'toUser', 'to']) {
       final o = json[k];
       if (o is Map) {
         final id = pick(asJsonMap(o), ['id', 'userId'])?.toString();

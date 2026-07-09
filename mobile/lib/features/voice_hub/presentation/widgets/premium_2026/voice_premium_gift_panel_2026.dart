@@ -282,6 +282,7 @@ class _VoicePremiumGiftPanel2026State
       final raw = LiveGiftEvent(
         id: 'local-${DateTime.now().microsecondsSinceEpoch}',
         senderId: user?.id,
+        receiverId: receiver.id,
         senderName: user?.display ?? 'Sen',
         receiverName: receiver.displayName,
         giftId: g.id,

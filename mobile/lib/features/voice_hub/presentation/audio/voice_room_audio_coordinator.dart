@@ -25,6 +25,8 @@ class VoiceRoomAudioCoordinator {
   bool get micOn => _agora.micOn;
   bool get isSupported => _agora.isSupported;
 
+  Future<void>? _micOp;
+
   /// [roomId] = Prisma oda kimliği (Agora kanal adı).
   Future<VoiceAudioEngineKind> join({
     required String roomId,
@@ -41,57 +43,67 @@ class VoiceRoomAudioCoordinator {
       throw StateError('Oda kimliği boş');
     }
 
-    VoiceRoomDebugLog.log('audio.agora.prepare', {'roomId': channel});
+    VoiceRoomDebugLog.log('audio.agora.prepare', {
+      'roomId': channel,
+      'enableMic': enableMic,
+    });
     _lastRoomId = channel;
 
-    if (!enableMic) {
-      _engine = VoiceAudioEngineKind.agora;
-      return _engine!;
-    }
-
     await ds.joinVoiceSession(channel);
-    await _agora.joinVoice(channel, publishMic: true);
+    await _agora.joinVoice(channel, publishMic: enableMic);
     _engine = VoiceAudioEngineKind.agora;
-    VoiceRoomDebugLog.log('audio.agora.joined', {'roomId': channel});
+    VoiceRoomDebugLog.log('audio.agora.joined', {
+      'roomId': channel,
+      'mic': enableMic,
+    });
     return _engine!;
   }
 
   void setMicEnabled(bool enabled) {
-    if (enabled) {
-      if (!_agora.inChannel && _lastRoomId != null) {
-        unawaited(_joinVoiceNow(_lastRoomId!));
-      } else {
-        _agora.setMicEnabled(true);
-      }
-      return;
-    }
-    _agora.setMicEnabled(false);
-    final ds = _remote;
-    final channel = _lastRoomId;
-    if (ds != null && channel != null && channel.isNotEmpty) {
-      unawaited(ds.leaveVoiceSession(channel));
-    }
+    _micOp = _setMicEnabledSafe(enabled);
+    unawaited(_micOp);
   }
 
-  Future<void> _joinVoiceNow(String roomId) async {
-    final ds = _remote;
-    if (ds == null) return;
+  Future<void> _setMicEnabledSafe(bool enabled) async {
+    final op = _micOp;
     try {
-      await ds.joinVoiceSession(roomId);
-      await _agora.joinVoice(roomId, publishMic: true);
-      _engine = VoiceAudioEngineKind.agora;
+      if (enabled) {
+        if (!_agora.inChannel && _lastRoomId != null) {
+          final ds = _remote;
+          final channel = _lastRoomId!;
+          if (ds != null) {
+            await ds.joinVoiceSession(channel);
+          }
+          await _agora.joinVoice(channel, publishMic: true);
+          _engine = VoiceAudioEngineKind.agora;
+        } else {
+          await _agora.setMicEnabled(true);
+        }
+        return;
+      }
+      await _agora.setMicEnabled(false);
+      final ds = _remote;
+      final channel = _lastRoomId;
+      if (ds != null && channel != null && channel.isNotEmpty) {
+        try {
+          await ds.leaveVoiceSession(channel);
+        } catch (_) {}
+      }
     } catch (e, st) {
-      VoiceRoomDebugLog.log('audio.agora.mic_join.fail', {
+      VoiceRoomDebugLog.log('audio.agora.mic_toggle.fail', {
+        'enabled': enabled,
         'error': e.toString(),
         'stack': st.toString(),
       });
-      rethrow;
+    } finally {
+      if (identical(_micOp, op)) _micOp = null;
     }
   }
 
   void setHeadphonesOn(bool on) => _agora.setRemoteAudioMuted(!on);
 
   Future<void> leave() async {
+    await _micOp;
     final ds = _remote;
     final channel = _agora.inChannel ? _lastRoomId : null;
     if (ds != null && channel != null && channel.isNotEmpty) {
@@ -113,6 +125,7 @@ class VoiceRoomAudioCoordinator {
   }
 
   void dispose() {
+    unawaited(leave());
     unawaited(_agora.dispose());
     _engine = null;
   }

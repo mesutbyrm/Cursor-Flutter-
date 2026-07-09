@@ -184,7 +184,7 @@ class VoiceMicSeat extends StatelessWidget {
                 : (micOn ? Colors.white : Colors.white54),
           ),
         ),
-        _SeatGiftBadge(receiverName: user!.displayName),
+        _SeatGiftBadge(userId: user!.id, receiverName: user!.displayName),
       ],
     );
   }
@@ -317,8 +317,12 @@ class _EmptySeat extends StatelessWidget {
 
 /// Koltuk altı hediye jeton rozeti — tıklanınca gönderici dökümü açılır.
 class _SeatGiftBadge extends ConsumerWidget {
-  const _SeatGiftBadge({required this.receiverName});
+  const _SeatGiftBadge({
+    required this.userId,
+    required this.receiverName,
+  });
 
+  final String userId;
   final String receiverName;
 
   static String _fmt(int v) {
@@ -329,9 +333,12 @@ class _SeatGiftBadge extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final key = receiverName.trim().toLowerCase();
     final agg = ref.watch(
-      voiceSeatGiftTotalsProvider.select((m) => m[key]),
+      voiceSeatGiftTotalsProvider.select(
+        (m) =>
+            m[VoiceSeatGiftTotals.idKey(userId)] ??
+            m[VoiceSeatGiftTotals.nameKey(receiverName)],
+      ),
     );
     if (agg == null || agg.totalCoins <= 0) return const SizedBox.shrink();
 

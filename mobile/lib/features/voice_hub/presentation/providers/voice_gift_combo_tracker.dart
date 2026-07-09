@@ -40,6 +40,7 @@ class VoiceGiftComboTracker extends Notifier<void> {
     return LiveGiftEvent(
       id: raw.id,
       senderId: raw.senderId,
+      receiverId: raw.receiverId,
       senderName: raw.senderName,
       receiverName: raw.receiverName,
       giftId: giftKey,

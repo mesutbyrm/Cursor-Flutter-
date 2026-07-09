@@ -23,8 +23,10 @@ class VoiceAgoraEngine {
   RtcEngineEventHandler? _handler;
   var _inChannel = false;
   var _micOn = true;
+  var _publishMic = false;
   String _channelId = '';
   AgoraCredentials? _lastCredentials;
+  Future<void>? _joinInFlight;
 
   bool get isSupported => !kIsWeb;
   bool get inChannel => _inChannel;
@@ -84,7 +86,7 @@ class VoiceAgoraEngine {
       }
 
       if (_inChannel && _channelId == channel) {
-        setMicEnabled(publishMic);
+        await setMicEnabled(publishMic);
         return;
       }
 
@@ -260,7 +262,8 @@ class VoiceAgoraEngine {
       }
 
       _inChannel = true;
-      setMicEnabled(publishMic);
+      _publishMic = publishMic;
+      await setMicEnabled(publishMic);
     } on VoiceAgoraException {
       rethrow;
     } catch (e, st) {
@@ -313,12 +316,24 @@ class VoiceAgoraEngine {
     }
   }
 
-  void setMicEnabled(bool enabled) {
+  Future<void> setMicEnabled(bool enabled) async {
     final engine = _engine;
     if (engine == null || !_inChannel) return;
+    if (enabled == _micOn && enabled == _publishMic) return;
     try {
-      engine.muteLocalAudioStream(!enabled);
+      if (enabled && !_publishMic) {
+        await engine.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
+        _publishMic = true;
+      } else if (!enabled && _publishMic) {
+        await engine.muteLocalAudioStream(true);
+        await engine.setClientRole(role: ClientRoleType.clientRoleAudience);
+        _publishMic = false;
+        _micOn = false;
+        return;
+      }
+      await engine.muteLocalAudioStream(!enabled);
       _micOn = enabled;
+      _publishMic = enabled || _publishMic;
     } catch (e, st) {
       _logFailure('setMicEnabled', e, st);
     }
@@ -364,8 +379,10 @@ class VoiceAgoraEngine {
     _engine = null;
     _inChannel = false;
     _micOn = false;
+    _publishMic = false;
     _channelId = '';
     _lastCredentials = null;
+    _joinInFlight = null;
     VoiceRoomDebugLog.log('audio.agora.left', {});
   }
 

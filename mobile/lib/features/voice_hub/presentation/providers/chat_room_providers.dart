@@ -540,15 +540,23 @@ class VoiceRoomLiveController
       chatRole: user.chatRole,
     );
     if (VoiceStaffChatStyle.isStaffEntry(content: name, user: userRef)) {
+      final staffLine = VoiceStaffChatStyle.formatStaffEntryLine(
+        name,
+        user: userRef,
+        roomName: _roomMeta.nameTr,
+      );
+      _pushRealtimeEvent(VoiceRoomRealtimeKind.join, staffLine);
       _showStaffEnterBanner(name, user: userRef);
       return;
     }
-    final line = VoiceOfficialJoin.formatEntranceBanner(
-      '$name giriş yaptı',
+    final line = '$name giriş yaptı';
+    _pushRealtimeEvent(VoiceRoomRealtimeKind.join, line);
+    final banner = VoiceOfficialJoin.formatEntranceBanner(
+      line,
       roomName: _roomMeta.nameTr,
     );
-    if (line.isEmpty || !_markEntranceOnce(line)) return;
-    state = state.copyWith(enterBanner: line);
+    if (banner.isEmpty || !_markEntranceOnce(banner)) return;
+    state = state.copyWith(enterBanner: banner);
     _enterBannerTimer?.cancel();
     _enterBannerTimer = Timer(const Duration(seconds: 10), () {
       if (!_sessionActive) return;
@@ -1243,6 +1251,7 @@ class VoiceRoomLiveController
             );
             if (ev != null) {
               ref.read(voiceRoomGiftRealtimeProvider).publishRemote(ev);
+              ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(ev);
             }
           },
           onMessage: (msg) {
@@ -1429,6 +1438,12 @@ class VoiceRoomLiveController
           nickname: payload['userNickname']?.toString(),
           chatRole: entry.isNotEmpty ? entry.toLowerCase() : null,
         );
+        final staffLine = VoiceStaffChatStyle.formatStaffEntryLine(
+          name,
+          user: userRef,
+          roomName: _roomMeta.nameTr,
+        );
+        _pushRealtimeEvent(VoiceRoomRealtimeKind.join, staffLine);
         _showStaffEnterBanner(name, user: userRef);
         return;
       }
@@ -1525,6 +1540,7 @@ class VoiceRoomLiveController
     ref
         .read(voiceRoomDiagnosticProvider.notifier)
         .setPresence(joined: true, count: merged.length);
+    unawaited(_tryAutoPrivilegedSeat());
   }
 
   void _handleSseUserLeave(Map<String, dynamic> payload) {
@@ -1544,7 +1560,7 @@ class VoiceRoomLiveController
             : 'Bir kullanıcı');
     _notifyRealtimeIfBasic(
       VoiceRoomRealtimeKind.leave,
-      '$name odadan ayrıldı',
+      '$name çıkış yaptı',
     );
     final remaining = state.presence.where((p) => p.id != userId).toList();
     if (remaining.length == state.presence.length) return;
@@ -1644,6 +1660,7 @@ class VoiceRoomLiveController
           accessToken: storage.readAccess,
           onEvent: (ev) {
             ref.read(voiceRoomGiftRealtimeProvider).publishRemote(ev);
+            ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(ev);
             if (!state.sseConnected) {
               ref.read(voiceRoomGiftRealtimeProvider).setSocketPreferred(true);
             }
@@ -3035,7 +3052,17 @@ class VoiceRoomLiveController
       self,
     );
     if (priority == null) return;
-    if (_autoSeatAttempted) return;
+    if (_autoSeatAttempted) {
+      ChatRoomPresence? selfNow;
+      for (final p in state.presence) {
+        if (p.id == user.id) {
+          selfNow = p;
+          break;
+        }
+      }
+      if (selfNow?.seatIndex != null) return;
+      _autoSeatAttempted = false;
+    }
 
     final seatIndex = _pickAutoSeatIndex(
       myPriority: priority,

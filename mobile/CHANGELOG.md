@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.6+7 (2026-07-09)
+
+### Sesli sohbet — çökme ve hediye
+
+- **Ses çöküşü:** odaya girince Agora dinleyici olarak bağlanır; mikrofon açılınca tam yeniden bağlanma yerine rol yükseltme
+- **Hediyeler:** alıcı `receiverId` ile eşleşir; koltuk altında anında görünür (SSE + socket + 5 sn poll)
+- **Giriş bildirimi:** SSE ile tüm odada aynı anda «giriş yaptı» / yetkili bandı
+- **Yetkili koltuk:** öncelik sırasına göre otomatik koltuk yeniden denenir
+
 ## 1.0.5+6 (2026-07-09)
 
 ### Sesli sohbet odaları

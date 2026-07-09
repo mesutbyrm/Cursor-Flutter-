@@ -41,8 +41,7 @@ class SeatGiftAggregate {
   }
 }
 
-/// Oturum boyunca alıcı adına göre gelen hediyeleri biriktirir.
-/// Hediye olaylarından (LiveGiftEvent) istemci tarafında toplanır.
+/// Oturum boyunca alıcı kimliği/adına göre gelen hediyeleri biriktirir.
 class VoiceSeatGiftTotals extends Notifier<Map<String, SeatGiftAggregate>> {
   StreamSubscription<LiveGiftEvent>? _sub;
 
@@ -54,38 +53,67 @@ class VoiceSeatGiftTotals extends Notifier<Map<String, SeatGiftAggregate>> {
     return const {};
   }
 
-  String _key(String receiverName) => receiverName.trim().toLowerCase();
+  static String idKey(String userId) => 'id:${userId.trim()}';
+
+  static String nameKey(String receiverName) =>
+      'name:${receiverName.trim().toLowerCase()}';
 
   void _record(LiveGiftEvent ev) {
+    final receiverId = ev.receiverId?.trim();
     final receiver = ev.receiverName.trim();
-    if (receiver.isEmpty) return;
-    final key = _key(receiver);
+    if (receiver.isEmpty &&
+        (receiverId == null || receiverId.isEmpty)) {
+      return;
+    }
     final coins = ev.coinCost * (ev.quantity <= 0 ? 1 : ev.quantity);
     final count = ev.quantity <= 0 ? 1 : ev.quantity;
     final sender =
         ev.senderName.trim().isNotEmpty ? ev.senderName.trim() : 'Bilinmeyen';
 
-    final current = state[key];
+    final keys = <String>{
+      if (receiverId != null && receiverId.isNotEmpty) idKey(receiverId),
+      if (receiver.isNotEmpty) nameKey(receiver),
+    };
+    if (keys.isEmpty) return;
+
+    SeatGiftAggregate? base;
+    for (final k in keys) {
+      base = state[k] ?? base;
+    }
     final contributors = <String, SeatGiftContributor>{
-      ...?current?.contributors,
+      ...?base?.contributors,
     };
     final sk = sender.toLowerCase();
     contributors[sk] = (contributors[sk] ??
             SeatGiftContributor(senderName: sender, coins: 0, giftCount: 0))
         .add(coins, count);
+    final next = SeatGiftAggregate(
+      totalCoins: (base?.totalCoins ?? 0) + coins,
+      contributors: contributors,
+    );
 
-    state = {
-      ...state,
-      key: SeatGiftAggregate(
-        totalCoins: (current?.totalCoins ?? 0) + coins,
-        contributors: contributors,
-      ),
-    };
+    final patch = <String, SeatGiftAggregate>{...state};
+    for (final k in keys) {
+      patch[k] = next;
+    }
+    state = patch;
   }
 
-  /// Belirli bir alıcı için toplu veriyi döndürür.
-  SeatGiftAggregate? forReceiver(String receiverName) =>
-      state[_key(receiverName)];
+  SeatGiftAggregate? forReceiver({
+    String? userId,
+    String? displayName,
+  }) {
+    final id = userId?.trim();
+    if (id != null && id.isNotEmpty) {
+      final byId = state[idKey(id)];
+      if (byId != null) return byId;
+    }
+    final name = displayName?.trim();
+    if (name != null && name.isNotEmpty) {
+      return state[nameKey(name)];
+    }
+    return null;
+  }
 }
 
 final voiceSeatGiftTotalsProvider =

@@ -401,11 +401,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   void _onGiftEvent(LiveGiftEvent raw) {
     if (!mounted) return;
+    final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
+    ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
+
     final ui = ref.read(voiceRoomUiProvider);
     if (!ui.giftAnimationsEnabled) return;
 
-    final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
-    ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
     ref.read(voiceGiftFlightQueueProvider.notifier).enqueue(event);
 
     final room = _effectiveRoom();
