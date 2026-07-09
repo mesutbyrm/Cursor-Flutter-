@@ -587,11 +587,16 @@ class _VoiceRoomManagementPanelState
   }
 
   Future<void> _startGiftBattle() async {
-    final seated = widget.live.presence
-        .where((p) => p.seatIndex != null && p.id.isNotEmpty)
-        .toList();
+    // Katılımcı: önce koltuktakiler; koltuk verisi yoksa/azsa odadaki tüm
+    // kullanıcılar. (seatIndex her odada dolmayabiliyor → eskiden hep "2
+    // koltukta kullanıcı" deyip başlamıyordu.)
+    final present =
+        widget.live.presence.where((p) => p.id.isNotEmpty).toList();
+    final seatedUsers =
+        present.where((p) => p.seatIndex != null).toList();
+    final seated = seatedUsers.length >= 2 ? seatedUsers : present;
     if (seated.length < 2) {
-      await _snack('Savaş için en az 2 koltukta kullanıcı olmalı');
+      await _snack('Savaş için odada en az 2 kişi olmalı');
       return;
     }
     final duration = await showModalBottomSheet<int>(

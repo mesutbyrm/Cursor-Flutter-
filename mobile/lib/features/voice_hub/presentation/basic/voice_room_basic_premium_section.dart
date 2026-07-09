@@ -590,7 +590,7 @@ Future<void> showVoiceRoomBasicIncomingPkInvite({
   required BuildContext context,
   required WidgetRef ref,
   required VoiceRoomEntity room,
-  required String battleId,
+  required String inviteId,
 }) async {
   final battle = ref.read(pkBattleRemoteProvider);
   final durationLabel = battle != null
@@ -620,7 +620,7 @@ Future<void> showVoiceRoomBasicIncomingPkInvite({
   final altRoom = room.slug != roomKey ? room.slug : null;
   if (accept == true) {
     await remote.accept(
-      battleId,
+      inviteId,
       roomId: roomKey,
       alternateRoomId: altRoom,
     );
@@ -629,7 +629,7 @@ Future<void> showVoiceRoomBasicIncomingPkInvite({
     }
   } else if (accept == false) {
     await remote.reject(
-      battleId,
+      inviteId,
       roomId: roomKey,
       alternateRoomId: altRoom,
     );

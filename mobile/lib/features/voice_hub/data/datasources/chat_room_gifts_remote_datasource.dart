@@ -32,6 +32,7 @@ class ChatRoomGiftsRemoteDataSource {
     String? receiverName,
     String? receiverId,
     String platform = 'mobile',
+    String? battleId,
   }) async {
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.chatRoomGifts(roomId),
@@ -43,6 +44,8 @@ class ChatRoomGiftsRemoteDataSource {
         if (receiverName != null && receiverName.isNotEmpty)
           'receiverName': receiverName,
         if (receiverId != null && receiverId.isNotEmpty) 'receiverId': receiverId,
+        // PK aktifken: gift-engine battleId ile alıcı katılımcının skorunu artırır.
+        if (battleId != null && battleId.isNotEmpty) 'battleId': battleId,
         'platform': platform,
       },
     );

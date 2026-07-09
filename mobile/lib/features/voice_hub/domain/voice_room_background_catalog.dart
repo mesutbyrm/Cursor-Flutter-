@@ -3,7 +3,9 @@ import '../../../core/config/env.dart';
 /// canlifal.com sesli oda arka planları — `/images/voice-bg-{n}.jpg` (web ile aynı).
 abstract final class VoiceRoomBackgroundCatalog {
   static String get _origin {
-    var base = Env.siteOrigin.trim();
+    // Arka plan görselleri statik olup canlifal.com'da barınır; API host
+    // (siteOrigin) bunları sunmaz (404). Bu yüzden web origin kullanılır.
+    var base = Env.webOrigin.trim();
     if (base.endsWith('/')) base = base.substring(0, base.length - 1);
     return base;
   }

@@ -626,14 +626,15 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       final isTarget = opp == room.apiRoomKey ||
           opp == room.id ||
           opp == room.slug;
-      if (!isTarget || _shownPkInviteId == next.id) return;
-      _shownPkInviteId = next.id;
+      final inviteId = next.inviteId ?? next.id;
+      if (!isTarget || inviteId.isEmpty || _shownPkInviteId == inviteId) return;
+      _shownPkInviteId = inviteId;
       unawaited(
         showVoiceRoomBasicIncomingPkInvite(
           context: context,
           ref: ref,
           room: room,
-          battleId: next.id,
+          inviteId: inviteId,
         ),
       );
     });

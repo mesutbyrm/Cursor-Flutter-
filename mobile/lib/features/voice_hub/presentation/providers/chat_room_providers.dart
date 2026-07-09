@@ -1944,11 +1944,14 @@ class VoiceRoomLiveController
         myNickname: myNickname,
         roomMuted: roomMuted,
         clearError: true,
+        // Öncelik: DJ arka planı > TAZE oda arka planı (sunucudan) > önceki
+        // state. Not: eskiden yapışkan state, taze oda değerini kalıcı
+        // gölgeliyordu; arkaplan değişimi ancak yeniden girişte görünüyordu.
         backgroundUrl: (bgFromDj != null && bgFromDj.isNotEmpty)
             ? bgFromDj
-            : (state.backgroundUrl?.isNotEmpty == true)
-            ? state.backgroundUrl
-            : room.backgroundImageUrl,
+            : (room.backgroundImageUrl?.trim().isNotEmpty == true)
+            ? room.backgroundImageUrl
+            : state.backgroundUrl,
         selfInRoom: state.selfInRoom || presence.isNotEmpty,
       );
       if (playDjInBackground) {

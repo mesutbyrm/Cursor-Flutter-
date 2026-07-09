@@ -10,6 +10,14 @@ class Env {
     defaultValue: 'https://canlifal.com',
   );
 
+  /// Herkese açık web sitesi kökü — statik varlıklar (arka planlar,
+  /// `/images/...`) her zaman burada barınır; API host (apiBaseUrl) farklı
+  /// olabilir ve bu varlıkları sunmaz.
+  static const String webOrigin = String.fromEnvironment(
+    'WEB_ORIGIN',
+    defaultValue: 'https://canlifal.com',
+  );
+
   /// Oyun odası uçları (Redis / Backend-2).
   static const String gamesApiBaseUrl = String.fromEnvironment(
     'GAMES_API_BASE_URL',

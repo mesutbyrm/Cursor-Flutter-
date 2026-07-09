@@ -70,8 +70,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   Future<PkBattleRemote?> inviteRoom({
     required String roomId,
     String? alternateRoomId,
-    required String opponentRoomId,
-    String? alternateOpponentRoomId,
+    required String guestUserId,
     int durationSeconds = 180,
   }) async {
     final stale = state;
@@ -80,8 +79,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     final battle = await _api.inviteVoiceRoom(
       roomId: roomId,
       alternateRoomId: alternateRoomId,
-      opponentRoomId: opponentRoomId,
-      alternateOpponentRoomId: alternateOpponentRoomId,
+      guestUserId: guestUserId,
       durationSeconds: durationSeconds,
     );
     if (battle != null) _apply(battle, 'pk:invite');
