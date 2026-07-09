@@ -91,11 +91,17 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
         setState(() => _error = 'Geçersiz rakip oda seçildi');
         return;
       }
+      // Yeni kontrat: davet bir kullanıcıya gider → rakip oda sahibi.
+      final guestUserId = opponent.ownerId?.trim() ?? '';
+      if (guestUserId.isEmpty) {
+        setState(() => _error =
+            'Rakip odanın sahibi bulunamadı — bu odaya PK daveti gönderilemez.');
+        return;
+      }
       final battle = await remote.inviteRoom(
         roomId: _roomKey,
         alternateRoomId: _altRoomKey,
-        opponentRoomId: oppKey,
-        alternateOpponentRoomId: opponent.slug != oppKey ? opponent.slug : null,
+        guestUserId: guestUserId,
         durationSeconds: _durationSeconds,
       );
       if (!mounted) return;

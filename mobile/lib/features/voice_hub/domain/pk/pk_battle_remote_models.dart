@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 class PkBattleRemote extends Equatable {
   const PkBattleRemote({
     required this.id,
+    this.inviteId,
     required this.battleType,
     required this.status,
     required this.challengerScore,
@@ -25,6 +26,7 @@ class PkBattleRemote extends Equatable {
   });
 
   final String id;
+  final String? inviteId;
   final String battleType;
   final String status;
   final int challengerScore;
@@ -56,7 +58,8 @@ class PkBattleRemote extends Equatable {
   factory PkBattleRemote.fromJson(Map<String, dynamic> json) {
     final giftsRaw = json['recentGifts'];
     return PkBattleRemote(
-      id: json['id']?.toString() ?? '',
+      id: (json['id'] ?? json['battleId'])?.toString() ?? '',
+      inviteId: json['inviteId']?.toString(),
       battleType: json['battleType']?.toString() ?? 'voice_room',
       status: json['status']?.toString() ?? 'pending',
       challengerScore: _int(json['challengerScore'] ?? json['leftScore']),

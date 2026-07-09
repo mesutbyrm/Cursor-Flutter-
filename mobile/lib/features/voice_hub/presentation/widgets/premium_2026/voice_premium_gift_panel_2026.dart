@@ -20,6 +20,7 @@ import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../providers/chat_room_providers.dart';
+import '../../providers/pk_battle_remote_provider.dart';
 import '../../providers/voice_gift_providers.dart';
 import '../voice_room_gift_sheet.dart';
 
@@ -268,6 +269,10 @@ class _VoicePremiumGiftPanel2026State
       final ownerId = widget.room.ownerId?.trim() ?? '';
       final receiverIsOwner =
           ownerId.isNotEmpty && receiver.id.trim() == ownerId;
+      // PK aktifse: battleId ile gönder → alıcı katılımcının skoru otomatik artar.
+      final activePk = ref.read(pkBattleRemoteProvider);
+      final pkBattleId =
+          (activePk != null && activePk.isActive) ? activePk.id : null;
       final result = await ref.read(chatRoomGiftsRemoteProvider).sendGift(
             roomId: roomKey,
             giftTypeId: g.id,
@@ -275,6 +280,7 @@ class _VoicePremiumGiftPanel2026State
             senderName: user?.display ?? 'Sen',
             receiverName: receiver.displayName,
             receiverId: receiver.id,
+            battleId: pkBattleId,
           );
       final gross = g.price * _qty;
       final revenue = result.revenue;

@@ -288,7 +288,18 @@ abstract final class ApiEndpoints {
   static String chatRoomTyping(String roomId) => '/api/chat/rooms/$roomId/typing';
 
   /// Üretim PK — `GET/POST /api/chat/rooms/{roomId}/pk`
+  /// POST body: `{ guestUserId, durationSec }` → pending davet.
+  /// GET (public, poll): `{ roomId, activeBattle, pendingInvite }`.
   static String chatRoomPk(String roomId) => '/api/chat/rooms/$roomId/pk';
+
+  /// Davete yanıt — `POST /api/chat/rooms/{roomId}/pk/{inviteId}/respond`
+  /// body: `{ action: "accept" | "reject" }`.
+  static String chatRoomPkRespond(String roomId, String inviteId) =>
+      '/api/chat/rooms/$roomId/pk/$inviteId/respond';
+
+  /// Savaşı erken bitir — `POST /api/chat/rooms/{roomId}/pk/{battleId}/end`.
+  static String chatRoomPkEnd(String roomId, String battleId) =>
+      '/api/chat/rooms/$roomId/pk/$battleId/end';
 
   /// Geriye dönük alias (`pk-battle` üretimde 404).
   static String chatRoomPkBattle(String roomId) => chatRoomPk(roomId);
