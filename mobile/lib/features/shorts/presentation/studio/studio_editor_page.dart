@@ -41,7 +41,7 @@ class _StudioEditorPageState extends ConsumerState<StudioEditorPage> {
     final c = VideoEditorController.file(
       File(path),
       minDuration: const Duration(seconds: 1),
-      maxDuration: const Duration(seconds: 15),
+      maxDuration: const Duration(seconds: 30),
     );
     await c.initialize();
     if (!mounted) {

@@ -150,9 +150,19 @@ class PushNavigationHandler {
       id: data['id']?.toString() ?? 'push',
       title: data['title']?.toString() ?? 'Canlifal',
       body: data['body']?.toString(),
-      type: data['type']?.toString(),
-      targetPath: data['targetPath']?.toString(),
-      targetId: data['targetId']?.toString(),
+      type: (data['type'] ?? data['event'] ?? data['notificationType'])
+          ?.toString(),
+      targetPath: (data['targetPath'] ??
+              data['actionUrl'] ??
+              data['link'] ??
+              data['href'])
+          ?.toString(),
+      targetId: (data['targetId'] ??
+              data['conversationId'] ??
+              data['chatId'] ??
+              data['threadId'] ??
+              data['senderId'])
+          ?.toString(),
     );
 
     try {

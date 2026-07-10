@@ -44,7 +44,13 @@ class _DailyFortuneResultPageState extends ConsumerState<DailyFortuneResultPage>
     // Kullanıcının otomatik paylaşım tercihine saygı gösterir ("Kapalı" ise
     // paylaşmaz; aksi halde seçilen görünürlükle paylaşır).
     try {
-      await ref.read(fortuneShareHandlerProvider).autoShareIfEnabled(result);
+      final shared =
+          await ref.read(fortuneShareHandlerProvider).autoShareIfEnabled(result);
+      if (mounted && shared) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('CanlıFal Sosyal bölümünde paylaşıldı')),
+        );
+      }
     } catch (_) {}
   }
 

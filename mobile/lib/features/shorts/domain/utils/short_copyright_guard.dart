@@ -3,7 +3,7 @@ class ShortCopyrightGuard {
   ShortCopyrightGuard._();
 
   static const catalogOnlyHint =
-      'Telif güvenliği için yalnızca uygulama müzik kataloğundan seçim yapın.';
+      'Telif güvenliği için uygulama kataloğu, Creative Commons veya kullanım hakkına sahip olduğunuz bağlantıları seçin.';
 
   /// `null` = yayınlanabilir.
   static String? validatePublish({

@@ -45,6 +45,26 @@ class CfcPaymentRequestEntity {
   final String? reviewNote;
   final String? createdAt;
 
+  DateTime? get createdDate => DateTime.tryParse(createdAt ?? '');
+
+  bool get isPending => status.toLowerCase() == 'pending';
+
+  DateTime? get expiresAt {
+    final created = createdDate;
+    return created == null ? null : created.add(const Duration(hours: 24));
+  }
+
+  Duration? get timeLeft {
+    final expiry = expiresAt;
+    if (expiry == null) return null;
+    return expiry.difference(DateTime.now());
+  }
+
+  bool get shouldAutoCancel {
+    final left = timeLeft;
+    return isPending && left != null && !left.isPositive;
+  }
+
   bool get isCfc => requestType != 'jeton';
 
   bool get isJeton => requestType == 'jeton';

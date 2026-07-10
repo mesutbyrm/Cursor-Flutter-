@@ -46,6 +46,29 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
   List<ShortHashtagEntity> _hashtagHits = const [];
   List<ShortMusicEntity> _musicHits = const [];
 
+  static const _creativeCommonsMusic = <ShortMusicEntity>[
+    ShortMusicEntity(
+      id: 'cc:ambient-dream',
+      title: 'Ambient Dream',
+      artist: 'Creative Commons',
+    ),
+    ShortMusicEntity(
+      id: 'cc:cinematic-pulse',
+      title: 'Cinematic Pulse',
+      artist: 'Creative Commons',
+    ),
+    ShortMusicEntity(
+      id: 'cc:lofi-mystic',
+      title: 'Lo-Fi Mystic',
+      artist: 'Creative Commons',
+    ),
+    ShortMusicEntity(
+      id: 'cc:soft-piano',
+      title: 'Soft Piano Reflection',
+      artist: 'Creative Commons',
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -118,8 +141,21 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
   }
 
   Future<void> _searchMusic(String q) async {
-    final list = await ref.read(shortsRepositoryProvider).searchMusic(q);
-    if (mounted) setState(() => _musicHits = list);
+    final list = await ref
+        .read(shortsRepositoryProvider)
+        .searchMusic(q)
+        .catchError((_) => const <ShortMusicEntity>[]);
+    if (mounted) setState(() => _musicHits = _musicWithFallback(list));
+  }
+
+  List<ShortMusicEntity> _musicWithFallback(List<ShortMusicEntity> items) {
+    if (items.isEmpty) return _creativeCommonsMusic;
+    final ids = items.map((e) => e.id).toSet();
+    return [
+      ...items,
+      for (final m in _creativeCommonsMusic)
+        if (!ids.contains(m.id)) m,
+    ];
   }
 
   Future<void> _saveDraft() async {
@@ -200,7 +236,12 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
             hashtags: draft.aiHashtags,
           );
       if (list.isEmpty) {
-        list = await ref.read(shortsRepositoryProvider).searchMusic('');
+        list = _musicWithFallback(
+          await ref
+              .read(shortsRepositoryProvider)
+              .searchMusic('')
+              .catchError((_) => const <ShortMusicEntity>[]),
+        );
       }
       if (list.isEmpty) {
         if (mounted) showShortsSnackBar(context, 'Müzik önerisi bulunamadı.');
@@ -542,10 +583,13 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
                 builder: (ctx) => _MusicPickerSheet(
                   items: _musicHits,
                   onSearch: (q) async {
-                    final list =
-                        await ref.read(shortsRepositoryProvider).searchMusic(q);
-                    if (mounted) setState(() => _musicHits = list);
-                    return list;
+                    final list = await ref
+                        .read(shortsRepositoryProvider)
+                        .searchMusic(q)
+                        .catchError((_) => const <ShortMusicEntity>[]);
+                    final merged = _musicWithFallback(list);
+                    if (mounted) setState(() => _musicHits = merged);
+                    return merged;
                   },
                 ),
               );
@@ -694,6 +738,72 @@ class _MusicPickerSheetState extends State<_MusicPickerSheet> {
     super.dispose();
   }
 
+  Future<void> _addExternalMusic() async {
+    final urlCtrl = TextEditingController();
+    final titleCtrl = TextEditingController();
+    final picked = await showDialog<ShortMusicEntity>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Bağlantıdan müzik ekle'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: urlCtrl,
+              decoration: const InputDecoration(
+                labelText: 'YouTube / müzik bağlantısı',
+                hintText: 'https://...',
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: titleCtrl,
+              decoration: const InputDecoration(labelText: 'Başlık'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final url = urlCtrl.text.trim();
+              if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                return;
+              }
+              final title = titleCtrl.text.trim();
+              Navigator.pop(
+                ctx,
+                ShortMusicEntity(
+                  id: 'external:${Uri.encodeComponent(url)}',
+                  title: title.isEmpty ? _platformTitle(url) : title,
+                  artist: _platformTitle(url),
+                  audioUrl: url,
+                ),
+              );
+            },
+            child: const Text('Ekle'),
+          ),
+        ],
+      ),
+    );
+    urlCtrl.dispose();
+    titleCtrl.dispose();
+    if (picked != null && mounted) Navigator.pop(context, picked);
+  }
+
+  static String _platformTitle(String url) {
+    final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
+    if (host.contains('youtube') || host.contains('youtu.be')) {
+      return 'YouTube müziği';
+    }
+    if (host.contains('soundcloud')) return 'SoundCloud müziği';
+    if (host.contains('spotify')) return 'Spotify bağlantısı';
+    return 'Harici müzik';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -707,16 +817,23 @@ class _MusicPickerSheetState extends State<_MusicPickerSheet> {
               hintText: 'Şarkı ara',
               suffixIcon: IconButton(
                 icon: const Icon(Icons.search),
-            onPressed: () async {
-              final list = await widget.onSearch(_q.text);
+                onPressed: () async {
+                  final list = await widget.onSearch(_q.text);
+                  if (mounted) setState(() => _items = list);
+                },
+              ),
+            ),
+            onSubmitted: (v) async {
+              final list = await widget.onSearch(v);
               if (mounted) setState(() => _items = list);
             },
           ),
-        ),
-        onSubmitted: (v) async {
-          final list = await widget.onSearch(v);
-          if (mounted) setState(() => _items = list);
-        },
+          const SizedBox(height: 10),
+          ListTile(
+            leading: const Icon(Icons.link_rounded),
+            title: const Text('YouTube / başka platformdan ekle'),
+            subtitle: const Text('Bağlantı ve başlık gir'),
+            onTap: _addExternalMusic,
           ),
           Flexible(
             child: ListView.builder(

@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
 
 import 'package:canlifal_social/core/providers/auth_selectors.dart';
 import 'package:canlifal_social/core/theme/app_colors.dart';
@@ -14,6 +17,9 @@ import 'short_studio_providers.dart';
 import 'studio_compose_page.dart';
 import 'studio_editor_page.dart';
 import 'studio_publish_page.dart';
+
+const int kShortStudioMaxVideoBytes = 20 * 1024 * 1024;
+const Duration kShortStudioMaxVideoDuration = Duration(seconds: 30);
 
 enum _StudioStep { pick, edit, compose, publish }
 
@@ -104,9 +110,15 @@ class _ShortsStudioPageState extends ConsumerState<ShortsStudioPage> {
     try {
       final file = await _picker.pickVideo(
         source: ImageSource.gallery,
-        maxDuration: const Duration(seconds: 60),
+        maxDuration: kShortStudioMaxVideoDuration,
       );
       if (file == null) {
+        if (mounted) context.pop();
+        return;
+      }
+      final error = await _validatePickedVideo(file.path);
+      if (error != null) {
+        if (mounted) showShortsSnackBar(context, error);
         if (mounted) context.pop();
         return;
       }
@@ -118,6 +130,28 @@ class _ShortsStudioPageState extends ConsumerState<ShortsStudioPage> {
     } finally {
       if (mounted) setState(() => _picking = false);
     }
+  }
+
+  Future<String?> _validatePickedVideo(String path) async {
+    final file = File(path);
+    final size = await file.length();
+    if (size > kShortStudioMaxVideoBytes) {
+      return 'Video en fazla 20 MB olabilir.';
+    }
+    VideoPlayerController? controller;
+    try {
+      controller = VideoPlayerController.file(file);
+      await controller.initialize();
+      if (controller.value.duration > kShortStudioMaxVideoDuration) {
+        return 'Video en fazla 30 saniye olabilir.';
+      }
+    } catch (_) {
+      // Süre okunamazsa editör yine açılır; export aşaması 30 saniye ile sınırlar.
+      return null;
+    } finally {
+      await controller?.dispose();
+    }
+    return null;
   }
 
   void _goCompose() => setState(() => _step = _StudioStep.compose);

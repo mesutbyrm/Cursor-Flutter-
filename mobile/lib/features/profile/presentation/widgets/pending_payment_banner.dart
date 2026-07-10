@@ -31,6 +31,12 @@ class PendingPaymentBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final staff = ref.watch(staffAccessProvider);
+    final timeLeft = request.timeLeft;
+    final expiryLine = timeLeft == null
+        ? '24 saat içinde cevap verilmezse talebi buradan iptal edebilirsiniz.'
+        : timeLeft.isPositive
+            ? 'Kalan süre: ${_formatTimeLeft(timeLeft)} · 24 saat sonunda otomatik iptal edilir.'
+            : '24 saat doldu; uygulama bu talebi otomatik iptal etmeyi deneyecek.';
 
     return ProGlassCard(
       blur: 12,
@@ -64,8 +70,8 @@ class PendingPaymentBanner extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   totalPending > 1
-                      ? '${request.displayLine}\nYeni alım için bekleyen taleplerin tümünü temizleyin.'
-                      : '${request.displayLine}\nOnay sonrası $_currencyLabel hesabınıza yansır.',
+                      ? '${request.displayLine}\nYeni alım için bekleyen taleplerin tümünü temizleyin.\n$expiryLine'
+                      : '${request.displayLine}\nOnay sonrası $_currencyLabel hesabınıza yansır.\n$expiryLine',
                   style: TextStyle(
                     fontSize: 12.5,
                     height: 1.4,
@@ -100,6 +106,13 @@ class PendingPaymentBanner extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  String _formatTimeLeft(Duration d) {
+    final hours = d.inHours;
+    final minutes = d.inMinutes.remainder(60);
+    if (hours <= 0) return '$minutes dk';
+    return '$hours sa ${minutes.toString().padLeft(2, '0')} dk';
   }
 
   Future<void> _cancel(BuildContext context, WidgetRef ref) async {

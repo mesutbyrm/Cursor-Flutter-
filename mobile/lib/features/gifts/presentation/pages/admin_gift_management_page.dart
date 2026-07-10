@@ -17,7 +17,7 @@ class AdminGiftManagementPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final access = ref.watch(staffAccessProvider);
-    if (!access.isSiteAdmin) {
+    if (!access.showAdminPanel) {
       return Scaffold(
         backgroundColor: const Color(0xFF0E0524),
         appBar: AppBar(
@@ -25,7 +25,7 @@ class AdminGiftManagementPage extends ConsumerWidget {
           title: const Text('Hediye Yönetimi'),
         ),
         body: const Center(
-          child: Text('Bu alan yalnızca site admin içindir.',
+          child: Text('Bu alan yalnızca admin/yönetici hesapları içindir.',
               style: TextStyle(color: Color(0x99FFFFFF))),
         ),
       );

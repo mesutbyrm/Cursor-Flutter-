@@ -10,6 +10,8 @@ import '../../domain/entities/short_upload_draft.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../datasources/shorts_remote_datasource.dart';
 
+const int kShortVideoUploadMaxBytes = 20 * 1024 * 1024;
+
 /// R2 presigned yükleme + register; başarısız olursa doğrudan multipart fallback.
 class ShortVideoUploadService {
   ShortVideoUploadService(this._dio, this._remote);
@@ -25,6 +27,10 @@ class ShortVideoUploadService {
     final videoPath = draft.videoPath;
     if (videoPath == null || videoPath.isEmpty) {
       throw const ApiException('Video dosyası bulunamadı.');
+    }
+    final sourceFile = File(videoPath);
+    if (await sourceFile.length() > kShortVideoUploadMaxBytes) {
+      throw const ApiException('Video en fazla 20 MB olabilir.');
     }
 
     try {
@@ -51,6 +57,9 @@ class ShortVideoUploadService {
   }) async {
     final videoFile = File(videoPath);
     final videoBytes = await videoFile.readAsBytes();
+    if (videoBytes.length > kShortVideoUploadMaxBytes) {
+      throw const ApiException('Video en fazla 20 MB olabilir.');
+    }
     final videoExt = _ext(videoPath);
     final videoMime = _videoMime(videoPath);
 
@@ -132,6 +141,7 @@ class ShortVideoUploadService {
         'commentSetting': draft.commentSetting.wireValue,
         'allowDuet': draft.allowDuet,
         if (draft.musicId != null) 'musicId': draft.musicId,
+        if (draft.musicTitle != null) 'musicTitle': draft.musicTitle,
         if (draft.locationLabel != null) 'location': draft.locationLabel,
         if (draft.locationLat != null) 'latitude': draft.locationLat,
         if (draft.locationLng != null) 'longitude': draft.locationLng,

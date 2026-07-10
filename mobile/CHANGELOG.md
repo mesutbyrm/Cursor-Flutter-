@@ -3,6 +3,17 @@
 
 ## 1.0.9+13 (2026-07-10)
 
+### Mobil profil / bildirim / ödeme / video
+- Admin panelinde hediye yönetimi yönetici hesaplarından erişilebilir hale getirildi
+- İçeriklerim: Fallarım ve Canlı Yayınlarım kartları premium görsel kartlara taşındı; İzlediklerim ve Favoriler sekmeleri görünür akışta
+- Profilde kısa video toplam beğeni/izlenme gerçek shorts istatistikleriyle gösterilir
+- Hakkımda burç değeri İngilizce gelirse Türkçe gösterilir (ör. Libra → Terazi)
+- Bekleyen jeton/CFC/Gold ödeme talepleri 24 saat sonunda mevcut iptal API’siyle otomatik temizlenir; kullanıcı elle de iptal edebilir
+- Bildirimlerde “Tümünü oku” okundu durumunu cihazda kalıcı tutar; mesaj push’ları sohbet hedefiyle açılır
+- Trend videoya ana sayfadan dokununca izlenme endpoint’i çağrılır
+- Fal sonucu açıldığında gizlilik ayarına göre CanlıFal Sosyal paylaşımı otomatik yapılır
+- Video stüdyosu 20 MB / 30 sn sınırına hizalandı; emoji/sticker silme-düzenleme, Creative Commons ve bağlantıdan müzik ekleme eklendi
+
 ### PK daveti
 - PK menüsü artık doğrudan savaş ekranına değil **oda seçim listesine** gider (yalnızca aktif PK savaşında savaş ekranı)
 - PK davet listesi: boş odalar gizli; yalnızca çevrimiçi kullanıcısı ve oda sahibi olan odalar
