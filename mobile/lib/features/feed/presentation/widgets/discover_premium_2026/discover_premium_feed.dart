@@ -51,14 +51,6 @@ class _DiscoverPremiumFeedState extends ConsumerState<DiscoverPremiumFeed> {
   }
 
   void _onCategoryTap(String? id) {
-    if (id == 'pk') {
-      final rooms = ref.read(voiceRoomsProvider).valueOrNull;
-      if (rooms != null && rooms.isNotEmpty) {
-        final r = trendingRooms(rooms).first;
-        context.push('/voice-room/${r.apiRoomKey}/pk', extra: r);
-        return;
-      }
-    }
     setState(() => _categoryId = id);
   }
 

@@ -13,6 +13,7 @@ import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/pk/pk_battle_mode.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_battle_state.dart';
+import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_provider.dart';
 import '../providers/pk_battle_remote_provider.dart';
@@ -77,11 +78,28 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     final r = widget.room;
     final roomKey = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
     final remote = ref.read(pkBattleRemoteProvider.notifier);
-    await remote.loadRoomBattle(roomKey);
+    await remote.loadRoomBattle(
+      roomKey,
+      alternateRoomId: r.slug != roomKey ? r.slug : null,
+    );
+    if (!mounted) return;
+    final battle = ref.read(pkBattleRemoteProvider);
+    if (battle == null || battle.isEnded) return;
+
+    if (battle.isPending && !battle.isActive) {
+      final userId = ref.read(authControllerProvider).valueOrNull?.id;
+      final isTarget = isPkInviteTarget(battle, r, userId: userId);
+      final isChallenger = isPkChallengerRoom(battle, r);
+      if (!isTarget && !isChallenger) {
+        context.replace('/voice-room/$roomKey/pk-invite', extra: r);
+        return;
+      }
+    }
+
     remote.connectSocket(
       roomId: roomKey,
       alternateRoomId: r.slug != roomKey ? r.slug : null,
-      battleId: ref.read(pkBattleRemoteProvider)?.id,
+      battleId: battle.id,
     );
   }
 

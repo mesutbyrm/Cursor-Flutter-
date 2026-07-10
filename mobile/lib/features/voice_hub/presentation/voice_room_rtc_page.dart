@@ -41,6 +41,7 @@ import '../music/presentation/widgets/music_search_picker_sheet.dart';
 import 'sheets/voice_room_hub_settings.dart';
 import 'providers/pk_battle_remote_provider.dart';
 import '../domain/pk/pk_duration_options.dart';
+import '../domain/pk/pk_opponent_room_filter.dart';
 import 'utils/voice_room_image_prefetch.dart';
 import 'providers/voice_gift_providers.dart';
 import 'providers/voice_room_audio_providers.dart';
@@ -603,6 +604,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     if (battle == null || battle.isEnded) {
       if (battle != null && battle.isEnded) remote.clear();
       return;
+    }
+    if (battle.isPending && !battle.isActive) {
+      final userId = ref.read(authControllerProvider).valueOrNull?.id;
+      final involved = isPkInviteTarget(battle, r, userId: userId) ||
+          isPkChallengerRoom(battle, r);
+      if (!involved) {
+        remote.clear();
+        return;
+      }
     }
     remote.connectSocket(
       roomId: roomKey,
@@ -1347,10 +1357,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     ref.listen(pkBattleRemoteProvider, (prev, next) {
       if (next == null || !isOwner || !next.isPending) return;
-      final opp = next.opponentVoiceRoomId;
-      final isTarget = opp == room.apiRoomKey ||
-          opp == room.id ||
-          opp == room.slug;
+      final userId = ref.read(authControllerProvider).valueOrNull?.id;
+      final isTarget = isPkInviteTarget(next, room, userId: userId);
       if (!isTarget || _shownPkInviteId == next.id) return;
       _shownPkInviteId = next.id;
       unawaited(_showIncomingPkInvite(next.id));

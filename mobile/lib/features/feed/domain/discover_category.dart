@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../live/domain/entities/voice_room_entity.dart';
+import '../../voice_hub/domain/pk/pk_opponent_room_filter.dart';
 
 /// Keşfet kategori tanımları (PART 2).
 class DiscoverCategoryDef {
@@ -91,7 +92,7 @@ bool matchesDiscoverCategory(VoiceRoomEntity room, String categoryId) {
           t.contains('music') ||
           t.contains('dj');
     case 'pk':
-      return t.contains('pk') || t.contains('savaş') || t.contains('battle');
+      return isPkEligibleOpponentRoom(room, excludeRoomKey: '');
     case 'vip':
       return t.contains('vip') || t.contains('gold') || t.contains('premium');
     case 'flirt':

@@ -6,6 +6,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/pk/pk_duration_options.dart';
+import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../widgets/premium_2026/pk/pk_duration_picker.dart';
 
@@ -44,8 +45,8 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
     });
     try {
       final remote = ref.read(pkBattleRemoteProvider.notifier);
-      await remote.prepareRoomForInvite(
-        roomId: _roomKey,
+      await remote.loadRoomBattle(
+        _roomKey,
         alternateRoomId: _altRoomKey,
       );
     } catch (_) {}
@@ -153,18 +154,32 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(ApiException.userMessage(e))),
         data: (rooms) {
-          final others = rooms.where((r) {
-            final key = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
-            return key.isNotEmpty && key != _roomKey;
-          }).toList();
+          final others = filterPkEligibleOpponentRooms(
+            rooms,
+            excludeRoomKey: _roomKey,
+          );
 
           if (others.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'PK için uygun başka oda bulunamadı.',
-                  textAlign: TextAlign.center,
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'PK için uygun aktif oda bulunamadı.\n'
+                      'Yalnızca içinde kullanıcı olan ve sahibi belli odalar listelenir.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: _syncing
+                          ? null
+                          : () => ref.invalidate(voiceRoomsProvider),
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Odaları yenile'),
+                    ),
+                  ],
                 ),
               ),
             );

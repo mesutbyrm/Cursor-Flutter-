@@ -13,6 +13,7 @@ import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../../core/providers/auth_selectors.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
+import '../../../voice_hub/domain/pk/pk_opponent_room_filter.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import 'package:canlifal_social/features/vip_gold/domain/voice_room_access.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/theme/vip_gold_tokens.dart';
@@ -132,10 +133,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     final result = switch (_tab) {
       'popular' => list..sort((a, b) => b.displayOnline.compareTo(a.displayOnline)),
       'vip' => list.where((r) => r.isVipGoldRoom).toList(),
-      'pk' => list.where((r) {
-        final t = '${r.nameTr} ${r.slug}'.toLowerCase();
-        return t.contains('pk');
-      }).toList(),
+      'pk' => filterPkEligibleOpponentRooms(list),
       'game' => list.where((r) {
         final t = '${r.nameTr} ${r.descTr ?? ''}'.toLowerCase();
         return t.contains('oyun');
@@ -226,11 +224,6 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
                   tab: t,
                   active: active,
                   onTap: () {
-                    if (t.id == 'pk' && widget.rooms.isNotEmpty) {
-                      final r = widget.rooms.first;
-                      context.push('/voice-room/${r.apiRoomKey}/pk', extra: r);
-                      return;
-                    }
                     setState(() {
                       _tab = t.id;
                       _resetVisibleRooms();
@@ -493,10 +486,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
   int _computeCatCount(String id) {
     return switch (id) {
       'vip' => widget.rooms.where((r) => r.isVipGoldRoom).length,
-      'pk' => widget.rooms.where((r) {
-          final t = '${r.nameTr} ${r.slug}'.toLowerCase();
-          return t.contains('pk');
-        }).length,
+      'pk' => filterPkEligibleOpponentRooms(widget.rooms).length,
       'game' => widget.rooms.where((r) {
           final t = '${r.nameTr} ${r.descTr ?? ''}'.toLowerCase();
           return t.contains('oyun');

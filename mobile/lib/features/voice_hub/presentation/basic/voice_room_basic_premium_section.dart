@@ -19,6 +19,7 @@ import '../../domain/pk/pk_duration_options.dart';
 import '../widgets/voice_room/voice_room_join_toast_stack.dart';
 import '../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../providers/chat_room_providers.dart';
+import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../sheets/voice_room_menu_sheet.dart';
@@ -578,6 +579,15 @@ Future<void> connectVoiceRoomBasicPkBattle(
   if (battle == null || battle.isEnded) {
     if (battle != null && battle.isEnded) remote.clear();
     return;
+  }
+  if (battle.isPending && !battle.isActive) {
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    final involved = isPkInviteTarget(battle, room, userId: userId) ||
+        isPkChallengerRoom(battle, room);
+    if (!involved) {
+      remote.clear();
+      return;
+    }
   }
   remote.connectSocket(
     roomId: roomKey,

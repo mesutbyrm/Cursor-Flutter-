@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.9+13 (2026-07-10)
+
+### PK daveti
+- PK menüsü artık doğrudan savaş ekranına değil **oda seçim listesine** gider (yalnızca aktif PK savaşında savaş ekranı)
+- PK davet listesi: boş odalar gizli; yalnızca çevrimiçi kullanıcısı ve oda sahibi olan odalar
+- Gelen PK daveti popup: rakip oda sahibi `opponentId` ile doğru eşleşir
+- Keşfet PK sekmesi: aktif odaları listeler (doğrudan boş savaş ekranına gitmez)
+
 ## 1.0.9+12 (2026-07-10)
 
 ### CI / derleme

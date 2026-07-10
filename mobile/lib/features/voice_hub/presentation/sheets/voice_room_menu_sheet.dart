@@ -7,6 +7,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
+import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
@@ -69,7 +70,7 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).valueOrNull;
     final pk = ref.watch(pkBattleRemoteProvider);
-    final pkActive = pk != null && !pk.isEnded;
+    final pkLive = isPkBattleLive(pk);
     final role = VoiceRoomMenuRole.label(perms, user: user, live: live);
     final canManageAuthority = perms.isSiteAdmin ||
         perms.isRoomOwner ||
@@ -82,12 +83,12 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
 
     final actions = <_MenuAction>[
       _MenuAction(
-        icon: pkActive ? Icons.flash_on_rounded : Icons.sports_mma_rounded,
+        icon: pkLive ? Icons.flash_on_rounded : Icons.sports_mma_rounded,
         color: VoiceRoomTokens.neonPink,
-        tooltip: pkActive ? 'PK savaşı' : 'PK daveti',
+        tooltip: pkLive ? 'PK savaşı' : 'PK daveti',
         onTap: () {
           Navigator.pop(context);
-          if (pkActive) {
+          if (pkLive) {
             final key =
                 room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
             context.push('/voice-room/$key/pk', extra: room);

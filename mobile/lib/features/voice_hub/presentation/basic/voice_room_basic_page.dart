@@ -21,6 +21,7 @@ import '../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_leaderboard_provider.dart';
+import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_gift_providers.dart';
 import '../audio/voice_room_audio_coordinator.dart';
@@ -622,10 +623,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
     ref.listen(pkBattleRemoteProvider, (prev, next) {
       if (next == null || !isOwner || !next.isPending) return;
-      final opp = next.opponentVoiceRoomId;
-      final isTarget = opp == room.apiRoomKey ||
-          opp == room.id ||
-          opp == room.slug;
+      final userId = ref.read(authControllerProvider).valueOrNull?.id;
+      final isTarget = isPkInviteTarget(next, room, userId: userId);
       final inviteId = next.inviteId ?? next.id;
       if (!isTarget || inviteId.isEmpty || _shownPkInviteId == inviteId) return;
       _shownPkInviteId = inviteId;
