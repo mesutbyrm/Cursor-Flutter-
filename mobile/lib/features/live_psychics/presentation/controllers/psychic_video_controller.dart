@@ -16,6 +16,8 @@ import 'package:canlifal_social/features/live/presentation/providers/live_beauty
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_extend_sheet.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_tip_sheet.dart';
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
+import 'package:canlifal_social/features/live_psychics/data/services/psychic_room_sse_service.dart';
+import 'package:canlifal_social/features/live_psychics/domain/repositories/live_psychics_repository.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_room_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_status.dart';
@@ -135,6 +137,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   var _disposed = false;
   var _remoteEndHandled = false;
   final _seenSignalIds = <String>{};
+  String? _joinedChannel;
 
   AgoraRoomManager get agora => _agora;
 
@@ -216,13 +219,20 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           '${sig['type']}_${sig['createdAt'] ?? sig['timestamp']}';
       if (id.isEmpty || !_seenSignalIds.add(id)) continue;
       final type = (sig['type'] ?? '').toString().toLowerCase();
-      if (!type.contains('tip') && !type.contains('bahsis')) continue;
+      if (!type.contains('tip') &&
+          !type.contains('bahsis') &&
+          !type.contains('gift') &&
+          !type.contains('hediye')) continue;
       final data = sig['data'] is Map
           ? Map<String, dynamic>.from(sig['data'] as Map)
           : sig;
       final amountRaw = data['amount'] ??
           data['jeton'] ??
           data['tipAmount'] ??
+          data['giftValue'] ??
+          data['coins'] ??
+          data['coin'] ??
+          data['price'] ??
           data['value'] ??
           sig['amount'];
       final amount = amountRaw is num
@@ -238,7 +248,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   Future<void> _syncRoomInfo({bool startTimerIfTeller = false}) async {
     if (_disposed || state.leaving) return;
     final repo = ref.read(livePsychicsRepositoryProvider);
-    final previousRoomId = state.room?.roomId;
     final info = await repo.fetchRoom(session.sessionId);
     if (_disposed || info == null) return;
 
@@ -314,15 +323,22 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       unawaited(PsychicSessionStore.save(updated));
     }
 
-    if (newRoomId != null &&
-        newRoomId.isNotEmpty &&
-        previousRoomId != newRoomId &&
-        (state.rtcReady || state.rtcError != null)) {
-      await _rejoinRtc();
+    // Yalnızca gerçekten farklı bir KANALA geçildiyse yeniden bağlan. Ham oda
+    // kimliği null'dan gerçek değere dönse bile normalize kanal aynıysa
+    // (room_{sessionId}) gereksiz yeniden bağlanma yapıp gecikme yaratma.
+    if (newRoomId != null && newRoomId.isNotEmpty) {
+      final newChannel = AgoraChannelNames.forRoom(newRoomId);
+      if (newChannel.isNotEmpty &&
+          _joinedChannel != null &&
+          newChannel != _joinedChannel &&
+          (state.rtcReady || state.rtcError != null)) {
+        await _rejoinRtc();
+      }
     }
   }
 
   Future<void> _rejoinRtc() async {
+    _joinedChannel = null;
     await _agora.leave();
     if (_disposed) return;
     state = state.copyWith(rtcReady: false);
@@ -410,7 +426,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       unawaited(_handleRemoteSessionEnded(info.status));
       return;
     }
-    final previousRoomId = state.room?.roomId;
     var remaining = state.remaining;
     if (info.timerStarted) {
       remaining = Duration(seconds: info.remainingSeconds);
@@ -421,11 +436,14 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       waitingForTimer: session.isClient && !info.timerStarted,
       remaining: remaining,
     );
-    if (info.roomId != null &&
-        info.roomId!.isNotEmpty &&
-        previousRoomId != info.roomId &&
-        (state.rtcReady || state.rtcError != null)) {
-      unawaited(_rejoinRtc());
+    if (info.roomId != null && info.roomId!.isNotEmpty) {
+      final newChannel = AgoraChannelNames.forRoom(info.roomId!);
+      if (newChannel.isNotEmpty &&
+          _joinedChannel != null &&
+          newChannel != _joinedChannel &&
+          (state.rtcReady || state.rtcError != null)) {
+        unawaited(_rejoinRtc());
+      }
     }
   }
 
@@ -466,20 +484,11 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       return;
     }
 
-    await _syncRoomInfo();
-    final repo = ref.read(livePsychicsRepositoryProvider);
-    final status = await repo.fetchSessionStatus(session.sessionId);
-    if (status?.trtcRoomId != null && status!.trtcRoomId!.trim().isNotEmpty) {
-      final updated = session.copyWith(
-        trtcRoomIdOverride: status.trtcRoomId,
-        tellerUserId: status.tellerUserId ?? session.tellerUserId,
-      );
-      unawaited(PsychicSessionStore.save(updated));
-    }
-
-    if (state.room?.roomId == null || state.room!.roomId!.trim().isEmpty) {
-      await _syncRoomInfo();
-    }
+    // Kanal kimliği her zaman session'dan (sessionId fallback) türetilebilir.
+    // Oda senkronunu beklemeden hemen bağlan — hem gecikmeyi düşürür hem de
+    // iki taraf da aynı kanalı (room_{sessionId}) hesapladığı için EŞ ZAMANLI
+    // bağlanır. Backend farklı bir oda kimliği verirse _syncRoomInfo (bootstrap
+    // içinde paralel çalışıyor) kanalı karşılaştırıp gerekiyorsa yeniden bağlar.
     final roomId = channelId;
     if (roomId.trim().isEmpty) {
       state = state.copyWith(rtcError: 'Oda bilgisi alınamadı. Tekrar deneyin.');
@@ -504,6 +513,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       await _agora.joinTwoWayVideo(
         credentials: cred.copyWith(channelName: effectiveChannel),
       );
+      _joinedChannel = effectiveChannel;
       ref.read(liveBeautyProvider.notifier).bindRtc(agora: _agora);
       LiveDebugLog.log('psychic.agora.join.ok', {
         'sessionId': session.sessionId,
@@ -717,52 +727,27 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _chatPoll?.cancel();
     _ping?.cancel();
     _roomPoll?.cancel();
+    _signalPoll?.cancel();
     ref.read(psychicSessionCancelSignalProvider.notifier).signal(session.sessionId);
     final user = ref.read(authControllerProvider).valueOrNull;
     final tipsTotal = state.sessionTipsTotal;
     final sessionId = session.sessionId;
     final isClient = session.isClient;
+    final tellerReceiver = state.room?.tellerUserId ?? session.tellerUserId;
+    final clientReceiver = state.room?.clientId;
+    // ref'i navigasyon/dispose öncesi oku — autoDispose sonrası ref.read atmasın.
     final repo = ref.read(livePsychicsRepositoryProvider);
+    final sse = ref.read(psychicRoomSseServiceProvider);
 
-    // Karşı tarafa önce sinyal gönder — RTC kapanmadan SSE ile haber ver.
-    try {
-      await repo.sendRoomSignal(
-        sessionId: sessionId,
-        type: 'session_end',
-        data: {
-          'endedByRole': isClient ? 'client' : 'teller',
-          if (user?.id != null) 'endedBy': user!.id,
-        },
-        receiverId: isClient
-            ? (state.room?.tellerUserId ?? session.tellerUserId)
-            : state.room?.clientId,
-      );
-    } catch (_) {}
-    try {
-      await repo.roomAction(
-        sessionId,
-        'end',
-        extra: {
-          'endedByRole': isClient ? 'client' : 'teller',
-          if (user?.id != null) 'endedBy': user!.id,
-        },
-      );
-    } catch (_) {}
-    try {
-      await repo.endSession(sessionId);
-    } catch (_) {}
-    try {
-      await repo.clearRoomSignals(sessionId);
-    } catch (_) {}
+    // 1) RTC'yi HEMEN kapat — ekranın kapanması backend'e bağlı kalmasın.
+    //    (Önceki sürümde ardışık ağ çağrıları takılırsa seans "kapanmıyordu".)
+    unawaited(() async {
+      try {
+        await _agora.leave();
+      } catch (_) {}
+    }());
 
-    try {
-      await _agora.leave();
-    } catch (_) {}
-    try {
-      await ref.read(psychicRoomSseServiceProvider).disconnect();
-    } catch (_) {}
-    await PsychicSessionStore.clear();
-
+    // 2) Karşı tarafı bilgilendir + navigasyonu tetikle — ağ temizliğini bekleme.
     if (peerEndedMessage != null) {
       ref.read(psychicPeerLeftProvider.notifier).notifyPeerLeft(
             sessionId: sessionId,
@@ -784,7 +769,63 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       );
     }
 
+    // 3) Backend temizliği arka planda, her çağrıya zaman aşımı koyarak yürüt.
+    //    Herhangi biri takılsa bile UI zaten kapanmış olur.
+    unawaited(_cleanupBackend(
+      repo: repo,
+      sse: sse,
+      sessionId: sessionId,
+      isClient: isClient,
+      endedBy: user?.id,
+      tellerReceiver: tellerReceiver,
+      clientReceiver: clientReceiver,
+    ));
+
+    unawaited(PsychicSessionStore.clear());
     invalidateWalletCacheFromRef(ref);
+  }
+
+  Future<void> _cleanupBackend({
+    required LivePsychicsRepository repo,
+    required PsychicRoomSseService sse,
+    required String sessionId,
+    required bool isClient,
+    required String? endedBy,
+    required String? tellerReceiver,
+    required String? clientReceiver,
+  }) async {
+    const t = Duration(seconds: 4);
+    // Karşı tarafa "session_end" sinyalini önce gönder ki SSE ile haber alsın.
+    try {
+      await repo.sendRoomSignal(
+        sessionId: sessionId,
+        type: 'session_end',
+        data: {
+          'endedByRole': isClient ? 'client' : 'teller',
+          if (endedBy != null) 'endedBy': endedBy,
+        },
+        receiverId: isClient ? tellerReceiver : clientReceiver,
+      ).timeout(t);
+    } catch (_) {}
+    try {
+      await repo.roomAction(
+        sessionId,
+        'end',
+        extra: {
+          'endedByRole': isClient ? 'client' : 'teller',
+          if (endedBy != null) 'endedBy': endedBy,
+        },
+      ).timeout(t);
+    } catch (_) {}
+    try {
+      await repo.endSession(sessionId).timeout(t);
+    } catch (_) {}
+    try {
+      await repo.clearRoomSignals(sessionId).timeout(t);
+    } catch (_) {}
+    try {
+      await sse.disconnect().timeout(t);
+    } catch (_) {}
   }
 
   Future<UserEntity?> _waitForAuth() async {

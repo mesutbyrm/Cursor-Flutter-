@@ -251,7 +251,7 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('💝', style: TextStyle(fontSize: 36)),
+                          const Text('🎁', style: TextStyle(fontSize: 40)),
                           const SizedBox(height: 10),
                           Text(
                             state.tipReceivedFrom?.trim().isNotEmpty == true
@@ -264,11 +264,12 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '${state.tipReceivedAmount} jeton bahşiş aldınız!',
+                            'size ${state.tipReceivedAmount} jetonluk hediye gönderdi!',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Color(0xFFFFD54F),
                               fontWeight: FontWeight.w800,
+                              fontSize: 15,
                             ),
                           ),
                         ],

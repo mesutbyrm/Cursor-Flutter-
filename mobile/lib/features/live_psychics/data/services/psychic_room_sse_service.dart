@@ -150,7 +150,13 @@ class PsychicRoomSseService {
       if (type == 'tip' ||
           type == 'tip_received' ||
           type == 'bahsis' ||
-          type == 'tip_sent') {
+          type == 'tip_sent' ||
+          type == 'gift' ||
+          type == 'gift_received' ||
+          type == 'gift_sent' ||
+          type == 'hediye' ||
+          type.contains('gift') ||
+          type.contains('hediye')) {
         final amount = _parseTipAmount(map);
         if (amount > 0) {
           final from = map['senderName']?.toString() ??
@@ -193,7 +199,14 @@ class PsychicRoomSseService {
   }
 
   int _parseTipAmount(Map<String, dynamic> map) {
-    final raw = map['amount'] ?? map['jeton'] ?? map['tipAmount'] ?? map['value'];
+    final raw = map['amount'] ??
+        map['jeton'] ??
+        map['tipAmount'] ??
+        map['giftValue'] ??
+        map['coins'] ??
+        map['coin'] ??
+        map['price'] ??
+        map['value'];
     if (raw is num) return raw.toInt();
     return int.tryParse(raw?.toString() ?? '') ?? 0;
   }
