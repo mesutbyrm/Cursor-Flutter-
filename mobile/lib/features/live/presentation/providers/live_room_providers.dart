@@ -183,7 +183,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
           LiveFortuneRequestStatus.answered =>
             'Fal isteğiniz yanıtlandı. Canlı yayına katılarak falınızı dinleyebilirsiniz.',
           LiveFortuneRequestStatus.cancelled =>
-            'Fal isteğiniz reddedildi veya iptal edildi. Jetonlar iade edilir.',
+            'Yayıncı fal isteğinizi reddetti — jetonlarınız iade edildi.',
           LiveFortuneRequestStatus.pending => null,
         };
         if (notice != null) {

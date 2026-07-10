@@ -34,7 +34,7 @@ class PendingPaymentBanner extends ConsumerWidget {
     final timeLeft = request.timeLeft;
     final expiryLine = timeLeft == null
         ? '24 saat içinde cevap verilmezse talebi buradan iptal edebilirsiniz.'
-        : timeLeft.isPositive
+        : timeLeft.inMilliseconds > 0
             ? 'Kalan süre: ${_formatTimeLeft(timeLeft)} · 24 saat sonunda otomatik iptal edilir.'
             : '24 saat doldu; uygulama bu talebi otomatik iptal etmeyi deneyecek.';
 

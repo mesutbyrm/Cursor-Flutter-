@@ -1521,12 +1521,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             .toList();
         if (pending.isEmpty) return;
         final latest = pending.last;
+        final queueNo = pending.indexWhere((r) => r.id == latest.id) + 1;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Yeni fal isteği: ${latest.displayName} — ${latest.fortuneType}',
+                'Fal bildirimi #$queueNo: ${latest.displayName} — ${latest.fortuneType}',
               ),
               action: SnackBarAction(
                 label: 'Gör',
@@ -1555,29 +1556,31 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           });
         }
         if (next.streamEnded && !(prev?.streamEnded ?? false) && !s.isHost) {
-        WidgetsBinding.instance.addPostFrameCallback((_) async {
-          if (!mounted) return;
-          await showDialog<void>(
-            context: context,
-            barrierDismissible: false,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Yayın sona erdi'),
-              content: const Text('Yayın kapandı.'),
-              actions: [
-                FilledButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Tamam'),
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (!mounted) return;
+            await showDialog<void>(
+              context: context,
+              barrierDismissible: false,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Yayıncı yayını kapattı'),
+                content: const Text(
+                  'Bu yayın sona erdi. Canlı yayınlar sayfasına yönlendiriliyorsunuz.',
                 ),
-              ],
-            ),
-          );
-          if (!mounted) return;
-          if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
-            widget.onSwipeClose!();
-          } else {
-            context.go('/live');
-          }
-        });
+                actions: [
+                  FilledButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Tamam'),
+                  ),
+                ],
+              ),
+            );
+            if (!mounted) return;
+            if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+              widget.onSwipeClose!();
+            } else {
+              context.go('/live');
+            }
+          });
         }
       });
     }
@@ -1602,9 +1605,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           count: 6 + ev.combo.clamp(0, 12).toInt(),
         );
         if (hasStream) {
-          ref
-              .read(liveRoomInteractionProvider(streamId).notifier)
-              .pulseHeartsVisual();
           final battle = ref.read(liveVideoPkProvider(streamId)).battle;
           if (battle != null && battle['status'] == 'active') {
             unawaited(ref.read(liveVideoPkProvider(streamId).notifier).refresh());
@@ -1670,8 +1670,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               key: _heartsKey,
               burstToken: interaction.heartBurstToken,
               onDoubleTap: _onDoubleTapHeart,
-              onTripleTap: _onTripleTapSuperLike,
-              onLongPress: _onLongPressApplause,
             ),
             LiveInteractionEffectsOverlay(
               burstToken: interaction.heartBurstToken,
@@ -2081,42 +2079,52 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                       ),
                     ),
                   const SizedBox(height: 8),
-                  LivePremiumBottomBar(
-                    chatController: _chat,
-                    isHost: s.isHost,
-                    agora: s.isHost ? _agora : null,
-                    commentsEnabled: broadcastSettings.commentsEnabled,
-                    onJoinBroadcast: !s.isHost &&
-                            broadcastSettings.guestsEnabled &&
-                            hasStream
-                        ? () => unawaited(_requestGuestJoin())
-                        : null,
-                    onRtcStateChanged: s.isHost
-                        ? () => setState(() => _localPreviewKey = UniqueKey())
-                        : null,
-                    onToggleCamera: s.isHost
-                        ? () {
-                            _agora.setCameraEnabled(!_agora.cameraOn);
-                            setState(() => _localPreviewKey = UniqueKey());
-                          }
-                        : null,
-                    onGift: broadcastSettings.giftsEnabled
-                        ? () => giftCtrl.setPanelOpen(true)
-                        : null,
-                    onSend: () {
-                      final t = _chat.text.trim();
-                      if (t.isEmpty || streamId == null || streamId.isEmpty) {
-                        return;
-                      }
-                      _chat.clear();
-                      unawaited(
-                        ref.read(liveRoomProvider(streamId).notifier).sendMessage(
-                              t,
-                              selfName: user?.display ?? 'Sen',
-                            ),
-                      );
-                    },
-                    onEnd: s.isHost ? () => unawaited(_exitBroadcast(context)) : null,
+                  AnimatedPadding(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOutCubic,
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.viewInsetsOf(context).bottom,
+                    ),
+                    child: LivePremiumBottomBar(
+                      chatController: _chat,
+                      isHost: s.isHost,
+                      agora: s.isHost ? _agora : null,
+                      commentsEnabled: broadcastSettings.commentsEnabled,
+                      onJoinBroadcast: !s.isHost &&
+                              broadcastSettings.guestsEnabled &&
+                              hasStream
+                          ? () => unawaited(_requestGuestJoin())
+                          : null,
+                      onRtcStateChanged: s.isHost
+                          ? () => setState(() => _localPreviewKey = UniqueKey())
+                          : null,
+                      onToggleCamera: s.isHost
+                          ? () {
+                              _agora.setCameraEnabled(!_agora.cameraOn);
+                              setState(() => _localPreviewKey = UniqueKey());
+                            }
+                          : null,
+                      onGift: broadcastSettings.giftsEnabled
+                          ? () => giftCtrl.setPanelOpen(true)
+                          : null,
+                      onSend: () {
+                        final t = _chat.text.trim();
+                        if (t.isEmpty || streamId == null || streamId.isEmpty) {
+                          return;
+                        }
+                        _chat.clear();
+                        unawaited(
+                          ref
+                              .read(liveRoomProvider(streamId).notifier)
+                              .sendMessage(
+                                t,
+                                selfName: user?.display ?? 'Sen',
+                              ),
+                        );
+                      },
+                      onEnd:
+                          s.isHost ? () => unawaited(_exitBroadcast(context)) : null,
+                    ),
                   ),
                 ],
               ),

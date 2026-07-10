@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -33,8 +32,6 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
   final _hearts = <_HeartParticle>[];
   final _rand = Random();
   Offset? _lastTap;
-  int _tapCount = 0;
-  Timer? _tapReset;
 
   @override
   void initState() {
@@ -87,25 +84,14 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
 
   @override
   void dispose() {
-    _tapReset?.cancel();
     _ctrl.dispose();
     super.dispose();
   }
 
   void _registerTap(Offset globalPos) {
     _lastTap = globalPos;
-    _tapCount++;
-    _tapReset?.cancel();
-    _tapReset = Timer(const Duration(milliseconds: 420), () {
-      if (_tapCount >= 3) {
-        widget.onTripleTap?.call();
-        burstAt(globalPos, count: 18);
-      } else if (_tapCount == 2) {
-        widget.onDoubleTap?.call();
-        burstAt(globalPos);
-      }
-      _tapCount = 0;
-    });
+    widget.onDoubleTap?.call();
+    burstAt(globalPos, count: 8);
   }
 
   @override
