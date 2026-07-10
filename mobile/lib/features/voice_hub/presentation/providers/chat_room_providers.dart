@@ -65,6 +65,8 @@ import 'voice_gift_leaderboard_provider.dart';
 import 'voice_room_diagnostic_provider.dart';
 import 'voice_room_ui_provider.dart';
 part 'chat_room_providers_music.dart';
+part 'chat_room_providers_moderation.dart';
+part 'chat_room_providers_seat.dart';
 
 final youtubeStreamResolverProvider = Provider<YoutubeStreamResolver>((ref) {
   final resolver = YoutubeStreamResolver(ref.watch(dioProvider));
@@ -3007,98 +3009,6 @@ class VoiceRoomLiveController
     );
   }
 
-  int? _privilegedRolePriority(
-    UserEntity user,
-    ChatRoomMyPermissions? server,
-    ChatRoomPresence? self,
-  ) {
-    final tier = VoiceRoomSeatPriority.forUser(
-      user,
-      room: _roomMeta,
-      self: self,
-      server: server,
-    );
-    if (!VoiceRoomSeatPriority.shouldAutoSit(tier)) return null;
-    return tier;
-  }
-
-  int? _pickAutoSeatIndex({
-    required int myPriority,
-    required List<ChatRoomPresence> presence,
-  }) {
-    return VoiceRoomSeatPriority.pickAutoSeatIndex(
-      myTier: myPriority,
-      presence: presence,
-      room: _roomMeta,
-    );
-  }
-
-  Future<void> _tryAutoPrivilegedSeat() async {
-    if (_roomKey.isEmpty || !state.selfInRoom) return;
-    final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null) return;
-
-    ChatRoomPresence? self;
-    for (final p in state.presence) {
-      if (p.id == user.id) {
-        self = p;
-        break;
-      }
-    }
-    if (self?.seatIndex != null) {
-      _autoSeatAttempted = true;
-      return;
-    }
-
-    final priority = _privilegedRolePriority(
-      user,
-      state.serverPermissions,
-      self,
-    );
-    if (priority == null) return;
-    if (_autoSeatAttempted) {
-      ChatRoomPresence? selfNow;
-      for (final p in state.presence) {
-        if (p.id == user.id) {
-          selfNow = p;
-          break;
-        }
-      }
-      if (selfNow?.seatIndex != null) return;
-      _autoSeatAttempted = false;
-    }
-
-    final seatIndex = _pickAutoSeatIndex(
-      myPriority: priority,
-      presence: state.presence,
-    );
-    if (seatIndex == null) return;
-
-    VoiceRoomDebugLog.log('seat.auto_join', {
-      'room': _roomKey,
-      'seat': seatIndex,
-      'priority': priority,
-    });
-    // Manuel "Koltuğa Al" ile AYNI çalışan yolu kullan (voiceSeatRestService
-    // .takeSeat). Eski joinSeat ucu 200 dönüp koltuğa oturtmuyordu; bu yüzden
-    // yetkili otomatik koltuğa geçmiyordu.
-    final err = await assignSeat(seatIndex: seatIndex, userId: user.id);
-    if (err == null) {
-      _autoSeatAttempted = true;
-      return;
-    }
-    // İzinler veya presence gecikirse bir sonraki poll'da tekrar dene.
-    for (final p in state.presence) {
-      if (p.id == user.id && p.seatIndex != null) {
-        _autoSeatAttempted = true;
-        break;
-      }
-    }
-    if (self?.seatIndex == null) {
-      _autoSeatAttempted = false;
-    }
-  }
-
   Future<String?> toggleRoomMute({required bool mute}) async {
     final perms = _permissions();
     if (!perms.canMuteRoom && !perms.isRoomOwner && !perms.isSiteAdmin) {
@@ -3565,106 +3475,6 @@ class VoiceRoomLiveController
     }
   }
 
-  Future<String?> postModeratorAnnouncement(String message) async =>
-      sendDuyuruAnnouncement(message);
-
-  bool _looksLikeDuyuruCommand(String trimmed) {
-    final lower = trimmed.toLowerCase();
-    return lower.startsWith('!duyuru') || lower.startsWith('/duyuru');
-  }
-
-  Future<String?> clearChatAsModerator() async {
-    final perms = _permissions();
-    if (!perms.canModerate && !perms.isRoomOwner) {
-      return 'Sohbet temizleme yetkiniz yok.';
-    }
-    try {
-      await ref.read(chatRoomRemoteProvider).clearChatViaModeration(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-          );
-      _applyLocalChatClear();
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<ModerationKickResult?> kickUserModeration({
-    required String userId,
-    String? reason,
-  }) async {
-    final perms = _permissions();
-    if (!perms.canModerate && !perms.isRoomOwner) return null;
-    try {
-      return await ref.read(chatRoomRemoteProvider).kickUser(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            userId: userId,
-            reason: reason,
-          );
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<String?> banUserModeration({
-    required String userId,
-    String? reason,
-  }) async {
-    final perms = _permissions();
-    if (!perms.canBanUsers && !perms.isRoomOwner) {
-      return 'Ban yetkiniz yok.';
-    }
-    try {
-      await ref.read(chatRoomRemoteProvider).banUser(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            userId: userId,
-            reason: reason,
-          );
-      showModerationToast('Kullanıcı banlandı');
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> unbanUserModeration({required String userId}) async {
-    final perms = _permissions();
-    if (!perms.canBanUsers && !perms.isRoomOwner) {
-      return 'Ban kaldırma yetkiniz yok.';
-    }
-    try {
-      await ref.read(chatRoomRemoteProvider).unbanUser(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            userId: userId,
-          );
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> unmuteUserModeration({required String userId}) async {
-    final perms = _permissions();
-    if (!perms.canMuteUsers && !perms.isRoomOwner && !perms.canModerate) {
-      return 'Susturma kaldırma yetkiniz yok.';
-    }
-    try {
-      await ref.read(chatRoomRemoteProvider).unmuteUser(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            userId: userId,
-          );
-      await refresh();
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
   Future<void> _postChatLineOnly(String content) async {
     final user = ref.read(authControllerProvider).valueOrNull;
     try {
@@ -3674,49 +3484,6 @@ class VoiceRoomLiveController
             nickname: _effectiveNickname(user),
           );
     } catch (_) {}
-  }
-
-  Future<String?> requestSpeak() async {
-    try {
-      await ref.read(chatRoomRemoteProvider).requestSpeak(_roomKey);
-      ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(true);
-      return null;
-    } catch (e) {
-      final msg = ApiException.userMessage(e);
-      if (msg.contains('404')) {
-        return 'Mikrofon isteği bu odada desteklenmiyor; boş koltuğa dokunarak oturmayı deneyin.';
-      }
-      return msg;
-    }
-  }
-
-  Future<String?> cancelSpeakRequest() async {
-    try {
-      await ref.read(chatRoomRemoteProvider).cancelSpeakRequest(_roomKey);
-      ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<List<String>> fetchSpeakRequests() async {
-    try {
-      return await ref.read(chatRoomRemoteProvider).fetchSpeakRequests(_roomKey);
-    } catch (_) {
-      return [];
-    }
-  }
-
-  Future<String?> approveSpeakRequest(String userId) async {
-    try {
-      await ref
-          .read(chatRoomRemoteProvider)
-          .approveSpeakRequest(_roomKey, userId);
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
   }
 
   bool _canControlMusic() {
@@ -3898,54 +3665,6 @@ class VoiceRoomLiveController
     }
   }
 
-  Future<String?> assignSeat({required int seatIndex, String? userId}) async {
-    try {
-      await ref
-          .read(voiceSeatRestServiceProvider)
-          .takeSeat(_roomKey, seatIndex, userId: userId);
-      await refresh();
-      return null;
-    } catch (e) {
-      final self = ref.read(authControllerProvider).valueOrNull;
-      if (self != null && (userId == null || userId == self.id)) {
-        final list = [...state.presence];
-        final idx = list.indexWhere((p) => p.id == self.id);
-        final updated = ChatRoomPresence(
-          id: self.id,
-          name: self.display,
-          nickname: self.username,
-          image: self.avatarUrl,
-          chatRole: self.role ?? 'listener',
-          roleSymbol: _roleSymbolForUser(self),
-          seatIndex: seatIndex,
-          isSpeaking: idx >= 0 ? list[idx].isSpeaking : false,
-        );
-        if (idx >= 0) {
-          list[idx] = updated;
-        } else {
-          list.add(updated);
-        }
-        state = state.copyWith(presence: list, selfInRoom: true);
-        return null;
-      }
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> clearUserSeat({required String userId}) async {
-    try {
-      await ref.read(chatRoomRemoteProvider).clearSeat(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            userId: userId,
-          );
-      await refresh();
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
   Future<String?> requestMusic({
     required String title,
     required String youtubeUrl,
@@ -4105,52 +3824,6 @@ class VoiceRoomLiveController
     }
   }
 
-  Future<List<String>> fetchBannedWords() async {
-    try {
-      final words =
-          await ref.read(chatRoomRemoteProvider).fetchBannedWords(_roomKey);
-      state = state.copyWith(bannedWords: words);
-      return words;
-    } catch (_) {
-      return state.bannedWords;
-    }
-  }
-
-  Future<List<VoiceRoomBanEntry>> fetchModerationBans() async {
-    try {
-      final snap = await ref.read(chatRoomRemoteProvider).fetchModeration(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-          );
-      return snap.bans;
-    } catch (_) {
-      return const [];
-    }
-  }
-
-  Future<String?> addBannedWord(String word) async {
-    try {
-      final words = await ref
-          .read(chatRoomRemoteProvider)
-          .addBannedWord(roomKey: _roomKey, word: word);
-      state = state.copyWith(bannedWords: words);
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> removeBannedWord(String word) async {
-    try {
-      final words = await ref
-          .read(chatRoomRemoteProvider)
-          .removeBannedWord(roomKey: _roomKey, word: word);
-      state = state.copyWith(bannedWords: words);
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
 }
 
 class _ParsedRoomCommand {
