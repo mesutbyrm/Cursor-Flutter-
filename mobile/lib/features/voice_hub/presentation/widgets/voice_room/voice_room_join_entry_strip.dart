@@ -46,7 +46,10 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
   AnimationController? _ctrl;
   Animation<Offset>? _slide;
   Animation<double>? _fade;
-  int _lastEventCount = 0;
+  // Olay listesi başa eklenip 40'ta kırpıldığı için uzunluk farkı güvenilir
+  // değil (dolduğunda uzunluk sabit kalıp yeni girişler görünmez oluyordu).
+  // Yeni olayları kimlik (identical) ile tespit ediyoruz.
+  VoiceRoomRealtimeEvent? _lastSeenEvent;
   int _lastJoinMsgCount = 0;
   int _lastLeaveMsgCount = 0;
 
@@ -77,10 +80,17 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
   }
 
   void _collectNewEntries() {
-    if (widget.events.length > _lastEventCount) {
-      final fresh = widget.events.take(widget.events.length - _lastEventCount);
-      _lastEventCount = widget.events.length;
-      for (final e in fresh) {
+    final events = widget.events;
+    if (events.isNotEmpty) {
+      // events: en yeni başta. Daha önce görülen olaya (kimlik) kadar topla.
+      final fresh = <VoiceRoomRealtimeEvent>[];
+      for (final e in events) {
+        if (identical(e, _lastSeenEvent)) break;
+        fresh.add(e);
+      }
+      _lastSeenEvent = events.first;
+      // Kronolojik sırada (eskiden yeniye) kuyruğa al.
+      for (final e in fresh.reversed) {
         if (e.kind == VoiceRoomRealtimeKind.join &&
             !_isStaffJoin(e.message, null)) {
           _enqueue(_parseLine(e.message, user: null, isLeave: false));
