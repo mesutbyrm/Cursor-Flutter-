@@ -44,15 +44,12 @@ abstract final class CanlifalImageUrls {
       });
     }
 
-    if (uri.host.contains('canlifal.com') && !uri.path.contains('_next/image')) {
-      final encoded = Uri.encodeComponent(url);
-      return '${Env.siteOrigin}/_next/image?url=$encoded&w=$width&q=$quality';
-    }
-
-    if (uri.path.contains('_next/image')) {
-      return _withQuery(uri, {'w': '$width', 'q': '$quality'});
-    }
-
+    // canlifal.com'un /_next/image optimizasyon uç noktası bu ortamda 404
+    // dönüyor (her genişlik/relatif-mutlak varyasyonu doğrulandı) → görseller
+    // hiç yüklenmiyordu (ör. hazır oda arka planlarının çoğu boş kalıyordu).
+    // Statik /images/... doğrudan 200 döndüğü için orijinal URL kullanılır.
+    // Zaten _next/image içeren URL'lerde de yalnızca boyut parametreleri
+    // güncellenmez; bozuk uç noktaya dokunulmaz.
     return url;
   }
 
