@@ -67,6 +67,7 @@ import 'voice_room_ui_provider.dart';
 part 'chat_room_providers_music.dart';
 part 'chat_room_providers_moderation.dart';
 part 'chat_room_providers_seat.dart';
+part 'chat_room_providers_gift.dart';
 
 final youtubeStreamResolverProvider = Provider<YoutubeStreamResolver>((ref) {
   final resolver = YoutubeStreamResolver(ref.watch(dioProvider));
@@ -712,18 +713,6 @@ class VoiceRoomLiveController
       final words =
           await ref.read(chatRoomRemoteProvider).fetchBannedWords(_roomKey);
       state = state.copyWith(bannedWords: words);
-    } catch (_) {}
-  }
-
-  Future<void> _loadGiftLeaderboard() async {
-    if (_roomKey.isEmpty) return;
-    try {
-      final entries = await ref
-          .read(chatRoomGiftsRemoteProvider)
-          .fetchRoomGiftLeaderboard(roomId: _roomKey);
-      if (entries.isNotEmpty) {
-        ref.read(voiceSessionGiftLeaderboardProvider.notifier).seedFromApi(entries);
-      }
     } catch (_) {}
   }
 
@@ -1646,49 +1635,6 @@ class VoiceRoomLiveController
     state = state.copyWith(
       chatClearedBannerNonce: state.chatClearedBannerNonce + 1,
     );
-  }
-
-  void _startGiftSocket() {
-    if (_roomKey.isEmpty) return;
-    if (_giftSocketStarted) {
-      VoiceRoomDebugLog.log('socket.subscribe.skip', {'roomId': _roomKey});
-      return;
-    }
-    _giftSocketStarted = true;
-    final storage = ref.read(tokenStorageProvider);
-    final alt = _roomMeta.slug.trim();
-    ref.read(voiceRoomGiftSocketProvider).connect(
-          roomId: _roomKey,
-          alternateRoomId: alt.isNotEmpty ? alt : null,
-          accessToken: storage.readAccess,
-          onEvent: (ev) {
-            ref.read(voiceRoomGiftRealtimeProvider).publishRemote(ev);
-            ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(ev);
-            if (!state.sseConnected) {
-              ref.read(voiceRoomGiftRealtimeProvider).setSocketPreferred(true);
-            }
-          },
-          onPresenceSnapshot: applyPresenceSnapshot,
-          onDjUpdate: (payload) {
-            // SSE bağlıyken DJ olayları yalnızca SSE'den işlenir (çift oynatma önlenir).
-            if (state.sseConnected || payload.isEmpty) return;
-            _applyRoomVideoPayload(payload);
-            unawaited(_applyDjRealtimePayload(payload));
-          },
-          onMessage: (msg) {
-            if (state.sseConnected) return;
-            final exists = state.messages.any((m) => m.id == msg.id);
-            if (exists) return;
-            state = state.copyWith(messages: [...state.messages, msg]);
-          },
-          onConnectionChanged: (connected) {
-            ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(connected);
-            if (connected && !state.sseConnected) {
-              ref.read(voiceRoomGiftRealtimeProvider).setSocketPreferred(true);
-            }
-          },
-        );
-    VoiceRoomDebugLog.log('socket.subscribe', {'roomId': _roomKey});
   }
 
   /// Sunucu presence snapshot diff — koltuk / konuşma / rol (`roomUsers` vb.).
