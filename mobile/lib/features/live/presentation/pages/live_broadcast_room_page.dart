@@ -77,11 +77,16 @@ class LiveBroadcastRoomPage extends ConsumerStatefulWidget {
     required this.session,
     this.embeddedInSwipe = false,
     this.onSwipeClose,
+    this.active = true,
   });
 
   final LiveBroadcastSession session;
   final bool embeddedInSwipe;
   final VoidCallback? onSwipeClose;
+
+  /// Kaydırmalı izleyicide yalnızca ekrandaki sayfa `true`. Ekranda olmayan
+  /// (ısıtılmış komşu) sayfalar sesi kısar ki yayınlar üst üste duyulmasın.
+  final bool active;
 
   @override
   ConsumerState<LiveBroadcastRoomPage> createState() =>
@@ -146,6 +151,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     });
   }
 
+  @override
+  void didUpdateWidget(covariant LiveBroadcastRoomPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.active != widget.active) {
+      _applyActiveAudio();
+    }
+  }
+
   void _initGifts() {
     final streamId = widget.session.streamId;
     if (streamId == null || streamId.isEmpty) return;
@@ -205,6 +218,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
     final quality = ref.read(liveStreamQualityProvider);
     unawaited(_agora.setStreamQuality(quality));
+    _applyActiveAudio();
+  }
+
+  /// Ekranda olmayan (ısıtılmış) yayının sesini kıs; ekrandakini aç. Yayıncı
+  /// kendi sesini duymaz zaten; bu yalnızca uzak sese uygulanır.
+  void _applyActiveAudio() {
+    if (!widget.embeddedInSwipe) return;
+    unawaited(_agora.muteAllRemoteAudioStreams(!widget.active));
   }
 
   Future<void> _initAgora() async {

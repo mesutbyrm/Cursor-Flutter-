@@ -177,14 +177,16 @@ class VideoStreamSseService {
   }
 
   void _handleBlock(String block) {
-    if (block.trim() == ': heartbeat' || block.contains('heartbeat')) return;
-
     final dataLines = <String>[];
     for (final line in block.split('\n')) {
       if (line.startsWith('data:')) {
         dataLines.add(line.substring(5).trimLeft());
       }
     }
+    // SSE heartbeat/comment blokları `: ...` yorum satırıdır; `data:` içermez,
+    // bu yüzden dataLines boş kalır ve doğal olarak atlanır. Önceki
+    // `block.contains('heartbeat')` kontrolü, içinde "heartbeat" geçen gerçek
+    // mesaj/hediye bloklarını da düşürüyordu.
     if (dataLines.isEmpty) return;
     final payload = dataLines.join('\n').trim();
     if (payload.isEmpty) return;

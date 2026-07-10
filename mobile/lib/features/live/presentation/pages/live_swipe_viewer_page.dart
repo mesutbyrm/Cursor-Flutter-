@@ -72,8 +72,10 @@ class _LiveSwipeViewerPageState extends ConsumerState<LiveSwipeViewerPage> {
           }
           final stream = streams[i];
           return LiveBroadcastRoomPage(
+            key: ValueKey(stream.id),
             session: LiveBroadcastSession.fromStream(stream),
             embeddedInSwipe: true,
+            active: i == _index,
             onSwipeClose: () => context.pop(),
           );
         },

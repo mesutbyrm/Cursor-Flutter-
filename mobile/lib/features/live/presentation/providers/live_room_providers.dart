@@ -271,8 +271,9 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
             content: trimmed,
           );
       var list = [...state.messages]..removeWhere((m) => m.id == optimisticId);
-      if (sent != null) {
-        _seenIds.add(sent.id);
+      // SSE, gönderilen mesajı biz cevabı almadan geri yollamış olabilir; bu
+      // durumda _seenIds zaten içeriyor olur — ikinci kez eklemeyelim.
+      if (sent != null && _seenIds.add(sent.id)) {
         list.add(
           LiveRoomChatMessage(
             id: sent.id,
