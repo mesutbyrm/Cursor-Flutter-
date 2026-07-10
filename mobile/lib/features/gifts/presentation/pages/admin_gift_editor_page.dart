@@ -112,12 +112,13 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
           .uploadAsset(file, kind: kind);
       if (url == null || !mounted) return;
       setState(() {
+        // Backend upload-url yalnızca icon/thumbnail/asset/sound kabul ediyor.
         switch (kind) {
-          case 'image':
+          case 'icon':
             _imageUrl = url;
           case 'thumbnail':
             _thumbnailUrl = url;
-          case 'animation':
+          case 'asset':
             _animationUrl = url;
             _animationType = _guessAnimationType(file!.path);
           case 'sound':
@@ -226,15 +227,15 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             label: 'Görsel (PNG / WebP)',
             hint: 'Panelde görünen statik ikon',
             url: _imageUrl,
-            kind: 'image',
-            uploading: _uploadingKind == 'image',
+            kind: 'icon',
+            uploading: _uploadingKind == 'icon',
             onPickGallery: () => _uploadFile(
-              kind: 'image',
+              kind: 'icon',
               extensions: ['png', 'webp', 'jpg', 'jpeg'],
               useGallery: true,
             ),
             onPickFile: () => _uploadFile(
-              kind: 'image',
+              kind: 'icon',
               extensions: ['png', 'webp', 'jpg', 'jpeg'],
             ),
           ),
@@ -258,10 +259,10 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             label: 'Animasyon',
             hint: 'MP4 · WebM · SVGA · Lottie · GIF',
             url: _animationUrl,
-            kind: 'animation',
-            uploading: _uploadingKind == 'animation',
+            kind: 'asset',
+            uploading: _uploadingKind == 'asset',
             onPickFile: () => _uploadFile(
-              kind: 'animation',
+              kind: 'asset',
               extensions: ['mp4', 'webm', 'svga', 'json', 'gif', 'riv'],
             ),
           ),
@@ -523,11 +524,11 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
                       _miniBtn('Kaldır', () {
                         setState(() {
                           switch (kind) {
-                            case 'image':
+                            case 'icon':
                               _imageUrl = null;
                             case 'thumbnail':
                               _thumbnailUrl = null;
-                            case 'animation':
+                            case 'asset':
                               _animationUrl = null;
                             case 'sound':
                               _soundUrl = null;
