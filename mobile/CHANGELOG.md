@@ -1,6 +1,12 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.9+12 (2026-07-10)
+
+### CI / derleme
+- Release gate: `canlifal_image_urls` testi güncellendi (`/_next/image` 404 — doğrudan URL)
+- Kullanılmayan YouTube IFrame embed widget sadeleştirildi (DJ stream tabanlı)
+
 ## 1.0.9+11 (2026-07-09)
 
 ### Ana sayfa performans
