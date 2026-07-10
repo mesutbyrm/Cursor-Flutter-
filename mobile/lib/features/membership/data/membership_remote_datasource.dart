@@ -42,7 +42,14 @@ class MembershipRemoteDataSource {
     if (catalog.packages.isEmpty) {
       catalog = _fallbackCatalog(wallet);
     }
+    // Plans yanıtında mevcut üyelik/gün bilgisi yok; cüzdandan tamamla ki
+    // "aktif üyelik" kartı ve uzatma doğru görünsün.
+    final currentFromApi = catalog.currentMembership.toLowerCase();
+    final resolvedCurrent = (currentFromApi.isEmpty || currentFromApi == 'basic')
+        ? (wallet.membership ?? 'basic')
+        : catalog.currentMembership;
     return catalog.copyWith(
+      currentMembership: resolvedCurrent,
       jetonBalance: catalog.jetonBalance > 0 ? catalog.jetonBalance : wallet.jeton,
       cfcBalance: catalog.cfcBalance > 0 ? catalog.cfcBalance : wallet.cfc,
       daysRemaining: catalog.daysRemaining ?? wallet.membershipDaysRemaining,

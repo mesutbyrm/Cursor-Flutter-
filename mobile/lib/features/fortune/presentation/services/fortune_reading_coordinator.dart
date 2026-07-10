@@ -284,11 +284,13 @@ class FortuneReadingCoordinator {
         // Yerel sonuç yine gösterilir.
       }
 
-      // Bakılan her fal otomatik olarak sosyal akışta (herkese açık) paylaşılır.
+      // Bakılan fal, kullanıcının otomatik paylaşım tercihine göre sosyalde
+      // paylaşılır (varsayılan: herkese açık; ayarlardan "Kapalı" seçilirse
+      // paylaşılmaz).
       unawaited(
         ref
             .read(fortuneShareHandlerProvider)
-            .shareToSocialFeed(finalResult)
+            .autoShareIfEnabled(finalResult)
             .catchError((_) {}),
       );
     }

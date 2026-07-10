@@ -55,6 +55,7 @@ class HomeGoldMembershipsRow extends ConsumerWidget {
       const [
         MembershipPackageEntity(
           id: 'basic',
+          planId: 'basic',
           title: 'Basic',
           durationDays: 30,
           priceJeton: 100,
@@ -63,6 +64,7 @@ class HomeGoldMembershipsRow extends ConsumerWidget {
         ),
         MembershipPackageEntity(
           id: 'premium',
+          planId: 'premium',
           title: 'Premium',
           durationDays: 30,
           priceJeton: 250,
@@ -71,6 +73,7 @@ class HomeGoldMembershipsRow extends ConsumerWidget {
         ),
         MembershipPackageEntity(
           id: 'gold',
+          planId: 'gold',
           title: 'Gold',
           durationDays: 30,
           priceJeton: 500,
@@ -79,6 +82,7 @@ class HomeGoldMembershipsRow extends ConsumerWidget {
         ),
         MembershipPackageEntity(
           id: 'diamond',
+          planId: 'diamond',
           title: 'Diamond',
           durationDays: 30,
           priceJeton: 1000,
