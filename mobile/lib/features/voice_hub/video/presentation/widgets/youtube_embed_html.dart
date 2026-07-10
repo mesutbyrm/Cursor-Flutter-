@@ -68,7 +68,12 @@ abstract final class YoutubeEmbedHtml {
           },
           onStateChange: function(e) {
             if (e.data === YT.PlayerState.ENDED) post('ended');
-            else if (e.data === YT.PlayerState.PLAYING) post('playing');
+            else if (e.data === YT.PlayerState.PLAYING) {
+              post('playing');
+              // Muted-autoplay tuzağı: onReady'deki unMute genelde tutmuyor;
+              // oynatma GERÇEKTEN başladığında unmute güvenilir şekilde çalışır.
+              try { e.target.unMute(); e.target.setVolume(100); } catch (err) {}
+            }
             else if (e.data === YT.PlayerState.PAUSED) post('paused');
           },
           onError: function(e) { post('error:' + e.data); }

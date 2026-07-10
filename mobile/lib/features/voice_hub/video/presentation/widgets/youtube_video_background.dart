@@ -107,6 +107,11 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
       unawaited(_runCmd({'action': 'unmute', 'volume': 100}));
       return;
     }
+    if (msg == 'playing') {
+      // Oynatma başladı — muted-autoplay ihtimaline karşı unmute'u pekiştir.
+      unawaited(_runCmd({'action': 'unmute', 'volume': 100}));
+      return;
+    }
     if (msg == 'ended') {
       unawaited(_onVideoEnded());
       return;
