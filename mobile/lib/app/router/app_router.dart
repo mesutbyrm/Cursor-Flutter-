@@ -112,7 +112,6 @@ import '../../features/live_psychics/presentation/screens/psychics_list_screen.d
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
 import '../../features/agency/presentation/providers/agency_providers.dart';
 import '../../features/vip_gold/presentation/pages/vip_gold_hub_page.dart';
-import '../../premium_fortune/router/pf_router.dart';
 import '../../core/bootstrap/app_startup_log.dart';
 import '../../core/bootstrap/auth_redirect.dart';
 import '../../core/bootstrap/startup_route_observer.dart';
@@ -1020,7 +1019,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/pk/result',
         builder: (context, state) => const PkResultPage(),
       ),
-      ...premiumFortuneRoutes,
     ],
   );
 });

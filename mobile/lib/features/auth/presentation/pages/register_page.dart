@@ -54,11 +54,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  void _soon(String label) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label yakında aktif olacak.')),
-    );
-  }
 
   Future<void> _submitRegister() async {
     if (!_form.currentState!.validate()) return;
@@ -121,7 +116,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     : () => ref
                         .read(authControllerProvider.notifier)
                         .loginWithTikTok(),
-                onApple: () => _soon('Apple girişi'),
               ),
               const SizedBox(height: 18),
               const AuthOrDividerPremium(),

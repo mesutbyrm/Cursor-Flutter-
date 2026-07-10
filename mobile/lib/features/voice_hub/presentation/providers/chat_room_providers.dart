@@ -64,6 +64,11 @@ import 'voice_gift_providers.dart';
 import 'voice_gift_leaderboard_provider.dart';
 import 'voice_room_diagnostic_provider.dart';
 import 'voice_room_ui_provider.dart';
+part 'chat_room_providers_music.dart';
+part 'chat_room_providers_moderation.dart';
+part 'chat_room_providers_seat.dart';
+part 'chat_room_providers_gift.dart';
+part 'chat_room_providers_presence.dart';
 
 final youtubeStreamResolverProvider = Provider<YoutubeStreamResolver>((ref) {
   final resolver = YoutubeStreamResolver(ref.watch(dioProvider));
@@ -480,105 +485,6 @@ class VoiceRoomLiveController
     return VoiceRoomMessageMerge.merge(current, fetched);
   }
 
-  bool _markEntranceOnce(String raw) {
-    final key = VoiceOfficialJoin.entranceDedupeKey(raw, roomName: _roomMeta.nameTr);
-    if (_shownEntranceKeys.contains(key)) return false;
-    _shownEntranceKeys.add(key);
-    return true;
-  }
-
-  void _syncPresenceJoinAnnouncements(List<ChatRoomPresence> merged) {
-    final previous = _knownPresenceIds;
-    final nextIds = merged.map((p) => p.id).where((id) => id.isNotEmpty).toSet();
-    if (previous.isEmpty) {
-      _knownPresenceIds
-        ..clear()
-        ..addAll(nextIds);
-      return;
-    }
-    for (final user in merged) {
-      if (user.id.isEmpty || previous.contains(user.id)) continue;
-      _announcePresenceJoin(user);
-    }
-    // Ayrılanlar — poll ile (SSE gelmese de) herkes çıkışı görsün.
-    final departedIds = previous.difference(nextIds);
-    if (departedIds.isNotEmpty) {
-      final self = ref.read(authControllerProvider).valueOrNull?.id;
-      for (final id in departedIds) {
-        if (id.isEmpty || id == self) continue;
-        final name = _lastKnownPresenceNames[id];
-        if (name != null && name.isNotEmpty) {
-          _notifyRealtimeIfBasic(
-            VoiceRoomRealtimeKind.leave,
-            '$name çıkış yaptı',
-          );
-        }
-      }
-    }
-    for (final p in merged) {
-      if (p.id.isEmpty) continue;
-      final n = p.displayName.trim().isNotEmpty
-          ? p.displayName.trim()
-          : p.name.trim();
-      if (n.isNotEmpty) _lastKnownPresenceNames[p.id] = n;
-    }
-    _knownPresenceIds
-      ..clear()
-      ..addAll(nextIds);
-  }
-
-  void _announcePresenceJoin(ChatRoomPresence user) {
-    final name = user.displayName.trim().isNotEmpty
-        ? user.displayName.trim()
-        : user.name.trim();
-    if (name.isEmpty) return;
-    final userRef = ChatRoomUserRef(
-      id: user.id,
-      name: user.name,
-      nickname: user.nickname,
-      image: user.image,
-      chatRole: user.chatRole,
-    );
-    if (VoiceStaffChatStyle.isStaffEntry(content: name, user: userRef)) {
-      final staffLine = VoiceStaffChatStyle.formatStaffEntryLine(
-        name,
-        user: userRef,
-        roomName: _roomMeta.nameTr,
-      );
-      _pushRealtimeEvent(VoiceRoomRealtimeKind.join, staffLine);
-      _showStaffEnterBanner(name, user: userRef);
-      return;
-    }
-    final line = '$name giriş yaptı';
-    _pushRealtimeEvent(VoiceRoomRealtimeKind.join, line);
-    final banner = VoiceOfficialJoin.formatEntranceBanner(
-      line,
-      roomName: _roomMeta.nameTr,
-    );
-    if (banner.isEmpty || !_markEntranceOnce(banner)) return;
-    state = state.copyWith(enterBanner: banner);
-    _enterBannerTimer?.cancel();
-    _enterBannerTimer = Timer(const Duration(seconds: 10), () {
-      if (!_sessionActive) return;
-      state = state.copyWith(clearEnterBanner: true);
-    });
-  }
-
-  void _showStaffEnterBanner(String name, {ChatRoomUserRef? user}) {
-    final line = VoiceStaffChatStyle.formatStaffEntryLine(
-      name,
-      user: user,
-      roomName: _roomMeta.nameTr,
-    );
-    if (!_markEntranceOnce(line)) return;
-    state = state.copyWith(enterBanner: line);
-    _enterBannerTimer?.cancel();
-    _enterBannerTimer = Timer(const Duration(seconds: 10), () {
-      if (!_sessionActive) return;
-      state = state.copyWith(clearEnterBanner: true);
-    });
-  }
-
   Object? _roomKeepAliveLink;
   var _keepAliveTransferred = false;
 
@@ -712,99 +618,7 @@ class VoiceRoomLiveController
     } catch (_) {}
   }
 
-  Future<void> _loadGiftLeaderboard() async {
-    if (_roomKey.isEmpty) return;
-    try {
-      final entries = await ref
-          .read(chatRoomGiftsRemoteProvider)
-          .fetchRoomGiftLeaderboard(roomId: _roomKey);
-      if (entries.isNotEmpty) {
-        ref.read(voiceSessionGiftLeaderboardProvider.notifier).seedFromApi(entries);
-      }
-    } catch (_) {}
-  }
-
-  List<ChatRoomPresence> _mergeSelf(List<ChatRoomPresence> list) {
-    final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null) return list;
-    if (list.any((p) => p.id == user.id)) return list;
-    return [
-      ...list,
-      ChatRoomPresence(
-        id: user.id,
-        name: user.display,
-        nickname: user.username,
-        image: user.avatarUrl,
-        chatRole: user.role ?? 'listener',
-        roleSymbol: _roleSymbolForUser(user),
-      ),
-    ];
-  }
-
   /// Boş presence güncellemelerinde koltuk/avatar kaybını önler; dolu listede sunucu otoriter.
-  List<ChatRoomPresence> _mergePresenceStable(
-    List<ChatRoomPresence> incoming, {
-    required String source,
-  }) {
-    final previous = state.presence;
-    final withSelf = _mergeSelf(incoming);
-    if (withSelf.isEmpty && previous.isNotEmpty) {
-      VoiceRoomDebugLog.presenceUpdate(
-        roomId: _roomKey,
-        previousCount: previous.length,
-        incomingCount: 0,
-        mergedCount: previous.length,
-        source: '$source.keep_previous',
-      );
-      return previous;
-    }
-    final prevById = <String, ChatRoomPresence>{
-      for (final p in previous) p.id: p,
-    };
-    final merged = <ChatRoomPresence>[];
-    for (final p in withSelf) {
-      final prev = prevById[p.id];
-      if (prev == null) {
-        merged.add(p);
-        continue;
-      }
-      merged.add(
-        ChatRoomPresence(
-          id: p.id,
-          name: p.name.trim().isNotEmpty ? p.name : prev.name,
-          nickname: (p.nickname?.trim().isNotEmpty == true)
-              ? p.nickname
-              : prev.nickname,
-          image: (p.image?.trim().isNotEmpty == true) ? p.image : prev.image,
-          chatRole: (p.chatRole?.trim().isNotEmpty == true)
-              ? p.chatRole!
-              : (prev.chatRole ?? 'listener'),
-          roleSymbol: p.roleSymbol ?? prev.roleSymbol,
-          membership: p.membership ?? prev.membership,
-          seatIndex: p.seatIndex ?? prev.seatIndex,
-          isSpeaking: p.isSpeaking || prev.isSpeaking,
-          isMuted: p.isMuted,
-        ),
-      );
-    }
-    VoiceRoomDebugLog.presenceUpdate(
-      roomId: _roomKey,
-      previousCount: previous.length,
-      incomingCount: withSelf.length,
-      mergedCount: merged.length,
-      source: source,
-    );
-    final seatCount = merged.where((p) => p.seatIndex != null).length;
-    if (seatCount > 0) {
-      VoiceRoomDebugLog.seatUpdate(
-        roomId: _roomKey,
-        seatCount: seatCount,
-        source: source,
-      );
-    }
-    return merged;
-  }
-
   void _pushRealtimeEvent(VoiceRoomRealtimeKind kind, String message) {
     final line = message.trim();
     if (line.isEmpty) return;
@@ -846,22 +660,6 @@ class VoiceRoomLiveController
         }
       case ChatMessageKind.unknown:
         break;
-    }
-  }
-
-  void _detectMicChanges(List<ChatRoomPresence> next) {
-    final prev = {for (final p in state.presence) p.id: p.isSpeaking};
-    for (final p in next) {
-      final was = prev[p.id];
-      if (was == null || was == p.isSpeaking) continue;
-      final name = p.displayName.trim().isNotEmpty
-          ? p.displayName.trim()
-          : p.name.trim();
-      if (name.isEmpty) continue;
-      _pushRealtimeEvent(
-        p.isSpeaking ? VoiceRoomRealtimeKind.micOn : VoiceRoomRealtimeKind.micOff,
-        p.isSpeaking ? '$name konuşuyor' : '$name sustu',
-      );
     }
   }
 
@@ -980,149 +778,6 @@ class VoiceRoomLiveController
     }
   }
 
-  void _patchHubPresenceCount(int count) {
-    if (_roomKey.isEmpty) return;
-    ref.read(voiceRoomsPresenceProvider.notifier).patchRoomCount(_roomKey, count);
-    final alt = _roomMeta.slug.trim();
-    if (alt.isNotEmpty && alt != _roomKey) {
-      ref.read(voiceRoomsPresenceProvider.notifier).patchRoomCount(alt, count);
-    }
-  }
-
-  Future<void> _broadcastStaffEntryIfNeeded() async {
-    if (_roomKey.isEmpty) return;
-    final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null) return;
-    ChatRoomPresence? self;
-    for (final p in state.presence) {
-      if (p.id == user.id) {
-        self = p;
-        break;
-      }
-    }
-    final userRef = ChatRoomUserRef(
-      id: user.id,
-      name: user.display,
-      nickname: user.username,
-      image: user.avatarUrl,
-      chatRole: self?.chatRole,
-    );
-    if (!VoiceStaffChatStyle.isStaffEntry(
-      content: '',
-      user: userRef,
-    ) &&
-        !VoiceRoomPermissions.forUser(
-          user: user,
-          room: _roomMeta,
-          selfPresence: self,
-          server: state.serverPermissions,
-        ).isSiteAdmin &&
-        !VoiceRoomPermissions.forUser(
-          user: user,
-          room: _roomMeta,
-          selfPresence: self,
-          server: state.serverPermissions,
-        ).canModerate) {
-      return;
-    }
-    final name = user.displayName?.trim().isNotEmpty == true
-        ? user.displayName!.trim()
-        : user.username;
-    final symbol = self?.roleSymbol?.trim() ?? '';
-    try {
-      await ref.read(chatRoomRemoteProvider).postEntryAnnouncement(
-            roomKey: _roomKey,
-            alternateKey: _roomMeta.slug,
-            userName: name,
-            roleSymbol: symbol.isNotEmpty ? symbol : null,
-            entryType: VoiceStaffChatStyle.entryRoleLabel(userRef),
-          );
-    } catch (_) {}
-  }
-
-  Future<void> _joinPresence() async {
-    if (_roomKey.isEmpty) {
-      state = state.copyWith(loading: false, error: 'Geçersiz oda kimliği');
-      return;
-    }
-    if (_presenceJoined && state.selfInRoom) {
-      VoiceRoomDebugLog.roomJoin(
-        roomId: _roomKey,
-        source: 'presence',
-        skipped: true,
-      );
-      return;
-    }
-    VoiceRoomDebugLog.roomJoin(roomId: _roomKey, source: 'presence');
-    try {
-      final token = await ref.read(tokenStorageProvider).readAccess();
-      final hasJwt = token != null && token.isNotEmpty;
-      VoiceRoomDebugLog.jwtStatus(hasToken: hasJwt, tokenLength: token?.length);
-      ref.read(voiceRoomDiagnosticProvider.notifier).setJwt(hasJwt: hasJwt);
-      VoiceRoomDebugLog.log('api.presence.join', {'room': _roomKey});
-      final user = ref.read(authControllerProvider).valueOrNull;
-      final nick = _effectiveNickname(user);
-      _presenceNickname = nick;
-      await ref.read(chatRoomRemoteProvider).postPresence(_roomKey);
-      final joined = await ref.read(chatRoomRemoteProvider).fetchPresence(_roomKey);
-      final merged = _mergeSelf(joined);
-      VoiceRoomDebugLog.log('api.presence.join.ok', {
-        'count': merged.length,
-        'roomId': _roomKey,
-      });
-      _presenceJoined = true;
-      state = state.copyWith(
-        presence: _mergePresenceStable(merged, source: 'join'),
-        selfInRoom: true,
-        loading: false,
-        clearError: true,
-      );
-      _knownPresenceIds
-        ..clear()
-        ..addAll(merged.map((p) => p.id).where((id) => id.isNotEmpty));
-      ref
-          .read(voiceRoomDiagnosticProvider.notifier)
-          .setPresence(joined: true, count: merged.length);
-      _patchHubPresenceCount(merged.length);
-      unawaited(_tryAutoPrivilegedSeat());
-      unawaited(_broadcastStaffEntryIfNeeded());
-    } on Object catch (e) {
-      VoiceRoomDebugLog.log('api.presence.join.fail', {'error': e.toString()});
-      ref.read(voiceRoomDiagnosticProvider.notifier).setPresence(joined: false);
-      ref
-          .read(voiceRoomDiagnosticProvider.notifier)
-          .setError(ApiException.userMessage(e));
-      final msg = ApiException.userMessage(e);
-      if (msg.toLowerCase().contains('yasak') ||
-          msg.contains('403') ||
-          msg.toLowerCase().contains('forbidden')) {
-        state = state.copyWith(
-          loading: false,
-          error: 'Bu odadan yasaklandınız',
-        );
-        return;
-      }
-      state = state.copyWith(
-        loading: false,
-        error: msg.contains('401') || msg.toLowerCase().contains('oturum')
-            ? 'Listede görünmek için tekrar giriş yapın.'
-            : msg,
-      );
-    }
-  }
-
-  Future<void> _leavePresence() async {
-    if (_roomKey.isEmpty) return;
-    // selfInRoom=true means join was acknowledged by backend; even if the
-    // _presenceJoined flag wasn't set yet (race during room switch), still
-    // send DELETE to avoid the user appearing in the old room.
-    if (!_presenceJoined && !state.selfInRoom) return;
-    _presenceJoined = false;
-    try {
-      await ref.read(chatRoomRemoteProvider).leavePresence(_roomKey);
-    } catch (_) {}
-  }
-
   Future<void> joinVoiceSession() async {
     if (_roomKey.isEmpty || _voiceJoined) return;
     try {
@@ -1173,18 +828,6 @@ class VoiceRoomLiveController
     try {
       await ref.read(chatRoomRemoteProvider).setTyping(_roomKey, isTyping: false);
     } catch (_) {}
-  }
-
-  Future<void> _presenceHeartbeatTick() async {
-    if (_roomKey.isEmpty) return;
-    try {
-      VoiceRoomDebugLog.log('api.presence.heartbeat', {'room': _roomKey});
-      await ref.read(chatRoomRemoteProvider).presenceHeartbeat(_roomKey);
-    } catch (e) {
-      VoiceRoomDebugLog.log('api.presence.heartbeat.fail', {
-        'error': e.toString(),
-      });
-    }
   }
 
   void _startSse() {
@@ -1572,25 +1215,6 @@ class VoiceRoomLiveController
     VoiceRoomDebugLog.log('sse.user_left', {'userId': userId});
   }
 
-  List<ChatRoomPresence> _presenceFromSsePayload(Map<String, dynamic> payload) {
-    dynamic raw = payload['users'] ?? payload['presence'] ?? payload['members'];
-    if (raw == null && payload['user'] is Map) {
-      raw = [payload['user']];
-    }
-    if (raw == null) {
-      final userId = payload['userId']?.toString() ?? payload['id']?.toString();
-      if (userId != null && userId.isNotEmpty) {
-        raw = [payload];
-      }
-    }
-    if (raw is! List) return const [];
-    return raw
-        .whereType<Map>()
-        .map((e) => ChatRoomPresence.fromJson(Map<String, dynamic>.from(e)))
-        .where((u) => u.id.isNotEmpty)
-        .toList();
-  }
-
   void _showModeratorAnnouncement(String text) {
     final key = text.trim().toLowerCase();
     if (key.isEmpty) return;
@@ -1643,49 +1267,6 @@ class VoiceRoomLiveController
     state = state.copyWith(
       chatClearedBannerNonce: state.chatClearedBannerNonce + 1,
     );
-  }
-
-  void _startGiftSocket() {
-    if (_roomKey.isEmpty) return;
-    if (_giftSocketStarted) {
-      VoiceRoomDebugLog.log('socket.subscribe.skip', {'roomId': _roomKey});
-      return;
-    }
-    _giftSocketStarted = true;
-    final storage = ref.read(tokenStorageProvider);
-    final alt = _roomMeta.slug.trim();
-    ref.read(voiceRoomGiftSocketProvider).connect(
-          roomId: _roomKey,
-          alternateRoomId: alt.isNotEmpty ? alt : null,
-          accessToken: storage.readAccess,
-          onEvent: (ev) {
-            ref.read(voiceRoomGiftRealtimeProvider).publishRemote(ev);
-            ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(ev);
-            if (!state.sseConnected) {
-              ref.read(voiceRoomGiftRealtimeProvider).setSocketPreferred(true);
-            }
-          },
-          onPresenceSnapshot: applyPresenceSnapshot,
-          onDjUpdate: (payload) {
-            // SSE bağlıyken DJ olayları yalnızca SSE'den işlenir (çift oynatma önlenir).
-            if (state.sseConnected || payload.isEmpty) return;
-            _applyRoomVideoPayload(payload);
-            unawaited(_applyDjRealtimePayload(payload));
-          },
-          onMessage: (msg) {
-            if (state.sseConnected) return;
-            final exists = state.messages.any((m) => m.id == msg.id);
-            if (exists) return;
-            state = state.copyWith(messages: [...state.messages, msg]);
-          },
-          onConnectionChanged: (connected) {
-            ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(connected);
-            if (connected && !state.sseConnected) {
-              ref.read(voiceRoomGiftRealtimeProvider).setSocketPreferred(true);
-            }
-          },
-        );
-    VoiceRoomDebugLog.log('socket.subscribe', {'roomId': _roomKey});
   }
 
   /// Sunucu presence snapshot diff — koltuk / konuşma / rol (`roomUsers` vb.).
@@ -2946,47 +2527,6 @@ class VoiceRoomLiveController
     return 'Sunucu yanıt vermedi; bağlantınızı kontrol edip tekrar deneyin.';
   }
 
-  void _scanEntrancesFromMessages(
-    List<ChatRoomMessage> previous,
-    List<ChatRoomMessage> merged,
-  ) {
-    final prevIds = previous.map((m) => m.id).toSet();
-    for (final m in merged) {
-      if (prevIds.contains(m.id)) continue;
-      if (m.kind != ChatMessageKind.systemJoin) continue;
-      if (VoiceStaffChatStyle.isStaffEntry(
-        content: m.content,
-        user: m.user,
-      )) {
-        continue;
-      }
-      _pushRealtimeEvent(VoiceRoomRealtimeKind.join, m.content.trim());
-      if (!VoiceOfficialJoin.isEntranceWorthy(
-        content: m.content,
-        membership: m.user?.membership,
-        chatRole: m.user?.chatRole,
-      )) {
-        continue;
-      }
-      if (_markEntranceOnce(m.content)) {
-        _showEnterBanner(m.content);
-      }
-    }
-  }
-
-  void _showEnterBanner(String raw) {
-    final formatted = VoiceOfficialJoin.formatEntranceBanner(
-      raw,
-      roomName: _roomMeta.nameTr,
-    );
-    if (formatted.isEmpty) return;
-    state = state.copyWith(enterBanner: formatted);
-    _enterBannerTimer?.cancel();
-    _enterBannerTimer = Timer(const Duration(seconds: 10), () {
-      state = state.copyWith(clearEnterBanner: true);
-    });
-  }
-
   VoiceRoomPermissions _permissions() {
     final user = ref.read(authControllerProvider).valueOrNull;
     ChatRoomPresence? self;
@@ -3004,98 +2544,6 @@ class VoiceRoomLiveController
       selfPresence: self,
       server: state.serverPermissions,
     );
-  }
-
-  int? _privilegedRolePriority(
-    UserEntity user,
-    ChatRoomMyPermissions? server,
-    ChatRoomPresence? self,
-  ) {
-    final tier = VoiceRoomSeatPriority.forUser(
-      user,
-      room: _roomMeta,
-      self: self,
-      server: server,
-    );
-    if (!VoiceRoomSeatPriority.shouldAutoSit(tier)) return null;
-    return tier;
-  }
-
-  int? _pickAutoSeatIndex({
-    required int myPriority,
-    required List<ChatRoomPresence> presence,
-  }) {
-    return VoiceRoomSeatPriority.pickAutoSeatIndex(
-      myTier: myPriority,
-      presence: presence,
-      room: _roomMeta,
-    );
-  }
-
-  Future<void> _tryAutoPrivilegedSeat() async {
-    if (_roomKey.isEmpty || !state.selfInRoom) return;
-    final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null) return;
-
-    ChatRoomPresence? self;
-    for (final p in state.presence) {
-      if (p.id == user.id) {
-        self = p;
-        break;
-      }
-    }
-    if (self?.seatIndex != null) {
-      _autoSeatAttempted = true;
-      return;
-    }
-
-    final priority = _privilegedRolePriority(
-      user,
-      state.serverPermissions,
-      self,
-    );
-    if (priority == null) return;
-    if (_autoSeatAttempted) {
-      ChatRoomPresence? selfNow;
-      for (final p in state.presence) {
-        if (p.id == user.id) {
-          selfNow = p;
-          break;
-        }
-      }
-      if (selfNow?.seatIndex != null) return;
-      _autoSeatAttempted = false;
-    }
-
-    final seatIndex = _pickAutoSeatIndex(
-      myPriority: priority,
-      presence: state.presence,
-    );
-    if (seatIndex == null) return;
-
-    VoiceRoomDebugLog.log('seat.auto_join', {
-      'room': _roomKey,
-      'seat': seatIndex,
-      'priority': priority,
-    });
-    // Manuel "Koltuğa Al" ile AYNI çalışan yolu kullan (voiceSeatRestService
-    // .takeSeat). Eski joinSeat ucu 200 dönüp koltuğa oturtmuyordu; bu yüzden
-    // yetkili otomatik koltuğa geçmiyordu.
-    final err = await assignSeat(seatIndex: seatIndex, userId: user.id);
-    if (err == null) {
-      _autoSeatAttempted = true;
-      return;
-    }
-    // İzinler veya presence gecikirse bir sonraki poll'da tekrar dene.
-    for (final p in state.presence) {
-      if (p.id == user.id && p.seatIndex != null) {
-        _autoSeatAttempted = true;
-        break;
-      }
-    }
-    if (self?.seatIndex == null) {
-      _autoSeatAttempted = false;
-    }
   }
 
   Future<String?> toggleRoomMute({required bool mute}) async {
@@ -3483,20 +2931,6 @@ class VoiceRoomLiveController
     }
   }
 
-  ChatRoomPresence? _resolvePresence(String target) {
-    final raw = target.trim().replaceFirst(RegExp(r'^@'), '').toLowerCase();
-    if (raw.isEmpty) return null;
-    for (final user in state.presence) {
-      final keys = [
-        user.id,
-        user.name,
-        user.nickname,
-      ].whereType<String>().map((e) => e.trim().toLowerCase());
-      if (keys.any((key) => key == raw || key.contains(raw))) return user;
-    }
-    return null;
-  }
-
   Future<void> _recoverAfterSendTimeout({
     required String trimmed,
     String? optimisticId,
@@ -3564,106 +2998,6 @@ class VoiceRoomLiveController
     }
   }
 
-  Future<String?> postModeratorAnnouncement(String message) async =>
-      sendDuyuruAnnouncement(message);
-
-  bool _looksLikeDuyuruCommand(String trimmed) {
-    final lower = trimmed.toLowerCase();
-    return lower.startsWith('!duyuru') || lower.startsWith('/duyuru');
-  }
-
-  Future<String?> clearChatAsModerator() async {
-    final perms = _permissions();
-    if (!perms.canModerate && !perms.isRoomOwner) {
-      return 'Sohbet temizleme yetkiniz yok.';
-    }
-    try {
-      await ref.read(chatRoomRemoteProvider).clearChatViaModeration(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-          );
-      _applyLocalChatClear();
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<ModerationKickResult?> kickUserModeration({
-    required String userId,
-    String? reason,
-  }) async {
-    final perms = _permissions();
-    if (!perms.canModerate && !perms.isRoomOwner) return null;
-    try {
-      return await ref.read(chatRoomRemoteProvider).kickUser(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            userId: userId,
-            reason: reason,
-          );
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<String?> banUserModeration({
-    required String userId,
-    String? reason,
-  }) async {
-    final perms = _permissions();
-    if (!perms.canBanUsers && !perms.isRoomOwner) {
-      return 'Ban yetkiniz yok.';
-    }
-    try {
-      await ref.read(chatRoomRemoteProvider).banUser(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            userId: userId,
-            reason: reason,
-          );
-      showModerationToast('Kullanıcı banlandı');
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> unbanUserModeration({required String userId}) async {
-    final perms = _permissions();
-    if (!perms.canBanUsers && !perms.isRoomOwner) {
-      return 'Ban kaldırma yetkiniz yok.';
-    }
-    try {
-      await ref.read(chatRoomRemoteProvider).unbanUser(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            userId: userId,
-          );
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> unmuteUserModeration({required String userId}) async {
-    final perms = _permissions();
-    if (!perms.canMuteUsers && !perms.isRoomOwner && !perms.canModerate) {
-      return 'Susturma kaldırma yetkiniz yok.';
-    }
-    try {
-      await ref.read(chatRoomRemoteProvider).unmuteUser(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            userId: userId,
-          );
-      await refresh();
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
   Future<void> _postChatLineOnly(String content) async {
     final user = ref.read(authControllerProvider).valueOrNull;
     try {
@@ -3673,49 +3007,6 @@ class VoiceRoomLiveController
             nickname: _effectiveNickname(user),
           );
     } catch (_) {}
-  }
-
-  Future<String?> requestSpeak() async {
-    try {
-      await ref.read(chatRoomRemoteProvider).requestSpeak(_roomKey);
-      ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(true);
-      return null;
-    } catch (e) {
-      final msg = ApiException.userMessage(e);
-      if (msg.contains('404')) {
-        return 'Mikrofon isteği bu odada desteklenmiyor; boş koltuğa dokunarak oturmayı deneyin.';
-      }
-      return msg;
-    }
-  }
-
-  Future<String?> cancelSpeakRequest() async {
-    try {
-      await ref.read(chatRoomRemoteProvider).cancelSpeakRequest(_roomKey);
-      ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<List<String>> fetchSpeakRequests() async {
-    try {
-      return await ref.read(chatRoomRemoteProvider).fetchSpeakRequests(_roomKey);
-    } catch (_) {
-      return [];
-    }
-  }
-
-  Future<String?> approveSpeakRequest(String userId) async {
-    try {
-      await ref
-          .read(chatRoomRemoteProvider)
-          .approveSpeakRequest(_roomKey, userId);
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
   }
 
   bool _canControlMusic() {
@@ -3868,172 +3159,6 @@ class VoiceRoomLiveController
     }
   }
 
-  Future<List<YoutubeSearchHit>> searchYoutube(String query) =>
-      ref.read(chatRoomRemoteProvider).searchYoutube(query);
-
-  Future<
-    ({
-      List<MusicQueueItem> queue,
-      int cost,
-      int videoRequestCost,
-      int maxMusicQueue,
-      bool musicEnabled,
-      MusicQueueItem? nowPlaying,
-      bool? playing,
-      bool? canRequestMusic,
-      String? musicUrl,
-    })
-  >
-  fetchMusicQueue() =>
-      ref.read(chatRoomRemoteProvider).fetchMusicQueue(_roomKey);
-
-  Future<List<PopularMusicSuggestion>> fetchPopularMusic() =>
-      ref.read(chatRoomRemoteProvider).fetchPopularMusic();
-
-  Future<String?> skipMusic() async {
-    if (!_canControlMusic()) {
-      return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
-    }
-    try {
-      await ref.read(chatRoomRemoteProvider).skipMusicQueue(
-        roomKey: _roomKey,
-        alternateKey: _musicAlternateKey,
-      );
-      await refresh();
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> replayMusic() async {
-    if (!_canControlMusic()) {
-      return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
-    }
-    if (state.dj.nowPlaying == null) {
-      return 'Tekrar çalınacak parça yok.';
-    }
-    try {
-      _lastDjPlaybackSignature = '';
-      final dj = state.dj.copyWith(playing: true);
-      final applied = await _applyDjPlayback(dj);
-      state = state.copyWith(dj: applied);
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> reorderMusicQueue(List<String> orderedItemIds) async {
-    if (!_canControlMusic()) {
-      return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
-    }
-    if (orderedItemIds.isEmpty) return null;
-    try {
-      await ref.read(chatRoomRemoteProvider).reorderMusicQueue(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            orderedItemIds: orderedItemIds,
-          );
-      await refresh(includeDj: true);
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> removeQueueItem(String itemId) async {
-    if (!_canControlMusic()) {
-      return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
-    }
-    try {
-      await ref
-          .read(chatRoomRemoteProvider)
-          .removeMusicQueueItem(roomKey: _roomKey, itemId: itemId);
-      await refresh();
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> clearMusicQueue() async {
-    if (!_canStopMusic()) {
-      return 'Müziği yalnızca oda sahibi, admin veya şarkıyı isteyen durdurabilir.';
-    }
-    try {
-      final result = await ref.read(chatRoomRemoteProvider).clearMusicQueue(
-        roomKey: _roomKey,
-        alternateKey: _musicAlternateKey,
-      );
-      if (result.autoAdvanced) {
-        await refresh();
-        return null;
-      }
-      await ref.read(voiceRoomDjPlayerProvider).stop();
-      await refresh();
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  /// X / kapat — yalnızca yetkili kullanıcılar sunucu kuyruğunu durdurur.
-  Future<void> closeMusicPlayer() async {
-    if (!_canStopMusic()) {
-      ref.read(voiceRoomMusicSessionProvider.notifier).markUserDismissed();
-      ref.read(voiceRoomMusicSessionProvider.notifier).dismissAfterClose();
-      return;
-    }
-    ref.read(voiceRoomMusicSessionProvider.notifier).markUserDismissed();
-    await ref.read(voiceRoomDjPlayerProvider).stop();
-    try {
-      final result = await ref.read(chatRoomRemoteProvider).clearMusicQueue(
-        roomKey: _roomKey,
-        alternateKey: _musicAlternateKey,
-      );
-      if (result.autoAdvanced) {
-        await refresh();
-        return;
-      }
-      await refresh();
-    } catch (_) {
-      state = state.copyWith(
-        dj: state.dj.copyWith(
-          playing: false,
-          clearNowPlaying: true,
-          clearMusicUrl: true,
-          musicQueue: const [],
-        ),
-      );
-    }
-    if (_roomKey.isNotEmpty) {
-      ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
-    }
-    ref.read(voiceRoomMusicSessionProvider.notifier).dismissAfterClose();
-  }
-
-  Future<String?> updateMusicSettings({
-    bool? musicEnabled,
-    int? musicRequestCost,
-    int? maxMusicQueue,
-  }) async {
-    try {
-      await ref
-          .read(chatRoomRemoteProvider)
-          .updateMusicSettings(
-            roomKey: _roomKey,
-            musicEnabled: musicEnabled,
-            musicRequestCost: musicRequestCost,
-            maxMusicQueue: maxMusicQueue,
-          );
-      await refresh();
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
   Future<String?> assignRoleToUser({
     required String targetUserId,
     required String roleSymbol,
@@ -4055,54 +3180,6 @@ class VoiceRoomLiveController
             alternateKey: _musicAlternateKey,
             userId: targetUserId,
             roleSymbol: symbol,
-          );
-      await refresh();
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> assignSeat({required int seatIndex, String? userId}) async {
-    try {
-      await ref
-          .read(voiceSeatRestServiceProvider)
-          .takeSeat(_roomKey, seatIndex, userId: userId);
-      await refresh();
-      return null;
-    } catch (e) {
-      final self = ref.read(authControllerProvider).valueOrNull;
-      if (self != null && (userId == null || userId == self.id)) {
-        final list = [...state.presence];
-        final idx = list.indexWhere((p) => p.id == self.id);
-        final updated = ChatRoomPresence(
-          id: self.id,
-          name: self.display,
-          nickname: self.username,
-          image: self.avatarUrl,
-          chatRole: self.role ?? 'listener',
-          roleSymbol: _roleSymbolForUser(self),
-          seatIndex: seatIndex,
-          isSpeaking: idx >= 0 ? list[idx].isSpeaking : false,
-        );
-        if (idx >= 0) {
-          list[idx] = updated;
-        } else {
-          list.add(updated);
-        }
-        state = state.copyWith(presence: list, selfInRoom: true);
-        return null;
-      }
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> clearUserSeat({required String userId}) async {
-    try {
-      await ref.read(chatRoomRemoteProvider).clearSeat(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            userId: userId,
           );
       await refresh();
       return null;
@@ -4270,118 +3347,6 @@ class VoiceRoomLiveController
     }
   }
 
-  Future<String?> addRoomDj(String targetUserId) async {
-    try {
-      final label = _djChatLabel(targetUserId);
-      final ids = await ref.read(chatRoomRemoteProvider).addRoomDj(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            targetUserId: targetUserId,
-            targetLabel: label,
-          );
-      final enriched = _enrichDjUsers(
-        state.dj,
-        state.presence,
-      ).copyWith(
-        djUsers: ids
-            .map(
-              (id) => state.dj.djUsers
-                      .where((u) => u.id == id)
-                      .firstOrNull ??
-                  ChatRoomUserRef(
-                    id: id,
-                    name: _djChatLabel(id) ?? 'DJ',
-                    chatRole: 'dj',
-                  ),
-            )
-            .toList(),
-      );
-      state = state.copyWith(dj: enriched);
-      await refresh(includeDj: true);
-      ref.invalidate(voiceRoomsProvider);
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> removeRoomDj(String targetUserId) async {
-    try {
-      final label = _djChatLabel(targetUserId);
-      await ref.read(chatRoomRemoteProvider).removeRoomDj(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            targetUserId: targetUserId,
-            targetLabel: label,
-          );
-      await refresh();
-      ref.invalidate(voiceRoomsProvider);
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> setActiveDj(String? targetUserId) async {
-    try {
-      await ref.read(chatRoomRemoteProvider).setActiveDj(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            userId: targetUserId,
-          );
-      await refresh(includeDj: true);
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<List<String>> fetchBannedWords() async {
-    try {
-      final words =
-          await ref.read(chatRoomRemoteProvider).fetchBannedWords(_roomKey);
-      state = state.copyWith(bannedWords: words);
-      return words;
-    } catch (_) {
-      return state.bannedWords;
-    }
-  }
-
-  Future<List<VoiceRoomBanEntry>> fetchModerationBans() async {
-    try {
-      final snap = await ref.read(chatRoomRemoteProvider).fetchModeration(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-          );
-      return snap.bans;
-    } catch (_) {
-      return const [];
-    }
-  }
-
-  Future<String?> addBannedWord(String word) async {
-    try {
-      final words = await ref
-          .read(chatRoomRemoteProvider)
-          .addBannedWord(roomKey: _roomKey, word: word);
-      state = state.copyWith(bannedWords: words);
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> removeBannedWord(String word) async {
-    try {
-      final words = await ref
-          .read(chatRoomRemoteProvider)
-          .removeBannedWord(roomKey: _roomKey, word: word);
-      state = state.copyWith(bannedWords: words);
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
 }
 
 class _ParsedRoomCommand {

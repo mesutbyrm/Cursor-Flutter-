@@ -28,12 +28,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.dispose();
   }
 
-  void _soon(String label) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label yakında aktif olacak.')),
-    );
-  }
-
   void _continueAsGuest() {
     ref.read(guestModeProvider.notifier).state = true;
   }
@@ -85,7 +79,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   : () => ref
                       .read(authControllerProvider.notifier)
                       .loginWithTikTok(),
-              onApple: () => _soon('Apple girişi'),
               onGuest: _continueAsGuest,
             ),
             const SizedBox(height: 22),
