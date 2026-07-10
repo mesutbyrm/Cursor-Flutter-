@@ -13,7 +13,7 @@ import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../../core/providers/auth_selectors.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
-import '../../../voice_hub/domain/pk/pk_opponent_room_filter.dart';
+import '../../../domain/pk/pk_opponent_room_filter.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import 'package:canlifal_social/features/vip_gold/domain/voice_room_access.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/theme/vip_gold_tokens.dart';

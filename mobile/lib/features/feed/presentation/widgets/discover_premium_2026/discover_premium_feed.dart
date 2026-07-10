@@ -6,7 +6,6 @@ import '../../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
 import '../../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
-import '../../../domain/discover_category.dart';
 import 'discover_premium_categories.dart';
 import 'discover_premium_header.dart';
 import 'discover_premium_search.dart';
