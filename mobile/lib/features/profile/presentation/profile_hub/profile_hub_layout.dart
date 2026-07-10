@@ -11,6 +11,7 @@ import 'profile_hub_services_row.dart';
 import 'profile_hub_share_card.dart';
 import 'profile_hub_top_gifts_section.dart';
 import 'profile_hub_vip_banner.dart';
+import '../../../shorts/presentation/widgets/shorts_profile_content.dart';
 
 /// Referans profil hub düzeni.
 class ProfileHubLayout extends StatelessWidget {
@@ -38,6 +39,12 @@ class ProfileHubLayout extends StatelessWidget {
       children: [
         ProfileHubHeader(state: state, onRefresh: onRefresh),
         const SizedBox(height: 16),
+        ShortsProfileStatsRow(
+          userId: userId,
+          fallbackFollowers: state.user.followersCount,
+          fallbackFollowing: state.user.followingCount,
+        ),
+        const SizedBox(height: 14),
         ProfileHubCurrencyCard(state: state),
         const SizedBox(height: 14),
         ProfileHubVipBanner(

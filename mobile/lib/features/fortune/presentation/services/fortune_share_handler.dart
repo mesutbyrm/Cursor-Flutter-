@@ -13,11 +13,12 @@ class FortuneShareHandler {
 
   final Ref _ref;
 
-  Future<void> autoShareIfEnabled(FortuneReadingResult result) async {
+  Future<bool> autoShareIfEnabled(FortuneReadingResult result) async {
     final mode = await _ref.read(fortuneAutoShareModeProvider.future);
-    if (mode == FortuneAutoShareMode.off) return;
+    if (mode == FortuneAutoShareMode.off) return false;
     // Kullanıcının seçtiği görünürlükle paylaş (varsayılan: herkese açık).
     await _share(result, mode);
+    return true;
   }
 
   Future<void> shareToSocialFeed(FortuneReadingResult result) =>

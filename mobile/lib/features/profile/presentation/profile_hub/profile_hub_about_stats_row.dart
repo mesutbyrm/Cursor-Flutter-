@@ -116,7 +116,7 @@ class _AboutCard extends StatelessWidget {
             if (ext.city != null && ext.city!.trim().isNotEmpty)
               _InfoRow(Icons.location_on_rounded, ext.city!),
             if (ext.zodiacSign != null && ext.zodiacSign!.trim().isNotEmpty)
-              _InfoRow(Icons.star_rounded, ext.zodiacSign!),
+              _InfoRow(Icons.star_rounded, _zodiacTr(ext.zodiacSign!)),
             if (ext.birthDate != null)
               _InfoRow(
                 Icons.cake_rounded,
@@ -132,6 +132,26 @@ class _AboutCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _zodiacTr(String raw) {
+  final value = raw.trim();
+  final key = value.toLowerCase();
+  return switch (key) {
+    'aries' => 'Koç',
+    'taurus' => 'Boğa',
+    'gemini' => 'İkizler',
+    'cancer' => 'Yengeç',
+    'leo' => 'Aslan',
+    'virgo' => 'Başak',
+    'libra' => 'Terazi',
+    'scorpio' => 'Akrep',
+    'sagittarius' => 'Yay',
+    'capricorn' => 'Oğlak',
+    'aquarius' => 'Kova',
+    'pisces' => 'Balık',
+    _ => value,
+  };
 }
 
 class _StatisticsCard extends StatelessWidget {

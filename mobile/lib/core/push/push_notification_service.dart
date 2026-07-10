@@ -165,13 +165,23 @@ class PushNotificationService {
         msg.notification?.body ??
         msg.data['body']?.toString() ??
         msg.data['message']?.toString();
+    final type = data['type']?.toString().toLowerCase() ?? '';
+    final isMessage = type.contains('message') ||
+        type.contains('chat') ||
+        data['conversationId'] != null ||
+        data['senderId'] != null;
+    final payload = data.isNotEmpty
+        ? jsonEncode(data)
+        : msg.data['targetPath']?.toString();
 
     final android = AndroidNotificationDetails(
-      _channelId,
-      _channelName,
-      channelDescription: 'Canlifal bildirimleri',
-      importance: Importance.high,
-      priority: Priority.high,
+      isMessage ? _urgentChannelId : _channelId,
+      isMessage ? 'Canlifal — Acil' : _channelName,
+      channelDescription:
+          isMessage ? 'Mesaj ve sohbet bildirimleri' : 'Canlifal bildirimleri',
+      importance: isMessage ? Importance.max : Importance.high,
+      priority: isMessage ? Priority.max : Priority.high,
+      category: isMessage ? AndroidNotificationCategory.message : null,
       icon: '@mipmap/ic_launcher',
     );
     const ios = DarwinNotificationDetails();
@@ -181,7 +191,7 @@ class PushNotificationService {
       title,
       body,
       NotificationDetails(android: android, iOS: ios),
-      payload: msg.data['targetPath']?.toString(),
+      payload: payload,
     );
   }
 

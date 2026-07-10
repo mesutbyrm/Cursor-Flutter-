@@ -8,6 +8,7 @@ import '../../../domain/entities/home_trend_video_entity.dart';
 import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_section_title.dart';
+import '../../../../shorts/presentation/providers/shorts_providers.dart';
 
 /// Ana sayfa — yüklenen kısa videolar (R2/CDN). YouTube trend içeriği gösterilmez.
 class TrendingVideoSection extends ConsumerWidget {
@@ -52,10 +53,14 @@ class TrendingVideoSection extends ConsumerWidget {
     if (videos.$2) return const SizedBox.shrink();
     final items = videos.$3;
     if (items == null || items.isEmpty) return const SizedBox.shrink();
-    return _content(context, items);
+    return _content(context, ref, items);
   }
 
-  static Widget _content(BuildContext context, List<HomeTrendVideoEntity> videos) {
+  static Widget _content(
+    BuildContext context,
+    WidgetRef ref,
+    List<HomeTrendVideoEntity> videos,
+  ) {
     return Column(
       children: [
         HomeSectionTitle(
@@ -74,7 +79,16 @@ class TrendingVideoSection extends ConsumerWidget {
               separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (_, i) => _TrendThumb(
                 video: videos[i],
-                onTap: () => context.push('/shorts?videoId=${videos[i].id}'),
+                onTap: () async {
+                  final id = videos[i].id;
+                  try {
+                    await ref
+                        .read(shortsRepositoryProvider)
+                        .recordView(id, watchedSec: 1);
+                    ref.invalidate(homeTrendVideosProvider);
+                  } catch (_) {}
+                  if (context.mounted) context.push('/shorts?videoId=$id');
+                },
               ),
             ),
           ),

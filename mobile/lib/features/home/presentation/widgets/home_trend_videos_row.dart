@@ -10,6 +10,7 @@ import '../../domain/entities/home_trend_video_entity.dart';
 import '../providers/home_providers.dart';
 import '../theme/home_palette.dart';
 import 'home_section_header.dart';
+import '../../../shorts/presentation/providers/shorts_providers.dart';
 
 class HomeTrendVideosRow extends ConsumerWidget {
   const HomeTrendVideosRow({super.key});
@@ -38,7 +39,16 @@ class HomeTrendVideosRow extends ConsumerWidget {
                 itemCount: items.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 12),
                 itemBuilder: (_, i) => GestureDetector(
-                  onTap: () => context.push('/shorts?videoId=${items[i].id}'),
+                  onTap: () async {
+                    final id = items[i].id;
+                    try {
+                      await ref
+                          .read(shortsRepositoryProvider)
+                          .recordView(id, watchedSec: 1);
+                      ref.invalidate(homeTrendVideosProvider);
+                    } catch (_) {}
+                    if (context.mounted) context.push('/shorts?videoId=$id');
+                  },
                   child: _TrendVideoCard(video: items[i]),
                 ),
               ),

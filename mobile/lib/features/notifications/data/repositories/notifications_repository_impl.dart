@@ -7,6 +7,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/performance/network_perf.dart';
 import '../../../../core/offline/api_cache_store.dart';
 import '../../../../core/offline/cache_first_loader.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationsRepositoryImpl implements NotificationsRepository {
   NotificationsRepositoryImpl(this._remote, this._canlifal);
@@ -15,6 +16,8 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   final CanlifalUserApiDataSource _canlifal;
 
   static const _cacheKey = 'notifications_list_v1';
+  static const _readIdsKey = 'notifications_read_ids_v1';
+  static const _readAllBeforeKey = 'notifications_read_all_before_ms_v1';
 
   @override
   Future<List<AppNotificationEntity>> fetch({bool forceRefresh = false}) {
@@ -78,7 +81,10 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       (pair[1] as List<ProfileActivityItemEntity>).map(_activityToNotification),
     );
 
+    final localRead = await _NotificationReadMemory.load();
     final list = _dedupeMergedNotifications(byId.values.toList())
+        .map(localRead.apply)
+        .toList()
       ..sort((a, b) {
         final at = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
         final bt = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
@@ -167,6 +173,7 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   @override
   Future<void> markRead(String id) async {
     await _invalidateCache();
+    await _NotificationReadMemory.markIdRead(id);
     if (Env.useMobileAuth) {
       try {
         await _canlifal.markActivityRead(id);
@@ -181,6 +188,7 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   @override
   Future<void> markAllRead() async {
     await _invalidateCache();
+    await _NotificationReadMemory.markAllReadBeforeNow();
     if (Env.useMobileAuth) {
       await _canlifal.markAllActivityRead();
     }
@@ -194,5 +202,71 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
     try {
       await _remote.clearPaymentNotifications();
     } catch (_) {}
+  }
+}
+
+class _NotificationReadMemory {
+  const _NotificationReadMemory({
+    required this.readIds,
+    required this.readAllBeforeMs,
+  });
+
+  final Set<String> readIds;
+  final int readAllBeforeMs;
+
+  static Future<_NotificationReadMemory> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    return _NotificationReadMemory(
+      readIds: prefs.getStringList(NotificationsRepositoryImpl._readIdsKey)
+              ?.toSet() ??
+          const <String>{},
+      readAllBeforeMs:
+          prefs.getInt(NotificationsRepositoryImpl._readAllBeforeKey) ?? 0,
+    );
+  }
+
+  static Future<void> markIdRead(String id) async {
+    final trimmed = id.trim();
+    if (trimmed.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    final ids = prefs
+            .getStringList(NotificationsRepositoryImpl._readIdsKey)
+            ?.toSet() ??
+        <String>{};
+    ids.add(trimmed);
+    // Keep the preference bounded; old entries are still covered by read-all cutoff.
+    final compact = ids.length > 500 ? ids.toList().skip(ids.length - 500) : ids;
+    await prefs.setStringList(
+      NotificationsRepositoryImpl._readIdsKey,
+      compact.toList(),
+    );
+  }
+
+  static Future<void> markAllReadBeforeNow() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(
+      NotificationsRepositoryImpl._readAllBeforeKey,
+      DateTime.now().millisecondsSinceEpoch,
+    );
+  }
+
+  AppNotificationEntity apply(AppNotificationEntity n) {
+    if (n.read) return n;
+    final idRead = n.id.trim().isNotEmpty && readIds.contains(n.id.trim());
+    final created = n.createdAt?.millisecondsSinceEpoch;
+    final coveredByReadAll = created != null &&
+        readAllBeforeMs > 0 &&
+        created <= readAllBeforeMs;
+    if (!idRead && !coveredByReadAll) return n;
+    return AppNotificationEntity(
+      id: n.id,
+      title: n.title,
+      body: n.body,
+      read: true,
+      createdAt: n.createdAt,
+      type: n.type,
+      targetPath: n.targetPath,
+      targetId: n.targetId,
+    );
   }
 }
