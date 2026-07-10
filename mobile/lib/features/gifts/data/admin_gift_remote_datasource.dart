@@ -88,7 +88,7 @@ class AdminGiftRemoteDataSource {
   }
 
   /// Hediye dosyası/küçük resim yükle → okunabilir/cloud path döner.
-  /// kind: 'thumbnail' | 'asset' | 'sound'.
+  /// kind: 'icon' | 'thumbnail' | 'asset' | 'sound' (backend sözleşmesi).
   Future<String?> uploadAsset(File file, {required String kind}) async {
     final fileName = file.path.split(Platform.pathSeparator).last;
     final contentType = _contentType(fileName);

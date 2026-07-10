@@ -149,13 +149,26 @@ abstract final class VoiceRoomSeatPriority {
         if (p.seatIndex != null) p.seatIndex!: p,
     };
 
+    // 1) Ayrılmış koltuk: admin → 11, kurucu → 1 (boşsa ya da alt rütbeyi
+    //    devralarak). Doluysa aşağıdaki boş koltuk taramasına düşülür ki
+    //    "yetkili girer girmez BOŞ koltuğa otursun" garanti olsun.
     if (myTier >= tierAdmin) {
-      return _takeSeat(11, myTier, occupied, room);
-    }
-    if (myTier >= tierFounder) {
-      return _takeSeat(1, myTier, occupied, room);
+      final s = _takeSeat(11, myTier, occupied, room);
+      if (s != null) return s;
+    } else if (myTier >= tierFounder) {
+      final s = _takeSeat(1, myTier, occupied, room);
+      if (s != null) return s;
     }
 
+    // 2) Herhangi bir BOŞ koltuk (2-10) — kimseyi kaldırmadan hemen otur.
+    for (var seat = 2; seat <= 10; seat++) {
+      if (!occupied.containsKey(seat)) return seat;
+    }
+
+    // 3) Admin için ayrılmış koltuk (1) boşsa onu da kullan.
+    if (myTier >= tierAdmin && !occupied.containsKey(1)) return 1;
+
+    // 4) Son çare: alt rütbeli birini devralarak koltuk aç (2-10).
     for (var seat = 2; seat <= 10; seat++) {
       final picked = _takeSeat(seat, myTier, occupied, room);
       if (picked != null) return picked;

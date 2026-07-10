@@ -452,6 +452,12 @@ class AgoraRoomManager {
     await _engine?.muteRemoteAudioStream(uid: uid, mute: mute);
   }
 
+  /// Tüm uzak ses akışlarını sustur/aç. Kaydırmalı izleyicide ekranda olmayan
+  /// (arka planda ısıtılmış) yayınların sesinin karışmaması için kullanılır.
+  Future<void> muteAllRemoteAudioStreams(bool mute) async {
+    await _engine?.muteAllRemoteAudioStreams(mute);
+  }
+
   Future<void> leave() async {
     remoteVideoAvailable.value = false;
     remoteUid = null;

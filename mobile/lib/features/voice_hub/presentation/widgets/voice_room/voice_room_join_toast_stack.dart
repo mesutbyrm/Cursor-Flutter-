@@ -37,7 +37,9 @@ class _VoiceRoomJoinToastStackState extends State<VoiceRoomJoinToastStack> {
   final _visible = <_JoinToast>[];
   final _seen = <String>{};
   final _timers = <String, Timer>{};
-  var _lastEventCount = 0;
+  // Olay listesi başa eklenip kırpıldığından uzunluk farkı güvenilir değil;
+  // yeni olayları kimlik (identical) ile tespit et.
+  VoiceRoomRealtimeEvent? _lastSeenEvent;
   var _lastJoinMsgCount = 0;
   var _lastLeaveMsgCount = 0;
 
@@ -63,10 +65,15 @@ class _VoiceRoomJoinToastStackState extends State<VoiceRoomJoinToastStack> {
 
   void _collectNewEntries() {
     if (!widget.enabled) return;
-    if (widget.events.length > _lastEventCount) {
-      final fresh = widget.events.take(widget.events.length - _lastEventCount);
-      _lastEventCount = widget.events.length;
-      for (final e in fresh) {
+    final events = widget.events;
+    if (events.isNotEmpty) {
+      final fresh = <VoiceRoomRealtimeEvent>[];
+      for (final e in events) {
+        if (identical(e, _lastSeenEvent)) break;
+        fresh.add(e);
+      }
+      _lastSeenEvent = events.first;
+      for (final e in fresh.reversed) {
         if (e.kind == VoiceRoomRealtimeKind.join &&
             !VoiceStaffChatStyle.isStaffEntry(content: e.message)) {
           _enqueueFromRaw(e.message, user: null, isLeave: false);

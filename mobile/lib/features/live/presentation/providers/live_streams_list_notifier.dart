@@ -60,7 +60,16 @@ class LiveStreamsListNotifier extends AsyncNotifier<List<LiveStreamEntity>> {
         return;
       }
       _page = nextPage;
-      state = AsyncValue.data([...cur, ...next]);
+      // Canlı liste sayfa çekimleri arasında değiştiği için aynı yayın iki
+      // sayfada gelebilir; id'ye göre yineleri ele ki liste tekrarlı kart
+      // göstermesin.
+      final seen = {for (final s in cur) s.id};
+      final merged = [
+        ...cur,
+        for (final s in next)
+          if (s.id.isEmpty || seen.add(s.id)) s,
+      ];
+      state = AsyncValue.data(merged);
     } finally {
       _loadingMore = false;
     }
