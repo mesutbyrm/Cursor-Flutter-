@@ -156,7 +156,9 @@ class _ProfileScrollBody extends ConsumerWidget {
       child: _profileScroll(
         context,
         [
-          SliverToBoxAdapter(child: SizedBox(height: top + 8)),
+          // Üstteki boş bant kaldırıldı: kapak banner'ı durum çubuğuna kadar
+          // yukarı çekilir (yalnızca küçük bir nefes payı bırakılır).
+          const SliverToBoxAdapter(child: SizedBox(height: 8)),
           SliverToBoxAdapter(
             child: ResponsiveConstrained(
               maxWidth: 1200,

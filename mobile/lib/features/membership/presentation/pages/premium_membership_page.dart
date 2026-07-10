@@ -165,7 +165,7 @@ class PremiumMembershipPage extends ConsumerWidget {
       try {
         await ref.read(dioProvider).safePost<Map<String, dynamic>>(
           ApiEndpoints.membershipPurchase,
-          data: {'tierId': pkg.id},
+          data: {'planId': pkg.planId},
         );
         ref.invalidate(membershipCatalogProvider);
         ref.refreshWalletCache(force: true);

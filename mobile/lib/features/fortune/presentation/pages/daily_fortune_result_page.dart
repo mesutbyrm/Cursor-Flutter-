@@ -6,9 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../social/domain/entities/share_fortune_input.dart';
-import '../../../social/presentation/providers/social_providers.dart';
 import '../../domain/entities/fortune_type_entity.dart';
+import '../services/fortune_share_handler.dart';
 import '../widgets/fortune_hub_crystal_illustration.dart';
 import '../widgets/fortune_mystic_background.dart';
 import '../widgets/fortune_mystic_bar_button.dart';
@@ -42,19 +41,10 @@ class _DailyFortuneResultPageState extends ConsumerState<DailyFortuneResultPage>
     final me = ref.read(authControllerProvider).valueOrNull;
     if (me == null) return;
     _autoShared = true;
+    // Kullanıcının otomatik paylaşım tercihine saygı gösterir ("Kapalı" ise
+    // paylaşmaz; aksi halde seçilen görünürlükle paylaşır).
     try {
-      await ref.read(socialRepositoryProvider).shareFortuneAuto(
-            ShareFortuneInput(
-              fortuneSlug: result.type.slug,
-              fortuneType: result.type.title,
-              summary: result.summary,
-              detail: result.fullText,
-              imageUrl: result.imageUrl,
-              fortuneId: result.recordId,
-              visualAnalysis: result.visualAnalysis,
-            ),
-          );
-      ref.invalidate(socialNotifierProvider);
+      await ref.read(fortuneShareHandlerProvider).autoShareIfEnabled(result);
     } catch (_) {}
   }
 

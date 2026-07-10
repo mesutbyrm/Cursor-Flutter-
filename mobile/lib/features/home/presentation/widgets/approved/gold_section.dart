@@ -15,6 +15,7 @@ class GoldSection extends ConsumerWidget {
   static const _fallbackPackages = [
     MembershipPackageEntity(
       id: 'basic',
+      planId: 'basic',
       title: 'Basic',
       durationDays: 30,
       priceJeton: 100,
@@ -23,6 +24,7 @@ class GoldSection extends ConsumerWidget {
     ),
     MembershipPackageEntity(
       id: 'premium',
+      planId: 'premium',
       title: 'Premium',
       durationDays: 30,
       priceJeton: 250,
@@ -31,6 +33,7 @@ class GoldSection extends ConsumerWidget {
     ),
     MembershipPackageEntity(
       id: 'gold',
+      planId: 'gold',
       title: 'Gold',
       durationDays: 30,
       priceJeton: 500,
@@ -39,6 +42,7 @@ class GoldSection extends ConsumerWidget {
     ),
     MembershipPackageEntity(
       id: 'diamond',
+      planId: 'diamond',
       title: 'Diamond',
       durationDays: 30,
       priceJeton: 1000,

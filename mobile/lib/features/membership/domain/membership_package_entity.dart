@@ -3,6 +3,7 @@ import '../../../core/util/json_util.dart';
 class MembershipPackageEntity {
   const MembershipPackageEntity({
     required this.id,
+    required this.planId,
     required this.title,
     required this.durationDays,
     required this.priceJeton,
@@ -14,9 +15,12 @@ class MembershipPackageEntity {
 
   factory MembershipPackageEntity.fromJson(Map<String, dynamic> json) {
     final tier = json['tier']?.toString().trim();
+    // `id` görsel/mantık için tier ("gold" vb.), `planId` ise satın alma için
+    // sunucudaki gerçek plan kimliği (cuid). Sunucu id yoksa tier'a düşülür.
+    final rawId = json['id']?.toString().trim();
     return MembershipPackageEntity(
-      id: (tier != null && tier.isNotEmpty ? tier : json['id'])?.toString() ??
-          '',
+      id: (tier != null && tier.isNotEmpty ? tier : rawId) ?? '',
+      planId: (rawId != null && rawId.isNotEmpty ? rawId : tier) ?? '',
       title: (json['title'] ?? json['name'] ?? json['nameEn'])?.toString() ??
           '',
       durationDays: asInt(json['durationDays'] ?? json['duration_days'] ?? 30),
@@ -41,6 +45,7 @@ class MembershipPackageEntity {
   }
 
   final String id;
+  final String planId;
   final String title;
   final int durationDays;
   final int priceJeton;
@@ -63,7 +68,7 @@ class MembershipCatalogEntity {
   });
 
   factory MembershipCatalogEntity.fromJson(Map<String, dynamic> json) {
-    final list = json['packages'];
+    final list = json['packages'] ?? json['plans'];
     return MembershipCatalogEntity(
       packages: list is List
           ? list

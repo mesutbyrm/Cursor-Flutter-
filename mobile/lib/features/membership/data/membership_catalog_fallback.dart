@@ -17,6 +17,8 @@ List<MembershipPackageEntity> fallbackMembershipPackages({
     final active = current == id && days > 0;
     return MembershipPackageEntity(
       id: id,
+      // Fallback'te gerçek plan cuid'i yok; satın alma tier ile denenir.
+      planId: id,
       title: title,
       durationDays: 30,
       priceJeton: price,

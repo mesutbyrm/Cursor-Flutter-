@@ -15,6 +15,9 @@ abstract final class ApiBackendRouter {
     final p = _normalizePath(path);
     if (p == '/api/v1/health') return ApiBackendKind.game;
     if (_isPkBackendPath(p)) return ApiBackendKind.game;
+    if (_isVoiceRoomPkBackendPath(p)) return ApiBackendKind.game;
+    if (_isGiftBattleBackendPath(p)) return ApiBackendKind.game;
+    if (_isMembershipBackendPath(p)) return ApiBackendKind.game;
     if (_isAdminGiftsBackendPath(p)) return ApiBackendKind.game;
     if (_isGameBackendPath(p, method)) return ApiBackendKind.game;
     return ApiBackendKind.main;
@@ -30,6 +33,25 @@ abstract final class ApiBackendRouter {
 
   /// Birleşik PK sistemi (Faz 1–3) — `canlifalapi.abacusai.app`.
   static bool _isPkBackendPath(String path) => path.startsWith('/api/pk');
+
+  /// Sesli oda PK'sı (`/api/chat/rooms/{id}/pk[...]`) yalnızca abacus'ta
+  /// gerçek (canlifal.com null stub döndürüyor). Odanın kendisi (mesaj,
+  /// katılımcı, hediye) ana sitede kalır — sadece `/pk` alt yolu yönlendirilir.
+  static final RegExp _voicePkRe = RegExp(r'^/api/chat/rooms/[^/]+/pk(/|$)');
+  static bool _isVoiceRoomPkBackendPath(String path) =>
+      _voicePkRe.hasMatch(path);
+
+  /// Hediye savaşı / hedefi (`/api/gifts/battles`, `/api/gifts/goals`) yalnızca
+  /// abacus'ta var (canlifal.com 404). Hediye gönderimi katalog ana sitede.
+  static bool _isGiftBattleBackendPath(String path) =>
+      path.startsWith('/api/gifts/battles') ||
+      path.startsWith('/api/gifts/goals');
+
+  /// Üyelik planları + satın alma (`/api/membership/plans`, `/purchase`) modern
+  /// uçları yalnızca abacus'ta (canlifal.com'da /purchase yok → "istenilen
+  /// kaynak bulunamadı"). Aynı DB, aynı plan kimlikleri.
+  static bool _isMembershipBackendPath(String path) =>
+      path.startsWith('/api/membership');
 
   /// Admin hediye kataloğu CRUD + yükleme — `canlifalapi.abacusai.app`.
   static bool _isAdminGiftsBackendPath(String path) =>
