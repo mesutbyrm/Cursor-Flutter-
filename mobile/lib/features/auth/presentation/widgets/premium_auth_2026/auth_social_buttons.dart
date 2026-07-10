@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 import '../../../../../core/config/env.dart';
@@ -7,13 +6,13 @@ import '../../../../../core/ui/platform_blur.dart';
 import '../../../../../core/ui/premium_2026/liquid_glass.dart';
 import '../google_sign_in_button.dart';
 
-/// Google, TikTok, Apple ve misafir giriş satırları.
+/// Google, TikTok (yalnızca yapılandırıldığında) ve misafir giriş satırları.
+/// Uygulanmamış sağlayıcılar ("yakında") gösterilmez.
 class AuthSocialSection extends StatelessWidget {
   const AuthSocialSection({
     super.key,
     required this.onGoogle,
     this.onTikTok,
-    this.onApple,
     this.onGuest,
     this.busy = false,
     this.googleLabel = 'Google ile devam et',
@@ -21,7 +20,6 @@ class AuthSocialSection extends StatelessWidget {
 
   final VoidCallback? onGoogle;
   final VoidCallback? onTikTok;
-  final VoidCallback? onApple;
   final VoidCallback? onGuest;
   final bool busy;
   final String googleLabel;
@@ -38,22 +36,18 @@ class AuthSocialSection extends StatelessWidget {
           onPressed: onGoogle,
           busy: busy,
         ),
-        SizedBox(height: 10),
-        _AuthGlassSocialButton(
-          icon: Icons.music_note_rounded,
-          label: tiktokEnabled ? 'TikTok ile devam et' : 'TikTok (yakında)',
-          onPressed: tiktokEnabled && !busy ? onTikTok : null,
-          trailing: tiktokEnabled ? null : _soonBadge(),
-        ),
-        SizedBox(height: 10),
-        _AuthGlassSocialButton(
-          icon: Icons.apple_rounded,
-          label: 'Apple ile devam et',
-          onPressed: !busy ? onApple : null,
-          trailing: _soonBadge(),
-        ),
+        // TikTok yalnızca gerçekten yapılandırıldığında görünür; aksi halde
+        // kullanıcıya çalışmayan "yakında" butonu gösterilmez.
+        if (tiktokEnabled) ...[
+          const SizedBox(height: 10),
+          _AuthGlassSocialButton(
+            icon: Icons.music_note_rounded,
+            label: 'TikTok ile devam et',
+            onPressed: busy ? null : onTikTok,
+          ),
+        ],
         if (onGuest != null) ...[
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
           TextButton(
             onPressed: busy ? null : onGuest,
             child: Text(
@@ -69,27 +63,6 @@ class AuthSocialSection extends StatelessWidget {
           ),
         ],
       ],
-    );
-  }
-
-  static Widget _soonBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: AppThemeColors.accentCyan.withValues(alpha: 0.15),
-        border: Border.all(
-          color: AppThemeColors.accentCyan.withValues(alpha: 0.35),
-        ),
-      ),
-      child: Text(
-        'Yakında',
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          color: AppThemeColors.accentCyan,
-        ),
-      ),
     );
   }
 }
