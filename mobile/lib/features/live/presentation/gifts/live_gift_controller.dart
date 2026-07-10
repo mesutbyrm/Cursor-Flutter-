@@ -183,7 +183,7 @@ class LiveGiftController extends ChangeNotifier {
       notifyListeners();
     });
 
-    Future.delayed(const Duration(seconds: 8), () {
+    Future.delayed(const Duration(seconds: 5), () {
       notifications.removeWhere((e) => e.id == enriched.id);
       notifyListeners();
     });

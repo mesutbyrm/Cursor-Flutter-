@@ -67,7 +67,7 @@ class _GiftBanner extends StatelessWidget {
                       ),
                     ),
                     TextSpan(
-                      text: ' → ',
+                      text: ' ',
                       style: TextStyle(color: AppThemeColors.dark.onSurfaceMuted),
                     ),
                     TextSpan(
@@ -78,7 +78,8 @@ class _GiftBanner extends StatelessWidget {
                       ),
                     ),
                     TextSpan(
-                      text: ' ${event.quantity > 1 ? '${event.quantity} ' : ''}${event.giftName}$combo',
+                      text:
+                          ' kullanıcısına ${event.quantity > 1 ? '${event.quantity} ' : ''}${event.giftName}$combo attı',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: AppThemeColors.accentPink,
