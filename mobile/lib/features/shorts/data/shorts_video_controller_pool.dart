@@ -12,8 +12,8 @@ class ShortsVideoControllerPool {
 
   final Dio _dio;
   static const _maxControllers = 3;
-  static const _warmOffsets = [-1, 0, 1];
-  static const _diskPreloadAhead = [-1, 1];
+  static const _warmOffsets = [0, 1, -1];
+  static const _diskPreloadAhead = [1, -1];
 
   final _controllers = <String, VideoPlayerController>{};
   final _pending = <String, Future<VideoPlayerController>>{};

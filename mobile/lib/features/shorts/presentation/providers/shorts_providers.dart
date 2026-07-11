@@ -42,7 +42,7 @@ class ShortsFeedNotifier
     _hasMore = true;
     final page = await ref
         .read(shortsRepositoryProvider)
-        .fetchFeed(tab: tab);
+        .fetchFeed(tab: tab, limit: 15);
     _cursor = page.nextCursor;
     _hasMore = page.hasMore;
     return page.videos;
@@ -55,7 +55,7 @@ class ShortsFeedNotifier
       _hasMore = true;
       final page = await ref
           .read(shortsRepositoryProvider)
-          .fetchFeed(tab: arg);
+          .fetchFeed(tab: arg, limit: 15);
       _cursor = page.nextCursor;
       _hasMore = page.hasMore;
       return page.videos;
@@ -69,6 +69,7 @@ class ShortsFeedNotifier
     try {
       final page = await ref.read(shortsRepositoryProvider).fetchFeed(
             cursor: _cursor,
+            limit: 15,
             tab: arg,
           );
       if (page.videos.isEmpty) {

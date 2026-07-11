@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +11,8 @@ import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_section_title.dart';
 import '../../../../shorts/presentation/providers/shorts_providers.dart';
+import '../../../../shorts/presentation/utils/short_video_player_util.dart';
+import '../../../../../core/network/dio_provider.dart';
 
 /// Ana sayfa — yüklenen kısa videolar (R2/CDN). YouTube trend içeriği gösterilmez.
 class TrendingVideoSection extends ConsumerWidget {
@@ -79,15 +83,24 @@ class TrendingVideoSection extends ConsumerWidget {
               separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (_, i) => _TrendThumb(
                 video: videos[i],
-                onTap: () async {
-                  final id = videos[i].id;
-                  try {
-                    await ref
+                onTap: () {
+                  final video = videos[i];
+                  final id = video.id;
+                  unawaited(
+                    preloadShortVideoUrl(
+                      video.videoUrl ?? '',
+                      videoId: id,
+                      dio: ref.read(dioProvider),
+                    ),
+                  );
+                  unawaited(
+                    ref
                         .read(shortsRepositoryProvider)
-                        .recordView(id, watchedSec: 1);
-                    ref.invalidate(homeTrendVideosProvider);
-                  } catch (_) {}
-                  if (context.mounted) context.push('/shorts?videoId=$id');
+                        .recordView(id, watchedSec: 1)
+                        .then((_) => ref.invalidate(homeTrendVideosProvider))
+                        .catchError((_) {}),
+                  );
+                  context.push('/shorts?videoId=$id');
                 },
               ),
             ),

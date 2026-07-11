@@ -3,6 +3,14 @@
 
 ## 1.0.9+13 (2026-07-10)
 
+### Kısa videolar — açılış hızı
+- Ana sayfa trend videoya dokununca izlenme kaydı artık navigasyonu bekletmez; video sayfası hemen açılır
+- Trend videolar dokunma anında arka planda video URL prefetch yapar
+- Shorts route geçişi animasyonsuz açılır
+- Feed ilk yüklemesi 15 video alır; daha az load-more tetiklenir
+- Video controller pool aktif videoyu önce, sonra sonraki/önceki komşuları hazırlar
+- Oynatıcı artık imzalı URL çözümlemesini ilk açılışta beklemez; CDN/API stream adayları önce denenir
+
 ### Premium mesajlaşma UI/UX
 - Mesaj listesi Canlifal siyah/mor neon/glass tasarım diline taşındı; üst arama, filtreler, online nokta, okunmamış rozet ve lazy liste korundu
 - Sohbet üst barı profil, online/yazıyor durumu, sesli arama, görüntülü fal/arama ve işlemler ikonlarıyla yenilendi

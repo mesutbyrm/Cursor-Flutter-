@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +13,8 @@ import '../providers/home_providers.dart';
 import '../theme/home_palette.dart';
 import 'home_section_header.dart';
 import '../../../shorts/presentation/providers/shorts_providers.dart';
+import '../../../shorts/presentation/utils/short_video_player_util.dart';
+import '../../../../core/network/dio_provider.dart';
 
 class HomeTrendVideosRow extends ConsumerWidget {
   const HomeTrendVideosRow({super.key});
@@ -39,15 +43,24 @@ class HomeTrendVideosRow extends ConsumerWidget {
                 itemCount: items.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 12),
                 itemBuilder: (_, i) => GestureDetector(
-                  onTap: () async {
-                    final id = items[i].id;
-                    try {
-                      await ref
+                  onTap: () {
+                    final video = items[i];
+                    final id = video.id;
+                    unawaited(
+                      preloadShortVideoUrl(
+                        video.videoUrl ?? '',
+                        videoId: id,
+                        dio: ref.read(dioProvider),
+                      ),
+                    );
+                    unawaited(
+                      ref
                           .read(shortsRepositoryProvider)
-                          .recordView(id, watchedSec: 1);
-                      ref.invalidate(homeTrendVideosProvider);
-                    } catch (_) {}
-                    if (context.mounted) context.push('/shorts?videoId=$id');
+                          .recordView(id, watchedSec: 1)
+                          .then((_) => ref.invalidate(homeTrendVideosProvider))
+                          .catchError((_) {}),
+                    );
+                    context.push('/shorts?videoId=$id');
                   },
                   child: _TrendVideoCard(video: items[i]),
                 ),

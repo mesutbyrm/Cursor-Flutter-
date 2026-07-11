@@ -23,16 +23,6 @@ Future<VideoPlayerController> createShortVideoController({
       '${Env.siteOrigin}${ApiEndpoints.shortVideoStream(videoId.trim())}',
     );
   }
-  if (dio != null && (trimmed.isNotEmpty || videoId != null)) {
-    final resolver = ShortVideoUrlResolver(dio);
-    final resolved = await resolver.resolvePlayUrls(
-      videoUrl: url,
-      videoId: videoId,
-    );
-    for (final u in resolved) {
-      if (!candidates.contains(u)) candidates.add(u);
-    }
-  }
 
   if (candidates.isEmpty || candidates.every((u) => u.isEmpty)) {
     throw StateError('Video URL boş');
@@ -40,8 +30,8 @@ Future<VideoPlayerController> createShortVideoController({
 
   Object? lastError;
   final cache = VideoCacheService.instance;
-  for (final playUrl in candidates) {
-    if (playUrl.isEmpty) continue;
+  Future<VideoPlayerController?> tryCandidate(String playUrl) async {
+    if (playUrl.isEmpty) return null;
     VideoPlayerController? controller;
     try {
       if (fastStart) {
@@ -75,6 +65,25 @@ Future<VideoPlayerController> createShortVideoController({
       lastError = e;
       await controller?.dispose();
     }
+    return null;
+  }
+
+  for (final playUrl in candidates) {
+    final controller = await tryCandidate(playUrl);
+    if (controller != null) return controller;
+  }
+
+  if (dio != null && (trimmed.isNotEmpty || videoId != null)) {
+    final resolver = ShortVideoUrlResolver(dio);
+    final resolved = await resolver.resolvePlayUrls(
+      videoUrl: url,
+      videoId: videoId,
+    );
+    for (final playUrl in resolved) {
+      if (candidates.contains(playUrl)) continue;
+      final controller = await tryCandidate(playUrl);
+      if (controller != null) return controller;
+    }
   }
 
   throw lastError ?? StateError('Video oynatılamadı');
@@ -89,6 +98,18 @@ Future<void> preloadShortVideoUrl(
   if (url.isEmpty) return;
   final cache = VideoCacheService.instance;
   final candidates = <String>[url.trim()];
+  if (videoId != null && videoId.trim().isNotEmpty) {
+    candidates.add(
+      '${Env.siteOrigin}${ApiEndpoints.shortVideoStream(videoId.trim())}',
+    );
+  }
+  for (final playUrl in candidates) {
+    if (playUrl.isEmpty) continue;
+    try {
+      await cache.prefetch(playUrl);
+      return;
+    } catch (_) {}
+  }
   if (dio != null) {
     try {
       final resolver = ShortVideoUrlResolver(dio);

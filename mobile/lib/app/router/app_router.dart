@@ -769,7 +769,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/shorts',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+        pageBuilder: (context, state) => AppPageTransitions.none(
           key: state.pageKey,
           child: ShortsFeedPage(
             initialVideoId: state.uri.queryParameters['videoId'],
