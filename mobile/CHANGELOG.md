@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.11+15 (2026-07-11)
+
+### Üretim hazırlığı — analyzer / performans / SSE
+- `flutter analyze`: **0 error / 0 warning** (önce ~191 warning)
+- Kullanılmayan import/ölü private kod temizlendi; null-safety uyarıları giderildi
+- SSE reconnect maks. 20 deneme (kılavuz §6); 401 sonrası JWT refresh + yeniden bağlanma
+- Release ErrorWidget artık istisna detayı göstermiyor
+- Scroll `cacheExtent` → `scrollCacheExtent` (Flutter 3.41+) ana listelerde
+- SharePlus API güncellemesi; webview platform bağımlılıkları eklendi
+- Android Manifest / Gradle / Proguard / Firebase doğrulandı (imzalama key.properties CI’de)
+
 ## 1.0.10+14 (2026-07-11)
 
 ### Üyelikler — pixel-perfect sayfa

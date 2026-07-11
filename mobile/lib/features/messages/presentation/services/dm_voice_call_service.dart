@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../video_call/data/video_call_invitation_service.dart';
 import '../../../video_call/domain/video_call_invitation.dart';
 import '../../../video_call/presentation/video_call_provider.dart';
 import '../../domain/utils/dm_message_codec.dart';

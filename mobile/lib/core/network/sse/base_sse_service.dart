@@ -21,6 +21,7 @@ abstract class BaseSseService {
   Timer? _heartbeatWatchdog;
 
   Future<String?> Function()? _accessToken;
+  Future<bool> Function()? _refreshTokens;
   var _stopped = true;
   var _reconnectAttempt = 0;
   DateTime? _lastEventAt;
@@ -61,17 +62,22 @@ abstract class BaseSseService {
   void onReconnecting(int attempt) {}
 
   /// Alt sınıflar token ile bağlantı açar.
+  ///
+  /// [refreshTokens]: 401 alındığında JWT yenilemek için (kılavuz §6).
   Future<void> openConnection({
     required Future<String?> Function() accessToken,
+    Future<bool> Function()? refreshTokens,
   }) async {
     _stopped = false;
     _accessToken = accessToken;
+    _refreshTokens = refreshTokens;
     await _openStream();
   }
 
   Future<void> disconnect() async {
     _stopped = true;
     _accessToken = null;
+    _refreshTokens = null;
     await _closeStreamOnly();
     status.emit(
       const SseConnectionStatus(phase: SseConnectionPhase.idle),
@@ -155,6 +161,30 @@ abstract class BaseSseService {
         onDone: () => _scheduleReconnect(),
         cancelOnError: false,
       );
+    } on DioException catch (e) {
+      if (kDebugMode) debugPrint('$runtimeType SSE: $e');
+      // Kılavuz §6: 401 → refresh sonra yeniden bağlan.
+      if (e.response?.statusCode == 401 && _refreshTokens != null) {
+        final ok = await _refreshTokens!.call();
+        if (!ok) {
+          status.emit(
+            SseConnectionStatus(
+              phase: SseConnectionPhase.failed,
+              attempt: _reconnectAttempt,
+              lastError: e,
+            ),
+          );
+          return;
+        }
+      }
+      status.emit(
+        SseConnectionStatus(
+          phase: SseConnectionPhase.reconnecting,
+          attempt: _reconnectAttempt,
+          lastError: e,
+        ),
+      );
+      _scheduleReconnect();
     } catch (e) {
       if (kDebugMode) debugPrint('$runtimeType SSE: $e');
       status.emit(

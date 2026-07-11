@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';

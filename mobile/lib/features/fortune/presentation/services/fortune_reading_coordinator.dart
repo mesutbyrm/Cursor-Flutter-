@@ -291,7 +291,7 @@ class FortuneReadingCoordinator {
         ref
             .read(fortuneShareHandlerProvider)
             .autoShareIfEnabled(finalResult)
-            .catchError((_) {}),
+            .catchError((_) => false),
       );
     }
 

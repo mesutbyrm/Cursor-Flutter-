@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../features/fortune/data/services/rewarded_ad_service.dart';
-import '../../features/voice_hub/data/services/voice_room_debug_log.dart';
 import '../crash/crash_reporting_bootstrap.dart';
 import '../firebase/firebase_bootstrap.dart';
 import '../network/api.dart';

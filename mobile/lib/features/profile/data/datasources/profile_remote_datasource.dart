@@ -656,7 +656,11 @@ class WalletRemoteDataSource {
             if (body['senderInfo'] != null) 'senderInfo': body['senderInfo'],
           },
         )
-        .catchError((_) {});
+        .catchError((Object _) => Response<dynamic>(
+              requestOptions: RequestOptions(
+                path: ApiEndpoints.adminPaymentNotifications,
+              ),
+            ));
   }
 
   /// Bekleyen ödeme talebini iptal — `PATCH /api/payment/requests`.

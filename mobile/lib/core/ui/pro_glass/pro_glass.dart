@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:canlifal_social/core/performance/effects_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:flutter/material.dart';
 
 import '../../widgets/themed_glass_card.dart';
 import '../premium_2026/premium_motion.dart';

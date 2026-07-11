@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
 import 'list_perf.dart';
@@ -24,6 +25,10 @@ abstract final class ScrollPerf {
   static const double paginationThrottlePx = 48;
 
   static const ScrollPhysics feedPhysics = ListPerf.listPhysics;
+
+  /// Flutter 3.41+ [scrollCacheExtent] için px sarmalayıcı.
+  static ScrollCacheExtent scrollCache(double pixels) =>
+      ScrollCacheExtent.pixels(pixels);
 
   /// Liste öğesi — scroll sırasında komşu satırlar repaint etmesin.
   static Widget item(Widget child) => ListPerf.repaint(child);

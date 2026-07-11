@@ -242,7 +242,7 @@ class _NotificationsListView extends StatelessWidget {
     final items = state.visible;
 
     return ListView.separated(
-      cacheExtent: ListPerf.cacheExtent,
+      scrollCacheExtent: ScrollPerf.scrollCache(ListPerf.cacheExtent),
       controller: scrollController,
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
       itemCount: items.length + (state.hasMore ? 1 : 0),

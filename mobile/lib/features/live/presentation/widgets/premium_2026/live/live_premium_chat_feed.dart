@@ -37,7 +37,7 @@ class LivePremiumChatFeed extends StatelessWidget {
         child: ListView.builder(
           reverse: true,
           padding: EdgeInsets.zero,
-          cacheExtent: ScrollPerf.chatCacheExtent,
+          scrollCacheExtent: ScrollPerf.scrollCache(ScrollPerf.chatCacheExtent),
           addAutomaticKeepAlives: false,
           addRepaintBoundaries: false,
           physics: ScrollPerf.feedPhysics,

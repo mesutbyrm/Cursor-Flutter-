@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
+import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/messages_notifications_actions.dart';
@@ -251,7 +252,7 @@ class _LiveStreamsList extends ConsumerWidget {
             ref.read(liveStreamsListNotifierProvider.notifier).hasMore;
         final extra = hasMore ? 1 : 0;
         return ListView.separated(
-          cacheExtent: ListPerf.cacheExtent,
+          scrollCacheExtent: ScrollPerf.scrollCache(ListPerf.cacheExtent),
           controller: scrollController,
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
           physics: ListPerf.listPhysics,

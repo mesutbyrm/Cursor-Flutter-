@@ -1,5 +1,9 @@
 part of 'chat_room_providers.dart';
 
+// Extension methods on Notifier access `state` in the same library.
+// Analyzer still flags @protected/@visibleForTesting across extensions.
+// ignore_for_file: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
+
 /// Sesli oda müzik ve DJ kontrol API'si — [VoiceRoomLiveController]'dan ayrıldı.
 /// `part` olduğundan aynı kütüphanededir: private alan/metotlara erişir ve
 /// davranış birebir korunur (yalnızca fiziksel konum değişti).

@@ -81,7 +81,7 @@ class VoiceLiveChatFeed extends StatelessWidget {
                 reverse: true,
                 shrinkWrap: true,
                 padding: EdgeInsets.zero,
-                cacheExtent: ScrollPerf.chatCacheExtent,
+                scrollCacheExtent: ScrollPerf.scrollCache(ScrollPerf.chatCacheExtent),
                 addAutomaticKeepAlives: false,
                 addRepaintBoundaries: false,
                 physics: const ClampingScrollPhysics(),

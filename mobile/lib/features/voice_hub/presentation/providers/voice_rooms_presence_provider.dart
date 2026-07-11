@@ -6,7 +6,6 @@ import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
-import '../../data/services/chat_room_sse_service.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
 
 /// Keşfet listesinde anlık çevrimiçi sayıları — merkezi SSE hub (oda başına tek bağlantı).

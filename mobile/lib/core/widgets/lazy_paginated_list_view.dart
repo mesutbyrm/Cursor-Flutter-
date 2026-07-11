@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../performance/list_perf.dart';
+import '../performance/scroll_perf.dart';
 import 'lazy_paginated_sliver_list.dart';
 
 /// [ListView] — yalnızca görünür dilim build edilir; scroll’da genişler.
@@ -81,7 +82,8 @@ class _LazyPaginatedListViewState extends State<LazyPaginatedListView> {
 
     if (widget.separatorBuilder != null) {
       return ListView.separated(
-        cacheExtent: widget.cacheExtent, controller: _scroll,
+        scrollCacheExtent: ScrollPerf.scrollCache(widget.cacheExtent),
+        controller: _scroll,
         padding: widget.padding,
         physics: widget.physics ?? ListPerf.listPhysics,
         itemCount: total,
@@ -102,7 +104,8 @@ class _LazyPaginatedListViewState extends State<LazyPaginatedListView> {
     }
 
     return ListView.builder(
-      cacheExtent: widget.cacheExtent, controller: _scroll,
+      scrollCacheExtent: ScrollPerf.scrollCache(widget.cacheExtent),
+      controller: _scroll,
       padding: widget.padding,
       physics: widget.physics ?? ListPerf.listPhysics,
       itemCount: total,

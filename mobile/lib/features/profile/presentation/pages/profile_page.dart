@@ -180,7 +180,7 @@ class _ProfileScrollBody extends ConsumerWidget {
   Widget _profileScroll(BuildContext context, List<Widget> slivers) {
     return CustomScrollView(
       clipBehavior: Clip.hardEdge,
-      cacheExtent: ScrollPerf.feedCacheExtent,
+      scrollCacheExtent: ScrollPerf.scrollCache(ScrollPerf.feedCacheExtent),
       physics: PremiumMotion.listPhysics,
       slivers: slivers,
     );

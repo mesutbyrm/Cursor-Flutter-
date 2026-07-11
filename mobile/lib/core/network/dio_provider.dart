@@ -150,6 +150,14 @@ final dioProvider = Provider<Dio>((ref) {
 /// Geriye dönük alias — artık [dioProvider] ile aynı (routing interceptor içinde).
 final gamesDioProvider = Provider<Dio>((ref) => ref.watch(dioProvider));
 
+Future<bool> tryRefreshAccessToken(
+  Dio dio,
+  TokenStorage storage, {
+  String? refreshPath,
+}) {
+  return _tryRefresh(dio, storage, refreshPath ?? _refreshPath());
+}
+
 Future<bool> _tryRefresh(
   Dio dio,
   TokenStorage storage,

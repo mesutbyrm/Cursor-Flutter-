@@ -21,19 +21,14 @@ import '../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../providers/chat_room_providers.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
-import '../providers/voice_room_ui_provider.dart';
 import '../sheets/voice_room_menu_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
-import '../sheets/voice_youtube_song_sheet.dart';
 import '../theme/voice_room_tokens.dart';
-import '../utils/voice_music_access.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/chat/chat_message_widgets.dart';
 import '../widgets/voice_room/voice_room_mention_text_field.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import '../widgets/voice_room/voice_room_premium_music_card.dart';
-import '../widgets/premium_2026/voice_web_owner_stage.dart';
-import 'voice_room_basic_moderation_section.dart';
 
 /// Çark menüsü — Faz 3 menüsüne yönlendirir (geriye uyumluluk).
 Future<void> showVoiceRoomBasicToolsSheet(

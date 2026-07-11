@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:cookie_jar/cookie_jar.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
@@ -26,10 +26,9 @@ Future<void> main() async {
     ..maximumSizeBytes = 80 << 20;
   AppStartupLog.log('main() begin');
 
-  // Bir alt-ağaç build hatası verdiğinde (özellikle profil admin bölümü),
-  // release'de varsayılan gri/donuk kutu yerine okunabilir hata göster.
-  // Hem kalıcı UX iyileştirmesi hem de teşhis: ekran görüntüsünden hata okunur.
+  // Release'de hata detayı gösterme; debug'da teşhis için bırak.
   ErrorWidget.builder = (FlutterErrorDetails details) {
+    final debug = kDebugMode;
     final msg = details.exceptionAsString();
     return Material(
       color: const Color(0xFF1A0808),
@@ -53,12 +52,24 @@ Future<void> main() async {
                             fontSize: 14)),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  msg,
-                  style: const TextStyle(
-                      color: Color(0xCCFFFFFF), fontSize: 11, height: 1.4),
-                ),
+                if (debug) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    msg,
+                    style: const TextStyle(
+                        color: Color(0xCCFFFFFF), fontSize: 11, height: 1.4),
+                  ),
+                ] else ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Lütfen sayfayı yenileyin veya uygulamayı yeniden başlatın.',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 12,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

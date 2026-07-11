@@ -35,7 +35,7 @@ class SocialFeedScrollView extends ConsumerWidget {
       onRefresh: onRefresh,
       child: CustomScrollView(
         controller: controller,
-        cacheExtent: ScrollPerf.feedCacheExtent,
+        scrollCacheExtent: ScrollPerf.scrollCache(ScrollPerf.feedCacheExtent),
         physics: PremiumMotion.listPhysics,
         slivers: [
           social.when(

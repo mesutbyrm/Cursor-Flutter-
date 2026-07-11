@@ -6,7 +6,8 @@ import 'dart:async';
 abstract final class SseReconnectPolicy {
   static const _delaysSec = [1, 2, 5, 10, 20, 30];
   static const maxDelay = Duration(seconds: 30);
-  static const maxAttempts = 0; // 0 = sınırsız
+  /// Kılavuz §6: maksimum 20 deneme; sonrası failed.
+  static const maxAttempts = 20;
 
   static Duration delayForAttempt(int attempt) {
     final idx = (attempt - 1).clamp(0, _delaysSec.length - 1);

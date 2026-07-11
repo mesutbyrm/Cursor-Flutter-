@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 import '../../../../core/performance/list_perf.dart';
+import '../../../../core/performance/scroll_perf.dart';
 
 /// Sesli Odalar keşfet — TikTok seviyesi scroll / ilk kare hedefleri.
 abstract final class VoiceRoomsPerf {
@@ -12,7 +12,7 @@ abstract final class VoiceRoomsPerf {
   static const horizontalCacheExtent = ListPerf.cacheExtent;
 
   static final scrollCacheExtent =
-      ScrollCacheExtent.pixels(horizontalCacheExtent);
+      ScrollPerf.scrollCache(horizontalCacheExtent);
 
   static const scrollPreloadPx = ListPerf.preloadThresholdPx;
 

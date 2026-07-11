@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../widgets/instagram/social_instagram_app_bar.dart';
 import '../widgets/instagram/social_feed_composer.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/social_providers.dart';
 import '../widgets/social_feed_scroll_view.dart';

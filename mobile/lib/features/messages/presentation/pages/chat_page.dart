@@ -11,8 +11,6 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
-import '../../../moderation/domain/entities/report_target.dart';
-import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../data/services/dm_message_sound_service.dart';

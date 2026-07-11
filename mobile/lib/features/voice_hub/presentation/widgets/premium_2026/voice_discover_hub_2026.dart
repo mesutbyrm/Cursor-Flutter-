@@ -246,7 +246,8 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
         ),
         Expanded(
           child: ListView.builder(
-            cacheExtent: ListPerf.cacheExtent, controller: _scroll,
+            scrollCacheExtent: ScrollPerf.scrollCache(ListPerf.cacheExtent),
+            controller: _scroll,
             padding: EdgeInsets.fromLTRB(
               metrics.horizontalPad,
               16,

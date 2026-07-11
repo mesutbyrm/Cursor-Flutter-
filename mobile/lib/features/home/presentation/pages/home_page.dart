@@ -74,7 +74,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             : context.colors.surface,
         onRefresh: _onRefresh,
         child: CustomScrollView(
-          cacheExtent: ScrollPerf.feedCacheExtent,
+          scrollCacheExtent: ScrollPerf.scrollCache(ScrollPerf.feedCacheExtent),
           physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
           ),

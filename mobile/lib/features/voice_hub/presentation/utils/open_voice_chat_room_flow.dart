@@ -23,7 +23,9 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
 
   final settings = ref.read(platformVoiceRoomSettingsProvider).valueOrNull ??
       PlatformVoiceRoomSettings.fallback;
-  ref.read(platformVoiceRoomSettingsProvider.future).catchError((_) {});
+  ref.read(platformVoiceRoomSettingsProvider.future).catchError(
+        (_) => PlatformVoiceRoomSettings.fallback,
+      );
   final normalCost = settings.normalOpenCost;
   final vipCost = settings.vipOpenCost;
   var balance = ref.read(walletBalancesProvider).valueOrNull?.jeton ??

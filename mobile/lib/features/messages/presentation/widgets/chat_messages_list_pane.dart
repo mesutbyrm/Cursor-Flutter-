@@ -119,7 +119,7 @@ class _ChatMessagesListPaneState extends ConsumerState<ChatMessagesListPane> {
     final lastIncomingIndex = msgs.rows.lastIndexWhere((m) => !m.isMine);
 
     return ListView.builder(
-      cacheExtent: ScrollPerf.chatCacheExtent,
+      scrollCacheExtent: ScrollPerf.scrollCache(ScrollPerf.chatCacheExtent),
       controller: widget.scrollController,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       physics: ScrollPerf.feedPhysics,

@@ -10,8 +10,6 @@ import '../../data/datasources/live_remote_datasource.dart';
 import '../../data/datasources/live_stream_extras_datasource.dart';
 import '../../data/repositories/live_repository_impl.dart';
 import '../../data/services/video_webrtc_signal_service.dart';
-import '../../../../core/network/sse/sse_hub_provider.dart';
-import '../gifts/providers/live_gift_providers.dart';
 
 final liveRemoteProvider = Provider<LiveRemoteDataSource>((ref) {
   return LiveRemoteDataSource(ref.watch(dioProvider));

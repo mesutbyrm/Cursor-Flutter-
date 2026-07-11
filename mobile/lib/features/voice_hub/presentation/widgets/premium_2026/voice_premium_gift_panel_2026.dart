@@ -307,7 +307,7 @@ class _VoicePremiumGiftPanel2026State
       if (mounted) {
         widget.onSent(raw);
         widget.onClose();
-        final myId = user?.id?.trim() ?? '';
+        final myId = user?.id.trim() ?? '';
         final receiverNet = GiftRevenueDisplay.voiceReceiverNet(
           gross: gross,
           receiverIsOwner: receiverIsOwner,

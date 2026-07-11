@@ -22,7 +22,8 @@ class ApiRetryInterceptor extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    if (_connectivity != null && !_connectivity!.isOnline) {
+    final connectivity = _connectivity;
+    if (connectivity != null && !connectivity.isOnline) {
       final isGet = options.method.toUpperCase() == 'GET';
       final forceRefresh = options.extra['forceRefresh'] == true;
       if (isGet && !forceRefresh) {

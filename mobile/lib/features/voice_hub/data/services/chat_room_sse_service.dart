@@ -60,6 +60,7 @@ class ChatRoomSseService extends BaseSseService {
   Future<void> connect({
     required String roomId,
     required Future<String?> Function() accessToken,
+    Future<bool> Function()? refreshTokens,
     void Function()? onConnected,
     void Function(ChatRoomMessage message)? onMessage,
     void Function(List<ChatRoomPresence> users)? onPresence,
@@ -102,7 +103,10 @@ class ChatRoomSseService extends BaseSseService {
       return;
     }
     VoiceRoomDebugLog.sseConnect(roomId: id, url: streamUrlFor(id));
-    await super.openConnection(accessToken: accessToken);
+    await super.openConnection(
+      accessToken: accessToken,
+      refreshTokens: refreshTokens,
+    );
   }
 
   @override

@@ -781,7 +781,7 @@ class ChatRoomRemoteDataSource {
       final res = await _dio.safeGet<dynamic>(
         '/api/chat/rooms/$key/speak-requests',
       );
-      final data = res?.data;
+      final data = res.data;
       if (data is Map) {
         final ids = data['userIds'];
         if (ids is List) result = ids.map((e) => e.toString()).toList();

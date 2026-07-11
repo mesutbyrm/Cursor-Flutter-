@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/live/domain/entities/voice_room_entity.dart';
-import '../../features/trtc/data/datasources/trtc_remote_datasource.dart';
 import '../../features/trtc/domain/entities/trtc_credentials.dart';
 import '../../features/trtc/presentation/providers/trtc_providers.dart';
 import '../../features/voice_hub/presentation/audio/voice_room_music_audio_session.dart';

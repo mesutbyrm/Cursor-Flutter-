@@ -669,9 +669,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final slug = widget.room.slug;
     final url = '${Env.siteOrigin}/sohbet/$slug';
     final title = widget.room.displayTitle;
-    await Share.share(
-      'CanlıFal sesli odaya katıl: $title\n$url',
-      subject: title,
+    await SharePlus.instance.share(
+      ShareParams(
+        text: 'CanlıFal sesli odaya katıl: $title\n$url',
+        subject: title,
+      ),
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
