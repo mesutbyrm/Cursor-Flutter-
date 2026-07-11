@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-07-10 20:39 UTC
+Oluşturulma: 2026-07-11 16:06 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -10,8 +10,8 @@ Base: `main`
 | Metrik | Adet |
 |--------|------|
 | Kapatılan PR | 0 |
-| Silinen remote dal | 0 |
-| Kalan açık PR | 0 |
+| Silinen remote dal | 1 |
+| Kalan açık PR | 2 |
 | Korunan / aktif dal | 0 |
 
 ## Kapatılan PR'lar
@@ -24,13 +24,14 @@ Base: `main`
 
 | Dal | Neden |
 |-----|-------|
-| — | — |
+| cursor/performance-profile-voice-live-9aef | merged into main |
 
 ## Kalan açık PR'lar
 
 | PR | Head | Base | Not |
 |----|------|------|-----|
-| — | — | — | — |
+| #236 | claude/fortune-teller-bugs-features-1eie7a | main | draft=true | perf(feed): ana sayfa barrier watchdog'unu ağaç temizlenince durdur |
+| #236 | claude/fortune-teller-bugs-features-1eie7a | main | draft=true | perf(feed): ana sayfa barrier watchdog'unu ağaç temizlenince durdur |
 
 ## Aktif / korunan dallar
 
