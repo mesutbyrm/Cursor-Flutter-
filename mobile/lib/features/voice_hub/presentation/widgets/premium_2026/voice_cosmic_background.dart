@@ -57,21 +57,26 @@ class _VoiceCosmicBackgroundState extends State<VoiceCosmicBackground>
               const DecoratedBox(
                 decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
               ),
-              CanlifalNetworkImage(
-                key: ValueKey(widget.imageUrl),
-                url: widget.imageUrl!,
-                width: w,
-                height: h,
-                thumbnailWidth: 720,
-                fit: BoxFit.cover,
-                fadeIn: false,
-                placeholder: const DecoratedBox(
-                  decoration:
-                      BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
-                ),
-                errorWidget: const DecoratedBox(
-                  decoration:
-                      BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 260),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeOutCubic,
+                child: CanlifalNetworkImage(
+                  key: ValueKey(widget.imageUrl),
+                  url: widget.imageUrl!,
+                  width: w,
+                  height: h,
+                  thumbnailWidth: 720,
+                  fit: BoxFit.cover,
+                  fadeIn: false,
+                  placeholder: const DecoratedBox(
+                    decoration:
+                        BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
+                  ),
+                  errorWidget: const DecoratedBox(
+                    decoration:
+                        BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
+                  ),
                 ),
               ),
               const IgnorePointer(

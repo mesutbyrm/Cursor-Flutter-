@@ -942,21 +942,27 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/voice-rooms',
-        builder: (context, state) => const VoiceRoomsHubPage(),
+        pageBuilder: (context, state) => AppPageTransitions.none(
+          key: state.pageKey,
+          child: const VoiceRoomsHubPage(),
+        ),
       ),
       GoRoute(
         path: '/voice-room/:id',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final room = state.extra as VoiceRoomEntity?;
+          final Widget child;
           if (room != null) {
             final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-            return VoiceRoomErrorBoundary(
+            child = VoiceRoomErrorBoundary(
               roomId: key,
               child: buildVoiceRoomPage(room),
             );
+          } else {
+            final id = state.pathParameters['id'] ?? '';
+            child = VoiceRoomRoutePage(roomId: id);
           }
-          final id = state.pathParameters['id'] ?? '';
-          return VoiceRoomRoutePage(roomId: id);
+          return AppPageTransitions.none(key: state.pageKey, child: child);
         },
         routes: [
           GoRoute(

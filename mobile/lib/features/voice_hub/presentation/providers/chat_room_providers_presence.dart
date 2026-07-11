@@ -35,9 +35,12 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         if (id.isEmpty || id == self) continue;
         final name = _lastKnownPresenceNames[id];
         if (name != null && name.isNotEmpty) {
-          _notifyRealtimeIfBasic(
-            VoiceRoomRealtimeKind.leave,
-            '$name çıkış yaptı',
+          final line = '$name odadan çıkış yaptı.';
+          _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.leave, line);
+          _appendSyntheticSystemMessage(
+            line,
+            kind: ChatMessageKind.systemLeave,
+            user: ChatRoomUserRef(id: id, name: name),
           );
         }
       }
@@ -73,11 +76,21 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         roomName: _roomMeta.nameTr,
       );
       _pushRealtimeEvent(VoiceRoomRealtimeKind.join, staffLine);
+      _appendSyntheticSystemMessage(
+        '$name odaya giriş yaptı.',
+        kind: ChatMessageKind.systemJoin,
+        user: userRef,
+      );
       _showStaffEnterBanner(name, user: userRef);
       return;
     }
     final line = '$name giriş yaptı';
     _pushRealtimeEvent(VoiceRoomRealtimeKind.join, line);
+    _appendSyntheticSystemMessage(
+      '$name odaya giriş yaptı.',
+      kind: ChatMessageKind.systemJoin,
+      user: userRef,
+    );
     final banner = VoiceOfficialJoin.formatEntranceBanner(
       line,
       roomName: _roomMeta.nameTr,
@@ -285,8 +298,10 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       final user = ref.read(authControllerProvider).valueOrNull;
       final nick = _effectiveNickname(user);
       _presenceNickname = nick;
-      await ref.read(chatRoomRemoteProvider).postPresence(_roomKey);
-      final joined = await ref.read(chatRoomRemoteProvider).fetchPresence(_roomKey);
+      final joined = await ref.read(chatRoomRemoteProvider).joinPresence(
+            _roomKey,
+            nickname: nick,
+          );
       final merged = _mergeSelf(joined);
       VoiceRoomDebugLog.log('api.presence.join.ok', {
         'count': merged.length,

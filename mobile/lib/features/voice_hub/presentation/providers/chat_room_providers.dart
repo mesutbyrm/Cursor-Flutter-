@@ -636,6 +636,31 @@ class VoiceRoomLiveController
     _pushRealtimeEvent(kind, message);
   }
 
+  void _appendSyntheticSystemMessage(
+    String content, {
+    required ChatMessageKind kind,
+    ChatRoomUserRef? user,
+  }) {
+    final line = content.trim();
+    if (line.isEmpty) return;
+    final key = '${kind.name}:${user?.id ?? ''}:$line';
+    if (_shownEntranceKeys.contains(key)) return;
+    _shownEntranceKeys.add(key);
+    final id = 'system-${kind.name}-${DateTime.now().microsecondsSinceEpoch}';
+    state = state.copyWith(
+      messages: [
+        ...state.messages,
+        ChatRoomMessage(
+          id: id,
+          content: line,
+          createdAt: DateTime.now(),
+          kind: kind,
+          user: user ?? const ChatRoomUserRef(id: 'system', name: 'Sistem'),
+        ),
+      ],
+    );
+  }
+
   void _pushBasicChatEvent(ChatRoomMessage msg) {
     final name = msg.user?.displayName.trim().isNotEmpty == true
         ? msg.user!.displayName.trim()

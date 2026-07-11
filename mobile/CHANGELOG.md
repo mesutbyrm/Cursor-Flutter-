@@ -3,6 +3,14 @@
 
 ## 1.0.9+13 (2026-07-10)
 
+### Sesli Chat Odaları — senkronizasyon ve arkaplan
+- Oda sahibi/admin/~ / & / @ / % yetkileri için otomatik koltuk seçimi en düşük numaralı boş koltuğa hizalandı; client-side iyimser oturma kaldırıldı, backend doğrulaması beklenir
+- Koltuk API gövdesi kılavuzla uyumlu `{action: take, seatIndex}` biçimine getirildi
+- Odaya giriş route ve VIP/giriş overlay animasyonları kapatıldı; kullanıcı doğrudan odaya yüklenir
+- Giriş/çıkış olayları chat içinde sistem mesajı olarak görünür; kullanıcı referansı korunur
+- Arkaplan listesinde backend/CDN listesi öncelikli hale getirildi; yerleşik arkaplanlar sadece fallback olarak kalır
+- Arkaplan değişimi SSE state güncellemesiyle odadaki herkese anlık yansır ve görsel geçiş fade ile yapılır
+
 ### Performans — profil / sesli sohbet / canlı yayın
 - Profil ilk açılışta gereksiz sosyal gönderi prefetch’i kaldırıldı ve prefetch 3 dk TTL ile tekilleştirildi
 - Profil alt içerikleri/ayarlar kademeli lazy yüklenir; rozet/seviye/hediye özetleri oturum cache’i kullanır

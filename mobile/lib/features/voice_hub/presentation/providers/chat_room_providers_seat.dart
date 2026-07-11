@@ -146,28 +146,6 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       await refresh();
       return null;
     } catch (e) {
-      final self = ref.read(authControllerProvider).valueOrNull;
-      if (self != null && (userId == null || userId == self.id)) {
-        final list = [...state.presence];
-        final idx = list.indexWhere((p) => p.id == self.id);
-        final updated = ChatRoomPresence(
-          id: self.id,
-          name: self.display,
-          nickname: self.username,
-          image: self.avatarUrl,
-          chatRole: self.role ?? 'listener',
-          roleSymbol: _roleSymbolForUser(self),
-          seatIndex: seatIndex,
-          isSpeaking: idx >= 0 ? list[idx].isSpeaking : false,
-        );
-        if (idx >= 0) {
-          list[idx] = updated;
-        } else {
-          list.add(updated);
-        }
-        state = state.copyWith(presence: list, selfInRoom: true);
-        return null;
-      }
       return ApiException.userMessage(e);
     }
   }

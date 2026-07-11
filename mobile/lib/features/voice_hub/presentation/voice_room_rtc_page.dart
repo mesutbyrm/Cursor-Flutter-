@@ -48,8 +48,6 @@ import 'providers/voice_room_audio_providers.dart';
 import 'providers/voice_room_diagnostic_provider.dart';
 import 'providers/voice_room_sse_provider.dart';
 import 'providers/voice_room_ui_provider.dart';
-import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
-import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'sheets/voice_room_speak_queue_sheet.dart';
 import 'sheets/voice_room_management_panel.dart';
 import 'sheets/voice_room_menu_sheet.dart';
@@ -73,8 +71,6 @@ import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_dj_music_slide_panel.dart';
-import 'widgets/voice_room/voice_room_join_entry_strip.dart';
-import 'widgets/voice_room/voice_room_staff_join_banner.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import '../video/presentation/widgets/room_video_overlay.dart';
@@ -109,8 +105,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _leaving = false;
   var _musicSearchOpen = false;
   LiveGiftEvent? _fullscreenGift;
-  var _showVipEntrance = false;
-  var _vipEntrancePlayed = false;
   String? _shownPkInviteId;
   final _messageFocus = FocusNode();
   /// Riverpod oturum anahtarı — metadata değişince provider dispose olmasın.
@@ -524,7 +518,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         });
       }
       _startGiftRealtime();
-      _maybeShowVipEntrance(user);
       unawaited(_connectPkBattle());
       return;
     }
@@ -571,7 +564,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         _startGiftRealtime();
         ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(true);
         _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
-        _maybeShowVipEntrance(user);
         unawaited(_connectPkBattle());
         // Agora kamera yalnızca kullanıcı açtığında — oda girişinde otomatik değil.
       }
@@ -585,7 +577,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           _audioError = msg;
         });
         _startGiftRealtime();
-        _maybeShowVipEntrance(user);
         unawaited(_connectPkBattle());
       }
     } finally {
@@ -625,14 +616,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       alternateRoomId: r.slug != roomKey ? r.slug : null,
       battleId: battle.id,
     );
-  }
-
-  void _maybeShowVipEntrance(UserEntity user) {
-    if (_vipEntrancePlayed || !mounted) return;
-    final tier = ref.read(vipTierProvider);
-    if (!tier.hasEntranceFx) return;
-    _vipEntrancePlayed = true;
-    setState(() => _showVipEntrance = true);
   }
 
   Future<void> _leaveRoom() async {
@@ -1612,13 +1595,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           selfUserId: user?.id,
                           remoteAgoraUid: _agora.remoteUid,
                         ),
-                        VoiceRoomStaffJoinBanner(
-                          enterBanner: live.enterBanner,
-                        ),
-                        VoiceRoomJoinEntryStrip(
-                          events: live.realtimeEvents,
-                          messages: live.messages,
-                        ),
                         Consumer(
                           builder: (context, ref, _) {
                             final ann = ref.watch(
@@ -1681,7 +1657,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                     Expanded(
                                       child: VoiceWebChatOverlay(
                                         messages: chat.messages,
-                                        hideOfficialJoinInChat: true,
+                                        hideOfficialJoinInChat: false,
                                         maxHeight: chatH,
                                         embedded: true,
                                         welcomeMarquee: null,
@@ -1800,16 +1776,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
             ),
             SafePremiumGiftFullscreenOverlay(event: _fullscreenGift),
-            if (_showVipEntrance && user != null)
-              VipEntranceOverlay(
-                tier: ref.watch(vipTierProvider),
-                userName: user.displayName?.trim().isNotEmpty == true
-                    ? user.displayName!.trim()
-                    : user.username,
-                onFinished: () {
-                  if (mounted) setState(() => _showVipEntrance = false);
-                },
-              ),
             if (!keyboardOpen)
               VoiceDjMusicSlidePanel(
                 room: room,

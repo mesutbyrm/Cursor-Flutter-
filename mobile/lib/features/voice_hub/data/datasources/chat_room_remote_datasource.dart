@@ -281,7 +281,7 @@ class ChatRoomRemoteDataSource {
       try {
         await _dio.safePost<dynamic>(
           presencePath(key),
-          data: jsonEncode({'type': 'leave'}),
+          data: jsonEncode({'action': 'leave'}),
           options: Options(contentType: 'application/json'),
         );
         return;
@@ -291,7 +291,7 @@ class ChatRoomRemoteDataSource {
       try {
         await _dio.safePost<dynamic>(
           presencePath(key),
-          data: jsonEncode({'action': 'leave'}),
+          data: jsonEncode({'type': 'leave'}),
           options: Options(contentType: 'application/json'),
         );
       } catch (_) {}
@@ -452,11 +452,6 @@ class ChatRoomRemoteDataSource {
       if (seen.add(trimmed)) urls.add(trimmed);
     }
 
-    // Web ile aynı yerleşik arka planlar her zaman listede.
-    for (final url in VoiceRoomBackgroundCatalog.siteDefaults()) {
-      addUrl(url);
-    }
-
     try {
       final res = await _dio.safeGet<dynamic>(
         backgroundsPath(),
@@ -468,6 +463,12 @@ class ChatRoomRemoteDataSource {
         addUrl(url);
       }
     } catch (_) {}
+    if (urls.isNotEmpty) return urls;
+
+    // Backend boş/erişilemezse web ile aynı yerleşik arka planlar fallback.
+    for (final url in VoiceRoomBackgroundCatalog.siteDefaults()) {
+      addUrl(url);
+    }
     return urls;
   }
 
@@ -1794,6 +1795,7 @@ class ChatRoomRemoteDataSource {
     String? userId,
   }) async {
     final body = jsonEncode({
+      'action': 'take',
       'seatIndex': seatIndex,
       if (userId != null && userId.isNotEmpty) 'userId': userId,
     });

@@ -144,48 +144,20 @@ abstract final class VoiceRoomSeatPriority {
     required List<ChatRoomPresence> presence,
     required VoiceRoomEntity room,
   }) {
+    if (room.id.trim().isEmpty && room.slug.trim().isEmpty) return null;
     final occupied = <int, ChatRoomPresence>{
       for (final p in presence)
         if (p.seatIndex != null) p.seatIndex!: p,
     };
 
-    // 1) Ayrılmış koltuk: admin → 11, kurucu → 1 (boşsa ya da alt rütbeyi
-    //    devralarak). Doluysa aşağıdaki boş koltuk taramasına düşülür ki
-    //    "yetkili girer girmez BOŞ koltuğa otursun" garanti olsun.
-    if (myTier >= tierAdmin) {
-      final s = _takeSeat(11, myTier, occupied, room);
-      if (s != null) return s;
-    } else if (myTier >= tierFounder) {
-      final s = _takeSeat(1, myTier, occupied, room);
-      if (s != null) return s;
-    }
-
-    // 2) Herhangi bir BOŞ koltuk (2-10) — kimseyi kaldırmadan hemen otur.
-    for (var seat = 2; seat <= 10; seat++) {
+    // En düşük numaralı boş koltuk — backend transaction/lock ile doğrular.
+    for (var seat = 1; seat <= 10; seat++) {
       if (!occupied.containsKey(seat)) return seat;
     }
-
-    // 3) Admin için ayrılmış koltuk (1) boşsa onu da kullan.
-    if (myTier >= tierAdmin && !occupied.containsKey(1)) return 1;
-
-    // 4) Son çare: alt rütbeli birini devralarak koltuk aç (2-10).
-    for (var seat = 2; seat <= 10; seat++) {
-      final picked = _takeSeat(seat, myTier, occupied, room);
-      if (picked != null) return picked;
+    // Admin koltuğu görünürse ve boşsa en son seçenek olarak kullanılabilir.
+    if (myTier >= tierAdmin && !occupied.containsKey(11)) {
+      return 11;
     }
-    return null;
-  }
-
-  static int? _takeSeat(
-    int seat,
-    int myTier,
-    Map<int, ChatRoomPresence> occupied,
-    VoiceRoomEntity room,
-  ) {
-    if (seat == 11 && myTier < tierAdmin) return null;
-    final occupant = occupied[seat];
-    if (occupant == null) return seat;
-    if (myTier > forPresence(occupant, room)) return seat;
     return null;
   }
 }
