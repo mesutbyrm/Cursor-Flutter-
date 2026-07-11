@@ -184,7 +184,6 @@ void main() {
     });
 
     test('does not treat top-level userId as clientId on teller push', () {
-      const clientId = 'client_help';
       const tellerUserId = 'teller_ilham';
       final invite = parsePsychicIncomingLoose({
         'type': 'psychic_request_created',

@@ -158,51 +158,6 @@ class VoiceWebRoomHeader extends ConsumerWidget {
   }
 }
 
-class _OnlineChip extends StatelessWidget {
-  const _OnlineChip({required this.count, this.onTap});
-
-  final int count;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.45),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.people_alt_rounded,
-                size: 16,
-                color: count > 0 ? AppThemeColors.onlineGreen : context.colors.onSurfaceMuted,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '$count',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: count > 0 ? AppThemeColors.onlineGreen : context.colors.onSurfaceMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _RoomAvatarRing extends StatelessWidget {
   const _RoomAvatarRing({this.url, required this.fallback});
 

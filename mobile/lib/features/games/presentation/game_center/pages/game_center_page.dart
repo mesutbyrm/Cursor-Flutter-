@@ -140,39 +140,6 @@ class GameCenterPage extends ConsumerWidget {
       ),
     );
   }
-
-  Future<void> _openGame(
-    BuildContext context,
-    WidgetRef ref,
-    GameCenterItem item,
-  ) async {
-    if (item.jetonCost > 0) {
-      final balance = await ref.read(gameCenterJetonProvider.future);
-      if (!context.mounted) return;
-      if (balance < item.jetonCost) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Yetersiz jeton (${item.jetonCost} gerekli)'),
-            action: SnackBarAction(
-              label: 'Yükle',
-              onPressed: () => context.push('/jeton-store'),
-            ),
-          ),
-        );
-        return;
-      }
-    }
-    if (!context.mounted) return;
-    context.push(item.route);
-  }
-
-  Future<void> _openLiveGame(
-    BuildContext context,
-    WidgetRef ref,
-    GameCenterItem item,
-  ) async {
-    await _openGame(context, ref, item);
-  }
 }
 
 class _LeaderboardTeaser extends StatelessWidget {

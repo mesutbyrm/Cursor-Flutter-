@@ -30,7 +30,6 @@ import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_audio_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
-import '../../domain/voice_music_sync.dart';
 import '../utils/voice_room_permissions.dart';
 import '../utils/voice_room_speak_access.dart';
 import '../theme/voice_room_tokens.dart';
@@ -44,7 +43,6 @@ import 'voice_room_basic_premium_section.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
 import '../sheets/voice_room_management_panel.dart';
-import '../utils/voice_music_access.dart';
 import '../widgets/premium_2026/voice_live_action_bar_2026.dart';
 import '../widgets/premium_2026/voice_live_header_2026.dart';
 import '../widgets/premium_2026/voice_online_gift_box.dart';
@@ -75,7 +73,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   String? _loginError;
   var _isMicMuted = true;
   var _leaving = false;
-  final _istekCtrl = TextEditingController();
   final _messageCtrl = TextEditingController();
   StreamSubscription<LiveGiftEvent>? _giftSub;
   LiveGiftEvent? _fullscreenGift;
@@ -118,7 +115,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
   @override
   void dispose() {
-    _istekCtrl.dispose();
     _messageCtrl.dispose();
     _giftSub?.cancel();
     ref.read(voiceRoomGiftRealtimeProvider).stop();
@@ -146,14 +142,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     } catch (_) {
       return ref.read(authControllerProvider).valueOrNull;
     }
-  }
-
-  bool _isRoomOwner(UserEntity user, VoiceRoomEntity room) {
-    final oid = room.ownerId;
-    if (oid != null && oid.isNotEmpty && oid == user.id) return true;
-    final uname = user.username.trim().toLowerCase();
-    final slug = room.slug.trim().toLowerCase();
-    return uname.isNotEmpty && slug == uname;
   }
 
   void _startPremiumRealtime(UserEntity? user) {
@@ -204,26 +192,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     }
 
     try {
-      final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
-      ChatRoomPresence? selfPresence;
-      for (final p in live.presence) {
-        if (p.id == user.id) {
-          selfPresence = p;
-          break;
-        }
-      }
-      final perms = VoiceRoomPermissions.forUser(
-        user: user,
-        room: room,
-        selfPresence: selfPresence,
-        server: live.serverPermissions,
-      );
-      final canSpeak = VoiceRoomSpeakAccess.canSpeak(
-        user: user,
-        perms: perms,
-        room: room,
-        presence: live.presence,
-      );
       final roomId = room.apiRoomKey;
       await _audio!.join(
         roomId: roomId,
@@ -333,7 +301,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
     final room = _effectiveRoom();
     final user = ref.read(authControllerProvider).valueOrNull;
-    final myId = user?.id?.trim() ?? '';
+    final myId = user?.id.trim() ?? '';
     final ownerId = room.ownerId?.trim() ?? '';
     if (myId.isNotEmpty && ownerId.isNotEmpty && myId == ownerId) {
       final receiverIsOwner = event.receiverName.trim().toLowerCase() ==
@@ -553,19 +521,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         isDj;
   }
 
-  Future<void> _sendIstek() async {
-    final text = _istekCtrl.text.trim();
-    if (text.isEmpty) {
-      _istekCtrl.text = '!istek ';
-      return;
-    }
-    final cmd = VoiceMusicSync.isIstekCommand(text) ? text : '!istek $text';
-    await ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).sendMessage(cmd);
-    if (!VoiceMusicSync.isIstekCommand(text)) {
-      _istekCtrl.clear();
-    }
-  }
-
   VoiceRoomPermissions _permissions(
     UserEntity? user,
     VoiceRoomLiveState live,
@@ -600,11 +555,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final perms = _permissions(user, live, room);
     final canControlMusic = _canControlMusic(live, room, user, perms);
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
-    final canCloseMusic = VoiceMusicAccess.canStopMusic(
-      user: user,
-      perms: perms,
-      nowPlaying: live.dj.nowPlaying,
-    );
     final flightQueue = ref.watch(voiceGiftFlightQueueProvider);
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
     final jeton = ref.watch(

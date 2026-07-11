@@ -29,9 +29,6 @@ import 'package:flutter_test/flutter_test.dart';
 const _runGrayScreenDiag =
     bool.fromEnvironment('GRAY_SCREEN_DIAG', defaultValue: false);
 
-const _skipReason =
-    'Manuel teşhis: flutter test test/gray_screen_diagnostic_test.dart --dart-define=GRAY_SCREEN_DIAG=true';
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 

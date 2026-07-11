@@ -26,7 +26,6 @@ class VoiceAgoraEngine {
   var _publishMic = false;
   String _channelId = '';
   AgoraCredentials? _lastCredentials;
-  Future<void>? _joinInFlight;
 
   bool get isSupported => !kIsWeb;
   bool get inChannel => _inChannel;
@@ -394,7 +393,6 @@ class VoiceAgoraEngine {
     _publishMic = false;
     _channelId = '';
     _lastCredentials = null;
-    _joinInFlight = null;
     VoiceRoomDebugLog.log('audio.agora.left', {});
   }
 

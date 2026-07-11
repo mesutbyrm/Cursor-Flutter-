@@ -37,7 +37,6 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     with AutomaticKeepAliveClientMixin {
   Timer? _presenceTimer;
   Timer? _liveStreamsTimer;
-  var _presenceReady = false;
   var _liveStreamsReady = false;
   var _prefetchedRoomImages = false;
 
@@ -50,7 +49,6 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     _presenceTimer = Timer(LazyLoadPerf.voiceRoomPresence, () {
       if (mounted) {
         ref.read(voiceRoomsPresenceProvider);
-        setState(() => _presenceReady = true);
       }
     });
     _liveStreamsTimer = Timer(LazyLoadPerf.voiceRoomLiveStreams, () {

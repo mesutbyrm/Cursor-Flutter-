@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,7 +27,6 @@ import 'providers/voice_gift_combo_tracker.dart';
 import 'providers/voice_gift_leaderboard_provider.dart';
 import '../../auth/domain/entities/user_entity.dart';
 import '../../agora/presentation/agora_room_manager.dart';
-import '../../agora/presentation/providers/agora_providers.dart';
 import '../domain/entities/chat_room_dj_state.dart';
 import '../domain/entities/chat_room_message.dart';
 import '../domain/entities/chat_room_presence.dart';
@@ -54,7 +52,6 @@ import 'sheets/voice_room_menu_sheet.dart';
 import 'sheets/voice_room_moderation_sheet.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'utils/voice_music_access.dart';
-import '../../profile/presentation/providers/profile_providers.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
 import 'utils/voice_room_speak_access.dart';
@@ -74,7 +71,6 @@ import 'widgets/voice_room/voice_dj_music_slide_panel.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import '../video/presentation/widgets/room_video_overlay.dart';
-import '../video/presentation/room_video_controller.dart';
 
 /// Sesli sohbet odası — Agora (App ID only) + canlifal.com chat API.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
@@ -168,31 +164,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         });
       }
     });
-  }
-
-  Future<void> _joinAgoraVideo({
-    required VoiceRoomEntity room,
-    required UserEntity user,
-    required bool publishVideo,
-  }) async {
-    if (!_agora.isSupported) return;
-    try {
-      final cred = await ref.read(agoraRemoteProvider).fetchVoiceRoomToken(
-            roomId: room.apiRoomKey,
-            role: publishVideo ? 'host' : 'audience',
-          );
-      await _agora.joinVoiceRoomVideo(
-        credentials: cred,
-        publishVideo: publishVideo,
-      );
-      if (mounted) setState(() => _agoraReady = true);
-      VoiceRoomDebugLog.log('agora.voice_room.joined', {
-        'channel': cred.channelName,
-        'publishVideo': publishVideo,
-      });
-    } catch (e) {
-      VoiceRoomDebugLog.log('agora.voice_room.fail', {'error': '$e'});
-    }
   }
 
   VoiceRoomEntity _roomSynced(List<VoiceRoomEntity>? rooms) {
@@ -412,7 +383,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     final room = _effectiveRoom();
     final user = ref.read(authControllerProvider).valueOrNull;
-    final myId = user?.id?.trim() ?? '';
+    final myId = user?.id.trim() ?? '';
     final ownerId = room.ownerId?.trim() ?? '';
     if (myId.isNotEmpty && ownerId.isNotEmpty && myId == ownerId) {
       final receiverIsOwner = event.receiverName.trim().toLowerCase() ==
@@ -523,26 +494,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
 
     try {
-      final liveForPerms = ref.read(voiceRoomLiveProvider(_liveRoomKey));
-      ChatRoomPresence? selfPresence;
-      for (final p in liveForPerms.presence) {
-        if (p.id == user.id) {
-          selfPresence = p;
-          break;
-        }
-      }
-      final perms = VoiceRoomPermissions.forUser(
-        user: user,
-        room: room,
-        selfPresence: selfPresence,
-        server: liveForPerms.serverPermissions,
-      );
-      final canSpeak = VoiceRoomSpeakAccess.canSpeak(
-        user: user,
-        perms: perms,
-        room: room,
-        presence: liveForPerms.presence,
-      );
       final roomId = room.apiRoomKey;
       await _audio!.join(
         roomId: roomId,
@@ -1134,8 +1085,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       perms: perms,
       nowPlaying: live.dj.nowPlaying,
     );
-    final videoState = ref.watch(roomVideoControllerProvider(_liveRoomKey));
-    final videoActive = videoState.hasActiveVideo;
     final speakingIds = <String>{
       for (final p in live.presence)
         if (p.isSpeaking) p.id,
@@ -1151,10 +1100,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             live.dj.musicQueue.isNotEmpty) &&
         !musicSession.dismissed &&
         !musicSession.userDismissedPlayer;
-    final showDjSlidePanel = VoiceMusicAccess.canShowDjMusicPanel(
-      perms: perms,
-      isDj: isDj,
-    );
     final duyuru = ((room.descTr ?? room.rulesTr)?.trim().isNotEmpty == true)
         ? (room.descTr ?? room.rulesTr)!.trim()
         : 'Sohbet odasına hoş geldiniz. Saygılı olun, keyifli sohbetler!';

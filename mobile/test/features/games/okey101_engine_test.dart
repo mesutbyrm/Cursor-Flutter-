@@ -9,7 +9,7 @@ void main() {
     state = startGame(state, 'host');
 
     final host = state.players.first;
-    final okey = state.okey!;
+    expect(state.okey, isNotNull);
     final hand = [
       const Okey101Tile(id: 'r1', color: OkeyColor.red, value: 10),
       const Okey101Tile(id: 'r2', color: OkeyColor.red, value: 11),

@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/voice_staff_rank.dart';
+import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/token_storage.dart';
@@ -777,7 +779,7 @@ class VoiceRoomLiveController
     if (videoId != null && videoId.isNotEmpty) return true;
     if (sync?.currentVideoId?.trim().isNotEmpty == true) return true;
     if (dj.nowPlaying?.resolvedVideoId?.trim().isNotEmpty == true) return true;
-    if (dj.nowPlaying?.youtubeUrl?.trim().isNotEmpty == true) return true;
+    if (dj.nowPlaying?.youtubeUrl.trim().isNotEmpty == true) return true;
     if (sync?.streamUrl?.trim().isNotEmpty == true) return true;
     if (dj.musicUrl?.trim().isNotEmpty == true) return true;
     return false;
@@ -872,10 +874,22 @@ class VoiceRoomLiveController
       'refs': hub.voiceRoomRefCount(_roomKey),
     });
     final giftsRemote = ref.read(liveGiftsRemoteProvider);
+    final refreshDio = Dio(
+      BaseOptions(
+        baseUrl: Env.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 20),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
     sse
         .connect(
           roomId: _roomKey,
           accessToken: storage.readAccess,
+          refreshTokens: () => tryRefreshAccessToken(refreshDio, storage),
           onConnected: () {
             if (!state.sseConnected) {
               state = state.copyWith(sseConnected: true);
@@ -1802,22 +1816,6 @@ class VoiceRoomLiveController
     state = state.copyWith(dj: applied);
   }
 
-  /// SSE `dj` — VoiceRoomDjPlayer (just_audio) üzerinden tek oynatıcı.
-  Future<String?> _playDjInBackgroundAndReport(
-    ChatRoomDjState dj, {
-    RoomPlaybackSync? sync,
-  }) async {
-    await _playDjInBackground(dj, sync: sync);
-    final player = ref.read(voiceRoomDjPlayerProvider);
-    if (dj.playing &&
-        !player.playback.value.playing &&
-        player.diagnostics.value.lastPhase == 'sync_verify_failed') {
-      return state.error ??
-          'Şarkı oynatılamadı. Bağlantınızı kontrol edip tekrar deneyin.';
-    }
-    return state.error;
-  }
-
   void clearPendingMusicSearch() {
     if (state.pendingMusicSearchQuery != null) {
       state = state.copyWith(clearPendingMusicSearch: true);
@@ -2188,7 +2186,6 @@ class VoiceRoomLiveController
     if (hasYoutube &&
         roomVideo.hasActiveVideo &&
         roomVideo.isPlaying &&
-        videoId != null &&
         roomVideo.videoId == videoId &&
         effectiveDj.nowPlaying != null) {
       _lastDjPlaybackSignature = sig;
@@ -2344,213 +2341,6 @@ class VoiceRoomLiveController
     return ChatRoomUserRef(id: 'system', name: m.group(1)!.trim());
   }
 
-  MusicQueueItem _musicItemWithRequester(MusicQueueItem item, UserEntity user) {
-    if (item.requestedBy != null && item.requestedBy!.id.isNotEmpty) {
-      return item;
-    }
-    return MusicQueueItem(
-      id: item.id,
-      title: item.title,
-      youtubeUrl: item.youtubeUrl,
-      createdAt: item.createdAt,
-      thumbUrl: item.thumbUrl,
-      requestedBy: ChatRoomUserRef(
-        id: user.id,
-        name: user.display,
-        nickname: user.username,
-        image: user.avatarUrl,
-      ),
-      giftTo: item.giftTo,
-      note: item.note,
-      uploader: item.uploader,
-      duration: item.duration,
-    );
-  }
-
-  Future<String?> _submitMusicRequestByTitle(
-    String title, {
-    bool priority = true,
-    bool skipPayment = false,
-  }) async {
-    final q = title.trim();
-    if (q.length < 2) return 'Şarkı adı çok kısa.';
-
-    final user = ref.read(authControllerProvider).valueOrNull;
-    final perms = _permissions();
-    if (!skipPayment) {
-      final jeton = VoiceMusicAccess.jetonFromBalances(
-        ref.read(walletBalancesProvider).valueOrNull,
-      );
-      if (!VoiceMusicAccess.canRequestSongs(
-        dj: state.dj,
-        perms: perms,
-        jetonBalance: jeton,
-      )) {
-        return 'Şarkı isteği gönderebilmek için en az ${state.dj.musicRequestCost} jetona sahip olmalısınız.';
-      }
-    }
-
-    try {
-      ({
-        MusicQueueItem? item,
-        List<MusicQueueItem> queue,
-        int? newBalance,
-        int? queuePosition,
-        String? musicUrl,
-        bool playing,
-      }) result;
-
-      if (skipPayment) {
-        final hits = await ref.read(chatRoomRemoteProvider).searchYoutube(q);
-        if (hits.isEmpty) {
-          return '«$q» için sonuç bulunamadı.';
-        }
-        final hit = hits.first;
-        result = await ref
-            .read(chatRoomRemoteProvider)
-            .requestMusic(
-              roomKey: _roomKey,
-              alternateKey: _musicAlternateKey,
-              title: hit.title,
-              youtubeUrl: hit.url,
-              thumbUrl: hit.thumbUrl,
-              videoId: hit.videoId,
-              duration: hit.duration,
-              priority: priority,
-              skipPayment: true,
-              withVideo: false,
-            )
-            .timeout(
-              const Duration(seconds: 45),
-              onTimeout: () => throw TimeoutException('Şarkı isteği zaman aşımı'),
-            );
-      } else {
-        try {
-          result = await ref
-              .read(chatRoomRemoteProvider)
-              .requestMusicByQuery(
-                roomKey: _roomKey,
-                alternateKey: _musicAlternateKey,
-                query: q,
-              )
-              .timeout(
-                const Duration(seconds: 45),
-                onTimeout: () =>
-                    throw TimeoutException('Şarkı isteği zaman aşımı'),
-              );
-        } on ApiException catch (e) {
-          if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-          final hits = await ref.read(chatRoomRemoteProvider).searchYoutube(q);
-          if (hits.isEmpty) {
-            return '«$q» için sonuç bulunamadı.';
-          }
-          final hit = hits.first;
-          final err = await requestMusic(
-            title: hit.title,
-            youtubeUrl: hit.url,
-            thumbUrl: hit.thumbUrl,
-            videoId: hit.videoId,
-            duration: hit.duration,
-            priority: priority,
-          );
-          if (err != null) return err;
-          await _syncMusicFromServerIfNeeded(force: true);
-          var dj = _djWithQueuePlaybackFallback(
-            state.dj.copyWith(playing: true),
-          );
-          if (user != null && dj.nowPlaying != null) {
-            dj = dj.copyWith(
-              nowPlaying: _musicItemWithRequester(dj.nowPlaying!, user),
-            );
-          }
-          _prefetchYoutubePlayback(dj);
-          state = state.copyWith(dj: dj);
-          await _playDjInBackground(dj);
-          return null;
-        }
-      }
-
-      invalidateWalletCacheFromRef(ref);
-
-      var queue = result.queue;
-      var nowPlaying =
-          result.item ?? (queue.isNotEmpty ? queue.first : null);
-      if (user != null && nowPlaying != null) {
-        nowPlaying = _musicItemWithRequester(nowPlaying, user);
-        queue = queue
-            .map((e) => e.id == nowPlaying!.id ? nowPlaying : e)
-            .toList();
-      }
-      if (skipPayment && nowPlaying != null) {
-        nowPlaying = nowPlaying.asVideoRequest();
-        queue = queue
-            .map((e) => e.id == nowPlaying!.id ? nowPlaying : e)
-            .toList();
-      }
-
-      final shouldPlay = result.playing ||
-          result.queuePosition == 1 ||
-          queue.isNotEmpty;
-
-      var dj = state.dj.copyWith(
-        musicQueue: queue,
-        nowPlaying: nowPlaying,
-        playing: shouldPlay,
-        musicUrl: result.musicUrl ?? nowPlaying?.youtubeUrl,
-      );
-      dj = _djWithQueuePlaybackFallback(dj);
-      if (dj.musicUrl == null || dj.musicUrl!.isEmpty) {
-        final yt = dj.nowPlaying?.youtubeUrl ?? '';
-        if (yt.isNotEmpty) {
-          dj = dj.copyWith(musicUrl: yt);
-        }
-      }
-      _prefetchYoutubePlayback(dj);
-      _lastDjPlaybackSignature = '';
-      state = state.copyWith(dj: dj);
-      if (shouldPlay) {
-        await _playDjInBackground(dj);
-      }
-      unawaited(_syncMusicFromServerIfNeeded(force: true));
-      return null;
-    } on TimeoutException {
-      return await _recoverMusicRequestAfterTimeout(title);
-    } on ApiException catch (e) {
-      if (e.statusCode == 402 ||
-          e.message.toLowerCase().contains('jeton')) {
-        return 'Şarkı isteği gönderebilmek için en az ${state.dj.musicRequestCost} jetona sahip olmalısınız.';
-      }
-      return e.message;
-    } catch (e) {
-      if (e is TimeoutException) {
-        return await _recoverMusicRequestAfterTimeout(title);
-      }
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> _recoverMusicRequestAfterTimeout(String title) async {
-    final needle = title.trim().toLowerCase();
-    if (needle.isEmpty) {
-      return 'İstek zaman aşımına uğradı. Bağlantınızı kontrol edip tekrar deneyin.';
-    }
-    try {
-      await _syncMusicFromServerIfNeeded(force: true);
-    } catch (_) {}
-    final haystack = [
-      state.dj.nowPlaying?.title ?? '',
-      ...state.dj.musicQueue.map((e) => e.title),
-    ].join(' ').toLowerCase();
-    if (haystack.contains(needle) ||
-        state.dj.musicQueue.any(
-          (e) => e.title.toLowerCase().contains(needle),
-        )) {
-      await _playDjInBackground(state.dj);
-      _showMusicRequestFlashLine('✅ «$title» kuyruğa eklendi');
-      return null;
-    }
-    return 'Sunucu yanıt vermedi; bağlantınızı kontrol edip tekrar deneyin.';
-  }
 
   VoiceRoomPermissions _permissions() {
     final user = ref.read(authControllerProvider).valueOrNull;

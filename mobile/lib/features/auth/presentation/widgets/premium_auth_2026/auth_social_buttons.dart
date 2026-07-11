@@ -72,13 +72,11 @@ class _AuthGlassSocialButton extends StatelessWidget {
     required this.icon,
     required this.label,
     this.onPressed,
-    this.trailing,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback? onPressed;
-  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +96,6 @@ class _AuthGlassSocialButton extends StatelessWidget {
             ),
           ),
         ),
-        ?trailing,
       ],
     );
 

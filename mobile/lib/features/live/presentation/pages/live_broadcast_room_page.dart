@@ -1670,6 +1670,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               key: _heartsKey,
               burstToken: interaction.heartBurstToken,
               onDoubleTap: _onDoubleTapHeart,
+              onTripleTap: _onTripleTapSuperLike,
+              onLongPress: _onLongPressApplause,
             ),
             LiveInteractionEffectsOverlay(
               burstToken: interaction.heartBurstToken,
