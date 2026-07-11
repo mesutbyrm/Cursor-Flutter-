@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.10+14 (2026-07-11)
+
+### Üyelikler — pixel-perfect sayfa
+- `/premium-membership` Canlifal koyu/neon/glass Üyelikler sayfasına taşındı (AppBar, yatay kademe kartları, özellik tablosu, yükselt banner, jeton paketleri, ortak avantajlar, destek)
+- Fiyatlar: Basic ₺500 / Gold ₺1000 / Premium ₺1500 / Diamond ₺2500 (aylık)
+- Aylık jeton: 250 / 1500 / 3500 / 7500 — jeton alımında indirim yok
+- Gold varsayılan seçili; seçili kartta altın border + glow + scale
+- Ana sayfa Gold Üyelikler satırı yeni TL fiyatlarını gösterir
+
 ## 1.0.9+13 (2026-07-10)
 
 ### Kısa videolar — açılış hızı
