@@ -36,11 +36,13 @@ final userDailyTasksProvider =
 });
 
 final userLevelProvider = FutureProvider<UserLevelEntity>((ref) async {
+  ref.keepAlive();
   return ref.watch(dailyTasksRemoteProvider).fetchUserLevel();
 });
 
 final userAchievementsProvider =
     FutureProvider<List<AchievementEntity>>((ref) async {
+  ref.keepAlive();
   return ref.watch(achievementsRemoteProvider).fetchAchievements();
 });
 
@@ -161,6 +163,7 @@ final profileStatsProvider = FutureProvider<ProfileStatsEntity>((ref) async {
 
 final giftsReceivedSummaryProvider =
     FutureProvider<List<GiftReceivedSummaryEntity>>((ref) async {
+  ref.keepAlive();
   return ref.watch(profileRepositoryProvider).giftsReceivedSummary();
 });
 

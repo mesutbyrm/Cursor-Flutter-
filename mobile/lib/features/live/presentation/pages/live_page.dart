@@ -39,11 +39,11 @@ class _LivePageState extends ConsumerState<LivePage>
     super.initState();
     _tab = TabController(length: 2, vsync: this);
     _liveScroll.addListener(_onLiveScroll);
-    _listRefresh = Timer.periodic(const Duration(seconds: 12), (_) {
+    _listRefresh = Timer.periodic(const Duration(seconds: 30), (_) {
       if (!mounted || _tab.index != 0) return;
       ref.read(liveStreamsListNotifierProvider.notifier).refresh();
     });
-    _voiceListRefresh = Timer.periodic(const Duration(seconds: 30), (_) {
+    _voiceListRefresh = Timer.periodic(const Duration(seconds: 60), (_) {
       if (!mounted || _tab.index != 1) return;
       ref.invalidate(voiceRoomsProvider);
     });

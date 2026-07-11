@@ -43,7 +43,7 @@ final voiceRoomsProvider = FutureProvider<List<VoiceRoomEntity>>((ref) async {
 final voiceRoomByIdProvider =
     FutureProvider.autoDispose.family<VoiceRoomEntity?, String>((ref, id) async {
   final needle = id.trim().toLowerCase();
-  final cached = ref.watch(voiceRoomsProvider).valueOrNull;
+  final cached = ref.read(voiceRoomsProvider).valueOrNull;
   if (cached != null) {
     String norm(String s) =>
         s.trim().toLowerCase().replaceAll(RegExp(r'-+$'), '');

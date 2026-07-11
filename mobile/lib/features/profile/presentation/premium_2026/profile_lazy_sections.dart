@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/performance/lazy_screen_section.dart';
-import '../../../../core/performance/profile_load_perf.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../auth/domain/entities/user_entity.dart';
@@ -170,9 +169,11 @@ class ProfileLazyContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ProfileLoadPerf.prefetchOnOpen(ref, userId);
-    // ProfileContentSection — opak kartlar, RepaintBoundary yok.
-    return ProfileContentSection(userId: userId);
+    return LazyScreenSection(
+      delay: LazyLoadPerf.profileContent,
+      repaintIsolate: false,
+      child: ProfileContentSection(userId: userId),
+    );
   }
 }
 

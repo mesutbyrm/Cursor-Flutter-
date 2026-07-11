@@ -38,7 +38,7 @@ class VoiceRoomsPresenceState {
 }
 
 class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
-  static const maxTrackedRooms = 12;
+  static const maxTrackedRooms = 6;
 
   final Map<String, StreamSubscription<ChatRoomSseEvent>> _subs = {};
 

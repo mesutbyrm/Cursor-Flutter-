@@ -691,7 +691,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       unawaited(ref.read(coBroadcastProvider.notifier).refresh());
       unawaited(ref.read(coBroadcastProvider.notifier).refreshStream(streamId));
       _guestJoinPoll?.cancel();
-      _guestJoinPoll = Timer.periodic(const Duration(seconds: 5), (_) {
+      _guestJoinPoll = Timer.periodic(const Duration(seconds: 8), (_) {
         if (!mounted) return;
         unawaited(
           ref.read(coBroadcastProvider.notifier).refreshStream(streamId),
@@ -699,7 +699,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       });
       unawaited(ref.read(liveFortuneRequestsProvider(streamId).notifier).refresh());
       _fortunePoll?.cancel();
-      _fortunePoll = Timer.periodic(const Duration(seconds: 3), (_) {
+      _fortunePoll = Timer.periodic(const Duration(seconds: 6), (_) {
         if (!mounted) return;
         unawaited(
           ref.read(liveFortuneRequestsProvider(streamId).notifier).refresh(),
@@ -707,7 +707,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       });
     } else {
       _coBroadcastPoll?.cancel();
-      _coBroadcastPoll = Timer.periodic(const Duration(seconds: 4), (_) {
+      _coBroadcastPoll = Timer.periodic(const Duration(seconds: 8), (_) {
         if (!mounted) return;
         unawaited(_syncCoBroadcastGuest(streamId));
       });
@@ -715,7 +715,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
 
     _pkInvitePoll?.cancel();
-    _pkInvitePoll = Timer.periodic(const Duration(seconds: 4), (_) {
+    _pkInvitePoll = Timer.periodic(const Duration(seconds: 6), (_) {
       if (!mounted) return;
       unawaited(_pollPkInvites(streamId));
     });

@@ -75,7 +75,7 @@ class _ProfileRealtimeSyncState extends ConsumerState<ProfileRealtimeSync> {
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 45), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 120), (_) {
       if (!mounted) return;
       _softRefresh();
     });
@@ -88,9 +88,6 @@ class _ProfileRealtimeSyncState extends ConsumerState<ProfileRealtimeSync> {
   }
 
   void _softRefresh() {
-    ref.invalidate(walletBalancesProvider);
-    ref.invalidate(profileStatsProvider);
-    ref.invalidate(userLevelProvider);
     ref.read(walletBalancesProvider.notifier).refresh(force: false);
   }
 
@@ -99,8 +96,6 @@ class _ProfileRealtimeSyncState extends ConsumerState<ProfileRealtimeSync> {
     ref.listen(notificationsUnreadCountProvider, (prev, next) {
       if (_lastNotifCount >= 0 && next != _lastNotifCount) {
         _softRefresh();
-        ref.invalidate(profileExtendedProvider);
-        ref.invalidate(giftsReceivedSummaryProvider);
       }
       _lastNotifCount = next;
     });

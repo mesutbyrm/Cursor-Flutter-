@@ -73,7 +73,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
 
   void _startPolling() {
     _poll?.cancel();
-    _poll = Timer.periodic(const Duration(seconds: 3), (_) => refresh());
+    _poll = Timer.periodic(const Duration(seconds: 5), (_) => refresh());
   }
 
   Future<void> refresh() async {

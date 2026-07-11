@@ -222,6 +222,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     return synced;
   }
 
+  VoiceRoomEntity _displayRoomFromSingle(VoiceRoomEntity? synced) {
+    if (synced != null && synced.apiRoomKey.isNotEmpty) return synced;
+    if (widget.room.apiRoomKey.isNotEmpty) return widget.room;
+    return synced ?? widget.room;
+  }
+
   VoiceRoomEntity _effectiveRoom() {
     return _displayRoom(ref.read(voiceRoomsProvider).valueOrNull);
   }
@@ -1108,7 +1114,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   @override
   Widget build(BuildContext context) {
-    final room = _displayRoom(ref.watch(voiceRoomsProvider).valueOrNull);
+    final roomLookupKey = _liveRoomKey.isNotEmpty
+        ? _liveRoomKey
+        : (widget.room.apiRoomKey.isNotEmpty ? widget.room.apiRoomKey : widget.room.id);
+    final room = _displayRoomFromSingle(
+      ref.watch(voiceRoomByIdProvider(roomLookupKey)).valueOrNull,
+    );
     ref.watch(
       voiceRoomForegroundLifecycleProvider(
         _liveRoomKey.isNotEmpty ? _liveRoomKey : widget.room.id,

@@ -13,7 +13,6 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../fortune/presentation/providers/fortune_access_providers.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
-import '../../../social/presentation/providers/user_social_posts_notifier.dart';
 import '../premium_2026/profile_screen_builder.dart';
 import '../profile_hub/profile_hub_layout.dart';
 import '../providers/profile_hub_providers.dart';
@@ -35,11 +34,6 @@ class ProfilePage extends ConsumerWidget {
       SystemSound.play(SystemSoundType.click);
       await refreshProfileHub(ref, userId: user?.id);
       ref.invalidate(fortuneAccessStateProvider);
-      final userId = ref.read(authControllerProvider).valueOrNull?.id;
-      if (userId != null) {
-        ref.invalidate(userSocialPostsNotifierProvider(userId));
-        await ref.read(userSocialPostsNotifierProvider(userId).future);
-      }
       await ref.read(fortuneAccessStateProvider.future);
     }
 

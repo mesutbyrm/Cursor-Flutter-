@@ -90,7 +90,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       state = state.copyWith(viewerCount: boot[0] as int, clearError: true);
       _mergeMessages(boot[1] as List<LiveStreamChatMessage>);
       _startRealtime(streamId);
-      _poll = Timer.periodic(const Duration(seconds: 12), (_) async {
+      _poll = Timer.periodic(const Duration(seconds: 20), (_) async {
         if (state.streamEnded) return;
         try {
           if (!state.sseConnected) {

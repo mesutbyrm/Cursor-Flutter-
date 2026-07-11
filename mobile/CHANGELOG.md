@@ -3,6 +3,17 @@
 
 ## 1.0.9+13 (2026-07-10)
 
+### Performans — profil / sesli sohbet / canlı yayın
+- Profil ilk açılışta gereksiz sosyal gönderi prefetch’i kaldırıldı ve prefetch 3 dk TTL ile tekilleştirildi
+- Profil alt içerikleri/ayarlar kademeli lazy yüklenir; rozet/seviye/hediye özetleri oturum cache’i kullanır
+- Profil arka plan senkronu 45 sn yerine 120 sn ve yalnız cüzdan odaklı çalışır
+- Hakkımda istatistik kartı artık fal geçmişini ilk boyamada çekmez
+- Sesli oda keşfinde eşzamanlı presence SSE bağlantısı 12’den 6’ya düşürüldü
+- Sesli oda detay sayfası tüm oda listesini izlemek yerine tek oda provider’ını kullanır
+- Canlı yayın/voice liste otomatik yenilemeleri seyrekleştirildi
+- Canlı yayın hediye fallback polling’i 2 sn yerine 15 sn’ye alındı; SSE ana kaynak olarak kalır
+- Canlı yayın oda/PK/fal/çoklu yayın poll aralıkları daha düşük CPU/ağ kullanacak şekilde optimize edildi
+
 ### Mobil profil / bildirim / ödeme / video
 - Admin panelinde hediye yönetimi yönetici hesaplarından erişilebilir hale getirildi
 - İçeriklerim: Fallarım ve Canlı Yayınlarım kartları premium görsel kartlara taşındı; İzlediklerim ve Favoriler sekmeleri görünür akışta

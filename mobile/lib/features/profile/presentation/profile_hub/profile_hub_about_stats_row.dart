@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../domain/entities/profile_extended_entity.dart';
-import '../../../fortune/presentation/providers/fortune_api_providers.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../providers/profile_hub_providers.dart';
 import '../widgets/premium/profile_glass.dart';
@@ -27,7 +26,6 @@ class ProfileHubAboutStatsRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final extAsync = ref.watch(profileExtendedProvider);
     final statsAsync = ref.watch(profileUserStatisticsProvider);
-    final fortuneHistory = ref.watch(fortuneHistoryProvider).valueOrNull ?? const [];
     final ext = extAsync.valueOrNull ?? const ProfileExtendedEntity();
     final detail = statsAsync.valueOrNull ?? const ProfileUserStatisticsEntity();
 
@@ -38,7 +36,6 @@ class ProfileHubAboutStatsRow extends ConsumerWidget {
         final statistics = _StatisticsCard(
           stats: stats,
           detail: detail,
-          fortuneCount: fortuneHistory.length,
           loading: statsAsync.isLoading,
         );
         if (wide) {
@@ -158,13 +155,11 @@ class _StatisticsCard extends StatelessWidget {
   const _StatisticsCard({
     required this.stats,
     required this.detail,
-    required this.fortuneCount,
     required this.loading,
   });
 
   final ProfileStatsEntity stats;
   final ProfileUserStatisticsEntity detail;
-  final int fortuneCount;
   final bool loading;
 
   @override
@@ -173,7 +168,7 @@ class _StatisticsCard extends StatelessWidget {
       (
         icon: Icons.auto_awesome_rounded,
         label: 'Fal Baktırdığım',
-        value: '${detail.fortunesReceived > 0 ? detail.fortunesReceived : fortuneCount}',
+        value: '${detail.fortunesReceived}',
       ),
       (
         icon: Icons.chat_bubble_outline_rounded,
