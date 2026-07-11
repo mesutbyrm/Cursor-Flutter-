@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
@@ -18,7 +19,14 @@ import 'chat_message_actions.dart';
 
 /// WhatsApp tarzı konuşma listesi.
 class ConversationsListSliver extends ConsumerWidget {
-  const ConversationsListSliver({super.key});
+  const ConversationsListSliver({
+    super.key,
+    this.query = '',
+    this.unreadOnly = false,
+  });
+
+  final String query;
+  final bool unreadOnly;
 
   String _formatTime(DateTime? dt) {
     if (dt == null) return '';
@@ -99,8 +107,17 @@ class ConversationsListSliver extends ConsumerWidget {
             ),
           ),
           data: (state) {
-            final items = state.visible;
-            if (state.all.isEmpty) {
+            final q = query.trim().toLowerCase();
+            final filteredAll = state.all.where((c) {
+              if (unreadOnly && c.unreadCount <= 0) return false;
+              if (q.isEmpty) return true;
+              return c.title.toLowerCase().contains(q) ||
+                  (c.subtitle ?? '').toLowerCase().contains(q);
+            }).toList();
+            final items = filteredAll
+                .take(state.visibleCount.clamp(0, filteredAll.length))
+                .toList();
+            if (state.all.isEmpty || items.isEmpty) {
               return SliverFillRemaining(
                 hasScrollBody: false,
                 child: DiscoverEmptyState(
@@ -115,7 +132,7 @@ class ConversationsListSliver extends ConsumerWidget {
             return SliverPadding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 32),
               sliver: SliverList.builder(
-                itemCount: items.length + (state.hasMore ? 1 : 0),
+                itemCount: items.length + (state.hasMore && q.isEmpty ? 1 : 0),
                 itemBuilder: (ctx, i) {
                   if (i >= items.length) {
                     return const Padding(
@@ -132,107 +149,163 @@ class ConversationsListSliver extends ConsumerWidget {
                   final c = items[i];
                   final unread = c.unreadCount > 0;
                   return ScrollPerf.item(
-                    Material(
-                      color: unread
-                          ? const Color(0xFF005C4B).withValues(alpha: 0.12)
-                          : Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          unawaited(
-                            ref
-                                .read(
-                                  chatMessagesListNotifierProvider(c.id).notifier,
-                                )
-                                .refresh(silent: true, forceRefresh: false),
-                          );
-                          context.push('/chat/${c.id}');
-                        },
-                        onLongPress: () => _showPeerActions(context, ref, c),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 12,
-                          ),
-                          child: Row(
-                            children: [
-                              UserAvatar(url: c.avatarUrl, radius: 28),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      c.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontWeight: unread
-                                            ? FontWeight.w800
-                                            : FontWeight.w600,
-                                        fontSize: 18,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      c.subtitle ?? '',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: unread
-                                            ? Colors.white.withValues(alpha: 0.92)
-                                            : Colors.white.withValues(alpha: 0.62),
-                                        fontSize: 16,
-                                        fontWeight: unread
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(22),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(22),
+                          onTap: () {
+                            unawaited(
+                              ref
+                                  .read(
+                                    chatMessagesListNotifierProvider(c.id)
+                                        .notifier,
+                                  )
+                                  .refresh(silent: true, forceRefresh: false),
+                            );
+                            context.push('/chat/${c.id}');
+                          },
+                          onLongPress: () => _showPeerActions(context, ref, c),
+                          child: Ink(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: unread
+                                  ? AppThemeColors.accentPurple
+                                      .withValues(alpha: 0.18)
+                                  : Colors.white.withValues(alpha: 0.045),
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(
+                                color: unread
+                                    ? AppThemeColors.accentPurple
+                                        .withValues(alpha: 0.42)
+                                    : Colors.white.withValues(alpha: 0.07),
                               ),
-                              const SizedBox(width: 8),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    _formatTime(c.lastMessageAt),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: unread
-                                          ? const Color(0xFF25D366)
-                                          : Colors.white.withValues(alpha: 0.5),
-                                      fontWeight: unread
-                                          ? FontWeight.w700
-                                          : FontWeight.w400,
-                                    ),
-                                  ),
-                                  if (unread) ...[
-                                    const SizedBox(height: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 7,
-                                        vertical: 3,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF25D366),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        c.unreadCount > 99
-                                            ? '99+'
-                                            : '${c.unreadCount}',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.white,
+                              boxShadow: unread
+                                  ? AppThemeColors.glowShadow(
+                                      AppThemeColors.accentPurple,
+                                      blur: 14,
+                                    )
+                                  : null,
+                            ),
+                            child: Row(
+                              children: [
+                                Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    UserAvatar(url: c.avatarUrl, radius: 28),
+                                    Positioned(
+                                      right: 0,
+                                      bottom: 1,
+                                      child: Container(
+                                        width: 12,
+                                        height: 12,
+                                        decoration: BoxDecoration(
+                                          color: c.isOnline
+                                              ? const Color(0xFF22C55E)
+                                              : Colors.grey.shade700,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: const Color(0xFF09090B),
+                                            width: 2,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ],
-                                ],
-                              ),
-                            ],
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        c.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontWeight: unread
+                                              ? FontWeight.w900
+                                              : FontWeight.w700,
+                                          fontSize: 16,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        c.subtitle ?? '',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: unread
+                                              ? Colors.white
+                                                  .withValues(alpha: 0.92)
+                                              : Colors.white
+                                                  .withValues(alpha: 0.58),
+                                          fontSize: 13,
+                                          fontWeight: unread
+                                              ? FontWeight.w700
+                                              : FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      _formatTime(c.lastMessageAt),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: unread
+                                            ? AppThemeColors.accentPink
+                                            : Colors.white
+                                                .withValues(alpha: 0.46),
+                                        fontWeight: unread
+                                            ? FontWeight.w800
+                                            : FontWeight.w500,
+                                      ),
+                                    ),
+                                    if (unread) ...[
+                                      const SizedBox(height: 7),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 7,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Color(0xFF7C3AED),
+                                              Color(0xFFFF2D8D),
+                                            ],
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          c.unreadCount > 99
+                                              ? '99+'
+                                              : '${c.unreadCount}',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

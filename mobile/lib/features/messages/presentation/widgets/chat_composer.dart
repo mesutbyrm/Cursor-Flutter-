@@ -2,6 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
+enum DmComposerAction {
+  photo,
+  video,
+  file,
+  location,
+  gift,
+  jeton,
+  fortune,
+  voiceFortune,
+  videoFortune,
+  liveInvite,
+  voiceRoomInvite,
+  gif,
+  sticker,
+}
 
 class ChatComposer extends StatelessWidget {
   const ChatComposer({
@@ -10,12 +25,14 @@ class ChatComposer extends StatelessWidget {
     required this.onSend,
     required this.sending,
     this.onChanged,
+    this.onAction,
   });
 
   final TextEditingController controller;
   final VoidCallback onSend;
   final bool sending;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<DmComposerAction>? onAction;
 
   void _showEmojiPicker(BuildContext context) {
     const emojis = [
@@ -53,19 +70,125 @@ class ChatComposer extends StatelessWidget {
     );
   }
 
+  void _showActionSheet(BuildContext context) {
+    final actions = [
+      (DmComposerAction.photo, Icons.photo_rounded, 'Fotoğraf', AppThemeColors.accentCyan),
+      (DmComposerAction.video, Icons.videocam_rounded, 'Video', AppThemeColors.liveRed),
+      (DmComposerAction.file, Icons.attach_file_rounded, 'Dosya', Colors.white70),
+      (DmComposerAction.location, Icons.location_on_rounded, 'Konum', Colors.greenAccent),
+      (DmComposerAction.gift, Icons.card_giftcard_rounded, 'Hediye', AppThemeColors.coinGold),
+      (DmComposerAction.jeton, Icons.toll_rounded, 'Jeton', AppThemeColors.coinGold),
+      (DmComposerAction.fortune, Icons.auto_awesome_rounded, 'Fal İste', AppThemeColors.accentPurple),
+      (DmComposerAction.voiceFortune, Icons.mic_rounded, 'Sesli Fal', AppThemeColors.accentPink),
+      (DmComposerAction.videoFortune, Icons.video_call_rounded, 'Görüntülü Fal', Colors.cyanAccent),
+      (DmComposerAction.liveInvite, Icons.podcasts_rounded, 'Canlı Yayın', AppThemeColors.liveRed),
+      (DmComposerAction.voiceRoomInvite, Icons.groups_rounded, 'Sesli Oda', AppThemeColors.accentCyan),
+      (DmComposerAction.gif, Icons.gif_box_rounded, 'GIF', Colors.purpleAccent),
+      (DmComposerAction.sticker, Icons.emoji_emotions_rounded, 'Sticker', Colors.orangeAccent),
+    ];
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      showDragHandle: false,
+      builder: (sheet) => SafeArea(
+        child: Container(
+          margin: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 18),
+          decoration: BoxDecoration(
+            color: const Color(0xFF09090B).withValues(alpha: 0.96),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppThemeColors.accentPurple.withValues(alpha: 0.32),
+            ),
+            boxShadow: AppThemeColors.glowShadow(
+              AppThemeColors.accentPurple,
+              blur: 24,
+            ),
+          ),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 0.92,
+            ),
+            itemCount: actions.length,
+            itemBuilder: (context, i) {
+              final a = actions[i];
+              return InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: () {
+                  Navigator.pop(sheet);
+                  onAction?.call(a.$1);
+                },
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.055),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [
+                              a.$4.withValues(alpha: 0.95),
+                              AppThemeColors.accentPurple.withValues(alpha: 0.65),
+                            ],
+                          ),
+                        ),
+                        child: Icon(a.$2, color: Colors.white, size: 22),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        a.$3,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
         child: Row(
           children: [
             IconButton(
-              onPressed: () => _showEmojiPicker(context),
+              onPressed: () => _showActionSheet(context),
               icon: Icon(
                 Icons.add_circle_outline_rounded,
                 color: AppThemeColors.accentPurple.withValues(alpha: 0.9),
+              ),
+            ),
+            IconButton(
+              onPressed: () => _showEmojiPicker(context),
+              icon: const Icon(
+                Icons.emoji_emotions_outlined,
+                color: Colors.white70,
               ),
             ),
             Expanded(
@@ -86,19 +209,19 @@ class ChatComposer extends StatelessWidget {
                   filled: true,
                   fillColor: Colors.white.withValues(alpha: 0.06),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(22),
                     borderSide: BorderSide(
                       color: AppThemeColors.accentPurple.withValues(alpha: 0.3),
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(22),
                     borderSide: BorderSide(
                       color: AppThemeColors.accentPurple.withValues(alpha: 0.25),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(22),
                     borderSide: const BorderSide(color: AppThemeColors.accentPink),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
@@ -109,7 +232,15 @@ class ChatComposer extends StatelessWidget {
                 onSubmitted: (_) => onSend(),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
+            IconButton.filled(
+              onPressed: () => onAction?.call(DmComposerAction.voiceFortune),
+              style: IconButton.styleFrom(
+                backgroundColor: AppThemeColors.accentPurple.withValues(alpha: 0.72),
+              ),
+              icon: const Icon(Icons.mic_rounded, color: Colors.white),
+            ),
+            const SizedBox(width: 8),
             Material(
               color: Colors.transparent,
               child: InkWell(

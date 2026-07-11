@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
@@ -21,6 +22,7 @@ import '../providers/chat_messages_list_notifier.dart';
 import '../providers/conversations_list_notifier.dart';
 import '../providers/messages_providers.dart';
 import '../services/dm_voice_call_service.dart';
+import '../widgets/chat_composer.dart';
 import '../widgets/chat_composer_bar.dart';
 import '../widgets/chat_message_actions.dart';
 import '../widgets/chat_messages_list_pane.dart';
@@ -48,6 +50,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
   MessageEntity? _forwardTarget;
   String? _peerName;
   String? _peerAvatar;
+  var _peerOnline = false;
 
   @override
   void initState() {
@@ -100,6 +103,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
       setState(() {
         _peerName = peer.title;
         _peerAvatar = peer.avatarUrl;
+        _peerOnline = peer.isOnline;
       });
     }
   }
@@ -161,9 +165,10 @@ class _ChatPageState extends ConsumerState<ChatPage>
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     final reply = _replyTarget;
     final forward = _forwardTarget;
-    await ref.read(messagesRepositoryProvider).sendMessage(
-          widget.conversationId,
-          text,
+    await ref
+        .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
+        .sendMessage(
+          text: text,
           currentUserId: userId,
           replyId: reply?.id,
           replyText: reply?.text,
@@ -178,9 +183,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
       _forwardTarget = null;
     });
     await DmMessageSoundService.instance.playOutgoing();
-    await ref
-        .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
-        .refresh(forceRefresh: true);
     ref.invalidate(conversationsProvider);
     _scrollToEnd();
   }
@@ -205,6 +207,37 @@ class _ChatPageState extends ConsumerState<ChatPage>
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Sesli arama isteği gönderildi')),
     );
+  }
+
+  Future<void> _handleComposerAction(DmComposerAction action) async {
+    switch (action) {
+      case DmComposerAction.gift:
+        return _sendMessage('🎁 Hediye göndermek istiyor.');
+      case DmComposerAction.jeton:
+        return _sendMessage('🪙 Jeton göndermek istiyor.');
+      case DmComposerAction.fortune:
+        return _sendMessage('🔮 Fal isteği gönderdi.');
+      case DmComposerAction.voiceFortune:
+        return _sendMessage('🎙️ Sesli fal isteği gönderdi.');
+      case DmComposerAction.videoFortune:
+        return _sendMessage('📹 Görüntülü fal isteği gönderdi.');
+      case DmComposerAction.liveInvite:
+        return _sendMessage('📡 Canlı yayına davet etti.');
+      case DmComposerAction.voiceRoomInvite:
+        return _sendMessage('🎧 Sesli odaya davet etti.');
+      case DmComposerAction.photo:
+        return _sendMessage('📷 Fotoğraf göndermek istiyor.');
+      case DmComposerAction.video:
+        return _sendMessage('🎬 Video göndermek istiyor.');
+      case DmComposerAction.file:
+        return _sendMessage('📎 Dosya göndermek istiyor.');
+      case DmComposerAction.location:
+        return _sendMessage('📍 Konum paylaşmak istiyor.');
+      case DmComposerAction.gif:
+        return _sendMessage('🖼️ GIF gönderdi.');
+      case DmComposerAction.sticker:
+        return _sendMessage('✨ Sticker gönderdi.');
+    }
   }
 
   Future<void> _showPeerActions() async {
@@ -301,7 +334,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
   @override
   Widget build(BuildContext context) {
     final peerLabel = _peerName ?? 'Sohbet';
-    final typingLabel = _peerTyping ? '$peerLabel yazıyor' : null;
+    final statusLabel = _peerTyping
+        ? 'Yazıyor...'
+        : (_peerOnline ? 'Çevrimiçi' : 'Son görülme yakın zamanda');
     final isGold = ref.watch(vipTierProvider).index >= VipTier.gold.index;
 
     ref.listen(conversationsListNotifierProvider, (_, __) => _loadPeerMeta());
@@ -322,39 +357,84 @@ class _ChatPageState extends ConsumerState<ChatPage>
                       icon: Icons.arrow_back_ios_new_rounded,
                       onPressed: () => Navigator.of(context).maybePop(),
                     ),
-                    GestureDetector(
-                      onLongPress: _showPeerActions,
-                      child: UserAvatar(url: _peerAvatar, radius: 20),
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        GestureDetector(
+                          onLongPress: _showPeerActions,
+                          child: UserAvatar(url: _peerAvatar, radius: 20),
+                        ),
+                        Positioned(
+                          right: -1,
+                          bottom: -1,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: _peerOnline
+                                  ? const Color(0xFF22C55E)
+                                  : Colors.grey.shade700,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFF09090B),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: GestureDetector(
                         onLongPress: _showPeerActions,
-                        child: DiscoverTabHeader(
-                          title: peerLabel,
-                          subtitle: typingLabel ?? 'Mesajlar',
-                          actions: [
-                            if (isGold)
-                              DiscoverIconButton(
-                                icon: Icons.call_rounded,
-                                tooltip: 'Sesli ara',
-                                onPressed: _startVoiceCall,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              peerLabel,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
                               ),
-                            DiscoverIconButton(
-                              icon: Icons.flag_outlined,
-                              tooltip: 'Sohbeti bildir',
-                              onPressed: () => openReportFlow(
-                                context,
-                                ReportTarget(
-                                  type: ReportTargetType.conversation,
-                                  targetId: widget.conversationId,
-                                  displayTitle: peerLabel,
-                                ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              statusLabel,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: _peerTyping
+                                    ? AppThemeColors.accentPink
+                                    : Colors.white.withValues(alpha: 0.62),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],
                         ),
                       ),
+                    ),
+                    if (isGold)
+                      DiscoverIconButton(
+                        icon: Icons.call_rounded,
+                        tooltip: 'Sesli ara',
+                        onPressed: _startVoiceCall,
+                      ),
+                    DiscoverIconButton(
+                      icon: Icons.videocam_rounded,
+                      tooltip: 'Görüntülü arama',
+                      onPressed: () =>
+                          _handleComposerAction(DmComposerAction.videoFortune),
+                    ),
+                    DiscoverIconButton(
+                      icon: Icons.more_horiz_rounded,
+                      tooltip: 'Sohbet işlemleri',
+                      onPressed: _showPeerActions,
                     ),
                   ],
                 ),
@@ -383,6 +463,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
             ChatComposerBar(
               controller: _text,
               onSend: _sendMessage,
+              onAction: _handleComposerAction,
             ),
           ],
         ),

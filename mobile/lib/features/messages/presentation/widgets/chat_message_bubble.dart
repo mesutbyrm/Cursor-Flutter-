@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/app_theme_colors.dart';
 import '../../domain/entities/message_entities.dart';
 import 'chat_quick_replies_bar.dart';
 
@@ -24,12 +25,12 @@ class ChatMessageBubble extends StatelessWidget {
   final bool showQuickReplies;
   final ValueChanged<String>? onQuickReply;
 
-  static const _mineColor = Color(0xFF005C4B);
-  static const _theirsColor = Color(0xFF1F2C34);
+  static const _theirsColor = Color(0xFF1A1A22);
 
   @override
   Widget build(BuildContext context) {
     final m = message;
+    final action = _actionMeta(m.text);
     return Column(
       crossAxisAlignment:
           m.isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -46,18 +47,24 @@ class ChatMessageBubble extends StatelessWidget {
               ),
               padding: const EdgeInsets.fromLTRB(12, 9, 10, 7),
               decoration: BoxDecoration(
-                color: m.isMine ? _mineColor : _theirsColor,
+                color: m.isMine ? null : _theirsColor,
+                gradient: m.isMine
+                    ? const LinearGradient(
+                        colors: [Color(0xFF7C3AED), Color(0xFFB832FF)],
+                      )
+                    : null,
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16),
-                  topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(m.isMine ? 16 : 4),
-                  bottomRight: Radius.circular(m.isMine ? 4 : 16),
+                  topLeft: const Radius.circular(20),
+                  topRight: const Radius.circular(20),
+                  bottomLeft: Radius.circular(m.isMine ? 20 : 6),
+                  bottomRight: Radius.circular(m.isMine ? 6 : 20),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
+                    color: (m.isMine ? const Color(0xFFB832FF) : Colors.black)
+                        .withValues(alpha: m.isMine ? 0.24 : 0.22),
+                    blurRadius: m.isMine ? 16 : 8,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -101,15 +108,18 @@ class ChatMessageBubble extends StatelessWidget {
                       ),
                     ),
                   ],
-                  Text(
-                    m.text,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 17.5,
-                      height: 1.4,
-                      letterSpacing: 0.1,
+                  if (action != null)
+                    _CanlifalActionCard(meta: action)
+                  else
+                    Text(
+                      m.text,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.5,
+                        height: 1.35,
+                        letterSpacing: 0.05,
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 3),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -137,6 +147,37 @@ class ChatMessageBubble extends StatelessWidget {
           ChatQuickRepliesBar(onSelect: onQuickReply!),
       ],
     );
+  }
+
+  _ActionMeta? _actionMeta(String text) {
+    final t = text.trim();
+    final table = <({String starts, IconData icon, String title, String subtitle, Color color})>[
+      (starts: '🎁', icon: Icons.card_giftcard_rounded, title: 'Hediye', subtitle: 'Canlifal hediyesi', color: AppThemeColors.coinGold),
+      (starts: '🪙', icon: Icons.toll_rounded, title: 'Jeton', subtitle: 'Jeton transfer isteği', color: AppThemeColors.coinGold),
+      (starts: '🔮', icon: Icons.auto_awesome_rounded, title: 'Fal İsteği', subtitle: 'Canlifal fal isteği', color: AppThemeColors.accentPurple),
+      (starts: '🎙️', icon: Icons.mic_rounded, title: 'Sesli Fal', subtitle: 'Sesli fal isteği', color: AppThemeColors.accentPink),
+      (starts: '📹', icon: Icons.video_call_rounded, title: 'Görüntülü Fal', subtitle: 'Görüntülü fal isteği', color: Colors.cyanAccent),
+      (starts: '📡', icon: Icons.podcasts_rounded, title: 'Canlı Yayın', subtitle: 'Canlı yayına davet', color: AppThemeColors.liveRed),
+      (starts: '🎧', icon: Icons.groups_rounded, title: 'Sesli Oda', subtitle: 'Sesli odaya davet', color: AppThemeColors.accentCyan),
+      (starts: '📷', icon: Icons.photo_rounded, title: 'Fotoğraf', subtitle: 'Fotoğraf mesajı', color: AppThemeColors.accentCyan),
+      (starts: '🎬', icon: Icons.videocam_rounded, title: 'Video', subtitle: 'Video mesajı', color: AppThemeColors.liveRed),
+      (starts: '📎', icon: Icons.attach_file_rounded, title: 'Dosya', subtitle: 'Dosya mesajı', color: Colors.white70),
+      (starts: '📍', icon: Icons.location_on_rounded, title: 'Konum', subtitle: 'Konum paylaşımı', color: Colors.greenAccent),
+      (starts: '🖼️', icon: Icons.gif_box_rounded, title: 'GIF', subtitle: 'GIF mesajı', color: Colors.purpleAccent),
+      (starts: '✨', icon: Icons.emoji_emotions_rounded, title: 'Sticker', subtitle: 'Sticker mesajı', color: Colors.orangeAccent),
+    ];
+    for (final row in table) {
+      if (t.startsWith(row.starts)) {
+        return _ActionMeta(
+          icon: row.icon,
+          title: row.title,
+          subtitle: row.subtitle,
+          color: row.color,
+          body: t,
+        );
+      }
+    }
+    return null;
   }
 
   void _showActions(BuildContext context) {
@@ -193,6 +234,87 @@ class ChatMessageBubble extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ActionMeta {
+  const _ActionMeta({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.body,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final String body;
+}
+
+class _CanlifalActionCard extends StatelessWidget {
+  const _CanlifalActionCard({required this.meta});
+
+  final _ActionMeta meta;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 210),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: meta.color.withValues(alpha: 0.42)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  meta.color.withValues(alpha: 0.92),
+                  AppThemeColors.accentPurple.withValues(alpha: 0.72),
+                ],
+              ),
+            ),
+            child: Icon(meta.icon, color: Colors.white, size: 22),
+          ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  meta.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  meta.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.72),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

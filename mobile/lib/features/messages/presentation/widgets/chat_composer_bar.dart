@@ -9,11 +9,13 @@ class ChatComposerBar extends StatefulWidget {
     required this.controller,
     required this.onSend,
     this.onChanged,
+    this.onAction,
   });
 
   final TextEditingController controller;
   final Future<void> Function(String text) onSend;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<DmComposerAction>? onAction;
 
   @override
   State<ChatComposerBar> createState() => _ChatComposerBarState();
@@ -40,6 +42,7 @@ class _ChatComposerBarState extends State<ChatComposerBar> {
       sending: _sending,
       onSend: _handleSend,
       onChanged: widget.onChanged,
+      onAction: widget.onAction,
     );
   }
 }

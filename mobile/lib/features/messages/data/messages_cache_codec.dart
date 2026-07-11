@@ -1,4 +1,5 @@
 import '../domain/entities/message_entities.dart';
+import '../domain/utils/dm_message_codec.dart';
 
 Map<String, dynamic> encodeConversation(ConversationEntity c) => {
       'id': c.id,
@@ -28,6 +29,14 @@ Map<String, dynamic> encodeMessage(MessageEntity m) => {
       'isMine': m.isMine,
       'createdAt': m.createdAt?.toIso8601String(),
       'deliveryStatus': m.deliveryStatus.name,
+      'replyTo': m.replyTo == null
+          ? null
+          : {
+              'id': m.replyTo!.id,
+              'text': m.replyTo!.text,
+            },
+      'forwardedFrom': m.forwardedFrom,
+      'rawText': m.rawText,
     };
 
 MessageEntity decodeMessage(Map<String, dynamic> json) {
@@ -42,5 +51,13 @@ MessageEntity decodeMessage(Map<String, dynamic> json) {
     isMine: json['isMine'] == true,
     createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
     deliveryStatus: status,
+    replyTo: json['replyTo'] is Map
+        ? DmReplyMeta(
+            id: (json['replyTo'] as Map)['id']?.toString() ?? '',
+            text: (json['replyTo'] as Map)['text']?.toString() ?? '',
+          )
+        : null,
+    forwardedFrom: json['forwardedFrom']?.toString(),
+    rawText: json['rawText']?.toString(),
   );
 }

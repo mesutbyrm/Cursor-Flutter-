@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/message_entities.dart';
+import '../../domain/utils/dm_message_codec.dart';
 import 'messages_providers.dart';
 
 /// Sohbet: en yeni mesajlar önce gösterilir; yukarı kaydırınca eski mesajlar yüklenir.
@@ -107,6 +108,61 @@ class ChatMessagesListNotifier
             currentUserId: userId,
           );
     } catch (_) {}
+  }
+
+  Future<void> sendMessage({
+    required String text,
+    String? currentUserId,
+    String? replyId,
+    String? replyText,
+    bool forward = false,
+    String? forwardFrom,
+  }) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+    final optimisticId = 'local-${DateTime.now().microsecondsSinceEpoch}';
+    final cur = state.valueOrNull;
+    final optimistic = MessageEntity(
+      id: optimisticId,
+      text: trimmed,
+      isMine: true,
+      createdAt: DateTime.now(),
+      deliveryStatus: MessageDeliveryStatus.sending,
+      replyTo: replyId != null && replyText != null
+          ? DmReplyMeta(id: replyId, text: replyText)
+          : null,
+      forwardedFrom: forward ? (forwardFrom ?? 'İletilen mesaj') : null,
+    );
+    if (cur != null) {
+      state = AsyncValue.data(
+        cur.copyWith(
+          all: [...cur.all, optimistic],
+          visibleCount: cur.visibleCount + 1,
+        ),
+      );
+    }
+    try {
+      await ref.read(messagesRepositoryProvider).sendMessage(
+            arg,
+            trimmed,
+            currentUserId: currentUserId,
+            replyId: replyId,
+            replyText: replyText,
+            forward: forward,
+            forwardFrom: forwardFrom,
+          );
+      await refresh(silent: true, forceRefresh: true);
+    } catch (e, st) {
+      final latest = state.valueOrNull;
+      if (latest != null) {
+        state = AsyncValue.data(
+          latest.copyWith(
+            all: latest.all.where((m) => m.id != optimisticId).toList(),
+          ),
+        );
+      }
+      Error.throwWithStackTrace(e, st);
+    }
   }
 }
 

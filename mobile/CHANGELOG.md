@@ -3,6 +3,15 @@
 
 ## 1.0.9+13 (2026-07-10)
 
+### Premium mesajlaşma UI/UX
+- Mesaj listesi Canlifal siyah/mor neon/glass tasarım diline taşındı; üst arama, filtreler, online nokta, okunmamış rozet ve lazy liste korundu
+- Sohbet üst barı profil, online/yazıyor durumu, sesli arama, görüntülü fal/arama ve işlemler ikonlarıyla yenilendi
+- Mesaj gönderimi optimistic hale getirildi; balon ağ cevabını beklemeden görünür
+- Gönderilen mesaj balonları mor gradient, alınan mesajlar koyu glass gri olarak güncellendi
+- Canlifal özel aksiyon paneli eklendi: fotoğraf, video, dosya, konum, hediye, jeton, fal iste, sesli/görüntülü fal, canlı yayın, sesli oda, GIF, sticker
+- Canlifal aksiyon mesajları sohbet içinde özel premium kart olarak gösterilir
+- Mesaj cache’i reply/forward/raw metni koruyacak şekilde genişletildi
+
 ### Sesli Chat Odaları — senkronizasyon ve arkaplan
 - Oda sahibi/admin/~ / & / @ / % yetkileri için otomatik koltuk seçimi en düşük numaralı boş koltuğa hizalandı; client-side iyimser oturma kaldırıldı, backend doğrulaması beklenir
 - Koltuk API gövdesi kılavuzla uyumlu `{action: take, seatIndex}` biçimine getirildi
