@@ -12,6 +12,7 @@ import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/utils/live_chat_guard.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
+import '../../data/services/live_namespace_socket_service.dart';
 import 'live_providers.dart';
 import 'live_stream_engagement_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
