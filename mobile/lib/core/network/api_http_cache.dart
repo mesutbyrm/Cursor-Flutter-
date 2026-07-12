@@ -20,8 +20,7 @@ abstract final class ApiHttpCache {
     final path = ApiCachePolicy.normalizedPath(options.path);
     final query = _canonicalQuery(options.queryParameters);
     final auth = options.headers['Authorization']?.toString() ?? '';
-    final authTag =
-        auth.isEmpty ? 'public' : auth.hashCode.toRadixString(16);
+    final authTag = auth.isEmpty ? 'public' : auth.hashCode.toRadixString(16);
     return '${options.method.toUpperCase()}|$path|$query|$authTag';
   }
 
@@ -72,8 +71,14 @@ abstract final class ApiHttpCache {
     }
   }
 
-  static Future<void> store(String key, Response<dynamic> response, Duration ttl) async {
-    if (response.statusCode == null || response.statusCode! < 200 || response.statusCode! >= 300) {
+  static Future<void> store(
+    String key,
+    Response<dynamic> response,
+    Duration ttl,
+  ) async {
+    if (response.statusCode == null ||
+        response.statusCode! < 200 ||
+        response.statusCode! >= 300) {
       return;
     }
     final entry = _CacheEntry(
@@ -101,7 +106,8 @@ abstract final class ApiHttpCache {
     _memory[key] = entry;
   }
 
-  static Completer<Response<dynamic>>? inflightFor(String key) => _inflight[key];
+  static Completer<Response<dynamic>>? inflightFor(String key) =>
+      _inflight[key];
 
   static Completer<Response<dynamic>> startInflight(String key) {
     final existing = _inflight[key];
@@ -125,7 +131,10 @@ abstract final class ApiHttpCache {
     }
   }
 
-  static Response<dynamic> toResponse(_CacheEntry entry, RequestOptions options) {
+  static Response<dynamic> toResponse(
+    _CacheEntry entry,
+    RequestOptions options,
+  ) {
     return Response<dynamic>(
       requestOptions: options,
       data: entry.data,
@@ -156,6 +165,11 @@ abstract final class ApiHttpCache {
   static Future<void> invalidatePath(String pathPrefix) async {
     final norm = ApiCachePolicy.normalizedPath(pathPrefix);
     _memory.removeWhere((k, _) => k.contains('|$norm'));
+    _inflight.removeWhere((k, _) => k.contains('|$norm'));
+    // Disk anahtarı `http_v1_METHOD|/path|query|auth` biçiminde. Yalnız
+    // belleği temizlemek yeni kayıttan sonra eski katalog yanıtını geri
+    // getiriyordu.
+    await ApiCacheStore.clearByPrefix('${_diskPrefix}GET|$norm');
   }
 }
 
@@ -170,20 +184,20 @@ final class _CacheEntry {
   final int statusCode;
   final DateTime savedAt;
 
-  bool isFresh(Duration ttl) =>
-      DateTime.now().difference(savedAt) <= ttl;
+  bool isFresh(Duration ttl) => DateTime.now().difference(savedAt) <= ttl;
 
   Map<String, dynamic> toJson() => {
-        'data': data,
-        'statusCode': statusCode,
-        'savedAt': savedAt.toIso8601String(),
-      };
+    'data': data,
+    'statusCode': statusCode,
+    'savedAt': savedAt.toIso8601String(),
+  };
 
   factory _CacheEntry.fromJson(Map<String, dynamic> json) {
     return _CacheEntry(
       data: json['data'],
       statusCode: (json['statusCode'] as num?)?.toInt() ?? 200,
-      savedAt: DateTime.tryParse(json['savedAt']?.toString() ?? '') ??
+      savedAt:
+          DateTime.tryParse(json['savedAt']?.toString() ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
     );
   }

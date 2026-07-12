@@ -8,8 +8,11 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/images/canlifal_network_image.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/api_http_cache.dart';
+import '../../../voice_hub/presentation/widgets/voice_room_gift_sheet.dart';
 import '../../domain/admin_gift_type.dart';
 import '../providers/admin_gift_providers.dart';
+import '../providers/gift_providers.dart';
 
 /// Tam özellikli hediye oluşturma / düzenleme ekranı.
 class AdminGiftEditorPage extends ConsumerStatefulWidget {
@@ -18,7 +21,8 @@ class AdminGiftEditorPage extends ConsumerStatefulWidget {
   final AdminGiftType? gift;
 
   @override
-  ConsumerState<AdminGiftEditorPage> createState() => _AdminGiftEditorPageState();
+  ConsumerState<AdminGiftEditorPage> createState() =>
+      _AdminGiftEditorPageState();
 }
 
 class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
@@ -35,6 +39,14 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
   String? _thumbnailUrl;
   String? _animationUrl;
   String? _soundUrl;
+  String? _imageCloudPath;
+  String? _thumbnailCloudPath;
+  String? _animationCloudPath;
+  String? _soundCloudPath;
+  bool _imageChanged = false;
+  bool _thumbnailChanged = false;
+  bool _animationChanged = false;
+  bool _soundChanged = false;
   String _animationType = 'lottie';
   bool _comboEnabled = true;
   bool _isPremium = false;
@@ -107,29 +119,37 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
       }
       if (file == null) return;
 
-      final url = await ref
+      final uploaded = await ref
           .read(adminGiftRemoteProvider)
           .uploadAsset(file, kind: kind);
-      if (url == null || !mounted) return;
+      if (!mounted) return;
       setState(() {
         // Backend upload-url yalnızca icon/thumbnail/asset/sound kabul ediyor.
         switch (kind) {
           case 'icon':
-            _imageUrl = url;
+            _imageUrl = uploaded.previewUrl;
+            _imageCloudPath = uploaded.cloudPath;
+            _imageChanged = true;
           case 'thumbnail':
-            _thumbnailUrl = url;
+            _thumbnailUrl = uploaded.previewUrl;
+            _thumbnailCloudPath = uploaded.cloudPath;
+            _thumbnailChanged = true;
           case 'asset':
-            _animationUrl = url;
+            _animationUrl = uploaded.previewUrl;
+            _animationCloudPath = uploaded.cloudPath;
+            _animationChanged = true;
             _animationType = _guessAnimationType(file!.path);
           case 'sound':
-            _soundUrl = url;
+            _soundUrl = uploaded.previewUrl;
+            _soundCloudPath = uploaded.cloudPath;
+            _soundChanged = true;
         }
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
       }
     } finally {
       if (mounted) setState(() => _uploadingKind = null);
@@ -148,11 +168,22 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
   }
 
   Future<void> _save() async {
+    if (_saving) return;
+    if (_uploadingKind != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Dosya yüklemesi tamamlanmadan kaydedilemez.'),
+        ),
+      );
+      return;
+    }
     final name = _nameTr.text.trim();
     final price = int.tryParse(_price.text.trim());
     if (name.isEmpty || price == null || price < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Türkçe isim ve geçerli jeton fiyatı gerekli.')),
+        const SnackBar(
+          content: Text('Türkçe isim ve geçerli jeton fiyatı gerekli.'),
+        ),
       );
       return;
     }
@@ -166,11 +197,21 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
       if (_icon.text.trim().isNotEmpty) 'icon': _icon.text.trim(),
       if (_category.text.trim().isNotEmpty) 'category': _category.text.trim(),
       if (_tier.text.trim().isNotEmpty) 'tier': _tier.text.trim(),
-      if (_imageUrl != null) 'imageCloudPath': _imageUrl,
-      if (_thumbnailUrl != null) 'thumbnailCloudPath': _thumbnailUrl,
-      if (_animationUrl != null) 'animationCloudPath': _animationUrl,
+      if (!_isEdit && _imageCloudPath != null)
+        'imageCloudPath': _imageCloudPath,
+      if (!_isEdit && _thumbnailCloudPath != null)
+        'thumbnailCloudPath': _thumbnailCloudPath,
+      if (!_isEdit && _animationCloudPath != null)
+        'animationCloudPath': _animationCloudPath,
       'animationType': _animationType,
-      if (_soundUrl != null) 'soundCloudPath': _soundUrl,
+      if (!_isEdit && _soundCloudPath != null)
+        'soundCloudPath': _soundCloudPath,
+      if (_isEdit && _imageChanged) 'imageCloudPath': _imageCloudPath,
+      if (_isEdit && _thumbnailChanged)
+        'thumbnailCloudPath': _thumbnailCloudPath,
+      if (_isEdit && _animationChanged)
+        'animationCloudPath': _animationCloudPath,
+      if (_isEdit && _soundChanged) 'soundCloudPath': _soundCloudPath,
       if (duration != null && duration > 0) 'animationDurationMs': duration,
       if (color.isNotEmpty) 'effectColor': color,
       'comboEnabled': _comboEnabled,
@@ -180,21 +221,59 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
     };
     try {
       final remote = ref.read(adminGiftRemoteProvider);
+      AdminGiftType? saved;
       if (_isEdit) {
-        await remote.updateGift(widget.gift!.id, body);
+        saved = await remote.updateGift(widget.gift!.id, body);
       } else {
-        await remote.createGift(body);
+        saved = await remote.createGift(body);
       }
+      if (saved != null) _verifySavedAssets(saved);
+
+      // GET katalog cache'lerini temizle; aksi halde provider invalidate edilse
+      // bile yeni hediye 15–60 sn eski disk/memory cache'inden okunabiliyordu.
+      await Future.wait([
+        ApiHttpCache.invalidatePath('/api/video-streams/gifts'),
+        ApiHttpCache.invalidatePath('/api/gifts'),
+      ]);
       ref.invalidate(adminGiftListProvider);
+      ref.invalidate(liveGiftCatalogProvider);
+      ref.invalidate(voiceRoomGiftTypesProvider);
+
+      // Admin kataloğunu başarı yanıtından sonra gerçekten yeniden yükle.
+      // Liste yenileme hatası aynı kaydı tekrar oluşturmaya yol açmamalı.
+      try {
+        await ref
+            .read(adminGiftListProvider.future)
+            .timeout(const Duration(seconds: 12));
+      } catch (_) {
+        // Kayıt API tarafından doğrulandı; yönetim ekranı tekrar izlediğinde
+        // provider yeniden deneyecek.
+      }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  void _verifySavedAssets(AdminGiftType saved) {
+    bool missing(String? uploadedPath, String? savedPath) =>
+        uploadedPath != null &&
+        uploadedPath.isNotEmpty &&
+        (savedPath == null || savedPath.isEmpty);
+
+    if (missing(_imageCloudPath, saved.imageUrl) ||
+        missing(_thumbnailCloudPath, saved.thumbnailUrl) ||
+        missing(_animationCloudPath, saved.animationUrl) ||
+        missing(_soundCloudPath, saved.soundUrl)) {
+      throw const ApiException(
+        'Hediye kaydı oluştu ancak yüklenen medya yolu kayda yazılmadı.',
+      );
     }
   }
 
@@ -214,8 +293,10 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Kaydet',
-                    style: TextStyle(fontWeight: FontWeight.w800)),
+                : const Text(
+                    'Kaydet',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
           ),
         ],
       ),
@@ -269,8 +350,8 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: DropdownButtonFormField<String>(
-              value: AdminGiftAnimationTypes.all
-                      .any((e) => e.$1 == _animationType)
+              value:
+                  AdminGiftAnimationTypes.all.any((e) => e.$1 == _animationType)
                   ? _animationType
                   : 'lottie',
               dropdownColor: const Color(0xFF1A1030),
@@ -292,10 +373,8 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             kind: 'sound',
             uploading: _uploadingKind == 'sound',
             isAudio: true,
-            onPickFile: () => _uploadFile(
-              kind: 'sound',
-              extensions: ['mp3', 'wav', 'm4a'],
-            ),
+            onPickFile: () =>
+                _uploadFile(kind: 'sound', extensions: ['mp3', 'wav', 'm4a']),
           ),
           const SizedBox(height: 8),
           _sectionTitle('Temel Bilgiler'),
@@ -338,12 +417,21 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
           ),
           const SizedBox(height: 12),
           _sectionTitle('Davranış'),
-          _switchTile('Combo destekli', _comboEnabled,
-              (v) => setState(() => _comboEnabled = v)),
-          _switchTile('Premium hediye', _isPremium,
-              (v) => setState(() => _isPremium = v)),
-          _switchTile('Tam ekran animasyon', _isFullscreen,
-              (v) => setState(() => _isFullscreen = v)),
+          _switchTile(
+            'Combo destekli',
+            _comboEnabled,
+            (v) => setState(() => _comboEnabled = v),
+          ),
+          _switchTile(
+            'Premium hediye',
+            _isPremium,
+            (v) => setState(() => _isPremium = v),
+          ),
+          _switchTile(
+            'Tam ekran animasyon',
+            _isFullscreen,
+            (v) => setState(() => _isFullscreen = v),
+          ),
           _switchTile(
             'Durum: Aktif',
             _isActive,
@@ -368,13 +456,16 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
   }
 
   Widget _sectionTitle(String t) => Padding(
-        padding: const EdgeInsets.only(top: 8, bottom: 10),
-        child: Text(t,
-            style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 15)),
-      );
+    padding: const EdgeInsets.only(top: 8, bottom: 10),
+    child: Text(
+      t,
+      style: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w900,
+        fontSize: 15,
+      ),
+    ),
+  );
 
   Widget _field(TextEditingController c, String label, {bool number = false}) {
     return Padding(
@@ -382,8 +473,9 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
       child: TextField(
         controller: c,
         keyboardType: number ? TextInputType.number : TextInputType.text,
-        inputFormatters:
-            number ? [FilteringTextInputFormatter.digitsOnly] : null,
+        inputFormatters: number
+            ? [FilteringTextInputFormatter.digitsOnly]
+            : null,
         style: const TextStyle(color: Colors.white),
         decoration: _inputDeco(label),
       ),
@@ -391,15 +483,15 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
   }
 
   InputDecoration _inputDeco(String label) => InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Color(0x99FFFFFF)),
-        enabledBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Color(0x33FFFFFF)),
-        ),
-        focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Color(0xFF7C3AED)),
-        ),
-      );
+    labelText: label,
+    labelStyle: const TextStyle(color: Color(0x99FFFFFF)),
+    enabledBorder: const OutlineInputBorder(
+      borderSide: BorderSide(color: Color(0x33FFFFFF)),
+    ),
+    focusedBorder: const OutlineInputBorder(
+      borderSide: BorderSide(color: Color(0xFF7C3AED)),
+    ),
+  );
 
   Widget _chipField({
     required TextEditingController controller,
@@ -434,11 +526,15 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
   }) {
     return SwitchListTile(
       contentPadding: EdgeInsets.zero,
-      title: Text(title,
-          style: const TextStyle(color: Colors.white, fontSize: 14)),
+      title: Text(
+        title,
+        style: const TextStyle(color: Colors.white, fontSize: 14),
+      ),
       subtitle: subtitle != null
-          ? Text(subtitle,
-              style: const TextStyle(color: Color(0x99FFFFFF), fontSize: 11))
+          ? Text(
+              subtitle,
+              style: const TextStyle(color: Color(0x99FFFFFF), fontSize: 11),
+            )
           : null,
       value: value,
       activeThumbColor: const Color(0xFF66E36F),
@@ -478,39 +574,53 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             child: uploading
                 ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
                 : (url != null && url.startsWith('http') && !isAudio
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: CanlifalNetworkImage(url: url, fit: BoxFit.cover),
-                      )
-                    : Icon(
-                        isAudio
-                            ? Icons.audiotrack_rounded
-                            : Icons.perm_media_rounded,
-                        color: url != null
-                            ? const Color(0xFF66E36F)
-                            : const Color(0xFFB388FF),
-                      )),
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: CanlifalNetworkImage(
+                            url: url,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Icon(
+                          isAudio
+                              ? Icons.audiotrack_rounded
+                              : Icons.perm_media_rounded,
+                          color: url != null
+                              ? const Color(0xFF66E36F)
+                              : const Color(0xFFB388FF),
+                        )),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13)),
-                Text(hint,
-                    style: const TextStyle(
-                        color: Color(0x99FFFFFF), fontSize: 11)),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  hint,
+                  style: const TextStyle(
+                    color: Color(0x99FFFFFF),
+                    fontSize: 11,
+                  ),
+                ),
                 if (url != null)
                   Text(
-                    url.length > 42 ? '…${url.substring(url.length - 38)}' : url,
+                    url.length > 42
+                        ? '…${url.substring(url.length - 38)}'
+                        : url,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        color: Color(0x66FFFFFF), fontSize: 9),
+                      color: Color(0x66FFFFFF),
+                      fontSize: 9,
+                    ),
                   ),
                 const SizedBox(height: 6),
                 Wrap(
@@ -526,12 +636,20 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
                           switch (kind) {
                             case 'icon':
                               _imageUrl = null;
+                              _imageCloudPath = null;
+                              _imageChanged = true;
                             case 'thumbnail':
                               _thumbnailUrl = null;
+                              _thumbnailCloudPath = null;
+                              _thumbnailChanged = true;
                             case 'asset':
                               _animationUrl = null;
+                              _animationCloudPath = null;
+                              _animationChanged = true;
                             case 'sound':
                               _soundUrl = null;
+                              _soundCloudPath = null;
+                              _soundChanged = true;
                           }
                         });
                       }),

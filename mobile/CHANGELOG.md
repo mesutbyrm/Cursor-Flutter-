@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.12+16 (2026-07-12)
+
+### Admin Hediye Yönetimi — create/upload onarımı
+- Yeni hediye Kaydet isteğine timeout + cancel eklendi; sonsuz loading kaldırıldı
+- API yalnız HTTP 200/201 + geçerli `gift.id` ile başarılı kabul edilir
+- R2/S3 `cloudPath` ile CDN `publicUrl` ayrıldı; veritabanına doğru cloud path gönderilir
+- Presign/PUT hataları artık sessizce yutulmaz; gerçek hata mesajı gösterilir
+- Upload sürerken Kaydet engellenir; dosya R2'ye stream edilir
+- Başarılı create sonrası admin, canlı yayın ve sesli oda katalogları otomatik yenilenir
+- HTTP memory/disk gift cache temizliği ve create/upload/loading testleri eklendi
+
 ## 1.0.11+15 (2026-07-11)
 
 ### Üretim hazırlığı — analyzer / performans / SSE

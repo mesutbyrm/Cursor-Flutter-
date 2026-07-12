@@ -33,13 +33,11 @@ bool _isPublicAuthPath(String path) {
       path == ApiEndpoints.authRefresh;
 }
 
-String _refreshPath() =>
-    Env.useMobileAuth ? ApiEndpoints.authMobileRefresh : ApiEndpoints.authRefresh;
+String _refreshPath() => Env.useMobileAuth
+    ? ApiEndpoints.authMobileRefresh
+    : ApiEndpoints.authRefresh;
 
-Dio _createApiDio(
-  Ref ref, {
-  required Dio tokenRefreshDio,
-}) {
+Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
   final tokenStorage = ref.watch(tokenStorageProvider);
   final cookieJar = ref.watch(cookieJarProvider);
 
@@ -72,10 +70,7 @@ Dio _createApiDio(
 
   final connectivity = ref.read(connectivityServiceProvider);
   dio.interceptors.add(
-    ApiRetryInterceptor(
-      dioGetter: () => dio,
-      connectivity: connectivity,
-    ),
+    ApiRetryInterceptor(dioGetter: () => dio, connectivity: connectivity),
   );
 
   dio.interceptors.add(
@@ -175,10 +170,7 @@ Future<bool> _tryRefresh(
     final access = _pickToken(data, 'accessToken', 'access_token');
     if (access == null) return false;
     final newRefresh = _pickToken(data, 'refreshToken', 'refresh_token');
-    await storage.writeTokens(
-      access: access,
-      refresh: newRefresh ?? refresh,
-    );
+    await storage.writeTokens(access: access, refresh: newRefresh ?? refresh);
     return true;
   } on DioException catch (e) {
     final code = e.response?.statusCode;
@@ -208,9 +200,7 @@ extension DioApi on Dio {
         path,
         queryParameters: query,
         cancelToken: cancelToken,
-        options: Options(
-          extra: forceRefresh ? {'forceRefresh': true} : null,
-        ),
+        options: Options(extra: forceRefresh ? {'forceRefresh': true} : null),
       );
     } on DioException catch (e) {
       throw _mapDio(e);
@@ -237,10 +227,7 @@ extension DioApi on Dio {
     }
   }
 
-  Future<Response<T>> safeDelete<T>(
-    String path, {
-    Object? data,
-  }) async {
+  Future<Response<T>> safeDelete<T>(String path, {Object? data}) async {
     try {
       return await delete<T>(path, data: data);
     } on DioException catch (e) {
@@ -253,6 +240,7 @@ extension DioApi on Dio {
     Object? data,
     Map<String, dynamic>? query,
     Options? options,
+    CancelToken? cancelToken,
   }) async {
     try {
       return await patch<T>(
@@ -260,6 +248,7 @@ extension DioApi on Dio {
         data: data,
         queryParameters: query,
         options: options,
+        cancelToken: cancelToken,
       );
     } on DioException catch (e) {
       throw _mapDio(e);
@@ -286,8 +275,13 @@ ApiException _mapDio(DioException e) {
   }
 
   if (code == 403) {
+    final serverMessage = body is Map
+        ? (body['message'] ?? body['error'] ?? body['detail'])?.toString()
+        : null;
     return ApiException(
-      'Bu işlem için yetkiniz yok veya dosya yüklenemedi. Oturumunuzu kontrol edip tekrar deneyin.',
+      serverMessage != null && serverMessage.trim().isNotEmpty
+          ? serverMessage
+          : 'Bu işlem için yetkiniz yok veya dosya yüklenemedi. Oturumunuzu kontrol edip tekrar deneyin.',
       statusCode: code,
     );
   }
@@ -298,10 +292,7 @@ ApiException _mapDio(DioException e) {
     );
   }
   if (code == 404) {
-    return ApiException(
-      'İstenen kaynak bulunamadı (404).',
-      statusCode: code,
-    );
+    return ApiException('İstenen kaynak bulunamadı (404).', statusCode: code);
   }
 
   if (e.type == DioExceptionType.receiveTimeout ||

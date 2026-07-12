@@ -25,8 +25,10 @@ class AdminGiftManagementPage extends ConsumerWidget {
           title: const Text('Hediye Yönetimi'),
         ),
         body: const Center(
-          child: Text('Bu alan yalnızca admin/yönetici hesapları içindir.',
-              style: TextStyle(color: Color(0x99FFFFFF))),
+          child: Text(
+            'Bu alan yalnızca admin/yönetici hesapları içindir.',
+            style: TextStyle(color: Color(0x99FFFFFF)),
+          ),
         ),
       );
     }
@@ -54,7 +56,18 @@ class AdminGiftManagementPage extends ConsumerWidget {
               builder: (_, __) => tab.index == 0
                   ? FloatingActionButton.extended(
                       backgroundColor: const Color(0xFF7C3AED),
-                      onPressed: () => ctx.push('/admin/gifts/new'),
+                      onPressed: () async {
+                        final created = await ctx.push<bool>(
+                          '/admin/gifts/new',
+                        );
+                        if (!ctx.mounted || created != true) return;
+                        ref.invalidate(adminGiftListProvider);
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          const SnackBar(
+                            content: Text('Hediye başarıyla oluşturuldu.'),
+                          ),
+                        );
+                      },
                       icon: const Icon(Icons.add),
                       label: const Text('Yeni Hediye'),
                     )
@@ -63,11 +76,7 @@ class AdminGiftManagementPage extends ConsumerWidget {
           },
         ),
         body: const TabBarView(
-          children: [
-            _CatalogTab(),
-            _StatsTab(),
-            _RevenueTab(),
-          ],
+          children: [_CatalogTab(), _StatsTab(), _RevenueTab()],
         ),
       ),
     );
@@ -90,18 +99,28 @@ class _CatalogTab extends ConsumerWidget {
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
-        child: Text(ApiException.userMessage(e),
-            style: const TextStyle(color: Color(0x99FFFFFF))),
+        child: Text(
+          ApiException.userMessage(e),
+          style: const TextStyle(color: Color(0x99FFFFFF)),
+        ),
       ),
       data: (gifts) => RefreshIndicator(
-        onRefresh: () async => ref.invalidate(adminGiftListProvider),
+        onRefresh: () async {
+          ref.invalidate(adminGiftListProvider);
+          await ref.read(adminGiftListProvider.future);
+        },
         child: gifts.isEmpty
-            ? ListView(children: const [
-                SizedBox(height: 120),
-                Center(
-                    child: Text('Katalog boş.',
-                        style: TextStyle(color: Color(0x99FFFFFF)))),
-              ])
+            ? ListView(
+                children: const [
+                  SizedBox(height: 120),
+                  Center(
+                    child: Text(
+                      'Katalog boş.',
+                      style: TextStyle(color: Color(0x99FFFFFF)),
+                    ),
+                  ),
+                ],
+              )
             : ListView.builder(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
                 itemCount: gifts.length,
@@ -116,9 +135,22 @@ class _GiftRow extends ConsumerWidget {
   const _GiftRow({required this.gift});
   final AdminGiftType gift;
 
-  Future<void> _patch(WidgetRef ref, Map<String, dynamic> body) async {
-    await ref.read(adminGiftRemoteProvider).updateGift(gift.id, body);
-    ref.invalidate(adminGiftListProvider);
+  Future<void> _patch(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      await ref.read(adminGiftRemoteProvider).updateGift(gift.id, body);
+      ref.invalidate(adminGiftListProvider);
+      await ref.read(adminGiftListProvider.future);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
+      }
+    }
   }
 
   @override
@@ -130,7 +162,9 @@ class _GiftRow extends ConsumerWidget {
         color: const Color(0xFF1A1030),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: gift.isActive ? const Color(0x22FFFFFF) : const Color(0x33FF5252),
+          color: gift.isActive
+              ? const Color(0x22FFFFFF)
+              : const Color(0x33FF5252),
         ),
       ),
       child: Column(
@@ -140,12 +174,18 @@ class _GiftRow extends ConsumerWidget {
               SizedBox(
                 width: 40,
                 height: 40,
-                child: gift.thumbnailUrl != null && gift.thumbnailUrl!.isNotEmpty
+                child:
+                    gift.thumbnailUrl != null && gift.thumbnailUrl!.isNotEmpty
                     ? CanlifalNetworkImage(
-                        url: gift.thumbnailUrl!, fit: BoxFit.contain)
+                        url: gift.thumbnailUrl!,
+                        fit: BoxFit.contain,
+                      )
                     : Center(
-                        child: Text(gift.icon ?? '🎁',
-                            style: const TextStyle(fontSize: 24))),
+                        child: Text(
+                          gift.icon ?? '🎁',
+                          style: const TextStyle(fontSize: 24),
+                        ),
+                      ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -164,18 +204,29 @@ class _GiftRow extends ConsumerWidget {
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.monetization_on_rounded,
-                            color: Color(0xFFFFD54F), size: 13),
+                        const Icon(
+                          Icons.monetization_on_rounded,
+                          color: Color(0xFFFFD54F),
+                          size: 13,
+                        ),
                         const SizedBox(width: 3),
-                        Text('${gift.price}',
-                            style: const TextStyle(
-                                color: Color(0xFFFFE082), fontSize: 12)),
+                        Text(
+                          '${gift.price}',
+                          style: const TextStyle(
+                            color: Color(0xFFFFE082),
+                            fontSize: 12,
+                          ),
+                        ),
                         if (gift.category != null &&
                             gift.category!.isNotEmpty) ...[
                           const SizedBox(width: 8),
-                          Text(gift.category!,
-                              style: const TextStyle(
-                                  color: Color(0x99FFFFFF), fontSize: 11)),
+                          Text(
+                            gift.category!,
+                            style: const TextStyle(
+                              color: Color(0x99FFFFFF),
+                              fontSize: 11,
+                            ),
+                          ),
                         ],
                       ],
                     ),
@@ -204,28 +255,50 @@ class _GiftRow extends ConsumerWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.edit_rounded,
-                    color: Color(0xFFB388FF), size: 20),
+                icon: const Icon(
+                  Icons.edit_rounded,
+                  color: Color(0xFFB388FF),
+                  size: 20,
+                ),
                 onPressed: () =>
                     AdminGiftManagementPage._openEditor(context, gift),
               ),
               IconButton(
-                icon: const Icon(Icons.delete_outline_rounded,
-                    color: Color(0xFFFF6E6E), size: 20),
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Color(0xFFFF6E6E),
+                  size: 20,
+                ),
                 onPressed: () => _confirmDelete(context, ref),
               ),
             ],
           ),
           Row(
             children: [
-              _toggle(ref, 'Aktif', gift.isActive,
-                  (v) => _patch(ref, {'isActive': v})),
-              _toggle(ref, 'Gizli', gift.isHidden,
-                  (v) => _patch(ref, {'isHidden': v})),
-              _toggle(ref, 'Öne çıkan', gift.isFeatured,
-                  (v) => _patch(ref, {'isFeatured': v})),
-              _toggle(ref, 'Popüler', gift.isPopular,
-                  (v) => _patch(ref, {'isPopular': v})),
+              _toggle(
+                ref,
+                'Aktif',
+                gift.isActive,
+                (v) => _patch(context, ref, {'isActive': v}),
+              ),
+              _toggle(
+                ref,
+                'Gizli',
+                gift.isHidden,
+                (v) => _patch(context, ref, {'isHidden': v}),
+              ),
+              _toggle(
+                ref,
+                'Öne çıkan',
+                gift.isFeatured,
+                (v) => _patch(context, ref, {'isFeatured': v}),
+              ),
+              _toggle(
+                ref,
+                'Popüler',
+                gift.isPopular,
+                (v) => _patch(context, ref, {'isPopular': v}),
+              ),
             ],
           ),
         ],
@@ -250,8 +323,10 @@ class _GiftRow extends ConsumerWidget {
               onChanged: onChanged,
             ),
           ),
-          Text(label,
-              style: const TextStyle(color: Color(0xCCFFFFFF), fontSize: 9.5)),
+          Text(
+            label,
+            style: const TextStyle(color: Color(0xCCFFFFFF), fontSize: 9.5),
+          ),
         ],
       ),
     );
@@ -265,9 +340,14 @@ class _GiftRow extends ConsumerWidget {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: color.withValues(alpha: 0.6)),
       ),
-      child: Text(label,
-          style: TextStyle(
-              color: color, fontSize: 9, fontWeight: FontWeight.w800)),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
   }
 
@@ -276,14 +356,18 @@ class _GiftRow extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Hediyeyi sil'),
-        content: Text('"${gift.name}" silinecek. Depodaki dosyalar da silinir.'),
+        content: Text(
+          '"${gift.name}" silinecek. Depodaki dosyalar da silinir.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Vazgeç')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Vazgeç'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Sil')),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sil'),
+          ),
         ],
       ),
     );
@@ -293,9 +377,9 @@ class _GiftRow extends ConsumerWidget {
       ref.invalidate(adminGiftListProvider);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
       }
     }
   }
@@ -348,8 +432,10 @@ class _StatsTabState extends ConsumerState<_StatsTab> {
           child: async.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
-              child: Text(ApiException.userMessage(e),
-                  style: const TextStyle(color: Color(0x99FFFFFF))),
+              child: Text(
+                ApiException.userMessage(e),
+                style: const TextStyle(color: Color(0x99FFFFFF)),
+              ),
             ),
             data: (s) => RefreshIndicator(
               onRefresh: () async =>
@@ -360,17 +446,20 @@ class _StatsTabState extends ConsumerState<_StatsTab> {
                   Row(
                     children: [
                       _StatCard(
-                          label: 'Toplam Hediye',
-                          value: compactAmount(s.totalGifts)),
+                        label: 'Toplam Hediye',
+                        value: compactAmount(s.totalGifts),
+                      ),
                       const SizedBox(width: 10),
                       _StatCard(
-                          label: 'Toplam Jeton',
-                          value: compactAmount(s.totalCoins)),
+                        label: 'Toplam Jeton',
+                        value: compactAmount(s.totalCoins),
+                      ),
                       const SizedBox(width: 10),
                       _StatCard(
-                          label: 'Site Geliri',
-                          value: compactAmount(s.siteRevenue),
-                          highlight: true),
+                        label: 'Site Geliri',
+                        value: compactAmount(s.siteRevenue),
+                        highlight: true,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 18),
@@ -406,21 +495,27 @@ class _StatCard extends StatelessWidget {
           color: highlight ? const Color(0x337C3AED) : const Color(0xFF1A1030),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-              color: highlight
-                  ? const Color(0x887C3AED)
-                  : const Color(0x22FFFFFF)),
+            color: highlight
+                ? const Color(0x887C3AED)
+                : const Color(0x22FFFFFF),
+          ),
         ),
         child: Column(
           children: [
-            Text(value,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 18)),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Color(0xCCFFFFFF), fontSize: 10.5)),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xCCFFFFFF), fontSize: 10.5),
+            ),
           ],
         ),
       ),
@@ -438,11 +533,14 @@ class _RankList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
-            style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 15)),
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+            fontSize: 15,
+          ),
+        ),
         const SizedBox(height: 8),
         if (rows.isEmpty)
           const Text('Veri yok.', style: TextStyle(color: Color(0x99FFFFFF)))
@@ -454,22 +552,30 @@ class _RankList extends StatelessWidget {
                 children: [
                   SizedBox(
                     width: 22,
-                    child: Text('${i + 1}',
-                        style: const TextStyle(
-                            color: Color(0xFFFFD54F),
-                            fontWeight: FontWeight.w900)),
+                    child: Text(
+                      '${i + 1}',
+                      style: const TextStyle(
+                        color: Color(0xFFFFD54F),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ),
                   Expanded(
-                    child: Text(rows[i].label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white, fontSize: 13)),
+                    child: Text(
+                      rows[i].label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
                   ),
-                  Text(compactAmount(rows[i].value),
-                      style: const TextStyle(
-                          color: Color(0xFFFFE082),
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12.5)),
+                  Text(
+                    compactAmount(rows[i].value),
+                    style: const TextStyle(
+                      color: Color(0xFFFFE082),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12.5,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -490,18 +596,25 @@ class _RevenueTab extends ConsumerWidget {
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
-        child: Text(ApiException.userMessage(e),
-            style: const TextStyle(color: Color(0x99FFFFFF))),
+        child: Text(
+          ApiException.userMessage(e),
+          style: const TextStyle(color: Color(0x99FFFFFF)),
+        ),
       ),
       data: (rules) => RefreshIndicator(
         onRefresh: () async => ref.invalidate(adminRevenueRulesProvider),
         child: rules.isEmpty
-            ? ListView(children: const [
-                SizedBox(height: 120),
-                Center(
-                    child: Text('Kural yok.',
-                        style: TextStyle(color: Color(0x99FFFFFF)))),
-              ])
+            ? ListView(
+                children: const [
+                  SizedBox(height: 120),
+                  Center(
+                    child: Text(
+                      'Kural yok.',
+                      style: TextStyle(color: Color(0x99FFFFFF)),
+                    ),
+                  ),
+                ],
+              )
             : ListView(
                 padding: const EdgeInsets.all(14),
                 children: [
@@ -538,16 +651,23 @@ class _RevenueRuleCard extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: Text(rule.context,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14)),
+                child: Text(
+                  rule.context,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
               ),
               if (rule.total != 100)
-                Text('Toplam %${rule.total}',
-                    style: const TextStyle(
-                        color: Color(0xFFFF6E6E), fontSize: 11)),
+                Text(
+                  'Toplam %${rule.total}',
+                  style: const TextStyle(
+                    color: Color(0xFFFF6E6E),
+                    fontSize: 11,
+                  ),
+                ),
               TextButton(
                 onPressed: () => _edit(context, ref),
                 child: const Text('Düzenle'),
@@ -571,11 +691,18 @@ class _RevenueRuleCard extends ConsumerWidget {
     return Expanded(
       child: Column(
         children: [
-          Text('%$pct',
-              style: TextStyle(
-                  color: color, fontWeight: FontWeight.w900, fontSize: 16)),
-          Text(label,
-              style: const TextStyle(color: Color(0xCCFFFFFF), fontSize: 11)),
+          Text(
+            '%$pct',
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(color: Color(0xCCFFFFFF), fontSize: 11),
+          ),
         ],
       ),
     );
@@ -589,8 +716,10 @@ class _RevenueRuleCard extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1A1030),
-        title: Text('${rule.context} — gelir paylaşımı',
-            style: const TextStyle(color: Colors.white, fontSize: 15)),
+        title: Text(
+          '${rule.context} — gelir paylaşımı',
+          style: const TextStyle(color: Colors.white, fontSize: 15),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -601,11 +730,13 @@ class _RevenueRuleCard extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Vazgeç')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Vazgeç'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Kaydet')),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Kaydet'),
+          ),
         ],
       ),
     );
@@ -620,9 +751,9 @@ class _RevenueRuleCard extends ConsumerWidget {
       ref.invalidate(adminRevenueRulesProvider);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
       }
     } finally {
       site.dispose();
