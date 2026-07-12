@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../domain/live_guest_list_snapshot.dart';
 
 class LiveStreamExtrasDataSource {
   LiveStreamExtrasDataSource(this._dio);
@@ -184,12 +185,29 @@ class LiveStreamExtrasDataSource {
 
   Future<({List<Map<String, dynamic>> coBroadcasters, List<Map<String, dynamic>> joinRequests})>
       fetchCoBroadcastSnapshot(String streamId) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.liveGuestList,
+        query: {'streamId': streamId},
+        forceRefresh: true,
+      );
+      if (res.data is Map) {
+        final snap = LiveGuestListSnapshot.fromJson(
+          asJsonMap(res.data),
+        );
+        return (
+          coBroadcasters: snap.toCoBroadcasters(),
+          joinRequests: const <Map<String, dynamic>>[],
+        );
+      }
+    } catch (_) {}
+
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.videoStreamCoBroadcast(streamId),
     );
     return (
       coBroadcasters: _listFromBody(res.data,
-          keys: ['coBroadcasters', 'items', 'data']),
+          keys: ['coBroadcasters', 'items', 'data', 'guests']),
       joinRequests: _listFromBody(res.data,
           keys: ['joinRequests', 'pendingRequests', 'requests']),
     );

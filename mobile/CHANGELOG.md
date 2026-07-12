@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.18+22 (2026-07-12)
+
+### Canlı PK + misafir — prod `/api/live/*` ve `/live` WebSocket
+- `GET /api/live/pk/active` öncelikli; yedek `/api/pk/active`
+- `GET /api/live/guest/list` ile çoklu yayın misafir listesi; yedek co-broadcast API
+- Socket.IO `/live` namespace: JWT auth, `joinStream` / `joinBattle`, `pk_score_update`, `guest_joined` olayları
+- PK skoru ve misafir grid canlı odada gerçek zamanlı güncellenir; PK battleId değişince socket odaya katılır
+
 ## 1.0.17+21 (2026-07-12)
 
 ### Admin — jeton/CFC/üyelik ve hediye düzeltmeleri

@@ -70,6 +70,25 @@ void main() {
       );
     });
 
+    test('canlı PK ve misafir uçları Game backend', () {
+      expect(
+        ApiBackendRouter.resolve('/api/live/pk/active'),
+        ApiBackendKind.game,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/live/pk/sweep', method: 'POST'),
+        ApiBackendKind.game,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/live/guest/list'),
+        ApiBackendKind.game,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/live/guest/list?streamId=abc'),
+        ApiBackendKind.game,
+      );
+    });
+
     test('birleşik PK uçları Game backend', () {
       expect(ApiBackendRouter.resolve('/api/pk/active'), ApiBackendKind.game);
       expect(

@@ -149,10 +149,18 @@ class PkRoomRemoteDataSource {
     return _parse(res.data);
   }
 
-  /// Aktif PK maçları.
+  /// Aktif PK maçları — önce `/api/live/pk/active`, yedek `/api/pk/active`.
   Future<List<PkRoomMatch>> active() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.pkActive);
-    return parsePkMatchList(res.data);
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.livePkActive,
+        forceRefresh: true,
+      );
+      return parsePkMatchList(res.data);
+    } catch (_) {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.pkActive);
+      return parsePkMatchList(res.data);
+    }
   }
 
   /// PK geçmişim (galibiyet/mağlubiyet/berabere).
