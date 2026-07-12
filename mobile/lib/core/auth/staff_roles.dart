@@ -60,8 +60,8 @@ abstract final class StaffRoles {
 
   static String labelTr(String role) {
     return switch (role.toLowerCase()) {
-      'admin' => 'Admin',
-      'yonetici' => 'Yönetici',
+      'admin' => 'Site Admin',
+      'yonetici' => 'Kurucu',
       'moderator' => 'Moderatör',
       'destek' => 'Destek',
       'yardim' => 'Yardım',

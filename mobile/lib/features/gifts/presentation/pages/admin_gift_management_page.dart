@@ -28,8 +28,9 @@ class AdminGiftManagementPage extends ConsumerWidget {
           child: Padding(
             padding: EdgeInsets.all(24),
             child: Text(
-              'Hediye yönetimi yalnızca site admin hesabına açıktır.\n'
-              'Yönetici/ödeme paneli yetkisi hediye eklemek için yeterli değildir.',
+              'Hediye eklemek için «admin» kullanıcı adıyla giriş yapın (Site Admin).\n\n'
+              '«yonetici» hesabı (Kurucu) ödeme paneli ve diğer yönetim işlemlerine açıktır; '
+              'hediye kataloğu yalnızca site admin hesabına açıktır.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Color(0x99FFFFFF)),
             ),

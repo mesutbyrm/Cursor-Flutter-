@@ -318,7 +318,8 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
           child: Padding(
             padding: EdgeInsets.all(24),
             child: Text(
-              'Hediye ekleme/düzenleme yalnızca site admin hesabına açıktır.',
+              'Hediye eklemek için «admin» kullanıcı adıyla giriş yapın (Site Admin).\n\n'
+              '«yonetici» (Kurucu) hesabı hediye ekleyemez.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Color(0x99FFFFFF)),
             ),

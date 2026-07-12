@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.15+19 (2026-07-12)
+
+### Roller — Site Admin / Kurucu etiketleri
+- `admin` kullanıcı adı profilde «Site Admin» olarak gösterilir
+- `yonetici` kullanıcı adı «Kurucu» olarak gösterilir
+- Hediye yönetimi kapalı ekranında hangi hesabın kullanılacağı açıkça yazılır
+
 ## 1.0.14+18 (2026-07-12)
 
 ### Admin Hediye — 403 ve ham hata düzeltmesi

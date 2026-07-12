@@ -11,14 +11,20 @@ class StaffAccess {
     required this.isSiteAdmin,
     required this.showAdminPanel,
     this.siteRole,
+    this.username,
   });
 
   final bool canManagePayments;
   final bool isSiteAdmin;
   final bool showAdminPanel;
   final String? siteRole;
+  final String? username;
 
+  /// Profil / panel başlığı — kullanıcı adı öncelikli (`admin` → Site Admin, `yonetici` → Kurucu).
   String get roleLabel {
+    final u = username?.toLowerCase().trim() ?? '';
+    if (u == 'admin') return 'Site Admin';
+    if (u == 'yonetici') return 'Kurucu';
     if (siteRole != null && siteRole!.isNotEmpty) {
       return StaffRoles.labelTr(siteRole!);
     }
@@ -76,5 +82,6 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
     isSiteAdmin: isSiteAdmin,
     showAdminPanel: showAdminPanel,
     siteRole: effectiveRole,
+    username: username,
   );
 });
