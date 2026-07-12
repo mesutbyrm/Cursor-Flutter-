@@ -71,6 +71,9 @@ passed
 
 npm test
 1 test passed
+
+flutter build apk --debug
+bloklandı: Cloud ortamında Android SDK bulunmuyor
 ```
 
 Yeni test kapsamı:
@@ -104,4 +107,6 @@ mümkün değildir. Bu nedenle:
 - Web görünümü production servisinin aynı DB/cache invalidation davranışına
   bağlıdır; bu repo web admin backend'ini içermediğinden istemci tarafından
   garanti edilemez.
+- Android APK derlemesi kod hatası nedeniyle değil, bu Cloud imajında Android
+  SDK bulunmadığı için başlatılamadı (`No Android SDK found`).
 
