@@ -8,6 +8,7 @@ import '../../../../core/performance/network_perf.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
+import '../../domain/live_guest_layout_resolver.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/utils/live_chat_guard.dart';
@@ -18,12 +19,14 @@ import 'live_stream_engagement_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import 'live_fortune_request_provider.dart';
+import 'live_broadcast_settings_provider.dart';
 import 'live_gift_leaderboard_provider.dart';
 import 'live_room_interaction_provider.dart';
 import 'live_video_pk_provider.dart';
 import 'live_namespace_providers.dart';
 import 'co_broadcast_provider.dart';
 import 'live_guest_grid_provider.dart';
+import 'pk_room_providers.dart';
 
 class LiveRoomState {
   const LiveRoomState({
@@ -222,11 +225,28 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
               .applyRemoteBattle(Map<String, dynamic>.from(battle));
         }
       },
+      onPkInvite: (payload) {
+        ref.invalidate(pkPendingInvitesProvider);
+        final battle = payload['battle'] ?? payload['match'] ?? payload;
+        if (battle is Map) {
+          ref
+              .read(liveVideoPkProvider(streamId).notifier)
+              .applyRemoteBattle(Map<String, dynamic>.from(battle));
+        }
+        LiveDebugLog.log('live.ns.pk_invite', payload);
+      },
       onGuestJoined: (guest) async {
         LiveDebugLog.log('live.ns.guest_joined', guest);
         await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
         final co = ref.read(coBroadcastProvider).coBroadcasters;
-        ref.read(liveGuestGridProvider.notifier).syncCoBroadcasters(co);
+        final layout = resolveGuestLayout(guestCount: co.length);
+        ref.read(liveBroadcastSettingsProvider.notifier)
+          ..toggleCoBroadcast(true)
+          ..toggleGuests(true)
+          ..setGuestLayout(layout);
+        ref.read(liveGuestGridProvider.notifier)
+          ..setLayout(layout)
+          ..syncCoBroadcasters(co);
       },
       onGuestLeft: (_) async {
         await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);

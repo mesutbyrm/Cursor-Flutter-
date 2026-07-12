@@ -33,7 +33,10 @@ import '../../data/host_live_stream_recovery.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_guest_layout.dart';
+import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
+import '../../domain/live_guest_layout_resolver.dart';
+import '../providers/live_namespace_providers.dart';
 import '../../domain/utils/live_fortune_type_slug.dart';
 import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
@@ -690,6 +693,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       }
       unawaited(ref.read(coBroadcastProvider.notifier).refresh());
       unawaited(ref.read(coBroadcastProvider.notifier).refreshStream(streamId));
+      unawaited(_applyGuestPresenceFromApi(streamId));
       _guestJoinPoll?.cancel();
       _guestJoinPoll = Timer.periodic(const Duration(seconds: 8), (_) {
         if (!mounted) return;
@@ -712,10 +716,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         unawaited(_syncCoBroadcastGuest(streamId));
       });
       unawaited(_syncCoBroadcastGuest(streamId));
+      unawaited(_applyGuestPresenceFromApi(streamId));
     }
 
     _pkInvitePoll?.cancel();
-    _pkInvitePoll = Timer.periodic(const Duration(seconds: 6), (_) {
+    _pkInvitePoll = Timer.periodic(const Duration(seconds: 3), (_) {
       if (!mounted) return;
       unawaited(_pollPkInvites(streamId));
     });
@@ -835,6 +840,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               userId: userId,
               displayName: name,
             );
+        _enableMultiGuestLayout(
+          LiveGuestLayout.duo,
+          [
+            {'userId': userId, 'displayName': name},
+          ],
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('$name yayına eklendi')),
@@ -888,11 +899,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       await _agora.setCameraEnabled(true);
       _agora.setMicEnabled(true);
       _coHostUpgraded = true;
-      ref.read(liveGuestGridProvider.notifier).addGuest(
-            slotIndex: _nextEmptyGuestSlot(),
-            userId: user.id,
-            displayName: user.display,
-          );
+      _enableMultiGuestLayout(
+        LiveGuestLayout.duo,
+        [
+          {
+            'userId': user.id,
+            'displayName': user.display,
+            'userName': user.display,
+          },
+        ],
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Misafir yayınına geçildi — kamera açık')),
@@ -905,6 +921,34 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         );
       }
     }
+  }
+
+  void _enableMultiGuestLayout(
+    LiveGuestLayout layout,
+    List<Map<String, dynamic>> guests,
+  ) {
+    final settings = ref.read(liveBroadcastSettingsProvider.notifier);
+    settings.toggleCoBroadcast(true);
+    settings.toggleGuests(true);
+    settings.setGuestLayout(layout);
+    ref.read(liveGuestGridProvider.notifier)
+      ..setLayout(layout)
+      ..syncCoBroadcasters(guests);
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _applyGuestPresenceFromApi(String streamId) async {
+    try {
+      final snap =
+          await ref.read(liveApiRemoteProvider).fetchGuestList(streamId: streamId);
+      if (snap.count <= 0 && snap.guests.isEmpty) return;
+      final guests = snap.toCoBroadcasters();
+      final layout = resolveGuestLayout(
+        guestCount: snap.count > 0 ? snap.count : guests.length,
+        gridSlots: snap.gridSlots,
+      );
+      _enableMultiGuestLayout(layout, guests);
+    } catch (_) {}
   }
 
   Future<void> _pollPkInvites(String streamId) async {
@@ -926,8 +970,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   void _maybeShowPkInvite(String streamId, Map<String, dynamic> battle) {
+    if (!widget.session.isHost) return;
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
     final status = battle['status']?.toString() ?? '';
     if (status != 'pending') return;
+    if (!isLivePkInviteRecipientMap(
+      battle,
+      myStreamId: streamId,
+      myUserId: userId,
+    )) {
+      return;
+    }
     final id = battle['id']?.toString() ?? '';
     if (id.isEmpty || !_seenPkInviteIds.add(id)) return;
     final hostStream = battle['hostStreamId']?.toString();
@@ -984,6 +1037,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         }
       }
       if (accept && mounted) {
+        await ref.read(liveVideoPkProvider(streamId).notifier).refresh();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('PK başlatılıyor…')),
         );
@@ -1020,9 +1074,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   /// PK aktif/beklemede VEYA misafir modu → ekran üst/alt bölünür.
-  bool _isSplitStage(LiveBroadcastSession s, String pkStatus) {
+  bool _isSplitStage(LiveBroadcastSession s, String pkStatus,
+      {bool hasCoGuests = false}) {
     final pkOn = pkStatus == 'active' || pkStatus == 'pending';
-    final guestOn = _resolveGuestLayout() != LiveGuestLayout.solo;
+    final guestOn =
+        _resolveGuestLayout() != LiveGuestLayout.solo || hasCoGuests;
     return pkOn || guestOn;
   }
 
@@ -1321,6 +1377,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
     final remoteUid = _agora.remoteUidNotifier.value;
     final layout = _resolveGuestLayout();
+    final hostJeton = ref.read(liveGiftControllerProvider).streamerEarnings ?? 0;
     return ValueListenableBuilder<List<int>>(
       valueListenable: _agora.remoteUidsNotifier,
       builder: (context, remoteUids, _) {
@@ -1332,6 +1389,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           hostAvatarUrl: s.avatarUrl,
           hostName: s.streamerName,
           remoteUid: remoteUid,
+          hostJetonEarned: hostJeton,
           onInviteSlot: s.isHost ? (_) => _openControlCenter() : null,
           onGuestAction: s.isHost ? _onGuestAction : null,
         );
@@ -1497,12 +1555,24 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         : null;
     final balance = ref.watch(coinBalanceProvider) ?? user?.coinBalance;
     final broadcastSettings = ref.watch(liveBroadcastSettingsProvider);
+    final coBroadcast = ref.watch(coBroadcastProvider);
+    final hasCoGuests = coBroadcast.coBroadcasters.isNotEmpty;
+    final hostJeton = giftCtrl.streamerEarnings ?? 0;
 
     if (hasStream && s.isHost) {
       ref.listen(coBroadcastProvider, (prev, next) {
-        ref
-            .read(liveGuestGridProvider.notifier)
-            .syncCoBroadcasters(next.coBroadcasters);
+        if (next.coBroadcasters.isNotEmpty) {
+          final layout = resolveGuestLayout(
+            guestCount: next.coBroadcasters.length,
+          );
+          if (_resolveGuestLayout() == LiveGuestLayout.solo) {
+            _enableMultiGuestLayout(layout, next.coBroadcasters);
+          } else {
+            ref
+                .read(liveGuestGridProvider.notifier)
+                .syncCoBroadcasters(next.coBroadcasters);
+          }
+        }
         for (final req in next.joinRequests) {
           if ((req['status']?.toString() ?? 'pending') == 'pending') {
             unawaited(_promptGuestJoinRequest(req));
@@ -1587,6 +1657,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
     ref.listen<LiveGiftController>(liveGiftControllerProvider, (prev, next) {
       if (hasStream) {
+        final earnings = next.streamerEarnings ?? 0;
+        ref.read(liveGuestGridProvider.notifier).setHostJeton(earnings);
         final prevIds =
             prev?.notifications.map((e) => e.id).toSet() ?? const <String>{};
         for (final ev in next.notifications) {
@@ -1647,7 +1719,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           children: [
             // PK veya misafir modunda ekran üst/alt bölünür: üst yarı video/PK
             // alanı, alt yarı hediye + chat. Normal yayında tam ekran video.
-            if (_isSplitStage(s, pkStatus))
+            if (_isSplitStage(s, pkStatus, hasCoGuests: hasCoGuests))
               Positioned(
                 top: 0,
                 left: 0,
@@ -1657,7 +1729,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               )
             else
               Positioned.fill(child: _videoLayer(s)),
-            if (_isSplitStage(s, pkStatus))
+            if (_isSplitStage(s, pkStatus, hasCoGuests: hasCoGuests))
               Positioned(
                 top: MediaQuery.sizeOf(context).height * 0.5,
                 left: 0,

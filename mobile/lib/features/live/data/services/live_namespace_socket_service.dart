@@ -19,6 +19,7 @@ class LiveNamespaceSocketService {
     String? streamId,
     String? battleId,
     void Function(Map<String, dynamic> payload)? onPkScoreUpdate,
+    void Function(Map<String, dynamic> payload)? onPkInvite,
     void Function(Map<String, dynamic> guest)? onGuestJoined,
     void Function(Map<String, dynamic> payload)? onGuestLeft,
     void Function()? onReconnect,
@@ -60,6 +61,9 @@ class LiveNamespaceSocketService {
           ..on('pk_score_update', (data) => _emitMap(data, onPkScoreUpdate))
           ..on('pk:score-update', (data) => _emitMap(data, onPkScoreUpdate))
           ..on('PK_SCORE_UPDATE', (data) => _emitMap(data, onPkScoreUpdate))
+          ..on('pk_invite', (data) => _emitMap(data, onPkInvite))
+          ..on('pkInvite', (data) => _emitMap(data, onPkInvite))
+          ..on('PK_INVITE', (data) => _emitMap(data, onPkInvite))
           ..on('guest_joined', (data) => _emitMap(data, onGuestJoined))
           ..on('guestJoined', (data) => _emitMap(data, onGuestJoined))
           ..on('GUEST_JOINED', (data) => _emitMap(data, onGuestJoined))

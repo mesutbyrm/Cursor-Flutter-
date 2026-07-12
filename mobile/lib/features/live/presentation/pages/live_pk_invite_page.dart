@@ -53,13 +53,22 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
       _error = null;
     });
     try {
-      // Birleşik PK API (Faz 1) — öncelikli; başarısızsa eski video-stream yolu.
-      final invited = await ref.read(pkUnifiedInviteProvider).inviteStream(
+      await ref.read(pkUnifiedInviteProvider).inviteStream(
             streamId: streamId,
             opponentStreamId: opponent.id,
             durationSeconds: _durationSeconds,
           );
-      if (invited == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${opponent.streamerName ?? opponent.title} kullanıcısına PK daveti gönderildi',
+          ),
+        ),
+      );
+      context.pop();
+    } catch (e) {
+      try {
         final legacy = await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
               streamId: streamId,
               opponentStreamId: opponent.id,
@@ -70,17 +79,14 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
           setState(() => _error = 'PK daveti gönderilemedi');
           return;
         }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('PK daveti gönderildi')),
+        );
+        context.pop();
+      } catch (legacyErr) {
+        if (mounted) setState(() => _error = '$legacyErr');
       }
-      if (!mounted) return;
-      context.push(
-        '/live/pk',
-        extra: {
-          'session': widget.session,
-          'opponent': opponent,
-        },
-      );
-    } catch (e) {
-      if (mounted) setState(() => _error = '$e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }

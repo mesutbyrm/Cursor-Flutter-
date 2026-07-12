@@ -1,6 +1,7 @@
 import '../../../../core/util/json_util.dart';
 import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import 'pk_room_models.dart';
+import 'live_pk_invite_helper.dart';
 
 /// `PkRoomMatch` → `PkBattleRemote` (sesli/canlı PK ekranları için).
 PkBattleRemote pkRoomMatchToBattleRemote(
@@ -70,10 +71,11 @@ Map<String, dynamic> pkRoomMatchToBattleMap(
   final isOpponent = myStreamId != null &&
       myStreamId.trim().isNotEmpty &&
       match.isPending &&
-      (match.hostStreamId == null ||
-          match.hostStreamId != myStreamId.trim()) &&
-      (match.seats.any((s) => s.streamId == myStreamId.trim()) ||
-          match.hostStreamId != myStreamId.trim());
+      isLivePkInviteRecipient(
+        match,
+        myStreamId: myStreamId.trim(),
+        myUserId: null,
+      );
 
   return {
     'id': match.id,

@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.19+23 (2026-07-12)
+
+### Canlı PK daveti + misafir grid
+- PK daveti gönderimi hata mesajı gösterir; kabul beklemeden savaş ekranına gitmez
+- Gelen PK daveti yalnızca hedef yayıncıya popup (Kabul / Reddet); kabulde PK başlar
+- Uygulama geneli PK davet dinleyicisi (`/api/pk/me/invites` + socket `pk_invite`)
+- Misafir katılınca otomatik duo grid ve üst/alt ekran bölünmesi
+- Misafir adı + yayıncı/konuk jeton miktarı grid hücrelerinde
+- Tüm konuk slotları Agora UID ile video gösterir; `/api/live/guest/list` ile senkron
+
 ## 1.0.18+22 (2026-07-12)
 
 ### Canlı PK + misafir — prod `/api/live/*` ve `/live` WebSocket

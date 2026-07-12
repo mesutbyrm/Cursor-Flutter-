@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/live_guest_layout.dart';
 import '../../domain/entities/live_guest_slot.dart';
+import '../../domain/live_guest_layout_resolver.dart';
 
 class LiveGuestGridState {
   const LiveGuestGridState({
@@ -101,7 +102,10 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
   }
 
   void syncCoBroadcasters(List<Map<String, dynamic>> guests) {
-    if (state.layout == LiveGuestLayout.solo) return;
+    if (guests.isEmpty) return;
+    if (state.layout == LiveGuestLayout.solo) {
+      setLayout(resolveGuestLayout(guestCount: guests.length));
+    }
     final list = [...state.slots];
     var slot = 1;
     for (final g in guests) {
@@ -115,10 +119,15 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
         userId: userId,
         displayName: name,
         agoraUid: int.tryParse('${g['agoraUid'] ?? g['uid'] ?? ''}'),
+        jetonEarned: parseGuestJeton(g),
       );
       slot++;
     }
     state = state.copyWith(slots: list);
+  }
+
+  void setHostJeton(int jeton) {
+    _upsert(0, jetonEarned: jeton);
   }
 
   void _upsert(
@@ -127,6 +136,7 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
     String? displayName,
     int? agoraUid,
     bool? isHost,
+    int? jetonEarned,
   }) {
     final list = [...state.slots];
     while (list.length <= index) {
@@ -137,6 +147,7 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
       displayName: displayName,
       agoraUid: agoraUid,
       isHost: isHost,
+      jetonEarned: jetonEarned,
     );
     state = state.copyWith(slots: list);
   }

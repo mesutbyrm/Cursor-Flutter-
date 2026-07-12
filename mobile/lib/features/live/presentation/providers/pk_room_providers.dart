@@ -198,16 +198,12 @@ class PkUnifiedInviteActions {
     int durationSeconds = 180,
   }) async {
     final api = _ref.read(pkRoomRemoteProvider);
-    try {
-      return await api.request(
-        hostStreamId: streamId,
-        opponentStreamId: opponentStreamId,
-        durationSec: durationSeconds,
-        mode: PkRoomMode.oneVsOne,
-      );
-    } catch (_) {
-      return null;
-    }
+    return api.request(
+      hostStreamId: streamId,
+      opponentStreamId: opponentStreamId,
+      durationSec: durationSeconds,
+      mode: PkRoomMode.oneVsOne,
+    );
   }
 
   Future<PkRoomMatch?> respond({

@@ -25,6 +25,7 @@ class LiveGuestGrid extends ConsumerWidget {
     this.remoteUid,
     this.onInviteSlot,
     this.onGuestAction,
+    this.hostJetonEarned = 0,
   });
 
   final LiveGuestLayout layout;
@@ -38,6 +39,7 @@ class LiveGuestGrid extends ConsumerWidget {
   final int? remoteUid;
   final void Function(int slotIndex)? onInviteSlot;
   final void Function(int slotIndex, String action)? onGuestAction;
+  final int hostJetonEarned;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -61,7 +63,8 @@ class LiveGuestGrid extends ConsumerWidget {
         hostAvatarUrl: hostAvatarUrl,
         hostName: hostName,
         remoteUid: slot.agoraUid ?? (i == 1 ? remoteUid : null),
-        remoteUserId: i == 1 ? remoteUserId : null,
+        remoteUserId: slot.userId ?? (i == 1 ? remoteUserId : null),
+        hostJetonEarned: hostJetonEarned,
         pinned: grid.pinnedIndex == i,
         onInvite: onInviteSlot == null ? null : () => onInviteSlot!(i),
         onAction: onGuestAction == null
@@ -202,6 +205,7 @@ class _SlotCell extends StatelessWidget {
     this.pinned = false,
     this.onInvite,
     this.onAction,
+    this.hostJetonEarned = 0,
   });
 
   final LiveGuestSlot slot;
@@ -216,6 +220,10 @@ class _SlotCell extends StatelessWidget {
   final bool pinned;
   final VoidCallback? onInvite;
   final void Function(String action)? onAction;
+  final int hostJetonEarned;
+
+  int get _displayJeton =>
+      slot.isHost || slot.index == 0 ? hostJetonEarned : slot.jetonEarned;
 
   @override
   Widget build(BuildContext context) {
@@ -226,6 +234,12 @@ class _SlotCell extends StatelessWidget {
           : trtc != null
               ? TrtcLocalVideoView(key: localPreviewKey, manager: trtc!)
               : _placeholder(hostName ?? 'Sen', hostAvatarUrl);
+    } else if (slot.agoraUid != null && slot.agoraUid! > 0 && agora != null) {
+      child = AgoraRemoteVideoView(
+        key: ValueKey(slot.agoraUid),
+        manager: agora!,
+        uid: slot.agoraUid!,
+      );
     } else if (remoteUid != null && agora != null) {
       child = AgoraRemoteVideoView(
         key: ValueKey(remoteUid),
@@ -265,11 +279,18 @@ class _SlotCell extends StatelessWidget {
           Positioned(
             left: 6,
             bottom: 6,
+            right: isHost && slot.index > 0 && onAction != null ? 72 : 6,
             child: _badge(
               Icons.person_rounded,
               slot.displayName ?? hostName ?? 'Yayıncı',
             ),
           ),
+          if (_displayJeton > 0)
+            Positioned(
+              left: 6,
+              top: 6,
+              child: _badge(Icons.monetization_on_rounded, '$_displayJeton jeton'),
+            ),
           if (isHost && slot.index > 0 && onAction != null)
             Positioned(
               right: 4,

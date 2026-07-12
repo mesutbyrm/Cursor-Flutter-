@@ -12,6 +12,7 @@ class LiveGuestSlot extends Equatable {
     this.micOn = true,
     this.pinned = false,
     this.mutedByHost = false,
+    this.jetonEarned = 0,
   });
 
   final int index;
@@ -23,6 +24,7 @@ class LiveGuestSlot extends Equatable {
   final bool micOn;
   final bool pinned;
   final bool mutedByHost;
+  final int jetonEarned;
 
   bool get isEmpty => userId == null && agoraUid == null && !isHost;
 
@@ -35,6 +37,7 @@ class LiveGuestSlot extends Equatable {
     bool? micOn,
     bool? pinned,
     bool? mutedByHost,
+    int? jetonEarned,
     bool clearUser = false,
   }) {
     return LiveGuestSlot(
@@ -47,10 +50,20 @@ class LiveGuestSlot extends Equatable {
       micOn: micOn ?? this.micOn,
       pinned: pinned ?? this.pinned,
       mutedByHost: mutedByHost ?? this.mutedByHost,
+      jetonEarned: jetonEarned ?? this.jetonEarned,
     );
   }
 
   @override
-  List<Object?> get props =>
-      [index, userId, agoraUid, isHost, cameraOn, micOn, pinned, mutedByHost];
+  List<Object?> get props => [
+        index,
+        userId,
+        agoraUid,
+        isHost,
+        cameraOn,
+        micOn,
+        pinned,
+        mutedByHost,
+        jetonEarned,
+      ];
 }

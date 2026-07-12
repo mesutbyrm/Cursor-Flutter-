@@ -1,4 +1,5 @@
 import '../../../core/util/json_util.dart';
+import 'live_guest_layout_resolver.dart';
 
 /// `GET /api/live/guest/list` yanıtı.
 class LiveGuestListSnapshot {
@@ -49,6 +50,8 @@ class LiveGuestListSnapshot {
               'agoraUid': g['agoraUid'] ?? g['uid'],
               'slotIndex': g['slotIndex'] ?? g['seatIndex'],
               'status': g['status'] ?? 'live',
+              'jeton': parseGuestJeton(g),
+              'jetonEarned': parseGuestJeton(g),
             })
         .where((g) => (g['userId'] as String).isNotEmpty)
         .toList(growable: false);
