@@ -7,6 +7,7 @@ import '../../data/pk/pk_room_remote_datasource.dart';
 import '../../domain/pk/pk_room_models.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
 import 'live_providers.dart';
+import 'live_namespace_providers.dart';
 import 'pk_room_providers.dart';
 
 class LiveVideoPkState {
@@ -87,6 +88,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
           unifiedMatchId: unified.id,
           clearError: true,
         );
+        _syncLiveSocketBattle();
         // SSE ile canlı takip (skor/süre).
         ref.read(pkRoomProvider(unified.id).notifier).adopt(unified);
         return;
@@ -102,10 +104,28 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       clearUnifiedMatchId: battle == null,
       clearError: true,
     );
+    _syncLiveSocketBattle();
   }
 
   void applyRemoteBattle(Map<String, dynamic> battle) {
-    state = state.copyWith(battle: battle, clearError: true);
+    final matchId = battle['id']?.toString() ?? battle['battleId']?.toString();
+    state = state.copyWith(
+      battle: battle,
+      unifiedMatchId: matchId ?? state.unifiedMatchId,
+      clearError: true,
+    );
+    _syncLiveSocketBattle();
+  }
+
+  void _syncLiveSocketBattle() {
+    final battleId = state.unifiedMatchId ??
+        state.battle?['id']?.toString() ??
+        state.battle?['battleId']?.toString();
+    if (battleId == null || battleId.isEmpty) return;
+    ref.read(liveNamespaceSocketProvider).updateRooms(
+          streamId: arg,
+          battleId: battleId,
+        );
   }
 
   Future<void> create({String? opponentStreamId, String? targetStreamId}) async {

@@ -322,6 +322,14 @@ abstract final class ApiEndpoints {
 
   /// Birleşik PK (Faz 1–3) — `canlifalapi.abacusai.app` üzerinden yönlendirilir.
   static const pkActive = '/api/pk/active';
+
+  /// Canlı PK (prod `/api/live/pk/*`) — games backend; `/api/pk/active` yedeği.
+  static const livePkActive = '/api/live/pk/active';
+  static const livePkSweep = '/api/live/pk/sweep';
+
+  /// Çoklu yayın misafir listesi (public) — `?streamId=` opsiyonel.
+  static const liveGuestList = '/api/live/guest/list';
+
   static const pkRequest = '/api/pk/request';
   static const pkRoom = '/api/pk/room';
   static const pkMeHistory = '/api/pk/me/history';

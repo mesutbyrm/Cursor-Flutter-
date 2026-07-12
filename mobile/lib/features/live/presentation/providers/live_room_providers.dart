@@ -20,6 +20,9 @@ import 'live_fortune_request_provider.dart';
 import 'live_gift_leaderboard_provider.dart';
 import 'live_room_interaction_provider.dart';
 import 'live_video_pk_provider.dart';
+import 'live_namespace_providers.dart';
+import 'co_broadcast_provider.dart';
+import 'live_guest_grid_provider.dart';
 
 class LiveRoomState {
   const LiveRoomState({
@@ -68,11 +71,14 @@ class LiveRoomState {
 class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String> {
   Timer? _poll;
   final Set<String> _seenIds = {};
+  LiveNamespaceSocketService? _liveSocket;
 
   @override
   LiveRoomState build(String streamId) {
     ref.onDispose(() {
       _poll?.cancel();
+      _liveSocket?.disconnect();
+      _liveSocket = null;
       ref.read(sseConnectionHubProvider).releaseVideoStream(streamId);
       unawaited(ref.read(liveRemoteProvider).leaveVideoStream(streamId));
     });
@@ -189,6 +195,46 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         if (notice != null) {
           state = state.copyWith(fortuneAnsweredNotice: notice);
         }
+      },
+    );
+
+    _startLiveNamespaceSocket(streamId);
+  }
+
+  void _startLiveNamespaceSocket(String streamId) {
+    final storage = ref.read(tokenStorageProvider);
+    _liveSocket = ref.read(liveNamespaceSocketProvider);
+    final pkState = ref.read(liveVideoPkProvider(streamId));
+    final battleId = pkState.unifiedMatchId ??
+        pkState.battle?['id']?.toString() ??
+        pkState.battle?['battleId']?.toString();
+
+    _liveSocket!.connect(
+      accessToken: storage.readAccess,
+      streamId: streamId,
+      battleId: battleId,
+      onPkScoreUpdate: (payload) {
+        final battle = payload['battle'] ?? payload['match'] ?? payload;
+        if (battle is Map) {
+          ref
+              .read(liveVideoPkProvider(streamId).notifier)
+              .applyRemoteBattle(Map<String, dynamic>.from(battle));
+        }
+      },
+      onGuestJoined: (guest) async {
+        LiveDebugLog.log('live.ns.guest_joined', guest);
+        await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
+        final co = ref.read(coBroadcastProvider).coBroadcasters;
+        ref.read(liveGuestGridProvider.notifier).syncCoBroadcasters(co);
+      },
+      onGuestLeft: (_) async {
+        await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
+        final co = ref.read(coBroadcastProvider).coBroadcasters;
+        ref.read(liveGuestGridProvider.notifier).syncCoBroadcasters(co);
+      },
+      onReconnect: () {
+        ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
+        ref.read(liveVideoPkProvider(streamId).notifier).refresh();
       },
     );
   }
