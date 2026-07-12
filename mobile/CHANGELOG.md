@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.13+17 (2026-07-12)
+
+### Admin Hediye Yönetimi — katalog ve yükleme onarımı
+- Hediye kataloğu (`GET /api/admin/gifts`) artık 30 sn operasyon timeout ile gelir; sonsuz spinner yerine hata + «Tekrar dene»
+- Admin `upload-url` zaman aşımı/5xx/404 olduğunda kılavuzdaki `/api/upload/presigned` yedek yoluna düşer (R2 cloud path korunur)
+- Presign isteğine `fileSize` eklendi; PUT için daha uzun gönderim süresi
+- Katalog provider `autoDispose` kaldırıldı — sekme geçişinde gereksiz yeniden yükleme azaltıldı
+- Kayıt sonrası medya doğrulaması CDN URL / cloud path eşleşmesini kabul eder
+
 ## 1.0.12+16 (2026-07-12)
 
 ### Admin Hediye Yönetimi — create/upload onarımı

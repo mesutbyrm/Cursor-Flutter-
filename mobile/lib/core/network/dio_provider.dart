@@ -194,13 +194,20 @@ extension DioApi on Dio {
     Map<String, dynamic>? query,
     bool forceRefresh = false,
     CancelToken? cancelToken,
+    Options? options,
   }) async {
     try {
+      final extra = <String, dynamic>{
+        if (forceRefresh) 'forceRefresh': true,
+        ...?options?.extra,
+      };
       return await get<T>(
         path,
         queryParameters: query,
         cancelToken: cancelToken,
-        options: Options(extra: forceRefresh ? {'forceRefresh': true} : null),
+        options: (options ?? Options()).copyWith(
+          extra: extra.isEmpty ? options?.extra : extra,
+        ),
       );
     } on DioException catch (e) {
       throw _mapDio(e);
