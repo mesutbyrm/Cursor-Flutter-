@@ -262,10 +262,17 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
   }
 
   void _verifySavedAssets(AdminGiftType saved) {
-    bool missing(String? uploadedPath, String? savedPath) =>
-        uploadedPath != null &&
-        uploadedPath.isNotEmpty &&
-        (savedPath == null || savedPath.isEmpty);
+    bool missing(String? uploadedPath, String? savedPath) {
+      if (uploadedPath == null || uploadedPath.isEmpty) return false;
+      if (savedPath == null || savedPath.isEmpty) return true;
+      final uploaded = uploadedPath.trim();
+      final savedValue = savedPath.trim();
+      if (savedValue == uploaded) return false;
+      if (savedValue.endsWith(uploaded) || uploaded.endsWith(savedValue)) {
+        return false;
+      }
+      return true;
+    }
 
     if (missing(_imageCloudPath, saved.imageUrl) ||
         missing(_thumbnailCloudPath, saved.thumbnailUrl) ||

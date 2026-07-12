@@ -10,8 +10,7 @@ final adminGiftRemoteProvider = Provider<AdminGiftRemoteDataSource>((ref) {
 });
 
 /// Admin katalog (pasifler dahil).
-final adminGiftListProvider =
-    FutureProvider.autoDispose<List<AdminGiftType>>((ref) {
+final adminGiftListProvider = FutureProvider<List<AdminGiftType>>((ref) {
   return ref.read(adminGiftRemoteProvider).listGifts();
 });
 

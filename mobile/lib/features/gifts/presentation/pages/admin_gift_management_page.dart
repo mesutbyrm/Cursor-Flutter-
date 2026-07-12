@@ -97,11 +97,42 @@ class _CatalogTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(adminGiftListProvider);
     return async.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 14),
+            Text(
+              'Hediye kataloğu yükleniyor…',
+              style: TextStyle(color: Color(0x99FFFFFF)),
+            ),
+          ],
+        ),
+      ),
       error: (e, _) => Center(
-        child: Text(
-          ApiException.userMessage(e),
-          style: const TextStyle(color: Color(0x99FFFFFF)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.cloud_off_rounded, color: Color(0xFFFF6E6E), size: 42),
+              const SizedBox(height: 12),
+              Text(
+                ApiException.userMessage(e),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xCCFFFFFF)),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: () {
+                  ref.invalidate(adminGiftListProvider);
+                },
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Tekrar dene'),
+              ),
+            ],
+          ),
         ),
       ),
       data: (gifts) => RefreshIndicator(
