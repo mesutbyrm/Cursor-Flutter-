@@ -17,7 +17,7 @@ class AdminGiftManagementPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final access = ref.watch(staffAccessProvider);
-    if (!access.showAdminPanel) {
+    if (!access.isSiteAdmin) {
       return Scaffold(
         backgroundColor: const Color(0xFF0E0524),
         appBar: AppBar(
@@ -25,13 +25,20 @@ class AdminGiftManagementPage extends ConsumerWidget {
           title: const Text('Hediye Yönetimi'),
         ),
         body: const Center(
-          child: Text(
-            'Bu alan yalnızca admin/yönetici hesapları içindir.',
-            style: TextStyle(color: Color(0x99FFFFFF)),
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'Hediye yönetimi yalnızca site admin hesabına açıktır.\n'
+              'Yönetici/ödeme paneli yetkisi hediye eklemek için yeterli değildir.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0x99FFFFFF)),
+            ),
           ),
         ),
       );
     }
+
+    final apiAccess = ref.watch(adminGiftApiAccessProvider);
 
     return DefaultTabController(
       length: 3,
@@ -51,9 +58,10 @@ class AdminGiftManagementPage extends ConsumerWidget {
         floatingActionButton: Builder(
           builder: (ctx) {
             final tab = DefaultTabController.of(ctx);
+            final canWrite = apiAccess.valueOrNull == true;
             return AnimatedBuilder(
               animation: tab,
-              builder: (_, __) => tab.index == 0
+              builder: (_, __) => tab.index == 0 && canWrite
                   ? FloatingActionButton.extended(
                       backgroundColor: const Color(0xFF7C3AED),
                       onPressed: () async {
@@ -75,8 +83,57 @@ class AdminGiftManagementPage extends ConsumerWidget {
             );
           },
         ),
-        body: const TabBarView(
-          children: [_CatalogTab(), _StatsTab(), _RevenueTab()],
+        body: Column(
+          children: [
+            if (apiAccess.isLoading)
+              const LinearProgressIndicator(minHeight: 2),
+            if (apiAccess.hasError)
+              Material(
+                color: const Color(0x33FF5252),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(
+                    ApiException.userMessage(apiAccess.error!),
+                    style: const TextStyle(color: Color(0xFFFFCDD2)),
+                  ),
+                ),
+              )
+            else if (apiAccess.hasValue && apiAccess.value == false)
+              Material(
+                color: const Color(0x33FF5252),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.lock_rounded, color: Color(0xFFFF8A80)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Sunucu hediye yönetimine izin vermiyor (403). '
+                          'Site admin hesabıyla giriş yapın veya oturumu yenileyin.',
+                          style: const TextStyle(
+                            color: Color(0xFFFFCDD2),
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          ref.invalidate(adminGiftApiAccessProvider);
+                          ref.invalidate(adminGiftListProvider);
+                        },
+                        child: const Text('Yenile'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const Expanded(
+              child: TabBarView(
+                children: [_CatalogTab(), _StatsTab(), _RevenueTab()],
+              ),
+            ),
+          ],
         ),
       ),
     );

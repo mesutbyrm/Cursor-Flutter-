@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.14+18 (2026-07-12)
+
+### Admin Hediye — 403 ve ham hata düzeltmesi
+- Ham `DioException` artık snackbar'da gösterilmez; Türkçe `ApiException` mesajı kullanılır
+- Hediye yönetimi yalnızca **site admin** (`isSiteAdmin`) hesabına açılır; yönetici/ödeme paneli yetkisi yeterli değil
+- Sunucu 403/401 dönerse kırmızı uyarı bandı + «Yenile»; kayıt öncesi cüzdan/rol yenilenir
+- Animasyon dosyası yokken `animationType: none` gönderilir (MP4 seçili ama dosya yok → sunucu hatası önlenir)
+- R2 PUT hataları da `ApiException` olarak map edilir; create timeout 45 sn
+
 ## 1.0.13+17 (2026-07-12)
 
 ### Admin Hediye Yönetimi — katalog ve yükleme onarımı

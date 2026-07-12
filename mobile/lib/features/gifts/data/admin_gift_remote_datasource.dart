@@ -27,7 +27,7 @@ class AdminGiftUploadedAsset {
 class AdminGiftRemoteDataSource {
   AdminGiftRemoteDataSource(
     this._dio, {
-    Duration operationTimeout = const Duration(seconds: 30),
+    Duration operationTimeout = const Duration(seconds: 45),
     Dio Function()? uploadDioFactory,
   }) : _operationTimeout = operationTimeout,
        _uploadDioFactory = uploadDioFactory ?? _defaultUploadDio;
@@ -78,7 +78,7 @@ class AdminGiftRemoteDataSource {
         'GET /api/admin/gifts failed elapsedMs=${stopwatch.elapsedMilliseconds} '
         'error=${ApiException.userMessage(error)}',
       );
-      rethrow;
+      throw _asAdminApiError(error);
     }
   }
 
@@ -113,7 +113,7 @@ class AdminGiftRemoteDataSource {
         'POST /api/admin/gifts failed elapsedMs=${stopwatch.elapsedMilliseconds} '
         'error=${ApiException.userMessage(error)}',
       );
-      rethrow;
+      throw _asAdminApiError(error);
     }
   }
 
@@ -421,6 +421,8 @@ class AdminGiftRemoteDataSource {
           statusCode: code,
         );
       }
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
     } finally {
       putDio.close(force: true);
     }
@@ -499,6 +501,29 @@ class AdminGiftRemoteDataSource {
         '$operation zaman aşımına uğradı. Lütfen tekrar deneyin.',
       );
     }
+  }
+
+  Never _asAdminApiError(Object error) {
+    if (error is ApiException) {
+      if (error.statusCode == 403) {
+        throw ApiException(
+          error.message.contains('yetkiniz')
+              ? 'Hediye yönetimi için site admin yetkisi gerekir. '
+                    'Ödeme paneli/yönetici rolü yeterli değildir.'
+              : error.message,
+          statusCode: 403,
+        );
+      }
+      if (error.statusCode == 401) {
+        throw const ApiException(
+          'Oturum süresi doldu. Çıkış yapıp site admin hesabıyla tekrar giriş yapın.',
+          statusCode: 401,
+        );
+      }
+      throw error;
+    }
+    if (error is DioException) throw ApiException.fromDio(error);
+    throw ApiException(ApiException.userMessage(error));
   }
 
   static Dio _defaultUploadDio() {

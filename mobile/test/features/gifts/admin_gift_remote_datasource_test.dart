@@ -4,9 +4,12 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:canlifal_social/core/network/api_exception.dart';
+import 'package:canlifal_social/features/admin/presentation/providers/staff_access_provider.dart';
 import 'package:canlifal_social/features/gifts/data/admin_gift_remote_datasource.dart';
 import 'package:canlifal_social/features/gifts/presentation/pages/admin_gift_editor_page.dart';
 import 'package:canlifal_social/features/gifts/presentation/providers/admin_gift_providers.dart';
+import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
+import 'package:canlifal_social/features/wallet/domain/wallet_balances.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -256,7 +259,18 @@ void main() {
     );
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [adminGiftRemoteProvider.overrideWithValue(remote)],
+        overrides: [
+          adminGiftRemoteProvider.overrideWithValue(remote),
+          staffAccessProvider.overrideWithValue(
+            const StaffAccess(
+              canManagePayments: true,
+              isSiteAdmin: true,
+              showAdminPanel: true,
+              siteRole: 'admin',
+            ),
+          ),
+          walletBalancesProvider.overrideWith(_FakeWalletBalancesNotifier.new),
+        ],
         child: const MaterialApp(home: AdminGiftEditorPage()),
       ),
     );
@@ -288,6 +302,15 @@ void main() {
     );
     expect(button.onPressed, isNotNull);
   });
+}
+
+class _FakeWalletBalancesNotifier extends WalletBalancesNotifier {
+  @override
+  Future<WalletBalances> build() async => WalletBalances.empty;
+
+  @override
+  Future<WalletBalances> refresh({bool force = false}) async =>
+      WalletBalances.empty;
 }
 
 Dio _dioWithAdapter(HttpClientAdapter adapter) {

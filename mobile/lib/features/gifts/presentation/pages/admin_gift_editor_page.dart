@@ -10,6 +10,8 @@ import '../../../../core/images/canlifal_network_image.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/api_http_cache.dart';
 import '../../../voice_hub/presentation/widgets/voice_room_gift_sheet.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/admin_gift_type.dart';
 import '../providers/admin_gift_providers.dart';
 import '../providers/gift_providers.dart';
@@ -169,6 +171,17 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
 
   Future<void> _save() async {
     if (_saving) return;
+    final access = ref.read(staffAccessProvider);
+    if (!access.isSiteAdmin) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Hediye ekleme yalnızca site admin hesabına açıktır.',
+          ),
+        ),
+      );
+      return;
+    }
     if (_uploadingKind != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -189,6 +202,11 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
     }
     final duration = int.tryParse(_durationMs.text.trim());
     final color = _effectColor.text.trim();
+    final hasAnimationMedia =
+        _animationCloudPath != null ||
+        (_isEdit &&
+            !_animationChanged &&
+            (_animationUrl?.trim().isNotEmpty ?? false));
     setState(() => _saving = true);
     final body = <String, dynamic>{
       'name': name,
@@ -203,7 +221,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
         'thumbnailCloudPath': _thumbnailCloudPath,
       if (!_isEdit && _animationCloudPath != null)
         'animationCloudPath': _animationCloudPath,
-      'animationType': _animationType,
+      'animationType': hasAnimationMedia ? _animationType : 'none',
       if (!_isEdit && _soundCloudPath != null)
         'soundCloudPath': _soundCloudPath,
       if (_isEdit && _imageChanged) 'imageCloudPath': _imageCloudPath,
@@ -220,6 +238,8 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
       'isActive': _isActive,
     };
     try {
+      ref.invalidate(walletBalancesProvider);
+      await ref.read(walletBalancesProvider.future);
       final remote = ref.read(adminGiftRemoteProvider);
       AdminGiftType? saved;
       if (_isEdit) {
@@ -286,6 +306,27 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
 
   @override
   Widget build(BuildContext context) {
+    final access = ref.watch(staffAccessProvider);
+    if (!access.isSiteAdmin) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF0E0524),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF12082A),
+          title: Text(_isEdit ? 'Hediyeyi Düzenle' : 'Hediye Ekle'),
+        ),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'Hediye ekleme/düzenleme yalnızca site admin hesabına açıktır.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0x99FFFFFF)),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF0E0524),
       appBar: AppBar(

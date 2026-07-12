@@ -210,7 +210,7 @@ extension DioApi on Dio {
         ),
       );
     } on DioException catch (e) {
-      throw _mapDio(e);
+      throw ApiException.fromDio(e);
     }
   }
 
@@ -230,7 +230,7 @@ extension DioApi on Dio {
         cancelToken: cancelToken,
       );
     } on DioException catch (e) {
-      throw _mapDio(e);
+      throw ApiException.fromDio(e);
     }
   }
 
@@ -238,7 +238,7 @@ extension DioApi on Dio {
     try {
       return await delete<T>(path, data: data);
     } on DioException catch (e) {
-      throw _mapDio(e);
+      throw ApiException.fromDio(e);
     }
   }
 
@@ -258,74 +258,7 @@ extension DioApi on Dio {
         cancelToken: cancelToken,
       );
     } on DioException catch (e) {
-      throw _mapDio(e);
+      throw ApiException.fromDio(e);
     }
   }
-}
-
-ApiException _mapDio(DioException e) {
-  final code = e.response?.statusCode;
-  final body = e.response?.data;
-
-  if (e.type == DioExceptionType.connectionError) {
-    final raw = (e.message ?? '').toLowerCase();
-    if (raw.contains('failed host lookup') || raw.contains('socketexception')) {
-      return ApiException(
-        'Sunucu adresi çözülemedi veya ağ yok. Wi-Fi/mobil veriyi kontrol edin.',
-        statusCode: code,
-      );
-    }
-    return ApiException(
-      'Bağlantı kurulamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.',
-      statusCode: code,
-    );
-  }
-
-  if (code == 403) {
-    final serverMessage = body is Map
-        ? (body['message'] ?? body['error'] ?? body['detail'])?.toString()
-        : null;
-    return ApiException(
-      serverMessage != null && serverMessage.trim().isNotEmpty
-          ? serverMessage
-          : 'Bu işlem için yetkiniz yok veya dosya yüklenemedi. Oturumunuzu kontrol edip tekrar deneyin.',
-      statusCode: code,
-    );
-  }
-  if (code == 405) {
-    return ApiException(
-      'Bu işlem sunucuda desteklenmiyor (405). Uygulamayı güncelleyin veya web sürümünü deneyin.',
-      statusCode: code,
-    );
-  }
-  if (code == 404) {
-    return ApiException('İstenen kaynak bulunamadı (404).', statusCode: code);
-  }
-
-  if (e.type == DioExceptionType.receiveTimeout ||
-      e.type == DioExceptionType.sendTimeout) {
-    return ApiException(
-      'Sunucu yanıt vermedi (zaman aşımı). Bağlantınızı kontrol edip tekrar deneyin.',
-      statusCode: code,
-    );
-  }
-  if (e.type == DioExceptionType.connectionTimeout) {
-    return ApiException(
-      'Sunucuya bağlanılamadı (zaman aşımı). İnternet bağlantınızı kontrol edin.',
-      statusCode: code,
-    );
-  }
-
-  String msg = e.message ?? 'Ağ hatası';
-  if (body is Map) {
-    final m = body.cast<String, dynamic>();
-    msg = (m['message'] ?? m['error'] ?? m['detail'] ?? msg).toString();
-  } else if (body is String && body.isNotEmpty) {
-    if (body.startsWith('<!DOCTYPE') || body.startsWith('<html')) {
-      msg = 'Sunucu HTML döndürdü (muhtemelen yanlış uç veya oturum yok).';
-    } else {
-      msg = body;
-    }
-  }
-  return ApiException(msg, statusCode: code);
 }
