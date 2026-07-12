@@ -3,7 +3,10 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../pages/admin_panel_page.dart';
 import '../providers/admin_panel_providers.dart';
+import 'admin_credit_sheet.dart';
+import 'admin_membership_sheet.dart';
 
 class AdminUserManageSheet {
   AdminUserManageSheet._();
@@ -37,6 +40,18 @@ class AdminUserManageSheet {
         ? '@${user['username']}'
         : userId;
 
+    final jeton = detail['coins'] ??
+        detail['jetonBalance'] ??
+        detail['jeton'] ??
+        user['coins'] ??
+        user['jetonBalance'] ??
+        '—';
+    final cfc = detail['cfcBalance'] ??
+        detail['cfc'] ??
+        user['cfcBalance'] ??
+        user['cfc'] ??
+        '—';
+
     if (!context.mounted) return;
 
     await showModalBottomSheet<void>(
@@ -68,6 +83,61 @@ class AdminUserManageSheet {
                   ),
                   const SizedBox(height: 4),
                   Text(label, style: TextStyle(color: Colors.grey.shade400)),
+                  const SizedBox(height: 12),
+                  _BalanceRow(jeton: jeton.toString(), cfc: cfc.toString()),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Hızlı işlemler',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _QuickChip(
+                        icon: Icons.monetization_on_outlined,
+                        label: 'Jeton',
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          if (!context.mounted) return;
+                          await AdminCreditSheet.show(
+                            context,
+                            ref: ref,
+                            user: detail,
+                            kind: AdminCreditKind.jeton,
+                          );
+                        },
+                      ),
+                      _QuickChip(
+                        icon: Icons.toll_outlined,
+                        label: 'CFC',
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          if (!context.mounted) return;
+                          await AdminCreditSheet.show(
+                            context,
+                            ref: ref,
+                            user: detail,
+                            kind: AdminCreditKind.cfc,
+                          );
+                        },
+                      ),
+                      _QuickChip(
+                        icon: Icons.workspace_premium_outlined,
+                        label: 'Gold üyelik',
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          if (!context.mounted) return;
+                          await AdminMembershipSheet.show(
+                            context,
+                            ref: ref,
+                            user: detail,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: nameCtrl,
@@ -97,7 +167,7 @@ class AdminUserManageSheet {
                   DropdownButtonFormField<String>(
                     value: role,
                     decoration: const InputDecoration(
-                      labelText: 'Rol',
+                      labelText: 'Yetki / rol',
                       border: OutlineInputBorder(),
                     ),
                     items: const [
@@ -105,7 +175,7 @@ class AdminUserManageSheet {
                       DropdownMenuItem(value: 'admin', child: Text('Admin')),
                       DropdownMenuItem(
                         value: 'yonetici',
-                        child: Text('Yönetici'),
+                        child: Text('Kurucu (yonetici)'),
                       ),
                       DropdownMenuItem(
                         value: 'moderator',
@@ -122,7 +192,7 @@ class AdminUserManageSheet {
                   DropdownButtonFormField<String>(
                     value: membership,
                     decoration: const InputDecoration(
-                      labelText: 'Üyelik',
+                      labelText: 'Üyelik seviyesi',
                       border: OutlineInputBorder(),
                     ),
                     items: const [
@@ -188,5 +258,109 @@ class AdminUserManageSheet {
     nameCtrl.dispose();
     bioCtrl.dispose();
     emailCtrl.dispose();
+  }
+}
+
+class _BalanceRow extends StatelessWidget {
+  const _BalanceRow({required this.jeton, required this.cfc});
+
+  final String jeton;
+  final String cfc;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _BalanceTile(
+            icon: Icons.monetization_on_outlined,
+            label: 'Jeton',
+            value: jeton,
+            color: AppThemeColors.coinGold,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _BalanceTile(
+            icon: Icons.toll_outlined,
+            label: 'CFC',
+            value: cfc,
+            color: AppThemeColors.accentCyan,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BalanceTile extends StatelessWidget {
+  const _BalanceTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickChip extends StatelessWidget {
+  const _QuickChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ActionChip(
+      avatar: Icon(icon, size: 18, color: AppThemeColors.accentPurple),
+      label: Text(label),
+      onPressed: onTap,
+    );
   }
 }

@@ -185,7 +185,7 @@ class _AdminPanelPageState extends ConsumerState<AdminPanelPage> {
                         onTap: () => context.push('/admin/users'),
                       ),
                     ]),
-                    if (access.showAdminPanel) ...[
+                    if (access.canManageGifts) ...[
                       const SizedBox(height: 20),
                       _SectionTitle('Hediye & içerik'),
                       _ActionGrid(items: [

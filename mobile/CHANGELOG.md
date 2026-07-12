@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.16+20 (2026-07-12)
+
+### Admin — hediye ve kullanıcı yönetimi
+- Hediye kataloğu artık **admin** ve **kurucu (yonetici)** hesaplarına açık; mevcut hediyeleri görüp ekleyebilir, düzenleyebilir veya silebilirsiniz
+- Kullanıcı yönetimi sayfasında harf yazınca anında arama listesi (buton yerine doğrudan arama alanı)
+- Seçilen kullanıcıda jeton, CFC ve Gold üyelik hızlı işlem kısayolları; bakiye özeti ve rol/üyelik düzenleme
+
 ## 1.0.15+19 (2026-07-12)
 
 ### Roller — Site Admin / Kurucu etiketleri

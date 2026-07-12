@@ -14,7 +14,7 @@ final adminGiftRemoteProvider = Provider<AdminGiftRemoteDataSource>((ref) {
 /// Site admin hediye API erişimi — sunucudan doğrulanır.
 final adminGiftApiAccessProvider = FutureProvider<bool>((ref) async {
   final access = ref.watch(staffAccessProvider);
-  if (!access.isSiteAdmin) return false;
+  if (!access.canManageGifts) return false;
   try {
     await ref.read(adminGiftRemoteProvider).listGifts();
     return true;

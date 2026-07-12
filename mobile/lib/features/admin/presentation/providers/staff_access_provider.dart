@@ -10,6 +10,7 @@ class StaffAccess {
     required this.canManagePayments,
     required this.isSiteAdmin,
     required this.showAdminPanel,
+    required this.canManageGifts,
     this.siteRole,
     this.username,
   });
@@ -17,6 +18,8 @@ class StaffAccess {
   final bool canManagePayments;
   final bool isSiteAdmin;
   final bool showAdminPanel;
+  /// Hediye kataloğu CRUD — admin ve kurucu (yonetici).
+  final bool canManageGifts;
   final String? siteRole;
   final String? username;
 
@@ -39,6 +42,7 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
       canManagePayments: false,
       isSiteAdmin: false,
       showAdminPanel: false,
+      canManageGifts: false,
     );
   }
 
@@ -77,10 +81,13 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
     effectiveRole = 'admin';
   }
 
+  final canManageGifts = canManagePayments;
+
   return StaffAccess(
     canManagePayments: canManagePayments,
     isSiteAdmin: isSiteAdmin,
     showAdminPanel: showAdminPanel,
+    canManageGifts: canManageGifts,
     siteRole: effectiveRole,
     username: username,
   );

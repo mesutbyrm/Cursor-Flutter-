@@ -75,7 +75,7 @@ class ProfileAdminCard extends ConsumerWidget {
         badge: 0,
         onTap: () => context.push('/admin/moderation'),
       ),
-      if (access.isSiteAdmin)
+      if (access.canManageGifts)
         (
           icon: Icons.card_giftcard_rounded,
           label: 'Hediye Yönetimi',

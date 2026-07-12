@@ -94,7 +94,7 @@ class ProfileAdminSection extends ConsumerWidget {
             ],
           ),
         ),
-        if (access.isSiteAdmin) ...[
+        if (access.canManageGifts) ...[
           ProfileGlass(
             onTap: () => context.push('/admin/gifts'),
             padding: const EdgeInsets.all(16),

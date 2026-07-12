@@ -17,7 +17,7 @@ class AdminGiftManagementPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final access = ref.watch(staffAccessProvider);
-    if (!access.isSiteAdmin) {
+    if (!access.canManageGifts) {
       return Scaffold(
         backgroundColor: const Color(0xFF0E0524),
         appBar: AppBar(
@@ -28,9 +28,7 @@ class AdminGiftManagementPage extends ConsumerWidget {
           child: Padding(
             padding: EdgeInsets.all(24),
             child: Text(
-              'Hediye eklemek için «admin» kullanıcı adıyla giriş yapın (Site Admin).\n\n'
-              '«yonetici» hesabı (Kurucu) ödeme paneli ve diğer yönetim işlemlerine açıktır; '
-              'hediye kataloğu yalnızca site admin hesabına açıktır.',
+              'Hediye kataloğu yalnızca admin veya kurucu (yonetici) hesaplarına açıktır.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Color(0x99FFFFFF)),
             ),

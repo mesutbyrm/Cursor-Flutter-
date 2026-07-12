@@ -4,15 +4,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
-import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/admin_panel_providers.dart';
 import '../providers/staff_access_provider.dart';
 import '../widgets/admin_user_manage_sheet.dart';
-import '../widgets/admin_user_picker.dart';
+import '../widgets/admin_user_search_list.dart';
 
-/// Admin — kullanıcı arama ve yönetim.
+/// Admin — kullanıcı arama ve yönetim (anında arama + jeton/CFC/üyelik).
 class AdminUsersPage extends ConsumerWidget {
   const AdminUsersPage({super.key});
 
@@ -47,27 +46,9 @@ class AdminUsersPage extends ConsumerWidget {
               ),
             ),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-                children: [
-                  Text(
-                    'Kullanıcı adı veya e-posta ile arayın; profil, rol ve bakiye güncelleyin.',
-                    style: TextStyle(
-                      color: context.colors.onSurfaceMuted,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  FilledButton.icon(
-                    onPressed: () => _pickAndManage(context, ref),
-                    icon: const Icon(Icons.person_search_rounded),
-                    label: const Text('Kullanıcı Ara'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppThemeColors.accentPurple,
-                      minimumSize: const Size.fromHeight(48),
-                    ),
-                  ),
-                ],
+              child: AdminUserSearchList(
+                autofocus: true,
+                onUserSelected: (user) => _openManage(context, ref, user),
               ),
             ),
           ],
@@ -76,10 +57,13 @@ class AdminUsersPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _pickAndManage(BuildContext context, WidgetRef ref) async {
-    final user = await AdminUserPicker.show(context, ref);
-    if (user == null || !context.mounted) return;
+  Future<void> _openManage(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> user,
+  ) async {
     await AdminUserManageSheet.show(context, ref: ref, user: user);
+    ref.invalidate(adminUserSearchProvider);
   }
 
   Widget _locked(BuildContext context) {

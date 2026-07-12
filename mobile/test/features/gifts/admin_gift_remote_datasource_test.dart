@@ -266,6 +266,7 @@ void main() {
               canManagePayments: true,
               isSiteAdmin: true,
               showAdminPanel: true,
+              canManageGifts: true,
               siteRole: 'admin',
             ),
           ),
