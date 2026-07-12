@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../domain/pk/pk_room_models.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
 import '../providers/pk_room_providers.dart';
@@ -44,11 +45,14 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
 
     try {
       final invites = await ref.read(pkPendingInvitesProvider.future);
+      final pendingIds = invites.where((i) => i.isPending).map((i) => i.id).toSet();
+      _seen.removeWhere((id) => !pendingIds.contains(id));
+
       for (final inv in invites) {
         if (!inv.isPending) continue;
         if (!isLivePkInviteRecipient(
           inv,
-          myStreamId: '',
+          myStreamId: inv.opponentStreamId ?? '',
           myUserId: user.id,
         )) {
           continue;
@@ -60,7 +64,7 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
     } catch (_) {}
   }
 
-  Future<void> _showDialog(inv) async {
+  Future<void> _showDialog(PkRoomMatch inv) async {
     if (!mounted || _showing) return;
     _showing = true;
     final battle = pkRoomMatchToBattleMap(inv);

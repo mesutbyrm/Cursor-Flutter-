@@ -96,6 +96,8 @@ class PkRoomMatch {
     this.rightName = 'Sağ',
     this.hostUserId,
     this.hostStreamId,
+    this.opponentUserId,
+    this.opponentStreamId,
     this.winnerSide,
     this.winnerSeatIndex,
     this.seats = const [],
@@ -103,14 +105,7 @@ class PkRoomMatch {
 
   factory PkRoomMatch.fromJson(Map<String, dynamic> json) {
     final m = json['match'] is Map ? asJsonMap(json['match']) : json;
-    final seatsRaw = pick(m, ['seats', 'participants']);
-    final seats = <PkSeat>[];
-    if (seatsRaw is List) {
-      for (final e in seatsRaw) {
-        if (e is Map) seats.add(PkSeat.fromJson(asJsonMap(e)));
-      }
-    }
-    seats.sort((a, b) => a.seatIndex.compareTo(b.seatIndex));
+    final seats = _parsePkSeats(m);
 
     var remaining = asInt(pick(m, ['remainingSec', 'secondsLeft', 'remaining']));
     final endsAtRaw = pick(m, ['endsAt', 'endAt', 'finishAt']);
@@ -122,28 +117,95 @@ class PkRoomMatch {
       }
     }
 
+    final challenger = m['challenger'] is Map ? asJsonMap(m['challenger']) : null;
+    final opponent = m['opponent'] is Map ? asJsonMap(m['opponent']) : null;
+
     return PkRoomMatch(
       id: (pick(m, ['id', 'matchId', 'pkMatchId']) ?? '').toString(),
       mode: PkRoomMode.parse(pick(m, ['mode'])?.toString()),
       status: (pick(m, ['status']) ?? 'pending').toString(),
       seatCount: asInt(pick(m, ['seatCount', 'seats_count', 'maxSeats'])),
       durationSec: () {
-        final d = asInt(pick(m, ['durationSec', 'duration']));
+        final d = asInt(pick(m, ['durationSec', 'duration', 'durationSeconds']));
         return d > 0 ? d : 180;
       }(),
       remainingSec: remaining,
       leftScore: asInt(pick(m, ['leftScore', 'challengerScore'])),
       rightScore: asInt(pick(m, ['rightScore', 'opponentScore'])),
-      leftName: (pick(m, ['leftName']) ?? 'Sol').toString(),
-      rightName: (pick(m, ['rightName']) ?? 'Sağ').toString(),
-      hostUserId: pick(m, ['hostUserId', 'hostId'])?.toString(),
-      hostStreamId: pick(m, ['hostStreamId'])?.toString(),
+      leftName: (pick(m, ['leftName']) ??
+              pick(challenger ?? {}, ['displayName', 'userName', 'name']) ??
+              'Sol')
+          .toString(),
+      rightName: (pick(m, ['rightName']) ??
+              pick(opponent ?? {}, ['displayName', 'userName', 'name']) ??
+              'Sağ')
+          .toString(),
+      hostUserId:
+          pick(m, ['hostUserId', 'hostId', 'challengerId'])?.toString(),
+      hostStreamId:
+          pick(m, ['hostStreamId', 'liveStreamId'])?.toString(),
+      opponentUserId: pick(m, ['opponentUserId', 'opponentId'])?.toString(),
+      opponentStreamId: pick(m, [
+        'opponentStreamId',
+        'opponentLiveStreamId',
+      ])?.toString(),
       winnerSide: pick(m, ['winnerSide', 'result', 'winner'])?.toString(),
       winnerSeatIndex: m.containsKey('winnerSeatIndex')
           ? asInt(pick(m, ['winnerSeatIndex']))
           : null,
       seats: seats,
     );
+  }
+
+  static List<PkSeat> _parsePkSeats(Map<String, dynamic> m) {
+    final seats = <PkSeat>[];
+    final seatsRaw = pick(m, ['seats', 'participants']);
+    if (seatsRaw is List) {
+      for (final e in seatsRaw) {
+        if (e is! Map) continue;
+        final map = asJsonMap(e);
+        final side = (map['side'] ?? map['team'])?.toString().toLowerCase();
+        seats.add(
+          PkSeat.fromJson({
+            ...map,
+            if (side == 'challenger') 'team': 'left',
+            if (side == 'opponent') 'team': 'right',
+            'seatIndex': map['seatIndex'] ??
+                map['index'] ??
+                (side == 'challenger'
+                    ? 0
+                    : side == 'opponent'
+                        ? 1
+                        : seats.length),
+          }),
+        );
+      }
+    }
+    if (seats.isEmpty) {
+      final challenger = m['challenger'];
+      final opponent = m['opponent'];
+      if (challenger is Map) {
+        seats.add(
+          PkSeat.fromJson({
+            ...asJsonMap(challenger),
+            'seatIndex': 0,
+            'team': 'left',
+            'isHost': true,
+          }),
+        );
+      }
+      if (opponent is Map) {
+        seats.add(
+          PkSeat.fromJson({
+            ...asJsonMap(opponent),
+            'seatIndex': 1,
+            'team': 'right',
+          }),
+        );
+      }
+    }
+    seats.sort((a, b) => a.seatIndex.compareTo(b.seatIndex));
+    return seats;
   }
 
   final String id;
@@ -158,6 +220,8 @@ class PkRoomMatch {
   final String rightName;
   final String? hostUserId;
   final String? hostStreamId;
+  final String? opponentUserId;
+  final String? opponentStreamId;
   final String? winnerSide; // left_win | right_win | draw
   final int? winnerSeatIndex;
   final List<PkSeat> seats;

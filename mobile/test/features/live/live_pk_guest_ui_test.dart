@@ -12,6 +12,8 @@ void main() {
       status: 'pending',
       hostStreamId: 'stream-a',
       hostUserId: 'host-user',
+      opponentStreamId: 'stream-b',
+      opponentUserId: 'opp-user',
       seats: [
         PkSeat(seatIndex: 0, userId: 'host-user', streamId: 'stream-a'),
         PkSeat(seatIndex: 1, userId: 'opp-user', streamId: 'stream-b'),
@@ -34,6 +36,55 @@ void main() {
           myUserId: 'host-user',
         ),
         isFalse,
+      );
+    });
+
+    test('recipient via opponentId only (prod API shape)', () {
+      const match = PkRoomMatch(
+        id: 'pk-2',
+        mode: PkRoomMode.oneVsOne,
+        status: 'pending',
+        hostStreamId: 'live-a',
+        hostUserId: 'user-a',
+        opponentStreamId: 'live-b',
+        opponentUserId: 'user-b',
+      );
+      expect(
+        isLivePkInviteRecipient(match, myStreamId: '', myUserId: 'user-b'),
+        isTrue,
+      );
+    });
+
+    test('fromJson parses abacus battle payload', () {
+      final match = PkRoomMatch.fromJson({
+        'id': 'pk-3',
+        'status': 'pending',
+        'liveStreamId': 'stream-host',
+        'opponentLiveStreamId': 'stream-opp',
+        'challengerId': 'u-host',
+        'opponentId': 'u-opp',
+        'challenger': {
+          'userId': 'u-host',
+          'streamId': 'stream-host',
+          'displayName': 'Host',
+        },
+        'opponent': {
+          'userId': 'u-opp',
+          'streamId': 'stream-opp',
+          'displayName': 'Opponent',
+        },
+      });
+      expect(match.hostStreamId, 'stream-host');
+      expect(match.opponentStreamId, 'stream-opp');
+      expect(match.opponentUserId, 'u-opp');
+      expect(match.seats, hasLength(2));
+      expect(
+        isLivePkInviteRecipient(
+          match,
+          myStreamId: 'stream-opp',
+          myUserId: 'u-opp',
+        ),
+        isTrue,
       );
     });
 

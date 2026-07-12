@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.20+24 (2026-07-12)
+
+### PK daveti — alıcı eşleşmesi düzeltmesi
+- Backend `liveStreamId` / `opponentLiveStreamId` / `opponentId` alanları artık parse edilir
+- `challenger` / `opponent` nesnelerinden koltuk listesi oluşturulur
+- Davet popup yalnızca gerçek hedef yayıncıya gösterilir (önceden boş `seats` yüzünden hiç gelmiyordu)
+
 ## 1.0.19+23 (2026-07-12)
 
 ### Canlı PK daveti + misafir grid

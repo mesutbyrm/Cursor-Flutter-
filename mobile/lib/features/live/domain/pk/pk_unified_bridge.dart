@@ -94,6 +94,9 @@ Map<String, dynamic> pkRoomMatchToBattleMap(
     'leftName': match.leftName,
     'rightName': match.rightName,
     'hostStreamId': match.hostStreamId,
+    'opponentStreamId': match.opponentStreamId,
+    'opponentUserId': match.opponentUserId,
+    'opponentId': match.opponentUserId,
     'isOpponent': isOpponent,
     'hostOnLeft': hostOnLeft,
     'seats': [for (final s in match.seats) _seatToJson(s)],
@@ -124,6 +127,7 @@ PkRoomMatch? findStreamPkMatch(
   for (final m in matches) {
     if (mode != null && m.mode != mode) continue;
     if (m.hostStreamId == sid) return m;
+    if (m.opponentStreamId == sid) return m;
     if (m.seats.any((s) => s.streamId == sid)) return m;
   }
   return null;
