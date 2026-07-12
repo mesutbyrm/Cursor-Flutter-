@@ -47,7 +47,8 @@ permissions:
 
 concurrency:
   group: build-apk-${{ github.ref }}
-  cancel-in-progress: true
+  # Yalnızca ardışık main push iptal eder; manuel RE-RUN devam eden push derlemesini kesmez.
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   build:
@@ -72,13 +73,14 @@ jobs:
 
       - name: Disk alanı aç (runner ön-yüklü gereksiz paketler)
         continue-on-error: true
+        timeout-minutes: 2
         working-directory: ${{ github.workspace }}
         run: |
           echo "Önce:"; df -h / | tail -1
-          sudo rm -rf /usr/share/dotnet /opt/ghc \
+          timeout 45s sudo rm -rf /usr/share/dotnet /opt/ghc \
             /usr/local/share/powershell /usr/share/swift /opt/hostedtoolcache/CodeQL \
             /usr/local/lib/node_modules || true
-          sudo docker image prune --all --force || true
+          timeout 30s sudo docker image prune --force || true
           echo "Sonra:"; df -h / | tail -1
 
       - name: Opsiyonel depolama temizliği

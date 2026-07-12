@@ -131,7 +131,7 @@ class _AdminUserSearchListState extends ConsumerState<AdminUserSearchList> {
                     subtitle: Text(
                       'Jeton: ${u['coins'] ?? u['jetonBalance'] ?? '—'} · '
                       'CFC: ${u['cfcBalance'] ?? u['cfc'] ?? '—'} · '
-                      _membershipLabel(u),
+                      '${_membershipLabel(u)}',
                       style: TextStyle(
                         fontSize: 11,
                         color: context.colors.onSurfaceMuted,

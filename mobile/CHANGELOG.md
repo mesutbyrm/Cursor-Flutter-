@@ -7,6 +7,7 @@
 - Hediye kataloğu artık **admin** ve **kurucu (yonetici)** hesaplarına açık; mevcut hediyeleri görüp ekleyebilir, düzenleyebilir veya silebilirsiniz
 - Kullanıcı yönetimi sayfasında harf yazınca anında arama listesi (buton yerine doğrudan arama alanı)
 - Seçilen kullanıcıda jeton, CFC ve Gold üyelik hızlı işlem kısayolları; bakiye özeti ve rol/üyelik düzenleme
+- CI: manuel RE-RUN artık devam eden push derlemesini iptal etmez; disk temizliği hızlandırıldı
 
 ## 1.0.15+19 (2026-07-12)
 
