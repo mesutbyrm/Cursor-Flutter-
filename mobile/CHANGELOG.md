@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.17+21 (2026-07-12)
+
+### Admin — jeton/CFC/üyelik ve hediye düzeltmeleri
+- Kullanıcı kimliği (`userId` / `id`) doğru okunur; jeton ve Gold üyelik işlemleri çalışır
+- **Uygula** / **Üyelik ver** anında yükleme göstergesi + başarı/hata mesajı (titreşim)
+- Jeton/CFC: birden fazla API gövdesi ve POST yedeği; 12 sn zaman aşımı
+- Gold üyelik: grant-membership + kullanıcı PATCH yedeği
+- Hediye yönetimi: **Yeni Hediye** her zaman görünür; admin API yoksa uygulamadaki canlı katalog listelenir
+
 ## 1.0.16+20 (2026-07-12)
 
 ### Admin — hediye ve kullanıcı yönetimi

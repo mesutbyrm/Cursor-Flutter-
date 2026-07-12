@@ -4,13 +4,17 @@ import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
+import '../domain/admin_user_util.dart';
 
-const _adminCallTimeout = Duration(seconds: 8);
+const _adminCallTimeout = Duration(seconds: 12);
 
 Future<T> _adminTimeout<T>(Future<T> future) {
   return future.timeout(
     _adminCallTimeout,
-    onTimeout: () => throw ApiException('timeout', statusCode: 408),
+    onTimeout: () => throw ApiException(
+      'İstek zaman aşımına uğradı. Lütfen tekrar deneyin.',
+      statusCode: 408,
+    ),
   );
 }
 
@@ -32,7 +36,7 @@ class AdminRemoteDataSource {
         final res = await _adminTimeout(
           _dio.safeGet<dynamic>(path, forceRefresh: true),
         );
-        final items = _flattenList(res.data);
+        final items = normalizeAdminUserList(_flattenList(res.data));
         if (items.isNotEmpty) return items;
       } on ApiException catch (e) {
         if (e.statusCode == 404) continue;
@@ -50,18 +54,20 @@ class AdminRemoteDataSource {
         forceRefresh: true,
       ),
     );
-    return _unwrapMap(res.data);
+    return normalizeAdminUserMap(_unwrapMap(res.data));
   }
 
   Future<Map<String, dynamic>> updateUser(
     String userId,
     Map<String, dynamic> patch,
   ) async {
-    final res = await _dio.safePatch<dynamic>(
-      ApiEndpoints.adminUser(userId),
-      data: patch,
+    final res = await _adminTimeout(
+      _dio.safePatch<dynamic>(
+        ApiEndpoints.adminUser(userId),
+        data: patch,
+      ),
     );
-    return _unwrapMap(res.data);
+    return normalizeAdminUserMap(_unwrapMap(res.data));
   }
 
   Future<void> adjustCredits({
@@ -71,29 +77,81 @@ class AdminRemoteDataSource {
     required bool add,
     String? reason,
   }) async {
-    final body = {
-      'userId': userId,
-      'type': type,
-      'amount': amount.abs(),
-      'action': add ? 'add' : 'subtract',
-      if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
-      if (reason != null && reason.trim().isNotEmpty) 'note': reason.trim(),
-    };
-
-    try {
-      await _dio.safePatch<dynamic>(
-        ApiEndpoints.adminUsersCredits,
-        data: body,
-      );
-      return;
-    } on ApiException catch (e) {
-      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    final uid = userId.trim();
+    if (uid.isEmpty) {
+      throw const ApiException('Kullanıcı kimliği bulunamadı.');
+    }
+    if (amount < 1) {
+      throw const ApiException('Geçerli bir miktar girin.');
     }
 
-    await _dio.safePost<dynamic>(
-      ApiEndpoints.adminCredits,
-      data: body,
-    );
+    final note = reason?.trim();
+    final action = add ? 'add' : 'subtract';
+    final types = type == 'jeton'
+        ? <String>['jeton', 'coins', 'coin']
+        : <String>['cfc', type];
+
+    ApiException? lastError;
+    for (final creditType in types) {
+      final bodies = <Map<String, dynamic>>[
+        {
+          'userId': uid,
+          'type': creditType,
+          'amount': amount,
+          'action': action,
+          if (note != null && note.isNotEmpty) 'reason': note,
+          if (note != null && note.isNotEmpty) 'note': note,
+        },
+        {
+          'userId': uid,
+          'type': creditType,
+          'amount': amount,
+          'operation': action,
+          if (note != null && note.isNotEmpty) 'reason': note,
+        },
+        {
+          'userId': uid,
+          'creditType': creditType,
+          'amount': amount,
+          'action': action,
+          if (note != null && note.isNotEmpty) 'note': note,
+        },
+      ];
+
+      for (final body in bodies) {
+        try {
+          await _adminTimeout(
+            _dio.safePatch<dynamic>(
+              ApiEndpoints.adminUsersCredits,
+              data: body,
+            ),
+          );
+          return;
+        } on ApiException catch (e) {
+          lastError = e;
+          if (e.statusCode == 404 || e.statusCode == 405) break;
+          if (e.statusCode == 400 || e.statusCode == 422) continue;
+          if (e.statusCode == 401 || e.statusCode == 403) rethrow;
+        }
+
+        try {
+          await _adminTimeout(
+            _dio.safePost<dynamic>(
+              ApiEndpoints.adminCredits,
+              data: body,
+            ),
+          );
+          return;
+        } on ApiException catch (e) {
+          lastError = e;
+          if (e.statusCode == 404 || e.statusCode == 405) continue;
+          if (e.statusCode == 400 || e.statusCode == 422) continue;
+          if (e.statusCode == 401 || e.statusCode == 403) rethrow;
+        }
+      }
+    }
+
+    throw lastError ?? const ApiException('Jeton/CFC güncellenemedi.');
   }
 
   Future<void> grantMembership({
@@ -102,18 +160,73 @@ class AdminRemoteDataSource {
     required String duration,
     String? reason,
   }) async {
-    await _dio.safePatch<dynamic>(
-      ApiEndpoints.adminUsersGrantMembership,
-      data: {
-        'userId': userId,
+    final uid = userId.trim();
+    if (uid.isEmpty) {
+      throw const ApiException('Kullanıcı kimliği bulunamadı.');
+    }
+
+    final note = reason?.trim();
+    final days = switch (duration) {
+      'daily' => 1,
+      'weekly' => 7,
+      _ => 30,
+    };
+
+    final bodies = <Map<String, dynamic>>[
+      {
+        'userId': uid,
         'tier': tier,
         'membership': tier,
         'duration': duration,
         'period': duration,
-        if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
-        if (reason != null && reason.trim().isNotEmpty) 'note': reason.trim(),
+        'days': days,
+        if (note != null && note.isNotEmpty) 'reason': note,
+        if (note != null && note.isNotEmpty) 'note': note,
       },
-    );
+      {
+        'userId': uid,
+        'membershipTier': tier,
+        'membership': tier,
+        'durationDays': days,
+        if (note != null && note.isNotEmpty) 'note': note,
+      },
+    ];
+
+    ApiException? lastError;
+    for (final body in bodies) {
+      try {
+        await _adminTimeout(
+          _dio.safePatch<dynamic>(
+            ApiEndpoints.adminUsersGrantMembership,
+            data: body,
+          ),
+        );
+        return;
+      } on ApiException catch (e) {
+        lastError = e;
+        if (e.statusCode == 400 || e.statusCode == 422) continue;
+        if (e.statusCode == 401 || e.statusCode == 403) rethrow;
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
+    }
+
+    // Son çare — kullanıcı kaydına üyelik yaz.
+    try {
+      await updateUser(uid, {
+        'membership': tier,
+        'membershipTier': tier,
+        'membershipExpiresAt': DateTime.now()
+            .add(Duration(days: days))
+            .toUtc()
+            .toIso8601String(),
+        if (note != null && note.isNotEmpty) 'adminNote': note,
+      });
+      return;
+    } on ApiException catch (e) {
+      lastError = e;
+    }
+
+    throw lastError ?? const ApiException('Üyelik verilemedi.');
   }
 
   Future<Map<String, dynamic>> fetchDashboardStats() async {

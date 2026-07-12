@@ -8,6 +8,7 @@ import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../domain/admin_gift_stats.dart';
 import '../../domain/admin_gift_type.dart';
 import '../providers/admin_gift_providers.dart';
+import '../providers/gift_providers.dart';
 
 /// Admin Hediye Yönetim Paneli — katalog CRUD, istatistik, gelir kuralları.
 /// Yalnızca site admin erişebilir. Gelir tutarları kısaltılmış gösterilir.
@@ -57,10 +58,9 @@ class AdminGiftManagementPage extends ConsumerWidget {
         floatingActionButton: Builder(
           builder: (ctx) {
             final tab = DefaultTabController.of(ctx);
-            final canWrite = apiAccess.valueOrNull == true;
             return AnimatedBuilder(
               animation: tab,
-              builder: (_, __) => tab.index == 0 && canWrite
+              builder: (_, __) => tab.index == 0
                   ? FloatingActionButton.extended(
                       backgroundColor: const Color(0xFF7C3AED),
                       onPressed: () async {
@@ -69,6 +69,7 @@ class AdminGiftManagementPage extends ConsumerWidget {
                         );
                         if (!ctx.mounted || created != true) return;
                         ref.invalidate(adminGiftListProvider);
+                        ref.invalidate(liveGiftCatalogProvider);
                         ScaffoldMessenger.of(ctx).showSnackBar(
                           const SnackBar(
                             content: Text('Hediye başarıyla oluşturuldu.'),
@@ -108,8 +109,8 @@ class AdminGiftManagementPage extends ConsumerWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Sunucu hediye yönetimine izin vermiyor (403). '
-                          'Site admin hesabıyla giriş yapın veya oturumu yenileyin.',
+                          'Admin hediye API bağlanamadı — aşağıda uygulamadaki canlı katalog gösteriliyor. '
+                          'Düzenlemek için «admin» veya «yonetici» ile giriş yapıp Yenile\'ye basın.',
                           style: const TextStyle(
                             color: Color(0xFFFFCDD2),
                             fontSize: 12.5,
@@ -152,6 +153,7 @@ class _CatalogTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(adminGiftListProvider);
+
     return async.when(
       loading: () => const Center(
         child: Column(
@@ -166,53 +168,107 @@ class _CatalogTab extends ConsumerWidget {
           ],
         ),
       ),
-      error: (e, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.cloud_off_rounded, color: Color(0xFFFF6E6E), size: 42),
-              const SizedBox(height: 12),
-              Text(
-                ApiException.userMessage(e),
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Color(0xCCFFFFFF)),
-              ),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: () {
-                  ref.invalidate(adminGiftListProvider);
-                },
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Tekrar dene'),
-              ),
-            ],
-          ),
-        ),
+      error: (e, _) => _ConsumerFallbackList(
+        banner: ApiException.userMessage(e),
       ),
-      data: (gifts) => RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(adminGiftListProvider);
-          await ref.read(adminGiftListProvider.future);
-        },
-        child: gifts.isEmpty
-            ? ListView(
-                children: const [
-                  SizedBox(height: 120),
-                  Center(
-                    child: Text(
-                      'Katalog boş.',
-                      style: TextStyle(color: Color(0x99FFFFFF)),
-                    ),
-                  ),
-                ],
-              )
-            : ListView.builder(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
-                itemCount: gifts.length,
-                itemBuilder: (_, i) => _GiftRow(gift: gifts[i]),
+      data: (gifts) {
+        if (gifts.isEmpty) {
+          return _ConsumerFallbackList(
+            banner: 'Admin katalog boş — uygulamadaki canlı hediyeler:',
+          );
+        }
+        return RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(adminGiftListProvider);
+            ref.invalidate(liveGiftCatalogProvider);
+            await ref.read(adminGiftListProvider.future);
+          },
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
+            itemCount: gifts.length,
+            itemBuilder: (_, i) => _GiftRow(gift: gifts[i]),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ConsumerFallbackList extends ConsumerWidget {
+  const _ConsumerFallbackList({required this.banner});
+
+  final String banner;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final liveCatalog = ref.watch(liveGiftCatalogProvider);
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(adminGiftListProvider);
+        ref.invalidate(liveGiftCatalogProvider);
+        await Future.wait([
+          ref.read(adminGiftListProvider.future).catchError((_) => const []),
+          ref.read(liveGiftCatalogProvider.future).catchError((_) => const []),
+        ]);
+      },
+      child: liveCatalog.when(
+        loading: () => ListView(
+          children: const [
+            SizedBox(height: 80),
+            Center(child: CircularProgressIndicator()),
+          ],
+        ),
+        error: (_, _) => ListView(
+          padding: const EdgeInsets.all(24),
+          children: [
+            Text(banner, style: const TextStyle(color: Color(0xFFFFCDD2))),
+            const SizedBox(height: 16),
+            const Text(
+              'Canlı katalog da yüklenemedi.',
+              style: TextStyle(color: Color(0x99FFFFFF)),
+            ),
+          ],
+        ),
+        data: (items) => ListView(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                banner,
+                style: const TextStyle(color: Color(0xFFFFE082), fontSize: 12.5),
               ),
+            ),
+            for (final g in items)
+              ListTile(
+                leading: g.iconUrl != null && g.iconUrl!.isNotEmpty
+                    ? Image.network(g.iconUrl!, width: 36, height: 36, errorBuilder: (_, _, _) => const Text('🎁'))
+                    : const Text('🎁', style: TextStyle(fontSize: 22)),
+                title: Text(
+                  g.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                subtitle: Text(
+                  '${g.price} jeton',
+                  style: const TextStyle(color: Color(0x99FFFFFF)),
+                ),
+                trailing: const Icon(Icons.info_outline, color: Color(0x99FFFFFF)),
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '«${g.name}» uygulamada görünüyor. '
+                        'Düzenlemek için admin API bağlantısı gerekir — «Yeni Hediye» ile ekleyebilirsiniz.',
+                      ),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
       ),
     );
   }

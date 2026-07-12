@@ -185,7 +185,7 @@ class AdminUserSearchNotifier
       return;
     }
 
-    _debounce = Timer(const Duration(milliseconds: 200), () {
+    _debounce = Timer(const Duration(milliseconds: 150), () {
       _runSearch(q);
     });
   }

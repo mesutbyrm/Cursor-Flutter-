@@ -3,6 +3,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../domain/admin_user_util.dart';
 import '../pages/admin_panel_page.dart';
 import '../providers/admin_panel_providers.dart';
 import 'admin_credit_sheet.dart';
@@ -16,10 +17,10 @@ class AdminUserManageSheet {
     required WidgetRef ref,
     required Map<String, dynamic> user,
   }) async {
-    final userId = user['id']?.toString() ?? '';
+    final userId = resolveAdminUserId(user);
     if (userId.isEmpty) return;
 
-    Map<String, dynamic> detail = Map<String, dynamic>.from(user);
+    Map<String, dynamic> detail = normalizeAdminUserMap(user);
     try {
       detail = await ref.read(adminRemoteProvider).fetchUser(userId);
     } catch (_) {}
