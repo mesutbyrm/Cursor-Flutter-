@@ -135,6 +135,13 @@ jobs:
       - name: Accept Android licenses
         run: yes | flutter doctor --android-licenses || true
 
+      - name: Install Android NDK (Flutter / Agora)
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euxo pipefail
+          chmod +x scripts/ci-install-android-ndk.sh
+          bash scripts/ci-install-android-ndk.sh
+
       - name: Release gate
         working-directory: ${{ github.workspace }}
         env:

@@ -61,6 +61,27 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Gradle build cache
+        if: matrix.language == 'java-kotlin'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            mobile/android/.gradle
+          key: gradle-${{ runner.os }}-${{ hashFiles('mobile/android/**/*.gradle*', 'mobile/android/**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Android NDK cache
+        if: matrix.language == 'java-kotlin'
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/android/sdk/ndk
+          key: android-ndk-${{ runner.os }}-flutter-stable
+          restore-keys: |
+            android-ndk-${{ runner.os }}-
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
@@ -71,6 +92,14 @@ jobs:
         if: matrix.language == 'java-kotlin'
         working-directory: mobile
         run: yes | flutter doctor --android-licenses || true
+
+      - name: Install Android NDK (Flutter / Agora)
+        if: matrix.language == 'java-kotlin'
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euxo pipefail
+          chmod +x scripts/ci-install-android-ndk.sh
+          bash scripts/ci-install-android-ndk.sh
 
       - name: Build Flutter Android for CodeQL
         if: matrix.language == 'java-kotlin'
