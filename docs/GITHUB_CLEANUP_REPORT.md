@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-07-13 17:15 UTC
+Oluşturulma: 2026-07-13 21:18 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -24,7 +24,7 @@ Base: `main`
 
 | Dal | Neden |
 |-----|-------|
-| cursor/codeql-ndk-fix-df6c | merged into main |
+| cursor/voice-live-gifts-admin-df6c | merged into main |
 
 ## Kalan açık PR'lar
 
