@@ -132,15 +132,30 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
+      - name: Android NDK cache
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/android/sdk/ndk
+          key: android-ndk-${{ runner.os }}-flutter-stable
+          restore-keys: |
+            android-ndk-${{ runner.os }}-
+
       - name: Accept Android licenses
         run: yes | flutter doctor --android-licenses || true
 
-      - name: Install Android NDK (Flutter / Agora)
+      - name: Install Android NDK (nttld)
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27c
+
+      - name: Link NDK for Flutter Gradle
         working-directory: ${{ github.workspace }}
+        env:
+          ANDROID_NDK_VERSION: 27.0.12077973
         run: |
           set -euxo pipefail
-          chmod +x scripts/ci-install-android-ndk.sh
-          bash scripts/ci-install-android-ndk.sh
+          chmod +x scripts/ci-link-android-ndk.sh
+          bash scripts/ci-link-android-ndk.sh
 
       - name: Release gate
         working-directory: ${{ github.workspace }}

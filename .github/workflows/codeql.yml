@@ -93,13 +93,28 @@ jobs:
         working-directory: mobile
         run: yes | flutter doctor --android-licenses || true
 
-      - name: Install Android NDK (Flutter / Agora)
+      - name: Free disk space for NDK
         if: matrix.language == 'java-kotlin'
         working-directory: ${{ github.workspace }}
         run: |
+          chmod +x scripts/ci-free-disk-for-ndk.sh
+          bash scripts/ci-free-disk-for-ndk.sh
+
+      - name: Setup Android NDK (nttld)
+        if: matrix.language == 'java-kotlin'
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27c
+
+      - name: Link NDK for Flutter Gradle
+        if: matrix.language == 'java-kotlin'
+        working-directory: ${{ github.workspace }}
+        env:
+          ANDROID_NDK_VERSION: 27.0.12077973
+        run: |
           set -euxo pipefail
-          chmod +x scripts/ci-install-android-ndk.sh
-          bash scripts/ci-install-android-ndk.sh
+          chmod +x scripts/ci-link-android-ndk.sh
+          bash scripts/ci-link-android-ndk.sh
 
       - name: Build Flutter Android for CodeQL
         if: matrix.language == 'java-kotlin'
