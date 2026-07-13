@@ -46,6 +46,7 @@ class _GiftBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final emoji = message.giftEmoji ?? '🎁';
     final count = message.giftCount ?? 1;
+    final jeton = message.giftJeton;
     final who = message.user?.displayName ?? 'Biri';
 
     return TweenAnimationBuilder<double>(
@@ -96,10 +97,10 @@ class _GiftBanner extends StatelessWidget {
               ),
             ),
             Text(
-              'x$count',
-              style: const TextStyle(
+              jeton != null && jeton > 0 ? '$jeton jeton' : 'x$count',
+              style: TextStyle(
                 fontWeight: FontWeight.w900,
-                fontSize: 18,
+                fontSize: jeton != null && jeton > 0 ? 13 : 18,
                 color: Colors.white,
               ),
             ),

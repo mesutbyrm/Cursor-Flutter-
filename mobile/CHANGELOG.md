@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.22+26 (2026-07-13)
+
+### Hediye görünürlüğü + yayın/oda özeti
+- Atılan hediye brüt jeton tutarı herkese görünür (sesli sohbet şeridi, chat, uçuş animasyonu)
+- Yayın veya odadan çıkınca hediye özeti sayfası: kimden ne kadar, misafir payı, size kalan net (jeton + ₺)
+- Hediye alan kullanıcı çıkışta cüzdanı otomatik yenilenir
+- Admin MP4 hediye: süre otomatik doldurulur; görsel yoksa videodan kare alınır
+- Yetkili (admin/kurucu) ve sesli yetkililer odaya girince boş koltuğa otomatik oturur
+
 ## 1.0.21+25 (2026-07-13)
 
 ### Admin hediye + combo + gelir paylaşımı

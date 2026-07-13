@@ -11,11 +11,14 @@ import '../widgets/voice_room_error_boundary.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/voice_official_join.dart';
+import '../../../gifts/domain/session_gift_summary_builder.dart';
+import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../../gifts/domain/gift_revenue_display.dart';
 import '../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
@@ -293,6 +296,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     if (!mounted) return;
     final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
     ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
+    ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).announceGift(event);
 
     final ui = ref.read(voiceRoomUiProvider);
     if (!ui.giftAnimationsEnabled) return;
@@ -307,7 +311,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       final receiverIsOwner = event.receiverName.trim().toLowerCase() ==
           (room.ownerName ?? '').trim().toLowerCase();
       final ownerNet = GiftRevenueDisplay.voiceOwnerDisplayNet(
-        gross: event.coinCost,
+        gross: event.coinCost * event.quantity,
         receiverIsOwner: receiverIsOwner,
       );
       if (ownerNet > 0) {
@@ -383,6 +387,18 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final audio = _audio;
     _audio = null;
 
+    final room = _effectiveRoom();
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final summary = SessionGiftSummaryBuilder.forVoiceRoom(
+      ref: ref,
+      roomTitle: room.title,
+      ownerUserId: room.ownerId,
+      ownerDisplayName: room.ownerName,
+      myUserId: user?.id,
+      myDisplayName: user?.display,
+    );
+    await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
+
     unawaited(liveCtrl.leaveRoomSession(source: 'basic_leave'));
     if (audio != null) {
       unawaited(
@@ -394,6 +410,10 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       );
     }
 
+    if (!mounted) return;
+    if (summary.hasData) {
+      await showSessionGiftSummarySheet(context, summary: summary);
+    }
     if (!mounted) return;
     if (context.canPop()) {
       context.pop();

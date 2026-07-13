@@ -12,6 +12,10 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     ChatRoomMyPermissions? server,
     ChatRoomPresence? self,
   ) {
+    final staff = ref.read(staffAccessProvider);
+    if (staff.canManagePayments) {
+      return VoiceRoomSeatPriority.tierAdmin;
+    }
     final tier = VoiceRoomSeatPriority.forUser(
       user,
       room: _roomMeta,
