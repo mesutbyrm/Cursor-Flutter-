@@ -8,6 +8,7 @@ import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../../core/providers/auth_selectors.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../live/presentation/providers/live_providers.dart';
 import '../../../voice_hub/presentation/pages/voice_gold_vip_page.dart';
 import '../../../voice_hub/presentation/providers/chat_room_providers.dart';
 import '../../../voice_hub/presentation/utils/voice_room_session_utils.dart';
