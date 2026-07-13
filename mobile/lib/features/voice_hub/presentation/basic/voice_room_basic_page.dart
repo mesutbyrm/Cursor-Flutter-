@@ -24,6 +24,7 @@ import '../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_leaderboard_provider.dart';
+import '../providers/voice_recent_gifts_provider.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_gift_providers.dart';
@@ -33,6 +34,7 @@ import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_audio_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
+import '../../../../core/auth/staff_roles.dart';
 import '../utils/voice_room_permissions.dart';
 import '../utils/voice_room_speak_access.dart';
 import '../theme/voice_room_tokens.dart';
@@ -54,7 +56,6 @@ import '../widgets/voice_room/voice_room_now_playing_bar.dart';
 import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../../gifts/presentation/widgets/first_gifter_badge.dart';
 import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
-import '../../../gifts/presentation/widgets/gift_live_feed_strip.dart';
 
 /// Aşama 1 — oda listesi, giriş/çıkış, mikrofon, hoparlör, katılımcılar, oda sahibi.
 class VoiceRoomBasicPage extends ConsumerStatefulWidget {
@@ -120,6 +121,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     _messageCtrl.dispose();
     _giftSub?.cancel();
     ref.read(voiceRoomGiftRealtimeProvider).stop();
+    ref.read(voiceRecentGiftsProvider.notifier).clear();
     final audio = _audio;
     _audio = null;
     if (audio != null) {
@@ -195,10 +197,16 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
     try {
       final roomId = room.apiRoomKey;
+      final staffBypass = StaffRoles.isAdminOrManager(
+        role: user.role,
+        username: user.username,
+      );
+      _audio!.setStaffBypassVoiceApi(staffBypass);
       await _audio!.join(
         roomId: roomId,
         remote: ref.read(chatRoomRemoteProvider),
         enableMic: false,
+        staffBypassVoiceApi: staffBypass,
       );
       if (!mounted) return;
       unawaited(VoiceRoomMusicAudioSession.activateForPlayback());
@@ -295,6 +303,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     if (!mounted) return;
     final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
     ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
+    ref.read(voiceRecentGiftsProvider.notifier).record(event);
     ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).announceGift(event);
 
     final ui = ref.read(voiceRoomUiProvider);
@@ -808,11 +817,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   ),
                   // Efsane İlk Destekçi rozeti (varsa).
                   FirstGifterBadge(
-                    context: 'voice_room',
-                    contextId: _liveRoomKey,
-                  ),
-                  // Canlı hediye akışı şeridi (gizli hediyeler hariç).
-                  GiftLiveFeedStrip(
                     context: 'voice_room',
                     contextId: _liveRoomKey,
                   ),

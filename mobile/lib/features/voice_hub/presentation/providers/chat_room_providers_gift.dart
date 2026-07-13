@@ -9,27 +9,9 @@ part of 'chat_room_providers.dart';
 /// private alan (_giftSocketStarted) ve metotlara erişir, davranış birebir
 /// korunur. Not: hediye state'inin çoğu zaten ayrı provider dosyalarında.
 extension VoiceRoomGiftControls on VoiceRoomLiveController {
-  /// Hediye olayını sohbet şeridine brüt jeton ile ekle — herkes görsün.
+  /// Hediye olayı — sohbet akışına değil; koltuk altı kutu + kayan duyuru.
   void announceGift(LiveGiftEvent ev) {
-    final gross = ev.coinCost * (ev.quantity <= 0 ? 1 : ev.quantity);
-    final id = 'gift-${ev.id}';
-    if (state.messages.any((m) => m.id == id)) return;
-    final msg = ChatRoomMessage(
-      id: id,
-      content:
-          '${ev.senderName} → ${ev.receiverName} ${ev.giftName} ($gross jeton) gönderdi',
-      createdAt: ev.timestamp,
-      user: ChatRoomUserRef(
-        id: ev.senderId ?? ev.senderName,
-        name: ev.senderName,
-      ),
-      kind: ChatMessageKind.gift,
-      giftEmoji: '🎁',
-      giftCount: ev.quantity <= 0 ? 1 : ev.quantity,
-      giftJeton: gross,
-      giftTargetName: ev.receiverName,
-    );
-    state = state.copyWith(messages: [...state.messages, msg]);
+    ref.read(voiceRecentGiftsProvider.notifier).record(ev);
   }
 
   Future<void> _loadGiftLeaderboard() async {

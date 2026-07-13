@@ -32,6 +32,7 @@ class VoiceRoomAudioCoordinator {
     required String roomId,
     ChatRoomRemoteDataSource? remote,
     bool enableMic = true,
+    bool staffBypassVoiceApi = false,
   }) async {
     unawaited(VoiceRoomMusicAudioSession.ensureConfigured());
     final ds = remote ?? _remote;
@@ -49,7 +50,15 @@ class VoiceRoomAudioCoordinator {
     });
     _lastRoomId = channel;
 
-    await ds.joinVoiceSession(channel);
+    try {
+      await ds.joinVoiceSession(channel);
+    } on Object catch (e) {
+      VoiceRoomDebugLog.log('audio.voice_api.join.warn', {
+        'error': e.toString(),
+        'staffBypass': staffBypassVoiceApi,
+      });
+      if (!staffBypassVoiceApi) rethrow;
+    }
     await _agora.joinVoice(channel, publishMic: enableMic);
     _engine = VoiceAudioEngineKind.agora;
     VoiceRoomDebugLog.log('audio.agora.joined', {
@@ -64,6 +73,10 @@ class VoiceRoomAudioCoordinator {
     unawaited(_micOp);
   }
 
+  var _staffBypassVoiceApi = false;
+
+  void setStaffBypassVoiceApi(bool value) => _staffBypassVoiceApi = value;
+
   Future<void> _setMicEnabledSafe(bool enabled) async {
     final op = _micOp;
     try {
@@ -73,7 +86,15 @@ class VoiceRoomAudioCoordinator {
       if (enabled) {
         final ds = _remote;
         if (ds != null) {
-          await ds.joinVoiceSession(channel);
+          try {
+            await ds.joinVoiceSession(channel);
+          } on Object catch (e) {
+            VoiceRoomDebugLog.log('audio.voice_api.mic.warn', {
+              'error': e.toString(),
+              'staffBypass': _staffBypassVoiceApi,
+            });
+            if (!_staffBypassVoiceApi) rethrow;
+          }
         }
         // Host token gerekir — tam yeniden bağlan.
         await _agora.joinVoice(channel, publishMic: true);

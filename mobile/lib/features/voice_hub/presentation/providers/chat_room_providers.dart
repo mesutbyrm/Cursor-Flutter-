@@ -66,6 +66,7 @@ import '../../video/domain/youtube_video_id.dart';
 import '../../video/presentation/room_video_controller.dart';
 import 'voice_gift_providers.dart';
 import 'voice_gift_leaderboard_provider.dart';
+import 'voice_recent_gifts_provider.dart';
 import 'voice_room_diagnostic_provider.dart';
 import 'voice_room_ui_provider.dart';
 part 'chat_room_providers_music.dart';
@@ -320,6 +321,8 @@ class VoiceRoomLiveController
   var _giftSocketStarted = false;
   var _sessionActive = true;
   var _autoSeatAttempted = false;
+  /// Odaya girince eski giriş/çıkış mesajları duyurulmasın.
+  var _entrancesArmed = false;
 
   String? _effectiveNickname(UserEntity? user) {
     final server = state.myNickname?.trim();
@@ -575,6 +578,7 @@ class VoiceRoomLiveController
         roomMuted: bundle.roomMuted ?? state.roomMuted,
         loading: false,
       );
+      _entrancesArmed = true;
     } catch (_) {}
   }
 

@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/pk/pk_room_models.dart';
-import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
 import '../providers/pk_room_providers.dart';
 
@@ -28,7 +27,7 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 4), (_) => _poll());
+    _timer = Timer.periodic(const Duration(seconds: 2), (_) => _poll());
     Future.microtask(_poll);
   }
 
@@ -50,13 +49,8 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
 
       for (final inv in invites) {
         if (!inv.isPending) continue;
-        if (!isLivePkInviteRecipient(
-          inv,
-          myStreamId: inv.opponentStreamId ?? '',
-          myUserId: user.id,
-        )) {
-          continue;
-        }
+        final uid = user.id.trim();
+        if (uid.isNotEmpty && inv.hostUserId == uid) continue;
         if (!_seen.add(inv.id)) continue;
         await _showDialog(inv);
         break;

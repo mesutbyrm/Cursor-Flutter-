@@ -19,6 +19,20 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   }
 
   void _syncPresenceJoinAnnouncements(List<ChatRoomPresence> merged) {
+    if (!_entrancesArmed) {
+      final nextIds = merged.map((p) => p.id).where((id) => id.isNotEmpty).toSet();
+      _knownPresenceIds
+        ..clear()
+        ..addAll(nextIds);
+      for (final p in merged) {
+        if (p.id.isEmpty) continue;
+        final n = p.displayName.trim().isNotEmpty
+            ? p.displayName.trim()
+            : p.name.trim();
+        if (n.isNotEmpty) _lastKnownPresenceNames[p.id] = n;
+      }
+      return;
+    }
     final previous = _knownPresenceIds;
     final nextIds = merged.map((p) => p.id).where((id) => id.isNotEmpty).toSet();
     if (previous.isEmpty) {
@@ -321,6 +335,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       _knownPresenceIds
         ..clear()
         ..addAll(merged.map((p) => p.id).where((id) => id.isNotEmpty));
+      _entrancesArmed = true;
       ref
           .read(voiceRoomDiagnosticProvider.notifier)
           .setPresence(joined: true, count: merged.length);
@@ -399,6 +414,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     List<ChatRoomMessage> previous,
     List<ChatRoomMessage> merged,
   ) {
+    if (!_entrancesArmed || previous.isEmpty) return;
     final prevIds = previous.map((m) => m.id).toSet();
     for (final m in merged) {
       if (prevIds.contains(m.id)) continue;

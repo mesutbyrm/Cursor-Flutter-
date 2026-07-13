@@ -520,48 +520,43 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (_leaving) return;
     _leaving = true;
     ref.read(liveGiftControllerProvider).detach();
-    try {
-      await _agora.leave();
-    } catch (_) {}
-    final streamId = widget.session.streamId;
-    if (widget.session.isHost && streamId != null && streamId.isNotEmpty) {
-      try {
-        await ref.read(liveRemoteProvider).sendStreamMessage(
+    final streamId = widget.session.streamId?.trim() ?? '';
+    final user = ref.read(authControllerProvider).valueOrNull;
+
+    if (widget.session.isHost && streamId.isNotEmpty) {
+      unawaited(_agora.leave());
+      unawaited(
+        ref.read(liveRemoteProvider).sendStreamMessage(
               streamId: streamId,
-              content: 'Yayın kapandı.',
-            );
-      } catch (_) {}
-      try {
-        await ref.read(liveRepositoryProvider).endVideoStream(streamId);
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Yayın sunucuda kapatılamadı: ${ApiException.userMessage(e)}',
-              ),
+              content: 'Yayıncı yayını kapattı.',
             ),
-          );
-        }
-      }
-      await HostLiveStreamRecovery.clear();
+      );
+      unawaited(
+        ref.read(liveRepositoryProvider).endVideoStream(streamId).then(
+          (_) => HostLiveStreamRecovery.clear(),
+          onError: (_) => HostLiveStreamRecovery.clear(),
+        ),
+      );
+      ref.read(liveRoomProvider(streamId).notifier).markStreamEnded();
+    } else {
+      try {
+        await _agora.leave();
+      } catch (_) {}
     }
 
-    final streamIdForSummary = widget.session.streamId?.trim() ?? '';
-    final user = ref.read(authControllerProvider).valueOrNull;
-    if (streamIdForSummary.isNotEmpty && user != null) {
+    if (streamId.isNotEmpty && user != null) {
       final hostId = widget.session.hostUserId?.trim().isNotEmpty == true
           ? widget.session.hostUserId!.trim()
           : (widget.session.isHost ? user.id : '');
       final summary = SessionGiftSummaryBuilder.forLiveBroadcast(
         ref: ref,
-        streamId: streamIdForSummary,
+        streamId: streamId,
         hostUserId: hostId.isNotEmpty ? hostId : user.id,
         hostDisplayName: widget.session.streamerName ?? user.display,
         myUserId: user.id,
       );
       await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
-      if (context.mounted && summary.hasData) {
+      if (context.mounted) {
         await showSessionGiftSummarySheet(context, summary: summary);
       }
     } else {
@@ -574,6 +569,50 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       widget.onSwipeClose!();
     } else {
       context.go('/feed');
+    }
+  }
+
+  Future<void> _showViewerStreamEndedSummary(String streamId) async {
+    if (_leaving || !mounted) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null || streamId.isEmpty) return;
+    final hostId = widget.session.hostUserId?.trim() ?? '';
+    final summary = SessionGiftSummaryBuilder.forLiveBroadcast(
+      ref: ref,
+      streamId: streamId,
+      hostUserId: hostId.isNotEmpty ? hostId : user.id,
+      hostDisplayName: widget.session.streamerName ?? 'Yayıncı',
+      myUserId: user.id,
+    );
+    await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Yayıncı yayını kapattı'),
+        content: Text(
+          summary.hasData
+              ? 'Yayın sona erdi. Hediye özetiniz bir sonraki ekranda.'
+              : 'Bu yayın sona erdi.',
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Tamam'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (summary.hasData) {
+      await showSessionGiftSummarySheet(context, summary: summary);
+    }
+    if (!mounted) return;
+    if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+      widget.onSwipeClose!();
+    } else {
+      context.go('/live');
     }
   }
 
@@ -1651,29 +1690,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         }
         if (next.streamEnded && !(prev?.streamEnded ?? false) && !s.isHost) {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
-            if (!mounted) return;
-            await showDialog<void>(
-              context: context,
-              barrierDismissible: false,
-              builder: (ctx) => AlertDialog(
-                title: const Text('Yayıncı yayını kapattı'),
-                content: const Text(
-                  'Bu yayın sona erdi. Canlı yayınlar sayfasına yönlendiriliyorsunuz.',
-                ),
-                actions: [
-                  FilledButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Tamam'),
-                  ),
-                ],
-              ),
-            );
-            if (!mounted) return;
-            if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
-              widget.onSwipeClose!();
-            } else {
-              context.go('/live');
-            }
+            if (!mounted || _leaving) return;
+            _leaving = true;
+            try {
+              await _agora.leave();
+            } catch (_) {}
+            await _showViewerStreamEndedSummary(streamId);
           });
         }
       });
