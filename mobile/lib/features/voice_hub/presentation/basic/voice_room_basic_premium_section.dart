@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -76,25 +74,40 @@ class VoiceRoomBasicJoinTicker extends StatefulWidget {
       _VoiceRoomBasicJoinTickerState();
 }
 
-class _VoiceRoomBasicJoinTickerState extends State<VoiceRoomBasicJoinTicker> {
+class _VoiceRoomBasicJoinTickerState extends State<VoiceRoomBasicJoinTicker>
+    with SingleTickerProviderStateMixin {
   final _scrollCtrl = ScrollController();
-  Timer? _marqueeTimer;
+  // Kayan yazı artık vsync Ticker ile (kareye hizalı, daha akıcı) sürülüyor.
+  // Ayrıca oda başka bir route ile örtülünce Ticker otomatik durur; eski 40 ms
+  // Timer arka planda da çalışıp CPU harcıyordu.
+  late final _ticker = createTicker(_onMarqueeTick);
+  Duration _lastTick = Duration.zero;
 
   @override
   void initState() {
     super.initState();
-    _marqueeTimer = Timer.periodic(const Duration(milliseconds: 40), (_) {
-      if (!_scrollCtrl.hasClients) return;
-      final max = _scrollCtrl.position.maxScrollExtent;
-      if (max <= 0) return;
-      final next = _scrollCtrl.offset + 1.2;
-      _scrollCtrl.jumpTo(next > max ? 0 : next);
-    });
+    _ticker.start();
+  }
+
+  void _onMarqueeTick(Duration elapsed) {
+    if (_lastTick == Duration.zero) {
+      _lastTick = elapsed;
+      return;
+    }
+    final dt = (elapsed - _lastTick).inMicroseconds / 1e6; // saniye
+    _lastTick = elapsed;
+    if (!_scrollCtrl.hasClients) return;
+    final max = _scrollCtrl.position.maxScrollExtent;
+    if (max <= 0) return;
+    // ~30 px/sn (eski: 1.2 px / 40 ms). Kareye hizalı ilerleme.
+    var next = _scrollCtrl.offset + 30.0 * dt;
+    if (next > max) next = 0;
+    _scrollCtrl.jumpTo(next);
   }
 
   @override
   void dispose() {
-    _marqueeTimer?.cancel();
+    _ticker.dispose();
     _scrollCtrl.dispose();
     super.dispose();
   }

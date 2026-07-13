@@ -445,8 +445,11 @@ class _RequesterRow extends StatelessWidget {
         CircleAvatar(
           radius: 12,
           backgroundColor: VoiceRoomTokens.neonPurple.withValues(alpha: 0.4),
-          backgroundImage:
-              avatar != null && avatar.isNotEmpty ? NetworkImage(avatar) : null,
+          backgroundImage: avatar != null && avatar.isNotEmpty
+              // Cache'li + küçültülmüş sağlayıcı: 24 px avatarı tam çözünürlükte
+              // decode etmez (ham NetworkImage yerine).
+              ? canlifalImageProvider(avatar, width: 48)
+              : null,
           child: avatar == null || avatar.isEmpty
               ? const Icon(Icons.person_rounded, size: 14, color: Colors.white70)
               : null,
