@@ -1,6 +1,12 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.23+28 (2026-07-13)
+
+### Derleme düzeltmesi (CodeQL)
+- `AdminGiftManagementPage.openEditor` static erişim hatası giderildi
+- `safeDelete` için `options` parametresi eklendi (admin hediye silme)
+
 ## 1.0.23+27 (2026-07-13)
 
 ### Admin / kurucu tam yetki + hata düzeltmeleri

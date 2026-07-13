@@ -15,6 +15,10 @@ import '../providers/gift_providers.dart';
 class AdminGiftManagementPage extends ConsumerStatefulWidget {
   const AdminGiftManagementPage({super.key});
 
+  static void openEditor(BuildContext context, AdminGiftType gift) {
+    context.push('/admin/gifts/${gift.id}/edit', extra: gift);
+  }
+
   @override
   ConsumerState<AdminGiftManagementPage> createState() =>
       _AdminGiftManagementPageState();
@@ -156,10 +160,6 @@ class _AdminGiftManagementPageState
           ],
         ),
       );
-  }
-
-  static void _openEditor(BuildContext context, AdminGiftType gift) {
-    context.push('/admin/gifts/${gift.id}/edit', extra: gift);
   }
 }
 
@@ -435,8 +435,7 @@ class _GiftRow extends ConsumerWidget {
                   color: Color(0xFFB388FF),
                   size: 20,
                 ),
-                onPressed: () =>
-                    AdminGiftManagementPage._openEditor(context, gift),
+                onPressed: () => AdminGiftManagementPage.openEditor(context, gift),
               ),
               IconButton(
                 icon: const Icon(

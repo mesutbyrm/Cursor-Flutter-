@@ -240,9 +240,19 @@ extension DioApi on Dio {
     }
   }
 
-  Future<Response<T>> safeDelete<T>(String path, {Object? data}) async {
+  Future<Response<T>> safeDelete<T>(
+    String path, {
+    Object? data,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
     try {
-      return await delete<T>(path, data: data);
+      return await delete<T>(
+        path,
+        data: data,
+        options: options,
+        cancelToken: cancelToken,
+      );
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
