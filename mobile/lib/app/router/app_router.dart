@@ -25,6 +25,7 @@ import '../../features/fortune/presentation/pages/fortune_session_page.dart';
 import '../../features/fortune/presentation/pages/fortune_ready_readings_page.dart';
 
 import '../../features/admin/presentation/pages/admin_panel_page.dart';
+import '../../features/admin/presentation/pages/admin_voice_room_backgrounds_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_sub_pages.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
@@ -722,6 +723,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             },
           ),
         ],
+      ),
+      GoRoute(
+        path: '/admin/voice-backgrounds',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminVoiceRoomBackgroundsPage(),
+        ),
       ),
       GoRoute(
         path: '/pk/leaderboard',

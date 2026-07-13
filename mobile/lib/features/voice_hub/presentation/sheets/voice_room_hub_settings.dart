@@ -14,6 +14,7 @@ import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../theme/voice_room_tokens.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import 'voice_room_management_panel.dart';
@@ -494,6 +495,7 @@ class _VoiceRoomBackgroundSheetState
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final canUpload = ref.watch(staffAccessProvider).isSiteAdmin;
     return DraggableScrollableSheet(
       initialChildSize: 0.55,
       minChildSize: 0.35,
@@ -511,7 +513,9 @@ class _VoiceRoomBackgroundSheetState
             ),
             const SizedBox(height: 8),
             Text(
-              'Hazır arka planlardan seçin veya galeriden yükleyin.',
+              canUpload
+                  ? 'Hazır arka planlardan seçin veya yükleyin.'
+                  : 'Admin tarafından yüklenen arka planlardan seçin.',
               style: TextStyle(
                 color: context.colors.onSurfaceMuted,
                 fontSize: 13,
@@ -554,24 +558,26 @@ class _VoiceRoomBackgroundSheetState
                 },
               ),
             ],
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: _uploading ? null : _pickFromCamera,
-              icon: const Icon(Icons.photo_camera_rounded),
-              label: const Text('Kamera'),
-            ),
-            const SizedBox(height: 10),
-            FilledButton.icon(
-              onPressed: _uploading ? null : _pickFromGallery,
-              icon: _uploading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.photo_library_rounded),
-              label: Text(_uploading ? 'Yükleniyor…' : 'Galeriden seç'),
-            ),
+            if (canUpload) ...[
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: _uploading ? null : _pickFromCamera,
+                icon: const Icon(Icons.photo_camera_rounded),
+                label: const Text('Kamera'),
+              ),
+              const SizedBox(height: 10),
+              FilledButton.icon(
+                onPressed: _uploading ? null : _pickFromGallery,
+                icon: _uploading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.photo_library_rounded),
+                label: Text(_uploading ? 'Yükleniyor…' : 'Galeriden seç'),
+              ),
+            ],
           ],
         ),
       ),

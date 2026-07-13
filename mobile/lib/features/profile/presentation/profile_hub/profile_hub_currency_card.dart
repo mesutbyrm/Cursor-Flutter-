@@ -22,7 +22,10 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
     final level = state.level;
     final xpTarget = level.xpToNext > 0 ? level.xpToNext : 100;
     final xpProgress = (level.xp / xpTarget).clamp(0.0, 1.0);
-    final loading = extAsync.isLoading && extAsync.valueOrNull == null;
+    final loading = extAsync.isLoading &&
+        extAsync.valueOrNull == null &&
+        level.xp <= 0 &&
+        level.level <= 1;
 
     return ProfileGlass(
       padding: const EdgeInsets.all(16),

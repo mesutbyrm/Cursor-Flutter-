@@ -364,6 +364,10 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
     if (count >= 0) state = state.copyWith(viewerCount: count);
   }
 
+  void markStreamEnded() {
+    state = state.copyWith(streamEnded: true);
+  }
+
   void clearFortuneAnsweredNotice() {
     if (state.fortuneAnsweredNotice != null) {
       state = state.copyWith(clearFortuneNotice: true);

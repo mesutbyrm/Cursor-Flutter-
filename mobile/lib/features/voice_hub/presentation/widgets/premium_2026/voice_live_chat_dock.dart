@@ -6,7 +6,6 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import '../../../domain/entities/chat_room_message.dart';
 import '../../theme/voice_room_tokens.dart';
 import '../chat/chat_message_widgets.dart';
-import 'voice_floating_gifts_strip.dart';
 
 /// Yalnızca mesaj akışı — sahne üzerinde yüzen feed.
 class VoiceLiveChatFeed extends StatelessWidget {
@@ -24,13 +23,7 @@ class VoiceLiveChatFeed extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textOnly = messages
-        .where(
-          (m) =>
-              m.kind == ChatMessageKind.text ||
-              m.kind == ChatMessageKind.gift ||
-              m.kind == ChatMessageKind.systemJoin ||
-              m.kind == ChatMessageKind.systemLeave,
-        )
+        .where((m) => m.kind == ChatMessageKind.text)
         .toList();
     final visible = textOnly.length > 50
         ? textOnly.sublist(textOnly.length - 50)
@@ -62,7 +55,6 @@ class VoiceLiveChatFeed extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        VoiceFloatingGiftsStrip(messages: messages, maxItems: 1),
         ClipRRect(
           borderRadius: BorderRadius.circular(18),
           child: EffectsPerf.chromeBar(

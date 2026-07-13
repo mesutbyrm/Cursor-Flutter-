@@ -1,6 +1,24 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.25+30 (2026-07-13)
+
+### Sesli oda açma + hediye + profil
+- Oda açma: oda adı + arka plan seçimi; ücretler 0 / 2500 / 5000 jeton
+- Hediye: sohbette çift satır kaldırıldı; 50 jetonun 100 görünmesi düzeltildi (birim fiyat)
+- Profil: istatistikler anında gösterilir; arka planda paralel yükleme
+
+## 1.0.24+29 (2026-07-13)
+
+### Sesli oda + canlı yayın UX
+- Giriş/çıkış: yalnızca o anki geçişler; odaya girince eski «çıkış yapan» duyurusu gösterilmez
+- Koltuk altında tek geçiş bandı; hediyeler çevrimiçi kutusundan kaldırıldı
+- Son 5 hediye atan (sağ kutu) + kayan duyuru: «Mesut, Suna … kahve … 🪙1000 jeton.🎉»
+- Admin/yönetici ses API hatasında Agora dinleme/konuşma devam eder (`action`+`type` join)
+- Canlı yayın kapatma hızlandı; izleyici/yayıncı hediye özeti ekranı
+- PK davetleri `myInvites` ile 2 sn poll; yanlış alıcı filtresi düzeltildi
+- Admin panel: **Sohbet odası görselleri** — R2/S3 yükleme; kullanıcı kendi arka planını yükleyemez
+
 ## 1.0.23+28 (2026-07-13)
 
 ### Derleme düzeltmesi (CodeQL)

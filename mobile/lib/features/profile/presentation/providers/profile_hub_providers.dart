@@ -45,16 +45,14 @@ Future<void> refreshProfileHub(WidgetRef ref, {String? userId}) async {
   ref.invalidate(giftsReceivedSummaryProvider);
   ref.invalidate(userAchievementsProvider);
   ref.invalidate(walletBalancesProvider);
-  await Future.wait([
-    ref.read(authControllerProvider.notifier).refreshMe(),
-    ref.read(walletBalancesProvider.notifier).refresh(force: true),
-    ref.read(profileExtendedProvider.future),
-    ref.read(profileUserStatisticsProvider.future),
-    ref.read(profileStatsProvider.future),
-    ref.read(userLevelProvider.future),
-    ref.read(giftsReceivedSummaryProvider.future),
-    ref.read(userAchievementsProvider.future),
-  ]);
+  unawaited(ref.read(authControllerProvider.notifier).refreshMe());
+  unawaited(ref.read(walletBalancesProvider.notifier).refresh(force: true));
+  unawaited(ref.read(profileExtendedProvider.future));
+  unawaited(ref.read(profileUserStatisticsProvider.future));
+  unawaited(ref.read(profileStatsProvider.future));
+  unawaited(ref.read(userLevelProvider.future));
+  unawaited(ref.read(giftsReceivedSummaryProvider.future));
+  unawaited(ref.read(userAchievementsProvider.future));
 }
 
 /// Profil sayfasında gerçek zamanlı senkron — bildirim + periyodik yenileme.

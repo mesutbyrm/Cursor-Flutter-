@@ -15,6 +15,8 @@ import '../sheets/voice_room_sheets.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium_2026/voice_web_owner_stage.dart';
+import '../widgets/premium_2026/voice_gift_announcement_ticker.dart';
+import '../widgets/premium_2026/voice_recent_gifters_box.dart';
 import '../widgets/voice_room/voice_room_duyuru_ticker.dart';
 import '../widgets/voice_room/voice_room_join_entry_strip.dart';
 import '../widgets/voice_room/voice_room_staff_join_banner.dart';
@@ -65,6 +67,17 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
         VoiceRoomJoinEntryStrip(
           events: live.realtimeEvents,
           messages: live.messages,
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Expanded(child: VoiceGiftAnnouncementTicker()),
+              const SizedBox(width: 8),
+              const VoiceRecentGiftersBox(),
+            ],
+          ),
         ),
         if (live.moderatorAnnouncement?.trim().isNotEmpty == true)
           VoiceRoomDuyuruTicker(

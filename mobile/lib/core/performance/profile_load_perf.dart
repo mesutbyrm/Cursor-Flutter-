@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/profile/presentation/providers/profile_hub_providers.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart';
 
 /// Profil — Jeton, CFC, takipçi, gönderiler birbirini beklemez.
@@ -23,5 +24,10 @@ abstract final class ProfileLoadPerf {
   static Future<void> _warm(WidgetRef ref) async {
     unawaited(ref.read(walletBalancesProvider.future));
     unawaited(ref.read(profileStatsProvider.future));
+    unawaited(ref.read(profileExtendedProvider.future));
+    unawaited(ref.read(profileUserStatisticsProvider.future));
+    unawaited(ref.read(userLevelProvider.future));
+    unawaited(ref.read(giftsReceivedSummaryProvider.future));
+    unawaited(ref.read(userAchievementsProvider.future));
   }
 }

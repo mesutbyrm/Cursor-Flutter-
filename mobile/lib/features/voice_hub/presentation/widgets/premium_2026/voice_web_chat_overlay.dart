@@ -78,7 +78,7 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
           VoiceOfficialJoin.isOfficialEntrance(m.content)) {
         return false;
       }
-      return m.kind == ChatMessageKind.text || m.kind == ChatMessageKind.gift;
+      return m.kind == ChatMessageKind.text;
     }).toList();
     final slice = visible.length > 40
         ? visible.sublist(visible.length - 40)

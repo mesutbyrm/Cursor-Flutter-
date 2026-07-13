@@ -14,7 +14,6 @@ import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
 import '../../domain/pk/pk_duration_options.dart';
-import '../widgets/voice_room/voice_room_join_toast_stack.dart';
 import '../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../providers/chat_room_providers.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
@@ -211,11 +210,7 @@ class VoiceRoomBasicChatFeed extends StatelessWidget {
       }
     }
     final visible = messages
-        .where(
-          (m) =>
-              m.kind == ChatMessageKind.text ||
-              m.kind == ChatMessageKind.gift,
-        )
+        .where((m) => m.kind == ChatMessageKind.text)
         .toList();
 
     return Stack(
@@ -254,10 +249,7 @@ class VoiceRoomBasicChatFeed extends StatelessWidget {
           left: 0,
           right: 0,
           bottom: 4,
-          child: VoiceRoomJoinToastStack(
-            events: events,
-            messages: messages,
-          ),
+          child: const SizedBox.shrink(),
         ),
       ],
     );

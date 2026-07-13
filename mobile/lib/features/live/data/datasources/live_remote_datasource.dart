@@ -123,7 +123,7 @@ class LiveRemoteDataSource {
         .toList();
   }
 
-  static const int voiceRoomNormalOpenJetonCost = 100;
+  static const int voiceRoomNormalOpenJetonCost = 2500;
   static const int voiceRoomVipOpenJetonCost = 5000;
 
   static int openRoomJetonCost({required bool vip, String? roomType}) {
@@ -184,6 +184,7 @@ class LiveRemoteDataSource {
     String paymentType = 'jeton',
     String? description,
     String? icon,
+    String? background,
   }) {
     final meta = voiceRoomCreateMetadata(
       roomType: roomType,
@@ -191,6 +192,7 @@ class LiveRemoteDataSource {
     );
     final desc = description?.trim();
     final ic = icon?.trim();
+    final bg = background?.trim();
     return {
       'name': meta.name,
       'description':
@@ -198,6 +200,7 @@ class LiveRemoteDataSource {
       'icon': (ic != null && ic.isNotEmpty) ? ic : meta.icon,
       'paymentType': normalizePaymentType(paymentType),
       'roomType': resolveRoomTypeEnum(roomType, vip: vip),
+      if (bg != null && bg.isNotEmpty) 'background': bg,
     };
   }
 
@@ -209,6 +212,7 @@ class LiveRemoteDataSource {
     String paymentType = 'jeton',
     String? description,
     String? icon,
+    String? background,
   }) async {
     final resolvedType = roomType ?? (vip ? 'vip' : 'normal');
     final payload = buildVoiceRoomCreatePayload(
@@ -218,6 +222,7 @@ class LiveRemoteDataSource {
       paymentType: paymentType,
       description: description,
       icon: icon,
+      background: background,
     );
     final name = payload['name']?.toString() ?? 'Sohbet';
 

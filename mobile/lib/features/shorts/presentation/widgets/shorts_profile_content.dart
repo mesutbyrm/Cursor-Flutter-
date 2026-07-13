@@ -43,23 +43,73 @@ class ShortsProfileStatsRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(shortVideoProfileStatsProvider(userId));
+    final stats = statsAsync.valueOrNull;
+
+    if (stats == null && statsAsync.isLoading) {
+      return ProfileGlass(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: _StatCell(
+                label: 'Video',
+                value: '…',
+              ),
+            ),
+            _divider(context),
+            Expanded(
+              child: _StatCell(
+                label: 'Takipçi',
+                value: formatShortCount(fallbackFollowers),
+                onTap: tappable
+                    ? () => context.push('/profile/followers?userId=$userId')
+                    : null,
+              ),
+            ),
+            _divider(context),
+            Expanded(
+              child: _StatCell(
+                label: 'Takip',
+                value: formatShortCount(fallbackFollowing),
+                onTap: tappable
+                    ? () => context.push('/profile/following?userId=$userId')
+                    : null,
+              ),
+            ),
+            _divider(context),
+            const Expanded(
+              child: _StatCell(label: 'Beğeni', value: '…'),
+            ),
+          ],
+        ),
+      );
+    }
 
     return statsAsync.when(
       loading: () => ProfileGlass(
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Row(
-          children: List.generate(
-            4,
-            (_) => const Expanded(
-              child: Center(
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
+          children: [
+            Expanded(
+              child: _StatCell(
+                label: 'Takipçi',
+                value: formatShortCount(fallbackFollowers),
+                onTap: tappable
+                    ? () => context.push('/profile/followers?userId=$userId')
+                    : null,
               ),
             ),
-          ),
+            _divider(context),
+            Expanded(
+              child: _StatCell(
+                label: 'Takip',
+                value: formatShortCount(fallbackFollowing),
+                onTap: tappable
+                    ? () => context.push('/profile/following?userId=$userId')
+                    : null,
+              ),
+            ),
+          ],
         ),
       ),
       error: (_, _) => ProfileGlass(

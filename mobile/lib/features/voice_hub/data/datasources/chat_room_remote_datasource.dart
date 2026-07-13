@@ -302,7 +302,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         voicePath(key),
-        data: jsonEncode({'action': 'join'}),
+        data: jsonEncode({'action': 'join', 'type': 'join'}),
         options: Options(contentType: 'application/json'),
       );
     });
@@ -312,10 +312,39 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         voicePath(key),
-        data: jsonEncode({'action': 'leave'}),
+        data: jsonEncode({'action': 'leave', 'type': 'leave'}),
         options: Options(contentType: 'application/json'),
       );
     });
+  }
+
+  /// Admin kataloğuna arka plan ekle — üretim uçları sırayla denenir.
+  Future<void> registerVoiceRoomBackground(String imageUrl) async {
+    final url = imageUrl.trim();
+    if (url.isEmpty) {
+      throw const ApiException('Görsel adresi boş');
+    }
+    final payloads = [
+      {'url': url, 'imageUrl': url},
+      {'background': url, 'imageUrl': url},
+      {'imageUrl': url},
+    ];
+    Object? lastError;
+    for (final path in [
+      '/api/admin/voice-room-backgrounds',
+      backgroundsPath(),
+    ]) {
+      for (final body in payloads) {
+        try {
+          await _dio.safePost<dynamic>(path, data: body);
+          return;
+        } on Object catch (e) {
+          lastError = e;
+        }
+      }
+    }
+    if (lastError != null) throw lastError!;
+    throw const ApiException('Arka plan kaydedilemedi');
   }
 
   Future<List<Map<String, dynamic>>> fetchVoiceUsers(
