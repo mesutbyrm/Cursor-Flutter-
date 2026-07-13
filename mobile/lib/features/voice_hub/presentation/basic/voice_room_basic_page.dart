@@ -49,7 +49,6 @@ import '../sheets/voice_room_management_panel.dart';
 import '../widgets/premium_2026/voice_live_action_bar_2026.dart';
 import '../widgets/premium_2026/voice_live_header_2026.dart';
 import '../widgets/premium_2026/voice_online_gift_box.dart';
-import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../widgets/voice_room/voice_room_now_playing_bar.dart';
 import '../../../gifts/presentation/widgets/gift_battle_strip.dart';

@@ -1,4 +1,4 @@
-import '../../../profile/data/jeton_packages_catalog.dart';
+import '../../profile/data/jeton_packages_catalog.dart';
 
 /// Yayın veya sesli oda oturumu sonunda gösterilen hediye özeti.
 class SessionGiftSummary {

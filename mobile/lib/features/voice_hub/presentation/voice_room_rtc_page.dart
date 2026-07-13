@@ -14,7 +14,7 @@ import '../../../core/widgets/cached_cover_image.dart';
 import '../../../core/navigation/wallet_navigation.dart';
 import '../../../core/network/api_exception.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
-import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../profile/presentation/providers/profile_providers.dart';
 import '../../live/domain/entities/live_gift_event.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/presentation/providers/live_providers.dart';

@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../profile/data/jeton_packages_catalog.dart';
-import '../../live/presentation/gifts/live_gift_controller.dart';
+import '../../profile/data/jeton_packages_catalog.dart';
+import '../../profile/presentation/providers/profile_providers.dart';
+import '../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../../live/presentation/providers/live_gift_leaderboard_provider.dart';
 import '../../live/presentation/providers/live_guest_grid_provider.dart';
 import '../../voice_hub/presentation/providers/voice_gift_leaderboard_provider.dart';
 import '../../voice_hub/presentation/providers/voice_seat_gift_totals_provider.dart';
-import '../../../profile/presentation/providers/profile_providers.dart';
 import 'gift_revenue_display.dart';
 import 'session_gift_summary.dart';
 
