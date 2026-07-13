@@ -13,7 +13,7 @@ abstract final class VoiceChatMessageFilters {
     final content = message.content.trim();
     if (content.isEmpty) return true;
 
-    if (message.kind == ChatMessageKind.gift) return true;
+    if (message.kind == ChatMessageKind.gift) return false;
 
     if (_isSongRequestAnnouncement(content)) return true;
 

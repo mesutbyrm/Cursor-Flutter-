@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,9 +34,9 @@ class ProfilePage extends ConsumerWidget {
     Future<void> refresh() async {
       HapticFeedback.mediumImpact();
       SystemSound.play(SystemSoundType.click);
-      await refreshProfileHub(ref, userId: user?.id);
+      unawaited(refreshProfileHub(ref, userId: user?.id));
       ref.invalidate(fortuneAccessStateProvider);
-      await ref.read(fortuneAccessStateProvider.future);
+      unawaited(ref.read(fortuneAccessStateProvider.future));
     }
 
     // Not: DiscoverBackground (immersive gradient + RepaintBoundary alt katman)

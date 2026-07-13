@@ -77,7 +77,7 @@ class PlatformVoiceRoomSettings {
   final int vipRoomMaxUsers;
 
   static const fallback = PlatformVoiceRoomSettings(
-    normalOpenCost: 100,
+    normalOpenCost: 2500,
     vipOpenCost: 5000,
     musicRequestCost: 10,
     freeRoomMaxUsers: 50,
@@ -96,7 +96,7 @@ final platformVoiceRoomSettingsProvider =
   int _int(String key, int fallback) =>
       (d[key] as num?)?.toInt() ?? fallback;
   return PlatformVoiceRoomSettings(
-    normalOpenCost: _int('normalOpenCost', 100),
+    normalOpenCost: _int('normalOpenCost', 2500),
     vipOpenCost: _int('vipOpenCost', 5000),
     musicRequestCost: _int('musicRequestCost', 10),
     freeRoomMaxUsers: _int('freeRoomMaxUsers', 50),

@@ -58,6 +58,17 @@ class VoiceRecentGiftsController extends Notifier<VoiceRecentGiftsState> {
     final senderId = (event.senderId ?? event.senderName).trim();
     if (senderId.isEmpty) return;
 
+    // Sunucu bazen aynı hediyeyi admin + yayıncı satırı olarak iki kez yollar.
+    final recent = state.announcements;
+    if (recent.isNotEmpty) {
+      final last = recent.first;
+      final delta = event.timestamp.difference(last.at).inMilliseconds.abs();
+      if (delta < 2500 && last.line.contains(event.giftName)) {
+        final sender = event.senderName.trim();
+        if (sender.isNotEmpty && last.line.startsWith(sender)) return;
+      }
+    }
+
     final now = event.timestamp;
     _gifters[senderId] = VoiceRecentGifter(
       senderId: senderId,

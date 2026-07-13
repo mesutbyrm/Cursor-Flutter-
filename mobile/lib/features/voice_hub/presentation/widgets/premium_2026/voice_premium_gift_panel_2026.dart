@@ -297,7 +297,7 @@ class _VoicePremiumGiftPanel2026State
           fallback: LiveGiftCatalog.displayName(g),
         ),
         quantity: _qty,
-        coinCost: gross,
+        coinCost: g.price,
         timestamp: DateTime.now(),
         combo: 1,
         rarity: PremiumGiftCatalog2026.rarity(g.id),

@@ -27,6 +27,7 @@ class LiveRepositoryImpl implements LiveRepository {
     String paymentType = 'jeton',
     String? description,
     String? icon,
+    String? background,
   }) =>
       _remote.createVoiceChatRoom(
         vip: vip,
@@ -35,6 +36,7 @@ class LiveRepositoryImpl implements LiveRepository {
         paymentType: paymentType,
         description: description,
         icon: icon,
+        background: background,
       );
 
   @override

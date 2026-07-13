@@ -303,7 +303,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     if (!mounted) return;
     final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
     ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
-    ref.read(voiceRecentGiftsProvider.notifier).record(event);
     ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).announceGift(event);
 
     final ui = ref.read(voiceRoomUiProvider);
