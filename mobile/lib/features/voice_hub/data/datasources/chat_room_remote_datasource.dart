@@ -64,7 +64,7 @@ class ChatRoomRemoteDataSource {
 
   static String typingPath(String roomId) => ApiEndpoints.chatRoomTyping(roomId);
 
-  /// Üretim presence/voice — API dokümantasyonu (`type` join/leave, heartbeat POST).
+  /// Üretim presence/voice — kılavuz §9.3 (`action` join/leave, heartbeat POST).
   static const presenceHeartbeatInterval = Duration(seconds: 12);
 
   /// Odaya giriş — `POST /presence` (gövde yok).
@@ -302,7 +302,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         voicePath(key),
-        data: jsonEncode({'type': 'join'}),
+        data: jsonEncode({'action': 'join'}),
         options: Options(contentType: 'application/json'),
       );
     });
@@ -312,7 +312,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         voicePath(key),
-        data: jsonEncode({'type': 'leave'}),
+        data: jsonEncode({'action': 'leave'}),
         options: Options(contentType: 'application/json'),
       );
     });

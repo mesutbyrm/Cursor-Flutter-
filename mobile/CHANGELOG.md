@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.23+27 (2026-07-13)
+
+### Admin / kurucu tam yetki + hata düzeltmeleri
+- **admin** ve **yonetici** hesapları uygulamada tam yetkili: hediye kataloğu, jeton/CFC yükleme, Gold üyelik, sesli oda moderasyonu
+- Sesli oda `POST /voice` gövdesi kılavuzla uyumlu (`action: join|leave`) — «No voice permission» hatası giderildi
+- Yetkili kullanıcılar koltukta olmasa da konuşabilir; oda içi tüm admin bypass açık
+- Hediye yönetimi: çift zaman aşımı banner'ı kaldırıldı; istatistik/gelir sekmeleri yalnızca seçilince yüklenir
+- Admin hediye API isteklerine staff rol başlığı (`X-Staff-Role`) eklendi
+- 403 mesajları «admin veya kurucu (yonetici)» olarak güncellendi
+
 ## 1.0.22+26 (2026-07-13)
 
 ### Hediye görünürlüğü + yayın/oda özeti

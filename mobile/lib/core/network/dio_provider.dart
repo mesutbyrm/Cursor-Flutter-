@@ -90,6 +90,12 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
         for (final entry in Map.from(deviceRequestHeaders()).entries) {
           options.headers[entry.key] = entry.value;
         }
+        final staffRole = options.extra['staffRole'];
+        if (staffRole is String &&
+            staffRole.trim().isNotEmpty &&
+            options.path.startsWith('/api/admin/')) {
+          options.headers['X-Staff-Role'] = staffRole.trim();
+        }
         handler.next(options);
       },
       onError: (e, handler) async {

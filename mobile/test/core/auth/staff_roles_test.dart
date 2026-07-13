@@ -3,11 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('StaffRoles', () {
-    test('site admin is only username admin by default', () {
+    test('site admin includes admin and yonetici', () {
       expect(StaffRoles.isSiteAdminUser(username: 'admin'), isTrue);
-      expect(StaffRoles.isSiteAdminUser(username: 'yonetici'), isFalse);
-      expect(StaffRoles.isSiteAdminUser(role: 'yonetici'), isFalse);
+      expect(StaffRoles.isSiteAdminUser(username: 'yonetici'), isTrue);
+      expect(StaffRoles.isSiteAdminUser(role: 'yonetici'), isTrue);
       expect(StaffRoles.isSiteAdminUser(role: 'founder'), isTrue);
+      expect(StaffRoles.isSiteAdminUser(role: 'user'), isFalse);
     });
 
     test('labelTr maps admin and yonetici display names', () {
