@@ -15,6 +15,7 @@ import '../sheets/voice_room_sheets.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium_2026/voice_web_owner_stage.dart';
+import '../widgets/premium_2026/voice_pk_invite_banner.dart';
 import '../widgets/premium_2026/voice_gift_announcement_ticker.dart';
 import '../widgets/premium_2026/voice_recent_gifters_box.dart';
 import '../widgets/voice_room/voice_room_duyuru_ticker.dart';
@@ -44,6 +45,11 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        VoicePkInviteBanner(
+          room: room,
+          liveKey: liveKey,
+          isOwner: perms.isRoomOwner || perms.isSiteAdmin,
+        ),
         VoiceWebOwnerStage(
           room: room,
           presence: live.presence,

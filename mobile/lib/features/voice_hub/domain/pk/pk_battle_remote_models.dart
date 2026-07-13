@@ -55,11 +55,21 @@ class PkBattleRemote extends Equatable {
       status == 'completed' ||
       status == 'canceled';
 
+  /// API yanıtında `inviteId` ayrı gelebilir — respond path için.
+  String get effectiveId {
+    final inv = inviteId?.trim() ?? '';
+    if (inv.isNotEmpty) return inv;
+    return id.trim();
+  }
+
   factory PkBattleRemote.fromJson(Map<String, dynamic> json) {
     final giftsRaw = json['recentGifts'];
+    final invite = json['inviteId']?.toString().trim();
+    final rawId = (json['id'] ?? json['battleId'])?.toString().trim() ?? '';
+    final id = rawId.isNotEmpty ? rawId : (invite ?? '');
     return PkBattleRemote(
-      id: (json['id'] ?? json['battleId'])?.toString() ?? '',
-      inviteId: json['inviteId']?.toString(),
+      id: id,
+      inviteId: invite?.isNotEmpty == true ? invite : null,
       battleType: json['battleType']?.toString() ?? 'voice_room',
       status: json['status']?.toString() ?? 'pending',
       challengerScore: _int(json['challengerScore'] ?? json['leftScore']),

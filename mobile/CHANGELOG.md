@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.26+31 (2026-07-13)
+
+### PK daveti + performans + komutlar
+- PK daveti: koltuk üstü banner (oda sahibi), Kabul/Reddet, 60 sn sonra kaybolur; 4 sn poll
+- Oda değiştirme: `go` ile tek oda, dispose'da oturum kapatma, ses motoru yalnızca `leave`
+- Moderasyon: Sustur/Sesi Aç tek düğme; Ses Ver/Yetki Al birleşik; Rol/Yetki tek yerde
+
 ## 1.0.25+30 (2026-07-13)
 
 ### Sesli oda açma + hediye + profil

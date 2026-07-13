@@ -20,6 +20,7 @@ class VoiceRoomModerationTarget {
     this.isModerator = false,
     this.isSpeaker = false,
     this.isSop = false,
+    this.isMuted = false,
   });
 
   factory VoiceRoomModerationTarget.fromPresence(ChatRoomPresence user) {
@@ -41,6 +42,7 @@ class VoiceRoomModerationTarget {
       isModerator: isMod,
       isSpeaker: isSpeaker,
       isSop: isSop,
+      isMuted: user.isMuted,
     );
   }
 
@@ -50,6 +52,7 @@ class VoiceRoomModerationTarget {
   final bool isModerator;
   final bool isSpeaker;
   final bool isSop;
+  final bool isMuted;
 }
 
 final voiceModerationProvider = StateNotifierProvider.family<
@@ -269,6 +272,9 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(voiceModerationProvider(roomKey).notifier);
     final state = ref.watch(voiceModerationProvider(roomKey));
+    final roomMuted = ref.watch(
+      voiceRoomLiveProvider(roomKey).select((s) => s.roomMuted),
+    );
     final isLoading = state is AsyncLoading;
     final errorMsg =
         state is AsyncError ? ApiException.userMessage(state.error) : null;
@@ -286,18 +292,29 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
         ),
       if (perms.canGiveVoice || isOwner)
         _ModBox(
-          icon: Icons.record_voice_over_rounded,
-          label: '+V Ses Ver',
-          color: Colors.green,
-          onTap: () => _run(context, notifier, () async {
-            final ok = await notifier.grantVoice(targetUser.id);
-            return ok ? '${targetUser.username} koltuğa alındı' : 'Hata';
-          }),
+          icon: targetUser.isSpeaker
+              ? Icons.mic_off_rounded
+              : Icons.record_voice_over_rounded,
+          label: targetUser.isSpeaker ? 'Yetki Al' : 'Ses Ver',
+          color: targetUser.isSpeaker ? Colors.orange : Colors.green,
+          onTap: () {
+            if (targetUser.isSpeaker) {
+              _run(context, notifier, () async {
+                final ok = await notifier.removeFromSeat(targetUser.id);
+                return ok ? 'Konuşma yetkisi alındı' : 'Hata';
+              });
+            } else {
+              _run(context, notifier, () async {
+                final ok = await notifier.grantVoice(targetUser.id);
+                return ok ? '${targetUser.username} koltuğa alındı' : 'Hata';
+              });
+            }
+          },
         ),
       if (canAddModerators && (perms.canModerate || isOwner))
         _ModBox(
           icon: Icons.admin_panel_settings_outlined,
-          label: 'Yetki Ver',
+          label: 'Rol / Yetki',
           color: const Color(0xFF8B5CF6),
           onTap: () => _showRolePicker(context, ref, notifier),
         ),
@@ -331,42 +348,22 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
         ),
       if (perms.canMuteRoom || isOwner)
         _ModBox(
-          icon: Icons.volume_off_rounded,
-          label: 'Sesi Kapat',
-          color: Colors.orange,
+          icon: roomMuted ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+          label: roomMuted ? 'Sesi Aç' : 'Sesi Kapat',
+          color: roomMuted ? Colors.teal : Colors.orange,
           onTap: () => _run(context, notifier, () async {
-            final ok = await notifier.setRoomMuted(true);
-            return ok ? 'Oda sesi kapatıldı' : 'Hata';
-          }),
-        ),
-      if (perms.canMuteRoom || isOwner)
-        _ModBox(
-          icon: Icons.volume_up_rounded,
-          label: 'Sesi Aç',
-          color: Colors.teal,
-          onTap: () => _run(context, notifier, () async {
-            final ok = await notifier.setRoomMuted(false);
-            return ok ? 'Oda sesi açıldı' : 'Hata';
+            final ok = await notifier.setRoomMuted(!roomMuted);
+            return ok
+                ? (roomMuted ? 'Oda sesi açıldı' : 'Oda sesi kapatıldı')
+                : 'Hata';
           }),
         ),
       if (perms.canAssignSeats || isOwner)
         _ModBox(
-          icon: targetUser.isSpeaker
-              ? Icons.event_seat_outlined
-              : Icons.event_seat_rounded,
-          label: targetUser.isSpeaker ? 'Koltuktan İndir' : 'Koltuğa Al',
+          icon: Icons.event_seat_rounded,
+          label: 'Koltuk Ata',
           color: const Color(0xFF3B82F6),
-          onTap: () {
-            if (targetUser.isSpeaker) {
-              _run(context, notifier, () async {
-                final ok = await notifier.removeFromSeat(targetUser.id);
-                return ok ? 'Koltuk güncellendi' : 'Hata';
-              });
-            } else {
-              // Boş koltukları göster, seçilene otur.
-              _pickEmptySeatAndAssign(context, ref, roomKey, targetUser.id);
-            }
-          },
+          onTap: () => _pickEmptySeatAndAssign(context, ref, roomKey, targetUser.id),
         ),
       if (perms.canManageDj || isOwner)
         _ModBox(
@@ -397,22 +394,18 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
         ),
       if (perms.canMuteUsers || isOwner)
         _ModBox(
-          icon: Icons.mic_off_rounded,
-          label: 'Mic Kapat',
-          color: Colors.redAccent,
+          icon: targetUser.isMuted ? Icons.mic_rounded : Icons.mic_off_rounded,
+          label: targetUser.isMuted ? 'Susturmayı Kaldır' : 'Sustur',
+          color: targetUser.isMuted ? Colors.lightGreen : Colors.redAccent,
           onTap: () => _run(context, notifier, () async {
-            final ok = await notifier.muteUser(targetUser.id);
-            return ok ? '${targetUser.username} susturuldu' : 'Hata';
-          }),
-        ),
-      if (perms.canMuteUsers || isOwner)
-        _ModBox(
-          icon: Icons.mic_rounded,
-          label: 'Mic Aç',
-          color: Colors.lightGreen,
-          onTap: () => _run(context, notifier, () async {
-            final ok = await notifier.unmuteUser(targetUser.id);
-            return ok ? 'Susturma kaldırıldı' : 'Hata';
+            final ok = targetUser.isMuted
+                ? await notifier.unmuteUser(targetUser.id)
+                : await notifier.muteUser(targetUser.id);
+            return ok
+                ? (targetUser.isMuted
+                    ? 'Susturma kaldırıldı'
+                    : '${targetUser.username} susturuldu')
+                : 'Hata';
           }),
         ),
       if (perms.canBanUsers || isOwner)
@@ -429,16 +422,6 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
               return ok ? 'Kullanıcı banlandı' : 'Hata';
             }),
           ),
-        ),
-      if (perms.canMuteUsers || isOwner)
-        _ModBox(
-          icon: Icons.notifications_off_rounded,
-          label: 'Sessize Al',
-          color: Colors.deepOrange,
-          onTap: () => _run(context, notifier, () async {
-            final ok = await notifier.muteUser(targetUser.id);
-            return ok ? '${targetUser.username} 30 dk susturuldu' : 'Hata';
-          }),
         ),
       if (perms.canKickUsers || isOwner)
         _ModBox(

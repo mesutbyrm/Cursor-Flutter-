@@ -25,7 +25,6 @@ import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen
 import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_leaderboard_provider.dart';
 import '../providers/voice_recent_gifts_provider.dart';
-import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_gift_providers.dart';
 import '../audio/voice_room_audio_coordinator.dart';
@@ -81,8 +80,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   LiveGiftEvent? _fullscreenGift;
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
-  String? _shownPkInviteId;
-
   String get _liveRoomKey {
     final pinned = _pinnedLiveRoomKey?.trim();
     if (pinned != null && pinned.isNotEmpty) return pinned;
@@ -120,18 +117,19 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   void dispose() {
     _messageCtrl.dispose();
     _giftSub?.cancel();
-    ref.read(voiceRoomGiftRealtimeProvider).stop();
-    ref.read(voiceRecentGiftsProvider.notifier).clear();
+    _giftSub = null;
+    final liveKey = _pinnedLiveRoomKey;
+    if (liveKey != null && liveKey.isNotEmpty) {
+      unawaited(
+        ref
+            .read(voiceRoomLiveProvider(liveKey).notifier)
+            .leaveRoomSession(source: 'basic_dispose'),
+      );
+    }
     final audio = _audio;
     _audio = null;
     if (audio != null) {
-      unawaited(
-        audio.leave().whenComplete(() {
-          try {
-            audio.dispose();
-          } catch (_) {}
-        }),
-      );
+      unawaited(audio.leave());
     }
     super.dispose();
   }
@@ -596,23 +594,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         }
       }
     }
-
-    ref.listen(pkBattleRemoteProvider, (prev, next) {
-      if (next == null || !isOwner || !next.isPending) return;
-      final userId = ref.read(authControllerProvider).valueOrNull?.id;
-      final isTarget = isPkInviteTarget(next, room, userId: userId);
-      final inviteId = next.inviteId ?? next.id;
-      if (!isTarget || inviteId.isEmpty || _shownPkInviteId == inviteId) return;
-      _shownPkInviteId = inviteId;
-      unawaited(
-        showVoiceRoomBasicIncomingPkInvite(
-          context: context,
-          ref: ref,
-          room: room,
-          inviteId: inviteId,
-        ),
-      );
-    });
 
     ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
       if (!mounted) return;

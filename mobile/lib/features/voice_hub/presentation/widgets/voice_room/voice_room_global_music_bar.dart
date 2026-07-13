@@ -53,9 +53,9 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
           onTap: () {
             final slug = room.slug.trim();
             if (slug.isNotEmpty) {
-              context.push('/voice-room/$slug');
+              context.go('/voice-room/$slug', extra: room);
             } else if (room.apiRoomKey.isNotEmpty) {
-              context.push('/voice-room/${room.apiRoomKey}');
+              context.go('/voice-room/${room.apiRoomKey}', extra: room);
             }
           },
           child: VoiceRoomWebMusicBar(
