@@ -40,7 +40,7 @@ class ApiException implements Exception {
       return ApiException(
         serverMessage != null && serverMessage.trim().isNotEmpty
             ? serverMessage
-            : 'Bu işlem için yetkiniz yok. Site admin hesabıyla giriş yaptığınızdan emin olun.',
+            : 'Bu işlem için yetkiniz yok. Admin veya kurucu (yonetici) hesabıyla giriş yaptığınızdan emin olun.',
         statusCode: 403,
       );
     }

@@ -54,15 +54,18 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
   final siteRole = walletRole?.trim().isNotEmpty == true ? walletRole : authRole;
   final username = user.username;
 
-  final isSiteAdmin = wallet?.isAdmin == true ||
-      StaffRoles.isSiteAdminUser(role: siteRole, username: username);
-
-  final canManagePayments = isSiteAdmin ||
-      wallet?.canManagePayments == true ||
+  final canManagePayments = wallet?.canManagePayments == true ||
       StaffRoles.isAdminOrManager(
         role: siteRole,
         username: username,
-      );
+      ) ||
+      wallet?.isAdmin == true;
+
+  final isSiteAdmin = StaffRoles.hasFullStaffAccess(
+    role: siteRole,
+    username: username,
+    walletIsAdmin: wallet?.isAdmin == true || canManagePayments,
+  );
 
   final showAdminPanel = StaffRoles.canAccessAdminPanel(
     role: siteRole,

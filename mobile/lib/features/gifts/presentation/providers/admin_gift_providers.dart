@@ -8,20 +8,31 @@ import '../../domain/admin_gift_stats.dart';
 import '../../domain/admin_gift_type.dart';
 
 final adminGiftRemoteProvider = Provider<AdminGiftRemoteDataSource>((ref) {
-  return AdminGiftRemoteDataSource(ref.watch(dioProvider));
+  final access = ref.watch(staffAccessProvider);
+  final role = access.siteRole?.trim().isNotEmpty == true
+      ? access.siteRole
+      : access.username;
+  return AdminGiftRemoteDataSource(
+    ref.watch(dioProvider),
+    staffRole: role,
+  );
 });
 
-/// Site admin hediye API erişimi — sunucudan doğrulanır.
-final adminGiftApiAccessProvider = FutureProvider<bool>((ref) async {
+/// Admin hediye API erişimi — istemci yetkisi + ilk katalog yanıtı.
+final adminGiftApiAccessProvider = Provider<bool>((ref) {
   final access = ref.watch(staffAccessProvider);
   if (!access.canManageGifts) return false;
-  try {
-    await ref.read(adminGiftRemoteProvider).listGifts();
-    return true;
-  } on ApiException catch (e) {
-    if (e.statusCode == 401 || e.statusCode == 403) return false;
-    rethrow;
-  }
+  final list = ref.watch(adminGiftListProvider);
+  return list.when(
+    data: (_) => true,
+    loading: () => true,
+    error: (e, _) {
+      if (e is ApiException && (e.statusCode == 401 || e.statusCode == 403)) {
+        return false;
+      }
+      return true;
+    },
+  );
 });
 
 /// Admin katalog (pasifler dahil).

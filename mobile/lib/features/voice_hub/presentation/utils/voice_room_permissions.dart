@@ -55,7 +55,10 @@ class VoiceRoomPermissions {
       );
     }
 
-    if (StaffRoles.isSiteAdminUser(role: user.role, username: user.username)) {
+    if (StaffRoles.isAdminOrManager(
+      role: user.role,
+      username: user.username,
+    )) {
       return const VoiceRoomPermissions(
         isSiteAdmin: true,
         isRoomOwner: true,
@@ -97,7 +100,7 @@ class VoiceRoomPermissions {
       chatRole: selfPresence?.chatRole ?? server?.role,
     );
     final staffPower = VoiceStaffRankParser.powerLevel(rank);
-    final isSiteAdmin = StaffRoles.isSiteAdminUser(
+    final isSiteAdmin = StaffRoles.isAdminOrManager(
           role: user.role,
           username: user.username,
         ) ||

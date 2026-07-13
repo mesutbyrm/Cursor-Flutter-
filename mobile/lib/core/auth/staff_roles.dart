@@ -22,16 +22,20 @@ abstract final class StaffRoles {
   static const managerUsernames = {'admin', 'yonetici'};
 
   /// Site yöneticisi kullanıcı adı (`admin` — IRC staff moderatörü değil).
-  static const siteAdminUsernames = {'admin'};
+  /// Tam yetkili hesaplar — admin + kurucu (yonetici).
+  static const siteAdminUsernames = managerUsernames;
 
+  /// Admin paneli, hediye CRUD, sesli oda bypass — admin ve yönetici.
   static bool isSiteAdminUser({String? role, String? username}) {
-    final u = username?.toLowerCase().trim() ?? '';
-    if (siteAdminUsernames.contains(u)) return true;
+    if (isAdminOrManager(role: role, username: username)) return true;
     final r = role?.toLowerCase().trim() ?? '';
-    return r == 'admin' ||
-        r == 'super_admin' ||
-        r == 'superadmin' ||
-        r == 'founder';
+    return r == 'super_admin' || r == 'superadmin' || r == 'founder';
+  }
+
+  /// Tüm yönetim işlemleri (jeton, CFC, üyelik, hediye, oda).
+  static bool hasFullStaffAccess({String? role, String? username, bool? walletIsAdmin}) {
+    if (walletIsAdmin == true) return true;
+    return isSiteAdminUser(role: role, username: username);
   }
 
   /// Profil admin paneli — site admin veya ödeme yöneticisi.

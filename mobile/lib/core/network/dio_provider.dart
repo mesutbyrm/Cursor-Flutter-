@@ -90,6 +90,12 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
         for (final entry in Map.from(deviceRequestHeaders()).entries) {
           options.headers[entry.key] = entry.value;
         }
+        final staffRole = options.extra['staffRole'];
+        if (staffRole is String &&
+            staffRole.trim().isNotEmpty &&
+            options.path.startsWith('/api/admin/')) {
+          options.headers['X-Staff-Role'] = staffRole.trim();
+        }
         handler.next(options);
       },
       onError: (e, handler) async {
@@ -234,9 +240,19 @@ extension DioApi on Dio {
     }
   }
 
-  Future<Response<T>> safeDelete<T>(String path, {Object? data}) async {
+  Future<Response<T>> safeDelete<T>(
+    String path, {
+    Object? data,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
     try {
-      return await delete<T>(path, data: data);
+      return await delete<T>(
+        path,
+        data: data,
+        options: options,
+        cancelToken: cancelToken,
+      );
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

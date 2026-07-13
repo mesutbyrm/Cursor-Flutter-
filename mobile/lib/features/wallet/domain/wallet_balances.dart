@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../core/util/json_util.dart';
+import '../../../core/auth/staff_roles.dart';
 
 /// Jeton + CFC — `GET /api/user/credits` (canlifal.com).
 class WalletBalances extends Equatable {
@@ -126,7 +127,10 @@ class WalletBalances extends Equatable {
     }.contains(r);
   }
 
-  bool get isAdmin => isAdminFlag == true || role?.toLowerCase().trim() == 'admin';
+  bool get isAdmin =>
+      isAdminFlag == true ||
+      canManagePayments == true ||
+      StaffRoles.isAdminOrManager(role: role);
 
   @override
   List<Object?> get props => [

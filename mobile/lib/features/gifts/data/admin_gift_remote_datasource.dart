@@ -23,18 +23,28 @@ class AdminGiftUploadedAsset {
   String get previewUrl => publicUrl ?? cloudPath;
 }
 
-/// Admin hediye yönetimi — `/api/admin/gifts/*`. Yalnızca site admin.
+/// Admin hediye yönetimi — `/api/admin/gifts/*`. Admin ve kurucu (yonetici).
 class AdminGiftRemoteDataSource {
   AdminGiftRemoteDataSource(
     this._dio, {
+    this.staffRole,
     Duration operationTimeout = const Duration(seconds: 45),
     Dio Function()? uploadDioFactory,
   }) : _operationTimeout = operationTimeout,
        _uploadDioFactory = uploadDioFactory ?? _defaultUploadDio;
 
   final Dio _dio;
+  final String? staffRole;
   final Duration _operationTimeout;
   final Dio Function() _uploadDioFactory;
+
+  Options _adminOptions(Options? base) {
+    final role = staffRole?.trim();
+    if (role == null || role.isEmpty) return base ?? Options();
+    return (base ?? Options()).copyWith(
+      extra: {...?base?.extra, 'staffRole': role},
+    );
+  }
 
   /// Tüm hediyeler (pasifler dahil).
   Future<List<AdminGiftType>> listGifts() async {
@@ -47,9 +57,11 @@ class AdminGiftRemoteDataSource {
           '/api/admin/gifts',
           cancelToken: cancel,
           forceRefresh: true,
-          options: Options(
-            receiveTimeout: _operationTimeout,
-            extra: const {'noCache': true},
+          options: _adminOptions(
+            Options(
+              receiveTimeout: _operationTimeout,
+              extra: const {'noCache': true},
+            ),
           ),
         ),
         cancel,
@@ -93,9 +105,11 @@ class AdminGiftRemoteDataSource {
           '/api/admin/gifts',
           data: body,
           cancelToken: cancel,
-          options: Options(
-            sendTimeout: _operationTimeout,
-            receiveTimeout: _operationTimeout,
+          options: _adminOptions(
+            Options(
+              sendTimeout: _operationTimeout,
+              receiveTimeout: _operationTimeout,
+            ),
           ),
         ),
         cancel,
@@ -128,9 +142,11 @@ class AdminGiftRemoteDataSource {
         '/api/admin/gifts/$id',
         data: body,
         cancelToken: cancel,
-        options: Options(
-          sendTimeout: _operationTimeout,
-          receiveTimeout: _operationTimeout,
+        options: _adminOptions(
+          Options(
+            sendTimeout: _operationTimeout,
+            receiveTimeout: _operationTimeout,
+          ),
         ),
       ),
       cancel,
@@ -142,7 +158,10 @@ class AdminGiftRemoteDataSource {
 
   /// Hediye sil (depodaki dosyaları da siler).
   Future<void> deleteGift(String id) async {
-    await _dio.safeDelete<dynamic>('/api/admin/gifts/$id');
+    await _dio.safeDelete<dynamic>(
+      '/api/admin/gifts/$id',
+      options: _adminOptions(null),
+    );
   }
 
   /// İstatistikler.
@@ -154,9 +173,11 @@ class AdminGiftRemoteDataSource {
         query: {'period': period},
         cancelToken: cancel,
         forceRefresh: true,
-        options: Options(
-          receiveTimeout: _operationTimeout,
-          extra: const {'noCache': true},
+        options: _adminOptions(
+          Options(
+            receiveTimeout: _operationTimeout,
+            extra: const {'noCache': true},
+          ),
         ),
       ),
       cancel,
@@ -179,9 +200,11 @@ class AdminGiftRemoteDataSource {
         '/api/admin/gifts/revenue/rules',
         cancelToken: cancel,
         forceRefresh: true,
-        options: Options(
-          receiveTimeout: _operationTimeout,
-          extra: const {'noCache': true},
+        options: _adminOptions(
+          Options(
+            receiveTimeout: _operationTimeout,
+            extra: const {'noCache': true},
+          ),
         ),
       ),
       cancel,
@@ -207,6 +230,7 @@ class AdminGiftRemoteDataSource {
     await _dio.safePatch<dynamic>(
       '/api/admin/gifts/revenue/rules/$context',
       data: body,
+      options: _adminOptions(null),
     );
   }
 
@@ -253,9 +277,11 @@ class AdminGiftRemoteDataSource {
           'fileSize': fileSize,
         },
         cancelToken: cancel,
-        options: Options(
-          sendTimeout: _operationTimeout,
-          receiveTimeout: _operationTimeout,
+        options: _adminOptions(
+          Options(
+            sendTimeout: _operationTimeout,
+            receiveTimeout: _operationTimeout,
+          ),
         ),
       ),
       cancel,
@@ -332,9 +358,11 @@ class AdminGiftRemoteDataSource {
           'fileSize': fileSize,
         },
         cancelToken: cancel,
-        options: Options(
-          sendTimeout: _operationTimeout,
-          receiveTimeout: _operationTimeout,
+        options: _adminOptions(
+          Options(
+            sendTimeout: _operationTimeout,
+            receiveTimeout: _operationTimeout,
+          ),
         ),
       ),
       cancel,

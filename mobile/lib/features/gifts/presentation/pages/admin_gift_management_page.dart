@@ -11,12 +11,39 @@ import '../providers/admin_gift_providers.dart';
 import '../providers/gift_providers.dart';
 
 /// Admin Hediye Yönetim Paneli — katalog CRUD, istatistik, gelir kuralları.
-/// Yalnızca site admin erişebilir. Gelir tutarları kısaltılmış gösterilir.
-class AdminGiftManagementPage extends ConsumerWidget {
+/// Admin ve kurucu (yonetici) erişebilir.
+class AdminGiftManagementPage extends ConsumerStatefulWidget {
   const AdminGiftManagementPage({super.key});
 
+  static void openEditor(BuildContext context, AdminGiftType gift) {
+    context.push('/admin/gifts/${gift.id}/edit', extra: gift);
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdminGiftManagementPage> createState() =>
+      _AdminGiftManagementPageState();
+}
+
+class _AdminGiftManagementPageState
+    extends ConsumerState<AdminGiftManagementPage>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final access = ref.watch(staffAccessProvider);
     if (!access.canManageGifts) {
       return Scaffold(
@@ -39,66 +66,52 @@ class AdminGiftManagementPage extends ConsumerWidget {
     }
 
     final apiAccess = ref.watch(adminGiftApiAccessProvider);
+    final listState = ref.watch(adminGiftListProvider);
+    final showApiWarning = !apiAccess &&
+        listState.hasError &&
+        listState.error is ApiException &&
+        ((listState.error! as ApiException).statusCode == 401 ||
+            (listState.error! as ApiException).statusCode == 403);
 
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: const Color(0xFF0E0524),
         appBar: AppBar(
           backgroundColor: const Color(0xFF12082A),
           title: const Text('Hediye Yönetimi'),
-          bottom: const TabBar(
-            tabs: [
+          bottom: TabBar(
+            controller: _tabController,
+            tabs: const [
               Tab(text: 'Katalog'),
               Tab(text: 'İstatistik'),
               Tab(text: 'Gelir'),
             ],
           ),
         ),
-        floatingActionButton: Builder(
-          builder: (ctx) {
-            final tab = DefaultTabController.of(ctx);
-            return AnimatedBuilder(
-              animation: tab,
-              builder: (_, __) => tab.index == 0
-                  ? FloatingActionButton.extended(
-                      backgroundColor: const Color(0xFF7C3AED),
-                      onPressed: () async {
-                        final created = await ctx.push<bool>(
-                          '/admin/gifts/new',
-                        );
-                        if (!ctx.mounted || created != true) return;
-                        ref.invalidate(adminGiftListProvider);
-                        ref.invalidate(liveGiftCatalogProvider);
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                          const SnackBar(
-                            content: Text('Hediye başarıyla oluşturuldu.'),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Yeni Hediye'),
-                    )
-                  : const SizedBox.shrink(),
-            );
-          },
-        ),
+        floatingActionButton: _tabController.index == 0
+            ? FloatingActionButton.extended(
+                backgroundColor: const Color(0xFF7C3AED),
+                onPressed: () async {
+                  final created = await context.push<bool>(
+                    '/admin/gifts/new',
+                  );
+                  if (!context.mounted || created != true) return;
+                  ref.invalidate(adminGiftListProvider);
+                  ref.invalidate(liveGiftCatalogProvider);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Hediye başarıyla oluşturuldu.'),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Yeni Hediye'),
+              )
+            : null,
         body: Column(
           children: [
-            if (apiAccess.isLoading)
+            if (listState.isLoading)
               const LinearProgressIndicator(minHeight: 2),
-            if (apiAccess.hasError)
-              Material(
-                color: const Color(0x33FF5252),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    ApiException.userMessage(apiAccess.error!),
-                    style: const TextStyle(color: Color(0xFFFFCDD2)),
-                  ),
-                ),
-              )
-            else if (apiAccess.hasValue && apiAccess.value == false)
+            if (showApiWarning)
               Material(
                 color: const Color(0x33FF5252),
                 child: Padding(
@@ -128,19 +141,38 @@ class AdminGiftManagementPage extends ConsumerWidget {
                   ),
                 ),
               ),
-            const Expanded(
+            Expanded(
               child: TabBarView(
-                children: [_CatalogTab(), _StatsTab(), _RevenueTab()],
+                controller: _tabController,
+                children: [
+                  const _CatalogTab(),
+                  _LazyTab(
+                    active: _tabController.index == 1,
+                    child: const _StatsTab(),
+                  ),
+                  _LazyTab(
+                    active: _tabController.index == 2,
+                    child: const _RevenueTab(),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-      ),
-    );
+      );
   }
+}
 
-  static void _openEditor(BuildContext context, AdminGiftType gift) {
-    context.push('/admin/gifts/${gift.id}/edit', extra: gift);
+class _LazyTab extends StatelessWidget {
+  const _LazyTab({required this.active, required this.child});
+
+  final bool active;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!active) return const SizedBox.shrink();
+    return child;
   }
 }
 
@@ -403,8 +435,7 @@ class _GiftRow extends ConsumerWidget {
                   color: Color(0xFFB388FF),
                   size: 20,
                 ),
-                onPressed: () =>
-                    AdminGiftManagementPage._openEditor(context, gift),
+                onPressed: () => AdminGiftManagementPage.openEditor(context, gift),
               ),
               IconButton(
                 icon: const Icon(
