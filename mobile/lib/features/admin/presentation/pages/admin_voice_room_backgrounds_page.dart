@@ -143,7 +143,9 @@ class _AdminVoiceRoomBackgroundsPageState
                   ),
                   DiscoverIconButton(
                     icon: Icons.refresh_rounded,
-                    onPressed: _loading ? null : () { _load(); },
+                    onPressed: () {
+                      if (!_loading) _load();
+                    },
                   ),
                 ],
               ),
