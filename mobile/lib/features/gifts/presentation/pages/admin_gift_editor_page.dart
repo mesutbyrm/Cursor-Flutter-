@@ -14,6 +14,7 @@ import '../../../voice_hub/presentation/widgets/voice_room_gift_sheet.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../wallet/domain/wallet_balances.dart';
+import '../../data/admin_gift_media_probe.dart';
 import '../../domain/admin_gift_type.dart';
 import '../providers/admin_gift_providers.dart';
 import '../providers/gift_providers.dart';
@@ -125,6 +126,36 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
       final uploaded = await ref
           .read(adminGiftRemoteProvider)
           .uploadAsset(file, kind: kind);
+      if (!mounted) return;
+      final isVideo = _guessAnimationType(file.path) == 'mp4' ||
+          _guessAnimationType(file.path) == 'webm';
+      if (kind == 'asset' && isVideo) {
+        final ms = await AdminGiftMediaProbe.durationMs(file);
+        if (ms != null && ms > 0) {
+          _durationMs.text = '$ms';
+        }
+        final needsThumb = _imageCloudPath == null &&
+            (!_isEdit || !_imageChanged || (_imageUrl?.trim().isEmpty ?? true));
+        if (needsThumb) {
+          final thumb = await AdminGiftMediaProbe.thumbnailFile(file);
+          if (thumb != null) {
+            try {
+              final thumbUp = await ref
+                  .read(adminGiftRemoteProvider)
+                  .uploadAsset(thumb, kind: 'icon');
+              if (mounted) {
+                setState(() {
+                  _imageUrl = thumbUp.previewUrl;
+                  _imageCloudPath = thumbUp.cloudPath;
+                  _imageChanged = true;
+                });
+              }
+            } catch (_) {
+              // Önizleme isteğe bağlı; animasyon yüklemesi başarılı kalsın.
+            }
+          }
+        }
+      }
       if (!mounted) return;
       setState(() {
         // Backend upload-url yalnızca icon/thumbnail/asset/sound kabul ediyor.

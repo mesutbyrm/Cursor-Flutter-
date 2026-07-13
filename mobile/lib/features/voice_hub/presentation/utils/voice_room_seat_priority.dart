@@ -132,9 +132,9 @@ abstract final class VoiceRoomSeatPriority {
     return tier;
   }
 
-  /// Oda sahibi, site admin, kanal yetkilileri ve DJ odaya girince otomatik koltuk.
+  /// Oda sahibi, site admin, kanal yetkilileri, sesli yetkili ve DJ otomatik koltuk.
   static bool shouldAutoSit(int tier) =>
-      tier >= tierOp || tier == tierDj;
+      tier >= tierVoice || tier == tierDj;
 
   /// Sağ alt admin koltuğu (11) — admin oturabilsin diye her zaman görünür.
   static bool showAdminSeat(Map<int, ChatRoomPresence> seats) => true;

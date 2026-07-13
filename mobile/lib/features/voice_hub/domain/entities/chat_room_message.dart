@@ -92,6 +92,7 @@ class ChatRoomMessage extends Equatable {
     this.kind = ChatMessageKind.text,
     this.giftEmoji,
     this.giftCount,
+    this.giftJeton,
     this.giftTargetName,
   });
 
@@ -114,6 +115,7 @@ class ChatRoomMessage extends Equatable {
     var kind = ChatMessageKind.text;
     String? giftEmoji;
     int? giftCount;
+    int? giftJeton;
     String? giftTarget;
 
     if (content.startsWith('[SYSTEM_VIP_JOIN:') ||
@@ -128,6 +130,8 @@ class ChatRoomMessage extends Equatable {
       giftEmoji = '🌹';
       final m = RegExp(r'x(\d+)').firstMatch(content);
       giftCount = m != null ? int.tryParse(m.group(1)!) : 1;
+      final jm = RegExp(r'(\d+)\s*jeton', caseSensitive: false).firstMatch(content);
+      giftJeton = jm != null ? int.tryParse(jm.group(1)!) : null;
     }
 
     final id = json['id']?.toString() ??
@@ -146,6 +150,7 @@ class ChatRoomMessage extends Equatable {
       kind: kind,
       giftEmoji: giftEmoji,
       giftCount: giftCount,
+      giftJeton: giftJeton,
       giftTargetName: giftTarget,
     );
   }
@@ -184,9 +189,10 @@ class ChatRoomMessage extends Equatable {
   final ChatMessageKind kind;
   final String? giftEmoji;
   final int? giftCount;
+  final int? giftJeton;
   final String? giftTargetName;
 
   @override
-  List<Object?> get props =>
-      [id, content, createdAt, user, kind, giftEmoji, giftCount, giftTargetName];
+  List<Object?> get props => [
+      id, content, createdAt, user, kind, giftEmoji, giftCount, giftJeton, giftTargetName];
 }

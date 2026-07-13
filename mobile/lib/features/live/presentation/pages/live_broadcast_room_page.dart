@@ -19,6 +19,8 @@ import '../../../live_psychics/presentation/providers/live_psychics_providers.da
 import '../../../live_psychics/presentation/widgets/psychic_booking_sheet.dart';
 import '../../../live_psychics/presentation/widgets/psychic_broadcast_side_rail.dart';
 import '../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
+import '../../../gifts/domain/session_gift_summary_builder.dart';
+import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../gifts/presentation/widgets/first_gifter_badge.dart';
 import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
@@ -544,6 +546,28 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       }
       await HostLiveStreamRecovery.clear();
     }
+
+    final streamIdForSummary = widget.session.streamId?.trim() ?? '';
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (streamIdForSummary.isNotEmpty && user != null) {
+      final hostId = widget.session.hostUserId?.trim().isNotEmpty == true
+          ? widget.session.hostUserId!.trim()
+          : (widget.session.isHost ? user.id : '');
+      final summary = SessionGiftSummaryBuilder.forLiveBroadcast(
+        ref: ref,
+        streamId: streamIdForSummary,
+        hostUserId: hostId.isNotEmpty ? hostId : user.id,
+        hostDisplayName: widget.session.streamerName ?? user.display,
+        myUserId: user.id,
+      );
+      await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
+      if (context.mounted && summary.hasData) {
+        await showSessionGiftSummarySheet(context, summary: summary);
+      }
+    } else {
+      await ref.refreshWalletCache(force: true);
+    }
+
     ref.invalidate(liveStreamsProvider);
     if (!context.mounted) return;
     if (widget.embeddedInSwipe && widget.onSwipeClose != null) {

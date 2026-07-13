@@ -154,6 +154,7 @@ class _GiftRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final count = message.giftCount ?? 1;
+    final jeton = message.giftJeton;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -170,10 +171,23 @@ class _GiftRow extends StatelessWidget {
               ),
             ),
           ),
-          Text(
-            '${message.giftEmoji ?? '🎁'} x$count',
-            style: TextStyle(fontSize: 28),
-          ),
+          if (jeton != null && jeton > 0)
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Text(
+                '$jeton jeton',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFFFFD54F),
+                ),
+              ),
+            )
+          else
+            Text(
+              '${message.giftEmoji ?? '🎁'} x$count',
+              style: const TextStyle(fontSize: 28),
+            ),
         ],
       ),
     );
