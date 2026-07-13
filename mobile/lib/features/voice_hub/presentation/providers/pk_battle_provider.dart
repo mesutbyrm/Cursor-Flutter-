@@ -139,7 +139,7 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
 
   void applyGift(LiveGiftEvent event, {required bool toLeft}) {
     if (!state.isActive || state.serverAuthoritative) return;
-    final power = event.coinCost * event.quantity * (event.combo.clamp(1, 99));
+    final power = event.coinCost * event.quantity;
     final bump = (power * 0.85).round().clamp(50, 500000);
 
     if (toLeft) {

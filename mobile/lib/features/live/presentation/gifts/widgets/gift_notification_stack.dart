@@ -38,7 +38,7 @@ class _GiftBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final emoji = LiveGiftCatalog.emojiById[event.giftId] ?? '🎁';
-    final combo = event.combo > 1 ? ' x${event.combo}' : '';
+    final jeton = event.coinCost * event.quantity;
 
     return ProfileGlass(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
@@ -79,7 +79,7 @@ class _GiftBanner extends StatelessWidget {
                     ),
                     TextSpan(
                       text:
-                          ' kullanıcısına ${event.quantity > 1 ? '${event.quantity} ' : ''}${event.giftName}$combo attı',
+                          ' kullanıcısına ${event.quantity > 1 ? '${event.quantity} ' : ''}${event.giftName} ($jeton jeton) attı',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: AppThemeColors.accentPink,

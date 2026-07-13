@@ -172,12 +172,10 @@ abstract final class PremiumGiftCatalog2026 {
   static bool triggersFullscreen({
     required String giftId,
     required int coinCost,
-    required int combo,
   }) {
     final r = rarity(giftId);
     if (r.index >= GiftRarity.epic.index) return true;
     if (coinCost >= 100) return true;
-    if (combo >= 3) return true;
     return false;
   }
 

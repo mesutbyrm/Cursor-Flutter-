@@ -174,13 +174,13 @@ class _GiftFlightBubble extends StatelessWidget {
               end: const Offset(1.08, 1.08),
               duration: 400.ms,
             ),
-        if (event.combo > 1)
+        if (event.quantity > 1 || event.coinCost > 0)
           Text(
-            'x${event.combo}',
+            '${event.coinCost * event.quantity} jeton',
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               color: AppThemeColors.coinGold,
-              fontSize: 14,
+              fontSize: 12,
             ),
           ),
       ],

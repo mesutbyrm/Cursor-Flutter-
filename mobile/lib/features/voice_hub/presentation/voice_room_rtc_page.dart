@@ -407,7 +407,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final showFullscreen = PremiumGiftCatalog2026.triggersFullscreen(
       giftId: event.giftId,
       coinCost: event.coinCost,
-      combo: event.combo,
     );
     if (showFullscreen) {
       final rarity = PremiumGiftCatalog2026.rarity(event.giftId);

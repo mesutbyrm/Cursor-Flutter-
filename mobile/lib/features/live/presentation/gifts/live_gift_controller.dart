@@ -10,20 +10,6 @@ import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_gift_type.dart';
 
-/// Combo: aynı gönderen + hediye, 4 sn içinde tekrar.
-class _ComboKey {
-  _ComboKey(this.senderId, this.giftId);
-  final String senderId;
-  final String giftId;
-
-  @override
-  bool operator ==(Object other) =>
-      other is _ComboKey && other.senderId == senderId && other.giftId == giftId;
-
-  @override
-  int get hashCode => Object.hash(senderId, giftId);
-}
-
 class LiveGiftController extends ChangeNotifier {
   LiveGiftController({
     required LiveGiftsRemoteDataSource remote,
@@ -48,7 +34,6 @@ class LiveGiftController extends ChangeNotifier {
 
   String? _streamId;
   String? _receiverName;
-  final _combo = <_ComboKey, _ComboState>{};
 
   bool panelOpen = false;
   bool sending = false;
@@ -71,7 +56,6 @@ class LiveGiftController extends ChangeNotifier {
     notifications.clear();
     activeFullscreen = null;
     fullscreenQueue.clear();
-    _combo.clear();
     panelOpen = false;
     notifyListeners();
   }
@@ -117,7 +101,7 @@ class LiveGiftController extends ChangeNotifier {
           (streamerEarnings ?? 0) + GiftRevenueDisplay.liveBroadcasterNet(gross);
 
       final base = result.event!;
-      final enriched = _applyCombo(
+      final enriched = _withoutCombo(
         LiveGiftEvent(
           id: base.id,
           senderId: base.senderId ?? senderId,
@@ -127,7 +111,7 @@ class LiveGiftController extends ChangeNotifier {
           giftName: base.giftName,
           quantity: base.quantity,
           coinCost: base.coinCost,
-          combo: base.combo,
+          combo: 1,
           timestamp: base.timestamp,
           iconUrl: base.iconUrl ?? gift.iconPath,
           animationKey: base.animationKey ?? gift.animationRef,
@@ -144,22 +128,11 @@ class LiveGiftController extends ChangeNotifier {
     }
   }
 
-  LiveGiftEvent _applyCombo(LiveGiftEvent event) {
-    final key = _ComboKey(event.senderId ?? event.senderName, event.giftId);
-    final now = DateTime.now();
-    final state = _combo[key];
-    if (state != null && now.difference(state.lastAt).inSeconds <= 4) {
-      state.count += event.quantity;
-      state.lastAt = now;
-      return event.copyWithCombo(state.count);
-    }
-    _combo[key] = _ComboState(event.quantity, now);
-    return event.copyWithCombo(1);
-  }
+  LiveGiftEvent _withoutCombo(LiveGiftEvent event) => event.copyWithCombo(1);
 
   void _onIncoming(LiveGiftEvent event) {
     if (!_isDisplayable(event)) return;
-    final enriched = _applyCombo(event);
+    final enriched = _withoutCombo(event);
     notifications.insert(0, enriched);
     if (notifications.length > 5) {
       notifications.removeRange(5, notifications.length);
@@ -200,12 +173,6 @@ class LiveGiftController extends ChangeNotifier {
     detach();
     super.dispose();
   }
-}
-
-class _ComboState {
-  _ComboState(this.count, this.lastAt);
-  int count;
-  DateTime lastAt;
 }
 
 extension _LiveGiftEventCopy on LiveGiftEvent {

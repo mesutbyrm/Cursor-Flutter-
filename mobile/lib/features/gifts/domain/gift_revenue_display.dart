@@ -11,7 +11,7 @@ abstract final class GiftRevenueDisplay {
   /// Herkesin gördüğü hediye tutarı (brüt).
   static int publicGross(int gross) => gross < 0 ? 0 : gross;
 
-  /// Sesli oda — API yanıtı yoksa kullanıcı kurallarına göre tahmin.
+  /// Sesli oda — API yanıtı yoksa: %50 alıcı, %50 site.
   static VoiceGiftRevenueBreakdown estimateVoiceGift({
     required int gross,
     required bool receiverIsOwner,
@@ -26,23 +26,12 @@ abstract final class GiftRevenueDisplay {
       );
     }
     final site = gross ~/ 2;
-    final pool = gross - site;
-    if (receiverIsOwner) {
-      return VoiceGiftRevenueBreakdown(
-        total: gross,
-        roomType: 'NORMAL',
-        receiverNet: pool,
-        ownerNet: 0,
-        siteAmount: site,
-      );
-    }
-    final ownerNet = (pool * 0.3).round();
-    final receiverNet = pool - ownerNet;
+    final receiverNet = gross - site;
     return VoiceGiftRevenueBreakdown(
       total: gross,
       roomType: 'NORMAL',
       receiverNet: receiverNet,
-      ownerNet: ownerNet,
+      ownerNet: 0,
       siteAmount: site,
     );
   }
