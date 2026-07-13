@@ -119,6 +119,9 @@ jobs:
       - name: Build Flutter Android for CodeQL
         if: matrix.language == 'java-kotlin'
         working-directory: mobile
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
         run: |
           set -euxo pipefail
 
@@ -134,7 +137,9 @@ jobs:
           chmod +x android/gradlew
           test -x android/gradlew
 
-          flutter build apk --debug
+          # CodeQL — Gradle derlemesi Java/Kotlin izlerini yakalar (flutter build apk yeterli değil).
+          cd android
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
