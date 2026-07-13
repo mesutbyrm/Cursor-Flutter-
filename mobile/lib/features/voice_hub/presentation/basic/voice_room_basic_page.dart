@@ -390,7 +390,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final user = ref.read(authControllerProvider).valueOrNull;
     final summary = SessionGiftSummaryBuilder.forVoiceRoom(
       ref: ref,
-      roomTitle: room.title,
+      roomTitle: room.nameTr,
       ownerUserId: room.ownerId,
       ownerDisplayName: room.ownerName,
       myUserId: user?.id,
