@@ -508,8 +508,8 @@ class AdminGiftRemoteDataSource {
       if (error.statusCode == 403) {
         throw ApiException(
           error.message.contains('yetkiniz')
-              ? 'Hediye yönetimi için site admin yetkisi gerekir. '
-                    'Ödeme paneli/yönetici rolü yeterli değildir.'
+              ? 'Hediye yönetimi için admin veya kurucu (yonetici) yetkisi gerekir. '
+                    'Çıkış yapıp doğru hesapla tekrar giriş yapın.'
               : error.message,
           statusCode: 403,
         );

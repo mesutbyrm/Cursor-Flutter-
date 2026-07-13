@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.21+25 (2026-07-13)
+
+### Admin hediye + combo + gelir paylaşımı
+- Hediye ekleme/düzenleme artık **admin** ve **kurucu (yonetici)** hesaplarına açık (`canManageGifts`); cüzdan yüklenemese bile kayıt engellenmez
+- Combo tamamen kaldırıldı — hediye gönderiminde birleştirme yok, bildirimlerde jeton tutarı gösterilir
+- Canlı yayın ve sesli odalarda gelir paylaşımı: **%50 alıcı/yayıncı, %50 site**
+- Hediye bildirimlerinde atılan jeton miktarı görünür (canlı toast, banner, tam ekran, sesli oda uçuş animasyonu)
+
 ## 1.0.20+24 (2026-07-12)
 
 ### PK daveti — alıcı eşleşmesi düzeltmesi

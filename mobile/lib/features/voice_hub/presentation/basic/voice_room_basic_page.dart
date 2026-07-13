@@ -325,7 +325,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final showFullscreen = PremiumGiftCatalog2026.triggersFullscreen(
       giftId: event.giftId,
       coinCost: event.coinCost,
-      combo: event.combo,
     );
     if (showFullscreen) {
       if (mounted) setState(() => _fullscreenGift = event);

@@ -299,7 +299,7 @@ class _VoicePremiumGiftPanel2026State
         quantity: _qty,
         coinCost: gross,
         timestamp: DateTime.now(),
-        combo: _qty,
+        combo: 1,
         rarity: PremiumGiftCatalog2026.rarity(g.id),
       );
       ref.refreshWalletCache(force: true);
@@ -313,21 +313,9 @@ class _VoicePremiumGiftPanel2026State
           receiverIsOwner: receiverIsOwner,
           revenue: revenue,
         );
-        final ownerNet = GiftRevenueDisplay.voiceOwnerDisplayNet(
-          gross: gross,
-          receiverIsOwner: receiverIsOwner,
-          revenue: revenue,
-        );
         var msg = '${raw.giftName} x$_qty gönderildi ($gross jeton)';
         if (myId.isNotEmpty && myId == receiver.id.trim()) {
           msg = '${raw.giftName} aldınız — size $receiverNet jeton kaldı';
-        } else if (myId.isNotEmpty &&
-            ownerId.isNotEmpty &&
-            myId == ownerId &&
-            !receiverIsOwner &&
-            ownerNet > 0) {
-          msg =
-              '${raw.giftName} gönderildi — oda payınız +$ownerNet jeton';
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg)),

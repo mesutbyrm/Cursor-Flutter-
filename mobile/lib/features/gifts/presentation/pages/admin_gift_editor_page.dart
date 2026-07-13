@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -12,6 +13,7 @@ import '../../../../core/network/api_http_cache.dart';
 import '../../../voice_hub/presentation/widgets/voice_room_gift_sheet.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../wallet/domain/wallet_balances.dart';
 import '../../domain/admin_gift_type.dart';
 import '../providers/admin_gift_providers.dart';
 import '../providers/gift_providers.dart';
@@ -50,7 +52,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
   bool _animationChanged = false;
   bool _soundChanged = false;
   String _animationType = 'lottie';
-  bool _comboEnabled = true;
+  static const bool _comboEnabled = false;
   bool _isPremium = false;
   bool _isFullscreen = false;
   bool _isActive = true;
@@ -80,7 +82,6 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
     _animationUrl = g?.animationUrl;
     _soundUrl = g?.soundUrl;
     _animationType = g?.animationType ?? 'lottie';
-    _comboEnabled = g?.comboEnabled ?? true;
     _isPremium = g?.isPremium ?? false;
     _isFullscreen = g?.isFullscreen ?? false;
     _isActive = g?.isActive ?? true;
@@ -172,11 +173,11 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
   Future<void> _save() async {
     if (_saving) return;
     final access = ref.read(staffAccessProvider);
-    if (!access.isSiteAdmin) {
+    if (!access.canManageGifts) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Hediye ekleme yalnızca site admin hesabına açıktır.',
+            'Hediye ekleme yalnızca admin veya kurucu (yonetici) hesabına açıktır.',
           ),
         ),
       );
@@ -238,8 +239,12 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
       'isActive': _isActive,
     };
     try {
-      ref.invalidate(walletBalancesProvider);
-      await ref.read(walletBalancesProvider.future);
+      // Cüzdan yenilemesi kaydı engellemesin — zaman aşımında arka planda dene.
+      unawaited(
+        ref.read(walletBalancesProvider.notifier).refresh(force: true).catchError(
+          (_) => WalletBalances.empty,
+        ),
+      );
       final remote = ref.read(adminGiftRemoteProvider);
       AdminGiftType? saved;
       if (_isEdit) {
@@ -307,7 +312,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
   @override
   Widget build(BuildContext context) {
     final access = ref.watch(staffAccessProvider);
-    if (!access.isSiteAdmin) {
+    if (!access.canManageGifts) {
       return Scaffold(
         backgroundColor: const Color(0xFF0E0524),
         appBar: AppBar(
@@ -318,8 +323,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
           child: Padding(
             padding: EdgeInsets.all(24),
             child: Text(
-              'Hediye eklemek için «admin» kullanıcı adıyla giriş yapın (Site Admin).\n\n'
-              '«yonetici» (Kurucu) hesabı hediye ekleyemez.',
+              'Hediye eklemek için admin veya kurucu (yonetici) hesabıyla giriş yapın.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Color(0x99FFFFFF)),
             ),
@@ -466,11 +470,6 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
           ),
           const SizedBox(height: 12),
           _sectionTitle('Davranış'),
-          _switchTile(
-            'Combo destekli',
-            _comboEnabled,
-            (v) => setState(() => _comboEnabled = v),
-          ),
           _switchTile(
             'Premium hediye',
             _isPremium,

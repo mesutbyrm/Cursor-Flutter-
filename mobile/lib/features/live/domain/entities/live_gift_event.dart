@@ -43,7 +43,8 @@ class LiveGiftEvent extends Equatable {
 
   String get notificationText {
     final q = quantity > 1 ? '$quantity ' : '';
-    return '$senderName → $receiverName $q$giftName gönderdi';
+    final jeton = coinCost * quantity;
+    return '$senderName → $receiverName $q$giftName ($jeton jeton) gönderdi';
   }
 
   @override

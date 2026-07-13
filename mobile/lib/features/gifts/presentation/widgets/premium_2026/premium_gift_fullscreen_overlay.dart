@@ -82,7 +82,7 @@ class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverl
   void _triggerEffects(LiveGiftEvent e) {
     final emoji = PremiumGiftCatalog2026.emoji(e.giftId);
     final rarity = PremiumGiftCatalog2026.rarity(e.giftId);
-    final comboBonus = e.combo.clamp(0, 20);
+    final comboBonus = (e.coinCost * e.quantity ~/ 50).clamp(0, 20);
     _particlesKey.currentState?.burst(emoji, count: 10 + comboBonus);
     _coinKey.currentState?.burst(count: 8 + (e.coinCost ~/ 50).clamp(0, 16));
 
@@ -179,10 +179,8 @@ class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverl
                     ],
                   ),
                 ),
-                if (e.combo > 1) ...[
-                  const SizedBox(height: 12),
-                  _ComboBadge(combo: e.combo, glow: glow),
-                ],
+                const SizedBox(height: 12),
+                _JetonBadge(jeton: e.coinCost * e.quantity, glow: glow),
                 const SizedBox(height: 14),
                 _SenderBanner(event: e, glow: glow),
               ],
@@ -218,10 +216,10 @@ class _GiftHero extends StatelessWidget {
   }
 }
 
-class _ComboBadge extends StatelessWidget {
-  const _ComboBadge({required this.combo, required this.glow});
+class _JetonBadge extends StatelessWidget {
+  const _JetonBadge({required this.jeton, required this.glow});
 
-  final int combo;
+  final int jeton;
   final Color glow;
 
   @override
@@ -240,9 +238,9 @@ class _ComboBadge extends StatelessWidget {
         boxShadow: AppThemeColors.glowShadow(AppThemeColors.coinGold, blur: 20),
       ),
       child: Text(
-        'COMBO x$combo',
+        '$jeton jeton',
         style: TextStyle(
-          fontSize: 36,
+          fontSize: 28,
           fontWeight: FontWeight.w900,
           letterSpacing: 1.2,
           foreground: Paint()

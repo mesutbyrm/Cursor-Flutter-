@@ -26,7 +26,7 @@ class AdminGiftType {
     this.isNew = false,
     this.isFullscreen = false,
     this.isPremium = false,
-    this.comboEnabled = true,
+    this.comboEnabled = false,
   });
 
   factory AdminGiftType.fromJson(Map<String, dynamic> json) {
@@ -65,7 +65,7 @@ class AdminGiftType {
       isNew: pick(json, ['isNew']) == true,
       isFullscreen: pick(json, ['isFullscreen']) == true,
       isPremium: pick(json, ['isPremium', 'premium']) == true,
-      comboEnabled: pick(json, ['comboEnabled', 'supportsCombo']) != false,
+      comboEnabled: pick(json, ['comboEnabled', 'supportsCombo']) == true,
     );
   }
 

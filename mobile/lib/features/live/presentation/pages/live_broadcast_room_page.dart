@@ -1674,7 +1674,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         final emoji = LiveGiftCatalog.emojiById[ev.giftId] ?? '💖';
         _particlesKey.currentState?.burst(
           emoji,
-          count: 6 + ev.combo.clamp(0, 12).toInt(),
+          count: 6 + (ev.quantity * ev.coinCost ~/ 100).clamp(0, 12),
         );
         if (hasStream) {
           final battle = ref.read(liveVideoPkProvider(streamId)).battle;
