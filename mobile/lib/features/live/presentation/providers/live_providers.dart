@@ -105,20 +105,33 @@ final platformVoiceRoomSettingsProvider =
   );
 });
 
-/// Giriş yapan kullanıcının sahip olduğu sesli oda (ownerId veya slug = username).
-final myVoiceRoomProvider = Provider<VoiceRoomEntity?>((ref) {
+/// Giriş yapan kullanıcının sahip olduğu sesli odalar (ownerId veya slug = username).
+final myOwnedVoiceRoomsProvider = Provider<List<VoiceRoomEntity>>((ref) {
   final user = ref.watch(authControllerProvider).valueOrNull;
   final rooms = ref.watch(voiceRoomsProvider).valueOrNull;
-  if (user == null || rooms == null || rooms.isEmpty) return null;
+  if (user == null || rooms == null || rooms.isEmpty) return const [];
+
+  final owned = <VoiceRoomEntity>[];
+  final seen = <String>{};
+  final uname = user.username.trim().toLowerCase();
 
   for (final r in rooms) {
-    final oid = r.ownerId;
-    if (oid != null && oid.isNotEmpty && oid == user.id) return r;
+    final key = r.apiRoomKey;
+    if (key.isEmpty || seen.contains(key)) continue;
+    final oid = r.ownerId?.trim() ?? '';
+    final isOwner = (oid.isNotEmpty && oid == user.id) ||
+        (uname.isNotEmpty && r.slug.trim().toLowerCase() == uname);
+    if (isOwner) {
+      seen.add(key);
+      owned.add(r);
+    }
   }
-  final uname = user.username.trim().toLowerCase();
-  if (uname.isEmpty) return null;
-  for (final r in rooms) {
-    if (r.slug.trim().toLowerCase() == uname) return r;
-  }
-  return null;
+  owned.sort((a, b) => b.displayOnline.compareTo(a.displayOnline));
+  return owned;
+});
+
+/// Giriş yapan kullanıcının sahip olduğu sesli oda (ownerId veya slug = username).
+final myVoiceRoomProvider = Provider<VoiceRoomEntity?>((ref) {
+  final owned = ref.watch(myOwnedVoiceRoomsProvider);
+  return owned.isEmpty ? null : owned.first;
 });

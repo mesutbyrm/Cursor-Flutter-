@@ -46,13 +46,23 @@ bool isPkInviteTarget(
   final oppRoom = battle.opponentVoiceRoomId?.trim() ?? '';
   if (oppRoom.isNotEmpty && keys.contains(oppRoom)) return true;
 
-  final ownerId = room.ownerId?.trim() ?? '';
   final opponentId = battle.opponentId?.trim() ?? '';
   if (ownerId.isNotEmpty && opponentId.isNotEmpty && ownerId == opponentId) {
     return true;
   }
   final uid = userId?.trim() ?? '';
   if (uid.isNotEmpty && opponentId.isNotEmpty && uid == opponentId) {
+    return true;
+  }
+  final oppUser = battle.opponent?.userId.trim() ?? '';
+  if (uid.isNotEmpty && oppUser.isNotEmpty && uid == oppUser) {
+    return true;
+  }
+  if (ownerId.isNotEmpty && oppUser.isNotEmpty && ownerId == oppUser) {
+    return true;
+  }
+  final oppRoomFromParticipant = battle.opponent?.roomId?.trim() ?? '';
+  if (oppRoomFromParticipant.isNotEmpty && keys.contains(oppRoomFromParticipant)) {
     return true;
   }
   return false;

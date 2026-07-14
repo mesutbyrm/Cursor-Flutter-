@@ -63,9 +63,11 @@ abstract final class VoiceRoomsDiscoverMapper {
   }
 
   static List<PopularRoomItem> popularFromRooms(List<VoiceRoomEntity> rooms) {
-    final sorted = sortVoiceRoomsByPopularity(rooms);
+    final live = rooms.where((r) => r.displayOnline > 0).toList();
+    if (live.isEmpty) return const [];
+
+    final sorted = sortVoiceRoomsByPopularity(live);
     final picks = sorted.take(4).toList();
-    if (picks.isEmpty) return VoiceRoomsMockData.popularRooms;
 
     return List.generate(picks.length, (i) {
       final r = picks[i];
@@ -134,6 +136,41 @@ abstract final class VoiceRoomsDiscoverMapper {
       return TrendingTopicItem(
         tag: tag.startsWith('#') ? tag : '#$tag',
         views: _formatCount(asInt(viewsRaw)),
+      );
+    }).toList();
+  }
+
+  static List<ActiveSpeakerItem> speakersFromRooms(List<VoiceRoomEntity> rooms) {
+    final candidates = <({String name, int online, String? avatarUrl})>[];
+    for (final r in rooms) {
+      if (r.displayOnline <= 0) continue;
+      final owner = r.ownerName?.trim();
+      if (owner != null && owner.isNotEmpty) {
+        candidates.add((
+          name: owner,
+          online: r.displayOnline,
+          avatarUrl: r.ownerAvatarUrl,
+        ));
+      }
+    }
+    if (candidates.isEmpty) return const [];
+
+    candidates.sort((a, b) => b.online.compareTo(a.online));
+    final colors = [
+      VoiceRoomsUiTokens.gold,
+      VoiceRoomsUiTokens.silver,
+      VoiceRoomsUiTokens.bronze,
+    ];
+    return candidates.take(3).toList().asMap().entries.map((e) {
+      final rank = e.key + 1;
+      final c = e.value;
+      return ActiveSpeakerItem(
+        rank: rank,
+        name: c.name,
+        diamonds: _formatCount(c.online),
+        avatarColor: colors[e.key % colors.length],
+        avatarUrl: c.avatarUrl,
+        onlineLabel: '${_formatCount(c.online)} dinleyici',
       );
     }).toList();
   }

@@ -62,7 +62,7 @@ class VoiceRoomPermissions {
         : user.role;
 
     if (staffSiteAdmin ||
-        StaffRoles.isFounderUser(
+        StaffRoles.isSiteAdminUser(
           role: effectiveRole,
           username: user.username,
         )) {
@@ -110,7 +110,7 @@ class VoiceRoomPermissions {
     );
     final staffPower = VoiceStaffRankParser.powerLevel(rank);
     final isSiteAdmin = staffSiteAdmin ||
-        StaffRoles.isFounderUser(
+        StaffRoles.isSiteAdminUser(
           role: effectiveRole,
           username: user.username,
         ) ||

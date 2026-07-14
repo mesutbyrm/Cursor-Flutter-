@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/app_router.dart';
 import '../../../../core/images/canlifal_image_prefetch.dart';
 import '../../../../core/performance/animation_perf.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../live/presentation/providers/live_providers.dart';
 import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import '../performance/voice_rooms_perf.dart';
 import '../providers/voice_rooms_discover_providers.dart';
@@ -127,7 +130,12 @@ class _VoiceRoomsPageState extends ConsumerState<VoiceRoomsPage>
               child: RefreshIndicator(
                 color: VoiceRoomsUiTokens.purpleGlow,
                 backgroundColor: VoiceRoomsUiTokens.bgAmoled,
-                onRefresh: ref.read(voiceRoomsDiscoverProvider.notifier).refresh,
+                onRefresh: () async {
+                  ref.invalidate(voiceRoomsProvider);
+                  await ref
+                      .read(voiceRoomsDiscoverProvider.notifier)
+                      .refresh();
+                },
                 child: CustomScrollView(
                   controller: _scroll,
                   physics: VoiceRoomsPerf.scrollPhysics,
@@ -238,10 +246,30 @@ class _VoiceRoomsPageState extends ConsumerState<VoiceRoomsPage>
         ),
         bottomNavigationBar: VoiceRoomsBottomNav(
           active: _nav,
-          onChanged: (item) => setState(() => _nav = item),
+          onChanged: _onNavChanged,
         ),
       ),
     );
+  }
+
+  void _onNavChanged(VoiceRoomsNavItem item) {
+    if (item == VoiceRoomsNavItem.voice) {
+      setState(() => _nav = item);
+      return;
+    }
+    final router = ref.read(goRouterProvider);
+    switch (item) {
+      case VoiceRoomsNavItem.home:
+        router.go('/feed');
+      case VoiceRoomsNavItem.shorts:
+        router.go('/shorts');
+      case VoiceRoomsNavItem.live:
+        router.go('/live');
+      case VoiceRoomsNavItem.profile:
+        router.go('/profile');
+      case VoiceRoomsNavItem.voice:
+        break;
+    }
   }
 
   void _openRoom(
