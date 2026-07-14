@@ -25,6 +25,9 @@ abstract final class StaffRoles {
   /// Tam yetkili site admin nickleri (kurucu + siteadmin).
   static const siteAdminUsernames = {'yonetici', 'siteadmin'};
 
+  /// Eski uyumluluk — site admin nick listesi.
+  static const managerUsernames = siteAdminUsernames;
+
   /// Sesli oda staff — yalnızca kurucu (yonetici) hesabı.
   static bool isFounderUser({String? role, String? username}) {
     final u = username?.toLowerCase().trim() ?? '';

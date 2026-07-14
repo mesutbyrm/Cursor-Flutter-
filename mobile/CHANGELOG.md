@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.32+38 (2026-07-14)
+
+### Derleme düzeltmesi (CodeQL)
+- `mini_music_player.dart`: müzik kuyruğu import yolu
+- `pk_opponent_room_filter.dart`: `ownerId` tanımı
+- `staff_roles.dart`: `managerUsernames` geri eklendi
+
 ## 1.0.32+37 (2026-07-14)
 
 ### Sesli odalar hub düzeltmeleri

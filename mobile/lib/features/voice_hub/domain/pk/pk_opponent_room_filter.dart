@@ -46,6 +46,7 @@ bool isPkInviteTarget(
   final oppRoom = battle.opponentVoiceRoomId?.trim() ?? '';
   if (oppRoom.isNotEmpty && keys.contains(oppRoom)) return true;
 
+  final ownerId = room.ownerId?.trim() ?? '';
   final opponentId = battle.opponentId?.trim() ?? '';
   if (ownerId.isNotEmpty && opponentId.isNotEmpty && ownerId == opponentId) {
     return true;

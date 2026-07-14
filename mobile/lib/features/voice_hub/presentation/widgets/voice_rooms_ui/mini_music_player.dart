@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/images/canlifal_network_image.dart';
-import '../../music/presentation/widgets/room_music_queue_sheet.dart';
+import '../../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../../providers/chat_room_providers.dart';
 import 'voice_rooms_hero.dart';
 import 'voice_rooms_svg_icons.dart';
