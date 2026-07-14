@@ -9,7 +9,7 @@ import '../providers/voice_room_session_registry.dart';
 
 /// Oda değiştirmeden önce aktif oturumu güvenle kapat.
 Future<void> teardownVoiceRoomBeforeSwitch(
-  WidgetRef ref, {
+  Ref ref, {
   required String liveKey,
   String source = 'room_switch',
 }) async {
@@ -28,7 +28,7 @@ Future<void> teardownVoiceRoomBeforeSwitch(
 
 /// Önceki oda (varsa) tamamen kapatılır, ardından yeni oda kaydedilir.
 Future<void> prepareVoiceRoomSwitch(
-  WidgetRef ref, {
+  Ref ref, {
   required String nextLiveKey,
   String source = 'room_switch',
 }) async {
