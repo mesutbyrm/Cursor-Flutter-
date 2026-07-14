@@ -31,7 +31,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 3), (_) => _poll());
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) => _poll());
     Future.microtask(_poll);
   }
 

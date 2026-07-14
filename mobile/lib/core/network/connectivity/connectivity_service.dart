@@ -4,6 +4,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+export 'online_status_notifier.dart' show isOnlineProvider;
+
 /// İnternet bağlantı durumu — offline mod ve istek duraklatma.
 class ConnectivityService {
   ConnectivityService() {
@@ -54,9 +56,4 @@ final connectivityServiceProvider = Provider<ConnectivityService>((ref) {
   final service = ConnectivityService();
   ref.onDispose(service.dispose);
   return service;
-});
-
-final isOnlineProvider = Provider<bool>((ref) {
-  ref.watch(connectivityServiceProvider);
-  return ref.read(connectivityServiceProvider).isOnline;
 });

@@ -43,9 +43,36 @@ class VoiceWebChatOverlay extends StatefulWidget {
 
 class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
   ScrollController? _ownedScroll;
+  List<ChatRoomMessage> _visibleCache = const [];
+  int _sourceLen = -1;
+  String? _lastMessageId;
 
   ScrollController get _scroll =>
       widget.scrollController ?? (_ownedScroll ??= ScrollController());
+
+  List<ChatRoomMessage> _computeVisible() {
+    return widget.messages.where((m) {
+      if (!VoiceChatMessageFilters.shouldShow(m)) return false;
+      if (widget.hideOfficialJoinInChat &&
+          m.kind == ChatMessageKind.systemJoin &&
+          VoiceOfficialJoin.isOfficialEntrance(m.content)) {
+        return false;
+      }
+      return m.kind == ChatMessageKind.text;
+    }).toList(growable: false);
+  }
+
+  List<ChatRoomMessage> get _visible {
+    final len = widget.messages.length;
+    final lastId = len == 0 ? null : widget.messages.last.id;
+    if (len == _sourceLen && lastId == _lastMessageId) {
+      return _visibleCache;
+    }
+    _sourceLen = len;
+    _lastMessageId = lastId;
+    _visibleCache = _computeVisible();
+    return _visibleCache;
+  }
 
   @override
   void dispose() {
@@ -71,15 +98,7 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final visible = widget.messages.where((m) {
-      if (!VoiceChatMessageFilters.shouldShow(m)) return false;
-      if (widget.hideOfficialJoinInChat &&
-          m.kind == ChatMessageKind.systemJoin &&
-          VoiceOfficialJoin.isOfficialEntrance(m.content)) {
-        return false;
-      }
-      return m.kind == ChatMessageKind.text;
-    }).toList();
+    final visible = _visible;
     final slice = visible.length > 40
         ? visible.sublist(visible.length - 40)
         : visible;

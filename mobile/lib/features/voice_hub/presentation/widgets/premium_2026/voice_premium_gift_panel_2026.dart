@@ -55,6 +55,9 @@ class _VoicePremiumGiftPanel2026State
   bool _sending = false;
   _GiftCategory _category = _GiftCategory.all;
   ChatRoomPresence? _receiver;
+  List<LiveVideoGiftType>? _catalogSource;
+  _GiftCategory? _catalogCategory;
+  List<LiveVideoGiftType>? _displayCatalog;
 
   @override
   void initState() {
@@ -94,6 +97,20 @@ class _VoicePremiumGiftPanel2026State
         }).toList(),
       _ => list,
     };
+  }
+
+  List<LiveVideoGiftType> _displayGifts(List<LiveVideoGiftType> list) {
+    if (identical(_catalogSource, list) &&
+        _catalogCategory == _category &&
+        _displayCatalog != null) {
+      return _displayCatalog!;
+    }
+    _catalogSource = list;
+    _catalogCategory = _category;
+    _displayCatalog = _filterGifts(
+      PremiumGiftCatalog2026.sortCatalog(list, (g) => g.id),
+    );
+    return _displayCatalog!;
   }
 
   @override
@@ -233,11 +250,7 @@ class _VoicePremiumGiftPanel2026State
                     child: Text(ApiException.userMessage(e)),
                   ),
                   data: (list) {
-                    final sorted = PremiumGiftCatalog2026.sortCatalog(
-                      list,
-                      (g) => g.id,
-                    );
-                    final filtered = _filterGifts(sorted);
+                    final filtered = _displayGifts(list);
                     return _GiftsTab(
                       gifts: filtered,
                       selected: _selected,

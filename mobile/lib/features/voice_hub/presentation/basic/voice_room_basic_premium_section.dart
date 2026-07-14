@@ -180,27 +180,29 @@ class _VoiceRoomBasicJoinTickerState extends State<VoiceRoomBasicJoinTicker>
   }
 }
 
-/// Sohbet akışı — kaydırılabilir mesaj listesi.
-class VoiceRoomBasicChatFeed extends StatelessWidget {
+/// Sohbet akışı — yalnızca mesaj/presence dilimini izler (oda gövdesi rebuild etmez).
+class VoiceRoomBasicChatFeed extends ConsumerWidget {
   const VoiceRoomBasicChatFeed({
     super.key,
-    required this.messages,
-    this.events = const [],
-    this.presence = const [],
+    required this.liveKey,
     this.onMention,
     this.onUserPerms,
   });
 
-  final List<ChatRoomMessage> messages;
-  final List<VoiceRoomRealtimeEvent> events;
-  final List<ChatRoomPresence> presence;
+  final String liveKey;
   /// Tek dokunuş — @kullanıcı adı mesaj kutusuna eklenir.
   final void Function(String userId, String name)? onMention;
   /// Çift dokunuş — kullanıcı yetkileri (moderasyon) açılır.
   final void Function(String userId, String name)? onUserPerms;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final messages = ref.watch(
+      voiceRoomLiveProvider(liveKey).select((s) => s.messages),
+    );
+    final presence = ref.watch(
+      voiceRoomLiveProvider(liveKey).select((s) => s.presence),
+    );
     // Presence'tan id→profil resmi — mesajda görsel yoksa buradan çözülür.
     final avatarById = <String, String>{};
     for (final p in presence) {

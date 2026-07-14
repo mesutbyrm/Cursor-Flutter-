@@ -16,7 +16,10 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../domain/entities/chat_room_dj_state.dart';
+import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../../domain/entities/voice_room_realtime_event.dart';
 import '../../domain/voice_official_join.dart';
 import '../../../gifts/domain/session_gift_summary_builder.dart';
 import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
@@ -33,7 +36,6 @@ import '../audio/voice_room_music_audio_session.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_audio_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
-import '../../domain/entities/voice_room_realtime_event.dart';
 import '../../../../core/auth/staff_roles.dart';
 import '../sheets/voice_room_commands_panel.dart';
 import '../utils/voice_room_permissions.dart';
@@ -576,7 +578,10 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   Widget build(BuildContext context) {
     final roomKey = _liveRoomKey.isNotEmpty ? _liveRoomKey : widget.room.id;
     ref.watch(voiceRoomForegroundLifecycleProvider(roomKey));
-    final live = ref.watch(voiceRoomLiveProvider(_liveRoomKey));
+    ref.watch(
+      voiceRoomLiveProvider(_liveRoomKey).select(_BasicLiveShell.fromState),
+    );
+    final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
     final ui = ref.watch(voiceRoomUiProvider);
     final room = _effectiveRoom();
     final online = live.onlineCountFor(room);
@@ -830,9 +835,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   ),
                   Expanded(
                     child: VoiceRoomBasicChatFeed(
-                      messages: live.messages,
-                      events: live.realtimeEvents,
-                      presence: live.presence,
+                      liveKey: _liveRoomKey,
                       onMention: (userId, name) => _insertMention(name),
                       onUserPerms: (userId, name) =>
                           _openUserById(userId, live, room, perms),
@@ -930,6 +933,64 @@ class _Banner extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Oda gövdesi rebuild sınırı — sohbet mesajları hariç.
+class _BasicLiveShell {
+  const _BasicLiveShell({
+    required this.presence,
+    required this.dj,
+    required this.serverPermissions,
+    required this.backgroundUrl,
+    required this.loading,
+    required this.error,
+    required this.roomMuted,
+    required this.realtimeEvents,
+  });
+
+  factory _BasicLiveShell.fromState(VoiceRoomLiveState s) => _BasicLiveShell(
+        presence: s.presence,
+        dj: s.dj,
+        serverPermissions: s.serverPermissions,
+        backgroundUrl: s.backgroundUrl,
+        loading: s.loading,
+        error: s.error,
+        roomMuted: s.roomMuted,
+        realtimeEvents: s.realtimeEvents,
+      );
+
+  final List<ChatRoomPresence> presence;
+  final ChatRoomDjState dj;
+  final ChatRoomMyPermissions? serverPermissions;
+  final String? backgroundUrl;
+  final bool loading;
+  final String? error;
+  final bool roomMuted;
+  final List<VoiceRoomRealtimeEvent> realtimeEvents;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _BasicLiveShell &&
+      identical(presence, other.presence) &&
+      dj == other.dj &&
+      serverPermissions == other.serverPermissions &&
+      backgroundUrl == other.backgroundUrl &&
+      loading == other.loading &&
+      error == other.error &&
+      roomMuted == other.roomMuted &&
+      identical(realtimeEvents, other.realtimeEvents);
+
+  @override
+  int get hashCode => Object.hash(
+        presence,
+        dj,
+        serverPermissions,
+        backgroundUrl,
+        loading,
+        error,
+        roomMuted,
+        realtimeEvents,
+      );
 }
 
 /// Rota sarmalayıcı — hata sınırı ile temel sayfa.

@@ -9,17 +9,20 @@ abstract final class StartupPerf {
   /// runApp sonrası ağır SDK init gecikmesi (AdMob, analytics).
   static const deferredSdkDelay = Duration(milliseconds: 800);
 
-  /// Kabuk prefetch — bildirim, cüzdan, mesajlar (jeton gecikmesiz).
-  static const shellPrefetchDelay = Duration.zero;
+  /// Kabuk prefetch — yalnızca cüzdan (ilk kare sonrası).
+  static const shellPrefetchDelay = Duration(milliseconds: 200);
+
+  /// Kabuk prefetch kademe 1b — bildirim + profil istatistikleri.
+  static const shellPrefetchTier1bDelay = Duration(milliseconds: 600);
 
   /// Kabuk prefetch kademe 2 — mesajlar / sohbet listesi.
-  static const shellPrefetchTier2Delay = Duration(milliseconds: 450);
+  static const shellPrefetchTier2Delay = Duration(milliseconds: 1100);
 
-  /// Kabuk prefetch kademe 3 — kısa video feed.
-  static const shellPrefetchTier3Delay = Duration(milliseconds: 900);
+  /// Kabuk prefetch kademe 3 — kısa video feed (lazy).
+  static const shellPrefetchTier3Delay = Duration(milliseconds: 2200);
 
   /// Kabuk prefetch kademe 4 — jeton mağazası (düşük öncelik).
-  static const shellPrefetchTier4Delay = Duration(milliseconds: 1400);
+  static const shellPrefetchTier4Delay = Duration(milliseconds: 3500);
 
   /// SSE presence + psikolog/ajans yenileme.
   static const shellRealtimeDelay = Duration(seconds: 3);
