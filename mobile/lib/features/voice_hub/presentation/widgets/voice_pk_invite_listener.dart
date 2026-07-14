@@ -24,7 +24,8 @@ class VoicePkInviteListener extends ConsumerStatefulWidget {
 
 class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   Timer? _timer;
-  final Set<String> _seen = {};
+  final Set<String> _seenInvites = {};
+  final Set<String> _seenRejections = {};
   var _showing = false;
 
   @override
@@ -47,6 +48,40 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         .toList(growable: false);
   }
 
+  String _roomLabel(PkBattleRemote battle, VoiceRoomEntity? fallbackRoom) {
+    final rooms = ref.read(voiceRoomsProvider).valueOrNull;
+    final roomId = battle.voiceRoomId?.trim() ?? '';
+    if (rooms != null && roomId.isNotEmpty) {
+      for (final r in rooms) {
+        if (r.apiRoomKey == roomId || r.id == roomId || r.slug == roomId) {
+          final name = r.nameTr.trim();
+          return name.isNotEmpty ? name : r.slug;
+        }
+      }
+    }
+    final challenger = battle.challenger?.displayName?.trim();
+    if (challenger != null && challenger.isNotEmpty) return challenger;
+    final fb = fallbackRoom?.nameTr.trim();
+    if (fb != null && fb.isNotEmpty) return fb;
+    return fallbackRoom?.slug ?? 'Bir oda';
+  }
+
+  String _opponentRoomLabel(PkBattleRemote battle) {
+    final rooms = ref.read(voiceRoomsProvider).valueOrNull;
+    final roomId = battle.opponentVoiceRoomId?.trim() ?? '';
+    if (rooms != null && roomId.isNotEmpty) {
+      for (final r in rooms) {
+        if (r.apiRoomKey == roomId || r.id == roomId || r.slug == roomId) {
+          final name = r.nameTr.trim();
+          return name.isNotEmpty ? name : r.slug;
+        }
+      }
+    }
+    final opp = battle.opponent?.displayName?.trim();
+    if (opp != null && opp.isNotEmpty) return opp;
+    return 'Karşı oda';
+  }
+
   Future<void> _poll() async {
     if (_showing || !mounted) return;
     final user = ref.read(authControllerProvider).valueOrNull;
@@ -66,24 +101,43 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
           alternateRoomId: room.slug != key ? room.slug : null,
         );
       } catch (_) {}
+
       final battle = ref.read(pkBattleRemoteProvider);
-      if (battle == null || !battle.isPending) continue;
-      if (!isPkInviteTarget(battle, room, userId: user.id)) continue;
-      final inviteId = battle.effectiveId;
-      if (inviteId.isEmpty || !_seen.add(inviteId)) continue;
-      await _showDialog(battle, room);
-      break;
+      if (battle == null) continue;
+
+      // Gelen davet — karşı odadan PK isteği.
+      if (battle.isPending && isPkInviteTarget(battle, room, userId: user.id)) {
+        final inviteId = battle.effectiveId;
+        if (inviteId.isNotEmpty && _seenInvites.add(inviteId)) {
+          await _showInviteDialog(battle, room);
+          break;
+        }
+        continue;
+      }
+
+      // Red bildirimi — davet gönderen oda sahibi.
+      if (battle.status == 'rejected' && isPkChallengerRoom(battle, room)) {
+        final id = battle.effectiveId;
+        if (id.isNotEmpty && _seenRejections.add(id)) {
+          final opp = _opponentRoomLabel(battle);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('$opp odası isteğinizi reddetti')),
+            );
+          }
+          remote.clear();
+        }
+      }
     }
   }
 
-  Future<void> _showDialog(PkBattleRemote battle, VoiceRoomEntity room) async {
+  Future<void> _showInviteDialog(PkBattleRemote battle, VoiceRoomEntity room) async {
     if (!mounted || _showing) return;
     _showing = true;
-    final challenger = battle.challenger?.displayName?.trim();
-    final label = (challenger != null && challenger.isNotEmpty)
-        ? challenger
-        : 'Bir oda';
+    final roomLabel = _roomLabel(battle, room);
     final inviteId = battle.effectiveId;
+    final minutes = (battle.durationSeconds / 60).round();
+    final durationHint = minutes > 0 ? '\nSüre: $minutes dk' : '';
     final accept = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -91,7 +145,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         backgroundColor: const Color(0xFF1A0F2E),
         title: const Text('PK Daveti', style: TextStyle(color: Colors.white)),
         content: Text(
-          '$label sizinle PK atmak istiyor.\nKabul ediyor musunuz?',
+          '$roomLabel odasında PK isteği var.$durationHint\nKabul ediyor musunuz?',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -117,16 +171,19 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         await remote.accept(inviteId, roomId: key, alternateRoomId: alt);
         if (!mounted) return;
         context.push('/voice-room/$key/pk', extra: room);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('PK başladı')),
+          );
+        }
       } else {
         await remote.reject(inviteId, roomId: key, alternateRoomId: alt);
         remote.clear();
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(accept ? 'PK kabul edildi' : 'PK reddedildi'),
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('PK daveti reddedildi')),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {

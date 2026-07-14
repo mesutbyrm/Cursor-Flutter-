@@ -19,17 +19,28 @@ abstract final class StaffRoles {
     'founder',
   };
 
-  static const managerUsernames = {'admin', 'yonetici'};
+  /// Kurucu (yonetici) — sesli oda staff bypass ve tam site yetkisi.
+  static const founderUsernames = {'yonetici'};
 
-  /// Site yöneticisi kullanıcı adı (`admin` — IRC staff moderatörü değil).
-  /// Tam yetkili hesaplar — admin + kurucu (yonetici).
-  static const siteAdminUsernames = managerUsernames;
+  /// Eski uyumluluk — yalnızca kurucu nick.
+  static const managerUsernames = founderUsernames;
 
-  /// Admin paneli, hediye CRUD, sesli oda bypass — admin ve yönetici.
+  static const siteAdminUsernames = founderUsernames;
+
+  /// Sesli oda staff — yalnızca kurucu (yonetici) hesabı.
+  static bool isFounderUser({String? role, String? username}) {
+    final u = username?.toLowerCase().trim() ?? '';
+    if (founderUsernames.contains(u)) return true;
+    final r = role?.toLowerCase().trim() ?? '';
+    return r == 'yonetici' || r == 'founder';
+  }
+
+  /// Admin paneli, hediye CRUD — kurucu nick veya sunucu rolü.
   static bool isSiteAdminUser({String? role, String? username}) {
+    if (isFounderUser(role: role, username: username)) return true;
     if (isAdminOrManager(role: role, username: username)) return true;
     final r = role?.toLowerCase().trim() ?? '';
-    return r == 'super_admin' || r == 'superadmin' || r == 'founder';
+    return r == 'super_admin' || r == 'superadmin' || r == 'admin';
   }
 
   /// Tüm yönetim işlemleri (jeton, CFC, üyelik, hediye, oda).

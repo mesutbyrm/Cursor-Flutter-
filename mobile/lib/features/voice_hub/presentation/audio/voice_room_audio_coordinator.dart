@@ -61,6 +61,9 @@ class VoiceRoomAudioCoordinator {
     }
     await _agora.joinVoice(channel, publishMic: enableMic);
     _engine = VoiceAudioEngineKind.agora;
+    if (!enableMic) {
+      _agora.setMicEnabled(false);
+    }
     VoiceRoomDebugLog.log('audio.agora.joined', {
       'roomId': channel,
       'mic': enableMic,

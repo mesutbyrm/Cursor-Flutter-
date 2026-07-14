@@ -128,8 +128,12 @@ class _SpeakerAction extends StatelessWidget {
   final bool headphonesOn;
   final VoidCallback onTap;
 
+  static const _green = Color(0xFF22C55E);
+  static const _red = Color(0xFFEF4444);
+
   @override
   Widget build(BuildContext context) {
+    final on = headphonesOn;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -140,17 +144,19 @@ class _SpeakerAction extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('🎧', style: TextStyle(fontSize: 22, height: 1)),
+              Icon(
+                on ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                color: on ? _green : _red,
+                size: 24,
+              ),
               const SizedBox(height: 2),
               Text(
-                headphonesOn ? 'Kulaklık' : 'Hoparlör',
+                on ? 'Açık' : 'Kapalı',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 8,
                   fontWeight: FontWeight.w800,
-                  color: headphonesOn
-                      ? VoiceRoomTokens.neonBlue
-                      : Colors.white.withValues(alpha: 0.75),
+                  color: on ? _green : _red,
                 ),
               ),
             ],

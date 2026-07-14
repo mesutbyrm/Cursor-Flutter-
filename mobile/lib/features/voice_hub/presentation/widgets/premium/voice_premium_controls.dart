@@ -40,10 +40,12 @@ class VoicePremiumControls extends StatelessWidget {
           ),
           _ControlItem(
             icon: headphonesOn
-                ? Icons.headphones_rounded
-                : Icons.headset_off_rounded,
+                ? Icons.volume_up_rounded
+                : Icons.volume_off_rounded,
             label: headphonesOn ? 'Açık' : 'Kapalı',
-            color: VoiceRoomTokens.neonBlue,
+            color: headphonesOn
+                ? AppThemeColors.onlineGreen
+                : const Color(0xFFEF4444),
             onTap: onHeadphones,
           ),
           _ControlItem(

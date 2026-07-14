@@ -373,9 +373,11 @@ class VoiceRoomBasicCompactControls extends ConsumerWidget {
           _MiniBtn(
             icon: speakerOn
                 ? Icons.volume_up_rounded
-                : Icons.hearing_disabled_rounded,
-            label: 'Ses',
+                : Icons.volume_off_rounded,
+            label: speakerOn ? 'Açık' : 'Kapalı',
             active: speakerOn,
+            activeColor: const Color(0xFF22C55E),
+            inactiveColor: const Color(0xFFEF4444),
             onTap: onSpeaker,
           ),
           const SizedBox(width: 6),
@@ -428,6 +430,8 @@ class _MiniBtn extends StatelessWidget {
     required this.onTap,
     this.active = false,
     this.danger = false,
+    this.activeColor,
+    this.inactiveColor,
   });
 
   final IconData icon;
@@ -435,15 +439,26 @@ class _MiniBtn extends StatelessWidget {
   final VoidCallback onTap;
   final bool active;
   final bool danger;
+  final Color? activeColor;
+  final Color? inactiveColor;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final bg = danger
-        ? scheme.errorContainer
-        : active
-            ? scheme.primaryContainer
-            : scheme.surfaceContainerHighest;
+    final Color fg;
+    final Color bg;
+    if (danger) {
+      fg = scheme.onErrorContainer;
+      bg = scheme.errorContainer;
+    } else if (activeColor != null || inactiveColor != null) {
+      fg = active ? (activeColor ?? scheme.primary) : (inactiveColor ?? scheme.error);
+      bg = fg.withValues(alpha: 0.18);
+    } else {
+      fg = scheme.onSurface;
+      bg = active
+          ? scheme.primaryContainer
+          : scheme.surfaceContainerHighest;
+    }
     return Material(
       color: bg,
       borderRadius: BorderRadius.circular(10),
@@ -455,8 +470,11 @@ class _MiniBtn extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 18),
-              Text(label, style: const TextStyle(fontSize: 9)),
+              Icon(icon, size: 18, color: danger ? null : fg),
+              Text(
+                label,
+                style: TextStyle(fontSize: 9, color: danger ? null : fg),
+              ),
             ],
           ),
         ),

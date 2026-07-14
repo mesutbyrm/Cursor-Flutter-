@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.28+33 (2026-07-14)
+
+### Sesli oda, staff ve PK düzeltmeleri
+- Staff hesabı yalnızca **yonetici** (kurucu); `admin` nick artık sesli oda staff bypass almaz
+- Yetkili (yonetici) odaya girince otomatik koltuk; oda sahibi **Ses Ver** önce `+` rolü + boş koltuk atar
+- Hoparlör: açık = yeşil «Açık», kapalı = kırmızı «Kapalı»; uzak ses yeni katılanlarda da susturulur
+- PK daveti: «{oda} odasında PK isteği var» popup; redde davet gönderene «{oda} isteğinizi reddetti» bildirimi
+- PK kabulünde seçilen süreyle savaş başlar
+
 ## 1.0.27+32 (2026-07-14)
 
 ### Admin, ödeme, PK ve sesli oda düzeltmeleri

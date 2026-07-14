@@ -197,7 +197,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
     try {
       final roomId = room.apiRoomKey;
-      final staffBypass = StaffRoles.isAdminOrManager(
+      final staffBypass = StaffRoles.isFounderUser(
         role: user.role,
         username: user.username,
       );
@@ -566,7 +566,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       room: room,
       selfPresence: self,
       server: live.serverPermissions,
-      staffSiteAdmin: ref.read(staffAccessProvider).isSiteAdmin,
+      staffSiteAdmin: ref.read(staffAccessProvider).isFounder,
       walletRole: ref.read(staffAccessProvider).siteRole ??
           ref.read(walletBalancesProvider).valueOrNull?.role,
     );
@@ -716,7 +716,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             room: room,
             selfPresence: selfPresence,
             server: next.serverPermissions,
-            staffSiteAdmin: ref.read(staffAccessProvider).isSiteAdmin,
+            staffSiteAdmin: ref.read(staffAccessProvider).isFounder,
             walletRole: ref.read(staffAccessProvider).siteRole ??
                 ref.read(walletBalancesProvider).valueOrNull?.role,
           );

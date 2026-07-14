@@ -57,9 +57,9 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
   final username = user.username.trim();
   final usernameLower = username.toLowerCase();
 
-  // Kullanıcı adı admin/yonetici ise rol beklemeden tam yetki (IRC nick eşleşmesi).
-  final usernameIsManager =
-      StaffRoles.managerUsernames.contains(usernameLower);
+  // Kurucu (yonetici) nick — rol beklemeden tam yetki.
+  final usernameIsFounder =
+      StaffRoles.founderUsernames.contains(usernameLower);
 
   final siteRole = walletRole?.trim().isNotEmpty == true
       ? walletRole
@@ -67,17 +67,17 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
 
   final canManagePayments = wallet?.canManagePayments == true ||
       wallet?.isAdmin == true ||
-      usernameIsManager ||
+      usernameIsFounder ||
       StaffRoles.isAdminOrManager(role: siteRole, username: username);
 
-  final isSiteAdmin = usernameIsManager ||
+  final isSiteAdmin = usernameIsFounder ||
       StaffRoles.hasFullStaffAccess(
         role: siteRole,
         username: username,
         walletIsAdmin: wallet?.isAdmin == true,
       );
 
-  final showAdminPanel = usernameIsManager ||
+  final showAdminPanel = usernameIsFounder ||
       StaffRoles.canAccessAdminPanel(
         role: siteRole,
         username: username,
@@ -87,7 +87,7 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
   String? effectiveRole = siteRole?.trim().isNotEmpty == true
       ? siteRole!.toLowerCase().trim()
       : null;
-  if (effectiveRole == null && usernameIsManager) {
+  if (effectiveRole == null && usernameIsFounder) {
     effectiveRole = usernameLower;
   }
   if (isSiteAdmin && effectiveRole == null) {

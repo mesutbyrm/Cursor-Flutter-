@@ -13,7 +13,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     ChatRoomPresence? self,
   ) {
     final staff = ref.read(staffAccessProvider);
-    if (staff.isSiteAdmin || staff.canManagePayments) {
+    if (staff.isFounder) {
       return VoiceRoomSeatPriority.tierAdmin;
     }
     final tier = VoiceRoomSeatPriority.forUser(

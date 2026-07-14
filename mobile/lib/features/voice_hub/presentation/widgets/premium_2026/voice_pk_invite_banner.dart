@@ -167,7 +167,7 @@ class _VoicePkInviteBannerState extends ConsumerState<VoicePkInviteBanner> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '$challenger sizinle PK atmak istiyor',
+                  '$challenger odasında PK isteği var',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,

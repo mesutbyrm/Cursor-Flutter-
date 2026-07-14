@@ -62,7 +62,7 @@ class VoiceRoomPermissions {
         : user.role;
 
     if (staffSiteAdmin ||
-        StaffRoles.isAdminOrManager(
+        StaffRoles.isFounderUser(
           role: effectiveRole,
           username: user.username,
         )) {
@@ -96,7 +96,9 @@ class VoiceRoomPermissions {
         canKickUsers: server.canKickUsers,
         canBanUsers: server.canBanUsers,
         canMuteRoom: server.canMuteRoom,
-        canGiveVoice: server.canGiveVoice,
+        canGiveVoice: server.canGiveVoice ||
+            server.isRoomOwner ||
+            server.canManageRoom,
         canManageRoom: server.canManageRoom,
       );
     }
@@ -108,7 +110,7 @@ class VoiceRoomPermissions {
     );
     final staffPower = VoiceStaffRankParser.powerLevel(rank);
     final isSiteAdmin = staffSiteAdmin ||
-        StaffRoles.isAdminOrManager(
+        StaffRoles.isFounderUser(
           role: effectiveRole,
           username: user.username,
         ) ||
@@ -147,7 +149,7 @@ class VoiceRoomPermissions {
       canKickUsers: canKickBan,
       canBanUsers: canKickBan,
       canMuteRoom: canKickBan,
-      canGiveVoice: canMuteUsers,
+      canGiveVoice: canMuteUsers || isRoomOwner || canManageRoom,
       canManageRoom: canManageRoom,
     );
   }

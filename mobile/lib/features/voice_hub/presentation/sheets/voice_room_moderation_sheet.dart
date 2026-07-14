@@ -104,15 +104,44 @@ class VoiceModerationNotifier extends StateNotifier<AsyncValue<void>> {
   Future<bool> grantVoice(String userId) async {
     state = const AsyncLoading();
     try {
-      for (var seat = 0; seat <= 14; seat++) {
-        final err = await _live.assignSeat(seatIndex: seat, userId: userId);
-        if (err == null) {
-          state = const AsyncData(null);
-          return true;
+      final roleErr = await _live.assignRoleToUser(
+        targetUserId: userId,
+        roleSymbol: '+',
+      );
+      if (roleErr != null) {
+        state = AsyncError(roleErr, StackTrace.current);
+        return false;
+      }
+
+      final approveErr = await _live.approveSpeakRequest(userId);
+      if (approveErr != null) {
+        // approveSpeakRequest bazı odalarda 404 dönebilir; rol+koltuk yeterli olabilir.
+      }
+
+      final live = _ref.read(voiceRoomLiveProvider(_roomKey));
+      final occupied = <int>{
+        for (final p in live.presence)
+          if (p.seatIndex != null) p.seatIndex!,
+      };
+      int? freeSeat;
+      for (var seat = 1; seat <= 10; seat++) {
+        if (!occupied.contains(seat)) {
+          freeSeat = seat;
+          break;
         }
       }
-      state = AsyncError(StateError('Boş koltuk bulunamadı'), StackTrace.current);
-      return false;
+      if (freeSeat == null) {
+        state = AsyncError(StateError('Boş koltuk bulunamadı'), StackTrace.current);
+        return false;
+      }
+
+      final err = await _live.assignSeat(seatIndex: freeSeat, userId: userId);
+      if (err != null) {
+        state = AsyncError(err, StackTrace.current);
+        return false;
+      }
+      state = const AsyncData(null);
+      return true;
     } catch (e, st) {
       state = AsyncError(e, st);
       return false;

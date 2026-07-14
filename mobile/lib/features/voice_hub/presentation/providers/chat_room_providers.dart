@@ -2365,7 +2365,7 @@ class VoiceRoomLiveController
       room: _roomMeta,
       selfPresence: self,
       server: state.serverPermissions,
-      staffSiteAdmin: ref.read(staffAccessProvider).isSiteAdmin,
+      staffSiteAdmin: ref.read(staffAccessProvider).isFounder,
       walletRole: ref.read(staffAccessProvider).siteRole ??
           ref.read(walletBalancesProvider).valueOrNull?.role,
     );
