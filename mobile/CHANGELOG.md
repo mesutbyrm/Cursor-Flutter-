@@ -1,6 +1,33 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.28+33 (2026-07-14)
+
+### Sesli oda, staff ve PK düzeltmeleri
+- Staff hesabı yalnızca **yonetici** (kurucu); `admin` nick artık sesli oda staff bypass almaz
+- Yetkili (yonetici) odaya girince otomatik koltuk; oda sahibi **Ses Ver** önce `+` rolü + boş koltuk atar
+- Hoparlör: açık = yeşil «Açık», kapalı = kırmızı «Kapalı»; uzak ses yeni katılanlarda da susturulur
+- PK daveti: «{oda} odasında PK isteği var» popup; redde davet gönderene «{oda} isteğinizi reddetti» bildirimi
+- PK kabulünde seçilen süreyle savaş başlar
+
+## 1.0.27+32 (2026-07-14)
+
+### Admin, ödeme, PK ve sesli oda düzeltmeleri
+- Jeton/CFC ödeme onay/red: doğru API uçları (`payment-requests` + `cfc-payment-requests`); boş talep kimliği düzeltildi
+- Ödeme bildirimleri sekmesinde **Onayla / Reddet** butonları
+- `admin` / `yonetici` nickleri cüzdan rolü beklemeden tam yetkili; `X-Staff-Role` admin API isteklerinde
+- Kurucu (yonetici) admin atayıp çıkarabilir; diğer adminler moderasyon rolleri
+- Sesli oda PK daveti uygulama genelinde dinlenir (`VoicePkInviteListener`)
+- Yetkililer odaya girince otomatik koltuk; sesli oda komut paneli basic modda da açılır
+- Admin hediye API ve kullanıcı yönetimi staff başlığı ile hizalandı
+
+## 1.0.26+31 (2026-07-13)
+
+### PK daveti + performans + komutlar
+- PK daveti: koltuk üstü banner (oda sahibi), Kabul/Reddet, 60 sn sonra kaybolur; 4 sn poll
+- Oda değiştirme: `go` ile tek oda, dispose'da oturum kapatma, ses motoru yalnızca `leave`
+- Moderasyon: Sustur/Sesi Aç tek düğme; Ses Ver/Yetki Al birleşik; Rol/Yetki tek yerde
+
 ## 1.0.25+30 (2026-07-13)
 
 ### Sesli oda açma + hediye + profil

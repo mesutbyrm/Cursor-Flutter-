@@ -11,6 +11,7 @@ import '../widgets/voice_room_error_boundary.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -25,7 +26,6 @@ import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen
 import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_leaderboard_provider.dart';
 import '../providers/voice_recent_gifts_provider.dart';
-import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_gift_providers.dart';
 import '../audio/voice_room_audio_coordinator.dart';
@@ -35,6 +35,7 @@ import '../providers/voice_room_audio_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
 import '../../../../core/auth/staff_roles.dart';
+import '../sheets/voice_room_commands_panel.dart';
 import '../utils/voice_room_permissions.dart';
 import '../utils/voice_room_speak_access.dart';
 import '../theme/voice_room_tokens.dart';
@@ -81,8 +82,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   LiveGiftEvent? _fullscreenGift;
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
-  String? _shownPkInviteId;
-
   String get _liveRoomKey {
     final pinned = _pinnedLiveRoomKey?.trim();
     if (pinned != null && pinned.isNotEmpty) return pinned;
@@ -120,18 +119,19 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   void dispose() {
     _messageCtrl.dispose();
     _giftSub?.cancel();
-    ref.read(voiceRoomGiftRealtimeProvider).stop();
-    ref.read(voiceRecentGiftsProvider.notifier).clear();
+    _giftSub = null;
+    final liveKey = _pinnedLiveRoomKey;
+    if (liveKey != null && liveKey.isNotEmpty) {
+      unawaited(
+        ref
+            .read(voiceRoomLiveProvider(liveKey).notifier)
+            .leaveRoomSession(source: 'basic_dispose'),
+      );
+    }
     final audio = _audio;
     _audio = null;
     if (audio != null) {
-      unawaited(
-        audio.leave().whenComplete(() {
-          try {
-            audio.dispose();
-          } catch (_) {}
-        }),
-      );
+      unawaited(audio.leave());
     }
     super.dispose();
   }
@@ -197,7 +197,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
     try {
       final roomId = room.apiRoomKey;
-      final staffBypass = StaffRoles.isAdminOrManager(
+      final staffBypass = StaffRoles.isFounderUser(
         role: user.role,
         username: user.username,
       );
@@ -566,6 +566,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       room: room,
       selfPresence: self,
       server: live.serverPermissions,
+      staffSiteAdmin: ref.read(staffAccessProvider).isFounder,
+      walletRole: ref.read(staffAccessProvider).siteRole ??
+          ref.read(walletBalancesProvider).valueOrNull?.role,
     );
   }
 
@@ -596,23 +599,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         }
       }
     }
-
-    ref.listen(pkBattleRemoteProvider, (prev, next) {
-      if (next == null || !isOwner || !next.isPending) return;
-      final userId = ref.read(authControllerProvider).valueOrNull?.id;
-      final isTarget = isPkInviteTarget(next, room, userId: userId);
-      final inviteId = next.inviteId ?? next.id;
-      if (!isTarget || inviteId.isEmpty || _shownPkInviteId == inviteId) return;
-      _shownPkInviteId = inviteId;
-      unawaited(
-        showVoiceRoomBasicIncomingPkInvite(
-          context: context,
-          ref: ref,
-          room: room,
-          inviteId: inviteId,
-        ),
-      );
-    });
 
     ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
       if (!mounted) return;
@@ -694,6 +680,26 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         }
       }
 
+      if (next.openCommandsPanel && !(prev?.openCommandsPanel ?? false)) {
+        ref
+            .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+            .clearOpenCommandsPanel();
+        if (!mounted) return;
+        final room = _effectiveRoom();
+        final userNow = ref.read(authControllerProvider).valueOrNull;
+        final permsNow = _permissions(userNow, next, room);
+        final owner = permsNow.isRoomOwner || permsNow.isSiteAdmin;
+        unawaited(
+          showVoiceRoomCommandsPanel(
+            context,
+            ref,
+            room: room,
+            perms: permsNow,
+            isOwner: owner,
+          ),
+        );
+      }
+
       if (_audioReady) {
         final user = ref.read(authControllerProvider).valueOrNull;
         if (user != null) {
@@ -710,6 +716,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             room: room,
             selfPresence: selfPresence,
             server: next.serverPermissions,
+            staffSiteAdmin: ref.read(staffAccessProvider).isFounder,
+            walletRole: ref.read(staffAccessProvider).siteRole ??
+                ref.read(walletBalancesProvider).valueOrNull?.role,
           );
           final canSpeak = VoiceRoomSpeakAccess.canSpeak(
             user: user,

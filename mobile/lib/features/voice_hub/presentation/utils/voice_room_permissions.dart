@@ -44,6 +44,8 @@ class VoiceRoomPermissions {
     required VoiceRoomEntity room,
     ChatRoomPresence? selfPresence,
     ChatRoomMyPermissions? server,
+    bool staffSiteAdmin = false,
+    String? walletRole,
   }) {
     if (user == null) {
       return const VoiceRoomPermissions(
@@ -55,10 +57,15 @@ class VoiceRoomPermissions {
       );
     }
 
-    if (StaffRoles.isAdminOrManager(
-      role: user.role,
-      username: user.username,
-    )) {
+    final effectiveRole = walletRole?.trim().isNotEmpty == true
+        ? walletRole
+        : user.role;
+
+    if (staffSiteAdmin ||
+        StaffRoles.isFounderUser(
+          role: effectiveRole,
+          username: user.username,
+        )) {
       return const VoiceRoomPermissions(
         isSiteAdmin: true,
         isRoomOwner: true,
@@ -89,19 +96,22 @@ class VoiceRoomPermissions {
         canKickUsers: server.canKickUsers,
         canBanUsers: server.canBanUsers,
         canMuteRoom: server.canMuteRoom,
-        canGiveVoice: server.canGiveVoice,
+        canGiveVoice: server.canGiveVoice ||
+            server.isRoomOwner ||
+            server.canManageRoom,
         canManageRoom: server.canManageRoom,
       );
     }
 
     final rank = VoiceStaffRankParser.resolve(
       username: user.username,
-      role: user.role,
+      role: effectiveRole,
       chatRole: selfPresence?.chatRole ?? server?.role,
     );
     final staffPower = VoiceStaffRankParser.powerLevel(rank);
-    final isSiteAdmin = StaffRoles.isAdminOrManager(
-          role: user.role,
+    final isSiteAdmin = staffSiteAdmin ||
+        StaffRoles.isFounderUser(
+          role: effectiveRole,
           username: user.username,
         ) ||
         server?.isGlobalAdmin == true ||
@@ -139,7 +149,7 @@ class VoiceRoomPermissions {
       canKickUsers: canKickBan,
       canBanUsers: canKickBan,
       canMuteRoom: canKickBan,
-      canGiveVoice: canMuteUsers,
+      canGiveVoice: canMuteUsers || isRoomOwner || canManageRoom,
       canManageRoom: canManageRoom,
     );
   }

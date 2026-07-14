@@ -6,6 +6,7 @@ import '../../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
 import '../../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
+import '../../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import 'discover_premium_categories.dart';
 import 'discover_premium_header.dart';
 import 'discover_premium_search.dart';
@@ -54,7 +55,7 @@ class _DiscoverPremiumFeedState extends ConsumerState<DiscoverPremiumFeed> {
   }
 
   void _openRoom(VoiceRoomEntity room) {
-    context.push('/voice-room/${room.apiRoomKey}', extra: room);
+    openVoiceRoomWithVipGate(context, ref, room);
   }
 
   @override

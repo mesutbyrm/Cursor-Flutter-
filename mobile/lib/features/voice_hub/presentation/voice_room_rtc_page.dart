@@ -68,6 +68,7 @@ import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
 import 'utils/kick_strike_ui.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
+import 'widgets/premium_2026/voice_pk_invite_banner.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_dj_music_slide_panel.dart';
@@ -104,7 +105,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _leaving = false;
   var _musicSearchOpen = false;
   LiveGiftEvent? _fullscreenGift;
-  String? _shownPkInviteId;
   final _messageFocus = FocusNode();
   /// Riverpod oturum anahtarı — metadata değişince provider dispose olmasın.
   String? _pinnedLiveRoomKey;
@@ -210,18 +210,20 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _messageCtrl.dispose();
     _chatScrollCtrl.dispose();
     _messageFocus.dispose();
+    if (_liveRoomKey.isNotEmpty) {
+      unawaited(
+        ref
+            .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+            .leaveRoomSession(source: 'rtc_dispose'),
+      );
+    }
+    ref.read(voiceRoomGiftRealtimeProvider).stop();
     final audio = _audio;
     _audio = null;
     if (audio != null) {
-      unawaited(
-        audio.leave().whenComplete(() {
-          try {
-            audio.dispose();
-          } catch (_) {}
-        }),
-      );
+      unawaited(audio.leave());
     }
-    unawaited(_agora.dispose());
+    unawaited(_agora.leave());
     super.dispose();
   }
 
@@ -601,13 +603,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     // Oturumu ve ses motorunu arka planda kapat — UI donmasın.
     unawaited(liveCtrl.leaveRoomSession(source: 'rtc_leave'));
     if (audio != null) {
-      unawaited(
-        audio.leave().whenComplete(() {
-          try {
-            audio.dispose();
-          } catch (_) {}
-        }),
-      );
+      unawaited(audio.leave());
     }
 
     if (!mounted) return;
@@ -722,53 +718,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   void _openActivePk(VoiceRoomEntity room) {
     final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
     context.push('/voice-room/$key/pk', extra: room);
-  }
-
-  Future<void> _showIncomingPkInvite(String battleId) async {
-    if (!mounted) return;
-    final battle = ref.read(pkBattleRemoteProvider);
-    final durationLabel = battle != null
-        ? pkDurationBySeconds(battle.durationSeconds).label
-        : '3 dakika';
-    final accept = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A0F2E),
-        title: const Text('PK Daveti', style: TextStyle(color: Colors.white)),
-        content: Text(
-          'Bir oda size PK daveti gönderdi.\nSüre: $durationLabel\n\nKabul ediyor musunuz?',
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Reddet'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Kabul Et'),
-          ),
-        ],
-      ),
-    );
-    final remote = ref.read(pkBattleRemoteProvider.notifier);
-    final r = widget.room;
-    final roomKey = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
-    final altRoom = r.slug != roomKey ? r.slug : null;
-    if (accept == true) {
-      await remote.accept(
-        battleId,
-        roomId: roomKey,
-        alternateRoomId: altRoom,
-      );
-      if (mounted) _openActivePk(widget.room);
-    } else if (accept == false) {
-      await remote.reject(
-        battleId,
-        roomId: roomKey,
-        alternateRoomId: altRoom,
-      );
-    }
   }
 
   Future<void> _pickBackground(BuildContext context, VoiceRoomEntity room) async {
@@ -1315,15 +1264,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       }
     });
 
-    ref.listen(pkBattleRemoteProvider, (prev, next) {
-      if (next == null || !isOwner || !next.isPending) return;
-      final userId = ref.read(authControllerProvider).valueOrNull?.id;
-      final isTarget = isPkInviteTarget(next, room, userId: userId);
-      if (!isTarget || _shownPkInviteId == next.id) return;
-      _shownPkInviteId = next.id;
-      unawaited(_showIncomingPkInvite(next.id));
-    });
-
     ref.listen(voiceRoomUiProvider, (prev, next) {
       if (prev?.backgroundMusicEnabled != next.backgroundMusicEnabled) {
         unawaited(
@@ -1540,6 +1480,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: VoiceRoomDiagnosticCard(state: diagnostic),
                           ),
+                        VoicePkInviteBanner(
+                          room: room,
+                          liveKey: _liveRoomKey,
+                          isOwner: isOwner,
+                        ),
                         VoiceWebOwnerStage(
                           room: room,
                           presence: live.presence,

@@ -205,7 +205,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                               final roomKey =
                                   r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
                               ref.read(pkBattleRemoteProvider.notifier).accept(
-                                    remote.id,
+                                    remote.effectiveId,
                                     roomId: roomKey,
                                     alternateRoomId:
                                         r.slug != roomKey ? r.slug : null,
@@ -216,7 +216,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                               final roomKey =
                                   r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
                               ref.read(pkBattleRemoteProvider.notifier).reject(
-                                    remote.id,
+                                    remote.effectiveId,
                                     roomId: roomKey,
                                     alternateRoomId:
                                         r.slug != roomKey ? r.slug : null,

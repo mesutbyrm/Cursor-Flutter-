@@ -4,6 +4,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../domain/admin_payment_review.dart';
 import 'staff_access_provider.dart';
 
 const paymentNotificationTypes = {
@@ -56,6 +57,16 @@ final adminPaymentRequestsProvider =
       'limit': '50',
     }),
   ]);
+
+  for (final row in merged.values) {
+    final id = resolvePaymentRequestId(row);
+    if (id.isNotEmpty && row['id']?.toString() != id) {
+      row['id'] = id;
+    }
+    if (row['requestType'] == null || row['requestType'].toString().isEmpty) {
+      row['requestType'] = resolvePaymentRequestType(row);
+    }
+  }
 
   if (merged.isEmpty && last403 != null) {
     throw ApiException(

@@ -6,6 +6,7 @@ import '../../../../../core/network/api_endpoints.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/network/dio_provider.dart';
 import '../../../../../core/theme/app_theme_colors.dart';
+import '../../../../admin/domain/admin_payment_review.dart';
 import '../../../../admin/presentation/providers/admin_providers.dart';
 import '../../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../providers/profile_providers.dart';
@@ -173,18 +174,25 @@ class _ProfileAdminPaymentQueue extends ConsumerWidget {
   Future<void> _review(
     WidgetRef ref,
     BuildContext context,
-    String requestId,
+    Map<String, dynamic> row,
     String action,
   ) async {
+    final requestId = resolvePaymentRequestId(row);
+    if (requestId.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ödeme talebi kimliği bulunamadı')),
+        );
+      }
+      return;
+    }
     try {
-      await ref.read(dioProvider).safePatch<dynamic>(
-        ApiEndpoints.adminCfcPaymentPatch,
-        data: {
-          'requestId': requestId,
-          'action': action,
-          if (action == 'approve') 'reviewNote': 'Onaylandı',
-          if (action == 'reject') 'reviewNote': 'Reddedildi',
-        },
+      await reviewAdminPaymentRequest(
+        ref.read(dioProvider),
+        requestId: requestId,
+        action: action,
+        requestType: resolvePaymentRequestType(row),
+        reviewNote: action == 'approve' ? 'Onaylandı' : 'Reddedildi',
       );
       ref.invalidate(adminPaymentRequestsProvider);
       ref.invalidate(adminPaymentNotificationsProvider);
@@ -215,7 +223,16 @@ class _ProfileAdminPaymentQueue extends ConsumerWidget {
         height: 36,
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          ApiException.userMessage(e),
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.orange.shade200,
+          ),
+        ),
+      ),
       data: (rows) {
         if (rows.isEmpty) {
           return Text(
@@ -251,24 +268,14 @@ class _ProfileAdminPaymentQueue extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => _review(
-                        ref,
-                        context,
-                        r['id']?.toString() ?? '',
-                        'reject',
-                      ),
+                      onPressed: () => _review(ref, context, r, 'reject'),
                       child: const Text('Reddet'),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: FilledButton(
-                      onPressed: () => _review(
-                        ref,
-                        context,
-                        r['id']?.toString() ?? '',
-                        'approve',
-                      ),
+                      onPressed: () => _review(ref, context, r, 'approve'),
                       child: const Text('Onayla'),
                     ),
                   ),

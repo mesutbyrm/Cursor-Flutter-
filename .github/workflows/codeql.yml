@@ -49,10 +49,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
-          cache-dependency-path: |
-            mobile/android/**/*.gradle*
-            mobile/android/**/gradle-wrapper.properties
+          # Gradle cache CodeQL izleyicisini boş bırakır (FROM-CACHE → javac/kotlinc çalışmaz).
 
       - name: Setup Flutter
         if: matrix.language == 'java-kotlin'
@@ -118,7 +115,7 @@ jobs:
 
           # CodeQL — Gradle derlemesi Java/Kotlin izlerini yakalar (flutter build apk yeterli değil).
           cd android
-          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+          ./gradlew clean :app:assembleDebug --no-daemon --no-build-cache --rerun-tasks --stacktrace
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4

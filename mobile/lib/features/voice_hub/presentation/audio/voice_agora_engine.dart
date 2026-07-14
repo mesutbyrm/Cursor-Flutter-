@@ -24,6 +24,7 @@ class VoiceAgoraEngine {
   var _inChannel = false;
   var _micOn = true;
   var _publishMic = false;
+  var _remoteAudioMuted = false;
   String _channelId = '';
   AgoraCredentials? _lastCredentials;
 
@@ -165,6 +166,15 @@ class VoiceAgoraEngine {
             'elapsedMs': elapsed,
           });
           if (!joinCompleter.isCompleted) joinCompleter.complete();
+        },
+        onUserJoined: (connection, remoteUid, elapsed) {
+          if (_remoteAudioMuted) {
+            try {
+              _engine?.muteRemoteAudioStream(uid: remoteUid, mute: true);
+            } catch (e, st) {
+              _logFailure('muteRemoteOnJoin', e, st);
+            }
+          }
         },
         onLeaveChannel: (connection, stats) {
           _inChannel = false;
@@ -351,6 +361,7 @@ class VoiceAgoraEngine {
   }
 
   void setRemoteAudioMuted(bool muted) {
+    _remoteAudioMuted = muted;
     try {
       _engine?.muteAllRemoteAudioStreams(muted);
     } catch (e, st) {

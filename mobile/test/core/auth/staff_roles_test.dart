@@ -3,11 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('StaffRoles', () {
-    test('site admin includes admin and yonetici', () {
-      expect(StaffRoles.isSiteAdminUser(username: 'admin'), isTrue);
+    test('founder staff is yonetici only', () {
+      expect(StaffRoles.isFounderUser(username: 'admin'), isFalse);
+      expect(StaffRoles.isFounderUser(username: 'yonetici'), isTrue);
+      expect(StaffRoles.isFounderUser(role: 'yonetici'), isTrue);
+      expect(StaffRoles.isFounderUser(role: 'founder'), isTrue);
       expect(StaffRoles.isSiteAdminUser(username: 'yonetici'), isTrue);
-      expect(StaffRoles.isSiteAdminUser(role: 'yonetici'), isTrue);
-      expect(StaffRoles.isSiteAdminUser(role: 'founder'), isTrue);
+      expect(StaffRoles.isSiteAdminUser(role: 'admin'), isTrue);
       expect(StaffRoles.isSiteAdminUser(role: 'user'), isFalse);
     });
 

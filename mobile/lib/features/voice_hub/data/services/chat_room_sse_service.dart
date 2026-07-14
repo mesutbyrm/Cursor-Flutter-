@@ -320,7 +320,7 @@ class ChatRoomSseService extends BaseSseService {
     final raw = map['battle'] ?? map['pk'] ?? map['data'];
     if (raw is! Map) return;
     final battle = PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
-    if (battle.id.isEmpty) return;
+    if (battle.effectiveId.isEmpty) return;
     final event = map['event']?.toString() ??
         map['type']?.toString() ??
         'pk';
