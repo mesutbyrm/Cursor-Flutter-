@@ -22,10 +22,11 @@ abstract final class StaffRoles {
   /// Kurucu (yonetici) — sesli oda staff bypass ve tam site yetkisi.
   static const founderUsernames = {'yonetici'};
 
-  /// Eski uyumluluk — yalnızca kurucu nick.
-  static const managerUsernames = founderUsernames;
+  /// Tam yetkili site admin nickleri (kurucu + siteadmin).
+  static const siteAdminUsernames = {'yonetici', 'siteadmin'};
 
-  static const siteAdminUsernames = founderUsernames;
+  /// Eski uyumluluk — site admin nick listesi.
+  static const managerUsernames = siteAdminUsernames;
 
   /// Sesli oda staff — yalnızca kurucu (yonetici) hesabı.
   static bool isFounderUser({String? role, String? username}) {
@@ -35,8 +36,10 @@ abstract final class StaffRoles {
     return r == 'yonetici' || r == 'founder';
   }
 
-  /// Admin paneli, hediye CRUD — kurucu nick veya sunucu rolü.
+  /// Admin paneli, hediye CRUD — kurucu / siteadmin nick veya sunucu rolü.
   static bool isSiteAdminUser({String? role, String? username}) {
+    final u = username?.toLowerCase().trim() ?? '';
+    if (siteAdminUsernames.contains(u)) return true;
     if (isFounderUser(role: role, username: username)) return true;
     if (isAdminOrManager(role: role, username: username)) return true;
     final r = role?.toLowerCase().trim() ?? '';
@@ -70,7 +73,7 @@ abstract final class StaffRoles {
     final r = role?.toLowerCase().trim() ?? '';
     if (adminOrManager.contains(r)) return true;
     final u = username?.toLowerCase().trim() ?? '';
-    return managerUsernames.contains(u);
+    return siteAdminUsernames.contains(u);
   }
 
   static String labelTr(String role) {

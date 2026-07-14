@@ -77,6 +77,7 @@ class VoiceRoomsPopularSection extends ConsumerWidget {
     final rooms = ref.watch(
       voiceRoomsDiscoverProvider.select((s) => s.popular),
     );
+    if (rooms.isEmpty) return const SizedBox.shrink();
     return VoiceRoomsFx.sectionEnter(
       VoiceRoomsPerf.section(PopularRoomsCarousel(rooms: rooms)),
       delayMs: 120,
@@ -101,9 +102,11 @@ class VoiceRoomsSidebarSection extends ConsumerWidget {
           children: [
             const MyRoomCard(),
             const SizedBox(height: VoiceRoomsUiTokens.gapMd),
-            TrendingTopicsCard(topics: trends),
-            const SizedBox(height: VoiceRoomsUiTokens.gapMd),
-            ActiveSpeakersCard(speakers: speakers),
+            if (trends.isNotEmpty) ...[
+              TrendingTopicsCard(topics: trends),
+              const SizedBox(height: VoiceRoomsUiTokens.gapMd),
+            ],
+            if (speakers.isNotEmpty) ActiveSpeakersCard(speakers: speakers),
           ],
         ),
       ),

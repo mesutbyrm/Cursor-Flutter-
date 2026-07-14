@@ -1,6 +1,24 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.32+38 (2026-07-14)
+
+### Derleme düzeltmesi (CodeQL)
+- `mini_music_player.dart`: müzik kuyruğu import yolu
+- `pk_opponent_room_filter.dart`: `ownerId` tanımı
+- `staff_roles.dart`: `managerUsernames` geri eklendi
+
+## 1.0.32+37 (2026-07-14)
+
+### Sesli odalar hub düzeltmeleri
+- Müzik mini player: yalnızca canlı oturumda; kuyruk modalı çalışır
+- Odalarım: sahip olunan odalar listelenir; oda oluştur akışı bağlandı
+- Popüler odalar: kimse yoksa gizlenir
+- En aktif konuşmacılar: gerçek oda sahipleri (online sayısı)
+- Çift alt bar: site nav `/voice-rooms` üzerinde gizlendi; sesli oda barı yönlendirir
+- PK daveti: polling iyileştirmesi, hedef eşleşmesi genişletildi
+- `siteadmin` nick tam yetkili (site admin)
+
 ## 1.0.31+36 (2026-07-14)
 
 ### Derleme düzeltmesi (CodeQL)

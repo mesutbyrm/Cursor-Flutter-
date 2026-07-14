@@ -29,6 +29,7 @@ class AppBottomNavHost extends ConsumerWidget {
       return true;
     }
     if (path.startsWith('/voice-room/')) return true;
+    if (path == '/voice-rooms' || path.startsWith('/voice-rooms/')) return true;
     if (path == '/live/room' || path.startsWith('/live/room/')) return true;
     if (path.contains('/session') && path.startsWith('/canli-falcilar')) {
       return true;

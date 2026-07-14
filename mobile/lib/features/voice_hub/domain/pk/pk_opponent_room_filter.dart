@@ -55,6 +55,17 @@ bool isPkInviteTarget(
   if (uid.isNotEmpty && opponentId.isNotEmpty && uid == opponentId) {
     return true;
   }
+  final oppUser = battle.opponent?.userId.trim() ?? '';
+  if (uid.isNotEmpty && oppUser.isNotEmpty && uid == oppUser) {
+    return true;
+  }
+  if (ownerId.isNotEmpty && oppUser.isNotEmpty && ownerId == oppUser) {
+    return true;
+  }
+  final oppRoomFromParticipant = battle.opponent?.roomId?.trim() ?? '';
+  if (oppRoomFromParticipant.isNotEmpty && keys.contains(oppRoomFromParticipant)) {
+    return true;
+  }
   return false;
 }
 

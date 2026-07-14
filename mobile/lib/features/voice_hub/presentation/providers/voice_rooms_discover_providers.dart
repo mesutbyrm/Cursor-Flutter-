@@ -7,6 +7,7 @@ import '../../../gifts/data/leaderboard_remote_datasource.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/datasources/voice_rooms_discover_remote_datasource.dart';
 import '../../data/repositories/voice_rooms_discover_repository_impl.dart';
+import '../../data/mappers/voice_rooms_discover_mapper.dart';
 import '../../domain/repositories/voice_rooms_discover_repository.dart';
 import '../../presentation/widgets/voice_rooms_ui/voice_rooms_mock_data.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -157,14 +158,14 @@ class VoiceRoomsDiscoverNotifier extends StateNotifier<VoiceRoomsDiscoverViewSta
 
   Future<void> _loadSecondary({bool forceRefresh = false}) async {
     try {
-      final results = await Future.wait([
-        _repo.fetchTrends(forceRefresh: forceRefresh),
-        _repo.fetchActiveSpeakers(forceRefresh: forceRefresh),
-      ]);
+      final trends = await _repo.fetchTrends(forceRefresh: forceRefresh);
+      final speakers = VoiceRoomsDiscoverMapper.speakersFromRooms(
+        state.allRooms,
+      );
       if (_disposed) return;
       state = state.copyWith(
-        trends: results[0] as List<TrendingTopicItem>,
-        speakers: results[1] as List<ActiveSpeakerItem>,
+        trends: trends,
+        speakers: speakers,
       );
     } catch (_) {}
   }

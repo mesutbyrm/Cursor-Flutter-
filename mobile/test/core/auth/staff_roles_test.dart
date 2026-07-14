@@ -5,10 +5,12 @@ void main() {
   group('StaffRoles', () {
     test('founder staff is yonetici only', () {
       expect(StaffRoles.isFounderUser(username: 'admin'), isFalse);
+      expect(StaffRoles.isFounderUser(username: 'siteadmin'), isFalse);
       expect(StaffRoles.isFounderUser(username: 'yonetici'), isTrue);
       expect(StaffRoles.isFounderUser(role: 'yonetici'), isTrue);
       expect(StaffRoles.isFounderUser(role: 'founder'), isTrue);
       expect(StaffRoles.isSiteAdminUser(username: 'yonetici'), isTrue);
+      expect(StaffRoles.isSiteAdminUser(username: 'siteadmin'), isTrue);
       expect(StaffRoles.isSiteAdminUser(role: 'admin'), isTrue);
       expect(StaffRoles.isSiteAdminUser(role: 'user'), isFalse);
     });

@@ -32,7 +32,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 5), (_) => _poll());
+    _timer = Timer.periodic(const Duration(seconds: 3), (_) => _poll());
     Future.microtask(_poll);
   }
 
@@ -96,14 +96,14 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     for (final room in owned) {
       final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
       if (key.isEmpty) continue;
+      PkBattleRemote? battle;
       try {
-        await remote.loadRoomBattle(
+        battle = await remote.loadRoomBattle(
           key,
           alternateRoomId: room.slug != key ? room.slug : null,
         );
       } catch (_) {}
 
-      final battle = ref.read(pkBattleRemoteProvider);
       if (battle == null) continue;
 
       // Gelen davet — karşı odadan PK isteği.

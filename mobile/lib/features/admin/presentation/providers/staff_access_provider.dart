@@ -30,6 +30,7 @@ class StaffAccess {
   String get roleLabel {
     final u = username?.toLowerCase().trim() ?? '';
     if (u == 'admin') return 'Site Admin';
+    if (u == 'siteadmin') return 'Site Admin';
     if (u == 'yonetici') return 'Kurucu';
     if (siteRole != null && siteRole!.isNotEmpty) {
       return StaffRoles.labelTr(siteRole!);
@@ -57,9 +58,11 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
   final username = user.username.trim();
   final usernameLower = username.toLowerCase();
 
-  // Kurucu (yonetici) nick — rol beklemeden tam yetki.
+  // Kurucu / siteadmin nick — rol beklemeden tam yetki.
   final usernameIsFounder =
       StaffRoles.founderUsernames.contains(usernameLower);
+  final usernameIsSiteAdmin =
+      StaffRoles.siteAdminUsernames.contains(usernameLower);
 
   final siteRole = walletRole?.trim().isNotEmpty == true
       ? walletRole
@@ -67,17 +70,17 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
 
   final canManagePayments = wallet?.canManagePayments == true ||
       wallet?.isAdmin == true ||
-      usernameIsFounder ||
+      usernameIsSiteAdmin ||
       StaffRoles.isAdminOrManager(role: siteRole, username: username);
 
-  final isSiteAdmin = usernameIsFounder ||
+  final isSiteAdmin = usernameIsSiteAdmin ||
       StaffRoles.hasFullStaffAccess(
         role: siteRole,
         username: username,
         walletIsAdmin: wallet?.isAdmin == true,
       );
 
-  final showAdminPanel = usernameIsFounder ||
+  final showAdminPanel = usernameIsSiteAdmin ||
       StaffRoles.canAccessAdminPanel(
         role: siteRole,
         username: username,
@@ -87,8 +90,8 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
   String? effectiveRole = siteRole?.trim().isNotEmpty == true
       ? siteRole!.toLowerCase().trim()
       : null;
-  if (effectiveRole == null && usernameIsFounder) {
-    effectiveRole = usernameLower;
+  if (effectiveRole == null && usernameIsSiteAdmin) {
+    effectiveRole = usernameLower == 'siteadmin' ? 'admin' : usernameLower;
   }
   if (isSiteAdmin && effectiveRole == null) {
     effectiveRole = 'admin';

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/images/canlifal_network_image.dart';
 import 'voice_rooms_fx.dart';
 import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_svg_icons.dart';
@@ -122,15 +123,25 @@ class _SpeakerRow extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.2),
                 ),
               ),
+              clipBehavior: Clip.antiAlias,
               alignment: Alignment.center,
-              child: Text(
-                speaker.name.characters.first,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                ),
-              ),
+              child: speaker.avatarUrl?.trim().isNotEmpty == true
+                  ? CanlifalNetworkImage(
+                      url: speaker.avatarUrl!,
+                      width: 36,
+                      height: 36,
+                      fit: BoxFit.cover,
+                      thumbnailWidth: 72,
+                      fadeIn: false,
+                    )
+                  : Text(
+                      speaker.name.characters.first,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
             ),
           ),
           const SizedBox(width: 10),
@@ -157,20 +168,37 @@ class _SpeakerRow extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              VoiceRoomsSvgIcons.icon(
-                'diamond',
-                size: 12,
-                color: VoiceRoomsUiTokens.purpleGlow,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                speaker.diamonds,
-                style: const TextStyle(
-                  color: VoiceRoomsUiTokens.textSecondary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+              if (speaker.onlineLabel != null) ...[
+                VoiceRoomsSvgIcons.icon(
+                  'soundwave',
+                  size: 12,
+                  color: VoiceRoomsUiTokens.onlineGreen,
                 ),
-              ),
+                const SizedBox(width: 4),
+                Text(
+                  speaker.onlineLabel!,
+                  style: const TextStyle(
+                    color: VoiceRoomsUiTokens.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ] else ...[
+                VoiceRoomsSvgIcons.icon(
+                  'diamond',
+                  size: 12,
+                  color: VoiceRoomsUiTokens.purpleGlow,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  speaker.diamonds,
+                  style: const TextStyle(
+                    color: VoiceRoomsUiTokens.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ],
           ),
         ],
