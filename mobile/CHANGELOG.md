@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.29+34 (2026-07-14)
+
+### Performans optimizasyonu
+- Soğuk açılış: cookie `forceInit` ertelendi; shell prefetch kademeli (cüzdan → bildirim/profil → mesaj → shorts → jeton)
+- `isOnlineProvider` bağlantı stream'ine bağlandı (offline banner doğru çalışır)
+- Sesli oda basic: sohbet izole rebuild (`_BasicLiveShell`, `VoiceRoomBasicChatFeed` Consumer)
+- Sohbet overlay ve hediye paneli filtre önbelleği
+- Global poll aralıkları gevşetildi (DM, psikolog, PK)
+- Admin hediye: `CanlifalNetworkImage`; profil auth `.select`
+- Rapor: `docs/PERFORMANCE_OPTIMIZATION_REPORT.md`
+
 ## 1.0.28+33 (2026-07-14)
 
 ### Sesli oda, staff ve PK düzeltmeleri

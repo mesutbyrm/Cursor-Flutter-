@@ -27,7 +27,7 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 2), (_) => _poll());
+    _timer = Timer.periodic(const Duration(seconds: 4), (_) => _poll());
     Future.microtask(_poll);
   }
 

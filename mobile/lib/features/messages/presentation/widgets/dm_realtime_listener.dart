@@ -35,7 +35,7 @@ class _DmRealtimeListenerState extends ConsumerState<DmRealtimeListener> {
 
   void _startPoll() {
     _poll?.cancel();
-    _poll = Timer.periodic(const Duration(seconds: 8), (_) => _tick());
+    _poll = Timer.periodic(const Duration(seconds: 12), (_) => _tick());
     unawaited(_tick());
   }
 

@@ -1,141 +1,80 @@
-# Performans Optimizasyon Raporu — 1.0.505+509
+# Performans optimizasyon raporu — 1.0.29+34
 
-**Tarih:** 2026-07-08  
-**Hedef:** Web sürümüne yakın açılış süresi, akıcı scroll, düşük bellek ve ağ tıkanıklığı.
-
----
+**Tarih:** 2026-07-14  
+**Hedef:** Soğuk açılış &lt; 2 sn, ekran geçişleri &lt; 300 ms (mevcut özellikler korunarak)
 
 ## Özet
 
-Bu sürümde ana sayfa, sesli odalar, canlı falcılar ve kısa videolar için **soğuk açılış**, **Riverpod rebuild**, **görsel önbellek**, **video preload** ve **arka plan animasyon** optimizasyonları uygulandı. Mevcut işlevler korundu; yalnızca yükleme sırası, cache ve widget izolasyonu iyileştirildi.
+Uygulama genelinde analiz yapıldı; yüksek etkili düzeltmeler uygulandı. Altyapı zaten güçlüydü (paralel storage init, tek `Dio`, Hive + `ApiCacheStore`, `CanlifalNetworkImage`, deferred SDK bootstrap, `VoiceRoomEntryPerf`).
 
----
+## Yapılan optimizasyonlar
 
-## Flutter — Yapılan Değişiklikler
+### 1. Soğuk açılış (cold start)
 
-### 1. Kabuk prefetch kademelendirme (`shell_prefetch.dart`)
+| Değişiklik | Dosya | Etki |
+|------------|-------|------|
+| Cookie jar `forceInit()` runApp sonrasına ertelendi | `main.dart` | İlk kare daha erken |
+| Shell prefetch kademelendi: cüzdan T+200ms, bildirim+profil T+600ms (paralel), mesajlar T+1100ms, shorts T+2200ms, jeton T+3500ms | `shell_prefetch.dart`, `startup_perf.dart` | Açılışta ağ yükü azaldı |
 
-| Kademe | Gecikme | İstekler |
-|--------|---------|----------|
-| T+0 | 0 ms | Bildirimler, cüzdan, profil istatistikleri, TRTC ön ısıtma |
-| T+450 | 450 ms | Sohbet listesi |
-| T+900 | 900 ms | Shorts For You feed |
-| T+1400 | 1400 ms | Jeton paketleri |
+### 2. Bağlantı durumu (rebuild düzeltmesi)
 
-**Beklenen etki:** Soğuk açılışta eşzamanlı 6+ API yerine 3 kritik istek; ana thread ve TLS el sıkışması baskısı ~%40 azalır.
+| Değişiklik | Dosya | Etki |
+|------------|-------|------|
+| `isOnlineProvider` artık `ConnectivityService.onlineStream` dinliyor | `online_status_notifier.dart` | Offline banner ve sync doğru tetiklenir; gereksiz stale okuma yok |
 
-### 2. Ana sayfa bootstrap (`home_bootstrap.dart`)
+### 3. Sesli oda — gereksiz rebuild
 
-- `homeOnlinePsychicsProvider` paralel prefetch'e eklendi (7 paralel görev).
-- Falcı listesi ana sayfa ve `/canli-falcilar` arasında paylaşımlı `keepAlive` cache.
+| Değişiklik | Dosya | Etki |
+|------------|-------|------|
+| Basic mod: `_BasicLiveShell` ile mesajlar hariç selective watch | `voice_room_basic_page.dart` | Her chat mesajında tüm oda ağacı yeniden çizilmez |
+| `VoiceRoomBasicChatFeed` → `ConsumerWidget`; yalnızca `messages` + `presence` | `voice_room_basic_premium_section.dart` | Sohbet izole rebuild |
+| Sohbet overlay filtre önbelleği (uzunluk + son id) | `voice_web_chat_overlay.dart` | `build()` içinde tekrarlayan filter azaldı |
+| Hediye paneli katalog sort/filter önbelleği | `voice_premium_gift_panel_2026.dart` | Panel açıkken gereksiz sort yok |
 
-**Beklenen etki:** Canlı Falcılar bölümü ilk boyamada ~200–400 ms daha hızlı (önbellek isabetinde).
+> RTC sayfası (`voice_room_rtc_page.dart`) zaten `_RtcLiveShell` kullanıyordu — dokunulmadı.
 
-### 3. Riverpod `keepAlive` genişletme (`home_providers.dart`, `shorts_providers.dart`)
+### 4. Global poll aralıkları (CPU / ağ)
 
-- `homeAdvisorsProvider`, `homeGamesProvider`, `homeDailyRewardsProvider` → oturum cache.
-- `ShortsFeedNotifier` → sekme değişiminde feed yeniden fetch azalır.
+| Bileşen | Eski | Yeni |
+|---------|------|------|
+| DM global poll | 8 sn | 12 sn |
+| Psikolog gelen çağrı | 2 sn | 4 sn |
+| PK davet (sesli) | 3 sn | 5 sn |
+| PK davet (canlı) | 2 sn | 4 sn |
+| DM sohbet sayfası | 4 sn | 5 sn |
+| Yazıyor göstergesi | 2,5 sn | 3,5 sn |
 
-### 4. Gereksiz rebuild azaltma
+Tüm timer'lar mevcut `dispose` / `ref.onDispose` ile kapatılıyor — sızıntı tespit edilmedi.
 
-| Dosya | Değişiklik |
-|-------|------------|
-| `main_app_shell.dart` | `goRouterProvider` → `ref.read`; presence ayrı `VoiceRoomsPresenceScope` |
-| `voice_room_section.dart` | `homeVoiceRoomsProvider.select` ile tuple izleme |
-| `psychics_list_screen.dart` | Auth `select`, skeleton loader, `CosmicGalaxyBackground(animate: false)` |
+### 5. Görsel / cache
 
-**Beklenen etki:** Kabuk ve ana sayfa bölümlerinde gereksiz rebuild ~%25–35 azalır.
+| Değişiklik | Dosya |
+|------------|-------|
+| Admin hediye listesinde `Image.network` → `CanlifalNetworkImage` | `admin_gift_management_page.dart` |
+| Profil: `authControllerProvider.select(valueOrNull)` | `profile_page.dart` |
 
-### 5. Sesli odalar (`voice_rooms_page.dart`)
+### 6. Zaten mevcut (değiştirilmedi)
 
-- `addAutomaticKeepAlives: false` — off-screen tile bellek tutma kapatıldı.
-- `DeferredTickerMode` (200 ms) — parçacık/gradient animasyonu ilk kareden sonra.
+- **Dio:** Tek `dioProvider` instance (`dio_provider.dart`)
+- **Hive:** `LocalCache` (`staff_roles`, tema, bayraklar)
+- **API cache:** `ApiCacheStore` + `ApiHttpCache` interceptor
+- **Görseller:** `cached_network_image` via `CanlifalNetworkImage`
+- **SSE:** `BaseSseService.disconnect()`, `sse_hub_provider` `onDispose`
+- **Deferred:** Firebase, OneSignal, AdMob T+800ms
 
-**Beklenen etki:** Liste scroll bellek kullanımı ~%15 düşer; ilk paint ~100–150 ms hızlanır.
+## Ölçüm notları
 
-### 6. Kısa video preload (`shorts_video_controller_pool.dart`)
+- `AppPerfMetrics.mark('cold_start')` — `main.dart` içinde ölçülüyor
+- `VoiceRoomEntryPerf` — oda giriş bütçesi 2 sn
+- CI / cihazda gerçek süreler donanıma bağlı; bu sürüm ağ ve rebuild yükünü azaltır
 
-- Disk preload: yalnızca sonraki `[1]` → **önceki + sonraki `[-1, 1]`**.
-- Placeholder tile: `Image.network` → `CanlifalNetworkImage` (disk/mem cache).
+## Sonraki adımlar (öneri)
 
-**Beklenen etki:** Yukarı/aşağı kaydırmada video başlama gecikmesi ~150–300 ms azalır.
+1. `VoiceRoomLiveState` alt provider'lara bölme (messages / presence / dj)
+2. `ref.listen` bloklarını `initState` / notifier callback'e taşıma (RTC sayfası)
+3. DM sohbet için SSE veya push öncelikli senkron (poll yedek)
+4. Release profilinde `devtools` timeline ile cold start doğrulama
 
-### 7. Görsel önbellek tutarlılığı
+## Sürüm
 
-- `profile_hub_header.dart` — kapak `CanlifalNetworkImage`
-- `shorts_feed_placeholder_tile.dart` — thumbnail cache
-- `short_story_share_card.dart` — paylaşım kartı thumbnail cache
-
-**Beklenen etki:** Tekrar ziyaret edilen görsellerde ağ isteği sıfır; bellek `memCacheWidth` ile sınırlı.
-
-### 8. Ana sayfa realtime poll (`home_realtime_bridge.dart`)
-
-- Poll aralığı 90 s → **120 s**.
-
-**Beklenen etki:** Arka planda gereksiz liste invalidation ~%25 azalır.
-
-### 9. Yeni bileşen: `VoiceRoomsPresenceScope`
-
-- SSE presence izolasyonu; kabuk `Stack` yeniden çizilmez.
-
----
-
-## Beklenen Performans Kazanımları (tahmini)
-
-| Alan | Metrik | Önce (tahmin) | Sonra (tahmin) |
-|------|--------|---------------|----------------|
-| Ana sayfa ilk içerik | TTFC | 1.2–1.8 s | 0.7–1.2 s |
-| Sesli odalar ilk liste | TTFC | 0.9–1.4 s | 0.6–1.0 s |
-| Canlı falcılar liste | TTFC | 0.8–1.2 s | 0.5–0.9 s |
-| Shorts video geçiş | Kaydırma gecikmesi | 300–500 ms | 100–250 ms |
-| Kabuk rebuild | Frame başına widget | Yüksek | Orta |
-| Soğuk açılış ağ | Eşzamanlı istek | 8–10 | 3–4 (ilk 500 ms) |
-
-*Gerçek ölçüm: Flutter DevTools → Performance, Network; `AppPerfMetrics` debug çıktısı.*
-
----
-
-## Cloudflare / CDN — Backend Tarafı (bu repoda uygulanmadı)
-
-Aşağıdaki görevler **canlifal.com sunucu/Cloudflare paneli** erişimi gerektirir; mobil istemci tarafında yapılamaz.
-
-### Kontrol listesi
-
-1. **`/shorts/*` Bot Challenge** — Video player `Range` istekleri challenge alıyorsa oynatma kesilir.  
-   - **Öneri:** `cf.bot_management` bypass kuralı: path `/shorts/*` + known video MIME + mobil User-Agent veya signed URL.
-
-2. **Cache Rules** — Statik video segmentleri için:  
-   `Cache-Control: public, max-age=31536000, immutable`
-
-3. **Video pipeline**  
-   - `ffmpeg -movflags +faststart` (progressive download)  
-   - Otomatik thumbnail (poster frame)  
-   - HLS (`m3u8`) + çoklu bitrate (isteğe bağlı)
-
-### Beklenen CDN etkisi
-
-| Optimizasyon | Etki |
-|--------------|------|
-| Challenge bypass (video) | İlk frame 1–3 s daha hızlı; 403/retry yok |
-| `immutable` cache | Tekrar izlemede edge cache hit ~%95+ |
-| `faststart` | İlk oynatma 200–800 ms hızlanır |
-| HLS | Adaptif kalite, zayıf ağda daha az rebuffer |
-
----
-
-## Doğrulama
-
-```bash
-cd mobile && dart analyze
-cd mobile && flutter test
-```
-
-DevTools ile kontrol:
-- **CPU:** Voice rooms scroll sırasında frame >16 ms düşüşü
-- **Memory:** Shorts 20+ video kaydırma sonrası controller sayısı ≤3
-- **Network:** Soğuk açılışta ilk 500 ms istek sayısı
-- **Rebuild:** Provider `select` ile izole widget ağaçları
-
----
-
-_Bu dosya CI tarafından otomatik güncellenmez; sürüm notları için `mobile/CHANGELOG.md`._
+`1.0.29+34` — `mobile/pubspec.yaml`, `mobile/CHANGELOG.md`

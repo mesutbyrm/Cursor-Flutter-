@@ -274,7 +274,13 @@ class _ConsumerFallbackList extends ConsumerWidget {
             for (final g in items)
               ListTile(
                 leading: g.iconUrl != null && g.iconUrl!.isNotEmpty
-                    ? Image.network(g.iconUrl!, width: 36, height: 36, errorBuilder: (_, _, _) => const Text('🎁'))
+                    ? CanlifalNetworkImage(
+                        url: g.iconUrl!,
+                        width: 36,
+                        height: 36,
+                        fit: BoxFit.cover,
+                        errorWidget: const Text('🎁'),
+                      )
                     : const Text('🎁', style: TextStyle(fontSize: 22)),
                 title: Text(
                   g.name,

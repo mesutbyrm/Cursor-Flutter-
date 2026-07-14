@@ -56,7 +56,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
     WidgetsBinding.instance.addObserver(this);
     _scroll.addListener(_onScroll);
     _text.addListener(_onTextChanged);
-    _typingPoll = Timer.periodic(const Duration(milliseconds: 2500), (_) async {
+    _typingPoll = Timer.periodic(const Duration(milliseconds: 3500), (_) async {
       if (!mounted) return;
       final recentlyTyped = _lastTypedAt != null &&
           DateTime.now().difference(_lastTypedAt!) < const Duration(seconds: 4);
@@ -84,7 +84,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
             ),
       );
     });
-    _poll = Timer.periodic(const Duration(seconds: 4), (_) {
+    _poll = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted) return;
       ref
           .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)

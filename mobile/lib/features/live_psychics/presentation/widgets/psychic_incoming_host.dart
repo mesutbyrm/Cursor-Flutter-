@@ -153,7 +153,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
 
   void _startPoll() {
     _poll?.cancel();
-    _poll = Timer.periodic(const Duration(seconds: 2), (_) => _pollApi());
+    _poll = Timer.periodic(const Duration(seconds: 4), (_) => _pollApi());
     unawaited(_pollApi());
   }
 

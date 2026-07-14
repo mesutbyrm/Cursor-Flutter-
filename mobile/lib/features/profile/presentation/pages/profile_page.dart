@@ -27,9 +27,9 @@ class ProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
+    final user = ref.watch(authControllerProvider.select((a) => a.valueOrNull));
     final guest = ref.watch(guestModeProvider);
     final top = MediaQuery.paddingOf(context).top;
-    final user = auth.valueOrNull;
 
     Future<void> refresh() async {
       HapticFeedback.mediumImpact();

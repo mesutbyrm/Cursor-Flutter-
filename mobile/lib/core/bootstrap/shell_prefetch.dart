@@ -9,14 +9,16 @@ import '../../../features/profile/presentation/providers/profile_providers.dart'
 import '../../../features/shorts/domain/repositories/shorts_repository.dart';
 import '../../../features/shorts/presentation/providers/shorts_providers.dart';
 import 'startup_perf.dart';
+import '../performance/network_perf.dart';
 import '../performance/voice_room_entry_perf.dart';
 
 /// Ana kabuk açıldığında sık kullanılan verileri kademeli önceden yükler.
 ///
-/// Kademe 1 (T+0): bildirim, cüzdan, profil istatistikleri, TRTC ön ısıtma.
-/// Kademe 2 (T+450ms): sohbet listesi.
-/// Kademe 3 (T+900ms): shorts For You feed.
-/// Kademe 4 (T+1400ms): jeton paketleri.
+/// Kademe 1 (T+200ms): cüzdan.
+/// Kademe 1b (T+600ms): bildirim + profil istatistikleri (paralel).
+/// Kademe 2 (T+1100ms): sohbet listesi.
+/// Kademe 3 (T+2200ms): shorts For You feed.
+/// Kademe 4 (T+3500ms): jeton paketleri.
 void prefetchShellData(
   WidgetRef ref, {
   Duration delay = StartupPerf.shellPrefetchDelay,
@@ -24,9 +26,18 @@ void prefetchShellData(
   unawaited(
     Future<void>.delayed(delay, () {
       VoiceRoomEntryPerf.prewarmShell();
-      ref.read(notificationsListProvider.future).ignore();
       ref.read(walletBalancesProvider.future).ignore();
-      ref.read(profileStatsProvider.future).ignore();
+    }),
+  );
+
+  unawaited(
+    Future<void>.delayed(StartupPerf.shellPrefetchTier1bDelay, () {
+      unawaited(
+        NetworkPerf.waitSilent([
+          ref.read(notificationsListProvider.future),
+          ref.read(profileStatsProvider.future),
+        ]),
+      );
     }),
   );
 

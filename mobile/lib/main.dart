@@ -97,7 +97,6 @@ Future<void> main() async {
             storage: FileStorage('${supportDir.path}/canlifal_cookies'),
             persistSession: true,
           );
-          await jar!.forceInit();
         } catch (e) {
           debugPrint('Cookie jar init failed: $e');
           jar = PersistCookieJar();
@@ -123,6 +122,9 @@ Future<void> main() async {
         ),
       );
       scheduleDeferredAppBootstrap();
+      unawaited(jar!.forceInit().catchError((Object e) {
+        debugPrint('Cookie jar forceInit deferred failed: $e');
+      }));
     },
     (error, stack) => VoiceRoomDebugLog.recordZoneError(error, stack),
   );
