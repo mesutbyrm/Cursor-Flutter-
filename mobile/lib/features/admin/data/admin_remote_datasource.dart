@@ -20,9 +20,18 @@ Future<T> _adminTimeout<T>(Future<T> future) {
 
 /// canlifal.com admin API — web paneli ile aynı uç noktalar.
 class AdminRemoteDataSource {
-  AdminRemoteDataSource(this._dio);
+  AdminRemoteDataSource(this._dio, {this.staffRole});
 
   final Dio _dio;
+  final String? staffRole;
+
+  Options _opts([Options? base]) {
+    final role = staffRole?.trim();
+    if (role == null || role.isEmpty) return base ?? Options();
+    return (base ?? Options()).copyWith(
+      extra: {...?base?.extra, 'staffRole': role},
+    );
+  }
 
   Future<List<Map<String, dynamic>>> searchUsers(String query) async {
     final q = query.trim();
@@ -34,7 +43,7 @@ class AdminRemoteDataSource {
     ]) {
       try {
         final res = await _adminTimeout(
-          _dio.safeGet<dynamic>(path, forceRefresh: true),
+          _dio.safeGet<dynamic>(path, forceRefresh: true, options: _opts()),
         );
         final items = normalizeAdminUserList(_flattenList(res.data));
         if (items.isNotEmpty) return items;
@@ -52,6 +61,7 @@ class AdminRemoteDataSource {
       _dio.safeGet<dynamic>(
         ApiEndpoints.adminUser(userId),
         forceRefresh: true,
+        options: _opts(),
       ),
     );
     return normalizeAdminUserMap(_unwrapMap(res.data));
@@ -65,6 +75,7 @@ class AdminRemoteDataSource {
       _dio.safePatch<dynamic>(
         ApiEndpoints.adminUser(userId),
         data: patch,
+        options: _opts(),
       ),
     );
     return normalizeAdminUserMap(_unwrapMap(res.data));

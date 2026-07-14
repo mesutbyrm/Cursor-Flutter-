@@ -6,6 +6,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../domain/admin_user_util.dart';
 import '../pages/admin_panel_page.dart';
 import '../providers/admin_panel_providers.dart';
+import '../providers/staff_access_provider.dart';
 import 'admin_credit_sheet.dart';
 import 'admin_membership_sheet.dart';
 
@@ -36,6 +37,8 @@ class AdminUserManageSheet {
     );
     var role = (detail['role'] ?? 'user').toString();
     var membership = (detail['membership'] ?? 'basic').toString();
+    final access = ref.read(staffAccessProvider);
+    final canAssignAdmin = access.isFounder;
 
     final label = user['username']?.toString().trim().isNotEmpty == true
         ? '@${user['username']}'
@@ -171,19 +174,21 @@ class AdminUserManageSheet {
                       labelText: 'Yetki / rol',
                       border: OutlineInputBorder(),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'user', child: Text('Kullanıcı')),
-                      DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                      DropdownMenuItem(
-                        value: 'yonetici',
-                        child: Text('Kurucu (yonetici)'),
-                      ),
-                      DropdownMenuItem(
+                    items: [
+                      const DropdownMenuItem(value: 'user', child: Text('Kullanıcı')),
+                      if (canAssignAdmin)
+                        const DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                      if (canAssignAdmin)
+                        const DropdownMenuItem(
+                          value: 'yonetici',
+                          child: Text('Kurucu (yonetici)'),
+                        ),
+                      const DropdownMenuItem(
                         value: 'moderator',
                         child: Text('Moderatör'),
                       ),
-                      DropdownMenuItem(value: 'destek', child: Text('Destek')),
-                      DropdownMenuItem(value: 'yardim', child: Text('Yardım')),
+                      const DropdownMenuItem(value: 'destek', child: Text('Destek')),
+                      const DropdownMenuItem(value: 'yardim', child: Text('Yardım')),
                     ],
                     onChanged: (v) {
                       if (v != null) setState(() => role = v);
@@ -215,6 +220,17 @@ class AdminUserManageSheet {
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: () async {
+                      if (!canAssignAdmin &&
+                          (role == 'admin' || role == 'yonetici')) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Admin atama/çıkarma yalnızca kurucu (yonetici) yapabilir',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
                       try {
                         await ref.read(adminRemoteProvider).updateUser(
                               userId,

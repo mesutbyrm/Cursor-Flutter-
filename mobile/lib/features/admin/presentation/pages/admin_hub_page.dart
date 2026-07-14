@@ -15,6 +15,7 @@ import '../../../../core/performance/network_perf.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../domain/admin_payment_review.dart';
 import '../providers/admin_providers.dart';
 import '../providers/staff_access_provider.dart';
 import '../widgets/admin_voice_room_settings_panel.dart';
@@ -211,6 +212,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                     async: notifs,
                     onRefresh: _refreshAll,
                     onOpenPending: () => _tabs.animateTo(0),
+                    onReview: _review,
                   ),
                   const AdminVoiceRoomSettingsPanel(),
                 ],
@@ -274,23 +276,21 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
   Future<void> _review(
     BuildContext context,
     String requestId,
-    String action,
-  ) async {
+    String action, {
+    String? requestType,
+  }) async {
     String? reviewNote;
     if (action == 'reject') {
       reviewNote = await _askRejectReason(context);
       if (reviewNote == null) return;
     }
     try {
-      await ref.read(dioProvider).safePatch<dynamic>(
-        ApiEndpoints.adminCfcPaymentPatch,
-        data: {
-          'requestId': requestId,
-          'action': action,
-          if (action == 'approve') 'reviewNote': 'Onaylandı',
-          if (action == 'reject' && (reviewNote?.trim().isNotEmpty ?? false))
-            'reviewNote': reviewNote!.trim(),
-        },
+      await reviewAdminPaymentRequest(
+        ref.read(dioProvider),
+        requestId: requestId,
+        action: action,
+        requestType: requestType,
+        reviewNote: reviewNote,
       );
       _refreshAll();
       await NetworkPerf.parallel([
@@ -384,7 +384,12 @@ class _PendingPaymentsTab extends StatelessWidget {
   });
 
   final AsyncValue<List<Map<String, dynamic>>> async;
-  final void Function(BuildContext, String, String) onReview;
+  final void Function(
+    BuildContext context,
+    String requestId,
+    String action, {
+    String? requestType,
+  }) onReview;
   final VoidCallback onRefresh;
   final VoidCallback onDismissAll;
 
@@ -466,7 +471,8 @@ class _PendingPaymentsTab extends StatelessWidget {
                 );
               }
               final r = rows[i - 1];
-              final id = r['id']?.toString() ?? '';
+              final id = resolvePaymentRequestId(r);
+              final isJeton = resolvePaymentRequestType(r) == 'jeton';
               final user = r['user'] is Map
                   ? Map<String, dynamic>.from(r['user'] as Map)
                   : null;
@@ -474,7 +480,6 @@ class _PendingPaymentsTab extends StatelessWidget {
                   user?['displayName']?.toString() ??
                   r['senderInfo']?.toString() ??
                   'Kullanıcı';
-              final isJeton = (r['requestType'] ?? '').toString() == 'jeton';
 
               return DiscoverGlassCard(
                 padding: const EdgeInsets.all(14),
@@ -554,7 +559,13 @@ class _PendingPaymentsTab extends StatelessWidget {
                           child: OutlinedButton(
                             onPressed: id.isEmpty
                                 ? null
-                                : () => onReview(context, id, 'reject'),
+                                : () => onReview(
+                                      context,
+                                      id,
+                                      'reject',
+                                      requestType:
+                                          isJeton ? 'jeton' : 'cfc',
+                                    ),
                             child: Text('Reddet'),
                           ),
                         ),
@@ -563,7 +574,13 @@ class _PendingPaymentsTab extends StatelessWidget {
                           child: FilledButton(
                             onPressed: id.isEmpty
                                 ? null
-                                : () => onReview(context, id, 'approve'),
+                                : () => onReview(
+                                      context,
+                                      id,
+                                      'approve',
+                                      requestType:
+                                          isJeton ? 'jeton' : 'cfc',
+                                    ),
                             style: FilledButton.styleFrom(
                               backgroundColor: AppThemeColors.accentCyan,
                             ),
@@ -588,11 +605,18 @@ class _PaymentNotificationsTab extends StatelessWidget {
     required this.async,
     required this.onRefresh,
     required this.onOpenPending,
+    required this.onReview,
   });
 
   final AsyncValue<List<Map<String, dynamic>>> async;
   final VoidCallback onRefresh;
   final VoidCallback onOpenPending;
+  final void Function(
+    BuildContext context,
+    String requestId,
+    String action, {
+    String? requestType,
+  }) onReview;
 
   @override
   Widget build(BuildContext context) {
@@ -646,9 +670,13 @@ class _PaymentNotificationsTab extends StatelessWidget {
               );
               final isRequest = isPaymentNotificationType(n['type']?.toString()) &&
                   (n['type']?.toString() ?? '').contains('request');
+              final requestId = resolvePaymentRequestId(n);
+              final requestType = (n['type']?.toString() ?? '').contains('jeton')
+                  ? 'jeton'
+                  : 'cfc';
 
               return DiscoverGlassCard(
-                onTap: isRequest ? onOpenPending : null,
+                onTap: isRequest && requestId.isEmpty ? onOpenPending : null,
                 borderColor: read
                     ? null
                     : AppThemeColors.accentPink.withValues(alpha: 0.4),
@@ -656,46 +684,83 @@ class _PaymentNotificationsTab extends StatelessWidget {
                   horizontal: 14,
                   vertical: 12,
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(
-                      Icons.payments_rounded,
-                      color: read ? context.colors.onSurfaceMuted : AppThemeColors.accentCyan,
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.payments_rounded,
+                          color: read
+                              ? context.colors.onSurfaceMuted
+                              : AppThemeColors.accentCyan,
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                n['title']?.toString() ?? 'Ödeme bildirimi',
+                                style: TextStyle(
+                                  fontWeight:
+                                      read ? FontWeight.w600 : FontWeight.w800,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                paymentNotificationSummary(n),
+                                style: TextStyle(
+                                  color: context.colors.onSurfaceMuted,
+                                  fontSize: 12,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (created != null)
                           Text(
-                            n['title']?.toString() ?? 'Ödeme bildirimi',
+                            fmt.format(created.toLocal()),
                             style: TextStyle(
-                              fontWeight:
-                                  read ? FontWeight.w600 : FontWeight.w800,
-                              fontSize: 14,
+                              fontSize: 10,
+                              color: context.colors.onSurfaceMuted,
                             ),
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            paymentNotificationSummary(n),
-                            style: TextStyle(
-                              color: context.colors.onSurfaceMuted,
-                              fontSize: 12,
-                              height: 1.35,
+                      ],
+                    ),
+                    if (isRequest && !read && requestId.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => onReview(
+                                context,
+                                requestId,
+                                'reject',
+                                requestType: requestType,
+                              ),
+                              child: const Text('Reddet'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: () => onReview(
+                                context,
+                                requestId,
+                                'approve',
+                                requestType: requestType,
+                              ),
+                              child: const Text('Onayla'),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    if (created != null)
-                      Text(
-                        fmt.format(created.toLocal()),
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: context.colors.onSurfaceMuted,
-                        ),
-                      ),
+                    ],
                   ],
                 ),
               );

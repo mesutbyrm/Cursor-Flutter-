@@ -12,6 +12,7 @@ import '../../../../core/performance/network_perf.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
@@ -2364,6 +2365,9 @@ class VoiceRoomLiveController
       room: _roomMeta,
       selfPresence: self,
       server: state.serverPermissions,
+      staffSiteAdmin: ref.read(staffAccessProvider).isSiteAdmin,
+      walletRole: ref.read(staffAccessProvider).siteRole ??
+          ref.read(walletBalancesProvider).valueOrNull?.role,
     );
   }
 

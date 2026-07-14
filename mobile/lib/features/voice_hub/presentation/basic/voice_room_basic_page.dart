@@ -11,6 +11,7 @@ import '../widgets/voice_room_error_boundary.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -34,6 +35,7 @@ import '../providers/voice_room_audio_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
 import '../../../../core/auth/staff_roles.dart';
+import '../sheets/voice_room_commands_panel.dart';
 import '../utils/voice_room_permissions.dart';
 import '../utils/voice_room_speak_access.dart';
 import '../theme/voice_room_tokens.dart';
@@ -564,6 +566,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       room: room,
       selfPresence: self,
       server: live.serverPermissions,
+      staffSiteAdmin: ref.read(staffAccessProvider).isSiteAdmin,
+      walletRole: ref.read(staffAccessProvider).siteRole ??
+          ref.read(walletBalancesProvider).valueOrNull?.role,
     );
   }
 
@@ -675,6 +680,26 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         }
       }
 
+      if (next.openCommandsPanel && !(prev?.openCommandsPanel ?? false)) {
+        ref
+            .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+            .clearOpenCommandsPanel();
+        if (!mounted) return;
+        final room = _effectiveRoom();
+        final userNow = ref.read(authControllerProvider).valueOrNull;
+        final permsNow = _permissions(userNow, next, room);
+        final owner = permsNow.isRoomOwner || permsNow.isSiteAdmin;
+        unawaited(
+          showVoiceRoomCommandsPanel(
+            context,
+            ref,
+            room: room,
+            perms: permsNow,
+            isOwner: owner,
+          ),
+        );
+      }
+
       if (_audioReady) {
         final user = ref.read(authControllerProvider).valueOrNull;
         if (user != null) {
@@ -691,6 +716,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             room: room,
             selfPresence: selfPresence,
             server: next.serverPermissions,
+            staffSiteAdmin: ref.read(staffAccessProvider).isSiteAdmin,
+            walletRole: ref.read(staffAccessProvider).siteRole ??
+                ref.read(walletBalancesProvider).valueOrNull?.role,
           );
           final canSpeak = VoiceRoomSpeakAccess.canSpeak(
             user: user,

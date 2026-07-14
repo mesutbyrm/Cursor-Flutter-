@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.27+32 (2026-07-14)
+
+### Admin, ödeme, PK ve sesli oda düzeltmeleri
+- Jeton/CFC ödeme onay/red: doğru API uçları (`payment-requests` + `cfc-payment-requests`); boş talep kimliği düzeltildi
+- Ödeme bildirimleri sekmesinde **Onayla / Reddet** butonları
+- `admin` / `yonetici` nickleri cüzdan rolü beklemeden tam yetkili; `X-Staff-Role` admin API isteklerinde
+- Kurucu (yonetici) admin atayıp çıkarabilir; diğer adminler moderasyon rolleri
+- Sesli oda PK daveti uygulama genelinde dinlenir (`VoicePkInviteListener`)
+- Yetkililer odaya girince otomatik koltuk; sesli oda komut paneli basic modda da açılır
+- Admin hediye API ve kullanıcı yönetimi staff başlığı ile hizalandı
+
 ## 1.0.26+31 (2026-07-13)
 
 ### PK daveti + performans + komutlar

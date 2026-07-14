@@ -2,13 +2,24 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/auth/staff_roles.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../data/admin_remote_datasource.dart';
 import 'admin_providers.dart';
 import 'staff_access_provider.dart';
 
+String? _adminStaffRole(StaffAccess access) {
+  final u = access.username?.toLowerCase().trim() ?? '';
+  if (StaffRoles.managerUsernames.contains(u)) return u;
+  return access.siteRole ?? (access.isSiteAdmin ? 'admin' : null);
+}
+
 final adminRemoteProvider = Provider<AdminRemoteDataSource>((ref) {
-  return AdminRemoteDataSource(ref.watch(dioProvider));
+  final access = ref.watch(staffAccessProvider);
+  return AdminRemoteDataSource(
+    ref.watch(dioProvider),
+    staffRole: _adminStaffRole(access),
+  );
 });
 
 /// Admin panel — özet sayılar (kırmızı rozetler).
