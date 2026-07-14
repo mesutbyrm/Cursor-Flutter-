@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.30+35 (2026-07-14)
+
+### Sesli sohbet performans ve senkronizasyon
+- Oda girişi &lt; 1 sn: paralel presence+mesaj, optimistic kullanıcı, SSE hemen
+- Çıkış: anında yerel presence silme, koltuk clear, force SSE disconnect
+- Oda geçişi: aktif oturum kaydı, eski bağlantılar tam kapatma
+- Yetkili auto-seat: ~ & @ % sembolleri (oda sahibi öncelikli)
+- PK kabulünde TRTC/Agora prewarm
+- Profil prefetch; sohbet RepaintBoundary
+- Rapor: `docs/VOICE_CHAT_PERF_REPORT.md`
+
 ## 1.0.29+34 (2026-07-14)
 
 ### Performans optimizasyonu

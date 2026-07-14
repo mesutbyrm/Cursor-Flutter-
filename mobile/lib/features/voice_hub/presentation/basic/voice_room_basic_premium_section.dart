@@ -235,15 +235,17 @@ class VoiceRoomBasicChatFeed extends ConsumerWidget {
             itemCount: visible.length,
             itemBuilder: (context, index) {
               final msg = visible[visible.length - 1 - index];
-              return ChatMessageWidget(
-                key: ValueKey(msg.id),
-                message: msg,
-                showAvatar: true,
-                avatarUrl: msg.user?.id != null
-                    ? avatarById[msg.user!.id]
-                    : null,
-                onUserTap: onMention,
-                onUserDoubleTap: onUserPerms,
+              return RepaintBoundary(
+                child: ChatMessageWidget(
+                  key: ValueKey(msg.id),
+                  message: msg,
+                  showAvatar: true,
+                  avatarUrl: msg.user?.id != null
+                      ? avatarById[msg.user!.id]
+                      : null,
+                  onUserTap: onMention,
+                  onUserDoubleTap: onUserPerms,
+                ),
               );
             },
           ),

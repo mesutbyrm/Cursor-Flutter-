@@ -54,6 +54,16 @@ class SseConnectionHub {
     }
   }
 
+  /// Odadan çıkış / oda değişimi — anında SSE kesilir (ref sayacı yok sayılır).
+  void forceReleaseVoiceRoom(String roomId) {
+    final id = roomId.trim();
+    final lease = _voiceRooms[id];
+    if (lease == null) return;
+    lease.refCount = 0;
+    unawaited(lease.service.disconnect());
+    _voiceRooms.remove(id);
+  }
+
   int voiceRoomRefCount(String roomId) =>
       _voiceRooms[roomId.trim()]?.refCount ?? 0;
 

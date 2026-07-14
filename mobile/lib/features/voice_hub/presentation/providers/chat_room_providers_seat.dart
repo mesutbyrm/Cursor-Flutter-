@@ -16,6 +16,11 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     if (staff.isFounder) {
       return VoiceRoomSeatPriority.tierAdmin;
     }
+
+    final symbol = self?.roleSymbol ?? _roleSymbolForUser(user);
+    final symTier = VoiceRoomSeatPriority.tierFromRoleSymbol(symbol);
+    if (symTier != null) return symTier;
+
     final tier = VoiceRoomSeatPriority.forUser(
       user,
       room: _roomMeta,

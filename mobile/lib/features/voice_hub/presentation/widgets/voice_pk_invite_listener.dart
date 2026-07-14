@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
@@ -170,6 +171,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
       if (accept) {
         await remote.accept(inviteId, roomId: key, alternateRoomId: alt);
         if (!mounted) return;
+        VoiceRoomEntryPerf.prewarmOnRoomTap(ref, room);
         context.push('/voice-room/$key/pk', extra: room);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
