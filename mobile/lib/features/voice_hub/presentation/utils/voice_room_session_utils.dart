@@ -9,12 +9,16 @@ import '../providers/voice_room_session_registry.dart';
 
 /// Oda değiştirmeden önce aktif oturumu güvenle kapat.
 Future<void> teardownVoiceRoomBeforeSwitch(
-  Ref ref, {
+  WidgetRef ref, {
   required String liveKey,
   String source = 'room_switch',
 }) async {
   if (liveKey.trim().isEmpty) return;
-  clearVoiceRoomLiveSession(ref, liveKey);
+  final key = liveKey.trim();
+  final active = ref.read(voiceRoomActiveLiveKeyProvider);
+  if (active == key) {
+    ref.read(voiceRoomActiveLiveKeyProvider.notifier).state = null;
+  }
   ref.read(pkBattleRemoteProvider.notifier).clear();
   ref.read(voiceRoomGiftRealtimeProvider).stop();
   ref.read(voiceRecentGiftsProvider.notifier).clear();
@@ -28,7 +32,7 @@ Future<void> teardownVoiceRoomBeforeSwitch(
 
 /// Önceki oda (varsa) tamamen kapatılır, ardından yeni oda kaydedilir.
 Future<void> prepareVoiceRoomSwitch(
-  Ref ref, {
+  WidgetRef ref, {
   required String nextLiveKey,
   String source = 'room_switch',
 }) async {

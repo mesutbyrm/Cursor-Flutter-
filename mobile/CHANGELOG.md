@@ -4,7 +4,7 @@
 ## 1.0.31+36 (2026-07-14)
 
 ### Derleme düzeltmesi (CodeQL)
-- `voice_room_session_utils.dart`: `WidgetRef` → `Ref` tip uyumu (java-kotlin CodeQL derlemesi)
+- `voice_room_session_utils.dart`: `WidgetRef`/`Ref` tip uyumu — registry çağrısı inline (java-kotlin CodeQL derlemesi)
 
 ## 1.0.30+35 (2026-07-14)
 
