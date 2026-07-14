@@ -30,6 +30,9 @@ class ProfilePage extends ConsumerWidget {
     final user = ref.watch(authControllerProvider.select((a) => a.valueOrNull));
     final guest = ref.watch(guestModeProvider);
     final top = MediaQuery.paddingOf(context).top;
+    if (user != null) {
+      ProfileLoadPerf.prefetchOnOpen(ref, user.id);
+    }
 
     Future<void> refresh() async {
       HapticFeedback.mediumImpact();

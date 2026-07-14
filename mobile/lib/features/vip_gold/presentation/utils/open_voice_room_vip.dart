@@ -11,6 +11,7 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../voice_hub/presentation/pages/voice_gold_vip_page.dart';
 import '../../../voice_hub/presentation/providers/chat_room_providers.dart';
+import '../../../voice_hub/presentation/providers/voice_room_session_registry.dart';
 import '../../../voice_hub/presentation/utils/voice_room_session_utils.dart';
 import '../../domain/voice_room_access.dart';
 import '../providers/vip_membership_provider.dart';
@@ -66,16 +67,7 @@ Future<void> _enterVoiceRoom(
   VoiceRoomEntity room,
 ) async {
   final nextKey = room.liveKey;
-  final rooms = ref.read(voiceRoomsProvider).valueOrNull;
-  if (rooms != null) {
-    for (final r in rooms) {
-      final key = r.liveKey;
-      if (key.isEmpty || key == nextKey) continue;
-      if (r.ownerId == ref.read(currentUserIdProvider)) {
-        await teardownVoiceRoomBeforeSwitch(ref, liveKey: key);
-      }
-    }
-  }
+  await prepareVoiceRoomSwitch(ref, nextLiveKey: nextKey);
 
   VoiceRoomEntryPerf.prewarmOnRoomTap(ref, room);
   if (!context.mounted) return;

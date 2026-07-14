@@ -379,8 +379,39 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     } catch (_) {}
   }
 
+  void _removeSelfFromPresenceOptimistic() {
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    if (userId == null || userId.isEmpty) return;
+    final remaining =
+        state.presence.where((p) => p.id != userId).toList(growable: false);
+    if (remaining.length == state.presence.length) return;
+    state = state.copyWith(presence: remaining, selfInRoom: false);
+    _knownPresenceIds.remove(userId);
+    _patchHubPresenceCount(remaining.length);
+  }
+
+  Future<void> _leavePresenceWithSeatClear() async {
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    if (userId != null && userId.isNotEmpty) {
+      try {
+        await ref.read(chatRoomRemoteProvider).clearSeat(
+              roomKey: _roomKey,
+              alternateKey: _musicAlternateKey,
+              userId: userId,
+            );
+      } catch (_) {}
+    }
+    await _leavePresence();
+  }
+
   Future<void> _presenceHeartbeatTick() async {
     if (_roomKey.isEmpty) return;
+    final last = _lastSseEventAt;
+    if (state.sseConnected &&
+        last != null &&
+        DateTime.now().difference(last) < const Duration(seconds: 45)) {
+      return;
+    }
     try {
       VoiceRoomDebugLog.log('api.presence.heartbeat', {'room': _roomKey});
       await ref.read(chatRoomRemoteProvider).presenceHeartbeat(_roomKey);

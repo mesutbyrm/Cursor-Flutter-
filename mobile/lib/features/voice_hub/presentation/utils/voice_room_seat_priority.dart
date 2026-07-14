@@ -132,9 +132,26 @@ abstract final class VoiceRoomSeatPriority {
     return tier;
   }
 
-  /// Oda sahibi, site admin, kanal yetkilileri, sesli yetkili ve DJ otomatik koltuk.
-  static bool shouldAutoSit(int tier) =>
-      tier >= tierVoice || tier == tierDj;
+  /// Oda sahibi, admin (%), moderatör (@), SOP (&), kurucu (~) — `+` hariç.
+  static bool shouldAutoSit(int tier) => tier >= tierOp;
+
+  static bool shouldAutoSitForSymbol(String? symbol) {
+    switch (symbol?.trim()) {
+      case '~':
+      case '&':
+      case '@':
+      case '%':
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  static int? tierFromRoleSymbol(String? symbol) {
+    if (!shouldAutoSitForSymbol(symbol)) return null;
+    final rank = _rankFromSymbol(symbol);
+    return tierForRank(rank);
+  }
 
   /// Sağ alt admin koltuğu (11) — admin oturabilsin diye her zaman görünür.
   static bool showAdminSeat(Map<int, ChatRoomPresence> seats) => true;

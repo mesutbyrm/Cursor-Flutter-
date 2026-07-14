@@ -37,6 +37,7 @@ import '../../domain/voice_playback_limits.dart';
 import '../../domain/voice_music_sync.dart';
 import '../../domain/utils/voice_banned_word_filter.dart';
 import '../../domain/voice_official_join.dart';
+import 'voice_room_session_registry.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import '../utils/voice_room_permissions.dart';
 import '../utils/kick_strike_ui.dart';
@@ -324,6 +325,7 @@ class VoiceRoomLiveController
   var _autoSeatAttempted = false;
   /// Odaya girince eski giriş/çıkış mesajları duyurulmasın.
   var _entrancesArmed = false;
+  DateTime? _lastSseEventAt;
 
   String? _effectiveNickname(UserEntity? user) {
     final server = state.myNickname?.trim();
@@ -514,10 +516,12 @@ class VoiceRoomLiveController
       _moderationToastTimer?.cancel();
       _kickWarningTimer?.cancel();
       if (_sessionActive) {
+        clearVoiceRoomLiveSession(ref, _roomKey);
+        _removeSelfFromPresenceOptimistic();
         unawaited(_leaveVoiceSession());
-        unawaited(_leavePresence());
+        unawaited(_leavePresenceWithSeatClear());
         unawaited(_stopTyping());
-        ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
+        ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(_roomKey);
         ref.read(voiceRoomGiftSocketProvider).disconnect();
       }
       final session = ref.read(voiceRoomMusicSessionProvider);
@@ -545,25 +549,55 @@ class VoiceRoomLiveController
     );
   }
 
-  /// Odaya giriş — POST presence → GET messages → SSE → heartbeat.
+  /// Odaya giriş — presence + mesajlar paralel; SSE hemen; UI bloklanmaz.
   Future<void> _beginRoomSession() async {
+    registerVoiceRoomLiveSession(ref, _roomKey);
     ref
         .read(voiceRoomMusicSessionProvider.notifier)
         .prepareForRoomEntry(_roomMeta);
     unawaited(VoiceRoomMusicAudioSession.ensureConfigured());
+    _seedOptimisticSelfPresence();
     state = state.copyWith(loading: false);
-
-    try {
-      await _joinPresence();
-      unawaited(_loadInitialMessages());
-    } catch (_) {
-      state = state.copyWith(loading: false);
-    }
 
     _startSse();
     _schedulePoll(sseConnected: false);
+
+    unawaited(_parallelEntryLoad());
     unawaited(_bootstrapRoomData());
   }
+
+  Future<void> _parallelEntryLoad() async {
+    try {
+      await Future.wait<void>([
+        _joinPresence(),
+        _loadInitialMessages(),
+      ]);
+    } catch (_) {
+      state = state.copyWith(loading: false);
+    }
+  }
+
+  void _seedOptimisticSelfPresence() {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null || _roomKey.isEmpty) return;
+    if (state.presence.any((p) => p.id == user.id)) return;
+    final self = ChatRoomPresence(
+      id: user.id,
+      name: user.display,
+      nickname: user.username,
+      image: user.avatarUrl,
+      chatRole: user.role ?? 'listener',
+      roleSymbol: _roleSymbolForUser(user),
+    );
+    final merged = [...state.presence, self];
+    state = state.copyWith(
+      presence: merged,
+      selfInRoom: true,
+      loading: false,
+    );
+  }
+
+  void _markSseActivity() => _lastSseEventAt = DateTime.now();
 
   Future<void> _loadInitialMessages() async {
     if (_roomKey.isEmpty) return;
@@ -740,15 +774,17 @@ class VoiceRoomLiveController
     if (!_sessionActive) return;
     _sessionActive = false;
     VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: source);
+    clearVoiceRoomLiveSession(ref, _roomKey);
+    _removeSelfFromPresenceOptimistic();
     _poll?.cancel();
     _presenceHeartbeat?.cancel();
     _typingStopTimer?.cancel();
     _sseStarted = false;
     _giftSocketStarted = false;
+    ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(_roomKey);
     unawaited(_leaveVoiceSession());
-    unawaited(_leavePresence());
+    unawaited(_leavePresenceWithSeatClear());
     unawaited(_stopTyping());
-    ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
     ref.read(voiceRoomGiftSocketProvider).disconnect();
 
     final player = ref.read(voiceRoomDjPlayerProvider);
@@ -898,6 +934,7 @@ class VoiceRoomLiveController
           accessToken: storage.readAccess,
           refreshTokens: () => tryRefreshAccessToken(refreshDio, storage),
           onConnected: () {
+            _markSseActivity();
             if (!state.sseConnected) {
               state = state.copyWith(sseConnected: true);
             }
@@ -1209,6 +1246,7 @@ class VoiceRoomLiveController
   }
 
   void _handleSseUserJoin(Map<String, dynamic> payload) {
+    _markSseActivity();
     final users = _presenceFromSsePayload(payload);
     if (users.isEmpty) return;
     final byId = {for (final p in state.presence) p.id: p};
@@ -1233,6 +1271,7 @@ class VoiceRoomLiveController
   }
 
   void _handleSseUserLeave(Map<String, dynamic> payload) {
+    _markSseActivity();
     final userId = payload['userId']?.toString() ?? payload['id']?.toString();
     if (userId == null || userId.isEmpty) return;
     ChatRoomPresence? departed;

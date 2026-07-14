@@ -9,9 +9,9 @@ import '../../features/trtc/presentation/providers/trtc_providers.dart';
 import '../../features/voice_hub/presentation/audio/voice_room_music_audio_session.dart';
 import '../providers/auth_selectors.dart';
 
-/// Sesli oda girişi — UI ≤2 sn; ses/TRTC arka planda hazırlanır.
+/// Sesli oda girişi — UI ≤1 sn; ses/TRTC arka planda hazırlanır.
 abstract final class VoiceRoomEntryPerf {
-  static const entryBudget = Duration(seconds: 2);
+  static const entryBudget = Duration(seconds: 1);
   static const trtcCacheTtl = Duration(minutes: 3);
 
   static final Map<String, _TrtcCacheEntry> _trtcCache = {};
