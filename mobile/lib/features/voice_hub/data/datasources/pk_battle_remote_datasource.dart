@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
@@ -24,19 +25,28 @@ class PkBattleRemoteDataSource {
     return null;
   }
 
+  @visibleForTesting
+  PkBattleRemote? parseBattleForTest(dynamic body) => _parseBattle(body);
+
   PkBattleRemote? _parseBattle(dynamic body) {
     final map = _unwrap(body);
     if (map == null) return null;
     // Yeni kontrat: GET → { activeBattle, pendingInvite }; accept → { battle };
     // invite POST → davetin kendisi (inviteId, status:pending).
+    final hasWrapper =
+        map.containsKey('activeBattle') || map.containsKey('pendingInvite');
     final raw = map['activeBattle'] ??
         map['battle'] ??
         map['pendingInvite'] ??
         map['pk'] ??
         map['full'] ??
-        map;
+        (hasWrapper ? null : map);
+    if (raw == null) return null;
     if (raw is! Map) return null;
-    return PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
+    final battle =
+        PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
+    if (battle.effectiveId.isEmpty) return null;
+    return battle;
   }
 
   Future<PkBattleRemote?> fetchRoomBattle(
@@ -70,19 +80,33 @@ class PkBattleRemoteDataSource {
     String? battleType,
     int limit = 20,
   }) async {
-    final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.pkHistory,
-      query: {
-        'battleType': ?battleType,
-        'limit': '$limit',
-      },
-    );
-    final map = _unwrap(res.data);
-    final list = map?['items'] ?? map?['history'] ?? res.data;
-    return asJsonList(list)
-        .map((e) => PkBattleRemote.fromJson(e))
-        .where((b) => b.id.isNotEmpty)
-        .toList();
+    for (final path in [ApiEndpoints.pkMeHistory, ApiEndpoints.pkHistory]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          path,
+          query: {
+            'battleType': ?battleType,
+            'limit': '$limit',
+          },
+        );
+        final map = _unwrap(res.data);
+        final list = map?['items'] ??
+            map?['history'] ??
+            map?['matches'] ??
+            res.data;
+        final items = asJsonList(list)
+            .map((e) => PkBattleRemote.fromJson(e))
+            .where((b) => b.id.isNotEmpty)
+            .toList();
+        if (items.isNotEmpty || path == ApiEndpoints.pkMeHistory) {
+          return items;
+        }
+      } on ApiException catch (e) {
+        if (e.statusCode == 404 && path == ApiEndpoints.pkHistory) continue;
+        if (path == ApiEndpoints.pkMeHistory) rethrow;
+      }
+    }
+    return const [];
   }
 
   /// `POST /api/chat/rooms/{myRoomId}/pk` — `{ guestUserId, durationSec }`.

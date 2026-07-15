@@ -2126,7 +2126,11 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 | `addToQueue` | POST | `/api/chat/rooms/{roomId}/music-queue` | ✅ | `{videoId, title, thumbnail?}` |
 | `requestSong` | POST | `/api/chat/rooms/{roomId}/song-request` | ✅ | `{videoId, title}` |
 | `transferOwnership` | POST | `/api/chat/rooms/{roomId}/transfer-ownership` | ✅ | `{newOwnerId}` |
-| **SSE** | GET | `/api/chat/rooms/{roomId}/stream` | ✅ | - |
+| `getPkStatus` | GET | `/api/chat/rooms/{roomId}/pk` | Opsiyonel | Games backend — `{ roomId, activeBattle, pendingInvite }` |
+| `invitePk` | POST | `/api/chat/rooms/{roomId}/pk` | ✅ | `{ guestUserId, durationSec }` |
+| `respondPk` | POST | `/api/chat/rooms/{roomId}/pk/{inviteId}/respond` | ✅ | `{ action: "accept" \| "reject" }` |
+| `endPk` | POST | `/api/chat/rooms/{roomId}/pk/{battleId}/end` | ✅ | — |
+| **SSE** | GET | `/api/chat/rooms/{roomId}/stream` | ✅ | Event `pk` — skor, davet, bitiş |
 
 ### 9.4 LiveStreamRepository
 

@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/token_storage.dart';
 import '../../data/datasources/pk_battle_remote_datasource.dart';
+import '../../data/services/pk_battle_socket_service.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_duration_options.dart';
 import 'pk_battle_provider.dart';
@@ -10,12 +12,17 @@ final pkBattleRemoteDataSourceProvider = Provider<PkBattleRemoteDataSource>((ref
   return PkBattleRemoteDataSource(ref.watch(dioProvider));
 });
 
-/// Sunucu PK senkronu — REST; canlı güncellemeler oda SSE üzerinden gelir.
+/// Sunucu PK senkronu — REST + Socket.IO yedek; odadayken SSE birincil.
 class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   PkBattleRemoteDataSource get _api => ref.read(pkBattleRemoteDataSourceProvider);
 
+  PkBattleSocketService? _socket;
+
   @override
-  PkBattleRemote? build() => null;
+  PkBattleRemote? build() {
+    ref.onDispose(disconnectSocket);
+    return null;
+  }
 
   Future<PkBattleRemote?> loadRoomBattle(String roomId, {String? alternateRoomId}) async {
     final battle = await _api.fetchRoomBattle(
@@ -180,16 +187,34 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     return battle;
   }
 
-  /// Eski çağrılar uyumluluk için korunur — PK artık oda SSE üzerinden gelir.
+  /// Socket.IO PK kanalı — web ile aynı olaylar; SSE yedek / oda dışı skor.
   void connectSocket({
     String? roomId,
     String? alternateRoomId,
     String? streamId,
     String? battleId,
-  }) {}
+  }) {
+    final hasRoom = roomId != null && roomId.trim().isNotEmpty;
+    final hasStream = streamId != null && streamId.trim().isNotEmpty;
+    if (!hasRoom && !hasStream) return;
 
-  /// Eski çağrılar uyumluluk için korunur — ayrı socket bağlantısı yok.
-  void disconnectSocket() {}
+    _socket ??= PkBattleSocketService();
+    final storage = ref.read(tokenStorageProvider);
+    _socket!.connect(
+      roomId: roomId,
+      alternateRoomId: alternateRoomId,
+      streamId: streamId,
+      battleId: battleId,
+      onUpdate: (battle, event) => _apply(battle, event),
+      accessToken: storage.readAccess,
+    );
+  }
+
+  /// Socket.IO bağlantısını kapat.
+  void disconnectSocket() {
+    _socket?.disconnect();
+    _socket = null;
+  }
 
   /// Oda SSE üzerinden gelen PK güncellemesi — socket bağlantısı gerekmez.
   void ingestSseBattle(PkBattleRemote battle) {
