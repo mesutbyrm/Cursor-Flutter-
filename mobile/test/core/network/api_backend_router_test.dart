@@ -126,6 +126,8 @@ void main() {
         ApiBackendRouter.resolve('/api/admin/gifts/abc123', method: 'PATCH'),
         ApiBackendKind.game,
       );
+    });
+
     test('sesli oda PK uçları Game backend', () {
       expect(
         ApiBackendRouter.resolve(
