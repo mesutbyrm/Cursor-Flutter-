@@ -20,6 +20,9 @@ import '../../features/video_call/presentation/incoming_video_call_screen.dart';
 import '../../features/voice_hub/presentation/widgets/voice_room/voice_room_global_music_bar.dart';
 import '../router/app_router.dart';
 import '../../core/bootstrap/voice_rooms_presence_scope.dart';
+import '../../core/network/sse/connectivity_sse_reconnect_provider.dart';
+import '../../core/widgets/offline_status_banner.dart';
+import '../../features/notifications/presentation/widgets/notifications_realtime_listener.dart';
 
 /// MaterialApp.router [builder] içeriği — [ListenableBuilder] kullanmaz.
 ///
@@ -100,6 +103,8 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(connectivitySseReconnectProvider);
+
     final router = ref.read(goRouterProvider);
     if (!identical(router, _router)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -115,6 +120,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
 
     var body = widget.child;
     if (!isAuthRoute) {
+      body = NotificationsRealtimeListener(child: body);
       body = DmRealtimeListener(child: body);
       body = DmVoiceCallHost(child: body);
       body = JetonPaymentStatusListener(child: body);
@@ -130,16 +136,18 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
       body = VoiceRoomsPresenceScope(child: body);
     }
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        body,
-        if (showGlobalMusic)
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: VoiceRoomGlobalMusicBar(routePath: location),
-          ),
-      ],
+    return OfflineStatusBanner(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          body,
+          if (showGlobalMusic)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: VoiceRoomGlobalMusicBar(routePath: location),
+            ),
+        ],
+      ),
     );
   }
 }

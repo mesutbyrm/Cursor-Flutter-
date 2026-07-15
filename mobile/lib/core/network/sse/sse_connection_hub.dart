@@ -115,6 +115,15 @@ class SseConnectionHub {
     }
     _videoStreams.clear();
   }
+
+  /// İnternet geri gelince aktif sesli oda SSE bağlantılarını yeniden kur.
+  Future<void> reconnectAllActive() async {
+    for (final lease in _voiceRooms.values) {
+      if (lease.refCount > 0) {
+        await lease.service.reconnectNow();
+      }
+    }
+  }
 }
 
 class _VoiceRoomLease {

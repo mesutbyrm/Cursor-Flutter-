@@ -1,6 +1,11 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.33+40 (2026-07-15)
+
+### Derleme düzeltmesi (CodeQL)
+- `api_backend_router_test.dart`: eksik `});` — admin hediye test bloğu kapanışı
+
 ## 1.0.33+39 (2026-07-15)
 
 ### Sesli oda PK parite

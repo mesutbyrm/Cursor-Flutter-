@@ -595,6 +595,7 @@ abstract final class ApiEndpoints {
       '/api/messages/conversations/$id/typing';
 
   static const notifications = '/api/notifications';
+  static const notificationsStream = '/api/notifications/stream';
   static const notificationsPaymentClear = '/api/notifications/payment';
   static String notificationRead(String id) => '/api/notifications/$id/read';
 
