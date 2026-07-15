@@ -14,8 +14,7 @@ import '../performance/voice_room_entry_perf.dart';
 
 /// Ana kabuk açıldığında sık kullanılan verileri kademeli önceden yükler.
 ///
-/// Kademe 1 (T+200ms): cüzdan.
-/// Kademe 1b (T+600ms): bildirim + profil istatistikleri (paralel).
+/// Kademe 1 (T+200ms): cüzdan + bildirim + profil istatistikleri (paralel).
 /// Kademe 2 (T+1100ms): sohbet listesi.
 /// Kademe 3 (T+2200ms): shorts For You feed.
 /// Kademe 4 (T+3500ms): jeton paketleri.
@@ -26,14 +25,9 @@ void prefetchShellData(
   unawaited(
     Future<void>.delayed(delay, () {
       VoiceRoomEntryPerf.prewarmShell();
-      ref.read(walletBalancesProvider.future).ignore();
-    }),
-  );
-
-  unawaited(
-    Future<void>.delayed(StartupPerf.shellPrefetchTier1bDelay, () {
       unawaited(
         NetworkPerf.waitSilent([
+          ref.read(walletBalancesProvider.future),
           ref.read(notificationsListProvider.future),
           ref.read(profileStatsProvider.future),
         ]),

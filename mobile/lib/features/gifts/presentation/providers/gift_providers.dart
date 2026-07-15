@@ -18,9 +18,9 @@ final giftSoundServiceProvider = Provider<GiftSoundService>((ref) {
   return svc;
 });
 
-/// Mobil katalog — lazy, platform=mobile.
-final liveGiftCatalogProvider =
-    FutureProvider.autoDispose<List<GiftEntity>>((ref) async {
+/// Mobil katalog — oturum boyunca cache (HTTP + keepAlive).
+final liveGiftCatalogProvider = FutureProvider<List<GiftEntity>>((ref) async {
+  ref.keepAlive();
   final repo = ref.watch(giftRepositoryProvider);
   try {
     return await repo.fetchCatalog(platform: GiftPlatform.mobile);

@@ -68,6 +68,21 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
       ? walletRole
       : (authRole?.trim().isNotEmpty == true ? authRole : null);
 
+  final walletIsAdmin = wallet?.isAdmin == true;
+
+  // Sunucu admin rolü — tüm özellikler açık (web ile aynı).
+  if (walletIsAdmin) {
+    return StaffAccess(
+      canManagePayments: true,
+      isSiteAdmin: true,
+      showAdminPanel: true,
+      canManageGifts: true,
+      siteRole: siteRole?.trim().isNotEmpty == true ? siteRole : 'admin',
+      username: username,
+      isFounder: usernameIsFounder,
+    );
+  }
+
   final canManagePayments = wallet?.canManagePayments == true ||
       wallet?.isAdmin == true ||
       usernameIsSiteAdmin ||

@@ -84,6 +84,13 @@ abstract class BaseSseService {
     );
   }
 
+  /// Ağ geri geldiğinde veya manuel yenileme — backoff sıfırlanır.
+  Future<void> reconnectNow() async {
+    if (_stopped || _accessToken == null) return;
+    _reconnectAttempt = 0;
+    await _openStream();
+  }
+
   void dispose() {
     unawaited(disconnect());
     status.dispose();

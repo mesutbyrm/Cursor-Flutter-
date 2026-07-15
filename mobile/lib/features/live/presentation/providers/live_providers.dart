@@ -35,6 +35,7 @@ final liveStreamsProvider = FutureProvider<List<LiveStreamEntity>>((ref) async {
 });
 
 final voiceRoomsProvider = FutureProvider<List<VoiceRoomEntity>>((ref) async {
+  ref.keepAlive();
   return ref.watch(liveRepositoryProvider).fetchVoiceRooms();
 });
 
