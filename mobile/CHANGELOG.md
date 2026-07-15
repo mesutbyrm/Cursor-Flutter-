@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.33+39 (2026-07-15)
+
+### Sesli oda PK parite
+- **Analiz:** `docs/PK_VOICE_ROOM_PARITY.md` — web vs Flutter endpoint, SSE, Socket.IO, iş akışı
+- **Düzeltme:** Boş `GET /pk` yanıtı (`activeBattle:null`) artık sahte davet üretmiyor
+- **PK geçmişi:** `/api/pk/me/history` öncelikli (games backend)
+- **Socket.IO:** PK skor/davet yedek kanalı yeniden etkin (`pk_battle_remote_provider`)
+- **Kılavuz:** `FLUTTER_ENTegrasyon_KILAVUZU.md` §9.3 sesli oda PK satırları
+
 ## 1.0.32+38 (2026-07-14)
 
 ### Derleme düzeltmesi (CodeQL)

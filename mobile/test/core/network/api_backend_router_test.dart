@@ -127,5 +127,32 @@ void main() {
         ApiBackendKind.game,
       );
     });
+
+    test('sesli oda PK uçları Game backend', () {
+      expect(
+        ApiBackendRouter.resolve(
+          '/api/chat/rooms/cm123/pk',
+        ),
+        ApiBackendKind.game,
+      );
+      expect(
+        ApiBackendRouter.resolve(
+          '/api/chat/rooms/cm123/pk/inv-1/respond',
+          method: 'POST',
+        ),
+        ApiBackendKind.game,
+      );
+      expect(
+        ApiBackendRouter.resolve(
+          '/api/chat/rooms/cm123/pk/battle-1/end',
+          method: 'POST',
+        ),
+        ApiBackendKind.game,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/chat/rooms/cm123/messages'),
+        ApiBackendKind.main,
+      );
+    });
   });
 }
