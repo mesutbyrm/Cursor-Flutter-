@@ -39,6 +39,7 @@ on:
       - 'scripts/run-release-gate.sh'
       - 'scripts/dart-analyze-gate.sh'
       - 'scripts/run-acceptance-tests.sh'
+      - 'scripts/ci-upload-apk-latest.sh'
       - '.github/workflows/build-apk.yml'
 
 permissions:
