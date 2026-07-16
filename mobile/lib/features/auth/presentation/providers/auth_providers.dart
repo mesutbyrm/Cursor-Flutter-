@@ -21,6 +21,8 @@ import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/active_session_entity.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../../../services/auth_service_provider.dart';
+import '../../../../core/network/auth_token_refresh_coordinator.dart';
 
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
   return AuthRemoteDataSource(ref.watch(dioProvider));
@@ -34,6 +36,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepositoryImpl(
     ref.watch(authRemoteDataSourceProvider),
     ref.watch(nativeAuthDataSourceProvider),
+    ref.watch(authServiceProvider),
     ref.watch(tokenStorageProvider),
     ref.watch(cookieJarProvider),
     ref.watch(sessionUserCacheProvider),
@@ -119,6 +122,15 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
   @override
   Future<UserEntity?> build() async {
+    AuthTokenRefreshCoordinator.instance.onSessionExpired = () {
+      unawaited(logout());
+    };
+    ref.onDispose(() {
+      if (AuthTokenRefreshCoordinator.instance.onSessionExpired != null) {
+        AuthTokenRefreshCoordinator.instance.onSessionExpired = null;
+      }
+    });
+
     AppStartupLog.authStart();
     _cancelBootWatchdog();
 
@@ -248,6 +260,24 @@ class AuthController extends AsyncNotifier<UserEntity?> {
           ref.read(authRepositoryProvider).loginWithGoogle(),
           timeout: _actionTimeout,
           message: 'Google girişi zaman aşımına uğradı',
+        );
+        final resolved = await _withSiteProfile(u);
+        await _afterAuthSuccess(resolved);
+        return resolved;
+      });
+      _clearGuestModeOnSuccess();
+    });
+  }
+
+  Future<void> loginWithApple({String? referralCode}) async {
+    await _runUserAction(() async {
+      state = await AsyncValue.guard(() async {
+        final u = await LoadingTimeout.run(
+          ref.read(authRepositoryProvider).loginWithApple(
+                referralCode: referralCode,
+              ),
+          timeout: _actionTimeout,
+          message: 'Apple girişi zaman aşımına uğradı',
         );
         final resolved = await _withSiteProfile(u);
         await _afterAuthSuccess(resolved);

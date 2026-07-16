@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
 
 class ApiException implements Exception {
-  const ApiException(this.message, {this.statusCode});
+  const ApiException(this.message, {this.statusCode, this.errorCode});
 
   final String message;
   final int? statusCode;
+  final String? errorCode;
 
   /// Dio hatalarını kullanıcıya gösterilebilir metne çevirir.
   static ApiException fromDio(DioException e) {
@@ -72,8 +73,18 @@ class ApiException implements Exception {
 
     String msg = e.message ?? 'Ağ hatası';
     if (body is Map) {
+      final parsed = _parseStructuredError(
+        Map<String, dynamic>.from(body),
+        statusCode: code,
+      );
+      if (parsed != null) return parsed;
       final m = body.cast<String, dynamic>();
-      msg = (m['message'] ?? m['error'] ?? m['detail'] ?? msg).toString();
+      final errField = m['error'];
+      if (errField is String) {
+        msg = errField;
+      } else {
+        msg = (m['message'] ?? m['detail'] ?? msg).toString();
+      }
     } else if (body is String && body.isNotEmpty) {
       if (body.startsWith('<!DOCTYPE') || body.startsWith('<html')) {
         msg = 'Sunucu HTML döndürdü (muhtemelen yanlış uç veya oturum yok).';
@@ -82,6 +93,33 @@ class ApiException implements Exception {
       }
     }
     return ApiException(msg, statusCode: code);
+  }
+
+  /// Yeni `{ success: false, error: { code, message } }` ve eski `{ error: "..." }`.
+  static ApiException? _parseStructuredError(
+    Map<String, dynamic> body, {
+    int? statusCode,
+  }) {
+    final nested = body['error'];
+    if (nested is Map) {
+      final err = Map<String, dynamic>.from(nested);
+      final message = (err['message'] ?? err['detail'])?.toString().trim();
+      final code = err['code']?.toString();
+      if (message != null && message.isNotEmpty) {
+        return ApiException(message, statusCode: statusCode, errorCode: code);
+      }
+    }
+    final flat = body['error'];
+    if (flat is String && flat.trim().isNotEmpty) {
+      return ApiException(flat.trim(), statusCode: statusCode);
+    }
+    if (body['success'] == false) {
+      final message = body['message']?.toString();
+      if (message != null && message.isNotEmpty) {
+        return ApiException(message, statusCode: statusCode);
+      }
+    }
+    return null;
   }
 
   /// Snackbar / dialog metni; ham DioException veya `toString` göstermez.

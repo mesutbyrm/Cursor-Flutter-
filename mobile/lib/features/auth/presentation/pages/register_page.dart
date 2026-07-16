@@ -111,6 +111,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     : () => ref
                         .read(authControllerProvider.notifier)
                         .loginWithGoogle(),
+                onApple: formBusy
+                    ? null
+                    : () => ref
+                        .read(authControllerProvider.notifier)
+                        .loginWithApple(),
                 onTikTok: formBusy
                     ? null
                     : () => ref

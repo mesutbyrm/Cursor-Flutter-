@@ -13,8 +13,10 @@ abstract final class ApiEndpoints {
   static const authMobileRegister = '/api/auth/mobile-register';
   static const authMobileLogin = '/api/auth/mobile-login';
   static const authMobileGoogle = '/api/auth/mobile-google';
+  static const authMobileApple = '/api/auth/mobile-apple';
   static const authMobileTiktok = '/api/auth/mobile-tiktok';
   static const authMobileRefresh = '/api/auth/mobile-refresh';
+  static const authLogout = '/api/auth/logout';
   static const authMobileSendVerification = '/api/auth/mobile-send-verification';
   static const authMobileVerifyEmail = '/api/auth/mobile-verify-email';
   static const authMobileSessions = '/api/auth/mobile-sessions';
@@ -24,6 +26,7 @@ abstract final class ApiEndpoints {
   static const authForgotPassword = '/api/auth/forgot-password';
   static const authResetPassword = '/api/auth/reset-password';
   static const authChangePassword = '/api/auth/change-password';
+  static const mobileConfig = '/api/mobile/config';
   static const me = '/api/me';
   static const meStats = '/api/users/me/stats';
   static const meGiftsReceived = '/api/users/me/gifts-received';
@@ -135,6 +138,10 @@ abstract final class ApiEndpoints {
       '/api/fortune-tellers/gifts?tellerId=${Uri.encodeComponent(tellerId.trim())}';
 
   static String fortuneTeller(String id) => '/api/fortune-tellers/$id';
+
+  /// `POST /api/fortune-tellers/{tellerId}/session`
+  static String fortuneTellerSessionFor(String tellerId) =>
+      '/api/fortune-tellers/$tellerId/session';
 
   static const fortuneTellerMyProfile = '/api/fortune-tellers/my-profile';
   static const fortuneTellerToggleOnline = '/api/fortune-tellers/toggle-online';
@@ -270,8 +277,23 @@ abstract final class ApiEndpoints {
   static String chatRoomMessages(String roomId) =>
       '/api/chat/rooms/$roomId/messages';
 
+  static String chatRoomMessage(String roomId, String messageId) =>
+      '/api/chat/rooms/$roomId/messages/$messageId';
+
   static String chatRoomPresence(String roomId) =>
       '/api/chat/rooms/$roomId/presence';
+
+  /// Koltuk yönetimi — kılavuz §9.3 `POST` (`action`, `seatIndex`).
+  static String chatRoomSeats(String roomId) =>
+      '/api/chat/rooms/$roomId/seats';
+
+  /// DJ müzik durumu — `GET/POST /api/chat/rooms/{roomId}/music`.
+  static String chatRoomMusic(String roomId) =>
+      '/api/chat/rooms/$roomId/music';
+
+  /// Şarkı isteği — `POST /api/chat/rooms/{roomId}/song-request`.
+  static String chatRoomSongRequest(String roomId) =>
+      '/api/chat/rooms/$roomId/song-request';
 
   /// Yetkili kullanıcı otomatik koltuk — üretim `join-seat`, yoksa `seats` fallback.
   static String chatRoomJoinSeat(String roomId) =>
@@ -295,6 +317,10 @@ abstract final class ApiEndpoints {
   /// POST body: `{ guestUserId, durationSec }` → pending davet.
   /// GET (public, poll): `{ roomId, activeBattle, pendingInvite }`.
   static String chatRoomPk(String roomId) => '/api/chat/rooms/$roomId/pk';
+
+  /// PK skor güncelleme — `POST /api/chat/rooms/{roomId}/pk/score`.
+  static String chatRoomPkScore(String roomId) =>
+      '/api/chat/rooms/$roomId/pk/score';
 
   /// Davete yanıt — `POST /api/chat/rooms/{roomId}/pk/{inviteId}/respond`
   /// body: `{ action: "accept" | "reject" }`.
@@ -525,6 +551,29 @@ abstract final class ApiEndpoints {
 
   static const giftsCatalog = '/api/gifts';
 
+  static const giftsTypes = '/api/gifts/types';
+
+  static const giftsSend = '/api/gifts/send';
+
+  static const giftsRecentBig = '/api/gifts/recent-big';
+
+  static const homepageButtons = '/api/homepage-buttons';
+
+  static const announcements = '/api/announcements';
+
+  static const horoscopeDaily = '/api/horoscope/daily';
+
+  static const creditPackages = '/api/credit-packages';
+
+  static const usersOnline = '/api/users/online';
+
+  static const gamesDailySpin = '/api/games/daily-spin';
+
+  static const gamesQuests = '/api/games/quests';
+
+  static String gamesQuestComplete(String questId) =>
+      '/api/games/quests/$questId';
+
   static String userProfile(String userId) => '/api/users/$userId';
 
   /// Kullanıcı adı ile profil — Flutter API dokümanı.
@@ -586,6 +635,12 @@ abstract final class ApiEndpoints {
 
   /// Engellenen kullanıcılar — kılavuz §9.2 UserRepository.
   static const userBlocked = '/api/user/blocked';
+
+  /// Toggle engelleme — `POST/GET /api/user/block` (yeni mobil uç).
+  static const userBlock = '/api/user/block';
+
+  /// Kullanıcı şikayet — `POST /api/user/report`.
+  static const userReport = '/api/user/report';
 
   static const conversations = messages;
   static String conversationMessages(String id) =>

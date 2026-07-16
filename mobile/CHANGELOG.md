@@ -1,6 +1,95 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+52 (2026-07-16)
+
+### CI / derleme düzeltmesi
+- **`parseResponseBody`:** servis katmanı `fromData` API uyumu
+- **`services_providers.dart`:** `Dio` + `auth_service_provider` import
+- **`api_exception.dart`:** `Map<dynamic, dynamic>` → `Map<String, dynamic>` cast
+
+## 1.0.44+51 (2026-07-16)
+
+### Flutter yeni endpoint'ler
+- **Apple Sign-In:** `AuthService.loginWithApple` / `signInWithApple` → `POST /api/auth/mobile-apple`; `APPLE_SERVICE_ID` env; giriş/kayıt UI
+- **Mobil config:** `ConfigService.getConfig` → `GET /api/mobile/config`; `MobileConfigGate` bakım / zorunlu / isteğe bağlı güncelleme
+- **Şifre değiştirme:** `AuthService.changePassword` → `POST /api/auth/change-password`; profil güvenlik sayfası PATCH yerine bu uç
+- **Kullanıcı engelleme:** `UserService.blockUser` (toggle), `getBlockedUsers` → `/api/user/block` (+ eski `/api/user/blocked` yedek)
+- **Kullanıcı şikayet:** `UserService.reportUser` → `POST /api/user/report`
+- **Modeller:** `AppleFullName`, `MobileConfig`, `UserBlockResult`, `UserReportResult`, `BlockedUserEntry`
+- **Rapor:** `docs/FLUTTER_BACKEND_UYUMLULUK_RAPORU.md`
+- **Test:** `new_endpoints_test.dart`
+
+## 1.0.43+50 (2026-07-16)
+
+### Flutter diğer servisler (13 modül)
+- **`profile_service.dart`:** getMe, updateProfile, getUser, follow, credits, XP, achievements, arama
+- **`gift_service.dart`:** types, send, recent-big
+- **`fortune_service.dart`:** generateFortune SSE (14 fal tipi slug eşlemesi)
+- **`teller_service.dart`:** falcı listesi, session, favoriler
+- **`social_service.dart`:** post, yorum, beğeni
+- **`short_video_service.dart`:** liste, presigned upload, like, comment
+- **`message_service.dart`:** DM konuşmalar ve mesajlar
+- **`notification_service.dart`:** liste, markRead, SSE
+- **`push_service.dart`:** FCM token kayıt/silme
+- **`upload_service.dart`:** presigned PUT yükleme
+- **`payment_service.dart`:** paketler, jeton, üyelik, cüzdan
+- **`game_service.dart`:** oyunlar, daily-spin, görevler
+- **`misc_service.dart`:** homepage, duyuru, liderlik, burç, günlük giriş, referral
+- **`services_providers.dart`:** tüm Riverpod provider'ları tek export
+- **Endpoint:** gifts/types, send, recent-big, homepage-buttons, credit-packages, games/quests, vb.
+- **Test:** `other_services_test.dart`
+
+## 1.0.42+49 (2026-07-16)
+
+### Flutter Canlı Yayın servisi
+- **`lib/services/stream_service.dart`:** yayın listesi, başlat/bitir, join/leave, SSE, yorum, hediye, beğeni
+- **Co-broadcast:** `getCoStatus`, `joinCo`, `inviteCo`
+- **Moderasyon:** `getMods`, `addMod`, `muteUser`, `banUser`
+- **RTC:** `fetchAgoraToken`, `fetchTrtcUserSig`
+- **Kılavuz §9.4 uyumu:** leave için `DELETE .../join` + `POST .../leave` yedek; gifts `{giftId, giftTypeId}`
+- **Modeller:** `StreamSummary`, `StreamComment`
+- **`stream_service_provider.dart`:** Riverpod + `SseClient`
+- **Test:** `stream_service_test.dart`
+
+## 1.0.41+48 (2026-07-16)
+
+### Flutter Chat servisi
+- **`lib/services/chat_service.dart`:** oda listesi, mesajlar, presence, typing, SSE, hediye, koltuk, ses, Agora/TRTC token, DJ/müzik, PK
+- **Kılavuz §9.3 uyumu:** presence `{action: join|leave}`, seats `POST/PATCH`, voice `{action}`, gifts `{giftId, receiverUserId}`
+- **Modeller:** `ChatRoomSummary`, `ChatServiceMessage`, `ChatPresence`, `ChatMusicHit`
+- **`chat_service_provider.dart`:** Riverpod + `SseClient`
+- **Endpoint:** `chatRoomSeats`, `chatRoomMusic`, `chatRoomSongRequest`, `chatRoomPkScore`, `chatRoomMessage`
+- **Test:** `chat_service_test.dart`
+- **Düzeltme:** `auth_service_provider.dart` import yolları
+
+## 1.0.40+47 (2026-07-16)
+
+### SSE istemcisi
+- **`lib/core/sse_client.dart`:** Dio ByteStream GET SSE — 5 endpoint + AI fal POST stream
+- **Olay parse:** `data: { "type", "data" }` + `event:` satırı desteği
+- **Reconnect:** exponential backoff (max 20), 401 → refresh → yeniden bağlan
+- **Yaşam döngüsü:** arka plan `pauseAll`, ön plan `resumeAll` (`MainAppShell`)
+- **`sse_client_provider.dart`:** Riverpod + JWT refresh
+- **Test:** `sse_client_test.dart`
+
+## 1.0.39+46 (2026-07-16)
+
+### API response modeli + parsing
+- **`lib/core/api_response.dart`:** `ApiResponse<T>`, `ApiError`, `FieldError`, `Pagination`
+- **`parseResponse`:** yeni `{ success, data, error }` + eski düz JSON / string `error`
+- **`apiPageQuery`:** `?page=1&limit=20` liste parametreleri
+- **Test:** `api_response_test.dart`
+
+## 1.0.38+45 (2026-07-16)
+
+### Flutter Auth servisi
+- **`lib/services/auth_service.dart`:** login, register, Google/TikTok, refresh, forgot/reset password, logout (`POST /api/auth/logout` + `DELETE /api/devices/fcm`)
+- **`AuthResponse` / `AuthUser` modelleri** — tüm auth uçları ortak format
+- **Token storage:** `accessToken`, `refreshToken`, `userId` (`flutter_secure_storage`)
+- **401 interceptor:** queue pattern ile tek refresh; başarısız → otomatik logout / login
+- **Hata formatı:** yeni `{ error: { code, message } }` + eski `{ error: "..." }`
+
 ## 1.0.37+44 (2026-07-16)
 
 ### Canlı PK polling kaldırma + kalan performans

@@ -3,7 +3,10 @@ import 'package:cookie_jar/cookie_jar.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/loading_timeout.dart';
 import '../../../../core/auth/session_user_cache.dart';
+import '../../../../core/network/cookie_jar_provider.dart';
 import '../../../../core/network/token_storage.dart';
+import '../../../../services/auth_service.dart';
+import '../../../../services/models/auth_response.dart';
 import '../../domain/entities/active_session_entity.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -15,6 +18,7 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(
     this._remote,
     this._native,
+    this._authService,
     this._tokens,
     this._cookieJar,
     this._sessionCache,
@@ -22,6 +26,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   final AuthRemoteDataSource _remote;
   final NativeAuthDataSource _native;
+  final AuthService _authService;
   final TokenStorage _tokens;
   final CookieJar _cookieJar;
   final SessionUserCache _sessionCache;
@@ -94,7 +99,12 @@ class AuthRepositoryImpl implements AuthRepository {
     final access = _pickToken(body);
     final refresh = _pickRefresh(body);
     if (access != null) {
-      await _tokens.writeTokens(access: access, refresh: refresh);
+      final um = _userMap(body);
+      await _tokens.writeTokens(
+        access: access,
+        refresh: refresh,
+        userId: um?['id']?.toString(),
+      );
     }
     final um = _userMap(body);
     if (um != null) {
@@ -113,13 +123,23 @@ class AuthRepositoryImpl implements AuthRepository {
     return entity;
   }
 
+  Future<UserEntity> _mapAuthResponse(AuthResponse response) async {
+    final dto = UserDto.fromApiMap(response.user.toJson());
+    final entity = dto.toEntity(role: dto.roleFrom(response.user.toJson()));
+    await _sessionCache.write(entity);
+    return entity;
+  }
+
   @override
   Future<UserEntity> login({
     required String identifier,
     required String password,
   }) async {
-    final body = await _remote.login(identifier: identifier, password: password);
-    return _persistAndMap(body);
+    final response = await _authService.login(
+      email: identifier,
+      password: password,
+    );
+    return _mapAuthResponse(response);
   }
 
   @override
@@ -133,29 +153,42 @@ class AuthRepositoryImpl implements AuthRepository {
     String? birthTime,
     String language = 'tr',
   }) async {
-    final body = await _remote.register(
+    final response = await _authService.register(
+      name: displayName,
       email: email,
       password: password,
-      displayName: displayName,
       username: username,
-      phone: phone,
       birthDate: birthDate,
       birthTime: birthTime,
-      language: language,
+      preferredLanguage: language,
     );
-    return _persistAndMap(body);
+    return _mapAuthResponse(response);
   }
 
   @override
   Future<UserEntity> loginWithGoogle() async {
     final body = await _native.signInWithGoogle();
-    return _persistAndMap(body);
+    if (body.containsKey('accessToken') || body.containsKey('access_token')) {
+      return _persistAndMap(body);
+    }
+    throw const ApiException('Google giriş yanıtı geçersiz');
+  }
+
+  @override
+  Future<UserEntity> loginWithApple({String? referralCode}) async {
+    final response = await _authService.signInWithApple(
+      referralCode: referralCode,
+    );
+    return _mapAuthResponse(response);
   }
 
   @override
   Future<UserEntity> loginWithTikTok() async {
     final body = await _native.signInWithTikTok();
-    return _persistAndMap(body);
+    if (body.containsKey('accessToken') || body.containsKey('access_token')) {
+      return _persistAndMap(body);
+    }
+    throw const ApiException('TikTok giriş yanıtı geçersiz');
   }
 
   @override
@@ -167,15 +200,17 @@ class AuthRepositoryImpl implements AuthRepository {
       return null;
     }
     try {
-      final me = await LoadingTimeout.run(
-        _remote.me(),
+      final validated = await LoadingTimeout.run(
+        _authService.validateSession(),
         timeout: const Duration(seconds: 8),
         message: 'Oturum doğrulanamadı',
       );
-      final um = _userMap(me) ?? me;
-      final merged = _mergeRoleHints(um, me);
-      final dto = UserDto.fromJson(merged);
-      final entity = dto.toEntity(role: dto.roleFrom(merged));
+      if (validated == null) {
+        await _sessionCache.clear();
+        return null;
+      }
+      final dto = UserDto.fromApiMap(validated.toJson());
+      final entity = dto.toEntity(role: dto.roleFrom(validated.toJson()));
       await _sessionCache.write(entity);
       return entity;
     } on ApiException catch (e) {
@@ -196,7 +231,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> requestPasswordReset(String email) async {
-    await _remote.requestPasswordReset(email);
+    await _authService.forgotPassword(email);
   }
 
   @override
@@ -228,13 +263,13 @@ class AuthRepositoryImpl implements AuthRepository {
     required String token,
     required String password,
   }) async {
-    await _remote.resetPassword(token: token, password: password);
+    await _authService.resetPassword(token: token, newPassword: password);
   }
 
   @override
   Future<void> logout() async {
+    await _authService.logout();
     await _cookieJar.deleteAll();
-    await _tokens.clear();
     await _sessionCache.clear();
   }
 }
