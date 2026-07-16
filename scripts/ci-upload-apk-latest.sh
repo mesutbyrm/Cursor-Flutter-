@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # apk-latest rolling release — gh CLI (publish-latest.sh ile aynı mantık).
-# GET 403 / view hatalarında yanlışlıkla "create" denemesini önler.
+# Not: Release GET bazen 403 döner; upload --clobber yine de çalışabilir.
 set -euo pipefail
 
 APK_PATH="${1:-canlifal-mobile-release.apk}"
@@ -36,9 +36,6 @@ HTTP_CODE="$(release_http_code)"
 echo "Release GET HTTP ${HTTP_CODE}"
 
 case "$HTTP_CODE" in
-  200)
-    echo "Mevcut apk-latest release — asset yükleniyor…"
-    ;;
   404)
     echo "apk-latest release yok — oluşturuluyor…"
     create_args=(
@@ -52,21 +49,25 @@ case "$HTTP_CODE" in
     echo "apk-latest oluşturuldu: ${TITLE}"
     exit 0
     ;;
+  200)
+    echo "Mevcut apk-latest release — asset yükleniyor…"
+    ;;
   403)
-    echo "Hata: Release API 403 — GITHUB_TOKEN yetersiz olabilir." >&2
-    echo "Çözüm: repo secret olarak GH_RELEASE_PAT (contents:write) ekleyin." >&2
+    echo "Uyarı: Release GET 403 — upload yine de deneniyor (view 403, upload OK bilinen durum)…" >&2
     cat /tmp/apk_latest_release.json >&2 || true
-    exit 1
     ;;
   *)
-    echo "Hata: Release API beklenmeyen yanıt ${HTTP_CODE}" >&2
+    echo "Uyarı: Release GET HTTP ${HTTP_CODE} — upload deneniyor…" >&2
     cat /tmp/apk_latest_release.json >&2 || true
-    exit 1
     ;;
 esac
 
-# Release mevcut — publish-latest.sh ile aynı (stderr gizleme yok)
-gh release upload apk-latest "$APK_PATH" --clobber "${gh_args[@]}"
+# publish-latest.sh ile aynı — stderr gizleme yok
+if ! gh release upload apk-latest "$APK_PATH" --clobber "${gh_args[@]}"; then
+  echo "Hata: gh release upload başarısız." >&2
+  echo "İpucu: repo secret GH_RELEASE_PAT (contents:write) ekleyin veya workflow izinlerini kontrol edin." >&2
+  exit 1
+fi
 
 if gh release edit apk-latest --title "$TITLE" --notes-file "$NOTES_PATH" "${gh_args[@]}"; then
   echo "Release meta güncellendi"
