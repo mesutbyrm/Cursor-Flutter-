@@ -305,6 +305,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_RELEASE_PAT: ${{ secrets.GH_RELEASE_PAT }}
         working-directory: ${{ github.workspace }}
         run: |
           set -eux
@@ -318,6 +319,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.publish_release == true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_RELEASE_PAT: ${{ secrets.GH_RELEASE_PAT }}
         working-directory: ${{ github.workspace }}
         run: |
           set -eux
