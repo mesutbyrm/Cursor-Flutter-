@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/network/dio_provider.dart';
+import '../../../../core/network/dio_provider.dart';
 import '../../data/datasources/live_room_remote_datasource.dart';
 import '../../data/datasources/trtc_remote_datasource.dart';
 import '../../domain/entities/trtc_credentials.dart';

@@ -1,6 +1,12 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+55 (2026-07-16)
+
+### CI düzeltmesi (CodeQL)
+- **`auth_providers.dart`:** TRTC bootstrap import yolu (`../../../trtc/...`)
+- **`trtc_providers.dart`:** `dio_provider` import yolu (`../../../../core/...`)
+
 ## 1.0.44+54 (2026-07-16)
 
 ### Tencent TRTC — Canlı Fal entegrasyonu
