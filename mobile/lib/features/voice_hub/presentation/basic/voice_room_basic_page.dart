@@ -209,6 +209,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         remote: ref.read(chatRoomRemoteProvider),
         enableMic: false,
         staffBypassVoiceApi: staffBypass,
+        userId: user.id,
       );
       if (!mounted) return;
       unawaited(VoiceRoomMusicAudioSession.activateForPlayback());

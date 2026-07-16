@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.36+43 (2026-07-16)
+
+### Sesli oda + PK performans (web paritesi)
+- **Paralel oda girişi:** presence, mesajlar, PK durumu, hediye kataloğu, üye listesi `Future.wait`
+- **Agora token ön-isıtma:** oda listesi dokunuşunda arka planda; girişte `POST /voice` + Agora paralel
+- **PK davet:** HTTP polling kaldırıldı — Socket.IO (sahip odalar) + oda SSE; 30 sn popup
+- **PK banner:** 4 sn poll kaldırıldı; SSE/socket ile anlık güncelleme
+- **Presence:** SSE `user_left` anında listeden düşürür
+- **API:** connectTimeout 3 sn, receiveTimeout 5 sn; retry exponential backoff (max 2)
+- **Kabuk:** hediye kataloğu prefetch
+
 ## 1.0.35+42 (2026-07-16)
 
 ### Canlı PK / hediye / yayın stabilizasyonu

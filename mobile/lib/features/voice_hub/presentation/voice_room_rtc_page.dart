@@ -426,7 +426,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
   }
 
-  Future<UserEntity?> _waitForAuth({Duration timeout = const Duration(seconds: 12)}) async {
+  Future<UserEntity?> _waitForAuth({Duration timeout = const Duration(seconds: 1)}) async {
+    final cached = ref.read(authControllerProvider).valueOrNull;
+    if (cached != null) return cached;
     final auth = ref.read(authControllerProvider);
     if (!auth.isLoading) return auth.valueOrNull;
     try {
@@ -465,7 +467,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       try {
         final rooms = await ref
             .read(voiceRoomsProvider.future)
-            .timeout(const Duration(seconds: 15));
+            .timeout(const Duration(seconds: 3));
         room = _roomSynced(rooms);
         if (room.apiRoomKey.isNotEmpty) {
           _pinnedLiveRoomKey = room.liveKey;
@@ -504,6 +506,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         roomId: roomId,
         remote: ref.read(chatRoomRemoteProvider),
         enableMic: false,
+        userId: user.id,
       );
       if (mounted) {
         ref.read(voiceRoomDiagnosticProvider.notifier).setTrtc(
@@ -548,10 +551,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final roomKey = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
     if (roomKey.isEmpty) return;
     final remote = ref.read(pkBattleRemoteProvider.notifier);
-    await remote.loadRoomBattle(
-      roomKey,
+    remote.connectSocket(
+      roomId: roomKey,
       alternateRoomId: r.slug != roomKey ? r.slug : null,
     );
+    unawaited(remote.loadRoomBattle(
+      roomKey,
+      alternateRoomId: r.slug != roomKey ? r.slug : null,
+    ));
     if (!mounted) return;
     final battle = ref.read(pkBattleRemoteProvider);
     if (battle == null || battle.isEnded) {

@@ -53,6 +53,8 @@ class VoiceAgoraEngine {
   Future<void> joinVoice(
     String roomId, {
     bool publishMic = true,
+    AgoraCredentials? prefetchedCredentials,
+    String role = 'audience',
   }) async {
     if (!isSupported) {
       throw const VoiceAgoraException(
@@ -95,14 +97,14 @@ class VoiceAgoraEngine {
         await Future<void>.delayed(const Duration(milliseconds: 250));
       }
 
-      final role = publishMic ? 'host' : 'audience';
-      AgoraCredentials? credentials;
+      final effectiveRole = publishMic ? 'host' : role;
+      AgoraCredentials? credentials = prefetchedCredentials;
       final tokenSource = _tokenSource;
-      if (tokenSource != null) {
+      if (credentials == null && tokenSource != null) {
         try {
           credentials = await tokenSource.fetchVoiceRoomToken(
             roomId: rawRoomId,
-            role: role,
+            role: effectiveRole,
           );
         } catch (e, st) {
           _logFailure('fetchVoiceRoomToken', e, st, extra: {'channel': channel});

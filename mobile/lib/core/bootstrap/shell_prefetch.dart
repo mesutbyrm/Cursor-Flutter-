@@ -10,6 +10,7 @@ import '../../../features/shorts/domain/repositories/shorts_repository.dart';
 import '../../../features/shorts/presentation/providers/shorts_providers.dart';
 import 'startup_perf.dart';
 import '../performance/network_perf.dart';
+import '../../../features/voice_hub/presentation/providers/voice_gift_providers.dart';
 import '../performance/voice_room_entry_perf.dart';
 
 /// Ana kabuk açıldığında sık kullanılan verileri kademeli önceden yükler.
@@ -32,6 +33,9 @@ void prefetchShellData(
           ref.read(profileStatsProvider.future),
         ]),
       );
+      try {
+        ref.read(chatRoomGiftsRemoteProvider).fetchGiftTypes().ignore();
+      } catch (_) {}
     }),
   );
 

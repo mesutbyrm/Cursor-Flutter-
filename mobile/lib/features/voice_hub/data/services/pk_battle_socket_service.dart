@@ -16,6 +16,7 @@ class PkBattleSocketService {
   void connect({
     String? roomId,
     String? alternateRoomId,
+    List<String>? roomKeys,
     String? streamId,
     String? battleId,
     required void Function(PkBattleRemote battle, String event) onUpdate,
@@ -24,12 +25,20 @@ class PkBattleSocketService {
     _onUpdate = onUpdate;
     _streamId = streamId;
     _battleId = battleId;
-    _roomKeys = roomId == null
-        ? const []
-        : VoiceRoomSocketHelper.joinKeys(
-            primary: roomId,
-            alternate: alternateRoomId,
-          );
+    if (roomKeys != null && roomKeys.isNotEmpty) {
+      _roomKeys = roomKeys
+          .map((k) => k.trim())
+          .where((k) => k.isNotEmpty)
+          .toSet()
+          .toList(growable: false);
+    } else {
+      _roomKeys = roomId == null
+          ? const []
+          : VoiceRoomSocketHelper.joinKeys(
+              primary: roomId,
+              alternate: alternateRoomId,
+            );
+    }
 
     Future.microtask(() async {
       try {
