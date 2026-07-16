@@ -9,9 +9,9 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../agora/domain/entities/agora_credentials.dart';
-import '../../../agora/presentation/agora_room_manager.dart';
-import '../../../agora/presentation/providers/agora_providers.dart';
+import '../../../trtc/domain/entities/trtc_credentials.dart';
+import '../../../trtc/presentation/trtc_room_manager.dart';
+import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../data/host_live_stream_recovery.dart';
 import '../../domain/entities/live_broadcast_prep_args.dart';
 import '../../domain/entities/live_broadcast_session.dart';
@@ -35,7 +35,7 @@ class LiveBroadcastPrepPage extends ConsumerStatefulWidget {
 
 class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
   final _title = TextEditingController();
-  AgoraRoomManager _agora = AgoraRoomManager();
+  TrtcRoomManager _trtc = TrtcRoomManager();
   Key _localPreviewKey = UniqueKey();
 
   var _micOn = true;
@@ -91,12 +91,12 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
     try {
       final streamId = session.streamId!.trim();
       final cred = await ref
-          .read(agoraRemoteProvider)
-          .fetchToken(channelName: streamId, role: 'host');
+          .read(trtcRemoteProvider)
+          .fetchToken(roomId: streamId, role: 'host');
       _navigatedToRoom = true;
       await context.push(
         '/live/room',
-        extra: session.copyWith(agora: cred, hostUserId: user.id),
+        extra: session.copyWith(trtc: cred, hostUserId: user.id),
       );
       await HostLiveStreamRecovery.clear();
       if (mounted) {
@@ -123,7 +123,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         ref.read(liveRepositoryProvider).endVideoStream(orphan).catchError((_) {}),
       );
     }
-    _agora.dispose();
+    _trtc.dispose();
     super.dispose();
   }
 
@@ -144,7 +144,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
       }
       return;
     }
-    if (!_agora.isSupported) {
+    if (!_trtc.isSupported) {
       if (mounted) {
         setState(
           () => _previewError = 'Kamera yalnızca Android/iOS cihazlarda çalışır',
@@ -154,7 +154,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
     }
 
     if (mounted) setState(() => _previewLoading = true);
-    final ok = await AgoraRoomManager.requestPermissions(video: true);
+    final ok = await TrtcRoomManager.requestPermissions(video: true);
     if (!ok) {
       if (mounted) {
         setState(() {
@@ -166,22 +166,8 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
     }
 
     try {
-      final previewChannel = 'preview-${user.id}';
-      AgoraCredentials cred;
-      try {
-        cred = await ref.read(agoraRemoteProvider).fetchToken(
-              channelName: previewChannel,
-              role: 'host',
-            );
-      } catch (_) {
-        cred = AgoraCredentials(
-          token: '',
-          channelName: previewChannel,
-          appId: AgoraCredentials.defaultAppId,
-        );
-      }
-      await _agora.startPreviewOnly(appId: cred.appId);
-      ref.read(liveBeautyProvider.notifier).bindRtc(agora: _agora);
+      await _trtc.startPreviewOnly();
+      ref.read(liveBeautyProvider.notifier).bindRtc(trtc: _trtc);
       if (mounted) {
         setState(() {
           _previewReady = true;
@@ -208,7 +194,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
       );
       return;
     }
-    if (!_agora.isSupported) {
+    if (!_trtc.isSupported) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Canlı yayın yalnızca Android/iOS cihazlarda desteklenir'),
@@ -224,16 +210,12 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         setState(() => _previewReady = false);
       }
 
-      // Agora handoff — motor kapatma da nadiren takılabilir, koruma altına alındı.
-      await _agora.shutdownForHandoff().timeout(
+      await _trtc.shutdownForHandoff().timeout(
         const Duration(seconds: 8),
-        onTimeout: () {
-          // Motor kapatılamasa bile akışı durdurmuyoruz; yeni instance
-          // oluşturmak güvenlidir, eski referans çöp toplanır.
-        },
+        onTimeout: () {},
       );
       await Future<void>.delayed(const Duration(milliseconds: 350));
-      _agora = AgoraRoomManager();
+      _trtc = TrtcRoomManager();
 
       var roomId = 'live-${DateTime.now().millisecondsSinceEpoch}';
       if (Env.useMobileAuth) {
@@ -264,11 +246,11 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         _orphanStreamId = roomId;
       }
 
-      final AgoraCredentials agora;
+      final TrtcCredentials trtc;
       try {
-        agora = await ref
-            .read(agoraRemoteProvider)
-            .fetchToken(channelName: roomId, role: 'host')
+        trtc = await ref
+            .read(trtcRemoteProvider)
+            .fetchToken(roomId: roomId, role: 'host')
             .timeout(const Duration(seconds: 15));
       } on TimeoutException {
         throw StateError(
@@ -292,7 +274,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         coverImageUrl: _localBackgroundPath ?? _backgroundUrl ?? user.avatarUrl,
       ).copyWith(
         streamId: roomId,
-        agora: agora,
+        trtc: trtc,
         hostUserId: user.id,
         initialMicOn: _micOn,
         initialCameraOn: _cameraOn,
@@ -303,7 +285,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
       _orphanStreamId = null;
       await context.push('/live/room', extra: session);
       if (mounted) {
-        _agora = AgoraRoomManager();
+        _trtc = TrtcRoomManager();
         if (context.canPop()) {
           context.pop();
         }
@@ -316,7 +298,6 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ApiException.userMessage(e))),
         );
-        // Buton tekrar denenebilir olsun diye önizlemeyi de sıfırlıyoruz.
         setState(() => _previewReady = false);
       }
     } finally {
@@ -357,7 +338,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         children: [
           _backgroundLayer(),
           if (_previewReady && _cameraOn)
-            AgoraLocalVideoView(key: _localPreviewKey, manager: _agora),
+            TrtcLocalVideoView(key: _localPreviewKey, manager: _trtc),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -534,7 +515,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                                 : Icons.videocam_off_rounded,
                             onTap: () async {
                               final next = !_cameraOn;
-                              await _agora.setCameraEnabled(next);
+                              _trtc.setCameraEnabled(next);
                               if (!mounted) return;
                               setState(() {
                                 _cameraOn = next;
@@ -546,14 +527,14 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                           _ControlBtn(
                             icon: _micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
                             onTap: () {
-                              _agora.setMicEnabled(!_micOn);
+                              _trtc.setMicEnabled(!_micOn);
                               setState(() => _micOn = !_micOn);
                             },
                           ),
                           const SizedBox(width: 14),
                           _ControlBtn(
                             icon: Icons.cameraswitch_rounded,
-                            onTap: _agora.switchCamera,
+                            onTap: _trtc.switchCamera,
                           ),
                           const SizedBox(width: 14),
                           _ControlBtn(

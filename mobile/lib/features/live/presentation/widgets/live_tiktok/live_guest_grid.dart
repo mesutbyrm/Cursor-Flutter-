@@ -6,24 +6,21 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../domain/entities/live_guest_layout.dart';
 import '../../../domain/entities/live_guest_slot.dart';
-import '../../../../agora/presentation/agora_room_manager.dart';
 import '../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../providers/live_guest_grid_provider.dart';
 import '../../gifts/widgets/live_seat_gift_flash_stack.dart';
 
-/// TikTok Party tarzı çoklu yayın grid — 2/4/6/9 koltuk.
+/// TikTok Party tarzı çoklu yayın grid — 2/4/6/9 koltuk (TRTC).
 class LiveGuestGrid extends ConsumerWidget {
   const LiveGuestGrid({
     super.key,
     required this.layout,
     required this.isHost,
-    this.agora,
     this.trtc,
     this.localPreviewKey,
     this.hostAvatarUrl,
     this.hostName,
     this.remoteUserId,
-    this.remoteUid,
     this.onInviteSlot,
     this.onGuestAction,
     this.hostJetonEarned = 0,
@@ -31,13 +28,11 @@ class LiveGuestGrid extends ConsumerWidget {
 
   final LiveGuestLayout layout;
   final bool isHost;
-  final AgoraRoomManager? agora;
   final TrtcRoomManager? trtc;
   final Key? localPreviewKey;
   final String? hostAvatarUrl;
   final String? hostName;
   final String? remoteUserId;
-  final int? remoteUid;
   final void Function(int slotIndex)? onInviteSlot;
   final void Function(int slotIndex, String action)? onGuestAction;
   final int hostJetonEarned;
@@ -55,16 +50,15 @@ class LiveGuestGrid extends ConsumerWidget {
 
     Widget cell(int i) {
       final slot = i < slots.length ? slots[i] : LiveGuestSlot(index: i);
+      final remoteId = slot.rtcUserId ?? slot.userId ?? (i == 1 ? remoteUserId : null);
       return _SlotCell(
         slot: slot,
         isHost: isHost,
-        agora: agora,
         trtc: trtc,
         localPreviewKey: i == 0 ? localPreviewKey : null,
         hostAvatarUrl: hostAvatarUrl,
         hostName: hostName,
-        remoteUid: slot.agoraUid ?? (i == 1 ? remoteUid : null),
-        remoteUserId: slot.userId ?? (i == 1 ? remoteUserId : null),
+        remoteUserId: remoteId,
         hostJetonEarned: hostJetonEarned,
         pinned: grid.pinnedIndex == i,
         onInvite: onInviteSlot == null ? null : () => onInviteSlot!(i),
@@ -76,7 +70,6 @@ class LiveGuestGrid extends ConsumerWidget {
 
     const gap = SizedBox(width: 3, height: 3);
 
-    // 2'li: yan yana 2 eşit dikdörtgen.
     if (layout == LiveGuestLayout.duo) {
       return Row(
         children: [
@@ -87,7 +80,6 @@ class LiveGuestGrid extends ConsumerWidget {
       );
     }
 
-    // 3'lü: sol yarı yayıncı (tam yükseklik), sağ yarı dikey 2 parça.
     if (layout == LiveGuestLayout.trio) {
       return Row(
         children: [
@@ -106,7 +98,6 @@ class LiveGuestGrid extends ConsumerWidget {
       );
     }
 
-    // 4'lü: eşit 2x2.
     if (layout == LiveGuestLayout.quad) {
       return Column(
         children: [
@@ -133,7 +124,6 @@ class LiveGuestGrid extends ConsumerWidget {
       );
     }
 
-    // 6 / 9: eşit grid.
     final cross = layout.crossAxisCount;
     return GridView.builder(
       physics: const NeverScrollableScrollPhysics(),
@@ -154,38 +144,14 @@ class LiveGuestGrid extends ConsumerWidget {
   }
 
   Widget _soloView() {
-    if (isHost && (agora != null || trtc != null)) {
-      return _localVideo(localPreviewKey);
+    if (isHost && trtc != null) {
+      return TrtcLocalVideoView(key: localPreviewKey, manager: trtc!);
     }
-    if ((remoteUid != null || remoteUserId != null) &&
-        (agora != null || trtc != null)) {
-      return _remoteVideo(remoteUid, remoteUserId);
-    }
-    return const ColoredBox(color: Colors.black);
-  }
-
-  Widget _localVideo(Key? key) {
-    if (agora != null) {
-      return AgoraLocalVideoView(key: key, manager: agora!);
-    }
-    if (trtc != null) {
-      return TrtcLocalVideoView(key: key, manager: trtc!);
-    }
-    return const ColoredBox(color: Colors.black);
-  }
-
-  Widget _remoteVideo(int? uid, String? userId) {
-    if (agora != null) {
-      final id = uid ?? agora!.remoteUid;
-      if (id != null && id > 0) {
-        return AgoraRemoteVideoView(key: ValueKey(id), manager: agora!, uid: id);
-      }
-    }
-    if (userId != null && trtc != null) {
+    if (remoteUserId != null && trtc != null) {
       return TrtcRemoteVideoView(
-        key: ValueKey(userId),
+        key: ValueKey(remoteUserId),
         manager: trtc!,
-        userId: userId,
+        userId: remoteUserId!,
       );
     }
     return const ColoredBox(color: Colors.black);
@@ -196,12 +162,10 @@ class _SlotCell extends StatelessWidget {
   const _SlotCell({
     required this.slot,
     required this.isHost,
-    this.agora,
     this.trtc,
     this.localPreviewKey,
     this.hostAvatarUrl,
     this.hostName,
-    this.remoteUid,
     this.remoteUserId,
     this.pinned = false,
     this.onInvite,
@@ -211,12 +175,10 @@ class _SlotCell extends StatelessWidget {
 
   final LiveGuestSlot slot;
   final bool isHost;
-  final AgoraRoomManager? agora;
   final TrtcRoomManager? trtc;
   final Key? localPreviewKey;
   final String? hostAvatarUrl;
   final String? hostName;
-  final int? remoteUid;
   final String? remoteUserId;
   final bool pinned;
   final VoidCallback? onInvite;
@@ -230,23 +192,9 @@ class _SlotCell extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget child;
     if (slot.isHost || slot.index == 0) {
-      child = agora != null
-          ? AgoraLocalVideoView(key: localPreviewKey, manager: agora!)
-          : trtc != null
-              ? TrtcLocalVideoView(key: localPreviewKey, manager: trtc!)
-              : _placeholder(hostName ?? 'Sen', hostAvatarUrl);
-    } else if (slot.agoraUid != null && slot.agoraUid! > 0 && agora != null) {
-      child = AgoraRemoteVideoView(
-        key: ValueKey(slot.agoraUid),
-        manager: agora!,
-        uid: slot.agoraUid!,
-      );
-    } else if (remoteUid != null && agora != null) {
-      child = AgoraRemoteVideoView(
-        key: ValueKey(remoteUid),
-        manager: agora!,
-        uid: remoteUid!,
-      );
+      child = trtc != null
+          ? TrtcLocalVideoView(key: localPreviewKey, manager: trtc!)
+          : _placeholder(hostName ?? 'Sen', hostAvatarUrl);
     } else if (remoteUserId != null && trtc != null) {
       child = TrtcRemoteVideoView(
         key: ValueKey(remoteUserId),

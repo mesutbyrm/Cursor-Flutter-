@@ -1,23 +1,24 @@
 import 'package:canlifal_social/core/performance/live_entry_perf.dart';
-import 'package:canlifal_social/features/agora/domain/entities/agora_credentials.dart';
+import 'package:canlifal_social/features/trtc/domain/entities/trtc_credentials.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('takeAgora returns cached credentials once', () {
-    const cred = AgoraCredentials(
-      token: 'tok',
-      channelName: 'stream-1',
-      appId: AgoraCredentials.defaultAppId,
+  test('takeTrtc returns cached credentials once', () {
+    const cred = TrtcCredentials(
+      sdkAppId: 1400000000,
+      userId: 'u1',
+      userSig: 'sig',
+      roomId: 'stream-1',
     );
-    LiveEntryPerf.testPutAgora(
+    LiveEntryPerf.testPutTrtc(
       userId: 'u1',
       streamId: 'stream-1',
       cred: cred,
     );
     expect(
-      LiveEntryPerf.takeAgora(userId: 'u1', streamId: 'stream-1')?.token,
-      'tok',
+      LiveEntryPerf.takeTrtc(userId: 'u1', streamId: 'stream-1')?.userSig,
+      'sig',
     );
-    expect(LiveEntryPerf.takeAgora(userId: 'u1', streamId: 'stream-1'), isNull);
+    expect(LiveEntryPerf.takeTrtc(userId: 'u1', streamId: 'stream-1'), isNull);
   });
 }

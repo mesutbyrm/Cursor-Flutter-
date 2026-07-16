@@ -1,6 +1,6 @@
 import 'dart:async';
 
-/// Canlı fal video oturumu — TRTC birincil, Agora yedek.
+/// Canlı fal video oturumu — Tencent TRTC.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,9 +9,6 @@ import 'package:canlifal_social/core/network/live_debug_log.dart';
 import 'package:canlifal_social/features/auth/domain/entities/user_entity.dart';
 import 'package:canlifal_social/core/network/token_storage.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
-import 'package:canlifal_social/features/agora/domain/agora_channel_names.dart';
-import 'package:canlifal_social/features/agora/presentation/agora_room_manager.dart';
-import 'package:canlifal_social/features/agora/presentation/providers/agora_providers.dart';
 import 'package:canlifal_social/features/live/presentation/providers/live_beauty_provider.dart';
 import 'package:canlifal_social/features/trtc/presentation/providers/trtc_providers.dart';
 import 'package:canlifal_social/features/trtc/presentation/trtc_live_room_coordinator.dart';
@@ -30,7 +27,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/providers/ps
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
 
-enum PsychicRtcBackend { none, trtc, agora }
+enum PsychicRtcBackend { none, trtc }
 
 class PsychicVideoState {
   const PsychicVideoState({
@@ -128,7 +125,6 @@ class PsychicVideoState {
 class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   PsychicVideoController(this.ref, this.session)
       : super(PsychicVideoState(remaining: Duration(minutes: session.durationMinutes))) {
-    _agora = AgoraRoomManager();
     _trtc = ref.read(trtcRoomManagerProvider);
     _bootstrap();
   }
@@ -136,7 +132,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   final Ref ref;
   final PsychicSessionEntity session;
 
-  late final AgoraRoomManager _agora;
   late final TrtcRoomManager _trtc;
   TrtcLiveRoomCoordinator? _trtcCoordinator;
   final _seenChatIds = <String>{};
@@ -149,26 +144,18 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   var _disposed = false;
   var _remoteEndHandled = false;
   final _seenSignalIds = <String>{};
-  String? _joinedChannel;
   String? _joinedTrtcRoom;
 
-  AgoraRoomManager get agora => _agora;
   TrtcRoomManager get trtc => _trtc;
-  PsychicRtcBackend get activeRtcBackend => state.rtcBackend;
-
-  bool get micOn =>
-      state.rtcBackend == PsychicRtcBackend.trtc ? _trtc.micOn : _agora.micOn;
-
-  bool get cameraOn => state.rtcBackend == PsychicRtcBackend.trtc
-      ? _trtc.cameraOn
-      : _agora.cameraOn;
+  bool get micOn => _trtc.micOn;
+  bool get cameraOn => _trtc.cameraOn;
 
   String get channelId {
     final fromRoom = state.room?.roomId?.trim();
     final raw = (fromRoom != null && fromRoom.isNotEmpty)
         ? fromRoom
         : session.trtcRoomId;
-    return AgoraChannelNames.forRoom(raw);
+    return raw.trim();
   }
 
   Future<void> _bootstrap() async {
@@ -349,41 +336,23 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     // kimliği null'dan gerçek değere dönse bile normalize kanal aynıysa
     // (room_{sessionId}) gereksiz yeniden bağlanma yapıp gecikme yaratma.
     if (newRoomId != null && newRoomId.isNotEmpty) {
-      if (state.rtcBackend == PsychicRtcBackend.trtc) {
-        if (_joinedTrtcRoom != null &&
-            newRoomId != _joinedTrtcRoom &&
-            (state.rtcReady || state.rtcError != null)) {
-          await _rejoinRtc();
-        }
-      } else {
-        final newChannel = AgoraChannelNames.forRoom(newRoomId);
-        if (newChannel.isNotEmpty &&
-            _joinedChannel != null &&
-            newChannel != _joinedChannel &&
-            (state.rtcReady || state.rtcError != null)) {
-          await _rejoinRtc();
-        }
+      if (_joinedTrtcRoom != null &&
+          newRoomId != _joinedTrtcRoom &&
+          (state.rtcReady || state.rtcError != null)) {
+        await _rejoinRtc();
       }
     }
   }
 
   Future<void> _rejoinRtc() async {
-    if (state.rtcBackend == PsychicRtcBackend.trtc) {
-      _joinedTrtcRoom = null;
-      try {
-        await _trtcCoordinator?.reconnect();
-        _joinedTrtcRoom = session.trtcRoomId;
-        state = state.copyWith(rtcReady: true, clearRtcError: true);
-      } catch (e) {
-        state = state.copyWith(rtcError: ApiException.userMessage(e));
-      }
-      return;
+    _joinedTrtcRoom = null;
+    try {
+      await _trtcCoordinator?.reconnect();
+      _joinedTrtcRoom = session.trtcRoomId;
+      state = state.copyWith(rtcReady: true, clearRtcError: true);
+    } catch (e) {
+      state = state.copyWith(rtcError: ApiException.userMessage(e));
     }
-    _joinedChannel = null;
-    await _agora.leave();
-    if (_disposed) return;
-    state = state.copyWith(rtcReady: false);
-    await _joinRtc();
   }
 
   Future<void> _sendPing() async {
@@ -479,20 +448,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     );
     if (info.roomId != null && info.roomId!.isNotEmpty) {
       final newRoomId = info.roomId!;
-      if (state.rtcBackend == PsychicRtcBackend.trtc) {
-        if (_joinedTrtcRoom != null &&
-            newRoomId != _joinedTrtcRoom &&
-            (state.rtcReady || state.rtcError != null)) {
-          unawaited(_rejoinRtc());
-        }
-      } else {
-        final newChannel = AgoraChannelNames.forRoom(newRoomId);
-        if (newChannel.isNotEmpty &&
-            _joinedChannel != null &&
-            newChannel != _joinedChannel &&
-            (state.rtcReady || state.rtcError != null)) {
-          unawaited(_rejoinRtc());
-        }
+      if (_joinedTrtcRoom != null &&
+          newRoomId != _joinedTrtcRoom &&
+          (state.rtcReady || state.rtcError != null)) {
+        unawaited(_rejoinRtc());
       }
     }
   }
@@ -529,6 +488,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       state = state.copyWith(rtcError: 'Oturum için giriş gerekli');
       return;
     }
+    if (!_trtc.isSupported) {
+      state = state.copyWith(rtcError: 'Video bu cihazda desteklenmiyor');
+      return;
+    }
 
     final trtcRoomId = session.trtcRoomId.trim();
     if (trtcRoomId.isEmpty) {
@@ -536,20 +499,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       return;
     }
 
-    if (_trtc.isSupported) {
-      try {
-        await _joinTrtc(user: user, roomId: trtcRoomId);
-        return;
-      } catch (e) {
-        LiveDebugLog.log('psychic.trtc.join.fail', {
-          'sessionId': session.sessionId,
-          'roomId': trtcRoomId,
-          'error': ApiException.userMessage(e),
-        });
-      }
-    }
-
-    await _joinAgora(user: user, roomId: channelId);
+    await _joinTrtc(user: user, roomId: trtcRoomId);
   }
 
   Future<void> _joinTrtc({
@@ -587,58 +537,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     );
     if (!session.isClient && !state.timerStarted) {
       unawaited(_ensureTimerStarted());
-    }
-  }
-
-  Future<void> _joinAgora({
-    required UserEntity user,
-    required String roomId,
-  }) async {
-    if (!_agora.isSupported) {
-      state = state.copyWith(rtcError: 'Video bu cihazda desteklenmiyor');
-      return;
-    }
-
-    LiveDebugLog.log('psychic.agora.join.request', {
-      'sessionId': session.sessionId,
-      'channel': roomId,
-      'userId': user.id,
-    });
-
-    try {
-      final cred = await ref.read(agoraRemoteProvider).fetchToken(
-            channelName: roomId,
-            role: 'host',
-          );
-      final effectiveChannel = cred.channelName.trim().isNotEmpty
-          ? cred.channelName.trim()
-          : roomId;
-
-      await _agora.joinTwoWayVideo(
-        credentials: cred.copyWith(channelName: effectiveChannel),
-      );
-      _joinedChannel = effectiveChannel;
-      ref.read(liveBeautyProvider.notifier).bindRtc(agora: _agora);
-      LiveDebugLog.log('psychic.agora.join.ok', {
-        'sessionId': session.sessionId,
-        'channel': effectiveChannel,
-        'uid': cred.uid,
-      });
-      state = state.copyWith(
-        rtcReady: true,
-        rtcBackend: PsychicRtcBackend.agora,
-        clearRtcError: true,
-      );
-      if (!session.isClient && !state.timerStarted) {
-        unawaited(_ensureTimerStarted());
-      }
-    } catch (e) {
-      LiveDebugLog.log('psychic.agora.join.fail', {
-        'sessionId': session.sessionId,
-        'channel': roomId,
-        'error': ApiException.userMessage(e),
-      });
-      state = state.copyWith(rtcError: ApiException.userMessage(e));
     }
   }
 
@@ -814,30 +712,14 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     await leave(silent: true);
   }
 
-  void toggleMic() {
-    if (state.rtcBackend == PsychicRtcBackend.trtc) {
-      _trtc.setMicEnabled(!_trtc.micOn);
-    } else {
-      _agora.setMicEnabled(!_agora.micOn);
-    }
-  }
+  void toggleMic() => _trtc.setMicEnabled(!_trtc.micOn);
 
   void toggleCamera() {
-    if (state.rtcBackend == PsychicRtcBackend.trtc) {
-      _trtc.setCameraEnabled(!_trtc.cameraOn);
-    } else {
-      _agora.setCameraEnabled(!_agora.cameraOn);
-    }
+    _trtc.setCameraEnabled(!_trtc.cameraOn);
     state = state.copyWith(localPreviewKey: state.localPreviewKey + 1);
   }
 
-  void switchCamera() {
-    if (state.rtcBackend == PsychicRtcBackend.trtc) {
-      _trtc.switchCamera();
-    } else {
-      _agora.switchCamera();
-    }
-  }
+  void switchCamera() => _trtc.switchCamera();
 
   Future<void> leave({
     bool silent = false,
@@ -865,11 +747,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     //    (Önceki sürümde ardışık ağ çağrıları takılırsa seans "kapanmıyordu".)
     unawaited(() async {
       try {
-        if (state.rtcBackend == PsychicRtcBackend.trtc) {
-          await _trtcCoordinator?.leave();
-        } else {
-          await _agora.leave();
-        }
+        await _trtcCoordinator?.leave();
       } catch (_) {}
     }());
 
@@ -981,7 +859,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
     _trtcCoordinator?.dispose();
     _trtcCoordinator = null;
-    _agora.dispose();
     super.dispose();
   }
 }

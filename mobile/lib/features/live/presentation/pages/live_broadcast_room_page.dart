@@ -28,8 +28,9 @@ import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
 import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
-import '../../../agora/presentation/agora_room_manager.dart';
-import '../../../agora/presentation/providers/agora_providers.dart';
+import '../../../trtc/presentation/trtc_room_manager.dart';
+import '../../../trtc/presentation/providers/trtc_providers.dart';
+import '../../../trtc/domain/entities/trtc_credentials.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../data/host_live_stream_recovery.dart';
 import '../../domain/entities/live_broadcast_session.dart';
@@ -102,7 +103,7 @@ class LiveBroadcastRoomPage extends ConsumerStatefulWidget {
 
 class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     with WidgetsBindingObserver {
-  final _agora = AgoraRoomManager();
+  final _trtc = TrtcRoomManager();
   var _rtcReady = false;
   String? _rtcError;
   final _chat = TextEditingController();
@@ -148,7 +149,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           ..reset(initialLikes: 0)
           ..loadInitialLikeCount();
       }
-      _initAgora();
+      _initTrtc();
       _lazyGiftsTimer = Timer(LazyLoadPerf.liveRoomGifts, () {
         if (mounted) _initGifts();
       });
@@ -180,16 +181,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     );
   }
 
-  bool _isBenignAgoraError(Object e) {
+  bool _isBenignRtcError(Object e) {
     final msg = e.toString();
     return msg.contains('-17') ||
         msg.contains('JOIN_CHANNEL_REJECTED') ||
         msg.contains('errJoinChannelRejected');
   }
 
-  void _handleAgoraError(Object e) {
-    debugPrint('[Agora] error: $e');
-    if (_isBenignAgoraError(e)) return;
+  void _handleRtcError(Object e) {
+    debugPrint('[TRTC] error: $e');
+    if (_isBenignRtcError(e)) return;
     if (!mounted) return;
     if (widget.session.isHost && !_leaving) {
       unawaited(_enterHostGracePeriod(notifyViewers: true));
@@ -207,7 +208,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       _rtcError = null;
       _localPreviewKey = UniqueKey();
     });
-    ref.read(liveBeautyProvider.notifier).bindRtc(agora: _agora);
+    ref.read(liveBeautyProvider.notifier).bindRtc(trtc: _trtc);
     final layout = _resolveGuestLayout();
     ref.read(liveGuestGridProvider.notifier)
       ..setLayout(layout)
@@ -216,17 +217,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         name: widget.session.streamerName ?? user.display,
       );
     _remoteUidsListener ??= _onRemoteUidsChanged;
-    _agora.remoteUidsNotifier.addListener(_remoteUidsListener!);
+    _trtc.remoteUserIdsNotifier.addListener(_remoteUidsListener!);
     _onRemoteUidsChanged();
     if (!widget.session.isHost) {
       _remoteVideoListener ??= _onHostVideoAvailabilityChanged;
-      _agora.remoteVideoAvailable.addListener(_remoteVideoListener!);
+      _trtc.remoteVideoAvailable.addListener(_remoteVideoListener!);
       _onHostVideoAvailabilityChanged();
     } else {
       _startHostHeartbeat();
     }
     final quality = ref.read(liveStreamQualityProvider);
-    unawaited(_agora.setStreamQuality(quality));
+    unawaited(_trtc.setStreamQuality(quality));
     _applyActiveAudio();
   }
 
@@ -234,10 +235,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   /// kendi sesini duymaz zaten; bu yalnızca uzak sese uygulanır.
   void _applyActiveAudio() {
     if (!widget.embeddedInSwipe) return;
-    unawaited(_agora.muteAllRemoteAudioStreams(!widget.active));
+    _trtc.muteAllRemoteAudioStreams(!widget.active);
   }
 
-  Future<void> _initAgora() async {
+  Future<void> _initTrtc() async {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) {
       if (mounted) {
@@ -245,7 +246,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       }
       return;
     }
-    if (!_agora.isSupported) {
+    if (!_trtc.isSupported) {
       if (mounted) {
         setState(
           () => _rtcError = 'Canlı yayın yalnızca Android/iOS cihazlarda desteklenir',
@@ -260,19 +261,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         throw StateError('Yayın odası kimliği eksik');
       }
 
-      var cred = widget.session.agora;
-      if (cred == null || !cred.matchesChannel(roomId)) {
-        cred = LiveEntryPerf.takeAgora(userId: user.id, streamId: roomId);
+      var cred = widget.session.trtc;
+      if (cred == null || !cred.matchesRoom(roomId)) {
+        cred = LiveEntryPerf.takeTrtc(userId: user.id, streamId: roomId);
       }
-      if (cred == null || !cred.matchesChannel(roomId)) {
+      if (cred == null || !cred.matchesRoom(roomId)) {
         if (widget.session.isHost) {
-          cred = await ref.read(agoraRemoteProvider).fetchToken(
-                channelName: roomId,
+          cred = await ref.read(trtcRemoteProvider).fetchToken(
+                roomId: roomId,
                 role: 'host',
               );
         } else {
-          cred = await LiveEntryPerf.fetchAgoraParallel(
-            ref,
+          cred = await LiveEntryPerf.fetchTrtcParallel(
+            ref: ref,
             streamId: roomId,
             role: 'audience',
             userId: user.id,
@@ -280,21 +281,27 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         }
       }
 
-      await _agora.join(
-        credentials: cred,
+      final resolvedCred = cred;
+      if (resolvedCred == null || !resolvedCred.matchesRoom(roomId)) {
+        throw StateError('TRTC oturumu alınamadı');
+      }
+
+      await _trtc.join(
+        credentials: resolvedCred,
         isHost: widget.session.isHost,
+        audioOnly: false,
       );
       if (widget.session.isHost) {
-        await _agora.setCameraEnabled(widget.session.initialCameraOn);
-        _agora.setMicEnabled(widget.session.initialMicOn);
+        _trtc.setCameraEnabled(widget.session.initialCameraOn);
+        _trtc.setMicEnabled(widget.session.initialMicOn);
         try {
           await ref.read(liveRemoteProvider).notifyLiveStarted(roomId);
         } catch (_) {}
       }
       _onRtcJoinSuccess(user);
     } catch (e) {
-      if (_isBenignAgoraError(e) && _agora.inChannel) {
-        debugPrint('[Agora] duplicate join ignored, channel active: $e');
+      if (_isBenignRtcError(e) && _trtc.inChannel) {
+        debugPrint('[TRTC] duplicate join ignored, channel active: $e');
         _onRtcJoinSuccess(user);
         return;
       }
@@ -305,14 +312,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         ref.invalidate(liveStreamsProvider);
       }
       if (mounted) {
-        if (_isBenignAgoraError(e)) {
-          _handleAgoraError(e);
+        if (_isBenignRtcError(e)) {
+          _handleRtcError(e);
           return;
         }
-        _handleAgoraError(e);
+        _handleRtcError(e);
         final msg = ApiException.userMessage(e);
         setState(() {
-          _rtcError = msg.contains('Agora') ? 'Yayına bağlanılamadı' : msg;
+          _rtcError = msg.contains('TRTC') || msg.contains('token')
+              ? 'Yayına bağlanılamadı'
+              : msg;
         });
       }
     }
@@ -329,21 +338,21 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _hostHeartbeat?.cancel();
     _signalService?.stop();
     if (_remoteUidsListener != null) {
-      _agora.remoteUidsNotifier.removeListener(_remoteUidsListener!);
+      _trtc.remoteUserIdsNotifier.removeListener(_remoteUidsListener!);
     }
     if (_remoteVideoListener != null) {
-      _agora.remoteVideoAvailable.removeListener(_remoteVideoListener!);
+      _trtc.remoteVideoAvailable.removeListener(_remoteVideoListener!);
     }
     _chat.dispose();
     if (!_leaving) {
       if (widget.session.isHost &&
           widget.session.streamId?.isNotEmpty == true) {
         unawaited(HostLiveStreamRecovery.save(widget.session));
-      } else if (_agora.inChannel) {
-        unawaited(_agora.leave());
+      } else if (_trtc.inChannel) {
+        unawaited(_trtc.leave());
       }
     }
-    _agora.dispose();
+    _trtc.dispose();
     super.dispose();
   }
 
@@ -528,7 +537,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final user = ref.read(authControllerProvider).valueOrNull;
 
     if (widget.session.isHost && streamId.isNotEmpty) {
-      unawaited(_agora.leave());
+      unawaited(_trtc.leave());
       unawaited(
         ref.read(liveRemoteProvider).sendStreamMessage(
               streamId: streamId,
@@ -544,7 +553,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       ref.read(liveRoomProvider(streamId).notifier).markStreamEnded();
     } else {
       try {
-        await _agora.leave();
+        await _trtc.leave();
       } catch (_) {}
     }
 
@@ -627,8 +636,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _hostAway = true;
     _graceEndsAt = DateTime.now().add(HostLiveStreamRecovery.gracePeriod);
     await HostLiveStreamRecovery.save(widget.session);
-    if (_agora.inChannel) {
-      await _agora.leave();
+    if (_trtc.inChannel) {
+      await _trtc.leave();
     }
     if (notifyViewers) {
       try {
@@ -649,7 +658,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _hostHeartbeat = Timer.periodic(const Duration(seconds: 15), (_) {
       if (_leaving || !widget.session.isHost) return;
       unawaited(ref.read(liveRemoteProvider).sendStreamHeartbeat(streamId));
-      if (!_agora.inChannel && _hostAway) {
+      if (!_trtc.inChannel && _hostAway) {
         unawaited(_resumeHostBroadcast(silent: true));
       }
     });
@@ -670,7 +679,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final streamId = widget.session.streamId?.trim();
     if (streamId == null || streamId.isEmpty) return;
     try {
-      if (_agora.inChannel) {
+      if (_trtc.inChannel) {
         _hostAway = false;
         await HostLiveStreamRecovery.clear();
         if (mounted && !silent) {
@@ -692,13 +701,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       }
       final user = ref.read(authControllerProvider).valueOrNull;
       if (user == null) return;
-      final cred = await ref.read(agoraRemoteProvider).fetchToken(
-            channelName: streamId,
+      final cred = await ref.read(trtcRemoteProvider).fetchToken(
+            roomId: streamId,
             role: 'host',
           );
-      await _agora.join(credentials: cred, isHost: true);
-      await _agora.setCameraEnabled(widget.session.initialCameraOn);
-      _agora.setMicEnabled(widget.session.initialMicOn);
+      await _trtc.join(credentials: cred, isHost: true, audioOnly: false);
+      _trtc.setCameraEnabled(widget.session.initialCameraOn);
+      _trtc.setMicEnabled(widget.session.initialMicOn);
       try {
         await ref.read(liveRemoteProvider).notifyLiveStarted(streamId);
       } catch (_) {}
@@ -721,7 +730,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   void _onHostVideoAvailabilityChanged() {
     if (widget.session.isHost || _leaving) return;
-    final available = _agora.remoteVideoAvailable.value;
+    final available = _trtc.remoteVideoAvailable.value;
     if (available) {
       _hadHostVideo = true;
       return;
@@ -977,14 +986,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Future<void> _upgradeToCoHost(String streamId, UserEntity user) async {
     if (_coHostUpgraded || widget.session.isHost || !_rtcReady) return;
     try {
-      final cred = await ref.read(agoraRemoteProvider).fetchToken(
-            channelName: streamId,
+      final cred = await ref.read(trtcRemoteProvider).fetchToken(
+            roomId: streamId,
             role: 'host',
           );
-      await _agora.leave();
-      await _agora.join(credentials: cred, isHost: true);
-      await _agora.setCameraEnabled(true);
-      _agora.setMicEnabled(true);
+      await _trtc.leave();
+      await _trtc.join(credentials: cred, isHost: true, audioOnly: false);
+      _trtc.setCameraEnabled(true);
+      _trtc.setMicEnabled(true);
       _coHostUpgraded = true;
       _enableMultiGuestLayout(
         LiveGuestLayout.duo,
@@ -1194,7 +1203,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   void _onRemoteUidsChanged() {
     ref
         .read(liveGuestGridProvider.notifier)
-        .syncRemoteUids(_agora.remoteUidsNotifier.value);
+        .syncRemoteUserIds(_trtc.remoteUserIdsNotifier.value);
   }
 
   void _onGuestAction(int slotIndex, String action) {
@@ -1206,9 +1215,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         grid.toggleGuestMute(slotIndex);
         final slots = ref.read(liveGuestGridProvider).slots;
         if (slotIndex < slots.length) {
-          final uid = slots[slotIndex].agoraUid;
-          if (uid != null) {
-            unawaited(_agora.muteRemoteAudio(uid, slots[slotIndex].mutedByHost));
+          final userId = slots[slotIndex].rtcUserId ?? slots[slotIndex].userId;
+          if (userId != null && userId.isNotEmpty) {
+            _trtc.muteRemoteAudio(userId, slots[slotIndex].mutedByHost);
           }
         }
       case 'cam':
@@ -1468,20 +1477,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       );
     }
 
-    final remoteUid = _agora.remoteUidNotifier.value;
+    final remoteUid = _trtc.remoteAnchorUserIdNotifier.value;
     final layout = _resolveGuestLayout();
     final hostJeton = ref.read(liveGiftControllerProvider).streamerEarnings ?? 0;
-    return ValueListenableBuilder<List<int>>(
-      valueListenable: _agora.remoteUidsNotifier,
+    return ValueListenableBuilder<List<String>>(
+      valueListenable: _trtc.remoteUserIdsNotifier,
       builder: (context, remoteUids, _) {
         return LiveGuestGrid(
           layout: layout,
           isHost: s.isHost,
-          agora: _agora,
+          trtc: _trtc,
           localPreviewKey: _localPreviewKey,
           hostAvatarUrl: s.avatarUrl,
           hostName: s.streamerName,
-          remoteUid: remoteUid,
+          remoteUserId: remoteUid,
           hostJetonEarned: hostJeton,
           onInviteSlot: s.isHost ? (_) => _openControlCenter() : null,
           onGuestAction: s.isHost ? _onGuestAction : null,
@@ -1744,7 +1753,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             if (!mounted || _leaving) return;
             _leaving = true;
             try {
-              await _agora.leave();
+              await _trtc.leave();
             } catch (_) {}
             await _showViewerStreamEndedSummary(streamId);
           });
@@ -2259,7 +2268,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                     child: LivePremiumBottomBar(
                       chatController: _chat,
                       isHost: s.isHost,
-                      agora: s.isHost ? _agora : null,
+                      trtc: s.isHost ? _trtc : null,
                       commentsEnabled: broadcastSettings.commentsEnabled,
                       onJoinBroadcast: !s.isHost &&
                               broadcastSettings.guestsEnabled &&
@@ -2271,7 +2280,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                           : null,
                       onToggleCamera: s.isHost
                           ? () {
-                              _agora.setCameraEnabled(!_agora.cameraOn);
+                              _trtc.setCameraEnabled(!_trtc.cameraOn);
                               setState(() => _localPreviewKey = UniqueKey());
                             }
                           : null,

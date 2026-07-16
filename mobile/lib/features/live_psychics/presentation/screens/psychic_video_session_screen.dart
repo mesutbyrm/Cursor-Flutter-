@@ -12,7 +12,6 @@ import 'package:canlifal_social/features/profile/presentation/widgets/premium/pr
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_peer_left_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
-import 'package:canlifal_social/features/agora/presentation/agora_room_manager.dart';
 import 'package:canlifal_social/features/trtc/presentation/trtc_room_manager.dart';
 
 final _psychicSessionChatProvider =
@@ -20,7 +19,7 @@ final _psychicSessionChatProvider =
   (ref, _) => TextEditingController(),
 );
 
-/// Canlı fal video oturumu — Agora + süre + sohbet.
+/// Canlı fal video oturumu — Tencent TRTC + süre + sohbet.
 class PsychicVideoSessionScreen extends ConsumerWidget {
   const PsychicVideoSessionScreen({super.key, required this.session});
 
@@ -543,43 +542,6 @@ class _VideoLayer extends StatelessWidget {
     }
 
     if (!session.isClient) {
-      if (state.rtcBackend == PsychicRtcBackend.trtc) {
-        return ValueListenableBuilder<String?>(
-          valueListenable: ctrl.trtc.remoteAnchorUserIdNotifier,
-          builder: (context, remoteUserId, _) {
-            if (remoteUserId != null && remoteUserId.isNotEmpty) {
-              return TrtcRemoteVideoView(
-                key: ValueKey('remote-$remoteUserId'),
-                manager: ctrl.trtc,
-                userId: remoteUserId,
-              );
-            }
-            return TrtcLocalVideoView(
-              key: ValueKey(state.localPreviewKey),
-              manager: ctrl.trtc,
-            );
-          },
-        );
-      }
-      return ValueListenableBuilder<int?>(
-        valueListenable: ctrl.agora.remoteUidNotifier,
-        builder: (context, remoteUid, _) {
-          if (remoteUid != null) {
-            return AgoraRemoteVideoView(
-              key: ValueKey('remote-$remoteUid'),
-              manager: ctrl.agora,
-              uid: remoteUid,
-            );
-          }
-          return AgoraLocalVideoView(
-            key: ValueKey(state.localPreviewKey),
-            manager: ctrl.agora,
-          );
-        },
-      );
-    }
-
-    if (state.rtcBackend == PsychicRtcBackend.trtc) {
       return ValueListenableBuilder<String?>(
         valueListenable: ctrl.trtc.remoteAnchorUserIdNotifier,
         builder: (context, remoteUserId, _) {
@@ -590,19 +552,22 @@ class _VideoLayer extends StatelessWidget {
               userId: remoteUserId,
             );
           }
-          return const LiveRoomVideoBackground();
+          return TrtcLocalVideoView(
+            key: ValueKey(state.localPreviewKey),
+            manager: ctrl.trtc,
+          );
         },
       );
     }
 
-    return ValueListenableBuilder<int?>(
-      valueListenable: ctrl.agora.remoteUidNotifier,
-      builder: (context, remoteUid, _) {
-        if (remoteUid != null) {
-          return AgoraRemoteVideoView(
-            key: ValueKey('remote-$remoteUid'),
-            manager: ctrl.agora,
-            uid: remoteUid,
+    return ValueListenableBuilder<String?>(
+      valueListenable: ctrl.trtc.remoteAnchorUserIdNotifier,
+      builder: (context, remoteUserId, _) {
+        if (remoteUserId != null && remoteUserId.isNotEmpty) {
+          return TrtcRemoteVideoView(
+            key: ValueKey('remote-$remoteUserId'),
+            manager: ctrl.trtc,
+            userId: remoteUserId,
           );
         }
         return const LiveRoomVideoBackground();
@@ -612,15 +577,9 @@ class _VideoLayer extends StatelessWidget {
 }
 
 Widget _buildLocalPreview(PsychicVideoController ctrl, PsychicVideoState state) {
-  if (state.rtcBackend == PsychicRtcBackend.trtc) {
-    return TrtcLocalVideoView(
-      key: ValueKey(state.localPreviewKey),
-      manager: ctrl.trtc,
-    );
-  }
-  return AgoraLocalVideoView(
+  return TrtcLocalVideoView(
     key: ValueKey(state.localPreviewKey),
-    manager: ctrl.agora,
+    manager: ctrl.trtc,
   );
 }
 
