@@ -37,11 +37,11 @@ class GiftAnimationPlayer extends StatelessWidget {
     return GiftEntity(
       id: giftId,
       name: event?.giftName ?? giftId,
-      price: event?.coinCost ?? 0,
+      price: event?.jetonAmount ?? event?.coinCost ?? 0,
       animationRef: event?.animationKey,
       rarity: event?.rarity ?? GiftRarity.common,
       animationKind: event?.animationKind ?? GiftAnimationKind.lottie,
-      iconUrl: g.iconUrl ?? event?.giftImageUrl ?? event?.iconUrl,
+      iconUrl: event?.giftImageUrl ?? event?.iconUrl,
     );
   }
 

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/entities/live_gift_event.dart';
+import '../../../domain/entities/live_gift_event.dart';
 import 'live_gift_providers.dart';
 
 /// Koltuk altında 3 sn gösterilen hediye flaşı.
@@ -76,7 +76,10 @@ class LiveSeatGiftFlashNotifier extends Notifier<Map<String, List<LiveSeatGiftFl
 
     final patch = <String, List<LiveSeatGiftFlash>>{...state};
     for (final k in keys) {
-      final list = [...(patch[k] ?? const []), flash.copyWith(receiverKey: k)];
+      final list = <LiveSeatGiftFlash>[
+        ...(patch[k] ?? const <LiveSeatGiftFlash>[]),
+        flash.copyWith(receiverKey: k),
+      ];
       patch[k] = list;
     }
     state = patch;
