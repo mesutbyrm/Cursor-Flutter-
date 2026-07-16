@@ -8,6 +8,9 @@ import '../../../../core/network/token_storage.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/services/notifications_sse_service.dart';
 import '../../domain/entities/app_notification_entity.dart';
+import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
+import '../../../live/presentation/providers/live_pk_streams_provider.dart';
+import '../../../live/presentation/providers/pk_room_providers.dart';
 import '../providers/notifications_list_notifier.dart';
 import '../providers/notifications_providers.dart';
 
@@ -62,6 +65,12 @@ class _NotificationsRealtimeListenerState
   void _onNotification(AppNotificationEntity notification) {
     ref.read(notificationsListNotifierProvider.notifier).prepend(notification);
     ref.invalidate(notificationsListProvider);
+    final type = notification.type?.toLowerCase() ?? '';
+    if (type.contains('pk')) {
+      ref.invalidate(pkPendingInvitesProvider);
+      ref.invalidate(livePkStreamsProvider);
+      ref.read(livePkInviteSignalProvider.notifier).bump();
+    }
   }
 
   @override

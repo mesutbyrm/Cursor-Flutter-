@@ -28,6 +28,7 @@ import 'co_broadcast_provider.dart';
 import 'live_guest_grid_provider.dart';
 import 'pk_room_providers.dart';
 import 'live_pk_streams_provider.dart';
+import 'live_pk_invite_signal_provider.dart';
 
 class LiveRoomState {
   const LiveRoomState({
@@ -231,6 +232,8 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       },
       onPkInvite: (payload) {
         ref.invalidate(pkPendingInvitesProvider);
+        ref.invalidate(livePkStreamsProvider);
+        ref.read(livePkInviteSignalProvider.notifier).bump();
         final battle = payload['battle'] ?? payload['match'] ?? payload;
         if (battle is Map) {
           ref

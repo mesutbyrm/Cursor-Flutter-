@@ -47,6 +47,7 @@ import '../gifts/widgets/floating_gift_particles.dart';
 import '../gifts/widgets/gift_center_toast_stack.dart';
 import '../gifts/widgets/gift_notification_stack.dart';
 import '../providers/pk_room_providers.dart';
+import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
 import '../../data/services/video_webrtc_signal_service.dart';
 import '../providers/co_broadcast_provider.dart';
@@ -118,7 +119,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Timer? _lazyGiftsTimer;
   Timer? _lazyExtrasTimer;
   Timer? _coBroadcastPoll;
-  Timer? _pkInvitePoll;
   Timer? _hostHeartbeat;
   final Set<String> _seenGuestJoinIds = {};
   final Set<String> _seenPkInviteIds = {};
@@ -326,7 +326,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _guestJoinPoll?.cancel();
     _fortunePoll?.cancel();
     _coBroadcastPoll?.cancel();
-    _pkInvitePoll?.cancel();
     _hostHeartbeat?.cancel();
     _signalService?.stop();
     if (_remoteUidsListener != null) {
@@ -810,12 +809,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       unawaited(_applyGuestPresenceFromApi(streamId));
     }
 
-    _pkInvitePoll?.cancel();
-    _pkInvitePoll = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (!mounted) return;
-      unawaited(_pollPkInvites(streamId));
-    });
-    unawaited(_pollPkInvites(streamId));
     _signalService = ref.read(videoWebrtcSignalServiceProvider);
     _signalService?.onSignal = (sig) {
       if (!mounted) return;
@@ -823,6 +816,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       _handlePkSignal(streamId, sig);
     };
     _signalService?.start(streamId: streamId);
+    if (widget.session.isHost) {
+      unawaited(_bootstrapPkInvites(streamId));
+    }
   }
 
   /// PK skor sinyali — anlık senkron (poll'u beklemeden).
@@ -1042,22 +1038,28 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     } catch (_) {}
   }
 
-  Future<void> _pollPkInvites(String streamId) async {
+  Future<void> _bootstrapPkInvites(String streamId) async {
     if (_leaving) return;
     try {
+      ref.invalidate(pkPendingInvitesProvider);
       await ref.read(liveVideoPkProvider(streamId).notifier).refresh();
-      final battle = ref.read(liveVideoPkProvider(streamId)).battle;
-      if (battle != null) {
-        _maybeShowPkInvite(streamId, battle);
-      }
-      final invites = await ref.read(pkPendingInvitesProvider.future);
-      for (final inv in invites) {
-        if (!inv.isPending) continue;
-        if (inv.hostStreamId == streamId) continue;
-        final map = pkRoomMatchToBattleMap(inv, myStreamId: streamId);
-        _maybeShowPkInvite(streamId, map);
-      }
+      if (mounted) _applyPkInvites(streamId);
     } catch (_) {}
+  }
+
+  void _applyPkInvites(String streamId) {
+    if (_leaving || !mounted) return;
+    final battle = ref.read(liveVideoPkProvider(streamId)).battle;
+    if (battle != null) {
+      _maybeShowPkInvite(streamId, battle);
+    }
+    final invites = ref.read(pkPendingInvitesProvider).valueOrNull ?? const [];
+    for (final inv in invites) {
+      if (!inv.isPending) continue;
+      if (inv.hostStreamId == streamId) continue;
+      final map = pkRoomMatchToBattleMap(inv, myStreamId: streamId);
+      _maybeShowPkInvite(streamId, map);
+    }
   }
 
   void _maybeShowPkInvite(String streamId, Map<String, dynamic> battle) {
@@ -1698,6 +1700,27 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             ),
           );
         });
+      });
+      ref.listen(liveVideoPkProvider(streamId), (prev, next) {
+        final battle = next.battle;
+        if (battle != null) {
+          _maybeShowPkInvite(streamId, battle);
+        }
+      });
+      ref.listen(pkPendingInvitesProvider, (_, next) {
+        next.whenData((invites) {
+          for (final inv in invites) {
+            if (!inv.isPending) continue;
+            if (inv.hostStreamId == streamId) continue;
+            _maybeShowPkInvite(
+              streamId,
+              pkRoomMatchToBattleMap(inv, myStreamId: streamId),
+            );
+          }
+        });
+      });
+      ref.listen(livePkInviteSignalProvider, (_, __) {
+        _applyPkInvites(streamId);
       });
     }
 

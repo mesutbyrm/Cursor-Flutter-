@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,7 +13,7 @@ import '../../domain/entities/live_stream_entity.dart';
 import '../providers/live_pk_streams_provider.dart';
 import '../providers/pk_room_providers.dart';
 
-/// Canlı yayın PK daveti — tek endpoint, 3 sn poll, cache yok.
+/// Canlı yayın PK daveti — tek endpoint; liste SSE/socket ile yenilenir.
 class LivePkInvitePage extends ConsumerStatefulWidget {
   const LivePkInvitePage({super.key, required this.session});
 
@@ -25,6 +27,7 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
   var _loading = false;
   var _durationSeconds = pkDefaultDurationSeconds;
   String? _error;
+  Timer? _listRefresh;
 
   String? get _streamId => widget.session.streamId?.trim();
 
@@ -33,7 +36,18 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(livePkStreamsProvider.notifier).refresh();
+      _listRefresh = Timer.periodic(const Duration(seconds: 10), (_) {
+        if (mounted) {
+          ref.read(livePkStreamsProvider.notifier).refresh(silent: true);
+        }
+      });
     });
+  }
+
+  @override
+  void dispose() {
+    _listRefresh?.cancel();
+    super.dispose();
   }
 
   Future<void> _invite(LiveStreamEntity opponent) async {

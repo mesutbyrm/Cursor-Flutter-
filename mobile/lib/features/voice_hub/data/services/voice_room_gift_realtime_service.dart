@@ -19,12 +19,12 @@ class VoiceRoomGiftRealtimeService {
 
   Stream<LiveGiftEvent> get events => _local.stream;
 
-  /// Socket.IO aktifken REST poll seyrekleştirilir.
+  /// Socket.IO aktifken REST poll kapalı; yalnızca socket kesilirse yeniden açılır.
   void setSocketPreferred(bool preferred) {
     _socketPreferred = preferred;
     if (_roomId != null) {
       stop();
-      start(_roomId!);
+      if (!preferred) start(_roomId!);
     }
   }
 
