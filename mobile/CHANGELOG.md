@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.41+48 (2026-07-16)
+
+### Flutter Chat servisi
+- **`lib/services/chat_service.dart`:** oda listesi, mesajlar, presence, typing, SSE, hediye, koltuk, ses, Agora/TRTC token, DJ/müzik, PK
+- **Kılavuz §9.3 uyumu:** presence `{action: join|leave}`, seats `POST/PATCH`, voice `{action}`, gifts `{giftId, receiverUserId}`
+- **Modeller:** `ChatRoomSummary`, `ChatServiceMessage`, `ChatPresence`, `ChatMusicHit`
+- **`chat_service_provider.dart`:** Riverpod + `SseClient`
+- **Endpoint:** `chatRoomSeats`, `chatRoomMusic`, `chatRoomSongRequest`, `chatRoomPkScore`, `chatRoomMessage`
+- **Test:** `chat_service_test.dart`
+- **Düzeltme:** `auth_service_provider.dart` import yolları
+
 ## 1.0.40+47 (2026-07-16)
 
 ### SSE istemcisi

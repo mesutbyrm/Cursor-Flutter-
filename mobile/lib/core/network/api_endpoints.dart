@@ -271,8 +271,23 @@ abstract final class ApiEndpoints {
   static String chatRoomMessages(String roomId) =>
       '/api/chat/rooms/$roomId/messages';
 
+  static String chatRoomMessage(String roomId, String messageId) =>
+      '/api/chat/rooms/$roomId/messages/$messageId';
+
   static String chatRoomPresence(String roomId) =>
       '/api/chat/rooms/$roomId/presence';
+
+  /// Koltuk yönetimi — kılavuz §9.3 `POST` (`action`, `seatIndex`).
+  static String chatRoomSeats(String roomId) =>
+      '/api/chat/rooms/$roomId/seats';
+
+  /// DJ müzik durumu — `GET/POST /api/chat/rooms/{roomId}/music`.
+  static String chatRoomMusic(String roomId) =>
+      '/api/chat/rooms/$roomId/music';
+
+  /// Şarkı isteği — `POST /api/chat/rooms/{roomId}/song-request`.
+  static String chatRoomSongRequest(String roomId) =>
+      '/api/chat/rooms/$roomId/song-request';
 
   /// Yetkili kullanıcı otomatik koltuk — üretim `join-seat`, yoksa `seats` fallback.
   static String chatRoomJoinSeat(String roomId) =>
@@ -296,6 +311,10 @@ abstract final class ApiEndpoints {
   /// POST body: `{ guestUserId, durationSec }` → pending davet.
   /// GET (public, poll): `{ roomId, activeBattle, pendingInvite }`.
   static String chatRoomPk(String roomId) => '/api/chat/rooms/$roomId/pk';
+
+  /// PK skor güncelleme — `POST /api/chat/rooms/{roomId}/pk/score`.
+  static String chatRoomPkScore(String roomId) =>
+      '/api/chat/rooms/$roomId/pk/score';
 
   /// Davete yanıt — `POST /api/chat/rooms/{roomId}/pk/{inviteId}/respond`
   /// body: `{ action: "accept" | "reject" }`.
