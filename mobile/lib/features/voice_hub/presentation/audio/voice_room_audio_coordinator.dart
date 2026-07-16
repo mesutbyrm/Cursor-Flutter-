@@ -1,34 +1,34 @@
 import 'dart:async';
 
 import '../../../../core/performance/voice_room_entry_perf.dart';
-import '../../../agora/data/datasources/agora_remote_datasource.dart';
+import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import '../../domain/entities/voice_audio_engine.dart';
-import 'voice_agora_engine.dart';
 import 'voice_room_music_audio_session.dart';
+import 'voice_trtc_engine.dart';
 
-/// canlifal.com sesli oda — Agora token + `POST /voice` `{type: join}`.
+/// canlifal.com sesli oda — Tencent TRTC token + `POST /voice` `{type: join}`.
 class VoiceRoomAudioCoordinator {
   VoiceRoomAudioCoordinator({
-    VoiceAgoraEngine? agora,
+    VoiceTrtcEngine? trtc,
     ChatRoomRemoteDataSource? remote,
-    AgoraRemoteDataSource? agoraToken,
-  })  : _agora = agora ?? VoiceAgoraEngine(tokenSource: agoraToken),
+  })  : _trtc = trtc ?? VoiceTrtcEngine(),
         _remote = remote;
 
-  final VoiceAgoraEngine _agora;
+  final VoiceTrtcEngine _trtc;
   final ChatRoomRemoteDataSource? _remote;
 
   VoiceAudioEngineKind? _engine;
   VoiceAudioEngineKind? get engine => _engine;
 
-  bool get micOn => _agora.micOn;
-  bool get isSupported => _agora.isSupported;
+  bool get micOn => _trtc.micOn;
+  bool get isSupported => _trtc.isSupported;
+  TrtcRoomManager get trtcManager => _trtc.manager;
 
   Future<void>? _micOp;
 
-  /// [roomId] = Prisma oda kimliği (Agora kanal adı).
+  /// [roomId] = Prisma oda kimliği; TRTC kanalı `voice_room_{id}`.
   Future<VoiceAudioEngineKind> join({
     required String roomId,
     ChatRoomRemoteDataSource? remote,
@@ -46,18 +46,20 @@ class VoiceRoomAudioCoordinator {
       throw StateError('Oda kimliği boş');
     }
 
-    VoiceRoomDebugLog.log('audio.agora.prepare', {
+    final trtcRoom = VoiceTrtcEngine.trtcRoomIdFor(channel);
+    VoiceRoomDebugLog.log('audio.trtc.prepare', {
       'roomId': channel,
+      'trtcRoom': trtcRoom,
       'enableMic': enableMic,
     });
     _lastRoomId = channel;
+    _lastUserId = userId;
 
     final role = enableMic ? 'host' : 'audience';
     final prefetched = userId != null && userId.isNotEmpty
-        ? VoiceRoomEntryPerf.takeAgora(
+        ? VoiceRoomEntryPerf.takeTrtc(
             userId: userId,
-            roomId: channel,
-            role: role,
+            roomId: trtcRoom,
           )
         : null;
 
@@ -74,28 +76,30 @@ class VoiceRoomAudioCoordinator {
             if (!staffBypassVoiceApi) rethrow;
           }
         }(),
-        _agora.joinVoice(
+        _trtc.joinVoice(
           channel,
           publishMic: enableMic,
           prefetchedCredentials: prefetched,
           role: role,
+          userId: userId,
         ),
       ]);
     } on Object catch (e) {
       if (!staffBypassVoiceApi) rethrow;
       VoiceRoomDebugLog.log('audio.join.partial', {'error': e.toString()});
-      await _agora.joinVoice(
+      await _trtc.joinVoice(
         channel,
         publishMic: enableMic,
         prefetchedCredentials: prefetched,
         role: role,
+        userId: userId,
       );
     }
-    _engine = VoiceAudioEngineKind.agora;
+    _engine = VoiceAudioEngineKind.trtc;
     if (!enableMic) {
-      _agora.setMicEnabled(false);
+      await _trtc.setMicEnabled(false);
     }
-    VoiceRoomDebugLog.log('audio.agora.joined', {
+    VoiceRoomDebugLog.log('audio.trtc.joined', {
       'roomId': channel,
       'mic': enableMic,
     });
@@ -130,14 +134,17 @@ class VoiceRoomAudioCoordinator {
             if (!_staffBypassVoiceApi) rethrow;
           }
         }
-        // Host token gerekir — tam yeniden bağlan.
-        await _agora.joinVoice(channel, publishMic: true);
-        _engine = VoiceAudioEngineKind.agora;
+        await _trtc.joinVoice(
+          channel,
+          publishMic: true,
+          userId: _lastUserId,
+        );
+        _engine = VoiceAudioEngineKind.trtc;
         return;
       }
 
-      if (_agora.inChannel) {
-        await _agora.setMicEnabled(false);
+      if (_trtc.inChannel) {
+        await _trtc.setMicEnabled(false);
       }
       final ds = _remote;
       if (ds != null) {
@@ -146,7 +153,7 @@ class VoiceRoomAudioCoordinator {
         } catch (_) {}
       }
     } catch (e, st) {
-      VoiceRoomDebugLog.log('audio.agora.mic_toggle.fail', {
+      VoiceRoomDebugLog.log('audio.trtc.mic_toggle.fail', {
         'enabled': enabled,
         'error': e.toString(),
         'stack': st.toString(),
@@ -157,25 +164,26 @@ class VoiceRoomAudioCoordinator {
     }
   }
 
-  void setHeadphonesOn(bool on) => _agora.setRemoteAudioMuted(!on);
+  void setHeadphonesOn(bool on) => _trtc.setRemoteAudioMuted(!on);
 
   Future<void> leave() async {
     await _micOp;
     final ds = _remote;
-    final channel = _agora.inChannel ? _lastRoomId : null;
+    final channel = _trtc.inChannel ? _lastRoomId : null;
     if (ds != null && channel != null && channel.isNotEmpty) {
       try {
         await ds.leaveVoiceSession(channel);
       } catch (_) {}
     }
-    await _agora.leave();
+    await _trtc.leave();
     _engine = null;
     _lastRoomId = null;
+    _lastUserId = null;
   }
 
   String? _lastRoomId;
+  String? _lastUserId;
 
-  /// Oturum sonlandırma — Agora + voice API leave.
   Future<void> leaveRoom(String roomId) async {
     _lastRoomId = roomId.trim();
     await leave();
@@ -183,7 +191,7 @@ class VoiceRoomAudioCoordinator {
 
   void dispose() {
     unawaited(leave());
-    unawaited(_agora.dispose());
+    unawaited(_trtc.dispose());
     _engine = null;
   }
 }

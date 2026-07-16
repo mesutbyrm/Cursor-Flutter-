@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../../../agora/presentation/agora_room_manager.dart';
+import '../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../providers/voice_seat_gift_totals_provider.dart';
@@ -25,10 +25,10 @@ class VoiceMicSeat extends StatelessWidget {
     this.room,
     this.djUserIds = const [],
     this.onTap,
-    this.agora,
-    this.agoraReady = false,
+    this.trtc,
+    this.trtcReady = false,
     this.selfUserId,
-    this.remoteAgoraUid,
+    this.remoteTrtcUserId,
   });
 
   final ChatRoomPresence? user;
@@ -42,10 +42,10 @@ class VoiceMicSeat extends StatelessWidget {
   final VoiceRoomEntity? room;
   final List<String> djUserIds;
   final VoidCallback? onTap;
-  final AgoraRoomManager? agora;
-  final bool agoraReady;
+  final TrtcRoomManager? trtc;
+  final bool trtcReady;
   final String? selfUserId;
-  final int? remoteAgoraUid;
+  final String? remoteTrtcUserId;
 
   bool _resolveMicOpen(ChatRoomPresence u) => micOpen ?? u.micOpen;
 
@@ -63,7 +63,7 @@ class VoiceMicSeat extends StatelessWidget {
     final vipTier = VipTier.fromMembership(user!.membership);
     final vip = vipTier.isVip;
     final levelLabel = _levelLabel(user!);
-    final videoChild = _agoraVideoChild();
+    final videoChild = _trtcVideoChild();
     final micOn = _resolveMicOpen(user!);
 
     return Column(
@@ -189,21 +189,21 @@ class VoiceMicSeat extends StatelessWidget {
     );
   }
 
-  Widget? _agoraVideoChild() {
-    final manager = agora;
-    if (!agoraReady || manager == null || user == null) return null;
+  Widget? _trtcVideoChild() {
+    final manager = trtc;
+    if (!trtcReady || manager == null || user == null) return null;
     final uid = user!.id;
     final self = selfUserId;
-    if (self != null && uid == self && manager.isHost && manager.cameraOn) {
-      return AgoraLocalVideoView(manager: manager);
+    if (self != null && uid == self && manager.cameraOn) {
+      return TrtcLocalVideoView(manager: manager);
     }
     if (!isHost) return null;
-    final remote = remoteAgoraUid ?? manager.remoteUid;
+    final remote = remoteTrtcUserId ?? manager.remoteAnchorUserId;
     if (remote != null &&
-        remote > 0 &&
+        remote.isNotEmpty &&
         uid != self &&
         manager.remoteVideoAvailable.value) {
-      return AgoraRemoteVideoView(manager: manager, uid: remote);
+      return TrtcRemoteVideoView(manager: manager, userId: remote);
     }
     return null;
   }

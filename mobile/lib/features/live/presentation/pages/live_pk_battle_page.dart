@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
-import '../../../agora/presentation/agora_room_manager.dart';
+import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../voice_hub/domain/pk/pk_battle_mode.dart';
 import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/domain/pk/pk_battle_state.dart';
@@ -43,9 +43,9 @@ class LivePkBattlePage extends ConsumerStatefulWidget {
 }
 
 class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
-  final _agora = AgoraRoomManager();
+  final _trtc = TrtcRoomManager();
   var _lastGiftSideLeft = true;
-  var _agoraReady = false;
+  var _trtcReady = false;
   Timer? _pkPollTimer;
   String? _unifiedMatchId;
 
@@ -61,7 +61,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final streamId = _streamId;
     if (streamId == null || streamId.isEmpty) return;
 
-    await _initAgoraPreview();
+    await _initTrtcPreview();
 
     final remote = ref.read(pkBattleRemoteProvider.notifier);
     final unified = await ref.read(pkRoomRemoteProvider).activeForStream(streamId);
@@ -93,12 +93,11 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     _pollPk();
   }
 
-  Future<void> _initAgoraPreview() async {
-    final agora = widget.session.agora;
-    if (agora == null || !widget.session.isHost) return;
+  Future<void> _initTrtcPreview() async {
+    if (!widget.session.isHost) return;
     try {
-      await _agora.startPreviewOnly(appId: agora.appId);
-      if (mounted) setState(() => _agoraReady = true);
+      await _trtc.startPreviewOnly();
+      if (mounted) setState(() => _trtcReady = true);
     } catch (_) {}
   }
 
@@ -131,7 +130,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     ref.read(liveGiftControllerProvider).detach();
     ref.read(liveGiftSocketBridgeProvider).disconnect();
     ref.read(pkBattleRemoteProvider.notifier).disconnectSocket();
-    unawaited(_agora.dispose());
+    unawaited(_trtc.dispose());
     super.dispose();
   }
 
@@ -296,7 +295,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                             accent: Colors.pinkAccent,
                             thumbnailUrl: widget.session.avatarUrl ??
                                 widget.session.coverImageUrl,
-                            agora: _agoraReady ? _agora : null,
+                            trtc: _trtcReady ? _trtc : null,
                             isLocal: true,
                           ),
                         ),
@@ -306,10 +305,6 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                             label: rightName,
                             accent: Colors.cyanAccent,
                             thumbnailUrl: widget.opponentStream?.thumbnailUrl,
-                            agora: _agoraReady && _agora.remoteUid != null
-                                ? _agora
-                                : null,
-                            remoteUid: _agora.remoteUid,
                             isLocal: false,
                           ),
                         ),
@@ -389,25 +384,21 @@ class _PkVideoPane extends StatelessWidget {
     required this.label,
     required this.accent,
     this.thumbnailUrl,
-    this.agora,
-    this.remoteUid,
+    this.trtc,
     this.isLocal = false,
   });
 
   final String label;
   final Color accent;
   final String? thumbnailUrl;
-  final AgoraRoomManager? agora;
-  final int? remoteUid;
+  final TrtcRoomManager? trtc;
   final bool isLocal;
 
   @override
   Widget build(BuildContext context) {
     Widget videoChild;
-    if (isLocal && agora?.engine != null) {
-      videoChild = AgoraLocalVideoView(manager: agora!);
-    } else if (!isLocal && agora != null && remoteUid != null && remoteUid! > 0) {
-      videoChild = AgoraRemoteVideoView(manager: agora!, uid: remoteUid!);
+    if (isLocal && trtc != null) {
+      videoChild = TrtcLocalVideoView(manager: trtc!);
     } else if (thumbnailUrl != null && thumbnailUrl!.isNotEmpty) {
       videoChild = CanlifalNetworkImage(
         url: thumbnailUrl!,

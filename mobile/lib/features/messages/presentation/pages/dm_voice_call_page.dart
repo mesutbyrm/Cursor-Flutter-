@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../agora/presentation/agora_room_manager.dart';
-import '../../../agora/presentation/providers/agora_providers.dart';
+import '../../../trtc/presentation/trtc_room_manager.dart';
+import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 
-/// DM sesli görüşme — yalnızca ses (Gold).
+/// DM sesli görüşme — yalnızca ses (Gold), Tencent TRTC.
 class DmVoiceCallPage extends ConsumerStatefulWidget {
   const DmVoiceCallPage({
     super.key,
@@ -23,7 +23,7 @@ class DmVoiceCallPage extends ConsumerStatefulWidget {
 }
 
 class _DmVoiceCallPageState extends ConsumerState<DmVoiceCallPage> {
-  final _agora = AgoraRoomManager();
+  final _trtc = TrtcRoomManager();
   var _ready = false;
   var _muted = false;
 
@@ -37,12 +37,11 @@ class _DmVoiceCallPageState extends ConsumerState<DmVoiceCallPage> {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
     try {
-      final cred = await ref.read(agoraRemoteProvider).fetchToken(
-            channelName: widget.channelId,
+      final cred = await ref.read(trtcRemoteProvider).fetchToken(
+            roomId: widget.channelId,
             role: 'host',
           );
-      await _agora.join(credentials: cred, isHost: true);
-      await _agora.setCameraEnabled(false);
+      await _trtc.join(credentials: cred, isHost: true, audioOnly: true);
       if (mounted) setState(() => _ready = true);
     } catch (e) {
       if (mounted) {
@@ -56,8 +55,8 @@ class _DmVoiceCallPageState extends ConsumerState<DmVoiceCallPage> {
 
   @override
   void dispose() {
-    unawaited(_agora.leave());
-    _agora.dispose();
+    unawaited(_trtc.leave());
+    _trtc.dispose();
     super.dispose();
   }
 
@@ -93,7 +92,7 @@ class _DmVoiceCallPageState extends ConsumerState<DmVoiceCallPage> {
                   backgroundColor: const Color(0xFF1F2C34),
                   onPressed: () {
                     _muted = !_muted;
-                    _agora.setMicEnabled(!_muted);
+                    _trtc.setMicEnabled(!_muted);
                     setState(() {});
                   },
                   child: Icon(_muted ? Icons.mic_off_rounded : Icons.mic_rounded),

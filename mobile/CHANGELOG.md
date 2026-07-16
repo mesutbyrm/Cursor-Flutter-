@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+56 (2026-07-16)
+
+### Agora pasif — yalnızca Tencent TRTC
+- **Sesli oda:** `VoiceTrtcEngine` + `POST /api/trtc/token` (Agora token hatası kaldırıldı)
+- **Canlı yayın:** hazırlık, oda, misafir grid, PK önizleme TRTC
+- **Canlı fal video:** Agora yedek kaldırıldı
+- **DM sesli arama:** TRTC ses odası
+- **TRTC önizleme:** yayın hazırlığında kamera önizlemesi (`startPreviewOnly`)
+
 ## 1.0.44+55 (2026-07-16)
 
 ### CI düzeltmesi (CodeQL)

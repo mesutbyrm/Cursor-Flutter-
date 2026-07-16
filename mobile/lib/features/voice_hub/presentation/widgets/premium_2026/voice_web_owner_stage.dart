@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../agora/presentation/agora_room_manager.dart';
+import '../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../utils/voice_room_seat_layout.dart';
@@ -19,10 +19,10 @@ class VoiceWebOwnerStage extends StatelessWidget {
     this.speakingUserIds = const {},
     this.onUserTap,
     this.onSeatTap,
-    this.agora,
-    this.agoraReady = false,
+    this.trtc,
+    this.trtcReady = false,
     this.selfUserId,
-    this.remoteAgoraUid,
+    this.remoteTrtcUserId,
   });
 
   final VoiceRoomEntity room;
@@ -32,10 +32,10 @@ class VoiceWebOwnerStage extends StatelessWidget {
   final Set<String> speakingUserIds;
   final void Function(ChatRoomPresence user)? onUserTap;
   final void Function(int internalSeatIndex, ChatRoomPresence? user)? onSeatTap;
-  final AgoraRoomManager? agora;
-  final bool agoraReady;
+  final TrtcRoomManager? trtc;
+  final bool trtcReady;
   final String? selfUserId;
-  final int? remoteAgoraUid;
+  final String? remoteTrtcUserId;
 
   List<String> get _effectiveDjIds =>
       djUserIds ?? room.djUserIds;
@@ -89,10 +89,10 @@ class VoiceWebOwnerStage extends StatelessWidget {
                   djUserIds: _effectiveDjIds,
                   speaking: _isSpeaking(host),
                   onTap: () => onSeatTap?.call(1, host),
-                  agora: agora,
-                  agoraReady: agoraReady,
+                  trtc: trtc,
+                  trtcReady: trtcReady,
                   selfUserId: selfUserId,
-                  remoteAgoraUid: remoteAgoraUid,
+                  remoteTrtcUserId: remoteTrtcUserId,
                 ),
                 const SizedBox(width: gap),
                 Expanded(
@@ -147,10 +147,10 @@ class VoiceWebOwnerStage extends StatelessWidget {
           djUserIds: _effectiveDjIds,
           speaking: _isSpeaking(user),
           onTap: () => onSeatTap?.call(internal, user),
-          agora: agora,
-          agoraReady: agoraReady,
+          trtc: trtc,
+          trtcReady: trtcReady,
           selfUserId: selfUserId,
-          remoteAgoraUid: remoteAgoraUid,
+          remoteTrtcUserId: remoteTrtcUserId,
         );
       }),
     );

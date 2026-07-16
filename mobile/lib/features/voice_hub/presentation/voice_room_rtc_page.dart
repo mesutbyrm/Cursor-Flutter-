@@ -29,7 +29,7 @@ import '../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_ov
 import 'providers/voice_gift_combo_tracker.dart';
 import 'providers/voice_gift_leaderboard_provider.dart';
 import '../../auth/domain/entities/user_entity.dart';
-import '../../agora/presentation/agora_room_manager.dart';
+import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../domain/entities/chat_room_dj_state.dart';
 import '../domain/entities/chat_room_message.dart';
 import '../domain/entities/chat_room_presence.dart';
@@ -76,7 +76,7 @@ import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import '../video/presentation/widgets/room_video_overlay.dart';
 
-/// Sesli sohbet odası — Agora (App ID only) + canlifal.com chat API.
+/// Sesli sohbet odası — Tencent TRTC + canlifal.com chat API.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
   const VoiceRoomRtcPage({super.key, required this.room});
 
@@ -88,11 +88,9 @@ class VoiceRoomRtcPage extends ConsumerStatefulWidget {
 
 class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   VoiceRoomAudioCoordinator? _audio;
-  final _agora = AgoraRoomManager();
   StreamSubscription<LiveGiftEvent>? _giftSub;
   StreamSubscription<ChatRoomSseEvent>? _sseParticipantsSub;
   var _participants = <String, Map<String, dynamic>>{};
-  var _agoraReady = false;
   final _messageCtrl = TextEditingController();
   final _chatScrollCtrl = ScrollController();
   var _scrollChatToLatest = false;
@@ -223,7 +221,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     if (audio != null) {
       unawaited(audio.leave());
     }
-    unawaited(_agora.leave());
+    unawaited(_audio?.leave());
     super.dispose();
   }
 
@@ -592,8 +590,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final liveCtrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
     final audio = _audio;
     _audio = null;
-    unawaited(_agora.leave());
-    if (mounted) setState(() => _agoraReady = false);
+    unawaited(_audio?.leave());
+    if (mounted) setState(() => _audioReady = false);
 
     final room = _effectiveRoom();
     final user = ref.read(authControllerProvider).valueOrNull;
@@ -1508,10 +1506,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               occupant: user,
                             ),
                           ),
-                          agora: _agora,
-                          agoraReady: _agoraReady,
+                          trtc: _audio?.trtcManager,
+                          trtcReady: _audioReady,
                           selfUserId: user?.id,
-                          remoteAgoraUid: _agora.remoteUid,
+                          remoteTrtcUserId: _audio?.trtcManager.remoteAnchorUserId,
                         ),
                         Consumer(
                           builder: (context, ref, _) {
