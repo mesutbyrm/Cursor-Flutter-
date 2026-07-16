@@ -1,6 +1,24 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.40+47 (2026-07-16)
+
+### SSE istemcisi
+- **`lib/core/sse_client.dart`:** Dio ByteStream GET SSE — 5 endpoint + AI fal POST stream
+- **Olay parse:** `data: { "type", "data" }` + `event:` satırı desteği
+- **Reconnect:** exponential backoff (max 20), 401 → refresh → yeniden bağlan
+- **Yaşam döngüsü:** arka plan `pauseAll`, ön plan `resumeAll` (`MainAppShell`)
+- **`sse_client_provider.dart`:** Riverpod + JWT refresh
+- **Test:** `sse_client_test.dart`
+
+## 1.0.39+46 (2026-07-16)
+
+### API response modeli + parsing
+- **`lib/core/api_response.dart`:** `ApiResponse<T>`, `ApiError`, `FieldError`, `Pagination`
+- **`parseResponse`:** yeni `{ success, data, error }` + eski düz JSON / string `error`
+- **`apiPageQuery`:** `?page=1&limit=20` liste parametreleri
+- **Test:** `api_response_test.dart`
+
 ## 1.0.38+45 (2026-07-16)
 
 ### Flutter Auth servisi

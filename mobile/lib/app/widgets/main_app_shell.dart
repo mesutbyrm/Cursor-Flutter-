@@ -21,6 +21,7 @@ import '../../features/voice_hub/presentation/widgets/voice_room/voice_room_glob
 import '../router/app_router.dart';
 import '../../core/bootstrap/voice_rooms_presence_scope.dart';
 import '../../core/network/sse/connectivity_sse_reconnect_provider.dart';
+import '../../core/sse_client_provider.dart';
 import '../../core/widgets/offline_status_banner.dart';
 import '../../features/notifications/presentation/widgets/notifications_realtime_listener.dart';
 
@@ -44,6 +45,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
   var _listenerAttached = false;
   var _realtimeReady = false;
   Timer? _realtimeTimer;
+  SseClientLifecycleBinding? _sseLifecycle;
 
   @override
   void initState() {
@@ -53,6 +55,8 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _attachRouter(ref.read(goRouterProvider));
+      _sseLifecycle = ref.read(sseClientLifecycleProvider);
+      _sseLifecycle?.attach();
     });
     _realtimeTimer = Timer(StartupPerf.shellRealtimeDelay, () {
       if (!mounted) return;
@@ -65,6 +69,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
   @override
   void dispose() {
     _realtimeTimer?.cancel();
+    _sseLifecycle?.dispose();
     _detachRouter();
     super.dispose();
   }
