@@ -21,6 +21,7 @@ import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/active_session_entity.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../../features/trtc/presentation/trtc_bootstrap_service.dart';
 import '../../../../services/auth_service_provider.dart';
 import '../../../../core/network/auth_token_refresh_coordinator.dart';
 
@@ -177,6 +178,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
       if (user != null) {
         await sessionCache.write(user);
         unawaited(_enrichUserAfterBoot(user));
+        unawaited(TrtcBootstrapService.prewarmAfterAuth());
       }
       return user;
     } catch (_) {
@@ -198,6 +200,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   Future<void> _afterAuthSuccess(UserEntity? user) async {
     if (user == null || user.id.isEmpty) return;
     unawaited(OneSignalBootstrap.login(user.id));
+    unawaited(TrtcBootstrapService.prewarmAfterAuth());
   }
 
   Future<void> login(String identifier, String password) async {

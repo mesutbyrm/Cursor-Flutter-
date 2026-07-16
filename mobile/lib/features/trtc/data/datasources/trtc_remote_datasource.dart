@@ -12,6 +12,38 @@ class TrtcRemoteDataSource {
 
   final Dio _dio;
 
+  Future<TrtcCredentials> fetchToken({
+    required String roomId,
+    String role = 'audience',
+  }) async {
+    final started = DateTime.now();
+    LiveDebugLog.log('trtc.token.request', {'roomId': roomId, 'role': role});
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.trtcToken,
+        data: {'roomId': roomId, 'role': role},
+      );
+      final map = _unwrapTrtcBody(res.data);
+      if (map == null) {
+        throw DioException(
+          requestOptions: res.requestOptions,
+          message: 'Geçersiz TRTC token yanıtı',
+        );
+      }
+      final cred = _validate(TrtcCredentials.fromJson(map, requestedRoomId: roomId));
+      LiveDebugLog.log('trtc.token.ok', {
+        'roomId': cred.roomId,
+        'elapsedMs': DateTime.now().difference(started).inMilliseconds,
+      });
+      return cred;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw ApiException('TRTC token uç noktası bulunamadı', statusCode: 404);
+      }
+      rethrow;
+    }
+  }
+
   Future<TrtcCredentials> fetchUserSig({
     required String userId,
     required String roomId,
@@ -34,15 +66,9 @@ class TrtcRemoteDataSource {
           message: 'Geçersiz TRTC yanıtı',
         );
       }
-      final cred = TrtcCredentials.fromJson(map, requestedRoomId: roomId);
-      if (cred.sdkAppId <= 0 || cred.userSig.isEmpty) {
-        throw ApiException(
-          'TRTC yapılandırması eksik (sdkAppId veya userSig). '
-          'Uygulamayı güncelleyin veya destek ile iletişime geçin.',
-        );
-      }
-      if (cred.userId.isEmpty) {
-        throw ApiException('TRTC kullanıcı kimliği alınamadı');
+      var cred = _validate(TrtcCredentials.fromJson(map, requestedRoomId: roomId));
+      if (cred.userId.isEmpty && userId.isNotEmpty) {
+        cred = cred.copyWith(userId: userId);
       }
       LiveDebugLog.log('usersig.ok', {
         'roomId': cred.roomId,
@@ -58,6 +84,16 @@ class TrtcRemoteDataSource {
       });
       rethrow;
     }
+  }
+
+  TrtcCredentials _validate(TrtcCredentials cred) {
+    if (!cred.isValid) {
+      throw ApiException(
+        'TRTC yapılandırması eksik (sdkAppId veya userSig). '
+        'Uygulamayı güncelleyin veya destek ile iletişime geçin.',
+      );
+    }
+    return cred;
   }
 
   static Map<String, dynamic>? _unwrapTrtcBody(dynamic body) {
