@@ -258,6 +258,20 @@ ApiResponse<T> parseResponse<T>(
   );
 }
 
+/// Ham JSON gövdesi — servis katmanı (`res.data`) için kısayol.
+ApiResponse<T> parseResponseBody<T>(
+  dynamic json, {
+  required T Function(dynamic data) fromData,
+}) {
+  return parseResponse<T>(
+    Response<dynamic>(
+      requestOptions: RequestOptions(path: ''),
+      data: json,
+    ),
+    fromData,
+  );
+}
+
 ApiError _errorFrom(Map<String, dynamic> map) {
   final nested = map['error'];
   if (nested is Map) {

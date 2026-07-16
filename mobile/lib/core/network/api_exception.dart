@@ -73,7 +73,10 @@ class ApiException implements Exception {
 
     String msg = e.message ?? 'Ağ hatası';
     if (body is Map) {
-      final parsed = _parseStructuredError(body, statusCode: code);
+      final parsed = _parseStructuredError(
+        Map<String, dynamic>.from(body),
+        statusCode: code,
+      );
       if (parsed != null) return parsed;
       final m = body.cast<String, dynamic>();
       final errField = m['error'];

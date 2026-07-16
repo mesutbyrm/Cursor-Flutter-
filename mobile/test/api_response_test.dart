@@ -88,6 +88,20 @@ void main() {
     });
   });
 
+  group('parseResponseBody', () {
+    test('parses raw map with fromData', () {
+      final res = parseResponseBody<String>(
+        {
+          'success': true,
+          'data': {'title': 'Hello'},
+        },
+        fromData: (data) => (data as Map)['title'] as String,
+      );
+      expect(res.success, isTrue);
+      expect(res.data, 'Hello');
+    });
+  });
+
   group('apiPageQuery', () {
     test('defaults to page 1 limit 20', () {
       expect(apiPageQuery(), {'page': 1, 'limit': 20});

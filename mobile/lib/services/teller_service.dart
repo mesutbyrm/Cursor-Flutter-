@@ -27,7 +27,7 @@ class TellerService {
         if (online == true) 'online': 'true',
       },
     );
-    return parseResponse<List<Map<String, dynamic>>>(
+    return parseResponseBody<List<Map<String, dynamic>>>(
       res.data,
       fromData: (data) => ServiceUtils.extractList(
         data,

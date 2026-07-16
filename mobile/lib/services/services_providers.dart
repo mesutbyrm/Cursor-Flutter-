@@ -1,7 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/network/dio_provider.dart';
 import '../core/sse_client_provider.dart';
+import 'auth_service_provider.dart';
 import 'chat_service.dart';
 import 'config_service.dart';
 import 'fortune_service.dart';

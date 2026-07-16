@@ -48,7 +48,7 @@ void main() {
 
   group('getStreams parseResponse', () {
     test('unwraps paginated list', () {
-      final parsed = parseResponse<List<StreamSummary>>(
+      final parsed = parseResponseBody<List<StreamSummary>>(
         {
           'success': true,
           'data': {

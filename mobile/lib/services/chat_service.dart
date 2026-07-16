@@ -71,7 +71,7 @@ class ChatService {
           if (since != null && since.isNotEmpty) 'after': since,
         }),
     );
-    return parseResponse<List<ChatServiceMessage>>(
+    return parseResponseBody<List<ChatServiceMessage>>(
       res.data,
       fromData: (data) {
         final list = data is List

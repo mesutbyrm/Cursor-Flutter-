@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+52 (2026-07-16)
+
+### CI / derleme düzeltmesi
+- **`parseResponseBody`:** servis katmanı `fromData` API uyumu
+- **`services_providers.dart`:** `Dio` + `auth_service_provider` import
+- **`api_exception.dart`:** `Map<dynamic, dynamic>` → `Map<String, dynamic>` cast
+
 ## 1.0.44+51 (2026-07-16)
 
 ### Flutter yeni endpoint'ler

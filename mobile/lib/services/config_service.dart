@@ -24,7 +24,7 @@ class ConfigService {
         'version': version.trim(),
       },
     );
-    return parseResponse<MobileConfig>(
+    return parseResponseBody<MobileConfig>(
       res.data,
       fromData: (data) {
         if (data is Map<String, dynamic>) {

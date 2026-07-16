@@ -43,7 +43,7 @@ class StreamService {
           if (category != null && category.isNotEmpty) 'category': category,
         }),
     );
-    return parseResponse<List<StreamSummary>>(
+    return parseResponseBody<List<StreamSummary>>(
       res.data,
       fromData: (data) => _parseStreamList(data),
     );

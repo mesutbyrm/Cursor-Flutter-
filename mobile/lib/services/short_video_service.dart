@@ -32,7 +32,7 @@ class ShortVideoService {
       ApiEndpoints.shortVideos,
       query: apiPageQuery(page: page, limit: limit),
     );
-    return parseResponse<List<Map<String, dynamic>>>(
+    return parseResponseBody<List<Map<String, dynamic>>>(
       res.data,
       fromData: (data) => ServiceUtils.extractList(
         data,

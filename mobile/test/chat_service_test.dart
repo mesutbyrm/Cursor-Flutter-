@@ -65,7 +65,7 @@ void main() {
 
   group('getMessages parseResponse', () {
     test('unwraps success wrapper', () {
-      final parsed = parseResponse<List<ChatServiceMessage>>(
+      final parsed = parseResponseBody<List<ChatServiceMessage>>(
         {
           'success': true,
           'data': {
