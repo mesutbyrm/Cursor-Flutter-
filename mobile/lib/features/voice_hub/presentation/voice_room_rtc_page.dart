@@ -29,7 +29,7 @@ import '../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_ov
 import 'providers/voice_gift_combo_tracker.dart';
 import 'providers/voice_gift_leaderboard_provider.dart';
 import '../../auth/domain/entities/user_entity.dart';
-import '../../../trtc/presentation/trtc_room_manager.dart';
+import '../../trtc/presentation/trtc_room_manager.dart';
 import '../domain/entities/chat_room_dj_state.dart';
 import '../domain/entities/chat_room_message.dart';
 import '../domain/entities/chat_room_presence.dart';

@@ -130,7 +130,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     ref.read(liveGiftControllerProvider).detach();
     ref.read(liveGiftSocketBridgeProvider).disconnect();
     ref.read(pkBattleRemoteProvider.notifier).disconnectSocket();
-    unawaited(_trtc.dispose());
+    _trtc.dispose();
     super.dispose();
   }
 

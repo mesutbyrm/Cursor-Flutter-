@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+57 (2026-07-16)
+
+### CI düzeltmesi (CodeQL)
+- `voice_room_rtc_page.dart`: TRTC import yolu (`../../trtc/...`)
+- `live_broadcast_room_page.dart`: `fetchTrtcParallel` named args, `TrtcCredentials` null guard, void RTC çağrıları
+- `open_live_stream.dart`: `fetchTrtcParallel` + `trtc` session alanı
+
 ## 1.0.44+56 (2026-07-16)
 
 ### Agora pasif — yalnızca Tencent TRTC

@@ -235,7 +235,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   /// kendi sesini duymaz zaten; bu yalnızca uzak sese uygulanır.
   void _applyActiveAudio() {
     if (!widget.embeddedInSwipe) return;
-    unawaited(_trtc.muteAllRemoteAudioStreams(!widget.active));
+    _trtc.muteAllRemoteAudioStreams(!widget.active);
   }
 
   Future<void> _initTrtc() async {
@@ -273,7 +273,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               );
         } else {
           cred = await LiveEntryPerf.fetchTrtcParallel(
-            ref,
+            ref: ref,
             streamId: roomId,
             role: 'audience',
             userId: user.id,
@@ -281,13 +281,18 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         }
       }
 
+      final resolvedCred = cred;
+      if (resolvedCred == null || !resolvedCred.matchesRoom(roomId)) {
+        throw StateError('TRTC oturumu alınamadı');
+      }
+
       await _trtc.join(
-        credentials: cred,
+        credentials: resolvedCred,
         isHost: widget.session.isHost,
         audioOnly: false,
       );
       if (widget.session.isHost) {
-        await _trtc.setCameraEnabled(widget.session.initialCameraOn);
+        _trtc.setCameraEnabled(widget.session.initialCameraOn);
         _trtc.setMicEnabled(widget.session.initialMicOn);
         try {
           await ref.read(liveRemoteProvider).notifyLiveStarted(roomId);
@@ -701,7 +706,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             role: 'host',
           );
       await _trtc.join(credentials: cred, isHost: true, audioOnly: false);
-      await _trtc.setCameraEnabled(widget.session.initialCameraOn);
+      _trtc.setCameraEnabled(widget.session.initialCameraOn);
       _trtc.setMicEnabled(widget.session.initialMicOn);
       try {
         await ref.read(liveRemoteProvider).notifyLiveStarted(streamId);
@@ -987,7 +992,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           );
       await _trtc.leave();
       await _trtc.join(credentials: cred, isHost: true, audioOnly: false);
-      await _trtc.setCameraEnabled(true);
+      _trtc.setCameraEnabled(true);
       _trtc.setMicEnabled(true);
       _coHostUpgraded = true;
       _enableMultiGuestLayout(
@@ -1212,7 +1217,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         if (slotIndex < slots.length) {
           final userId = slots[slotIndex].rtcUserId ?? slots[slotIndex].userId;
           if (userId != null && userId.isNotEmpty) {
-            unawaited(_trtc.muteRemoteAudio(userId, slots[slotIndex].mutedByHost));
+            _trtc.muteRemoteAudio(userId, slots[slotIndex].mutedByHost);
           }
         }
       case 'cam':
