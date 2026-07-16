@@ -18,18 +18,32 @@ if [[ -z "${GH_TOKEN:-${GITHUB_TOKEN:-}}" ]]; then
 fi
 
 export GH_TOKEN="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
+REPO="${GITHUB_REPOSITORY:-}"
 
-if gh release view apk-latest >/dev/null 2>&1; then
-  echo "Mevcut apk-latest release güncelleniyor…"
-  gh release upload apk-latest "$APK_PATH" --clobber
-  gh release edit apk-latest --title "$TITLE" --notes-file "$NOTES_PATH"
-else
-  echo "Yeni apk-latest release oluşturuluyor…"
-  args=(gh release create apk-latest "$APK_PATH" --title "$TITLE" --notes-file "$NOTES_PATH")
-  if [[ -n "$TARGET_SHA" ]]; then
-    args+=(--target "$TARGET_SHA")
-  fi
-  "${args[@]}"
+gh_args=()
+if [[ -n "$REPO" ]]; then
+  gh_args=(--repo "$REPO")
 fi
 
-echo "apk-latest yüklendi: $TITLE"
+# Önce mevcut release'e yükle (view bazen 403 döner; upload çalışır).
+if gh release upload apk-latest "$APK_PATH" --clobber "${gh_args[@]}" 2>/dev/null; then
+  echo "apk-latest asset güncellendi"
+  gh release edit apk-latest --title "$TITLE" --notes-file "$NOTES_PATH" "${gh_args[@]}"
+  echo "apk-latest yüklendi: $TITLE"
+  exit 0
+fi
+
+echo "Yeni apk-latest release oluşturuluyor…"
+create_args=(
+  gh release create apk-latest "$APK_PATH"
+  --title "$TITLE"
+  --notes-file "$NOTES_PATH"
+)
+if [[ -n "$TARGET_SHA" ]]; then
+  create_args+=(--target "$TARGET_SHA")
+fi
+if [[ -n "$REPO" ]]; then
+  create_args+=(--repo "$REPO")
+fi
+"${create_args[@]}"
+echo "apk-latest oluşturuldu: $TITLE"
