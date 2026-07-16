@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/images/canlifal_image_prefetch.dart';
 import '../../../../core/performance/animation_perf.dart';
+import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
@@ -74,6 +75,9 @@ class _VoiceRoomsPageState extends ConsumerState<VoiceRoomsPage>
           thumbnailWidth: VoiceRoomsPerf.imageThumbnailWidth,
         ),
       );
+      for (final room in rooms.take(3)) {
+        VoiceRoomEntryPerf.prewarmOnRoomTap(ref, room);
+      }
     });
   }
 

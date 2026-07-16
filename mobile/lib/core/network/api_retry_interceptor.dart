@@ -59,7 +59,9 @@ class ApiRetryInterceptor extends Interceptor {
     }
 
     options.extra['_retryAttempt'] = attempt;
-    await Future<void>.delayed(Duration(milliseconds: 400 * attempt));
+    await Future<void>.delayed(
+      Duration(milliseconds: 300 * (1 << (attempt - 1)).clamp(1, 4)),
+    );
 
     try {
       final response = await _dioGetter().fetch<dynamic>(options);

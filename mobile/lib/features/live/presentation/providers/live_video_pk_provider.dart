@@ -63,18 +63,32 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   PkRoomRemoteDataSource get _pk => ref.read(pkRoomRemoteProvider);
 
   Timer? _poll;
+  var _sseActive = false;
 
   @override
   LiveVideoPkState build(String streamId) {
     ref.onDispose(() => _poll?.cancel());
     Future.microtask(() => refresh());
-    _startPolling();
     return const LiveVideoPkState();
   }
 
   void _startPolling() {
+    if (_sseActive) return;
     _poll?.cancel();
-    _poll = Timer.periodic(const Duration(seconds: 5), (_) => refresh());
+    _poll = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (state.battle == null ||
+          state.status == 'completed' ||
+          state.status == 'ended') {
+        _poll?.cancel();
+        return;
+      }
+      refresh();
+    });
+  }
+
+  void _stopPolling() {
+    _poll?.cancel();
+    _poll = null;
   }
 
   Future<void> refresh() async {
@@ -88,6 +102,8 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
           unifiedMatchId: unified.id,
           clearError: true,
         );
+        _sseActive = true;
+        _stopPolling();
         _syncLiveSocketBattle();
         // SSE ile canlı takip (skor/süre).
         ref.read(pkRoomProvider(unified.id).notifier).adopt(unified);
@@ -95,9 +111,14 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       }
     } catch (_) {}
 
+    _sseActive = false;
+
     // 2) Eski video-stream PK yolu (geriye dönük).
     final battle = await _remote.fetchPkBattle(arg);
-    if (battle == null && state.battle == null) return;
+    if (battle == null && state.battle == null) {
+      _stopPolling();
+      return;
+    }
     state = state.copyWith(
       battle: battle,
       clearBattle: battle == null,
@@ -105,6 +126,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       clearError: true,
     );
     _syncLiveSocketBattle();
+    if (battle != null) _startPolling();
   }
 
   void applyRemoteBattle(Map<String, dynamic> battle) {
@@ -114,6 +136,10 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       unifiedMatchId: matchId ?? state.unifiedMatchId,
       clearError: true,
     );
+    if (state.isUnified && matchId != null && matchId.isNotEmpty) {
+      _sseActive = true;
+      _stopPolling();
+    }
     _syncLiveSocketBattle();
   }
 

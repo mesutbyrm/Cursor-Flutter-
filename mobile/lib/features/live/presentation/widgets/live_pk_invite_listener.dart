@@ -7,9 +7,11 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/pk_room_models.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
+import '../providers/live_pk_invite_signal_provider.dart';
+import '../providers/live_pk_owned_streams_socket_provider.dart';
 import '../providers/pk_room_providers.dart';
 
-/// Uygulama genelinde bekleyen PK davetleri — 3 sn poll, socket yedek, 30 sn popup.
+/// Uygulama genelinde bekleyen PK davetleri — Socket.IO + SSE; HTTP polling yok.
 class LivePkInviteListener extends ConsumerStatefulWidget {
   const LivePkInviteListener({super.key, required this.child});
 
@@ -21,24 +23,15 @@ class LivePkInviteListener extends ConsumerStatefulWidget {
 }
 
 class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
-  Timer? _timer;
   final Set<String> _seen = {};
   var _showing = false;
 
-  static const _pollInterval = Duration(seconds: 3);
   static const _dialogTimeout = Duration(seconds: 30);
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(_pollInterval, (_) => _poll());
-    Future.microtask(_poll);
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+    Future.microtask(_processPendingInvites);
   }
 
   bool _isRecipient(PkRoomMatch inv, String userId) {
@@ -50,7 +43,7 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
     );
   }
 
-  Future<void> _poll() async {
+  Future<void> _processPendingInvites() async {
     if (_showing || !mounted) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
@@ -77,7 +70,10 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   Future<void> _showDialog(PkRoomMatch inv) async {
     if (!mounted || _showing) return;
     _showing = true;
-    final battle = pkRoomMatchToBattleMap(inv, myUserId: ref.read(authControllerProvider).valueOrNull?.id);
+    final battle = pkRoomMatchToBattleMap(
+      inv,
+      myUserId: ref.read(authControllerProvider).valueOrNull?.id,
+    );
     final challenger = battle['leftName']?.toString() ?? 'Yayıncı';
 
     bool? accept;
@@ -159,8 +155,17 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(livePkOwnedStreamsSocketProvider);
+    ref.listen(livePkInviteSignalProvider, (_, __) {
+      unawaited(_processPendingInvites());
+    });
     ref.listen(pkPendingInvitesProvider, (_, __) {
-      unawaited(_poll());
+      unawaited(_processPendingInvites());
+    });
+    ref.listen(authControllerProvider, (prev, next) {
+      if (prev?.valueOrNull == null && next.valueOrNull != null) {
+        unawaited(_processPendingInvites());
+      }
     });
     return widget.child;
   }

@@ -22,6 +22,7 @@ import '../../data/services/voice_room_music_pipeline_log.dart';
 import '../../data/services/chat_room_sse_service.dart';
 import '../../data/services/voice_room_gift_socket.dart';
 import '../../data/services/voice_seat_rest_service.dart';
+import 'voice_gift_providers.dart';
 import 'pk_battle_provider.dart';
 import 'pk_battle_remote_provider.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
@@ -549,7 +550,7 @@ class VoiceRoomLiveController
     );
   }
 
-  /// Odaya giriş — presence + mesajlar paralel; SSE hemen; UI bloklanmaz.
+  /// Odaya giriş — presence + mesajlar + PK + hediye paralel; SSE hemen; UI bloklanmaz.
   Future<void> _beginRoomSession() async {
     registerVoiceRoomLiveSession(ref, _roomKey);
     ref
@@ -562,19 +563,56 @@ class VoiceRoomLiveController
     _startSse();
     _schedulePoll(sseConnected: false);
 
+    ref.read(pkBattleRemoteProvider.notifier).connectSocket(
+          roomId: _roomKey,
+          alternateRoomId: _musicAlternateKey,
+        );
+
     unawaited(_parallelEntryLoad());
     unawaited(_bootstrapRoomData());
   }
 
   Future<void> _parallelEntryLoad() async {
+    if (_roomKey.isEmpty) return;
     try {
       await Future.wait<void>([
         _joinPresence(),
         _loadInitialMessages(),
-      ]);
+        _preloadPkStatus(),
+        _preloadGiftCatalog(),
+        _preloadPresenceMembers(),
+      ], eagerError: false);
     } catch (_) {
       state = state.copyWith(loading: false);
     }
+  }
+
+  Future<void> _preloadPkStatus() async {
+    try {
+      await ref.read(pkBattleRemoteProvider.notifier).loadRoomBattle(
+            _roomKey,
+            alternateRoomId: _musicAlternateKey,
+          );
+    } catch (_) {}
+  }
+
+  Future<void> _preloadGiftCatalog() async {
+    try {
+      await ref.read(chatRoomGiftsRemoteProvider).fetchGiftTypes();
+    } catch (_) {}
+  }
+
+  Future<void> _preloadPresenceMembers() async {
+    try {
+      final members = await ref
+          .read(chatRoomRemoteProvider)
+          .fetchPresence(_roomKey, alternateKey: _musicAlternateKey);
+      if (members.isEmpty) return;
+      state = state.copyWith(
+        presence: _mergePresenceStable(members, source: 'preload'),
+      );
+      _patchHubPresenceCount(members.length);
+    } catch (_) {}
   }
 
   void _seedOptimisticSelfPresence() {
@@ -1292,6 +1330,8 @@ class VoiceRoomLiveController
     );
     final remaining = state.presence.where((p) => p.id != userId).toList();
     if (remaining.length == state.presence.length) return;
+    _knownPresenceIds.remove(userId);
+    _lastKnownPresenceNames.remove(userId);
     state = state.copyWith(presence: remaining);
     _patchHubPresenceCount(remaining.length);
     ref

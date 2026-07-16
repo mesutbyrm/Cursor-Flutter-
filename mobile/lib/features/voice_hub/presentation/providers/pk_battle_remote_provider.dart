@@ -17,10 +17,14 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   PkBattleRemoteDataSource get _api => ref.read(pkBattleRemoteDataSourceProvider);
 
   PkBattleSocketService? _socket;
+  PkBattleSocketService? _ownedRoomsSocket;
 
   @override
   PkBattleRemote? build() {
-    ref.onDispose(disconnectSocket);
+    ref.onDispose(() {
+      disconnectSocket();
+      disconnectOwnedRoomsSocket();
+    });
     return null;
   }
 
@@ -185,6 +189,29 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     }
     if (battle != null) _apply(battle, 'pk:end');
     return battle;
+  }
+
+  /// Sahip olunan odalar için global PK socket — polling yerine anlık davet.
+  void connectOwnedRooms(List<String> roomKeys) {
+    final keys = roomKeys
+        .map((k) => k.trim())
+        .where((k) => k.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    if (keys.isEmpty) return;
+
+    _ownedRoomsSocket ??= PkBattleSocketService();
+    final storage = ref.read(tokenStorageProvider);
+    _ownedRoomsSocket!.connect(
+      roomKeys: keys,
+      onUpdate: (battle, event) => _apply(battle, event),
+      accessToken: storage.readAccess,
+    );
+  }
+
+  void disconnectOwnedRoomsSocket() {
+    _ownedRoomsSocket?.disconnect();
+    _ownedRoomsSocket = null;
   }
 
   /// Socket.IO PK kanalı — web ile aynı olaylar; SSE yedek / oda dışı skor.

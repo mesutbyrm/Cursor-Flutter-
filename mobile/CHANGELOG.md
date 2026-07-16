@@ -1,6 +1,27 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.37+44 (2026-07-16)
+
+### Canlı PK polling kaldırma + kalan performans
+- **Global PK davet:** `/live` namespace socket (sahip yayınlar) + bildirim SSE; `LivePkInviteListener` HTTP poll kaldırıldı
+- **Yayın odası PK:** 3 sn `_pkInvitePoll` kaldırıldı; SSE/socket + `pkPendingInvites` dinleyici
+- **PK rakip listesi:** global 3 sn poll kaldırıldı; davet sayfasında 10 sn yedek + `liveStreams` invalidation
+- **PK skor:** unified maçta SSE aktifken 5 sn poll kapalı; legacy yolda 15 sn yedek
+- **Sesli hediye:** socket aktifken REST poll tamamen kapalı
+- **Oda listesi:** ilk 3 oda Agora token ön-isıtma
+
+## 1.0.36+43 (2026-07-16)
+
+### Sesli oda + PK performans (web paritesi)
+- **Paralel oda girişi:** presence, mesajlar, PK durumu, hediye kataloğu, üye listesi `Future.wait`
+- **Agora token ön-isıtma:** oda listesi dokunuşunda arka planda; girişte `POST /voice` + Agora paralel
+- **PK davet:** HTTP polling kaldırıldı — Socket.IO (sahip odalar) + oda SSE; 30 sn popup
+- **PK banner:** 4 sn poll kaldırıldı; SSE/socket ile anlık güncelleme
+- **Presence:** SSE `user_left` anında listeden düşürür
+- **API:** connectTimeout 3 sn, receiveTimeout 5 sn; retry exponential backoff (max 2)
+- **Kabuk:** hediye kataloğu prefetch
+
 ## 1.0.35+42 (2026-07-16)
 
 ### Canlı PK / hediye / yayın stabilizasyonu

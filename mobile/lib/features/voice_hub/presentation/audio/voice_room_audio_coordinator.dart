@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../agora/data/datasources/agora_remote_datasource.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../data/services/voice_room_debug_log.dart';
@@ -31,8 +32,9 @@ class VoiceRoomAudioCoordinator {
   Future<VoiceAudioEngineKind> join({
     required String roomId,
     ChatRoomRemoteDataSource? remote,
-    bool enableMic = true,
+    bool enableMic = false,
     bool staffBypassVoiceApi = false,
+    String? userId,
   }) async {
     unawaited(VoiceRoomMusicAudioSession.ensureConfigured());
     final ds = remote ?? _remote;
@@ -50,16 +52,45 @@ class VoiceRoomAudioCoordinator {
     });
     _lastRoomId = channel;
 
+    final role = enableMic ? 'host' : 'audience';
+    final prefetched = userId != null && userId.isNotEmpty
+        ? VoiceRoomEntryPerf.takeAgora(
+            userId: userId,
+            roomId: channel,
+            role: role,
+          )
+        : null;
+
     try {
-      await ds.joinVoiceSession(channel);
+      await Future.wait<void>([
+        () async {
+          try {
+            await ds.joinVoiceSession(channel);
+          } on Object catch (e) {
+            VoiceRoomDebugLog.log('audio.voice_api.join.warn', {
+              'error': e.toString(),
+              'staffBypass': staffBypassVoiceApi,
+            });
+            if (!staffBypassVoiceApi) rethrow;
+          }
+        }(),
+        _agora.joinVoice(
+          channel,
+          publishMic: enableMic,
+          prefetchedCredentials: prefetched,
+          role: role,
+        ),
+      ]);
     } on Object catch (e) {
-      VoiceRoomDebugLog.log('audio.voice_api.join.warn', {
-        'error': e.toString(),
-        'staffBypass': staffBypassVoiceApi,
-      });
       if (!staffBypassVoiceApi) rethrow;
+      VoiceRoomDebugLog.log('audio.join.partial', {'error': e.toString()});
+      await _agora.joinVoice(
+        channel,
+        publishMic: enableMic,
+        prefetchedCredentials: prefetched,
+        role: role,
+      );
     }
-    await _agora.joinVoice(channel, publishMic: enableMic);
     _engine = VoiceAudioEngineKind.agora;
     if (!enableMic) {
       _agora.setMicEnabled(false);

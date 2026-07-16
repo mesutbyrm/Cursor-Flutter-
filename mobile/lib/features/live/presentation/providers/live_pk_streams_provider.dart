@@ -8,11 +8,9 @@ import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/pk/live_pk_opponent_filter.dart';
 import 'live_providers.dart';
 
-/// PK rakip listesi — cache yok, 3 sn poll, 5 sn timeout, sonsuz loading yok.
+/// PK rakip listesi — cache yok, SSE/socket ile yenilenir; 5 sn timeout.
 class LivePkStreamsNotifier extends Notifier<AsyncValue<List<LiveStreamEntity>>> {
-  Timer? _timer;
   CancelToken? _cancel;
-  static const _pollInterval = Duration(seconds: 3);
   static const _fetchTimeout = Duration(seconds: 5);
 
   @override
@@ -22,12 +20,10 @@ class LivePkStreamsNotifier extends Notifier<AsyncValue<List<LiveStreamEntity>>>
       if (next.hasValue) unawaited(refresh(silent: true));
     });
     Future.microtask(refresh);
-    _timer = Timer.periodic(_pollInterval, (_) => refresh(silent: true));
     return const AsyncValue.loading();
   }
 
   void _dispose() {
-    _timer?.cancel();
     _cancel?.cancel();
   }
 
