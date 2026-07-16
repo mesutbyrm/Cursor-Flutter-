@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+53 (2026-07-16)
+
+### PK davet süresi (60 sn) ve `expired` durumu
+- **SSE:** `expiresAt`, `timeoutSeconds: 60`, `action` (`created`, `started`, `expired`, …)
+- **Model:** `PkBattleRemote` / `PkRoomMatch` — `expired` status, geri sayım
+- **UI:** PK davet banner + diyaloglarda 60 sn geri sayım; süre dolunca mesaj
+- **Accept 400:** `PK isteği zaman aşımına uğradı (60 saniye)` → expire UI
+- **Test:** `pk_invite_expiry_test.dart`
+
 ## 1.0.44+52 (2026-07-16)
 
 ### CI / derleme düzeltmesi

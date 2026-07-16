@@ -99,7 +99,10 @@ class PkBattleSocketService {
     final battle = PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
     if (battle.id.isEmpty) return;
     _battleId = battle.id;
-    _onUpdate?.call(battle, map['event']?.toString() ?? eventName);
+    final event = map['action']?.toString() ??
+        map['event']?.toString() ??
+        eventName;
+    _onUpdate?.call(battle, event);
   }
 
   void disconnect() {

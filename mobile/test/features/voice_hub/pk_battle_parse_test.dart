@@ -21,7 +21,7 @@ void main() {
       );
     });
 
-    test('pendingInvite is parsed', () {
+    test('pendingInvite is parsed with expiry fields', () {
       final battle = ds.parseBattleForTest({
         'roomId': 'room-a',
         'activeBattle': null,
@@ -32,11 +32,19 @@ void main() {
           'opponentVoiceRoomId': 'room-b',
           'opponentId': 'user-b',
           'durationSeconds': 180,
+          'timeoutSeconds': 60,
+          'expiresAt': DateTime.now()
+              .add(const Duration(seconds: 60))
+              .toUtc()
+              .toIso8601String(),
         },
       });
       expect(battle, isNotNull);
       expect(battle!.effectiveId, 'inv-1');
       expect(battle.isPending, isTrue);
+      expect(battle.timeoutSeconds, 60);
+      expect(battle.expiresAt, isNotNull);
+      expect(battle.inviteSecondsLeft, inInclusiveRange(59, 60));
     });
 
     test('activeBattle is parsed', () {

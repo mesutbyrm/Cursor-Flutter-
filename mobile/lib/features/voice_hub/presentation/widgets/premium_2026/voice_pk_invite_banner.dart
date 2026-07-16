@@ -9,10 +9,12 @@ import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
 import '../../../domain/pk/pk_battle_remote_models.dart';
+import '../../../domain/pk/pk_invite_expiry.dart';
 import '../../../domain/pk/pk_opponent_room_filter.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../providers/pk_battle_remote_provider.dart';
 import '../../theme/voice_room_tokens.dart';
+import '../pk/pk_invite_countdown.dart';
 
 /// Koltukların üstü — yalnızca oda sahibi görür; SSE/socket ile anlık güncellenir.
 class VoicePkInviteBanner extends ConsumerStatefulWidget {
@@ -33,23 +35,8 @@ class VoicePkInviteBanner extends ConsumerStatefulWidget {
 }
 
 class _VoicePkInviteBannerState extends ConsumerState<VoicePkInviteBanner> {
-  Timer? _expireTimer;
-  String? _dismissedInviteId;
   var _responding = false;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.isOwner) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _loadOnce());
-    }
-  }
-
-  @override
-  void dispose() {
-    _expireTimer?.cancel();
-    super.dispose();
-  }
+  var _dismissed = false;
 
   Future<void> _loadOnce() async {
     if (!mounted || !widget.isOwner) return;
@@ -67,13 +54,13 @@ class _VoicePkInviteBannerState extends ConsumerState<VoicePkInviteBanner> {
     } catch (_) {}
   }
 
-  void _armExpiry(String inviteId) {
-    _expireTimer?.cancel();
-    _expireTimer = Timer(const Duration(minutes: 1), () {
-      if (!mounted) return;
-      setState(() => _dismissedInviteId = inviteId);
-      ref.read(pkBattleRemoteProvider.notifier).clear();
-    });
+  void _onExpired() {
+    if (!mounted || _dismissed) return;
+    setState(() => _dismissed = true);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text(pkInviteExpiredMessage)),
+    );
+    ref.read(pkBattleRemoteProvider.notifier).clear();
   }
 
   String _challengerLabel(PkBattleRemote battle) {
@@ -108,24 +95,33 @@ class _VoicePkInviteBannerState extends ConsumerState<VoicePkInviteBanner> {
         remote.clear();
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
+      if (!mounted) return;
+      if (isPkInviteExpireApiError(e)) {
+        _onExpired();
+        return;
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
     } finally {
       if (mounted) setState(() => _responding = false);
     }
   }
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.isOwner) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadOnce());
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (!widget.isOwner) return const SizedBox.shrink();
+    if (!widget.isOwner || _dismissed) return const SizedBox.shrink();
 
     final battle = ref.watch(pkBattleRemoteProvider);
-    if (battle == null ||
-        !battle.isPending ||
-        battle.effectiveId == _dismissedInviteId) {
+    if (battle == null || !battle.isPending || battle.isExpired) {
       return const SizedBox.shrink();
     }
 
@@ -133,8 +129,6 @@ class _VoicePkInviteBannerState extends ConsumerState<VoicePkInviteBanner> {
     if (!isPkInviteTarget(battle, widget.room, userId: userId)) {
       return const SizedBox.shrink();
     }
-
-    _armExpiry(battle.effectiveId);
 
     return RepaintBoundary(
       child: Padding(
@@ -157,27 +151,46 @@ class _VoicePkInviteBannerState extends ConsumerState<VoicePkInviteBanner> {
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.sports_mma_rounded, color: Colors.white),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    '${_challengerLabel(battle)} PK daveti gönderdi',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
+                Row(
+                  children: [
+                    const Icon(Icons.sports_mma_rounded, color: Colors.white),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '${_challengerLabel(battle)} PK daveti gönderdi',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                TextButton(
-                  onPressed: _responding ? null : () => _respond(false, battle),
-                  child: const Text('Reddet'),
+                const SizedBox(height: 6),
+                PkInviteCountdownText(
+                  expiresAt: battle.expiresAt,
+                  timeoutSeconds: battle.timeoutSeconds,
+                  onExpired: _onExpired,
                 ),
-                FilledButton(
-                  onPressed: _responding ? null : () => _respond(true, battle),
-                  child: const Text('Kabul'),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed:
+                          _responding ? null : () => _respond(false, battle),
+                      child: const Text('Reddet'),
+                    ),
+                    FilledButton(
+                      onPressed:
+                          _responding ? null : () => _respond(true, battle),
+                      child: const Text('Kabul'),
+                    ),
+                  ],
                 ),
               ],
             ),

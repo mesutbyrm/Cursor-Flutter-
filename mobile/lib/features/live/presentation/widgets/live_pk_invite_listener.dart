@@ -2,11 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/pk_room_models.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
+import '../../../voice_hub/domain/pk/pk_invite_expiry.dart';
+import '../../../voice_hub/presentation/widgets/pk/pk_invite_response_dialog.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_pk_owned_streams_socket_provider.dart';
 import '../providers/pk_room_providers.dart';
@@ -24,9 +28,8 @@ class LivePkInviteListener extends ConsumerStatefulWidget {
 
 class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   final Set<String> _seen = {};
+  final Set<String> _seenExpired = {};
   var _showing = false;
-
-  static const _dialogTimeout = Duration(seconds: 30);
 
   @override
   void initState() {
@@ -51,11 +54,19 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
     try {
       ref.invalidate(pkPendingInvitesProvider);
       final invites = await ref.read(pkRoomRemoteProvider).myInvites();
-      final pendingIds =
-          invites.where((i) => i.isPending).map((i) => i.id).toSet();
+      final pendingIds = invites
+          .where((i) => i.isPending && !i.isExpired)
+          .map((i) => i.id)
+          .toSet();
       _seen.removeWhere((id) => !pendingIds.contains(id));
 
       for (final inv in invites) {
+        if (inv.isExpired) {
+          if (_seenExpired.add(inv.id)) {
+            showPkInviteExpiredSnackBar(context);
+          }
+          continue;
+        }
         if (!inv.isPending) continue;
         final uid = user.id.trim();
         if (uid.isNotEmpty && inv.hostUserId == uid) continue;
@@ -78,56 +89,18 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
 
     bool? accept;
     try {
-      accept = await showDialog<bool>(
+      accept = await showPkInviteResponseDialog(
         context: context,
-        barrierDismissible: false,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: const Color(0xFF1A0F2E),
-          title: const Text('PK Daveti', style: TextStyle(color: Colors.white)),
-          content: Text(
-            '$challenger size PK daveti gönderdi.\nKabul ediyor musunuz?',
-            style: const TextStyle(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Reddet'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Kabul Et'),
-            ),
-          ],
-        ),
-      ).timeout(
-        _dialogTimeout,
-        onTimeout: () {
-          if (mounted && Navigator.canPop(context)) {
-            Navigator.pop(context, null);
-          }
-          return null;
-        },
+        challengerLabel: challenger,
+        expiresAt: inv.expiresAt,
+        timeoutSeconds: inv.timeoutSeconds,
       );
-    } on TimeoutException {
-      accept = null;
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PK daveti süresi doldu')),
-        );
-      }
     } finally {
       _showing = false;
     }
 
     if (!mounted || accept == null) {
-      if (accept == null && mounted) {
-        try {
-          await ref.read(pkUnifiedInviteProvider).respond(
-                matchId: inv.id,
-                accept: false,
-              );
-        } catch (_) {}
-      }
+      if (accept == null && mounted) showPkInviteExpiredSnackBar(context);
       return;
     }
     try {
@@ -145,11 +118,14 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
-        );
+      if (!mounted) return;
+      if (isPkInviteExpireApiError(e)) {
+        showPkInviteExpiredSnackBar(context);
+        return;
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
     }
   }
 

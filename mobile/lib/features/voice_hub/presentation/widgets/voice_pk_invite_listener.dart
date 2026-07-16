@@ -5,13 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
+import '../../domain/pk/pk_invite_expiry.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_pk_owned_rooms_socket_provider.dart';
+import '../widgets/pk/pk_invite_response_dialog.dart';
 
 /// Sesli oda PK davetleri — Socket.IO + SSE; HTTP polling yok.
 class VoicePkInviteListener extends ConsumerStatefulWidget {
@@ -27,6 +30,7 @@ class VoicePkInviteListener extends ConsumerStatefulWidget {
 class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   final Set<String> _seenInvites = {};
   final Set<String> _seenRejections = {};
+  final Set<String> _seenExpired = {};
   var _showing = false;
 
   List<VoiceRoomEntity> _ownedRooms(List<VoiceRoomEntity> rooms, String userId) {
@@ -70,10 +74,27 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     return 'Karşı oda';
   }
 
-  void _onBattleUpdate(PkBattleRemote? battle) {
-    if (_showing || !mounted || battle == null) return;
+  void _notifyExpired() {
+    if (!mounted) return;
+    showPkInviteExpiredSnackBar(context);
+    ref.read(pkBattleRemoteProvider.notifier).clear();
+  }
+
+  void _onBattleUpdate(PkBattleRemote? battle, {String? event}) {
+    if (!mounted || battle == null) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
+
+    final expired = battle.isExpired || isPkExpiredAction(event);
+    if (expired) {
+      final id = battle.effectiveId;
+      if (id.isNotEmpty && _seenExpired.add(id)) {
+        _notifyExpired();
+      }
+      return;
+    }
+
+    if (_showing) return;
 
     final rooms = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
     final owned = _ownedRooms(rooms, user.id);
@@ -111,34 +132,19 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     final roomLabel = _roomLabel(battle, room);
     final inviteId = battle.effectiveId;
     final minutes = (battle.durationSeconds / 60).round();
-    final durationHint = minutes > 0 ? '\nSüre: $minutes dk' : '';
-    final accept = await showDialog<bool>(
+    final durationHint = minutes > 0 ? 'Süre: $minutes dk' : null;
+    final accept = await showPkInviteResponseDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A0F2E),
-        title: const Text('PK Daveti', style: TextStyle(color: Colors.white)),
-        content: Text(
-          '$roomLabel odasında PK isteği var.$durationHint\nKabul ediyor musunuz?',
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Reddet'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Kabul Et'),
-          ),
-        ],
-      ),
-    ).timeout(
-      const Duration(seconds: 30),
-      onTimeout: () => null,
+      challengerLabel: roomLabel,
+      durationHint: durationHint,
+      expiresAt: battle.expiresAt,
+      timeoutSeconds: battle.timeoutSeconds,
     );
     _showing = false;
-    if (!mounted || accept == null) return;
+    if (!mounted || accept == null) {
+      if (accept == null && mounted) _notifyExpired();
+      return;
+    }
 
     final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
     final alt = room.slug != key ? room.slug : null;
@@ -164,18 +170,21 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         }
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
-        );
+      if (!mounted) return;
+      if (isPkInviteExpireApiError(e)) {
+        _notifyExpired();
+        return;
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     ref.watch(voicePkOwnedRoomsSocketProvider);
-    ref.listen<PkBattleRemote?>(pkBattleRemoteProvider, (_, next) {
+    ref.listen<PkBattleRemote?>(pkBattleRemoteProvider, (prev, next) {
       _onBattleUpdate(next);
     });
     return widget.child;

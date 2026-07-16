@@ -244,13 +244,14 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   }
 
   /// Oda SSE üzerinden gelen PK güncellemesi — socket bağlantısı gerekmez.
-  void ingestSseBattle(PkBattleRemote battle) {
-    _apply(battle, 'sse:pk');
+  void ingestSseBattle(PkBattleRemote battle, {String? event}) {
+    _apply(battle.withSseAction(event), event ?? 'sse:pk');
   }
 
   void _apply(PkBattleRemote battle, String event) {
-    state = battle;
-    ref.read(pkBattleProvider.notifier).applyRemoteBattle(battle);
+    final normalized = battle.withSseAction(event);
+    state = normalized;
+    ref.read(pkBattleProvider.notifier).applyRemoteBattle(normalized);
   }
 
   void clear() {

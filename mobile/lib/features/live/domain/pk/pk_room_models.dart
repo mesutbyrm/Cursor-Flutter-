@@ -1,4 +1,5 @@
 import '../../../../core/util/json_util.dart';
+import '../../../voice_hub/domain/pk/pk_invite_expiry.dart';
 
 /// PK Faz 2 modları — birleşik `/api/pk/*` sözleşmesi.
 enum PkRoomMode {
@@ -101,6 +102,8 @@ class PkRoomMatch {
     this.winnerSide,
     this.winnerSeatIndex,
     this.seats = const [],
+    this.expiresAt,
+    this.timeoutSeconds = pkInviteTimeoutSeconds,
   });
 
   factory PkRoomMatch.fromJson(Map<String, dynamic> json) {
@@ -154,6 +157,13 @@ class PkRoomMatch {
           ? asInt(pick(m, ['winnerSeatIndex']))
           : null,
       seats: seats,
+      expiresAt: parsePkExpiresAt(
+        pick(m, ['expiresAt', 'inviteExpiresAt', 'expires_at']),
+      ),
+      timeoutSeconds: () {
+        final t = asInt(pick(m, ['timeoutSeconds']));
+        return t > 0 ? t : pkInviteTimeoutSeconds;
+      }(),
     );
   }
 
@@ -225,11 +235,23 @@ class PkRoomMatch {
   final String? winnerSide; // left_win | right_win | draw
   final int? winnerSeatIndex;
   final List<PkSeat> seats;
+  final DateTime? expiresAt;
+  final int timeoutSeconds;
 
-  bool get isPending => status == 'pending';
+  bool get isExpired => isPkExpiredStatus(status);
+  bool get isPending => status == 'pending' && !isExpired;
   bool get isLive => status == 'live' || status == 'active';
   bool get isCompleted =>
-      status == 'completed' || status == 'ended' || status == 'cancelled';
+      isExpired ||
+      status == 'completed' ||
+      status == 'ended' ||
+      status == 'cancelled' ||
+      status == 'rejected';
+
+  int get inviteSecondsLeft => pkInviteSecondsLeft(
+        expiresAt: expiresAt,
+        timeoutSeconds: timeoutSeconds,
+      );
   bool get isLastCall => isLive && remainingSec <= 30;
 
   bool get isTeam => mode == PkRoomMode.team;

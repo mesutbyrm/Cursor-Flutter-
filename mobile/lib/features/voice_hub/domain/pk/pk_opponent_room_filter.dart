@@ -38,7 +38,7 @@ bool isPkInviteTarget(
   VoiceRoomEntity room, {
   String? userId,
 }) {
-  if (!battle.isPending) return false;
+  if (!battle.isPending || battle.isExpired) return false;
 
   final keys = {room.apiRoomKey, room.id, room.slug}
       .where((k) => k.trim().isNotEmpty)

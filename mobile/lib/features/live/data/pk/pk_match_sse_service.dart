@@ -7,6 +7,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/sse/base_sse_service.dart';
 import '../../domain/pk/pk_event_models.dart';
 import '../../domain/pk/pk_room_models.dart';
+import '../../../voice_hub/domain/pk/pk_invite_expiry.dart';
 
 /// PK maç SSE — `GET /api/pk/{id}/stream`.
 /// Skor, süre, koltuk, takım ve premium etkinlik güncellemeleri.
@@ -97,13 +98,37 @@ class PkMatchSseEvent {
   final Map<String, dynamic> raw;
 
   factory PkMatchSseEvent.fromJson(Map<String, dynamic> json) {
-    final type = (json['type'] ?? json['event'] ?? 'update').toString();
+    final action = json['action']?.toString();
+    final type = (action ?? json['type'] ?? json['event'] ?? 'update').toString();
     PkRoomMatch? match;
     final matchRaw = json['match'] ?? json['data'] ?? json;
     if (matchRaw is Map) {
       final m = Map<String, dynamic>.from(matchRaw);
       if (m.containsKey('id') || m.containsKey('matchId')) {
         match = PkRoomMatch.fromJson(m);
+        if (isPkExpiredAction(action) && match != null && !match.isExpired) {
+          match = PkRoomMatch(
+            id: match.id,
+            mode: match.mode,
+            status: 'expired',
+            seatCount: match.seatCount,
+            durationSec: match.durationSec,
+            remainingSec: match.remainingSec,
+            leftScore: match.leftScore,
+            rightScore: match.rightScore,
+            leftName: match.leftName,
+            rightName: match.rightName,
+            hostUserId: match.hostUserId,
+            hostStreamId: match.hostStreamId,
+            opponentUserId: match.opponentUserId,
+            opponentStreamId: match.opponentStreamId,
+            winnerSide: match.winnerSide,
+            winnerSeatIndex: match.winnerSeatIndex,
+            seats: match.seats,
+            expiresAt: match.expiresAt,
+            timeoutSeconds: match.timeoutSeconds,
+          );
+        }
       }
     }
     PkMatchEvent? event;
@@ -121,7 +146,12 @@ class PkMatchSseEvent {
       type == 'match_update';
 
   bool get isEnded =>
-      type == 'ended' || type == 'pk:end' || type == 'completed';
+      type == 'ended' ||
+      type == 'pk:end' ||
+      type == 'completed' ||
+      isPkExpiredAction(type);
+
+  bool get isExpired => isPkExpiredAction(type) || match?.isExpired == true;
 
   bool get isEventUpdate =>
       type == 'event' || type == 'pk_event' || type == 'multiplier';

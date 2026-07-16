@@ -83,5 +83,18 @@ void main() {
     );
     expect(isPkBattleLive(pending), isFalse);
     expect(isPkBattleLive(active), isTrue);
+
+    const expired = PkBattleRemote(
+      id: 'pk3',
+      battleType: 'voice_room',
+      status: 'expired',
+      challengerScore: 0,
+      opponentScore: 0,
+      secondsLeft: 0,
+      durationSeconds: 180,
+      targetScore: 1000,
+    );
+    expect(isPkInviteTarget(expired, eligible, userId: 'owner-b'), isFalse);
+    expect(isPkBattleLive(expired), isFalse);
   });
 }

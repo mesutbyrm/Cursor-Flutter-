@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'pk_invite_expiry.dart';
+
 /// Sunucu PK durumu — web ve Flutter ortak sözleşme.
 class PkBattleRemote extends Equatable {
   const PkBattleRemote({
@@ -12,6 +14,8 @@ class PkBattleRemote extends Equatable {
     required this.secondsLeft,
     required this.durationSeconds,
     required this.targetScore,
+    this.timeoutSeconds = pkInviteTimeoutSeconds,
+    this.expiresAt,
     this.voiceRoomId,
     this.opponentVoiceRoomId,
     this.liveStreamId,
@@ -34,6 +38,8 @@ class PkBattleRemote extends Equatable {
   final int secondsLeft;
   final int durationSeconds;
   final int targetScore;
+  final int timeoutSeconds;
+  final DateTime? expiresAt;
   final String? voiceRoomId;
   final String? opponentVoiceRoomId;
   final String? liveStreamId;
@@ -46,14 +52,72 @@ class PkBattleRemote extends Equatable {
   final PkResultRemote? result;
   final List<PkGiftRemote> recentGifts;
 
-  bool get isPending => status == 'pending';
+  bool get isPending => status == 'pending' && !isExpired;
   bool get isActive => status == 'active';
+  bool get isExpired => isPkExpiredStatus(status);
   bool get isEnded =>
+      isExpired ||
       status == 'ended' ||
       status == 'rejected' ||
       status == 'cancelled' ||
       status == 'completed' ||
       status == 'canceled';
+
+  int get inviteSecondsLeft => pkInviteSecondsLeft(
+        expiresAt: expiresAt,
+        timeoutSeconds: timeoutSeconds,
+      );
+
+  PkBattleRemote copyWith({
+    String? status,
+    DateTime? expiresAt,
+    int? timeoutSeconds,
+  }) {
+    return PkBattleRemote(
+      id: id,
+      inviteId: inviteId,
+      battleType: battleType,
+      status: status ?? this.status,
+      challengerScore: challengerScore,
+      opponentScore: opponentScore,
+      secondsLeft: secondsLeft,
+      durationSeconds: durationSeconds,
+      targetScore: targetScore,
+      timeoutSeconds: timeoutSeconds ?? this.timeoutSeconds,
+      expiresAt: expiresAt ?? this.expiresAt,
+      voiceRoomId: voiceRoomId,
+      opponentVoiceRoomId: opponentVoiceRoomId,
+      liveStreamId: liveStreamId,
+      opponentLiveStreamId: opponentLiveStreamId,
+      challengerId: challengerId,
+      opponentId: opponentId,
+      winnerId: winnerId,
+      challenger: challenger,
+      opponent: opponent,
+      result: result,
+      recentGifts: recentGifts,
+    );
+  }
+
+  /// SSE `action` alanına göre durumu normalize eder.
+  PkBattleRemote withSseAction(String? action) {
+    final a = (action ?? '').trim().toLowerCase();
+    if (isPkExpiredAction(a)) return copyWith(status: 'expired');
+    if (a == 'started' || a == 'pk:start' || a == 'start') {
+      return copyWith(status: 'active');
+    }
+    if (a == 'rejected' || a == 'reject') {
+      return copyWith(status: 'rejected');
+    }
+    if (a == 'cancelled' || a == 'canceled' || a == 'cancel') {
+      return copyWith(status: 'cancelled');
+    }
+    if (a == 'completed' || a == 'ended' || a == 'complete') {
+      return copyWith(status: 'completed');
+    }
+    if (a == 'created' && isPending) return this;
+    return this;
+  }
 
   /// API yanıtında `inviteId` ayrı gelebilir — respond path için.
   String get effectiveId {
@@ -80,6 +144,10 @@ class PkBattleRemote extends Equatable {
         fallback: 180,
       ),
       targetScore: _int(json['targetScore'], fallback: 150000),
+      timeoutSeconds: _int(json['timeoutSeconds'], fallback: pkInviteTimeoutSeconds),
+      expiresAt: parsePkExpiresAt(
+        json['expiresAt'] ?? json['inviteExpiresAt'] ?? json['expires_at'],
+      ),
       voiceRoomId: json['voiceRoomId']?.toString(),
       opponentVoiceRoomId: json['opponentVoiceRoomId']?.toString(),
       liveStreamId: json['liveStreamId']?.toString(),
@@ -118,7 +186,8 @@ class PkBattleRemote extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, status, challengerScore, opponentScore, secondsLeft];
+  List<Object?> get props =>
+      [id, status, challengerScore, opponentScore, secondsLeft, expiresAt];
 }
 
 class PkParticipantRemote extends Equatable {

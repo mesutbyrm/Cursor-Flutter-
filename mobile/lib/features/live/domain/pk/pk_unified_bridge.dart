@@ -22,6 +22,8 @@ PkBattleRemote pkRoomMatchToBattleRemote(
     secondsLeft: match.remainingSec,
     durationSeconds: match.durationSec,
     targetScore: 150000,
+    timeoutSeconds: match.timeoutSeconds,
+    expiresAt: match.expiresAt,
     liveStreamId: match.hostStreamId ?? leftSeat?.streamId,
     opponentLiveStreamId: rightSeat?.streamId,
     challengerId: leftSeat?.userId ?? match.hostUserId,

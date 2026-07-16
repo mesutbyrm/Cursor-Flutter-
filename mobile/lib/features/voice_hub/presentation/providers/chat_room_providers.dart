@@ -1076,7 +1076,10 @@ class VoiceRoomLiveController
             // PK battle — artık ayrı bir Socket.IO bağlantısı yerine
             // odanın ana SSE akışından besleniyor.
             ref.read(pkBattleProvider.notifier).applyRemoteBattle(battle);
-            ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
+            ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(
+                  battle,
+                  event: event,
+                );
             VoiceRoomDebugLog.log('sse.pk', {
               'roomId': _roomKey,
               'battleId': battle.id,

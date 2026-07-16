@@ -321,7 +321,8 @@ class ChatRoomSseService extends BaseSseService {
     if (raw is! Map) return;
     final battle = PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
     if (battle.effectiveId.isEmpty) return;
-    final event = map['event']?.toString() ??
+    final event = map['action']?.toString() ??
+        map['event']?.toString() ??
         map['type']?.toString() ??
         'pk';
     _onPk?.call(battle, event);

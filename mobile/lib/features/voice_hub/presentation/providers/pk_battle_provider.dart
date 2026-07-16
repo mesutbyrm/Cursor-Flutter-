@@ -173,11 +173,13 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
 
   void applyRemoteBattle(PkBattleRemote remote) {
     _tick?.cancel();
-    final phase = remote.isActive
-        ? PkBattlePhase.active
-        : remote.isEnded
-            ? PkBattlePhase.finished
-            : PkBattlePhase.ready;
+    final phase = remote.isExpired
+        ? PkBattlePhase.finished
+        : remote.isActive
+            ? PkBattlePhase.active
+            : remote.isEnded
+                ? PkBattlePhase.finished
+                : PkBattlePhase.ready;
 
     PkBattleWinner winner = PkBattleWinner.none;
     if (remote.isEnded && remote.result != null) {
