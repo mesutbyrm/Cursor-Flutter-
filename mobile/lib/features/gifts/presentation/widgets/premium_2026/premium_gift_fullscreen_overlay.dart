@@ -82,7 +82,7 @@ class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverl
   void _triggerEffects(LiveGiftEvent e) {
     final emoji = PremiumGiftCatalog2026.emoji(e.giftId);
     final rarity = PremiumGiftCatalog2026.rarity(e.giftId);
-    final comboBonus = (e.coinCost * e.quantity ~/ 50).clamp(0, 20);
+    final comboBonus = (e.jetonAmount ~/ 50).clamp(0, 20);
     _particlesKey.currentState?.burst(emoji, count: 10 + comboBonus);
     _coinKey.currentState?.burst(count: 8 + (e.coinCost ~/ 50).clamp(0, 16));
 
@@ -180,7 +180,7 @@ class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverl
                   ),
                 ),
                 const SizedBox(height: 12),
-                _JetonBadge(jeton: e.coinCost * e.quantity, glow: glow),
+                _JetonBadge(jeton: e.jetonAmount, glow: glow),
                 const SizedBox(height: 14),
                 _SenderBanner(event: e, glow: glow),
               ],

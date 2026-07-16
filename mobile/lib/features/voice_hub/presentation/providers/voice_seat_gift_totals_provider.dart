@@ -65,7 +65,7 @@ class VoiceSeatGiftTotals extends Notifier<Map<String, SeatGiftAggregate>> {
         (receiverId == null || receiverId.isEmpty)) {
       return;
     }
-    final coins = ev.coinCost * (ev.quantity <= 0 ? 1 : ev.quantity);
+    final coins = ev.jetonAmount;
     final count = ev.quantity <= 0 ? 1 : ev.quantity;
     final sender =
         ev.senderName.trim().isNotEmpty ? ev.senderName.trim() : 'Bilinmeyen';

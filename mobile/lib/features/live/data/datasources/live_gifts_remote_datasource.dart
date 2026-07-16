@@ -116,7 +116,9 @@ class LiveGiftsRemoteDataSource {
           giftId: giftTypeId,
           giftName: giftName,
           quantity: quantity,
-          coinCost: unitPrice * quantity,
+          coinCost: unitPrice,
+          giftPrice: unitPrice,
+          totalCoin: unitPrice * quantity,
           timestamp: DateTime.now(),
           animationKey: giftTypeId,
         );
@@ -184,17 +186,38 @@ class LiveGiftsRemoteDataSource {
       giftName = LiveGiftCatalog.displayNameOverrides[giftId] ?? 'Hediye';
     }
 
-    final qtyRaw = asInt(pick(json, ['quantity', 'count', 'amount']));
+    final qtyRaw = asInt(pick(json, ['quantity', 'count', 'amount', 'giftCount']));
     final qty = qtyRaw > 0 ? qtyRaw : 1;
-    final price = asInt(pick(json, ['price', 'coinCost', 'totalCost']));
+    final giftPrice = asInt(
+      pick(json, ['giftPrice', 'unitPrice', 'pricePerUnit', 'coinPrice']),
+    );
+    final totalCoin = asInt(
+      pick(json, ['totalCoin', 'totalCoins', 'totalCost', 'coins', 'jeton']),
+    );
+    final totalDiamond = asInt(
+      pick(json, ['totalDiamond', 'totalDiamonds', 'diamonds']),
+    );
+    final legacyPrice = asInt(pick(json, ['price', 'coinCost']));
+    final unitPrice = giftPrice > 0
+        ? giftPrice
+        : (totalCoin > 0 && qty > 0
+            ? totalCoin ~/ qty
+            : (legacyPrice > 0 && qty > 1 && legacyPrice >= qty
+                ? legacyPrice ~/ qty
+                : legacyPrice));
+    final resolvedTotal = totalCoin > 0
+        ? totalCoin
+        : (unitPrice > 0 ? unitPrice * qty : legacyPrice);
     final comboRaw = asInt(pick(json, ['combo', 'comboCount']));
 
-    final icon = pick(json, ['icon', 'iconUrl'])?.toString();
-    final iconUrl = icon == null || icon.isEmpty
-        ? null
-        : icon.startsWith('http')
-            ? icon
-            : '${Env.siteOrigin}${icon.startsWith('/') ? icon : '/$icon'}';
+    final icon = pick(json, [
+      'giftImage',
+      'giftImageUrl',
+      'image',
+      'icon',
+      'iconUrl',
+    ])?.toString();
+    final iconUrl = _resolveImageUrl(icon);
 
     final animKey = pick(json, ['animation', 'animationKey'])?.toString();
     final animType = GiftAnimationKind.parse(
@@ -210,10 +233,14 @@ class LiveGiftsRemoteDataSource {
       giftId: giftId,
       giftName: giftName,
       quantity: qty,
-      coinCost: price,
+      coinCost: unitPrice,
+      giftPrice: unitPrice,
+      totalCoin: resolvedTotal,
+      totalDiamond: totalDiamond,
       combo: comboRaw > 0 ? comboRaw : 1,
       timestamp: ts,
       iconUrl: iconUrl,
+      giftImageUrl: iconUrl,
       animationKey: animKey,
       rarity: GiftRarity.parse(pick(json, ['rarity'])?.toString()),
       animationKind: animType,
@@ -238,6 +265,26 @@ class LiveGiftsRemoteDataSource {
     return pick(json, ['giftTypeId', 'giftId', 'type'])?.toString();
   }
 
+  String? _resolveImageUrl(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    if (raw.startsWith('http')) return raw;
+    if (_isBareAssetFilename(raw)) return null;
+    return '${Env.siteOrigin}${raw.startsWith('/') ? raw : '/$raw'}';
+  }
+
+  bool _isBareAssetFilename(String s) {
+    final l = s.trim().toLowerCase();
+    if (l.startsWith('http')) return false;
+    return l.endsWith('.png') ||
+        l.endsWith('.jpg') ||
+        l.endsWith('.jpeg') ||
+        l.endsWith('.webp') ||
+        l.endsWith('.gif') ||
+        l.endsWith('.svga') ||
+        l.endsWith('.json') ||
+        l.contains('assets/');
+  }
+
   String _resolveGiftName(Map<String, dynamic> json, String giftId) {
     final nested = pick(json, ['giftType', 'gift']);
     if (nested is Map) {
@@ -245,13 +292,13 @@ class LiveGiftsRemoteDataSource {
         nested,
         keys: const ['nameTr', 'name', 'nameEn', 'label'],
       );
-      if (fromType != null) return fromType;
+      if (fromType != null && !_isBareAssetFilename(fromType)) return fromType;
     }
     final flat = jsonDisplayLabel(
-      pick(json, ['giftName', 'giftTypeName']),
+      pick(json, ['giftName', 'giftTypeName', 'name']),
     );
-    if (flat != null) return flat;
-    return LiveGiftCatalog.displayNameOverrides[giftId] ?? giftId;
+    if (flat != null && !_isBareAssetFilename(flat)) return flat;
+    return LiveGiftCatalog.displayNameOverrides[giftId] ?? 'Hediye';
   }
 
   String _resolvePersonName(

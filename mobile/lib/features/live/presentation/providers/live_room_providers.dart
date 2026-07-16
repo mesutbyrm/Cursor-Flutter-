@@ -27,6 +27,7 @@ import 'live_namespace_providers.dart';
 import 'co_broadcast_provider.dart';
 import 'live_guest_grid_provider.dart';
 import 'pk_room_providers.dart';
+import 'live_pk_streams_provider.dart';
 
 class LiveRoomState {
   const LiveRoomState({
@@ -147,7 +148,10 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         ref.read(liveGiftRealtimeProvider).publishRemote(ev);
         ref.read(liveGiftLeaderboardProvider(streamId).notifier).record(ev);
       },
-      onStreamEnded: () => state = state.copyWith(streamEnded: true),
+      onStreamEnded: () {
+        state = state.copyWith(streamEnded: true);
+        ref.invalidate(livePkStreamsProvider);
+      },
       onPkBattle: (battle) {
         ref.read(liveVideoPkProvider(streamId).notifier).applyRemoteBattle(battle);
       },

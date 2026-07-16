@@ -62,19 +62,18 @@ PkBattleRemote pkRoomMatchToBattleRemote(
 Map<String, dynamic> pkRoomMatchToBattleMap(
   PkRoomMatch match, {
   String? myStreamId,
+  String? myUserId,
 }) {
   final leftSeat = match.seats.where((s) => s.isLeft && s.isOccupied).toList();
   final hostOnLeft = match.hostStreamId == null ||
       match.hostStreamId == myStreamId ||
       leftSeat.any((s) => s.streamId == myStreamId);
 
-  final isOpponent = myStreamId != null &&
-      myStreamId.trim().isNotEmpty &&
-      match.isPending &&
+  final isOpponent = match.isPending &&
       isLivePkInviteRecipient(
         match,
-        myStreamId: myStreamId.trim(),
-        myUserId: null,
+        myStreamId: myStreamId?.trim() ?? '',
+        myUserId: myUserId,
       );
 
   return {

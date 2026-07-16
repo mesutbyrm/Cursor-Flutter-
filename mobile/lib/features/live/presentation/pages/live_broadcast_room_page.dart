@@ -42,6 +42,7 @@ import '../providers/live_namespace_providers.dart';
 import '../../domain/utils/live_fortune_type_slug.dart';
 import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
+import '../gifts/providers/live_seat_gift_flash_provider.dart';
 import '../gifts/widgets/floating_gift_particles.dart';
 import '../gifts/widgets/gift_center_toast_stack.dart';
 import '../gifts/widgets/gift_notification_stack.dart';
@@ -118,6 +119,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Timer? _lazyExtrasTimer;
   Timer? _coBroadcastPoll;
   Timer? _pkInvitePoll;
+  Timer? _hostHeartbeat;
   final Set<String> _seenGuestJoinIds = {};
   final Set<String> _seenPkInviteIds = {};
   final Set<String> _seenVipEntrances = {};
@@ -220,6 +222,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       _remoteVideoListener ??= _onHostVideoAvailabilityChanged;
       _agora.remoteVideoAvailable.addListener(_remoteVideoListener!);
       _onHostVideoAvailabilityChanged();
+    } else {
+      _startHostHeartbeat();
     }
     final quality = ref.read(liveStreamQualityProvider);
     unawaited(_agora.setStreamQuality(quality));
@@ -323,6 +327,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _fortunePoll?.cancel();
     _coBroadcastPoll?.cancel();
     _pkInvitePoll?.cancel();
+    _hostHeartbeat?.cancel();
     _signalService?.stop();
     if (_remoteUidsListener != null) {
       _agora.remoteUidsNotifier.removeListener(_remoteUidsListener!);
@@ -638,7 +643,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (mounted) setState(() => _rtcReady = false);
   }
 
-  Future<void> _resumeHostBroadcast() async {
+  void _startHostHeartbeat() {
+    _hostHeartbeat?.cancel();
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    _hostHeartbeat = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (_leaving || !widget.session.isHost) return;
+      unawaited(ref.read(liveRemoteProvider).sendStreamHeartbeat(streamId));
+      if (!_agora.inChannel && _hostAway) {
+        unawaited(_resumeHostBroadcast(silent: true));
+      }
+    });
+  }
+
+  Future<void> _resumeHostBroadcast({bool silent = false}) async {
     if (!widget.session.isHost || _leaving) return;
     final endsAt = _graceEndsAt;
     if (endsAt != null && DateTime.now().isAfter(endsAt)) {
@@ -653,8 +671,18 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final streamId = widget.session.streamId?.trim();
     if (streamId == null || streamId.isEmpty) return;
     try {
+      if (_agora.inChannel) {
+        _hostAway = false;
+        await HostLiveStreamRecovery.clear();
+        if (mounted && !silent) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Yayına kaldığınız yerden devam ediliyor.')),
+          );
+        }
+        return;
+      }
       final meta = await ref.read(liveRemoteProvider).fetchStream(streamId);
-      if (meta != null && !meta.isLive) {
+      if (meta != null && !meta.isLive && endsAt == null) {
         await HostLiveStreamRecovery.clear();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -678,13 +706,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       _hostAway = false;
       _onRtcJoinSuccess(user);
       await HostLiveStreamRecovery.clear();
-      if (mounted) {
+      if (mounted && !silent) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Yayına kaldığınız yerden devam ediliyor.')),
         );
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && !silent) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ApiException.userMessage(e))),
         );

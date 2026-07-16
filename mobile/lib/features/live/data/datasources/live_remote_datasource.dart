@@ -38,6 +38,28 @@ class LiveRemoteDataSource {
     return _parseStreamList(res.data);
   }
 
+  /// PK rakip listesi — `GET /api/video-streams/pk/list` (cache kapalı), yedek canlı liste.
+  Future<List<LiveStreamEntity>> fetchPkEligibleStreams({
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.videoStreamPkList,
+        forceRefresh: true,
+        cancelToken: cancelToken,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 5),
+          sendTimeout: const Duration(seconds: 5),
+        ),
+      );
+      final parsed = _parseStreamList(res.data);
+      if (parsed.isNotEmpty) return parsed;
+    } catch (_) {}
+
+    final live = await fetch(page: 1);
+    return live.where((s) => s.isLive).toList();
+  }
+
   List<LiveStreamEntity> _parseStreamList(dynamic body) {
     dynamic list;
     if (body is Map<String, dynamic>) {
@@ -544,6 +566,19 @@ class LiveRemoteDataSource {
       'elapsedMs': DateTime.now().difference(started).inMilliseconds,
     });
     return streamId;
+  }
+
+  /// Yayıncı bağlantı canlılığı — 15 sn aralıkla sinyal ping.
+  Future<void> sendStreamHeartbeat(String streamId) async {
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.videoStreamSignal(streamId),
+        data: {
+          'type': 'ping',
+          'data': {'ts': DateTime.now().toUtc().toIso8601String()},
+        },
+      );
+    } catch (_) {}
   }
 
   /// Agora bağlandıktan sonra çağır — takipçilere push bildirimi.

@@ -110,10 +110,18 @@ class LiveGiftController extends ChangeNotifier {
           giftId: base.giftId,
           giftName: base.giftName,
           quantity: base.quantity,
-          coinCost: base.coinCost,
+          coinCost: base.coinCost > 0 ? base.coinCost : gift.price,
+          giftPrice: base.giftPrice > 0 ? base.giftPrice : gift.price,
+          totalCoin: base.totalCoin > 0
+              ? base.totalCoin
+              : (base.coinCost > 0
+                  ? base.coinCost * base.quantity
+                  : gift.price * quantity),
+          totalDiamond: base.totalDiamond,
           combo: 1,
           timestamp: base.timestamp,
-          iconUrl: base.iconUrl ?? gift.iconPath,
+          iconUrl: base.iconUrl ?? base.giftImageUrl ?? gift.iconPath,
+          giftImageUrl: base.giftImageUrl ?? base.iconUrl ?? gift.iconPath,
           animationKey: base.animationKey ?? gift.animationRef,
           rarity: gift.rarity,
           animationKind: gift.animationKind,
@@ -142,7 +150,7 @@ class LiveGiftController extends ChangeNotifier {
       fullscreenQueue.removeRange(3, fullscreenQueue.length);
     }
     activeFullscreen = enriched;
-    final gross = enriched.coinCost * enriched.quantity;
+    final gross = enriched.jetonAmount;
     streamerEarnings =
         (streamerEarnings ?? 0) + GiftRevenueDisplay.liveBroadcasterNet(gross);
     notifyListeners();
@@ -180,15 +188,20 @@ extension _LiveGiftEventCopy on LiveGiftEvent {
     return LiveGiftEvent(
       id: id,
       senderId: senderId,
+      receiverId: receiverId,
       senderName: senderName,
       receiverName: receiverName,
       giftId: giftId,
       giftName: giftName,
       quantity: quantity,
       coinCost: coinCost,
+      giftPrice: giftPrice,
+      totalCoin: totalCoin,
+      totalDiamond: totalDiamond,
       combo: c,
       timestamp: timestamp,
       iconUrl: iconUrl,
+      giftImageUrl: giftImageUrl,
       animationKey: animationKey,
       rarity: rarity,
       animationKind: animationKind,

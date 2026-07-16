@@ -49,9 +49,16 @@ class PkRoomRemoteDataSource {
     return _parse(res.data);
   }
 
-  /// Bekleyen davetlerim.
+  /// Bekleyen davetlerim — cache kapalı.
   Future<List<PkRoomMatch>> myInvites() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.pkMeInvites);
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.pkMeInvites,
+      forceRefresh: true,
+      options: Options(
+        receiveTimeout: const Duration(seconds: 5),
+        sendTimeout: const Duration(seconds: 5),
+      ),
+    );
     return parsePkMatchList(res.data);
   }
 

@@ -370,7 +370,7 @@ class _GiftsTab extends ConsumerWidget {
         return ListTile(
           leading: CircleAvatar(
             backgroundColor: const Color(0xFFB832FF).withValues(alpha: 0.3),
-            child: Text('${g.coinCost * g.quantity}', style: const TextStyle(fontSize: 11)),
+            child: Text('${g.jetonAmount}', style: const TextStyle(fontSize: 11)),
           ),
           title: Text(g.senderName, style: const TextStyle(color: Colors.white)),
           subtitle: Text(
