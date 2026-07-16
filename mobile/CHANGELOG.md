@@ -1,6 +1,26 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.43+50 (2026-07-16)
+
+### Flutter diğer servisler (13 modül)
+- **`profile_service.dart`:** getMe, updateProfile, getUser, follow, credits, XP, achievements, arama
+- **`gift_service.dart`:** types, send, recent-big
+- **`fortune_service.dart`:** generateFortune SSE (14 fal tipi slug eşlemesi)
+- **`teller_service.dart`:** falcı listesi, session, favoriler
+- **`social_service.dart`:** post, yorum, beğeni
+- **`short_video_service.dart`:** liste, presigned upload, like, comment
+- **`message_service.dart`:** DM konuşmalar ve mesajlar
+- **`notification_service.dart`:** liste, markRead, SSE
+- **`push_service.dart`:** FCM token kayıt/silme
+- **`upload_service.dart`:** presigned PUT yükleme
+- **`payment_service.dart`:** paketler, jeton, üyelik, cüzdan
+- **`game_service.dart`:** oyunlar, daily-spin, görevler
+- **`misc_service.dart`:** homepage, duyuru, liderlik, burç, günlük giriş, referral
+- **`services_providers.dart`:** tüm Riverpod provider'ları tek export
+- **Endpoint:** gifts/types, send, recent-big, homepage-buttons, credit-packages, games/quests, vb.
+- **Test:** `other_services_test.dart`
+
 ## 1.0.42+49 (2026-07-16)
 
 ### Flutter Canlı Yayın servisi

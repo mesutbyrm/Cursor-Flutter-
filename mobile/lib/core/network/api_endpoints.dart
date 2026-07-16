@@ -137,6 +137,10 @@ abstract final class ApiEndpoints {
 
   static String fortuneTeller(String id) => '/api/fortune-tellers/$id';
 
+  /// `POST /api/fortune-tellers/{tellerId}/session`
+  static String fortuneTellerSessionFor(String tellerId) =>
+      '/api/fortune-tellers/$tellerId/session';
+
   static const fortuneTellerMyProfile = '/api/fortune-tellers/my-profile';
   static const fortuneTellerToggleOnline = '/api/fortune-tellers/toggle-online';
 
@@ -544,6 +548,29 @@ abstract final class ApiEndpoints {
       '/api/video-streams/$streamId/auto-close';
 
   static const giftsCatalog = '/api/gifts';
+
+  static const giftsTypes = '/api/gifts/types';
+
+  static const giftsSend = '/api/gifts/send';
+
+  static const giftsRecentBig = '/api/gifts/recent-big';
+
+  static const homepageButtons = '/api/homepage-buttons';
+
+  static const announcements = '/api/announcements';
+
+  static const horoscopeDaily = '/api/horoscope/daily';
+
+  static const creditPackages = '/api/credit-packages';
+
+  static const usersOnline = '/api/users/online';
+
+  static const gamesDailySpin = '/api/games/daily-spin';
+
+  static const gamesQuests = '/api/games/quests';
+
+  static String gamesQuestComplete(String questId) =>
+      '/api/games/quests/$questId';
 
   static String userProfile(String userId) => '/api/users/$userId';
 
