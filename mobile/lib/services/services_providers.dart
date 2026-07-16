@@ -34,6 +34,9 @@ export 'stream_service.dart';
 export 'teller_service.dart';
 export 'upload_service.dart';
 
+export 'chat_service_provider.dart' show chatServiceProvider;
+export 'stream_service_provider.dart' show streamServiceProvider;
+
 Dio Function() _resolveDio(Ref ref) => () => ref.read(dioProvider);
 
 final profileServiceProvider = Provider<ProfileService>((ref) {
@@ -93,7 +96,3 @@ final gameServiceProvider = Provider<GameService>((ref) {
 final miscServiceProvider = Provider<MiscService>((ref) {
   return MiscService(resolveAuthedDio: _resolveDio(ref));
 });
-
-// Mevcut chat/stream provider'ları — tek import noktası.
-export 'chat_service_provider.dart' show chatServiceProvider;
-export 'stream_service_provider.dart' show streamServiceProvider;
