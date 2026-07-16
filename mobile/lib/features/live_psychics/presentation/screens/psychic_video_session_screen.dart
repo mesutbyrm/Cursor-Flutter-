@@ -13,6 +13,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/providers/ps
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
 import 'package:canlifal_social/features/agora/presentation/agora_room_manager.dart';
+import 'package:canlifal_social/features/trtc/presentation/trtc_room_manager.dart';
 
 final _psychicSessionChatProvider =
     StateProvider.autoDispose.family<TextEditingController, PsychicSessionEntity>(
@@ -159,10 +160,7 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                   child: SizedBox(
                     width: 88,
                     height: 120,
-                    child: AgoraLocalVideoView(
-                      key: ValueKey(state.localPreviewKey),
-                      manager: ctrl.agora,
-                    ),
+                    child: _buildLocalPreview(ctrl, state),
                   ),
                 ),
               ),
@@ -180,10 +178,7 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        AgoraLocalVideoView(
-                          key: ValueKey(state.localPreviewKey),
-                          manager: ctrl.agora,
-                        ),
+                        _buildLocalPreview(ctrl, state),
                         Positioned(
                           right: 4,
                           bottom: 4,
@@ -409,14 +404,14 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _ControlBtn(
-                        icon: ctrl.agora.micOn
+                        icon: ctrl.micOn
                             ? Icons.mic_rounded
                             : Icons.mic_off_rounded,
                         label: 'Mik',
                         onTap: ctrl.toggleMic,
                       ),
                       _ControlBtn(
-                        icon: ctrl.agora.cameraOn
+                        icon: ctrl.cameraOn
                             ? Icons.videocam_rounded
                             : Icons.videocam_off_rounded,
                         label: 'Kamera',
@@ -548,6 +543,24 @@ class _VideoLayer extends StatelessWidget {
     }
 
     if (!session.isClient) {
+      if (state.rtcBackend == PsychicRtcBackend.trtc) {
+        return ValueListenableBuilder<String?>(
+          valueListenable: ctrl.trtc.remoteAnchorUserIdNotifier,
+          builder: (context, remoteUserId, _) {
+            if (remoteUserId != null && remoteUserId.isNotEmpty) {
+              return TrtcRemoteVideoView(
+                key: ValueKey('remote-$remoteUserId'),
+                manager: ctrl.trtc,
+                userId: remoteUserId,
+              );
+            }
+            return TrtcLocalVideoView(
+              key: ValueKey(state.localPreviewKey),
+              manager: ctrl.trtc,
+            );
+          },
+        );
+      }
       return ValueListenableBuilder<int?>(
         valueListenable: ctrl.agora.remoteUidNotifier,
         builder: (context, remoteUid, _) {
@@ -566,6 +579,22 @@ class _VideoLayer extends StatelessWidget {
       );
     }
 
+    if (state.rtcBackend == PsychicRtcBackend.trtc) {
+      return ValueListenableBuilder<String?>(
+        valueListenable: ctrl.trtc.remoteAnchorUserIdNotifier,
+        builder: (context, remoteUserId, _) {
+          if (remoteUserId != null && remoteUserId.isNotEmpty) {
+            return TrtcRemoteVideoView(
+              key: ValueKey('remote-$remoteUserId'),
+              manager: ctrl.trtc,
+              userId: remoteUserId,
+            );
+          }
+          return const LiveRoomVideoBackground();
+        },
+      );
+    }
+
     return ValueListenableBuilder<int?>(
       valueListenable: ctrl.agora.remoteUidNotifier,
       builder: (context, remoteUid, _) {
@@ -580,6 +609,19 @@ class _VideoLayer extends StatelessWidget {
       },
     );
   }
+}
+
+Widget _buildLocalPreview(PsychicVideoController ctrl, PsychicVideoState state) {
+  if (state.rtcBackend == PsychicRtcBackend.trtc) {
+    return TrtcLocalVideoView(
+      key: ValueKey(state.localPreviewKey),
+      manager: ctrl.trtc,
+    );
+  }
+  return AgoraLocalVideoView(
+    key: ValueKey(state.localPreviewKey),
+    manager: ctrl.agora,
+  );
 }
 
 class _ControlBtn extends StatelessWidget {

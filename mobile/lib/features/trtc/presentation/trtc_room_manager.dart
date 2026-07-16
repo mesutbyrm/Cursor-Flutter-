@@ -36,6 +36,11 @@ class TrtcRoomManager {
   String? _boundRemoteUserId;
   String? _expectedAnchorUserId;
 
+  /// Bağlantı koptuğunda çağrılır (yeniden bağlanma koordinatörde).
+  VoidCallback? onConnectionLost;
+
+  final ValueNotifier<int?> networkQuality = ValueNotifier<int?>(null);
+
   bool get isSupported => !kIsWeb;
   bool get inRoom => _inRoom;
   bool get micOn => _micOn;
@@ -121,6 +126,7 @@ class TrtcRoomManager {
     }
     _listener = TRTCCloudListener(
       onError: (code, msg) => debugPrint('TRTC error $code: $msg'),
+      onWarning: (code, msg) => debugPrint('TRTC warning $code: $msg'),
       onEnterRoom: (result) {
         _inRoom = result > 0;
         VoiceRoomDebugLog.log('audio.trtc.enter_room', {
@@ -142,9 +148,21 @@ class TrtcRoomManager {
         }
       },
       onRemoteUserLeaveRoom: (userId, _) {
+        debugPrint('TRTC remote leave: $userId');
         if (remoteAnchorUserId == userId) {
           _clearRemoteAnchor();
         }
+      },
+      onExitRoom: (reason) {
+        debugPrint('TRTC exitRoom: $reason');
+        _inRoom = false;
+      },
+      onConnectionLost: () {
+        debugPrint('TRTC connection lost');
+        onConnectionLost?.call();
+      },
+      onNetworkQuality: (local, remote) {
+        networkQuality.value = local.quality.index;
       },
       onUserVideoAvailable: (userId, available) {
         debugPrint('TRTC video $userId available=$available');
@@ -170,6 +188,7 @@ class TrtcRoomManager {
       },
     );
     _cloud!.registerListener(_listener!);
+    _configureAudioProcessing();
 
     // Canlı yayın izleyicisi: otomatik ses/video alımı (enterRoom öncesi).
     if (!audioOnly) {
@@ -204,11 +223,11 @@ class TrtcRoomManager {
     }
 
     if (audioOnly) {
-      _cloud!.startLocalAudio(TRTCAudioQuality.defaultMode);
+      _cloud!.startLocalAudio(TRTCAudioQuality.speech);
       _device?.setAudioRoute(TXAudioRoute.speakerPhone);
       _micOn = true;
     } else if (publishAsAnchor) {
-      _cloud!.startLocalAudio(TRTCAudioQuality.defaultMode);
+      _cloud!.startLocalAudio(TRTCAudioQuality.speech);
       _cloud!.muteLocalVideo(TRTCVideoStreamType.big, false);
       _micOn = true;
       _cameraOn = true;
@@ -216,6 +235,16 @@ class TrtcRoomManager {
     } else {
       _device?.setAudioRoute(TXAudioRoute.speakerPhone);
     }
+  }
+
+  void _configureAudioProcessing() {
+    if (_cloud == null) return;
+    // TRTC videoCall/live/voiceChatRoom sahnelerinde AEC/ANS/AGC varsayılan açık.
+    _cloud!.enableAudioVolumeEvaluation(
+      true,
+      TRTCAudioVolumeEvaluateParams(interval: 300),
+    );
+    _device?.setAudioRoute(TXAudioRoute.speakerPhone);
   }
 
   void _setRemoteAnchor(String userId) {
@@ -276,7 +305,7 @@ class TrtcRoomManager {
 
   void setMicEnabled(bool enabled) {
     if (enabled) {
-      _cloud?.startLocalAudio(TRTCAudioQuality.defaultMode);
+      _cloud?.startLocalAudio(TRTCAudioQuality.speech);
     } else {
       _cloud?.stopLocalAudio();
     }
@@ -303,6 +332,8 @@ class TrtcRoomManager {
   }
 
   Future<void> leave() async {
+    onConnectionLost = null;
+    networkQuality.value = null;
     remoteVideoAvailable.value = false;
     _expectedAnchorUserId = null;
     _clearRemoteAnchor();

@@ -98,10 +98,13 @@ abstract final class VoiceRoomEntryPerf {
     }
 
     try {
-      final cred = await ref.read(trtcRemoteProvider).fetchUserSig(
-            userId: userId,
-            roomId: roomId,
-          );
+      final remote = ref.read(trtcRemoteProvider);
+      TrtcCredentials cred;
+      try {
+        cred = await remote.fetchToken(roomId: roomId, role: 'audience');
+      } catch (_) {
+        cred = await remote.fetchUserSig(userId: userId, roomId: roomId);
+      }
       _trtcCache[key] = _TrtcCacheEntry(cred, DateTime.now());
     } catch (_) {}
   }

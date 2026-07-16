@@ -1,6 +1,23 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+55 (2026-07-16)
+
+### CI düzeltmesi (CodeQL)
+- **`auth_providers.dart`:** TRTC bootstrap import yolu (`../../../trtc/...`)
+- **`trtc_providers.dart`:** `dio_provider` import yolu (`../../../../core/...`)
+
+## 1.0.44+54 (2026-07-16)
+
+### Tencent TRTC — Canlı Fal entegrasyonu
+- **API:** `POST /api/trtc/token`, `/api/live/join-room`, `/api/live/heartbeat`, `/api/live/leave-room`
+- **TRTC birincil:** Canlı fal video oturumu TRTC ile bağlanır; başarısızsa Agora yedek
+- **Heartbeat:** 10 sn canlı oda nabzı; kopunca otomatik yeniden bağlanma + UserSig yenileme
+- **Ses:** TRTC speech kalitesi, AEC/ANS/AGC (SDK varsayılan), hoparlör yönlendirme
+- **Güvenlik:** SDKSecret istemcide yok; UserSig yalnızca backend'den
+- **Giriş sonrası:** TRTC motoru ısıtma + mikrofon izni ön kontrolü
+- **Test:** `trtc_live_room_test.dart`
+
 ## 1.0.44+52 (2026-07-16)
 
 ### CI / derleme düzeltmesi

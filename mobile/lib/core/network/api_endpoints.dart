@@ -454,8 +454,16 @@ abstract final class ApiEndpoints {
   /// Diğer ortamlar için genel canlı listesi.
   static const liveStreams = '/api/live';
 
-  /// Tencent TRTC UserSig (POST: userId, roomId).
+  /// Tencent TRTC UserSig (POST: userId, roomId) — eski uç.
   static const trtcUserSig = '/api/trtc/usersig';
+
+  /// Tencent TRTC token (POST: roomId, role?) — önerilen.
+  static const trtcToken = '/api/trtc/token';
+
+  /// Canlı oda yaşam döngüsü — compound katılım, heartbeat, ayrılma.
+  static const liveJoinRoom = '/api/live/join-room';
+  static const liveLeaveRoom = '/api/live/leave-room';
+  static const liveHeartbeat = '/api/live/heartbeat';
   static const livekitToken = '/api/livekit/token';
 
   /// Agora RTC token — canlı video yayını.
