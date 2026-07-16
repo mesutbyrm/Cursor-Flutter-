@@ -15,6 +15,7 @@ abstract final class ApiEndpoints {
   static const authMobileGoogle = '/api/auth/mobile-google';
   static const authMobileTiktok = '/api/auth/mobile-tiktok';
   static const authMobileRefresh = '/api/auth/mobile-refresh';
+  static const authLogout = '/api/auth/logout';
   static const authMobileSendVerification = '/api/auth/mobile-send-verification';
   static const authMobileVerifyEmail = '/api/auth/mobile-verify-email';
   static const authMobileSessions = '/api/auth/mobile-sessions';

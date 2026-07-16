@@ -3,6 +3,7 @@ import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/env.dart';
+import 'auth_token_refresh_coordinator.dart';
 import '../performance/json_isolate_perf.dart';
 import 'api.dart';
 import 'api_exception.dart';
@@ -26,6 +27,8 @@ bool _isPublicAuthPath(String path) {
       path == ApiEndpoints.authMobileGoogle ||
       path == ApiEndpoints.authMobileTiktok ||
       path == ApiEndpoints.authMobileRefresh ||
+      path == ApiEndpoints.authForgotPassword ||
+      path == ApiEndpoints.authResetPassword ||
       path == ApiEndpoints.authLogin ||
       path == ApiEndpoints.authRegister ||
       path == ApiEndpoints.authGoogle ||
@@ -103,12 +106,14 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
         final already = e.requestOptions.extra['_authRetry'] == true;
         if (!already &&
             e.response?.statusCode == 401 &&
-            e.requestOptions.path != refreshPath) {
+            e.requestOptions.path != refreshPath &&
+            e.requestOptions.path != ApiEndpoints.authLogout) {
           e.requestOptions.extra['_authRetry'] = true;
-          final refreshed = await _tryRefresh(
-            tokenRefreshDio,
-            tokenStorage,
-            refreshPath,
+          final refreshed =
+              await AuthTokenRefreshCoordinator.instance.refreshLegacy(
+            refreshDio: tokenRefreshDio,
+            storage: tokenStorage,
+            refreshPath: refreshPath,
           );
           if (refreshed) {
             final token = await tokenStorage.readAccess();
@@ -156,42 +161,11 @@ Future<bool> tryRefreshAccessToken(
   TokenStorage storage, {
   String? refreshPath,
 }) {
-  return _tryRefresh(dio, storage, refreshPath ?? _refreshPath());
-}
-
-Future<bool> _tryRefresh(
-  Dio dio,
-  TokenStorage storage,
-  String refreshPath,
-) async {
-  final refresh = await storage.readRefresh();
-  if (refresh == null || refresh.isEmpty) return false;
-  try {
-    final res = await dio.post<Map<String, dynamic>>(
-      refreshPath,
-      data: {'refreshToken': refresh},
-    );
-    final data = res.data;
-    if (data == null) return false;
-    final access = _pickToken(data, 'accessToken', 'access_token');
-    if (access == null) return false;
-    final newRefresh = _pickToken(data, 'refreshToken', 'refresh_token');
-    await storage.writeTokens(access: access, refresh: newRefresh ?? refresh);
-    return true;
-  } on DioException catch (e) {
-    final code = e.response?.statusCode;
-    if (code == 401 || code == 403) {
-      await storage.clear();
-    }
-    return false;
-  } catch (_) {
-    return false;
-  }
-}
-
-String? _pickToken(Map<String, dynamic> m, String a, String b) {
-  final v = m[a] ?? m[b];
-  return v is String ? v : null;
+  return tryRefreshAccessTokenLegacy(
+    dio,
+    storage,
+    refreshPath: refreshPath ?? _refreshPath(),
+  );
 }
 
 extension DioApi on Dio {

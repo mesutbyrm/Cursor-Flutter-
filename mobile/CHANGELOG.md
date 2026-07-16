@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.38+45 (2026-07-16)
+
+### Flutter Auth servisi
+- **`lib/services/auth_service.dart`:** login, register, Google/TikTok, refresh, forgot/reset password, logout (`POST /api/auth/logout` + `DELETE /api/devices/fcm`)
+- **`AuthResponse` / `AuthUser` modelleri** — tüm auth uçları ortak format
+- **Token storage:** `accessToken`, `refreshToken`, `userId` (`flutter_secure_storage`)
+- **401 interceptor:** queue pattern ile tek refresh; başarısız → otomatik logout / login
+- **Hata formatı:** yeni `{ error: { code, message } }` + eski `{ error: "..." }`
+
 ## 1.0.37+44 (2026-07-16)
 
 ### Canlı PK polling kaldırma + kalan performans
