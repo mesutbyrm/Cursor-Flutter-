@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.42+49 (2026-07-16)
+
+### Flutter Canlı Yayın servisi
+- **`lib/services/stream_service.dart`:** yayın listesi, başlat/bitir, join/leave, SSE, yorum, hediye, beğeni
+- **Co-broadcast:** `getCoStatus`, `joinCo`, `inviteCo`
+- **Moderasyon:** `getMods`, `addMod`, `muteUser`, `banUser`
+- **RTC:** `fetchAgoraToken`, `fetchTrtcUserSig`
+- **Kılavuz §9.4 uyumu:** leave için `DELETE .../join` + `POST .../leave` yedek; gifts `{giftId, giftTypeId}`
+- **Modeller:** `StreamSummary`, `StreamComment`
+- **`stream_service_provider.dart`:** Riverpod + `SseClient`
+- **Test:** `stream_service_test.dart`
+
 ## 1.0.41+48 (2026-07-16)
 
 ### Flutter Chat servisi
