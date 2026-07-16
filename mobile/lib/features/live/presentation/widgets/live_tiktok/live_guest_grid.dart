@@ -9,6 +9,7 @@ import '../../../domain/entities/live_guest_slot.dart';
 import '../../../../agora/presentation/agora_room_manager.dart';
 import '../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../providers/live_guest_grid_provider.dart';
+import '../../gifts/widgets/live_seat_gift_flash_stack.dart';
 
 /// TikTok Party tarzı çoklu yayın grid — 2/4/6/9 koltuk.
 class LiveGuestGrid extends ConsumerWidget {
@@ -283,6 +284,15 @@ class _SlotCell extends StatelessWidget {
             child: _badge(
               Icons.person_rounded,
               slot.displayName ?? hostName ?? 'Yayıncı',
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 28,
+            child: LiveSeatGiftFlashStack(
+              userId: slot.userId ?? (slot.index == 0 ? null : remoteUserId),
+              displayName: slot.displayName ?? (slot.index == 0 ? hostName : null),
             ),
           ),
           if (_displayJeton > 0)

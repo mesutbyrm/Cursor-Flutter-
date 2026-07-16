@@ -1,6 +1,29 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.35+42 (2026-07-16)
+
+### Canlı PK / hediye / yayın stabilizasyonu
+- **PK listesi:** `GET /api/video-streams/pk/list` tek kaynak, cache kapalı, 3 sn poll, 5 sn timeout, owner-null ve izleyicisiz filtre, dedupe
+- **PK davet:** 3 sn poll + `pkPendingInvites` dinleyici, 30 sn popup süresi, süre dolunca otomatik red
+- **Hediye jeton:** `giftPrice` / `totalCoin` / `giftImage` parse; `jetonAmount` ile 0 jeton gösterimi kaldırıldı
+- **Hediye UI:** chat bildirimi 3× font + gradient/glow + 3 sn fade; koltuk altı 3 sn flaş listesi
+- **Yayın:** yayıncı heartbeat 15 sn (`signal ping`); SSE yeniden bağlanma ≤2 sn; «Yayına devam et» kanal açıksa yeniden oluşturmaz
+- **API:** Dio timeout 5 sn
+- **Test:** `live_pk_gift_stabilize_test.dart`
+
+## 1.0.34+41 (2026-07-15)
+
+### Backend entegrasyon ve performans
+- **ApiClient:** merkezi HTTP facade (`api_client.dart`) — tüm modüller `dioProvider` üzerinden
+- **Bildirim SSE:** `GET /api/notifications/stream` — web ile aynı gerçek zamanlı kanal
+- **Çevrimdışı banner:** kabukta `OfflineStatusBanner` aktif
+- **SSE ağ kurtarma:** çevrimiçi olunca aktif oda SSE yeniden bağlanır
+- **Cache:** `voiceRoomsProvider` + `liveGiftCatalogProvider` oturum `keepAlive`
+- **Açılış:** kabuk prefetch — cüzdan + bildirim + profil paralel (T+200ms)
+- **Admin:** sunucu `wallet.isAdmin` → tüm özellikler açık
+- **Doküman:** `docs/FLUTTER_BACKEND_INTEGRATION_STATUS.md`
+
 ## 1.0.33+40 (2026-07-15)
 
 ### Derleme düzeltmesi (CodeQL)

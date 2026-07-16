@@ -84,7 +84,7 @@ class LiveGiftLeaderboardNotifier
   void record(LiveGiftEvent event) {
     final id = event.senderId ?? event.senderName;
     if (id.isEmpty) return;
-    final coins = event.coinCost * event.quantity;
+    final coins = event.jetonAmount;
     final emoji = LiveGiftCatalog.emojiById[event.giftId] ?? '🎁';
     final prev = _totals[id];
     _totals[id] = _Agg(

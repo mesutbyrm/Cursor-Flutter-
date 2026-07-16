@@ -41,7 +41,7 @@ class GiftAnimationPlayer extends StatelessWidget {
       animationRef: event?.animationKey,
       rarity: event?.rarity ?? GiftRarity.common,
       animationKind: event?.animationKind ?? GiftAnimationKind.lottie,
-      iconUrl: event?.iconUrl,
+      iconUrl: g.iconUrl ?? event?.giftImageUrl ?? event?.iconUrl,
     );
   }
 

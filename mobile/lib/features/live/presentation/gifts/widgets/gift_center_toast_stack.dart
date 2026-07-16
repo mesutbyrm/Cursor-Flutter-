@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../domain/entities/live_gift_catalog.dart';
 import '../../../domain/entities/live_gift_event.dart';
 
-/// Ortada gösterilen hediye bildirimi — «kullanıcı yayıncıya hediye (jeton) gönderdi».
+/// Ortada gösterilen hediye bildirimi.
 class GiftCenterToastStack extends StatelessWidget {
   const GiftCenterToastStack({super.key, required this.events});
 
@@ -15,9 +16,9 @@ class GiftCenterToastStack extends StatelessWidget {
     if (events.isEmpty) return const SizedBox.shrink();
     final event = events.first;
     final emoji = LiveGiftCatalog.emojiById[event.giftId] ?? '🎁';
-    final jeton = event.coinCost * event.quantity;
-    final giftLabel =
-        event.quantity > 1 ? '${event.quantity}×${event.giftName}' : event.giftName;
+    final jeton = event.jetonAmount;
+    final qtyLabel = event.quantity > 1 ? ' x${event.quantity}' : '';
+    final imageUrl = event.displayImageUrl;
 
     return IgnorePointer(
       child: Center(
@@ -46,48 +47,48 @@ class GiftCenterToastStack extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(emoji, style: const TextStyle(fontSize: 36)),
+                  if (imageUrl != null)
+                    CanlifalNetworkImage(
+                      url: imageUrl,
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.contain,
+                      errorWidget:
+                          Text(emoji, style: const TextStyle(fontSize: 36)),
+                    )
+                  else
+                    Text(emoji, style: const TextStyle(fontSize: 36)),
                   const SizedBox(width: 12),
                   Flexible(
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: const TextStyle(
-                          fontSize: 14,
-                          height: 1.35,
-                          color: Colors.white,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '👤 ${event.senderName}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
                         ),
-                        children: [
-                          TextSpan(
-                            text: event.senderName,
-                            style: const TextStyle(fontWeight: FontWeight.w900),
+                        Text(
+                          '🌹 ${event.giftName}$qtyLabel',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFFFF8EC7),
                           ),
-                          const TextSpan(text: ' '),
-                          TextSpan(
-                            text: event.receiverName,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: Colors.cyanAccent.shade100,
-                            ),
+                        ),
+                        Text(
+                          jeton > 0 ? '$jeton Jeton gönderdi' : 'Hediye gönderdi',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.amber.shade200,
                           ),
-                          const TextSpan(text: '\'a '),
-                          TextSpan(
-                            text: giftLabel,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFFFF8EC7),
-                            ),
-                          ),
-                          TextSpan(
-                            text: ' ($jeton jeton)',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.amber.shade200,
-                            ),
-                          ),
-                          const TextSpan(text: ' gönderdi'),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -101,7 +102,9 @@ class GiftCenterToastStack extends StatelessWidget {
                 end: const Offset(1, 1),
                 duration: 280.ms,
                 curve: Curves.easeOutBack,
-              ),
+              )
+              .then(delay: const Duration(seconds: 3))
+              .fadeOut(duration: 500.ms),
         ),
       ),
     );

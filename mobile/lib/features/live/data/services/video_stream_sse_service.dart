@@ -156,10 +156,19 @@ class VideoStreamSseService {
     if (_stopped || _streamId == null) return;
     _reconnectTimer?.cancel();
     _reconnectAttempt++;
-    final delay = Duration(seconds: (_reconnectAttempt.clamp(1, 6) * 2));
+    final ms = (_reconnectAttempt.clamp(1, 4) * 500);
+    final delay = Duration(milliseconds: ms);
     _reconnectTimer = Timer(delay, () {
       if (!_stopped) unawaited(_openStream());
     });
+  }
+
+  /// Anında yeniden bağlan (maks. ~2 sn backoff).
+  Future<void> reconnectNow() async {
+    if (_stopped || _streamId == null) return;
+    _reconnectTimer?.cancel();
+    _reconnectAttempt = 0;
+    await _openStream();
   }
 
   void _drainBuffer(StringBuffer buffer) {

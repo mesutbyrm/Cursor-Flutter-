@@ -44,8 +44,8 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
   final dio = Dio(
     BaseOptions(
       baseUrl: Env.apiBaseUrl,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 20),
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 5),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -135,8 +135,8 @@ final dioProvider = Provider<Dio>((ref) {
   final refreshOnly = Dio(
     BaseOptions(
       baseUrl: Env.apiBaseUrl,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 20),
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 5),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
