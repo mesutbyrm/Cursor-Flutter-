@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+51 (2026-07-16)
+
+### Flutter yeni endpoint'ler
+- **Apple Sign-In:** `AuthService.loginWithApple` / `signInWithApple` → `POST /api/auth/mobile-apple`; `APPLE_SERVICE_ID` env; giriş/kayıt UI
+- **Mobil config:** `ConfigService.getConfig` → `GET /api/mobile/config`; `MobileConfigGate` bakım / zorunlu / isteğe bağlı güncelleme
+- **Şifre değiştirme:** `AuthService.changePassword` → `POST /api/auth/change-password`; profil güvenlik sayfası PATCH yerine bu uç
+- **Kullanıcı engelleme:** `UserService.blockUser` (toggle), `getBlockedUsers` → `/api/user/block` (+ eski `/api/user/blocked` yedek)
+- **Kullanıcı şikayet:** `UserService.reportUser` → `POST /api/user/report`
+- **Modeller:** `AppleFullName`, `MobileConfig`, `UserBlockResult`, `UserReportResult`, `BlockedUserEntry`
+- **Rapor:** `docs/FLUTTER_BACKEND_UYUMLULUK_RAPORU.md`
+- **Test:** `new_endpoints_test.dart`
+
 ## 1.0.43+50 (2026-07-16)
 
 ### Flutter diğer servisler (13 modül)

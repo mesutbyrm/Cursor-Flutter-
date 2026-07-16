@@ -13,6 +13,7 @@ abstract final class ApiEndpoints {
   static const authMobileRegister = '/api/auth/mobile-register';
   static const authMobileLogin = '/api/auth/mobile-login';
   static const authMobileGoogle = '/api/auth/mobile-google';
+  static const authMobileApple = '/api/auth/mobile-apple';
   static const authMobileTiktok = '/api/auth/mobile-tiktok';
   static const authMobileRefresh = '/api/auth/mobile-refresh';
   static const authLogout = '/api/auth/logout';
@@ -25,6 +26,7 @@ abstract final class ApiEndpoints {
   static const authForgotPassword = '/api/auth/forgot-password';
   static const authResetPassword = '/api/auth/reset-password';
   static const authChangePassword = '/api/auth/change-password';
+  static const mobileConfig = '/api/mobile/config';
   static const me = '/api/me';
   static const meStats = '/api/users/me/stats';
   static const meGiftsReceived = '/api/users/me/gifts-received';
@@ -633,6 +635,12 @@ abstract final class ApiEndpoints {
 
   /// Engellenen kullanıcılar — kılavuz §9.2 UserRepository.
   static const userBlocked = '/api/user/blocked';
+
+  /// Toggle engelleme — `POST/GET /api/user/block` (yeni mobil uç).
+  static const userBlock = '/api/user/block';
+
+  /// Kullanıcı şikayet — `POST /api/user/report`.
+  static const userReport = '/api/user/report';
 
   static const conversations = messages;
   static String conversationMessages(String id) =>

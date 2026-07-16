@@ -269,6 +269,24 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     });
   }
 
+  Future<void> loginWithApple({String? referralCode}) async {
+    await _runUserAction(() async {
+      state = await AsyncValue.guard(() async {
+        final u = await LoadingTimeout.run(
+          ref.read(authRepositoryProvider).loginWithApple(
+                referralCode: referralCode,
+              ),
+          timeout: _actionTimeout,
+          message: 'Apple girişi zaman aşımına uğradı',
+        );
+        final resolved = await _withSiteProfile(u);
+        await _afterAuthSuccess(resolved);
+        return resolved;
+      });
+      _clearGuestModeOnSuccess();
+    });
+  }
+
   Future<void> loginWithTikTok() async {
     await _runUserAction(() async {
       state = await AsyncValue.guard(() async {

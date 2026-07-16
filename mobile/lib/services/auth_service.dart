@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../core/config/env.dart';
 import '../core/firebase/firebase_bootstrap.dart';
@@ -11,6 +12,7 @@ import '../core/push/push_notification_service.dart';
 import 'models/auth_api_error.dart';
 import 'models/auth_response.dart';
 import 'models/auth_user.dart';
+import 'models/apple_full_name.dart';
 
 /// Canlifal mobil kimlik doğrulama — `https://canlifal.com` JWT API.
 ///
@@ -87,6 +89,71 @@ class AuthService {
         'idToken': idToken,
         if (referralCode != null && referralCode.isNotEmpty)
           'referralCode': referralCode,
+      },
+    );
+  }
+
+  /// `POST /api/auth/mobile-apple`
+  Future<AuthResponse> loginWithApple({
+    required String identityToken,
+    AppleFullName? fullName,
+    String? referralCode,
+  }) async {
+    final nameJson = fullName?.toJson();
+    return _postAuth(
+      ApiEndpoints.authMobileApple,
+      {
+        'identityToken': identityToken,
+        if (nameJson != null) 'fullName': nameJson,
+        if (referralCode != null && referralCode.isNotEmpty)
+          'referralCode': referralCode,
+      },
+    );
+  }
+
+  /// `sign_in_with_apple` paketi ile kimlik bilgisi alıp API'ye gönderir.
+  ///
+  /// iOS Service ID: `APPLE_SERVICE_ID` (`Env.appleServiceId`).
+  /// [fullName] yalnızca ilk Apple girişinde credential'dan gelir.
+  Future<AuthResponse> signInWithApple({String? referralCode}) async {
+    final scopes = [
+      AppleIDAuthorizationScopes.email,
+      AppleIDAuthorizationScopes.fullName,
+    ];
+    final credential = await SignInWithApple.getAppleIDCredential(
+      scopes: scopes,
+      webAuthenticationOptions: Env.appleServiceId.trim().isNotEmpty
+          ? WebAuthenticationOptions(
+              clientId: Env.appleServiceId.trim(),
+              redirectUri: Uri.parse(Env.appleRedirectUri),
+            )
+          : null,
+    );
+    final token = credential.identityToken;
+    if (token == null || token.isEmpty) {
+      throw const ApiException('Apple kimlik jetonu alınamadı');
+    }
+    final name = AppleFullName.fromCredential(
+      givenName: credential.givenName,
+      familyName: credential.familyName,
+    );
+    return loginWithApple(
+      identityToken: token,
+      fullName: name.isEmpty ? null : name,
+      referralCode: referralCode,
+    );
+  }
+
+  /// `POST /api/auth/change-password` — Bearer gerekli.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await _authedDio.safePost<dynamic>(
+      ApiEndpoints.authChangePassword,
+      data: {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
       },
     );
   }

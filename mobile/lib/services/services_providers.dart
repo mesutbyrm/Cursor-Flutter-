@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/network/dio_provider.dart';
 import '../core/sse_client_provider.dart';
 import 'chat_service.dart';
+import 'config_service.dart';
 import 'fortune_service.dart';
 import 'game_service.dart';
 import 'gift_service.dart';
@@ -17,8 +18,10 @@ import 'social_service.dart';
 import 'stream_service.dart';
 import 'teller_service.dart';
 import 'upload_service.dart';
+import 'user_service.dart';
 
 export 'chat_service.dart';
+export 'config_service.dart';
 export 'fortune_service.dart';
 export 'game_service.dart';
 export 'gift_service.dart';
@@ -33,11 +36,21 @@ export 'social_service.dart';
 export 'stream_service.dart';
 export 'teller_service.dart';
 export 'upload_service.dart';
+export 'user_service.dart';
 
+export 'auth_service_provider.dart' show authServiceProvider, authPublicDioProvider;
 export 'chat_service_provider.dart' show chatServiceProvider;
 export 'stream_service_provider.dart' show streamServiceProvider;
 
 Dio Function() _resolveDio(Ref ref) => () => ref.read(dioProvider);
+
+final configServiceProvider = Provider<ConfigService>((ref) {
+  return ConfigService(publicDio: ref.watch(authPublicDioProvider));
+});
+
+final userServiceProvider = Provider<UserService>((ref) {
+  return UserService(resolveAuthedDio: _resolveDio(ref));
+});
 
 final profileServiceProvider = Provider<ProfileService>((ref) {
   return ProfileService(resolveAuthedDio: _resolveDio(ref));

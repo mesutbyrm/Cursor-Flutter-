@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/bootstrap/app_startup_log.dart';
+import '../core/bootstrap/mobile_config_gate.dart';
 import '../core/bootstrap/startup_perf.dart';
 import '../core/bootstrap/root_overlay_purge.dart';
 import '../core/l10n/app_localizations_config.dart';
@@ -90,39 +91,22 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
     final showMainShell = bootstrapDone && (authed || guest);
 
     if (!bootstrapDone) {
-      return MaterialApp(
-        title: 'Canlifal',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(),
-        darkTheme: darkTheme,
-        home: const AuthBootstrapOverlay(),
+      return MobileConfigGate(
+        child: MaterialApp(
+          title: 'Canlifal',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(),
+          darkTheme: darkTheme,
+          home: const AuthBootstrapOverlay(),
+        ),
       );
     }
 
     // Oturumsuz: go_router YOK — arka planda /feed shell yüklenmez, barrier oluşmaz.
     if (!showMainShell) {
-      return MaterialApp(
-        key: const ValueKey('auth-only'),
-        title: 'Canlifal',
-        debugShowCheckedModeBanner: false,
-        scrollBehavior: const ModernSocialScrollBehavior(),
-        locale: AppLocalizationsConfig.locale,
-        supportedLocales: AppLocalizationsConfig.supportedLocales,
-        localizationsDelegates: AppLocalizationsConfig.delegates,
-        theme: AppTheme.light(),
-        darkTheme: darkTheme,
-        themeMode: themeMode,
-        home: const AuthGatewayHost(),
-      );
-    }
-
-    final shellSession = ref.watch(shellSessionProvider);
-    final router = ref.watch(goRouterProvider);
-
-    return VoiceRoomMusicLifecycleHost(
-      child: PushLifecycleListener(
-        child: MaterialApp.router(
-          key: ValueKey('main-$shellSession'),
+      return MobileConfigGate(
+        child: MaterialApp(
+          key: const ValueKey('auth-only'),
           title: 'Canlifal',
           debugShowCheckedModeBanner: false,
           scrollBehavior: const ModernSocialScrollBehavior(),
@@ -132,24 +116,47 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
           theme: AppTheme.light(),
           darkTheme: darkTheme,
           themeMode: themeMode,
-          builder: (context, child) {
-            final brightness = Theme.of(context).brightness;
-            SystemChrome.setSystemUIOverlayStyle(
-              SystemUiOverlayStyle(
-                statusBarIconBrightness: brightness == Brightness.dark
-                    ? Brightness.light
-                    : Brightness.dark,
-                statusBarBrightness: brightness == Brightness.dark
-                    ? Brightness.dark
-                    : Brightness.light,
-              ),
-            );
+          home: const AuthGatewayHost(),
+        ),
+      );
+    }
 
-            return MainAppShell(
-              child: child ?? const ColoredBox(color: Color(0xFF05050D)),
-            );
-          },
-          routerConfig: router,
+    final shellSession = ref.watch(shellSessionProvider);
+    final router = ref.watch(goRouterProvider);
+
+    return MobileConfigGate(
+      child: VoiceRoomMusicLifecycleHost(
+        child: PushLifecycleListener(
+          child: MaterialApp.router(
+            key: ValueKey('main-$shellSession'),
+            title: 'Canlifal',
+            debugShowCheckedModeBanner: false,
+            scrollBehavior: const ModernSocialScrollBehavior(),
+            locale: AppLocalizationsConfig.locale,
+            supportedLocales: AppLocalizationsConfig.supportedLocales,
+            localizationsDelegates: AppLocalizationsConfig.delegates,
+            theme: AppTheme.light(),
+            darkTheme: darkTheme,
+            themeMode: themeMode,
+            builder: (context, child) {
+              final brightness = Theme.of(context).brightness;
+              SystemChrome.setSystemUIOverlayStyle(
+                SystemUiOverlayStyle(
+                  statusBarIconBrightness: brightness == Brightness.dark
+                      ? Brightness.light
+                      : Brightness.dark,
+                  statusBarBrightness: brightness == Brightness.dark
+                      ? Brightness.dark
+                      : Brightness.light,
+                ),
+              );
+
+              return MainAppShell(
+                child: child ?? const ColoredBox(color: Color(0xFF05050D)),
+              );
+            },
+            routerConfig: router,
+          ),
         ),
       ),
     );

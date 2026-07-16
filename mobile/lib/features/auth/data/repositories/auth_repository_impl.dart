@@ -175,6 +175,14 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<UserEntity> loginWithApple({String? referralCode}) async {
+    final response = await _authService.signInWithApple(
+      referralCode: referralCode,
+    );
+    return _mapAuthResponse(response);
+  }
+
+  @override
   Future<UserEntity> loginWithTikTok() async {
     final body = await _native.signInWithTikTok();
     if (body.containsKey('accessToken') || body.containsKey('access_token')) {

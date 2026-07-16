@@ -108,6 +108,31 @@ class ProfileRemoteDataSource {
     String? birthDate,
     String? birthTime,
   }) async {
+    final onlyPasswordChange = currentPassword != null &&
+        newPassword != null &&
+        displayName == null &&
+        bio == null &&
+        avatarUrl == null &&
+        username == null &&
+        birthDate == null &&
+        birthTime == null;
+
+    if (currentPassword != null && newPassword != null) {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.authChangePassword,
+        data: {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        },
+      );
+      if (onlyPasswordChange) {
+        final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.me);
+        final body = res.data ?? {};
+        final data = body['data'] is Map ? asJsonMap(body['data']) : body;
+        return UserDto.fromApiMap(data).toEntity();
+      }
+    }
+
     final res = await _dio.safePatch<Map<String, dynamic>>(
       ApiEndpoints.me,
       data: {
@@ -121,8 +146,6 @@ class ProfileRemoteDataSource {
           'avatarUrl': avatarUrl,
         },
         'username': ?username,
-        'currentPassword': ?currentPassword,
-        'newPassword': ?newPassword,
         if (birthDate != null && birthDate.isNotEmpty) 'birthDate': birthDate,
         if (birthTime != null && birthTime.isNotEmpty) 'birthTime': birthTime,
       },
