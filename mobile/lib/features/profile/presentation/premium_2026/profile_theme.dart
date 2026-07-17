@@ -6,8 +6,10 @@ abstract final class ProfilePremiumTheme {
   static const radiusMd = 22.0;
   static const radiusSm = 18.0;
 
-  static const coverHeight = 148.0;
+  /// Kapak kısa tutulur; avatar kapak üzerine biner (aşağı kayma hissi olmasın).
+  static const coverHeight = 96.0;
   static const avatarSize = 108.0;
+  static const avatarOverlap = 36.0;
 
   static const neonPurple = Color(0xFFB832FF);
   static const neonPink = Color(0xFFFF4D9D);

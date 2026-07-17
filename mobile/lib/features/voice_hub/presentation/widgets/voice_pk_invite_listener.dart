@@ -79,12 +79,39 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     final owned = _ownedRooms(rooms, user.id);
 
     if (battle.isPending) {
-      for (final room in owned) {
+      // Önce sahip olunan odalar; ownerId eksikse rakip kullanıcı eşleşmesi.
+      final candidates = owned.isNotEmpty
+          ? owned
+          : rooms.where((r) {
+              final oppRoom = battle.opponentVoiceRoomId?.trim() ?? '';
+              if (oppRoom.isEmpty) return false;
+              return r.apiRoomKey == oppRoom ||
+                  r.id == oppRoom ||
+                  r.slug == oppRoom;
+            }).toList(growable: false);
+
+      for (final room in candidates) {
         if (!isPkInviteTarget(battle, room, userId: user.id)) continue;
         final inviteId = battle.effectiveId;
         if (inviteId.isEmpty || !_seenInvites.add(inviteId)) continue;
         unawaited(_showInviteDialog(battle, room));
         return;
+      }
+
+      // ownerId boş olsa bile rakip kullanıcı bizsek dialog göster.
+      final oppId = battle.opponentId?.trim() ?? '';
+      final oppUser = battle.opponent?.userId.trim() ?? '';
+      if (oppId == user.id || oppUser == user.id) {
+        final inviteId = battle.effectiveId;
+        if (inviteId.isNotEmpty && _seenInvites.add(inviteId)) {
+          final room = candidates.isNotEmpty
+              ? candidates.first
+              : (rooms.isNotEmpty ? rooms.first : null);
+          if (room != null) {
+            unawaited(_showInviteDialog(battle, room));
+            return;
+          }
+        }
       }
     }
 

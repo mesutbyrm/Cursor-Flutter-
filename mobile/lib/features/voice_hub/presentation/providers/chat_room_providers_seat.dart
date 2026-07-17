@@ -152,6 +152,11 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
   }
 
   Future<String?> assignSeat({required int seatIndex, String? userId}) async {
+    final targetId =
+        (userId ?? ref.read(authControllerProvider).valueOrNull?.id)?.trim();
+    if (targetId != null && targetId.isNotEmpty) {
+      _applyOptimisticSeat(userId: targetId, seatIndex: seatIndex);
+    }
     try {
       await ref
           .read(voiceSeatRestServiceProvider)
@@ -163,7 +168,66 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     }
   }
 
+  void _applyOptimisticSeat({
+    required String userId,
+    required int seatIndex,
+  }) {
+    final next = state.presence.map((p) {
+      if (p.id != userId) {
+        // Aynı koltuktaki başka kullanıcıyı boşalt.
+        if (p.seatIndex == seatIndex) {
+          return ChatRoomPresence(
+            id: p.id,
+            name: p.name,
+            nickname: p.nickname,
+            image: p.image,
+            chatRole: p.chatRole,
+            roleSymbol: p.roleSymbol,
+            membership: p.membership,
+            seatIndex: null,
+            isSpeaking: p.isSpeaking,
+            isMuted: p.isMuted,
+          );
+        }
+        return p;
+      }
+      return ChatRoomPresence(
+        id: p.id,
+        name: p.name,
+        nickname: p.nickname,
+        image: p.image,
+        chatRole: p.chatRole,
+        roleSymbol: p.roleSymbol,
+        membership: p.membership,
+        seatIndex: seatIndex,
+        isSpeaking: p.isSpeaking,
+        isMuted: p.isMuted,
+      );
+    }).toList();
+    if (!next.any((p) => p.id == userId)) return;
+    state = state.copyWith(presence: next);
+  }
+
   Future<String?> clearUserSeat({required String userId}) async {
+    final prev = [
+      for (final p in state.presence)
+        if (p.id == userId)
+          ChatRoomPresence(
+            id: p.id,
+            name: p.name,
+            nickname: p.nickname,
+            image: p.image,
+            chatRole: p.chatRole,
+            roleSymbol: p.roleSymbol,
+            membership: p.membership,
+            seatIndex: null,
+            isSpeaking: false,
+            isMuted: p.isMuted,
+          )
+        else
+          p,
+    ];
+    state = state.copyWith(presence: prev);
     try {
       await ref.read(chatRoomRemoteProvider).clearSeat(
             roomKey: _roomKey,

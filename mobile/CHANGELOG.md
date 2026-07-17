@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.52+79 (2026-07-17)
+
+### Profil + canlı yayın + sesli oda
+- Profil: üst boşluk/kayma giderildi — kapak kısaldı, avatar kapak üzerine bindi
+- Video / Takipçi / Takip / Beğeni / İzlenme: nested API stats + hub istatistik yedekleri
+- Canlı yayın: sohbet yazma alanı yeniden görünür (SafeArea + kompakt hediye/sohbet)
+- Hediye: gönderen adı + jeton miktarı net; son hediyeler kutusu; banner küçültüldü
+- Zaten takip edilen yayıncıda «Takip Et» gizlenir
+- Yayına giren kişinin adı sohbette + son giriş şeridinde kalır
+- Sesli oda: PK davet eşleşmesi genişletildi; koltuk/komutlar anında (optimistic)
+
 ## 1.0.51+78 (2026-07-17)
 
 ### Sesli oda — komutlar, şifre, hediye, giriş

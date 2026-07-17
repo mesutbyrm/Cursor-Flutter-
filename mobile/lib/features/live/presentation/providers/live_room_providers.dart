@@ -39,6 +39,7 @@ class LiveRoomState {
     this.sseConnected = false,
     this.error,
     this.fortuneAnsweredNotice,
+    this.lastJoinedDisplayName,
   });
 
   final List<LiveRoomChatMessage> messages;
@@ -48,6 +49,8 @@ class LiveRoomState {
   final bool sseConnected;
   final String? error;
   final String? fortuneAnsweredNotice;
+  /// Son yayına giren izleyici — bir sonraki girişe kadar gösterilir.
+  final String? lastJoinedDisplayName;
 
   LiveRoomState copyWith({
     List<LiveRoomChatMessage>? messages,
@@ -57,8 +60,10 @@ class LiveRoomState {
     bool? sseConnected,
     String? error,
     String? fortuneAnsweredNotice,
+    String? lastJoinedDisplayName,
     bool clearError = false,
     bool clearFortuneNotice = false,
+    bool clearLastJoined = false,
   }) {
     return LiveRoomState(
       messages: messages ?? this.messages,
@@ -70,6 +75,9 @@ class LiveRoomState {
       fortuneAnsweredNotice: clearFortuneNotice
           ? null
           : (fortuneAnsweredNotice ?? this.fortuneAnsweredNotice),
+      lastJoinedDisplayName: clearLastJoined
+          ? null
+          : (lastJoinedDisplayName ?? this.lastJoinedDisplayName),
     );
   }
 }
@@ -163,9 +171,41 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       },
       onUserJoined: (user) {
         final count = user['viewerCount'] ?? user['viewers'] ?? user['watching'];
+        final name = (user['displayName'] ??
+                user['name'] ??
+                user['username'] ??
+                user['nickname'] ??
+                user['userName'] ??
+                '')
+            .toString()
+            .trim();
+        final joinId = (user['id'] ?? user['userId'] ?? name).toString();
+        var next = state;
         if (count is num) {
-          state = state.copyWith(viewerCount: count.round());
+          next = next.copyWith(viewerCount: count.round());
         }
+        if (name.isNotEmpty) {
+          final msgId =
+              'join-$joinId-${DateTime.now().millisecondsSinceEpoch}';
+          if (_seenIds.add(msgId)) {
+            next = next.copyWith(
+              lastJoinedDisplayName: name,
+              messages: [
+                ...next.messages,
+                LiveRoomChatMessage(
+                  id: msgId,
+                  userId: joinId,
+                  user: 'Sistem',
+                  text: '$name yayına katıldı',
+                  isSystem: true,
+                ),
+              ],
+            );
+          } else {
+            next = next.copyWith(lastJoinedDisplayName: name);
+          }
+        }
+        state = next;
       },
       onModeratorUpdated: (userId, isModerator) {
         _applyModeratorFlag(userId: userId, isModerator: isModerator);

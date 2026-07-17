@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../profile/presentation/providers/profile_providers.dart';
 import 'live_providers.dart';
 
 /// Canlı oda etkileşimleri — kalp patlaması, beğeni sayacı (yayın başına).
@@ -108,6 +109,16 @@ class LiveRoomInteractionNotifier
       if (count > state.likeCount) {
         state = state.copyWith(likeCount: count);
       }
+    } catch (_) {}
+  }
+
+  /// Yayıncı takip durumu — oda açılışında yüklenir; zaten takipteyse buton gizlenir.
+  Future<void> loadFollowingStatus(String hostUserId) async {
+    final id = hostUserId.trim();
+    if (id.isEmpty) return;
+    try {
+      final profile = await ref.read(profileRepositoryProvider).getUser(id);
+      state = state.copyWith(following: profile.isFollowing);
     } catch (_) {}
   }
 

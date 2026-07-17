@@ -628,13 +628,43 @@ class ShortsRemoteDataSource {
     );
     final m = _unwrap(res.data);
     if (m == null) return const ShortProfileStats();
+    // Üretim yanıtı bazen `stats` / `profile` altında gelir.
+    final nested = pick(m, ['stats', 'profile', 'summary', 'counts']);
+    final src = nested is Map
+        ? <String, dynamic>{...m, ...asJsonMap(nested)}
+        : m;
     return ShortProfileStats(
-      videosCount: asInt(pick(m, ['videosCount', 'videoCount'])),
-      totalLikes: asInt(pick(m, ['totalLikes', 'likesCount'])),
-      totalViews: asInt(pick(m, ['totalViews', 'viewsCount', 'total_views'])),
-      followersCount: asInt(pick(m, ['followersCount', 'followerCount'])),
-      followingCount: asInt(pick(m, ['followingCount'])),
-      isFollowing: asBool(pick(m, ['isFollowing', 'following'])),
+      videosCount: asInt(pick(src, [
+        'videosCount',
+        'videoCount',
+        'postCount',
+        'postsCount',
+        'shortVideosCount',
+      ])),
+      totalLikes: asInt(pick(src, [
+        'totalLikes',
+        'likesCount',
+        'likes',
+        'likeCount',
+      ])),
+      totalViews: asInt(pick(src, [
+        'totalViews',
+        'viewsCount',
+        'total_views',
+        'views',
+        'viewCount',
+      ])),
+      followersCount: asInt(pick(src, [
+        'followersCount',
+        'followerCount',
+        'followers',
+      ])),
+      followingCount: asInt(pick(src, [
+        'followingCount',
+        'following',
+        'followingsCount',
+      ])),
+      isFollowing: asBool(pick(src, ['isFollowing', 'followedByMe'])),
     );
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../../domain/repositories/shorts_repository.dart';
@@ -32,20 +33,38 @@ class ShortsProfileStatsRow extends ConsumerWidget {
     required this.userId,
     this.fallbackFollowers = 0,
     this.fallbackFollowing = 0,
+    this.fallbackLikes = 0,
+    this.fallbackViews = 0,
+    this.fallbackVideos = 0,
     this.tappable = true,
   });
 
   final String userId;
   final int fallbackFollowers;
   final int fallbackFollowing;
+  final int fallbackLikes;
+  final int fallbackViews;
+  final int fallbackVideos;
   final bool tappable;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(shortVideoProfileStatsProvider(userId));
-    final stats = statsAsync.valueOrNull;
+    final hubStats = ref.watch(profileStatsProvider).valueOrNull;
 
-    if (stats == null && statsAsync.isLoading) {
+    int pick(int primary, int secondary, int tertiary) {
+      if (primary > 0) return primary;
+      if (secondary > 0) return secondary;
+      return tertiary;
+    }
+
+    Widget row({
+      required int videos,
+      required int followers,
+      required int following,
+      required int likes,
+      required int views,
+    }) {
       return ProfileGlass(
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Row(
@@ -53,14 +72,14 @@ class ShortsProfileStatsRow extends ConsumerWidget {
             Expanded(
               child: _StatCell(
                 label: 'Video',
-                value: '…',
+                value: formatShortCount(videos),
               ),
             ),
             _divider(context),
             Expanded(
               child: _StatCell(
                 label: 'Takipçi',
-                value: formatShortCount(fallbackFollowers),
+                value: formatShortCount(followers),
                 onTap: tappable
                     ? () => context.push('/profile/followers?userId=$userId')
                     : null,
@@ -70,107 +89,7 @@ class ShortsProfileStatsRow extends ConsumerWidget {
             Expanded(
               child: _StatCell(
                 label: 'Takip',
-                value: formatShortCount(fallbackFollowing),
-                onTap: tappable
-                    ? () => context.push('/profile/following?userId=$userId')
-                    : null,
-              ),
-            ),
-            _divider(context),
-            const Expanded(
-              child: _StatCell(label: 'Beğeni', value: '…'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return statsAsync.when(
-      loading: () => ProfileGlass(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Row(
-          children: [
-            Expanded(
-              child: _StatCell(
-                label: 'Takipçi',
-                value: formatShortCount(fallbackFollowers),
-                onTap: tappable
-                    ? () => context.push('/profile/followers?userId=$userId')
-                    : null,
-              ),
-            ),
-            _divider(context),
-            Expanded(
-              child: _StatCell(
-                label: 'Takip',
-                value: formatShortCount(fallbackFollowing),
-                onTap: tappable
-                    ? () => context.push('/profile/following?userId=$userId')
-                    : null,
-              ),
-            ),
-          ],
-        ),
-      ),
-      error: (_, _) => ProfileGlass(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Row(
-          children: [
-            Expanded(
-              child: _StatCell(
-                label: 'Takipçi',
-                value: formatShortCount(fallbackFollowers),
-                onTap: tappable
-                    ? () => context.push('/profile/followers?userId=$userId')
-                    : null,
-              ),
-            ),
-            _divider(context),
-            Expanded(
-              child: _StatCell(
-                label: 'Takip',
-                value: formatShortCount(fallbackFollowing),
-                onTap: tappable
-                    ? () => context.push('/profile/following?userId=$userId')
-                    : null,
-              ),
-            ),
-          ],
-        ),
-      ),
-      data: (stats) => ProfileGlass(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Row(
-          children: [
-            Expanded(
-              child: _StatCell(
-                label: 'Video',
-                value: formatShortCount(stats.videosCount),
-              ),
-            ),
-            _divider(context),
-            Expanded(
-              child: _StatCell(
-                label: 'Takipçi',
-                value: formatShortCount(
-                  stats.followersCount > 0
-                      ? stats.followersCount
-                      : fallbackFollowers,
-                ),
-                onTap: tappable
-                    ? () => context.push('/profile/followers?userId=$userId')
-                    : null,
-              ),
-            ),
-            _divider(context),
-            Expanded(
-              child: _StatCell(
-                label: 'Takip',
-                value: formatShortCount(
-                  stats.followingCount > 0
-                      ? stats.followingCount
-                      : fallbackFollowing,
-                ),
+                value: formatShortCount(following),
                 onTap: tappable
                     ? () => context.push('/profile/following?userId=$userId')
                     : null,
@@ -180,18 +99,65 @@ class ShortsProfileStatsRow extends ConsumerWidget {
             Expanded(
               child: _StatCell(
                 label: 'Beğeni',
-                value: formatShortCount(stats.totalLikes),
+                value: formatShortCount(likes),
               ),
             ),
             _divider(context),
             Expanded(
               child: _StatCell(
                 label: 'İzlenme',
-                value: formatShortCount(stats.totalViews),
+                value: formatShortCount(views),
               ),
             ),
           ],
         ),
+      );
+    }
+
+    final hubFollowers = hubStats?.followers ?? 0;
+    final hubFollowing = hubStats?.following ?? 0;
+    final hubLikes = hubStats?.likes ?? 0;
+    final hubViews = hubStats?.profileViews ?? 0;
+
+    if (statsAsync.isLoading && statsAsync.valueOrNull == null) {
+      return row(
+        videos: fallbackVideos,
+        followers: pick(0, hubFollowers, fallbackFollowers),
+        following: pick(0, hubFollowing, fallbackFollowing),
+        likes: pick(0, hubLikes, fallbackLikes),
+        views: pick(0, hubViews, fallbackViews),
+      );
+    }
+
+    return statsAsync.when(
+      loading: () => row(
+        videos: fallbackVideos,
+        followers: pick(0, hubFollowers, fallbackFollowers),
+        following: pick(0, hubFollowing, fallbackFollowing),
+        likes: pick(0, hubLikes, fallbackLikes),
+        views: pick(0, hubViews, fallbackViews),
+      ),
+      error: (_, _) => row(
+        videos: fallbackVideos,
+        followers: pick(0, hubFollowers, fallbackFollowers),
+        following: pick(0, hubFollowing, fallbackFollowing),
+        likes: pick(0, hubLikes, fallbackLikes),
+        views: pick(0, hubViews, fallbackViews),
+      ),
+      data: (stats) => row(
+        videos: pick(stats.videosCount, 0, fallbackVideos),
+        followers: pick(
+          stats.followersCount,
+          hubFollowers,
+          fallbackFollowers,
+        ),
+        following: pick(
+          stats.followingCount,
+          hubFollowing,
+          fallbackFollowing,
+        ),
+        likes: pick(stats.totalLikes, hubLikes, fallbackLikes),
+        views: pick(stats.totalViews, hubViews, fallbackViews),
       ),
     );
   }

@@ -24,7 +24,13 @@ class ChatRoomPresence extends ChatRoomUserRef {
       chatRole: base.chatRole,
       roleSymbol: base.roleSymbol,
       membership: base.membership,
-      seatIndex: _parseSeatIndex(json['seatIndex']),
+      seatIndex: _parseSeatIndex(
+        json['seatIndex'] ??
+            json['seat'] ??
+            json['seat_index'] ??
+            json['seatNumber'] ??
+            json['seat_number'],
+      ),
       isSpeaking: json['isSpeaking'] == true,
       isMuted: json['isMuted'] == true,
     );

@@ -41,8 +41,9 @@ class ProfileHubLayout extends StatelessWidget {
         const SizedBox(height: 16),
         ShortsProfileStatsRow(
           userId: userId,
-          fallbackFollowers: state.user.followersCount,
-          fallbackFollowing: state.user.followingCount,
+          fallbackFollowers: state.followers,
+          fallbackFollowing: state.following,
+          fallbackLikes: state.stats.likes,
         ),
         const SizedBox(height: 14),
         ProfileHubCurrencyCard(state: state),

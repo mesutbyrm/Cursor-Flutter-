@@ -92,12 +92,22 @@ class PkBattleRemote extends Equatable {
         fallback: 180,
       ),
       targetScore: _int(json['targetScore'], fallback: 150000),
-      voiceRoomId: json['voiceRoomId']?.toString(),
-      opponentVoiceRoomId: json['opponentVoiceRoomId']?.toString(),
+      voiceRoomId: (json['voiceRoomId'] ??
+              json['challengerRoomId'] ??
+              json['roomId'])
+          ?.toString(),
+      opponentVoiceRoomId: (json['opponentVoiceRoomId'] ??
+              json['targetRoomId'] ??
+              json['opponentRoomId'] ??
+              json['guestRoomId'])
+          ?.toString(),
       liveStreamId: json['liveStreamId']?.toString(),
       opponentLiveStreamId: json['opponentLiveStreamId']?.toString(),
-      challengerId: json['challengerId']?.toString(),
-      opponentId: json['opponentId']?.toString(),
+      challengerId: (json['challengerId'] ?? json['hostUserId'])?.toString(),
+      opponentId: (json['opponentId'] ??
+              json['guestUserId'] ??
+              json['targetUserId'])
+          ?.toString(),
       winnerId: json['winnerId']?.toString(),
       challenger: json['challenger'] is Map
           ? PkParticipantRemote.fromJson(

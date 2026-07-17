@@ -32,130 +32,157 @@ class ProfileHubHeader extends ConsumerWidget {
     final level = state.level;
     final vipLabel = _vipLabel(state, ext);
 
+    final topInset = MediaQuery.paddingOf(context).top;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _CoverBanner(coverUrl: ext.coverImage),
-        const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Stack(
+          clipBehavior: Clip.none,
           children: [
-            _AvatarBlock(
-              user: user,
-              level: level.level,
-              isVip: state.isVip,
-              isOnline: ext.isOnline,
-              isVerified: user.isVerified,
-              onTap: () => showProfileAvatarSheet(
-                context,
-                ref,
-                avatarUrl: user.avatarUrl,
-                onUpdated: onRefresh ?? () {},
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          user.display,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                          ),
+            _CoverBanner(coverUrl: ext.coverImage, topInset: topInset),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: -ProfilePremiumTheme.avatarOverlap,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _AvatarBlock(
+                      user: user,
+                      level: level.level,
+                      isVip: state.isVip,
+                      isOnline: ext.isOnline,
+                      isVerified: user.isVerified,
+                      onTap: () => showProfileAvatarSheet(
+                        context,
+                        ref,
+                        avatarUrl: user.avatarUrl,
+                        onUpdated: onRefresh ?? () {},
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    user.display,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w900,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black54,
+                                          blurRadius: 8,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                if (vipLabel != null) ...[
+                                  const SizedBox(width: 6),
+                                  _VipPill(label: vipLabel),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '@${user.username}',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.85),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                shadows: const [
+                                  Shadow(color: Colors.black54, blurRadius: 6),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      if (vipLabel != null) ...[
-                        const SizedBox(width: 6),
-                        _VipPill(label: vipLabel),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '@${user.username}',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.55),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'ID: ${user.id}',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.35),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (user.isVerified) ...[
-                    const SizedBox(height: 6),
-                    Row(
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.verified_rounded,
-                          color: Color(0xFF29B6F6),
-                          size: 16,
+                        _ActionBtn(
+                          icon: Icons.edit_rounded,
+                          label: 'Düzenle',
+                          onTap: () => context.push('/profile/edit'),
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Doğrulanmış Üye',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        const SizedBox(height: 6),
+                        _ActionBtn(
+                          icon: Icons.qr_code_2_rounded,
+                          label: 'QR Kodum',
+                          onTap: () => context.push('/profile/qr'),
+                        ),
+                        const SizedBox(height: 6),
+                        _ActionBtn(
+                          icon: Icons.settings_rounded,
+                          label: 'Ayarlar',
+                          onTap: () => context.push('/settings'),
                         ),
                       ],
                     ),
                   ],
-                  if (user.bio != null && user.bio!.trim().isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      user.bio!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.72),
-                        fontSize: 12,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ],
+                ),
               ),
-            ),
-            Column(
-              children: [
-                _ActionBtn(
-                  icon: Icons.edit_rounded,
-                  label: 'Düzenle',
-                  onTap: () => context.push('/profile/edit'),
-                ),
-                const SizedBox(height: 8),
-                _ActionBtn(
-                  icon: Icons.qr_code_2_rounded,
-                  label: 'QR Kodum',
-                  onTap: () => context.push('/profile/qr'),
-                ),
-                const SizedBox(height: 8),
-                _ActionBtn(
-                  icon: Icons.settings_rounded,
-                  label: 'Ayarlar',
-                  onTap: () => context.push('/settings'),
-                ),
-              ],
             ),
           ],
         ),
+        SizedBox(height: ProfilePremiumTheme.avatarOverlap + 8),
+        Text(
+          'ID: ${user.id}',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.35),
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        if (user.isVerified) ...[
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Icon(
+                Icons.verified_rounded,
+                color: Color(0xFF29B6F6),
+                size: 16,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Doğrulanmış Üye',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (user.bio != null && user.bio!.trim().isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            user.bio!,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.72),
+              fontSize: 12,
+              height: 1.35,
+            ),
+          ),
+        ],
         if (extAsync.isLoading && extAsync.valueOrNull == null)
           const Padding(
             padding: EdgeInsets.only(top: 8),
@@ -178,18 +205,20 @@ class ProfileHubHeader extends ConsumerWidget {
 }
 
 class _CoverBanner extends StatelessWidget {
-  const _CoverBanner({this.coverUrl});
+  const _CoverBanner({this.coverUrl, this.topInset = 0});
 
   final String? coverUrl;
+  final double topInset;
 
   @override
   Widget build(BuildContext context) {
+    final height = ProfilePremiumTheme.coverHeight + topInset;
     return Hero(
       tag: 'profile-cover',
       child: ClipRRect(
         borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusLg),
         child: SizedBox(
-          height: ProfilePremiumTheme.coverHeight,
+          height: height,
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -203,12 +232,25 @@ class _CoverBanner extends StatelessWidget {
                 )
               else
                 _gradient(),
+              // Altta okunabilirlik için hafif karartma
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0x00000000),
+                      Color(0x99000000),
+                    ],
+                  ),
+                ),
+              ),
               Positioned(
                 right: -20,
-                top: -10,
+                top: topInset - 10,
                 child: Icon(
                   Icons.nightlight_round,
-                  size: 100,
+                  size: 88,
                   color: ProfilePremiumTheme.neonPurple.withValues(alpha: 0.2),
                 ),
               ),

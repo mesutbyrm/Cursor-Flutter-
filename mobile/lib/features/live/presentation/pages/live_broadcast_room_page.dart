@@ -71,6 +71,7 @@ import '../widgets/broadcast_room/live_viewers_sheet.dart';
 import '../widgets/broadcast_room/live_room_chat_fal_panel.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import '../widgets/broadcast_room/live_room_video_background.dart';
+import '../widgets/broadcast_room/live_recent_gifters_box.dart';
 import '../widgets/live_playback_bridge.dart';
 import '../widgets/premium_2026/live_premium_2026.dart';
 
@@ -142,9 +143,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           ref.read(liveFortuneHostUserIdProvider(streamId).notifier).state =
               hostId;
         }
-        ref.read(liveRoomInteractionProvider(streamId).notifier)
-          ..reset(initialLikes: 0)
-          ..loadInitialLikeCount();
+        final interaction =
+            ref.read(liveRoomInteractionProvider(streamId).notifier);
+        interaction.reset(initialLikes: 0);
+        unawaited(interaction.loadInitialLikeCount());
+        if (!widget.session.isHost &&
+            hostId != null &&
+            hostId.isNotEmpty) {
+          unawaited(interaction.loadFollowingStatus(hostId));
+        }
       }
       _initTrtc();
       _lazyGiftsTimer = Timer(LazyLoadPerf.liveRoomGifts, () {
@@ -2083,6 +2090,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 ),
               ),
             SafeArea(
+              bottom: false,
               child: Column(
                 children: [
                   Padding(
@@ -2187,11 +2195,24 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
+                                if (roomState.lastJoinedDisplayName != null &&
+                                    roomState
+                                        .lastJoinedDisplayName!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 6),
+                                    child: _LastJoinedChip(
+                                      name: roomState.lastJoinedDisplayName!,
+                                    ),
+                                  ),
+                                LiveRecentGiftersBox(
+                                  notifications: giftCtrl.notifications,
+                                ),
                                 GiftNotificationStack(
                                   events: giftCtrl.notifications,
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 6),
                                 LiveRoomChatFalPanel(
                                   messages: roomState.messages.isEmpty
                                       ? const [
@@ -2428,6 +2449,46 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   onClose: () => giftCtrl.setPanelOpen(false),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LastJoinedChip extends StatelessWidget {
+  const _LastJoinedChip({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF7C4DFF).withValues(alpha: 0.55)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.waving_hand_rounded,
+                size: 14, color: Color(0xFFFFD54F)),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                '$name yayına katıldı',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
           ],
         ),
       ),

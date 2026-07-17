@@ -27,8 +27,9 @@ bool isPkEligibleOpponentRoom(
 bool isPkChallengerRoom(PkBattleRemote battle, VoiceRoomEntity room) {
   final keys = {room.apiRoomKey, room.id, room.slug}
       .where((k) => k.trim().isNotEmpty)
+      .map((k) => k.trim().toLowerCase())
       .toSet();
-  final challengerRoom = battle.voiceRoomId?.trim() ?? '';
+  final challengerRoom = battle.voiceRoomId?.trim().toLowerCase() ?? '';
   return challengerRoom.isNotEmpty && keys.contains(challengerRoom);
 }
 
@@ -42,9 +43,15 @@ bool isPkInviteTarget(
 
   final keys = {room.apiRoomKey, room.id, room.slug}
       .where((k) => k.trim().isNotEmpty)
+      .map((k) => k.trim().toLowerCase())
       .toSet();
-  final oppRoom = battle.opponentVoiceRoomId?.trim() ?? '';
-  if (oppRoom.isNotEmpty && keys.contains(oppRoom)) return true;
+
+  bool roomMatches(String? raw) {
+    final v = raw?.trim().toLowerCase() ?? '';
+    return v.isNotEmpty && keys.contains(v);
+  }
+
+  if (roomMatches(battle.opponentVoiceRoomId)) return true;
 
   final ownerId = room.ownerId?.trim() ?? '';
   final opponentId = battle.opponentId?.trim() ?? '';
@@ -62,8 +69,13 @@ bool isPkInviteTarget(
   if (ownerId.isNotEmpty && oppUser.isNotEmpty && ownerId == oppUser) {
     return true;
   }
-  final oppRoomFromParticipant = battle.opponent?.roomId?.trim() ?? '';
-  if (oppRoomFromParticipant.isNotEmpty && keys.contains(oppRoomFromParticipant)) {
+  if (roomMatches(battle.opponent?.roomId)) return true;
+
+  // Challenger odası değilsek ve oda sahibiysek: hedef biziz (alanlar eksik gelse bile).
+  if (!isPkChallengerRoom(battle, room) &&
+      uid.isNotEmpty &&
+      ownerId.isNotEmpty &&
+      uid == ownerId) {
     return true;
   }
   return false;
