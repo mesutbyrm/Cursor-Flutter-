@@ -36,7 +36,6 @@ class StaffEntranceMarqueeNotifier extends Notifier<StaffEntranceMarqueeState> {
     _clearTimer?.cancel();
     state = StaffEntranceMarqueeState(message: line);
     _clearTimer = Timer(const Duration(seconds: 12), () {
-      if (!ref.mounted) return;
       state = const StaffEntranceMarqueeState();
     });
   }

@@ -1,6 +1,11 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+70 (2026-07-17)
+
+### CI düzeltmesi
+- `staff_entrance_marquee_provider`: `ref.mounted` kaldırıldı (Notifier derleme hatası — Release gate)
+
 ## 1.0.44+69 (2026-07-17)
 
 ### Yetkili giriş duyurusu
