@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/network/dio_provider.dart';
-import '../../../services/mobile_compound_service.dart';
-import '../domain/entities/fortune_type_entity.dart';
+import '../../../../core/network/dio_provider.dart';
+import '../../../../services/mobile_compound_service.dart';
+import '../../domain/entities/fortune_type_entity.dart';
 
 final mobileCompoundServiceProvider = Provider<MobileCompoundService>((ref) {
   return MobileCompoundService(ref.watch(dioProvider));

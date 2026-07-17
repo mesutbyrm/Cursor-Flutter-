@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+66 (2026-07-17)
+
+### Sesli oda — canlı oda entegrasyonu
+- **!istek:** `skipPayment` kaldırıldı; şarkı seçiminden sonra ses/videolu jeton seçici (10/20)
+- **Video isteği:** YouTube IFrame embed (`VoiceRoomYoutubeEmbedHost`) videolu modda aktif
+- **DJ çalma:** Video isteğinde IFrame; ses modunda just_audio (mevcut akış)
+- **Compound API:** `fortune_menu_providers` ve `home_remote_datasource` import düzeltmesi (CI)
+
 ## 1.0.44+65 (2026-07-17)
 
 ### CanlıFal Backend API referansı + uyumluluk raporu

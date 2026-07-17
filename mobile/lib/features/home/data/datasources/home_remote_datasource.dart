@@ -5,6 +5,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../../services/mobile_compound_service.dart';
+import '../../../../services/models/mobile_compound_models.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_fortune_card_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
