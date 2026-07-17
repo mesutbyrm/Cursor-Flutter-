@@ -251,4 +251,24 @@ extension DioApi on Dio {
       throw ApiException.fromDio(e);
     }
   }
+
+  Future<Response<T>> safePut<T>(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? query,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      return await put<T>(
+        path,
+        data: data,
+        queryParameters: query,
+        options: options,
+        cancelToken: cancelToken,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 }

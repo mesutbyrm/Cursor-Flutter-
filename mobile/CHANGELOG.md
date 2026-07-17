@@ -1,6 +1,11 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+64 (2026-07-17)
+
+### Düzeltme
+- `Dio` uzantısına `safePut` eklendi (profil güncelleme `PUT /api/user/profile` yedeği)
+
 ## 1.0.44+63 (2026-07-17)
 
 ### Düzeltme
