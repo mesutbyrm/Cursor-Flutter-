@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-07-17 11:24 UTC
+Oluşturulma: 2026-07-17 12:16 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -24,7 +24,7 @@ Base: `main`
 
 | Dal | Neden |
 |-----|-------|
-| cursor/fix-invalid-type-voice-room-df6c | merged into main |
+| cursor/staff-marquee-pk-mic-df6c | merged into main |
 
 ## Kalan açık PR'lar
 
