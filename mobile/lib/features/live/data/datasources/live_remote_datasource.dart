@@ -6,6 +6,8 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/live_debug_log.dart';
 import '../../../../core/util/json_util.dart';
+import '../datasources/live_field/live_field_api_remote_datasource.dart';
+import '../datasources/live_field/live_field_room_discovery_api.dart';
 import '../models/live_stream_dto.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
 import '../../domain/entities/live_stream_entity.dart';
@@ -16,9 +18,26 @@ class LiveRemoteDataSource {
 
   final Dio _dio;
 
+  LiveFieldApiRemoteDataSource get _liveField => LiveFieldApiRemoteDataSource(_dio);
+
   static const int _pageSize = 30;
 
   Future<List<LiveStreamEntity>> fetch({int page = 1, String? category}) async {
+    try {
+      final livePage = await _liveField.discovery.fetchRooms(
+        type: 'stream',
+        page: page,
+        limit: _pageSize,
+      );
+      final fromLive = livePage.rooms
+          .where((r) => r.isStream && r.id.isNotEmpty)
+          .map(_mapLiveFieldStream)
+          .toList();
+      if (fromLive.isNotEmpty) return fromLive;
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    } catch (_) {}
+
     final query = <String, String>{
       'limit': '$_pageSize',
       'page': '$page',
@@ -124,6 +143,20 @@ class LiveRemoteDataSource {
 
   /// canlifal.com `/api/chat/rooms` — site ile aynı oda kartları.
   Future<List<VoiceRoomEntity>> fetchVoiceRooms() async {
+    try {
+      final livePage = await _liveField.discovery.fetchRooms(
+        type: 'voice',
+        limit: 100,
+      );
+      final fromLive = livePage.rooms
+          .where((r) => r.isVoice && r.id.isNotEmpty)
+          .map(_mapLiveFieldVoice)
+          .toList();
+      if (fromLive.isNotEmpty) return fromLive;
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    } catch (_) {}
+
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.chatRooms,
       query: const {'withCounts': 'true'},
@@ -752,6 +785,34 @@ class LiveRemoteDataSource {
       recentUserAvatars: recent,
       isVip: isVip ? true : null,
       roomType: roomType,
+    );
+  }
+
+  LiveStreamEntity _mapLiveFieldStream(LiveFieldRoomSummary room) {
+    return LiveStreamEntity(
+      id: room.id,
+      title: room.title ?? 'Canlı Yayın',
+      streamerName: room.hostName ?? '',
+      thumbnailUrl: room.thumbnailUrl,
+      viewerCount: room.viewerCount,
+      isLive: room.isLive,
+      hostUserId: room.hostId,
+    );
+  }
+
+  VoiceRoomEntity _mapLiveFieldVoice(LiveFieldRoomSummary room) {
+    return VoiceRoomEntity(
+      id: room.id,
+      slug: room.slug ?? '',
+      nameTr: room.title ?? room.slug ?? 'Oda',
+      descTr: null,
+      onlineCount: room.viewerCount,
+      userCount: room.viewerCount,
+      backgroundImageUrl: room.backgroundImage,
+      ownerName: room.hostName,
+      ownerAvatarUrl: room.hostImage,
+      ownerId: room.hostId,
+      roomType: 'voice',
     );
   }
 }

@@ -461,9 +461,18 @@ abstract final class ApiEndpoints {
   static const trtcToken = '/api/trtc/token';
 
   /// Canlı oda yaşam döngüsü — compound katılım, heartbeat, ayrılma.
+  static const liveCreateRoom = '/api/live/create-room';
   static const liveJoinRoom = '/api/live/join-room';
   static const liveLeaveRoom = '/api/live/leave-room';
   static const liveHeartbeat = '/api/live/heartbeat';
+  static const liveRooms = '/api/live/rooms';
+  static const liveSeats = '/api/live/seats';
+  static const liveMessage = '/api/live/message';
+  static const liveGiftTypes = '/api/live/gift-types';
+  static const liveGiftSend = '/api/live/gift/send';
+  static const livePk = '/api/live/pk';
+  static const livePkScore = '/api/live/pk/score';
+  static const liveOnlineUsers = '/api/live/online-users';
   static const livekitToken = '/api/livekit/token';
 
   /// Agora RTC token — canlı video yayını.

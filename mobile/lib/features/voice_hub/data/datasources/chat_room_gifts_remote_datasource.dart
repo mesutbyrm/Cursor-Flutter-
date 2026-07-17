@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../live/data/datasources/live_field/live_field_api_remote_datasource.dart';
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
 import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
@@ -17,6 +19,23 @@ class ChatRoomGiftsRemoteDataSource {
   final LiveGiftsRemoteDataSource _liveGifts;
 
   Future<List<LiveVideoGiftType>> fetchGiftTypes() async {
+    try {
+      final liveTypes =
+          await LiveFieldApiRemoteDataSource(_dio).gifts.fetchGiftTypes();
+      if (liveTypes.isNotEmpty) {
+        return liveTypes
+            .map(
+              (g) => LiveVideoGiftType(
+                id: g.id,
+                name: g.name,
+                price: g.price,
+                iconPath: g.thumbnailUrl ?? g.assetUrl,
+                animationRef: g.assetUrl,
+              ),
+            )
+            .toList();
+      }
+    } catch (_) {}
     try {
       return await _liveGifts.fetchGiftTypes();
     } catch (_) {
@@ -34,6 +53,19 @@ class ChatRoomGiftsRemoteDataSource {
     String platform = 'mobile',
     String? battleId,
   }) async {
+    try {
+      await LiveFieldApiRemoteDataSource(_dio).gifts.sendGift(
+        roomId: roomId,
+        roomType: 'voice',
+        giftTypeId: giftTypeId,
+        recipientId: receiverId,
+        quantity: quantity,
+      );
+      return const VoiceGiftSendResult();
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    } catch (_) {}
+
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.chatRoomGifts(roomId),
       data: {
