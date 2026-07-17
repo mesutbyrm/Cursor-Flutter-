@@ -229,6 +229,25 @@ class PkBattleRemoteDataSource {
     String? opponentStreamId,
     int? duration,
   }) async {
+    final normalized = action.toLowerCase();
+    if (normalized == 'create' && opponentStreamId != null) {
+      final durationMinutes =
+          duration != null ? (duration / 60).ceil().clamp(1, 60) : null;
+      try {
+        final res = await _dio.safePost<dynamic>(
+          ApiEndpoints.videoStreamPkBattle(streamId),
+          data: {
+            'opponentStreamId': opponentStreamId,
+            if (durationMinutes != null) 'durationMinutes': durationMinutes,
+          },
+        );
+        final battle = _parseBattle(res.data);
+        if (battle != null) return battle;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
+    }
+
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamPkBattle(streamId),
       data: {
@@ -236,6 +255,8 @@ class PkBattleRemoteDataSource {
         'battleId': ?battleId,
         'opponentStreamId': ?opponentStreamId,
         if (action == 'create' && duration != null) 'duration': duration,
+        if (action == 'create' && duration != null)
+          'durationSeconds': duration,
       },
     );
     return _parseBattle(res.data);

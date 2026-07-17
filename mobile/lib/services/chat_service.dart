@@ -469,14 +469,12 @@ class ChatService {
       );
       return _unwrapMap(res.data) ?? asJsonMap(res.data);
     }
+    // Davet — kılavuz §9.3: yalnızca guestUserId + durationSec (action yok).
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.chatRoomPk(roomId),
       data: {
-        'action': action,
         if (guestUserId != null && guestUserId.isNotEmpty)
           'guestUserId': guestUserId,
-        if (targetRoomId != null && targetRoomId.isNotEmpty)
-          'targetRoomId': targetRoomId,
         if (durationSec != null) 'durationSec': durationSec,
       },
     );

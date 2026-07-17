@@ -61,12 +61,29 @@ class LiveStreamExtrasDataSource {
     String? battleId,
     int duration = 180,
   }) async {
+    final normalized = action.toLowerCase();
+    if (normalized == 'create' && targetStreamId != null) {
+      final durationMinutes = (duration / 60).ceil().clamp(1, 60);
+      try {
+        final res = await _dio.safePost<dynamic>(
+          ApiEndpoints.videoStreamPkBattle(streamId),
+          data: {
+            'opponentStreamId': targetStreamId,
+            'durationMinutes': durationMinutes,
+          },
+        );
+        final battle = _unwrapBattle(res.data);
+        if (battle != null) return battle;
+      } catch (_) {}
+    }
+
     final body = <String, dynamic>{
       'action': action,
       'targetStreamId': ?targetStreamId,
       'battleId': ?battleId,
       if (action == 'create') 'streamId': streamId,
       if (action == 'create') 'duration': duration,
+      if (action == 'create') 'durationSeconds': duration,
     };
 
     try {

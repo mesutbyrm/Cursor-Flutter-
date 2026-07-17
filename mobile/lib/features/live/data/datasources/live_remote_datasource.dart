@@ -439,10 +439,12 @@ class LiveRemoteDataSource {
     return null;
   }
 
-  Future<int> joinVideoStream(String streamId) async {
+  Future<int> joinVideoStream(String streamId, {String? nickname}) async {
     LiveDebugLog.log('stream.join', {'streamId': streamId});
+    final nick = nickname?.trim();
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamJoin(streamId),
+      data: nick != null && nick.isNotEmpty ? {'nickname': nick} : null,
     );
     final body = res.data;
     if (body is Map) {
@@ -733,8 +735,18 @@ class LiveRemoteDataSource {
       backgroundImageUrl: pick(json, ['backgroundImage']) as String?,
       ownerName: ownerName,
       ownerAvatarUrl: ownerAvatar,
-      ownerId: pick(json, ['ownerId'])?.toString() ??
-          (o is Map ? pick(asJsonMap(o), ['id'])?.toString() : null),
+      ownerId: pick(json, [
+            'ownerId',
+            'ownerUserId',
+            'hostUserId',
+            'createdBy',
+            'userId',
+            'hostId',
+          ])?.toString() ??
+          (o is Map
+              ? pick(asJsonMap(o), ['id', 'userId', 'realCid', 'gcid'])
+                  ?.toString()
+              : null),
       activeDjId: pick(json, ['activeDjId'])?.toString(),
       djUserIds: djIds,
       recentUserAvatars: recent,

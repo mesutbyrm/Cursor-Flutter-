@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+58 (2026-07-17)
+
+### Backend API parity (PK / Voice / Live)
+- Presence heartbeat: PATCH (kılavuz §9.3); join voice yalnızca `{action}`
+- PK video create: önce `{opponentStreamId, durationMinutes}` (kılavuz §9.4)
+- PK voice invite: `ChatService` action alanı kaldırıldı (`guestUserId` + `durationSec`)
+- Voice gift: `giftId` + `receiverUserId` alias; oda `ownerId` parse genişletildi
+- Live join: `{nickname?}` body
+- Rapor: `docs/API_PARITY_AUDIT_2026-07-17.md`
+
 ## 1.0.44+57 (2026-07-16)
 
 ### CI düzeltmesi (CodeQL)

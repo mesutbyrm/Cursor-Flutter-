@@ -38,13 +38,15 @@ class ChatRoomGiftsRemoteDataSource {
       ApiEndpoints.chatRoomGifts(roomId),
       data: {
         'giftTypeId': giftTypeId,
+        'giftId': giftTypeId,
         'quantity': quantity,
-        'streamId': roomId,
         if (senderName != null && senderName.isNotEmpty) 'senderName': senderName,
         if (receiverName != null && receiverName.isNotEmpty)
           'receiverName': receiverName,
-        if (receiverId != null && receiverId.isNotEmpty) 'receiverId': receiverId,
-        // PK aktifken: gift-engine battleId ile alıcı katılımcının skorunu artırır.
+        if (receiverId != null && receiverId.isNotEmpty) ...{
+          'receiverId': receiverId,
+          'receiverUserId': receiverId,
+        },
         if (battleId != null && battleId.isNotEmpty) 'battleId': battleId,
         'platform': platform,
       },

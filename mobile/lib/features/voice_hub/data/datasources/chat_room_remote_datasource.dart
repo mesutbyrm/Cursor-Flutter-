@@ -67,31 +67,37 @@ class ChatRoomRemoteDataSource {
   /// Üretim presence/voice — kılavuz §9.3 (`action` join/leave, heartbeat POST).
   static const presenceHeartbeatInterval = Duration(seconds: 12);
 
-  /// Odaya giriş — `POST /presence` (gövde yok).
-  Future<void> postPresence(
+  /// Heartbeat — `PATCH /presence` (kılavuz §9.3 / üretim).
+  Future<void> presenceHeartbeat(
     String roomKey, {
     String? alternateKey,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      await _dio.safePost<dynamic>(presencePath(key));
+      try {
+        await _dio.safePatch<dynamic>(presencePath(key));
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
+      // Eski backend: boş POST da heartbeat kabul edebilir.
+      await _dio.safePost<dynamic>(
+        presencePath(key),
+        data: const {'action': 'heartbeat'},
+      );
     });
   }
 
-  /// Heartbeat — `POST /presence` her 25 sn.
-  Future<void> presenceHeartbeat(
-    String roomKey, {
-    String? alternateKey,
-  }) =>
-      postPresence(roomKey, alternateKey: alternateKey);
-
-  /// Odaya giriş: POST presence + GET presence listesi.
+  /// Odaya giriş: join + presence listesi (kılavuz §9.3).
   Future<List<ChatRoomPresence>> enterPresence(
     String roomKey, {
     String? alternateKey,
     String? nickname,
   }) async {
-    await postPresence(roomKey, alternateKey: alternateKey);
-    return fetchPresence(roomKey, alternateKey: alternateKey);
+    return joinPresence(
+      roomKey,
+      alternateKey: alternateKey,
+      nickname: nickname,
+    );
   }
 
   Map<String, dynamic>? _unwrapMap(dynamic body) {
@@ -302,8 +308,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         voicePath(key),
-        data: jsonEncode({'action': 'join', 'type': 'join'}),
-        options: Options(contentType: 'application/json'),
+        data: const {'action': 'join'},
       );
     });
   }
@@ -312,8 +317,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         voicePath(key),
-        data: jsonEncode({'action': 'leave', 'type': 'leave'}),
-        options: Options(contentType: 'application/json'),
+        data: const {'action': 'leave'},
       );
     });
   }
