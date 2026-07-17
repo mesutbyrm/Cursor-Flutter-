@@ -9,6 +9,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/payment_debug_log.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../../services/mobile_compound_service.dart';
 import '../../../auth/data/models/user_dto.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
@@ -21,11 +22,16 @@ import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 
 class ProfileRemoteDataSource {
-  ProfileRemoteDataSource(this._dio);
+  ProfileRemoteDataSource(this._dio) : _compound = MobileCompoundService(_dio);
 
   final Dio _dio;
+  final MobileCompoundService _compound;
 
   Future<UserEntity> user(String userId) async {
+    final compound = await _compound.fetchUserProfile(userId);
+    if (compound != null && compound.user.id.isNotEmpty) {
+      return compound.user;
+    }
     final res = await _dio.safeGet<Map<String, dynamic>>(
       ApiEndpoints.userProfile(userId),
     );

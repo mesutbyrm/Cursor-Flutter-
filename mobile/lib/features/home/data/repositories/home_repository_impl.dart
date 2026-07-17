@@ -28,11 +28,22 @@ class HomeRepositoryImpl implements HomeRepository {
       _remote.fetchOnlineAdvisors();
 
   @override
-  Future<List<LiveStreamEntity>> fetchLiveStreams() =>
-      _live.fetchStreams(page: 1);
+  Future<List<LiveStreamEntity>> fetchLiveStreams() async {
+    final compound = await _remote.fetchMobileHome();
+    if (compound != null && compound.liveStreams.isNotEmpty) {
+      return compound.liveStreams;
+    }
+    return _live.fetchStreams(page: 1);
+  }
 
   @override
-  Future<List<VoiceRoomEntity>> fetchVoiceRooms() => _live.fetchVoiceRooms();
+  Future<List<VoiceRoomEntity>> fetchVoiceRooms() async {
+    final compound = await _remote.fetchMobileHome();
+    if (compound != null && compound.voiceRooms.isNotEmpty) {
+      return compound.voiceRooms;
+    }
+    return _live.fetchVoiceRooms();
+  }
 
   @override
   Future<HomeFeedBundle> fetchFeedPosts({required int page}) async {

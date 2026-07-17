@@ -4,6 +4,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../../services/mobile_compound_service.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_fortune_card_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
@@ -11,11 +12,19 @@ import '../../domain/entities/home_trend_video_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 
 class HomeRemoteDataSource {
-  HomeRemoteDataSource(this._dio);
+  HomeRemoteDataSource(this._dio) : _compound = MobileCompoundService(_dio);
 
   final Dio _dio;
+  final MobileCompoundService _compound;
+
+  Future<MobileHomeBundle?> fetchMobileHome({bool force = false}) =>
+      _compound.fetchHome(force: force);
 
   Future<List<HomeBannerEntity>> fetchBanners() async {
+    final compound = await fetchMobileHome();
+    if (compound != null && compound.banners.isNotEmpty) {
+      return compound.banners;
+    }
     for (final path in [
       ApiEndpoints.homeBanners,
       ApiEndpoints.socialAnnouncements,
@@ -30,6 +39,10 @@ class HomeRemoteDataSource {
   }
 
   Future<List<OnlineAdvisorEntity>> fetchOnlineAdvisors() async {
+    final compound = await fetchMobileHome();
+    if (compound != null && compound.advisors.isNotEmpty) {
+      return compound.advisors;
+    }
     for (final path in [
       ApiEndpoints.homeAdvisorsOnline,
       ApiEndpoints.fortuneTellers,
@@ -364,6 +377,10 @@ class HomeRemoteDataSource {
 
   /// canlifal.com ana sayfa fal vitrin — web `/` ile aynı kart listesi.
   Future<List<HomeFortuneCardEntity>> fetchHomepageFortuneCards() async {
+    final compound = await fetchMobileHome();
+    if (compound != null && compound.fortuneCards.isNotEmpty) {
+      return compound.fortuneCards;
+    }
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.homepageFortuneCards);
       final items = _itemsFromBody(res.data, keys: const ['cards', 'items']);

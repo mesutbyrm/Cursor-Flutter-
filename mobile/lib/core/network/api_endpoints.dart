@@ -27,6 +27,10 @@ abstract final class ApiEndpoints {
   static const authResetPassword = '/api/auth/reset-password';
   static const authChangePassword = '/api/auth/change-password';
   static const mobileConfig = '/api/mobile/config';
+  static const mobileHome = '/api/mobile/home';
+  static const mobileFortuneMenu = '/api/mobile/fortune-menu';
+  static String mobileUserProfile(String userId) =>
+      '/api/mobile/user-profile/$userId';
   static const me = '/api/me';
   static const meStats = '/api/users/me/stats';
   static const meGiftsReceived = '/api/users/me/gifts-received';

@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+65 (2026-07-17)
+
+### CanlıFal Backend API referansı + uyumluluk raporu
+- Doküman: `docs/api/FLUTTER_BACKEND_COMPATIBILITY_REPORT.md`
+- Mobil birleşik uçlar: `GET /api/mobile/home`, `/api/mobile/fortune-menu`, `/api/mobile/user-profile/{id}`
+- `MobileCompoundService` — ana sayfa tek istek (canlı yayın, sesli oda, fal kartları, falcılar)
+- Profil: compound user-profile öncelikli, eski uç yedek
+- Fal menüsü: `fortuneMenuTypesProvider` (API + yerel katalog yedeği)
+
 ## 1.0.44+64 (2026-07-17)
 
 ### Düzeltme
