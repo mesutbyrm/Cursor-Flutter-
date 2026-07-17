@@ -158,30 +158,57 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
           },
           data: (_) {
             if (_error != null) {
-              return Center(
-                child: Text(_error!, style: const TextStyle(color: Colors.red)),
-              );
-            }
-            if (_loading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (opponents.isEmpty) {
               return ListView(
-                children: const [
-                  SizedBox(height: 120),
-                  Center(child: Text('PK için uygun canlı yayın yok')),
-                  SizedBox(height: 8),
+                children: [
+                  const SizedBox(height: 24),
+                  PkDurationPicker(
+                    selectedSeconds: _durationSeconds,
+                    onChanged: (s) => setState(() => _durationSeconds = s),
+                  ),
+                  const SizedBox(height: 24),
                   Center(
-                    child: Text(
-                      'Yalnızca yayıncısı belli ve izleyicisi olan yayınlar listelenir.\nAşağı çekerek yenileyin.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: Colors.white54),
-                    ),
+                    child: Text(_error!, style: const TextStyle(color: Colors.red)),
                   ),
                 ],
               );
             }
-            return _buildList(opponents);
+            // Davet gönderilirken tüm sayfayı spinner yapma — liste kalsın.
+            if (opponents.isEmpty) {
+              return ListView(
+                children: [
+                  PkDurationPicker(
+                    selectedSeconds: _durationSeconds,
+                    onChanged: (s) => setState(() => _durationSeconds = s),
+                  ),
+                  const SizedBox(height: 80),
+                  if (_loading)
+                    const Center(child: CircularProgressIndicator())
+                  else ...const [
+                    Center(child: Text('PK için uygun canlı yayın yok')),
+                    SizedBox(height: 8),
+                    Center(
+                      child: Text(
+                        'Yalnızca yayıncısı belli canlı yayınlar listelenir.\nAşağı çekerek yenileyin.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12, color: Colors.white54),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            }
+            return Stack(
+              children: [
+                _buildList(opponents),
+                if (_loading)
+                  const Positioned.fill(
+                    child: ColoredBox(
+                      color: Color(0x66000000),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  ),
+              ],
+            );
           },
         ),
       ),

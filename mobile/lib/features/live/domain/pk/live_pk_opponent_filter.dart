@@ -33,8 +33,6 @@ bool isPkEligibleLiveStream(
   final host = stream.hostUserId?.trim() ?? '';
   if (host.isEmpty) return false;
 
-  // İzleyicisi olan veya aktif PK'da olan yayınlar.
-  if (stream.viewerCount <= 0 && !stream.isPkLive) return false;
-
+  // İzleyici sayısı 0 olsa bile yayıncı belli canlı yayınlar PK için listelenir.
   return true;
 }

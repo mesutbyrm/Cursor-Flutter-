@@ -37,10 +37,11 @@ final homeBannersProvider = FutureProvider<List<HomeBannerEntity>>((ref) async {
   final banners = <HomeBannerEntity>[];
   final marquee = ref.read(staffEntranceMarqueeProvider.notifier);
   for (final b in items) {
-    if (VoiceOfficialJoin.isHomeBannerEntranceAnnouncement(
+    if (VoiceOfficialJoin.isHomeBannerMarqueeOnly(
       b.title,
       subtitle: b.subtitle,
     )) {
+      // Sabit büyük kart yerine kayan şerit (yetkili/Gold giriş + hediye).
       marquee.enqueue(b.title, roomName: b.subtitle);
       continue;
     }

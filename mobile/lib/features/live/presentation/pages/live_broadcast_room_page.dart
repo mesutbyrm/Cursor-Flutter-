@@ -19,6 +19,7 @@ import '../../../live_psychics/presentation/providers/live_psychics_providers.da
 import '../../../live_psychics/presentation/widgets/psychic_booking_sheet.dart';
 import '../../../live_psychics/presentation/widgets/psychic_broadcast_side_rail.dart';
 import '../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
+import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../../../gifts/domain/session_gift_summary_builder.dart';
 import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -45,7 +46,6 @@ import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import '../gifts/providers/live_seat_gift_flash_provider.dart';
 import '../gifts/widgets/floating_gift_particles.dart';
-import '../gifts/widgets/gift_center_toast_stack.dart';
 import '../gifts/widgets/gift_notification_stack.dart';
 import '../providers/pk_room_providers.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
@@ -67,6 +67,7 @@ import '../providers/live_fortune_request_provider.dart';
 import '../providers/live_stream_quality_provider.dart';
 import '../widgets/broadcast_room/live_fortune_request_form.dart';
 import '../widgets/broadcast_room/live_gift_leaderboard.dart';
+import '../widgets/broadcast_room/live_recent_gifters_box.dart';
 import '../widgets/broadcast_room/live_like_realtime.dart';
 import '../widgets/broadcast_room/live_moderation_sheet.dart';
 import '../providers/live_broadcast_settings_provider.dart';
@@ -1770,6 +1771,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         for (final ev in next.notifications) {
           if (!prevIds.contains(ev.id)) {
             ref.read(liveGiftLeaderboardProvider(streamId).notifier).record(ev);
+            if (ev.jetonAmount >= 1000) {
+              ref.read(staffEntranceMarqueeProvider.notifier).enqueueBigGift(
+                    senderName: ev.senderName,
+                    receiverName: ev.receiverName,
+                    jeton: ev.jetonAmount,
+                    giftName: ev.giftName,
+                  );
+            }
           }
         }
       }
@@ -1858,11 +1867,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               applauseToken: interaction.applauseToken,
             ),
             FloatingGiftParticles(key: _particlesKey),
-            Positioned.fill(
-              child: IgnorePointer(
-                child: GiftCenterToastStack(events: giftCtrl.notifications),
-              ),
-            ),
+            // Tek hediye katmanı: chat üstü bildirim + (premium ise) fullscreen.
+            // Center toast kaldırıldı — çift/üst üste binen gösterim olmasın.
             Positioned.fill(
               child: IgnorePointer(
                 child: LiveGiftAnimationStack(
@@ -1907,6 +1913,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                           context: 'live_stream', contextId: streamId),
                       FirstGifterBadge(
                           context: 'live_stream', contextId: streamId),
+                      LiveRecentGiftersBox(notifications: giftCtrl.notifications),
                       LiveGiftLeaderboard(streamId: streamId),
                       PkRoomLiveSection(
                         streamId: streamId,

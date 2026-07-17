@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/datasources/live_remote_datasource.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/pk/live_pk_opponent_filter.dart';
 import 'live_providers.dart';
@@ -32,9 +31,9 @@ class LivePkStreamsNotifier extends Notifier<AsyncValue<List<LiveStreamEntity>>>
     _cancel = CancelToken();
     final token = _cancel;
 
-    if (!silent) {
-      state = state.whenData((v) => v).copyWithPrevious(state);
-      if (!state.hasValue) state = const AsyncValue.loading();
+    // Sessiz yenilemede loading'e düşme — PK ekranı spinner'da kalmasın.
+    if (!silent && !state.hasValue) {
+      state = const AsyncValue.loading();
     }
 
     try {
@@ -46,16 +45,12 @@ class LivePkStreamsNotifier extends Notifier<AsyncValue<List<LiveStreamEntity>>>
       state = AsyncValue.data(raw);
     } on TimeoutException {
       if (token?.isCancelled == true) return;
-      state = state.hasValue
-          ? state
-          : AsyncValue.error(
-              'PK listesi zaman aşımı (5 sn)',
-              StackTrace.current,
-            );
-    } catch (e, st) {
+      state = state.hasValue ? state : const AsyncValue.data([]);
+    } catch (_) {
       if (token?.isCancelled == true) return;
       if (state.hasValue) return;
-      state = AsyncValue.error(e, st);
+      // İlk yüklemede boş liste — sonsuz spinner olmasın.
+      state = const AsyncValue.data([]);
     }
   }
 

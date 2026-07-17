@@ -1,6 +1,21 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.46+73 (2026-07-17)
+
+### Ana sayfa
+- Sabit büyük hediye kartı kaldırıldı; arama çubuğu altında kayan şerit
+- Yetkili/Gold girişleri + 1000+ jeton hediyeleri sağdan sola (herkes görür)
+- `/api/gifts/recent-big` periyodik yenileme
+
+### PK
+- Canlı PK daveti: liste yüklenirken sonsuz spinner yok; davet sırasında sayfa kapanmıyor
+- İzleyicisi 0 olan yayınlar da listelenir (yayıncı belli ise)
+
+### Hediye
+- Çift/üst üste binen gösterim düzeltildi (tek katman + premium fullscreen)
+- Sesli oda ve canlı yayında son 3 hediye atan jeton miktarıyla görünür
+
 ## 1.0.45+72 (2026-07-17)
 
 ### Sesli oda — yetki, PK, hediye
