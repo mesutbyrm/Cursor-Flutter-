@@ -1,6 +1,11 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+71 (2026-07-17)
+
+### CI düzeltmesi
+- `voice_room_rtc_page`: eksik `VoiceWebChatOverlay` import geri eklendi
+
 ## 1.0.44+70 (2026-07-17)
 
 ### CI düzeltmesi
