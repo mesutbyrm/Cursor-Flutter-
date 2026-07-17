@@ -84,8 +84,17 @@ class _GifterRow extends StatelessWidget {
                 color: VoiceRoomTokens.gold,
               ),
             ),
+            if ((gifter.receiverName ?? '').isNotEmpty)
+              TextSpan(
+                text: ' → ${gifter.receiverName}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
+              ),
             TextSpan(
-              text: ' — ${gifter.lastJeton} jeton attı',
+              text: ' — ${gifter.lastJeton} jeton'
+                  '${(gifter.giftName ?? '').isNotEmpty ? ' (${gifter.giftName})' : ''}',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: Colors.white.withValues(alpha: 0.85),

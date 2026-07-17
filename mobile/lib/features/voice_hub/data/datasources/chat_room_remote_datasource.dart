@@ -315,22 +315,33 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     String? nickname,
     int? seatIndex,
+    String? password,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final nick = nickname?.trim();
+      final pass = password?.trim();
       final bodies = <Map<String, dynamic>>[
         {
           'action': 'join',
           if (nick != null && nick.isNotEmpty) 'nickname': nick,
           if (seatIndex != null && seatIndex >= 0) 'seatIndex': seatIndex,
+          if (pass != null && pass.isNotEmpty) ...{
+            'password': pass,
+            'entryPassword': pass,
+          },
         },
         if (nick != null && nick.isNotEmpty)
           {
             'action': 'join',
+            if (pass != null && pass.isNotEmpty) ...{
+              'password': pass,
+              'entryPassword': pass,
+            },
           },
         {
           'type': 'join',
           if (nick != null && nick.isNotEmpty) 'nickname': nick,
+          if (pass != null && pass.isNotEmpty) 'password': pass,
         },
       ];
       ApiException? lastError;
@@ -943,9 +954,10 @@ class ChatRoomRemoteDataSource {
     bool skipPayment = false,
     int? jetonCost,
   }) async {
+    // Map gönder — jsonEncode string gövdesi üretimde «invalid type» üretir.
     final res = await _dio.safePost<dynamic>(
       moderationPath(roomKey),
-      data: jsonEncode({
+      data: <String, dynamic>{
         'action': action,
         if (targetUserId != null && targetUserId.isNotEmpty)
           'targetUserId': targetUserId,
@@ -955,12 +967,40 @@ class ChatRoomRemoteDataSource {
         if (ttl != null && ttl > 0) 'ttl': ttl,
         if (skipPayment) 'skipPayment': true,
         if (jetonCost != null && jetonCost > 0) 'jetonCost': jetonCost,
-        'duration': ?duration,
-      }),
-      options: Options(contentType: 'application/json'),
+        if (duration != null) 'duration': duration,
+      },
     );
     final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
     return map.isEmpty ? null : map;
+  }
+
+  /// Kılavuz §9.3 — oda sahipliğini devret.
+  Future<void> transferOwnership({
+    required String roomKey,
+    String? alternateKey,
+    required String newOwnerId,
+  }) async {
+    final id = newOwnerId.trim();
+    if (id.isEmpty) {
+      throw const ApiException('Yeni sahip seçilmedi');
+    }
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _dio.safePost<dynamic>(
+          '/api/chat/rooms/$key/transfer-ownership',
+          data: <String, dynamic>{'newOwnerId': id},
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
+      // Yedek: founder rolü (~)
+      await assignRole(
+        roomKey: key,
+        userId: id,
+        roleSymbol: '~',
+      );
+    });
   }
 
   Future<void> postAnnouncement({
@@ -1125,13 +1165,12 @@ class ChatRoomRemoteDataSource {
       }
       await _dio.safePost<dynamic>(
         mutePath(key),
-        data: jsonEncode({
+        data: <String, dynamic>{
           'userId': userId,
           'minutes': minutes,
           'durationMinutes': minutes,
-          'reason': ?reason,
-        }),
-        options: Options(contentType: 'application/json'),
+          if (reason != null && reason.isNotEmpty) 'reason': reason,
+        },
       );
     });
   }
@@ -1156,13 +1195,12 @@ class ChatRoomRemoteDataSource {
       }
       await _dio.safePost<dynamic>(
         rolePath(key),
-        data: jsonEncode({
+        data: <String, dynamic>{
           'userId': userId,
           'role': roleSymbol,
           'symbol': roleSymbol,
           'roleSymbol': roleSymbol,
-        }),
-        options: Options(contentType: 'application/json'),
+        },
       );
     });
   }
@@ -2009,17 +2047,16 @@ class ChatRoomRemoteDataSource {
     required String action,
     String? userId,
   }) async {
-    // Kılavuz §9.3: assign/remove + targetUserId; üretim: add_dj/remove_dj + userId.
+    // Kılavuz §9.3: assign/remove + targetUserId — Map body (string değil).
     final res = await _dio.safePost<dynamic>(
       djPath(roomKey),
-      data: jsonEncode({
+      data: <String, dynamic>{
         'action': action,
         if (userId != null && userId.isNotEmpty) ...{
           'targetUserId': userId,
           'userId': userId,
         },
-      }),
-      options: Options(contentType: 'application/json'),
+      },
     );
     final ids = _parseDjUserIdsResponse(res.data);
     if (ids.isNotEmpty) return ids;

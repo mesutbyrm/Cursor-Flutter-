@@ -109,18 +109,25 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       kind: ChatMessageKind.systemJoin,
       user: userRef,
     );
-    final banner = VoiceOfficialJoin.formatEntranceBanner(
-      line,
-      roomName: _roomMeta.nameTr,
-    );
-    if (banner.isEmpty || !_markEntranceOnce(banner)) return;
-    state = state.copyWith(enterBanner: banner);
-    ref.read(staffEntranceMarqueeProvider.notifier).enqueue(banner);
-    _enterBannerTimer?.cancel();
-    _enterBannerTimer = Timer(const Duration(seconds: 10), () {
-      if (!_sessionActive) return;
-      state = state.copyWith(clearEnterBanner: true);
-    });
+    // Gold / VIP → koltuk altı; normal → yalnızca alt toast (realtime event).
+    if (VoiceOfficialJoin.isEntranceWorthy(
+      content: line,
+      membership: user.membership,
+      chatRole: user.chatRole,
+    )) {
+      final banner = VoiceOfficialJoin.formatEntranceBanner(
+        line,
+        roomName: _roomMeta.nameTr,
+      );
+      if (banner.isNotEmpty && _markEntranceOnce(banner)) {
+        state = state.copyWith(enterBanner: banner);
+        _enterBannerTimer?.cancel();
+        _enterBannerTimer = Timer(const Duration(seconds: 5), () {
+          if (!_sessionActive) return;
+          state = state.copyWith(clearEnterBanner: true);
+        });
+      }
+    }
   }
 
   void _showStaffEnterBanner(String name, {ChatRoomUserRef? user}) {
@@ -130,10 +137,10 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       roomName: _roomMeta.nameTr,
     );
     if (!_markEntranceOnce(line)) return;
+    // Tek kanal: koltuk altı banner (global marquee sesli odada zaten gizli).
     state = state.copyWith(enterBanner: line);
-    ref.read(staffEntranceMarqueeProvider.notifier).enqueue(line);
     _enterBannerTimer?.cancel();
-    _enterBannerTimer = Timer(const Duration(seconds: 10), () {
+    _enterBannerTimer = Timer(const Duration(seconds: 5), () {
       if (!_sessionActive) return;
       state = state.copyWith(clearEnterBanner: true);
     });
@@ -320,10 +327,15 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       final user = ref.read(authControllerProvider).valueOrNull;
       final nick = _effectiveNickname(user);
       _presenceNickname = nick;
+      final pendingPass = ref
+          .read(pendingRoomPasswordProvider.notifier)
+          .peek(_roomKey);
       final joined = await ref.read(chatRoomRemoteProvider).joinPresence(
             _roomKey,
             nickname: nick,
+            password: pendingPass,
           );
+      ref.read(pendingRoomPasswordProvider.notifier).clear(_roomKey);
       final merged = _mergeSelf(joined);
       VoiceRoomDebugLog.log('api.presence.join.ok', {
         'count': merged.length,
@@ -353,9 +365,23 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
           .read(voiceRoomDiagnosticProvider.notifier)
           .setError(ApiException.userMessage(e));
       final msg = ApiException.userMessage(e);
-      if (msg.toLowerCase().contains('yasak') ||
+      final lower = msg.toLowerCase();
+      if (lower.contains('şifre') ||
+          lower.contains('sifre') ||
+          lower.contains('password') ||
+          lower.contains('wrong password') ||
+          lower.contains('invalid password') ||
+          (e is ApiException && e.statusCode == 401)) {
+        ref.read(pendingRoomPasswordProvider.notifier).clear(_roomKey);
+        state = state.copyWith(
+          loading: false,
+          error: 'Oda şifresi hatalı. Şifreyi bilmeden giremezsiniz.',
+        );
+        return;
+      }
+      if (lower.contains('yasak') ||
           msg.contains('403') ||
-          msg.toLowerCase().contains('forbidden')) {
+          lower.contains('forbidden')) {
         state = state.copyWith(
           loading: false,
           error: 'Bu odadan yasaklandınız',
@@ -487,10 +513,11 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       roomName: _roomMeta.nameTr,
     );
     if (formatted.isEmpty || !_markEntranceOnce(formatted)) return;
+    // Gold / özel giriş — yalnızca koltuk altı (çift şerit yok).
     state = state.copyWith(enterBanner: formatted);
-    ref.read(staffEntranceMarqueeProvider.notifier).enqueue(formatted);
     _enterBannerTimer?.cancel();
-    _enterBannerTimer = Timer(const Duration(seconds: 10), () {
+    _enterBannerTimer = Timer(const Duration(seconds: 5), () {
+      if (!_sessionActive) return;
       state = state.copyWith(clearEnterBanner: true);
     });
   }

@@ -12,6 +12,7 @@ import '../../../../core/performance/network_perf.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
+import '../../../vip_gold/presentation/providers/pending_room_password_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';

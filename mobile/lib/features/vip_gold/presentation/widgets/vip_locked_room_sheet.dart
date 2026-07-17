@@ -3,11 +3,11 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../live/domain/entities/voice_room_entity.dart';
-import '../../domain/voice_room_access.dart';
+import '../providers/pending_room_password_provider.dart';
 import '../providers/vip_membership_provider.dart';
 import '../theme/vip_gold_tokens.dart';
 
-/// Şifreli oda — cam panel + kod girişi.
+/// Şifreli oda — cam panel + kod girişi. Şifre sunucuda doğrulanır.
 Future<bool> showVipLockedRoomSheet(
   BuildContext context,
   WidgetRef ref, {
@@ -16,16 +16,17 @@ Future<bool> showVipLockedRoomSheet(
   final unlocked = ref.read(vipUnlockedRoomsProvider);
   if (unlocked.contains(room.apiRoomKey)) return true;
 
-  final result = await showModalBottomSheet<bool>(
+  final result = await showModalBottomSheet<String>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (ctx) => _LockedSheet(room: room),
   );
-  if (result == true) {
-    ref.read(vipUnlockedRoomsProvider.notifier).unlock(room.apiRoomKey);
-  }
-  return result == true;
+  final pass = result?.trim() ?? '';
+  if (pass.isEmpty) return false;
+  ref.read(pendingRoomPasswordProvider.notifier).setPassword(room.apiRoomKey, pass);
+  ref.read(vipUnlockedRoomsProvider.notifier).unlock(room.apiRoomKey);
+  return true;
 }
 
 class _LockedSheet extends StatefulWidget {
@@ -49,11 +50,11 @@ class _LockedSheetState extends State<_LockedSheet> {
 
   void _submit() {
     final code = _ctrl.text.trim();
-    if (code == widget.room.demoPassword) {
-      Navigator.pop(context, true);
+    if (code.isEmpty) {
+      setState(() => _error = 'Oda şifresi gerekli');
       return;
     }
-    setState(() => _error = 'Geçersiz şifre');
+    Navigator.pop(context, code);
   }
 
   @override
@@ -103,7 +104,7 @@ class _LockedSheetState extends State<_LockedSheet> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Bu oda şifre korumalı. Davet kodunu gir.',
+                  'Bu oda şifre korumalı. Şifreyi bilmeyenler giremez.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: context.colors.onSurfaceMuted.withValues(alpha: 0.95)),
                 ),

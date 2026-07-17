@@ -9,10 +9,14 @@ class VoiceRecentGifter {
     required this.senderName,
     required this.lastJeton,
     required this.at,
+    this.receiverName,
+    this.giftName,
   });
 
   final String senderId;
   final String senderName;
+  final String? receiverName;
+  final String? giftName;
   final int lastJeton;
   final DateTime at;
 }
@@ -70,21 +74,6 @@ class VoiceRecentGiftsController extends Notifier<VoiceRecentGiftsState> {
     }
 
     final now = event.timestamp;
-    _gifters[senderId] = VoiceRecentGifter(
-      senderId: senderId,
-      senderName: event.senderName.trim().isNotEmpty
-          ? event.senderName.trim()
-          : 'Kullanıcı',
-      lastJeton: gross,
-      at: now,
-    );
-    _gifterOrder.remove(senderId);
-    _gifterOrder.add(senderId);
-    while (_gifterOrder.length > 24) {
-      final removed = _gifterOrder.removeAt(0);
-      _gifters.remove(removed);
-    }
-
     final receiver = event.receiverName.trim().isNotEmpty
         ? event.receiverName.trim()
         : 'kullanıcı';
@@ -94,6 +83,21 @@ class VoiceRecentGiftsController extends Notifier<VoiceRecentGiftsState> {
     final sender = event.senderName.trim().isNotEmpty
         ? event.senderName.trim()
         : 'Biri';
+
+    _gifters[senderId] = VoiceRecentGifter(
+      senderId: senderId,
+      senderName: sender,
+      receiverName: receiver,
+      giftName: gift,
+      lastJeton: gross,
+      at: now,
+    );
+    _gifterOrder.remove(senderId);
+    _gifterOrder.add(senderId);
+    while (_gifterOrder.length > 24) {
+      final removed = _gifterOrder.removeAt(0);
+      _gifters.remove(removed);
+    }
 
     final line =
         '$sender, $receiver kullanıcısına $gift hediyesini attı. 🪙$gross jeton.🎉';
@@ -120,6 +124,19 @@ class VoiceRecentGiftsController extends Notifier<VoiceRecentGiftsState> {
       gifters: ordered,
       announcements: announcements,
     );
+
+    // Duyuru 5 sn sonra kaybolsun.
+    final annId = announcements.first.id;
+    Future<void>.delayed(const Duration(seconds: 5), () {
+      try {
+        final current = state.announcements;
+        if (current.isEmpty) return;
+        final next = current.where((a) => a.id != annId).toList();
+        if (next.length == current.length) return;
+        state =
+            VoiceRecentGiftsState(gifters: state.gifters, announcements: next);
+      } catch (_) {}
+    });
   }
 
   void clear() {

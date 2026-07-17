@@ -318,11 +318,18 @@ class _VoiceRoomManagementPanelState
       ),
     );
     if (confirm != true) return;
-    final err = await _ctrl.assignRoleToUser(
-      targetUserId: picked.id,
-      roleSymbol: '~',
-    );
-    await _snack(err ?? 'Oda devredildi');
+    try {
+      await ref.read(chatRoomRemoteProvider).transferOwnership(
+            roomKey: widget.room.apiRoomKey.isNotEmpty
+                ? widget.room.apiRoomKey
+                : widget.room.id,
+            newOwnerId: picked.id,
+          );
+      await _ctrl.refresh();
+      await _snack('Oda ${picked.displayName} kullanıcısına devredildi');
+    } catch (e) {
+      await _snack(ApiException.userMessage(e));
+    }
   }
 
   Future<void> _changeNickname() async {
