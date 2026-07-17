@@ -64,5 +64,26 @@ void main() {
       });
       expect(battle?.id, 'b-legacy');
     });
+
+    test('partial accept response with status and inviteId', () {
+      final battle = ds.parseBattleForTest({
+        'success': true,
+        'status': 'accepted',
+        'inviteId': 'inv-99',
+      });
+      expect(battle, isNotNull);
+      expect(battle!.effectiveId, 'inv-99');
+    });
+
+    test('top-level battle fields without wrapper', () {
+      final battle = ds.parseBattleForTest({
+        'id': 'top-1',
+        'status': 'pending',
+        'challengerScore': 0,
+        'opponentScore': 0,
+      });
+      expect(battle?.id, 'top-1');
+      expect(battle?.isPending, isTrue);
+    });
   });
 }

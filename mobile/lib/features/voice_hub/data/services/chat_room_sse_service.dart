@@ -311,15 +311,30 @@ class ChatRoomSseService extends BaseSseService {
   }
 
   bool _tryEmitPk(Map<String, dynamic> map) {
-    if (!map.containsKey('battle') && !map.containsKey('pk')) return false;
+    if (!map.containsKey('battle') &&
+        !map.containsKey('pk') &&
+        !map.containsKey('data') &&
+        !map.containsKey('inviteId') &&
+        !map.containsKey('battleId')) {
+      return false;
+    }
     _emitPk(map);
     return true;
   }
 
   void _emitPk(Map<String, dynamic> map) {
-    final raw = map['battle'] ?? map['pk'] ?? map['data'];
-    if (raw is! Map) return;
-    final battle = PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
+    final nested = map['battle'] ?? map['pk'] ?? map['match'] ?? map['data'];
+    Map<String, dynamic>? raw;
+    if (nested is Map) {
+      raw = Map<String, dynamic>.from(nested);
+    } else if (map['id'] != null ||
+        map['inviteId'] != null ||
+        map['battleId'] != null ||
+        map['status'] != null) {
+      raw = map;
+    }
+    if (raw == null) return;
+    final battle = PkBattleRemote.fromJson(raw);
     if (battle.effectiveId.isEmpty) return;
     final event = map['event']?.toString() ??
         map['type']?.toString() ??

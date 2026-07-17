@@ -1,6 +1,28 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.45+72 (2026-07-17)
+
+### Sesli oda — yetki, PK, hediye
+- `myPermissions` snake_case / truthy parse; yalnız `canGiveVoice` gelse bile uygulanır
+- Rol değişince oda yetkileri anında yenilenir; «Yetki ver» hata metni düzeltildi
+- Ses hakkı: boş koltuk 0–14 aralığında aranır
+- PK SSE/yanıt: üst düzey battle alanları + kısmi accept/reject yanıtı desteklenir
+- Hediye: herkes aynı anda görür (parmak izi dedupe); jeton miktarı `jetonAmount` ile gösterilir
+- Hediye duyuru şeridi premium odada koltuk altında
+
+### Canlı yayın — PK ve misafir
+- PK daveti önce birleşik `/api/pk/request` (karşı tarafta kabul/red dialog)
+- Misafir listesinden `joinRequests` korunur; invite gövdesinde `userId` + `inviteeId`
+- Yayın SSE: gift/pk üst düzey payload
+
+### Canlı falcı
+- TRTC iki yönlü: kamera erken başlatma / yeniden açma
+
+### Yetkili giriş şeridi
+- Navbar altında kayar; sesli sohbet odalarında global şerit kapalı (koltuk altı kalır)
+- Giriş duyurusunda kullanıcı adı yerine görünen isim
+
 ## 1.0.44+71 (2026-07-17)
 
 ### CI düzeltmesi

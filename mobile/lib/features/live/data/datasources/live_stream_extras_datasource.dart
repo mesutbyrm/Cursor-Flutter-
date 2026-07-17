@@ -212,10 +212,32 @@ class LiveStreamExtrasDataSource {
         final snap = LiveGuestListSnapshot.fromJson(
           asJsonMap(res.data),
         );
-        return (
-          coBroadcasters: snap.toCoBroadcasters(),
-          joinRequests: const <Map<String, dynamic>>[],
-        );
+        final joinRequests = snap.toJoinRequests();
+        // Misafir listesinde bekleyen istek yoksa co-broadcast uçuna düş.
+        if (joinRequests.isNotEmpty || snap.guests.isNotEmpty) {
+          if (joinRequests.isNotEmpty) {
+            return (
+              coBroadcasters: snap.toCoBroadcasters(),
+              joinRequests: joinRequests,
+            );
+          }
+          // Misafirler var ama istek yok — yine de co-broadcast'ten istekleri dene.
+          try {
+            final coRes = await _dio.safeGet<dynamic>(
+              ApiEndpoints.videoStreamCoBroadcast(streamId),
+            );
+            return (
+              coBroadcasters: snap.toCoBroadcasters(),
+              joinRequests: _listFromBody(coRes.data,
+                  keys: ['joinRequests', 'pendingRequests', 'requests']),
+            );
+          } catch (_) {
+            return (
+              coBroadcasters: snap.toCoBroadcasters(),
+              joinRequests: const <Map<String, dynamic>>[],
+            );
+          }
+        }
       }
     } catch (_) {}
 
@@ -263,7 +285,10 @@ class LiveStreamExtrasDataSource {
     try {
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.videoStreamCoBroadcastInvite(streamId),
-        data: {'inviteeId': inviteeId},
+        data: {
+          'userId': inviteeId,
+          'inviteeId': inviteeId,
+        },
       );
       return _unwrapCoBroadcaster(res.data);
     } catch (_) {

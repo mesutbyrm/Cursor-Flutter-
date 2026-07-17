@@ -68,6 +68,7 @@ import 'widgets/premium_2026/voice_cosmic_background.dart';
 import 'widgets/voice_room/voice_room_spec_footer.dart';
 import 'sheets/voice_room_commands_panel.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
+import 'widgets/premium_2026/voice_gift_announcement_ticker.dart';
 import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
 import 'utils/kick_strike_ui.dart';
 import 'audio/voice_trtc_engine.dart';
@@ -417,7 +418,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       final receiverIsOwner = event.receiverName.trim().toLowerCase() ==
           (room.ownerName ?? '').trim().toLowerCase();
       final ownerNet = GiftRevenueDisplay.voiceOwnerDisplayNet(
-        gross: event.coinCost * event.quantity,
+        gross: event.jetonAmount,
         receiverIsOwner: receiverIsOwner,
       );
       if (ownerNet > 0) {
@@ -1529,18 +1530,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           liveKey: _liveRoomKey,
                           isOwner: isOwner,
                         ),
-                        Consumer(
-                          builder: (context, ref, _) {
-                            final banner = ref.watch(
-                              voiceRoomLiveProvider(_liveRoomKey).select(
-                                (s) => s.enterBanner,
-                              ),
-                            );
-                            return VoiceRoomStaffJoinBanner(
-                              enterBanner: banner,
-                            );
-                          },
-                        ),
                         VoiceWebOwnerStage(
                           room: room,
                           presence: live.presence,
@@ -1564,6 +1553,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         ),
                         Consumer(
                           builder: (context, ref, _) {
+                            final banner = ref.watch(
+                              voiceRoomLiveProvider(_liveRoomKey).select(
+                                (s) => s.enterBanner,
+                              ),
+                            );
+                            return VoiceRoomStaffJoinBanner(
+                              enterBanner: banner,
+                            );
+                          },
+                        ),
+                        Consumer(
+                          builder: (context, ref, _) {
                             final ann = ref.watch(
                               voiceRoomLiveProvider(_liveRoomKey).select(
                                 (s) => s.moderatorAnnouncement,
@@ -1582,6 +1583,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                   .clearModeratorAnnouncement(),
                             );
                           },
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          child: VoiceGiftAnnouncementTicker(),
                         ),
                         RoomVideoOverlay(
                           roomKey: _liveRoomKey,

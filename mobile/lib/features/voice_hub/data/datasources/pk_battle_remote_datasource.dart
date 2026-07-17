@@ -40,14 +40,30 @@ class PkBattleRemoteDataSource {
         map['battle'] ??
         map['pendingInvite'] ??
         map['pk'] ??
+        map['match'] ??
         map['full'] ??
         (hasWrapper ? null : map);
-    if (raw == null) return null;
-    if (raw is! Map) return null;
-    final battle =
-        PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
-    if (battle.effectiveId.isEmpty) return null;
-    return battle;
+    if (raw != null && raw is Map) {
+      final battle =
+          PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
+      if (battle.effectiveId.isNotEmpty) return battle;
+    }
+    // Kısmi yanıt: { success, status, inviteId } veya üst düzey battle alanları.
+    final status = map['status']?.toString();
+    final id = (map['id'] ??
+            map['inviteId'] ??
+            map['battleId'] ??
+            map['matchId'])
+        ?.toString()
+        .trim();
+    if (id != null && id.isNotEmpty) {
+      return PkBattleRemote.fromJson({
+        ...map,
+        'id': id,
+        'status': status ?? map['status'] ?? 'pending',
+      });
+    }
+    return null;
   }
 
   Future<PkBattleRemote?> fetchRoomBattle(
@@ -237,6 +253,7 @@ class PkBattleRemoteDataSource {
     String? alternateRoomId,
     required String action,
   }) async {
+    final synthesizedStatus = action == 'accept' ? 'active' : 'rejected';
     for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
       try {
         final res = await _dio.safePost<dynamic>(
@@ -245,6 +262,14 @@ class PkBattleRemoteDataSource {
         );
         final battle = _parseBattle(res.data);
         if (battle != null) return battle;
+        // Sunucu yalnızca { success: true } dönerse yerel durum üret.
+        return PkBattleRemote.fromJson({
+          'id': inviteId,
+          'inviteId': inviteId,
+          'status': synthesizedStatus,
+          'battleType': 'voice_room',
+          'voiceRoomId': key,
+        });
       } on ApiException catch (e) {
         if (e.statusCode == 404 || e.statusCode == 405) continue;
         rethrow;

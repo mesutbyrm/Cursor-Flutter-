@@ -230,7 +230,7 @@ class VideoStreamSseService {
         }
         return;
       case 'gift':
-        final giftRaw = map['gift'];
+        final giftRaw = map['gift'] ?? map['data'] ?? map;
         if (giftRaw is Map && _streamId != null) {
           final ev = _giftsRemote.parseGiftEvent(
             Map<String, dynamic>.from(giftRaw),
@@ -243,7 +243,9 @@ class VideoStreamSseService {
         _onStreamEnded?.call();
         return;
       case 'pk':
-        final data = map['data'];
+      case 'pkbattle':
+      case 'pk_battle':
+        final data = map['data'] ?? map['battle'] ?? map['pk'] ?? map;
         if (data is Map) {
           _onPkBattle?.call(Map<String, dynamic>.from(data));
         }

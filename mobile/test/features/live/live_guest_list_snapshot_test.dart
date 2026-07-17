@@ -43,5 +43,19 @@ void main() {
       expect(co.first['agoraUid'], 7);
       expect(co.first['slotIndex'], 1);
     });
+
+    test('fromJson keeps pending joinRequests', () {
+      final snap = LiveGuestListSnapshot.fromJson({
+        'streamId': 's1',
+        'guests': [],
+        'joinRequests': [
+          {'userId': 'u2', 'displayName': 'Ayşe', 'status': 'pending'},
+        ],
+      });
+      expect(snap.joinRequests, hasLength(1));
+      final reqs = snap.toJoinRequests();
+      expect(reqs.first['userId'], 'u2');
+      expect(reqs.first['displayName'], 'Ayşe');
+    });
   });
 }

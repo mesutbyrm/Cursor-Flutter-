@@ -1,28 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../providers/staff_entrance_marquee_provider.dart';
 import 'voice_room/voice_room_staff_join_banner.dart';
 
-/// Uygulama geneli yetkili giriş şeridi — aktif sayfanın üstünde, geçici.
+/// Uygulama geneli yetkili giriş şeridi — navbar altında, sesli odada kapalı.
 class StaffEntranceMarqueeHost extends ConsumerWidget {
-  const StaffEntranceMarqueeHost({super.key, required this.child});
+  const StaffEntranceMarqueeHost({
+    super.key,
+    required this.child,
+    this.routePath,
+  });
 
   final Widget child;
+  final String? routePath;
+
+  static bool hideForRoute(String? location) {
+    final path = Uri.tryParse(location ?? '')?.path ?? location ?? '';
+    if (path.startsWith('/voice-room/')) return true;
+    return false;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final message = ref.watch(
       staffEntranceMarqueeProvider.select((s) => s.message),
     );
+    final location = routePath ??
+        GoRouter.maybeOf(context)
+            ?.routerDelegate
+            .currentConfiguration
+            .uri
+            .path;
+    final hide = hideForRoute(location);
+    final topInset = MediaQuery.paddingOf(context).top + kToolbarHeight;
 
     return Stack(
       fit: StackFit.expand,
       children: [
         child,
-        if (message != null && message.trim().isNotEmpty)
+        if (!hide && message != null && message.trim().isNotEmpty)
           Positioned(
-            top: MediaQuery.paddingOf(context).top + 4,
+            top: topInset,
             left: 0,
             right: 0,
             child: IgnorePointer(

@@ -67,11 +67,16 @@ class PkBattleRemote extends Equatable {
     final invite = json['inviteId']?.toString().trim();
     final rawId = (json['id'] ?? json['battleId'])?.toString().trim() ?? '';
     final id = rawId.isNotEmpty ? rawId : (invite ?? '');
+    var status = json['status']?.toString() ?? 'pending';
+    // Sunucu accept sonrası "accepted" dönebilir — savaş aktif sayılır.
+    if (status == 'accepted' || status == 'accepted_invite') {
+      status = 'active';
+    }
     return PkBattleRemote(
       id: id,
       inviteId: invite?.isNotEmpty == true ? invite : null,
       battleType: json['battleType']?.toString() ?? 'voice_room',
-      status: json['status']?.toString() ?? 'pending',
+      status: status,
       challengerScore: _int(json['challengerScore'] ?? json['leftScore']),
       opponentScore: _int(json['opponentScore'] ?? json['rightScore']),
       secondsLeft: _int(json['secondsLeft'], fallback: 300),

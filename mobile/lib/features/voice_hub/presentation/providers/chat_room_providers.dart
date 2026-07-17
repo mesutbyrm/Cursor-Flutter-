@@ -334,9 +334,36 @@ class VoiceRoomLiveController
     if (server != null && server.isNotEmpty) return server;
     final saved = _presenceNickname?.trim();
     if (saved != null && saved.isNotEmpty) return saved;
+    final display = user?.display.trim();
+    if (display != null && display.isNotEmpty) return display;
     final nick = user?.username.trim();
     if (nick != null && nick.isNotEmpty) return nick;
-    return user?.display.trim();
+    return null;
+  }
+
+  /// SSE / moderation payload — isim önce, kullanıcı adı yedek.
+  String _displayNameFromPayload(Map<String, dynamic> payload) {
+    final user = payload['user'];
+    if (user is Map) {
+      final fromUser = (user['displayName'] ??
+              user['name'] ??
+              user['nickname'] ??
+              user['userName'] ??
+              user['username'])
+          ?.toString()
+          .trim();
+      if (fromUser != null && fromUser.isNotEmpty) return fromUser;
+    }
+    final direct = (payload['displayName'] ??
+            payload['name'] ??
+            payload['userNickname'] ??
+            payload['nickname'] ??
+            payload['userName'] ??
+            payload['username'])
+        ?.toString()
+        .trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+    return 'Kullanıcı';
   }
 
   /// Prisma cuid — slug değil.
@@ -1017,6 +1044,7 @@ class VoiceRoomLiveController
             if (ev != null) {
               ref.read(voiceRoomGiftRealtimeProvider).publishRemote(ev);
               ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(ev);
+              announceGift(ev);
             }
           },
           onMessage: (msg) {
@@ -1179,7 +1207,7 @@ class VoiceRoomLiveController
         return;
       case 'ROLE_CHANGED':
       case 'ROLE_REMOVED': {
-        final name = payload['userName']?.toString() ?? 'Kullanıcı';
+        final name = _displayNameFromPayload(payload);
         final newRole = payload['newRole']?.toString();
         final removed = payload['removedRole']?.toString();
         if (event == 'ROLE_CHANGED' && newRole != null) {
@@ -1191,16 +1219,18 @@ class VoiceRoomLiveController
           showModerationToast(line);
           _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.moderation, line);
         }
-        unawaited(_presenceHeartbeatTick());
+        // Hedef kullanıcıda yetkilerin anında uygulanması için yenile.
+        unawaited(refresh(includeDj: false));
         return;
       }
       case 'ENTRY_ANNOUNCEMENT': {
-        final name = payload['userName']?.toString() ?? 'Kullanıcı';
+        final name = _displayNameFromPayload(payload);
         final entry = payload['entryType']?.toString() ?? '';
         final userRef = ChatRoomUserRef(
           id: payload['userId']?.toString() ?? '',
           name: name,
-          nickname: payload['userNickname']?.toString(),
+          nickname: payload['userNickname']?.toString() ??
+              payload['username']?.toString(),
           chatRole: entry.isNotEmpty ? entry.toLowerCase() : null,
         );
         final staffLine = VoiceStaffChatStyle.formatStaffEntryLine(
@@ -3086,9 +3116,10 @@ class VoiceRoomLiveController
     final perms = _permissions();
     if (!perms.canManageRoom &&
         !perms.canModerate &&
+        !perms.canGiveVoice &&
         !perms.isRoomOwner &&
         !perms.isSiteAdmin) {
-      return 'Kullanıcıları taşıma yetkiniz yok.';
+      return 'Yetki verme izniniz yok.';
     }
     final symbol = roleSymbol.trim();
     if (symbol.isEmpty) {
