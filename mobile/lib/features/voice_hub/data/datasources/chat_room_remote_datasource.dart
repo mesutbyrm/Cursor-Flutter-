@@ -318,21 +318,50 @@ class ChatRoomRemoteDataSource {
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final nick = nickname?.trim();
-      final body = <String, dynamic>{'action': 'join'};
-      if (nick != null && nick.isNotEmpty) body['nickname'] = nick;
-      if (seatIndex != null && seatIndex >= 0) body['seatIndex'] = seatIndex;
-      final res = await _dio.safePost<dynamic>(
-        presencePath(key),
-        data: body.isEmpty ? null : body,
-      );
-      final list = _presenceList(res.data);
-      VoiceRoomDebugLog.log('api.presence.post', {
-        'roomId': key,
-        'status': res.statusCode,
-        'count': list.length,
-        'seatIndex': ?seatIndex,
-      });
-      return list;
+      final bodies = <Map<String, dynamic>>[
+        {
+          'action': 'join',
+          if (nick != null && nick.isNotEmpty) 'nickname': nick,
+          if (seatIndex != null && seatIndex >= 0) 'seatIndex': seatIndex,
+        },
+        if (nick != null && nick.isNotEmpty)
+          {
+            'action': 'join',
+          },
+        {
+          'type': 'join',
+          if (nick != null && nick.isNotEmpty) 'nickname': nick,
+        },
+      ];
+      ApiException? lastError;
+      for (final body in bodies) {
+        try {
+          final res = await _dio.safePost<dynamic>(
+            presencePath(key),
+            data: body,
+          );
+          final list = _presenceList(res.data);
+          VoiceRoomDebugLog.log('api.presence.post', {
+            'roomId': key,
+            'status': res.statusCode,
+            'count': list.length,
+            'seatIndex': ?seatIndex,
+            'bodyKeys': body.keys.toList(),
+          });
+          return list;
+        } on ApiException catch (e) {
+          lastError = e;
+          final msg = e.message.toLowerCase();
+          if (e.statusCode == 400 ||
+              e.statusCode == 422 ||
+              msg.contains('invalid type')) {
+            continue;
+          }
+          rethrow;
+        }
+      }
+      if (lastError != null) throw lastError;
+      return const [];
     });
   }
 
@@ -356,8 +385,7 @@ class ChatRoomRemoteDataSource {
       try {
         await _dio.safePost<dynamic>(
           presencePath(key),
-          data: jsonEncode({'type': 'leave'}),
-          options: Options(contentType: 'application/json'),
+          data: const {'type': 'leave'},
         );
       } catch (_) {}
     });
@@ -1821,18 +1849,17 @@ class ChatRoomRemoteDataSource {
     int? seatIndex,
     String? userId,
   }) async {
-    final body = jsonEncode({
-      'seatIndex': ?seatIndex,
+    final body = <String, dynamic>{
+      if (seatIndex != null) 'seatIndex': seatIndex,
       if (userId != null && userId.isNotEmpty) 'userId': userId,
-    });
-    final opts = Options(contentType: 'application/json');
+    };
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       for (final path in [
         ApiEndpoints.chatRoomJoinSeat(key),
         seatsPath(key),
       ]) {
         try {
-          await _dio.safePost<dynamic>(path, data: body, options: opts);
+          await _dio.safePost<dynamic>(path, data: body);
           return;
         } on ApiException catch (e) {
           if (e.statusCode == 404 || e.statusCode == 405) continue;
@@ -1840,12 +1867,12 @@ class ChatRoomRemoteDataSource {
         }
       }
       try {
-        await _dio.safePatch<dynamic>(seatsPath(key), data: body, options: opts);
+        await _dio.safePatch<dynamic>(seatsPath(key), data: body);
         return;
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       }
-      await _dio.safePost<dynamic>(presencePath(key), data: body, options: opts);
+      await _dio.safePost<dynamic>(presencePath(key), data: body);
     });
   }
 
@@ -1854,29 +1881,24 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     String? userId,
   }) async {
-    final body = jsonEncode({
+    final body = <String, dynamic>{
       'seatIndex': -1,
       if (userId != null && userId.isNotEmpty) 'userId': userId,
-    });
-    final opts = Options(contentType: 'application/json');
+    };
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       try {
-        await _dio.safePatch<dynamic>(
-          seatsPath(key),
-          data: body,
-          options: opts,
-        );
+        await _dio.safePatch<dynamic>(seatsPath(key), data: body);
         return;
       } on ApiException catch (e) {
         if (e.statusCode != 405 && e.statusCode != 404) rethrow;
       }
       try {
-        await _dio.safePost<dynamic>(seatsPath(key), data: body, options: opts);
+        await _dio.safePost<dynamic>(seatsPath(key), data: body);
         return;
       } on ApiException catch (e) {
         if (e.statusCode != 405 && e.statusCode != 404) rethrow;
       }
-      await _dio.safePost<dynamic>(presencePath(key), data: body, options: opts);
+      await _dio.safePost<dynamic>(presencePath(key), data: body);
     });
   }
 
@@ -1887,9 +1909,8 @@ class ChatRoomRemoteDataSource {
     String? userId,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final action = (userId != null && userId.isNotEmpty) ? 'force' : 'take';
       try {
-        final action =
-            userId != null && userId.isNotEmpty ? 'swap' : 'take';
         await _liveField.seats.seatAction(
           roomId: key,
           action: action,
@@ -1898,43 +1919,39 @@ class ChatRoomRemoteDataSource {
         );
         return;
       } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        if (e.statusCode != 404 &&
+            e.statusCode != 405 &&
+            e.statusCode != 400 &&
+            e.statusCode != 422) {
+          rethrow;
+        }
       } catch (_) {}
 
-      final body = jsonEncode({
+      final takeBody = <String, dynamic>{
         'action': 'take',
         'seatIndex': seatIndex,
         if (userId != null && userId.isNotEmpty) 'userId': userId,
-      });
-      final sitBody = jsonEncode({
+      };
+      final sitBody = <String, dynamic>{
         'action': 'sit',
         'seatIndex': seatIndex,
         if (userId != null && userId.isNotEmpty) 'userId': userId,
-      });
-      final opts = Options(contentType: 'application/json');
-      for (final payload in [body, sitBody]) {
+      };
+      for (final payload in [takeBody, sitBody]) {
         try {
-          await _dio.safePatch<dynamic>(
-            seatsPath(key),
-            data: payload,
-            options: opts,
-          );
+          await _dio.safePatch<dynamic>(seatsPath(key), data: payload);
           return;
         } on ApiException catch (e) {
           if (e.statusCode != 405 && e.statusCode != 404) rethrow;
         }
         try {
-          await _dio.safePost<dynamic>(
-            seatsPath(key),
-            data: payload,
-            options: opts,
-          );
+          await _dio.safePost<dynamic>(seatsPath(key), data: payload);
           return;
         } on ApiException catch (e) {
           if (e.statusCode != 405 && e.statusCode != 404) rethrow;
         }
       }
-      await _dio.safePost<dynamic>(presencePath(key), data: body, options: opts);
+      await _dio.safePost<dynamic>(presencePath(key), data: takeBody);
     });
   }
 

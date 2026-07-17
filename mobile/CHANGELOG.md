@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+68 (2026-07-17)
+
+### Sesli oda — «Invalid type» düzeltmesi
+- Koltuk/presence POST gövdeleri `jsonEncode` string yerine JSON Map (sunucu Zod hatası)
+- Otomatik koltuk: `take` action (yanlış `swap` kaldırıldı)
+- `/api/live/seats` 400 → chat room koltuk uçlarına yedek
+- Presence join: `action` / `type` gövde yedekleri
+- `seatIndex` string/num güvenli parse
+
 ## 1.0.44+67 (2026-07-17)
 
 ### Düzeltme

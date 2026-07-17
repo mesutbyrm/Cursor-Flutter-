@@ -91,7 +91,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     // Manuel "Koltuğa Al" ile AYNI çalışan yolu kullan (voiceSeatRestService
     // .takeSeat). Eski joinSeat ucu 200 dönüp koltuğa oturtmuyordu; bu yüzden
     // yetkili otomatik koltuğa geçmiyordu.
-    final err = await assignSeat(seatIndex: seatIndex, userId: user.id);
+    final err = await assignSeat(seatIndex: seatIndex);
     if (err == null) {
       _autoSeatAttempted = true;
       return;

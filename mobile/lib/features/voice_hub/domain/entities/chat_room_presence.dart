@@ -24,7 +24,7 @@ class ChatRoomPresence extends ChatRoomUserRef {
       chatRole: base.chatRole,
       roleSymbol: base.roleSymbol,
       membership: base.membership,
-      seatIndex: json['seatIndex'] as int?,
+      seatIndex: _parseSeatIndex(json['seatIndex']),
       isSpeaking: json['isSpeaking'] == true,
       isMuted: json['isMuted'] == true,
     );
@@ -36,4 +36,11 @@ class ChatRoomPresence extends ChatRoomUserRef {
 
   /// Mikrofon açık — koltukta ve susturulmamış.
   bool get micOpen => seatIndex != null && !isMuted;
+
+  static int? _parseSeatIndex(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return int.tryParse(raw.toString());
+  }
 }

@@ -149,7 +149,7 @@ class ApiException implements Exception {
     }
     final lower = raw.toLowerCase();
     if (lower.contains('invalid type')) {
-      return 'PK isteği sunucu tarafından reddedildi (geçersiz alan tipi). Uygulamayı güncelleyip tekrar deneyin.';
+      return 'Sunucu isteği reddetti (geçersiz alan tipi). Uygulamayı güncelleyip tekrar deneyin.';
     }
     return raw.replaceFirst('Bad state: ', '');
   }

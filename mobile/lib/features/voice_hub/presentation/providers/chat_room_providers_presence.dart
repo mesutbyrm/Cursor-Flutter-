@@ -358,6 +358,13 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         );
         return;
       }
+      // Oda kısmen çalışıyorsa (optimistic presence) kritik olmayan join
+      // hatalarını kalıcı banner yapma.
+      if (state.selfInRoom || state.presence.isNotEmpty) {
+        VoiceRoomDebugLog.log('api.presence.join.soft_fail', {'error': msg});
+        state = state.copyWith(loading: false, clearError: true);
+        return;
+      }
       state = state.copyWith(
         loading: false,
         error: msg.contains('401') || msg.toLowerCase().contains('oturum')
