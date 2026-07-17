@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.50+77 (2026-07-17)
+
+### Canlı yayın UI (mockup)
+- Yayın açma/izleme ekranı mockupa göre yenilendi: üst bar (isim, ID, takip, rozetler, top hediye atanlar, izleyici, Keşfet)
+- Alt bar: Sohbet, mesaj, Misafir, Eş Yayın, Oyunlar, Paylaş, **Hediye kutusu**, Daha fazla
+- Hediyeler açık şeritte değil — yalnızca hediye kutusundan panel açılır
+- Hediye Hedefi + Yıldız Turnuvası kartları; Fal İste sağ CTA; kalp beğeni
+- Yayıncı PK/Kontrol/Ayarlar/Güzellik “Daha fazla” menüsüne alındı
+
 ## 1.0.49+76 (2026-07-17)
 
 ### Düzeltme

@@ -17,14 +17,11 @@ import '../../../live_psychics/domain/entities/psychic_entity.dart';
 import '../../../live_psychics/presentation/controllers/psychic_flow.dart';
 import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
 import '../../../live_psychics/presentation/widgets/psychic_booking_sheet.dart';
-import '../../../live_psychics/presentation/widgets/psychic_broadcast_side_rail.dart';
 import '../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../../../gifts/domain/session_gift_summary_builder.dart';
 import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
-import '../../../gifts/presentation/widgets/first_gifter_badge.dart';
-import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
 import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
 import '../../../moderation/domain/entities/report_target.dart';
@@ -66,9 +63,6 @@ import '../widgets/pk/pk_room_live_section.dart';
 import '../providers/live_fortune_request_provider.dart';
 import '../providers/live_stream_quality_provider.dart';
 import '../widgets/broadcast_room/live_fortune_request_form.dart';
-import '../widgets/broadcast_room/live_gift_leaderboard.dart';
-import '../widgets/broadcast_room/live_recent_gifters_box.dart';
-import '../widgets/broadcast_room/live_like_realtime.dart';
 import '../widgets/broadcast_room/live_moderation_sheet.dart';
 import '../providers/live_broadcast_settings_provider.dart';
 import '../widgets/broadcast_room/live_broadcast_settings_sheet.dart';
@@ -1458,10 +1452,137 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     );
   }
 
+  Future<void> _openGamesHub() async {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Oyunlar yakında canlı yayında açılacak')),
+    );
+  }
+
+  Future<void> _openLiveMoreMenu({
+    required LiveBroadcastSession s,
+    required bool giftsEnabled,
+    required bool pkEnabled,
+    required int pendingFortune,
+  }) async {
+    final streamId = s.streamId?.trim();
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF151522),
+      showDragHandle: true,
+      builder: (ctx) {
+        Widget tile({
+          required IconData icon,
+          required String label,
+          required VoidCallback onTap,
+        }) {
+          return ListTile(
+            leading: Icon(icon, color: Colors.white70),
+            title: Text(label),
+            onTap: () {
+              Navigator.pop(ctx);
+              onTap();
+            },
+          );
+        }
+
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (s.isHost) ...[
+                if (pkEnabled)
+                  tile(
+                    icon: Icons.sports_mma_rounded,
+                    label: 'PK Başlat',
+                    onTap: () => unawaited(_openPkPanel()),
+                  ),
+                tile(
+                  icon: Icons.auto_awesome_rounded,
+                  label: 'Kontrol merkezi ($pendingFortune)',
+                  onTap: () => unawaited(_openControlCenter()),
+                ),
+                tile(
+                  icon: Icons.settings_rounded,
+                  label: 'Yayın ayarları',
+                  onTap: () => showLiveBroadcastSettingsSheet(
+                    context: context,
+                    ref: ref,
+                  ),
+                ),
+                tile(
+                  icon: Icons.face_retouching_natural_rounded,
+                  label: 'Güzellik filtresi',
+                  onTap: () => showLiveBeautyFilterSheet(
+                    context: context,
+                    ref: ref,
+                  ),
+                ),
+                tile(
+                  icon: Icons.tune_rounded,
+                  label: 'Yayın araçları',
+                  onTap: () => unawaited(_openHostTools()),
+                ),
+              ] else ...[
+                tile(
+                  icon: Icons.volume_up_rounded,
+                  label: _viewerAudioOn ? 'Sesi kapat' : 'Sesi aç',
+                  onTap: () => setState(() => _viewerAudioOn = !_viewerAudioOn),
+                ),
+                if (streamId != null && streamId.isNotEmpty)
+                  tile(
+                    icon: Icons.flag_outlined,
+                    label: 'Bildir',
+                    onTap: () => openReportFlow(
+                      context,
+                      ReportTarget(
+                        type: ReportTargetType.liveStream,
+                        targetId: streamId,
+                        displayTitle: s.streamerName ?? 'Canlı yayın',
+                      ),
+                    ),
+                  ),
+              ],
+              tile(
+                icon: Icons.share_rounded,
+                label: 'Paylaş',
+                onTap: () => unawaited(_shareLive()),
+              ),
+              if (giftsEnabled)
+                tile(
+                  icon: Icons.card_giftcard_rounded,
+                  label: 'Hediye kutusu',
+                  onTap: () =>
+                      ref.read(liveGiftControllerProvider).setPanelOpen(true),
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   String _fmtLikes(int n) {
     if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
     if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
     return '$n';
+  }
+
+  Widget _viewerSideRail({
+    required LiveBroadcastSession s,
+    required LiveRoomInteractionState interaction,
+    required LiveGiftController giftCtrl,
+  }) {
+    return LiveMockupSideRail(
+      likeLabel: _fmtLikes(interaction.likeCount),
+      onLike: _onDoubleTapHeart,
+      showFortune: !s.isHost && _isFortuneBroadcast(s),
+      onFortune: !s.isHost && _isFortuneBroadcast(s)
+          ? () => unawaited(_onFortuneRequest(s))
+          : null,
+      onGiftPackages: () => giftCtrl.setPanelOpen(true),
+    );
   }
 
   Widget _videoLayer(LiveBroadcastSession s) {
@@ -1646,68 +1767,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
   }
 
-  Widget _viewerSideRail({
-    required LiveBroadcastSession s,
-    required LiveRoomInteractionState interaction,
-    required LiveGiftController giftCtrl,
-    String? streamId,
-  }) {
-    if (!s.isHost) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (streamId != null && streamId.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: LiveLikeButton(streamId: streamId),
-            ),
-          PsychicBroadcastSideRail(
-            viewerCount: s.viewerCount,
-            onGift: () => giftCtrl.setPanelOpen(true),
-            onFortuneRequest: () => unawaited(_onFortuneRequest(s)),
-            showFortuneRequest: _isFortuneBroadcast(s),
-            onViewersTap: streamId != null && streamId.isNotEmpty
-                ? () => showLiveViewersSheet(
-                      context,
-                      ref,
-                      streamId: streamId,
-                      isHost: s.isHost,
-                    )
-                : null,
-            onNickname: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Rumuz ayarları yakında')),
-              );
-            },
-            onToggleAudio: () => setState(() => _viewerAudioOn = !_viewerAudioOn),
-            onExit: () => unawaited(_exitBroadcast(context)),
-            audioOn: _viewerAudioOn,
-          ),
-        ],
-      );
-    }
-    return LivePremiumSideRail(
-      likeLabel: _fmtLikes(interaction.likeCount),
-      giftLabel: giftCtrl.streamerEarnings != null
-          ? '${giftCtrl.streamerEarnings}'
-          : 'Hediye',
-      shareLabel: 'Paylaş',
-      onLike: _onDoubleTapHeart,
-      onGift: () => giftCtrl.setPanelOpen(true),
-      onShare: _shareLive,
-      onReport: s.streamId != null && s.streamId!.isNotEmpty
-          ? () => openReportFlow(
-                context,
-                ReportTarget(
-                  type: ReportTargetType.liveStream,
-                  targetId: s.streamId!,
-                  displayTitle: s.streamerName ?? 'Canlı yayın',
-                ),
-              )
-          : null,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final baseSession = widget.session;
@@ -1730,7 +1789,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final broadcastSettings = ref.watch(liveBroadcastSettingsProvider);
     final coBroadcast = ref.watch(coBroadcastProvider);
     final hasCoGuests = coBroadcast.coBroadcasters.isNotEmpty;
-    final hostJeton = giftCtrl.streamerEarnings ?? 0;
 
     if (hasStream && s.isHost) {
       ref.listen(coBroadcastProvider, (prev, next) {
@@ -1987,26 +2045,39 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             if (hasStream)
               Positioned(
                 left: 12,
-                bottom: 200,
+                top: top + 108,
                 child: SizedBox(
-                  width: MediaQuery.sizeOf(context).width * 0.66,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      GiftBattleStrip(
-                          context: 'live_stream', contextId: streamId),
-                      GiftGoalBar(
-                          context: 'live_stream', contextId: streamId),
-                      FirstGifterBadge(
-                          context: 'live_stream', contextId: streamId),
-                      LiveRecentGiftersBox(notifications: giftCtrl.notifications),
-                      LiveGiftLeaderboard(streamId: streamId),
-                      PkRoomLiveSection(
-                        streamId: streamId,
-                        myUserId: user?.id ?? '',
+                  width: MediaQuery.sizeOf(context).width * 0.42,
+                  child: GiftGoalBar(
+                    context: 'live_stream',
+                    contextId: streamId,
+                  ),
+                ),
+              ),
+            if (hasStream)
+              Positioned(
+                right: 12,
+                top: top + 108,
+                child: LiveStarTournamentCard(
+                  rank: 3,
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Yıldız Turnuvası yakında'),
                       ),
-                    ],
+                    );
+                  },
+                ),
+              ),
+            if (hasStream)
+              Positioned(
+                left: 12,
+                bottom: 210,
+                child: SizedBox(
+                  width: MediaQuery.sizeOf(context).width * 0.55,
+                  child: PkRoomLiveSection(
+                    streamId: streamId,
+                    myUserId: user?.id ?? '',
                   ),
                 ),
               ),
@@ -2022,6 +2093,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                       followLoading: interaction.followLoading,
                       onFollow: _onFollow,
                       onClose: () => unawaited(_exitBroadcast(context)),
+                      topGifters: hasStream
+                          ? ref.watch(liveGiftLeaderboardProvider(streamId))
+                          : const [],
+                      popularRank: s.isHost || s.viewerCount > 0 ? 1 : null,
+                      leagueLabel: 'Lig 1',
                       onViewersTap: hasStream
                           ? () => showLiveViewersSheet(
                                 context,
@@ -2033,6 +2109,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                       onProfileTap: s.hostUserId != null || s.streamerHandle != null
                           ? () => _openHostProfile(context, s)
                           : null,
+                      onDiscoverTap: () => context.go('/live'),
                       onBack: widget.embeddedInSwipe
                           ? () => unawaited(_exitBroadcast(context))
                           : null,
@@ -2043,9 +2120,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                       child: Builder(
                         builder: (_) {
-                          // Davetin rakip tarafı kabul/red edebilir. Canlı yayın
-                          // PK'sında rakip de kendi yayınının host'udur; bu yüzden
-                          // !isHost yerine isOpponent kullanılır.
                           final canRespond = pkState!.isOpponent;
                           return LivePkScoreBar(
                             leftScore: pkState.leftScore,
@@ -2064,133 +2138,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                                 : null,
                           );
                         },
-                      ),
-                    )
-                  else if (s.isHost)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            TextButton.icon(
-                              onPressed: broadcastSettings.pkEnabled ? _openPkPanel : null,
-                              style: TextButton.styleFrom(
-                                backgroundColor:
-                                    Colors.black.withValues(alpha: 0.35),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                              ),
-                              icon: const Icon(
-                                Icons.sports_mma_rounded,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                              label: const Text(
-                                'PK Başlat',
-                                style: TextStyle(color: Colors.white, fontSize: 12),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            TextButton.icon(
-                              onPressed: hasStream
-                                  ? _openControlCenter
-                                  : null,
-                              style: TextButton.styleFrom(
-                                backgroundColor:
-                                    Colors.black.withValues(alpha: 0.35),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                              ),
-                              icon: const Icon(
-                                Icons.auto_awesome_rounded,
-                                color: Color(0xFFFFD700),
-                                size: 16,
-                              ),
-                              label: Text(
-                                'Kontrol (${fortuneReqState?.pendingCount ?? 0})',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            TextButton.icon(
-                              onPressed: () => showLiveBroadcastSettingsSheet(
-                                context: context,
-                                ref: ref,
-                              ),
-                              style: TextButton.styleFrom(
-                                backgroundColor:
-                                    Colors.black.withValues(alpha: 0.35),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                              ),
-                              icon: const Icon(
-                                Icons.settings_rounded,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                              label: const Text(
-                                'Ayarlar',
-                                style: TextStyle(color: Colors.white, fontSize: 12),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            TextButton.icon(
-                              onPressed: () => showLiveBeautyFilterSheet(
-                                context: context,
-                                ref: ref,
-                              ),
-                              style: TextButton.styleFrom(
-                                backgroundColor:
-                                    Colors.black.withValues(alpha: 0.35),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                              ),
-                              icon: const Icon(
-                                Icons.face_retouching_natural_rounded,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                              label: const Text(
-                                'Güzellik',
-                                style: TextStyle(color: Colors.white, fontSize: 12),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            TextButton.icon(
-                              onPressed: _openHostTools,
-                              style: TextButton.styleFrom(
-                                backgroundColor:
-                                    Colors.black.withValues(alpha: 0.35),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                              ),
-                              icon: const Icon(
-                                Icons.tune_rounded,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                              label: const Text(
-                                'Araçlar',
-                                style: TextStyle(color: Colors.white, fontSize: 12),
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   const Spacer(),
@@ -2301,7 +2248,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                             s: s,
                             interaction: interaction,
                             giftCtrl: giftCtrl,
-                            streamId: streamId,
                           ),
                         ],
                       ),
@@ -2347,7 +2293,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                             s: s,
                             interaction: interaction,
                             giftCtrl: giftCtrl,
-                            streamId: streamId,
                           ),
                         ],
                       ),
@@ -2364,11 +2309,31 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                       isHost: s.isHost,
                       trtc: s.isHost ? _trtc : null,
                       commentsEnabled: broadcastSettings.commentsEnabled,
-                      onJoinBroadcast: !s.isHost &&
+                      chatVisible: _chatVisible,
+                      onToggleChat: () =>
+                          setState(() => _chatVisible = !_chatVisible),
+                      onGuest: !s.isHost &&
                               broadcastSettings.guestsEnabled &&
                               hasStream
                           ? () => unawaited(_requestGuestJoin())
-                          : null,
+                          : s.isHost && hasStream
+                              ? () => unawaited(_openControlCenter())
+                              : null,
+                      onCoBroadcast: s.isHost && hasStream
+                          ? () => unawaited(_openPkPanel())
+                          : broadcastSettings.guestsEnabled && hasStream
+                              ? () => unawaited(_requestGuestJoin())
+                              : null,
+                      onGames: () => unawaited(_openGamesHub()),
+                      onShare: () => unawaited(_shareLive()),
+                      onMore: () => unawaited(
+                        _openLiveMoreMenu(
+                          s: s,
+                          giftsEnabled: broadcastSettings.giftsEnabled,
+                          pkEnabled: broadcastSettings.pkEnabled,
+                          pendingFortune: fortuneReqState?.pendingCount ?? 0,
+                        ),
+                      ),
                       onRtcStateChanged: s.isHost
                           ? () => setState(() => _localPreviewKey = UniqueKey())
                           : null,
