@@ -1,6 +1,21 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+61 (2026-07-17)
+
+### 7 saha `/api/live/*` API entegrasyonu
+1. **Oda yaşam döngüsü** — create/join/leave/heartbeat
+2. **Oda keşif** — `GET /api/live/rooms` (stream + voice listesi)
+3. **Koltuk** — `POST/GET /api/live/seats`
+4. **Mesaj** — `POST/GET /api/live/message`
+5. **Hediye** — `gift-types` + `gift/send`
+6. **PK** — `GET/POST /api/live/pk` + `pk/score` (games yedeği)
+7. **Çevrimiçi** — `GET /api/live/online-users`
+
+- Katman: `mobile/lib/features/live/data/datasources/live_field/` (7 dosya + facade)
+- Provider: `liveFieldApiRemoteProvider`
+- Doküman: `docs/api/field/README.md`, `docs/api/FLUTTER_API_REFERENCE_LIVE_FIELD.md`
+
 ## 1.0.44+60 (2026-07-17)
 
 ### Backend API parity — 8 düzeltme (tek APK)

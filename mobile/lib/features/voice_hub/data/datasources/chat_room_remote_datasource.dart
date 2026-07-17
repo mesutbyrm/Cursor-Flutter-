@@ -8,6 +8,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../live/data/datasources/live_field/live_field_api_remote_datasource.dart';
 import '../../domain/voice_room_background_catalog.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/chat_room_message.dart';
@@ -23,10 +24,12 @@ import '../../domain/entities/chat_room_my_permissions.dart';
 
 class ChatRoomRemoteDataSource {
   ChatRoomRemoteDataSource(this._dio, {YoutubeMusicSearchCache? searchCache})
-    : _searchCache = searchCache ?? YoutubeMusicSearchCache();
+      : _searchCache = searchCache ?? YoutubeMusicSearchCache();
 
   final Dio _dio;
   final YoutubeMusicSearchCache _searchCache;
+
+  LiveFieldApiRemoteDataSource get _liveField => LiveFieldApiRemoteDataSource(_dio);
   final YoutubeExplode _youtube = YoutubeExplode();
 
   void close() => _youtube.close();
@@ -195,6 +198,42 @@ class ChatRoomRemoteDataSource {
     String? since,
     int limit = 100,
   }) async {
+    try {
+      final liveMsgs = await _liveField.messages.fetchMessages(
+        roomId: roomKey,
+        roomType: 'voice',
+        after: since,
+        limit: limit,
+      );
+      if (liveMsgs.isNotEmpty) {
+        final messages = liveMsgs
+            .map(
+              (m) => ChatRoomMessage(
+                id: m.id,
+                content: m.content,
+                createdAt: m.createdAt ?? DateTime.now(),
+                user: ChatRoomUserRef(
+                  id: m.userId ?? '',
+                  name: m.userName ?? 'Kullanıcı',
+                  image: m.userImage,
+                  chatRole: m.chatRole,
+                  roleSymbol: m.roleSymbol,
+                ),
+              ),
+            )
+            .where((m) => m.id.isNotEmpty || m.content.isNotEmpty)
+            .toList();
+        return (
+          messages: messages,
+          myPermissions: null,
+          myNickname: null,
+          roomMuted: null,
+        );
+      }
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    } catch (_) {}
+
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final cursor = since?.trim();
       final query = <String, dynamic>{
@@ -241,6 +280,30 @@ class ChatRoomRemoteDataSource {
     String roomKey, {
     String? alternateKey,
   }) async {
+    try {
+      final page = await _liveField.onlineUsers.fetchOnlineUsers(
+        roomId: roomKey,
+        roomType: 'voice',
+      );
+      if (page.users.isNotEmpty) {
+        return page.users
+            .map(
+              (u) => ChatRoomPresence(
+                id: u.userId,
+                name: u.userName ?? u.nickname ?? 'Kullanıcı',
+                nickname: u.nickname,
+                image: u.userImage,
+                seatIndex: u.seatIndex,
+                isMuted: !u.isMicOn,
+              ),
+            )
+            .where((p) => p.id.isNotEmpty)
+            .toList();
+      }
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    } catch (_) {}
+
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final res = await _dio.safeGet<dynamic>(presencePath(key));
       return _presenceList(res.data);
@@ -1823,13 +1886,27 @@ class ChatRoomRemoteDataSource {
     required int seatIndex,
     String? userId,
   }) async {
-    final body = jsonEncode({
-      'action': 'take',
-      'seatIndex': seatIndex,
-      if (userId != null && userId.isNotEmpty) 'userId': userId,
-    });
-    final opts = Options(contentType: 'application/json');
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        final action =
+            userId != null && userId.isNotEmpty ? 'swap' : 'take';
+        await _liveField.seats.seatAction(
+          roomId: key,
+          action: action,
+          seatIndex: seatIndex,
+          targetUserId: userId,
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      } catch (_) {}
+
+      final body = jsonEncode({
+        'action': 'take',
+        'seatIndex': seatIndex,
+        if (userId != null && userId.isNotEmpty) 'userId': userId,
+      });
+      final opts = Options(contentType: 'application/json');
       try {
         await _dio.safePatch<dynamic>(
           seatsPath(key),
@@ -2087,6 +2164,33 @@ class ChatRoomRemoteDataSource {
     String? nickname,
     List<String> mentionedUserIds = const [],
   }) async {
+    try {
+      final liveMsg = await _liveField.messages.sendMessage(
+        roomId: roomKey,
+        roomType: 'voice',
+        content: content,
+      );
+      if (liveMsg.id.isNotEmpty || liveMsg.content.isNotEmpty) {
+        return ChatRoomMessage(
+          id: liveMsg.id.isNotEmpty
+              ? liveMsg.id
+              : 'live-${DateTime.now().millisecondsSinceEpoch}',
+          content: liveMsg.content,
+          createdAt: liveMsg.createdAt ?? DateTime.now(),
+          user: ChatRoomUserRef(
+            id: liveMsg.userId ?? '',
+            name: liveMsg.userName ?? nickname ?? 'Kullanıcı',
+            image: liveMsg.userImage,
+            chatRole: liveMsg.chatRole,
+            roleSymbol: liveMsg.roleSymbol,
+            nickname: nickname,
+          ),
+        );
+      }
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    } catch (_) {}
+
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final nick = nickname?.trim();
       final res = await _dio

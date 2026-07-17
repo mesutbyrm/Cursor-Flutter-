@@ -5,6 +5,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../live/data/datasources/live_field/live_field_api_remote_datasource.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 
 class PkBattleRemoteDataSource {
@@ -120,6 +121,39 @@ class PkBattleRemoteDataSource {
   }) async {
     final oppRoom = opponentRoomId?.trim() ?? '';
     final guest = guestUserId.trim();
+
+    if (oppRoom.isNotEmpty) {
+      try {
+        for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
+          final liveBattle = await LiveFieldApiRemoteDataSource(_dio).pk.pkAction(
+            action: 'create',
+            roomId: key,
+            targetRoomId: oppRoom,
+            durationSeconds: durationSeconds,
+          );
+          if (liveBattle != null && liveBattle.id.isNotEmpty) {
+            final parsed = _parseBattle({
+              'battle': {
+                'id': liveBattle.id,
+                'status': liveBattle.status ?? 'pending',
+                'challengerScore': liveBattle.room1Score,
+                'opponentScore': liveBattle.room2Score,
+                'durationSeconds':
+                    liveBattle.durationSeconds ?? durationSeconds,
+                'opponentVoiceRoomId': oppRoom,
+                'opponentId': guest,
+              },
+            });
+            if (parsed != null) return parsed;
+          }
+        }
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) {
+          // games backend yedeğine düş
+        }
+      } catch (_) {}
+    }
+
     final bodies = <Map<String, dynamic>>[
       if (oppRoom.isNotEmpty)
         {
