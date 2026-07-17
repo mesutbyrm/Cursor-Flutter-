@@ -95,6 +95,8 @@ class LiveGiftsRemoteDataSource {
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamGifts(streamId),
       data: {
+        // Kılavuz §9.4: giftId; üretimde giftTypeId de kabul edilir.
+        'giftId': giftTypeId,
         'giftTypeId': giftTypeId,
         'quantity': quantity,
         'platform': GiftPlatform.mobile.queryValue,

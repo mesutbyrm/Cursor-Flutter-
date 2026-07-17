@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.48+75 (2026-07-17)
+
+### Backend + Flutter birlikte çalışma (doküman paketi)
+- Tüm yüklenen API/prompt dokümanları `docs/` ve `docs/prompts/` altına eklendi
+- Hediye gönderimi: kılavuz `giftId` + üretim `giftTypeId`
+- Canlı falcı: seans `POST …/{tellerId}/session` (+ `maxMinutes`); mesaj `content`+`message`
+- TRTC: `/token` 404’te `/usersig` yedek; host `userId` ile
+- Sesli oda SSE: `dj_update` alias; DJ `assign`/`remove`; mute/ban kılavuz action
+- Sesli alt menü: Müzik Aç / DJ kayar panel / PK kaldırıldı (prompt)
+- Ortak yayın: izleyiciye davet kabul/red dialog + RTC yükseltme
+
 ## 1.0.47+74 (2026-07-17)
 
 ### API dokümanı hizalama (`docs/FLUTTER_API_DOCS.md`)

@@ -15,6 +15,7 @@ class TrtcRemoteDataSource {
   Future<TrtcCredentials> fetchToken({
     required String roomId,
     String role = 'audience',
+    String? userId,
   }) async {
     final started = DateTime.now();
     LiveDebugLog.log('trtc.token.request', {'roomId': roomId, 'role': role});
@@ -36,8 +37,21 @@ class TrtcRemoteDataSource {
         'elapsedMs': DateTime.now().difference(started).inMilliseconds,
       });
       return cred;
+    } on ApiException catch (e) {
+      // Kılavuz §9.13: POST /api/trtc/usersig yedek.
+      if (e.statusCode == 404 || e.statusCode == 405) {
+        final uid = userId?.trim() ?? '';
+        if (uid.isNotEmpty) {
+          return fetchUserSig(userId: uid, roomId: roomId);
+        }
+      }
+      rethrow;
     } on DioException catch (e) {
-      if (e.response?.statusCode == 404) {
+      if (e.response?.statusCode == 404 || e.response?.statusCode == 405) {
+        final uid = userId?.trim() ?? '';
+        if (uid.isNotEmpty) {
+          return fetchUserSig(userId: uid, roomId: roomId);
+        }
         throw ApiException('TRTC token uç noktası bulunamadı', statusCode: 404);
       }
       rethrow;

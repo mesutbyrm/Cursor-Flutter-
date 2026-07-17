@@ -43,6 +43,9 @@ VoiceRoomSseKind voiceRoomSseKindFrom(String? raw) {
       return VoiceRoomSseKind.gift;
     case 'dj':
     case 'music':
+    case 'dj_update':
+    case 'djupdate':
+    case 'djevent':
       return VoiceRoomSseKind.dj;
     case 'fal_request':
     case 'live_fal_request':
