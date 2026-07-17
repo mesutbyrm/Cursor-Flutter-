@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+69 (2026-07-17)
+
+### Yetkili giriş duyurusu
+- Ana sayfada kalıcı mor kart kaldırıldı; yetkili girişleri geçici sağdan-sola kayan şerit
+- Tüm sayfalarda `StaffEntranceMarqueeHost` overlay; sesli odada koltuk altı banner
+
+### PK ve ses
+- PK daveti: kılavuz uyumlu `{ guestUserId, durationSec }` gövdesi öncelikli
+- Canlı yayın PK: `/api/video-streams/{id}/pk-battle` önce, birleşik API yedek
+- Mikrofon: izin isteği açılışta; siteadmin için `staffBypassVoiceApi` TRTC sayfasında
+
 ## 1.0.44+68 (2026-07-17)
 
 ### Sesli oda — «Invalid type» düzeltmesi
