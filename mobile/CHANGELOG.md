@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+62 (2026-07-17)
+
+### CanlifalTV API dokümantasyonu entegrasyonu
+- Referans: `docs/api/CANLIFALTV_FLUTTER_API.md`, parite: `CANLIFALTV_FLUTTER_PARITY.md`
+- Profil: `PUT /api/user/profile` yedek
+- Canlı yayın: `PATCH status ended`, `DELETE .../join` ayrılma
+- Hediye: `recipientUsername`, `type` alanları
+- Üyelik: `/api/memberships` + `/api/memberships/purchase` alias
+- Bildirim: `POST /api/notifications` `{markAll:true}`
+- Koltuk: `action: sit` yedek
+
 ## 1.0.44+61 (2026-07-17)
 
 ### 7 saha `/api/live/*` API entegrasyonu

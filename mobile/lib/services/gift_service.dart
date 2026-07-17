@@ -27,7 +27,7 @@ class GiftService {
     }
   }
 
-  /// `POST /api/gifts/send`
+  /// `POST /api/gifts/send` — CanlifalTV §10.2 (`recipientUsername`, `type`).
   Future<Map<String, dynamic>> sendGift({
     required String recipientId,
     required String giftId,
@@ -35,6 +35,8 @@ class GiftService {
     String? roomType,
     String? roomId,
     String? context,
+    String? recipientUsername,
+    String type = 'gift',
   }) async {
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.giftsSend,
@@ -43,7 +45,10 @@ class GiftService {
         'giftTypeId': giftId,
         'receiverUserId': recipientId,
         'receiverId': recipientId,
+        if (recipientUsername != null && recipientUsername.isNotEmpty)
+          'recipientUsername': recipientUsername,
         'quantity': quantity,
+        'type': type,
         'platform': 'mobile',
         if (roomType != null && roomType.isNotEmpty) 'roomType': roomType,
         if (roomId != null && roomId.isNotEmpty) 'roomId': roomId,

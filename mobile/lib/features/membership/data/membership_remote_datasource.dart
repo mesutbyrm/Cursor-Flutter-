@@ -13,12 +13,15 @@ class MembershipRemoteDataSource {
   final Dio _dio;
 
   Future<MembershipCatalogEntity> loadCatalog(WalletBalances wallet) async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.membershipPackages);
-      final parsed = _parseResponse(res.data, wallet);
-      if (parsed != null) return parsed;
-    } catch (_) {
-      // 404 HTML, oturum, ağ
+    for (final path in [
+      ApiEndpoints.membershipPackages,
+      ApiEndpoints.membershipsCatalog,
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final parsed = _parseResponse(res.data, wallet);
+        if (parsed != null) return parsed;
+      } catch (_) {}
     }
     return _fallbackCatalog(wallet);
   }

@@ -490,10 +490,22 @@ class LiveRemoteDataSource {
     return 0;
   }
 
-  Future<void> leaveVideoStream(String streamId) async {
+  Future<void> leaveVideoStream(String streamId, {String? viewerId}) async {
+    try {
+      await _dio.safeDelete<dynamic>(
+        ApiEndpoints.videoStreamJoin(streamId),
+        query: viewerId != null && viewerId.isNotEmpty
+            ? {'viewerId': viewerId}
+            : null,
+      );
+      LiveDebugLog.log('stream.leave', {'streamId': streamId, 'via': 'delete'});
+      return;
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    } catch (_) {}
     try {
       await _dio.safePost<dynamic>(ApiEndpoints.videoStreamLeave(streamId));
-      LiveDebugLog.log('stream.leave', {'streamId': streamId});
+      LiveDebugLog.log('stream.leave', {'streamId': streamId, 'via': 'post'});
     } catch (_) {}
   }
 
@@ -702,6 +714,15 @@ class LiveRemoteDataSource {
   }
 
   Future<void> endVideoStream(String streamId) async {
+    try {
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.videoStream(streamId),
+        data: const {'status': 'ended'},
+      );
+      return;
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    } catch (_) {}
     try {
       await _dio.safePost<dynamic>(ApiEndpoints.videoStreamEnd(streamId));
     } catch (_) {
