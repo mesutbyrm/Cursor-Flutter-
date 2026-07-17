@@ -22,6 +22,7 @@ import '../sheets/voice_room_menu_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
+import '../utils/voice_chat_message_filters.dart';
 import '../widgets/chat/chat_message_widgets.dart';
 import '../widgets/voice_room/voice_room_mention_text_field.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
@@ -211,9 +212,15 @@ class VoiceRoomBasicChatFeed extends ConsumerWidget {
         avatarById[p.id] = img;
       }
     }
-    final visible = messages
-        .where((m) => m.kind == ChatMessageKind.text)
-        .toList();
+    final visible = messages.where((m) {
+      if (m.kind == ChatMessageKind.systemJoin ||
+          m.kind == ChatMessageKind.systemLeave) {
+        return true;
+      }
+      if (m.kind != ChatMessageKind.text) return false;
+      if (ChatRoomMessage.isSystemProtocol(m.content)) return false;
+      return VoiceChatMessageFilters.shouldShow(m);
+    }).toList();
 
     return Stack(
       children: [

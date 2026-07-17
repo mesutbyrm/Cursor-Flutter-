@@ -152,6 +152,12 @@ class PkBattleRemoteDataSource {
           'durationSec': durationSeconds,
           'targetRoomId': oppRoom,
         },
+      if (oppRoom.isNotEmpty)
+        {
+          'guestUserId': guest,
+          'durationSec': durationSeconds,
+          'opponentRoomId': oppRoom,
+        },
     ];
 
     ApiException? lastError;

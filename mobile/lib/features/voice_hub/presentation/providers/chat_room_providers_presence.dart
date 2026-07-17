@@ -395,6 +395,10 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         state = state.copyWith(loading: false, clearError: true);
         return;
       }
+      if (lower.contains('invalid type') || lower.contains('geçersiz alan')) {
+        state = state.copyWith(loading: false, clearError: true);
+        return;
+      }
       state = state.copyWith(
         loading: false,
         error: msg.contains('401') || msg.toLowerCase().contains('oturum')

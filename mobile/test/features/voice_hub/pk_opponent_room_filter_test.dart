@@ -28,12 +28,19 @@ void main() {
     onlineCount: 0,
   );
 
+  const eligibleNoOwner = VoiceRoomEntity(
+    id: 'room-d',
+    slug: 'room-d',
+    nameTr: 'Sahipsiz',
+    onlineCount: 2,
+  );
+
   test('filterPkEligibleOpponentRooms hides empty and self rooms', () {
     final out = filterPkEligibleOpponentRooms(
-      [self, eligible, emptyRoom],
+      [self, eligible, emptyRoom, eligibleNoOwner],
       excludeRoomKey: 'room-a',
     );
-    expect(out.map((r) => r.id).toList(), ['room-b']);
+    expect(out.map((r) => r.id).toList(), ['room-b', 'room-d']);
   });
 
   test('isPkInviteTarget matches opponent user id', () {

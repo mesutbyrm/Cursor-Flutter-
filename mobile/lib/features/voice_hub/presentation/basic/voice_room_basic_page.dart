@@ -41,6 +41,7 @@ import '../providers/voice_room_ui_provider.dart';
 import '../../../../core/auth/staff_roles.dart';
 import '../sheets/voice_room_commands_panel.dart';
 import '../utils/voice_room_permissions.dart';
+import '../utils/voice_room_error_display.dart';
 import '../utils/voice_room_speak_access.dart';
 import '../theme/voice_room_tokens.dart';
 import '../widgets/premium/voice_gift_flight_overlay.dart';
@@ -599,6 +600,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       voiceRoomLiveProvider(_liveRoomKey).select(_BasicLiveShell.fromState),
     );
     final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+    final roomErrorBanner =
+        VoiceRoomErrorDisplay.bannerMessage(live.error, live: live);
     final ui = ref.watch(voiceRoomUiProvider);
     final room = _effectiveRoom();
     final online = live.onlineCountFor(room);
@@ -866,11 +869,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                           _openUserById(userId, live, room, perms),
                     ),
                   ),
-                  if (live.error != null)
+                  if (roomErrorBanner != null)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        live.error!,
+                        roomErrorBanner,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.error,

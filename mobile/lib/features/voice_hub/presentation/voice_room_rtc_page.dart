@@ -61,6 +61,7 @@ import 'utils/voice_music_access.dart';
 import 'widgets/voice_room/voice_room_youtube_embed_host.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
+import 'utils/voice_room_error_display.dart';
 import 'utils/voice_room_speak_access.dart';
 import 'utils/voice_room_responsive_metrics.dart';
 import 'widgets/premium/voice_gift_flight_overlay.dart';
@@ -1061,6 +1062,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       voiceRoomLiveProvider(_liveRoomKey).select(_RtcLiveShell.fromState),
     );
     final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+    final roomErrorBanner =
+        VoiceRoomErrorDisplay.bannerMessage(live.error, live: live);
     final diagnostic = ref.watch(voiceRoomDiagnosticProvider);
     final ui = ref.watch(voiceRoomUiProvider);
     final flightQueue = ref.watch(voiceGiftFlightQueueProvider);
@@ -1499,11 +1502,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               ],
                             ),
                           ),
-                        if (live.error != null)
+                        if (roomErrorBanner != null)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: Text(
-                              live.error!,
+                              roomErrorBanner,
                               style: const TextStyle(
                                 color: AppThemeColors.liveRed,
                                 fontSize: 11,

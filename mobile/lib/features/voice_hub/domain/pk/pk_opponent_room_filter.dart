@@ -19,8 +19,7 @@ bool isPkEligibleOpponentRoom(
   if (key.isEmpty) return false;
   if (excludeRoomKey.isNotEmpty && key == excludeRoomKey) return false;
   if (room.displayOnline <= 0) return false;
-  final ownerId = room.ownerId?.trim() ?? '';
-  if (ownerId.isEmpty) return false;
+  // ownerId boş olsa bile davet anında presence'tan çözülür.
   return true;
 }
 

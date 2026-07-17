@@ -131,7 +131,13 @@ class ApiException implements Exception {
 
   /// Snackbar / dialog metni; ham DioException veya `toString` göstermez.
   static String userMessage(Object error) {
-    if (error is ApiException) return error.message;
+    if (error is ApiException) {
+      final lower = error.message.toLowerCase();
+      if (lower.contains('invalid type') || lower.contains('geçersiz alan')) {
+        return 'Sunucu isteği reddetti (geçersiz alan). Odaya tekrar girin veya uygulamayı güncelleyin.';
+      }
+      return error.message;
+    }
     if (error is DioException) return fromDio(error).message;
     // VoiceAgoraException — döngüsel import olmaması için tip adı ile kontrol.
     if (error.runtimeType.toString() == 'VoiceAgoraException') {

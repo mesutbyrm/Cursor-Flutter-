@@ -6,7 +6,9 @@ import '../../../../core/network/api_exception.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/pk/pk_duration_options.dart';
+import '../../domain/pk/pk_guest_user_resolver.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
+import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../widgets/premium_2026/pk/pk_duration_picker.dart';
 
@@ -93,10 +95,20 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
         return;
       }
       // Yeni kontrat: davet bir kullanıcıya gider → rakip oda sahibi.
-      final guestUserId = opponent.ownerId?.trim() ?? '';
-      if (guestUserId.isEmpty) {
+      var guestUserId = resolvePkGuestUserId(ownerId: opponent.ownerId);
+      if (guestUserId == null || guestUserId.isEmpty) {
+        try {
+          final presence = await ref.read(chatRoomRemoteProvider).fetchPresence(
+                oppKey,
+                alternateKey:
+                    opponent.slug != oppKey ? opponent.slug : null,
+              );
+          guestUserId = resolvePkGuestUserId(presence: presence);
+        } catch (_) {}
+      }
+      if (guestUserId == null || guestUserId.isEmpty) {
         setState(() => _error =
-            'Rakip odanın sahibi bulunamadı — bu odaya PK daveti gönderilemez.');
+            'Rakip odanın sahibi bulunamadı — oda açık değil veya sahip bilinmiyor.');
         return;
       }
       final battle = await remote.inviteRoom(

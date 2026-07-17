@@ -69,8 +69,11 @@ class _ChatMessageBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (message.kind == ChatMessageKind.systemJoin ||
-        message.kind == ChatMessageKind.systemLeave) {
-      return _SystemJoinLine(content: message.content);
+        message.kind == ChatMessageKind.systemLeave ||
+        ChatRoomMessage.isSystemProtocol(message.content)) {
+      return _SystemJoinLine(
+        content: ChatRoomMessage.formatDisplay(message.content),
+      );
     }
     if (message.kind == ChatMessageKind.gift) {
       return GiftWidget(content: message.content);
@@ -322,7 +325,22 @@ class _SystemJoinLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox.shrink();
+    final line = content.trim();
+    if (line.isEmpty) return const SizedBox.shrink();
+    return RepaintBoundary(
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(
+          line,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w700,
+            color: VoiceRoomTokens.gold.withValues(alpha: 0.95),
+            shadows: const [Shadow(color: Colors.black87, blurRadius: 8)],
+          ),
+        ),
+      ),
+    );
   }
 }
 

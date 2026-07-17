@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.53+80 (2026-07-17)
+
+### Sesli oda — Invalid type, PK, hız
+- «Invalid type»: tüm oda API gövdeleri Map; join presence GET yedek; hata şeridi gizlenir
+- Sistem mesajları: `[SYSTEM_VIP_JOIN]` / `[SYSTEM_LEAVE]` kullanıcı dostu Türkçe metin
+- PK davet: rakip sahip `ownerId` yoksa presence'tan çözülür; `opponentRoomId` gövde yedeği
+- Koltuk: optimistic güncelleme + hızlı refresh; poll aralığı kısaltıldı (8–120 sn)
+- SSE bağlanınca geçici hatalar temizlenir
+
 ## 1.0.52+79 (2026-07-17)
 
 ### Profil + canlı yayın + sesli oda

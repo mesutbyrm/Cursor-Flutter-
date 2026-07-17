@@ -371,7 +371,15 @@ class ChatRoomRemoteDataSource {
           rethrow;
         }
       }
-      if (lastError != null) throw lastError;
+      if (lastError != null) {
+        // POST gövdesi reddedilse bile GET ile mevcut presence alınabilir.
+        try {
+          final res = await _dio.safeGet<dynamic>(presencePath(key));
+          final list = _presenceList(res.data);
+          if (list.isNotEmpty) return list;
+        } catch (_) {}
+        throw lastError;
+      }
       return const [];
     });
   }
@@ -470,8 +478,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         typingPath(key),
-        data: jsonEncode({'isTyping': isTyping}),
-        options: Options(contentType: 'application/json'),
+        data: <String, dynamic>{'isTyping': isTyping},
       );
     });
   }
@@ -563,11 +570,10 @@ class ChatRoomRemoteDataSource {
       }
       final res = await _dio.safePost<dynamic>(
         musicPath(key),
-        data: jsonEncode({
+        data: <String, dynamic>{
           if (musicUrl != null && musicUrl.isNotEmpty) 'musicUrl': musicUrl,
           'playing': true,
-        }),
-        options: Options(contentType: 'application/json'),
+        },
       );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       return ChatRoomDjState.fromJson(map);
@@ -734,8 +740,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePatch<dynamic>(
         songRequestPath(key),
-        data: jsonEncode({'requestId': requestId}),
-        options: Options(contentType: 'application/json'),
+        data: <String, dynamic>{'requestId': requestId},
       );
     });
   }
@@ -771,12 +776,11 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePatch<dynamic>(
         '/api/chat/rooms/$key/music-settings',
-        data: jsonEncode({
-          'musicEnabled': ?musicEnabled,
-          'musicRequestCost': ?musicRequestCost,
-          'maxMusicQueue': ?maxMusicQueue,
-        }),
-        options: Options(contentType: 'application/json'),
+        data: <String, dynamic>{
+          if (musicEnabled != null) 'musicEnabled': musicEnabled,
+          if (musicRequestCost != null) 'musicRequestCost': musicRequestCost,
+          if (maxMusicQueue != null) 'maxMusicQueue': maxMusicQueue,
+        },
       );
     });
   }
@@ -1060,8 +1064,7 @@ class ChatRoomRemoteDataSource {
       }
       await _dio.safePost<dynamic>(
         banPath(key, userId),
-        data: jsonEncode({'reason': ?reason}),
-        options: Options(contentType: 'application/json'),
+        data: <String, dynamic>{if (reason != null && reason.isNotEmpty) 'reason': reason},
       );
     });
   }
@@ -1104,8 +1107,7 @@ class ChatRoomRemoteDataSource {
       }
       await _dio.safePost<dynamic>(
         mutePath(key),
-        data: jsonEncode({'userId': userId, 'unmute': true}),
-        options: Options(contentType: 'application/json'),
+        data: <String, dynamic>{'userId': userId, 'unmute': true},
       );
     });
   }
@@ -1130,11 +1132,10 @@ class ChatRoomRemoteDataSource {
       }
       await _dio.safePost<dynamic>(
         kickPath(key),
-        data: jsonEncode({
+        data: <String, dynamic>{
           'userId': userId,
-          'reason': ?reason,
-        }),
-        options: Options(contentType: 'application/json'),
+          if (reason != null && reason.isNotEmpty) 'reason': reason,
+        },
       );
       return const ModerationKickResult();
     });
@@ -1672,10 +1673,11 @@ class ChatRoomRemoteDataSource {
         'skipPayment': skipPayment,
         'djMusicControl': djMusicControl,
       });
-      final songRequestBody = jsonEncode({
-        'videoId': ?vid,
+      final songRequestBody = <String, dynamic>{
+        if (vid != null && vid.isNotEmpty) 'videoId': vid,
         'title': title,
-        'duration': ?durationLabel,
+        if (durationLabel != null && durationLabel.isNotEmpty)
+          'duration': durationLabel,
         'requestType': withVideo ? 'video' : 'audio',
         if (withVideo) 'withVideo': true,
         if (withVideo) 'videoMode': 'video',
@@ -1685,26 +1687,27 @@ class ChatRoomRemoteDataSource {
         if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
         if (skipPayment) 'skipPayment': true,
         if (priority) 'priority': true,
-      });
-      final legacyBody = jsonEncode({
+      };
+      final legacyBody = <String, dynamic>{
         'title': title,
         'youtubeUrl': youtubeUrl,
-        'videoId': ?vid,
-        'thumbUrl': ?thumbUrl,
+        if (vid != null && vid.isNotEmpty) 'videoId': vid,
+        if (thumbUrl != null && thumbUrl.isNotEmpty) 'thumbUrl': thumbUrl,
         if (dedicationText != null && dedicationText.isNotEmpty)
           'dedication': dedicationText,
         if (giftTo != null && giftTo.trim().isNotEmpty) 'giftTo': giftTo.trim(),
         if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
         if (priority) 'priority': true,
         if (skipPayment) 'skipPayment': true,
-        'duration': ?durationLabel,
-      });
-      final djMusicBody = jsonEncode({
+        if (durationLabel != null && durationLabel.isNotEmpty)
+          'duration': durationLabel,
+      };
+      final djMusicBody = <String, dynamic>{
         'title': title,
-        'videoId': ?vid,
-        'duration': ?durationLabel,
-      });
-      final opts = Options(contentType: 'application/json');
+        if (vid != null && vid.isNotEmpty) 'videoId': vid,
+        if (durationLabel != null && durationLabel.isNotEmpty)
+          'duration': durationLabel,
+      };
       Response<dynamic> res;
       var usedEndpoint = songRequestPath(key);
       if (djMusicControl) {
@@ -1713,14 +1716,12 @@ class ChatRoomRemoteDataSource {
           res = await _dio.safePost<dynamic>(
             usedEndpoint,
             data: djMusicBody,
-            options: opts,
           );
         } on Object {
           usedEndpoint = songRequestPath(key);
           res = await _dio.safePost<dynamic>(
             usedEndpoint,
             data: songRequestBody,
-            options: opts,
           );
         }
       } else {
@@ -1728,7 +1729,6 @@ class ChatRoomRemoteDataSource {
           res = await _dio.safePost<dynamic>(
             usedEndpoint,
             data: songRequestBody,
-            options: opts,
           );
         } on Object {
           usedEndpoint = '/api/chat/rooms/$key/music-queue';
@@ -1736,14 +1736,12 @@ class ChatRoomRemoteDataSource {
             res = await _dio.safePost<dynamic>(
               usedEndpoint,
               data: legacyBody,
-              options: opts,
             );
           } on Object {
             usedEndpoint = musicPath(key);
             res = await _dio.safePost<dynamic>(
               usedEndpoint,
               data: djMusicBody,
-              options: opts,
             );
           }
         }
@@ -1847,11 +1845,9 @@ class ChatRoomRemoteDataSource {
     required String query,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final body = jsonEncode({'query': query.trim()});
       final res = await _dio.safePost<dynamic>(
         '/api/chat/rooms/$key/music-request-by-query',
-        data: body,
-        options: Options(contentType: 'application/json'),
+        data: <String, dynamic>{'query': query.trim()},
       );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       MusicQueueItem? item;
@@ -2198,8 +2194,7 @@ class ChatRoomRemoteDataSource {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final res = await _dio.safePost<dynamic>(
         '/api/chat/rooms/$key/banned-words',
-        data: jsonEncode({'word': word}),
-        options: Options(contentType: 'application/json'),
+        data: <String, dynamic>{'word': word},
       );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['words'];
@@ -2287,7 +2282,7 @@ class ChatRoomRemoteDataSource {
       final res = await _dio
           .safePost<dynamic>(
             messagesPath(key),
-            data: jsonEncode({
+            data: <String, dynamic>{
               'content': content,
               if (nick != null && nick.isNotEmpty) 'nickname': nick,
               if (mentionedUserIds.isNotEmpty) ...{
@@ -2295,8 +2290,7 @@ class ChatRoomRemoteDataSource {
                 'mentionUserIds': mentionedUserIds,
                 'mentions': mentionedUserIds,
               },
-            }),
-            options: Options(contentType: 'application/json'),
+            },
           )
           .timeout(const Duration(seconds: 25));
       final code = res.statusCode ?? 0;
@@ -2356,11 +2350,10 @@ class ChatRoomRemoteDataSource {
       try {
         await _dio.safePost<dynamic>(
           '/api/chat/rooms/$key/mentions',
-          data: jsonEncode({
+          data: <String, dynamic>{
             'mentionedUserIds': mentionedUserIds,
             'preview': preview,
-          }),
-          options: Options(contentType: 'application/json'),
+          },
         );
       } on ApiException catch (e) {
         if (e.statusCode == 404 || e.statusCode == 405) return;

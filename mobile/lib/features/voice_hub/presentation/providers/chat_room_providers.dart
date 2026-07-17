@@ -1080,6 +1080,7 @@ class VoiceRoomLiveController
               presence: merged,
               sseConnected: true,
               selfInRoom: true,
+              clearError: true,
             );
             ref.read(voiceRoomDiagnosticProvider.notifier).setSse(true);
             ref
@@ -1468,8 +1469,8 @@ class VoiceRoomLiveController
         (state.dj.playing || state.dj.nowPlaying != null);
     // SSE varken mesaj poll zaten kapalı; DJ yokken daha seyrek yenile.
     final interval = sse
-        ? (active ? 90 : 180)
-        : 12;
+        ? (active ? 60 : 120)
+        : 8;
     _poll = Timer.periodic(Duration(seconds: interval), (_) {
       if (_pollPaused) return;
       _pollTick++;
@@ -1697,9 +1698,16 @@ class VoiceRoomLiveController
       }
       unawaited(_tryAutoPrivilegedSeat());
     } catch (e) {
+      final msg = ApiException.userMessage(e);
+      final lower = msg.toLowerCase();
+      if ((state.selfInRoom || state.presence.isNotEmpty || state.sseConnected) &&
+          (lower.contains('invalid type') || lower.contains('geçersiz alan'))) {
+        state = state.copyWith(loading: false, clearError: true);
+        return;
+      }
       state = state.copyWith(
         loading: false,
-        error: ApiException.userMessage(e),
+        error: msg,
       );
     }
   }

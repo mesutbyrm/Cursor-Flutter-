@@ -161,7 +161,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       await ref
           .read(voiceSeatRestServiceProvider)
           .takeSeat(_roomKey, seatIndex, userId: userId);
-      await refresh();
+      unawaited(refresh());
       return null;
     } catch (e) {
       return ApiException.userMessage(e);
