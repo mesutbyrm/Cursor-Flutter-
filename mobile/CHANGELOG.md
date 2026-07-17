@@ -1,6 +1,11 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+63 (2026-07-17)
+
+### Düzeltme
+- Canlı yayın ayrılma: `DELETE .../join?viewerId=` derleme hatası giderildi (`safeDelete` query parametresi yok)
+
 ## 1.0.44+62 (2026-07-17)
 
 ### CanlifalTV API dokümantasyonu entegrasyonu

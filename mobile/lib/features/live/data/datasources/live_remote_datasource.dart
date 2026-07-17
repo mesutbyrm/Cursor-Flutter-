@@ -491,13 +491,11 @@ class LiveRemoteDataSource {
   }
 
   Future<void> leaveVideoStream(String streamId, {String? viewerId}) async {
+    final leavePath = viewerId != null && viewerId.isNotEmpty
+        ? '${ApiEndpoints.videoStreamJoin(streamId)}?viewerId=${Uri.encodeComponent(viewerId)}'
+        : ApiEndpoints.videoStreamJoin(streamId);
     try {
-      await _dio.safeDelete<dynamic>(
-        ApiEndpoints.videoStreamJoin(streamId),
-        query: viewerId != null && viewerId.isNotEmpty
-            ? {'viewerId': viewerId}
-            : null,
-      );
+      await _dio.safeDelete<dynamic>(leavePath);
       LiveDebugLog.log('stream.leave', {'streamId': streamId, 'via': 'delete'});
       return;
     } on ApiException catch (e) {
