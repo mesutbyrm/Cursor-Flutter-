@@ -2,13 +2,13 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
-import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 import '../../../../../agora/presentation/agora_room_manager.dart';
 import '../../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../broadcast_room/live_camera_control.dart';
 
-/// Alt cam giriş çubuğu + yayıncı kontrolleri.
+/// Mockup alt bar — mesaj + Misafir / Eş Yayın / Oyunlar / Paylaş / Hediye kutusu / Daha fazla.
+/// Hediyeler açık şeritte değil; yalnızca hediye kutusundan açılır.
 class LivePremiumBottomBar extends StatelessWidget {
   const LivePremiumBottomBar({
     super.key,
@@ -22,6 +22,13 @@ class LivePremiumBottomBar extends StatelessWidget {
     this.onRtcStateChanged,
     this.onEnd,
     this.onJoinBroadcast,
+    this.onGuest,
+    this.onCoBroadcast,
+    this.onGames,
+    this.onShare,
+    this.onMore,
+    this.onToggleChat,
+    this.chatVisible = true,
     this.commentsEnabled = true,
   });
 
@@ -35,6 +42,13 @@ class LivePremiumBottomBar extends StatelessWidget {
   final VoidCallback? onRtcStateChanged;
   final VoidCallback? onEnd;
   final VoidCallback? onJoinBroadcast;
+  final VoidCallback? onGuest;
+  final VoidCallback? onCoBroadcast;
+  final VoidCallback? onGames;
+  final VoidCallback? onShare;
+  final VoidCallback? onMore;
+  final VoidCallback? onToggleChat;
+  final bool chatVisible;
   final bool commentsEnabled;
 
   void _showEmojiPicker(BuildContext context) {
@@ -73,20 +87,22 @@ class LivePremiumBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
-
     final hasRtc = agora != null || trtc != null;
     final rtcChanged = onRtcStateChanged ?? onToggleCamera;
+    final guestAction = onGuest ?? onJoinBroadcast;
 
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Container(
-          padding: EdgeInsets.fromLTRB(12, 10, 12, bottom + 10),
+          padding: EdgeInsets.fromLTRB(10, 8, 10, bottom + 8),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.5),
+            color: Colors.black.withValues(alpha: 0.42),
             border: Border(
-              top: BorderSide(color: AppThemeColors.accentPink.withValues(alpha: 0.25)),
+              top: BorderSide(
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
             ),
           ),
           child: Column(
@@ -99,19 +115,19 @@ class LivePremiumBottomBar extends StatelessWidget {
                     LiveMicToggleButton(
                       agora: agora,
                       trtc: trtc,
-                      size: 44,
+                      size: 40,
                       onChanged: rtcChanged,
                     ),
                     LiveCameraToggleButton(
                       agora: agora,
                       trtc: trtc,
-                      size: 44,
+                      size: 40,
                       onChanged: rtcChanged,
                     ),
                     LiveCameraSwitchButton(
                       agora: agora,
                       trtc: trtc,
-                      size: 44,
+                      size: 40,
                     ),
                     if (onEnd != null)
                       _MiniControl(
@@ -122,87 +138,226 @@ class LivePremiumBottomBar extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
               ],
               Row(
                 children: [
-                  if (!isHost && onJoinBroadcast != null)
+                  if (onToggleChat != null)
                     Padding(
                       padding: const EdgeInsets.only(right: 4),
-                      child: TextButton.icon(
-                        onPressed: onJoinBroadcast,
-                        icon: const Icon(Icons.videocam_rounded, size: 18),
-                        label: const Text('Katıl'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor:
-                              AppThemeColors.accentPink.withValues(alpha: 0.35),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 8,
-                          ),
-                        ),
+                      child: _ActionIcon(
+                        icon: chatVisible
+                            ? Icons.chat_bubble_rounded
+                            : Icons.chat_bubble_outline_rounded,
+                        label: 'Sohbet',
+                        onTap: onToggleChat,
+                        active: chatVisible,
                       ),
                     ),
-                  IconButton(
-                    onPressed: () => _showEmojiPicker(context),
-                    icon: const Icon(Icons.emoji_emotions_outlined,
-                        color: Colors.white70),
-                  ),
                   Expanded(
-                    child: TextField(
-                      controller: chatController,
-                      enabled: commentsEnabled,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                      decoration: InputDecoration(
-                        hintText: commentsEnabled
-                            ? 'Yorum yaz…'
-                            : 'Yorumlar kapalı',
-                        hintStyle: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.45),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.1),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 11,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
+                    child: Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.15),
                         ),
                       ),
-                      onSubmitted: (_) => onSend(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  if (onGift != null)
-                    IconButton(
-                      onPressed: onGift,
-                      icon: const Icon(Icons.card_giftcard_rounded,
-                          color: AppThemeColors.coinGold),
-                    ),
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: onSend,
-                      borderRadius: BorderRadius.circular(20),
-                      child: Ink(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          gradient: context.colors.brandGradient,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink),
-                        ),
-                        child: const Icon(Icons.send_rounded, color: Colors.white),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: chatController,
+                              enabled: commentsEnabled,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                              decoration: InputDecoration(
+                                isDense: true,
+                                hintText: commentsEnabled
+                                    ? 'Mesajını yaz...'
+                                    : 'Yorumlar kapalı',
+                                hintStyle: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.45),
+                                  fontSize: 13,
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
+                              ),
+                              onSubmitted: (_) => onSend(),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: commentsEnabled
+                                ? () => _showEmojiPicker(context)
+                                : null,
+                            icon: Icon(
+                              Icons.emoji_emotions_outlined,
+                              size: 20,
+                              color: Colors.white.withValues(alpha: 0.7),
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
+                  const SizedBox(width: 4),
+                  if (guestAction != null)
+                    _ActionIcon(
+                      icon: Icons.people_alt_rounded,
+                      label: 'Misafir',
+                      onTap: guestAction,
+                    ),
+                  if (onCoBroadcast != null)
+                    _ActionIcon(
+                      icon: Icons.video_call_rounded,
+                      label: 'Eş Yayın',
+                      onTap: onCoBroadcast,
+                    ),
+                  if (onGames != null)
+                    _ActionIcon(
+                      icon: Icons.sports_esports_rounded,
+                      label: 'Oyunlar',
+                      onTap: onGames,
+                    ),
+                  if (onShare != null)
+                    _ActionIcon(
+                      icon: Icons.share_rounded,
+                      label: 'Paylaş',
+                      onTap: onShare,
+                    ),
+                  if (onGift != null) ...[
+                    const SizedBox(width: 2),
+                    _GiftBoxButton(onTap: onGift!),
+                  ],
+                  if (onMore != null)
+                    _ActionIcon(
+                      icon: Icons.more_horiz_rounded,
+                      label: 'Daha fazla',
+                      onTap: onMore,
+                    ),
                 ],
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Büyük mor hediye kutusu — panel yalnızca buradan açılır.
+class _GiftBoxButton extends StatelessWidget {
+  const _GiftBoxButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFB388FF), Color(0xFF7C4DFF), Color(0xFF5E35B1)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF7C4DFF).withValues(alpha: 0.55),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.35),
+                width: 1.2,
+              ),
+            ),
+            child: const Icon(
+              Icons.card_giftcard_rounded,
+              color: Colors.white,
+              size: 26,
+            ),
+          ),
+          const SizedBox(height: 2),
+          const Text(
+            'Hediye',
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionIcon extends StatelessWidget {
+  const _ActionIcon({
+    required this.icon,
+    required this.label,
+    this.onTap,
+    this.active = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 3),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: active
+                    ? AppThemeColors.accentPurple.withValues(alpha: 0.45)
+                    : Colors.black.withValues(alpha: 0.35),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.18),
+                ),
+              ),
+              child: Icon(icon, color: Colors.white, size: 20),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 8,
+                fontWeight: FontWeight.w700,
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
+            ),
+          ],
         ),
       ),
     );

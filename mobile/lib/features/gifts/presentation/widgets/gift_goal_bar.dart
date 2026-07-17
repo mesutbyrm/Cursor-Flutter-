@@ -56,101 +56,78 @@ class _GoalStrip extends StatelessWidget {
     final done = goal.isCompleted;
     final pct = (goal.progress * 100).round();
 
+    final title = (goal.title.trim().isEmpty) ? 'Hediye Hedefi' : goal.title;
     return Container(
-      margin: const EdgeInsets.fromLTRB(10, 2, 10, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.fromLTRB(0, 2, 0, 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: done
-              ? const [Color(0x5566E36F), Color(0x3327C93F)]
-              : const [Color(0x3327C93F), Color(0x220FA958)],
-        ),
-        borderRadius: BorderRadius.circular(14),
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: done ? const Color(0xAA66E36F) : const Color(0x5566E36F),
-          width: done ? 1.5 : 1,
+          color: done
+              ? const Color(0xAA66E36F)
+              : const Color(0xFF9C27FF).withValues(alpha: 0.45),
         ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(
-                done ? Icons.emoji_events_rounded : Icons.flag_rounded,
-                color: done ? const Color(0xFFFFD54F) : const Color(0xFF66E36F),
-                size: 16,
+                done ? Icons.emoji_events_rounded : Icons.card_giftcard_rounded,
+                color: done ? const Color(0xFFFFD54F) : const Color(0xFFB388FF),
+                size: 14,
               ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  goal.title,
+                  title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
               Text(
-                done ? 'TAMAMLANDI 🎉' : '%$pct',
+                done ? 'TAMAM' : '%$pct',
                 style: TextStyle(
-                  color: done ? const Color(0xFFFFD54F) : Colors.white,
+                  color: done ? const Color(0xFFFFD54F) : Colors.white70,
                   fontWeight: FontWeight.w900,
-                  fontSize: 11.5,
+                  fontSize: 10,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             child: TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: goal.progress),
               duration: const Duration(milliseconds: 600),
               curve: Curves.easeOut,
               builder: (_, value, __) => LinearProgressIndicator(
                 value: value,
-                minHeight: 8,
+                minHeight: 6,
                 backgroundColor: const Color(0x33FFFFFF),
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  done ? const Color(0xFFFFD54F) : const Color(0xFF66E36F),
+                  done ? const Color(0xFFFFD54F) : const Color(0xFF9C27FF),
                 ),
               ),
             ),
           ),
           const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _fmt(goal.currentAmount),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Text(
-                done ? 'Hedef doldu' : 'Kalan ${_fmt(goal.remaining)}',
-                style: const TextStyle(
-                  color: Color(0xCCFFFFFF),
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                _fmt(goal.targetAmount),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
+          Text(
+            '${_fmt(goal.currentAmount)} / ${_fmt(goal.targetAmount)}',
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           if (celebrating) ...[
             const SizedBox(height: 4),
