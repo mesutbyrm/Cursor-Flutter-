@@ -1,6 +1,20 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+60 (2026-07-17)
+
+### Backend API parity — 8 düzeltme (tek APK)
+1. **Presence heartbeat** — `PATCH /presence` (boş POST kaldırıldı)
+2. **Presence join** — `{action: "join", nickname?}` (`enterPresence` → `joinPresence`)
+3. **Voice session** — yalnızca `{action: "join"|"leave"}` (`type` kaldırıldı)
+4. **Live join** — `{nickname?}` body
+5. **Oda ownerId** — `ownerUserId`, `hostUserId`, `createdBy`, `userId`, `owner.id` alias
+6. **Voice hediye** — `giftId` + `receiverUserId` alias
+7. **Video PK create** — önce `{opponentStreamId, durationMinutes}` (kılavuz §9.4)
+8. **PK davet (sesli oda)** — games `{action:"create", targetRoomId, duration}` + kılavuz `{guestUserId, durationSec}`; `opponentRoomId` eklendi
+
+Rapor: `docs/API_PARITY_AUDIT_2026-07-17.md`
+
 ## 1.0.44+59 (2026-07-17)
 
 ### PK davet — «Invalid type» düzeltmesi
