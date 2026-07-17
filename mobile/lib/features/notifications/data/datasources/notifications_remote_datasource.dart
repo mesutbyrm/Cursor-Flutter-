@@ -85,13 +85,22 @@ class NotificationsRemoteDataSource {
   }
 
   Future<void> markAllRead() async {
-    try {
-      await _dio.safePatch(ApiEndpoints.notifications, data: const {'readAll': true});
-    } catch (_) {
-      await _dio.safePatch(
-        ApiEndpoints.notifications,
-        data: const {'markAllRead': true},
-      );
+    final bodies = [
+      const {'markAll': true},
+      const {'readAll': true},
+      const {'markAllRead': true},
+    ];
+    for (final body in bodies) {
+      try {
+        await _dio.safePost<dynamic>(ApiEndpoints.notifications, data: body);
+        return;
+      } catch (_) {}
+    }
+    for (final body in bodies) {
+      try {
+        await _dio.safePatch<dynamic>(ApiEndpoints.notifications, data: body);
+        return;
+      } catch (_) {}
     }
   }
 

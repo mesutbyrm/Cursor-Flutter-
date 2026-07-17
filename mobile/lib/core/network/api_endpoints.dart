@@ -230,6 +230,7 @@ abstract final class ApiEndpoints {
   static String celebrityFollow(String id) => '/api/celebrities/$id/follow';
   static String celebrityPosts(String id) => '/api/celebrities/$id/posts';
   static const fanClubs = '/api/fan-clubs';
+  static const fanClubsPopular = '/api/fan-clubs/popular';
   static String fanClubJoin(String id) => '/api/fan-clubs/$id/join';
   static String fanClubPosts(String id) => '/api/fan-clubs/$id/posts';
   static String fanClubPolls(String id) => '/api/fan-clubs/$id/polls';
@@ -412,7 +413,11 @@ abstract final class ApiEndpoints {
   static const jetonCatalog = '/api/jeton';
 
   static const membershipPackages = '/api/membership/plans';
+  /// CanlifalTV API doc alias (§12).
+  static const membershipsCatalog = '/api/memberships';
   static const membershipPurchase = '/api/membership/purchase';
+  static const membershipsPurchase = '/api/memberships/purchase';
+  static const membershipBadges = '/api/membership-badges';
 
   static const paymentConfig = '/api/payment/config';
   static const paymentRequests = '/api/payment/requests';

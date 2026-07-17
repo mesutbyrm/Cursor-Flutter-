@@ -23,19 +23,26 @@ class ProfileService {
     return user is Map ? Map<String, dynamic>.from(user) : map;
   }
 
-  /// `PATCH /api/me` veya kılavuz yedek `PATCH /api/user/profile`.
+  /// `PATCH /api/me` · yedek `PUT/PATCH /api/user/profile` (CanlifalTV API §3.2).
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data) async {
     try {
       final res = await _dio.safePatch<dynamic>(ApiEndpoints.me, data: data);
       return ServiceUtils.unwrapMap(res.data) ?? asJsonMap(res.data);
     } on ApiException catch (e) {
       if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-      final res = await _dio.safePatch<dynamic>(
-        ApiEndpoints.userSiteProfile,
-        data: data,
-      );
-      return ServiceUtils.unwrapMap(res.data) ?? asJsonMap(res.data);
     }
+    for (final call in [
+      () => _dio.safePut<dynamic>(ApiEndpoints.userSiteProfile, data: data),
+      () => _dio.safePatch<dynamic>(ApiEndpoints.userSiteProfile, data: data),
+    ]) {
+      try {
+        final res = await call();
+        return ServiceUtils.unwrapMap(res.data) ?? asJsonMap(res.data);
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
+    }
+    throw const ApiException('Profil güncellenemedi');
   }
 
   /// `GET /api/users/{userId}`

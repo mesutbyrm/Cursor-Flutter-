@@ -1906,22 +1906,33 @@ class ChatRoomRemoteDataSource {
         'seatIndex': seatIndex,
         if (userId != null && userId.isNotEmpty) 'userId': userId,
       });
+      final sitBody = jsonEncode({
+        'action': 'sit',
+        'seatIndex': seatIndex,
+        if (userId != null && userId.isNotEmpty) 'userId': userId,
+      });
       final opts = Options(contentType: 'application/json');
-      try {
-        await _dio.safePatch<dynamic>(
-          seatsPath(key),
-          data: body,
-          options: opts,
-        );
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode != 405 && e.statusCode != 404) rethrow;
-      }
-      try {
-        await _dio.safePost<dynamic>(seatsPath(key), data: body, options: opts);
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode != 405 && e.statusCode != 404) rethrow;
+      for (final payload in [body, sitBody]) {
+        try {
+          await _dio.safePatch<dynamic>(
+            seatsPath(key),
+            data: payload,
+            options: opts,
+          );
+          return;
+        } on ApiException catch (e) {
+          if (e.statusCode != 405 && e.statusCode != 404) rethrow;
+        }
+        try {
+          await _dio.safePost<dynamic>(
+            seatsPath(key),
+            data: payload,
+            options: opts,
+          );
+          return;
+        } on ApiException catch (e) {
+          if (e.statusCode != 405 && e.statusCode != 404) rethrow;
+        }
       }
       await _dio.safePost<dynamic>(presencePath(key), data: body, options: opts);
     });
