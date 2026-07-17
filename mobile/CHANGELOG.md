@@ -1,6 +1,42 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.48+75 (2026-07-17)
+
+### Backend + Flutter birlikte çalışma (doküman paketi)
+- Tüm yüklenen API/prompt dokümanları `docs/` ve `docs/prompts/` altına eklendi
+- Hediye gönderimi: kılavuz `giftId` + üretim `giftTypeId`
+- Canlı falcı: seans `POST …/{tellerId}/session` (+ `maxMinutes`); mesaj `content`+`message`
+- TRTC: `/token` 404’te `/usersig` yedek; host `userId` ile
+- Sesli oda SSE: `dj_update` alias; DJ `assign`/`remove`; mute/ban kılavuz action
+- Sesli alt menü: Müzik Aç / DJ kayar panel / PK kaldırıldı (prompt)
+- Ortak yayın: izleyiciye davet kabul/red dialog + RTC yükseltme
+
+## 1.0.47+74 (2026-07-17)
+
+### API dokümanı hizalama (`docs/FLUTTER_API_DOCS.md`)
+- Ana sayfa: `GET /api/homepage-ticker` kayan yazı kaynağı (+ `recent-big` poll)
+- Canlı PK: `POST /api/video-streams/pk` (`opponentStreamId`, `durationMinutes`); yanıt/aksiyon `pkBattleId`
+- PK skor: `POST /api/video-streams/pk/score` gövdesi `pkBattleId` + `points`
+- Hediye SSE: `totalPrice`, iç içe `giftType.icon` / `giftType.price` / `sender.name`
+- PK rakip listesi: önce `GET /api/video-streams/pk`, yedek `pk/list`
+- Canlı PK daveti: doküman yolu + birleşik `/api/pk/request` birlikte denenir
+
+## 1.0.46+73 (2026-07-17)
+
+### Ana sayfa
+- Sabit büyük hediye kartı kaldırıldı; arama çubuğu altında kayan şerit
+- Yetkili/Gold girişleri + 1000+ jeton hediyeleri sağdan sola (herkes görür)
+- `/api/gifts/recent-big` periyodik yenileme
+
+### PK
+- Canlı PK daveti: liste yüklenirken sonsuz spinner yok; davet sırasında sayfa kapanmıyor
+- İzleyicisi 0 olan yayınlar da listelenir (yayıncı belli ise)
+
+### Hediye
+- Çift/üst üste binen gösterim düzeltildi (tek katman + premium fullscreen)
+- Sesli oda ve canlı yayında son 3 hediye atan jeton miktarıyla görünür
+
 ## 1.0.45+72 (2026-07-17)
 
 ### Sesli oda — yetki, PK, hediye

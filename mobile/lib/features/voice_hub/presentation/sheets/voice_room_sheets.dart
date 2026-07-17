@@ -122,7 +122,6 @@ Future<void> showVoiceMoreMenuSheet(
   VoidCallback? onPkBattle,
   VoidCallback? onGoldVip,
 }) {
-  final ui = ref.read(voiceRoomUiProvider);
   return showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
@@ -147,18 +146,6 @@ Future<void> showVoiceMoreMenuSheet(
             onTap: () {
               Navigator.pop(ctx);
               onSpeakers();
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.music_note_rounded),
-            title: Text(
-              ui.backgroundMusicEnabled
-                  ? 'Arka plan müziğini kapat'
-                  : 'Arka plan müziği',
-            ),
-            onTap: () {
-              Navigator.pop(ctx);
-              onBackgroundMusic();
             },
           ),
           if (onPickBackground != null)
@@ -186,15 +173,7 @@ Future<void> showVoiceMoreMenuSheet(
               onShare();
             },
           ),
-          if (onPkBattle != null)
-            ListTile(
-              leading: const Icon(Icons.flash_on_rounded, color: AppThemeColors.accentPink),
-              title: const Text('PK Savaşı'),
-              onTap: () {
-                Navigator.pop(ctx);
-                onPkBattle();
-              },
-            ),
+          // Sesli sohbet prompt: Müzik Aç / DJ / PK alt menüde yok.
           if (onGoldVip != null)
             ListTile(
               leading: const Icon(Icons.workspace_premium_rounded,

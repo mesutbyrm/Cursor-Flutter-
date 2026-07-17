@@ -63,12 +63,34 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
       _error = null;
     });
     try {
-      // Birleşik PK önce — global LivePkInviteListener yalnızca `/api/pk/me/invites` okur.
-      await ref.read(pkUnifiedInviteProvider).inviteStream(
-            streamId: streamId,
-            opponentStreamId: opponent.id,
-            durationSeconds: _durationSeconds,
-          );
+      // API dokümanı §8: POST /api/video-streams/pk + birleşik /api/pk/request
+      // (LivePkInviteListener birleşik invites dinler).
+      Object? lastErr;
+      var sent = false;
+      try {
+        final legacy =
+            await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
+                  streamId: streamId,
+                  opponentStreamId: opponent.id,
+                  durationSeconds: _durationSeconds,
+                );
+        if (legacy != null) sent = true;
+      } catch (e) {
+        lastErr = e;
+      }
+      try {
+        await ref.read(pkUnifiedInviteProvider).inviteStream(
+              streamId: streamId,
+              opponentStreamId: opponent.id,
+              durationSeconds: _durationSeconds,
+            );
+        sent = true;
+      } catch (e) {
+        lastErr ??= e;
+      }
+      if (!sent) {
+        throw lastErr ?? Exception('PK daveti gönderilemedi');
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -78,29 +100,8 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
         ),
       );
       context.pop();
-    } catch (unifiedErr) {
-      try {
-        final legacy =
-            await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
-                  streamId: streamId,
-                  opponentStreamId: opponent.id,
-                  durationSeconds: _durationSeconds,
-                );
-        if (legacy == null) rethrow;
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${opponent.streamerName ?? opponent.title} kullanıcısına PK daveti gönderildi',
-            ),
-          ),
-        );
-        context.pop();
-      } catch (_) {
-        if (mounted) {
-          setState(() => _error = ApiException.userMessage(unifiedErr));
-        }
-      }
+    } catch (e) {
+      if (mounted) setState(() => _error = ApiException.userMessage(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -158,30 +159,57 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
           },
           data: (_) {
             if (_error != null) {
-              return Center(
-                child: Text(_error!, style: const TextStyle(color: Colors.red)),
-              );
-            }
-            if (_loading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (opponents.isEmpty) {
               return ListView(
-                children: const [
-                  SizedBox(height: 120),
-                  Center(child: Text('PK için uygun canlı yayın yok')),
-                  SizedBox(height: 8),
+                children: [
+                  const SizedBox(height: 24),
+                  PkDurationPicker(
+                    selectedSeconds: _durationSeconds,
+                    onChanged: (s) => setState(() => _durationSeconds = s),
+                  ),
+                  const SizedBox(height: 24),
                   Center(
-                    child: Text(
-                      'Yalnızca yayıncısı belli ve izleyicisi olan yayınlar listelenir.\nAşağı çekerek yenileyin.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: Colors.white54),
-                    ),
+                    child: Text(_error!, style: const TextStyle(color: Colors.red)),
                   ),
                 ],
               );
             }
-            return _buildList(opponents);
+            // Davet gönderilirken tüm sayfayı spinner yapma — liste kalsın.
+            if (opponents.isEmpty) {
+              return ListView(
+                children: [
+                  PkDurationPicker(
+                    selectedSeconds: _durationSeconds,
+                    onChanged: (s) => setState(() => _durationSeconds = s),
+                  ),
+                  const SizedBox(height: 80),
+                  if (_loading)
+                    const Center(child: CircularProgressIndicator())
+                  else ...const [
+                    Center(child: Text('PK için uygun canlı yayın yok')),
+                    SizedBox(height: 8),
+                    Center(
+                      child: Text(
+                        'Yalnızca yayıncısı belli canlı yayınlar listelenir.\nAşağı çekerek yenileyin.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12, color: Colors.white54),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            }
+            return Stack(
+              children: [
+                _buildList(opponents),
+                if (_loading)
+                  const Positioned.fill(
+                    child: ColoredBox(
+                      color: Color(0x66000000),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  ),
+              ],
+            );
           },
         ),
       ),

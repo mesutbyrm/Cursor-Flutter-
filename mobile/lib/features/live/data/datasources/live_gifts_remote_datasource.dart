@@ -95,6 +95,8 @@ class LiveGiftsRemoteDataSource {
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamGifts(streamId),
       data: {
+        // Kılavuz §9.4: giftId; üretimde giftTypeId de kabul edilir.
+        'giftId': giftTypeId,
         'giftTypeId': giftTypeId,
         'quantity': quantity,
         'platform': GiftPlatform.mobile.queryValue,
@@ -191,15 +193,31 @@ class LiveGiftsRemoteDataSource {
     final giftPrice = asInt(
       pick(json, ['giftPrice', 'unitPrice', 'pricePerUnit', 'coinPrice']),
     );
+    // SSE dokümanı: giftType.price iç içe gelebilir.
+    final nestedGiftPrice = () {
+      final gt = json['giftType'] ?? json['gift'];
+      if (gt is Map) {
+        return asInt(pick(asJsonMap(gt), ['price', 'coinCost', 'jeton']));
+      }
+      return 0;
+    }();
     final totalCoin = asInt(
-      pick(json, ['totalCoin', 'totalCoins', 'totalCost', 'coins', 'jeton']),
+      pick(json, [
+        'totalCoin',
+        'totalCoins',
+        'totalCost',
+        'totalPrice',
+        'coins',
+        'jeton',
+      ]),
     );
     final totalDiamond = asInt(
       pick(json, ['totalDiamond', 'totalDiamonds', 'diamonds']),
     );
     final legacyPrice = asInt(pick(json, ['price', 'coinCost']));
-    final unitPrice = giftPrice > 0
-        ? giftPrice
+    final resolvedGiftPrice = giftPrice > 0 ? giftPrice : nestedGiftPrice;
+    final unitPrice = resolvedGiftPrice > 0
+        ? resolvedGiftPrice
         : (totalCoin > 0 && qty > 0
             ? totalCoin ~/ qty
             : (legacyPrice > 0 && qty > 1 && legacyPrice >= qty
@@ -217,7 +235,14 @@ class LiveGiftsRemoteDataSource {
       'icon',
       'iconUrl',
     ])?.toString();
-    final iconUrl = _resolveImageUrl(icon);
+    // SSE dokümanı: giftType.icon iç içe gelebilir.
+    String? nestedIcon;
+    final giftType = json['giftType'] ?? json['gift'];
+    if (giftType is Map) {
+      nestedIcon = pick(asJsonMap(giftType), ['icon', 'iconUrl', 'image'])
+          ?.toString();
+    }
+    final iconUrl = _resolveImageUrl(icon ?? nestedIcon);
 
     final animKey = pick(json, ['animation', 'animationKey'])?.toString();
     final animType = GiftAnimationKind.parse(

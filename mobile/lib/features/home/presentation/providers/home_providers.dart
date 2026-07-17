@@ -37,16 +37,28 @@ final homeBannersProvider = FutureProvider<List<HomeBannerEntity>>((ref) async {
   final banners = <HomeBannerEntity>[];
   final marquee = ref.read(staffEntranceMarqueeProvider.notifier);
   for (final b in items) {
-    if (VoiceOfficialJoin.isHomeBannerEntranceAnnouncement(
+    if (VoiceOfficialJoin.isHomeBannerMarqueeOnly(
       b.title,
       subtitle: b.subtitle,
     )) {
+      // Sabit büyük kart yerine kayan şerit (yetkili/Gold giriş + hediye).
       marquee.enqueue(b.title, roomName: b.subtitle);
       continue;
     }
     banners.add(b);
   }
   return banners;
+});
+
+/// `GET /api/homepage-ticker` — site geneli kayan yazılar.
+final homeTickerProvider = FutureProvider<List<String>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  final lines = await ref.watch(homeRemoteProvider).fetchHomepageTicker();
+  final marquee = ref.read(staffEntranceMarqueeProvider.notifier);
+  for (final line in lines) {
+    marquee.enqueue(line);
+  }
+  return lines;
 });
 
 final homeFortuneCardsProvider =

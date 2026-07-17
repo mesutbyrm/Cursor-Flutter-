@@ -515,9 +515,14 @@ class ChatService {
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.videoStreamPkScore,
         data: {
-          'roomId': roomId,
+          // API dokümanı §8: { pkBattleId, streamId, points }
+          'streamId': roomId,
+          'points': score,
           'score': score,
-          if (battleId != null && battleId.isNotEmpty) 'battleId': battleId,
+          if (battleId != null && battleId.isNotEmpty) ...{
+            'pkBattleId': battleId,
+            'battleId': battleId,
+          },
         },
       );
       return _unwrapMap(res.data) ?? asJsonMap(res.data);

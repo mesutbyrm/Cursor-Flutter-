@@ -37,6 +37,8 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
       return ChatRoomSseEventType.message;
     case 'dj':
     case 'djevent':
+    case 'dj_update':
+    case 'djupdate':
       return ChatRoomSseEventType.dj;
     case 'song':
     case 'songrequest':

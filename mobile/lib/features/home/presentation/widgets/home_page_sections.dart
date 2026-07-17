@@ -14,6 +14,7 @@ import 'approved/trending_video_section.dart';
 import 'approved/voice_room_section.dart';
 import 'home_banner_carousel.dart';
 import 'home_deferred_section.dart';
+import 'home_feed_marquee.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 
 /// Ana sayfa bölümleri — küçük widget'lar, RepaintBoundary ile izole repaint.
@@ -21,6 +22,10 @@ abstract final class HomePageSections {
   static List<Widget> slivers({required double bottomInset}) {
     return [
       const SliverToBoxAdapter(child: RepaintBoundary(child: HomeHeader())),
+      // Arama altında kayan şerit — yetkili/Gold giriş + 1000+ hediye.
+      const SliverToBoxAdapter(
+        child: RepaintBoundary(child: HomeFeedMarquee()),
+      ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeBannerDelay,

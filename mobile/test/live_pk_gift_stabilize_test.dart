@@ -8,7 +8,7 @@ import 'package:dio/dio.dart';
 
 void main() {
   group('filterPkEligibleLiveStreams', () {
-    test('excludes owner-null, offline, zero viewers, duplicates', () {
+    test('excludes owner-null, offline, duplicates; keeps zero-viewer hosts', () {
       final streams = [
         LiveStreamEntity(
           id: 'a',
@@ -53,8 +53,7 @@ void main() {
       ];
 
       final out = filterPkEligibleLiveStreams(streams, excludeStreamId: 'mine');
-      expect(out.length, 1);
-      expect(out.first.id, 'a');
+      expect(out.map((e) => e.id).toList(), ['a', 'b']);
     });
 
     test('allows PK live with zero viewers', () {

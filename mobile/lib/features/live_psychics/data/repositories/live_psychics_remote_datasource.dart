@@ -483,27 +483,40 @@ class LivePsychicsRemoteDataSource {
     final id = tellerId.trim();
     if (id.isEmpty) return null;
     final tellerUid = tellerUserId?.trim() ?? '';
-    try {
-      final res = await _dio.safePost<dynamic>(
-        ApiEndpoints.fortuneTellerSession,
-        data: {
-          'tellerId': id,
-          if (tellerUid.isNotEmpty) 'tellerUserId': tellerUid,
-          if (tellerUid.isNotEmpty) 'anchorUserId': tellerUid,
-          'fortuneType': fortuneType.trim().isNotEmpty ? fortuneType.trim() : 'general',
-          'duration': durationMinutes,
-          'durationMinutes': durationMinutes,
-          if (staffExempt) 'staffExempt': true,
-          if (clientName != null && clientName.trim().isNotEmpty)
-            'clientName': clientName.trim(),
-        },
-      );
-      return PsychicModel.sessionCreateFromJson(res.data);
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(ApiException.userMessage(e));
+    final body = <String, dynamic>{
+      'tellerId': id,
+      if (tellerUid.isNotEmpty) 'tellerUserId': tellerUid,
+      if (tellerUid.isNotEmpty) 'anchorUserId': tellerUid,
+      'fortuneType':
+          fortuneType.trim().isNotEmpty ? fortuneType.trim() : 'general',
+      'duration': durationMinutes,
+      'durationMinutes': durationMinutes,
+      // Kılavuz §9.6: maxMinutes
+      'maxMinutes': durationMinutes,
+      if (staffExempt) 'staffExempt': true,
+      if (clientName != null && clientName.trim().isNotEmpty)
+        'clientName': clientName.trim(),
+    };
+    // Kılavuz: POST /api/fortune-tellers/{tellerId}/session — yedek: /session
+    Object? lastErr;
+    for (final path in [
+      ApiEndpoints.fortuneTellerSessionFor(id),
+      ApiEndpoints.fortuneTellerSession,
+    ]) {
+      try {
+        final res = await _dio.safePost<dynamic>(path, data: body);
+        return PsychicModel.sessionCreateFromJson(res.data);
+      } on ApiException catch (e) {
+        lastErr = e;
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      } catch (e) {
+        lastErr = e;
+      }
     }
+    if (lastErr is ApiException) throw lastErr;
+    throw ApiException(
+      ApiException.userMessage(lastErr ?? 'Seans oluşturulamadı'),
+    );
   }
 
   Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId) async {
@@ -887,7 +900,11 @@ class LivePsychicsRemoteDataSource {
     try {
       await _dio.safePost<dynamic>(
         ApiEndpoints.liveFortuneRoomMessages(key),
-        data: {'message': message},
+        data: {
+          // Kılavuz §9.7: content; üretimde message yedek.
+          'content': message,
+          'message': message,
+        },
       );
       return true;
     } catch (_) {

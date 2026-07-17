@@ -65,7 +65,14 @@ class PkBattleRemote extends Equatable {
   factory PkBattleRemote.fromJson(Map<String, dynamic> json) {
     final giftsRaw = json['recentGifts'];
     final invite = json['inviteId']?.toString().trim();
-    final rawId = (json['id'] ?? json['battleId'])?.toString().trim() ?? '';
+    // API dokümanı §8: yanıtta `pkBattleId` birincil kimlik olabilir.
+    final rawId = (json['id'] ??
+            json['pkBattleId'] ??
+            json['battleId'] ??
+            json['inviteId'])
+        ?.toString()
+        .trim() ??
+        '';
     final id = rawId.isNotEmpty ? rawId : (invite ?? '');
     var status = json['status']?.toString() ?? 'pending';
     // Sunucu accept sonrası "accepted" dönebilir — savaş aktif sayılır.

@@ -1004,16 +1004,19 @@ class ChatRoomRemoteDataSource {
     String? reason,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      try {
-        await _postModeration(
-          roomKey: key,
-          action: 'ban_user',
-          targetUserId: userId,
-          reason: reason,
-        );
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      // Kılavuz §9.3: action "ban"; üretim: ban_user
+      for (final action in ['ban', 'ban_user']) {
+        try {
+          await _postModeration(
+            roomKey: key,
+            action: action,
+            targetUserId: userId,
+            reason: reason,
+          );
+          return;
+        } on ApiException catch (e) {
+          if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        }
       }
       await _dio.safePost<dynamic>(
         banPath(key, userId),
@@ -1105,17 +1108,20 @@ class ChatRoomRemoteDataSource {
     String? reason,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      try {
-        await _postModeration(
-          roomKey: key,
-          action: 'mute_user',
-          targetUserId: userId,
-          reason: reason,
-          duration: minutes,
-        );
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      // Kılavuz §9.3: action "mute"; üretim: mute_user
+      for (final action in ['mute', 'mute_user']) {
+        try {
+          await _postModeration(
+            roomKey: key,
+            action: action,
+            targetUserId: userId,
+            reason: reason,
+            duration: minutes,
+          );
+          return;
+        } on ApiException catch (e) {
+          if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        }
       }
       await _dio.safePost<dynamic>(
         mutePath(key),
@@ -2003,11 +2009,15 @@ class ChatRoomRemoteDataSource {
     required String action,
     String? userId,
   }) async {
+    // Kılavuz §9.3: assign/remove + targetUserId; üretim: add_dj/remove_dj + userId.
     final res = await _dio.safePost<dynamic>(
       djPath(roomKey),
       data: jsonEncode({
         'action': action,
-        'userId': ?userId,
+        if (userId != null && userId.isNotEmpty) ...{
+          'targetUserId': userId,
+          'userId': userId,
+        },
       }),
       options: Options(contentType: 'application/json'),
     );
@@ -2038,6 +2048,14 @@ class ChatRoomRemoteDataSource {
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       ApiException? restError;
+      try {
+        // Kılavuz §9.3: assign + targetUserId
+        return await _postDjAction(
+          roomKey: key,
+          action: 'assign',
+          userId: targetUserId,
+        );
+      } on ApiException catch (_) {}
       try {
         return await _postDjAction(
           roomKey: key,
@@ -2078,6 +2096,14 @@ class ChatRoomRemoteDataSource {
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       ApiException? restError;
+      try {
+        // Kılavuz §9.3: remove + targetUserId
+        return await _postDjAction(
+          roomKey: key,
+          action: 'remove',
+          userId: targetUserId,
+        );
+      } on ApiException catch (_) {}
       try {
         return await _postDjAction(
           roomKey: key,

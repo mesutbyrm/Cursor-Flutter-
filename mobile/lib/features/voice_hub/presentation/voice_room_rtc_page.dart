@@ -24,7 +24,6 @@ import '../domain/entities/voice_room_realtime_event.dart';
 import '../domain/voice_official_join.dart';
 import '../../gifts/domain/session_gift_summary_builder.dart';
 import '../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
-import '../../gifts/domain/gift_revenue_display.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import 'providers/voice_gift_combo_tracker.dart';
@@ -39,6 +38,7 @@ import '../domain/entities/chat_room_my_permissions.dart';
 import 'audio/voice_room_audio_coordinator.dart';
 import 'audio/voice_room_music_audio_session.dart';
 import 'providers/chat_room_providers.dart';
+import 'providers/staff_entrance_marquee_provider.dart';
 import '../music/presentation/widgets/music_search_picker_sheet.dart';
 import 'sheets/music_mode_picker_sheet.dart';
 import 'sheets/voice_room_hub_settings.dart';
@@ -69,6 +69,7 @@ import 'widgets/voice_room/voice_room_spec_footer.dart';
 import 'sheets/voice_room_commands_panel.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import 'widgets/premium_2026/voice_gift_announcement_ticker.dart';
+import 'widgets/premium_2026/voice_recent_gifters_box.dart';
 import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
 import 'utils/kick_strike_ui.dart';
 import 'audio/voice_trtc_engine.dart';
@@ -77,7 +78,6 @@ import 'widgets/premium_2026/voice_pk_invite_banner.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
-import 'widgets/voice_room/voice_dj_music_slide_panel.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import '../video/presentation/widgets/room_video_overlay.dart';
@@ -408,36 +408,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final ui = ref.read(voiceRoomUiProvider);
     if (!ui.giftAnimationsEnabled) return;
 
-    ref.read(voiceGiftFlightQueueProvider.notifier).enqueue(event);
-
-    final room = _effectiveRoom();
-    final user = ref.read(authControllerProvider).valueOrNull;
-    final myId = user?.id.trim() ?? '';
-    final ownerId = room.ownerId?.trim() ?? '';
-    if (myId.isNotEmpty && ownerId.isNotEmpty && myId == ownerId) {
-      final receiverIsOwner = event.receiverName.trim().toLowerCase() ==
-          (room.ownerName ?? '').trim().toLowerCase();
-      final ownerNet = GiftRevenueDisplay.voiceOwnerDisplayNet(
-        gross: event.jetonAmount,
-        receiverIsOwner: receiverIsOwner,
-      );
-      if (ownerNet > 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${event.senderName} → ${event.receiverName}: +$ownerNet jeton (oda payı)',
-            ),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-
     final showFullscreen = PremiumGiftCatalog2026.triggersFullscreen(
       giftId: event.giftId,
-      coinCost: event.coinCost,
+      coinCost: event.jetonAmount,
     );
-    if (showFullscreen) {
+    // Fullscreen varken uçuş animasyonu gösterme — çift/üst üste binme olmasın.
+    if (!showFullscreen) {
+      ref.read(voiceGiftFlightQueueProvider.notifier).enqueue(event);
+    } else {
       final rarity = PremiumGiftCatalog2026.rarity(event.giftId);
       final duration = rarity.fullscreenDuration;
       if (mounted) setState(() => _fullscreenGift = event);
@@ -446,6 +424,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           setState(() => _fullscreenGift = null);
         }
       });
+    }
+
+    if (event.jetonAmount >= 1000) {
+      ref.read(staffEntranceMarqueeProvider.notifier).enqueueBigGift(
+            senderName: event.senderName,
+            receiverName: event.receiverName,
+            jeton: event.jetonAmount,
+            giftName: event.giftName,
+          );
     }
   }
 
@@ -1591,6 +1578,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           ),
                           child: VoiceGiftAnnouncementTicker(),
                         ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: VoiceRecentGiftersBox(),
+                          ),
+                        ),
                         RoomVideoOverlay(
                           roomKey: _liveRoomKey,
                           perms: perms,
@@ -1751,14 +1745,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
             ),
             SafePremiumGiftFullscreenOverlay(event: _fullscreenGift),
-            if (!keyboardOpen)
-              VoiceDjMusicSlidePanel(
-                room: room,
-                live: live,
-                perms: perms,
-                isOwner: isOwner,
-                isDj: isDj,
-              ),
+            // Sesli sohbet prompt: sağ kayar DJ paneli kaldırıldı; müzik !istek + komutlar.
           ],
         ),
       ),

@@ -19,6 +19,7 @@ import '../../../live_psychics/presentation/providers/live_psychics_providers.da
 import '../../../live_psychics/presentation/widgets/psychic_booking_sheet.dart';
 import '../../../live_psychics/presentation/widgets/psychic_broadcast_side_rail.dart';
 import '../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
+import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../../../gifts/domain/session_gift_summary_builder.dart';
 import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -45,7 +46,6 @@ import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import '../gifts/providers/live_seat_gift_flash_provider.dart';
 import '../gifts/widgets/floating_gift_particles.dart';
-import '../gifts/widgets/gift_center_toast_stack.dart';
 import '../gifts/widgets/gift_notification_stack.dart';
 import '../providers/pk_room_providers.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
@@ -67,6 +67,7 @@ import '../providers/live_fortune_request_provider.dart';
 import '../providers/live_stream_quality_provider.dart';
 import '../widgets/broadcast_room/live_fortune_request_form.dart';
 import '../widgets/broadcast_room/live_gift_leaderboard.dart';
+import '../widgets/broadcast_room/live_recent_gifters_box.dart';
 import '../widgets/broadcast_room/live_like_realtime.dart';
 import '../widgets/broadcast_room/live_moderation_sheet.dart';
 import '../providers/live_broadcast_settings_provider.dart';
@@ -122,6 +123,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Timer? _coBroadcastPoll;
   Timer? _hostHeartbeat;
   final Set<String> _seenGuestJoinIds = {};
+  final Set<String> _seenCoBroadcastInviteIds = {};
   final Set<String> _seenPkInviteIds = {};
   final Set<String> _seenVipEntrances = {};
   var _coHostUpgraded = false;
@@ -270,6 +272,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           cred = await ref.read(trtcRemoteProvider).fetchToken(
                 roomId: roomId,
                 role: 'host',
+                userId: user.id,
               );
         } else {
           cred = await LiveEntryPerf.fetchTrtcParallel(
@@ -704,6 +707,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       final cred = await ref.read(trtcRemoteProvider).fetchToken(
             roomId: streamId,
             role: 'host',
+            userId: user.id,
           );
       await _trtc.join(credentials: cred, isHost: true, audioOnly: false);
       _trtc.setCameraEnabled(widget.session.initialCameraOn);
@@ -799,6 +803,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         unawaited(
           ref.read(coBroadcastProvider.notifier).refreshStream(streamId),
         );
+        // İzleyici: bekleyen ortak yayın davetlerini de yenile.
+        if (!widget.session.isHost) {
+          unawaited(ref.read(coBroadcastProvider.notifier).refresh());
+        }
       });
       unawaited(ref.read(liveFortuneRequestsProvider(streamId).notifier).refresh());
       _fortunePoll?.cancel();
@@ -963,6 +971,68 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
   }
 
+  Future<void> _promptCoBroadcastInvite(
+    String streamId,
+    Map<String, dynamic> invite,
+  ) async {
+    if (widget.session.isHost) return;
+    final id = (invite['id'] ??
+            invite['inviteId'] ??
+            invite['streamId'] ??
+            streamId)
+        .toString();
+    if (id.isEmpty || !_seenCoBroadcastInviteIds.add(id)) return;
+    final hostName = (invite['hostName'] ??
+            invite['streamerName'] ??
+            invite['fromName'] ??
+            'Yayıncı')
+        .toString();
+    if (!mounted) return;
+    final accept = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        title: const Text(
+          'Ortak yayın daveti',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          '$hostName sizi ortak yayına davet etti.',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Reddet'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Kabul Et'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || accept == null) return;
+    try {
+      final user = ref.read(authControllerProvider).valueOrNull;
+      if (accept) {
+        await ref.read(coBroadcastProvider.notifier).acceptInvite(streamId);
+        if (user != null) {
+          await _upgradeToCoHost(streamId, user);
+        }
+      } else {
+        await ref.read(coBroadcastProvider.notifier).rejectInvite(streamId);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
+  }
+
   Future<void> _syncCoBroadcastGuest(String streamId) async {
     if (widget.session.isHost || _coHostUpgraded || _leaving) return;
     final user = ref.read(authControllerProvider).valueOrNull;
@@ -989,6 +1059,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       final cred = await ref.read(trtcRemoteProvider).fetchToken(
             roomId: streamId,
             role: 'host',
+            userId: user.id,
           );
       await _trtc.leave();
       await _trtc.join(credentials: cred, isHost: true, audioOnly: false);
@@ -1733,6 +1804,23 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       });
     }
 
+    // Misafir ortak yayın daveti (co-broadcast invite) — izleyici tarafı.
+    if (hasStream && !s.isHost) {
+      ref.listen(coBroadcastProvider, (prev, next) {
+        for (final inv in next.invites) {
+          final status = (inv['status']?.toString() ?? 'pending').toLowerCase();
+          if (status != 'pending') continue;
+          final invStream = (inv['streamId'] ??
+                  inv['videoStreamId'] ??
+                  inv['liveStreamId'] ??
+                  '')
+              .toString();
+          if (invStream.isNotEmpty && invStream != streamId) continue;
+          unawaited(_promptCoBroadcastInvite(streamId, inv));
+        }
+      });
+    }
+
     if (hasStream) {
       ref.listen(liveRoomProvider(streamId), (prev, next) {
         if (next.fortuneAnsweredNotice != null &&
@@ -1770,6 +1858,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         for (final ev in next.notifications) {
           if (!prevIds.contains(ev.id)) {
             ref.read(liveGiftLeaderboardProvider(streamId).notifier).record(ev);
+            if (ev.jetonAmount >= 1000) {
+              ref.read(staffEntranceMarqueeProvider.notifier).enqueueBigGift(
+                    senderName: ev.senderName,
+                    receiverName: ev.receiverName,
+                    jeton: ev.jetonAmount,
+                    giftName: ev.giftName,
+                  );
+            }
           }
         }
       }
@@ -1858,11 +1954,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               applauseToken: interaction.applauseToken,
             ),
             FloatingGiftParticles(key: _particlesKey),
-            Positioned.fill(
-              child: IgnorePointer(
-                child: GiftCenterToastStack(events: giftCtrl.notifications),
-              ),
-            ),
+            // Tek hediye katmanı: chat üstü bildirim + (premium ise) fullscreen.
+            // Center toast kaldırıldı — çift/üst üste binen gösterim olmasın.
             Positioned.fill(
               child: IgnorePointer(
                 child: LiveGiftAnimationStack(
@@ -1907,6 +2000,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                           context: 'live_stream', contextId: streamId),
                       FirstGifterBadge(
                           context: 'live_stream', contextId: streamId),
+                      LiveRecentGiftersBox(notifications: giftCtrl.notifications),
                       LiveGiftLeaderboard(streamId: streamId),
                       PkRoomLiveSection(
                         streamId: streamId,

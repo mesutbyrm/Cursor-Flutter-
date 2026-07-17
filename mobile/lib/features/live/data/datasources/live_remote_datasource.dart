@@ -57,23 +57,28 @@ class LiveRemoteDataSource {
     return _parseStreamList(res.data);
   }
 
-  /// PK rakip listesi — `GET /api/video-streams/pk/list` (cache kapalı), yedek canlı liste.
+  /// PK rakip listesi — API dokümanı: GET /api/video-streams/pk, yedek pk/list + canlı.
   Future<List<LiveStreamEntity>> fetchPkEligibleStreams({
     CancelToken? cancelToken,
   }) async {
-    try {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.videoStreamPkList,
-        forceRefresh: true,
-        cancelToken: cancelToken,
-        options: Options(
-          receiveTimeout: const Duration(seconds: 5),
-          sendTimeout: const Duration(seconds: 5),
-        ),
-      );
-      final parsed = _parseStreamList(res.data);
-      if (parsed.isNotEmpty) return parsed;
-    } catch (_) {}
+    for (final path in [
+      ApiEndpoints.videoStreamPk,
+      ApiEndpoints.videoStreamPkList,
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          path,
+          forceRefresh: true,
+          cancelToken: cancelToken,
+          options: Options(
+            receiveTimeout: const Duration(seconds: 5),
+            sendTimeout: const Duration(seconds: 5),
+          ),
+        );
+        final parsed = _parseStreamList(res.data);
+        if (parsed.isNotEmpty) return parsed;
+      } catch (_) {}
+    }
 
     final live = await fetch(page: 1);
     return live.where((s) => s.isLive).toList();

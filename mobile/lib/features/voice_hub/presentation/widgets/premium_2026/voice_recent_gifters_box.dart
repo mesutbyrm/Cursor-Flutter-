@@ -6,13 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/voice_recent_gifts_provider.dart';
 import '../../theme/voice_room_tokens.dart';
 
-/// Koltukların altı sağ — son 5 hediye atan (jeton miktarı ile).
+/// Koltukların altı sağ — son 3 hediye atan (jeton miktarı ile).
 class VoiceRecentGiftersBox extends ConsumerWidget {
   const VoiceRecentGiftersBox({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final gifters = ref.watch(voiceRecentGiftersListProvider);
+    final gifters = ref.watch(voiceRecentGiftersListProvider).take(3).toList();
     if (gifters.isEmpty) return const SizedBox.shrink();
 
     return ClipRRect(
