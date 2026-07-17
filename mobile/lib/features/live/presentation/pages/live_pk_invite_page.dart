@@ -63,12 +63,34 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
       _error = null;
     });
     try {
-      // Birleşik PK önce — global LivePkInviteListener yalnızca `/api/pk/me/invites` okur.
-      await ref.read(pkUnifiedInviteProvider).inviteStream(
-            streamId: streamId,
-            opponentStreamId: opponent.id,
-            durationSeconds: _durationSeconds,
-          );
+      // API dokümanı §8: POST /api/video-streams/pk + birleşik /api/pk/request
+      // (LivePkInviteListener birleşik invites dinler).
+      Object? lastErr;
+      var sent = false;
+      try {
+        final legacy =
+            await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
+                  streamId: streamId,
+                  opponentStreamId: opponent.id,
+                  durationSeconds: _durationSeconds,
+                );
+        if (legacy != null) sent = true;
+      } catch (e) {
+        lastErr = e;
+      }
+      try {
+        await ref.read(pkUnifiedInviteProvider).inviteStream(
+              streamId: streamId,
+              opponentStreamId: opponent.id,
+              durationSeconds: _durationSeconds,
+            );
+        sent = true;
+      } catch (e) {
+        lastErr ??= e;
+      }
+      if (!sent) {
+        throw lastErr ?? Exception('PK daveti gönderilemedi');
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -78,29 +100,8 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
         ),
       );
       context.pop();
-    } catch (unifiedErr) {
-      try {
-        final legacy =
-            await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
-                  streamId: streamId,
-                  opponentStreamId: opponent.id,
-                  durationSeconds: _durationSeconds,
-                );
-        if (legacy == null) rethrow;
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${opponent.streamerName ?? opponent.title} kullanıcısına PK daveti gönderildi',
-            ),
-          ),
-        );
-        context.pop();
-      } catch (_) {
-        if (mounted) {
-          setState(() => _error = ApiException.userMessage(unifiedErr));
-        }
-      }
+    } catch (e) {
+      if (mounted) setState(() => _error = ApiException.userMessage(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

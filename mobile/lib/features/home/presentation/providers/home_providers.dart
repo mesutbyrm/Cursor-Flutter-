@@ -50,6 +50,17 @@ final homeBannersProvider = FutureProvider<List<HomeBannerEntity>>((ref) async {
   return banners;
 });
 
+/// `GET /api/homepage-ticker` — site geneli kayan yazılar.
+final homeTickerProvider = FutureProvider<List<String>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  final lines = await ref.watch(homeRemoteProvider).fetchHomepageTicker();
+  final marquee = ref.read(staffEntranceMarqueeProvider.notifier);
+  for (final line in lines) {
+    marquee.enqueue(line);
+  }
+  return lines;
+});
+
 final homeFortuneCardsProvider =
     FutureProvider<List<HomeFortuneCardEntity>>((ref) async {
   _keepHomeCacheAlive(ref);

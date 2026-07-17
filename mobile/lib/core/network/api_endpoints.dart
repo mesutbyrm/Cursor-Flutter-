@@ -585,6 +585,9 @@ abstract final class ApiEndpoints {
 
   static const homepageButtons = '/api/homepage-buttons';
 
+  /// Ana sayfa kayan yazılar — `GET /api/homepage-ticker`
+  static const homepageTicker = '/api/homepage-ticker';
+
   static const announcements = '/api/announcements';
 
   static const horoscopeDaily = '/api/horoscope/daily';

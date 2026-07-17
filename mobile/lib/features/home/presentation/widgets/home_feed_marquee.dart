@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../services/services_providers.dart';
+import '../providers/home_providers.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../../../voice_hub/presentation/widgets/voice_room/voice_room_staff_join_banner.dart';
 
@@ -24,8 +25,12 @@ class _HomeFeedMarqueeState extends ConsumerState<HomeFeedMarquee> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // API dokümanı: GET /api/homepage-ticker + GET /api/gifts/recent-big
+      unawaited(ref.read(homeTickerProvider.future));
       unawaited(_pollBigGifts());
       _poll = Timer.periodic(const Duration(seconds: 20), (_) {
+        ref.invalidate(homeTickerProvider);
+        unawaited(ref.read(homeTickerProvider.future));
         unawaited(_pollBigGifts());
       });
     });
@@ -47,7 +52,8 @@ class _HomeFeedMarqueeState extends ConsumerState<HomeFeedMarquee> {
             .toString()
             .trim();
         final jeton = _asInt(
-          raw['totalCoin'] ??
+          raw['totalPrice'] ??
+              raw['totalCoin'] ??
               raw['jeton'] ??
               raw['amount'] ??
               raw['coinCost'] ??
@@ -58,20 +64,28 @@ class _HomeFeedMarqueeState extends ConsumerState<HomeFeedMarquee> {
             ? id
             : '${raw['senderName']}_${raw['receiverName']}_$jeton';
         if (!_seenGiftIds.add(key)) continue;
-        final sender = (raw['senderName'] ??
-                raw['sender'] ??
-                raw['fromName'] ??
-                raw['userName'] ??
-                'Biri')
-            .toString();
-        final receiver = (raw['receiverName'] ??
-                raw['receiver'] ??
-                raw['toName'] ??
-                raw['targetName'] ??
-                'birine')
-            .toString();
-        final giftName =
-            (raw['giftName'] ?? raw['name'] ?? raw['gift'] ?? '').toString();
+        final sender = _nestedName(
+          raw,
+          flat: const ['senderName', 'fromName', 'userName'],
+          nested: const ['sender', 'user', 'from'],
+          fallback: 'Biri',
+        );
+        final receiver = _nestedName(
+          raw,
+          flat: const ['receiverName', 'toName', 'targetName'],
+          nested: const ['receiver', 'to', 'host'],
+          fallback: 'birine',
+        );
+        final giftName = () {
+          final flat =
+              (raw['giftName'] ?? raw['name'] ?? '').toString().trim();
+          if (flat.isNotEmpty) return flat;
+          final gt = raw['giftType'] ?? raw['gift'];
+          if (gt is Map) {
+            return (gt['name'] ?? gt['title'] ?? '').toString().trim();
+          }
+          return '';
+        }();
         marquee.enqueueBigGift(
           senderName: sender,
           receiverName: receiver,
@@ -80,6 +94,31 @@ class _HomeFeedMarqueeState extends ConsumerState<HomeFeedMarquee> {
         );
       }
     } catch (_) {}
+  }
+
+  static String _nestedName(
+    Map<String, dynamic> raw, {
+    required List<String> flat,
+    required List<String> nested,
+    required String fallback,
+  }) {
+    for (final k in flat) {
+      final v = raw[k]?.toString().trim() ?? '';
+      if (v.isNotEmpty) return v;
+    }
+    for (final k in nested) {
+      final obj = raw[k];
+      if (obj is Map) {
+        final v = (obj['name'] ?? obj['displayName'] ?? obj['username'] ?? '')
+            .toString()
+            .trim();
+        if (v.isNotEmpty) return v;
+      } else if (obj != null) {
+        final v = obj.toString().trim();
+        if (v.isNotEmpty) return v;
+      }
+    }
+    return fallback;
   }
 
   static int _asInt(dynamic v) {

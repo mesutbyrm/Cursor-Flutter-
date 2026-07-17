@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.47+74 (2026-07-17)
+
+### API dokümanı hizalama (`docs/FLUTTER_API_DOCS.md`)
+- Ana sayfa: `GET /api/homepage-ticker` kayan yazı kaynağı (+ `recent-big` poll)
+- Canlı PK: `POST /api/video-streams/pk` (`opponentStreamId`, `durationMinutes`); yanıt/aksiyon `pkBattleId`
+- PK skor: `POST /api/video-streams/pk/score` gövdesi `pkBattleId` + `points`
+- Hediye SSE: `totalPrice`, iç içe `giftType.icon` / `giftType.price` / `sender.name`
+- PK rakip listesi: önce `GET /api/video-streams/pk`, yedek `pk/list`
+- Canlı PK daveti: doküman yolu + birleşik `/api/pk/request` birlikte denenir
+
 ## 1.0.46+73 (2026-07-17)
 
 ### Ana sayfa

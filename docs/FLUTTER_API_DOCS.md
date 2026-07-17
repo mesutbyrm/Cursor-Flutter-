@@ -1,5 +1,7 @@
 # 🔮 CanLıFal Flutter API Dokümantasyonu
 
+> **Not (mobil):** Çelişkide [`FLUTTER_ENTegrasyon_KILAVUZU.md`](FLUTTER_ENTegrasyon_KILAVUZU.md) geçerlidir. Bu dosya üretim uçlarının geniş envanteridir; istemci soft-fail ile dener.
+
 **Base URL:** `https://canlifal.com/api`  
 **Tarih:** 2026-06-11  
 **Toplam Endpoint:** ~300+ (admin dahil ~400)
