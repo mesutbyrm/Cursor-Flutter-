@@ -1,6 +1,11 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.49+76 (2026-07-17)
+
+### Düzeltme
+- `LiveRecentGiftersBox` import yolu — release gate derleme hatası giderildi
+
 ## 1.0.48+75 (2026-07-17)
 
 ### Backend + Flutter birlikte çalışma (doküman paketi)

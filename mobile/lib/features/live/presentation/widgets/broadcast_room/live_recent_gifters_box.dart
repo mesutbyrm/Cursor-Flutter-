@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/entities/live_gift_event.dart';
+import '../../../domain/entities/live_gift_event.dart';
 
 /// Canlı yayın — son 3 hediye atan (jeton miktarı ile); herkes görür.
 class LiveRecentGiftersBox extends StatelessWidget {
