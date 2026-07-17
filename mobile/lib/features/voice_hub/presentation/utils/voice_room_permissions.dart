@@ -81,14 +81,16 @@ class VoiceRoomPermissions {
       );
     }
 
-    if (server != null && server.canModerate) {
+    // Sunucu `canGiveVoice` vb. gönderdiyse `canModerate` false olsa bile uygula.
+    if (server != null && (server.canModerate || server.hasAnyServerFlag)) {
       return VoiceRoomPermissions(
         isSiteAdmin: server.isGlobalAdmin,
         isRoomOwner: server.isRoomOwner,
         canModerate: server.canModerate,
         canManageDj: server.canManageRoom ||
             server.isGlobalAdmin ||
-            server.isRoomOwner,
+            server.isRoomOwner ||
+            server.canGiveVoice,
         canChangeBackground: server.canManageRoom ||
             server.isGlobalAdmin ||
             server.isRoomOwner,

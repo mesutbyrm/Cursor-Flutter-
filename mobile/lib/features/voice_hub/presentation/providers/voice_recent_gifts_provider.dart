@@ -52,7 +52,7 @@ class VoiceRecentGiftsController extends Notifier<VoiceRecentGiftsState> {
   VoiceRecentGiftsState build() => const VoiceRecentGiftsState();
 
   void record(LiveGiftEvent event) {
-    final gross = event.coinCost * (event.quantity <= 0 ? 1 : event.quantity);
+    final gross = event.jetonAmount;
     if (gross <= 0) return;
 
     final senderId = (event.senderId ?? event.senderName).trim();

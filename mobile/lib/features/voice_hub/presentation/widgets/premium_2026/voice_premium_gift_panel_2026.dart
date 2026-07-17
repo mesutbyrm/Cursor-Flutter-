@@ -311,6 +311,8 @@ class _VoicePremiumGiftPanel2026State
         ),
         quantity: _qty,
         coinCost: g.price,
+        giftPrice: g.price,
+        totalCoin: gross,
         timestamp: DateTime.now(),
         combo: 1,
         rarity: PremiumGiftCatalog2026.rarity(g.id),

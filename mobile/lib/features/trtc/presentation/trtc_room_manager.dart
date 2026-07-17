@@ -265,6 +265,10 @@ class TrtcRoomManager {
     } else if (publishAsAnchor) {
       _cloud!.startLocalAudio(TRTCAudioQuality.speech);
       _cloud!.muteLocalVideo(TRTCVideoStreamType.big, false);
+      try {
+        // View henüz yokken yayınlamayı dene; gerçek view bağlanınca yeniden bağlanır.
+        _cloud!.startLocalPreview(true, 0);
+      } catch (_) {}
       _micOn = true;
       _cameraOn = true;
       _device?.setAudioRoute(TXAudioRoute.speakerPhone);
@@ -373,6 +377,11 @@ class TrtcRoomManager {
     if (!_isHost && !_twoWayVideo && !_previewOnly) return;
     if (enabled) {
       _cloud!.muteLocalVideo(TRTCVideoStreamType.big, false);
+      if (_twoWayVideo || _isHost) {
+        try {
+          _cloud!.startLocalPreview(true, 0);
+        } catch (_) {}
+      }
     } else {
       _cloud!.muteLocalVideo(TRTCVideoStreamType.big, true);
     }

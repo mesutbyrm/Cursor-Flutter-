@@ -459,24 +459,40 @@ class _GuestsTab extends ConsumerWidget {
               r['userName']?.toString() ?? r['displayName']?.toString() ?? 'İzleyici',
               style: const TextStyle(color: Colors.white),
             ),
-            trailing: FilledButton(
-              onPressed: () {
-                final uid = r['userId']?.toString() ?? '';
-                if (uid.isNotEmpty) {
-                  ref.read(coBroadcastProvider.notifier).approveRequest(
-                        streamId: streamId,
-                        userId: uid,
-                      );
-                  ref.read(liveGuestGridProvider.notifier).addGuest(
-                        slotIndex: 1,
-                        userId: uid,
-                        displayName: r['userName']?.toString() ??
-                            r['displayName']?.toString() ??
-                            'Konuk',
-                      );
-                }
-              },
-              child: const Text('Kabul'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    final uid = r['userId']?.toString() ?? '';
+                    if (uid.isEmpty) return;
+                    ref.read(coBroadcastProvider.notifier).rejectRequest(
+                          streamId: streamId,
+                          userId: uid,
+                        );
+                  },
+                  child: const Text('Red', style: TextStyle(color: Colors.white70)),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    final uid = r['userId']?.toString() ?? '';
+                    if (uid.isNotEmpty) {
+                      ref.read(coBroadcastProvider.notifier).approveRequest(
+                            streamId: streamId,
+                            userId: uid,
+                          );
+                      ref.read(liveGuestGridProvider.notifier).addGuest(
+                            slotIndex: 1,
+                            userId: uid,
+                            displayName: r['displayName']?.toString() ??
+                                r['userName']?.toString() ??
+                                'Konuk',
+                          );
+                    }
+                  },
+                  child: const Text('Kabul'),
+                ),
+              ],
             ),
           );
         }

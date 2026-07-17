@@ -90,6 +90,18 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
     await refreshStream(streamId);
   }
 
+  Future<void> rejectRequest({
+    required String streamId,
+    required String userId,
+  }) async {
+    await _remote.coBroadcastAction(
+      streamId: streamId,
+      action: 'reject',
+      userId: userId,
+    );
+    await refreshStream(streamId);
+  }
+
   Future<void> acceptInvite(String streamId) async {
     await _remote.patchCoBroadcast(streamId: streamId, action: 'accept');
   }

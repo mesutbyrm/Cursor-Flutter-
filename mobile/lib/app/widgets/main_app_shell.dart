@@ -144,6 +144,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
 
     return OfflineStatusBanner(
       child: StaffEntranceMarqueeHost(
+        routePath: location,
         child: Stack(
           fit: StackFit.expand,
           children: [

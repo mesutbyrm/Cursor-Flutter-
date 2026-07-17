@@ -63,23 +63,7 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
       _error = null;
     });
     try {
-      final legacy = await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
-            streamId: streamId,
-            opponentStreamId: opponent.id,
-            durationSeconds: _durationSeconds,
-          );
-      if (legacy != null) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${opponent.streamerName ?? opponent.title} kullanıcısına PK daveti gönderildi',
-            ),
-          ),
-        );
-        context.pop();
-        return;
-      }
+      // Birleşik PK önce — global LivePkInviteListener yalnızca `/api/pk/me/invites` okur.
       await ref.read(pkUnifiedInviteProvider).inviteStream(
             streamId: streamId,
             opponentStreamId: opponent.id,
@@ -94,8 +78,29 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
         ),
       );
       context.pop();
-    } catch (e) {
-      if (mounted) setState(() => _error = ApiException.userMessage(e));
+    } catch (unifiedErr) {
+      try {
+        final legacy =
+            await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
+                  streamId: streamId,
+                  opponentStreamId: opponent.id,
+                  durationSeconds: _durationSeconds,
+                );
+        if (legacy == null) rethrow;
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${opponent.streamerName ?? opponent.title} kullanıcısına PK daveti gönderildi',
+            ),
+          ),
+        );
+        context.pop();
+      } catch (_) {
+        if (mounted) {
+          setState(() => _error = ApiException.userMessage(unifiedErr));
+        }
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

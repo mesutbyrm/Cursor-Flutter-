@@ -280,9 +280,11 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         ).canModerate) {
       return;
     }
-    final name = user.displayName?.trim().isNotEmpty == true
-        ? user.displayName!.trim()
-        : user.username;
+    final name = user.display.trim().isNotEmpty
+        ? user.display.trim()
+        : (user.displayName?.trim().isNotEmpty == true
+            ? user.displayName!.trim()
+            : user.username);
     final symbol = self?.roleSymbol?.trim() ?? '';
     try {
       await ref.read(chatRoomRemoteProvider).postEntryAnnouncement(
