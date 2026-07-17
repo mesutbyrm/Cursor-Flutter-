@@ -1,6 +1,11 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+67 (2026-07-17)
+
+### Düzeltme
+- `voice_room_rtc_page`: `VoiceRoomYoutubeEmbedHost` import yolu (CI derleme)
+
 ## 1.0.44+66 (2026-07-17)
 
 ### Sesli oda — canlı oda entegrasyonu

@@ -56,7 +56,7 @@ import 'sheets/voice_room_menu_sheet.dart';
 import 'sheets/voice_room_moderation_sheet.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'utils/voice_music_access.dart';
-import '../widgets/voice_room/voice_room_youtube_embed_host.dart';
+import 'widgets/voice_room/voice_room_youtube_embed_host.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
 import 'utils/voice_room_speak_access.dart';
