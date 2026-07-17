@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.44+59 (2026-07-17)
+
+### PK davet — «Invalid type» düzeltmesi
+- Games backend: `{action:"create", targetRoomId, duration}` + `{guestUserId, durationSec}` birlikte deneniyor
+- Rakip oda kimliği (`opponentRoomId`) PK isteğine eklendi
+- Presence join: `jsonEncode` yerine Map (çift kodlama önlendi)
+
 ## 1.0.44+58 (2026-07-17)
 
 ### Backend API parity (PK / Voice / Live)

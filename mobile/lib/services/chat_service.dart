@@ -469,13 +469,25 @@ class ChatService {
       );
       return _unwrapMap(res.data) ?? asJsonMap(res.data);
     }
-    // Davet — kılavuz §9.3: yalnızca guestUserId + durationSec (action yok).
+    // Davet — games: action+targetRoomId veya kılavuz guestUserId+durationSec.
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.chatRoomPk(roomId),
       data: {
-        if (guestUserId != null && guestUserId.isNotEmpty)
+        if (guestUserId != null && guestUserId.isNotEmpty) ...{
           'guestUserId': guestUserId,
-        if (durationSec != null) 'durationSec': durationSec,
+          'opponentId': guestUserId,
+        },
+        if (targetRoomId != null && targetRoomId.isNotEmpty) ...{
+          'action': 'create',
+          'targetRoomId': targetRoomId,
+          'opponentRoomId': targetRoomId,
+          'opponentVoiceRoomId': targetRoomId,
+        },
+        if (durationSec != null) ...{
+          'durationSec': durationSec,
+          'duration': durationSec,
+          'durationSeconds': durationSec,
+        },
       },
     );
     return _unwrapMap(res.data) ?? asJsonMap(res.data);

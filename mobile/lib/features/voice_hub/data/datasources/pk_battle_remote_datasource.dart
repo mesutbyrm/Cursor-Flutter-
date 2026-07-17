@@ -109,31 +109,58 @@ class PkBattleRemoteDataSource {
     return const [];
   }
 
-  /// `POST /api/chat/rooms/{myRoomId}/pk` — `{ guestUserId, durationSec }`.
-  /// Davet artık odaya değil bir **kullanıcıya** gider (rakip oda sahibi).
-  /// Döner: bekleyen davet (`inviteId`, `status:"pending"`).
+  /// `POST /api/chat/rooms/{myRoomId}/pk` — games backend.
+  /// Üretim: `{ guestUserId, durationSec }` veya `{ action:"create", targetRoomId, duration }`.
   Future<PkBattleRemote?> inviteVoiceRoom({
     required String roomId,
     String? alternateRoomId,
     required String guestUserId,
+    String? opponentRoomId,
     int durationSeconds = 180,
   }) async {
+    final oppRoom = opponentRoomId?.trim() ?? '';
+    final guest = guestUserId.trim();
+    final bodies = <Map<String, dynamic>>[
+      if (oppRoom.isNotEmpty)
+        {
+          'action': 'create',
+          'targetRoomId': oppRoom,
+          'opponentRoomId': oppRoom,
+          'opponentVoiceRoomId': oppRoom,
+          'guestUserId': guest,
+          'opponentId': guest,
+          'duration': durationSeconds,
+          'durationSec': durationSeconds,
+          'durationSeconds': durationSeconds,
+        },
+      {
+        'guestUserId': guest,
+        'durationSec': durationSeconds,
+      },
+      if (oppRoom.isNotEmpty)
+        {
+          'action': 'create',
+          'targetRoomId': oppRoom,
+          'duration': durationSeconds,
+        },
+    ];
+
     ApiException? lastError;
     for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
-      try {
-        final res = await _dio.safePost<dynamic>(
-          ApiEndpoints.chatRoomPk(key),
-          data: {
-            'guestUserId': guestUserId,
-            'durationSec': durationSeconds,
-          },
-        );
-        final battle = _parseBattle(res.data);
-        if (battle != null) return battle;
-      } on ApiException catch (e) {
-        lastError = e;
-        if (e.statusCode == 404 || e.statusCode == 405) continue;
-        rethrow;
+      for (final body in bodies) {
+        try {
+          final res = await _dio.safePost<dynamic>(
+            ApiEndpoints.chatRoomPk(key),
+            data: body,
+          );
+          final battle = _parseBattle(res.data);
+          if (battle != null) return battle;
+        } on ApiException catch (e) {
+          lastError = e;
+          if (e.statusCode == 404 || e.statusCode == 405) break;
+          if (e.statusCode == 400 || e.statusCode == 422) continue;
+          rethrow;
+        }
       }
     }
     if (lastError != null) throw lastError;

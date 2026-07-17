@@ -82,8 +82,15 @@ class ApiException implements Exception {
       final errField = m['error'];
       if (errField is String) {
         msg = errField;
+      } else if (errField is List && errField.isNotEmpty) {
+        msg = errField.map((e) => e.toString()).join('; ');
       } else {
-        msg = (m['message'] ?? m['detail'] ?? msg).toString();
+        final messageField = m['message'];
+        if (messageField is List && messageField.isNotEmpty) {
+          msg = messageField.map((e) => e.toString()).join('; ');
+        } else {
+          msg = (messageField ?? m['detail'] ?? msg).toString();
+        }
       }
     } else if (body is String && body.isNotEmpty) {
       if (body.startsWith('<!DOCTYPE') || body.startsWith('<html')) {
@@ -139,6 +146,10 @@ class ApiException implements Exception {
     }
     if (raw.contains('TimeoutException') || raw.contains('timeout')) {
       return 'İstek zaman aşımına uğradı. Bağlantınızı kontrol edip tekrar deneyin.';
+    }
+    final lower = raw.toLowerCase();
+    if (lower.contains('invalid type')) {
+      return 'PK isteği sunucu tarafından reddedildi (geçersiz alan tipi). Uygulamayı güncelleyip tekrar deneyin.';
     }
     return raw.replaceFirst('Bad state: ', '');
   }

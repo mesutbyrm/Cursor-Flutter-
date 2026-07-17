@@ -82,6 +82,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     required String roomId,
     String? alternateRoomId,
     required String guestUserId,
+    String? opponentRoomId,
     int durationSeconds = 180,
   }) async {
     final stale = state;
@@ -91,6 +92,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
       roomId: roomId,
       alternateRoomId: alternateRoomId,
       guestUserId: guestUserId,
+      opponentRoomId: opponentRoomId,
       durationSeconds: durationSeconds,
     );
     if (battle != null) _apply(battle, 'pk:invite');

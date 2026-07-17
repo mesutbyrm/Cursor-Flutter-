@@ -260,10 +260,7 @@ class ChatRoomRemoteDataSource {
       if (seatIndex != null && seatIndex >= 0) body['seatIndex'] = seatIndex;
       final res = await _dio.safePost<dynamic>(
         presencePath(key),
-        data: body.isEmpty ? null : jsonEncode(body),
-        options: body.isEmpty
-            ? null
-            : Options(contentType: 'application/json'),
+        data: body.isEmpty ? null : body,
       );
       final list = _presenceList(res.data);
       VoiceRoomDebugLog.log('api.presence.post', {
@@ -287,8 +284,7 @@ class ChatRoomRemoteDataSource {
       try {
         await _dio.safePost<dynamic>(
           presencePath(key),
-          data: jsonEncode({'action': 'leave'}),
-          options: Options(contentType: 'application/json'),
+          data: const {'action': 'leave'},
         );
         return;
       } on ApiException catch (e) {

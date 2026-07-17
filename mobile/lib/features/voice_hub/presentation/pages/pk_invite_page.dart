@@ -103,6 +103,7 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
         roomId: _roomKey,
         alternateRoomId: _altRoomKey,
         guestUserId: guestUserId,
+        opponentRoomId: oppKey,
         durationSeconds: _durationSeconds,
       );
       if (!mounted) return;
