@@ -39,6 +39,7 @@ import 'audio/voice_room_audio_coordinator.dart';
 import 'audio/voice_room_music_audio_session.dart';
 import 'providers/chat_room_providers.dart';
 import '../music/presentation/widgets/music_search_picker_sheet.dart';
+import 'sheets/music_mode_picker_sheet.dart';
 import 'sheets/voice_room_hub_settings.dart';
 import 'providers/pk_battle_remote_provider.dart';
 import '../domain/pk/pk_duration_options.dart';
@@ -55,6 +56,7 @@ import 'sheets/voice_room_menu_sheet.dart';
 import 'sheets/voice_room_moderation_sheet.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'utils/voice_music_access.dart';
+import '../widgets/voice_room/voice_room_youtube_embed_host.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
 import 'utils/voice_room_speak_access.dart';
@@ -1144,6 +1146,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           !_musicSearchOpen) {
         final skipPayment = next.pendingMusicSearchSkipPayment;
         final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+        final dj = next.dj;
         _musicSearchOpen = true;
         ctrl.clearPendingMusicSearch();
         unawaited(
@@ -1153,10 +1156,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             query: q,
             onSelected: (hit) async {
               if (!mounted) return;
+              final withVideo = await showMusicModePickerSheet(
+                context,
+                audioCost: VoiceMusicAccess.audioRequestCost(dj),
+                videoCost: VoiceMusicAccess.videoRequestCost(dj),
+                songTitle: hit.title,
+              );
+              if (!mounted || withVideo == null) return;
               final messenger = ScaffoldMessenger.of(context);
               final err = await ctrl.submitSelectedSong(
                 hit,
-                withVideo: false,
+                withVideo: withVideo,
                 skipPayment: skipPayment,
               );
               if (!mounted) return;
@@ -1310,6 +1320,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
+            VoiceRoomYoutubeEmbedHost(roomKey: _liveRoomKey),
             Column(
               children: [
                 Expanded(

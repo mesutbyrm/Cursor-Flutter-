@@ -99,9 +99,8 @@ class RoomVideoState extends Equatable {
       positionMs: sync?.currentPositionMs ?? 0,
       trackStartedAtMs: sync?.trackStartedAtMs,
       nowPlaying: np,
-      // Sesli odada müzik yalnızca arka planda ÇALAR — video/görüntü gösterilmez.
-      // (Kullanıcı isteği: "müzik arka planda çalsın, video gelmesin".)
-      audioOnly: true,
+      // Sesli odada müzik yalnızca arka planda çalar; video isteğinde görünür şerit.
+      audioOnly: !np.isVideoRequest,
     );
   }
 

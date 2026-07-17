@@ -1949,8 +1949,15 @@ class VoiceRoomLiveController
       }
       var queue = result.queue;
       var nowPlaying = result.item ?? (queue.isNotEmpty ? queue.first : null);
-      nowPlaying = nowPlaying?.asAudioRequest();
-      queue = queue.map((e) => e.asAudioRequest()).toList();
+      if (withVideo && nowPlaying != null) {
+        nowPlaying = nowPlaying.asVideoRequest();
+        queue = queue
+            .map((e) => e.id == nowPlaying!.id ? nowPlaying : e)
+            .toList();
+      } else {
+        nowPlaying = nowPlaying?.asAudioRequest();
+        queue = queue.map((e) => e.asAudioRequest()).toList();
+      }
       final queuePosition = result.queuePosition ?? 0;
       final player = ref.read(voiceRoomDjPlayerProvider);
       final currentlyPlaying = state.dj.playing ||
@@ -2000,12 +2007,12 @@ class VoiceRoomLiveController
     return item ?? fallback;
   }
 
-  /// SSE nowPlaying — sesli odada video modu kullanılmaz.
+  /// SSE nowPlaying — video isteği bayrağını koru.
   MusicQueueItem _mergeNowPlayingFromSse(
     Map<String, dynamic> json, {
     MusicQueueItem? previous,
   }) {
-    return MusicQueueItem.fromJson(json).asAudioRequest();
+    return MusicQueueItem.fromJson(json);
   }
 
   Future<void> _handleMusicStoppedFromSse() async {
@@ -2234,11 +2241,19 @@ class VoiceRoomLiveController
     // çözümlemesi gerekmez (Node-only ortam, 429 riski yok). Video isteğinde
     // görünür şerit, aksi halde ses-only gizli iframe (RoomVideoState.audioOnly).
     final hasYoutube = videoId != null && videoId.isNotEmpty;
+    final isVideoRequest = effectiveDj.nowPlaying?.isVideoRequest == true;
 
     if (shouldPlay) {
       await VoiceRoomMusicAudioSession.activateForPlayback();
 
-      // Sesli oda: YouTube dahil tüm müzik just_audio — WebView/video yok (donma önlenir).
+      if (isVideoRequest && hasYoutube) {
+        await player.stop();
+        _syncRoomVideo(effectiveDj, sync: sync);
+        _lastDjPlaybackSignature = sig;
+        return effectiveDj;
+      }
+
+      // Ses modu: YouTube dahil tüm müzik just_audio — WebView/video yok.
       ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
       if (!sameTrack) {
         await player.stop();
@@ -2563,7 +2578,7 @@ class VoiceRoomLiveController
       }
       state = state.copyWith(
         pendingMusicSearchQuery: song ?? '',
-        pendingMusicSearchSkipPayment: true,
+        pendingMusicSearchSkipPayment: false,
         clearError: true,
         clearMusicRequestFlash: true,
       );

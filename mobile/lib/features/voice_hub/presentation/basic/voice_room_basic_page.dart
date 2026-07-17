@@ -49,6 +49,8 @@ import 'voice_room_basic_moderation_section.dart';
 import '../sheets/voice_room_menu_sheet.dart';
 import 'voice_room_basic_premium_section.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
+import '../sheets/music_mode_picker_sheet.dart';
+import '../utils/voice_music_access.dart';
 import '../sheets/voice_room_sheets.dart';
 import '../sheets/voice_room_management_panel.dart';
 import '../widgets/premium_2026/voice_live_action_bar_2026.dart';
@@ -649,6 +651,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           mounted) {
         final skipPayment = next.pendingMusicSearchSkipPayment;
         final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+        final dj = next.dj;
         ctrl.clearPendingMusicSearch();
         unawaited(
           showMusicSearchPickerSheet(
@@ -657,10 +660,17 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             query: q,
             onSelected: (hit) async {
               if (!mounted) return;
+              final withVideo = await showMusicModePickerSheet(
+                context,
+                audioCost: VoiceMusicAccess.audioRequestCost(dj),
+                videoCost: VoiceMusicAccess.videoRequestCost(dj),
+                songTitle: hit.title,
+              );
+              if (!mounted || withVideo == null) return;
               final messenger = ScaffoldMessenger.of(context);
               final err = await ctrl.submitSelectedSong(
                 hit,
-                withVideo: false,
+                withVideo: withVideo,
                 skipPayment: skipPayment,
               );
               if (!mounted) return;
