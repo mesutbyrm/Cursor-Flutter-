@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.51+78 (2026-07-17)
+
+### Sesli oda — komutlar, şifre, hediye, giriş
+- «Invalid type»: moderasyon/DJ/rol gövdeleri Map (jsonEncode string kaldırıldı)
+- VIP/şifreli oda: şifre girişi → `joinPresence` ile sunucuya; yanlış şifrede giriş yok
+- Ses Ver / Sustur / Koltuk Ata / Yetki Ver+Al / DJ Yap-Çıkar: anında API + refresh
+- Yetki verildiğinde kullanıcı hemen boş koltuğa alınır; Ses Ver sonrası unmute
+- Odayı devret: `POST …/transfer-ownership`
+- Giriş: çift şerit kaldırıldı; yetkili/Gold koltuk altında (5 sn); normal alt toast
+- Hediye: chat alanı temizlenir; duyuru 5 sn sonra kaybolur; kim→kime+jeton herkese
+- Hediye savaşı şeridi RTC odada; PK kabul/red mevcut banner+listener
+
 ## 1.0.50+77 (2026-07-17)
 
 ### Canlı yayın UI (mockup)

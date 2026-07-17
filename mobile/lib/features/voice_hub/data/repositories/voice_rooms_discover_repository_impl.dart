@@ -205,6 +205,8 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
         'recentUserAvatars': r.recentUserAvatars,
         'isVip': r.isVip,
         'roomType': r.roomType,
+        'isLocked': r.isLocked,
+        'hasPassword': r.hasPassword,
       };
 
   static List<VoiceRoomEntity> _decodeRooms(dynamic raw) {
@@ -227,6 +229,8 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
             avatars is List ? avatars.map((e) => '$e').toList() : const [],
         isVip: m['isVip'] as bool?,
         roomType: m['roomType']?.toString(),
+        isLocked: m['isLocked'] as bool?,
+        hasPassword: m['hasPassword'] as bool?,
       );
     }).toList();
   }

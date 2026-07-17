@@ -26,6 +26,7 @@ import '../../gifts/domain/session_gift_summary_builder.dart';
 import '../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
+import '../../gifts/presentation/widgets/gift_battle_strip.dart';
 import 'providers/voice_gift_combo_tracker.dart';
 import 'providers/voice_gift_leaderboard_provider.dart';
 import '../../auth/domain/entities/user_entity.dart';
@@ -768,6 +769,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       room: room,
       seatedUsers: _seatedPresence(presence),
       initialReceiver: receiver,
+      onGiftSent: () {
+        if (!mounted) return;
+        _messageCtrl.clear();
+      },
     );
   }
 
@@ -1577,6 +1582,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             vertical: 4,
                           ),
                           child: VoiceGiftAnnouncementTicker(),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: GiftBattleStrip(
+                            context: 'voice_room',
+                            contextId: room.apiRoomKey.isNotEmpty
+                                ? room.apiRoomKey
+                                : room.id,
+                          ),
                         ),
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 8),

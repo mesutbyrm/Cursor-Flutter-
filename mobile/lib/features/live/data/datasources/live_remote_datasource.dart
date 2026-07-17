@@ -780,6 +780,24 @@ class LiveRemoteDataSource {
         isVipRaw == 'true' ||
         isVipRaw == '1';
     final roomType = pick(json, ['roomType', 'type'])?.toString();
+    final lockedRaw = pick(json, [
+      'isLocked',
+      'locked',
+      'hasPassword',
+      'passwordRequired',
+      'requiresPassword',
+      'isPasswordProtected',
+    ]);
+    final isLocked = lockedRaw == true ||
+        lockedRaw == 1 ||
+        lockedRaw == 'true' ||
+        lockedRaw == '1';
+    final hasPassRaw = pick(json, ['hasPassword', 'passwordRequired', 'requiresPassword']);
+    final hasPassword = hasPassRaw == true ||
+        hasPassRaw == 1 ||
+        hasPassRaw == 'true' ||
+        hasPassRaw == '1' ||
+        (pick(json, ['password'])?.toString().trim().isNotEmpty == true);
     return VoiceRoomEntity(
       id: rawId,
       slug: slug,
@@ -809,6 +827,8 @@ class LiveRemoteDataSource {
       recentUserAvatars: recent,
       isVip: isVip ? true : null,
       roomType: roomType,
+      isLocked: isLocked || hasPassword ? true : null,
+      hasPassword: hasPassword || isLocked ? true : null,
     );
   }
 

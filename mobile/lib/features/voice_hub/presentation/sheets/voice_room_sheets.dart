@@ -997,6 +997,7 @@ Future<void> showPremiumVoiceGiftShop(
   required VoiceRoomEntity room,
   List<ChatRoomPresence> seatedUsers = const [],
   ChatRoomPresence? initialReceiver,
+  VoidCallback? onGiftSent,
 }) {
   return showVoiceRoomGiftPicker(
     context,
@@ -1004,5 +1005,6 @@ Future<void> showPremiumVoiceGiftShop(
     room: room,
     seatedUsers: seatedUsers,
     initialReceiver: initialReceiver,
+    onGiftSent: onGiftSent,
   );
 }

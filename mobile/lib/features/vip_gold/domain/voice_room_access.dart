@@ -30,8 +30,10 @@ extension VoiceRoomAccess on VoiceRoomEntity {
     return 'NORMAL';
   }
 
+  /// Şifre korumalı oda — sunucu bayrağı veya isim/açıklama ipucu.
   bool get isPasswordLockedRoom {
     if (isFreeRoom) return false;
+    if (isLocked == true || hasPassword == true) return true;
     final t = _haystack;
     return t.contains('şifre') ||
         t.contains('sifre') ||
@@ -40,7 +42,4 @@ extension VoiceRoomAccess on VoiceRoomEntity {
         t.contains('locked') ||
         t.contains('private');
   }
-
-  /// Demo şifre — API yokken yerel doğrulama (istemcide gösterilmez).
-  String get demoPassword => 'gold2026';
 }

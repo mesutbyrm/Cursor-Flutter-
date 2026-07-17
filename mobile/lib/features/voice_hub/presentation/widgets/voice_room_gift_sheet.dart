@@ -30,6 +30,7 @@ Future<void> showVoiceRoomGiftPicker(
   required VoiceRoomEntity room,
   List<ChatRoomPresence> seatedUsers = const [],
   ChatRoomPresence? initialReceiver,
+  VoidCallback? onGiftSent,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -48,6 +49,7 @@ Future<void> showVoiceRoomGiftPicker(
               final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
               ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
               ref.read(voiceRoomGiftRealtimeProvider).publishLocal(event);
+              onGiftSent?.call();
             },
           );
         },

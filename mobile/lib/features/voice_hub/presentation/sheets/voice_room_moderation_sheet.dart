@@ -140,6 +140,13 @@ class VoiceModerationNotifier extends StateNotifier<AsyncValue<void>> {
         state = AsyncError(err, StackTrace.current);
         return false;
       }
+      try {
+        await _ref.read(chatRoomRemoteProvider).unmuteUser(
+              roomKey: _roomKey,
+              userId: userId,
+            );
+      } catch (_) {}
+      await _live.refresh();
       state = const AsyncData(null);
       return true;
     } catch (e, st) {
@@ -222,8 +229,77 @@ class VoiceModerationNotifier extends StateNotifier<AsyncValue<void>> {
   Future<bool> removeDj(String userId) => _run(() => _live.removeRoomDj(userId));
 
   Future<bool> transferOwnership(String userId) => _run(
-        () => _live.assignRoleToUser(targetUserId: userId, roleSymbol: '~'),
+        () async {
+          try {
+            await _ref.read(chatRoomRemoteProvider).transferOwnership(
+                  roomKey: _roomKey,
+                  newOwnerId: userId,
+                );
+            await _live.refresh();
+            return null;
+          } catch (e) {
+            return ApiException.userMessage(e);
+          }
+        },
       );
+
+  /// Rol ver + hemen boş koltuğa oturt (yetkili @ & ~ +).
+  Future<bool> grantRoleAndSeat(String userId, String roleSymbol) async {
+    state = const AsyncLoading();
+    try {
+      final roleErr = await _live.assignRoleToUser(
+        targetUserId: userId,
+        roleSymbol: roleSymbol,
+      );
+      if (roleErr != null) {
+        state = AsyncError(roleErr, StackTrace.current);
+        return false;
+      }
+      if (roleSymbol == '+' ||
+          roleSymbol == '@' ||
+          roleSymbol == '&' ||
+          roleSymbol == '~') {
+        final live = _ref.read(voiceRoomLiveProvider(_roomKey));
+        final occupied = <int>{
+          for (final p in live.presence)
+            if (p.seatIndex != null) p.seatIndex!,
+        };
+        // Zaten koltuktaysa sadece rol yeterli.
+        final alreadySeated = live.presence.any(
+          (p) => p.id == userId && p.seatIndex != null,
+        );
+        if (!alreadySeated) {
+          int? freeSeat;
+          for (var seat = 0; seat <= 14; seat++) {
+            if (!occupied.contains(seat)) {
+              freeSeat = seat;
+              break;
+            }
+          }
+          if (freeSeat != null) {
+            final err =
+                await _live.assignSeat(seatIndex: freeSeat, userId: userId);
+            if (err != null) {
+              state = AsyncError(err, StackTrace.current);
+              return false;
+            }
+          }
+        }
+        try {
+          await _ref.read(chatRoomRemoteProvider).unmuteUser(
+                roomKey: _roomKey,
+                userId: userId,
+              );
+        } catch (_) {}
+      }
+      await _live.refresh();
+      state = const AsyncData(null);
+      return true;
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      return false;
+    }
+  }
 
   Future<bool> setRoomMuted(bool mute) => _run(
         () => _live.toggleRoomMute(mute: mute),
@@ -577,11 +653,8 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
     );
     if (picked == null || !context.mounted) return;
     await _run(context, notifier, () async {
-      final err = await ref.read(voiceRoomLiveProvider(roomKey).notifier).assignRoleToUser(
-            targetUserId: targetUser.id,
-            roleSymbol: picked,
-          );
-      return err ?? 'Rol verildi';
+      final ok = await notifier.grantRoleAndSeat(targetUser.id, picked);
+      return ok ? 'Yetki verildi ve koltuğa alındı' : 'Hata';
     });
   }
 

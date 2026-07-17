@@ -20,6 +20,8 @@ class VoiceRoomEntity extends Equatable {
     this.recentUserAvatars = const [],
     this.isVip,
     this.roomType,
+    this.isLocked,
+    this.hasPassword,
   });
 
   final String id;
@@ -39,6 +41,9 @@ class VoiceRoomEntity extends Equatable {
   final List<String> recentUserAvatars;
   final bool? isVip;
   final String? roomType;
+  /// Sunucu: oda kilitli / şifre gerekli.
+  final bool? isLocked;
+  final bool? hasPassword;
 
   int get displayOnline => onlineCount > 0 ? onlineCount : userCount;
 
@@ -74,11 +79,15 @@ class VoiceRoomEntity extends Equatable {
         recentUserAvatars: recentUserAvatars,
         isVip: isVip,
         roomType: roomType,
+        isLocked: isLocked,
+        hasPassword: hasPassword,
       );
 
   VoiceRoomEntity copyWith({
     int? onlineCount,
     int? userCount,
+    bool? isLocked,
+    bool? hasPassword,
   }) {
     return VoiceRoomEntity(
       id: id,
@@ -98,6 +107,8 @@ class VoiceRoomEntity extends Equatable {
       recentUserAvatars: recentUserAvatars,
       isVip: isVip,
       roomType: roomType,
+      isLocked: isLocked ?? this.isLocked,
+      hasPassword: hasPassword ?? this.hasPassword,
     );
   }
 
@@ -120,5 +131,7 @@ class VoiceRoomEntity extends Equatable {
         recentUserAvatars,
         isVip,
         roomType,
+        isLocked,
+        hasPassword,
       ];
 }
