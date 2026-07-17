@@ -18,6 +18,7 @@ import '../../features/messages/presentation/widgets/dm_realtime_listener.dart';
 import '../../features/messages/presentation/widgets/dm_voice_call_host.dart';
 import '../../features/video_call/presentation/incoming_video_call_screen.dart';
 import '../../features/voice_hub/presentation/widgets/voice_room/voice_room_global_music_bar.dart';
+import '../../features/voice_hub/presentation/widgets/staff_entrance_marquee_host.dart';
 import '../router/app_router.dart';
 import '../../core/bootstrap/voice_rooms_presence_scope.dart';
 import '../../core/network/sse/connectivity_sse_reconnect_provider.dart';
@@ -142,16 +143,18 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
     }
 
     return OfflineStatusBanner(
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          body,
-          if (showGlobalMusic)
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: VoiceRoomGlobalMusicBar(routePath: location),
-            ),
-        ],
+      child: StaffEntranceMarqueeHost(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            body,
+            if (showGlobalMusic)
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: VoiceRoomGlobalMusicBar(routePath: location),
+              ),
+          ],
+        ),
       ),
     );
   }

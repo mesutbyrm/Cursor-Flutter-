@@ -15,6 +15,22 @@ abstract final class VoiceOfficialJoin {
     return 'entrance:${name.toLowerCase()}:$room';
   }
 
+  /// Ana sayfa banner / duyuru — yetkili giriş metni (kalıcı kart olmamalı).
+  static bool isHomeBannerEntranceAnnouncement(
+    String title, {
+    String? subtitle,
+  }) {
+    final combined = '$title ${subtitle ?? ''}'.trim();
+    if (combined.isEmpty) return false;
+    if (isOfficialEntrance(combined)) return true;
+    if (_looksLikeFormattedEntrance(combined)) return true;
+    final lower = combined.toLowerCase();
+    return lower.contains('sesli odasına katıldı') ||
+        lower.contains('odaya giriş yaptı') ||
+        lower.contains('odaya giris yapti') ||
+        (lower.contains('joined') && lower.contains('room'));
+  }
+
   static bool isOfficialEntrance(String content) {
     final raw = content.trim();
     if (raw.isEmpty) return false;

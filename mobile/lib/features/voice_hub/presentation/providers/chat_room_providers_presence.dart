@@ -115,6 +115,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     );
     if (banner.isEmpty || !_markEntranceOnce(banner)) return;
     state = state.copyWith(enterBanner: banner);
+    ref.read(staffEntranceMarqueeProvider.notifier).enqueue(banner);
     _enterBannerTimer?.cancel();
     _enterBannerTimer = Timer(const Duration(seconds: 10), () {
       if (!_sessionActive) return;
@@ -130,6 +131,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     );
     if (!_markEntranceOnce(line)) return;
     state = state.copyWith(enterBanner: line);
+    ref.read(staffEntranceMarqueeProvider.notifier).enqueue(line);
     _enterBannerTimer?.cancel();
     _enterBannerTimer = Timer(const Duration(seconds: 10), () {
       if (!_sessionActive) return;
@@ -482,8 +484,9 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       raw,
       roomName: _roomMeta.nameTr,
     );
-    if (formatted.isEmpty) return;
+    if (formatted.isEmpty || !_markEntranceOnce(formatted)) return;
     state = state.copyWith(enterBanner: formatted);
+    ref.read(staffEntranceMarqueeProvider.notifier).enqueue(formatted);
     _enterBannerTimer?.cancel();
     _enterBannerTimer = Timer(const Duration(seconds: 10), () {
       state = state.copyWith(clearEnterBanner: true);

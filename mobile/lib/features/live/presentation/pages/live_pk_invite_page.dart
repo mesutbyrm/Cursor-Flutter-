@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/network/api_exception.dart';
+
 import '../../../voice_hub/domain/pk/pk_duration_options.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_duration_picker.dart';
@@ -61,6 +63,23 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
       _error = null;
     });
     try {
+      final legacy = await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
+            streamId: streamId,
+            opponentStreamId: opponent.id,
+            durationSeconds: _durationSeconds,
+          );
+      if (legacy != null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${opponent.streamerName ?? opponent.title} kullanıcısına PK daveti gönderildi',
+            ),
+          ),
+        );
+        context.pop();
+        return;
+      }
       await ref.read(pkUnifiedInviteProvider).inviteStream(
             streamId: streamId,
             opponentStreamId: opponent.id,
@@ -76,25 +95,7 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
       );
       context.pop();
     } catch (e) {
-      try {
-        final legacy = await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
-              streamId: streamId,
-              opponentStreamId: opponent.id,
-              durationSeconds: _durationSeconds,
-            );
-        if (legacy == null) {
-          if (!mounted) return;
-          setState(() => _error = 'PK daveti gönderilemedi');
-          return;
-        }
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PK daveti gönderildi')),
-        );
-        context.pop();
-      } catch (legacyErr) {
-        if (mounted) setState(() => _error = '$legacyErr');
-      }
+      if (mounted) setState(() => _error = ApiException.userMessage(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

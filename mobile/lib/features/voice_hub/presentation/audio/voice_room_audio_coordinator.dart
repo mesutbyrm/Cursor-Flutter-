@@ -106,9 +106,9 @@ class VoiceRoomAudioCoordinator {
     return _engine!;
   }
 
-  void setMicEnabled(bool enabled) {
+  Future<void> setMicEnabled(bool enabled) async {
     _micOp = _setMicEnabledSafe(enabled);
-    unawaited(_micOp);
+    await _micOp;
   }
 
   var _staffBypassVoiceApi = false;

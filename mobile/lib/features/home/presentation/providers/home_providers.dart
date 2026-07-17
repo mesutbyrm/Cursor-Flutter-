@@ -14,6 +14,8 @@ import '../../domain/entities/online_advisor_entity.dart';
 import '../../domain/repositories/home_repository.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../voice_hub/domain/voice_official_join.dart';
+import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 
 void _keepHomeCacheAlive(Ref ref) => ref.keepAlive();
 
@@ -31,7 +33,20 @@ final homeRepositoryProvider = Provider<HomeRepository>((ref) {
 
 final homeBannersProvider = FutureProvider<List<HomeBannerEntity>>((ref) async {
   _keepHomeCacheAlive(ref);
-  return ref.watch(homeRepositoryProvider).fetchBanners();
+  final items = await ref.watch(homeRepositoryProvider).fetchBanners();
+  final banners = <HomeBannerEntity>[];
+  final marquee = ref.read(staffEntranceMarqueeProvider.notifier);
+  for (final b in items) {
+    if (VoiceOfficialJoin.isHomeBannerEntranceAnnouncement(
+      b.title,
+      subtitle: b.subtitle,
+    )) {
+      marquee.enqueue(b.title, roomName: b.subtitle);
+      continue;
+    }
+    banners.add(b);
+  }
+  return banners;
 });
 
 final homeFortuneCardsProvider =

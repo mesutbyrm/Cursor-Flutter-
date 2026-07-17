@@ -48,6 +48,7 @@ import '../utils/voice_room_duyuru_access.dart';
 import '../utils/voice_room_mention.dart';
 import '../utils/voice_room_seat_priority.dart';
 import '../utils/voice_staff_chat_style.dart';
+import 'staff_entrance_marquee_provider.dart';
 import '../utils/voice_room_message_merge.dart';
 import 'voice_rooms_presence_provider.dart';
 import '../widgets/voice_room/voice_room_music_request_flash.dart';

@@ -9,6 +9,7 @@ import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../utils/kick_strike_ui.dart';
 import '../widgets/voice_room_error_boundary.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/auth/staff_roles.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
@@ -32,6 +33,7 @@ import '../providers/voice_recent_gifts_provider.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_gift_providers.dart';
 import '../audio/voice_room_audio_coordinator.dart';
+import '../audio/voice_trtc_engine.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_audio_providers.dart';
@@ -201,7 +203,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
     try {
       final roomId = room.apiRoomKey;
-      final staffBypass = StaffRoles.isFounderUser(
+      final staffBypass = StaffRoles.isSiteAdminUser(
         role: user.role,
         username: user.username,
       );
@@ -232,7 +234,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     }
   }
 
-  void _toggleMic() {
+  Future<void> _toggleMic() async {
     if (_audio == null || !_audioReady) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Ses bağlantısı hazır değil')),
@@ -241,6 +243,18 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     }
     final muted = !_isMicMuted;
     if (!muted) {
+      final micOk = await VoiceTrtcEngine.requestMicrophonePermission();
+      if (!micOk) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Mikrofon izni gerekli. Ayarlardan mikrofonu açıp tekrar deneyin.',
+            ),
+          ),
+        );
+        return;
+      }
       final user = ref.read(authControllerProvider).valueOrNull;
       final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
       final room = _effectiveRoom();
@@ -272,7 +286,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       }
     }
     try {
-      _audio!.setMicEnabled(!muted);
+      await _audio!.setMicEnabled(!muted);
       if (mounted) setState(() => _isMicMuted = muted);
     } catch (e) {
       if (!mounted) return;

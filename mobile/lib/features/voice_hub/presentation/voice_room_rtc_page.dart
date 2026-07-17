@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/auth/staff_roles.dart';
 import '../../../core/performance/voice_room_entry_perf.dart';
 import '../../../core/network/token_storage.dart';
 import '../../../core/widgets/cached_cover_image.dart';
@@ -69,7 +70,8 @@ import 'sheets/voice_room_commands_panel.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
 import 'utils/kick_strike_ui.dart';
-import 'widgets/premium_2026/voice_web_chat_overlay.dart';
+import 'audio/voice_trtc_engine.dart';
+import 'widgets/voice_room/voice_room_staff_join_banner.dart';
 import 'widgets/premium_2026/voice_pk_invite_banner.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
@@ -324,7 +326,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _openUser(found, perms: perms, room: room, isOwner: isOwner);
   }
 
-  void _toggleMic() {
+  Future<void> _toggleMic() async {
     if (_audio == null || !_audioReady) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Ses bağlantısı hazır değil')),
@@ -333,6 +335,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
     final muted = !_isMicMuted;
     if (!muted) {
+      final micOk = await VoiceTrtcEngine.requestMicrophonePermission();
+      if (!micOk) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Mikrofon izni gerekli. Ayarlardan mikrofonu açıp tekrar deneyin.',
+            ),
+          ),
+        );
+        return;
+      }
       final user = ref.read(authControllerProvider).valueOrNull;
       final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
       final room = _effectiveRoom();
@@ -351,8 +365,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         return;
       }
     }
-    _audio?.setMicEnabled(!muted);
-    if (mounted) setState(() => _isMicMuted = muted);
+    try {
+      await _audio?.setMicEnabled(!muted);
+      if (mounted) setState(() => _isMicMuted = muted);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
   }
 
   void _onChatChanged(String text) {
@@ -502,10 +523,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     try {
       final roomId = room.apiRoomKey;
+      final staffBypass = StaffRoles.isSiteAdminUser(
+        role: user.role,
+        username: user.username,
+      );
+      _audio!.setStaffBypassVoiceApi(staffBypass);
       await _audio!.join(
         roomId: roomId,
         remote: ref.read(chatRoomRemoteProvider),
         enableMic: false,
+        staffBypassVoiceApi: staffBypass,
         userId: user.id,
       );
       if (mounted) {
@@ -1500,6 +1527,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           room: room,
                           liveKey: _liveRoomKey,
                           isOwner: isOwner,
+                        ),
+                        Consumer(
+                          builder: (context, ref, _) {
+                            final banner = ref.watch(
+                              voiceRoomLiveProvider(_liveRoomKey).select(
+                                (s) => s.enterBanner,
+                              ),
+                            );
+                            return VoiceRoomStaffJoinBanner(
+                              enterBanner: banner,
+                            );
+                          },
                         ),
                         VoiceWebOwnerStage(
                           room: room,
