@@ -70,6 +70,8 @@ import '../../features/profile/presentation/pages/cfc_purchase_page.dart';
 import '../../features/profile/presentation/pages/jeton_purchase_page.dart';
 import '../../features/wallet/presentation/pages/wallet_center_page.dart';
 import '../../features/profile/presentation/pages/profile_about_page.dart';
+import '../../features/legal/domain/legal_document.dart';
+import '../../features/legal/presentation/pages/site_content_page.dart';
 import '../../features/profile/presentation/pages/profile_account_security_page.dart';
 import '../../features/profile/presentation/pages/profile_broadcast_history_page.dart';
 import '../../features/profile/presentation/pages/profile_broadcaster_stats_page.dart';
@@ -606,6 +608,26 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/about',
         builder: (context, state) => const ProfileAboutPage(),
+      ),
+      GoRoute(
+        path: '/legal/:slug',
+        builder: (context, state) {
+          final slug = state.pathParameters['slug'] ?? '';
+          final title = state.extra as String? ??
+              kLegalDocuments
+                  .where((d) => d.slug == slug)
+                  .map((d) => d.title)
+                  .firstOrNull ??
+              'Yasal';
+          final doc = kLegalDocuments
+              .where((d) => d.slug == slug)
+              .firstOrNull;
+          return SiteContentPage(
+            slug: slug,
+            title: title,
+            fallbackUrl: doc?.fallbackUrl,
+          );
+        },
       ),
       GoRoute(
         path: '/profile/followers',

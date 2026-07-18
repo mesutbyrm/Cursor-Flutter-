@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../utils/navigate_to_voice_room.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../providers/voice_room_ui_provider.dart';
 import '../../../video/presentation/room_video_controller.dart';
@@ -50,14 +51,12 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
       child: SafeArea(
         top: false,
         child: GestureDetector(
-          onTap: () {
-            final slug = room.slug.trim();
-            if (slug.isNotEmpty) {
-              context.go('/voice-room/$slug', extra: room);
-            } else if (room.apiRoomKey.isNotEmpty) {
-              context.go('/voice-room/${room.apiRoomKey}', extra: room);
-            }
-          },
+          onTap: () => navigateToVoiceRoom(
+            context,
+            ref,
+            room: room,
+            source: 'music_bar',
+          ),
           child: VoiceRoomWebMusicBar(
             dj: session.dj,
             musicMuted: !ui.backgroundMusicEnabled,

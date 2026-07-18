@@ -1,6 +1,22 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.54+81 (2026-07-18)
+
+### Profil — Yasal bölümü
+- Kullanıcı Sözleşmesi, Gizlilik, Çocuk Güvenliği, KVKK, Topluluk Kuralları
+- İçerik `GET /api/site-pages/{slug}` ile dinamik yüklenir (WebView)
+- Uygulama sürümü (v1.0.54) profil altında gösterilir
+
+### Sesli oda + PK + yetki + bildirim
+- Oda geçişinde eski presence anında temizlenir (`prepareVoiceRoomSwitch`)
+- Giriş: presence önce, sonra paralel yükleme; çıkış: leave await
+- PK daveti önce `POST /api/live/pk` (TRTC signaling)
+- Moderatör yetkisi → otomatik boş koltuk + unmute; host → koltuk 1
+- Çift bildirim: OneSignal aktifken FCM foreground kapalı
+- Hediye jeton: `jetonAmount` / `giftJeton` alanları parse edilir
+- Randevu davet debounce 60→20 sn
+
 ## 1.0.53+80 (2026-07-17)
 
 ### Sesli oda — Invalid type, PK, hız

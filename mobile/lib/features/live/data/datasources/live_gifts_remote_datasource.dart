@@ -209,6 +209,9 @@ class LiveGiftsRemoteDataSource {
         'totalPrice',
         'coins',
         'jeton',
+        'jetonAmount',
+        'giftJeton',
+        'coinAmount',
       ]),
     );
     final totalDiamond = asInt(

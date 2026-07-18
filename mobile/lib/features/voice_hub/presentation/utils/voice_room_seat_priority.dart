@@ -167,7 +167,10 @@ abstract final class VoiceRoomSeatPriority {
         if (p.seatIndex != null) p.seatIndex!: p,
     };
 
-    // En düşük numaralı boş koltuk — backend transaction/lock ile doğrular.
+    // En düşük numaralı boş koltuk — oda sahibi için önce koltuk 1.
+    if (myTier >= tierFounder && !occupied.containsKey(1)) {
+      return 1;
+    }
     for (var seat = 1; seat <= 10; seat++) {
       if (!occupied.containsKey(seat)) return seat;
     }

@@ -141,6 +141,42 @@ class PkBattleRemoteDataSource {
     }
     final oppRoom = opponentRoomId?.trim() ?? '';
 
+    // Birincil: POST /api/live/pk — games backend + TRTC signaling.
+    if (oppRoom.isNotEmpty) {
+      try {
+        for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
+          for (final action in ['invite', 'create']) {
+            final liveBattle = await LiveFieldApiRemoteDataSource(_dio).pk.pkAction(
+              action: action,
+              roomId: key,
+              targetRoomId: oppRoom,
+              guestUserId: guest,
+              durationSeconds: durationSeconds,
+            );
+            if (liveBattle != null && liveBattle.id.isNotEmpty) {
+              final parsed = _parseBattle({
+                'battle': {
+                  'id': liveBattle.id,
+                  'status': liveBattle.status ?? 'pending',
+                  'challengerScore': liveBattle.room1Score,
+                  'opponentScore': liveBattle.room2Score,
+                  'durationSeconds':
+                      liveBattle.durationSeconds ?? durationSeconds,
+                  'opponentVoiceRoomId': oppRoom,
+                  'opponentId': guest,
+                },
+              });
+              if (parsed != null) return parsed;
+            }
+          }
+        }
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) {
+          // chat-room PK yedeğine düş
+        }
+      } catch (_) {}
+    }
+
     final bodies = <Map<String, dynamic>>[
       {
         'guestUserId': guest,

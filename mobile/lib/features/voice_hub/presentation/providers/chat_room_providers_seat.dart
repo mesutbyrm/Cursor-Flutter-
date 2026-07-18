@@ -240,4 +240,27 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       return ApiException.userMessage(e);
     }
   }
+
+  Future<void> _autoSeatAfterRoleGrant(String userId) async {
+    final occupied = <int>{
+      for (final p in state.presence)
+        if (p.seatIndex != null) p.seatIndex!,
+    };
+    int? freeSeat;
+    for (var seat = 1; seat <= 14; seat++) {
+      if (!occupied.contains(seat)) {
+        freeSeat = seat;
+        break;
+      }
+    }
+    if (freeSeat == null) return;
+    final err = await assignSeat(seatIndex: freeSeat, userId: userId);
+    if (err != null) return;
+    try {
+      await ref.read(chatRoomRemoteProvider).unmuteUser(
+            roomKey: _roomKey,
+            userId: userId,
+          );
+    } catch (_) {}
+  }
 }

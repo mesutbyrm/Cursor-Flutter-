@@ -28,6 +28,7 @@ class LiveFieldPkApi {
     required String roomId,
     String? targetRoomId,
     String? battleId,
+    String? guestUserId,
     int? durationSeconds,
   }) async {
     final res = await _dio.safePost<dynamic>(
@@ -37,6 +38,8 @@ class LiveFieldPkApi {
         'roomId': roomId,
         if (targetRoomId != null && targetRoomId.isNotEmpty)
           'targetRoomId': targetRoomId,
+        if (guestUserId != null && guestUserId.isNotEmpty)
+          'guestUserId': guestUserId,
         if (battleId != null && battleId.isNotEmpty) 'battleId': battleId,
         if (durationSeconds != null) 'durationSeconds': durationSeconds,
       },

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -11,6 +13,7 @@ import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
 import '../../../../live/presentation/utils/open_live_stream.dart';
+import '../../../../voice_hub/presentation/utils/navigate_to_voice_room.dart';
 
 /// «Aktif Odalar» — canlı yayın ve ses odaları yatay şeridi.
 class SocialActiveRooms extends ConsumerWidget {
@@ -208,8 +211,14 @@ class SocialActiveRooms extends ConsumerWidget {
         }
       case _ActiveRoomKind.voice:
         if (chip.voiceRoom != null) {
-          final room = chip.voiceRoom!;
-          context.push('/voice-room/${room.id}', extra: room);
+          unawaited(
+            navigateToVoiceRoom(
+              context,
+              ref,
+              room: chip.voiceRoom!,
+              source: 'social_active',
+            ),
+          );
         } else {
           context.push('/voice-rooms');
         }

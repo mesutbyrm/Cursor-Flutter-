@@ -604,8 +604,8 @@ class VoiceRoomLiveController
   Future<void> _parallelEntryLoad() async {
     if (_roomKey.isEmpty) return;
     try {
+      await _joinPresence();
       await Future.wait<void>([
-        _joinPresence(),
         _loadInitialMessages(),
         _preloadPkStatus(),
         _preloadGiftCatalog(),
@@ -843,6 +843,9 @@ class VoiceRoomLiveController
     VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: source);
     clearVoiceRoomLiveSession(ref, _roomKey);
     _removeSelfFromPresenceOptimistic();
+    try {
+      await _leavePresenceWithSeatClear().timeout(const Duration(seconds: 4));
+    } catch (_) {}
     _poll?.cancel();
     _presenceHeartbeat?.cancel();
     _typingStopTimer?.cancel();
@@ -850,7 +853,6 @@ class VoiceRoomLiveController
     _giftSocketStarted = false;
     ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(_roomKey);
     unawaited(_leaveVoiceSession());
-    unawaited(_leavePresenceWithSeatClear());
     unawaited(_stopTyping());
     ref.read(voiceRoomGiftSocketProvider).disconnect();
 
@@ -3141,6 +3143,9 @@ class VoiceRoomLiveController
             userId: targetUserId,
             roleSymbol: symbol,
           );
+      if (VoiceRoomSeatPriority.shouldAutoSitForSymbol(symbol)) {
+        unawaited(_autoSeatAfterRoleGrant(targetUserId));
+      }
       await refresh();
       return null;
     } catch (e) {

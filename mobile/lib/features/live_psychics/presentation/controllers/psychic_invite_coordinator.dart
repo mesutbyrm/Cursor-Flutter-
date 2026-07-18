@@ -8,7 +8,7 @@ class PsychicInviteCoordinator {
   static String? _lastPresentRequestId;
   static DateTime? _lastPresentRequestAt;
 
-  static const _dedupeWindow = Duration(seconds: 60);
+  static const _dedupeWindow = Duration(seconds: 20);
 
   static void requestPresent({String? sessionId}) {
     if (sessionId != null && sessionId.isNotEmpty) {
