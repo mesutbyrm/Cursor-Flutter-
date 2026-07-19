@@ -20,8 +20,13 @@ void main() {
     expect(frame?.id, 'frame_gold_rotating');
   });
 
-  test('catalog includes name effects for gold', () {
-    final names = CosmeticCatalogDefaults.forSlot(CosmeticSlot.nameEffect);
-    expect(names.any((e) => e.id == 'name_gold'), isTrue);
+  test('catalog includes entrance and chat bubble slots', () {
+    final entrances =
+        CosmeticCatalogDefaults.forSlot(CosmeticSlot.entranceAnimation);
+    final bubbles = CosmeticCatalogDefaults.forSlot(CosmeticSlot.chatBubble);
+    final mic = CosmeticCatalogDefaults.forSlot(CosmeticSlot.microphoneFrame);
+    expect(entrances.any((e) => e.id == 'ent_dragon'), isTrue);
+    expect(bubbles.any((e) => e.id == 'bubble_gold'), isTrue);
+    expect(mic.any((e) => e.id == 'mic_neon'), isTrue);
   });
 }

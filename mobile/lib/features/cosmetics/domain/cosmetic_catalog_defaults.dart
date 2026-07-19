@@ -11,6 +11,8 @@ abstract final class CosmeticCatalogDefaults {
       CosmeticSlot.nameEffect => _nameEffects,
       CosmeticSlot.profileEffect => _profileEffects,
       CosmeticSlot.entranceAnimation => _entrances,
+      CosmeticSlot.chatBubble => _chatBubbles,
+      CosmeticSlot.microphoneFrame => _micFrames,
       _ => const [],
     };
   }
@@ -20,6 +22,8 @@ abstract final class CosmeticCatalogDefaults {
         ..._nameEffects,
         ..._profileEffects,
         ..._entrances,
+        ..._chatBubbles,
+        ..._micFrames,
       ];
 
   static const _frames = [
@@ -224,6 +228,82 @@ abstract final class CosmeticCatalogDefaults {
       name: 'Taç',
       effectKind: CosmeticEffectKind.entranceCrown,
       requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'ent_dragon',
+      slot: CosmeticSlot.entranceAnimation,
+      name: 'Ejderha',
+      effectKind: CosmeticEffectKind.entranceDragon,
+      requiredTier: VipTier.diamond,
+    ),
+    CosmeticItem(
+      id: 'ent_meteor',
+      slot: CosmeticSlot.entranceAnimation,
+      name: 'Meteor',
+      effectKind: CosmeticEffectKind.entranceMeteor,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'ent_wings',
+      slot: CosmeticSlot.entranceAnimation,
+      name: 'Kanat açılması',
+      effectKind: CosmeticEffectKind.entranceWings,
+      requiredTier: VipTier.diamond,
+    ),
+    CosmeticItem(
+      id: 'ent_angel',
+      slot: CosmeticSlot.entranceAnimation,
+      name: 'Melek',
+      effectKind: CosmeticEffectKind.entranceAngel,
+      requiredTier: VipTier.premium,
+    ),
+  ];
+
+  static const _chatBubbles = [
+    CosmeticItem(
+      id: 'bubble_gold',
+      slot: CosmeticSlot.chatBubble,
+      name: 'Altın balon',
+      effectKind: CosmeticEffectKind.goldText,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'bubble_neon',
+      slot: CosmeticSlot.chatBubble,
+      name: 'Neon balon',
+      effectKind: CosmeticEffectKind.neonText,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'bubble_glass',
+      slot: CosmeticSlot.chatBubble,
+      name: 'Cam balon',
+      effectKind: CosmeticEffectKind.glassText,
+      requiredTier: VipTier.premium,
+    ),
+  ];
+
+  static const _micFrames = [
+    CosmeticItem(
+      id: 'mic_gold_ring',
+      slot: CosmeticSlot.microphoneFrame,
+      name: 'Altın halka',
+      effectKind: CosmeticEffectKind.goldParticles,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'mic_neon',
+      slot: CosmeticSlot.microphoneFrame,
+      name: 'Neon çerçeve',
+      effectKind: CosmeticEffectKind.neonGlow,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'mic_fire',
+      slot: CosmeticSlot.microphoneFrame,
+      name: 'Ateş çerçeve',
+      effectKind: CosmeticEffectKind.fire,
+      requiredTier: VipTier.premium,
     ),
   ];
 

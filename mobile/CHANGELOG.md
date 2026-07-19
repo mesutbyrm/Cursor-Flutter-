@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.58+85 (2026-07-19)
+
+### Premium kozmetik — eksik alanlar tamamlandı
+- **Giriş efektleri:** Ejderha, meteor, kanat, melek + odaya girişte `CosmeticEntranceOverlay` (Gold seçim → sesli oda)
+- **Sohbet balonu:** Altın / neon / cam balon kataloğu + kendi mesajlarında uygulama
+- **Mikrofon çerçevesi:** Koltukta kendi avatarında dönen kozmetik halka
+- **Profil kozmetik sayfası:** 6 sekme (Çerçeve, İsim, Efekt, Giriş, Balon, Mikrofon)
+- **Üyelik rozetleri:** `GET /api/membership-badges` yatay şerit profilde
+- **Equip senkron:** `POST /api/user/cosmetics/equip` hazır olduğunda otomatik (404’te yerel prefs)
+
+### Backend notu
+- Kozmetik equip/loadout ve başkalarının giriş efektini görme için sunucu deploy gerekir (mobil hazır)
+
 ## 1.0.57+84 (2026-07-19)
 
 ### Ana sayfa — premium sesli oda kartları
