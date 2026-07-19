@@ -29,4 +29,10 @@ void main() {
     expect(bubbles.any((e) => e.id == 'bubble_gold'), isTrue);
     expect(mic.any((e) => e.id == 'mic_neon'), isTrue);
   });
+
+  test('membership badge defaults exist when API empty', () {
+    final badges = CosmeticCatalogDefaults.forSlot(CosmeticSlot.badge);
+    expect(badges.any((e) => e.id == 'badge_gold'), isTrue);
+    expect(badges.any((e) => e.id == 'badge_founder'), isTrue);
+  });
 }

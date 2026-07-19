@@ -53,6 +53,7 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
           room: room,
           presence: live.presence,
           djUserIds: live.dj.djUsers.map((u) => u.id).toList(),
+          selfUserId: user?.id,
           onSeatTap: (seatIndex, occupant) => unawaited(
             onVoiceRoomBasicSeatTap(
               context: context,

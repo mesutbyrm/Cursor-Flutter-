@@ -51,7 +51,7 @@ final membershipBadgesCatalogProvider =
   final remote =
       await ref.watch(cosmeticsRemoteProvider).fetchMembershipBadges();
   if (remote.isNotEmpty) return remote;
-  return const [];
+  return CosmeticCatalogDefaults.forSlot(CosmeticSlot.badge);
 });
 
 final cosmeticLoadoutProvider =

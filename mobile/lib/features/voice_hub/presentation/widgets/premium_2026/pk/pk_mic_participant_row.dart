@@ -10,10 +10,12 @@ class PkMicParticipantRow extends StatelessWidget {
     super.key,
     required this.presence,
     this.maxSeats = 5,
+    this.selfUserId,
   });
 
   final List<ChatRoomPresence> presence;
   final int maxSeats;
+  final String? selfUserId;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +44,7 @@ class PkMicParticipantRow extends StatelessWidget {
                         user: seats[i],
                         seatIndex: i + 1,
                         size: 52,
+                        selfUserId: selfUserId,
                       ),
               ),
             ),

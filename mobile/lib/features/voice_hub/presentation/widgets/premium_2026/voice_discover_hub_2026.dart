@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/ui/premium_2026/liquid_glass.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
-import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_visual.dart';
+import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_room_card.dart';
 import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/performance/list_perf.dart';
 import '../../../../../core/widgets/lazy_list_views.dart';
@@ -320,9 +320,8 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
             scrollDirection: Axis.horizontal,
             itemCount: popular.take(10).length,
             separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (context, j) => _PopularRoomCard(
+            itemBuilder: (context, j) => DiscoverPremiumRoomCard(
               room: popular[j],
-              index: j,
               width: metrics.popularCardWidth,
               onTap: () => widget.onRoomTap(popular[j]),
             ),

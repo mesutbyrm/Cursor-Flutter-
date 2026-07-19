@@ -30,6 +30,11 @@ import '../../gifts/presentation/widgets/gift_battle_strip.dart';
 import 'providers/voice_gift_combo_tracker.dart';
 import 'providers/voice_gift_leaderboard_provider.dart';
 import '../../auth/domain/entities/user_entity.dart';
+import '../../vip_gold/domain/vip_tier.dart';
+import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
+import '../../cosmetics/presentation/providers/cosmetics_providers.dart';
+import '../../cosmetics/presentation/widgets/cosmetic_entrance_overlay.dart';
+import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import '../../trtc/presentation/trtc_room_manager.dart';
 import '../domain/entities/chat_room_dj_state.dart';
 import '../domain/entities/chat_room_message.dart';
@@ -112,6 +117,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _musicSearchOpen = false;
   LiveGiftEvent? _fullscreenGift;
   final _messageFocus = FocusNode();
+  var _showVipEntrance = false;
+  var _vipEntrancePlayed = false;
   /// Riverpod oturum anahtarı — metadata değişince provider dispose olmasın.
   String? _pinnedLiveRoomKey;
 
@@ -147,6 +154,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         unawaited(ref.read(voiceRoomsProvider.future));
       }
       _startGiftRealtime();
+      final user = ref.read(authControllerProvider).valueOrNull;
+      if (user != null) _maybeShowEntrance(user);
       unawaited(_joinAudioBackground());
       _prefetchRoomImages();
       _bindSseParticipants();
@@ -450,6 +459,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
   }
 
+  void _maybeShowEntrance(UserEntity user) {
+    if (_vipEntrancePlayed || !mounted) return;
+    final cosmetic = ref.read(resolvedEntranceEffectProvider);
+    final tier = ref.read(vipTierProvider);
+    if (cosmetic == null && !tier.hasEntranceFx) return;
+    _vipEntrancePlayed = true;
+    if (mounted) setState(() => _showVipEntrance = true);
+  }
+
   Future<void> _joinAudioBackground() async {
     if (!mounted) return;
     setState(() {
@@ -468,6 +486,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
 
     setState(() => _loginError = null);
+    _maybeShowEntrance(user);
 
     var room = _effectiveRoom();
     if (room.apiRoomKey.isEmpty && widget.room.apiRoomKey.isNotEmpty) {
@@ -1762,6 +1781,31 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
             ),
             SafePremiumGiftFullscreenOverlay(event: _fullscreenGift),
+            if (_showVipEntrance && user != null)
+              Builder(
+                builder: (context) {
+                  final name = user.displayName?.trim().isNotEmpty == true
+                      ? user.displayName!.trim()
+                      : user.username;
+                  final cosmetic = ref.watch(resolvedEntranceEffectProvider);
+                  if (cosmetic != null) {
+                    return CosmeticEntranceOverlay(
+                      userName: name,
+                      effectKind: cosmetic.effectKind,
+                      onFinished: () {
+                        if (mounted) setState(() => _showVipEntrance = false);
+                      },
+                    );
+                  }
+                  return VipEntranceOverlay(
+                    tier: ref.watch(vipTierProvider),
+                    userName: name,
+                    onFinished: () {
+                      if (mounted) setState(() => _showVipEntrance = false);
+                    },
+                  );
+                },
+              ),
             // Sesli sohbet prompt: sağ kayar DJ paneli kaldırıldı; müzik !istek + komutlar.
           ],
         ),
