@@ -17,8 +17,11 @@ import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_provider.dart';
 import '../providers/pk_battle_remote_provider.dart';
+import '../providers/staff_entrance_marquee_provider.dart';
 import '../providers/voice_gift_combo_tracker.dart';
+import '../providers/voice_gift_leaderboard_provider.dart';
 import '../providers/voice_gift_providers.dart';
+import '../providers/voice_room_ui_provider.dart';
 import '../theme/voice_room_tokens.dart';
 import '../widgets/premium_2026/voice_cosmic_background.dart';
 import '../widgets/premium_2026/pk/pk_action_bottom_bar.dart';
@@ -126,9 +129,26 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   void _onGiftEvent(LiveGiftEvent raw) {
     if (!mounted) return;
     final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
+    ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
+    ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier).announceGift(event);
+
+    final ui = ref.read(voiceRoomUiProvider);
+    if (ui.giftAnimationsEnabled) {
+      ref.read(voiceGiftFlightQueueProvider.notifier).enqueue(event);
+    }
+
     final toLeft = ref.read(pkBattleProvider.notifier).giftTargetsLeft(event);
     _lastGiftSideLeft = toLeft;
     ref.read(pkBattleProvider.notifier).applyGift(event, toLeft: toLeft);
+
+    if (event.jetonAmount >= 1000) {
+      ref.read(staffEntranceMarqueeProvider.notifier).enqueueBigGift(
+            senderName: event.senderName,
+            receiverName: event.receiverName,
+            jeton: event.jetonAmount,
+            giftName: event.giftName,
+          );
+    }
   }
 
   @override

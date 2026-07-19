@@ -83,30 +83,28 @@ abstract final class SessionGiftSummaryBuilder {
     final myId = myUserId?.trim() ?? '';
     final myName = myDisplayName?.trim() ?? '';
 
-    var ownerGross = 0;
-    if (ownerId.isNotEmpty) {
-      ownerGross = seatTotals[VoiceSeatGiftTotals.idKey(ownerId)]?.totalCoins ?? 0;
-    }
-    if (ownerGross == 0 && ownerName.isNotEmpty) {
-      ownerGross =
-          seatTotals[VoiceSeatGiftTotals.nameKey(ownerName)]?.totalCoins ?? 0;
-    }
+    var ownerNet = 0;
+    var guestNet = 0;
 
-    var guestGross = 0;
     for (final entry in seatTotals.entries) {
       final agg = entry.value;
-      if (ownerId.isNotEmpty && entry.key == VoiceSeatGiftTotals.idKey(ownerId)) {
-        continue;
+      final gross = agg.totalCoins;
+      if (gross <= 0) continue;
+      final isOwnerSeat = (ownerId.isNotEmpty &&
+              entry.key == VoiceSeatGiftTotals.idKey(ownerId)) ||
+          (ownerName.isNotEmpty &&
+              entry.key == VoiceSeatGiftTotals.nameKey(ownerName));
+      final split = GiftRevenueDisplay.estimateVoiceGift(
+        gross: gross,
+        receiverIsOwner: isOwnerSeat,
+      );
+      if (isOwnerSeat) {
+        ownerNet += split.receiverNet;
+      } else {
+        guestNet += split.receiverNet;
+        ownerNet += split.ownerNet;
       }
-      if (ownerName.isNotEmpty &&
-          entry.key == VoiceSeatGiftTotals.nameKey(ownerName)) {
-        continue;
-      }
-      guestGross += agg.totalCoins;
     }
-
-    final ownerNet = GiftRevenueDisplay.liveBroadcasterNet(ownerGross);
-    final guestNet = GiftRevenueDisplay.liveBroadcasterNet(guestGross);
 
     final isOwner = myId.isNotEmpty && myId == ownerId;
     var myNet = 0;
@@ -118,7 +116,10 @@ abstract final class SessionGiftSummaryBuilder {
             displayName: myName.isNotEmpty ? myName : null,
           );
       if (mine != null && mine.totalCoins > 0) {
-        myNet = GiftRevenueDisplay.liveBroadcasterNet(mine.totalCoins);
+        myNet = GiftRevenueDisplay.estimateVoiceGift(
+          gross: mine.totalCoins,
+          receiverIsOwner: false,
+        ).receiverNet;
       }
     }
 

@@ -19,11 +19,13 @@ void main() {
     expect(s.hasData, isTrue);
   });
 
-  test('voice estimate 50/50 for summary guest net', () {
+  test('voice guest split — alıcı net yayıncı payından ayrı', () {
     final r = GiftRevenueDisplay.estimateVoiceGift(
-      gross: 200,
+      gross: 100,
       receiverIsOwner: false,
     );
-    expect(GiftRevenueDisplay.liveBroadcasterNet(r.receiverNet), 50);
+    expect(r.receiverNet, 35);
+    expect(r.ownerNet, 15);
+    expect(r.siteAmount, 50);
   });
 }

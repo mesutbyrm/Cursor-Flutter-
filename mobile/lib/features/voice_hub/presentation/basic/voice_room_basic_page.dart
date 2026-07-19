@@ -27,6 +27,7 @@ import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../../gifts/domain/gift_revenue_display.dart';
 import '../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
+import '../providers/staff_entrance_marquee_provider.dart';
 import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_leaderboard_provider.dart';
 import '../providers/voice_recent_gifts_provider.dart';
@@ -340,7 +341,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       final receiverIsOwner = event.receiverName.trim().toLowerCase() ==
           (room.ownerName ?? '').trim().toLowerCase();
       final ownerNet = GiftRevenueDisplay.voiceOwnerDisplayNet(
-        gross: event.coinCost * event.quantity,
+        gross: event.jetonAmount,
         receiverIsOwner: receiverIsOwner,
       );
       if (ownerNet > 0) {
@@ -357,7 +358,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
     final showFullscreen = PremiumGiftCatalog2026.triggersFullscreen(
       giftId: event.giftId,
-      coinCost: event.coinCost,
+      coinCost: event.jetonAmount,
     );
     if (showFullscreen) {
       if (mounted) setState(() => _fullscreenGift = event);
@@ -367,6 +368,15 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           setState(() => _fullscreenGift = null);
         }
       });
+    }
+
+    if (event.jetonAmount >= 1000) {
+      ref.read(staffEntranceMarqueeProvider.notifier).enqueueBigGift(
+            senderName: event.senderName,
+            receiverName: event.receiverName,
+            jeton: event.jetonAmount,
+            giftName: event.giftName,
+          );
     }
   }
 

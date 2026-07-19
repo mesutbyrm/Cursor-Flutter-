@@ -97,9 +97,6 @@ class LiveGiftController extends ChangeNotifier {
         pkMatchId: pkMatchId,
       );
       if (result.newBalance != null) coinBalance = result.newBalance;
-      final gross = gift.price * quantity;
-      streamerEarnings =
-          (streamerEarnings ?? 0) + GiftRevenueDisplay.liveBroadcasterNet(gross);
 
       final base = result.event!;
       final enriched = _withoutCombo(

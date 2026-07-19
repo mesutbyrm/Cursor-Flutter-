@@ -155,7 +155,6 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       onMessage: (msg) => _mergeMessages([msg]),
       onGift: (ev) {
         ref.read(liveGiftRealtimeProvider).publishRemote(ev);
-        ref.read(liveGiftLeaderboardProvider(streamId).notifier).record(ev);
       },
       onStreamEnded: () {
         state = state.copyWith(streamEnded: true);

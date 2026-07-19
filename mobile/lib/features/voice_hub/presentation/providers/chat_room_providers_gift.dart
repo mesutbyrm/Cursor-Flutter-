@@ -41,7 +41,6 @@ extension VoiceRoomGiftControls on VoiceRoomLiveController {
           accessToken: storage.readAccess,
           onEvent: (ev) {
             ref.read(voiceRoomGiftRealtimeProvider).publishRemote(ev);
-            ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(ev);
             if (!state.sseConnected) {
               ref.read(voiceRoomGiftRealtimeProvider).setSocketPreferred(true);
             }

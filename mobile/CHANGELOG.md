@@ -1,6 +1,23 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.60+87 (2026-07-19)
+
+### Hediye senkronizasyonu ve jeton gösterimi
+- **Çift sayım düzeltildi:** 1000 jeton artık 2000 olarak görünmüyor (`jetonAmount` brüt; `coinCost × quantity` tekrar çarpılmıyor)
+- **Tüm cihazlarda hediye:** SSE/socket → tek `publishRemote` hattı; sayfa dinleyicisi kayıt + duyuru + animasyon
+- **Gönderen sıralaması:** Olay kimliği ile dedupe; gönderici başına brüt jeton toplamı
+- **Canlı yayın:** Liderlik tablosu dedupe; göndericide çift kazanç düzeltmesi
+
+### Oturum sonu net paylaşım (sesli oda + canlı)
+- Yayıncıya hediye: brüt 100 → yayıncı net 50, site 50
+- Misafire hediye: brüt 100 → misafir 35, yayıncı 15, site 50
+- Herkese görünen tutar her zaman **brüt** (100 jeton = 100 gösterilir)
+
+### Canlı Falcılar (TRTC)
+- Odaya girmeden önce eski TRTC oturumu kapatılır (donma çakışması)
+- Oda kimliği değişince tam yeniden bağlanma (yalnızca `reconnect` değil)
+
 ## 1.0.59+86 (2026-07-19)
 
 ### Premium entegrasyon — eksik bağlantılar tamamlandı
