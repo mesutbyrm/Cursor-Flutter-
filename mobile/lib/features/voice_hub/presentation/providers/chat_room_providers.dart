@@ -1046,8 +1046,6 @@ class VoiceRoomLiveController
             );
             if (ev != null) {
               ref.read(voiceRoomGiftRealtimeProvider).publishRemote(ev);
-              ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(ev);
-              announceGift(ev);
             }
           },
           onMessage: (msg) {

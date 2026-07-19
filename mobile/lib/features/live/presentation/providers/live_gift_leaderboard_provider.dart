@@ -46,6 +46,7 @@ class LiveGiftSender {
 class LiveGiftLeaderboardNotifier
     extends AutoDisposeFamilyNotifier<List<LiveGiftSender>, String> {
   final _totals = <String, _Agg>{};
+  final _recordedIds = <String>{};
 
   @override
   List<LiveGiftSender> build(String streamId) {
@@ -65,6 +66,7 @@ class LiveGiftLeaderboardNotifier
 
   void setInitialFromApi(List<GiftLeaderboardEntry> entries) {
     _totals.clear();
+    _recordedIds.clear();
     for (final e in entries) {
       final id = e.userId ?? e.displayName;
       if (id.isEmpty) continue;
@@ -82,6 +84,9 @@ class LiveGiftLeaderboardNotifier
   }
 
   void record(LiveGiftEvent event) {
+    final eventId = event.id.trim();
+    if (eventId.isNotEmpty && !_recordedIds.add(eventId)) return;
+
     final id = event.senderId ?? event.senderName;
     if (id.isEmpty) return;
     final coins = event.jetonAmount;
@@ -118,6 +123,7 @@ class LiveGiftLeaderboardNotifier
 
   void clear() {
     _totals.clear();
+    _recordedIds.clear();
     state = const [];
   }
 }

@@ -145,6 +145,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   var _remoteEndHandled = false;
   final _seenSignalIds = <String>{};
   String? _joinedTrtcRoom;
+  var _rejoiningRtc = false;
 
   TrtcRoomManager get trtc => _trtc;
   bool get micOn => _trtc.micOn;
@@ -345,14 +346,48 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   Future<void> _rejoinRtc() async {
+    if (_disposed || state.leaving || _rejoiningRtc) return;
+    final roomId = _activeTrtcRoomId();
+    if (roomId.isEmpty) return;
+    if (_joinedTrtcRoom == roomId && state.rtcReady) return;
+
+    _rejoiningRtc = true;
     _joinedTrtcRoom = null;
+    state = state.copyWith(rtcReady: false, clearRtcError: true);
     try {
-      await _trtcCoordinator?.reconnect();
-      _joinedTrtcRoom = session.trtcRoomId;
+      final user = await _waitForAuth();
+      if (user == null) {
+        state = state.copyWith(rtcError: 'Oturum için giriş gerekli');
+        return;
+      }
+      if (_trtc.inRoom) {
+        await _trtc.leave();
+      }
+      await _trtcCoordinator?.leave();
+      _trtcCoordinator?.dispose();
+      _trtcCoordinator = createTrtcLiveRoomCoordinator(ref);
+      await _trtcCoordinator!.join(
+        roomId: roomId,
+        roomType: 'stream',
+        userId: user.id,
+        isHost: !session.isClient,
+        twoWayVideo: true,
+        expectedAnchorUserId: session.remotePeerIdFor(room: state.room),
+      );
+      _joinedTrtcRoom = roomId;
+      ref.read(liveBeautyProvider.notifier).bindRtc(trtc: _trtc);
       state = state.copyWith(rtcReady: true, clearRtcError: true);
     } catch (e) {
       state = state.copyWith(rtcError: ApiException.userMessage(e));
+    } finally {
+      _rejoiningRtc = false;
     }
+  }
+
+  String _activeTrtcRoomId() {
+    final fromRoom = state.room?.roomId?.trim();
+    if (fromRoom != null && fromRoom.isNotEmpty) return fromRoom;
+    return session.trtcRoomId.trim();
   }
 
   Future<void> _sendPing() async {
@@ -514,6 +549,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
     _trtcCoordinator?.dispose();
     _trtcCoordinator = createTrtcLiveRoomCoordinator(ref);
+
+    if (_trtc.inRoom) {
+      await _trtc.leave();
+    }
 
     await _trtcCoordinator!.join(
       roomId: roomId,

@@ -45,9 +45,7 @@ class _GiftBanner extends StatelessWidget {
     final jeton = event.jetonAmount;
     final qtyLabel = event.quantity > 1 ? ' ×${event.quantity}' : '';
     final imageUrl = event.displayImageUrl;
-    final totalJeton = jeton > 0
-        ? (event.quantity > 1 ? jeton * event.quantity : jeton)
-        : 0;
+    final totalJeton = jeton;
 
     return RepaintBoundary(
       child: ConstrainedBox(
