@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.61+88 (2026-07-19)
+
+### Sesli oda ayarları — üst menü kaldırıldı, alt Ayarlar birleşik
+- Üstteki **⋯** (üç nokta) menü kaldırıldı; tüm işlevler **Ayarlar** alt menüsünde
+- **Kullanıcı yönetimi:** yetki ver, kullanıcı listesi, cezalar, sessize alınanlar
+- **Sohbet yönetimi:** oda sessize, sohbet temizle, oda komutları
+- **Oda yönetimi:** PK, müzik, arkaplan, hediye savaşı/hedefi
+- **Kullanıcı ayarları:** rumuz, efektler, bildirim sesi, jeton
+- Sunucu `myPermissions` bayrakları (`canGiveVoice`, `canGiveOp`, `canGiveSop`…) kullanılıyor
+- **Ses verilince** boş koltuğa otomatik alma + mikrofon açma (alıcı cihazda)
+
 ## 1.0.60+87 (2026-07-19)
 
 ### Hediye senkronizasyonu ve jeton gösterimi
