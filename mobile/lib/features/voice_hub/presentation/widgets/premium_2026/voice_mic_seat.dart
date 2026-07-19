@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
+import 'package:canlifal_social/features/cosmetics/presentation/providers/cosmetics_providers.dart';
+import 'package:canlifal_social/features/cosmetics/presentation/widgets/cosmetic_mic_frame_ring.dart';
 import '../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
@@ -12,7 +14,7 @@ import '../../theme/voice_room_tokens.dart';
 import 'voice_seat_avatar_frame.dart';
 
 /// Tek mikrofon koltuğu — boş, kilitli veya dolu (Faz 12 cam yuvarlak tasarım).
-class VoiceMicSeat extends StatelessWidget {
+class VoiceMicSeat extends ConsumerWidget {
   const VoiceMicSeat({
     super.key,
     this.user,
@@ -50,7 +52,7 @@ class VoiceMicSeat extends StatelessWidget {
   bool _resolveMicOpen(ChatRoomPresence u) => micOpen ?? u.micOpen;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (user == null) {
       return _EmptySeat(
         seatIndex: seatIndex,
@@ -65,6 +67,39 @@ class VoiceMicSeat extends StatelessWidget {
     final levelLabel = _levelLabel(user!);
     final videoChild = _trtcVideoChild();
     final micOn = _resolveMicOpen(user!);
+    final isSelf = selfUserId != null && user!.id == selfUserId;
+    final micCosmetic =
+        isSelf ? ref.watch(resolvedMicrophoneFrameProvider) : null;
+
+    Widget avatar = videoChild != null
+        ? ClipOval(
+            child: SizedBox(
+              width: size,
+              height: size,
+              child: videoChild,
+            ),
+          )
+        : VoiceSeatAvatarFrame(
+            imageUrl: user!.image,
+            size: size,
+            role: SeatAvatarRoleResolver.resolve(
+              user: user!,
+              isHost: isHost,
+              isRoomDj: djUserIds.contains(user!.id) ||
+                  room?.djUserIds.contains(user!.id) == true,
+            ),
+            speaking: speaking,
+            micOpen: micOn,
+          );
+
+    if (micCosmetic != null) {
+      avatar = CosmeticMicFrameRing(
+        item: micCosmetic,
+        size: size,
+        micOpen: micOn,
+        child: avatar,
+      );
+    }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -75,26 +110,7 @@ class VoiceMicSeat extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: onTap,
-              child: videoChild != null
-                  ? ClipOval(
-                      child: SizedBox(
-                        width: size,
-                        height: size,
-                        child: videoChild,
-                      ),
-                    )
-                  : VoiceSeatAvatarFrame(
-                      imageUrl: user!.image,
-                      size: size,
-                      role: SeatAvatarRoleResolver.resolve(
-                        user: user!,
-                        isHost: isHost,
-                        isRoomDj: djUserIds.contains(user!.id) ||
-                            room?.djUserIds.contains(user!.id) == true,
-                      ),
-                      speaking: speaking,
-                      micOpen: micOn,
-                    ),
+              child: avatar,
             ),
             if (vip && !isHost)
               Positioned(

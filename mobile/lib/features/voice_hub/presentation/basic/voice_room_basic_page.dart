@@ -47,6 +47,8 @@ import '../theme/voice_room_tokens.dart';
 import '../widgets/premium/voice_gift_flight_overlay.dart';
 import '../widgets/premium_2026/voice_cosmic_background.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
+import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
+import '../../../cosmetics/presentation/widgets/cosmetic_entrance_overlay.dart';
 import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'voice_room_basic_moderation_section.dart';
 import '../sheets/voice_room_menu_sheet.dart';
@@ -370,8 +372,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
   void _maybeShowVipEntrance(UserEntity user) {
     if (_vipEntrancePlayed || !mounted) return;
+    final cosmetic = ref.read(resolvedEntranceEffectProvider);
     final tier = ref.read(vipTierProvider);
-    if (!tier.hasEntranceFx) return;
+    if (cosmetic == null && !tier.hasEntranceFx) return;
     _vipEntrancePlayed = true;
     if (mounted) setState(() => _showVipEntrance = true);
   }
@@ -917,13 +920,28 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             ),
             SafePremiumGiftFullscreenOverlay(event: _fullscreenGift),
             if (_showVipEntrance && user != null)
-              VipEntranceOverlay(
-                tier: ref.watch(vipTierProvider),
-                userName: user.displayName?.trim().isNotEmpty == true
-                    ? user.displayName!.trim()
-                    : user.username,
-                onFinished: () {
-                  if (mounted) setState(() => _showVipEntrance = false);
+              Builder(
+                builder: (context) {
+                  final name = user.displayName?.trim().isNotEmpty == true
+                      ? user.displayName!.trim()
+                      : user.username;
+                  final cosmetic = ref.watch(resolvedEntranceEffectProvider);
+                  if (cosmetic != null) {
+                    return CosmeticEntranceOverlay(
+                      userName: name,
+                      effectKind: cosmetic.effectKind,
+                      onFinished: () {
+                        if (mounted) setState(() => _showVipEntrance = false);
+                      },
+                    );
+                  }
+                  return VipEntranceOverlay(
+                    tier: ref.watch(vipTierProvider),
+                    userName: name,
+                    onFinished: () {
+                      if (mounted) setState(() => _showVipEntrance = false);
+                    },
+                  );
                 },
               ),
           ],

@@ -7,6 +7,7 @@ import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../data/cosmetic_loadout_store.dart';
 import '../../data/cosmetics_catalog_cache.dart';
+import '../../data/cosmetics_equip_remote_datasource.dart';
 import '../../data/cosmetics_remote_datasource.dart';
 import '../../domain/cosmetic_catalog_defaults.dart';
 import '../../domain/cosmetic_item.dart';
@@ -17,13 +18,17 @@ final cosmeticsRemoteProvider = Provider<CosmeticsRemoteDataSource>((ref) {
   return CosmeticsRemoteDataSource(ref.watch(dioProvider));
 });
 
+final cosmeticsEquipRemoteProvider =
+    Provider<CosmeticsEquipRemoteDataSource>((ref) {
+  return CosmeticsEquipRemoteDataSource(ref.watch(dioProvider));
+});
+
 final profileFramesCatalogProvider =
     FutureProvider<List<CosmeticItem>>((ref) async {
   final prefs = await SharedPreferences.getInstance();
   final cache = CosmeticsCatalogCache(prefs);
   final cached = await cache.read();
   if (cached != null && cached.isNotEmpty) {
-    // Arka planda tazele.
     Future.microtask(() async {
       try {
         final remote =
@@ -66,7 +71,17 @@ class CosmeticLoadoutNotifier extends AsyncNotifier<UserCosmeticLoadout> {
   Future<UserCosmeticLoadout> build() async {
     final userId = ref.watch(authControllerProvider).valueOrNull?.id ?? '';
     if (userId.isEmpty) return const UserCosmeticLoadout.empty();
-    return (await _ensureStore()).read(userId);
+
+    final local = await (await _ensureStore()).read(userId);
+    try {
+      final remote =
+          await ref.read(cosmeticsEquipRemoteProvider).fetchRemoteLoadout();
+      if (remote != null && remote.equipped.isNotEmpty) {
+        await (await _ensureStore()).write(userId, remote);
+        return remote;
+      }
+    } catch (_) {}
+    return local;
   }
 
   Future<void> equip(CosmeticSlot slot, String? itemId) async {
@@ -76,7 +91,21 @@ class CosmeticLoadoutNotifier extends AsyncNotifier<UserCosmeticLoadout> {
     final next = current.copyWithEquipped(slot, itemId);
     state = AsyncData(next);
     await (await _ensureStore()).write(userId, next);
+    await ref.read(cosmeticsEquipRemoteProvider).pushEquip(slot, itemId);
   }
+}
+
+CosmeticItem? _resolveEquipped(
+  CosmeticSlot slot,
+  UserCosmeticLoadout? loadout,
+  List<CosmeticItem> catalog,
+) {
+  final id = loadout?.idFor(slot);
+  if (id == null) return null;
+  for (final c in catalog) {
+    if (c.id == id) return c;
+  }
+  return null;
 }
 
 final resolvedProfileFrameProvider = Provider<CosmeticItem?>((ref) {
@@ -86,14 +115,14 @@ final resolvedProfileFrameProvider = Provider<CosmeticItem?>((ref) {
   final catalog = ref.watch(profileFramesCatalogProvider).valueOrNull ??
       CosmeticCatalogDefaults.forSlot(CosmeticSlot.profileFrame);
 
-  final equippedId = loadout?.idFor(CosmeticSlot.profileFrame);
-  if (equippedId != null) {
-    for (final picked in catalog) {
-      if (picked.id == equippedId &&
-          picked.isUnlockedFor(tier: tier, role: user?.role)) {
-        return picked;
-      }
-    }
+  final picked = _resolveEquipped(
+    CosmeticSlot.profileFrame,
+    loadout,
+    catalog,
+  );
+  if (picked != null &&
+      picked.isUnlockedFor(tier: tier, role: user?.role)) {
+    return picked;
   }
 
   return CosmeticCatalogDefaults.defaultFrameFor(
@@ -104,34 +133,54 @@ final resolvedProfileFrameProvider = Provider<CosmeticItem?>((ref) {
 });
 
 final resolvedNameEffectProvider = Provider<CosmeticItem?>((ref) {
-  final tier = ref.watch(vipTierProvider);
-  if (tier.index < VipTier.gold.index) return null;
-  final loadout = ref.watch(cosmeticLoadoutProvider).valueOrNull;
-  final id = loadout?.idFor(CosmeticSlot.nameEffect);
-  if (id == null) return null;
-  for (final c in CosmeticCatalogDefaults.forSlot(CosmeticSlot.nameEffect)) {
-    if (c.id == id) return c;
-  }
-  return null;
+  if (ref.watch(vipTierProvider).index < VipTier.gold.index) return null;
+  return _resolveEquipped(
+    CosmeticSlot.nameEffect,
+    ref.watch(cosmeticLoadoutProvider).valueOrNull,
+    CosmeticCatalogDefaults.forSlot(CosmeticSlot.nameEffect),
+  );
 });
 
 final resolvedProfileEffectProvider = Provider<CosmeticItem?>((ref) {
-  final tier = ref.watch(vipTierProvider);
-  if (tier.index < VipTier.gold.index) return null;
-  final loadout = ref.watch(cosmeticLoadoutProvider).valueOrNull;
-  final id = loadout?.idFor(CosmeticSlot.profileEffect);
-  if (id == null) return null;
-  for (final c in CosmeticCatalogDefaults.forSlot(CosmeticSlot.profileEffect)) {
-    if (c.id == id) return c;
-  }
-  return null;
+  if (ref.watch(vipTierProvider).index < VipTier.gold.index) return null;
+  return _resolveEquipped(
+    CosmeticSlot.profileEffect,
+    ref.watch(cosmeticLoadoutProvider).valueOrNull,
+    CosmeticCatalogDefaults.forSlot(CosmeticSlot.profileEffect),
+  );
+});
+
+final resolvedEntranceEffectProvider = Provider<CosmeticItem?>((ref) {
+  if (ref.watch(vipTierProvider).index < VipTier.gold.index) return null;
+  return _resolveEquipped(
+    CosmeticSlot.entranceAnimation,
+    ref.watch(cosmeticLoadoutProvider).valueOrNull,
+    CosmeticCatalogDefaults.forSlot(CosmeticSlot.entranceAnimation),
+  );
+});
+
+final resolvedChatBubbleProvider = Provider<CosmeticItem?>((ref) {
+  if (ref.watch(vipTierProvider).index < VipTier.gold.index) return null;
+  return _resolveEquipped(
+    CosmeticSlot.chatBubble,
+    ref.watch(cosmeticLoadoutProvider).valueOrNull,
+    CosmeticCatalogDefaults.forSlot(CosmeticSlot.chatBubble),
+  );
+});
+
+final resolvedMicrophoneFrameProvider = Provider<CosmeticItem?>((ref) {
+  if (ref.watch(vipTierProvider).index < VipTier.gold.index) return null;
+  return _resolveEquipped(
+    CosmeticSlot.microphoneFrame,
+    ref.watch(cosmeticLoadoutProvider).valueOrNull,
+    CosmeticCatalogDefaults.forSlot(CosmeticSlot.microphoneFrame),
+  );
 });
 
 final canCustomizeCosmeticsProvider = Provider<bool>((ref) {
   return ref.watch(vipTierProvider).index >= VipTier.gold.index;
 });
 
-/// Üyelik rozeti — `GET /api/membership-badges` + tier eşleşmesi.
 final resolvedMembershipBadgeProvider = Provider<CosmeticItem?>((ref) {
   final tier = ref.watch(vipTierProvider);
   if (tier == VipTier.basic) return null;
@@ -144,5 +193,19 @@ final resolvedMembershipBadgeProvider = Provider<CosmeticItem?>((ref) {
 });
 
 List<CosmeticItem> catalogForSlot(CosmeticSlot slot) {
+  return CosmeticCatalogDefaults.forSlot(slot);
+}
+
+List<CosmeticItem> mergedCatalogForSlot(
+  WidgetRef ref,
+  CosmeticSlot slot,
+) {
+  if (slot == CosmeticSlot.profileFrame) {
+    final remote = ref.watch(profileFramesCatalogProvider).valueOrNull;
+    final local = CosmeticCatalogDefaults.forSlot(slot);
+    if (remote == null || remote.isEmpty) return local;
+    final ids = remote.map((e) => e.id).toSet();
+    return [...remote, ...local.where((e) => !ids.contains(e.id))];
+  }
   return CosmeticCatalogDefaults.forSlot(slot);
 }

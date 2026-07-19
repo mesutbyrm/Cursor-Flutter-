@@ -4,6 +4,7 @@ import '../premium_2026/profile_lazy_sections.dart';
 import '../premium_2026/profile_screen_state.dart';
 import 'profile_hub_about_stats_row.dart';
 import 'profile_hub_badges_section.dart';
+import 'profile_hub_membership_badges_section.dart';
 import 'profile_hub_currency_card.dart';
 import 'profile_hub_header.dart';
 import 'profile_hub_quick_menu.dart';
@@ -66,6 +67,8 @@ class ProfileHubLayout extends StatelessWidget {
           username: state.user.username,
           displayName: state.user.display,
         ),
+        const SizedBox(height: 12),
+        const ProfileHubMembershipBadgesSection(),
         const SizedBox(height: 12),
         LayoutBuilder(
           builder: (context, c) {
