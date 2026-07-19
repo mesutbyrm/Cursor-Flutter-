@@ -868,6 +868,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       perms: perms,
       isOwner: isOwner,
       onUserTap: _openUser,
+      onPkInvite: () => unawaited(_openPkInvite(room)),
     );
   }
 

@@ -92,6 +92,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   LiveGiftEvent? _fullscreenGift;
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
+  int? _lastSelfSeatIndex;
   String get _liveRoomKey {
     final pinned = _pinnedLiveRoomKey?.trim();
     if (pinned != null && pinned.isNotEmpty) return pinned;
@@ -498,25 +499,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       perms: perms,
       isOwner: isOwner,
       onUserTap: (u) => _openUser(u, room, perms),
-    );
-  }
-
-  void _openTools(
-    VoiceRoomEntity room,
-    VoiceRoomLiveState live,
-    VoiceRoomPermissions perms,
-    bool isOwner,
-    UserEntity? user,
-    bool canControlMusic,
-  ) {
-    showVoiceRoomMenuSheet(
-      context,
-      ref,
-      room: room,
-      live: live,
-      perms: perms,
-      isOwner: isOwner,
-      onUserTap: (p) => _openUser(p, room, perms),
       onPkInvite: () => openVoiceRoomBasicPkInvite(context, room),
     );
   }
@@ -772,6 +754,16 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             room: room,
             presence: next.presence,
           );
+          final seat = selfPresence?.seatIndex;
+          if (canSpeak &&
+              seat != null &&
+              seat != _lastSelfSeatIndex &&
+              _audioReady &&
+              _isMicMuted) {
+            _audio?.setMicEnabled(true);
+            if (mounted) setState(() => _isMicMuted = false);
+          }
+          _lastSelfSeatIndex = seat;
           if (!canSpeak && !_isMicMuted) {
             _audio?.setMicEnabled(false);
             if (mounted) setState(() => _isMicMuted = true);
@@ -809,14 +801,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     presence: live.presence,
                     room: room,
                     onUserTap: (u) => _openUser(u, room, perms),
-                  ),
-                  onMore: () => _openTools(
-                    room,
-                    live,
-                    perms,
-                    isOwner,
-                    user,
-                    canControlMusic,
                   ),
                   onCoinsTap: () => openJetonStore(context, ref: ref),
                 ),

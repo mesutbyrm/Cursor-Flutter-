@@ -18,6 +18,9 @@ class VoiceRoomPermissions {
     this.canBanUsers = false,
     this.canMuteRoom = false,
     this.canGiveVoice = false,
+    this.canGiveOp = false,
+    this.canGiveSop = false,
+    this.canGiveFounder = false,
     this.canManageRoom = false,
   });
 
@@ -31,6 +34,9 @@ class VoiceRoomPermissions {
   final bool canBanUsers;
   final bool canMuteRoom;
   final bool canGiveVoice;
+  final bool canGiveOp;
+  final bool canGiveSop;
+  final bool canGiveFounder;
   final bool canManageRoom;
 
   bool get hasFullAdmin => isSiteAdmin || isRoomOwner;
@@ -38,6 +44,27 @@ class VoiceRoomPermissions {
   bool get canTakeSeat => canModerate || isRoomOwner || canManageDj || canGiveVoice;
 
   bool get canAssignSeats => isRoomOwner || canManageRoom || canModerate;
+
+  bool get canManageUsers =>
+      canModerate ||
+      canMuteUsers ||
+      canKickUsers ||
+      canBanUsers ||
+      canGiveVoice ||
+      canGiveOp ||
+      canGiveSop ||
+      isRoomOwner ||
+      isSiteAdmin;
+
+  bool get canManageChat =>
+      canModerate || canMuteRoom || isRoomOwner || isSiteAdmin;
+
+  bool get canManageRoomSettings =>
+      canManageRoom ||
+      canChangeBackground ||
+      canManageDj ||
+      isRoomOwner ||
+      isSiteAdmin;
 
   static VoiceRoomPermissions forUser({
     required UserEntity? user,
@@ -77,6 +104,9 @@ class VoiceRoomPermissions {
         canBanUsers: true,
         canMuteRoom: true,
         canGiveVoice: true,
+        canGiveOp: true,
+        canGiveSop: true,
+        canGiveFounder: true,
         canManageRoom: true,
       );
     }
@@ -101,6 +131,13 @@ class VoiceRoomPermissions {
         canGiveVoice: server.canGiveVoice ||
             server.isRoomOwner ||
             server.canManageRoom,
+        canGiveOp: server.canGiveOp ||
+            server.isRoomOwner ||
+            server.isGlobalAdmin,
+        canGiveSop: server.canGiveSop ||
+            server.isRoomOwner ||
+            server.isGlobalAdmin,
+        canGiveFounder: server.canGiveFounder || server.isGlobalAdmin,
         canManageRoom: server.canManageRoom,
       );
     }
@@ -152,6 +189,9 @@ class VoiceRoomPermissions {
       canBanUsers: canKickBan,
       canMuteRoom: canKickBan,
       canGiveVoice: canMuteUsers || isRoomOwner || canManageRoom,
+      canGiveOp: canMuteUsers || isRoomOwner || canManageRoom,
+      canGiveSop: canKickBan || isRoomOwner || canManageRoom,
+      canGiveFounder: isSiteAdmin || isRoomOwner,
       canManageRoom: canManageRoom,
     );
   }

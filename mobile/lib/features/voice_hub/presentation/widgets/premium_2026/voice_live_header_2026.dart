@@ -133,11 +133,12 @@ class VoiceLiveHeader2026 extends StatelessWidget {
                 onTap: onCoinsTap,
                 child: _coinPill(),
               ),
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                onPressed: onMore ?? onShare,
-                icon: const Icon(Icons.more_horiz_rounded, color: Colors.white, size: 22),
-              ),
+              if (onMore != null)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onMore,
+                  icon: const Icon(Icons.more_horiz_rounded, color: Colors.white, size: 22),
+                ),
               IconButton(
                 visualDensity: VisualDensity.compact,
                 onPressed: onExit,

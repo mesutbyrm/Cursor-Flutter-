@@ -247,7 +247,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
         if (p.seatIndex != null) p.seatIndex!,
     };
     int? freeSeat;
-    for (var seat = 1; seat <= 14; seat++) {
+    for (var seat = 0; seat <= 14; seat++) {
       if (!occupied.contains(seat)) {
         freeSeat = seat;
         break;
