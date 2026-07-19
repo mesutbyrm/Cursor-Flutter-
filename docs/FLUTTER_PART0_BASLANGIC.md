@@ -1,6 +1,7 @@
 # CanlıFal Flutter — Başlangıç Kılavuzu (PART 0)
 
 > **Amaç:** `FLUTTER_PART1` … `FLUTTER_PART12` dosyalarının önerdiği sırayı tek sayfada özetlemek.  
+> **2026 Premium şartname:** [`FLUTTER_PREMIUM_2026_SARTNAME.md`](./FLUTTER_PREMIUM_2026_SARTNAME.md) — özellik matrisi ve yayın kontrol listesi.  
 > **Bu repoda API tek kaynağı:** [`FLUTTER_ENTegrasyon_KILAVUZU.md`](./FLUTTER_ENTegrasyon_KILAVUZU.md) (27 Haziran 2026). PART dosyaları ile çelişkide **kılavuz geçerlidir**.
 
 **Base URL:** `https://canlifal.com`  
