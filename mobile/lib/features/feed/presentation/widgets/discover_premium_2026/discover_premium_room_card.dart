@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
@@ -8,7 +10,7 @@ import '../../../domain/discover_category.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../voice_hub/presentation/widgets/premium_2026/voice_discover_2026.dart';
 
-/// Neon glow sesli oda kartı — yatay liste / grid.
+/// Neon glow sesli oda kartı — canlı dalga, rozetler, konuşan avatar vurgusu.
 class DiscoverPremiumRoomCard extends StatefulWidget {
   const DiscoverPremiumRoomCard({
     super.key,
@@ -28,8 +30,37 @@ class DiscoverPremiumRoomCard extends StatefulWidget {
       _DiscoverPremiumRoomCardState();
 }
 
-class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard> {
+class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard>
+    with TickerProviderStateMixin {
   var _pressed = false;
+  late final AnimationController _waveCtrl;
+  late final AnimationController _spinCtrl;
+  late final AnimationController _micCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _waveCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
+    _spinCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat();
+    _micCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _waveCtrl.dispose();
+    _spinCtrl.dispose();
+    _micCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,115 +68,193 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard> {
     final bg = widget.room.backgroundImageUrl;
     final h = widget.compact ? 200.0 : 220.0;
     final isVip = matchesDiscoverCategory(widget.room, 'vip');
+    final roomType = widget.room.roomType?.trim().toLowerCase() ?? '';
+    final level = _roomLevel(online);
+    final popularity = _popularityLabel(online);
 
     return RepaintBoundary(
       child: GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: widget.onTap,
-      child: AnimatedScale(
-        scale: _pressed ? 0.97 : 1,
-        duration: PremiumMotion.fast,
-        curve: PremiumMotion.spring,
-        child: AnimatedContainer(
-          duration: PremiumMotion.medium,
-          width: widget.width,
-          height: h,
-          decoration: BoxDecoration(
-            borderRadius:
-                BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
-            boxShadow: DiscoverPremiumVisual.cardGlow(pressed: _pressed),
-          ),
-          child: ClipRRect(
-            borderRadius:
-                BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (bg != null && bg.isNotEmpty)
-                  CanlifalNetworkImage(url: bg, fit: BoxFit.cover)
-                else
-                  const DecoratedBox(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _pressed ? 0.97 : 1,
+          duration: PremiumMotion.fast,
+          curve: PremiumMotion.spring,
+          child: AnimatedContainer(
+            duration: PremiumMotion.medium,
+            width: widget.width,
+            height: h,
+            decoration: BoxDecoration(
+              borderRadius:
+                  BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+              boxShadow: DiscoverPremiumVisual.cardGlow(pressed: _pressed),
+            ),
+            child: ClipRRect(
+              borderRadius:
+                  BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (bg != null && bg.isNotEmpty)
+                    CanlifalNetworkImage(url: bg, fit: BoxFit.cover)
+                  else
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF4C1D95), Color(0xFF1E1033)],
+                        ),
+                      ),
+                    ),
+                  DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Color(0xFF4C1D95), Color(0xFF1E1033)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.1),
+                          Colors.black.withValues(alpha: 0.82),
+                        ],
                       ),
                     ),
                   ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.1),
-                        Colors.black.withValues(alpha: 0.82),
-                      ],
-                    ),
+                  Positioned(
+                    left: 10,
+                    right: 10,
+                    bottom: 72,
+                    child: _LiveWaveform(controller: _waveCtrl),
                   ),
-                ),
-                Positioned(
-                  top: 10,
-                  left: 10,
-                  right: 10,
-                  child: Row(
-                    children: [
-                      _OnlinePill(count: online),
-                      const Spacer(),
-                      if (isVip) const _VipBadge(),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  left: 12,
-                  right: 12,
-                  bottom: 12,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        widget.room.displayTitle,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                          color: Colors.white,
-                          height: 1.15,
-                        ),
-                      ),
-                      if (widget.room.ownerName != null &&
-                          widget.room.ownerName!.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.room.ownerName!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.white.withValues(alpha: 0.65),
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    right: 10,
+                    child: Row(
+                      children: [
+                        _GlowingOnlinePill(count: online),
+                        const Spacer(),
+                        RotationTransition(
+                          turns: _spinCtrl,
+                          child: Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.4),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.music_note_rounded,
+                              size: 14,
+                              color: Color(0xFFFFD54F),
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 6),
+                        _MicPulse(controller: _micCtrl),
                       ],
-                      const SizedBox(height: 8),
-                      _AvatarStrip(avatars: widget.room.recentUserAvatars),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                  Positioned(
+                    top: 38,
+                    left: 10,
+                    right: 10,
+                    child: Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: [
+                        if (isVip) const _RoomBadge(label: 'VIP', colors: [Color(0xFFFFE082), Color(0xFFFF8F00)]),
+                        if (roomType.contains('gold')) const _RoomBadge(label: 'Gold', colors: [Color(0xFFFFF176), Color(0xFFFFB300)]),
+                        if (roomType.contains('admin')) const _RoomBadge(label: 'Admin', colors: [Color(0xFFEF5350), Color(0xFFB71C1C)]),
+                        _RoomBadge(label: 'Lv.$level', colors: const [Color(0xFF7C4DFF), Color(0xFF448AFF)]),
+                        if (popularity != null)
+                          _RoomBadge(label: popularity, colors: const [Color(0xFF26A69A), Color(0xFF00897B)]),
+                        if (roomType.isNotEmpty && !roomType.contains('gold') && !roomType.contains('admin'))
+                          _RoomBadge(label: _categoryLabel(roomType), colors: const [Color(0xFF5C6BC0), Color(0xFF3949AB)]),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    bottom: 12,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.room.displayTitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                            color: Colors.white,
+                            height: 1.15,
+                          ),
+                        ),
+                        if (widget.room.ownerName != null &&
+                            widget.room.ownerName!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const _RoomBadge(
+                                label: 'Sahip',
+                                colors: [Color(0xFFFFD54F), Color(0xFFFF8F00)],
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  widget.room.ownerName!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.white.withValues(alpha: 0.65),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 8),
+                        _SpeakingAvatarStrip(avatars: widget.room.recentUserAvatars),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-      ),
     );
+  }
+
+  int _roomLevel(int online) {
+    if (online >= 200) return 5;
+    if (online >= 100) return 4;
+    if (online >= 50) return 3;
+    if (online >= 20) return 2;
+    return 1;
+  }
+
+  String? _popularityLabel(int online) {
+    if (online >= 150) return '🔥 Popüler';
+    if (online >= 50) return '⭐ Aktif';
+    return null;
+  }
+
+  String _categoryLabel(String type) {
+    if (type.contains('tarot')) return 'Tarot';
+    if (type.contains('burc') || type.contains('zodiac')) return 'Burç';
+    if (type.contains('kahve') || type.contains('coffee')) return 'Kahve';
+    if (type.contains('muzik') || type.contains('music')) return 'Müzik';
+    if (type.contains('sohbet') || type.contains('chat')) return 'Sohbet';
+    return type.length > 12 ? '${type.substring(0, 12)}…' : type;
   }
 }
 
-class _OnlinePill extends StatelessWidget {
-  const _OnlinePill({required this.count});
+class _GlowingOnlinePill extends StatelessWidget {
+  const _GlowingOnlinePill({required this.count});
 
   final int count;
 
@@ -157,8 +266,16 @@ class _OnlinePill extends StatelessWidget {
         color: Colors.black.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppThemeColors.onlineGreen.withValues(alpha: 0.6),
+          color: const Color(0xFFFFD54F).withValues(alpha: 0.85),
         ),
+        boxShadow: count > 0
+            ? [
+                BoxShadow(
+                  color: const Color(0xFFFFD54F).withValues(alpha: 0.45),
+                  blurRadius: 10,
+                ),
+              ]
+            : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -169,8 +286,16 @@ class _OnlinePill extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: count > 0
-                  ? AppThemeColors.onlineGreen
+                  ? const Color(0xFFFFD54F)
                   : Colors.white.withValues(alpha: 0.35),
+              boxShadow: count > 0
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFFFFD54F).withValues(alpha: 0.8),
+                        blurRadius: 6,
+                      ),
+                    ]
+                  : null,
             ),
           ),
           const SizedBox(width: 5),
@@ -178,8 +303,11 @@ class _OnlinePill extends StatelessWidget {
             VoiceLiveHeader2026Format.count(count),
             style: const TextStyle(
               fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFFFFEE58),
+              shadows: [
+                Shadow(color: Color(0xFFFFD54F), blurRadius: 8),
+              ],
             ),
           ),
         ],
@@ -188,52 +316,153 @@ class _OnlinePill extends StatelessWidget {
   }
 }
 
-class _VipBadge extends StatelessWidget {
-  const _VipBadge();
+class _MicPulse extends StatelessWidget {
+  const _MicPulse({required this.controller});
+
+  final AnimationController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final scale = 0.9 + controller.value * 0.2;
+        return Transform.scale(
+          scale: scale,
+          child: Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: AppThemeColors.accentPink.withValues(alpha: 0.35),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppThemeColors.accentPink.withValues(alpha: 0.8),
+              ),
+            ),
+            child: const Icon(
+              Icons.mic_rounded,
+              size: 12,
+              color: Colors.white,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LiveWaveform extends StatelessWidget {
+  const _LiveWaveform({required this.controller});
+
+  final AnimationController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        return SizedBox(
+          height: 18,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: List.generate(16, (i) {
+              final phase = (controller.value + i * 0.08) % 1.0;
+              final h = 3 + math.sin(phase * math.pi * 2) * 6 + 4;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 0.5),
+                  child: Container(
+                    height: h,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(2),
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          const Color(0xFFB832FF).withValues(alpha: 0.9),
+                          const Color(0xFF00E5FF).withValues(alpha: 0.9),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _RoomBadge extends StatelessWidget {
+  const _RoomBadge({required this.label, required this.colors});
+
+  final String label;
+  final List<Color> colors;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFE082), Color(0xFFFF8F00)],
-        ),
-        borderRadius: BorderRadius.circular(10),
+        gradient: LinearGradient(colors: colors),
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: const Text(
-        'VIP',
-        style: TextStyle(
-          fontSize: 9,
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 8,
           fontWeight: FontWeight.w900,
-          color: Color(0xFF3E2723),
+          color: Colors.white,
         ),
       ),
     );
   }
 }
 
-class _AvatarStrip extends StatelessWidget {
-  const _AvatarStrip({required this.avatars});
+class _SpeakingAvatarStrip extends StatelessWidget {
+  const _SpeakingAvatarStrip({required this.avatars});
 
   final List<String> avatars;
 
   @override
   Widget build(BuildContext context) {
     final urls = avatars.where((u) => u.isNotEmpty).take(4).toList();
-    if (urls.isEmpty) return const SizedBox(height: 22);
+    if (urls.isEmpty) return const SizedBox(height: 26);
 
     return SizedBox(
-      height: 22,
+      height: 26,
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
           for (var i = 0; i < urls.length; i++)
             Positioned(
-              left: i * 14.0,
-              child: CircleAvatar(
-                radius: 11,
-                backgroundColor: const Color(0xFF1E1033),
-                backgroundImage: canlifalImageProvider(urls[i]),
+              left: i * 16.0,
+              bottom: 0,
+              child: AnimatedContainer(
+                duration: PremiumMotion.fast,
+                width: i == 0 ? 26 : 22,
+                height: i == 0 ? 26 : 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: i == 0
+                        ? AppThemeColors.accentPink
+                        : Colors.white.withValues(alpha: 0.35),
+                    width: i == 0 ? 2 : 1,
+                  ),
+                  boxShadow: i == 0
+                      ? AppThemeColors.glowShadow(
+                          AppThemeColors.accentPink,
+                          blur: 10,
+                        )
+                      : null,
+                ),
+                child: CircleAvatar(
+                  radius: i == 0 ? 12 : 10,
+                  backgroundColor: const Color(0xFF1E1033),
+                  backgroundImage: canlifalImageProvider(urls[i]),
+                ),
               ),
             ),
         ],

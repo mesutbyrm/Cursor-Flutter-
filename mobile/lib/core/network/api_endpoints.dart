@@ -423,6 +423,7 @@ abstract final class ApiEndpoints {
   static const membershipPurchase = '/api/membership/purchase';
   static const membershipsPurchase = '/api/memberships/purchase';
   static const membershipBadges = '/api/membership-badges';
+  static const profileFrames = '/api/profile-frames';
 
   static const paymentConfig = '/api/payment/config';
   static const paymentRequests = '/api/payment/requests';

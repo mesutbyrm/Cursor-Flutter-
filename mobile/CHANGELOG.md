@@ -1,6 +1,21 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.55+82 (2026-07-19)
+
+### Premium Profil Sistemi
+- Yetkiye göre dinamik profil çerçevesi (Admin, Mod, Oda Sahibi, Gold, VIP, Yayıncı, Falcı, Destek)
+- Animasyonlu çerçeveler: dönen ışık, neon, ateş, altın parçacık, elmas, kozmik, aura, kalp, şimşek, gökkuşağı, taç
+- Gold üyeler çerçeve, isim efekti ve profil parçacık efekti seçebilir (`/profile/cosmetics`)
+- İsim efektleri: altın, gümüş, elmas, neon, rainbow, ateş, hologram
+- Profil efektleri: yıldızlar, galaksi, altın toz, kalpler
+- Backend katalog: `GET /api/profile-frames`, `GET /api/membership-badges` (offline yerleşik katalog yedek)
+
+### Sesli sohbet kartları (Keşfet)
+- Canlı ses dalgası, dönen müzik ikonu, mikrofon nabız animasyonu
+- Oda seviyesi, popülerlik, kategori ve VIP/Gold/Admin rozetleri
+- Online sayısı sarı parlayan yazı; ilk avatar konuşan vurgusu (büyük + glow)
+
 ## 1.0.54+81 (2026-07-18)
 
 ### Profil — Yasal bölümü

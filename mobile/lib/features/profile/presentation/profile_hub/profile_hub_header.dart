@@ -12,6 +12,11 @@ import '../premium_2026/profile_screen_state.dart';
 import '../premium_2026/profile_theme.dart';
 import '../providers/profile_hub_providers.dart';
 import 'profile_avatar_sheet.dart';
+import '../../../cosmetics/domain/cosmetic_item.dart';
+import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
+import '../../../cosmetics/presentation/widgets/cosmetic_avatar_frame.dart';
+import '../../../cosmetics/presentation/widgets/cosmetic_name_label.dart';
+import '../../../cosmetics/presentation/widgets/cosmetic_particle_overlay.dart';
 
 /// Referans profil başlığı — avatar, VIP, doğrulama, düzenle/QR/ayarlar.
 class ProfileHubHeader extends ConsumerWidget {
@@ -73,10 +78,10 @@ class ProfileHubHeader extends ConsumerWidget {
                             Row(
                               children: [
                                 Expanded(
-                                  child: Text(
-                                    user.display,
+                                  child: CosmeticNameLabel(
+                                    text: user.display,
+                                    item: ref.watch(resolvedNameEffectProvider),
                                     maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 20,
@@ -269,7 +274,7 @@ class _CoverBanner extends StatelessWidget {
       );
 }
 
-class _AvatarBlock extends StatelessWidget {
+class _AvatarBlock extends ConsumerWidget {
   const _AvatarBlock({
     required this.user,
     required this.level,
@@ -287,34 +292,30 @@ class _AvatarBlock extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final frame = ref.watch(resolvedProfileFrameProvider);
+    final profileFx = ref.watch(resolvedProfileEffectProvider);
+
     return GestureDetector(
       onTap: onTap,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [
-                  ProfilePremiumTheme.neonPink,
-                  ProfilePremiumTheme.neonPurple,
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: ProfilePremiumTheme.neonPurple.withValues(alpha: 0.45),
-                  blurRadius: 24,
-                ),
-              ],
-            ),
+          CosmeticAvatarFrame(
+            item: frame,
+            size: 92,
+            showParticles: false,
             child: UserAvatar(
               url: user.avatarUrl,
-              radius: 42,
+              radius: 40,
             ),
           ),
+          if (profileFx != null)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: _ProfileFxHost(effect: profileFx),
+              ),
+            ),
           if (isOnline)
             Positioned(
               right: 4,
@@ -350,6 +351,44 @@ class _AvatarBlock extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ProfileFxHost extends StatefulWidget {
+  const _ProfileFxHost({required this.effect});
+
+  final CosmeticItem effect;
+
+  @override
+  State<_ProfileFxHost> createState() => _ProfileFxHostState();
+}
+
+class _ProfileFxHostState extends State<_ProfileFxHost>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CosmeticParticleOverlay(
+      kind: widget.effect.effectKind,
+      size: 92,
+      controller: _ctrl,
     );
   }
 }
