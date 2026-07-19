@@ -6,6 +6,7 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/ui/premium_2026/premium_motion.dart';
 import 'discover_premium_visual.dart';
+import 'discover_room_visuals.dart';
 import '../../../domain/discover_category.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../voice_hub/presentation/widgets/premium_2026/voice_discover_2026.dart';
@@ -97,16 +98,12 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard>
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (bg != null && bg.isNotEmpty)
-                    CanlifalNetworkImage(url: bg, fit: BoxFit.cover)
-                  else
-                    const DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF4C1D95), Color(0xFF1E1033)],
-                        ),
-                      ),
-                    ),
+                if (bg != null && bg.isNotEmpty)
+                  CanlifalNetworkImage(url: bg, fit: BoxFit.cover)
+                else
+                  DecoratedBox(
+                    decoration: DiscoverRoomVisuals.fallbackDecoration(widget.room),
+                  ),
                   DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -168,7 +165,11 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard>
                         if (popularity != null)
                           _RoomBadge(label: popularity, colors: const [Color(0xFF26A69A), Color(0xFF00897B)]),
                         if (roomType.isNotEmpty && !roomType.contains('gold') && !roomType.contains('admin'))
-                          _RoomBadge(label: _categoryLabel(roomType), colors: const [Color(0xFF5C6BC0), Color(0xFF3949AB)]),
+                          _RoomBadge(
+                            label: DiscoverRoomVisuals.categoryLabel(widget.room) ??
+                                _categoryLabel(roomType),
+                            colors: const [Color(0xFF5C6BC0), Color(0xFF3949AB)],
+                          ),
                       ],
                     ),
                   ),

@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.57+84 (2026-07-19)
+
+### Ana sayfa — premium sesli oda kartları
+- `VoiceRoomSection` artık `DiscoverPremiumRoomCard` kullanıyor (canlı dalga, müzik, mikrofon, rozetler)
+- Kategori temalı arka planlar: fal, tarot, burç, kahve, Gold/VIP (`DiscoverRoomVisuals`)
+- Oda kapak görselleri önbelleğe alınır (prefetch)
+
+### Kozmetik & rozet
+- Profil çerçevesi kataloğu 30 dk disk önbelleği
+- Üyelik rozeti profil başlığında (`GET /api/membership-badges`)
+
 ## 1.0.56+83 (2026-07-19)
 
 ### Mobil Admin Paneli (WebView)

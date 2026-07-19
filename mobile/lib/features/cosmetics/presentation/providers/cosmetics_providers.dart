@@ -6,6 +6,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../data/cosmetic_loadout_store.dart';
+import '../../data/cosmetics_catalog_cache.dart';
 import '../../data/cosmetics_remote_datasource.dart';
 import '../../domain/cosmetic_catalog_defaults.dart';
 import '../../domain/cosmetic_item.dart';
@@ -18,8 +19,25 @@ final cosmeticsRemoteProvider = Provider<CosmeticsRemoteDataSource>((ref) {
 
 final profileFramesCatalogProvider =
     FutureProvider<List<CosmeticItem>>((ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  final cache = CosmeticsCatalogCache(prefs);
+  final cached = await cache.read();
+  if (cached != null && cached.isNotEmpty) {
+    // Arka planda tazele.
+    Future.microtask(() async {
+      try {
+        final remote =
+            await ref.read(cosmeticsRemoteProvider).fetchProfileFrames();
+        if (remote.isNotEmpty) await cache.write(remote);
+      } catch (_) {}
+    });
+    return cached;
+  }
   final remote = await ref.watch(cosmeticsRemoteProvider).fetchProfileFrames();
-  if (remote.isNotEmpty) return remote;
+  if (remote.isNotEmpty) {
+    await cache.write(remote);
+    return remote;
+  }
   return CosmeticCatalogDefaults.forSlot(CosmeticSlot.profileFrame);
 });
 
@@ -111,6 +129,18 @@ final resolvedProfileEffectProvider = Provider<CosmeticItem?>((ref) {
 
 final canCustomizeCosmeticsProvider = Provider<bool>((ref) {
   return ref.watch(vipTierProvider).index >= VipTier.gold.index;
+});
+
+/// Üyelik rozeti — `GET /api/membership-badges` + tier eşleşmesi.
+final resolvedMembershipBadgeProvider = Provider<CosmeticItem?>((ref) {
+  final tier = ref.watch(vipTierProvider);
+  if (tier == VipTier.basic) return null;
+  final catalog = ref.watch(membershipBadgesCatalogProvider).valueOrNull;
+  if (catalog == null || catalog.isEmpty) return null;
+  for (final b in catalog) {
+    if (b.requiredTier == tier) return b;
+  }
+  return catalog.first;
 });
 
 List<CosmeticItem> catalogForSlot(CosmeticSlot slot) {

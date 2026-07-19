@@ -18,7 +18,7 @@ import '../../../cosmetics/presentation/widgets/cosmetic_avatar_frame.dart';
 import '../../../cosmetics/presentation/widgets/cosmetic_name_label.dart';
 import '../../../cosmetics/presentation/widgets/cosmetic_particle_overlay.dart';
 
-/// Referans profil başlığı — avatar, VIP, doğrulama, düzenle/QR/ayarlar.
+/// Referans profil başlığı
 class ProfileHubHeader extends ConsumerWidget {
   const ProfileHubHeader({
     super.key,
@@ -99,6 +99,9 @@ class ProfileHubHeader extends ConsumerWidget {
                                   const SizedBox(width: 6),
                                   _VipPill(label: vipLabel),
                                 ],
+                                _MembershipBadgeChip(
+                                  badge: ref.watch(resolvedMembershipBadgeProvider),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 2),
@@ -389,6 +392,43 @@ class _ProfileFxHostState extends State<_ProfileFxHost>
       kind: widget.effect.effectKind,
       size: 92,
       controller: _ctrl,
+    );
+  }
+}
+
+class _MembershipBadgeChip extends StatelessWidget {
+  const _MembershipBadgeChip({required this.badge});
+
+  final CosmeticItem? badge;
+
+  @override
+  Widget build(BuildContext context) {
+    if (badge == null) return const SizedBox.shrink();
+    final url = badge!.previewUrl ?? badge!.assetUrl;
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: url != null && url.isNotEmpty
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: CanlifalNetworkImage(
+                url: url,
+                width: 22,
+                height: 22,
+                fit: BoxFit.cover,
+                thumbnailWidth: 48,
+              ),
+            )
+          : Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                badge!.name,
+                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800),
+              ),
+            ),
     );
   }
 }
