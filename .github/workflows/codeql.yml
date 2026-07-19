@@ -92,30 +92,46 @@ jobs:
           chmod +x scripts/ci-link-android-ndk.sh
           bash scripts/ci-link-android-ndk.sh
 
+      - name: Install Android CMake (Agora / native plugins)
+        if: matrix.language == 'java-kotlin'
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+        run: |
+          set -euxo pipefail
+          yes | sdkmanager --sdk_root="${ANDROID_HOME}" "cmake;3.22.1"
+          test -x "${ANDROID_HOME}/cmake/3.22.1/bin/ninja"
+
       - name: Build Flutter Android for CodeQL
         if: matrix.language == 'java-kotlin'
         working-directory: mobile
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
           ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
         run: |
           set -euxo pipefail
 
+          FLUTTER_ROOT="$(dirname "$(dirname "$(command -v flutter)")")"
+          export PATH="${FLUTTER_ROOT}/bin:${PATH}"
+
           flutter pub get
+          flutter precache --android
 
           if grep -qE '^[[:space:]]*build_runner:' pubspec.yaml; then
             dart run build_runner build --delete-conflicting-outputs
           fi
 
-          if [[ ! -f android/gradlew ]]; then
-            flutter create --platforms=android .
-          fi
-          chmod +x android/gradlew
-          test -x android/gradlew
+          mkdir -p android
+          cat > android/local.properties <<EOF
+          sdk.dir=${ANDROID_HOME}
+          flutter.sdk=${FLUTTER_ROOT}
+          EOF
 
-          # CodeQL — Gradle derlemesi Java/Kotlin izlerini yakalar (flutter build apk yeterli değil).
-          cd android
-          ./gradlew clean :app:assembleDebug --no-daemon --no-build-cache --rerun-tasks --stacktrace
+          # gradlew clean → Agora externalNativeBuildCleanDebug ninja hatası verir.
+          # flutter build apk — build-apk.yml ile aynı yol; CodeQL Java/Kotlin izlerini yakalar.
+          flutter build apk --debug \
+            --target-platform android-arm64 \
+            --no-pub
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
