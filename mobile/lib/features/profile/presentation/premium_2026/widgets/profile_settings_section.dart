@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/config/app_version.dart';
 import '../../../../../core/theme/app_palette.dart';
 import '../../../../../core/widgets/theme_mode_selector.dart';
+import '../../../../admin_web/presentation/providers/admin_web_access_provider.dart';
 import '../../widgets/premium/profile_glass.dart';
 
 /// Ayarlar — gruplu liste; tema, hesap, keşfet, destek.
@@ -57,6 +59,7 @@ class ProfileSettingsSection extends StatelessWidget {
                 label: 'Bildirimler',
                 onTap: () => context.push('/notifications'),
               ),
+              const _AdminWebSettingsRow(),
             ],
           ),
           const SizedBox(height: 16),
@@ -261,6 +264,29 @@ class _SettingsRow extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Yalnızca Admin / Süper Admin — tam ekran WebView yönetim paneli.
+class _AdminWebSettingsRow extends ConsumerWidget {
+  const _AdminWebSettingsRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!ref.watch(adminWebAccessProvider)) {
+      return const SizedBox.shrink();
+    }
+    final palette = context.palette;
+    return Column(
+      children: [
+        Divider(height: 1, indent: 52, color: palette.divider),
+        _SettingsRow(
+          icon: Icons.admin_panel_settings_outlined,
+          label: 'Yönetim Paneli',
+          onTap: () => context.push('/admin/web'),
+        ),
+      ],
     );
   }
 }

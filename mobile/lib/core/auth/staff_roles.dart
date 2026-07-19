@@ -76,6 +76,19 @@ abstract final class StaffRoles {
     return siteAdminUsernames.contains(u);
   }
 
+  /// Mobil WebView admin — yalnızca Admin / Süper Admin (moderatör hariç).
+  static bool isStrictWebAdmin({
+    String? role,
+    String? username,
+    bool? walletIsAdmin,
+  }) {
+    if (walletIsAdmin == true) return true;
+    final r = role?.toLowerCase().trim() ?? '';
+    if (r == 'admin' || r == 'superadmin' || r == 'super_admin') return true;
+    final u = username?.toLowerCase().trim() ?? '';
+    return u == 'admin' || u == 'siteadmin';
+  }
+
   static String labelTr(String role) {
     return switch (role.toLowerCase()) {
       'admin' => 'Site Admin',

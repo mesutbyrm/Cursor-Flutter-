@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.56+83 (2026-07-19)
+
+### Mobil Admin Paneli (WebView)
+- Profil > Ayarlar > **Yönetim Paneli** (yalnızca Admin / Süper Admin)
+- Tam ekran in-app WebView — harici tarayıcı açılmaz
+- JWT SSO: çerez senkronu + bootstrap ile Bearer token aktarımı
+- HTTPS zorunlu, http engelli; canlifal.com içi navigasyon
+- Pull-to-refresh (toolbar), geri tuşu WebView geçmişi
+- Dosya yükleme: galeri, kamera, çoklu seçim, PDF/Excel (Android file selector)
+- Kamera/mikrofon izinleri, panoya kopyalama köprüsü
+- Giriş sayfası algılanırsa yerel admin paneline yönlendirme banner'ı
+- Yerel admin paneli (`/admin/panel`) yedek olarak korunur
+
 ## 1.0.55+82 (2026-07-19)
 
 ### Premium Profil Sistemi

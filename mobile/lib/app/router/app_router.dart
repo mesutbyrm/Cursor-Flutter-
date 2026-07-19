@@ -28,6 +28,7 @@ import '../../features/admin/presentation/pages/admin_panel_page.dart';
 import '../../features/admin/presentation/pages/admin_voice_room_backgrounds_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_sub_pages.dart';
+import '../../features/admin_web/presentation/pages/admin_web_panel_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
 import '../../features/gifts/presentation/pages/gift_send_page.dart';
@@ -501,6 +502,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/panel',
         builder: (context, state) => const AdminPanelPage(),
+      ),
+      GoRoute(
+        path: '/admin/web',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminWebPanelPage(),
+        ),
       ),
       GoRoute(
         path: '/admin/users',

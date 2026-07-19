@@ -9,6 +9,7 @@ import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../../admin/domain/admin_payment_review.dart';
 import '../../../../admin/presentation/providers/admin_providers.dart';
 import '../../../../admin/presentation/providers/staff_access_provider.dart';
+import '../../../../admin_web/presentation/providers/admin_web_access_provider.dart';
 import '../../providers/profile_providers.dart';
 import '../../widgets/premium/profile_glass.dart';
 import '../profile_theme.dart';
@@ -23,6 +24,8 @@ class ProfileAdminCard extends ConsumerWidget {
     final access = ref.watch(staffAccessProvider);
     if (!access.showAdminPanel) return const SizedBox.shrink();
 
+    final webAdmin = ref.watch(adminWebAccessProvider);
+
     final pending = ref.watch(adminPendingPaymentsCountProvider);
 
     ref.listen<StaffAccess>(staffAccessProvider, (prev, next) {
@@ -36,9 +39,9 @@ class ProfileAdminCard extends ConsumerWidget {
     final items = <({IconData icon, String label, VoidCallback onTap, int badge})>[
       (
         icon: Icons.dashboard_customize_rounded,
-        label: 'Admin Paneli',
+        label: webAdmin ? 'Yönetim Paneli' : 'Admin Paneli',
         badge: pending,
-        onTap: () => context.push('/admin/panel'),
+        onTap: () => context.push(webAdmin ? '/admin/web' : '/admin/panel'),
       ),
       (
         icon: Icons.payments_rounded,
