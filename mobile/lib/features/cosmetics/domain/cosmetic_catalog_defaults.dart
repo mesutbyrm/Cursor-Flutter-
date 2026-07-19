@@ -13,7 +13,7 @@ abstract final class CosmeticCatalogDefaults {
       CosmeticSlot.entranceAnimation => _entrances,
       CosmeticSlot.chatBubble => _chatBubbles,
       CosmeticSlot.microphoneFrame => _micFrames,
-      _ => const [],
+      CosmeticSlot.badge => _membershipBadges,
     };
   }
 
@@ -24,6 +24,7 @@ abstract final class CosmeticCatalogDefaults {
         ..._entrances,
         ..._chatBubbles,
         ..._micFrames,
+        ..._membershipBadges,
       ];
 
   static const _frames = [
@@ -304,6 +305,37 @@ abstract final class CosmeticCatalogDefaults {
       name: 'Ateş çerçeve',
       effectKind: CosmeticEffectKind.fire,
       requiredTier: VipTier.premium,
+    ),
+  ];
+
+  static const _membershipBadges = [
+    CosmeticItem(
+      id: 'badge_premium',
+      slot: CosmeticSlot.badge,
+      name: 'Premium',
+      effectKind: CosmeticEffectKind.imageOverlay,
+      requiredTier: VipTier.premium,
+    ),
+    CosmeticItem(
+      id: 'badge_gold',
+      slot: CosmeticSlot.badge,
+      name: 'Gold',
+      effectKind: CosmeticEffectKind.goldParticles,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'badge_diamond',
+      slot: CosmeticSlot.badge,
+      name: 'Diamond',
+      effectKind: CosmeticEffectKind.diamond,
+      requiredTier: VipTier.diamond,
+    ),
+    CosmeticItem(
+      id: 'badge_founder',
+      slot: CosmeticSlot.badge,
+      name: 'Kurucu',
+      effectKind: CosmeticEffectKind.crown,
+      requiredRole: 'founder',
     ),
   ];
 

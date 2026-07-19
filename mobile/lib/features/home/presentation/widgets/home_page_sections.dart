@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
+import 'approved/discover_premium_home_section.dart';
 import 'approved/discover_section.dart';
 import 'approved/fortune_section.dart';
 import 'approved/gold_section.dart';
@@ -45,6 +46,12 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homeLiveSectionDelay,
           child: LiveBroadcastSection(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeVoiceSectionDelay,
+          child: DiscoverPremiumHomeSection(),
         ),
       ),
       const SliverToBoxAdapter(

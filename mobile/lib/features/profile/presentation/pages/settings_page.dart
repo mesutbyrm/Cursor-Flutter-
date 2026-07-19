@@ -35,6 +35,12 @@ class SettingsPage extends ConsumerWidget {
                 child: Column(
                   children: [
                     _SettingsTile(
+                      icon: Icons.palette_outlined,
+                      label: 'Premium Profil',
+                      onTap: () => context.push('/profile/cosmetics'),
+                    ),
+                    const _Divider(),
+                    _SettingsTile(
                       icon: Icons.person_outline_rounded,
                       label: 'Profili Düzenle',
                       onTap: () => context.push('/profile/edit'),

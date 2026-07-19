@@ -234,7 +234,10 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                             ),
                           ),
                   ),
-                PkMicParticipantRow(presence: live.presence),
+                PkMicParticipantRow(
+                  presence: live.presence,
+                  selfUserId: ref.read(authControllerProvider).valueOrNull?.id,
+                ),
                 Expanded(
                   flex: 2,
                   child: PkGiftFeedPanel(messages: live.messages),

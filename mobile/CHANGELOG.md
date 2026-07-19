@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.59+86 (2026-07-19)
+
+### Premium entegrasyon — eksik bağlantılar tamamlandı
+- **Mikrofon çerçevesi:** Varsayılan sesli oda sahnesinde `selfUserId` ile kozmetik halka (basic mod)
+- **Giriş efekti:** RTC sesli oda sayfasında da `CosmeticEntranceOverlay` (basic ile aynı)
+- **Ayarlar:** Merkezi `/settings` sayfasına **Premium Profil** kısayolu
+- **Ana sayfa:** `DiscoverPremiumHomeSection` — premium oda kartları yatay şerit
+- **Sesli keşfet:** Popüler odalar `DiscoverPremiumRoomCard` kullanıyor
+- **Üyelik rozetleri:** API boşken yerel katalog (Premium/Gold/Diamond/Kurucu)
+- **PK sahnesi:** Mikrofon kozmetiği PK katılımcı şeridinde
+
 ## 1.0.58+85 (2026-07-19)
 
 ### Premium kozmetik — eksik alanlar tamamlandı
