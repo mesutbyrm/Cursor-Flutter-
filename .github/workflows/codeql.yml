@@ -92,15 +92,6 @@ jobs:
           chmod +x scripts/ci-link-android-ndk.sh
           bash scripts/ci-link-android-ndk.sh
 
-      - name: Install Android CMake (Agora / native plugins)
-        if: matrix.language == 'java-kotlin'
-        env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
-        run: |
-          set -euxo pipefail
-          yes | sdkmanager --sdk_root="${ANDROID_HOME}" "cmake;3.22.1"
-          test -x "${ANDROID_HOME}/cmake/3.22.1/bin/ninja"
-
       - name: Build Flutter Android for CodeQL
         if: matrix.language == 'java-kotlin'
         working-directory: mobile
@@ -128,7 +119,7 @@ jobs:
           EOF
 
           # gradlew clean → Agora externalNativeBuildCleanDebug ninja hatası verir.
-          # flutter build apk — build-apk.yml ile aynı yol; CodeQL Java/Kotlin izlerini yakalar.
+          # build-apk.yml ile aynı yol; CodeQL Java/Kotlin izlerini yakalar.
           flutter build apk --debug \
             --target-platform android-arm64 \
             --no-pub
