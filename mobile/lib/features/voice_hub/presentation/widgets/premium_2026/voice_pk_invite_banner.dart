@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
-import '../../../../live/presentation/providers/live_providers.dart';
 import '../../../domain/pk/pk_battle_remote_models.dart';
 import '../../../domain/pk/pk_opponent_room_filter.dart';
 import '../../providers/chat_room_providers.dart';
@@ -67,12 +66,22 @@ class _VoicePkInviteBannerState extends ConsumerState<VoicePkInviteBanner> {
     } catch (_) {}
   }
 
-  void _armExpiry(String inviteId) {
+  void _armExpiry(String inviteId, PkBattleRemote battle) {
     _expireTimer?.cancel();
     _expireTimer = Timer(const Duration(minutes: 1), () {
       if (!mounted) return;
       setState(() => _dismissedInviteId = inviteId);
-      ref.read(pkBattleRemoteProvider.notifier).clear();
+      final key = widget.room.apiRoomKey.isNotEmpty
+          ? widget.room.apiRoomKey
+          : widget.room.id;
+      final alt = widget.room.slug != key ? widget.room.slug : null;
+      final remote = ref.read(pkBattleRemoteProvider.notifier);
+      unawaited(
+        remote
+            .reject(battle.effectiveId, roomId: key, alternateRoomId: alt)
+            .then((_) => remote.clear())
+            .catchError((_) => remote.clear()),
+      );
     });
   }
 
@@ -134,7 +143,7 @@ class _VoicePkInviteBannerState extends ConsumerState<VoicePkInviteBanner> {
       return const SizedBox.shrink();
     }
 
-    _armExpiry(battle.effectiveId);
+    _armExpiry(battle.effectiveId, battle);
 
     return RepaintBoundary(
       child: Padding(

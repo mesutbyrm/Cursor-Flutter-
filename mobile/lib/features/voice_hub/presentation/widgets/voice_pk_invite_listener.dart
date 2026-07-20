@@ -139,6 +139,9 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     final inviteId = battle.effectiveId;
     final minutes = (battle.durationSeconds / 60).round();
     final durationHint = minutes > 0 ? '\nSüre: $minutes dk' : '';
+    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    final alt = room.slug != key ? room.slug : null;
+    final remote = ref.read(pkBattleRemoteProvider.notifier);
     final accept = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -165,12 +168,14 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
       onTimeout: () => null,
     );
     _showing = false;
-    if (!mounted || accept == null) return;
+    if (!mounted) return;
 
-    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-    final alt = room.slug != key ? room.slug : null;
-    final remote = ref.read(pkBattleRemoteProvider.notifier);
     try {
+      if (accept == null) {
+        await remote.reject(inviteId, roomId: key, alternateRoomId: alt);
+        remote.clear();
+        return;
+      }
       if (accept) {
         await remote.accept(inviteId, roomId: key, alternateRoomId: alt);
         if (!mounted) return;

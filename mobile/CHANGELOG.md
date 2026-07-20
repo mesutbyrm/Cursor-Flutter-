@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.64+91 (2026-07-20)
+
+### Sesli oda — oda sahibi yetkileri ve PK onayı
+- Oda sahibi girişte **dâhilî sunucu hatası** banner'ı artık odayı kilitlemiyor; yetkiler ayrıca yenileniyor
+- SSE açıkken bile `myPermissions` sunucudan çekiliyor — yetki verme, koltuğa alma, ses verme düzeltildi
+- Oda sahibi için sunucu bayrakları boşsa istemci tarafı yetki yedeği (`~` founder)
+- Rol atama: `set_role` + `give_voice` / `give_op` / `give_sop` / `give_founder` yedekleri
+- Koltuk atama: başka kullanıcı için önce `force` aksiyonu deneniyor
+- **PK daveti:** süre dolunca sunucuya otomatik red; sesli odada banner ve global dinleyici düzeltildi
+
 ## 1.0.63+90 (2026-07-20)
 
 ### Premium profil önizleme ve görsel iyileştirmeler
