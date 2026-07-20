@@ -14,6 +14,7 @@ import '../widgets/cosmetic_avatar_frame.dart';
 import '../widgets/cosmetic_chat_bubble.dart';
 import '../widgets/cosmetic_mic_frame_ring.dart';
 import '../widgets/cosmetic_name_label.dart';
+import '../widgets/cosmetic_profile_preview_panel.dart';
 
 /// Gold+ — profil kozmetikleri (çerçeve, isim, efekt, giriş, balon, mikrofon).
 class ProfileCosmeticsPage extends ConsumerStatefulWidget {
@@ -41,6 +42,9 @@ class _ProfileCosmeticsPageState extends ConsumerState<ProfileCosmeticsPage>
   void initState() {
     super.initState();
     _tabs = TabController(length: _slots.length, vsync: this);
+    _tabs.addListener(() {
+      if (!_tabs.indexIsChanging) setState(() {});
+    });
   }
 
   @override
@@ -62,6 +66,9 @@ class _ProfileCosmeticsPageState extends ConsumerState<ProfileCosmeticsPage>
           body: canCustomize
               ? Column(
                   children: [
+                    CosmeticProfilePreviewPanel(
+                      activeSlot: _slots[_tabs.index],
+                    ),
                     TabBar(
                       controller: _tabs,
                       isScrollable: true,
@@ -78,6 +85,7 @@ class _ProfileCosmeticsPageState extends ConsumerState<ProfileCosmeticsPage>
                               slot: slot,
                               catalog: mergedCatalogForSlot(ref, slot),
                               tier: tier,
+                              onEquipped: () => setState(() {}),
                             ),
                         ],
                       ),
@@ -126,11 +134,13 @@ class _CosmeticGrid extends ConsumerWidget {
     required this.slot,
     required this.catalog,
     required this.tier,
+    this.onEquipped,
   });
 
   final CosmeticSlot slot;
   final List<CosmeticItem> catalog;
   final VipTier tier;
+  final VoidCallback? onEquipped;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -153,9 +163,12 @@ class _CosmeticGrid extends ConsumerWidget {
             title: 'Varsayılan',
             selected: selected,
             child: _defaultPreview(slot),
-            onTap: () => ref
-                .read(cosmeticLoadoutProvider.notifier)
-                .equip(slot, null),
+            onTap: () async {
+              await ref
+                  .read(cosmeticLoadoutProvider.notifier)
+                  .equip(slot, null);
+              onEquipped?.call();
+            },
           );
         }
         final item = catalog[i - 1];
@@ -167,9 +180,12 @@ class _CosmeticGrid extends ConsumerWidget {
           locked: !unlocked,
           child: _itemPreview(slot, item),
           onTap: unlocked
-              ? () => ref
-                  .read(cosmeticLoadoutProvider.notifier)
-                  .equip(slot, item.id)
+              ? () async {
+                  await ref
+                      .read(cosmeticLoadoutProvider.notifier)
+                      .equip(slot, item.id);
+                  onEquipped?.call();
+                }
               : null,
         );
       },
@@ -203,10 +219,29 @@ class _CosmeticGrid extends ConsumerWidget {
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
         ),
       CosmeticSlot.chatBubble => CosmeticChatBubbleStyle.preview(item),
-      CosmeticSlot.entranceAnimation => Icon(
-          _entranceIcon(item.effectKind),
-          size: 44,
-          color: _entranceColor(item.effectKind),
+      CosmeticSlot.entranceAnimation => Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [
+                _entranceColor(item.effectKind).withValues(alpha: 0.55),
+                Colors.transparent,
+              ],
+            ),
+          ),
+          child: Icon(
+            _entranceIcon(item.effectKind),
+            size: 36,
+            color: _entranceColor(item.effectKind),
+            shadows: [
+              Shadow(
+                color: _entranceColor(item.effectKind).withValues(alpha: 0.8),
+                blurRadius: 12,
+              ),
+            ],
+          ),
         ),
       CosmeticSlot.microphoneFrame => CosmeticMicFrameRing(
           item: item,
@@ -219,15 +254,30 @@ class _CosmeticGrid extends ConsumerWidget {
         ),
       _ => CosmeticAvatarFrame(
           item: item,
-          size: 64,
+          size: 72,
           showParticles: slot == CosmeticSlot.profileEffect,
-          child: const CircleAvatar(
-            radius: 26,
-            child: Icon(Icons.person, size: 28),
+          child: CircleAvatar(
+            radius: 28,
+            backgroundColor: _glowFor(item.effectKind).withValues(alpha: 0.25),
+            child: Icon(
+              Icons.person_rounded,
+              size: 30,
+              color: _glowFor(item.effectKind),
+            ),
           ),
         ),
     };
   }
+
+  Color _glowFor(CosmeticEffectKind k) => switch (k) {
+        CosmeticEffectKind.fire => const Color(0xFFFF5722),
+        CosmeticEffectKind.diamond => const Color(0xFF80DEEA),
+        CosmeticEffectKind.lightning => const Color(0xFFFFEB3B),
+        CosmeticEffectKind.neonGlow => const Color(0xFF00E5FF),
+        CosmeticEffectKind.crown => const Color(0xFFFFD54F),
+        CosmeticEffectKind.rotatingLight => const Color(0xFFB832FF),
+        _ => const Color(0xFFB832FF),
+      };
 
   IconData _entranceIcon(CosmeticEffectKind k) => switch (k) {
         CosmeticEffectKind.entranceDragon => Icons.whatshot_rounded,
@@ -271,37 +321,70 @@ class _CosmeticTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Material(
       color: selected
-          ? Theme.of(context).colorScheme.primaryContainer
-          : Theme.of(context).colorScheme.surfaceContainerHighest,
+          ? scheme.primaryContainer
+          : scheme.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Opacity(opacity: locked ? 0.4 : 1, child: child),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: selected
+                ? Border.all(
+                    color: scheme.primary.withValues(alpha: 0.85),
+                    width: 2,
+                  )
+                : null,
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: scheme.primary.withValues(alpha: 0.28),
+                      blurRadius: 14,
+                      spreadRadius: -2,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Opacity(opacity: locked ? 0.4 : 1, child: child),
+                const SizedBox(height: 8),
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  ),
                 ),
-              ),
-              if (locked)
-                const Padding(
-                  padding: EdgeInsets.only(top: 4),
-                  child: Icon(Icons.lock, size: 14),
-                ),
-            ],
+                if (selected)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Profilde aktif',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: scheme.primary,
+                      ),
+                    ),
+                  ),
+                if (locked)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4),
+                    child: Icon(Icons.lock, size: 14),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

@@ -14,7 +14,7 @@ class ShortsAiHelper {
     if (!await File(videoPath).exists()) return const [];
     final dir = await getTemporaryDirectory();
     final out = <String>[];
-    for (final pct in [0.15, 0.45, 0.75]) {
+    for (final pct in [0.08, 0.22, 0.38, 0.55, 0.72, 0.88]) {
       try {
         final path = await VideoThumbnail.thumbnailFile(
           video: videoPath,

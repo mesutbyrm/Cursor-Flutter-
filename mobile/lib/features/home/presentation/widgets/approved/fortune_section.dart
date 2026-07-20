@@ -1,9 +1,11 @@
+import 'package:canlifal_social/core/images/canlifal_image_urls.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../fortune/presentation/data/fortune_catalog.dart';
 import '../../../../fortune/presentation/data/fortune_type_images.dart';
+import '../../../../fortune/presentation/widgets/fortune_type_cover_image.dart';
 import '../../../domain/entities/home_fortune_card_entity.dart';
 import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
@@ -50,6 +52,7 @@ class FortuneSection extends ConsumerWidget {
               return _FortuneCard(
                 title: e.title,
                 accent: e.accent,
+                slug: e.slug,
                 imageUrl: e.imageUrl,
                 emoji: e.emoji,
                 onTap: () => context.push('/fortune/${e.slug}'),
@@ -93,13 +96,15 @@ class FortuneSection extends ConsumerWidget {
     return out;
   }
 
-  static String _fortuneImage(String slug, String? apiUrl) {
+  static String? _fortuneImage(String slug, String? apiUrl) {
     final raw = apiUrl?.trim();
     if (raw != null && raw.isNotEmpty) {
-      if (raw.startsWith('http')) return raw;
-      return FortuneTypeImages.urlFor(raw, width: 480);
+      if (raw.startsWith('http')) return CanlifalImageUrls.resolve(raw);
+      final resolved = CanlifalImageUrls.resolve(raw);
+      if (resolved.isNotEmpty) return resolved;
+      return FortuneTypeImages.urlFor(slug, width: 480);
     }
-    return FortuneTypeImages.urlFor(slug, width: 480);
+    return null;
   }
 }
 
@@ -107,6 +112,7 @@ class _FortuneCard extends StatelessWidget {
   const _FortuneCard({
     required this.title,
     required this.accent,
+    required this.slug,
     required this.onTap,
     this.imageUrl,
     this.emoji = '🔮',
@@ -114,18 +120,10 @@ class _FortuneCard extends StatelessWidget {
 
   final String title;
   final Color accent;
+  final String slug;
   final VoidCallback onTap;
   final String? imageUrl;
   final String emoji;
-
-  bool get _hasImage => imageUrl != null && imageUrl!.trim().isNotEmpty;
-
-  String? get _resolvedImage {
-    if (!_hasImage) return null;
-    final u = imageUrl!.trim();
-    if (u.startsWith('http')) return u;
-    return FortuneTypeImages.urlFor(u, width: 480);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -150,57 +148,52 @@ class _FortuneCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (_resolvedImage != null)
+            FortuneTypeCoverImage(
+              slug: slug,
+              accent: accent,
+              imageWidth: 480,
+            ),
+            if (imageUrl != null && imageUrl!.trim().isNotEmpty)
               CanlifalNetworkImage(
-                url: _resolvedImage!,
+                url: CanlifalImageUrls.resolve(imageUrl),
                 fit: BoxFit.cover,
-              )
-            else
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      accent.withValues(alpha: 0.35),
-                      HomeApprovedDesign.surface,
-                    ],
-                  ),
-                ),
-                child: Center(
-                  child: Text(emoji, style: const TextStyle(fontSize: 32)),
+              ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.78),
+                  ],
                 ),
               ),
-            if (_resolvedImage != null)
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.75),
-                    ],
-                  ),
-                ),
-              ),
+            ),
             Align(
-              alignment: _resolvedImage != null ? Alignment.bottomCenter : Alignment.center,
+              alignment: Alignment.bottomCenter,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
-                child: Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: _resolvedImage != null
-                        ? Colors.white
-                        : HomeApprovedDesign.textPrimary,
-                    height: 1.15,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(emoji, style: const TextStyle(fontSize: 14)),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          height: 1.15,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

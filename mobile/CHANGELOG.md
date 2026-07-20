@@ -1,6 +1,25 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.63+90 (2026-07-20)
+
+### Premium profil önizleme ve görsel iyileştirmeler
+- **Premium Profil:** üstte canlı profil önizleme paneli — seçilen çerçeve/efekt/isim profilde anında görünür
+- Giriş efekti için **“Giriş efektini oynat”** butonu; sohbet balonu ve mikrofon önizlemesi
+- Kozmetik kartlarında parlak seçim vurgusu ve **“Profilde aktif”** etiketi
+
+### Fal & Tarot görselleri
+- Ana sayfa ve keşfet önizlemesinde `FortuneTypeCoverImage` (yerel asset + Unsplash yedek)
+- API görselleri `CanlifalImageUrls.resolve` ile düzgün yüklenir
+
+### Keşfet ve Gold
+- Her kutu/paket için ayrı, net temalı görseller (karışık görünüm azaltıldı)
+- Daha hafif gradient overlay — arka plan fotoğrafları daha net
+
+### Trend video kapak önerileri
+- Video düzenleme ve yayınlama adımında otomatik **6 kapak önerisi**
+- Seçilen kapak video küçük resmi olarak kullanılır
+
 ## 1.0.62+89 (2026-07-20)
 
 ### Görsel iyileştirmeler ve premium sesli oda kaldırma

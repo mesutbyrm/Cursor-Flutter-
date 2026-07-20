@@ -3,7 +3,7 @@ abstract final class SectionVisualCatalog {
   static const _base = 'https://images.unsplash.com';
 
   static String _url(String photoId, {int width = 480, String crop = 'entropy'}) =>
-      '$_base/photo-$photoId?auto=format&fit=crop&w=$width&q=88&fm=webp&crop=$crop';
+      '$_base/photo-$photoId?auto=format&fit=crop&w=$width&q=90&fm=webp&crop=$crop';
 
   /// Günlük burç — burç başına sinematik gökyüzü / mistik görsel.
   static String horoscopeFor(String signName, {int width = 220}) {
@@ -27,23 +27,25 @@ abstract final class SectionVisualCatalog {
     'balık': '1506905925346-21bda4d32df4',
   };
 
-  /// Keşfet grid kutuları.
-  static String discoverTile(String id, {int width = 320}) {
+  /// Keşfet grid — her kutu farklı tema (karışık görünümü önlemek için).
+  static String discoverTile(String id, {int width = 360}) {
     final photo = switch (id) {
-      'trends' => '1611162616475-24bffc06a659',
-      'invite' => '1529156069898-49953e39b3ac',
-      'gifts' => '1513885536761-752b173d5e91',
+      'trends' => '1611162616475-24bffc06a659', // neon sosyal / trend
+      'invite' => '1529156069898-49953e39b3ac', // arkadaş grubu
+      'gifts' => '1549465220-1a8f923d54fa', // lüks hediye kutusu
       _ => '1534528741775-53994a69daeb',
     };
-    return _url(photo, width: width);
+    return _url(photo, width: width, crop: 'center');
   }
 
-  /// Gold üyelik paket kartları.
+  /// Gold üyelik — paket başına net ayrılmış görsel.
   static String goldTier(String planId, {int width = 440}) {
-    final id = switch (planId.toLowerCase()) {
-      'gold' => '1518709268805-4e9042af2176',
-      'diamond' => '1618005198914-d3d0fb660b40',
-      'premium' => '1557683316-973673baf926',
+    final key = planId.toLowerCase();
+    final id = switch (key) {
+      'basic' => '1519682337128-7fa9a06a3995', // sıcak bronz ton
+      'gold' => '1610374471067-ba344bb6bc42', // altın parıltı
+      'diamond' => '1518709268805-4e9042af2176', // elmas kristal
+      'premium' => '1557683316-973673baf926', // mor lüks gece
       _ => '1528454864517-dd3fba88b7fa',
     };
     return _url(id, width: width, crop: 'center');

@@ -1,4 +1,3 @@
-import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -6,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../fortune/presentation/data/fortune_catalog.dart';
-import '../../../../fortune/presentation/data/fortune_type_images.dart';
+import '../../../../fortune/presentation/widgets/fortune_type_cover_image.dart';
 import 'discover_section_header.dart';
 
 /// Keşfet önizlemesi — 14 fal türü; tam sayfa: `/fortune`.
@@ -136,7 +135,6 @@ class _FortunePreviewTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = FortuneTypeImages.urlFor(slug, width: 240);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -144,51 +142,58 @@ class _FortunePreviewTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: border.withValues(alpha: 0.55),
-                width: 1.1,
+          child: AspectRatio(
+            aspectRatio: 0.82,
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: border.withValues(alpha: 0.55),
+                  width: 1.1,
+                ),
               ),
-            ),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                CanlifalNetworkImage(url: imageUrl, fit: BoxFit.cover),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        border.withValues(alpha: 0.15),
-                        Colors.black.withValues(alpha: 0.78),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  FortuneTypeCoverImage(
+                    slug: slug,
+                    accent: border,
+                    imageWidth: 280,
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.82),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(emoji, style: const TextStyle(fontSize: 16)),
+                        const SizedBox(height: 2),
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 9,
+                            color: Colors.white,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(emoji, style: const TextStyle(fontSize: 18)),
-                      const SizedBox(height: 4),
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 9,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

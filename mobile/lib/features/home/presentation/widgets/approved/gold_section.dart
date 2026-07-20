@@ -153,7 +153,10 @@ class _TierCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = SectionVisualCatalog.goldTier(pkg.planId, width: 320);
+    final imageUrl = SectionVisualCatalog.goldTier(
+      pkg.planId.isNotEmpty ? pkg.planId : pkg.id,
+      width: 320,
+    );
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
@@ -180,7 +183,7 @@ class _TierCard extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      _accent.withValues(alpha: 0.2),
+                      _accent.withValues(alpha: 0.08),
                       Colors.black.withValues(alpha: 0.82),
                     ],
                   ),

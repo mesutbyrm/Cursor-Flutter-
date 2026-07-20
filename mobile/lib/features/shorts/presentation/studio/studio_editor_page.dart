@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -7,8 +8,10 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/short_upload_draft.dart';
+import '../../data/shorts_ai_helper.dart';
 import '../utils/shorts_api_message.dart';
 import 'short_studio_providers.dart';
+import 'studio_cover_picker.dart';
 import 'studio_video_export.dart';
 
 /// Kırpma, döndürme, filtre, hız, kapak — video_editor + FFmpeg.
@@ -29,11 +32,32 @@ class StudioEditorPage extends ConsumerStatefulWidget {
 class _StudioEditorPageState extends ConsumerState<StudioEditorPage> {
   VideoEditorController? _controller;
   var _exporting = false;
+  var _coversLoading = false;
 
   @override
   void dispose() {
     _controller?.dispose();
     super.dispose();
+  }
+
+  Future<void> _generateCoverCandidates(String videoPath) async {
+    if (_coversLoading) return;
+    setState(() => _coversLoading = true);
+    try {
+      final thumbs = await ShortsAiHelper.generateThumbnailCandidates(videoPath);
+      if (!mounted || thumbs.isEmpty) return;
+      ref.read(shortUploadDraftProvider.notifier).patch((d) {
+        final selected = d.thumbnailPath;
+        return d.copyWith(
+          thumbnailCandidates: thumbs,
+          thumbnailPath: (selected != null && thumbs.contains(selected))
+              ? selected
+              : thumbs.first,
+        );
+      });
+    } finally {
+      if (mounted) setState(() => _coversLoading = false);
+    }
   }
 
   Future<void> _initController(String path) async {
@@ -49,6 +73,10 @@ class _StudioEditorPageState extends ConsumerState<StudioEditorPage> {
       return;
     }
     setState(() => _controller = c);
+    final draft = ref.read(shortUploadDraftProvider);
+    if (draft.thumbnailCandidates.isEmpty) {
+      unawaited(_generateCoverCandidates(path));
+    }
   }
 
   ColorFilter _colorFilter(ShortUploadDraft draft) {
@@ -74,13 +102,16 @@ class _StudioEditorPageState extends ConsumerState<StudioEditorPage> {
         playbackSpeed: draft.playbackSpeed,
       );
       final ms = coverTimeMs(c);
-      final thumb = await VideoThumbnail.thumbnailFile(
-        video: outPath,
-        imageFormat: ImageFormat.JPEG,
-        timeMs: ms,
-        maxWidth: 720,
-        quality: 85,
-      );
+      String? thumb = draft.thumbnailPath;
+      if (thumb == null || !await File(thumb).exists()) {
+        thumb = await VideoThumbnail.thumbnailFile(
+          video: outPath,
+          imageFormat: ImageFormat.JPEG,
+          timeMs: ms,
+          maxWidth: 720,
+          quality: 85,
+        );
+      }
 
       ref.read(shortUploadDraftProvider.notifier).patch(
             (d) => d.copyWith(
@@ -143,6 +174,23 @@ class _StudioEditorPageState extends ConsumerState<StudioEditorPage> {
                 ),
                 TrimSlider(controller: c, height: 48, horizontalMargin: 12),
                 CoverSelection(controller: c, size: 56),
+                if (draft.thumbnailCandidates.isNotEmpty ||
+                    _coversLoading) ...[
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: StudioCoverPicker(
+                      candidates: draft.thumbnailCandidates,
+                      selectedPath: draft.thumbnailPath,
+                      loading: _coversLoading,
+                      onSelected: (path) => ref
+                          .read(shortUploadDraftProvider.notifier)
+                          .patch((d) => d.copyWith(thumbnailPath: path)),
+                      onGenerate: () =>
+                          _generateCoverCandidates(draft.sourcePath!),
+                    ),
+                  ),
+                ],
                 _AdjustPanel(
                   draft: draft,
                   onChanged: (d) =>
