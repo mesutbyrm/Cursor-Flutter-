@@ -8,6 +8,7 @@ import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_room_card.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/domain/entities/voice_room_sort.dart';
+import '../../../../vip_gold/domain/voice_room_access.dart';
 import '../../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import '../../../../voice_hub/presentation/utils/open_voice_chat_room_flow.dart';
 import '../../providers/home_providers.dart';
@@ -81,7 +82,9 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
         message: ApiException.userMessage(rooms.$4!),
       );
     }
-    final items = rooms.$3 ?? const <VoiceRoomEntity>[];
+    final items = (rooms.$3 ?? const <VoiceRoomEntity>[])
+        .where((r) => !r.isVipGoldRoom)
+        .toList();
     if (items.isEmpty) {
       return _sectionShell(context, ref, empty: true);
     }

@@ -62,7 +62,6 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     _DiscoverTab(id: 'discover', label: 'Keşfet', icon: Icons.explore_rounded),
     _DiscoverTab(id: 'popular', label: 'Popüler', icon: Icons.local_fire_department_rounded),
     _DiscoverTab(id: 'live', label: 'Canlı', icon: Icons.live_tv_rounded),
-    _DiscoverTab(id: 'vip', label: 'VIP', icon: Icons.workspace_premium_rounded),
     _DiscoverTab(id: 'game', label: 'Oyun', icon: Icons.sports_esports_rounded),
     _DiscoverTab(id: 'music', label: 'Müzik', icon: Icons.music_note_rounded),
     _DiscoverTab(id: 'pk', label: 'PK', icon: Icons.flash_on_rounded),
@@ -77,7 +76,6 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     _GridCat('pk', 'PK Odaları', Icons.flash_on_rounded, Color(0xFFB832FF)),
     _GridCat('fun', 'Eğlence', Icons.celebration_rounded, Color(0xFF5B8CFF)),
     _GridCat('social', 'Flört', Icons.favorite_rounded, Color(0xFFFF6B9D)),
-    _GridCat('vip', 'VIP Odalar', Icons.lock_rounded, VipGoldTokens.goldMid),
   ];
 
   @override
@@ -133,7 +131,6 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     }
     final result = switch (_tab) {
       'popular' => list..sort((a, b) => b.displayOnline.compareTo(a.displayOnline)),
-      'vip' => list.where((r) => r.isVipGoldRoom).toList(),
       'pk' => filterPkEligibleOpponentRooms(list),
       'game' => list.where((r) {
         final t = '${r.nameTr} ${r.descTr ?? ''}'.toLowerCase();
@@ -180,7 +177,6 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     final avatar = ref.watch(
       authControllerProvider.select((a) => a.valueOrNull?.avatarUrl),
     );
-    final vipRooms = widget.rooms.where((r) => r.isVipGoldRoom).take(8).toList();
     final popular = [...widget.rooms]
       ..sort((a, b) => b.displayOnline.compareTo(a.displayOnline));
     final live = widget.liveStreams.where((s) => s.isLive).toList();
@@ -255,18 +251,13 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
               metrics.horizontalPad,
               100,
             ),
-            itemCount: _listChildCount(
-              popular: popular,
-              live: live,
-              vipRooms: vipRooms,
-            ),
+            itemCount: _listChildCount(),
             itemBuilder: (context, index) => _buildListChild(
               context,
               index: index,
               metrics: metrics,
               popular: popular,
               live: live,
-              vipRooms: vipRooms,
             ),
           ),
         ),
@@ -274,12 +265,8 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     );
   }
 
-  int _listChildCount({
-    required List<VoiceRoomEntity> popular,
-    required List<LiveStreamEntity> live,
-    required List<VoiceRoomEntity> vipRooms,
-  }) {
-    var n = 8; // banner, titles, horizontals, grid, footer label
+  int _listChildCount() {
+    const n = 8; // banner, titles, horizontals, grid, footer label
     final roomVisible = _visibleRooms.clamp(0, _filtered.length);
     return n + roomVisible + (_visibleRooms < _filtered.length ? 1 : 0);
   }
@@ -290,7 +277,6 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     required _DiscoverMetrics metrics,
     required List<VoiceRoomEntity> popular,
     required List<LiveStreamEntity> live,
-    required List<VoiceRoomEntity> vipRooms,
   }) {
     var i = index;
     if (i == 0) {
@@ -404,36 +390,6 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
       );
     }
     i--;
-    if (vipRooms.isNotEmpty) {
-      if (i == 0) {
-        return Padding(
-          padding: const EdgeInsets.only(top: 22, bottom: 10),
-          child: _SectionTitle(
-            title: 'VIP Odalar',
-            action: 'Tümü',
-            fontSize: metrics.sectionTitleSize,
-          ),
-        );
-      }
-      i--;
-      if (i == 0) {
-        return RepaintBoundary(
-          child: SizedBox(
-            height: 120,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: vipRooms.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
-              itemBuilder: (context, j) => _VipRoomCard(
-                room: vipRooms[j],
-                onTap: () => widget.onRoomTap(vipRooms[j]),
-              ),
-            ),
-          ),
-        );
-      }
-      i--;
-    }
     if (i == 0) {
       return Padding(
         padding: const EdgeInsets.only(top: 16, bottom: 10),
@@ -486,7 +442,6 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
 
   int _computeCatCount(String id) {
     return switch (id) {
-      'vip' => widget.rooms.where((r) => r.isVipGoldRoom).length,
       'pk' => filterPkEligibleOpponentRooms(widget.rooms).length,
       'game' => widget.rooms.where((r) {
           final t = '${r.nameTr} ${r.descTr ?? ''}'.toLowerCase();
@@ -623,7 +578,7 @@ class _DiscoverHeader extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Premium keşfet',
+                  'Sesli sohbet keşfet',
                   style: TextStyle(
                     fontSize: 12,
                     color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
@@ -936,7 +891,7 @@ class _NightBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Premium sesli sohbet — hemen katıl',
+                  'Sesli sohbet — hemen katıl',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.white.withValues(alpha: 0.85),
@@ -1329,106 +1284,6 @@ class _CategoryIconTile extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _VipRoomCard extends StatelessWidget {
-  const _VipRoomCard({required this.room, required this.onTap});
-
-  final VoiceRoomEntity room;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 200,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius:
-              BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
-          child: Ink(
-            decoration: BoxDecoration(
-              borderRadius:
-                  BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
-              boxShadow: DiscoverPremiumVisual.cardGlow(color: VipGoldTokens.goldMid),
-              gradient: LinearGradient(
-                colors: [
-                  VipGoldTokens.goldDeep.withValues(alpha: 0.5),
-                  const Color(0xFF1A1208),
-                ],
-              ),
-              border: Border.all(color: VipGoldTokens.goldMid.withValues(alpha: 0.45)),
-            ),
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        gradient: VipGoldTokens.goldLuxury,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'VIP',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    Icon(
-                      room.isPasswordLockedRoom
-                          ? Icons.lock_rounded
-                          : Icons.workspace_premium_rounded,
-                      color: VipGoldTokens.goldMid,
-                      size: 18,
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Text(
-                  room.displayTitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  room.descTr ?? 'Özel üyelik odası',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.white.withValues(alpha: 0.65),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                VoiceRoomOnlineCount(
-                  room: room,
-                  builder: (context, count) => Text(
-                    '${VoiceLiveHeader2026Format.count(count)} kullanıcı',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: VipGoldTokens.goldMid.withValues(alpha: 0.95),
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ),

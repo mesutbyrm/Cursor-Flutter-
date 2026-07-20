@@ -17,6 +17,7 @@ import '../../live/domain/entities/voice_room_sort.dart';
 import '../../live/presentation/providers/live_providers.dart';
 import 'providers/voice_rooms_presence_provider.dart';
 import 'utils/open_voice_chat_room_flow.dart';
+import '../../vip_gold/domain/voice_room_access.dart';
 import '../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import 'widgets/premium_2026/voice_discover_hub_2026.dart';
 
@@ -143,8 +144,9 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     List<VoiceRoomEntity> all,
     VoiceRoomEntity? mine,
   ) {
-    final sorted = sortVoiceRoomsByPopularity(all);
-    if (mine == null) return sorted;
+    final public = all.where((r) => !r.isVipGoldRoom).toList();
+    final sorted = sortVoiceRoomsByPopularity(public);
+    if (mine == null || mine.isVipGoldRoom) return sorted;
     final rest = sorted.where((r) => r.id != mine.id).toList();
     return [mine, ...rest];
   }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../fortune/presentation/data/fortune_catalog.dart';
+import '../../../../fortune/presentation/data/fortune_type_images.dart';
 import '../../../domain/entities/home_fortune_card_entity.dart';
 import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
@@ -69,7 +70,7 @@ class FortuneSection extends ConsumerWidget {
         emoji: c.icon.isNotEmpty ? c.icon : (catalog?.emoji ?? '🔮'),
         title: c.title,
         accent: c.accent,
-        imageUrl: c.imageUrl,
+        imageUrl: _fortuneImage(c.navigationSlug, c.imageUrl),
       );
     }).toList();
   }
@@ -85,11 +86,20 @@ class FortuneSection extends ConsumerWidget {
           emoji: type.emoji,
           title: type.title,
           accent: type.accent,
-          imageUrl: null,
+          imageUrl: FortuneTypeImages.urlFor(type.slug, width: 480),
         ));
       }
     }
     return out;
+  }
+
+  static String _fortuneImage(String slug, String? apiUrl) {
+    final raw = apiUrl?.trim();
+    if (raw != null && raw.isNotEmpty) {
+      if (raw.startsWith('http')) return raw;
+      return FortuneTypeImages.urlFor(raw, width: 480);
+    }
+    return FortuneTypeImages.urlFor(slug, width: 480);
   }
 }
 
@@ -109,6 +119,13 @@ class _FortuneCard extends StatelessWidget {
   final String emoji;
 
   bool get _hasImage => imageUrl != null && imageUrl!.trim().isNotEmpty;
+
+  String? get _resolvedImage {
+    if (!_hasImage) return null;
+    final u = imageUrl!.trim();
+    if (u.startsWith('http')) return u;
+    return FortuneTypeImages.urlFor(u, width: 480);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -133,9 +150,9 @@ class _FortuneCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (_hasImage)
+            if (_resolvedImage != null)
               CanlifalNetworkImage(
-                url: imageUrl!,
+                url: _resolvedImage!,
                 fit: BoxFit.cover,
               )
             else
@@ -154,7 +171,7 @@ class _FortuneCard extends StatelessWidget {
                   child: Text(emoji, style: const TextStyle(fontSize: 32)),
                 ),
               ),
-            if (_hasImage)
+            if (_resolvedImage != null)
               DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -168,7 +185,7 @@ class _FortuneCard extends StatelessWidget {
                 ),
               ),
             Align(
-              alignment: _hasImage ? Alignment.bottomCenter : Alignment.center,
+              alignment: _resolvedImage != null ? Alignment.bottomCenter : Alignment.center,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
                 child: Text(
@@ -179,7 +196,7 @@ class _FortuneCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
-                    color: _hasImage
+                    color: _resolvedImage != null
                         ? Colors.white
                         : HomeApprovedDesign.textPrimary,
                     height: 1.15,

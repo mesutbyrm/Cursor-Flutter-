@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/navigation/native_site_routes.dart';
 import '../../../domain/home_site_catalog.dart';
+import '../../data/section_visual_catalog.dart';
+import '../../../../../core/images/canlifal_network_image.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_section_title.dart';
 
@@ -32,6 +34,7 @@ class DiscoverSection extends StatelessWidget {
                 icon: tile.icon,
                 label: tile.label,
                 gradient: tile.gradient,
+                imageUrl: SectionVisualCatalog.discoverTile(tile.id),
                 onTap: () => openNativeSitePath(context, tile.route),
               );
             },
@@ -47,49 +50,72 @@ class _Tile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.gradient,
+    required this.imageUrl,
     required this.onTap,
   });
 
   final IconData icon;
   final String label;
   final List<Color> gradient;
+  final String imageUrl;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: HomeApprovedDesign.surface,
-          borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-          border: Border.all(color: HomeApprovedDesign.border),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              gradient.first.withValues(alpha: 0.35),
-              HomeApprovedDesign.surface,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: HomeApprovedDesign.border),
+            boxShadow: [
+              BoxShadow(
+                color: gradient.first.withValues(alpha: 0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 22, color: gradient.first),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: HomeApprovedDesign.textPrimary,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              CanlifalNetworkImage(url: imageUrl, fit: BoxFit.cover),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      gradient.first.withValues(alpha: 0.15),
+                      Colors.black.withValues(alpha: 0.72),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+              Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Icon(icon, size: 20, color: Colors.white),
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

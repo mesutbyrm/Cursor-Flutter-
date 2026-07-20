@@ -126,7 +126,16 @@ class ShortsRemoteDataSource {
           ]) ??
           '')
           .toString(),
-      thumbnailUrl: pick(json, ['thumbnailUrl', 'thumbnail_url'])?.toString(),
+      thumbnailUrl: pick(json, [
+        'thumbnailUrl',
+        'thumbnail_url',
+        'coverUrl',
+        'cover_url',
+        'imageUrl',
+        'image',
+        'thumbUrl',
+        'posterUrl',
+      ])?.toString(),
       description: pick(json, ['description', 'caption'])?.toString(),
       viewsCount: asInt(pick(json, ['viewsCount', 'views_count'])),
       likesCount: asInt(pick(json, ['likesCount', 'likes_count'])),

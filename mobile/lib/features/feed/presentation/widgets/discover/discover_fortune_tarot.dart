@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../fortune/presentation/data/fortune_catalog.dart';
+import '../../../../fortune/presentation/data/fortune_type_images.dart';
 import 'discover_section_header.dart';
 
 /// Keşfet önizlemesi — 14 fal türü; tam sayfa: `/fortune`.
@@ -96,6 +98,7 @@ class DiscoverFortuneTarot extends StatelessWidget {
                     SizedBox(
                       width: cellW,
                       child: _FortunePreviewTile(
+                        slug: card.slug,
                         emoji: card.emoji,
                         title: card.title,
                         border: card.accent,
@@ -118,12 +121,14 @@ class DiscoverFortuneTarot extends StatelessWidget {
 
 class _FortunePreviewTile extends StatelessWidget {
   const _FortunePreviewTile({
+    required this.slug,
     required this.emoji,
     required this.title,
     required this.border,
     required this.onTap,
   });
 
+  final String slug;
   final String emoji;
   final String title;
   final Color border;
@@ -131,43 +136,56 @@ class _FortunePreviewTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = FortuneTypeImages.urlFor(slug, width: 240);
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            border: Border.all(
-              color: border.withValues(alpha: 0.55),
-              width: 1.1,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: border.withValues(alpha: 0.55),
+                width: 1.1,
+              ),
             ),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                border.withValues(alpha: 0.22),
-                context.colors.surfaceContainer.withValues(alpha: 0.85),
-              ],
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                Text(emoji, style: TextStyle(fontSize: 22)),
-                SizedBox(height: 4),
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 9,
-                    color: context.colors.onSurface,
+                CanlifalNetworkImage(url: imageUrl, fit: BoxFit.cover),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        border.withValues(alpha: 0.15),
+                        Colors.black.withValues(alpha: 0.78),
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(emoji, style: const TextStyle(fontSize: 18)),
+                      const SizedBox(height: 4),
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 9,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

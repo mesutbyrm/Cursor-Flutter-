@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.62+89 (2026-07-20)
+
+### Görsel iyileştirmeler ve premium sesli oda kaldırma
+- **Premium sesli odalar** ana sayfa ve keşfetten kaldırıldı (VIP sekmesi, VIP şeridi, premium oda satırı)
+- **Trend videolar:** `coverUrl` / `image` alanları destekleniyor; küçük resim yoksa sinematik yedek görsel
+- **Fal & Tarot:** sinematik Unsplash görselleri (ana sayfa + keşfet önizlemesi)
+- **Günlük burç:** her burç için gökyüzü / mistik arka plan görselleri
+- **Keşfet** ve **Gold üyelik** kartlarında premium arka plan görselleri
+
 ## 1.0.61+88 (2026-07-19)
 
 ### Sesli oda ayarları — üst menü kaldırıldı, alt Ayarlar birleşik

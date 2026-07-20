@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/images/canlifal_network_image.dart';
+import '../../data/section_visual_catalog.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_section_title.dart';
 
@@ -34,7 +36,7 @@ class HomeHoroscopeSection extends StatelessWidget {
           onAction: () => context.push('/fortune/yildiz-haritasi'),
         ),
         SizedBox(
-          height: 96,
+          height: 108,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
@@ -47,6 +49,7 @@ class HomeHoroscopeSection extends StatelessWidget {
                 glyph: glyph,
                 primary: primary,
                 secondary: secondary,
+                imageUrl: SectionVisualCatalog.horoscopeFor(name),
                 onTap: () => context.push('/fortune/yildiz-haritasi'),
               );
             },
@@ -63,6 +66,7 @@ class _SignChip extends StatelessWidget {
     required this.glyph,
     required this.primary,
     required this.secondary,
+    required this.imageUrl,
     required this.onTap,
   });
 
@@ -70,6 +74,7 @@ class _SignChip extends StatelessWidget {
   final String glyph;
   final Color primary;
   final Color secondary;
+  final String imageUrl;
   final VoidCallback onTap;
 
   @override
@@ -80,22 +85,18 @@ class _SignChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
         child: SizedBox(
-          width: 76,
+          width: 80,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 56,
-                height: 56,
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [primary, secondary],
-                  ),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.12),
+                    color: primary.withValues(alpha: 0.55),
+                    width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -105,15 +106,38 @@ class _SignChip extends StatelessWidget {
                     ),
                   ],
                 ),
-                alignment: Alignment.center,
-                child: Text(
-                  glyph,
-                  style: const TextStyle(
-                    fontSize: 26,
-                    height: 1,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CanlifalNetworkImage(url: imageUrl, fit: BoxFit.cover),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            primary.withValues(alpha: 0.55),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: Text(
+                        glyph,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          height: 1,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          shadows: [
+                            Shadow(color: Colors.black54, blurRadius: 6),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 6),

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/images/canlifal_image_urls.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
@@ -237,7 +238,19 @@ class HomeRemoteDataSource {
       id: _str(m, ['id', '_id']) ?? '',
       title: (desc != null && desc.isNotEmpty) ? desc : channel,
       channelName: channel,
-      thumbnailUrl: _str(m, ['thumbnailUrl', 'thumbnail_url', 'thumbnail']),
+      thumbnailUrl: CanlifalImageUrls.resolve(
+        _str(m, [
+          'thumbnailUrl',
+          'thumbnail_url',
+          'thumbnail',
+          'coverUrl',
+          'cover_url',
+          'imageUrl',
+          'image',
+          'thumbUrl',
+          'posterUrl',
+        ]),
+      ),
       duration: durationStr,
       viewCount: asInt(pick(m, ['viewsCount', 'views_count', 'viewCount'])),
       videoUrl: _str(m, ['videoUrl', 'video_url']),

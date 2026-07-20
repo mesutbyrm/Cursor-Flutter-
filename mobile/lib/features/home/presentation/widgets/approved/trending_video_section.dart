@@ -13,6 +13,7 @@ import 'home_section_title.dart';
 import '../../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../../../shorts/presentation/utils/short_video_player_util.dart';
 import '../../../../../core/network/dio_provider.dart';
+import '../../data/section_visual_catalog.dart';
 
 /// Ana sayfa — yüklenen kısa videolar (R2/CDN). YouTube trend içeriği gösterilmez.
 class TrendingVideoSection extends ConsumerWidget {
@@ -82,6 +83,7 @@ class TrendingVideoSection extends ConsumerWidget {
               itemCount: videos.length,
               separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (_, i) => _TrendThumb(
+                index: i,
                 video: videos[i],
                 onTap: () {
                   final video = videos[i];
@@ -112,10 +114,21 @@ class TrendingVideoSection extends ConsumerWidget {
 }
 
 class _TrendThumb extends StatelessWidget {
-  const _TrendThumb({required this.video, required this.onTap});
+  const _TrendThumb({
+    required this.index,
+    required this.video,
+    required this.onTap,
+  });
 
+  final int index;
   final HomeTrendVideoEntity video;
   final VoidCallback onTap;
+
+  String? get _thumbUrl {
+    final raw = video.thumbnailUrl?.trim();
+    if (raw != null && raw.isNotEmpty) return raw;
+    return SectionVisualCatalog.trendFallback(index);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -129,13 +142,10 @@ class _TrendThumb extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              if (video.thumbnailUrl != null && video.thumbnailUrl!.isNotEmpty)
-                CanlifalNetworkImage(
-                  url: video.thumbnailUrl!,
-                  fit: BoxFit.cover,
-                )
-              else
-                const ColoredBox(color: HomeApprovedDesign.surface),
+              CanlifalNetworkImage(
+                url: _thumbUrl!,
+                fit: BoxFit.cover,
+              ),
               DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(

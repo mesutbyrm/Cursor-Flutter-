@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/images/canlifal_network_image.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../membership/domain/membership_package_entity.dart';
 import '../../../../membership/presentation/pages/premium_membership_page.dart';
+import '../../data/section_visual_catalog.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_section_title.dart';
 
@@ -151,46 +153,68 @@ class _TierCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = SectionVisualCatalog.goldTier(pkg.planId, width: 320);
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: 110,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-        decoration: BoxDecoration(
-          color: HomeApprovedDesign.surface,
-          borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-          border: Border.all(color: _accent.withValues(alpha: 0.45)),
-          boxShadow: [
-            BoxShadow(
-              color: _accent.withValues(alpha: 0.18),
-              blurRadius: 12,
-              spreadRadius: -2,
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(_icon, size: 32, color: _accent),
-            const SizedBox(height: 8),
-            Text(
-              pkg.title,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
-                color: HomeApprovedDesign.textPrimary,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
+        child: Container(
+          width: 110,
+          decoration: BoxDecoration(
+            border: Border.all(color: _accent.withValues(alpha: 0.55)),
+            boxShadow: [
+              BoxShadow(
+                color: _accent.withValues(alpha: 0.22),
+                blurRadius: 12,
+                spreadRadius: -2,
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '₺${pkg.priceJeton ~/ 2}/ay',
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: HomeApprovedDesign.textSecondary,
+            ],
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              CanlifalNetworkImage(url: imageUrl, fit: BoxFit.cover),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      _accent.withValues(alpha: 0.2),
+                      Colors.black.withValues(alpha: 0.82),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(_icon, size: 28, color: Colors.white),
+                    const SizedBox(height: 8),
+                    Text(
+                      pkg.title,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '₺${pkg.priceJeton ~/ 2}/ay',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white.withValues(alpha: 0.88),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
