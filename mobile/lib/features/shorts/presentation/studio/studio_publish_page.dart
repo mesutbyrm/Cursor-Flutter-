@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:async';
 
 import 'package:canlifal_social/core/providers/auth_selectors.dart';
 import 'package:dio/dio.dart';
@@ -17,6 +17,7 @@ import '../../domain/utils/short_copyright_guard.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/shorts_api_message.dart';
 import 'short_studio_providers.dart';
+import 'studio_cover_picker.dart';
 import 'studio_voiceover_sheet.dart';
 
 /// Açıklama, mention, hashtag, müzik, gizlilik ve yükleme ilerlemesi.
@@ -75,6 +76,11 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
     final draft = ref.read(shortUploadDraftProvider);
     _descCtrl.text = draft.description;
     _descCtrl.addListener(_onDescChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (draft.thumbnailCandidates.isEmpty) {
+        unawaited(_aiGenerateThumbnails(silent: true));
+      }
+    });
   }
 
   @override
@@ -257,26 +263,30 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
     });
   }
 
-  Future<void> _aiGenerateThumbnails() async {
+  Future<void> _aiGenerateThumbnails({bool silent = false}) async {
     await _runAi(() async {
       final path = ref.read(shortUploadDraftProvider).videoPath;
       if (path == null) {
-        if (mounted) showShortsSnackBar(context, 'Önce video seçin.');
+        if (!silent && mounted) {
+          showShortsSnackBar(context, 'Önce video seçin.');
+        }
         return;
       }
       final thumbs = await ShortsAiHelper.generateThumbnailCandidates(path);
       if (thumbs.isEmpty) {
-        if (mounted) showShortsSnackBar(context, 'Kapak oluşturulamadı.');
+        if (!silent && mounted) {
+          showShortsSnackBar(context, 'Kapak oluşturulamadı.');
+        }
         return;
       }
       ref.read(shortUploadDraftProvider.notifier).patch(
             (d) => d.copyWith(
               thumbnailCandidates: thumbs,
-              thumbnailPath: thumbs.first,
+              thumbnailPath: d.thumbnailPath ?? thumbs.first,
             ),
           );
-      if (mounted) {
-        showShortsSnackBar(context, '${thumbs.length} kapak adayı hazır.');
+      if (!silent && mounted) {
+        showShortsSnackBar(context, '${thumbs.length} kapak önerisi hazır.');
       }
     });
   }
@@ -520,8 +530,8 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
                 onPressed: _aiLoading ? null : _aiGenerateSubtitles,
               ),
               ActionChip(
-                label: const Text('Kapak'),
-                onPressed: _aiLoading ? null : _aiGenerateThumbnails,
+                label: const Text('Kapak öner'),
+                onPressed: _aiLoading ? null : () => _aiGenerateThumbnails(),
               ),
               ActionChip(
                 label: const Text('Müzik öner'),
@@ -538,34 +548,12 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
           ],
           if (draft.thumbnailCandidates.isNotEmpty) ...[
             const SizedBox(height: 12),
-            SizedBox(
-              height: 72,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: draft.thumbnailCandidates.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (ctx, i) {
-                  final p = draft.thumbnailCandidates[i];
-                  final sel = draft.thumbnailPath == p;
-                  return GestureDetector(
-                    onTap: () => _pickThumbnail(p),
-                    child: Container(
-                      width: 72,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: sel ? Colors.amber : Colors.white24,
-                          width: sel ? 2 : 1,
-                        ),
-                        image: DecorationImage(
-                          image: FileImage(File(p)),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+            StudioCoverPicker(
+              candidates: draft.thumbnailCandidates,
+              selectedPath: draft.thumbnailPath,
+              loading: _aiLoading,
+              onSelected: _pickThumbnail,
+              onGenerate: () => _aiGenerateThumbnails(),
             ),
           ],
           const SizedBox(height: 12),

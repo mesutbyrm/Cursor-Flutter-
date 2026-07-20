@@ -87,8 +87,8 @@ class _Tile extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      gradient.first.withValues(alpha: 0.15),
-                      Colors.black.withValues(alpha: 0.72),
+                      Colors.black.withValues(alpha: 0.05),
+                      Colors.black.withValues(alpha: 0.78),
                     ],
                   ),
                 ),

@@ -475,7 +475,9 @@ class HomeRemoteDataSource {
       title: _str(m, const ['name', 'title']) ?? '',
       slug: slug,
       icon: _str(m, const ['icon', 'emoji']) ?? '🔮',
-      imageUrl: _str(m, const ['image', 'imageUrl', 'thumbnail']),
+      imageUrl: CanlifalImageUrls.resolve(
+        _str(m, const ['image', 'imageUrl', 'thumbnail']),
+      ),
       routePath: href.isNotEmpty ? href : null,
     );
   }
