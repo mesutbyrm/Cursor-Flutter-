@@ -477,10 +477,30 @@ class ChatRoomRemoteDataSource {
 
   Future<void> joinVoiceSession(String roomKey, {String? alternateKey}) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      await _dio.safePost<dynamic>(
-        voicePath(key),
-        data: const {'action': 'join'},
-      );
+      final bodies = <Map<String, dynamic>>[
+        const {'action': 'join'},
+        const {'type': 'join'},
+        const {'action': 'join', 'type': 'join'},
+      ];
+      ApiException? lastError;
+      for (final body in bodies) {
+        try {
+          await _dio.safePost<dynamic>(voicePath(key), data: body);
+          return;
+        } on ApiException catch (e) {
+          lastError = e;
+          final msg = e.message.toLowerCase();
+          if (e.statusCode == 404 || e.statusCode == 405) rethrow;
+          if (e.statusCode == 400 ||
+              e.statusCode == 422 ||
+              msg.contains('invalid type') ||
+              msg.contains('geçersiz alan')) {
+            continue;
+          }
+          rethrow;
+        }
+      }
+      if (lastError != null) throw lastError;
     });
   }
 
@@ -2040,57 +2060,61 @@ class ChatRoomRemoteDataSource {
     String? userId,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final action = (userId != null && userId.isNotEmpty) ? 'force' : 'take';
-      try {
-        await _liveField.seats.seatAction(
-          roomId: key,
-          action: action,
-          seatIndex: seatIndex,
-          targetUserId: userId,
-        );
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 &&
-            e.statusCode != 405 &&
-            e.statusCode != 400 &&
-            e.statusCode != 422) {
-          rethrow;
-        }
-      } catch (_) {}
+      final targetId = userId?.trim();
+      final isOther = targetId != null && targetId.isNotEmpty;
 
-      final takeBody = <String, dynamic>{
-        'action': 'take',
-        'seatIndex': seatIndex,
-        if (userId != null && userId.isNotEmpty) 'userId': userId,
-      };
-      final forceBody = <String, dynamic>{
-        'action': 'force',
-        'seatIndex': seatIndex,
-        if (userId != null && userId.isNotEmpty) 'userId': userId,
-      };
-      final sitBody = <String, dynamic>{
-        'action': 'sit',
-        'seatIndex': seatIndex,
-        if (userId != null && userId.isNotEmpty) 'userId': userId,
-      };
-      final payloads = userId != null && userId.isNotEmpty
-          ? [forceBody, takeBody, sitBody]
-          : [takeBody, sitBody];
+      Map<String, dynamic> seatPayload(String action, int index) => {
+            'action': action,
+            'seatIndex': index,
+            if (isOther) ...{
+              'userId': targetId,
+              'targetUserId': targetId,
+            },
+          };
+
+      final payloads = <Map<String, dynamic>>[
+        if (isOther) ...[
+          seatPayload('force', seatIndex),
+          seatPayload('take', seatIndex),
+          seatPayload('sit', seatIndex),
+        ] else ...[
+          seatPayload('take', seatIndex),
+          seatPayload('sit', seatIndex),
+          if (seatIndex > 0) seatPayload('take', seatIndex - 1),
+        ],
+      ];
+
+      ApiException? lastError;
       for (final payload in payloads) {
-        try {
-          await _dio.safePatch<dynamic>(seatsPath(key), data: payload);
-          return;
-        } on ApiException catch (e) {
-          if (e.statusCode != 405 && e.statusCode != 404) rethrow;
-        }
-        try {
-          await _dio.safePost<dynamic>(seatsPath(key), data: payload);
-          return;
-        } on ApiException catch (e) {
-          if (e.statusCode != 405 && e.statusCode != 404) rethrow;
+        for (final send in [_dio.safePost<dynamic>, _dio.safePatch<dynamic>]) {
+          try {
+            await send(seatsPath(key), data: payload);
+            return;
+          } on ApiException catch (e) {
+            lastError = e;
+            if (e.statusCode == 404 ||
+                e.statusCode == 405 ||
+                e.statusCode == 400 ||
+                e.statusCode == 422) {
+              continue;
+            }
+            rethrow;
+          }
         }
       }
-      await _dio.safePost<dynamic>(presencePath(key), data: takeBody);
+
+      final presenceBody = <String, dynamic>{
+        'action': 'join',
+        'seatIndex': seatIndex,
+        if (isOther) 'userId': targetId,
+      };
+      try {
+        await _dio.safePost<dynamic>(presencePath(key), data: presenceBody);
+        return;
+      } on ApiException catch (e) {
+        lastError = e;
+      }
+      if (lastError != null) throw lastError;
     });
   }
 

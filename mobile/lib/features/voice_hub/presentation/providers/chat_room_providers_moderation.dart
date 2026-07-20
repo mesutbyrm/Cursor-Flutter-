@@ -41,14 +41,17 @@ extension VoiceRoomModerationControls on VoiceRoomLiveController {
           );
       if (perms != null && perms.hasAnyServerFlag) {
         state = state.copyWith(serverPermissions: perms);
+        unawaited(_tryAutoPrivilegedSeat());
         return;
       }
       if (_isClientRoomOwner()) {
         state = state.copyWith(serverPermissions: _ownerPermissionsFallback());
+        unawaited(_tryAutoPrivilegedSeat());
       }
     } catch (_) {
       if (_isClientRoomOwner()) {
         state = state.copyWith(serverPermissions: _ownerPermissionsFallback());
+        unawaited(_tryAutoPrivilegedSeat());
       }
     }
   }
