@@ -198,6 +198,13 @@ class ChatRoomRemoteDataSource {
     String? since,
     int limit = 100,
   }) async {
+    Future<({
+      ChatRoomMyPermissions? myPermissions,
+      String? myNickname,
+      bool? roomMuted,
+    })> loadMeta() =>
+        _fetchRoomMeta(roomKey, alternateKey: alternateKey);
+
     try {
       final liveMsgs = await _liveField.messages.fetchMessages(
         roomId: roomKey,
@@ -223,11 +230,12 @@ class ChatRoomRemoteDataSource {
             )
             .where((m) => m.id.isNotEmpty || m.content.isNotEmpty)
             .toList();
+        final meta = await loadMeta();
         return (
           messages: messages,
-          myPermissions: null,
-          myNickname: null,
-          roomMuted: null,
+          myPermissions: meta.myPermissions,
+          myNickname: meta.myNickname,
+          roomMuted: meta.roomMuted,
         );
       }
     } on ApiException catch (e) {
@@ -274,6 +282,63 @@ class ChatRoomRemoteDataSource {
         roomMuted: roomMuted,
       );
     });
+  }
+
+  /// Yalnızca `myPermissions` / rumuz — mesaj listesi olmadan.
+  Future<ChatRoomMyPermissions?> fetchMyPermissions(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    final meta = await _fetchRoomMeta(roomKey, alternateKey: alternateKey);
+    return meta.myPermissions;
+  }
+
+  Future<
+    ({
+      ChatRoomMyPermissions? myPermissions,
+      String? myNickname,
+      bool? roomMuted,
+    })
+  > _fetchRoomMeta(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    try {
+      return await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+        final res = await _dio.safeGet<dynamic>(
+          messagesPath(key),
+          query: const {'limit': 1},
+        );
+        final body = res.data;
+        final map =
+            _unwrapMap(body) ?? (body is Map ? asJsonMap(body) : null);
+        ChatRoomMyPermissions? perms;
+        String? myNickname;
+        bool? roomMuted;
+        if (map != null) {
+          final rawPerms = map['myPermissions'];
+          if (rawPerms is Map) {
+            perms = ChatRoomMyPermissions.fromJson(
+              Map<String, dynamic>.from(rawPerms),
+            );
+          }
+          myNickname = map['myNickname']?.toString();
+          final muted = map['roomMuted'];
+          if (muted is bool) roomMuted = muted;
+        }
+        return (
+          myPermissions: perms,
+          myNickname: myNickname,
+          roomMuted: roomMuted,
+        );
+      });
+    } catch (_) {
+      return (
+        myPermissions: null,
+        myNickname: null,
+        roomMuted: null,
+      );
+    }
   }
 
   Future<List<ChatRoomPresence>> fetchPresence(
@@ -965,7 +1030,11 @@ class ChatRoomRemoteDataSource {
         'action': action,
         if (targetUserId != null && targetUserId.isNotEmpty)
           'targetUserId': targetUserId,
-        if (role != null && role.isNotEmpty) 'role': role,
+        if (role != null && role.isNotEmpty) ...{
+          'role': role,
+          'roleSymbol': role,
+          'symbol': role,
+        },
         if (reason != null && reason.isNotEmpty) 'reason': reason,
         if (message != null && message.trim().isNotEmpty) 'message': message.trim(),
         if (ttl != null && ttl > 0) 'ttl': ttl,
@@ -1183,26 +1252,48 @@ class ChatRoomRemoteDataSource {
     required String roleSymbol,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final actions = <String>[
+        'set_role',
+        if (roleSymbol == '+') 'give_voice',
+        if (roleSymbol == '@') 'give_op',
+        if (roleSymbol == '&') 'give_sop',
+        if (roleSymbol == '~') 'give_founder',
+      ];
+      ApiException? lastError;
+      for (final action in actions) {
+        try {
+          await _postModeration(
+            roomKey: key,
+            action: action,
+            targetUserId: userId,
+            role: roleSymbol,
+          );
+          return;
+        } on ApiException catch (e) {
+          lastError = e;
+          if (e.statusCode == 404 || e.statusCode == 405) continue;
+          if (e.statusCode != null && e.statusCode! >= 500) continue;
+          rethrow;
+        }
+      }
       try {
-        await _postModeration(
-          roomKey: key,
-          action: 'set_role',
-          targetUserId: userId,
-          role: roleSymbol,
+        await _dio.safePost<dynamic>(
+          rolePath(key),
+          data: <String, dynamic>{
+            'userId': userId,
+            'role': roleSymbol,
+            'symbol': roleSymbol,
+            'roleSymbol': roleSymbol,
+          },
         );
         return;
       } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        if (e.statusCode != 404 && e.statusCode != 405) {
+          if (lastError != null) throw lastError!;
+          rethrow;
+        }
       }
-      await _dio.safePost<dynamic>(
-        rolePath(key),
-        data: <String, dynamic>{
-          'userId': userId,
-          'role': roleSymbol,
-          'symbol': roleSymbol,
-          'roleSymbol': roleSymbol,
-        },
-      );
+      if (lastError != null) throw lastError!;
     });
   }
 
@@ -1972,12 +2063,20 @@ class ChatRoomRemoteDataSource {
         'seatIndex': seatIndex,
         if (userId != null && userId.isNotEmpty) 'userId': userId,
       };
+      final forceBody = <String, dynamic>{
+        'action': 'force',
+        'seatIndex': seatIndex,
+        if (userId != null && userId.isNotEmpty) 'userId': userId,
+      };
       final sitBody = <String, dynamic>{
         'action': 'sit',
         'seatIndex': seatIndex,
         if (userId != null && userId.isNotEmpty) 'userId': userId,
       };
-      for (final payload in [takeBody, sitBody]) {
+      final payloads = userId != null && userId.isNotEmpty
+          ? [forceBody, takeBody, sitBody]
+          : [takeBody, sitBody];
+      for (final payload in payloads) {
         try {
           await _dio.safePatch<dynamic>(seatsPath(key), data: payload);
           return;

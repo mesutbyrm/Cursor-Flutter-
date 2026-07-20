@@ -358,6 +358,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       _patchHubPresenceCount(merged.length);
       unawaited(_tryAutoPrivilegedSeat());
       unawaited(_broadcastStaffEntryIfNeeded());
+      unawaited(refreshServerPermissions());
     } on Object catch (e) {
       VoiceRoomDebugLog.log('api.presence.join.fail', {'error': e.toString()});
       ref.read(voiceRoomDiagnosticProvider.notifier).setPresence(joined: false);
@@ -398,6 +399,16 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       if (lower.contains('invalid type') || lower.contains('geçersiz alan')) {
         state = state.copyWith(loading: false, clearError: true);
         return;
+      }
+      if (lower.contains('sunucu hatası') ||
+          lower.contains('internal server') ||
+          msg.contains('500')) {
+        // Oda sahibi / katılımcı zaten içerideyse geçici 500 banner gösterme.
+        if (state.selfInRoom || state.presence.isNotEmpty) {
+          state = state.copyWith(loading: false, clearError: true);
+          unawaited(refreshServerPermissions());
+          return;
+        }
       }
       state = state.copyWith(
         loading: false,

@@ -1552,12 +1552,23 @@ class VoiceRoomLiveController
       final skipMessagePoll = state.sseConnected;
       final results = await Future.wait<Object?>([
         if (skipMessagePoll)
-          Future.value((
-            messages: state.messages,
-            myPermissions: state.serverPermissions,
-            myNickname: state.myNickname,
-            roomMuted: state.roomMuted,
-          ))
+          ref.read(chatRoomRemoteProvider).fetchMyPermissions(
+                _roomKey,
+                alternateKey: _musicAlternateKey,
+              ).then((p) => (
+                    messages: state.messages,
+                    myPermissions: p ?? state.serverPermissions,
+                    myNickname: state.myNickname,
+                    roomMuted: state.roomMuted,
+                  )).catchError((Object e) {
+            refreshError ??= e;
+            return (
+              messages: state.messages,
+              myPermissions: state.serverPermissions,
+              myNickname: state.myNickname,
+              roomMuted: state.roomMuted,
+            );
+          })
         else
           remote.fetchMessages(_roomKey, since: since).catchError((Object e) {
             refreshError ??= e;
@@ -1581,6 +1592,22 @@ class VoiceRoomLiveController
       });
       fetchedMsgs = msgResult.messages;
       serverPerms = msgResult.myPermissions ?? serverPerms;
+      if ((serverPerms == null || !serverPerms.hasAnyServerFlag) &&
+          _isClientRoomOwnerForRefresh(user)) {
+        serverPerms = const ChatRoomMyPermissions(
+          isRoomOwner: true,
+          canGiveVoice: true,
+          canGiveOp: true,
+          canGiveSop: true,
+          canGiveFounder: true,
+          canManageRoom: true,
+          canMuteUsers: true,
+          canKickUsers: true,
+          canBanUsers: true,
+          canMuteRoom: true,
+          role: '~',
+        );
+      }
       myNickname = msgResult.myNickname ?? myNickname;
       if (msgResult.roomMuted != null) roomMuted = msgResult.roomMuted!;
       presence = _mergePresenceStable(
@@ -2503,6 +2530,15 @@ class VoiceRoomLiveController
       walletRole: ref.read(staffAccessProvider).siteRole ??
           ref.read(walletBalancesProvider).valueOrNull?.role,
     );
+  }
+
+  bool _isClientRoomOwnerForRefresh(UserEntity? user) {
+    if (user == null) return false;
+    final room = _roomMeta;
+    final uname = user.username.trim().toLowerCase();
+    final oid = room.ownerId?.trim() ?? '';
+    return (oid.isNotEmpty && oid == user.id) ||
+        (uname.isNotEmpty && room.slug.trim().toLowerCase() == uname);
   }
 
   Future<String?> toggleRoomMute({required bool mute}) async {

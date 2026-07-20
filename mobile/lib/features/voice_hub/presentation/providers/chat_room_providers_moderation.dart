@@ -7,6 +7,52 @@ part of 'chat_room_providers.dart';
 /// Sesli oda moderasyon API'si — [VoiceRoomLiveController]'dan ayrıldı.
 /// `part of` — aynı kütüphane; private erişim ve davranış birebir korunur.
 extension VoiceRoomModerationControls on VoiceRoomLiveController {
+  bool _isClientRoomOwner() {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return false;
+    final room = _roomMeta;
+    final uname = user.username.trim().toLowerCase();
+    final oid = room.ownerId?.trim() ?? '';
+    return (oid.isNotEmpty && oid == user.id) ||
+        (uname.isNotEmpty && room.slug.trim().toLowerCase() == uname);
+  }
+
+  ChatRoomMyPermissions _ownerPermissionsFallback() => const ChatRoomMyPermissions(
+        isRoomOwner: true,
+        canGiveVoice: true,
+        canGiveOp: true,
+        canGiveSop: true,
+        canGiveFounder: true,
+        canManageRoom: true,
+        canMuteUsers: true,
+        canKickUsers: true,
+        canBanUsers: true,
+        canMuteRoom: true,
+        role: '~',
+      );
+
+  /// Sunucu `myPermissions` — SSE açıkken de yenilenir (yetki verme için kritik).
+  Future<void> refreshServerPermissions() async {
+    if (_roomKey.isEmpty) return;
+    try {
+      final perms = await ref.read(chatRoomRemoteProvider).fetchMyPermissions(
+            _roomKey,
+            alternateKey: _musicAlternateKey,
+          );
+      if (perms != null && perms.hasAnyServerFlag) {
+        state = state.copyWith(serverPermissions: perms);
+        return;
+      }
+      if (_isClientRoomOwner()) {
+        state = state.copyWith(serverPermissions: _ownerPermissionsFallback());
+      }
+    } catch (_) {
+      if (_isClientRoomOwner()) {
+        state = state.copyWith(serverPermissions: _ownerPermissionsFallback());
+      }
+    }
+  }
+
   Future<String?> postModeratorAnnouncement(String message) async =>
       sendDuyuruAnnouncement(message);
 
