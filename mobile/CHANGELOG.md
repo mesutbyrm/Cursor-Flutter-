@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.65+92 (2026-07-20)
+
+### Sesli oda — mikrofon ve otomatik koltuk
+- **No voice permission:** izleyici girişinde gereksiz `POST /voice` kaldırıldı; mikrofon açılırken önce koltuğa oturma
+- **Geçersiz alan:** koltuk atama artık yalnızca `/api/chat/rooms/{id}/seats` kullanıyor (yanlış `/api/live/seats` kaldırıldı)
+- Koltuk API: `take` / `sit` / `force` + `targetUserId` yedekleri; 400/422'de sonraki format denenir
+- **Yetkili otomatik koltuk:** sunucu `myPermissions` yüklendikten sonra tekrar denenir; `@` `&` `~` rolleri tanınır
+- Normal kullanıcı mikrofon açarken boş koltuğa otomatik oturma
+
 ## 1.0.64+91 (2026-07-20)
 
 ### Sesli oda — oda sahibi yetkileri ve PK onayı

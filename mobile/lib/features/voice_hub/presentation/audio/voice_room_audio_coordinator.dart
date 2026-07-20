@@ -65,17 +65,20 @@ class VoiceRoomAudioCoordinator {
 
     try {
       await Future.wait<void>([
-        () async {
-          try {
-            await ds.joinVoiceSession(channel);
-          } on Object catch (e) {
-            VoiceRoomDebugLog.log('audio.voice_api.join.warn', {
-              'error': e.toString(),
-              'staffBypass': staffBypassVoiceApi,
-            });
-            if (!staffBypassVoiceApi) rethrow;
-          }
-        }(),
+        if (enableMic)
+          () async {
+            try {
+              await ds.joinVoiceSession(channel);
+            } on Object catch (e) {
+              VoiceRoomDebugLog.log('audio.voice_api.join.warn', {
+                'error': e.toString(),
+                'staffBypass': staffBypassVoiceApi,
+              });
+              if (!staffBypassVoiceApi) rethrow;
+            }
+          }()
+        else
+          Future<void>.value(),
         _trtc.joinVoice(
           channel,
           publishMic: enableMic,

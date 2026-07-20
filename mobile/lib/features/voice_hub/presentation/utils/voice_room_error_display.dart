@@ -25,6 +25,8 @@ abstract final class VoiceRoomErrorDisplay {
       return false;
     }
     final lower = msg.toLowerCase();
-    return lower.contains('invalid type') || lower.contains('geçersiz alan');
+    return lower.contains('invalid type') ||
+        lower.contains('geçersiz alan') ||
+        lower.contains('no voice permission');
   }
 }

@@ -370,12 +370,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         room: room,
         presence: live.presence,
       )) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Konuşmak için koltuğa oturmalısınız'),
-          ),
-        );
-        return;
+        final notifier = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+        final seated = await notifier.ensureSelfOnSeatForMic();
+        if (!mounted) return;
+        if (!seated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Konuşmak için boş bir koltuğa oturmalısınız'),
+            ),
+          );
+          return;
+        }
+        await notifier.refresh();
       }
     }
     try {

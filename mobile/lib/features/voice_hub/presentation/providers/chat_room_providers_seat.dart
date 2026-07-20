@@ -17,6 +17,25 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       return VoiceRoomSeatPriority.tierAdmin;
     }
 
+    if (server != null) {
+      if (server.isGlobalAdmin) return VoiceRoomSeatPriority.tierAdmin;
+      if (server.isRoomOwner || server.canGiveFounder) {
+        return VoiceRoomSeatPriority.tierFounder;
+      }
+      if (server.canGiveSop) return VoiceRoomSeatPriority.tierSop;
+      if (server.canGiveOp ||
+          server.canMuteUsers ||
+          server.canKickUsers ||
+          server.canManageRoom) {
+        return VoiceRoomSeatPriority.tierOp;
+      }
+      final serverSym = server.role?.trim();
+      if (serverSym != null && serverSym.isNotEmpty) {
+        final symTier = VoiceRoomSeatPriority.tierFromRoleSymbol(serverSym);
+        if (symTier != null) return symTier;
+      }
+    }
+
     final symbol = self?.roleSymbol ?? _roleSymbolForUser(user);
     final symTier = VoiceRoomSeatPriority.tierFromRoleSymbol(symbol);
     if (symTier != null) return symTier;
@@ -149,6 +168,23 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     } catch (e) {
       return ApiException.userMessage(e);
     }
+  }
+
+  /// Mikrofon açmadan önce boş koltuğa otur (normal kullanıcılar için).
+  Future<bool> ensureSelfOnSeatForMic() async {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return false;
+    for (final p in state.presence) {
+      if (p.id == user.id && p.seatIndex != null) return true;
+    }
+    final seatIndex = VoiceRoomSeatPriority.pickAutoSeatIndex(
+      myTier: VoiceRoomSeatPriority.tierNormal,
+      presence: state.presence,
+      room: _roomMeta,
+    );
+    if (seatIndex == null) return false;
+    final err = await assignSeat(seatIndex: seatIndex);
+    return err == null;
   }
 
   Future<String?> assignSeat({required int seatIndex, String? userId}) async {
