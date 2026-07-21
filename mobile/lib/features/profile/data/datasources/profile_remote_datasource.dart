@@ -162,12 +162,17 @@ class ProfileRemoteDataSource {
   }
 
   Future<ProfileStatsEntity> myStats() async {
-    try {
-      final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.meStats);
-      return ProfileStatsEntity.fromJson(res.data ?? {});
-    } catch (_) {
-      return const ProfileStatsEntity();
+    for (final path in [
+      ApiEndpoints.userStats,
+      ApiEndpoints.userStatistics,
+      ApiEndpoints.meStats,
+    ]) {
+      try {
+        final res = await _dio.safeGet<Map<String, dynamic>>(path);
+        return ProfileStatsEntity.fromJson(res.data ?? {});
+      } catch (_) {}
     }
+    return const ProfileStatsEntity();
   }
 
   Future<ProfileExtendedEntity> extendedProfile() async {
@@ -303,36 +308,38 @@ class ProfileRemoteDataSource {
   }
 
   Future<List<BroadcastHistoryItemEntity>> broadcastHistory() async {
-    try {
-      final res = await _dio.safeGet<Map<String, dynamic>>(
-        ApiEndpoints.meBroadcastHistory,
-      );
-      final body = res.data ?? {};
-      final data = body['data'] is Map ? asJsonMap(body['data']) : body;
-      final raw = data['items'];
-      if (raw is! List) return const [];
-      return raw
-          .map((e) => BroadcastHistoryItemEntity.fromJson(asJsonMap(e)))
-          .toList();
-    } catch (_) {
-      return const [];
+    for (final path in [
+      ApiEndpoints.userBroadcastHistory,
+      ApiEndpoints.meBroadcastHistory,
+    ]) {
+      try {
+        final res = await _dio.safeGet<Map<String, dynamic>>(path);
+        final body = res.data ?? {};
+        final data = body['data'] is Map ? asJsonMap(body['data']) : body;
+        final raw = data['items'];
+        if (raw is! List) continue;
+        return raw
+            .map((e) => BroadcastHistoryItemEntity.fromJson(asJsonMap(e)))
+            .toList();
+      } catch (_) {}
     }
+    return const [];
   }
 
   Future<List<ProfileActivityItemEntity>> myActivity() async {
-    try {
-      final res =
-          await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.meActivity);
-      final body = res.data ?? {};
-      final data = body['data'] is Map ? asJsonMap(body['data']) : body;
-      final raw = data['items'];
-      if (raw is! List) return const [];
-      return raw
-          .map((e) => ProfileActivityItemEntity.fromJson(asJsonMap(e)))
-          .toList();
-    } catch (_) {
-      return const [];
+    for (final path in [ApiEndpoints.userActivity, ApiEndpoints.meActivity]) {
+      try {
+        final res = await _dio.safeGet<Map<String, dynamic>>(path);
+        final body = res.data ?? {};
+        final data = body['data'] is Map ? asJsonMap(body['data']) : body;
+        final raw = data['items'];
+        if (raw is! List) continue;
+        return raw
+            .map((e) => ProfileActivityItemEntity.fromJson(asJsonMap(e)))
+            .toList();
+      } catch (_) {}
     }
+    return const [];
   }
 
   Future<List<UserEntity>> followers(String userId) async {

@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.69+96 (2026-07-21)
+
+### Backend dokümantasyon uyumu (Faz 2)
+- **ApiEndpoints:** sesli oda uçları merkezileştirildi (music-queue, settings, moderation, speak-request, banned-words, …)
+- **chat_room_remote_datasource:** tüm inline `/api/chat/rooms/...` path'leri `ApiEndpoints`'e taşındı
+- **Profil:** `userStats`, `userActivity`, `userBroadcastHistory` birincil; `/api/users/me/*` yedek
+- **Hediye:** `check-reciprocal` gönderim öncesi sesli oda, canlı yayın ve `GiftService`'te
+- **SSE seat_update:** 300 ms debounce ile koltuk yenileme
+- **Cache policy:** `/api/user/stats` ve `/api/user/activity` TTL kuralları
+
 ## 1.0.68+95 (2026-07-21)
 
 ### Backend dokümantasyon uyumu (Faz 1)

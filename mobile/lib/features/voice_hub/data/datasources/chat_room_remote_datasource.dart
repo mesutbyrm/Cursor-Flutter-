@@ -37,33 +37,33 @@ class ChatRoomRemoteDataSource {
   void close() => _youtube.close();
 
   static String messagesPath(String roomId) =>
-      '/api/chat/rooms/$roomId/messages';
+      ApiEndpoints.chatRoomMessages(roomId);
 
   static String presencePath(String roomId) =>
-      '/api/chat/rooms/$roomId/presence';
+      ApiEndpoints.chatRoomPresence(roomId);
 
-  static String djPath(String roomId) => '/api/chat/rooms/$roomId/dj';
+  static String djPath(String roomId) => ApiEndpoints.chatRoomDj(roomId);
 
-  static String musicPath(String roomId) => '/api/chat/rooms/$roomId/music';
+  static String musicPath(String roomId) => ApiEndpoints.chatRoomMusic(roomId);
 
   static String moderationPath(String roomId) =>
-      '/api/chat/rooms/$roomId/moderation';
+      ApiEndpoints.chatRoomModeration(roomId);
 
-  static String backgroundsPath() => '/api/chat/rooms/backgrounds';
+  static String backgroundsPath() => ApiEndpoints.chatRoomBackgrounds;
 
   static String speakRequestPath(String roomId) =>
-      '/api/chat/rooms/$roomId/speak-request';
+      ApiEndpoints.chatRoomSpeakRequest(roomId);
 
   static String roomBackgroundPath(String roomId) =>
-      '/api/chat/rooms/$roomId/background';
+      ApiEndpoints.chatRoomBackground(roomId);
 
   /// canlifal.com müzik arama (mobil JWT + sunucu YOUTUBE_API_KEY).
   static String musicSearchPath() => ApiEndpoints.musicSearch;
 
   static String songRequestPath(String roomId) =>
-      '/api/chat/rooms/$roomId/song-request';
+      ApiEndpoints.chatRoomSongRequest(roomId);
 
-  static String seatsPath(String roomId) => '/api/chat/rooms/$roomId/seats';
+  static String seatsPath(String roomId) => ApiEndpoints.chatRoomSeats(roomId);
 
   static String statePath(String roomId) => ApiEndpoints.chatRoomState(roomId);
 
@@ -767,7 +767,7 @@ class ChatRoomRemoteDataSource {
   Future<void> completeMusicQueue(String roomKey, {String? alternateKey}) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
-        '/api/chat/rooms/$key/music-queue/complete',
+        ApiEndpoints.chatRoomMusicQueueComplete(key),
       );
     });
   }
@@ -777,7 +777,7 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      await _dio.safePost<dynamic>('/api/chat/rooms/$key/music-queue/advance');
+      await _dio.safePost<dynamic>(ApiEndpoints.chatRoomMusicQueueAdvance(key));
     });
   }
 
@@ -788,7 +788,7 @@ class ChatRoomRemoteDataSource {
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safeDelete<dynamic>(
-        '/api/chat/rooms/$key/music-queue/$itemId',
+        ApiEndpoints.chatRoomMusicQueueItem(key, itemId),
       );
     });
   }
@@ -801,13 +801,13 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       try {
         await _dio.safePatch<dynamic>(
-          '/api/chat/rooms/$key/music-queue',
+          ApiEndpoints.chatRoomMusicQueue(key),
           data: {'order': orderedItemIds},
         );
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
         await _dio.safePost<dynamic>(
-          '/api/chat/rooms/$key/music-queue/reorder',
+          ApiEndpoints.chatRoomMusicQueueReorder(key),
           data: {'order': orderedItemIds},
         );
       }
@@ -824,7 +824,7 @@ class ChatRoomRemoteDataSource {
         res = await _dio.safeDelete<dynamic>(musicPath(key));
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-        res = await _dio.safeDelete<dynamic>('/api/chat/rooms/$key/music-queue');
+        res = await _dio.safeDelete<dynamic>(ApiEndpoints.chatRoomMusicQueue(key));
       }
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       return MusicClearResult.fromJson(map.isEmpty ? null : map);
@@ -847,7 +847,7 @@ class ChatRoomRemoteDataSource {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       }
       await _dio.safePatch<dynamic>(
-        '/api/chat/rooms/$key/settings',
+        ApiEndpoints.chatRoomSettings(key),
         data: {'isMuted': mute},
       );
     });
@@ -896,7 +896,7 @@ class ChatRoomRemoteDataSource {
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePatch<dynamic>(
-        '/api/chat/rooms/$key/music-settings',
+        ApiEndpoints.chatRoomMusicSettings(key),
         data: <String, dynamic>{
           if (musicEnabled != null) 'musicEnabled': musicEnabled,
           if (musicRequestCost != null) 'musicRequestCost': musicRequestCost,
@@ -962,13 +962,13 @@ class ChatRoomRemoteDataSource {
       if (data.isEmpty) return;
       try {
         await _dio.safePatch<dynamic>(
-          '/api/chat/rooms/$key/settings',
+          ApiEndpoints.chatRoomSettings(key),
           data: data,
         );
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
         await _dio.safePatch<dynamic>(
-          '/api/chat/rooms/$key',
+          ApiEndpoints.chatRoomDetail(key),
           data: data,
         );
       }
@@ -989,7 +989,7 @@ class ChatRoomRemoteDataSource {
       try {
         // Üretim: kılavuz §9 — PATCH /settings { background }
         await _dio.safePatch<dynamic>(
-          '/api/chat/rooms/$key/settings',
+          ApiEndpoints.chatRoomSettings(key),
           data: settingsPayload,
         );
         return;
@@ -1007,7 +1007,7 @@ class ChatRoomRemoteDataSource {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       }
       await _dio.safePatch<dynamic>(
-        '/api/chat/rooms/$key',
+        ApiEndpoints.chatRoomDetail(key),
         data: {...settingsPayload, ...legacyPayload},
       );
     });
@@ -1035,7 +1035,7 @@ class ChatRoomRemoteDataSource {
     List<String> result = [];
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final res = await _dio.safeGet<dynamic>(
-        '/api/chat/rooms/$key/speak-requests',
+        ApiEndpoints.chatRoomSpeakRequests(key),
       );
       final data = res.data;
       if (data is Map) {
@@ -1053,19 +1053,19 @@ class ChatRoomRemoteDataSource {
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
-        '/api/chat/rooms/$key/speak-requests/$targetUserId/approve',
+        ApiEndpoints.chatRoomSpeakRequestApprove(key, targetUserId),
       );
     });
   }
 
   static String banPath(String roomId, String userId) =>
-      '/api/chat/rooms/$roomId/bans/$userId';
+      ApiEndpoints.chatRoomBan(roomId, userId);
 
-  static String kickPath(String roomId) => '/api/chat/rooms/$roomId/kick';
+  static String kickPath(String roomId) => ApiEndpoints.chatRoomKick(roomId);
 
-  static String mutePath(String roomId) => '/api/chat/rooms/$roomId/mute';
+  static String mutePath(String roomId) => ApiEndpoints.chatRoomMute(roomId);
 
-  static String rolePath(String roomId) => '/api/chat/rooms/$roomId/roles';
+  static String rolePath(String roomId) => ApiEndpoints.chatRoomRoles(roomId);
 
   Future<Map<String, dynamic>?> _postModeration({
     required String roomKey,
@@ -1116,7 +1116,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       try {
         await _dio.safePost<dynamic>(
-          '/api/chat/rooms/$key/transfer-ownership',
+          ApiEndpoints.chatRoomTransferOwnership(key),
           data: <String, dynamic>{'newOwnerId': id},
         );
         return;
@@ -1631,7 +1631,7 @@ class ChatRoomRemoteDataSource {
       for (final path in [
         musicPath(key),
         songRequestPath(key),
-        '/api/chat/rooms/$key/music-queue',
+        ApiEndpoints.chatRoomMusicQueue(key),
         djPath(key),
       ]) {
         try {
@@ -1878,7 +1878,7 @@ class ChatRoomRemoteDataSource {
             data: songRequestBody,
           );
         } on Object {
-          usedEndpoint = '/api/chat/rooms/$key/music-queue';
+          usedEndpoint = ApiEndpoints.chatRoomMusicQueue(key);
           try {
             res = await _dio.safePost<dynamic>(
               usedEndpoint,
@@ -1993,7 +1993,7 @@ class ChatRoomRemoteDataSource {
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final res = await _dio.safePost<dynamic>(
-        '/api/chat/rooms/$key/music-request-by-query',
+        ApiEndpoints.chatRoomMusicRequestByQuery(key),
         data: <String, dynamic>{'query': query.trim()},
       );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
@@ -2260,7 +2260,7 @@ class ChatRoomRemoteDataSource {
       }
       try {
         final res = await _dio.safePost<dynamic>(
-          '/api/chat/rooms/$key/dj/$targetUserId',
+          ApiEndpoints.chatRoomDjUser(key, targetUserId),
         );
         final ids = _parseDjUserIdsResponse(res.data);
         if (ids.isNotEmpty) return ids;
@@ -2308,7 +2308,7 @@ class ChatRoomRemoteDataSource {
       }
       try {
         final res = await _dio.safeDelete<dynamic>(
-          '/api/chat/rooms/$key/dj/$targetUserId',
+          ApiEndpoints.chatRoomDjUser(key, targetUserId),
         );
         final ids = _parseDjUserIdsResponse(res.data);
         if (ids.isNotEmpty || res.statusCode == 200) return ids;
@@ -2334,7 +2334,7 @@ class ChatRoomRemoteDataSource {
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final res = await _dio.safeGet<dynamic>(
-        '/api/chat/rooms/$key/banned-words',
+        ApiEndpoints.chatRoomBannedWords(key),
       );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['words'];
@@ -2352,7 +2352,7 @@ class ChatRoomRemoteDataSource {
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final res = await _dio.safePost<dynamic>(
-        '/api/chat/rooms/$key/banned-words',
+        ApiEndpoints.chatRoomBannedWords(key),
         data: <String, dynamic>{'word': word},
       );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
@@ -2372,7 +2372,7 @@ class ChatRoomRemoteDataSource {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final encoded = Uri.encodeComponent(word);
       final res = await _dio.safeDelete<dynamic>(
-        '/api/chat/rooms/$key/banned-words/$encoded',
+        ApiEndpoints.chatRoomBannedWord(key, encoded),
       );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['words'];
@@ -2508,7 +2508,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       try {
         await _dio.safePost<dynamic>(
-          '/api/chat/rooms/$key/mentions',
+          ApiEndpoints.chatRoomMentions(key),
           data: <String, dynamic>{
             'mentionedUserIds': mentionedUserIds,
             'preview': preview,

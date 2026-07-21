@@ -35,6 +35,9 @@ abstract final class ApiEndpoints {
   static const mobileFortuneMenu = '/api/mobile/fortune-menu';
   static String mobileUserProfile(String userId) =>
       '/api/mobile/user-profile/$userId';
+  static const userPresence = '/api/presence';
+  static const userPresenceSections = '/api/presence/sections';
+
   static const me = '/api/me';
   static const meStats = '/api/users/me/stats';
   /// Kılavuz §9.2 — alınan hediyeler (eski `/api/users/me/gifts-received` yedek).
@@ -310,6 +313,83 @@ abstract final class ApiEndpoints {
   /// Şarkı isteği — `POST /api/chat/rooms/{roomId}/song-request`.
   static String chatRoomSongRequest(String roomId) =>
       '/api/chat/rooms/$roomId/song-request';
+
+  /// Oda arka planları — kılavuz §9.3 `getBackgrounds`.
+  static const chatRoomBackgrounds = '/api/chat/rooms/backgrounds';
+
+  static String chatRoomBackground(String roomId) =>
+      '/api/chat/rooms/$roomId/background';
+
+  /// Koltuk moderasyonu — kılavuz §9.3 `muteUser` / `banUser`.
+  static String chatRoomModeration(String roomId) =>
+      '/api/chat/rooms/$roomId/moderation';
+
+  /// Oda ayarları — kılavuz §9.3 `updateSettings`.
+  static String chatRoomSettings(String roomId) =>
+      '/api/chat/rooms/$roomId/settings';
+
+  /// Oda detayı — `GET/PATCH /api/chat/rooms/{roomId}`.
+  static String chatRoomDetail(String roomId) => '/api/chat/rooms/$roomId';
+
+  /// Müzik kuyruğu — kılavuz §9.3 `getMusicQueue` / `addToQueue`.
+  static String chatRoomMusicQueue(String roomId) =>
+      '/api/chat/rooms/$roomId/music-queue';
+
+  static String chatRoomMusicQueueComplete(String roomId) =>
+      '${chatRoomMusicQueue(roomId)}/complete';
+
+  static String chatRoomMusicQueueAdvance(String roomId) =>
+      '${chatRoomMusicQueue(roomId)}/advance';
+
+  static String chatRoomMusicQueueItem(String roomId, String itemId) =>
+      '${chatRoomMusicQueue(roomId)}/$itemId';
+
+  static String chatRoomMusicQueueReorder(String roomId) =>
+      '${chatRoomMusicQueue(roomId)}/reorder';
+
+  /// Sahiplik devri — kılavuz §9.3 `transferOwnership`.
+  static String chatRoomTransferOwnership(String roomId) =>
+      '/api/chat/rooms/$roomId/transfer-ownership';
+
+  /// Kılavuz dışı — üretimde mevcut (bkz. uyumluluk raporu §5.2).
+  static String chatRoomSpeakRequest(String roomId) =>
+      '/api/chat/rooms/$roomId/speak-request';
+
+  static String chatRoomSpeakRequests(String roomId) =>
+      '/api/chat/rooms/$roomId/speak-requests';
+
+  static String chatRoomSpeakRequestApprove(
+    String roomId,
+    String targetUserId,
+  ) =>
+      '/api/chat/rooms/$roomId/speak-requests/$targetUserId/approve';
+
+  static String chatRoomMusicSettings(String roomId) =>
+      '/api/chat/rooms/$roomId/music-settings';
+
+  static String chatRoomMusicRequestByQuery(String roomId) =>
+      '/api/chat/rooms/$roomId/music-request-by-query';
+
+  static String chatRoomKick(String roomId) => '/api/chat/rooms/$roomId/kick';
+
+  static String chatRoomMute(String roomId) => '/api/chat/rooms/$roomId/mute';
+
+  static String chatRoomRoles(String roomId) => '/api/chat/rooms/$roomId/roles';
+
+  static String chatRoomBan(String roomId, String userId) =>
+      '/api/chat/rooms/$roomId/bans/$userId';
+
+  static String chatRoomDjUser(String roomId, String targetUserId) =>
+      '/api/chat/rooms/$roomId/dj/$targetUserId';
+
+  static String chatRoomBannedWords(String roomId) =>
+      '/api/chat/rooms/$roomId/banned-words';
+
+  static String chatRoomBannedWord(String roomId, String word) =>
+      '${chatRoomBannedWords(roomId)}/${Uri.encodeComponent(word)}';
+
+  static String chatRoomMentions(String roomId) =>
+      '/api/chat/rooms/$roomId/mentions';
 
   /// Yetkili kullanıcı otomatik koltuk — üretim `join-seat`, yoksa `seats` fallback.
   static String chatRoomJoinSeat(String roomId) =>

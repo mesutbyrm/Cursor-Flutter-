@@ -4,6 +4,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../gifts/data/gift_reciprocal_guard.dart';
 import '../../../gifts/domain/gift_animation_kind.dart';
 import '../../../gifts/domain/gift_entity.dart';
 import '../../../gifts/domain/gift_platform.dart';
@@ -92,6 +93,9 @@ class LiveGiftsRemoteDataSource {
     String? toUserId,
     String? pkMatchId,
   }) async {
+    if (toUserId != null && toUserId.isNotEmpty) {
+      await assertReciprocalGiftAllowed(_dio, toUserId);
+    }
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamGifts(streamId),
       data: {
