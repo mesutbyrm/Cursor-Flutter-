@@ -21,6 +21,8 @@ import '../../domain/entities/moderation_result.dart';
 import '../../domain/entities/voice_room_ban_entry.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
 import '../../domain/entities/chat_room_my_permissions.dart';
+import '../../domain/entities/voice_room_seat_slot.dart';
+import '../../domain/entities/voice_room_state_snapshot.dart';
 
 class ChatRoomRemoteDataSource {
   ChatRoomRemoteDataSource(this._dio, {YoutubeMusicSearchCache? searchCache})
@@ -62,6 +64,8 @@ class ChatRoomRemoteDataSource {
       '/api/chat/rooms/$roomId/song-request';
 
   static String seatsPath(String roomId) => '/api/chat/rooms/$roomId/seats';
+
+  static String statePath(String roomId) => ApiEndpoints.chatRoomState(roomId);
 
   static String voicePath(String roomId) => ApiEndpoints.chatRoomVoice(roomId);
 
@@ -372,6 +376,38 @@ class ChatRoomRemoteDataSource {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final res = await _dio.safeGet<dynamic>(presencePath(key));
       return _presenceList(res.data);
+    });
+  }
+
+  /// Tek kaynaklı oda durumu — `GET /api/chat/rooms/{roomId}/state`.
+  Future<VoiceRoomStateSnapshot> fetchRoomState(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safeGet<dynamic>(statePath(key));
+      final body = res.data;
+      if (body is Map) {
+        return VoiceRoomStateSnapshot.fromJson(
+          Map<String, dynamic>.from(body),
+          roomId: key,
+        );
+      }
+      if (body is Map<String, dynamic>) {
+        return VoiceRoomStateSnapshot.fromJson(body, roomId: key);
+      }
+      throw ApiException('Geçersiz oda state yanıtı', statusCode: 502);
+    });
+  }
+
+  /// 15'li koltuk haritası — `GET /api/chat/rooms/{roomId}/seats`.
+  Future<List<VoiceRoomSeatSlot>> fetchSeats(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safeGet<dynamic>(seatsPath(key));
+      return parseVoiceRoomSeatMap(res.data);
     });
   }
 

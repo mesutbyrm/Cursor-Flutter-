@@ -289,6 +289,10 @@ abstract final class ApiEndpoints {
   static String chatRoomPresence(String roomId) =>
       '/api/chat/rooms/$roomId/presence';
 
+  /// Tek kaynaklı oda durumu — katılımcılar, koltuklar, TRTC, owner.
+  static String chatRoomState(String roomId) =>
+      '/api/chat/rooms/$roomId/state';
+
   /// Koltuk yönetimi — kılavuz §9.3 `POST` (`action`, `seatIndex`).
   static String chatRoomSeats(String roomId) =>
       '/api/chat/rooms/$roomId/seats';

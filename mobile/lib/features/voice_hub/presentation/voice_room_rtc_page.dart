@@ -519,6 +519,23 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     try {
       final roomId = room.apiRoomKey;
+      final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+      if (!live.backendSyncReady) {
+        if (mounted) {
+          setState(() {
+            _audioJoining = true;
+            _audioError = null;
+          });
+        }
+        final deadline = DateTime.now().add(const Duration(seconds: 12));
+        while (DateTime.now().isBefore(deadline)) {
+          await Future<void>.delayed(const Duration(milliseconds: 200));
+          if (!mounted) return;
+          final snap = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+          if (snap.backendSyncReady) break;
+        }
+      }
+      final sync = ref.read(voiceRoomLiveProvider(_liveRoomKey));
       final staffBypass = StaffRoles.isSiteAdminUser(
         role: user.role,
         username: user.username,
@@ -530,10 +547,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         enableMic: false,
         staffBypassVoiceApi: staffBypass,
         userId: user.id,
+        backendTrtc: sync.roomTrtc,
       );
       if (mounted) {
         ref.read(voiceRoomDiagnosticProvider.notifier).setTrtc(
-              roomId: roomId,
+              roomId: sync.roomTrtc?.effectiveStrRoomId ?? roomId,
               result: 1,
             );
         ref.read(voiceRoomDiagnosticProvider.notifier).setAudioReady(true);

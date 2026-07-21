@@ -33,6 +33,7 @@ class VoiceTrtcEngine {
       TrtcRoomManager.requestPermissions(video: false);
 
   static String trtcRoomIdFor(String rawRoomId) {
+    // Yalnızca geriye dönük yedek — yeni akış backend `trtcRoomId` kullanır.
     final id = rawRoomId.trim();
     if (id.isEmpty) return '';
     if (id.startsWith('voice_room_') ||
@@ -58,18 +59,21 @@ class VoiceTrtcEngine {
     }
 
     final rawRoomId = roomId.trim();
-    if (rawRoomId.isEmpty) {
+    if (rawRoomId.isEmpty && prefetchedCredentials == null) {
       throw const VoiceAgoraException(
         'Oda kimliği boş — ses bağlantısı kurulamadı.',
         phase: 'validate',
       );
     }
 
-    final trtcRoom = trtcRoomIdFor(rawRoomId);
+    final trtcRoom = prefetchedCredentials?.effectiveStrRoomId.isNotEmpty == true
+        ? prefetchedCredentials!.effectiveStrRoomId
+        : rawRoomId;
     VoiceRoomDebugLog.log('audio.trtc.prepare', {
       'roomId': rawRoomId,
       'trtcRoom': trtcRoom,
       'publishMic': publishMic,
+      'fromBackend': prefetchedCredentials != null,
     });
 
     try {
@@ -97,18 +101,19 @@ class VoiceTrtcEngine {
       if (credentials == null && tokenSource != null) {
         try {
           credentials = await tokenSource.fetchToken(
-            roomId: trtcRoom,
+            roomId: rawRoomId,
             role: effectiveRole,
+            userId: userId,
           );
         } catch (e) {
           VoiceRoomDebugLog.log('audio.trtc.token.fallback', {
-            'roomId': trtcRoom,
+            'roomId': rawRoomId,
             'error': e.toString(),
           });
           if (userId != null && userId.isNotEmpty) {
             credentials = await tokenSource.fetchUserSig(
               userId: userId,
-              roomId: trtcRoom,
+              roomId: rawRoomId,
             );
           } else {
             rethrow;
@@ -124,9 +129,10 @@ class VoiceTrtcEngine {
       }
 
       VoiceRoomDebugLog.log('audio.trtc.token', {
-        'roomId': credentials.roomId,
+        'roomId': credentials.effectiveStrRoomId,
         'userId': credentials.userId,
         'sdkAppId': credentials.sdkAppId,
+        'numericUid': credentials.numericUid,
       });
 
       await _manager.join(
@@ -136,7 +142,7 @@ class VoiceTrtcEngine {
       );
 
       _inRoom = true;
-      _roomId = trtcRoom;
+      _roomId = credentials.effectiveStrRoomId;
       _lastCredentials = credentials;
       _publishMic = publishMic;
       if (!publishMic) {

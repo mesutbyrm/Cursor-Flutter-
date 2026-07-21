@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.67+94 (2026-07-21)
+
+### Sesli oda — backend %100 senkronizasyon
+- **GET /state** ve **GET /seats** — odaya girişte tek kaynaklı durum; Flutter artık koltuk/owner/mic üretmiyor
+- **Oda akışı:** Join → state → seats → TRTC (backend `trtcRoomId` + `numericUid`) → SSE → UI
+- **SSE `room_event`:** `user_joined`, `user_left`, `mic_changed`, `seat_changed`, `owner_changed`, `room_closed` — ek API çağrısı yok
+- Optimistic presence/koltuk ve otomatik koltuk seçimi kaldırıldı
+- Çıkışta state tamamen temizlenir (hayalet kullanıcı önleme)
+
 ## 1.0.66+93 (2026-07-21)
 
 ### Hediye senkronizasyonu — sesli oda ve canlı yayın

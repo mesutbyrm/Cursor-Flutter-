@@ -209,6 +209,17 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
     try {
       final roomId = room.apiRoomKey;
+      if (!ref.read(voiceRoomLiveProvider(_liveRoomKey)).backendSyncReady) {
+        final deadline = DateTime.now().add(const Duration(seconds: 12));
+        while (DateTime.now().isBefore(deadline)) {
+          await Future<void>.delayed(const Duration(milliseconds: 200));
+          if (!mounted) return;
+          if (ref.read(voiceRoomLiveProvider(_liveRoomKey)).backendSyncReady) {
+            break;
+          }
+        }
+      }
+      final sync = ref.read(voiceRoomLiveProvider(_liveRoomKey));
       final staffBypass = StaffRoles.isSiteAdminUser(
         role: user.role,
         username: user.username,
@@ -220,6 +231,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         enableMic: false,
         staffBypassVoiceApi: staffBypass,
         userId: user.id,
+        backendTrtc: sync.roomTrtc,
       );
       if (!mounted) return;
       unawaited(VoiceRoomMusicAudioSession.activateForPlayback());

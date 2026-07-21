@@ -34,6 +34,7 @@ class ChatRoomSseService extends BaseSseService {
   void Function(Map<String, dynamic> payload)? _onFortuneRequest;
   void Function(PkBattleRemote battle, String event)? _onPk;
   void Function(List<String> users)? _onTyping;
+  void Function(Map<String, dynamic> payload)? _onRoomEvent;
 
   static String streamUrlFor(String roomId) {
     final base = BaseSseService.createSseDio().options.baseUrl
@@ -76,6 +77,7 @@ class ChatRoomSseService extends BaseSseService {
     void Function(Map<String, dynamic> payload)? onFortuneRequest,
     void Function(PkBattleRemote battle, String event)? onPk,
     void Function(List<String> users)? onTyping,
+    void Function(Map<String, dynamic> payload)? onRoomEvent,
   }) async {
     final id = roomId.trim();
     if (id.isEmpty) return;
@@ -95,6 +97,7 @@ class ChatRoomSseService extends BaseSseService {
     _onFortuneRequest = onFortuneRequest;
     _onPk = onPk;
     _onTyping = onTyping;
+    _onRoomEvent = onRoomEvent;
     if (isLiveForRoom(id)) {
       VoiceRoomDebugLog.log('sse.connect.skip', {
         'roomId': id,
@@ -226,6 +229,9 @@ class ChatRoomSseService extends BaseSseService {
         return;
       case ChatRoomSseEventType.pk:
         _emitPk(map);
+        return;
+      case ChatRoomSseEventType.roomEvent:
+        _onRoomEvent?.call(map);
         return;
       case ChatRoomSseEventType.typing:
         final users = (map['users'] is List

@@ -120,7 +120,7 @@ class TrtcRoomManager {
       throw StateError('TRTC yalnızca Android/iOS üzerinde desteklenir');
     }
 
-    final roomId = credentials.roomId.trim();
+    final roomId = credentials.effectiveStrRoomId;
     if (roomId.isEmpty) {
       throw StateError('TRTC oda kimliği boş — yayına bağlanılamadı');
     }

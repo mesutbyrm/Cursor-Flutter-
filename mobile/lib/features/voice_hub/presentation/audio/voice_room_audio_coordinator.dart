@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../../../../core/performance/voice_room_entry_perf.dart';
+import '../../../trtc/domain/entities/trtc_credentials.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../data/services/voice_room_debug_log.dart';
@@ -35,6 +36,7 @@ class VoiceRoomAudioCoordinator {
     bool enableMic = false,
     bool staffBypassVoiceApi = false,
     String? userId,
+    TrtcCredentials? backendTrtc,
   }) async {
     unawaited(VoiceRoomMusicAudioSession.ensureConfigured());
     final ds = remote ?? _remote;
@@ -46,22 +48,24 @@ class VoiceRoomAudioCoordinator {
       throw StateError('Oda kimliği boş');
     }
 
-    final trtcRoom = VoiceTrtcEngine.trtcRoomIdFor(channel);
     VoiceRoomDebugLog.log('audio.trtc.prepare', {
       'roomId': channel,
-      'trtcRoom': trtcRoom,
+      'trtcRoom': backendTrtc?.effectiveStrRoomId,
       'enableMic': enableMic,
+      'fromBackend': backendTrtc != null,
     });
     _lastRoomId = channel;
     _lastUserId = userId;
 
     final role = enableMic ? 'host' : 'audience';
-    final prefetched = userId != null && userId.isNotEmpty
-        ? VoiceRoomEntryPerf.takeTrtc(
-            userId: userId,
-            roomId: trtcRoom,
-          )
-        : null;
+    final prefetched = backendTrtc ??
+        (userId != null && userId.isNotEmpty
+            ? VoiceRoomEntryPerf.takeTrtc(
+                userId: userId,
+                roomId: backendTrtc?.effectiveStrRoomId ??
+                    VoiceTrtcEngine.trtcRoomIdFor(channel),
+              )
+            : null);
 
     try {
       await Future.wait<void>([

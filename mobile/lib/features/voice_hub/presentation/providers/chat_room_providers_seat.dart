@@ -170,34 +170,27 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     }
   }
 
-  /// Mikrofon açmadan önce boş koltuğa otur (normal kullanıcılar için).
+  /// Mikrofon açmadan önce boş koltuğa otur — yalnızca backend koltuk haritası.
   Future<bool> ensureSelfOnSeatForMic() async {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return false;
     for (final p in state.presence) {
       if (p.id == user.id && p.seatIndex != null) return true;
     }
-    final seatIndex = VoiceRoomSeatPriority.pickAutoSeatIndex(
-      myTier: VoiceRoomSeatPriority.tierNormal,
-      presence: state.presence,
-      room: _roomMeta,
-    );
-    if (seatIndex == null) return false;
-    final err = await assignSeat(seatIndex: seatIndex);
+    final empty = state.seatSlots
+        .where((s) => s.isEmpty)
+        .map((s) => s.index)
+        .toList();
+    if (empty.isEmpty) return false;
+    final err = await assignSeat(seatIndex: empty.first);
     return err == null;
   }
 
   Future<String?> assignSeat({required int seatIndex, String? userId}) async {
-    final targetId =
-        (userId ?? ref.read(authControllerProvider).valueOrNull?.id)?.trim();
-    if (targetId != null && targetId.isNotEmpty) {
-      _applyOptimisticSeat(userId: targetId, seatIndex: seatIndex);
-    }
     try {
       await ref
           .read(voiceSeatRestServiceProvider)
           .takeSeat(_roomKey, seatIndex, userId: userId);
-      unawaited(refresh());
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

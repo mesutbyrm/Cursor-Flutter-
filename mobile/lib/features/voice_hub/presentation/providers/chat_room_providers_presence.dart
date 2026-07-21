@@ -356,7 +356,6 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
           .read(voiceRoomDiagnosticProvider.notifier)
           .setPresence(joined: true, count: merged.length);
       _patchHubPresenceCount(merged.length);
-      unawaited(_tryAutoPrivilegedSeat());
       unawaited(_broadcastStaffEntryIfNeeded());
       unawaited(refreshServerPermissions());
     } on Object catch (e) {

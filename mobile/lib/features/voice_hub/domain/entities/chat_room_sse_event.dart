@@ -19,6 +19,7 @@ enum ChatRoomSseEventType {
   fortuneRequest,
   pk,
   typing,
+  roomEvent,
   unknown,
 }
 
@@ -96,6 +97,9 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
     case 'pkbattleupdated':
     case 'pk_battle_updated':
       return ChatRoomSseEventType.pk;
+    case 'room_event':
+    case 'roomevent':
+      return ChatRoomSseEventType.roomEvent;
     default:
       return ChatRoomSseEventType.unknown;
   }

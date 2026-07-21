@@ -60,6 +60,9 @@ import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/moderation_result.dart';
 import '../../domain/entities/voice_room_ban_entry.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
+import '../../domain/entities/voice_room_state_snapshot.dart';
+import '../../domain/entities/voice_room_seat_slot.dart';
+import '../../../trtc/domain/entities/trtc_credentials.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/youtube_stream_resolver.dart';
@@ -80,6 +83,7 @@ part 'chat_room_providers_music.dart';
 part 'chat_room_providers_moderation.dart';
 part 'chat_room_providers_seat.dart';
 part 'chat_room_providers_gift.dart';
+part 'chat_room_providers_room_sync.dart';
 part 'chat_room_providers_presence.dart';
 
 final youtubeStreamResolverProvider = Provider<YoutubeStreamResolver>((ref) {
@@ -165,6 +169,10 @@ class VoiceRoomLiveState {
     this.realtimeEvents = const [],
     this.musicLikeCount = 0,
     this.bannedWords = const [],
+    this.seatSlots = const [],
+    this.ownerId,
+    this.roomTrtc,
+    this.backendSyncReady = false,
   });
 
   final List<ChatRoomMessage> messages;
@@ -194,11 +202,18 @@ class VoiceRoomLiveState {
   final List<VoiceRoomRealtimeEvent> realtimeEvents;
   final int musicLikeCount;
   final List<String> bannedWords;
+  /// Backend `GET /seats` — 15 koltuk (sıra korunur).
+  final List<VoiceRoomSeatSlot> seatSlots;
+  final String? ownerId;
+  final TrtcCredentials? roomTrtc;
+  /// Join → state → seats tamamlandı; TRTC bağlanabilir.
+  final bool backendSyncReady;
 
   bool get isAnyoneTyping => typingUsers.isNotEmpty;
 
   int onlineCountFor(VoiceRoomEntity room) {
     if (presence.isNotEmpty) return presence.length;
+    if (backendSyncReady) return 0;
     if (room.displayOnline > 0) return room.displayOnline;
     return selfInRoom ? 1 : 0;
   }
@@ -240,6 +255,12 @@ class VoiceRoomLiveState {
     List<VoiceRoomRealtimeEvent>? realtimeEvents,
     int? musicLikeCount,
     List<String>? bannedWords,
+    List<VoiceRoomSeatSlot>? seatSlots,
+    String? ownerId,
+    bool clearOwnerId = false,
+    TrtcCredentials? roomTrtc,
+    bool clearRoomTrtc = false,
+    bool? backendSyncReady,
     bool clearError = false,
   }) {
     return VoiceRoomLiveState(
@@ -291,6 +312,10 @@ class VoiceRoomLiveState {
       realtimeEvents: realtimeEvents ?? this.realtimeEvents,
       musicLikeCount: musicLikeCount ?? this.musicLikeCount,
       bannedWords: bannedWords ?? this.bannedWords,
+      seatSlots: seatSlots ?? this.seatSlots,
+      ownerId: clearOwnerId ? null : (ownerId ?? this.ownerId),
+      roomTrtc: clearRoomTrtc ? null : (roomTrtc ?? this.roomTrtc),
+      backendSyncReady: backendSyncReady ?? this.backendSyncReady,
     );
   }
 }
@@ -581,15 +606,29 @@ class VoiceRoomLiveController
     );
   }
 
-  /// Odaya giriş — presence + mesajlar + PK + hediye paralel; SSE hemen; UI bloklanmaz.
+  /// Odaya giriş — sıra: presence join → GET state → GET seats → SSE → UI.
+  /// TRTC sayfa tarafında `backendSyncReady` + `roomTrtc` ile bağlanır.
   Future<void> _beginRoomSession() async {
     registerVoiceRoomLiveSession(ref, _roomKey);
     ref
         .read(voiceRoomMusicSessionProvider.notifier)
         .prepareForRoomEntry(_roomMeta);
     unawaited(VoiceRoomMusicAudioSession.ensureConfigured());
-    _seedOptimisticSelfPresence();
-    state = state.copyWith(loading: false);
+    state = state.copyWith(
+      loading: true,
+      presence: const [],
+      seatSlots: const [],
+      clearOwnerId: true,
+      clearRoomTrtc: true,
+      backendSyncReady: false,
+    );
+
+    try {
+      await _joinPresence();
+      await _loadBackendSnapshot();
+    } catch (_) {
+      state = state.copyWith(loading: false);
+    }
 
     _startSse();
     _schedulePoll(sseConnected: false);
@@ -599,19 +638,20 @@ class VoiceRoomLiveController
           alternateRoomId: _musicAlternateKey,
         );
 
-    unawaited(_parallelEntryLoad());
+    unawaited(_parallelEntryLoad(skipPresence: true));
     unawaited(_bootstrapRoomData());
   }
 
-  Future<void> _parallelEntryLoad() async {
+  Future<void> _parallelEntryLoad({bool skipPresence = false}) async {
     if (_roomKey.isEmpty) return;
     try {
-      await _joinPresence();
+      if (!skipPresence) {
+        await _joinPresence();
+      }
       await Future.wait<void>([
         _loadInitialMessages(),
         _preloadPkStatus(),
         _preloadGiftCatalog(),
-        _preloadPresenceMembers(),
       ], eagerError: false);
     } catch (_) {
       state = state.copyWith(loading: false);
@@ -845,6 +885,15 @@ class VoiceRoomLiveController
     VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: source);
     clearVoiceRoomLiveSession(ref, _roomKey);
     _removeSelfFromPresenceOptimistic();
+    state = state.copyWith(
+      presence: const [],
+      seatSlots: const [],
+      clearOwnerId: true,
+      clearRoomTrtc: true,
+      backendSyncReady: false,
+      selfInRoom: false,
+    );
+    _knownPresenceIds.clear();
     try {
       await _leavePresenceWithSeatClear().timeout(const Duration(seconds: 4));
     } catch (_) {}
@@ -1091,6 +1140,7 @@ class VoiceRoomLiveController
           },
           onUserJoin: _handleSseUserJoin,
           onUserLeave: _handleSseUserLeave,
+          onRoomEvent: _handleRoomEvent,
           onTyping: (users) {
             state = state.copyWith(typingUsers: users);
           },
@@ -1338,7 +1388,6 @@ class VoiceRoomLiveController
     ref
         .read(voiceRoomDiagnosticProvider.notifier)
         .setPresence(joined: true, count: merged.length);
-    unawaited(_tryAutoPrivilegedSeat());
   }
 
   void _handleSseUserLeave(Map<String, dynamic> payload) {
