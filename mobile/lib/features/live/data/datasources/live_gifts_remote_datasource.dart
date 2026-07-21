@@ -273,6 +273,26 @@ class LiveGiftsRemoteDataSource {
       rarity: GiftRarity.parse(pick(json, ['rarity'])?.toString()),
       animationKind: animType,
       soundKey: pick(json, ['sound'])?.toString(),
+      remainingBalance: asInt(
+        pick(json, [
+          'remainingBalance',
+          'balance',
+          'newBalance',
+          'coinBalance',
+        ]),
+      ),
+      seatIndex: asInt(pick(json, ['seatIndex', 'seat_index'])),
+      senderAvatar: _resolveImageUrl(
+        pick(json, ['senderAvatar', 'senderImage', 'sender_avatar'])?.toString(),
+      ),
+      receiverAvatar: _resolveImageUrl(
+        pick(json, [
+          'receiverAvatar',
+          'receiverImage',
+          'receiver_avatar',
+        ])?.toString(),
+      ),
+      giftType: pick(json, ['giftType', 'type', 'gift_type'])?.toString(),
     );
   }
 

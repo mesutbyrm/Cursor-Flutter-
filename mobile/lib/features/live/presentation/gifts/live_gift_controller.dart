@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 
 import '../../../gifts/data/gift_sound_service.dart';
 import '../../../gifts/domain/gift_revenue_display.dart';
-import '../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../data/datasources/live_gifts_remote_datasource.dart';
 import '../../data/services/live_gift_realtime_service.dart';
 import '../../domain/entities/live_gift_catalog.dart';
@@ -138,42 +137,13 @@ class LiveGiftController extends ChangeNotifier {
 
   void _onIncoming(LiveGiftEvent event) {
     if (!_isDisplayable(event)) return;
-    final enriched = _withoutCombo(event);
-    // Tek bildirim katmanı — chat üstü stack. Center toast ayrı render edilmez.
-    notifications.insert(0, enriched);
-    if (notifications.length > 5) {
-      notifications.removeRange(5, notifications.length);
-    }
-
-    final showFs = PremiumGiftCatalog2026.triggersFullscreen(
-      giftId: enriched.giftId,
-      coinCost: enriched.jetonAmount,
-    );
-    if (showFs) {
-      fullscreenQueue
-        ..clear()
-        ..add(enriched);
-      activeFullscreen = enriched;
-      final duration = enriched.rarity.fullscreenDuration;
-      Future.delayed(duration, () {
-        fullscreenQueue.removeWhere((e) => e.id == enriched.id);
-        if (activeFullscreen?.id == enriched.id) {
-          activeFullscreen =
-              fullscreenQueue.isNotEmpty ? fullscreenQueue.first : null;
-        }
-        notifyListeners();
-      });
-    }
-
-    final gross = enriched.jetonAmount;
+    final gross = event.jetonAmount;
     streamerEarnings =
         (streamerEarnings ?? 0) + GiftRevenueDisplay.liveBroadcasterNet(gross);
+    if (event.remainingBalance != null && event.remainingBalance! > 0) {
+      coinBalance = event.remainingBalance;
+    }
     notifyListeners();
-
-    Future.delayed(const Duration(seconds: 5), () {
-      notifications.removeWhere((e) => e.id == enriched.id);
-      notifyListeners();
-    });
   }
 
   bool _isDisplayable(LiveGiftEvent e) {
@@ -212,6 +182,11 @@ extension _LiveGiftEventCopy on LiveGiftEvent {
       rarity: rarity,
       animationKind: animationKind,
       soundKey: soundKey,
+      remainingBalance: remainingBalance,
+      seatIndex: seatIndex,
+      senderAvatar: senderAvatar,
+      receiverAvatar: receiverAvatar,
+      giftType: giftType,
     );
   }
 }

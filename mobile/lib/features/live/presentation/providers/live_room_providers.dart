@@ -17,6 +17,7 @@ import '../../data/services/live_namespace_socket_service.dart';
 import 'live_providers.dart';
 import 'live_stream_engagement_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import 'live_fortune_request_provider.dart';
 import 'live_broadcast_settings_provider.dart';
@@ -147,6 +148,8 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       accessToken: storage.readAccess,
       onConnected: () {
         state = state.copyWith(sseConnected: true);
+        GiftSyncLog.broadcast(streamId, 'sse', 'connected');
+        GiftSyncLog.sseConnected(streamId);
         LiveDebugLog.log('stream.room.sse_ok', {'streamId': streamId});
       },
       onViewerCount: (count) {
@@ -154,6 +157,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       },
       onMessage: (msg) => _mergeMessages([msg]),
       onGift: (ev) {
+        GiftSyncLog.broadcast(streamId, 'sse', ev.id);
         ref.read(liveGiftRealtimeProvider).publishRemote(ev);
       },
       onStreamEnded: () {

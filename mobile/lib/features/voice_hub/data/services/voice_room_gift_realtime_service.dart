@@ -49,8 +49,9 @@ class VoiceRoomGiftRealtimeService {
 
   String _fingerprint(LiveGiftEvent e) {
     final sender = (e.senderId ?? e.senderName).trim().toLowerCase();
+    final receiver = (e.receiverId ?? e.receiverName).trim().toLowerCase();
     final gift = e.giftId.trim().isNotEmpty ? e.giftId : e.giftName;
-    return '$sender|$gift|${e.quantity}|${e.jetonAmount}';
+    return '$sender|$receiver|$gift|${e.quantity}|${e.jetonAmount}';
   }
 
   bool _isDuplicateFingerprint(LiveGiftEvent event) {
@@ -69,8 +70,8 @@ class VoiceRoomGiftRealtimeService {
   }
 
   void publishLocal(LiveGiftEvent event) {
+    if (_isDuplicateFingerprint(event)) return;
     _seen.add(event.id);
-    _isDuplicateFingerprint(event);
     if (!_local.isClosed) _local.add(event);
   }
 

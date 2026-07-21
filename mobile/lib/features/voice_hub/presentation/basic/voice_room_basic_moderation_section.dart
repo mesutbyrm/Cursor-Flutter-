@@ -17,7 +17,7 @@ import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium_2026/voice_web_owner_stage.dart';
 import '../widgets/premium_2026/voice_pk_invite_banner.dart';
 import '../widgets/premium_2026/voice_gift_announcement_ticker.dart';
-import '../widgets/premium_2026/voice_recent_gifters_box.dart';
+import '../../../gifts/presentation/widgets/unified_recent_gifters_box.dart';
 import '../widgets/voice_room/voice_room_duyuru_ticker.dart';
 import '../widgets/voice_room/voice_room_staff_join_banner.dart';
 import 'voice_room_basic_premium_section.dart';
@@ -77,7 +77,11 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
             children: [
               const Expanded(child: VoiceGiftAnnouncementTicker()),
               const SizedBox(width: 8),
-              const VoiceRecentGiftersBox(),
+              UnifiedRecentGiftersBox(
+                sessionKey: room.apiRoomKey.isNotEmpty
+                    ? room.apiRoomKey
+                    : room.id,
+              ),
             ],
           ),
         ),

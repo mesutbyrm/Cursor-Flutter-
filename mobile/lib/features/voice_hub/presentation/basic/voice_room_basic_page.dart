@@ -25,7 +25,8 @@ import '../../domain/voice_official_join.dart';
 import '../../../gifts/domain/session_gift_summary_builder.dart';
 import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../../gifts/domain/gift_revenue_display.dart';
-import '../../../gifts/domain/premium_gift_catalog_2026.dart';
+import '../../../gifts/presentation/sync/gift_event_listener.dart';
+import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import '../providers/staff_entrance_marquee_provider.dart';
 import '../providers/voice_gift_combo_tracker.dart';
@@ -333,49 +334,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     if (!mounted) return;
     final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
     ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
-    ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).announceGift(event);
-
-    final ui = ref.read(voiceRoomUiProvider);
-    if (!ui.giftAnimationsEnabled) return;
-
-    ref.read(voiceGiftFlightQueueProvider.notifier).enqueue(event);
-
-    final room = _effectiveRoom();
-    final user = ref.read(authControllerProvider).valueOrNull;
-    final myId = user?.id.trim() ?? '';
-    final ownerId = room.ownerId?.trim() ?? '';
-    if (myId.isNotEmpty && ownerId.isNotEmpty && myId == ownerId) {
-      final receiverIsOwner = event.receiverName.trim().toLowerCase() ==
-          (room.ownerName ?? '').trim().toLowerCase();
-      final ownerNet = GiftRevenueDisplay.voiceOwnerDisplayNet(
-        gross: event.jetonAmount,
-        receiverIsOwner: receiverIsOwner,
-      );
-      if (ownerNet > 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${event.senderName} → ${event.receiverName}: +$ownerNet jeton (oda payı)',
-            ),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-
-    final showFullscreen = PremiumGiftCatalog2026.triggersFullscreen(
-      giftId: event.giftId,
-      coinCost: event.jetonAmount,
-    );
-    if (showFullscreen) {
-      if (mounted) setState(() => _fullscreenGift = event);
-      final duration = PremiumGiftCatalog2026.rarity(event.giftId).fullscreenDuration;
-      Future.delayed(duration, () {
-        if (mounted && _fullscreenGift?.id == event.id) {
-          setState(() => _fullscreenGift = null);
-        }
-      });
-    }
 
     if (event.jetonAmount >= 1000) {
       ref.read(staffEntranceMarqueeProvider.notifier).enqueueBigGift(
@@ -610,7 +568,12 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final perms = _permissions(user, live, room);
     final canControlMusic = _canControlMusic(live, room, user, perms);
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
-    final flightQueue = ref.watch(voiceGiftFlightQueueProvider);
+    final sessionKey =
+        room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    final giftSession = ref.watch(giftSessionProvider(sessionKey));
+    final flightEvents = giftSession.activeAnimation != null
+        ? [giftSession.activeAnimation!]
+        : const <LiveGiftEvent>[];
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
     final jeton = ref.watch(
       walletBalancesProvider.select((a) => a.valueOrNull?.jeton ?? 0),
@@ -778,7 +741,10 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       }
     });
 
-    return PopScope(
+    return GiftEventListener(
+      sessionKey: sessionKey,
+      isHost: isOwner,
+      child: PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) unawaited(_confirmLeave());
@@ -913,12 +879,13 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             ),
             ),
             VoiceGiftFlightOverlay(
-              events: flightQueue,
+              events: flightEvents,
               enabled: ui.giftAnimationsEnabled,
-              onFinished: (id) =>
-                  ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
+              onFinished: (id) => ref
+                  .read(giftSessionProvider(sessionKey).notifier)
+                  .dequeueAnimation(id),
             ),
-            SafePremiumGiftFullscreenOverlay(event: _fullscreenGift),
+            SafePremiumGiftFullscreenOverlay(event: giftSession.activeFullscreen),
             if (_showVipEntrance && user != null)
               Builder(
                 builder: (context) {
@@ -947,6 +914,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           ],
         ),
       ),
+    ),
     );
   }
 

@@ -69,6 +69,8 @@ import '../services/voice_room_sse_audio_player.dart';
 import '../services/voice_room_music_control_delegate.dart';
 import '../../video/domain/youtube_video_id.dart';
 import '../../video/presentation/room_video_controller.dart';
+import '../../../gifts/presentation/sync/gift_session_controller.dart';
+import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import 'voice_gift_providers.dart';
 import 'voice_gift_leaderboard_provider.dart';
 import 'voice_recent_gifts_provider.dart';
@@ -1004,6 +1006,7 @@ class VoiceRoomLiveController
           refreshTokens: () => tryRefreshAccessToken(refreshDio, storage),
           onConnected: () {
             _markSseActivity();
+            GiftSyncLog.sseConnected(_roomKey);
             if (!state.sseConnected) {
               state = state.copyWith(sseConnected: true);
             }
@@ -1034,11 +1037,8 @@ class VoiceRoomLiveController
             unawaited(_applyDjRealtimePayload(payload));
           },
           onGift: (payload) {
-            if (!VoiceRoomBasicMode.premiumEnabled &&
-                VoiceRoomBasicMode.enabled) {
-              return;
-            }
-            final giftRaw = payload['gift'] ?? payload;
+            GiftSyncLog.broadcast(_roomKey, 'sse', payload['id']?.toString() ?? '');
+            final giftRaw = payload['gift'] ?? payload['data'] ?? payload;
             if (giftRaw is! Map) return;
             final ev = giftsRemote.parseGiftEvent(
               Map<String, dynamic>.from(giftRaw),

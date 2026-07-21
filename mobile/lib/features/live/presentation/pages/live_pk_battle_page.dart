@@ -22,10 +22,14 @@ import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
+import '../../../gifts/presentation/sync/gift_event_listener.dart';
+import '../../../gifts/presentation/sync/gift_session_controller.dart';
+import '../../../gifts/presentation/sync/gift_session_state.dart';
+import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
+import '../../../voice_hub/presentation/widgets/premium/voice_gift_flight_overlay.dart';
 import '../providers/pk_room_providers.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import '../widgets/broadcast_room/live_pk_score_bar.dart';
-import '../widgets/premium_2026/live_gift_animation_stack.dart';
 
 /// Canlı yayın split-screen PK — sol kendi yayın, sağ rakip, jeton skorları.
 class LivePkBattlePage extends ConsumerStatefulWidget {
@@ -193,7 +197,13 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   Widget build(BuildContext context) {
     final remote = ref.watch(pkBattleRemoteProvider);
     final pk = ref.watch(pkBattleProvider);
-    final giftCtrl = ref.watch(liveGiftControllerProvider);
+    final streamId = _streamId ?? '';
+    final giftSession = streamId.isNotEmpty
+        ? ref.watch(giftSessionProvider(streamId))
+        : const GiftSessionState();
+    final flightEvents = giftSession.activeAnimation != null
+        ? [giftSession.activeAnimation!]
+        : const <LiveGiftEvent>[];
 
     final leftScore = remote?.challengerScore ?? pk.left.total;
     final rightScore = remote?.opponentScore ?? pk.right.total;
@@ -225,7 +235,13 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final rightWon = pkState.winner == PkBattleWinner.right;
     final showLoserFx = pkState.isFinished && pkState.winner != PkBattleWinner.tie;
 
-    return Scaffold(
+    return GiftEventListener(
+      sessionKey: streamId,
+      isHost: widget.session.isHost,
+      useVoiceRealtime: false,
+      useLiveRealtime: streamId.isNotEmpty,
+      liveStreamId: streamId.isEmpty ? null : streamId,
+      child: Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         fit: StackFit.expand,
@@ -357,14 +373,15 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
           ),
           Positioned.fill(
             child: IgnorePointer(
-              child: LiveGiftAnimationStack(
-                events: [
-                  if (giftCtrl.activeFullscreen != null) giftCtrl.activeFullscreen!,
-                  ...giftCtrl.fullscreenQueue,
-                ],
+              child: VoiceGiftFlightOverlay(
+                events: flightEvents,
+                onFinished: (id) => ref
+                    .read(giftSessionProvider(streamId).notifier)
+                    .dequeueAnimation(id),
               ),
             ),
           ),
+          SafePremiumGiftFullscreenOverlay(event: giftSession.activeFullscreen),
           PkWinnerCelebration(
             state: pkState,
             onRestart: () {
@@ -374,6 +391,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
             onClose: () => context.pop(),
           ),
         ],
+      ),
       ),
     );
   }

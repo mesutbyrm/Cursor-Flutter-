@@ -9,9 +9,13 @@ part of 'chat_room_providers.dart';
 /// private alan (_giftSocketStarted) ve metotlara erişir, davranış birebir
 /// korunur. Not: hediye state'inin çoğu zaten ayrı provider dosyalarında.
 extension VoiceRoomGiftControls on VoiceRoomLiveController {
-  /// Hediye olayı — sohbet akışına değil; koltuk altı kutu + kayan duyuru.
+  /// Hediye olayı — merkezi gift session (host/guest aynı state).
   void announceGift(LiveGiftEvent ev) {
-    ref.read(voiceRecentGiftsProvider.notifier).record(ev);
+    if (_roomKey.isEmpty) return;
+    ref.read(giftSessionProvider(_roomKey).notifier).onGiftSent(
+          ev,
+          source: 'voice_announce',
+        );
   }
 
   Future<void> _loadGiftLeaderboard() async {

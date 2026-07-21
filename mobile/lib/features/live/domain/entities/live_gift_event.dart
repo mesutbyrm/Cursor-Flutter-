@@ -26,6 +26,11 @@ class LiveGiftEvent extends Equatable {
     this.giftPrice = 0,
     this.totalCoin = 0,
     this.totalDiamond = 0,
+    this.remainingBalance,
+    this.seatIndex,
+    this.senderAvatar,
+    this.receiverAvatar,
+    this.giftType,
   });
 
   final String id;
@@ -49,6 +54,11 @@ class LiveGiftEvent extends Equatable {
   final GiftRarity rarity;
   final GiftAnimationKind animationKind;
   final String? soundKey;
+  final int? remainingBalance;
+  final int? seatIndex;
+  final String? senderAvatar;
+  final String? receiverAvatar;
+  final String? giftType;
 
   /// Ekranda gösterilecek jeton — asla çift çarpım yapmaz; totalCoin öncelikli.
   int get jetonAmount {
@@ -92,5 +102,10 @@ class LiveGiftEvent extends Equatable {
         rarity,
         animationKind,
         soundKey,
+        remainingBalance,
+        seatIndex,
+        senderAvatar,
+        receiverAvatar,
+        giftType,
       ];
 }

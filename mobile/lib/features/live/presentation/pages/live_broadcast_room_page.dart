@@ -22,7 +22,13 @@ import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provide
 import '../../../gifts/domain/session_gift_summary_builder.dart';
 import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../gifts/presentation/sync/gift_event_listener.dart';
+import '../../../gifts/presentation/sync/gift_session_controller.dart';
+import '../../../gifts/presentation/sync/gift_session_state.dart';
 import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
+import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
+import '../../../gifts/presentation/widgets/unified_recent_gifters_box.dart';
+import '../../../voice_hub/presentation/widgets/premium/voice_gift_flight_overlay.dart';
 import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
@@ -33,6 +39,7 @@ import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../data/host_live_stream_recovery.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_catalog.dart';
+import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_guest_layout.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
@@ -43,7 +50,6 @@ import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import '../gifts/providers/live_seat_gift_flash_provider.dart';
 import '../gifts/widgets/floating_gift_particles.dart';
-import '../gifts/widgets/gift_notification_stack.dart';
 import '../providers/pk_room_providers.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
@@ -71,7 +77,6 @@ import '../widgets/broadcast_room/live_viewers_sheet.dart';
 import '../widgets/broadcast_room/live_room_chat_fal_panel.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import '../widgets/broadcast_room/live_room_video_background.dart';
-import '../widgets/broadcast_room/live_recent_gifters_box.dart';
 import '../widgets/live_playback_bridge.dart';
 import '../widgets/premium_2026/live_premium_2026.dart';
 
@@ -1785,6 +1790,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final s = baseSession.copyWith(viewerCount: roomState.viewerCount);
     final top = MediaQuery.paddingOf(context).top;
     final giftCtrl = ref.watch(liveGiftControllerProvider);
+    final giftSession = hasStream
+        ? ref.watch(giftSessionProvider(streamId))
+        : const GiftSessionState();
+    final flightEvents = giftSession.activeAnimation != null
+        ? [giftSession.activeAnimation!]
+        : const <LiveGiftEvent>[];
     final user = ref.watch(authControllerProvider).valueOrNull;
     final interaction = hasStream
         ? ref.watch(liveRoomInteractionProvider(streamId))
@@ -1793,7 +1804,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final fortuneReqState = hasStream && s.isHost
         ? ref.watch(liveFortuneRequestsProvider(streamId))
         : null;
-    final balance = ref.watch(coinBalanceProvider) ?? user?.coinBalance;
+    final balance = giftSession.remainingBalance ??
+        ref.watch(coinBalanceProvider) ??
+        user?.coinBalance;
     final broadcastSettings = ref.watch(liveBroadcastSettingsProvider);
     final coBroadcast = ref.watch(coBroadcastProvider);
     final hasCoGuests = coBroadcast.coBroadcasters.isNotEmpty;
@@ -1915,30 +1928,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       });
     }
 
-    ref.listen<LiveGiftController>(liveGiftControllerProvider, (prev, next) {
-      if (hasStream) {
-        final earnings = next.streamerEarnings ?? 0;
-        ref.read(liveGuestGridProvider.notifier).setHostJeton(earnings);
-        final prevIds =
-            prev?.notifications.map((e) => e.id).toSet() ?? const <String>{};
-        for (final ev in next.notifications) {
-          if (!prevIds.contains(ev.id)) {
-            ref.read(liveGiftLeaderboardProvider(streamId).notifier).record(ev);
-            if (ev.jetonAmount >= 1000) {
-              ref.read(staffEntranceMarqueeProvider.notifier).enqueueBigGift(
-                    senderName: ev.senderName,
-                    receiverName: ev.receiverName,
-                    jeton: ev.jetonAmount,
-                    giftName: ev.giftName,
-                  );
-            }
-          }
+    if (hasStream) {
+      ref.listen(giftSessionProvider(streamId), (prev, next) {
+        final ev = next.latestEvent;
+        if (ev == null || ev == prev?.latestEvent) return;
+        ref.read(liveGiftLeaderboardProvider(streamId).notifier).record(ev);
+        if (ev.jetonAmount >= 1000) {
+          ref.read(staffEntranceMarqueeProvider.notifier).enqueueBigGift(
+                senderName: ev.senderName,
+                receiverName: ev.receiverName,
+                jeton: ev.jetonAmount,
+                giftName: ev.giftName,
+              );
         }
-      }
-      final queue = next.fullscreenQueue;
-      final prevQueue = prev?.fullscreenQueue ?? const [];
-      if (queue.isNotEmpty && queue.first != (prevQueue.isNotEmpty ? prevQueue.first : null)) {
-        final ev = queue.first;
         final emoji = LiveGiftCatalog.emojiById[ev.giftId] ?? '💖';
         _particlesKey.currentState?.burst(
           emoji,
@@ -1950,6 +1952,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             unawaited(ref.read(liveVideoPkProvider(streamId).notifier).refresh());
           }
         }
+      });
+    }
+
+    ref.listen<LiveGiftController>(liveGiftControllerProvider, (prev, next) {
+      if (hasStream) {
+        final earnings = next.streamerEarnings ?? 0;
+        ref.read(liveGuestGridProvider.notifier).setHostJeton(earnings);
       }
     });
 
@@ -1973,7 +1982,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final pkExtras = _pkBattleExtras(pkState?.battle);
     final pkStatus = pkState?.status ?? '';
 
-    return PopScope(
+    return GiftEventListener(
+      sessionKey: streamId ?? '',
+      isHost: s.isHost,
+      useVoiceRealtime: false,
+      useLiveRealtime: hasStream,
+      liveStreamId: streamId,
+      child: PopScope(
       canPop: widget.embeddedInSwipe,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
@@ -2020,15 +2035,21 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               applauseToken: interaction.applauseToken,
             ),
             FloatingGiftParticles(key: _particlesKey),
-            // Tek hediye katmanı: chat üstü bildirim + (premium ise) fullscreen.
-            // Center toast kaldırıldı — çift/üst üste binen gösterim olmasın.
             Positioned.fill(
               child: IgnorePointer(
-                child: LiveGiftAnimationStack(
-                  events: List.from(giftCtrl.fullscreenQueue),
+                child: VoiceGiftFlightOverlay(
+                  events: flightEvents,
+                  enabled: broadcastSettings.giftsEnabled,
+                  onFinished: (id) {
+                    if (!hasStream) return;
+                    ref
+                        .read(giftSessionProvider(streamId).notifier)
+                        .dequeueAnimation(id);
+                  },
                 ),
               ),
             ),
+            SafePremiumGiftFullscreenOverlay(event: giftSession.activeFullscreen),
             if (hasStream && pkState?.battle != null &&
                 (pkStatus == 'active' || pkStatus == 'ended'))
               LivePkPremiumOverlay(
@@ -2206,12 +2227,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                                       name: roomState.lastJoinedDisplayName!,
                                     ),
                                   ),
-                                LiveRecentGiftersBox(
-                                  notifications: giftCtrl.notifications,
-                                ),
-                                GiftNotificationStack(
-                                  events: giftCtrl.notifications,
-                                ),
+                                if (hasStream && streamId != null)
+                                  UnifiedRecentGiftersBox(sessionKey: streamId),
                                 const SizedBox(height: 6),
                                 LiveRoomChatFalPanel(
                                   messages: roomState.messages.isEmpty
@@ -2451,6 +2468,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               ),
           ],
         ),
+      ),
       ),
     );
   }

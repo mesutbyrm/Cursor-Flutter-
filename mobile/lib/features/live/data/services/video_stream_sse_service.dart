@@ -230,6 +230,8 @@ class VideoStreamSseService {
         }
         return;
       case 'gift':
+      case 'giftsent':
+      case 'gift_sent':
         final giftRaw = map['gift'] ?? map['data'] ?? map;
         if (giftRaw is Map && _streamId != null) {
           final ev = _giftsRemote.parseGiftEvent(

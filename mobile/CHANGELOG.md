@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.66+93 (2026-07-21)
+
+### Hediye senkronizasyonu — sesli oda ve canlı yayın
+- **Tek kaynak:** SSE/socket/poll → `GiftEventListener` → `giftSessionProvider` (host/guest/admin aynı state)
+- **Son hediyeler:** combo mantığı (❤️ x1 → x2 → x3), 5 sn TTL, ortak `UnifiedRecentGiftersBox`
+- **Animasyon kuyruğu:** aynı anda gelen hediyeler sırayla oynar; premium fullscreen + uçuş overlay
+- Host için `if (isHost) return` / gönderen filtresi kaldırıldı — tüm roller aynı event yolunu kullanır
+- **Loglar:** broadcast, SSE bağlantı, host/guest alma, işleme ve UI render (`GiftSyncLog`)
+- Canlı yayın, sesli oda RTC/basic ve PK sayfaları birleşik sisteme taşındı
+
 ## 1.0.65+92 (2026-07-20)
 
 ### Sesli oda — mikrofon ve otomatik koltuk
