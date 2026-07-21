@@ -92,7 +92,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         _applyRoomEventSeatChanged(payload);
         return;
       case 'seat_update':
-        unawaited(_refreshSeatsFromBackend());
+        _scheduleSeatsRefreshFromBackend();
         return;
       case 'owner_changed':
         _applyRoomEventOwnerChanged(payload);
@@ -300,7 +300,14 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     return null;
   }
 
-  /// PART4 SSE `seat_update` — koltuk listesini backend'den yeniler.
+  /// PART4 SSE `seat_update` — koltuk listesini backend'den yeniler (300 ms debounce).
+  void _scheduleSeatsRefreshFromBackend() {
+    _seatRefreshDebounce?.cancel();
+    _seatRefreshDebounce = Timer(const Duration(milliseconds: 300), () {
+      unawaited(_refreshSeatsFromBackend());
+    });
+  }
+
   Future<void> _refreshSeatsFromBackend() async {
     if (_roomKey.isEmpty) return;
     try {

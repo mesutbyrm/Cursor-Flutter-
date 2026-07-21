@@ -4,7 +4,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
-import '../../../live/data/datasources/live_field/live_field_api_remote_datasource.dart';
+import '../../../gifts/data/gift_reciprocal_guard.dart';
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
 import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
@@ -53,6 +53,9 @@ class ChatRoomGiftsRemoteDataSource {
     String platform = 'mobile',
     String? battleId,
   }) async {
+    if (receiverId != null && receiverId.isNotEmpty) {
+      await assertReciprocalGiftAllowed(_dio, receiverId);
+    }
     try {
       await LiveFieldApiRemoteDataSource(_dio).gifts.sendGift(
         roomId: roomId,

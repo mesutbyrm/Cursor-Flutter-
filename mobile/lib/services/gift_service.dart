@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../core/network/api_endpoints.dart';
 import '../core/network/dio_provider.dart';
 import '../core/util/json_util.dart';
+import '../features/gifts/data/gift_reciprocal_guard.dart';
 import 'service_utils.dart';
 
 /// Hediye API — kılavuz §9.9 `GiftRepository`.
@@ -38,6 +39,9 @@ class GiftService {
     String? recipientUsername,
     String type = 'gift',
   }) async {
+    if (recipientId.trim().isNotEmpty) {
+      await assertReciprocalGiftAllowed(_dio, recipientId);
+    }
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.giftsSend,
       data: {

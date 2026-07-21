@@ -179,14 +179,21 @@ Aşağıdakiler `chat_room_remote_datasource.dart` içinde kullanılıyor; **kı
 
 ---
 
-## 11. Sonraki faz önerisi (Faz 2)
+## 11. Sonraki faz önerisi (Faz 3)
 
-1. `chat_room_remote_datasource` — tüm path'leri `ApiEndpoints`'e taşı; kılavuz dışı uçları işaretle
-2. Auth — verify/reclaim device (backend metot doğrulaması sonrası)
-3. Profil — `/api/users/me/*` → `/api/user/*` birincil (activity, broadcast-history)
-4. Gift UI — `checkReciprocal` hediye gönder öncesi
-5. Kılavuz güncellemesi — `GET /state`, `room_event` SSE şeması
-6. Analyzer sıfır uyarı + `flutter test` tam yeşil
+1. Auth — verify/reclaim device (backend metot doğrulaması sonrası)
+2. Kılavuz güncellemesi — `GET /state`, `room_event` SSE şeması
+3. Koltuk UI — `seatSlots` birincil kaynak; `presence.seatIndex` legacy birleştirme
+4. Live heartbeat stratejisi tekilleştirme
+5. Analyzer info uyarıları temizliği
+6. E2E web + Flutter sesli oda testi
+
+### Faz 2 tamamlandı (1.0.69+96)
+
+- `chat_room_remote_datasource` path merkezileştirme ✅
+- Profil `/api/user/*` birincil ✅
+- `check-reciprocal` hediye gönder öncesi ✅
+- `seat_update` debounce 300 ms ✅
 
 ---
 

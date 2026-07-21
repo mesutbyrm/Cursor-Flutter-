@@ -331,6 +331,7 @@ class VoiceRoomLiveController
   Timer? _pinnedAnnouncementTimer;
   Timer? _moderationToastTimer;
   Timer? _kickWarningTimer;
+  Timer? _seatRefreshDebounce;
   final _pollPaused = false;
   var _pollTick = 0;
   String? _lastDjPlaybackSignature;
@@ -572,6 +573,7 @@ class VoiceRoomLiveController
       _pinnedAnnouncementTimer?.cancel();
       _moderationToastTimer?.cancel();
       _kickWarningTimer?.cancel();
+      _seatRefreshDebounce?.cancel();
       if (_sessionActive) {
         clearVoiceRoomLiveSession(ref, _roomKey);
         _removeSelfFromPresenceOptimistic();
