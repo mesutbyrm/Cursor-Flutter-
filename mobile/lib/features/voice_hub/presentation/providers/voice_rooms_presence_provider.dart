@@ -37,7 +37,7 @@ class VoiceRoomsPresenceState {
 }
 
 class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
-  static const maxTrackedRooms = 6;
+  static const maxTrackedRooms = 12;
 
   final Map<String, StreamSubscription<ChatRoomSseEvent>> _subs = {};
 
@@ -53,6 +53,17 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
       Future.microtask(() => _syncRooms(rooms));
     }
     return const VoiceRoomsPresenceState();
+  }
+
+  void mergeTrackRooms(List<VoiceRoomEntity> extra) {
+    final discover = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
+    final merged = <String, VoiceRoomEntity>{};
+    for (final r in [...extra, ...discover]) {
+      final key = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+      if (key.isEmpty) continue;
+      merged[key] = r;
+    }
+    _syncRooms(merged.values.toList());
   }
 
   void _syncRooms(List<VoiceRoomEntity> rooms) {

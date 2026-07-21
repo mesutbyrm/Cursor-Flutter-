@@ -16,6 +16,7 @@ extension VoiceRoomGiftControls on VoiceRoomLiveController {
           ev,
           source: 'voice_announce',
         );
+    ref.read(voiceRecentGiftsProvider.notifier).record(ev);
   }
 
   Future<void> _loadGiftLeaderboard() async {

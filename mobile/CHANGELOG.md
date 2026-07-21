@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.70+97 (2026-07-21)
+
+### Ana sayfa sesli odalar + oda içi hediye gösterimi
+- **Sesli odalar:** Yalnızca içinde kullanıcı olan odalar listelenir; canlı kişi sayısı (SSE + REST)
+- **5 kullanıcı:** Oda kartında en fazla 5 avatar; fazlası `+N` rozeti
+- **Hediye anlık:** Gönderen → alıcı, hediye adı ve jeton miktarı tüm rollerde (oda sahibi, konuk, izleyici)
+- **Son hediyeler:** 5 kayıt; kayan duyuru şeridi (`VoiceGiftAnnouncementTicker`) yeniden bağlandı
+- **Uçuş animasyonu:** Alıcı adı ve hediye bilgisi gösterilir
+
 ## 1.0.69+96 (2026-07-21)
 
 ### Backend dokümantasyon uyumu (Faz 2)

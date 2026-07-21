@@ -11,7 +11,7 @@ import 'gift_sync_log.dart';
 /// Oturum hediye state — tek kaynak (SSE/socket/poll → buraya).
 class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, String> {
   static const _recentTtl = Duration(seconds: 5);
-  static const _maxRecent = 3;
+  static const _maxRecent = 5;
   static const _comboWindow = Duration(seconds: 5);
   static const _maxProcessedIds = 256;
 

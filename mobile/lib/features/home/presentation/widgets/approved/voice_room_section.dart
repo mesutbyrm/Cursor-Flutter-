@@ -7,8 +7,6 @@ import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_room_card.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
-import '../../../../live/domain/entities/voice_room_sort.dart';
-import '../../../../vip_gold/domain/voice_room_access.dart';
 import '../../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import '../../../../voice_hub/presentation/utils/open_voice_chat_room_flow.dart';
 import '../../providers/home_providers.dart';
@@ -47,13 +45,9 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
 
   @override
   Widget build(BuildContext context) {
-    final rooms = ref.watch(
-      homeVoiceRoomsProvider.select(
-        (a) => (a.isLoading, a.hasError, a.valueOrNull, a.error),
-      ),
-    );
+    final rooms = ref.watch(homeLiveVoiceRoomsProvider);
 
-    if (rooms.$1 && rooms.$3 == null) {
+    if (rooms.isLoading && !rooms.hasValue) {
       return _sectionShell(
         context,
         ref,
@@ -75,20 +69,18 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
         ),
       );
     }
-    if (rooms.$2) {
+    if (rooms.hasError && !rooms.hasValue) {
       return _sectionShell(
         context,
         ref,
-        message: ApiException.userMessage(rooms.$4!),
+        message: ApiException.userMessage(rooms.error!),
       );
     }
-    final items = (rooms.$3 ?? const <VoiceRoomEntity>[])
-        .where((r) => !r.isVipGoldRoom)
-        .toList();
+    final items = rooms.valueOrNull ?? const <VoiceRoomEntity>[];
     if (items.isEmpty) {
-      return _sectionShell(context, ref, empty: true);
+      return const SizedBox.shrink();
     }
-    final sorted = sortVoiceRoomsByPopularity(items).take(12).toList();
+    final sorted = items;
     _prefetchCovers(sorted);
 
     return _sectionShell(
