@@ -158,7 +158,11 @@ class _GiftFlightBubble extends StatelessWidget {
             boxShadow: VoiceRoomTokens.neonGlow(VoiceRoomTokens.neonPink),
           ),
           child: Text(
-            event.senderName,
+            event.receiverName.trim().isNotEmpty
+                ? '${event.senderName} → ${event.receiverName}'
+                : event.senderName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w800,
@@ -166,6 +170,18 @@ class _GiftFlightBubble extends StatelessWidget {
             ),
           ),
         ),
+        const SizedBox(height: 2),
+        if (event.giftName.trim().isNotEmpty)
+          Text(
+            '${event.giftName.trim()}${event.combo > 1 ? ' x${event.combo}' : ''}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: Colors.white.withValues(alpha: 0.9),
+            ),
+          ),
         const SizedBox(height: 4),
         Text(emoji, style: const TextStyle(fontSize: 36))
             .animate(onPlay: (c) => c.repeat(reverse: true))

@@ -217,7 +217,10 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard>
                           ),
                         ],
                         const SizedBox(height: 8),
-                        _SpeakingAvatarStrip(avatars: widget.room.recentUserAvatars),
+                        _SpeakingAvatarStrip(
+                          avatars: widget.room.recentUserAvatars,
+                          online: online,
+                        ),
                       ],
                     ),
                   ),
@@ -422,14 +425,36 @@ class _RoomBadge extends StatelessWidget {
 }
 
 class _SpeakingAvatarStrip extends StatelessWidget {
-  const _SpeakingAvatarStrip({required this.avatars});
+  const _SpeakingAvatarStrip({
+    required this.avatars,
+    this.online = 0,
+  });
 
   final List<String> avatars;
+  final int online;
 
   @override
   Widget build(BuildContext context) {
-    final urls = avatars.where((u) => u.isNotEmpty).take(4).toList();
-    if (urls.isEmpty) return const SizedBox(height: 26);
+    final urls = avatars.where((u) => u.isNotEmpty).take(5).toList();
+    if (urls.isEmpty) {
+      if (online <= 0) return const SizedBox(height: 26);
+      return SizedBox(
+        height: 26,
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            '$online kişi odada',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: Colors.white.withValues(alpha: 0.85),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final extra = online > urls.length ? online - urls.length : 0;
 
     return SizedBox(
       height: 26,
@@ -438,7 +463,7 @@ class _SpeakingAvatarStrip extends StatelessWidget {
         children: [
           for (var i = 0; i < urls.length; i++)
             Positioned(
-              left: i * 16.0,
+              left: i * 14.0,
               bottom: 0,
               child: AnimatedContainer(
                 duration: PremiumMotion.fast,
@@ -463,6 +488,29 @@ class _SpeakingAvatarStrip extends StatelessWidget {
                   radius: i == 0 ? 12 : 10,
                   backgroundColor: const Color(0xFF1E1033),
                   backgroundImage: canlifalImageProvider(urls[i]),
+                ),
+              ),
+            ),
+          if (extra > 0)
+            Positioned(
+              left: urls.length * 14.0 + 4,
+              bottom: 2,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.65),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFFFFD54F).withValues(alpha: 0.6),
+                  ),
+                ),
+                child: Text(
+                  '+$extra',
+                  style: const TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFFFEE58),
+                  ),
                 ),
               ),
             ),

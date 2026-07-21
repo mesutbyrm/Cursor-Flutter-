@@ -14,8 +14,11 @@ import '../../domain/entities/online_advisor_entity.dart';
 import '../../domain/repositories/home_repository.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../live/domain/entities/voice_room_sort.dart';
 import '../../../voice_hub/domain/voice_official_join.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
+import '../../../voice_hub/presentation/providers/voice_rooms_presence_provider.dart';
+import '../../../vip_gold/domain/voice_room_access.dart';
 
 void _keepHomeCacheAlive(Ref ref) => ref.keepAlive();
 
@@ -84,6 +87,41 @@ final homeVoiceRoomsProvider =
   _keepHomeCacheAlive(ref);
   return ref.watch(homeRepositoryProvider).fetchVoiceRooms();
 });
+
+/// Ana sayfa sesli odalar — yalnızca içinde kullanıcı olanlar, SSE ile güncel sayı.
+final homeVoiceRoomPresenceSyncProvider = Provider<void>((ref) {
+  ref.listen(homeVoiceRoomsProvider, (prev, next) {
+    final rooms = next.valueOrNull;
+    if (rooms != null) {
+      ref.read(voiceRoomsPresenceProvider.notifier).mergeTrackRooms(rooms);
+    }
+  }, fireImmediately: true);
+});
+
+final homeLiveVoiceRoomsProvider = Provider<AsyncValue<List<VoiceRoomEntity>>>(
+  (ref) {
+    ref.watch(homeVoiceRoomPresenceSyncProvider);
+    final roomsAsync = ref.watch(homeVoiceRoomsProvider);
+    final presence = ref.watch(voiceRoomsPresenceProvider);
+    return roomsAsync.when(
+      loading: () => const AsyncValue.loading(),
+      error: (e, st) => AsyncValue.error(e, st),
+      data: (rooms) {
+        final live = rooms
+            .where((r) => !r.isVipGoldRoom)
+            .map((r) {
+              final count = presence.countFor(r);
+              if (count <= 0) return null;
+              return r.copyWith(onlineCount: count, userCount: count);
+            })
+            .whereType<VoiceRoomEntity>()
+            .toList();
+        final sorted = sortVoiceRoomsByPopularity(live).take(12).toList();
+        return AsyncValue.data(sorted);
+      },
+    );
+  },
+);
 
 final homeGamesProvider = FutureProvider<List<HomeGameEntity>>((ref) async {
   _keepHomeCacheAlive(ref);

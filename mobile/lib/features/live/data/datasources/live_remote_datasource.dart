@@ -748,9 +748,23 @@ class LiveRemoteDataSource {
       for (final u in ru) {
         if (u is Map) {
           final m = asJsonMap(u);
-          final img = pick(m, ['image', 'avatar'])?.toString();
+          final img = pick(m, ['image', 'avatar', 'avatarUrl'])?.toString();
           if (img != null && img.isNotEmpty) recent.add(img);
         }
+      }
+    }
+    if (recent.isEmpty) {
+      for (final key in ['presence', 'users', 'participants', 'members']) {
+        final raw = json[key];
+        if (raw is! List) continue;
+        for (final u in raw) {
+          if (u is Map) {
+            final m = asJsonMap(u);
+            final img = pick(m, ['image', 'avatar', 'avatarUrl'])?.toString();
+            if (img != null && img.isNotEmpty) recent.add(img);
+          }
+        }
+        if (recent.isNotEmpty) break;
       }
     }
     final djIds = <String>[];
@@ -845,6 +859,10 @@ class LiveRemoteDataSource {
   }
 
   VoiceRoomEntity _mapLiveFieldVoice(LiveFieldRoomSummary room) {
+    final avatars = <String>[];
+    if (room.hostImage != null && room.hostImage!.trim().isNotEmpty) {
+      avatars.add(room.hostImage!.trim());
+    }
     return VoiceRoomEntity(
       id: room.id,
       slug: room.slug ?? '',
@@ -856,6 +874,7 @@ class LiveRemoteDataSource {
       ownerName: room.hostName,
       ownerAvatarUrl: room.hostImage,
       ownerId: room.hostId,
+      recentUserAvatars: avatars,
       roomType: 'voice',
     );
   }

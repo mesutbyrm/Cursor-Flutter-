@@ -27,7 +27,7 @@ class UnifiedRecentGiftersBox extends ConsumerWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
-          constraints: const BoxConstraints(minWidth: 120, maxWidth: 220),
+          constraints: const BoxConstraints(minWidth: 140, maxWidth: 280),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.55),
@@ -80,6 +80,19 @@ class _Row extends StatelessWidget {
           style: const TextStyle(fontSize: 10, color: Colors.white, height: 1.25),
           children: [
             TextSpan(
+              text: item.senderName,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            const TextSpan(text: ' → '),
+            TextSpan(
+              text: item.receiverName,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: accent.withValues(alpha: 0.95),
+              ),
+            ),
+            const TextSpan(text: ': '),
+            TextSpan(
               text: item.giftName,
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
@@ -88,13 +101,6 @@ class _Row extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.w900,
                 color: accent,
-              ),
-            ),
-            TextSpan(
-              text: ' — ${item.senderName}',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Colors.white.withValues(alpha: 0.9),
               ),
             ),
             TextSpan(

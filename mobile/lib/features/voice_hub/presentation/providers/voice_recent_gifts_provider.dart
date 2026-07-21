@@ -46,7 +46,7 @@ class VoiceRecentGiftsState {
 
 /// Oturum içi son hediye gönderenler + kayan duyuru kuyruğu.
 class VoiceRecentGiftsController extends Notifier<VoiceRecentGiftsState> {
-  static const maxGifters = 3;
+  static const maxGifters = 5;
   static const maxAnnouncements = 8;
 
   final _gifters = <String, VoiceRecentGifter>{};
