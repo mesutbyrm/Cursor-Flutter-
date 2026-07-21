@@ -38,14 +38,10 @@ class AuthService {
     required String password,
   }) async {
     final trimmed = email.trim();
+    // Kılavuz §9.1 — `{email}` veya `{username}` + `password`.
     final body = trimmed.contains('@')
         ? {'email': trimmed, 'password': password}
-        : {
-            'emailOrUsername': trimmed,
-            if (!RegExp(r'^\+?[\d\s\-()]{10,}$').hasMatch(trimmed))
-              'username': trimmed,
-            'password': password,
-          };
+        : {'username': trimmed, 'password': password};
     return _postAuth(ApiEndpoints.authMobileLogin, body);
   }
 

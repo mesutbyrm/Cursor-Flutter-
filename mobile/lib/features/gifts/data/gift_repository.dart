@@ -64,4 +64,15 @@ class GiftRepository {
     }
     return data;
   }
+
+  /// Kılavuz §9.9 — karşılıklı hediye kontrolü (`GET ?userId=`).
+  Future<Map<String, dynamic>> checkReciprocal(String userId) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.giftsCheckReciprocal,
+      query: {'userId': userId.trim()},
+    );
+    final body = _unwrap(res.data);
+    if (body is Map) return Map<String, dynamic>.from(body);
+    return const {};
+  }
 }

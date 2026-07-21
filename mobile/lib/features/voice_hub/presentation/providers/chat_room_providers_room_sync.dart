@@ -91,6 +91,9 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       case 'seat_changed':
         _applyRoomEventSeatChanged(payload);
         return;
+      case 'seat_update':
+        unawaited(_refreshSeatsFromBackend());
+        return;
       case 'owner_changed':
         _applyRoomEventOwnerChanged(payload);
         return;
@@ -295,5 +298,23 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     if (s == 'true' || s == '1') return true;
     if (s == 'false' || s == '0') return false;
     return null;
+  }
+
+  /// PART4 SSE `seat_update` — koltuk listesini backend'den yeniler.
+  Future<void> _refreshSeatsFromBackend() async {
+    if (_roomKey.isEmpty) return;
+    try {
+      final seats = await ref.read(chatRoomRemoteProvider).fetchSeats(
+            _roomKey,
+            alternateKey: _musicAlternateKey,
+          );
+      state = state.copyWith(seatSlots: seats);
+      VoiceRoomDebugLog.log('sse.seat_update.refresh', {
+        'room': _roomKey,
+        'count': seats.length,
+      });
+    } on Object catch (e) {
+      VoiceRoomDebugLog.log('sse.seat_update.fail', {'error': e.toString()});
+    }
   }
 }

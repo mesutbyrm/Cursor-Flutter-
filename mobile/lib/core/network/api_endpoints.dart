@@ -26,6 +26,9 @@ abstract final class ApiEndpoints {
   static const authForgotPassword = '/api/auth/forgot-password';
   static const authResetPassword = '/api/auth/reset-password';
   static const authChangePassword = '/api/auth/change-password';
+  /// PART10 — cihaz doğrulama (metot: GET vs POST doküman çelişkisi; bkz. uyumluluk raporu).
+  static const authVerifyDevice = '/api/auth/verify-device';
+  static const authReclaimDevice = '/api/auth/reclaim-device';
   static const mobileConfig = '/api/mobile/config';
   static const mobileHome = '/api/mobile/home';
   static String sitePage(String slug) => '/api/site-pages/$slug';
@@ -34,7 +37,10 @@ abstract final class ApiEndpoints {
       '/api/mobile/user-profile/$userId';
   static const me = '/api/me';
   static const meStats = '/api/users/me/stats';
-  static const meGiftsReceived = '/api/users/me/gifts-received';
+  /// Kılavuz §9.2 — alınan hediyeler (eski `/api/users/me/gifts-received` yedek).
+  static const userReceivedGifts = '/api/user/received-gifts';
+  @Deprecated('Kılavuz §9.2: userReceivedGifts kullanın')
+  static const meGiftsReceived = userReceivedGifts;
   static const meBroadcastHistory = '/api/users/me/broadcast-history';
   static const meActivity = '/api/users/me/activity';
   static const meProfileVisitors = '/api/users/me/profile-visitors';
@@ -588,6 +594,9 @@ abstract final class ApiEndpoints {
   static const giftsSend = '/api/gifts/send';
 
   static const giftsRecentBig = '/api/gifts/recent-big';
+
+  /// Kılavuz §9.9 — karşılıklı hediye kontrolü (`?userId=`).
+  static const giftsCheckReciprocal = '/api/gifts/check-reciprocal';
 
   static const homepageButtons = '/api/homepage-buttons';
 

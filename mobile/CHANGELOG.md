@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.68+95 (2026-07-21)
+
+### Backend dokümantasyon uyumu (Faz 1)
+- **Giriş:** `emailOrUsername` kaldırıldı — kılavuz §9.1 `{email}` veya `{username}` + `password`
+- **Alınan hediyeler:** birincil uç `GET /api/user/received-gifts` (eski `/api/users/me/gifts-received` yedek)
+- **Presence heartbeat:** 12 sn → 25 sn (PART4/PART10)
+- **SSE alias:** `seat_update` → koltuk yenileme; `pk_score` → PK skor olayı
+- **Endpoint sabitleri:** `giftsCheckReciprocal`, `authVerifyDevice`, `authReclaimDevice`
+- **GiftRepository:** `checkReciprocal(userId)` — kılavuz §9.9
+- Uyumluluk raporu: `docs/FLUTTER_BACKEND_COMPLIANCE_REPORT.md`
+
 ## 1.0.67+94 (2026-07-21)
 
 ### Sesli oda — backend %100 senkronizasyon

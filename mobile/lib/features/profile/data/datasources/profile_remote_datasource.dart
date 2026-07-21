@@ -284,19 +284,22 @@ class ProfileRemoteDataSource {
   }
 
   Future<List<GiftReceivedSummaryEntity>> giftsReceivedSummary() async {
-    try {
-      final res =
-          await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.meGiftsReceived);
-      final body = res.data ?? {};
-      final data = body['data'] is Map ? asJsonMap(body['data']) : body;
-      final raw = data['summary'];
-      if (raw is! List) return const [];
-      return raw
-          .map((e) => GiftReceivedSummaryEntity.fromJson(asJsonMap(e)))
-          .toList();
-    } catch (_) {
-      return const [];
+    for (final path in [
+      ApiEndpoints.userReceivedGifts,
+      '/api/users/me/gifts-received',
+    ]) {
+      try {
+        final res = await _dio.safeGet<Map<String, dynamic>>(path);
+        final body = res.data ?? {};
+        final data = body['data'] is Map ? asJsonMap(body['data']) : body;
+        final raw = data['summary'] ?? data['gifts'] ?? data['items'] ?? data;
+        if (raw is! List) continue;
+        return raw
+            .map((e) => GiftReceivedSummaryEntity.fromJson(asJsonMap(e)))
+            .toList();
+      } catch (_) {}
     }
+    return const [];
   }
 
   Future<List<BroadcastHistoryItemEntity>> broadcastHistory() async {

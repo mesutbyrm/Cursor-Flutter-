@@ -17,15 +17,11 @@ class AuthRemoteDataSource {
     final path =
         Env.useMobileAuth ? ApiEndpoints.authMobileLogin : ApiEndpoints.authLogin;
     final trimmed = identifier.trim();
+    // Kılavuz §9.1 — `{email}` veya `{username}` + `password` (emailOrUsername yok).
     final body = trimmed.contains('@')
         ? {'email': trimmed, 'password': password}
         : Env.useMobileAuth
-            ? {
-                'emailOrUsername': trimmed,
-                if (!RegExp(r'^\+?[\d\s\-()]{10,}$').hasMatch(trimmed))
-                  'username': trimmed,
-                'password': password,
-              }
+            ? {'username': trimmed, 'password': password}
             : {'email': trimmed, 'password': password};
     final res = await _dio.safePost<Map<String, dynamic>>(
       path,

@@ -96,9 +96,13 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
     case 'pkbattle':
     case 'pkbattleupdated':
     case 'pk_battle_updated':
+    case 'pk_score':
+    case 'pkscore':
       return ChatRoomSseEventType.pk;
     case 'room_event':
     case 'roomevent':
+    case 'seat_update':
+    case 'seatupdate':
       return ChatRoomSseEventType.roomEvent;
     default:
       return ChatRoomSseEventType.unknown;
