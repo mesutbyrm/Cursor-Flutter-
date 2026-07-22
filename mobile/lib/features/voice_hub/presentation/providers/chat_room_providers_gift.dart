@@ -17,16 +17,47 @@ extension VoiceRoomGiftControls on VoiceRoomLiveController {
           source: 'voice_announce',
         );
     ref.read(voiceRecentGiftsProvider.notifier).record(ev);
+    appendGiftChatMessage(ev);
+  }
+
+  /// Sohbet alanına hediye sistem mesajı ekler.
+  void appendGiftChatMessage(LiveGiftEvent ev) {
+    if (_roomKey.isEmpty || ev.jetonAmount <= 0) return;
+    final msgId = 'gift-${ev.id}';
+    if (state.messages.any((m) => m.id == msgId)) return;
+    final sender = ev.senderName.trim().isNotEmpty
+        ? ev.senderName.trim()
+        : 'Biri';
+    final line = GiftSystemMessage.format(ev);
+    state = state.copyWith(
+      messages: [
+        ...state.messages,
+        ChatRoomMessage(
+          id: msgId,
+          content: line,
+          createdAt: ev.timestamp,
+          kind: ChatMessageKind.gift,
+          user: ChatRoomUserRef(
+            id: ev.senderId ?? sender,
+            name: sender,
+          ),
+        ),
+      ],
+    );
   }
 
   Future<void> _loadGiftLeaderboard() async {
     if (_roomKey.isEmpty) return;
     try {
-      final entries = await ref
-          .read(chatRoomGiftsRemoteProvider)
-          .fetchRoomGiftLeaderboard(roomId: _roomKey);
+      final gifts = ref.read(chatRoomGiftsRemoteProvider);
+      final entries =
+          await gifts.fetchRoomGiftLeaderboard(roomId: _roomKey);
       if (entries.isNotEmpty) {
         ref.read(voiceSessionGiftLeaderboardProvider.notifier).seedFromApi(entries);
+      }
+      final events = await gifts.fetchRoomGiftEvents(roomId: _roomKey);
+      if (events.isNotEmpty) {
+        ref.read(voiceSeatGiftTotalsProvider.notifier).seedFromEvents(events);
       }
     } catch (_) {}
   }

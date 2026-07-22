@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../gifts/domain/gift_system_message.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 
 /// Son hediye atan — koltuk altı kutusu için.
@@ -99,8 +100,7 @@ class VoiceRecentGiftsController extends Notifier<VoiceRecentGiftsState> {
       _gifters.remove(removed);
     }
 
-    final line =
-        '$sender, $receiver kullanıcısına $gift hediyesini attı. 🪙$gross jeton.🎉';
+    final line = '${GiftSystemMessage.format(event)} 🎉';
     final announcements = [
       VoiceGiftAnnouncement(
         id: 'gift-${event.id}-${now.microsecondsSinceEpoch}',

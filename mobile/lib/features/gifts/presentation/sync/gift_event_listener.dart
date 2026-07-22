@@ -5,8 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
+import '../../../live/presentation/providers/live_room_providers.dart';
 import '../../../voice_hub/presentation/providers/voice_gift_providers.dart';
 import '../../../voice_hub/presentation/providers/voice_recent_gifts_provider.dart';
+import '../../../voice_hub/presentation/providers/chat_room_providers.dart';
+import '../../../voice_hub/presentation/providers/voice_room_provider.dart';
 import 'gift_session_controller.dart';
 import 'gift_sync_log.dart';
 
@@ -85,6 +88,17 @@ class _GiftEventListenerState extends ConsumerState<GiftEventListener> {
           isHost: widget.isHost,
         );
     ref.read(voiceRecentGiftsProvider.notifier).record(event);
+
+    if (widget.useVoiceRealtime && widget.sessionKey.isNotEmpty) {
+      ref
+          .read(voiceRoomLiveProvider(widget.sessionKey).notifier)
+          .appendGiftChatMessage(event);
+    }
+    if (widget.useLiveRealtime && widget.liveStreamId != null) {
+      ref
+          .read(liveRoomProvider(widget.liveStreamId!).notifier)
+          .appendGiftSystemMessage(event);
+    }
   }
 
   @override

@@ -18,7 +18,8 @@ import '../../../live_psychics/presentation/controllers/psychic_flow.dart';
 import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
 import '../../../live_psychics/presentation/widgets/psychic_booking_sheet.dart';
 import '../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
-import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
+import '../../../voice_hub/presentation/providers/voice_room_session_registry.dart';
+import '../gifts/providers/live_seat_gift_totals_provider.dart';
 import '../../../gifts/domain/session_gift_summary_builder.dart';
 import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -340,6 +341,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    final streamId = widget.session.streamId?.trim();
+    if (streamId != null && streamId.isNotEmpty) {
+      ref.read(liveSeatGiftTotalsProvider.notifier).clear();
+      clearLiveGiftSession(ref, streamId);
+    }
     _lazyGiftsTimer?.cancel();
     _lazyExtrasTimer?.cancel();
     _guestJoinPoll?.cancel();

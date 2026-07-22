@@ -9,6 +9,7 @@ import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../widgets/wallet_balance_header.dart';
+import '../widgets/wallet_earnings_section.dart';
 import '../../domain/wallet_balances.dart';
 
 /// Cüzdan merkezi — Jeton, CFC ve Premium üyelik tek giriş.
@@ -44,7 +45,17 @@ class WalletCenterPage extends ConsumerWidget {
                   membership: balances.membership,
                   daysRemaining: balances.membershipDaysRemaining,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
+                WalletEarningsSection(balances: balances),
+                const SizedBox(height: 16),
+                _HubCard(
+                  icon: Icons.account_balance_wallet_rounded,
+                  title: 'Para Çek',
+                  subtitle: 'Banka havalesi ile çekim talebi',
+                  color: const Color(0xFF81C784),
+                  onTap: () => context.push('/withdraw'),
+                ),
+                const SizedBox(height: 12),
                 _HubCard(
                   icon: Icons.workspace_premium_rounded,
                   title: 'Premium Üyelik',

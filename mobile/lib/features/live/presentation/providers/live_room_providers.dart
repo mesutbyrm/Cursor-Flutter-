@@ -8,6 +8,7 @@ import '../../../../core/performance/network_perf.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
+import '../../../live/domain/entities/live_gift_event.dart';
 import '../../domain/live_guest_layout_resolver.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../domain/entities/live_stream_entity.dart';
@@ -17,6 +18,7 @@ import '../../data/services/live_namespace_socket_service.dart';
 import 'live_providers.dart';
 import 'live_stream_engagement_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../gifts/domain/gift_system_message.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import 'live_fortune_request_provider.dart';
@@ -422,6 +424,24 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
     if (state.fortuneAnsweredNotice != null) {
       state = state.copyWith(clearFortuneNotice: true);
     }
+  }
+
+  /// Hediye olayı — sohbet alanına sistem mesajı.
+  void appendGiftSystemMessage(LiveGiftEvent ev) {
+    if (ev.jetonAmount <= 0) return;
+    final msgId = 'gift-${ev.id}';
+    if (!_seenIds.add(msgId)) return;
+    state = state.copyWith(
+      messages: [
+        ...state.messages,
+        LiveRoomChatMessage(
+          id: msgId,
+          user: 'Sistem',
+          text: GiftSystemMessage.format(ev),
+          isSystem: true,
+        ),
+      ],
+    );
   }
 }
 

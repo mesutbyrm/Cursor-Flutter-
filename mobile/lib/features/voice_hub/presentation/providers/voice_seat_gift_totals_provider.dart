@@ -114,6 +114,15 @@ class VoiceSeatGiftTotals extends Notifier<Map<String, SeatGiftAggregate>> {
     }
     return null;
   }
+
+  /// Odaya geç katılanlar için API/SSE geçmişinden toplamları doldurur.
+  void seedFromEvents(Iterable<LiveGiftEvent> events) {
+    for (final ev in events) {
+      _record(ev);
+    }
+  }
+
+  void clear() => state = const {};
 }
 
 final voiceSeatGiftTotalsProvider =

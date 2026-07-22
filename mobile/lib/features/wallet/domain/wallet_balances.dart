@@ -17,6 +17,14 @@ class WalletBalances extends Equatable {
     this.canManagePayments,
     this.isAdminFlag,
     this.isStaffFlag,
+    this.totalEarnedJeton,
+    this.pendingEarningsTl,
+    this.approvedEarningsTl,
+    this.withdrawableTl,
+    this.todayEarningsTl,
+    this.monthEarningsTl,
+    this.totalSentJeton,
+    this.totalReceivedJeton,
   });
 
   static const empty = WalletBalances();
@@ -33,6 +41,14 @@ class WalletBalances extends Equatable {
     bool? canManagePayments,
     bool? isAdminFlag,
     bool? isStaffFlag,
+    int? totalEarnedJeton,
+    double? pendingEarningsTl,
+    double? approvedEarningsTl,
+    double? withdrawableTl,
+    double? todayEarningsTl,
+    double? monthEarningsTl,
+    int? totalSentJeton,
+    int? totalReceivedJeton,
   }) {
     return WalletBalances(
       jeton: jeton ?? this.jeton,
@@ -46,6 +62,14 @@ class WalletBalances extends Equatable {
       canManagePayments: canManagePayments ?? this.canManagePayments,
       isAdminFlag: isAdminFlag ?? this.isAdminFlag,
       isStaffFlag: isStaffFlag ?? this.isStaffFlag,
+      totalEarnedJeton: totalEarnedJeton ?? this.totalEarnedJeton,
+      pendingEarningsTl: pendingEarningsTl ?? this.pendingEarningsTl,
+      approvedEarningsTl: approvedEarningsTl ?? this.approvedEarningsTl,
+      withdrawableTl: withdrawableTl ?? this.withdrawableTl,
+      todayEarningsTl: todayEarningsTl ?? this.todayEarningsTl,
+      monthEarningsTl: monthEarningsTl ?? this.monthEarningsTl,
+      totalSentJeton: totalSentJeton ?? this.totalSentJeton,
+      totalReceivedJeton: totalReceivedJeton ?? this.totalReceivedJeton,
     );
   }
 
@@ -86,7 +110,54 @@ class WalletBalances extends Equatable {
       canManagePayments: pick(json, ['canManagePayments']) == true,
       isAdminFlag: pick(json, ['isAdmin']) == true,
       isStaffFlag: pick(json, ['isStaff']) == true,
+      totalEarnedJeton: asInt(pick(json, [
+        'totalEarnedJeton',
+        'totalEarned',
+        'earningsJeton',
+        'lifetimeEarnings',
+      ])),
+      pendingEarningsTl: _asDouble(pick(json, [
+        'pendingEarnings',
+        'pendingBalance',
+        'pendingEarningsTl',
+      ])),
+      approvedEarningsTl: _asDouble(pick(json, [
+        'approvedEarnings',
+        'approvedBalance',
+        'approvedEarningsTl',
+      ])),
+      withdrawableTl: _asDouble(pick(json, [
+        'withdrawable',
+        'withdrawableBalance',
+        'withdrawableTl',
+      ])),
+      todayEarningsTl: _asDouble(pick(json, [
+        'todayEarnings',
+        'todayEarningsTl',
+        'dailyEarnings',
+      ])),
+      monthEarningsTl: _asDouble(pick(json, [
+        'monthEarnings',
+        'monthEarningsTl',
+        'monthlyEarnings',
+      ])),
+      totalSentJeton: asInt(pick(json, [
+        'totalSentJeton',
+        'sentJeton',
+        'giftsSentTotal',
+      ])),
+      totalReceivedJeton: asInt(pick(json, [
+        'totalReceivedJeton',
+        'receivedJeton',
+        'giftsReceivedTotal',
+      ])),
     );
+  }
+
+  static double? _asDouble(dynamic v) {
+    if (v == null) return null;
+    if (v is num) return v.toDouble();
+    return double.tryParse(v.toString());
   }
 
   final int jeton;
@@ -100,6 +171,25 @@ class WalletBalances extends Equatable {
   final bool? canManagePayments;
   final bool? isAdminFlag;
   final bool? isStaffFlag;
+  final int? totalEarnedJeton;
+  final double? pendingEarningsTl;
+  final double? approvedEarningsTl;
+  final double? withdrawableTl;
+  final double? todayEarningsTl;
+  final double? monthEarningsTl;
+  final int? totalSentJeton;
+  final int? totalReceivedJeton;
+
+  double? jetonToTl(int jetonAmount) {
+    final rate = jetonTlRate;
+    if (rate == null || rate <= 0) return null;
+    return jetonAmount * rate;
+  }
+
+  String formatTl(double? value) {
+    if (value == null) return '—';
+    return '${value.toStringAsFixed(2)} TL';
+  }
 
   /// Kalan üyelik günü (`membershipExpiresAt` ISO).
   int? get membershipDaysRemaining {
@@ -144,5 +234,13 @@ class WalletBalances extends Equatable {
         canManagePayments,
         isAdminFlag,
         isStaffFlag,
+        totalEarnedJeton,
+        pendingEarningsTl,
+        approvedEarningsTl,
+        withdrawableTl,
+        todayEarningsTl,
+        monthEarningsTl,
+        totalSentJeton,
+        totalReceivedJeton,
       ];
 }

@@ -70,6 +70,7 @@ import '../../features/membership/presentation/pages/premium_membership_page.dar
 import '../../features/profile/presentation/pages/cfc_purchase_page.dart';
 import '../../features/profile/presentation/pages/jeton_purchase_page.dart';
 import '../../features/wallet/presentation/pages/wallet_center_page.dart';
+import '../../features/wallet/presentation/pages/withdrawal_page.dart';
 import '../../features/profile/presentation/pages/profile_about_page.dart';
 import '../../features/legal/domain/legal_document.dart';
 import '../../features/legal/presentation/pages/site_content_page.dart';
@@ -490,6 +491,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/wallet',
         builder: (context, state) => const WalletCenterPage(),
+      ),
+      GoRoute(
+        path: '/withdraw',
+        builder: (context, state) => const WithdrawalPage(),
       ),
       GoRoute(
         path: '/premium-membership',

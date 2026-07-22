@@ -8,7 +8,9 @@ import '../../../domain/entities/live_guest_layout.dart';
 import '../../../domain/entities/live_guest_slot.dart';
 import '../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../providers/live_guest_grid_provider.dart';
+import '../../gifts/providers/live_seat_gift_totals_provider.dart';
 import '../../gifts/widgets/live_seat_gift_flash_stack.dart';
+import 'package:canlifal_social/features/gifts/presentation/widgets/seat_gift_badge.dart';
 
 /// TikTok Party tarzı çoklu yayın grid — 2/4/6/9 koltuk (TRTC).
 class LiveGuestGrid extends ConsumerWidget {
@@ -158,7 +160,7 @@ class LiveGuestGrid extends ConsumerWidget {
   }
 }
 
-class _SlotCell extends StatelessWidget {
+class _SlotCell extends ConsumerWidget {
   const _SlotCell({
     required this.slot,
     required this.isHost,
@@ -189,7 +191,7 @@ class _SlotCell extends StatelessWidget {
       slot.isHost || slot.index == 0 ? hostJetonEarned : slot.jetonEarned;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     Widget child;
     if (slot.isHost || slot.index == 0) {
       child = trtc != null
@@ -241,6 +243,28 @@ class _SlotCell extends StatelessWidget {
             child: LiveSeatGiftFlashStack(
               userId: slot.userId ?? (slot.index == 0 ? null : remoteUserId),
               displayName: slot.displayName ?? (slot.index == 0 ? hostName : null),
+            ),
+          ),
+          Positioned(
+            left: 6,
+            right: 6,
+            bottom: 6,
+            child: Center(
+              child: SeatGiftBadge(
+                compact: true,
+                receiverName: slot.displayName ?? hostName ?? 'Yayıncı',
+                aggregate: ref.watch(
+                  liveSeatGiftTotalsProvider.select(
+                    (m) => selectSeatGiftAggregate(
+                      m,
+                      userId: slot.userId ??
+                          (slot.index == 0 ? null : remoteUserId),
+                      displayName: slot.displayName ??
+                          (slot.index == 0 ? hostName : null),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
           if (_displayJeton > 0)

@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.71+98 (2026-07-22)
+
+### Hediye sistemi, cüzdan ve performans
+- **Hediye sohbet mesajı:** «Mesut, Ayşe'ye 100 Jeton değerinde Rose gönderdi.» — sesli oda ve canlı yayın
+- **Koltuk altı sayaç:** Canlı yayında kümülatif jeton rozeti + tıklanınca gönderici dökümü (sesli oda ile aynı)
+- **Geç katılanlar:** Oda hediye geçmişi API'den koltuk toplamlarına seed
+- **Cüzdan:** Kazanç özeti (bekleyen, çekilebilir, bugün/ay, gönderilen/alınan jeton)
+- **Para çek:** `POST /api/withdrawals` — ad, banka, IBAN, tutar; geçmiş talepler
+- **Komisyon oranı:** `GET /api/platform/commission-rate` (salt okunur gösterim)
+- **Performans:** Odadan çıkışta hediye provider/state temizliği (bellek sızıntısı önleme)
+
 ## 1.0.70+97 (2026-07-21)
 
 ### Ana sayfa sesli odalar + oda içi hediye gösterimi

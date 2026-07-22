@@ -783,6 +783,8 @@ abstract final class ApiEndpoints {
   static const registerUserDeviceToken = '/api/user/device-token';
 
   static const wallet = '/api/wallet';
+  static const withdrawals = '/api/withdrawals';
+  static const platformCommissionRate = '/api/platform/commission-rate';
 
   /// İçerik / kullanıcı şikayeti (canlifal moderasyon API).
   static const reports = '/api/reports';
