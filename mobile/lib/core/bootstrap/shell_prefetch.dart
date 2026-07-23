@@ -4,12 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../features/messages/presentation/providers/conversations_list_notifier.dart';
 import '../../../features/messages/presentation/providers/messages_providers.dart';
-import '../../../features/notifications/presentation/providers/notifications_providers.dart';
 import '../../../features/profile/presentation/providers/profile_providers.dart';
 import '../../../features/shorts/domain/repositories/shorts_repository.dart';
 import '../../../features/shorts/presentation/providers/shorts_providers.dart';
 import 'startup_perf.dart';
-import '../performance/network_perf.dart';
 import '../../../features/voice_hub/presentation/providers/voice_gift_providers.dart';
 import '../performance/voice_room_entry_perf.dart';
 
@@ -26,15 +24,19 @@ void prefetchShellData(
   unawaited(
     Future<void>.delayed(delay, () {
       VoiceRoomEntryPerf.prewarmShell();
-      unawaited(
-        NetworkPerf.waitSilent([
-          ref.read(walletBalancesProvider.future),
-          ref.read(notificationsListProvider.future),
-          ref.read(profileStatsProvider.future),
-        ]),
-      );
+      // Cüzdan/bildirim HomeHeader rozetleri tarafından zaten yüklenir — yalnızca profil.
+      unawaited(ref.read(profileStatsProvider.future));
       try {
         ref.read(chatRoomGiftsRemoteProvider).fetchGiftTypes().ignore();
+      } catch (_) {}
+    }),
+  );
+
+  unawaited(
+    Future<void>.delayed(StartupPerf.shellPrefetchTier1bDelay, () {
+      // Rozetler yüklendikten sonra tam liste yenileme (sessiz).
+      try {
+        ref.read(walletBalancesProvider.notifier).refresh(force: false);
       } catch (_) {}
     }),
   );

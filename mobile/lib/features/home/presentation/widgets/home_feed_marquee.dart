@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../services/services_providers.dart';
+import '../../../../core/bootstrap/startup_perf.dart';
 import '../providers/home_providers.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../../../voice_hub/presentation/widgets/voice_room/voice_room_staff_join_banner.dart';
@@ -25,13 +26,15 @@ class _HomeFeedMarqueeState extends ConsumerState<HomeFeedMarquee> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // API dokümanı: GET /api/homepage-ticker + GET /api/gifts/recent-big
-      unawaited(ref.read(homeTickerProvider.future));
-      unawaited(_pollBigGifts());
-      _poll = Timer.periodic(const Duration(seconds: 20), (_) {
-        ref.invalidate(homeTickerProvider);
+      Future<void>.delayed(StartupPerf.homeRealtimeBridgeDelay, () {
+        if (!mounted) return;
         unawaited(ref.read(homeTickerProvider.future));
         unawaited(_pollBigGifts());
+        _poll = Timer.periodic(const Duration(seconds: 20), (_) {
+          ref.invalidate(homeTickerProvider);
+          unawaited(ref.read(homeTickerProvider.future));
+          unawaited(_pollBigGifts());
+        });
       });
     });
   }

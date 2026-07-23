@@ -156,7 +156,9 @@ class PsychicRoomSseService {
           type == 'gift_sent' ||
           type == 'hediye' ||
           type.contains('gift') ||
-          type.contains('hediye')) {
+          type.contains('hediye') ||
+          (eventName?.toLowerCase().contains('gift') ?? false) ||
+          (eventName?.toLowerCase().contains('tip') ?? false)) {
         final amount = _parseTipAmount(map);
         if (amount > 0) {
           final from = map['senderName']?.toString() ??

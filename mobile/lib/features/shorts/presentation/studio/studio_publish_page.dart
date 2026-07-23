@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:canlifal_social/core/providers/auth_selectors.dart';
 import 'package:dio/dio.dart';
@@ -335,6 +336,12 @@ class _StudioPublishPageState extends ConsumerState<StudioPublishPage> {
         );
     if (draft.videoPath == null) {
       setState(() => _error = 'Video dosyası yok.');
+      return;
+    }
+    final thumb = draft.thumbnailPath?.trim();
+    if (thumb == null || thumb.isEmpty || !File(thumb).existsSync()) {
+      setState(() => _error = 'Lütfen kapak görseli seçin.');
+      showShortsSnackBar(context, 'Video yüklemeden önce kapak görseli seçmelisiniz.');
       return;
     }
     final descError = ContentGuard.validate(draft.description, maxLen: 2200);

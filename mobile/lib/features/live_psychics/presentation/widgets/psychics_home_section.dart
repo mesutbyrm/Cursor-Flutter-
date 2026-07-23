@@ -10,7 +10,7 @@ import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_e
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
-/// Ana sayfa — çevrimiçi falcılar yatay liste.
+/// Ana sayfa — çevrimiçi falcılar yatay liste (premium kart).
 class PsychicsHomeSection extends ConsumerWidget {
   const PsychicsHomeSection({super.key});
 
@@ -115,73 +115,111 @@ class _PsychicCard extends StatelessWidget {
 
   final PsychicEntity psychic;
 
+  String get _stars {
+    final r = psychic.rating.clamp(0, 5);
+    final full = r.floor();
+    final half = r - full >= 0.5;
+    final buf = StringBuffer();
+    for (var i = 0; i < full; i++) {
+      buf.write('★');
+    }
+    if (half && full < 5) buf.write('☆');
+    while (buf.length < 5) {
+      buf.write('☆');
+    }
+    return buf.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final specialty = psychic.displayCategory.trim();
+    final price = psychic.pricePerMinute;
+    final reviews = psychic.reviewCount;
+
     return GestureDetector(
       onTap: () => context.push('/canli-falcilar/${psychic.id}'),
       child: Container(
         width: HomeApprovedDesign.tellerCardW,
         height: HomeApprovedDesign.tellerCardH,
-        padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
         decoration: BoxDecoration(
-          color: HomeApprovedDesign.surface,
           borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
           border: Border.all(
             color: psychic.isOnline
-                ? HomeApprovedDesign.purple.withValues(alpha: 0.45)
+                ? HomeApprovedDesign.purple.withValues(alpha: 0.5)
                 : HomeApprovedDesign.border,
           ),
           boxShadow: psychic.isOnline ? const [HomeApprovedDesign.liveGlow] : null,
         ),
-        child: Row(
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: psychic.avatarUrl != null &&
-                          psychic.avatarUrl!.isNotEmpty
-                      ? CanlifalNetworkImage(
-                          url: psychic.avatarUrl!,
-                          width: 56,
-                          height: 56,
-                          fit: BoxFit.cover,
-                        )
-                      : ColoredBox(
-                          color: HomeApprovedDesign.searchFill,
-                          child: SizedBox(
-                            width: 56,
-                            height: 56,
-                            child: Center(
-                              child: Text(
-                                psychic.name.isNotEmpty
-                                    ? psychic.name[0].toUpperCase()
-                                    : '?',
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  color: HomeApprovedDesign.textPrimary,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                ),
-                if (psychic.isOnline)
-                  const Positioned(
-                    top: -4,
-                    right: -4,
-                    child: LiveBadge(compact: true, label: 'CANLI'),
+            if (psychic.avatarUrl != null && psychic.avatarUrl!.isNotEmpty)
+              CanlifalNetworkImage(
+                url: psychic.avatarUrl!,
+                fit: BoxFit.cover,
+              )
+            else
+              ColoredBox(
+                color: HomeApprovedDesign.searchFill,
+                child: Center(
+                  child: Text(
+                    psychic.name.isNotEmpty
+                        ? psychic.name[0].toUpperCase()
+                        : '?',
+                    style: const TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w900,
+                      color: HomeApprovedDesign.textPrimary,
+                    ),
                   ),
-              ],
+                ),
+              ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.15),
+                    Colors.black.withValues(alpha: 0.82),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
+            if (psychic.isOnline)
+              const Positioned(
+                top: 8,
+                left: 8,
+                child: LiveBadge(compact: true, label: 'CANLI'),
+              ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: psychic.isOnline
+                      ? HomeApprovedDesign.green.withValues(alpha: 0.9)
+                      : Colors.black54,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  psychic.isOnline ? 'Müsait' : 'Çevrimdışı',
+                  style: const TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 8,
+              right: 8,
+              bottom: 8,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     psychic.name,
@@ -189,33 +227,38 @@ class _PsychicCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: HomeApprovedDesign.textPrimary,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
                     ),
                   ),
-                  if (specialty.isNotEmpty) ...[
-                    const SizedBox(height: 2),
+                  const SizedBox(height: 2),
+                  Text(
+                    _stars,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: HomeApprovedDesign.gold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  if (reviews > 0)
                     Text(
-                      specialty,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      '($reviews yorum)',
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: Colors.white.withValues(alpha: 0.75),
+                      ),
+                    ),
+                  if (price > 0) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '$price jeton/dk',
                       style: const TextStyle(
-                        fontSize: 11,
-                        color: HomeApprovedDesign.textMuted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: HomeApprovedDesign.gold,
                       ),
                     ),
                   ],
-                  const SizedBox(height: 4),
-                  Text(
-                    psychic.isOnline ? 'Çevrimiçi' : 'Çevrimdışı',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: psychic.isOnline
-                          ? HomeApprovedDesign.green
-                          : HomeApprovedDesign.textMuted,
-                    ),
-                  ),
                 ],
               ),
             ),

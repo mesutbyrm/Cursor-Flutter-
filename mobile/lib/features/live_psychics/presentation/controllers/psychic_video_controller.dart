@@ -144,6 +144,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   var _disposed = false;
   var _remoteEndHandled = false;
   final _seenSignalIds = <String>{};
+  final _seenTipEventIds = <String>{};
   String? _joinedTrtcRoom;
   var _rejoiningRtc = false;
 
@@ -251,7 +252,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       final from = data['fromName']?.toString() ??
           data['senderName']?.toString() ??
           data['from']?.toString();
-      _onTipReceived(amount, from);
+      _onTipReceived(amount, from, eventId: id);
     }
   }
 
@@ -432,14 +433,32 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           },
           onTipReceived: (amount, fromName) {
             if (_disposed || state.leaving) return;
-            _onTipReceived(amount, fromName);
+            _onTipReceived(amount, fromName, eventId: 'sse-$amount-$fromName');
           },
         );
   }
 
-  void _onTipReceived(int amount, String? fromName) {
+  void _onTipReceived(int amount, String? fromName, {String? eventId}) {
     if (amount <= 0) return;
+    final id = eventId?.trim();
+    if (id != null && id.isNotEmpty && !_seenTipEventIds.add(id)) return;
+
+    final authId = ref.read(authControllerProvider).valueOrNull?.id?.trim();
+    final tellerUid = (session.tellerUserId ??
+            state.room?.tellerUserId ??
+            session.psychic.userId)
+        ?.trim();
+
+    // Danışan yalnızca kendi gönderim teşekkürünü görür; falcı SSE/sinyal popup alır.
     if (session.isClient) return;
+    if (tellerUid != null &&
+        tellerUid.isNotEmpty &&
+        authId != null &&
+        authId.isNotEmpty &&
+        authId != tellerUid) {
+      return;
+    }
+
     final total = state.sessionTipsTotal + amount;
     state = state.copyWith(
       tipReceivedAmount: amount,
@@ -653,14 +672,18 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       Future<void>.delayed(const Duration(seconds: 3), () {
         if (!_disposed) state = state.copyWith(clearTipThankYou: true);
       });
-      final tellerUid = session.tellerUserId ?? state.room?.tellerUserId;
+      final tellerUid = session.tellerUserId ??
+          state.room?.tellerUserId ??
+          session.psychic.userId;
       unawaited(
         ref.read(livePsychicsRepositoryProvider).sendRoomSignal(
               sessionId: session.sessionId,
               type: 'tip',
               data: {
                 'amount': amount,
-                'senderName': ref.read(authControllerProvider).valueOrNull?.display,
+                'senderName':
+                    ref.read(authControllerProvider).valueOrNull?.display,
+                'senderId': ref.read(authControllerProvider).valueOrNull?.id,
               },
               receiverId: tellerUid,
             ),
@@ -896,8 +919,12 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _roomPoll?.cancel();
     _signalPoll?.cancel();
     unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
+    unawaited(_trtcCoordinator?.leave());
     _trtcCoordinator?.dispose();
     _trtcCoordinator = null;
+    if (_trtc.inRoom) {
+      unawaited(_trtc.leave());
+    }
     super.dispose();
   }
 }

@@ -79,18 +79,27 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     final owned = _ownedRooms(rooms, user.id);
 
     if (battle.isPending) {
-      // Önce sahip olunan odalar; ownerId eksikse rakip kullanıcı eşleşmesi.
-      final candidates = owned.isNotEmpty
-          ? owned
-          : rooms.where((r) {
-              final oppRoom = battle.opponentVoiceRoomId?.trim() ?? '';
-              if (oppRoom.isEmpty) return false;
-              return r.apiRoomKey == oppRoom ||
-                  r.id == oppRoom ||
-                  r.slug == oppRoom;
-            }).toList(growable: false);
+      // Önce sahip olunan odalar; ownerId eksikse rakip oda veya kullanıcı eşleşmesi.
+      final oppRoomId = battle.opponentVoiceRoomId?.trim() ?? '';
+      final candidates = <VoiceRoomEntity>[
+        ...owned,
+        ...rooms.where((r) {
+          if (oppRoomId.isEmpty) return false;
+          return r.apiRoomKey == oppRoomId ||
+              r.id == oppRoomId ||
+              r.slug == oppRoomId;
+        }),
+      ];
+      // Tekilleştir
+      final seen = <String>{};
+      final unique = <VoiceRoomEntity>[];
+      for (final r in candidates) {
+        final k = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+        if (k.isEmpty || !seen.add(k)) continue;
+        unique.add(r);
+      }
 
-      for (final room in candidates) {
+      for (final room in unique) {
         if (!isPkInviteTarget(battle, room, userId: user.id)) continue;
         final inviteId = battle.effectiveId;
         if (inviteId.isEmpty || !_seenInvites.add(inviteId)) continue;
@@ -104,12 +113,20 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
       if (oppId == user.id || oppUser == user.id) {
         final inviteId = battle.effectiveId;
         if (inviteId.isNotEmpty && _seenInvites.add(inviteId)) {
-          final room = candidates.isNotEmpty
-              ? candidates.first
-              : (rooms.isNotEmpty ? rooms.first : null);
+          VoiceRoomEntity? room;
+          if (unique.isNotEmpty) {
+            room = unique.first;
+          } else {
+            for (final r in rooms) {
+              if (isPkInviteTarget(battle, r, userId: user.id)) {
+                room = r;
+                break;
+              }
+            }
+            room ??= rooms.isNotEmpty ? rooms.first : null;
+          }
           if (room != null) {
             unawaited(_showInviteDialog(battle, room));
-            return;
           }
         }
       }

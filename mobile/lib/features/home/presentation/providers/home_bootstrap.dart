@@ -3,33 +3,46 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/performance/app_perf_metrics.dart';
 import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
 import '../../../social/presentation/providers/social_providers.dart';
 import 'home_providers.dart';
 
-/// Ana sayfa üst bölüm API'lerini paralel başlatır — bölüm gecikmelerinden önce.
+/// Ana sayfa üst bölüm API'lerini kademeli başlatır — ilk kare hızlı açılır.
 final homeBootstrapProvider = FutureProvider<void>((ref) async {
   ref.keepAlive();
   await prefetchHomeCriticalSections(ref);
 });
 
-/// Paralel ana sayfa prefetch + süre ölçümü.
+/// Kademeli ana sayfa prefetch — görünür bölümler önce, alt bölümler lazy.
 Future<void> prefetchHomeCriticalSections(Ref ref) async {
-  final tasks = <Future<void>>[
+  // Dalga 1: üstte görünen bölümler (paralel).
+  await Future.wait([
     _measureFuture(ref, 'home.banners', homeBannersProvider),
     _measureFuture(ref, 'home.trend_videos', homeTrendVideosProvider),
     _measureFuture(ref, 'home.live_streams', homeLiveStreamsProvider),
+  ]);
+
+  // Dalga 2: sesli oda + falcılar (kısa gecikme).
+  await Future<void>.delayed(StartupPerf.homeVoiceSectionDelay);
+  await Future.wait([
     _measureFuture(ref, 'home.voice_rooms', homeVoiceRoomsProvider),
-    _measureFuture(ref, 'home.fortune_cards', homeFortuneCardsProvider),
-    _measureFuture(ref, 'home.story_rings', socialStoryRingsProvider),
     _measureFuture(ref, 'home.psychics', homeOnlinePsychicsProvider),
-  ];
-  await Future.wait(tasks);
+  ]);
+
+  // Dalga 3: fal kartları + hikayeler (lazy).
+  unawaited(
+    Future<void>.delayed(StartupPerf.homeFortuneSectionDelay, () async {
+      await Future.wait([
+        _measureFuture(ref, 'home.fortune_cards', homeFortuneCardsProvider),
+        _measureFuture(ref, 'home.story_rings', socialStoryRingsProvider),
+      ]);
+    }),
+  );
+
   if (kDebugMode) {
-    debugPrint(
-      '[HomeBootstrap] critical sections prefetched (${tasks.length} parallel)',
-    );
+    debugPrint('[HomeBootstrap] wave-1 done; wave-2 done; wave-3 scheduled');
   }
 }
 

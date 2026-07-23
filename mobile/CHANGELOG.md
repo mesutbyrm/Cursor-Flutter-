@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.72+99 (2026-07-23)
+
+### Backend uyum + performans
+- **Açılış:** Ana sayfa API dalgaları; kabuk prefetch çift istek düzeltmesi; marquee gecikmesi
+- **Trend video:** 5 thumbnail karesi (%10–80, gerçek süre); kapak seçimi zorunlu
+- **Canlı Falcılar kartı:** 132×176 premium kart — yıldız, yorum, ücret, canlı rozeti
+- **Canlı fal:** SSE bahşiş eventleri; falcı popup; TRTC dispose leave
+- **Sesli PK:** Davet eşleşmesi genişletildi (opponent oda/kullanıcı)
+- Rapor: `docs/FLUTTER_BACKEND_SYNC_REPORT_2026-07-23.md`
+
 ## 1.0.71+98 (2026-07-22)
 
 ### Hediye sistemi, cüzdan ve performans
