@@ -11,9 +11,15 @@ class VoiceRoomApiLogInterceptor extends Interceptor {
         p.contains('/trtc/');
   }
 
+  /// Sesli oda REST — üretim yanıtları 5 sn global timeout'ta sık sık aşılır.
+  static const voiceConnectTimeout = Duration(seconds: 15);
+  static const voiceReceiveTimeout = Duration(seconds: 22);
+
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (_isVoicePath(options.path)) {
+      options.connectTimeout = voiceConnectTimeout;
+      options.receiveTimeout = voiceReceiveTimeout;
       options.extra['_voiceRoomStarted'] = DateTime.now();
       final hasAuth = options.headers['Authorization'] != null;
       VoiceRoomDebugLog.jwtStatus(hasToken: hasAuth);

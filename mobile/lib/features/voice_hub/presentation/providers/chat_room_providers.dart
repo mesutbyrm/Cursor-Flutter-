@@ -215,9 +215,10 @@ class VoiceRoomLiveState {
 
   int onlineCountFor(VoiceRoomEntity room) {
     if (presence.isNotEmpty) return presence.length;
+    if (selfInRoom) return 1;
     if (backendSyncReady) return 0;
     if (room.displayOnline > 0) return room.displayOnline;
-    return selfInRoom ? 1 : 0;
+    return 0;
   }
 
   VoiceRoomLiveState copyWith({
@@ -626,6 +627,7 @@ class VoiceRoomLiveController
       clearRoomTrtc: true,
       backendSyncReady: false,
     );
+    _seedOptimisticSelfPresence();
 
     try {
       await _joinPresence();
@@ -693,7 +695,10 @@ class VoiceRoomLiveController
   void _seedOptimisticSelfPresence() {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null || _roomKey.isEmpty) return;
-    if (state.presence.any((p) => p.id == user.id)) return;
+    if (state.presence.any((p) => p.id == user.id)) {
+      state = state.copyWith(selfInRoom: true, loading: false);
+      return;
+    }
     final self = ChatRoomPresence(
       id: user.id,
       name: user.display,
@@ -1061,7 +1066,10 @@ class VoiceRoomLiveController
             _markSseActivity();
             GiftSyncLog.sseConnected(_roomKey);
             if (!state.sseConnected) {
-              state = state.copyWith(sseConnected: true);
+              state = state.copyWith(sseConnected: true, clearError: true);
+            }
+            if (!state.selfInRoom || !_presenceJoined) {
+              unawaited(_joinPresence());
             }
             ref.read(voiceRoomDiagnosticProvider.notifier).setSse(true);
             if (!VoiceRoomBasicMode.enabled ||
@@ -1589,7 +1597,7 @@ class VoiceRoomLiveController
     final room = _roomMeta;
     final remote = ref.read(chatRoomRemoteProvider);
     final user = ref.read(authControllerProvider).valueOrNull;
-    if (user != null && !state.selfInRoom) {
+    if (user != null && (!_presenceJoined || !state.selfInRoom)) {
       unawaited(_joinPresence());
     }
     Object? refreshError;
@@ -1781,7 +1789,11 @@ class VoiceRoomLiveController
       final msg = ApiException.userMessage(e);
       final lower = msg.toLowerCase();
       if ((state.selfInRoom || state.presence.isNotEmpty || state.sseConnected) &&
-          (lower.contains('invalid type') || lower.contains('geçersiz alan'))) {
+          (lower.contains('invalid type') ||
+              lower.contains('geçersiz alan') ||
+              lower.contains('zaman aşımı') ||
+              lower.contains('timeout') ||
+              lower.contains('sunucu yanıt vermedi'))) {
         state = state.copyWith(loading: false, clearError: true);
         return;
       }
