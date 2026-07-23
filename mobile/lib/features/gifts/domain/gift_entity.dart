@@ -23,6 +23,11 @@ class GiftEntity extends Equatable {
     this.thumbnailUrl,
     this.assetUrl,
     this.iconEmoji,
+    this.soundUrl,
+    this.animationDurationMs = 0,
+    this.isFullscreen = false,
+    this.isPremium = false,
+    this.comboEnabled = false,
   });
 
   factory GiftEntity.fromJson(Map<String, dynamic> json, {String siteOrigin = ''}) {
@@ -32,9 +37,12 @@ class GiftEntity extends Equatable {
     final thumbnail = pick(json, ['thumbnailUrl'])?.toString();
     final asset = pick(json, ['assetUrl', 'image', 'giftImageUrl'])?.toString();
     final anim = pick(json, ['animation', 'animationKey'])?.toString();
-    final animType = GiftAnimationKind.parse(
-      pick(json, ['animationType', 'animationKind', 'assetType'])?.toString(),
-    );
+    final animTypeRaw = pick(json, [
+      'animationType',
+      'animationKind',
+      'assetType',
+    ])?.toString();
+    var animType = GiftAnimationKind.parse(animTypeRaw);
 
     String? imageUrl;
     for (final candidate in [thumbnail, asset, iconUrlField, rawIcon]) {
@@ -56,17 +64,30 @@ class GiftEntity extends Equatable {
     final resolvedAsset = _isResolvableUrl(asset ?? '')
         ? _resolveUrl(asset, siteOrigin)
         : null;
+    final animationRef = anim ?? resolvedAsset;
+    if (animType == GiftAnimationKind.lottie && animationRef != null) {
+      final inferred = GiftAnimationKind.fromUrl(animationRef);
+      if (inferred != GiftAnimationKind.none) animType = inferred;
+    }
+
+    final soundRaw = pick(json, ['soundUrl', 'sound', 'soundCloudPath'])?.toString();
+    final soundUrl = _isResolvableUrl(soundRaw ?? '')
+        ? _resolveUrl(soundRaw, siteOrigin)
+        : null;
 
     return GiftEntity(
       id: id,
       name: (pick(json, ['name', 'nameTr', 'nameEn']) ?? id).toString(),
       price: asInt(pick(json, ['price'])),
       iconUrl: imageUrl,
-      animationRef: anim ?? resolvedAsset,
+      animationRef: animationRef,
       animationKind: animType,
-      rarity: GiftRarity.parse(pick(json, ['rarity'])?.toString()),
+      rarity: GiftRarity.parse(
+        pick(json, ['rarity', 'tier'])?.toString(),
+      ),
       platform: GiftPlatform.parse(pick(json, ['platform'])?.toString()),
-      soundKey: pick(json, ['sound'])?.toString(),
+      soundKey: soundUrl == null ? soundRaw : null,
+      soundUrl: soundUrl,
       sortOrder: asInt(pick(json, ['sortOrder'])),
       isLucky: json['isLucky'] == true,
       collectionId: pick(json, ['collectionId'])?.toString(),
@@ -75,6 +96,12 @@ class GiftEntity extends Equatable {
           : null,
       assetUrl: resolvedAsset,
       iconEmoji: emoji,
+      animationDurationMs:
+          asInt(pick(json, ['animationDurationMs', 'animationDuration'])),
+      isFullscreen: json['isFullscreen'] == true,
+      isPremium: json['isPremium'] == true || json['premium'] == true,
+      comboEnabled:
+          json['comboEnabled'] == true || json['supportsCombo'] == true,
     );
   }
 
@@ -93,13 +120,35 @@ class GiftEntity extends Equatable {
   final String? thumbnailUrl;
   final String? assetUrl;
   final String? iconEmoji;
+  final String? soundUrl;
+  final int animationDurationMs;
+  final bool isFullscreen;
+  final bool isPremium;
+  final bool comboEnabled;
 
   /// Görüntüleme için en iyi ikon URL'si (thumbnail öncelikli).
   String? get displayIconUrl => thumbnailUrl ?? iconUrl ?? assetUrl;
 
-  bool get hasFullscreenAnimation =>
-      animationKind != GiftAnimationKind.none &&
-      (animationRef?.isNotEmpty ?? false);
+  String? get networkAnimationUrl {
+    final ref = animationRef ?? assetUrl;
+    if (ref != null && ref.startsWith('http')) return ref;
+    return null;
+  }
+
+  bool get hasCmsAnimation {
+    final url = networkAnimationUrl;
+    if (url == null) return false;
+    return animationKind == GiftAnimationKind.video ||
+        animationKind == GiftAnimationKind.gif ||
+        animationKind == GiftAnimationKind.svga ||
+        animationKind == GiftAnimationKind.lottie ||
+        animationKind == GiftAnimationKind.image;
+  }
+
+  bool get shouldFullscreen =>
+      isFullscreen || isPremium || hasCmsAnimation || price >= 100;
+
+  bool get hasFullscreenAnimation => hasCmsAnimation;
 
   @override
   List<Object?> get props => [
@@ -118,6 +167,11 @@ class GiftEntity extends Equatable {
         thumbnailUrl,
         assetUrl,
         iconEmoji,
+        soundUrl,
+        animationDurationMs,
+        isFullscreen,
+        isPremium,
+        comboEnabled,
       ];
 }
 

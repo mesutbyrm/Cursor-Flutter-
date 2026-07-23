@@ -5,6 +5,7 @@ import '../../../core/config/env.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
+import 'gift_cache_service.dart';
 import '../domain/gift_entity.dart';
 import '../domain/gift_leaderboard_entry.dart';
 import '../domain/gift_platform.dart';
@@ -100,11 +101,20 @@ class GiftRepository {
     if (remoteVersion.giftVersion > 0) {
       await cache.writeVersion(remoteVersion.giftVersion);
     }
+    GiftCacheService.instance.prefetchUrls(
+      merged.map((g) => g.networkAnimationUrl).whereType<String>(),
+    );
     return merged;
   }
 
   Future<GiftCatalogVersionInfo> fetchCatalogVersion() =>
       _luckyDs.fetchCatalogVersion();
+
+  /// Admin kaydı sonrası — disk önbelleğini sıfırla, sonraki istek tam senkron.
+  Future<void> bustCatalogCache() async {
+    final cache = await _syncCache();
+    await cache.clear();
+  }
 
   Future<List<GiftEntity>> fetchCatalogV2({
     GiftPlatform platform = GiftPlatform.mobile,

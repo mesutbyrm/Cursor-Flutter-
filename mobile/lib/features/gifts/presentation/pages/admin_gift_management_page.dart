@@ -8,6 +8,7 @@ import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../domain/admin_gift_stats.dart';
 import '../../domain/admin_gift_type.dart';
 import '../providers/admin_gift_providers.dart';
+import '../providers/gift_catalog_invalidate.dart';
 import '../providers/gift_providers.dart';
 
 /// Admin Hediye Yönetim Paneli — katalog CRUD, istatistik, gelir kuralları.
@@ -95,8 +96,8 @@ class _AdminGiftManagementPageState
                     '/admin/gifts/new',
                   );
                   if (!context.mounted || created != true) return;
+                  invalidateGiftCatalogProviders(ref);
                   ref.invalidate(adminGiftListProvider);
-                  ref.invalidate(liveGiftCatalogProvider);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Hediye başarıyla oluşturuldu.'),
@@ -211,8 +212,8 @@ class _CatalogTab extends ConsumerWidget {
         }
         return RefreshIndicator(
           onRefresh: () async {
+            invalidateGiftCatalogProviders(ref);
             ref.invalidate(adminGiftListProvider);
-            ref.invalidate(liveGiftCatalogProvider);
             await ref.read(adminGiftListProvider.future);
           },
           child: ListView.builder(
@@ -323,8 +324,8 @@ class _GiftRow extends ConsumerWidget {
   ) async {
     try {
       await ref.read(adminGiftRemoteProvider).updateGift(gift.id, body);
+      invalidateGiftCatalogProviders(ref);
       ref.invalidate(adminGiftListProvider);
-      await ref.read(adminGiftListProvider.future);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(

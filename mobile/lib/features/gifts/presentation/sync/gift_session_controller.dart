@@ -85,10 +85,7 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
 
     _enqueueAnimation(event);
 
-    final showFs = PremiumGiftCatalog2026.triggersFullscreen(
-      giftId: event.giftId,
-      coinCost: jeton,
-    );
+    final showFs = _shouldFullscreen(event, jeton);
     if (showFs) {
       state = state.copyWith(activeFullscreen: event);
       final duration = event.rarity.fullscreenDuration;
@@ -200,10 +197,7 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   }
 
   void _enqueueAnimation(LiveGiftEvent event) {
-    final showFs = PremiumGiftCatalog2026.triggersFullscreen(
-      giftId: event.giftId,
-      coinCost: event.jetonAmount,
-    );
+    final showFs = _shouldFullscreen(event, event.jetonAmount);
     if (showFs) return;
 
     state = state.copyWith(
@@ -231,6 +225,25 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       }
       _pumpAnimationQueue();
     });
+  }
+
+  bool _shouldFullscreen(LiveGiftEvent event, int jeton) {
+    if (PremiumGiftCatalog2026.triggersFullscreen(
+      giftId: event.giftId,
+      coinCost: jeton,
+    )) {
+      return true;
+    }
+    final anim = (event.animationKey ?? '').toLowerCase();
+    if (anim.startsWith('http') &&
+        (anim.contains('.mp4') ||
+            anim.contains('.webm') ||
+            anim.contains('.gif') ||
+            anim.contains('.json') ||
+            anim.contains('.svga'))) {
+      return true;
+    }
+    return jeton >= 100;
   }
 
   bool _isDisplayable(LiveGiftEvent e) {

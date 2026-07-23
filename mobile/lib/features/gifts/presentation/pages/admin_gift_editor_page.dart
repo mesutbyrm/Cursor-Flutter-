@@ -17,6 +17,7 @@ import '../../../wallet/domain/wallet_balances.dart';
 import '../../data/admin_gift_media_probe.dart';
 import '../../domain/admin_gift_type.dart';
 import '../providers/admin_gift_providers.dart';
+import '../providers/gift_catalog_invalidate.dart';
 import '../providers/gift_providers.dart';
 
 /// Tam özellikli hediye oluşturma / düzenleme ekranı.
@@ -39,6 +40,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
   late final TextEditingController _tier;
   late final TextEditingController _durationMs;
   late final TextEditingController _effectColor;
+  late final TextEditingController _sortOrder;
 
   String? _imageUrl;
   String? _thumbnailUrl;
@@ -53,10 +55,15 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
   bool _animationChanged = false;
   bool _soundChanged = false;
   String _animationType = 'lottie';
-  static const bool _comboEnabled = false;
+  bool _comboEnabled = false;
   bool _isPremium = false;
   bool _isFullscreen = false;
   bool _isActive = true;
+  bool _isHidden = false;
+  bool _isFeatured = false;
+  bool _isPopular = false;
+  bool _isNew = false;
+  bool _isLucky = false;
   bool _saving = false;
   String? _uploadingKind;
 
@@ -78,6 +85,9 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
           : '',
     );
     _effectColor = TextEditingController(text: g?.effectColor ?? '');
+    _sortOrder = TextEditingController(
+      text: g != null && g.sortOrder > 0 ? '${g.sortOrder}' : '',
+    );
     _imageUrl = g?.imageUrl;
     _thumbnailUrl = g?.thumbnailUrl;
     _animationUrl = g?.animationUrl;
@@ -86,6 +96,12 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
     _isPremium = g?.isPremium ?? false;
     _isFullscreen = g?.isFullscreen ?? false;
     _isActive = g?.isActive ?? true;
+    _comboEnabled = g?.comboEnabled ?? false;
+    _isHidden = g?.isHidden ?? false;
+    _isFeatured = g?.isFeatured ?? false;
+    _isPopular = g?.isPopular ?? false;
+    _isNew = g?.isNew ?? false;
+    _isLucky = g?.isLucky ?? false;
   }
 
   @override
@@ -98,6 +114,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
     _tier.dispose();
     _durationMs.dispose();
     _effectColor.dispose();
+    _sortOrder.dispose();
     super.dispose();
   }
 
@@ -239,6 +256,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
         (_isEdit &&
             !_animationChanged &&
             (_animationUrl?.trim().isNotEmpty ?? false));
+    final sortOrder = int.tryParse(_sortOrder.text.trim());
     setState(() => _saving = true);
     final body = <String, dynamic>{
       'name': name,
@@ -247,6 +265,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
       if (_icon.text.trim().isNotEmpty) 'icon': _icon.text.trim(),
       if (_category.text.trim().isNotEmpty) 'category': _category.text.trim(),
       if (_tier.text.trim().isNotEmpty) 'tier': _tier.text.trim(),
+      if (sortOrder != null && sortOrder >= 0) 'sortOrder': sortOrder,
       if (!_isEdit && _imageCloudPath != null)
         'imageCloudPath': _imageCloudPath,
       if (!_isEdit && _thumbnailCloudPath != null)
@@ -268,6 +287,11 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
       'isPremium': _isPremium,
       'isFullscreen': _isFullscreen,
       'isActive': _isActive,
+      'isHidden': _isHidden,
+      'isFeatured': _isFeatured,
+      'isPopular': _isPopular,
+      'isNew': _isNew,
+      'isLucky': _isLucky,
     };
     try {
       // Cüzdan yenilemesi kaydı engellemesin — zaman aşımında arka planda dene.
@@ -290,21 +314,12 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
       await Future.wait([
         ApiHttpCache.invalidatePath('/api/video-streams/gifts'),
         ApiHttpCache.invalidatePath('/api/gifts'),
+        ApiHttpCache.invalidatePath('/api/gifts/catalog'),
+        ApiHttpCache.invalidatePath('/api/gifts/version'),
       ]);
+      await invalidateAllGiftCatalogs(ref);
       ref.invalidate(adminGiftListProvider);
-      ref.invalidate(liveGiftCatalogProvider);
-      ref.invalidate(voiceRoomGiftTypesProvider);
 
-      // Admin kataloğunu başarı yanıtından sonra gerçekten yeniden yükle.
-      // Liste yenileme hatası aynı kaydı tekrar oluşturmaya yol açmamalı.
-      try {
-        await ref
-            .read(adminGiftListProvider.future)
-            .timeout(const Duration(seconds: 12));
-      } catch (_) {
-        // Kayıt API tarafından doğrulandı; yönetim ekranı tekrar izlediğinde
-        // provider yeniden deneyecek.
-      }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
@@ -511,6 +526,21 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             _isFullscreen,
             (v) => setState(() => _isFullscreen = v),
           ),
+          _switchTile(
+            'Kombo (combo)',
+            _comboEnabled,
+            (v) => setState(() => _comboEnabled = v),
+          ),
+          _switchTile('Yeni rozeti', _isNew, (v) => setState(() => _isNew = v)),
+          _switchTile(
+            '🍀 Şanslı hediye',
+            _isLucky,
+            (v) => setState(() => _isLucky = v),
+          ),
+          _switchTile('Öne çıkan', _isFeatured, (v) => setState(() => _isFeatured = v)),
+          _switchTile('Popüler', _isPopular, (v) => setState(() => _isPopular = v)),
+          _switchTile('Gizli', _isHidden, (v) => setState(() => _isHidden = v)),
+          _field(_sortOrder, 'Sıralama (sortOrder)', number: true),
           _switchTile(
             'Durum: Aktif',
             _isActive,
