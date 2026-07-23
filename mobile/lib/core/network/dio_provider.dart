@@ -99,6 +99,12 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
             options.path.startsWith('/api/admin/')) {
           options.headers['X-Staff-Role'] = staffRole.trim();
         }
+        final staffUsername = options.extra['staffUsername'];
+        if (staffUsername is String &&
+            staffUsername.trim().isNotEmpty &&
+            options.path.startsWith('/api/admin/')) {
+          options.headers['X-Staff-Username'] = staffUsername.trim();
+        }
         handler.next(options);
       },
       onError: (e, handler) async {

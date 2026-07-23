@@ -28,6 +28,7 @@ class AdminGiftRemoteDataSource {
   AdminGiftRemoteDataSource(
     this._dio, {
     this.staffRole,
+    this.staffUsername,
     Duration operationTimeout = const Duration(seconds: 45),
     Dio Function()? uploadDioFactory,
   }) : _operationTimeout = operationTimeout,
@@ -35,14 +36,23 @@ class AdminGiftRemoteDataSource {
 
   final Dio _dio;
   final String? staffRole;
+  final String? staffUsername;
   final Duration _operationTimeout;
   final Dio Function() _uploadDioFactory;
 
   Options _adminOptions(Options? base) {
     final role = staffRole?.trim();
-    if (role == null || role.isEmpty) return base ?? Options();
+    final username = staffUsername?.trim();
+    if ((role == null || role.isEmpty) &&
+        (username == null || username.isEmpty)) {
+      return base ?? Options();
+    }
     return (base ?? Options()).copyWith(
-      extra: {...?base?.extra, 'staffRole': role},
+      extra: {
+        ...?base?.extra,
+        if (role != null && role.isNotEmpty) 'staffRole': role,
+        if (username != null && username.isNotEmpty) 'staffUsername': username,
+      },
     );
   }
 

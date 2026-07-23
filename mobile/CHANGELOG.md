@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.78+105 (2026-07-23)
+
+### Admin / yonetim tam yetki + hediye video
+- **`admin` ve `yonetim` nickleri:** Cüzdan rolü beklemeden tam site yetkisi; hediye CRUD ve admin panel
+- **Admin API başlıkları:** `X-Staff-Role` + `X-Staff-Username` — backend ile uyumlu yetki çözümlemesi
+- **Video hediyeler:** CMS `animationUrl` alanı sesli oda ve canlı yayında oynatılır; admin editörde MP4/WebM önizleme
+- **Admin katalog:** Video animasyon rozeti; CDN/cloud path URL çözümlemesi
+
 ## 1.0.77+104 (2026-07-23)
 
 ### Hediye yönetimi hızlandırma + video animasyon

@@ -11,7 +11,7 @@ export const STAFF_ROLES = new Set([
   "founder",
 ]);
 
-export const MANAGER_USERNAMES = new Set(["admin", "yonetici"]);
+export const MANAGER_USERNAMES = new Set(["admin", "yonetici", "yonetim"]);
 
 export type StaffUserLike = {
   role: string;
@@ -22,7 +22,7 @@ export type StaffUserLike = {
 export function effectiveStaffRole(user: StaffUserLike): string {
   const username = user.username?.toLowerCase().trim() ?? "";
   if (username === "admin") return "admin";
-  if (username === "yonetici") return "yonetici";
+  if (username === "yonetici" || username === "yonetim") return "yonetici";
   const role = user.role?.toLowerCase().trim() ?? "user";
   if (STAFF_ROLES.has(role)) return role;
   return role || "user";

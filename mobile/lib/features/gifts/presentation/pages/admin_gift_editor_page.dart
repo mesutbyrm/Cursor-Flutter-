@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../../core/images/canlifal_network_image.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/api_http_cache.dart';
 import '../../../voice_hub/presentation/widgets/voice_room_gift_sheet.dart';
@@ -19,6 +18,7 @@ import '../../domain/admin_gift_type.dart';
 import '../providers/admin_gift_providers.dart';
 import '../providers/gift_catalog_invalidate.dart';
 import '../providers/gift_providers.dart';
+import '../widgets/admin_gift_media_preview.dart';
 
 /// Tam özellikli hediye oluşturma / düzenleme ekranı.
 class AdminGiftEditorPage extends ConsumerStatefulWidget {
@@ -441,6 +441,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             url: _animationUrl,
             kind: 'asset',
             uploading: _uploadingKind == 'asset',
+            animationType: _animationType,
             onPickFile: () => _uploadFile(
               kind: 'asset',
               extensions: ['mp4', 'webm', 'svga', 'json', 'gif', 'riv'],
@@ -660,6 +661,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
     VoidCallback? onPickGallery,
     VoidCallback? onPickFile,
     bool isAudio = false,
+    String? animationType,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -682,22 +684,15 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             ),
             child: uploading
                 ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
-                : (url != null && url.startsWith('http') && !isAudio
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: CanlifalNetworkImage(
-                            url: url,
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      : Icon(
-                          isAudio
-                              ? Icons.audiotrack_rounded
-                              : Icons.perm_media_rounded,
-                          color: url != null
-                              ? const Color(0xFF66E36F)
-                              : const Color(0xFFB388FF),
-                        )),
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: AdminGiftMediaPreview(
+                      url: url,
+                      size: 56,
+                      isAudio: isAudio,
+                      animationType: animationType,
+                    ),
+                  ),
           ),
           const SizedBox(width: 10),
           Expanded(

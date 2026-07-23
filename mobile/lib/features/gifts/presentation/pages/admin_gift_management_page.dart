@@ -356,18 +356,46 @@ class _GiftRow extends ConsumerWidget {
               SizedBox(
                 width: 40,
                 height: 40,
-                child:
-                    gift.thumbnailUrl != null && gift.thumbnailUrl!.isNotEmpty
-                    ? CanlifalNetworkImage(
-                        url: gift.thumbnailUrl!,
-                        fit: BoxFit.contain,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    if (gift.thumbnailUrl != null &&
+                        gift.thumbnailUrl!.isNotEmpty)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: CanlifalNetworkImage(
+                          url: gift.thumbnailUrl!,
+                          fit: BoxFit.contain,
+                          width: 40,
+                          height: 40,
+                        ),
                       )
-                    : Center(
+                    else
+                      Center(
                         child: Text(
                           gift.icon ?? '🎁',
                           style: const TextStyle(fontSize: 24),
                         ),
                       ),
+                    if (gift.hasVideoAnimation)
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF7C4DFF),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Icon(
+                            Icons.videocam_rounded,
+                            size: 10,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
