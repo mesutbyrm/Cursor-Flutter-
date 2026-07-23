@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.77+104 (2026-07-23)
+
+### Hediye yönetimi hızlandırma + video animasyon
+- **Admin panel:** Tüm backend bayrakları (şanslı, kombo, öne çıkan, popüler, gizli, sıralama); kayıt sonrası anında katalog yenileme
+- **Video/GIF/Lottie CDN:** Yüklenen MP4/WebM/GIF animasyonlar sesli oda ve canlı yayında tam ekran oynatılır
+- **Ses:** Admin CDN ses dosyası (`soundUrl`) oda/yayında çalınır
+- **Performans:** Admin katalog keepAlive; kayıt sonrası bloklayıcı liste beklemesi kaldırıldı; animasyon prefetch
+
 ## 1.0.76+103 (2026-07-23)
 
 ### Backend hediyeleri kullanılabilir

@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
+import 'package:video_player/video_player.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../live/domain/entities/live_gift_event.dart';
@@ -11,10 +13,11 @@ import '../../domain/gift_animation_kind.dart';
 import '../../domain/gift_entity.dart';
 import '../../domain/gift_rarity.dart';
 import '../../domain/premium_gift_catalog_2026.dart';
+import '../providers/gift_catalog_index_provider.dart';
 import 'premium_2026/premium_gift_icon.dart';
 
-/// Lottie / Rive / SVGA (yerel veya ağ) — RepaintBoundary ile izole oynatıcı.
-class GiftAnimationPlayer extends StatelessWidget {
+/// CMS video / GIF / Lottie / SVGA — sesli oda ve canlı yayın tam ekran.
+class GiftAnimationPlayer extends ConsumerWidget {
   const GiftAnimationPlayer({
     super.key,
     required this.giftId,
@@ -32,8 +35,13 @@ class GiftAnimationPlayer extends StatelessWidget {
   final bool repeat;
   final bool preferPremiumVisual;
 
-  GiftEntity get _entity {
+  GiftEntity _resolve(WidgetRef ref) {
     if (gift != null) return gift!;
+    final fromCatalog = lookupGiftCatalog(
+      ref.watch(giftCatalogByIdProvider),
+      giftId,
+    );
+    if (fromCatalog != null) return fromCatalog;
     return GiftEntity(
       id: giftId,
       name: event?.giftName ?? giftId,
@@ -46,24 +54,45 @@ class GiftAnimationPlayer extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final g = _entity;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final g = _resolve(ref);
     final canonical = PremiumGiftCatalog2026.canonicalId(giftId) ?? giftId;
-    if (preferPremiumVisual || GiftCatalogMaps.usePremiumPainter(g)) {
+    final usePremium =
+        preferPremiumVisual && !g.hasCmsAnimation && GiftCatalogMaps.usePremiumPainter(g);
+    if (usePremium) {
       return RepaintBoundary(
         child: PremiumGiftIcon(giftId: canonical, size: size),
       );
     }
+
     final kind = GiftCatalogMaps.resolvedKind(g);
     final emoji = GiftCatalogMaps.emoji(g);
+    final networkUrl = g.networkAnimationUrl;
 
     return RepaintBoundary(
       child: SizedBox(
         width: size,
         height: size,
         child: switch (kind) {
+          GiftAnimationKind.video => _NetworkVideoPlayer(
+              url: networkUrl ?? '',
+              emoji: emoji,
+              size: size,
+              durationMs: g.animationDurationMs,
+            ),
+          GiftAnimationKind.gif => _GifPlayer(
+              url: networkUrl ?? g.displayIconUrl ?? '',
+              emoji: emoji,
+              size: size,
+            ),
+          GiftAnimationKind.image => _IconOrEmoji(
+              iconUrl: networkUrl ?? g.displayIconUrl,
+              emoji: emoji,
+              size: size,
+            ),
           GiftAnimationKind.lottie => _LottiePlayer(
               asset: GiftCatalogMaps.lottieAsset(g),
+              networkUrl: networkUrl,
               emoji: emoji,
               size: size,
               repeat: repeat,
@@ -73,12 +102,13 @@ class GiftAnimationPlayer extends StatelessWidget {
               size: size,
             ),
           GiftAnimationKind.svga => _SvgaPlayer(
-              networkUrl: _networkAnimUrl(g),
+              networkUrl: networkUrl,
+              fallbackIcon: g.displayIconUrl,
               emoji: emoji,
               size: size,
             ),
           GiftAnimationKind.none => _IconOrEmoji(
-              iconUrl: g.iconUrl ?? event?.iconUrl,
+              iconUrl: g.displayIconUrl ?? event?.iconUrl,
               emoji: emoji,
               size: size,
             ),
@@ -86,29 +116,37 @@ class GiftAnimationPlayer extends StatelessWidget {
       ),
     );
   }
-
-  String? _networkAnimUrl(GiftEntity g) {
-    final ref = g.animationRef;
-    if (ref != null && ref.startsWith('http')) return ref;
-    return null;
-  }
 }
 
 class _LottiePlayer extends StatelessWidget {
   const _LottiePlayer({
     required this.asset,
+    required this.networkUrl,
     required this.emoji,
     required this.size,
     required this.repeat,
   });
 
   final String? asset;
+  final String? networkUrl;
   final String emoji;
   final double size;
   final bool repeat;
 
   @override
   Widget build(BuildContext context) {
+    final net = networkUrl;
+    if (net != null && net.isNotEmpty) {
+      return Lottie.network(
+        net,
+        width: size,
+        height: size,
+        repeat: repeat,
+        fit: BoxFit.contain,
+        errorBuilder: (_, _, _) =>
+            Text(emoji, style: TextStyle(fontSize: size * 0.45)),
+      );
+    }
     if (asset == null) {
       return Text(emoji, style: TextStyle(fontSize: size * 0.45));
     }
@@ -124,14 +162,126 @@ class _LottiePlayer extends StatelessWidget {
   }
 }
 
+class _NetworkVideoPlayer extends StatefulWidget {
+  const _NetworkVideoPlayer({
+    required this.url,
+    required this.emoji,
+    required this.size,
+    this.durationMs = 0,
+  });
+
+  final String url;
+  final String emoji;
+  final double size;
+  final int durationMs;
+
+  @override
+  State<_NetworkVideoPlayer> createState() => _NetworkVideoPlayerState();
+}
+
+class _NetworkVideoPlayerState extends State<_NetworkVideoPlayer> {
+  VideoPlayerController? _controller;
+  var _failed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    final url = widget.url.trim();
+    if (url.isEmpty) {
+      if (mounted) setState(() => _failed = true);
+      return;
+    }
+    try {
+      final c = VideoPlayerController.networkUrl(Uri.parse(url));
+      await c.initialize();
+      if (!mounted) {
+        await c.dispose();
+        return;
+      }
+      c.setLooping(false);
+      await c.play();
+      setState(() => _controller = c);
+      final ms = widget.durationMs > 0
+          ? widget.durationMs
+          : c.value.duration.inMilliseconds;
+      if (ms > 0) {
+        Future.delayed(Duration(milliseconds: ms), () {
+          if (mounted && _controller == c) c.pause();
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _failed = true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_failed || widget.url.isEmpty) {
+      return Text(widget.emoji, style: TextStyle(fontSize: widget.size * 0.45));
+    }
+    final c = _controller;
+    if (c == null || !c.value.isInitialized) {
+      return const Center(
+        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white54),
+      );
+    }
+    return FittedBox(
+      fit: BoxFit.contain,
+      child: SizedBox(
+        width: c.value.size.width,
+        height: c.value.size.height,
+        child: VideoPlayer(c),
+      ),
+    );
+  }
+}
+
+class _GifPlayer extends StatelessWidget {
+  const _GifPlayer({
+    required this.url,
+    required this.emoji,
+    required this.size,
+  });
+
+  final String url;
+  final String emoji;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    if (url.isEmpty) {
+      return Text(emoji, style: TextStyle(fontSize: size * 0.45));
+    }
+    return CanlifalNetworkImage(
+      url: url,
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      errorWidget: Text(emoji, style: TextStyle(fontSize: size * 0.45)),
+    );
+  }
+}
+
 class _SvgaPlayer extends StatefulWidget {
   const _SvgaPlayer({
     required this.networkUrl,
+    required this.fallbackIcon,
     required this.emoji,
     required this.size,
   });
 
   final String? networkUrl;
+  final String? fallbackIcon;
   final String emoji;
   final double size;
 
@@ -151,6 +301,16 @@ class _SvgaPlayerState extends State<_SvgaPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    final icon = widget.fallbackIcon;
+    if (icon != null && icon.isNotEmpty) {
+      return CanlifalNetworkImage(
+        url: icon,
+        width: widget.size,
+        height: widget.size,
+        fit: BoxFit.contain,
+        errorWidget: _pulseEmoji(widget.emoji, widget.size),
+      );
+    }
     return _pulseEmoji(widget.emoji, widget.size);
   }
 

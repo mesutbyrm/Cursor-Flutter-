@@ -27,6 +27,7 @@ class AdminGiftType {
     this.isFullscreen = false,
     this.isPremium = false,
     this.comboEnabled = false,
+    this.isLucky = false,
   });
 
   factory AdminGiftType.fromJson(Map<String, dynamic> json) {
@@ -66,6 +67,7 @@ class AdminGiftType {
       isFullscreen: pick(json, ['isFullscreen']) == true,
       isPremium: pick(json, ['isPremium', 'premium']) == true,
       comboEnabled: pick(json, ['comboEnabled', 'supportsCombo']) == true,
+      isLucky: json['isLucky'] == true,
     );
   }
 
@@ -92,6 +94,7 @@ class AdminGiftType {
   final bool isFullscreen;
   final bool isPremium;
   final bool comboEnabled;
+  final bool isLucky;
 }
 
 /// Desteklenen animasyon türleri (admin yükleme).

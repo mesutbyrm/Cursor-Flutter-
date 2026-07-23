@@ -18,6 +18,11 @@ class GiftCatalogSyncCache {
     await _prefs.setInt(_versionKey, version);
   }
 
+  Future<void> clear() async {
+    await _prefs.remove(_versionKey);
+    await _prefs.remove(_catalogKey);
+  }
+
   List<GiftEntity> readCatalog({required String siteOrigin}) {
     final raw = _prefs.getString(_catalogKey);
     if (raw == null || raw.isEmpty) return const [];
@@ -59,6 +64,12 @@ class GiftCatalogSyncCache {
               'sortOrder': g.sortOrder,
               'isLucky': g.isLucky,
               if (g.collectionId != null) 'collectionId': g.collectionId,
+              if (g.soundUrl != null) 'soundUrl': g.soundUrl,
+              if (g.animationDurationMs > 0)
+                'animationDurationMs': g.animationDurationMs,
+              'isFullscreen': g.isFullscreen,
+              'isPremium': g.isPremium,
+              'comboEnabled': g.comboEnabled,
             },
           )
           .toList(),

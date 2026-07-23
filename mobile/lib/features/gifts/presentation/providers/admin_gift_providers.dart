@@ -43,8 +43,9 @@ final adminGiftApiAccessProvider = Provider<bool>((ref) {
   );
 });
 
-/// Admin katalog (pasifler dahil).
+/// Admin katalog (pasifler dahil) — oturum boyunca cache.
 final adminGiftListProvider = FutureProvider<List<AdminGiftType>>((ref) {
+  ref.keepAlive();
   return ref.read(adminGiftRemoteProvider).listGifts();
 });
 

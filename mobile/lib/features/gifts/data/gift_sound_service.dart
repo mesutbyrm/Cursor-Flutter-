@@ -1,10 +1,12 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 
 import '../domain/gift_entity.dart';
 import '../domain/gift_rarity.dart';
 
-/// Hediye SFX — rarity’ye göre farklı geri bildirim.
+/// Hediye SFX — yerel asset veya CDN URL (admin yüklemesi).
 class GiftSoundService {
   GiftSoundService() : _player = AudioPlayer() {
     _player.setReleaseMode(ReleaseMode.stop);
@@ -17,7 +19,8 @@ class GiftSoundService {
     if (_busy) return;
     _busy = true;
     try {
-      final played = await _playAsset(gift.soundKey) ||
+      final played = await _playUrl(gift.soundUrl) ||
+          await _playAsset(gift.soundKey) ||
           await _playAsset(_rarityAsset(gift.rarity));
       if (!played) {
         await _playSystem(gift.rarity);
@@ -28,8 +31,19 @@ class GiftSoundService {
     }
   }
 
+  Future<bool> _playUrl(String? url) async {
+    if (url == null || url.isEmpty || !url.startsWith('http')) return false;
+    try {
+      await _player.play(UrlSource(url));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<bool> _playAsset(String? key) async {
     if (key == null || key.isEmpty) return false;
+    if (key.startsWith('http')) return _playUrl(key);
     final path = key.contains('/')
         ? key
         : 'assets/gifts/sounds/$key.mp3';

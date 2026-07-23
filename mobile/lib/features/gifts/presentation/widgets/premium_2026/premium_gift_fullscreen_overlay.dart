@@ -211,7 +211,7 @@ class _GiftHero extends StatelessWidget {
       giftId: giftId,
       event: event,
       size: 220,
-      preferPremiumVisual: true,
+      preferPremiumVisual: false,
     );
   }
 }
