@@ -1,6 +1,21 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.81+108 (2026-07-23)
+
+### Gerçek zamanlı parite (dokümantasyon §17–19)
+- **Seans SSE ham olay:** `type` olmadan `timerStartedAt`, `actualMinutesUsed`, `addedMinutes`, `message` alanlarından tür çıkarımı
+- **SSE keep-alive:** Seans odası kanalında `: heartbeat` yorumları yok sayılır; 20 sn timeout ile yeniden bağlanma
+- **Hediye SSE:** Sesli oda düz + canlı yayın iç içe payload; CMS katalogdan video animasyon zenginleştirme (önceki madde tamamlandı)
+
+## 1.0.80+107 (2026-07-23)
+
+### Gerçek zamanlı hediye sistemi (dokümantasyon uyumu)
+- **SSE hediye parse:** Sesli oda düz payload (`giftTypeId`, `giftName`, `giftIcon`, `amount`) + canlı yayın iç içe `gift` nesnesi
+- **Video animasyon:** SSE yalnızca emoji gönderse bile CMS `assetUrl` ile katalogdan zenginleştirme
+- **SSE heartbeat:** Sunucu 15 sn keep-alive → istemci 20 sn timeout (doküman §4–5)
+- **Birleşik katalog:** Sesli oda + canlı yayın + genel CMS tek indeks
+
 ## 1.0.79+106 (2026-07-23)
 
 ### Backend dokümantasyonu ile tam hizalama

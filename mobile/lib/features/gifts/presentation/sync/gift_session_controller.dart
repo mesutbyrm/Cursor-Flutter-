@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/gift_revenue_display.dart';
+import '../providers/gift_catalog_index_provider.dart';
+import '../../domain/gift_event_catalog_enricher.dart';
 import '../../domain/premium_gift_catalog_2026.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import 'gift_session_state.dart';
@@ -65,7 +67,13 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       GiftSyncLog.guestReceived(roomId, raw.id);
     }
 
-    final event = _normalizeCombo(raw);
+    final catalog = lookupGiftCatalog(
+      ref.read(allGiftCatalogByIdProvider),
+      raw.giftId,
+    );
+    final event = _normalizeCombo(
+      enrichGiftEventFromCatalog(raw, catalog),
+    );
     final ids = {...state.processedEventIds, event.id};
     if (ids.length > _maxProcessedIds) {
       ids.remove(ids.first);

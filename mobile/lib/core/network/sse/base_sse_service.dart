@@ -26,7 +26,7 @@ abstract class BaseSseService {
   var _reconnectAttempt = 0;
   DateTime? _lastEventAt;
 
-  static const heartbeatTimeout = Duration(seconds: 90);
+  static const heartbeatTimeout = Duration(seconds: 20);
 
   static Dio createSseDio() {
     return Dio(
@@ -207,7 +207,7 @@ abstract class BaseSseService {
 
   void _startHeartbeatWatchdog() {
     _heartbeatWatchdog?.cancel();
-    _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 30), (_) {
+    _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 5), (_) {
       final last = _lastEventAt;
       if (last == null || _stopped) return;
       if (DateTime.now().difference(last) > heartbeatTimeout) {
