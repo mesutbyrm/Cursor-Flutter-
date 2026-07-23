@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.75+102 (2026-07-23)
+
+### 🍀 Şanslı Hediye (Talih Kutusu)
+- **Katalog CMS:** `GET /api/gifts/version` + `GET /api/gifts/catalog` — `isLucky` alanı, versiyon önbelleği
+- **Şanslı hediye API:** `config`, `send`, `history` (kişisel özet + global jackpot akışı)
+- **Gönderim:** `isLucky` hediyeler `POST /api/gifts/lucky/send` ile yönlendirilir (sesli oda + canlı yayın)
+- **UI:** 🍀 rozeti, spin/kutu açılış overlay, JACKPOT kayan duyuru, «Son Büyük Kazançlar» şeridi
+
 ## 1.0.74+101 (2026-07-23)
 
 ### Ana sayfa görselleri + Canlı Falcılar oda düzeltmesi

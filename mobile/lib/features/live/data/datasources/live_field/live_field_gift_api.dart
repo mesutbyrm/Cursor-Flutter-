@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import '../../../../../core/network/api_endpoints.dart';
 import '../../../../../core/network/dio_provider.dart';
 import '../../../../../core/util/json_util.dart';
+import '../../../../gifts/data/lucky_gift_remote_datasource.dart';
+import '../../../../gifts/domain/lucky_gift_entities.dart';
 import 'live_field_api_util.dart';
 
 /// Saha 5 — Hediye sistemi (`GET gift-types`, `POST gift/send`).
@@ -26,7 +28,22 @@ class LiveFieldGiftApi {
     required String giftTypeId,
     String? recipientId,
     int quantity = 1,
+    bool isLucky = false,
   }) async {
+    if (isLucky) {
+      final luckyDs = LuckyGiftRemoteDataSource(_dio);
+      final lucky = await luckyDs.sendLuckyGift(
+        giftTypeId: giftTypeId,
+        quantity: quantity,
+        context: roomType == 'voice' ? 'voice_room' : 'live_stream',
+        contextId: roomId,
+      );
+      return LiveFieldGiftSendResult(
+        senderBalance: lucky.newBalance,
+        message: lucky.tierName,
+        luckyResult: lucky,
+      );
+    }
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.liveGiftSend,
       data: {
@@ -58,6 +75,7 @@ class LiveFieldGiftType {
     this.assetUrl,
     this.assetType,
     this.sortOrder = 0,
+    this.isLucky = false,
   });
 
   final String id;
@@ -70,6 +88,7 @@ class LiveFieldGiftType {
   final String? assetUrl;
   final String? assetType;
   final int sortOrder;
+  final bool isLucky;
 
   factory LiveFieldGiftType.fromJson(Map<String, dynamic> json) {
     return LiveFieldGiftType(
@@ -83,6 +102,7 @@ class LiveFieldGiftType {
       assetUrl: json['assetUrl']?.toString(),
       assetType: json['assetType']?.toString(),
       sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
+      isLucky: json['isLucky'] == true,
     );
   }
 }
@@ -92,11 +112,13 @@ class LiveFieldGiftSendResult {
     this.senderBalance,
     this.message,
     this.giftId,
+    this.luckyResult,
   });
 
   final int? senderBalance;
   final String? message;
   final String? giftId;
+  final LuckyGiftSpinResult? luckyResult;
 
   factory LiveFieldGiftSendResult.fromJson(Map<String, dynamic> json) {
     final gift = asJsonMap(json['gift']);

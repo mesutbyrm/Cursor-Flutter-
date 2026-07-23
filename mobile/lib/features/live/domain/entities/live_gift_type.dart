@@ -15,6 +15,7 @@ class LiveVideoGiftType {
     this.animationRef,
     this.soundKey,
     this.platform = GiftPlatform.all,
+    this.isLucky = false,
   });
 
   factory LiveVideoGiftType.fromJson(Map<String, dynamic> json) {
@@ -32,6 +33,7 @@ class LiveVideoGiftType {
       animationRef: g.animationRef,
       soundKey: g.soundKey,
       platform: g.platform,
+      isLucky: g.isLucky,
     );
   }
 
@@ -44,6 +46,7 @@ class LiveVideoGiftType {
   final String? animationRef;
   final String? soundKey;
   final GiftPlatform platform;
+  final bool isLucky;
 
   GiftEntity toEntity() => GiftEntity(
         id: id,
@@ -55,6 +58,7 @@ class LiveVideoGiftType {
         animationRef: animationRef,
         soundKey: soundKey,
         platform: platform,
+        isLucky: isLucky,
       );
 
   String iconUrl(String siteOrigin) {

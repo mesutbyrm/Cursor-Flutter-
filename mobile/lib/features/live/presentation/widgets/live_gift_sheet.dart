@@ -7,8 +7,11 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../gifts/presentation/widgets/lucky_gift_badge.dart';
+import '../../../gifts/presentation/widgets/lucky_gift_spin_overlay.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_gift_type.dart';
+import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../gifts/providers/live_gift_providers.dart';
 
 Future<void> showLiveGiftPicker(
@@ -91,25 +94,52 @@ Future<void> showLiveGiftPicker(
                                 final user = ref.read(authControllerProvider).valueOrNull;
                                 final sender = user?.displayName ?? user?.username ?? 'Kullanıcı';
                                 try {
-                                  await ref.read(liveGiftsRemoteProvider).sendGift(
+                                  final result = await ref
+                                      .read(liveGiftsRemoteProvider)
+                                      .sendGift(
                                         streamId: streamId,
                                         giftTypeId: g.id,
                                         senderName: sender,
                                         receiverName: receiverName,
-                                        giftName: LiveGiftCatalog.displayName(g),
+                                        giftName:
+                                            LiveGiftCatalog.displayName(g),
                                         unitPrice: g.price,
                                         senderId: user?.id,
+                                        isLucky: g.isLucky,
                                       );
                                   if (context.mounted) {
                                     ref.refreshWalletCache(force: true);
                                     Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          '${LiveGiftCatalog.displayName(g)} gönderildi',
+                                    if (result.luckyResult != null) {
+                                      final lucky = result.luckyResult!;
+                                      await showLuckyGiftSpinOverlay(
+                                        context,
+                                        result: lucky,
+                                        giftName: LiveGiftCatalog.displayName(g),
+                                      );
+                                      if (lucky.isJackpot) {
+                                        ref
+                                            .read(staffEntranceMarqueeProvider
+                                                .notifier)
+                                            .enqueueLuckyJackpot(
+                                              userName: sender,
+                                              giftName:
+                                                  LiveGiftCatalog.displayName(g),
+                                              multiplier:
+                                                  lucky.multiplier.round(),
+                                              wonJetons: lucky.wonJetons,
+                                            );
+                                      }
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            '${LiveGiftCatalog.displayName(g)} gönderildi',
+                                          ),
                                         ),
-                                      ),
-                                    );
+                                      );
+                                    }
                                   }
                                 } catch (e) {
                                   if (context.mounted) {
@@ -159,6 +189,11 @@ class _GiftTile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              if (gift.isLucky)
+                Align(
+                  alignment: Alignment.topRight,
+                  child: LuckyGiftBadge(compact: true),
+                ),
               Expanded(
                 child: url.isEmpty
                     ? const Icon(Icons.card_giftcard, size: 36)

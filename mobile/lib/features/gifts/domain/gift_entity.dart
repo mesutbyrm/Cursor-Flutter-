@@ -18,6 +18,8 @@ class GiftEntity extends Equatable {
     this.platform = GiftPlatform.all,
     this.soundKey,
     this.sortOrder = 0,
+    this.isLucky = false,
+    this.collectionId,
   });
 
   factory GiftEntity.fromJson(Map<String, dynamic> json, {String siteOrigin = ''}) {
@@ -39,6 +41,8 @@ class GiftEntity extends Equatable {
       platform: GiftPlatform.parse(pick(json, ['platform'])?.toString()),
       soundKey: pick(json, ['sound'])?.toString(),
       sortOrder: asInt(pick(json, ['sortOrder'])),
+      isLucky: json['isLucky'] == true,
+      collectionId: pick(json, ['collectionId'])?.toString(),
     );
   }
 
@@ -52,6 +56,8 @@ class GiftEntity extends Equatable {
   final GiftPlatform platform;
   final String? soundKey;
   final int sortOrder;
+  final bool isLucky;
+  final String? collectionId;
 
   bool get hasFullscreenAnimation =>
       animationKind != GiftAnimationKind.none &&
@@ -69,6 +75,8 @@ class GiftEntity extends Equatable {
         platform,
         soundKey,
         sortOrder,
+        isLucky,
+        collectionId,
       ];
 }
 
