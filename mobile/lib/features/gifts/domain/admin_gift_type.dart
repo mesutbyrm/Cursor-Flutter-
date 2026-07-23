@@ -1,8 +1,7 @@
 import '../../../core/config/env.dart';
 import '../../../core/util/json_util.dart';
 
-/// Admin katalog satırı — `/api/admin/gifts` (pasifler dahil).
-/// CreateGiftTypeDto / UpdateGiftTypeDto alanlarını kapsar.
+/// Admin katalog satırı — `GET /api/admin/gifts` (`gift_types` şeması).
 class AdminGiftType {
   const AdminGiftType({
     required this.id,
@@ -13,7 +12,7 @@ class AdminGiftType {
     this.imageUrl,
     this.thumbnailUrl,
     this.animationUrl,
-    this.animationType = 'lottie',
+    this.animationType = 'image',
     this.soundUrl,
     this.animationDurationMs = 0,
     this.effectColor,
@@ -29,6 +28,10 @@ class AdminGiftType {
     this.isPremium = false,
     this.comboEnabled = false,
     this.isLucky = false,
+    this.iconImageCloudPath,
+    this.cloudStoragePath,
+    this.thumbnailCloudPath,
+    this.soundCloudPath,
   });
 
   factory AdminGiftType.fromJson(
@@ -43,30 +46,24 @@ class AdminGiftType {
       price: asInt(pick(json, ['price'])),
       icon: pick(json, ['icon'])?.toString(),
       imageUrl: _resolveAdminMediaUrl(
-        pick(json, [
-          'imageUrl',
-          'imageCloudPath',
-          'assetUrl',
-          'assetCloudPath',
-        ])?.toString(),
+        pick(json, ['iconImageUrl', 'imageUrl'])?.toString(),
         origin,
       ),
       thumbnailUrl: _resolveAdminMediaUrl(
-        pick(json, ['thumbnailUrl', 'thumbnail', 'thumbnailCloudPath'])
-            ?.toString(),
+        pick(json, ['thumbnailUrl', 'thumbnail'])?.toString(),
         origin,
       ),
       animationUrl: _resolveAdminMediaUrl(
-        pick(json, [
-          'animationUrl',
-          'animation',
-          'animationCloudPath',
-        ])?.toString(),
+        pick(json, ['assetUrl', 'animationUrl'])?.toString(),
         origin,
       ),
-      animationType:
-          (pick(json, ['animationType', 'animationKind']) ?? 'lottie').toString(),
-      soundUrl: pick(json, ['soundUrl', 'sound', 'soundCloudPath'])?.toString(),
+      animationType: (pick(json, ['assetType', 'animationType', 'animation']) ??
+              'image')
+          .toString(),
+      soundUrl: _resolveAdminMediaUrl(
+        pick(json, ['soundUrl', 'sound'])?.toString(),
+        origin,
+      ),
       animationDurationMs:
           asInt(pick(json, ['animationDurationMs', 'animationDuration'])),
       effectColor: pick(json, ['effectColor', 'glowColor'])?.toString(),
@@ -82,6 +79,14 @@ class AdminGiftType {
       isPremium: pick(json, ['isPremium', 'premium']) == true,
       comboEnabled: pick(json, ['comboEnabled', 'supportsCombo']) == true,
       isLucky: json['isLucky'] == true,
+      iconImageCloudPath:
+          pick(json, ['iconImageCloudPath', 'imageCloudPath'])?.toString(),
+      cloudStoragePath: pick(json, [
+        'cloudStoragePath',
+        'animationCloudPath',
+      ])?.toString(),
+      thumbnailCloudPath: pick(json, ['thumbnailCloudPath'])?.toString(),
+      soundCloudPath: pick(json, ['soundCloudPath'])?.toString(),
     );
   }
 
@@ -109,10 +114,14 @@ class AdminGiftType {
   final bool isPremium;
   final bool comboEnabled;
   final bool isLucky;
+  final String? iconImageCloudPath;
+  final String? cloudStoragePath;
+  final String? thumbnailCloudPath;
+  final String? soundCloudPath;
 
   bool get hasVideoAnimation {
     final t = animationType.toLowerCase().trim();
-    if (t == 'mp4' || t == 'webm' || t == 'video') return true;
+    if (t == 'video') return true;
     final url = animationUrl?.toLowerCase().split('?').first ?? '';
     return url.endsWith('.mp4') || url.endsWith('.webm');
   }
@@ -126,16 +135,14 @@ String? _resolveAdminMediaUrl(String? raw, String siteOrigin) {
   return raw.startsWith('/') ? '$origin$raw' : '$origin/$raw';
 }
 
-/// Desteklenen animasyon türleri (admin yükleme).
+/// Desteklenen `assetType` değerleri — `gift_types.assetType`.
 abstract final class AdminGiftAnimationTypes {
   static const all = [
+    ('image', 'Statik görsel'),
     ('lottie', 'Lottie (.json)'),
-    ('rive', 'Rive (.riv)'),
     ('svga', 'SVGA (.svga)'),
-    ('mp4', 'MP4 video'),
-    ('webm', 'WebM video'),
+    ('video', 'MP4 / WebM video'),
     ('gif', 'GIF'),
-    ('none', 'Animasyon yok'),
   ];
 }
 

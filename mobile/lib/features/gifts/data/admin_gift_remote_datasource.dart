@@ -23,38 +23,20 @@ class AdminGiftUploadedAsset {
   String get previewUrl => publicUrl ?? cloudPath;
 }
 
-/// Admin hediye yönetimi — `/api/admin/gifts/*`. Admin ve kurucu (yonetici).
+/// Admin hediye yönetimi — `canlifal.com` `/api/admin/gifts/*` (JWT admin/yonetici).
 class AdminGiftRemoteDataSource {
   AdminGiftRemoteDataSource(
     this._dio, {
-    this.staffRole,
-    this.staffUsername,
     Duration operationTimeout = const Duration(seconds: 45),
     Dio Function()? uploadDioFactory,
   }) : _operationTimeout = operationTimeout,
        _uploadDioFactory = uploadDioFactory ?? _defaultUploadDio;
 
   final Dio _dio;
-  final String? staffRole;
-  final String? staffUsername;
   final Duration _operationTimeout;
   final Dio Function() _uploadDioFactory;
 
-  Options _adminOptions(Options? base) {
-    final role = staffRole?.trim();
-    final username = staffUsername?.trim();
-    if ((role == null || role.isEmpty) &&
-        (username == null || username.isEmpty)) {
-      return base ?? Options();
-    }
-    return (base ?? Options()).copyWith(
-      extra: {
-        ...?base?.extra,
-        if (role != null && role.isNotEmpty) 'staffRole': role,
-        if (username != null && username.isNotEmpty) 'staffUsername': username,
-      },
-    );
-  }
+  Options _adminOptions(Options? base) => base ?? Options();
 
   /// Tüm hediyeler (pasifler dahil).
   Future<List<AdminGiftType>> listGifts() async {
@@ -174,13 +156,13 @@ class AdminGiftRemoteDataSource {
     );
   }
 
-  /// İstatistikler.
+  /// İstatistikler — `GET /api/admin/gifts/stats`.
   Future<AdminGiftStats> statistics({String period = 'all'}) async {
     final cancel = CancelToken();
     final res = await _withTimeout(
       () => _dio.safeGet<dynamic>(
-        '/api/admin/gifts/statistics',
-        query: {'period': period},
+        '/api/admin/gifts/stats',
+        query: period != 'all' ? {'period': period} : null,
         cancelToken: cancel,
         forceRefresh: true,
         options: _adminOptions(
@@ -202,50 +184,8 @@ class AdminGiftRemoteDataSource {
     return const AdminGiftStats();
   }
 
-  /// Gelir paylaşım kuralları.
-  Future<List<AdminRevenueRule>> revenueRules() async {
-    final cancel = CancelToken();
-    final res = await _withTimeout(
-      () => _dio.safeGet<dynamic>(
-        '/api/admin/gifts/revenue/rules',
-        cancelToken: cancel,
-        forceRefresh: true,
-        options: _adminOptions(
-          Options(
-            receiveTimeout: _operationTimeout,
-            extra: const {'noCache': true},
-          ),
-        ),
-      ),
-      cancel,
-      operation: 'Gelir kuralları yükleme',
-    );
-    dynamic raw = res.data;
-    if (raw is Map) {
-      raw = asJsonMap(raw)['rules'] ?? asJsonMap(raw)['data'] ?? raw;
-    }
-    if (raw is! List) return const [];
-    final out = <AdminRevenueRule>[];
-    for (final e in raw) {
-      if (e is Map) out.add(AdminRevenueRule.fromJson(asJsonMap(e)));
-    }
-    return out;
-  }
-
-  /// Bir bağlamın gelir kuralını güncelle.
-  Future<void> updateRevenueRule(
-    String context,
-    Map<String, dynamic> body,
-  ) async {
-    await _dio.safePatch<dynamic>(
-      '/api/admin/gifts/revenue/rules/$context',
-      data: body,
-      options: _adminOptions(null),
-    );
-  }
-
-  /// Hediye dosyası/küçük resim yükle → okunabilir/cloud path döner.
-  /// kind: 'icon' | 'thumbnail' | 'asset' | 'sound' (backend sözleşmesi).
+  /// Hediye dosyası yükle — `POST /api/upload/presigned`.
+  /// kind: `icon` | `thumbnail` | `asset` | `sound`.
   Future<AdminGiftUploadedAsset> uploadAsset(
     File file, {
     required String kind,
@@ -253,97 +193,10 @@ class AdminGiftRemoteDataSource {
     if (!await file.exists()) {
       throw const ApiException('Yüklenecek hediye dosyası bulunamadı.');
     }
-    try {
-      return await _uploadViaAdminPresign(file, kind: kind);
-    } on ApiException catch (error) {
-      if (!_shouldFallbackUpload(error)) rethrow;
-      _log(
-        'admin upload-url failed (${error.message}); '
-        'trying /api/upload/presigned fallback',
-      );
-      return _uploadViaSitePresigned(file, kind: kind);
-    }
+    return _uploadViaPresigned(file, kind: kind);
   }
 
-  Future<AdminGiftUploadedAsset> _uploadViaAdminPresign(
-    File file, {
-    required String kind,
-  }) async {
-    final fileName = file.path.split(Platform.pathSeparator).last;
-    final contentType = _contentType(fileName);
-    final fileSize = await file.length();
-    _log(
-      'POST /api/admin/gifts/upload-url start '
-      'kind=$kind contentType=$contentType bytes=$fileSize',
-    );
-    final cancel = CancelToken();
-    final res = await _withTimeout(
-      () => _dio.safePost<dynamic>(
-        '/api/admin/gifts/upload-url',
-        data: {
-          'fileName': fileName,
-          'contentType': contentType,
-          'kind': kind,
-          'fileSize': fileSize,
-        },
-        cancelToken: cancel,
-        options: _adminOptions(
-          Options(
-            sendTimeout: _operationTimeout,
-            receiveTimeout: _operationTimeout,
-          ),
-        ),
-      ),
-      cancel,
-      operation: 'Hediye yükleme bağlantısı',
-    );
-    _expectMutationStatus(res);
-    final inner = _unwrapResponseMap(res.data);
-    final uploadUrl = pick(inner, [
-      'uploadUrl',
-      'url',
-      'signedUrl',
-      'putUrl',
-    ])?.toString();
-    final cloudPath = pick(inner, [
-      'cloud_storage_path',
-      'cloudPath',
-      'path',
-      'key',
-      'objectKey',
-    ])?.toString();
-    final publicUrl = pick(inner, [
-      'publicUrl',
-      'readUrl',
-      'fileUrl',
-    ])?.toString();
-    if (uploadUrl == null || uploadUrl.trim().isEmpty) {
-      throw const ApiException(
-        'Hediye yükleme bağlantısı sunucudan alınamadı.',
-      );
-    }
-    if (cloudPath == null || cloudPath.trim().isEmpty) {
-      throw const ApiException(
-        'Hediye dosyasının R2/S3 kayıt yolu sunucudan alınamadı.',
-      );
-    }
-
-    await _putFileToSignedUrl(
-      file: file,
-      uploadUrl: uploadUrl.trim(),
-      contentType: contentType,
-      operation: 'R2/S3 hediye dosyası yükleme',
-    );
-    _log('admin presign PUT success kind=$kind cloudPath=$cloudPath');
-    return AdminGiftUploadedAsset(
-      cloudPath: cloudPath.trim(),
-      publicUrl: publicUrl != null && publicUrl.trim().isNotEmpty
-          ? publicUrl.trim()
-          : null,
-    );
-  }
-
-  Future<AdminGiftUploadedAsset> _uploadViaSitePresigned(
+  Future<AdminGiftUploadedAsset> _uploadViaPresigned(
     File file, {
     required String kind,
   }) async {
@@ -376,7 +229,7 @@ class AdminGiftRemoteDataSource {
         ),
       ),
       cancel,
-      operation: 'Hediye dosyası yükleme (yedek)',
+      operation: 'Hediye dosyası yükleme',
     );
     _expectMutationStatus(res);
     final inner = _unwrapResponseMap(res.data);
@@ -401,12 +254,12 @@ class AdminGiftRemoteDataSource {
     ])?.toString();
     if (uploadUrl == null || uploadUrl.trim().isEmpty) {
       throw const ApiException(
-        'Yedek yükleme bağlantısı sunucudan alınamadı.',
+        'Yükleme bağlantısı sunucudan alınamadı.',
       );
     }
     if (cloudPath == null || cloudPath.trim().isEmpty) {
       throw const ApiException(
-        'Yedek yükleme kayıt yolu sunucudan alınamadı.',
+        'Yükleme kayıt yolu sunucudan alınamadı.',
       );
     }
 
@@ -414,9 +267,9 @@ class AdminGiftRemoteDataSource {
       file: file,
       uploadUrl: uploadUrl.trim(),
       contentType: contentType,
-      operation: 'Yedek R2/S3 hediye dosyası yükleme',
+      operation: 'R2/S3 hediye dosyası yükleme',
     );
-    _log('site presign PUT success kind=$kind cloudPath=$cloudPath');
+    _log('presign PUT success kind=$kind cloudPath=$cloudPath');
     return AdminGiftUploadedAsset(
       cloudPath: cloudPath.trim(),
       publicUrl: publicUrl != null && publicUrl.trim().isNotEmpty

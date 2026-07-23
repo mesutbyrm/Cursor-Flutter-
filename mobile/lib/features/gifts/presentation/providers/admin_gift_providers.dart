@@ -1,25 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/auth/staff_roles.dart';
-import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../data/admin_gift_remote_datasource.dart';
 import '../../domain/admin_gift_stats.dart';
 import '../../domain/admin_gift_type.dart';
 
 final adminGiftRemoteProvider = Provider<AdminGiftRemoteDataSource>((ref) {
-  final access = ref.watch(staffAccessProvider);
-  final headers = StaffRoles.adminApiHeaders(
-    username: access.username,
-    siteRole: access.siteRole,
-    isSiteAdmin: access.isSiteAdmin,
-  );
-  return AdminGiftRemoteDataSource(
-    ref.watch(dioProvider),
-    staffRole: headers.role,
-    staffUsername: headers.username,
-  );
+  return AdminGiftRemoteDataSource(ref.watch(dioProvider));
 });
 
 /// Admin hediye API erişimi — istemci yetkisi + ilk katalog yanıtı.
@@ -45,14 +34,8 @@ final adminGiftListProvider = FutureProvider<List<AdminGiftType>>((ref) {
   return ref.read(adminGiftRemoteProvider).listGifts();
 });
 
-/// İstatistikler; anahtar = dönem (all | daily | weekly | monthly | yearly).
+/// İstatistikler — `GET /api/admin/gifts/stats`.
 final adminGiftStatsProvider =
     FutureProvider.autoDispose.family<AdminGiftStats, String>((ref, period) {
   return ref.read(adminGiftRemoteProvider).statistics(period: period);
-});
-
-/// Gelir paylaşım kuralları.
-final adminRevenueRulesProvider =
-    FutureProvider.autoDispose<List<AdminRevenueRule>>((ref) {
-  return ref.read(adminGiftRemoteProvider).revenueRules();
 });

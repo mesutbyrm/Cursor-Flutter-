@@ -2,32 +2,13 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/auth/staff_roles.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../data/admin_remote_datasource.dart';
 import 'admin_providers.dart';
 import 'staff_access_provider.dart';
 
-String? _adminStaffRole(StaffAccess access) {
-  return StaffRoles.adminApiHeaders(
-    username: access.username,
-    siteRole: access.siteRole,
-    isSiteAdmin: access.isSiteAdmin,
-  ).role;
-}
-
 final adminRemoteProvider = Provider<AdminRemoteDataSource>((ref) {
-  final access = ref.watch(staffAccessProvider);
-  final headers = StaffRoles.adminApiHeaders(
-    username: access.username,
-    siteRole: access.siteRole,
-    isSiteAdmin: access.isSiteAdmin,
-  );
-  return AdminRemoteDataSource(
-    ref.watch(dioProvider),
-    staffRole: headers.role,
-    staffUsername: headers.username,
-  );
+  return AdminRemoteDataSource(ref.watch(dioProvider));
 });
 
 /// Admin panel — özet sayılar (kırmızı rozetler).

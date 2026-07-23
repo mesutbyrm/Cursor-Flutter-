@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.79+106 (2026-07-23)
+
+### Backend dokümantasyonu ile tam hizalama
+- **Admin hediye API:** `canlifal.com` ana backend (`/api/admin/gifts`, `/stats`) — games API yönlendirmesi kaldırıldı
+- **DTO alanları:** `iconImageCloudPath`, `cloudStoragePath`, `assetUrl`, `assetType` (`gift_types` şeması)
+- **Yükleme:** yalnızca `POST /api/upload/presigned` (dokümante edilmiş uç)
+- **Yetki:** JWT `admin` / `yonetici` rolü; dokümanda olmayan `X-Staff-*` başlıkları kaldırıldı
+- **Gelir sekmesi:** dokümanda olmayan `/revenue/rules` kaldırıldı
+
 ## 1.0.78+105 (2026-07-23)
 
 ### Admin / yonetim tam yetki + hediye video

@@ -94,31 +94,6 @@ abstract final class StaffRoles {
     return u == 'admin' || u == 'siteadmin' || u == 'yonetim';
   }
 
-  /// Admin API istekleri için `X-Staff-Role` / `X-Staff-Username` başlıkları.
-  static ({String? role, String? username}) adminApiHeaders({
-    String? username,
-    String? siteRole,
-    bool isSiteAdmin = false,
-  }) {
-    final u = username?.toLowerCase().trim() ?? '';
-    String? role;
-    if (u == 'admin' || u == 'siteadmin') {
-      role = 'admin';
-    } else if (u == 'yonetici' || u == 'yonetim') {
-      role = 'yonetici';
-    } else if (siteRole != null && siteRole.trim().isNotEmpty) {
-      role = siteRole.trim();
-    } else if (isSiteAdmin) {
-      role = 'admin';
-    }
-    return (
-      role: role,
-      username: username != null && username.trim().isNotEmpty
-          ? username.trim()
-          : null,
-    );
-  }
-
   static String labelTr(String role) {
     return switch (role.toLowerCase()) {
       'admin' => 'Site Admin',
