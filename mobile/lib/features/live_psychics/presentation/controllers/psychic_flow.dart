@@ -3,11 +3,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/auth_route_paths.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../data/services/psychic_session_store.dart';
 import '../../domain/entities/psychic_entity.dart';
 import '../../domain/entities/psychic_session_entity.dart';
 import '../../domain/repositories/live_psychics_repository.dart';
 import '../providers/live_psychics_providers.dart';
+import '../providers/psychic_booking_feedback_provider.dart';
 
 /// Canlı fal navigasyon akışı.
 abstract final class PsychicFlow {
@@ -31,15 +33,26 @@ abstract final class PsychicFlow {
     final type = fortuneType ??
         (psychic.specialties.isNotEmpty ? psychic.specialties.first : 'general');
     final clientName = ref.read(authControllerProvider).valueOrNull?.displayName;
-    final created = await repo.createSession(
-      tellerId: psychic.id,
-      tellerUserId: psychic.userId ?? psychic.trtcUserId,
-      durationMinutes: durationMinutes,
-      fortuneType: type,
-      staffExempt: staffExempt,
-      clientName: clientName,
-    );
-    if (created == null) return null;
+    PsychicSessionCreateResult? created;
+    try {
+      created = await repo.createSession(
+        tellerId: psychic.id,
+        tellerUserId: psychic.userId ?? psychic.trtcUserId,
+        durationMinutes: durationMinutes,
+        fortuneType: type,
+        staffExempt: staffExempt,
+        clientName: clientName,
+      );
+    } catch (e) {
+      ref.read(psychicBookingFeedbackProvider.notifier).state =
+          ApiException.userMessage(e);
+      return null;
+    }
+    if (created == null) {
+      ref.read(psychicBookingFeedbackProvider.notifier).state =
+          'Seans oluşturulamadı. Lütfen tekrar deneyin.';
+      return null;
+    }
     final session = PsychicSessionEntity(
       sessionId: created.sessionId,
       psychic: psychic,

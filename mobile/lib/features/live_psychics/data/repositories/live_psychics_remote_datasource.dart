@@ -489,9 +489,6 @@ class LivePsychicsRemoteDataSource {
       if (tellerUid.isNotEmpty) 'anchorUserId': tellerUid,
       'fortuneType':
           fortuneType.trim().isNotEmpty ? fortuneType.trim() : 'general',
-      'duration': durationMinutes,
-      'durationMinutes': durationMinutes,
-      // Kılavuz §9.6: maxMinutes
       'maxMinutes': durationMinutes,
       if (staffExempt) 'staffExempt': true,
       if (clientName != null && clientName.trim().isNotEmpty)

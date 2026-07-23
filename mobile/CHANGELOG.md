@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.74+101 (2026-07-23)
+
+### Ana sayfa görselleri + Canlı Falcılar oda düzeltmesi
+- **Fal & Tarot:** API görselleri (`homepage-fortune-cards`) öncelikli; yanlış Unsplash katmanı kaldırıldı
+- **Günlük burç:** Her burç için ayırt edici gökyüzü / element görseli
+- **Keşfet & Gold:** Kutu ve paket adına uygun görseller güncellendi
+- **Canlı Falcılar:** TRTC oda — önce `GET /api/room` senkronu, sonra bağlantı; `trtcRoomId` güncellenir
+- **Randevu:** Seans oluşturma hatası kullanıcıya gösterilir; bekleme ekranında oda bilgisi çekilir
+
 ## 1.0.73+100 (2026-07-23)
 
 ### Sesli oda bağlantı düzeltmesi

@@ -67,13 +67,18 @@ class FortuneSection extends ConsumerWidget {
   List<({String slug, String emoji, String title, Color accent, String? imageUrl})>
       _fromApi(List<HomeFortuneCardEntity> cards) {
     return cards.take(8).map((c) {
-      final catalog = FortuneCatalog.bySlug(c.navigationSlug);
+      final slug = FortuneCatalog.bySlug(c.navigationSlug)?.slug ??
+          c.navigationSlug;
+      final catalog = FortuneCatalog.bySlug(slug);
+      final apiImage = c.imageUrl?.trim();
       return (
-        slug: c.navigationSlug,
+        slug: slug,
         emoji: c.icon.isNotEmpty ? c.icon : (catalog?.emoji ?? '🔮'),
         title: c.title,
-        accent: c.accent,
-        imageUrl: _fortuneImage(c.navigationSlug, c.imageUrl),
+        accent: catalog?.accent ?? c.accent,
+        imageUrl: apiImage != null && apiImage.isNotEmpty
+            ? CanlifalImageUrls.resolve(apiImage)
+            : FortuneTypeImages.urlFor(slug, width: 480),
       );
     }).toList();
   }
@@ -96,16 +101,6 @@ class FortuneSection extends ConsumerWidget {
     return out;
   }
 
-  static String? _fortuneImage(String slug, String? apiUrl) {
-    final raw = apiUrl?.trim();
-    if (raw != null && raw.isNotEmpty) {
-      if (raw.startsWith('http')) return CanlifalImageUrls.resolve(raw);
-      final resolved = CanlifalImageUrls.resolve(raw);
-      if (resolved.isNotEmpty) return resolved;
-      return FortuneTypeImages.urlFor(slug, width: 480);
-    }
-    return null;
-  }
 }
 
 class _FortuneCard extends StatelessWidget {
@@ -148,15 +143,16 @@ class _FortuneCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            FortuneTypeCoverImage(
-              slug: slug,
-              accent: accent,
-              imageWidth: 480,
-            ),
             if (imageUrl != null && imageUrl!.trim().isNotEmpty)
               CanlifalNetworkImage(
-                url: CanlifalImageUrls.resolve(imageUrl),
+                url: imageUrl!,
                 fit: BoxFit.cover,
+              )
+            else
+              FortuneTypeCoverImage(
+                slug: slug,
+                accent: accent,
+                imageWidth: 480,
               ),
             DecoratedBox(
               decoration: BoxDecoration(

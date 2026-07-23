@@ -71,23 +71,23 @@ abstract final class FortuneTypeImages {
   };
 
   static const _photoIds = <String, String>{
-    'tarot': '1615739412122-529d88f59347',
-    'kahve-fali': '1495474472207-a37e27e5b782',
-    'ask-fali': '1522673609750-1b0e6a71928a',
-    'yildiz-haritasi': '1462335937197-5ed9bc70de55',
-    'el-fali': '1600880292203-757bb62b4baf',
-    'katina': '1578662996442-48f60103fc96',
-    'iskambil': '1571197119275-571a2ce9fccf',
-    'melek-kartlari': '1507408522659-9c339d1d0b9a',
-    'numeroloji': '1419242902214-272b3f66ee7a',
-    'ruya-tabiri': '1506905925346-21bda4d32df4',
-    'cin-fali': '1528360983097-13cdb7de7656',
-    'istihare': '1519681393784-d120267933ba',
-    'aura': '1534796998700-91747707550b',
-    'evet-hayir': '1454165804606-c3d57bc86b40',
-    'gunluk-fal': '1559491867-1ebf5cbf7ab7',
-    'dogum-haritasi': '1464800860016-b2f083179a1f',
-    'kursun-dokme': '1518131353823-3909e8946c78',
+    'tarot': '1615739412122-529d88f59347', // tarot kartları
+    'kahve-fali': '1511927619508-f553815789c7', // Türk kahvesi fincanı
+    'ask-fali': '1522673609750-1b0e6a71928a', // kalp / aşk
+    'yildiz-haritasi': '1462335937197-5ed9bc70de55', // yıldız haritası
+    'el-fali': '1600880292203-757bb62b4baf', // el falı / avuç
+    'katina': '1578662996442-48f60103fc96', // mistik kadın
+    'iskambil': '1571197119275-571a2ce9fccf', // iskambil kartları
+    'melek-kartlari': '1507408522659-9c339d1d0b9a', // melek / ışık
+    'numeroloji': '1419242902214-272b3f66ee7a', // sayılar / kozmos
+    'ruya-tabiri': '1506905925346-21bda4d32df4', // rüya / ay
+    'cin-fali': '1528360983097-13cdb7de7656', // mistik çay / duman
+    'istihare': '1519681393784-d120267933ba', // pendül / istihare
+    'aura': '1534796998700-91747707550b', // aura / enerji
+    'evet-hayir': '1454165804606-c3d57bc86b40', // evet-hayır kartı
+    'gunluk-fal': '1559491867-1ebf5cbf7ab7', // günlük fal
+    'dogum-haritasi': '1464800860016-b2f083179a1f', // doğum haritası
+    'kursun-dokme': '1518131353823-3909e8946c78', // kurşun dökme
   };
 
   static const _overlayHex = <String, List<int>>{

@@ -167,11 +167,15 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     state = state.copyWith(phase: PsychicWaitingPhase.accepted, closed: true);
     _poll?.cancel();
     _timeout?.cancel();
+    final room = await ref
+        .read(livePsychicsRepositoryProvider)
+        .fetchRoom(session.sessionId);
     final activeSession = session.copyWith(
-      tellerUserId: status?.tellerUserId ?? session.tellerUserId,
-      trtcRoomIdOverride: status?.trtcRoomId,
+      tellerUserId: status?.tellerUserId ?? room?.tellerUserId ?? session.tellerUserId,
+      trtcRoomIdOverride: status?.trtcRoomId ?? room?.roomId ?? session.trtcRoomIdOverride,
       durationMinutes: status?.durationMinutes ?? session.durationMinutes,
       totalJeton: status?.totalJeton ?? session.totalJeton,
+      clientId: room?.clientId ?? session.clientId,
     );
     await PsychicSessionStore.save(activeSession);
     await ref.read(psychicRoomSseServiceProvider).disconnect();

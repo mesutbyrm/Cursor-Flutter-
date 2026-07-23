@@ -123,14 +123,15 @@ class PsychicVideoState {
 }
 
 class PsychicVideoController extends StateNotifier<PsychicVideoState> {
-  PsychicVideoController(this.ref, this.session)
-      : super(PsychicVideoState(remaining: Duration(minutes: session.durationMinutes))) {
+  PsychicVideoController(this.ref, PsychicSessionEntity session)
+      : session = session,
+        super(PsychicVideoState(remaining: Duration(minutes: session.durationMinutes))) {
     _trtc = ref.read(trtcRoomManagerProvider);
     _bootstrap();
   }
 
   final Ref ref;
-  final PsychicSessionEntity session;
+  PsychicSessionEntity session;
 
   late final TrtcRoomManager _trtc;
   TrtcLiveRoomCoordinator? _trtcCoordinator;
@@ -167,7 +168,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     });
     await PsychicSessionStore.save(session);
     _startTimers();
-    unawaited(_syncRoomInfo(startTimerIfTeller: true));
+    await _syncRoomInfo(startTimerIfTeller: true);
     await Future.wait([
       _joinRtc(),
       _connectRoomSse(),
@@ -326,12 +327,12 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
     final newRoomId = room.roomId;
     if (newRoomId != null && newRoomId.isNotEmpty) {
-      final updated = session.copyWith(
+      session = session.copyWith(
         tellerUserId: room.tellerUserId ?? session.tellerUserId,
         clientId: room.clientId ?? session.clientId,
         trtcRoomIdOverride: newRoomId,
       );
-      unawaited(PsychicSessionStore.save(updated));
+      unawaited(PsychicSessionStore.save(session));
     }
 
     // Yalnızca gerçekten farklı bir KANALA geçildiyse yeniden bağlan. Ham oda
@@ -547,7 +548,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       return;
     }
 
-    final trtcRoomId = session.trtcRoomId.trim();
+    final trtcRoomId = _activeTrtcRoomId();
     if (trtcRoomId.isEmpty) {
       state = state.copyWith(rtcError: 'Oda bilgisi alınamadı. Tekrar deneyin.');
       return;
