@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-07-23 16:35 UTC
+Oluşturulma: 2026-07-23 18:50 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -24,7 +24,7 @@ Base: `main`
 
 | Dal | Neden |
 |-----|-------|
-| cursor/home-images-psychics-fix-dcd7 | merged into main |
+| cursor/lucky-gift-feature-dcd7 | merged into main |
 
 ## Kalan açık PR'lar
 
