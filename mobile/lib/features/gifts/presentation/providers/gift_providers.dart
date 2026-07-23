@@ -18,22 +18,33 @@ final giftSoundServiceProvider = Provider<GiftSoundService>((ref) {
   return svc;
 });
 
-/// Mobil katalog — oturum boyunca cache (HTTP + keepAlive).
+/// Mobil katalog — CMS birincil (`/api/gifts/catalog`), oturum boyunca cache.
 final liveGiftCatalogProvider = FutureProvider<List<GiftEntity>>((ref) async {
   ref.keepAlive();
   final repo = ref.watch(giftRepositoryProvider);
-  try {
-    return await repo.fetchCatalog(
-      platform: GiftPlatform.mobile,
-      context: 'voice_room',
-    );
-  } catch (_) {
-    try {
-      return await repo.fetchCatalogV2(platform: GiftPlatform.mobile);
-    } catch (_) {
-      return repo.fetchCatalog(platform: GiftPlatform.mobile);
-    }
-  }
+  return repo.fetchCatalog(platform: GiftPlatform.mobile);
+});
+
+/// Sesli oda hediye listesi — CMS katalog (admin panelinden eklenen hediyeler dahil).
+final voiceRoomGiftCatalogProvider = FutureProvider.autoDispose<List<GiftEntity>>((ref) async {
+  final repo = ref.watch(giftRepositoryProvider);
+  final voice = await repo.fetchCatalog(
+    platform: GiftPlatform.mobile,
+    context: 'voice_room',
+  );
+  if (voice.isNotEmpty) return voice;
+  return ref.watch(liveGiftCatalogProvider.future);
+});
+
+/// Canlı yayın hediye listesi.
+final liveStreamGiftCatalogProvider = FutureProvider.autoDispose<List<GiftEntity>>((ref) async {
+  final repo = ref.watch(giftRepositoryProvider);
+  final live = await repo.fetchCatalog(
+    platform: GiftPlatform.mobile,
+    context: 'live_stream',
+  );
+  if (live.isNotEmpty) return live;
+  return ref.watch(liveGiftCatalogProvider.future);
 });
 
 final liveGiftTypesLegacyProvider =

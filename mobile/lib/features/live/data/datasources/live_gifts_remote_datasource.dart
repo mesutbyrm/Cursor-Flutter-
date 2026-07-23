@@ -38,7 +38,17 @@ class LiveGiftsRemoteDataSource {
 
   Future<List<LiveVideoGiftType>> fetchGiftTypes({
     GiftPlatform platform = GiftPlatform.mobile,
+    String? context,
   }) async {
+    try {
+      final cms = await _lucky.fetchCatalogCms(
+        platform: platform,
+        context: context,
+      );
+      if (cms.isNotEmpty) {
+        return cms.map(LiveVideoGiftType.fromGift).toList();
+      }
+    } catch (_) {}
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.videoStreamGiftsCatalog,
       query: {'platform': platform.queryValue},

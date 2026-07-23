@@ -16,6 +16,7 @@ class LiveVideoGiftType {
     this.soundKey,
     this.platform = GiftPlatform.all,
     this.isLucky = false,
+    this.iconEmoji,
   });
 
   factory LiveVideoGiftType.fromJson(Map<String, dynamic> json) {
@@ -27,13 +28,14 @@ class LiveVideoGiftType {
       id: g.id,
       name: g.name,
       price: g.price,
-      iconPath: g.iconUrl,
+      iconPath: g.displayIconUrl ?? g.iconEmoji,
       rarity: g.rarity,
       animationKind: g.animationKind,
-      animationRef: g.animationRef,
+      animationRef: g.animationRef ?? g.assetUrl,
       soundKey: g.soundKey,
       platform: g.platform,
       isLucky: g.isLucky,
+      iconEmoji: g.iconEmoji,
     );
   }
 
@@ -47,6 +49,16 @@ class LiveVideoGiftType {
   final String? soundKey;
   final GiftPlatform platform;
   final bool isLucky;
+  final String? iconEmoji;
+
+  String? get displayEmoji {
+    if (iconEmoji != null && iconEmoji!.isNotEmpty) return iconEmoji;
+    final p = iconPath;
+    if (p != null && p.isNotEmpty && !p.startsWith('http') && !p.startsWith('/')) {
+      return p;
+    }
+    return null;
+  }
 
   GiftEntity toEntity() => GiftEntity(
         id: id,
@@ -59,11 +71,13 @@ class LiveVideoGiftType {
         soundKey: soundKey,
         platform: platform,
         isLucky: isLucky,
+        iconEmoji: iconEmoji,
       );
 
   String iconUrl(String siteOrigin) {
     final p = iconPath;
     if (p == null || p.isEmpty) return '';
+    if (displayEmoji != null) return '';
     if (p.startsWith('http')) return p;
     final o = siteOrigin.trim().replaceAll(RegExp(r'/+$'), '');
     return p.startsWith('/') ? '$o$p' : '$o/$p';

@@ -35,6 +35,6 @@ final liveGiftControllerProvider =
 
 final liveGiftTypesProvider =
     FutureProvider.autoDispose<List<LiveVideoGiftType>>((ref) async {
-  final catalog = await ref.watch(liveGiftCatalogProvider.future);
+  final catalog = await ref.watch(liveStreamGiftCatalogProvider.future);
   return catalog.map(LiveVideoGiftType.fromGift).toList();
 });

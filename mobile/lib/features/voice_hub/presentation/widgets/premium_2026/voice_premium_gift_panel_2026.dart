@@ -506,6 +506,7 @@ class _PremiumGiftTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = gift.iconUrl(Env.siteOrigin);
+    final emoji = gift.displayEmoji;
     final rarity = PremiumGiftCatalog2026.rarity(gift.id);
     final glow = rarity.glowColor;
     final name = PremiumGiftCatalog2026.displayName(
@@ -548,9 +549,11 @@ class _PremiumGiftTile extends StatelessWidget {
             const SizedBox(height: 4),
             SizedBox(
               height: 52,
-              child: url.isEmpty
-                  ? PremiumGiftIcon(giftId: canonical, size: 48, animate: selected)
-                  : CanlifalNetworkImage(url: url, fit: BoxFit.contain),
+              child: emoji != null
+                  ? Text(emoji, style: const TextStyle(fontSize: 44))
+                  : url.isEmpty
+                      ? PremiumGiftIcon(giftId: canonical, size: 48, animate: selected)
+                      : CanlifalNetworkImage(url: url, fit: BoxFit.contain),
             ),
             Text(
               name,

@@ -9,6 +9,7 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/presentation/widgets/lucky_gift_badge.dart';
 import '../../../gifts/presentation/widgets/lucky_gift_spin_overlay.dart';
+import '../../../gifts/presentation/providers/gift_providers.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_gift_type.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
@@ -20,6 +21,7 @@ Future<void> showLiveGiftPicker(
   required String streamId,
   String receiverName = 'Yayıncı',
 }) async {
+  ref.invalidate(liveStreamGiftCatalogProvider);
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -178,6 +180,7 @@ class _GiftTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = gift.iconUrl(Env.siteOrigin);
+    final emoji = gift.displayEmoji;
     return Material(
       color: AppTheme.surfaceElevated,
       borderRadius: BorderRadius.circular(14),
@@ -195,13 +198,17 @@ class _GiftTile extends StatelessWidget {
                   child: LuckyGiftBadge(compact: true),
                 ),
               Expanded(
-                child: url.isEmpty
-                    ? const Icon(Icons.card_giftcard, size: 36)
-                    : CanlifalNetworkImage(
-                        url: url,
-                        fit: BoxFit.contain,
-                        errorWidget: const Icon(Icons.card_giftcard),
-                      ),
+                child: emoji != null
+                    ? Center(
+                        child: Text(emoji, style: const TextStyle(fontSize: 36)),
+                      )
+                    : url.isEmpty
+                        ? const Icon(Icons.card_giftcard, size: 36)
+                        : CanlifalNetworkImage(
+                            url: url,
+                            fit: BoxFit.contain,
+                            errorWidget: const Icon(Icons.card_giftcard),
+                          ),
               ),
               const SizedBox(height: 4),
               Text(

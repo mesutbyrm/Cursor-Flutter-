@@ -21,7 +21,8 @@ import '../providers/voice_gift_providers.dart';
 import 'premium_2026/voice_premium_gift_panel_2026.dart';
 
 final voiceRoomGiftTypesProvider = FutureProvider.autoDispose((ref) async {
-  return ref.watch(chatRoomGiftsRemoteProvider).fetchGiftTypes();
+  final catalog = await ref.watch(voiceRoomGiftCatalogProvider.future);
+  return catalog.map(LiveVideoGiftType.fromGift).toList();
 });
 
 Future<void> showVoiceRoomGiftPicker(
@@ -32,6 +33,7 @@ Future<void> showVoiceRoomGiftPicker(
   ChatRoomPresence? initialReceiver,
   VoidCallback? onGiftSent,
 }) {
+  ref.invalidate(voiceRoomGiftCatalogProvider);
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,

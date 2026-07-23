@@ -30,35 +30,50 @@ class GiftRepository {
   Future<List<GiftEntity>> fetchCatalog({
     GiftPlatform platform = GiftPlatform.mobile,
     String? context,
+    bool forceRefresh = false,
   }) async {
     try {
       final synced = await syncCatalogIfNeeded(
         platform: platform,
         context: context,
+        forceRefresh: forceRefresh,
       );
       if (synced.isNotEmpty) return synced;
+    } catch (_) {}
+    try {
+      final cms = await _luckyDs.fetchCatalogCms(
+        platform: platform,
+        context: context,
+      );
+      if (cms.isNotEmpty) return cms;
     } catch (_) {}
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.videoStreamGiftsCatalog,
       query: {'platform': platform.queryValue},
     );
-    return _parseCatalogList(res.data);
+    final legacy = _parseCatalogList(res.data);
+    if (legacy.isNotEmpty) return legacy;
+    return fetchCatalogV2(platform: platform);
   }
 
   /// CMS versiyon kontrolü + delta senkronizasyon.
   Future<List<GiftEntity>> syncCatalogIfNeeded({
     GiftPlatform platform = GiftPlatform.mobile,
     String? context,
+    bool forceRefresh = false,
   }) async {
     final cache = await _syncCache();
     final remoteVersion = await _luckyDs.fetchCatalogVersion();
     final localVersion = cache.readVersion();
-    if (remoteVersion.giftVersion <= localVersion) {
+    if (!forceRefresh &&
+        remoteVersion.giftVersion > 0 &&
+        remoteVersion.giftVersion <= localVersion) {
       final cached = cache.readCatalog(siteOrigin: Env.siteOrigin);
       if (cached.isNotEmpty) return cached;
     }
     final gifts = await _luckyDs.fetchCatalogCms(
-      sinceVersion: localVersion > 0 ? localVersion : null,
+      sinceVersion:
+          !forceRefresh && localVersion > 0 ? localVersion : null,
       context: context,
       platform: platform,
     );
@@ -67,7 +82,9 @@ class GiftRepository {
       return cached;
     }
     List<GiftEntity> merged;
-    if (localVersion > 0 && remoteVersion.giftVersion > localVersion) {
+    if (!forceRefresh &&
+        localVersion > 0 &&
+        remoteVersion.giftVersion > localVersion) {
       final existing = {
         for (final g in cache.readCatalog(siteOrigin: Env.siteOrigin)) g.id: g,
       };
@@ -80,7 +97,9 @@ class GiftRepository {
       merged = gifts;
     }
     await cache.writeCatalog(merged);
-    await cache.writeVersion(remoteVersion.giftVersion);
+    if (remoteVersion.giftVersion > 0) {
+      await cache.writeVersion(remoteVersion.giftVersion);
+    }
     return merged;
   }
 
