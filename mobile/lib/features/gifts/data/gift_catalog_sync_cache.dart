@@ -1,0 +1,65 @@
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../domain/gift_entity.dart';
+
+/// CMS hediye kataloğu — versiyon + disk önbelleği.
+class GiftCatalogSyncCache {
+  GiftCatalogSyncCache(this._prefs);
+
+  final SharedPreferences _prefs;
+  static const _versionKey = 'gift_catalog_version_v1';
+  static const _catalogKey = 'gift_catalog_items_v1';
+
+  int readVersion() => _prefs.getInt(_versionKey) ?? 0;
+
+  Future<void> writeVersion(int version) async {
+    await _prefs.setInt(_versionKey, version);
+  }
+
+  List<GiftEntity> readCatalog({required String siteOrigin}) {
+    final raw = _prefs.getString(_catalogKey);
+    if (raw == null || raw.isEmpty) return const [];
+    try {
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      final items = map['items'];
+      if (items is! List) return const [];
+      return items
+          .whereType<Map>()
+          .map((e) => GiftEntity.fromJson(
+                Map<String, dynamic>.from(e),
+                siteOrigin: siteOrigin,
+              ))
+          .where((g) => g.id.isNotEmpty)
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<void> writeCatalog(List<GiftEntity> gifts) async {
+    final payload = jsonEncode({
+      'at': DateTime.now().toIso8601String(),
+      'items': gifts
+          .map(
+            (g) => {
+              'id': g.id,
+              'name': g.name,
+              'price': g.price,
+              'icon': g.iconUrl,
+              'animation': g.animationRef,
+              'animationType': g.animationKind.name,
+              'rarity': g.rarity.name,
+              'platform': g.platform.name,
+              'sound': g.soundKey,
+              'sortOrder': g.sortOrder,
+              'isLucky': g.isLucky,
+              if (g.collectionId != null) 'collectionId': g.collectionId,
+            },
+          )
+          .toList(),
+    });
+    await _prefs.setString(_catalogKey, payload);
+  }
+}

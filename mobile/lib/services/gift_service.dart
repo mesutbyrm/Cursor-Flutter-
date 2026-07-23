@@ -4,6 +4,7 @@ import '../core/network/api_endpoints.dart';
 import '../core/network/dio_provider.dart';
 import '../core/util/json_util.dart';
 import '../features/gifts/data/gift_reciprocal_guard.dart';
+import '../features/gifts/data/lucky_gift_remote_datasource.dart';
 import 'service_utils.dart';
 
 /// Hediye API — kılavuz §9.9 `GiftRepository`.
@@ -29,6 +30,7 @@ class GiftService {
   }
 
   /// `POST /api/gifts/send` — CanlifalTV §10.2 (`recipientUsername`, `type`).
+  /// `isLucky: true` ise `POST /api/gifts/lucky/send` kullanılır.
   Future<Map<String, dynamic>> sendGift({
     required String recipientId,
     required String giftId,
@@ -38,7 +40,21 @@ class GiftService {
     String? context,
     String? recipientUsername,
     String type = 'gift',
+    bool isLucky = false,
   }) async {
+    if (isLucky) {
+      final luckyDs = LuckyGiftRemoteDataSource(_dio);
+      final lucky = await luckyDs.sendLuckyGift(
+        giftTypeId: giftId,
+        quantity: quantity,
+        context: context ?? roomType,
+        contextId: roomId,
+      );
+      return {
+        'luckyResult': lucky,
+        'newBalance': lucky.newBalance,
+      };
+    }
     if (recipientId.trim().isNotEmpty) {
       await assertReciprocalGiftAllowed(_dio, recipientId);
     }

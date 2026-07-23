@@ -1,3 +1,5 @@
+import '../../../gifts/domain/lucky_gift_entities.dart';
+
 /// Hediye gönderimi sonrası backend gelir dağılımı (salt okunur).
 class VoiceGiftRevenueBreakdown {
   const VoiceGiftRevenueBreakdown({
@@ -44,7 +46,8 @@ class VoiceGiftRevenueBreakdown {
 }
 
 class VoiceGiftSendResult {
-  const VoiceGiftSendResult({this.revenue});
+  const VoiceGiftSendResult({this.revenue, this.luckyResult});
 
   final VoiceGiftRevenueBreakdown? revenue;
+  final LuckyGiftSpinResult? luckyResult;
 }

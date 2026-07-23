@@ -23,9 +23,16 @@ final liveGiftCatalogProvider = FutureProvider<List<GiftEntity>>((ref) async {
   ref.keepAlive();
   final repo = ref.watch(giftRepositoryProvider);
   try {
-    return await repo.fetchCatalog(platform: GiftPlatform.mobile);
+    return await repo.fetchCatalog(
+      platform: GiftPlatform.mobile,
+      context: 'voice_room',
+    );
   } catch (_) {
-    return repo.fetchCatalogV2(platform: GiftPlatform.mobile);
+    try {
+      return await repo.fetchCatalogV2(platform: GiftPlatform.mobile);
+    } catch (_) {
+      return repo.fetchCatalog(platform: GiftPlatform.mobile);
+    }
   }
 });
 

@@ -4,6 +4,8 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../gifts/data/lucky_gift_remote_datasource.dart';
+import '../../../gifts/domain/lucky_gift_entities.dart';
 import '../../../gifts/data/gift_reciprocal_guard.dart';
 import '../../../gifts/domain/gift_animation_kind.dart';
 import '../../../gifts/domain/gift_entity.dart';
@@ -18,17 +20,21 @@ class LiveGiftSendResult {
     this.newBalance,
     this.streamerBalance,
     this.event,
+    this.luckyResult,
   });
 
   final int? newBalance;
   final int? streamerBalance;
   final LiveGiftEvent? event;
+  final LuckyGiftSpinResult? luckyResult;
 }
 
 class LiveGiftsRemoteDataSource {
-  LiveGiftsRemoteDataSource(this._dio);
+  LiveGiftsRemoteDataSource(this._dio, {LuckyGiftRemoteDataSource? lucky})
+      : _lucky = lucky ?? LuckyGiftRemoteDataSource(_dio);
 
   final Dio _dio;
+  final LuckyGiftRemoteDataSource _lucky;
 
   Future<List<LiveVideoGiftType>> fetchGiftTypes({
     GiftPlatform platform = GiftPlatform.mobile,
@@ -92,7 +98,20 @@ class LiveGiftsRemoteDataSource {
     String? senderId,
     String? toUserId,
     String? pkMatchId,
+    bool isLucky = false,
   }) async {
+    if (isLucky) {
+      final lucky = await _lucky.sendLuckyGift(
+        giftTypeId: giftTypeId,
+        quantity: quantity,
+        context: pkMatchId != null && pkMatchId.isNotEmpty ? 'pk' : 'live_stream',
+        contextId: streamId,
+      );
+      return LiveGiftSendResult(
+        newBalance: lucky.newBalance,
+        luckyResult: lucky,
+      );
+    }
     if (toUserId != null && toUserId.isNotEmpty) {
       await assertReciprocalGiftAllowed(_dio, toUserId);
     }

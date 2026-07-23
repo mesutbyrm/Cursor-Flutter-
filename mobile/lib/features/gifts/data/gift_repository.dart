@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/config/env.dart';
 import '../../../core/network/api_endpoints.dart';
@@ -7,21 +8,84 @@ import '../../../core/util/json_util.dart';
 import '../domain/gift_entity.dart';
 import '../domain/gift_leaderboard_entry.dart';
 import '../domain/gift_platform.dart';
+import '../domain/lucky_gift_entities.dart';
+import 'gift_catalog_sync_cache.dart';
+import 'lucky_gift_remote_datasource.dart';
 
 class GiftRepository {
-  GiftRepository(this._dio);
+  GiftRepository(this._dio, {LuckyGiftRemoteDataSource? luckyDs}) 
+      : _luckyDs = luckyDs ?? LuckyGiftRemoteDataSource(_dio);
 
   final Dio _dio;
+  final LuckyGiftRemoteDataSource _luckyDs;
+  GiftCatalogSyncCache? _cache;
+
+  Future<GiftCatalogSyncCache> _syncCache() async {
+    _cache ??= GiftCatalogSyncCache(await SharedPreferences.getInstance());
+    return _cache!;
+  }
+
+  LuckyGiftRemoteDataSource get lucky => _luckyDs;
 
   Future<List<GiftEntity>> fetchCatalog({
     GiftPlatform platform = GiftPlatform.mobile,
+    String? context,
   }) async {
+    try {
+      final synced = await syncCatalogIfNeeded(
+        platform: platform,
+        context: context,
+      );
+      if (synced.isNotEmpty) return synced;
+    } catch (_) {}
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.videoStreamGiftsCatalog,
       query: {'platform': platform.queryValue},
     );
     return _parseCatalogList(res.data);
   }
+
+  /// CMS versiyon kontrolü + delta senkronizasyon.
+  Future<List<GiftEntity>> syncCatalogIfNeeded({
+    GiftPlatform platform = GiftPlatform.mobile,
+    String? context,
+  }) async {
+    final cache = await _syncCache();
+    final remoteVersion = await _luckyDs.fetchCatalogVersion();
+    final localVersion = cache.readVersion();
+    if (remoteVersion.giftVersion <= localVersion) {
+      final cached = cache.readCatalog(siteOrigin: Env.siteOrigin);
+      if (cached.isNotEmpty) return cached;
+    }
+    final gifts = await _luckyDs.fetchCatalogCms(
+      sinceVersion: localVersion > 0 ? localVersion : null,
+      context: context,
+      platform: platform,
+    );
+    if (gifts.isEmpty) {
+      final cached = cache.readCatalog(siteOrigin: Env.siteOrigin);
+      return cached;
+    }
+    List<GiftEntity> merged;
+    if (localVersion > 0 && remoteVersion.giftVersion > localVersion) {
+      final existing = {
+        for (final g in cache.readCatalog(siteOrigin: Env.siteOrigin)) g.id: g,
+      };
+      for (final g in gifts) {
+        existing[g.id] = g;
+      }
+      merged = existing.values.toList()
+        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    } else {
+      merged = gifts;
+    }
+    await cache.writeCatalog(merged);
+    await cache.writeVersion(remoteVersion.giftVersion);
+    return merged;
+  }
+
+  Future<GiftCatalogVersionInfo> fetchCatalogVersion() =>
+      _luckyDs.fetchCatalogVersion();
 
   Future<List<GiftEntity>> fetchCatalogV2({
     GiftPlatform platform = GiftPlatform.mobile,

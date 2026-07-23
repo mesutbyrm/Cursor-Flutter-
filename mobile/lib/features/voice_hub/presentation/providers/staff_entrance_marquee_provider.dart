@@ -62,6 +62,20 @@ class StaffEntranceMarqueeNotifier extends Notifier<StaffEntranceMarqueeState> {
     enqueue(line);
   }
 
+  /// Şanslı hediye JACKPOT — site geneli kayan duyuru.
+  void enqueueLuckyJackpot({
+    required String userName,
+    required String giftName,
+    required int multiplier,
+    required int wonJetons,
+  }) {
+    final user = userName.trim().isEmpty ? 'Biri' : userName.trim();
+    final gift = giftName.trim().isEmpty ? 'Talih Kutusu' : giftName.trim();
+    enqueue(
+      '👑 JACKPOT! $user $gift ile ×$multiplier kazandı — $wonJetons jeton!',
+    );
+  }
+
   void clear() {
     _clearTimer?.cancel();
     state = const StaffEntranceMarqueeState();

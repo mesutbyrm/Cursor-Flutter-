@@ -12,6 +12,8 @@ import '../../../../gifts/domain/gift_revenue_display.dart';
 import '../../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../../gifts/domain/gift_rarity.dart';
 import '../../../../gifts/domain/premium_gift_catalog_2026.dart';
+import '../../../../gifts/presentation/widgets/lucky_gift_badge.dart';
+import '../../../../gifts/presentation/widgets/lucky_gift_spin_overlay.dart';
 import '../../../../gifts/presentation/widgets/premium_2026/premium_gift_icon.dart';
 import '../../../../live/domain/entities/live_gift_catalog.dart';
 import '../../../../live/domain/entities/live_gift_event.dart';
@@ -21,6 +23,7 @@ import '../../../domain/entities/chat_room_presence.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../providers/pk_battle_remote_provider.dart';
+import '../../providers/staff_entrance_marquee_provider.dart';
 import '../../providers/voice_gift_providers.dart';
 import '../voice_room_gift_sheet.dart';
 
@@ -294,7 +297,35 @@ class _VoicePremiumGiftPanel2026State
             receiverName: receiver.displayName,
             receiverId: receiver.id,
             battleId: pkBattleId,
+            isLucky: g.isLucky,
           );
+      if (result.luckyResult != null) {
+        final lucky = result.luckyResult!;
+        ref.refreshWalletCache(force: true);
+        if (mounted) {
+          widget.onClose();
+          await showLuckyGiftSpinOverlay(
+            context,
+            result: lucky,
+            giftName: PremiumGiftCatalog2026.displayName(
+              g.id,
+              fallback: LiveGiftCatalog.displayName(g),
+            ),
+          );
+          if (lucky.isJackpot) {
+            ref.read(staffEntranceMarqueeProvider.notifier).enqueueLuckyJackpot(
+                  userName: user?.display ?? 'Sen',
+                  giftName: PremiumGiftCatalog2026.displayName(
+                    g.id,
+                    fallback: LiveGiftCatalog.displayName(g),
+                  ),
+                  multiplier: lucky.multiplier.round(),
+                  wonJetons: lucky.wonJetons,
+                );
+          }
+        }
+        return;
+      }
       final gross = g.price * _qty;
       final revenue = result.revenue;
       await ref.read(giftSoundServiceProvider).playFor(g.toEntity());
@@ -507,7 +538,13 @@ class _PremiumGiftTile extends StatelessWidget {
         ),
         child: Column(
           children: [
-            _RarityBadge(rarity: rarity),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _RarityBadge(rarity: rarity),
+                if (gift.isLucky) const LuckyGiftBadge(compact: true),
+              ],
+            ),
             const SizedBox(height: 4),
             SizedBox(
               height: 52,

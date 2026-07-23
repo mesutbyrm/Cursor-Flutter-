@@ -669,9 +669,21 @@ abstract final class ApiEndpoints {
 
   static const giftsCatalog = '/api/gifts';
 
+  /// CMS katalog versiyonu (public, hafif).
+  static const giftsVersion = '/api/gifts/version';
+
+  /// CMS tam katalog + koleksiyonlar (dual-auth).
+  static const giftsCatalogCms = '/api/gifts/catalog';
+
   static const giftsTypes = '/api/gifts/types';
 
   static const giftsSend = '/api/gifts/send';
+
+  static const giftsLuckyConfig = '/api/gifts/lucky/config';
+
+  static const giftsLuckySend = '/api/gifts/lucky/send';
+
+  static const giftsLuckyHistory = '/api/gifts/lucky/history';
 
   static const giftsRecentBig = '/api/gifts/recent-big';
 

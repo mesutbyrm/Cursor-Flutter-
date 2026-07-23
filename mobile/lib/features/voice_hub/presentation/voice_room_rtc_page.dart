@@ -27,6 +27,7 @@ import '../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import '../../gifts/presentation/widgets/gift_battle_strip.dart';
+import '../../gifts/presentation/widgets/lucky_gift_wins_ticker.dart';
 import 'providers/voice_gift_combo_tracker.dart';
 import 'providers/voice_gift_leaderboard_provider.dart';
 import '../../auth/domain/entities/user_entity.dart';
@@ -1617,6 +1618,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             vertical: 4,
                           ),
                           child: VoiceGiftAnnouncementTicker(),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          child: LuckyGiftWinsTicker(),
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),

@@ -6,6 +6,8 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../gifts/data/gift_reciprocal_guard.dart';
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
+import '../../../gifts/data/lucky_gift_remote_datasource.dart';
+import '../../../gifts/domain/lucky_gift_entities.dart';
 import '../../../live/data/datasources/live_field/live_field_api_remote_datasource.dart';
 import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
@@ -14,10 +16,12 @@ import '../../domain/entities/voice_gift_revenue.dart';
 
 /// Sesli oda hediyeleri — katalog canlı yayınla aynı, gönderim oda uç noktasına.
 class ChatRoomGiftsRemoteDataSource {
-  ChatRoomGiftsRemoteDataSource(this._dio, this._liveGifts);
+  ChatRoomGiftsRemoteDataSource(this._dio, this._liveGifts, {LuckyGiftRemoteDataSource? lucky})
+      : _lucky = lucky ?? LuckyGiftRemoteDataSource(_dio);
 
   final Dio _dio;
   final LiveGiftsRemoteDataSource _liveGifts;
+  final LuckyGiftRemoteDataSource _lucky;
 
   Future<List<LiveVideoGiftType>> fetchGiftTypes() async {
     try {
@@ -32,6 +36,7 @@ class ChatRoomGiftsRemoteDataSource {
                 price: g.price,
                 iconPath: g.thumbnailUrl ?? g.assetUrl,
                 animationRef: g.assetUrl,
+                isLucky: g.isLucky,
               ),
             )
             .toList();
@@ -53,7 +58,17 @@ class ChatRoomGiftsRemoteDataSource {
     String? receiverId,
     String platform = 'mobile',
     String? battleId,
+    bool isLucky = false,
   }) async {
+    if (isLucky) {
+      final lucky = await _lucky.sendLuckyGift(
+        giftTypeId: giftTypeId,
+        quantity: quantity,
+        context: 'voice_room',
+        contextId: roomId,
+      );
+      return VoiceGiftSendResult(luckyResult: lucky);
+    }
     if (receiverId != null && receiverId.isNotEmpty) {
       await assertReciprocalGiftAllowed(_dio, receiverId);
     }
@@ -64,6 +79,7 @@ class ChatRoomGiftsRemoteDataSource {
         giftTypeId: giftTypeId,
         recipientId: receiverId,
         quantity: quantity,
+        isLucky: isLucky,
       );
       return const VoiceGiftSendResult();
     } on ApiException catch (e) {
