@@ -21,10 +21,18 @@ abstract final class VoiceRoomErrorDisplay {
   }
 
   static bool _shouldSuppress(String msg, VoiceRoomLiveState live) {
+    final lower = msg.toLowerCase();
+    final transientNetwork = lower.contains('zaman aşımı') ||
+        lower.contains('timeout') ||
+        lower.contains('sunucu yanıt vermedi') ||
+        lower.contains('bağlantı kurulamadı');
+    if (transientNetwork &&
+        (live.selfInRoom || live.presence.isNotEmpty || live.sseConnected)) {
+      return true;
+    }
     if (!live.selfInRoom && live.presence.isEmpty && !live.sseConnected) {
       return false;
     }
-    final lower = msg.toLowerCase();
     return lower.contains('invalid type') ||
         lower.contains('geçersiz alan') ||
         lower.contains('no voice permission');

@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.73+100 (2026-07-23)
+
+### Sesli oda bağlantı düzeltmesi
+- **Zaman aşımı:** `/api/chat/rooms` istekleri 15/22 sn timeout (global 3/5 sn yerine)
+- **Presence join:** 3 deneme + gövde varyantları; geçici hata banner'ı gizlenir
+- **Optimistic UI:** Odaya girerken kullanıcı hemen çevrimiçi sayılır; arka planda join tamamlanır
+- **SSE bağlanınca:** Hata temizlenir ve presence join yeniden denenir
+
 ## 1.0.72+99 (2026-07-23)
 
 ### Backend uyum + performans

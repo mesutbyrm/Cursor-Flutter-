@@ -318,8 +318,43 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       return;
     }
     VoiceRoomDebugLog.roomJoin(roomId: _roomKey, source: 'presence');
-    try {
-      final token = await ref.read(tokenStorageProvider).readAccess();
+    Object? lastError;
+    for (var attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) {
+        await Future<void>.delayed(Duration(milliseconds: 500 * attempt));
+      }
+      try {
+        await _joinPresenceAttempt();
+        return;
+      } on Object catch (e) {
+        lastError = e;
+        if (attempt < 2 && _isTransientPresenceJoinError(e)) {
+          VoiceRoomDebugLog.log('api.presence.join.retry', {
+            'room': _roomKey,
+            'attempt': attempt + 1,
+            'error': e.toString(),
+          });
+          continue;
+        }
+        break;
+      }
+    }
+    if (lastError != null) {
+      _handlePresenceJoinFailure(lastError);
+    }
+  }
+
+  bool _isTransientPresenceJoinError(Object e) {
+    final msg = ApiException.userMessage(e).toLowerCase();
+    return msg.contains('zaman aşımı') ||
+        msg.contains('timeout') ||
+        msg.contains('sunucu yanıt vermedi') ||
+        msg.contains('bağlantı kurulamadı') ||
+        msg.contains('bağlantınızı kontrol');
+  }
+
+  Future<void> _joinPresenceAttempt() async {
+    final token = await ref.read(tokenStorageProvider).readAccess();
       final hasJwt = token != null && token.isNotEmpty;
       VoiceRoomDebugLog.jwtStatus(hasToken: hasJwt, tokenLength: token?.length);
       ref.read(voiceRoomDiagnosticProvider.notifier).setJwt(hasJwt: hasJwt);
@@ -358,7 +393,9 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       _patchHubPresenceCount(merged.length);
       unawaited(_broadcastStaffEntryIfNeeded());
       unawaited(refreshServerPermissions());
-    } on Object catch (e) {
+  }
+
+  void _handlePresenceJoinFailure(Object e) {
       VoiceRoomDebugLog.log('api.presence.join.fail', {'error': e.toString()});
       ref.read(voiceRoomDiagnosticProvider.notifier).setPresence(joined: false);
       ref
@@ -390,7 +427,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       }
       // Oda kısmen çalışıyorsa (optimistic presence) kritik olmayan join
       // hatalarını kalıcı banner yapma.
-      if (state.selfInRoom || state.presence.isNotEmpty) {
+      if (state.selfInRoom || state.presence.isNotEmpty || state.sseConnected) {
         VoiceRoomDebugLog.log('api.presence.join.soft_fail', {'error': msg});
         state = state.copyWith(loading: false, clearError: true);
         return;
@@ -415,7 +452,6 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
             ? 'Listede görünmek için tekrar giriş yapın.'
             : msg,
       );
-    }
   }
 
   Future<void> _leavePresence() async {

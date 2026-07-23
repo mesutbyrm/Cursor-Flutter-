@@ -156,6 +156,17 @@ class ChatRoomRemoteDataSource {
         .toList();
   }
 
+  bool _isRetryablePresenceError(ApiException e) {
+    final msg = e.message.toLowerCase();
+    if (msg.contains('zaman aşımı') ||
+        msg.contains('timeout') ||
+        msg.contains('bağlantı kurulamadı') ||
+        msg.contains('sunucu yanıt vermedi')) {
+      return true;
+    }
+    return e.statusCode != null && e.statusCode! >= 500;
+  }
+
   bool _shouldTryAlternateKey(Object error, String primary, String? alternate) {
     final alt = alternate?.trim();
     if (alt == null || alt.isEmpty || alt == primary) return false;
@@ -418,6 +429,40 @@ class ChatRoomRemoteDataSource {
     int? seatIndex,
     String? password,
   }) async {
+    Object? lastFailure;
+    for (var attempt = 0; attempt < 2; attempt++) {
+      if (attempt > 0) {
+        await Future<void>.delayed(Duration(milliseconds: 400 * attempt));
+      }
+      try {
+        return await _joinPresenceOnce(
+          roomKey,
+          alternateKey: alternateKey,
+          nickname: nickname,
+          seatIndex: seatIndex,
+          password: password,
+        );
+      } on Object catch (e) {
+        lastFailure = e;
+        final retryable = e is ApiException && _isRetryablePresenceError(e);
+        if (!retryable || attempt == 1) rethrow;
+        VoiceRoomDebugLog.log('api.presence.join.retry', {
+          'room': roomKey,
+          'attempt': attempt + 1,
+          'error': e.toString(),
+        });
+      }
+    }
+    throw lastFailure ?? const ApiException('Odaya giriş başarısız');
+  }
+
+  Future<List<ChatRoomPresence>> _joinPresenceOnce(
+    String roomKey, {
+    String? alternateKey,
+    String? nickname,
+    int? seatIndex,
+    String? password,
+  }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final nick = nickname?.trim();
       final pass = password?.trim();
@@ -466,7 +511,8 @@ class ChatRoomRemoteDataSource {
           final msg = e.message.toLowerCase();
           if (e.statusCode == 400 ||
               e.statusCode == 422 ||
-              msg.contains('invalid type')) {
+              msg.contains('invalid type') ||
+              _isRetryablePresenceError(e)) {
             continue;
           }
           rethrow;
