@@ -206,6 +206,7 @@ class LiveGiftsRemoteDataSource {
       json,
       flatKeys: const [
         'receiverName',
+        'recipientName',
         'streamerName',
         'hostName',
         'toUserName',
@@ -234,12 +235,27 @@ class LiveGiftsRemoteDataSource {
       }
       return 0;
     }();
+    final nestedTotalCoin = () {
+      final gt = json['giftType'] ?? json['gift'];
+      if (gt is Map) {
+        return asInt(
+          pick(asJsonMap(gt), [
+            'totalPrice',
+            'totalCoin',
+            'totalCoins',
+            'amount',
+          ]),
+        );
+      }
+      return 0;
+    }();
     final totalCoin = asInt(
       pick(json, [
         'totalCoin',
         'totalCoins',
         'totalCost',
         'totalPrice',
+        'amount',
         'coins',
         'jeton',
         'jetonAmount',
@@ -261,7 +277,9 @@ class LiveGiftsRemoteDataSource {
                 : legacyPrice));
     final resolvedTotal = totalCoin > 0
         ? totalCoin
-        : (unitPrice > 0 ? unitPrice * qty : legacyPrice);
+        : (nestedTotalCoin > 0
+            ? nestedTotalCoin
+            : (unitPrice > 0 ? unitPrice * qty : legacyPrice));
     final comboRaw = asInt(pick(json, ['combo', 'comboCount']));
 
     final icon = pick(json, [
@@ -270,20 +288,40 @@ class LiveGiftsRemoteDataSource {
       'image',
       'icon',
       'iconUrl',
+      'giftIcon',
     ])?.toString();
-    // SSE dokümanı: giftType.icon iç içe gelebilir.
+    // SSE dokümanı: giftType.icon / gift.giftIcon iç içe gelebilir.
     String? nestedIcon;
     final giftType = json['giftType'] ?? json['gift'];
     if (giftType is Map) {
-      nestedIcon = pick(asJsonMap(giftType), ['icon', 'iconUrl', 'image'])
+      final gt = asJsonMap(giftType);
+      nestedIcon = pick(gt, ['icon', 'iconUrl', 'image', 'giftIcon'])
           ?.toString();
     }
     final iconUrl = _resolveImageUrl(icon ?? nestedIcon);
 
-    final animKey = pick(json, ['animation', 'animationKey'])?.toString();
+    final animKey = pick(json, ['animation', 'animationKey', 'assetUrl'])
+        ?.toString();
+    String? nestedAnimUrl;
+    String? nestedAssetType;
+    if (giftType is Map) {
+      final gt = asJsonMap(giftType);
+      nestedAnimUrl = pick(gt, ['assetUrl', 'animationUrl', 'animation'])
+          ?.toString();
+      nestedAssetType =
+          pick(gt, ['assetType', 'animationType', 'animationKind'])?.toString();
+    }
+    final resolvedAnimKey = animKey ?? nestedAnimUrl;
     final animType = GiftAnimationKind.parse(
-      pick(json, ['animationType', 'animationKind'])?.toString(),
+      pick(json, ['animationType', 'animationKind', 'assetType'])?.toString() ??
+          nestedAssetType,
     );
+    final resolvedAnimType = animType == GiftAnimationKind.lottie &&
+            resolvedAnimKey != null
+        ? GiftAnimationKind.fromUrl(resolvedAnimKey)
+        : animType;
+    final finalAnimType =
+        resolvedAnimType != GiftAnimationKind.none ? resolvedAnimType : animType;
 
     return LiveGiftEvent(
       id: id,
@@ -302,9 +340,9 @@ class LiveGiftsRemoteDataSource {
       timestamp: ts,
       iconUrl: iconUrl,
       giftImageUrl: iconUrl,
-      animationKey: animKey,
+      animationKey: resolvedAnimKey,
       rarity: GiftRarity.parse(pick(json, ['rarity'])?.toString()),
-      animationKind: animType,
+      animationKind: finalAnimType,
       soundKey: pick(json, ['sound'])?.toString(),
       remainingBalance: asInt(
         pick(json, [
@@ -371,7 +409,7 @@ class LiveGiftsRemoteDataSource {
     if (nested is Map) {
       final fromType = jsonDisplayLabel(
         nested,
-        keys: const ['nameTr', 'name', 'nameEn', 'label'],
+        keys: const ['nameTr', 'name', 'nameEn', 'label', 'giftName'],
       );
       if (fromType != null && !_isBareAssetFilename(fromType)) return fromType;
     }
@@ -417,6 +455,7 @@ class LiveGiftsRemoteDataSource {
       'receiverId',
       'receiverUserId',
       'toUserId',
+      'recipientId',
       'streamerId',
       'hostId',
     ])?.toString();

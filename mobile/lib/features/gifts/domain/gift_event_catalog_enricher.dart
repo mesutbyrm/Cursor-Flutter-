@@ -1,0 +1,47 @@
+import '../../live/domain/entities/live_gift_event.dart';
+import '../data/gift_catalog_maps.dart';
+import 'gift_animation_kind.dart';
+import 'gift_entity.dart';
+
+/// SSE hediye olayını CMS katalog satırı ile zenginleştirir (video/Lottie URL).
+LiveGiftEvent enrichGiftEventFromCatalog(
+  LiveGiftEvent event,
+  GiftEntity? catalog,
+) {
+  if (catalog == null) return event;
+  final animUrl = catalog.networkAnimationUrl;
+  final kind = GiftCatalogMaps.resolvedKind(catalog);
+  final icon = event.iconUrl ??
+      event.giftImageUrl ??
+      catalog.displayIconUrl;
+  final hasAnim = animUrl != null && kind != GiftAnimationKind.none;
+  if (!hasAnim && icon == event.iconUrl) return event;
+
+  return LiveGiftEvent(
+    id: event.id,
+    senderId: event.senderId,
+    receiverId: event.receiverId,
+    senderName: event.senderName,
+    receiverName: event.receiverName,
+    giftId: event.giftId,
+    giftName: event.giftName.trim().isNotEmpty ? event.giftName : catalog.name,
+    quantity: event.quantity,
+    coinCost: event.coinCost > 0 ? event.coinCost : catalog.price,
+    giftPrice: event.giftPrice > 0 ? event.giftPrice : catalog.price,
+    totalCoin: event.totalCoin,
+    totalDiamond: event.totalDiamond,
+    combo: event.combo,
+    timestamp: event.timestamp,
+    iconUrl: icon,
+    giftImageUrl: icon,
+    animationKey: animUrl ?? event.animationKey ?? catalog.animationRef,
+    rarity: event.rarity,
+    animationKind: hasAnim ? kind : event.animationKind,
+    soundKey: event.soundKey ?? catalog.soundUrl ?? catalog.soundKey,
+    remainingBalance: event.remainingBalance,
+    seatIndex: event.seatIndex,
+    senderAvatar: event.senderAvatar,
+    receiverAvatar: event.receiverAvatar,
+    giftType: event.giftType,
+  );
+}

@@ -6,9 +6,11 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/sse/base_sse_service.dart';
 import '../../../../core/network/sse/sse_reconnect_policy.dart';
 import '../../domain/entities/psychic_room_entity.dart';
 import '../../domain/entities/psychic_session_status.dart';
+import '../../domain/session_room_sse_event.dart';
 import '../models/psychic_model.dart';
 
 /// Seans oda SSE — `GET /api/room/{sessionId}/stream`.
@@ -19,6 +21,8 @@ class PsychicRoomSseService {
   CancelToken? _cancel;
   StreamSubscription<List<int>>? _bytesSub;
   Timer? _reconnectTimer;
+  Timer? _heartbeatWatchdog;
+  DateTime? _lastEventAt;
   String? _sessionId;
   String? _myUserId;
   Future<String?> Function()? _accessToken;
@@ -84,10 +88,13 @@ class PsychicRoomSseService {
         return;
       }
       _reconnectAttempt = 0;
+      _lastEventAt = DateTime.now();
+      _startHeartbeatWatchdog();
       _onConnected?.call();
       final buffer = StringBuffer();
       _bytesSub = stream.listen(
         (chunk) {
+          _lastEventAt = DateTime.now();
           buffer.write(utf8.decode(chunk, allowMalformed: true));
           _drain(buffer);
         },
@@ -116,6 +123,8 @@ class PsychicRoomSseService {
   }
 
   void _handleBlock(String block) {
+    if (isSessionRoomSseCommentBlock(block)) return;
+
     String? eventName;
     final dataLines = <String>[];
     for (final line in block.split('\n')) {
@@ -129,7 +138,13 @@ class PsychicRoomSseService {
       final decoded = jsonDecode(payload);
       if (decoded is! Map) return;
       final map = Map<String, dynamic>.from(decoded);
-      final type = (map['type'] ?? eventName ?? '').toString().toLowerCase();
+      final type =
+          inferSessionRoomSseEventType(map, eventName: eventName) ?? '';
+      if (type == 'connected') {
+        final room = PsychicModel.roomFromJson(map, fallbackId: _sessionId ?? '');
+        _onRoomUpdate?.call(room);
+        return;
+      }
       if (type == 'ended' ||
           type == 'session_ended' ||
           type == 'session_end' ||
@@ -213,6 +228,20 @@ class PsychicRoomSseService {
     return int.tryParse(raw?.toString() ?? '') ?? 0;
   }
 
+  void _startHeartbeatWatchdog() {
+    _heartbeatWatchdog?.cancel();
+    _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 5), (_) {
+      final last = _lastEventAt;
+      if (last == null || _stopped) return;
+      if (DateTime.now().difference(last) > BaseSseService.heartbeatTimeout) {
+        if (kDebugMode) {
+          debugPrint('PsychicRoomSse: heartbeat timeout — reconnecting');
+        }
+        unawaited(_openStream());
+      }
+    });
+  }
+
   void _scheduleReconnect() {
     if (_stopped) return;
     _reconnectTimer?.cancel();
@@ -227,6 +256,8 @@ class PsychicRoomSseService {
 
   Future<void> _closeStreamOnly() async {
     _reconnectTimer?.cancel();
+    _heartbeatWatchdog?.cancel();
+    _heartbeatWatchdog = null;
     _cancel?.cancel();
     await _bytesSub?.cancel();
     _dio?.close(force: true);
