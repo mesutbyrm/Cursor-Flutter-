@@ -18,19 +18,10 @@ void main() {
       expect(StaffRoles.isSiteAdminUser(role: 'user'), isFalse);
     });
 
-    test('adminApiHeaders maps privileged nicknames', () {
-      expect(
-        StaffRoles.adminApiHeaders(username: 'admin').role,
-        'admin',
-      );
-      expect(
-        StaffRoles.adminApiHeaders(username: 'yonetim').role,
-        'yonetici',
-      );
-      expect(
-        StaffRoles.adminApiHeaders(username: 'yonetici').role,
-        'yonetici',
-      );
+    test('site admin usernames include admin and yonetim', () {
+      expect(StaffRoles.isSiteAdminUser(username: 'admin'), isTrue);
+      expect(StaffRoles.isSiteAdminUser(username: 'yonetim'), isTrue);
+      expect(StaffRoles.isSiteAdminUser(username: 'yonetici'), isTrue);
     });
 
     test('labelTr maps admin and yonetici display names', () {

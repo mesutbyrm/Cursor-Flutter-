@@ -128,11 +128,12 @@ void main() {
 
         final uploaded = await remote.uploadAsset(file, kind: 'icon');
 
-        expect(presignRequest?.path, '/api/admin/gifts/upload-url');
+        expect(presignRequest?.path, '/api/upload/presigned');
         expect(presignRequest?.data, {
           'fileName': file.path.split(Platform.pathSeparator).last,
           'contentType': 'image/png',
-          'kind': 'icon',
+          'isPublic': true,
+          'folder': 'gifts/icons',
           'fileSize': 4,
         });
         expect(putRequest?.method, 'PUT');
@@ -147,53 +148,6 @@ void main() {
         );
       },
     );
-
-    test('falls back to site presigned upload when admin presign times out', () async {
-      var call = 0;
-      final mainDio = _dioWithAdapter(
-        _FakeAdapter((options, _, __) {
-          call++;
-          if (options.path == '/api/admin/gifts/upload-url') {
-            return Completer<ResponseBody>().future;
-          }
-          if (options.path == '/api/upload/presigned') {
-            return _jsonResponse(201, {
-              'success': true,
-              'data': {
-                'uploadUrl': 'https://r2.example.test/fallback-put',
-                'cloud_storage_path': 'gifts/icons/fallback.png',
-                'publicUrl': 'https://cdn.example.test/gifts/icons/fallback.png',
-              },
-            });
-          }
-          return ResponseBody.fromString('{}', 404);
-        }),
-      );
-      final uploadDio = _dioWithAdapter(
-        _FakeAdapter((options, _, __) {
-          expect(options.method, 'PUT');
-          return ResponseBody.fromString('', 200);
-        }),
-      );
-      final remote = AdminGiftRemoteDataSource(
-        mainDio,
-        operationTimeout: const Duration(milliseconds: 30),
-        uploadDioFactory: () => uploadDio,
-      );
-      final file = File(
-        '${Directory.systemTemp.path}/admin-gift-fallback-${DateTime.now().microsecondsSinceEpoch}.png',
-      );
-      addTearDown(() async {
-        if (await file.exists()) await file.delete();
-      });
-      await file.writeAsBytes([9, 8, 7]);
-
-      final uploaded = await remote.uploadAsset(file, kind: 'icon');
-
-      expect(call, greaterThanOrEqualTo(2));
-      expect(uploaded.cloudPath, 'gifts/icons/fallback.png');
-      expect(uploaded.publicUrl, 'https://cdn.example.test/gifts/icons/fallback.png');
-    });
 
     test('listGifts times out instead of hanging forever', () async {
       final dio = _dioWithAdapter(
@@ -240,7 +194,7 @@ void main() {
           isA<ApiException>().having(
             (e) => e.message,
             'message',
-            contains('R2/S3 kayıt yolu'),
+            contains('kayıt yolu'),
           ),
         ),
       );

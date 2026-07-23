@@ -18,7 +18,6 @@ abstract final class ApiBackendRouter {
     if (_isVoiceRoomPkBackendPath(p)) return ApiBackendKind.game;
     if (_isGiftBattleBackendPath(p)) return ApiBackendKind.game;
     if (_isMembershipBackendPath(p)) return ApiBackendKind.game;
-    if (_isAdminGiftsBackendPath(p)) return ApiBackendKind.game;
     if (_isLiveGamesBackendPath(p)) return ApiBackendKind.game;
     if (_isGameBackendPath(p, method)) return ApiBackendKind.game;
     return ApiBackendKind.main;
@@ -54,11 +53,7 @@ abstract final class ApiBackendRouter {
   static bool _isMembershipBackendPath(String path) =>
       path.startsWith('/api/membership');
 
-  /// Admin hediye kataloğu CRUD + yükleme — `canlifalapi.abacusai.app`.
-  static bool _isAdminGiftsBackendPath(String path) =>
-      path.startsWith('/api/admin/gifts');
-
-  /// Canlı PK + misafir listesi — `canlifalapi.abacusai.app` (`/api/live/pk/*`, `/api/live/guest/*`).
+  /// Üyelik planları + satın alma (`/api/membership/plans`, `/purchase`) modern
   static bool _isLiveGamesBackendPath(String path) =>
       path.startsWith('/api/live/pk/') ||
       path.startsWith('/api/live/guest/');
