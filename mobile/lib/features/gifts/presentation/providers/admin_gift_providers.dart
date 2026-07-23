@@ -10,21 +10,17 @@ import '../../domain/admin_gift_type.dart';
 
 final adminGiftRemoteProvider = Provider<AdminGiftRemoteDataSource>((ref) {
   final access = ref.watch(staffAccessProvider);
-  final role = _resolveAdminGiftStaffRole(access);
+  final headers = StaffRoles.adminApiHeaders(
+    username: access.username,
+    siteRole: access.siteRole,
+    isSiteAdmin: access.isSiteAdmin,
+  );
   return AdminGiftRemoteDataSource(
     ref.watch(dioProvider),
-    staffRole: role,
+    staffRole: headers.role,
+    staffUsername: headers.username,
   );
 });
-
-String? _resolveAdminGiftStaffRole(StaffAccess access) {
-  final username = access.username?.toLowerCase().trim() ?? '';
-  if (StaffRoles.managerUsernames.contains(username)) return username;
-  final siteRole = access.siteRole?.trim();
-  if (siteRole != null && siteRole.isNotEmpty) return siteRole;
-  if (access.isSiteAdmin) return 'admin';
-  return access.username;
-}
 
 /// Admin hediye API erişimi — istemci yetkisi + ilk katalog yanıtı.
 final adminGiftApiAccessProvider = Provider<bool>((ref) {

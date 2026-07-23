@@ -32,6 +32,7 @@ class StaffAccess {
     if (u == 'admin') return 'Site Admin';
     if (u == 'siteadmin') return 'Site Admin';
     if (u == 'yonetici') return 'Kurucu';
+    if (u == 'yonetim') return 'Yönetim';
     if (siteRole != null && siteRole!.isNotEmpty) {
       return StaffRoles.labelTr(siteRole!);
     }
@@ -106,7 +107,11 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
       ? siteRole!.toLowerCase().trim()
       : null;
   if (effectiveRole == null && usernameIsSiteAdmin) {
-    effectiveRole = usernameLower == 'siteadmin' ? 'admin' : usernameLower;
+    effectiveRole = switch (usernameLower) {
+      'siteadmin' || 'admin' => 'admin',
+      'yonetim' => 'yonetim',
+      _ => usernameLower,
+    };
   }
   if (isSiteAdmin && effectiveRole == null) {
     effectiveRole = 'admin';
@@ -114,7 +119,10 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
 
   final canManageGifts = isSiteAdmin || canManagePayments;
   final isFounder =
-      effectiveRole == 'yonetici' || usernameLower == 'yonetici';
+      effectiveRole == 'yonetici' ||
+      effectiveRole == 'yonetim' ||
+      usernameLower == 'yonetici' ||
+      usernameLower == 'yonetim';
 
   return StaffAccess(
     canManagePayments: canManagePayments,

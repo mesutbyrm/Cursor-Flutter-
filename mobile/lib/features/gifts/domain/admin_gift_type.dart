@@ -1,3 +1,4 @@
+import '../../../core/config/env.dart';
 import '../../../core/util/json_util.dart';
 
 /// Admin katalog satırı — `/api/admin/gifts` (pasifler dahil).
@@ -30,26 +31,39 @@ class AdminGiftType {
     this.isLucky = false,
   });
 
-  factory AdminGiftType.fromJson(Map<String, dynamic> json) {
+  factory AdminGiftType.fromJson(
+    Map<String, dynamic> json, {
+    String? siteOrigin,
+  }) {
+    final origin = siteOrigin ?? Env.siteOrigin;
     return AdminGiftType(
       id: (pick(json, ['id', 'giftTypeId', 'slug']) ?? '').toString(),
       name: (pick(json, ['name', 'nameTr']) ?? '').toString(),
       nameEn: (pick(json, ['nameEn']) ?? '').toString(),
       price: asInt(pick(json, ['price'])),
       icon: pick(json, ['icon'])?.toString(),
-      imageUrl: pick(json, [
-        'imageUrl',
-        'imageCloudPath',
-        'assetUrl',
-        'assetCloudPath',
-      ])?.toString(),
-      thumbnailUrl: pick(json, ['thumbnailUrl', 'thumbnail', 'thumbnailCloudPath'])
-          ?.toString(),
-      animationUrl: pick(json, [
-        'animationUrl',
-        'animation',
-        'animationCloudPath',
-      ])?.toString(),
+      imageUrl: _resolveAdminMediaUrl(
+        pick(json, [
+          'imageUrl',
+          'imageCloudPath',
+          'assetUrl',
+          'assetCloudPath',
+        ])?.toString(),
+        origin,
+      ),
+      thumbnailUrl: _resolveAdminMediaUrl(
+        pick(json, ['thumbnailUrl', 'thumbnail', 'thumbnailCloudPath'])
+            ?.toString(),
+        origin,
+      ),
+      animationUrl: _resolveAdminMediaUrl(
+        pick(json, [
+          'animationUrl',
+          'animation',
+          'animationCloudPath',
+        ])?.toString(),
+        origin,
+      ),
       animationType:
           (pick(json, ['animationType', 'animationKind']) ?? 'lottie').toString(),
       soundUrl: pick(json, ['soundUrl', 'sound', 'soundCloudPath'])?.toString(),
@@ -95,6 +109,21 @@ class AdminGiftType {
   final bool isPremium;
   final bool comboEnabled;
   final bool isLucky;
+
+  bool get hasVideoAnimation {
+    final t = animationType.toLowerCase().trim();
+    if (t == 'mp4' || t == 'webm' || t == 'video') return true;
+    final url = animationUrl?.toLowerCase().split('?').first ?? '';
+    return url.endsWith('.mp4') || url.endsWith('.webm');
+  }
+}
+
+String? _resolveAdminMediaUrl(String? raw, String siteOrigin) {
+  if (raw == null || raw.isEmpty) return null;
+  if (raw.startsWith('http')) return raw;
+  final origin = siteOrigin.trim().replaceAll(RegExp(r'/+$'), '');
+  if (origin.isEmpty) return raw;
+  return raw.startsWith('/') ? '$origin$raw' : '$origin/$raw';
 }
 
 /// Desteklenen animasyon türleri (admin yükleme).

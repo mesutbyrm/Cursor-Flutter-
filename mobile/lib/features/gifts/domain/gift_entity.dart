@@ -36,7 +36,8 @@ class GiftEntity extends Equatable {
     final iconUrlField = pick(json, ['iconUrl'])?.toString();
     final thumbnail = pick(json, ['thumbnailUrl'])?.toString();
     final asset = pick(json, ['assetUrl', 'image', 'giftImageUrl'])?.toString();
-    final anim = pick(json, ['animation', 'animationKey'])?.toString();
+    final animKey = pick(json, ['animation', 'animationKey'])?.toString();
+    final animUrlRaw = pick(json, ['animationUrl'])?.toString();
     final animTypeRaw = pick(json, [
       'animationType',
       'animationKind',
@@ -64,8 +65,13 @@ class GiftEntity extends Equatable {
     final resolvedAsset = _isResolvableUrl(asset ?? '')
         ? _resolveUrl(asset, siteOrigin)
         : null;
-    final animationRef = anim ?? resolvedAsset;
-    if (animType == GiftAnimationKind.lottie && animationRef != null) {
+    final resolvedAnimUrl = _isResolvableUrl(animUrlRaw ?? '')
+        ? _resolveUrl(animUrlRaw, siteOrigin)
+        : null;
+    final animationRef = resolvedAnimUrl ??
+        ((animKey != null && animKey.isNotEmpty) ? animKey : null) ??
+        resolvedAsset;
+    if (animType == GiftAnimationKind.lottie) {
       final inferred = GiftAnimationKind.fromUrl(animationRef);
       if (inferred != GiftAnimationKind.none) animType = inferred;
     }

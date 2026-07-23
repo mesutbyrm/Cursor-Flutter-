@@ -20,16 +20,25 @@ Future<T> _adminTimeout<T>(Future<T> future) {
 
 /// canlifal.com admin API — web paneli ile aynı uç noktalar.
 class AdminRemoteDataSource {
-  AdminRemoteDataSource(this._dio, {this.staffRole});
+  AdminRemoteDataSource(this._dio, {this.staffRole, this.staffUsername});
 
   final Dio _dio;
   final String? staffRole;
+  final String? staffUsername;
 
   Options _opts([Options? base]) {
     final role = staffRole?.trim();
-    if (role == null || role.isEmpty) return base ?? Options();
+    final username = staffUsername?.trim();
+    if ((role == null || role.isEmpty) &&
+        (username == null || username.isEmpty)) {
+      return base ?? Options();
+    }
     return (base ?? Options()).copyWith(
-      extra: {...?base?.extra, 'staffRole': role},
+      extra: {
+        ...?base?.extra,
+        if (role != null && role.isNotEmpty) 'staffRole': role,
+        if (username != null && username.isNotEmpty) 'staffUsername': username,
+      },
     );
   }
 

@@ -9,16 +9,24 @@ import 'admin_providers.dart';
 import 'staff_access_provider.dart';
 
 String? _adminStaffRole(StaffAccess access) {
-  final u = access.username?.toLowerCase().trim() ?? '';
-  if (StaffRoles.managerUsernames.contains(u)) return u;
-  return access.siteRole ?? (access.isSiteAdmin ? 'admin' : null);
+  return StaffRoles.adminApiHeaders(
+    username: access.username,
+    siteRole: access.siteRole,
+    isSiteAdmin: access.isSiteAdmin,
+  ).role;
 }
 
 final adminRemoteProvider = Provider<AdminRemoteDataSource>((ref) {
   final access = ref.watch(staffAccessProvider);
+  final headers = StaffRoles.adminApiHeaders(
+    username: access.username,
+    siteRole: access.siteRole,
+    isSiteAdmin: access.isSiteAdmin,
+  );
   return AdminRemoteDataSource(
     ref.watch(dioProvider),
-    staffRole: _adminStaffRole(access),
+    staffRole: headers.role,
+    staffUsername: headers.username,
   );
 });
 
