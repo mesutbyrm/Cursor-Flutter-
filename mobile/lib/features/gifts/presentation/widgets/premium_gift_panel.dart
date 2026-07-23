@@ -217,10 +217,7 @@ class _GiftsTab extends StatelessWidget {
     return switch (category) {
       'fortune' => all.where(isFortune).toList(),
       'vip' => all.where(isVip).toList(),
-      'event' => all
-          .where((g) => !isFortune(g) && !isVip(g))
-          .where((g) => !PremiumGiftCatalog2026.giftIds.contains(g.id))
-          .toList(),
+      'event' => all.where((g) => !isFortune(g) && !isVip(g)).toList(),
       _ => PremiumGiftCatalog2026.sortCatalog(all, (g) => g.id),
     };
   }

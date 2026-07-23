@@ -6,6 +6,8 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../gifts/data/gift_reciprocal_guard.dart';
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
+import '../../../gifts/data/gift_repository.dart';
+import '../../../gifts/domain/gift_platform.dart';
 import '../../../gifts/data/lucky_gift_remote_datasource.dart';
 import '../../../gifts/domain/lucky_gift_entities.dart';
 import '../../../live/data/datasources/live_field/live_field_api_remote_datasource.dart';
@@ -23,7 +25,17 @@ class ChatRoomGiftsRemoteDataSource {
   final LiveGiftsRemoteDataSource _liveGifts;
   final LuckyGiftRemoteDataSource _lucky;
 
-  Future<List<LiveVideoGiftType>> fetchGiftTypes() async {
+  Future<List<LiveVideoGiftType>> fetchGiftTypes({String? context}) async {
+    try {
+      final repo = GiftRepository(_dio, luckyDs: _lucky);
+      final catalog = await repo.fetchCatalog(
+        platform: GiftPlatform.mobile,
+        context: context ?? 'voice_room',
+      );
+      if (catalog.isNotEmpty) {
+        return catalog.map(LiveVideoGiftType.fromGift).toList();
+      }
+    } catch (_) {}
     try {
       final liveTypes =
           await LiveFieldApiRemoteDataSource(_dio).gifts.fetchGiftTypes();

@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.76+103 (2026-07-23)
+
+### Backend hediyeleri kullanılabilir
+- **CMS katalog birincil:** Sesli oda ve canlı yayın `GET /api/gifts/catalog` ile admin panelinden eklenen hediyeleri gösterir
+- **Versiyon senkronu:** Panel açılışında katalog yenilenir; `thumbnailUrl` / `assetUrl` / emoji ikon desteği
+- **Yedek:** CMS boş veya hata → eski `/api/gifts` ve `/api/video-streams/gifts` uçları
+
 ## 1.0.75+102 (2026-07-23)
 
 ### 🍀 Şanslı Hediye (Talih Kutusu)
