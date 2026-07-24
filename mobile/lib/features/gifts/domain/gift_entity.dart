@@ -34,6 +34,10 @@ class GiftEntity extends Equatable {
     this.assetType = GiftAssetType.unknown,
     this.displayType = GiftDisplayType.standard,
     this.contentVersion = 0,
+    this.isActive = true,
+    this.isHidden = false,
+    this.visibleInVoiceRoom = true,
+    this.visibleInLiveStream = true,
   });
 
   factory GiftEntity.fromJson(Map<String, dynamic> json, {String siteOrigin = ''}) {
@@ -133,6 +137,10 @@ class GiftEntity extends Equatable {
       assetType: assetType,
       displayType: displayType,
       contentVersion: asInt(pick(json, ['contentVersion', 'version'])),
+      isActive: json['isActive'] != false && json['enabled'] != false,
+      isHidden: json['isHidden'] == true,
+      visibleInVoiceRoom: json['visibleInVoiceRoom'] != false,
+      visibleInLiveStream: json['visibleInLiveStream'] != false,
     );
   }
 
@@ -159,6 +167,10 @@ class GiftEntity extends Equatable {
   final GiftAssetType assetType;
   final GiftDisplayType displayType;
   final int contentVersion;
+  final bool isActive;
+  final bool isHidden;
+  final bool visibleInVoiceRoom;
+  final bool visibleInLiveStream;
 
   /// Görüntüleme için en iyi ikon URL'si (thumbnail öncelikli).
   String? get displayIconUrl => thumbnailUrl ?? iconUrl ?? assetUrl;
@@ -213,6 +225,10 @@ class GiftEntity extends Equatable {
         assetType,
         displayType,
         contentVersion,
+        isActive,
+        isHidden,
+        visibleInVoiceRoom,
+        visibleInLiveStream,
       ];
 }
 

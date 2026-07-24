@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../data/gift_repository.dart';
 import '../../data/gift_sound_service.dart';
+import '../../domain/gift_playable_filter.dart';
 import '../../domain/gift_entity.dart';
 import '../../domain/gift_leaderboard_entry.dart';
 import '../../domain/gift_platform.dart';
@@ -22,29 +23,38 @@ final giftSoundServiceProvider = Provider<GiftSoundService>((ref) {
 final liveGiftCatalogProvider = FutureProvider<List<GiftEntity>>((ref) async {
   ref.keepAlive();
   final repo = ref.watch(giftRepositoryProvider);
-  return repo.fetchCatalog(platform: GiftPlatform.mobile);
+  final catalog = await repo.fetchCatalog(platform: GiftPlatform.mobile);
+  return GiftPlayableFilter.forContext(catalog, context: 'all');
 });
 
 /// Sesli oda hediye listesi — CMS katalog (admin panelinden eklenen hediyeler dahil).
 final voiceRoomGiftCatalogProvider = FutureProvider.autoDispose<List<GiftEntity>>((ref) async {
   final repo = ref.watch(giftRepositoryProvider);
+  final general = await ref.watch(liveGiftCatalogProvider.future);
   final voice = await repo.fetchCatalog(
     platform: GiftPlatform.mobile,
     context: 'voice_room',
   );
-  if (voice.isNotEmpty) return voice;
-  return ref.watch(liveGiftCatalogProvider.future);
+  return GiftPlayableFilter.mergeContexts(
+    voice,
+    general,
+    context: 'voice_room',
+  );
 });
 
 /// Canlı yayın hediye listesi.
 final liveStreamGiftCatalogProvider = FutureProvider.autoDispose<List<GiftEntity>>((ref) async {
   final repo = ref.watch(giftRepositoryProvider);
+  final general = await ref.watch(liveGiftCatalogProvider.future);
   final live = await repo.fetchCatalog(
     platform: GiftPlatform.mobile,
     context: 'live_stream',
   );
-  if (live.isNotEmpty) return live;
-  return ref.watch(liveGiftCatalogProvider.future);
+  return GiftPlayableFilter.mergeContexts(
+    live,
+    general,
+    context: 'live_stream',
+  );
 });
 
 final liveGiftTypesLegacyProvider =

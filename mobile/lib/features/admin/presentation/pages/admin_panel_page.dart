@@ -195,6 +195,11 @@ class _AdminPanelPageState extends ConsumerState<AdminPanelPage> {
                           onTap: () => context.push('/admin/gifts'),
                         ),
                         _PanelItem(
+                          icon: Icons.collections_rounded,
+                          label: 'Hediye & koleksiyon',
+                          onTap: () => context.push('/admin/collections'),
+                        ),
+                        _PanelItem(
                           icon: Icons.wallpaper_rounded,
                           label: 'Sohbet odası görselleri',
                           onTap: () => context.push('/admin/voice-backgrounds'),

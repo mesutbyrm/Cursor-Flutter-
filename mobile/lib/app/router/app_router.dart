@@ -26,6 +26,7 @@ import '../../features/fortune/presentation/pages/fortune_ready_readings_page.da
 
 import '../../features/admin/presentation/pages/admin_panel_page.dart';
 import '../../features/admin/presentation/pages/admin_voice_room_backgrounds_page.dart';
+import '../../features/admin/presentation/pages/admin_gift_collection_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_sub_pages.dart';
 import '../../features/admin_web/presentation/pages/admin_web_panel_page.dart';
@@ -766,6 +767,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             },
           ),
         ],
+      ),
+      GoRoute(
+        path: '/admin/collections',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminGiftCollectionHubPage(),
+        ),
       ),
       GoRoute(
         path: '/admin/voice-backgrounds',

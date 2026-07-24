@@ -1,4 +1,5 @@
 import '../../vip_gold/domain/vip_tier.dart';
+import 'cosmetic_catalog_generators.dart';
 import 'cosmetic_effect_kind.dart';
 import 'cosmetic_item.dart';
 import 'cosmetic_slot.dart';
@@ -7,13 +8,35 @@ import 'cosmetic_slot.dart';
 abstract final class CosmeticCatalogDefaults {
   static List<CosmeticItem> forSlot(CosmeticSlot slot) {
     return switch (slot) {
-      CosmeticSlot.profileFrame => _frames,
-      CosmeticSlot.nameEffect => _nameEffects,
+      CosmeticSlot.profileFrame => [
+        ..._frames,
+        ...CosmeticCatalogGenerators.profileFrames()
+            .where((e) => _frames.every((f) => f.id != e.id)),
+      ],
+      CosmeticSlot.nameEffect => [
+        ..._nameEffects,
+        ...CosmeticCatalogGenerators.nameEffects()
+            .where((e) => _nameEffects.every((f) => f.id != e.id)),
+      ],
       CosmeticSlot.profileEffect => _profileEffects,
+      CosmeticSlot.avatarAccessory =>
+        CosmeticCatalogGenerators.avatarAccessories(),
       CosmeticSlot.entranceAnimation => _entrances,
-      CosmeticSlot.chatBubble => _chatBubbles,
-      CosmeticSlot.microphoneFrame => _micFrames,
-      CosmeticSlot.badge => _membershipBadges,
+      CosmeticSlot.chatBubble => [
+        ..._chatBubbles,
+        ...CosmeticCatalogGenerators.chatBubbles()
+            .where((e) => _chatBubbles.every((f) => f.id != e.id)),
+      ],
+      CosmeticSlot.microphoneFrame => [
+        ..._micFrames,
+        ...CosmeticCatalogGenerators.microphoneFrames()
+            .where((e) => _micFrames.every((f) => f.id != e.id)),
+      ],
+      CosmeticSlot.badge => [
+        ..._membershipBadges,
+        ...CosmeticCatalogGenerators.membershipBadges()
+            .where((e) => _membershipBadges.every((f) => f.id != e.id)),
+      ],
     };
   }
 

@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.83+110 (2026-07-24)
+
+### Hediye kataloğu + koleksiyon örnekleri
+- **Sesli oda / canlı yayın:** Admin katalog hediyeleri `visibleInVoiceRoom` / `visibleInLiveStream` ile birleşik gösterim
+- **Admin «Hediye & Koleksiyon»:** 40 arkaplan efekti, 20 oda teması, 20 avatar aksesuarı, 10 mikrofon çerçevesi, 10 sohbet balonu, 20 isim efekti, 10 üyelik rozeti, 20 profil çerçevesi, 20 başarı rozeti
+- **Kozmetik kataloğu:** Örnek setler Gold profil ekranında da kullanılabilir
+- **Arkaplan:** Yerleşik sesli oda arkaplan listesi 40 görsele çıkarıldı
+
 ## 1.0.82+109 (2026-07-24)
 
 ### Resmî servis + hediye sistemi dokümantasyonu
