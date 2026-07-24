@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../../../core/network/api_endpoints.dart';
 import '../../../../../core/network/dio_provider.dart';
 import '../../../../../core/util/json_util.dart';
+import '../../../../gifts/data/gift_idempotency.dart';
 import '../../../../gifts/data/lucky_gift_remote_datasource.dart';
 import '../../../../gifts/domain/lucky_gift_entities.dart';
 import 'live_field_api_util.dart';
@@ -51,6 +52,7 @@ class LiveFieldGiftApi {
         'roomType': roomType,
         'giftTypeId': giftTypeId,
         'quantity': quantity,
+        'idempotencyKey': newGiftIdempotencyKey(),
         if (recipientId != null && recipientId.isNotEmpty)
           'recipientId': recipientId,
       },
@@ -123,7 +125,9 @@ class LiveFieldGiftSendResult {
   factory LiveFieldGiftSendResult.fromJson(Map<String, dynamic> json) {
     final gift = asJsonMap(json['gift']);
     return LiveFieldGiftSendResult(
-      senderBalance: (json['senderBalance'] as num?)?.toInt(),
+      senderBalance: asInt(
+        pick(json, ['newBalance', 'senderBalance', 'balance']),
+      ),
       message: json['message']?.toString(),
       giftId: gift?['id']?.toString(),
     );

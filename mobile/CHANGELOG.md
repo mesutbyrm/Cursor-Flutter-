@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.82+109 (2026-07-24)
+
+### Resmî servis + hediye sistemi dokümantasyonu
+- **Dokümanlar:** `docs/CANLIFAL_FLUTTER_RESMI_SERVIS_ENTEGRASYONU.md`, `docs/CANLIFAL_HEDIYE_SISTEMI_DOKUMANTASYONU.md` repoya eklendi
+- **GiftAssetType / GiftDisplayType:** `unknown` fallback ile backend şeması
+- **Animasyon paritesi:** fiyat eşikleri 100/200/500 jeton → 3s/4s/5s kuyruk; ≥200 tam ekran flash
+- **Idempotency:** hediye gönderim POST'larına `idempotencyKey` (çift düşüm koruması)
+- **Katalog alanları:** `assetType`, `displayType`, `contentVersion` parse
+
 ## 1.0.81+108 (2026-07-23)
 
 ### Gerçek zamanlı parite (dokümantasyon §17–19)

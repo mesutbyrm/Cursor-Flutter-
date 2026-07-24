@@ -4,6 +4,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../gifts/data/gift_idempotency.dart';
 import '../../../gifts/data/gift_reciprocal_guard.dart';
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
 import '../../../gifts/data/gift_repository.dart';
@@ -113,6 +114,7 @@ class ChatRoomGiftsRemoteDataSource {
         },
         if (battleId != null && battleId.isNotEmpty) 'battleId': battleId,
         'platform': platform,
+        'idempotencyKey': newGiftIdempotencyKey(),
       },
     );
     final body = res.data;

@@ -18,7 +18,7 @@ enum GiftAnimationKind {
       'gif' => GiftAnimationKind.gif,
       'image' => GiftAnimationKind.image,
       'none' => GiftAnimationKind.none,
-      _ => GiftAnimationKind.lottie,
+      _ => GiftAnimationKind.none,
     };
   }
 

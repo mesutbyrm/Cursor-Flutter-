@@ -4,6 +4,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../gifts/data/gift_idempotency.dart';
 import '../../../gifts/data/lucky_gift_remote_datasource.dart';
 import '../../../gifts/domain/lucky_gift_entities.dart';
 import '../../../gifts/data/gift_reciprocal_guard.dart';
@@ -132,6 +133,7 @@ class LiveGiftsRemoteDataSource {
         'giftId': giftTypeId,
         'giftTypeId': giftTypeId,
         'quantity': quantity,
+        'idempotencyKey': newGiftIdempotencyKey(),
         'platform': GiftPlatform.mobile.queryValue,
         if (senderName.trim().isNotEmpty) 'senderName': senderName.trim(),
         if (receiverName.trim().isNotEmpty) 'receiverName': receiverName.trim(),

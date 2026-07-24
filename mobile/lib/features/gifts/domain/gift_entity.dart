@@ -2,6 +2,9 @@ import 'package:equatable/equatable.dart';
 
 import '../../../core/util/json_util.dart';
 import 'gift_animation_kind.dart';
+import 'gift_animation_policy.dart';
+import 'gift_asset_type.dart';
+import 'gift_display_type.dart';
 import 'gift_platform.dart';
 import 'gift_rarity.dart';
 
@@ -28,6 +31,9 @@ class GiftEntity extends Equatable {
     this.isFullscreen = false,
     this.isPremium = false,
     this.comboEnabled = false,
+    this.assetType = GiftAssetType.unknown,
+    this.displayType = GiftDisplayType.standard,
+    this.contentVersion = 0,
   });
 
   factory GiftEntity.fromJson(Map<String, dynamic> json, {String siteOrigin = ''}) {
@@ -44,6 +50,22 @@ class GiftEntity extends Equatable {
       'assetType',
     ])?.toString();
     var animType = GiftAnimationKind.parse(animTypeRaw);
+    final assetType = GiftAssetType.parse(
+      pick(json, ['assetType', 'animationType', 'animationKind'])?.toString(),
+    );
+    if (animType == GiftAnimationKind.none && assetType != GiftAssetType.unknown) {
+      animType = switch (assetType) {
+        GiftAssetType.video => GiftAnimationKind.video,
+        GiftAssetType.gif => GiftAnimationKind.gif,
+        GiftAssetType.svga => GiftAnimationKind.svga,
+        GiftAssetType.lottie => GiftAnimationKind.lottie,
+        GiftAssetType.image => GiftAnimationKind.image,
+        GiftAssetType.unknown => GiftAnimationKind.none,
+      };
+    }
+    final displayType = GiftDisplayType.parse(
+      pick(json, ['displayType', 'display_type'])?.toString(),
+    );
 
     String? imageUrl;
     for (final candidate in [thumbnail, asset, iconUrlField, rawIcon]) {
@@ -108,6 +130,9 @@ class GiftEntity extends Equatable {
       isPremium: json['isPremium'] == true || json['premium'] == true,
       comboEnabled:
           json['comboEnabled'] == true || json['supportsCombo'] == true,
+      assetType: assetType,
+      displayType: displayType,
+      contentVersion: asInt(pick(json, ['contentVersion', 'version'])),
     );
   }
 
@@ -131,6 +156,9 @@ class GiftEntity extends Equatable {
   final bool isFullscreen;
   final bool isPremium;
   final bool comboEnabled;
+  final GiftAssetType assetType;
+  final GiftDisplayType displayType;
+  final int contentVersion;
 
   /// Görüntüleme için en iyi ikon URL'si (thumbnail öncelikli).
   String? get displayIconUrl => thumbnailUrl ?? iconUrl ?? assetUrl;
@@ -152,7 +180,11 @@ class GiftEntity extends Equatable {
   }
 
   bool get shouldFullscreen =>
-      isFullscreen || isPremium || hasCmsAnimation || price >= 100;
+      isFullscreen ||
+      displayType.isFullscreenLayer ||
+      isPremium ||
+      hasCmsAnimation ||
+      price >= GiftAnimationPolicy.expensiveJetonThreshold;
 
   bool get hasFullscreenAnimation => hasCmsAnimation;
 
@@ -178,6 +210,9 @@ class GiftEntity extends Equatable {
         isFullscreen,
         isPremium,
         comboEnabled,
+        assetType,
+        displayType,
+        contentVersion,
       ];
 }
 

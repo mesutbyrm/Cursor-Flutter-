@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/gift_revenue_display.dart';
 import '../providers/gift_catalog_index_provider.dart';
+import '../../domain/gift_animation_policy.dart';
+import '../../domain/gift_entity.dart';
 import '../../domain/gift_event_catalog_enricher.dart';
 import '../../domain/premium_gift_catalog_2026.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
@@ -91,12 +93,15 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       latestEvent: event,
     );
 
-    _enqueueAnimation(event);
+    _enqueueAnimation(event, catalog);
 
-    final showFs = _shouldFullscreen(event, jeton);
+    final showFs = _shouldFullscreen(event, jeton, catalog);
     if (showFs) {
       state = state.copyWith(activeFullscreen: event);
-      final duration = event.rarity.fullscreenDuration;
+      final duration = GiftAnimationPolicy.fullscreenDuration(
+        jetonPrice: jeton,
+        animationDurationMs: catalog?.animationDurationMs,
+      );
       Timer(duration, () {
         if (state.activeFullscreen?.id == event.id) {
           state = state.copyWith(clearActiveFullscreen: true);
@@ -204,21 +209,26 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     return ordered.take(_maxRecent).toList();
   }
 
-  void _enqueueAnimation(LiveGiftEvent event) {
-    final showFs = _shouldFullscreen(event, event.jetonAmount);
+  void _enqueueAnimation(LiveGiftEvent event, GiftEntity? catalog) {
+    final jeton = event.jetonAmount;
+    final showFs = _shouldFullscreen(event, jeton, catalog);
     if (showFs) return;
 
     state = state.copyWith(
       animationQueue: [...state.animationQueue, event],
     );
-    _pumpAnimationQueue();
+    _pumpAnimationQueue(catalog);
   }
 
-  void _pumpAnimationQueue() {
+  GiftEntity? _catalogFor(String giftId) =>
+      lookupGiftCatalog(ref.read(allGiftCatalogByIdProvider), giftId);
+
+  void _pumpAnimationQueue([GiftEntity? catalogHint]) {
     if (state.activeAnimation != null) return;
     if (state.animationQueue.isEmpty) return;
 
     final next = state.animationQueue.first;
+    final catalog = catalogHint ?? _catalogFor(next.giftId);
     final rest = state.animationQueue.length > 1
         ? state.animationQueue.sublist(1)
         : <LiveGiftEvent>[];
@@ -226,8 +236,11 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     state = state.copyWith(activeAnimation: next, animationQueue: rest);
 
     _animationTimer?.cancel();
-    final duration = const Duration(milliseconds: 2800);
-    _animationTimer = Timer(duration, () {
+    final duration = GiftAnimationPolicy.queueDuration(
+      jetonPrice: next.jetonAmount,
+      animationDurationMs: catalog?.animationDurationMs,
+    );
+    _animationTimer = Timer(duration + GiftAnimationPolicy.queueGapDuration, () {
       if (state.activeAnimation?.id == next.id) {
         state = state.copyWith(clearActiveAnimation: true);
       }
@@ -235,23 +248,26 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     });
   }
 
-  bool _shouldFullscreen(LiveGiftEvent event, int jeton) {
+  bool _shouldFullscreen(
+    LiveGiftEvent event,
+    int jeton,
+    GiftEntity? catalog,
+  ) {
+    if (GiftAnimationPolicy.shouldFullscreen(
+      catalog: catalog,
+      jetonPrice: jeton,
+      displayType: catalog?.displayType,
+      hasNetworkAnimation: (event.animationKey ?? '').startsWith('http'),
+    )) {
+      return true;
+    }
     if (PremiumGiftCatalog2026.triggersFullscreen(
       giftId: event.giftId,
       coinCost: jeton,
     )) {
       return true;
     }
-    final anim = (event.animationKey ?? '').toLowerCase();
-    if (anim.startsWith('http') &&
-        (anim.contains('.mp4') ||
-            anim.contains('.webm') ||
-            anim.contains('.gif') ||
-            anim.contains('.json') ||
-            anim.contains('.svga'))) {
-      return true;
-    }
-    return jeton >= 100;
+    return false;
   }
 
   bool _isDisplayable(LiveGiftEvent e) {
