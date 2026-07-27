@@ -60,11 +60,8 @@ class LiveGiftRealtimeService {
     return false;
   }
 
-  void publishLocal(LiveGiftEvent event) {
-    if (_isDuplicateFingerprint(event)) return;
-    _seen.add(event.id);
-    if (!_local.isClosed) _local.add(event);
-  }
+  /// Yerel animasyon devre dışı — hediyeler yalnızca SSE/socket/poll üzerinden oynar.
+  void publishLocal(LiveGiftEvent event) {}
 
   void publishRemote(LiveGiftEvent event) {
     if (!_seen.add(event.id)) return;

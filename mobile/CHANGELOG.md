@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.90+117 (2026-07-27)
+
+### Canlı oda senkronizasyonu
+- **Hediye:** Yerel animasyon kaldırıldı; yalnızca SSE/uzak olay ile oynatılır (tüm cihazlar aynı anda)
+- **Video hediye:** MP4/webm ön-indirme + `assetUrl`/`assetType` ile doğru oynatıcı
+- **Jeton rozeti:** Koltuk altında yalnızca sayı (Toplam/Jeton metni kaldırıldı)
+- **Oda çıkışı:** Koltuk/presence önce temizlenir; TRTC/SSE/hediye/PK önbellekleri sıfırlanır
+- **Bellek:** Oda çıkışında hediye önbelleği; görsel önbellek 100 MB sınırı
+
 ## 1.0.89+116 (2026-07-27)
 
 ### CI düzeltmesi — TRTC ve hediye paketi

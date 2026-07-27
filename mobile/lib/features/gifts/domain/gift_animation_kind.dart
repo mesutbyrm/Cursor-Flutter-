@@ -17,6 +17,9 @@ enum GiftAnimationKind {
       'video' => GiftAnimationKind.video,
       'gif' => GiftAnimationKind.gif,
       'image' => GiftAnimationKind.image,
+      'png' => GiftAnimationKind.image,
+      'webp' => GiftAnimationKind.image,
+      'avif' => GiftAnimationKind.image,
       'none' => GiftAnimationKind.none,
       _ => GiftAnimationKind.none,
     };
@@ -35,7 +38,8 @@ enum GiftAnimationKind {
     if (lower.endsWith('.png') ||
         lower.endsWith('.jpg') ||
         lower.endsWith('.jpeg') ||
-        lower.endsWith('.webp')) {
+        lower.endsWith('.webp') ||
+        lower.endsWith('.avif')) {
       return GiftAnimationKind.image;
     }
     return GiftAnimationKind.none;

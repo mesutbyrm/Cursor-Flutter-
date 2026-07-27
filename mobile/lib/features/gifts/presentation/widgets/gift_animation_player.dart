@@ -7,6 +7,7 @@ import 'package:video_player/video_player.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../live/domain/entities/live_gift_event.dart';
+import '../../domain/gift_render_meta.dart';
 import '../../data/gift_cache_service.dart';
 import '../../data/gift_catalog_maps.dart';
 import '../../domain/gift_animation_kind.dart';
@@ -43,6 +44,32 @@ class GiftAnimationPlayer extends ConsumerWidget {
       ref.read(giftCatalogByIdProvider),
       giftId,
     );
+    final ev = event;
+    if (ev != null) {
+      final animUrl = GiftRenderMeta.animationUrl(ev, fromCatalog);
+      final kindFromAsset = ev.assetType != null && ev.assetType!.trim().isNotEmpty
+          ? GiftAnimationKind.parse(ev.assetType)
+          : GiftAnimationKind.none;
+      final kindFromUrl = GiftAnimationKind.fromUrl(animUrl);
+      final kind = kindFromAsset != GiftAnimationKind.none
+          ? kindFromAsset
+          : (ev.animationKind != GiftAnimationKind.lottie &&
+                  ev.animationKind != GiftAnimationKind.none
+              ? ev.animationKind
+              : kindFromUrl);
+      return GiftEntity(
+        id: giftId,
+        name: ev.giftName,
+        price: ev.jetonAmount,
+        animationRef: animUrl ?? ev.animationKey,
+        rarity: ev.rarity,
+        animationKind: kind != GiftAnimationKind.none
+            ? kind
+            : (fromCatalog?.animationKind ?? GiftAnimationKind.lottie),
+        iconUrl: ev.giftImageUrl ?? ev.iconUrl ?? fromCatalog?.iconUrl,
+        animationDurationMs: ev.displayDurationMs ?? fromCatalog?.animationDurationMs ?? 0,
+      );
+    }
     if (fromCatalog != null) return fromCatalog;
     return GiftEntity(
       id: giftId,
@@ -206,6 +233,7 @@ class _NetworkVideoPlayerState extends State<_NetworkVideoPlayer> {
       return;
     }
     try {
+      await GiftCacheService.instance.getBytes(url);
       final c = VideoPlayerController.networkUrl(Uri.parse(url));
       await c.initialize();
       if (!mounted) {
@@ -230,8 +258,21 @@ class _NetworkVideoPlayerState extends State<_NetworkVideoPlayer> {
 
   @override
   void dispose() {
-    _controller?.dispose();
+    final c = _controller;
+    _controller = null;
+    c?.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant _NetworkVideoPlayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.url != widget.url) {
+      _controller?.dispose();
+      _controller = null;
+      _failed = false;
+      _init();
+    }
   }
 
   @override

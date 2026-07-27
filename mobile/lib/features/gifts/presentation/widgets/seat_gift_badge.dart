@@ -55,7 +55,7 @@ class SeatGiftBadge extends StatelessWidget {
               ),
               const SizedBox(width: 3),
               Text(
-                compact ? _fmt(agg.totalCoins) : 'Toplam ${_fmt(agg.totalCoins)} Jeton',
+                compact ? _fmt(agg.totalCoins) : _fmt(agg.totalCoins),
                 style: TextStyle(
                   color: const Color(0xFFFFE082),
                   fontSize: compact ? 8 : 9,

@@ -22,8 +22,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   AppPerfMetrics.mark('cold_start');
   PaintingBinding.instance.imageCache
-    ..maximumSize = 150
-    ..maximumSizeBytes = 80 << 20;
+    ..maximumSize = 200
+    ..maximumSizeBytes = 100 << 20;
   AppStartupLog.log('main() begin');
 
   // Release'de hata detayı gösterme; debug'da teşhis için bırak.

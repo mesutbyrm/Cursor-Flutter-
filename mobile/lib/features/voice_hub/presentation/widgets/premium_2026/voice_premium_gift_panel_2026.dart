@@ -42,7 +42,7 @@ class VoicePremiumGiftPanel2026 extends ConsumerStatefulWidget {
 
   final VoiceRoomEntity room;
   final VoidCallback onClose;
-  final void Function(LiveGiftEvent event) onSent;
+  final VoidCallback onSent;
   final List<ChatRoomPresence> seatedUsers;
   final ChatRoomPresence? initialReceiver;
 
@@ -334,40 +334,21 @@ class _VoicePremiumGiftPanel2026State
       final gross = g.price * _qty;
       final revenue = result.revenue;
       unawaited(ref.read(giftSoundServiceProvider).playFor(g.toEntity()));
-      final raw = LiveGiftEvent(
-        id: 'local-${DateTime.now().microsecondsSinceEpoch}',
-        senderId: user?.id,
-        receiverId: receiver.id,
-        senderName: user?.display ?? 'Sen',
-        receiverName: receiver.displayName,
-        giftId: g.id,
-        giftName: PremiumGiftCatalog2026.displayName(
-          g.id,
-          fallback: LiveGiftCatalog.displayName(g),
-        ),
-        quantity: _qty,
-        coinCost: g.price,
-        giftPrice: g.price,
-        totalCoin: gross,
-        timestamp: DateTime.now(),
-        combo: 1,
-        rarity: PremiumGiftCatalog2026.rarity(g.id),
-      );
       ref.refreshWalletCache(force: true);
       if (mounted) {
         final messenger = ScaffoldMessenger.maybeOf(context);
         widget.onClose();
         scheduleMicrotask(() {
-          widget.onSent(raw);
+          widget.onSent();
           final myId = user?.id.trim() ?? '';
           final receiverNet = GiftRevenueDisplay.voiceReceiverNet(
             gross: gross,
             receiverIsOwner: receiverIsOwner,
             revenue: revenue,
           );
-          var msg = '${raw.giftName} x$_qty gönderildi ($gross jeton)';
+          var msg = '${PremiumGiftCatalog2026.displayName(g.id, fallback: LiveGiftCatalog.displayName(g))} x$_qty gönderildi ($gross jeton)';
           if (myId.isNotEmpty && myId == receiver.id.trim()) {
-            msg = '${raw.giftName} aldınız — size $receiverNet jeton kaldı';
+            msg = '${PremiumGiftCatalog2026.displayName(g.id, fallback: LiveGiftCatalog.displayName(g))} aldınız — size $receiverNet jeton kaldı';
           }
           messenger?.showSnackBar(SnackBar(content: Text(msg)));
         });

@@ -568,16 +568,7 @@ class VoiceRoomLiveController
       if (_sessionActive) {
         VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: 'dispose');
       }
-      _poll?.cancel();
-      _presenceHeartbeat?.cancel();
-      _typingStopTimer?.cancel();
-      _enterBannerTimer?.cancel();
-      _musicRequestFlashTimer?.cancel();
-      _announcementTimer?.cancel();
-      _pinnedAnnouncementTimer?.cancel();
-      _moderationToastTimer?.cancel();
-      _kickWarningTimer?.cancel();
-      _seatRefreshDebounce?.cancel();
+      _cancelSessionTimers();
       if (_sessionActive) {
         clearVoiceRoomLiveSession(ref, _roomKey);
         _removeSelfFromPresenceOptimistic();
@@ -890,12 +881,31 @@ class VoiceRoomLiveController
     unawaited(refresh(includeDj: true));
   }
 
+  void _cancelSessionTimers() {
+    _poll?.cancel();
+    _presenceHeartbeat?.cancel();
+    _typingStopTimer?.cancel();
+    _enterBannerTimer?.cancel();
+    _musicRequestFlashTimer?.cancel();
+    _announcementTimer?.cancel();
+    _pinnedAnnouncementTimer?.cancel();
+    _moderationToastTimer?.cancel();
+    _kickWarningTimer?.cancel();
+    _seatRefreshDebounce?.cancel();
+  }
+
   /// Odadan çıkış — presence, SSE ve müzik temizliği (RTC sayfası).
   /// Ağır işlemler UI'ı bloklamaz; navigasyon hemen yapılabilir.
   Future<void> leaveRoomSession({String source = 'ui_leave'}) async {
     if (!_sessionActive) return;
     _sessionActive = false;
     VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: source);
+    _cancelSessionTimers();
+    try {
+      await _leavePresenceWithSeatClear()
+          .timeout(const Duration(seconds: 5))
+          .catchError((_) {});
+    } catch (_) {}
     clearVoiceRoomLiveSession(ref, _roomKey);
     _removeSelfFromPresenceOptimistic();
     state = state.copyWith(
@@ -907,22 +917,15 @@ class VoiceRoomLiveController
       selfInRoom: false,
     );
     _knownPresenceIds.clear();
-    try {
-      unawaited(
-        _leavePresenceWithSeatClear()
-            .timeout(const Duration(seconds: 4))
-            .catchError((_) {}),
-      );
-    } catch (_) {}
-    _poll?.cancel();
-    _presenceHeartbeat?.cancel();
-    _typingStopTimer?.cancel();
     _sseStarted = false;
     _giftSocketStarted = false;
     ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(_roomKey);
     unawaited(_leaveVoiceSession());
     unawaited(_stopTyping());
     ref.read(voiceRoomGiftSocketProvider).disconnect();
+    ref.read(voiceRoomGiftRealtimeProvider).stop();
+    ref.read(pkBattleRemoteProvider.notifier).clear();
+    ref.read(voiceRoomDiagnosticProvider.notifier).resetForRoom(_roomKey);
 
     final player = ref.read(voiceRoomDjPlayerProvider);
     final dj = state.dj;
@@ -1438,6 +1441,7 @@ class VoiceRoomLiveController
         .read(voiceRoomDiagnosticProvider.notifier)
         .setPresence(joined: true, count: remaining.length);
     VoiceRoomDebugLog.log('sse.user_left', {'userId': userId});
+    _clearSeatForUser(userId);
   }
 
   void _showModeratorAnnouncement(String text) {

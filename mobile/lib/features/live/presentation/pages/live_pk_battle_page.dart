@@ -126,7 +126,6 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final toLeft = challengerId == null || event.senderId == challengerId;
     _lastGiftSideLeft = toLeft;
     ref.read(pkBattleProvider.notifier).applyGift(event, toLeft: toLeft);
-    ref.read(liveGiftRealtimeProvider).publishLocal(event);
   }
 
   @override

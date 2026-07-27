@@ -109,6 +109,11 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       return;
     }
 
+    if (raw.id.startsWith('local-')) {
+      GiftSyncLog.dedupeSkipped(roomId, raw.id, 'local_blocked');
+      return;
+    }
+
     if (state.processedEventIds.contains(raw.id)) {
       GiftSyncLog.dedupeSkipped(roomId, raw.id, 'duplicate_id');
       return;

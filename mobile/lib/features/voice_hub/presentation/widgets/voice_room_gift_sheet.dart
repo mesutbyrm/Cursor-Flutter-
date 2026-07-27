@@ -11,14 +11,11 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../live/domain/entities/live_gift_catalog.dart';
-import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/chat_room_providers.dart';
-import '../providers/voice_gift_combo_tracker.dart';
-import '../providers/voice_gift_leaderboard_provider.dart';
 import '../providers/voice_gift_providers.dart';
 import 'premium_2026/voice_premium_gift_panel_2026.dart';
 
@@ -48,16 +45,8 @@ Future<void> showVoiceRoomGiftPicker(
             seatedUsers: seatedUsers,
             initialReceiver: initialReceiver,
             onClose: () => Navigator.pop(context),
-            onSent: (raw) {
-              scheduleMicrotask(() {
-                final event =
-                    ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
-                ref
-                    .read(voiceSessionGiftLeaderboardProvider.notifier)
-                    .record(event);
-                ref.read(voiceRoomGiftRealtimeProvider).publishLocal(event);
-                onGiftSent?.call();
-              });
+            onSent: () {
+              onGiftSent?.call();
             },
           );
         },
@@ -165,38 +154,13 @@ Future<void> showVoiceRoomGiftPickerLegacy(
                                   await ref
                                       .read(giftSoundServiceProvider)
                                       .playFor(g.toEntity());
-                                  final raw = LiveGiftEvent(
-                                    id: 'local-${DateTime.now().microsecondsSinceEpoch}',
-                                    senderId: user?.id,
-                                    receiverId: room.ownerId,
-                                    senderName: user?.display ?? 'Sen',
-                                    receiverName:
-                                        room.ownerName ?? 'Oda sahibi',
-                                    giftId: g.id,
-                                    giftName: LiveGiftCatalog.displayName(g),
-                                    quantity: 1,
-                                    coinCost: g.price,
-                                    timestamp: DateTime.now(),
-                                  );
-                                  final event = ref
-                                      .read(voiceGiftComboTrackerProvider.notifier)
-                                      .enrich(raw);
-                                  ref
-                                      .read(voiceSessionGiftLeaderboardProvider.notifier)
-                                      .record(event);
-                                  ref
-                                      .read(voiceRoomGiftRealtimeProvider)
-                                      .publishLocal(event);
                                   if (context.mounted) {
                                     ref.refreshWalletCache(force: true);
-                                    ref
-                                        .read(voiceRoomLiveProvider(room.liveKey).notifier)
-                                        .refresh();
                                     Navigator.pop(context);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          '${event.giftName} gönderildi',
+                                          '${LiveGiftCatalog.displayName(g)} gönderildi',
                                         ),
                                       ),
                                     );
