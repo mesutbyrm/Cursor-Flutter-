@@ -129,7 +129,7 @@ class LiveMockupSideRail extends StatelessWidget {
           const SizedBox(height: 12),
         ],
         GestureDetector(
-          onTap: onLike,
+          onDoubleTap: onLike,
           child: Column(
             children: [
               Container(

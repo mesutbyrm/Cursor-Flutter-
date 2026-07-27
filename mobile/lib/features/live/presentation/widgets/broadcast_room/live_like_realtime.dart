@@ -219,10 +219,25 @@ void handleLiveLikeSignal(
       : signal;
   final delta = _asInt(payload['count'] ?? payload['delta'] ?? 1);
   final total = _asIntOrNull(payload['likeCount'] ?? payload['total']);
+  final userId = (payload['userId'] ?? payload['senderId'] ?? payload['id'])
+      ?.toString()
+      .trim();
+  final userTotal = _asIntOrNull(
+    payload['userLikeCount'] ?? payload['userLikes'] ?? payload['myLikes'],
+  );
 
   final notifier = ref.read(liveRoomInteractionProvider(streamId).notifier);
+  if (userId != null && userId.isNotEmpty) {
+    notifier.applyRemoteUserLike(
+      userId: userId,
+      delta: delta,
+      userTotal: userTotal,
+      streamTotal: total,
+    );
+    return;
+  }
   if (total != null) {
-    notifier.syncRemoteLikeCount(total);
+    notifier.syncRemoteLikeCount(total, pulse: true);
   } else if (delta > 0) {
     notifier.pulseHeartsVisual(bursts: delta.clamp(1, 3));
   } else {

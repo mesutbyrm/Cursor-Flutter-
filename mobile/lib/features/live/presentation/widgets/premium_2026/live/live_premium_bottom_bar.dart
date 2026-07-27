@@ -6,8 +6,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import '../../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../broadcast_room/live_camera_control.dart';
 
-/// Mockup alt bar — mesaj + Misafir / Eş Yayın / Oyunlar / Paylaş / Hediye kutusu / Daha fazla.
-/// Hediyeler açık şeritte değil; yalnızca hediye kutusundan açılır.
+/// Mockup alt bar — mesaj + Daha fazla (emoji, hediye, misafir, oyunlar menüde).
 class LivePremiumBottomBar extends StatelessWidget {
   const LivePremiumBottomBar({
     super.key,
@@ -15,15 +14,9 @@ class LivePremiumBottomBar extends StatelessWidget {
     required this.onSend,
     required this.isHost,
     this.trtc,
-    this.onGift,
     this.onToggleCamera,
     this.onRtcStateChanged,
     this.onEnd,
-    this.onJoinBroadcast,
-    this.onGuest,
-    this.onCoBroadcast,
-    this.onGames,
-    this.onShare,
     this.onMore,
     this.onToggleChat,
     this.chatVisible = true,
@@ -34,59 +27,19 @@ class LivePremiumBottomBar extends StatelessWidget {
   final VoidCallback onSend;
   final bool isHost;
   final TrtcRoomManager? trtc;
-  final VoidCallback? onGift;
   final VoidCallback? onToggleCamera;
   final VoidCallback? onRtcStateChanged;
   final VoidCallback? onEnd;
-  final VoidCallback? onJoinBroadcast;
-  final VoidCallback? onGuest;
-  final VoidCallback? onCoBroadcast;
-  final VoidCallback? onGames;
-  final VoidCallback? onShare;
   final VoidCallback? onMore;
   final VoidCallback? onToggleChat;
   final bool chatVisible;
   final bool commentsEnabled;
-
-  void _showEmojiPicker(BuildContext context) {
-    const emojis = [
-      '😀', '😂', '❤️', '🔥', '👏', '🎉', '💎', '🎤',
-      '🙏', '✨', '💜', '😍', '🤣', '👋', '🌙', '⭐',
-    ];
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        decoration: BoxDecoration(
-          color: const Color(0xFF14101F).withValues(alpha: 0.96),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: emojis
-              .map(
-                (e) => InkWell(
-                  onTap: () {
-                    chatController.text = '${chatController.text}$e';
-                    Navigator.pop(ctx);
-                  },
-                  child: Text(e, style: const TextStyle(fontSize: 28)),
-                ),
-              )
-              .toList(),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
     final hasRtc = trtc != null;
     final rtcChanged = onRtcStateChanged ?? onToggleCamera;
-    final guestAction = onGuest ?? onJoinBroadcast;
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
@@ -183,57 +136,13 @@ class LivePremiumBottomBar extends StatelessWidget {
                               onSubmitted: (_) => onSend(),
                             ),
                           ),
-                          IconButton(
-                            onPressed: commentsEnabled
-                                ? () => _showEmojiPicker(context)
-                                : null,
-                            icon: Icon(
-                              Icons.emoji_emotions_outlined,
-                              size: 20,
-                              color: Colors.white.withValues(alpha: 0.7),
-                            ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 36,
-                              minHeight: 36,
-                            ),
-                          ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  if (guestAction != null)
-                    _ActionIcon(
-                      icon: Icons.people_alt_rounded,
-                      label: 'Misafir',
-                      onTap: guestAction,
-                    ),
-                  if (onCoBroadcast != null)
-                    _ActionIcon(
-                      icon: Icons.video_call_rounded,
-                      label: 'Eş Yayın',
-                      onTap: onCoBroadcast,
-                    ),
-                  if (onGames != null)
-                    _ActionIcon(
-                      icon: Icons.sports_esports_rounded,
-                      label: 'Oyunlar',
-                      onTap: onGames,
-                    ),
-                  if (onShare != null)
-                    _ActionIcon(
-                      icon: Icons.share_rounded,
-                      label: 'Paylaş',
-                      onTap: onShare,
-                    ),
-                  if (onGift != null) ...[
-                    const SizedBox(width: 2),
-                    _GiftBoxButton(onTap: onGift!),
-                  ],
                   if (onMore != null)
                     _ActionIcon(
-                      icon: Icons.more_horiz_rounded,
+                      icon: Icons.apps_rounded,
                       label: 'Daha fazla',
                       onTap: onMore,
                     ),

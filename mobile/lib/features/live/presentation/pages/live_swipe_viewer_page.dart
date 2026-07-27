@@ -77,6 +77,16 @@ class _LiveSwipeViewerPageState extends ConsumerState<LiveSwipeViewerPage> {
             embeddedInSwipe: true,
             active: i == _index,
             onSwipeClose: () => context.pop(),
+            onAdvanceToNextStream: () {
+              if (_index < streams.length - 1) {
+                _pageCtrl.nextPage(
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeOutCubic,
+                );
+              } else if (context.mounted) {
+                context.pop();
+              }
+            },
           );
         },
       ),

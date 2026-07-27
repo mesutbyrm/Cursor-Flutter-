@@ -22,12 +22,20 @@ class RewardedAdService {
     _sdkReady = true;
   }
 
-  Future<void> preload() async {
+  Future<void> preload({Duration timeout = const Duration(seconds: 15)}) async {
     if (kIsWeb) return;
     await ensureInitialized();
-    if (_ad != null || _loading) return;
+    if (_ad != null) return;
+    if (_loading) {
+      final deadline = DateTime.now().add(timeout);
+      while (_loading && _ad == null && DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      }
+      return;
+    }
     _loading = true;
     try {
+      final completer = Completer<void>();
       await RewardedAd.load(
         adUnitId: AdMobConfig.rewardedAdUnitId,
         request: const AdRequest(),
@@ -35,13 +43,16 @@ class RewardedAdService {
           onAdLoaded: (ad) {
             _ad = ad;
             _loading = false;
+            if (!completer.isCompleted) completer.complete();
           },
           onAdFailedToLoad: (_) {
             _ad = null;
             _loading = false;
+            if (!completer.isCompleted) completer.complete();
           },
         ),
       );
+      await completer.future.timeout(timeout, onTimeout: () {});
     } catch (_) {
       _loading = false;
     }

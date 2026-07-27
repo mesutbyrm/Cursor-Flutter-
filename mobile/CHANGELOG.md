@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.93+120 (2026-07-27)
+
+### Canlı yayın UX — alt bar, beğeni, turnuva, performans
+- **Düşen emoji kaldırıldı:** Açılışta otomatik 💖🌹⭐ animasyonu ve hediye parçacıkları kapalı
+- **Alt bar sade:** Yalnızca mesaj + «Daha fazla»; emoji, misafir, oyun, hediye menüde
+- **Popüler No / Lig:** PK liderlik tablosundan gerçek sıra; tıklanınca liderlik sayfası
+- **Yıldız turnuvası:** `/api/tournaments` listesi ve katılım sheet'i
+- **Çift dokunma beğeni:** Gerçek double-tap; kişi bazlı sayaç + signal senkronu
+- **Yayın kapatma:** Yayıncı geri tuşunda onay; izleyici yayın bitince sonraki yayına geçiş
+- **Hediye donması:** Panel anında kapanır, gönderim arka planda
+- **Ödüllü reklam:** Tam yükleme beklenir (15 sn timeout)
+- **Keşfet:** Ana sayfada «Keşfet» başlığı + canlı yayınlar ve trend videolar
+
 ## 1.0.92+119 (2026-07-27)
 
 ### Hediye görünürlüğü, otomatik koltuk, PK iletimi, performans

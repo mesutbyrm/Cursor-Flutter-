@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -171,14 +172,20 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
   Future<void> _send() async {
     final g = _selected;
     if (g == null) return;
-    await widget.controller.send(
-      gift: g,
-      senderName: widget.senderName,
-      senderId: widget.senderId,
-      quantity: _qty,
-    );
-    ref.refreshWalletCache(force: true);
-    if (mounted) widget.onClose();
+    widget.onClose();
+    unawaited(_sendAsync(g));
+  }
+
+  Future<void> _sendAsync(LiveVideoGiftType g) async {
+    try {
+      await widget.controller.send(
+        gift: g,
+        senderName: widget.senderName,
+        senderId: widget.senderId,
+        quantity: _qty,
+      );
+      ref.refreshWalletCache(force: true);
+    } catch (_) {}
   }
 }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
+import '../theme/home_approved_design.dart';
 import 'approved/discover_section.dart';
 import 'approved/fortune_section.dart';
 import 'approved/gold_section.dart';
@@ -34,6 +35,19 @@ abstract final class HomePageSections {
       ),
       const SliverToBoxAdapter(
         child: RepaintBoundary(child: HomeQuickActions()),
+      ),
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          child: Text(
+            'Keşfet',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: HomeApprovedDesign.textPrimary,
+            ),
+          ),
+        ),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(

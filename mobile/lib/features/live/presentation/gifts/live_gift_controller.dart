@@ -79,6 +79,7 @@ class LiveGiftController extends ChangeNotifier {
   }) async {
     final streamId = _streamId;
     if (streamId == null || streamId.isEmpty || sending) return null;
+    panelOpen = false;
     sending = true;
     notifyListeners();
 

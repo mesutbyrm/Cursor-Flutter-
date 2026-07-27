@@ -26,6 +26,8 @@ class LivePremiumTopBar extends StatelessWidget {
     this.topGifters = const [],
     this.popularRank,
     this.leagueLabel,
+    this.onPopularTap,
+    this.onLeagueTap,
   });
 
   final LiveBroadcastSession session;
@@ -41,6 +43,8 @@ class LivePremiumTopBar extends StatelessWidget {
   final List<LiveGiftSender> topGifters;
   final int? popularRank;
   final String? leagueLabel;
+  final VoidCallback? onPopularTap;
+  final VoidCallback? onLeagueTap;
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +163,7 @@ class LivePremiumTopBar extends StatelessWidget {
                 emoji: '🔥',
                 label: 'Popüler No. $popularRank',
                 color: const Color(0xFFFF6B35),
+                onTap: onPopularTap,
               ),
             if (popularRank != null && (leagueLabel ?? '').isNotEmpty)
               const SizedBox(width: 6),
@@ -167,6 +172,7 @@ class LivePremiumTopBar extends StatelessWidget {
                 emoji: '💎',
                 label: leagueLabel!,
                 color: const Color(0xFF7C4DFF),
+                onTap: onLeagueTap,
               ),
             const Spacer(),
             if (onDiscoverTap != null)
@@ -318,15 +324,17 @@ class _BadgeChip extends StatelessWidget {
     required this.emoji,
     required this.label,
     required this.color,
+    this.onTap,
   });
 
   final String emoji;
   final String label;
   final Color color;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.85),
@@ -341,6 +349,8 @@ class _BadgeChip extends StatelessWidget {
         ),
       ),
     );
+    if (onTap == null) return chip;
+    return GestureDetector(onTap: onTap, child: chip);
   }
 }
 

@@ -42,6 +42,7 @@ import '../../../trtc/domain/entities/trtc_credentials.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../data/host_live_stream_recovery.dart';
 import '../../domain/entities/live_broadcast_session.dart';
+import '../../domain/entities/live_swipe_feed_args.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_guest_layout.dart';
@@ -53,7 +54,8 @@ import '../../domain/utils/live_fortune_type_slug.dart';
 import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import '../gifts/providers/live_seat_gift_flash_provider.dart';
-import '../gifts/widgets/floating_gift_particles.dart';
+import '../providers/live_host_rank_provider.dart';
+import '../../../games/presentation/providers/game_providers.dart';
 import '../providers/pk_room_providers.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
@@ -82,6 +84,7 @@ import '../widgets/broadcast_room/live_room_chat_fal_panel.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import '../widgets/broadcast_room/live_room_video_background.dart';
 import '../widgets/live_playback_bridge.dart';
+import '../widgets/premium_2026/live/live_star_tournament_sheet.dart';
 import '../widgets/premium_2026/live_premium_2026.dart';
 
 /// Premium 2026 canlı yayın — TRTC + immersive overlay + hediye + kalpler.
@@ -91,12 +94,15 @@ class LiveBroadcastRoomPage extends ConsumerStatefulWidget {
     required this.session,
     this.embeddedInSwipe = false,
     this.onSwipeClose,
+    this.onAdvanceToNextStream,
     this.active = true,
   });
 
   final LiveBroadcastSession session;
   final bool embeddedInSwipe;
   final VoidCallback? onSwipeClose;
+  /// Yayın bittiğinde bir sonraki yayına geç (kaydırmalı izleyici).
+  final VoidCallback? onAdvanceToNextStream;
 
   /// Kaydırmalı izleyicide yalnızca ekrandaki sayfa `true`. Ekranda olmayan
   /// (ısıtılmış komşu) sayfalar sesi kısar ki yayınlar üst üste duyulmasın.
@@ -114,7 +120,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   String? _rtcError;
   final _chat = TextEditingController();
 
-  final _particlesKey = GlobalKey<FloatingGiftParticlesState>();
   final _heartsKey = GlobalKey<LiveFloatingHeartsOverlayState>();
   Key _localPreviewKey = UniqueKey();
   var _leaving = false;
@@ -378,11 +383,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!widget.session.isHost || _leaving) return;
+    if (_leaving) return;
+    if (!widget.session.isHost) {
+      if (state == AppLifecycleState.paused ||
+          state == AppLifecycleState.inactive ||
+          state == AppLifecycleState.detached) {
+        unawaited(_exitBroadcast(context, skipHostConfirm: true));
+      }
+      return;
+    }
     if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.detached) {
+        state == AppLifecycleState.inactive) {
       unawaited(_enterHostGracePeriod(notifyViewers: false));
+    } else if (state == AppLifecycleState.detached) {
+      unawaited(_exitBroadcast(context, skipHostConfirm: true));
     } else if (state == AppLifecycleState.resumed && _hostAway) {
       unawaited(_resumeHostBroadcast());
     }
@@ -549,8 +563,31 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     );
   }
 
-  Future<void> _exitBroadcast(BuildContext context) async {
+  Future<void> _exitBroadcast(
+    BuildContext context, {
+    bool skipHostConfirm = false,
+  }) async {
     if (_leaving) return;
+    if (widget.session.isHost && !skipHostConfirm) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Yayını sonlandır'),
+          content: const Text('Canlı yayını kapatmak istiyor musunuz?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Hayır'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Evet, kapat'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || !context.mounted) return;
+    }
     _leaving = true;
     ref.read(liveGiftControllerProvider).detach();
     final streamId = widget.session.streamId?.trim() ?? '';
@@ -607,46 +644,32 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   Future<void> _showViewerStreamEndedSummary(String streamId) async {
     if (_leaving || !mounted) return;
-    final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null || streamId.isEmpty) return;
-    final hostId = widget.session.hostUserId?.trim() ?? '';
-    final summary = SessionGiftSummaryBuilder.forLiveBroadcast(
-      ref: ref,
-      streamId: streamId,
-      hostUserId: hostId.isNotEmpty ? hostId : user.id,
-      hostDisplayName: widget.session.streamerName ?? 'Yayıncı',
-      myUserId: user.id,
-    );
-    await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
+    _leaving = true;
+    try {
+      await _trtc.leave();
+    } catch (_) {}
+    ref.invalidate(liveStreamsProvider);
     if (!mounted) return;
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Yayıncı yayını kapattı'),
-        content: Text(
-          summary.hasData
-              ? 'Yayın sona erdi. Hediye özetiniz bir sonraki ekranda.'
-              : 'Bu yayın sona erdi.',
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Tamam'),
-          ),
-        ],
-      ),
-    );
-    if (!mounted) return;
-    if (summary.hasData) {
-      await showSessionGiftSummarySheet(context, summary: summary);
+    if (widget.onAdvanceToNextStream != null) {
+      widget.onAdvanceToNextStream!();
+      return;
     }
-    if (!mounted) return;
     if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
       widget.onSwipeClose!();
-    } else {
-      context.go('/live');
+      return;
     }
+    try {
+      final streams = await ref.read(liveStreamsProvider.future);
+      final live = streams.where((s) => s.isLive && s.id != streamId).toList();
+      if (live.isNotEmpty && mounted) {
+        context.go('/live/swipe', extra: LiveSwipeFeedArgs(
+          streams: live,
+          initialIndex: 0,
+        ));
+        return;
+      }
+    } catch (_) {}
+    if (mounted) context.go('/live');
   }
 
   Future<void> _enterHostGracePeriod({required bool notifyViewers}) async {
@@ -1244,8 +1267,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   void _onDoubleTapHeart() {
     final streamId = widget.session.streamId?.trim();
     if (streamId == null || streamId.isEmpty) return;
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
     ref.read(liveRoomInteractionProvider(streamId).notifier).burstHearts(
           likes: 1,
+          userId: userId,
         );
   }
 
@@ -1260,7 +1285,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (streamId == null || streamId.isEmpty) return;
     final notifier = ref.read(liveRoomInteractionProvider(streamId).notifier);
     notifier.triggerApplause();
-    notifier.triggerEmojiRain();
   }
 
   /// PK aktif/beklemede VEYA misafir modu → ekran üst/alt bölünür.
@@ -1493,6 +1517,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       context: context,
       backgroundColor: const Color(0xFF151522),
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (ctx) {
         Widget tile({
           required IconData icon,
@@ -1509,77 +1534,145 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           );
         }
 
+        void showEmojiPicker() {
+          const emojis = [
+            '😀', '😂', '❤️', '🔥', '👏', '🎉', '💎', '🎤',
+            '🙏', '✨', '💜', '😍', '🤣', '👋', '🌙', '⭐',
+          ];
+          showModalBottomSheet<void>(
+            context: context,
+            backgroundColor: Colors.transparent,
+            builder: (eCtx) => Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF14101F).withValues(alpha: 0.96),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: emojis
+                    .map(
+                      (e) => InkWell(
+                        onTap: () {
+                          _chat.text = '${_chat.text}$e';
+                          Navigator.pop(eCtx);
+                        },
+                        child: Text(e, style: const TextStyle(fontSize: 28)),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+          );
+        }
+
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (s.isHost) ...[
-                if (pkEnabled)
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                tile(
+                  icon: Icons.emoji_emotions_outlined,
+                  label: 'Emoji',
+                  onTap: showEmojiPicker,
+                ),
+                if (!s.isHost && giftsEnabled && streamId != null)
                   tile(
-                    icon: Icons.sports_mma_rounded,
-                    label: 'PK Başlat',
+                    icon: Icons.card_giftcard_rounded,
+                    label: 'Hediye gönder',
+                    onTap: () =>
+                        ref.read(liveGiftControllerProvider).setPanelOpen(true),
+                  ),
+                if (!s.isHost && streamId != null && streamId.isNotEmpty)
+                  tile(
+                    icon: Icons.people_alt_rounded,
+                    label: 'Misafir ol',
+                    onTap: () => unawaited(_requestGuestJoin()),
+                  ),
+                if (s.isHost && streamId != null)
+                  tile(
+                    icon: Icons.people_alt_rounded,
+                    label: 'Misafir / kontrol merkezi',
+                    onTap: () => unawaited(_openControlCenter()),
+                  ),
+                if (s.isHost && pkEnabled)
+                  tile(
+                    icon: Icons.video_call_rounded,
+                    label: 'Eş yayın / PK',
                     onTap: () => unawaited(_openPkPanel()),
                   ),
                 tile(
-                  icon: Icons.auto_awesome_rounded,
-                  label: 'Kontrol merkezi ($pendingFortune)',
-                  onTap: () => unawaited(_openControlCenter()),
+                  icon: Icons.sports_esports_rounded,
+                  label: 'Oyunlar',
+                  onTap: () => unawaited(_openGamesHub()),
                 ),
                 tile(
-                  icon: Icons.settings_rounded,
-                  label: 'Yayın ayarları',
-                  onTap: () => showLiveBroadcastSettingsSheet(
-                    context: context,
-                    ref: ref,
-                  ),
+                  icon: Icons.emoji_events_rounded,
+                  label: 'Yıldız turnuvası',
+                  onTap: () => unawaited(showLiveStarTournamentSheet(context, ref)),
                 ),
-                tile(
-                  icon: Icons.face_retouching_natural_rounded,
-                  label: 'Güzellik filtresi',
-                  onTap: () => showLiveBeautyFilterSheet(
-                    context: context,
-                    ref: ref,
-                  ),
-                ),
-                tile(
-                  icon: Icons.tune_rounded,
-                  label: 'Yayın araçları',
-                  onTap: () => unawaited(_openHostTools()),
-                ),
-              ] else ...[
-                tile(
-                  icon: Icons.volume_up_rounded,
-                  label: _viewerAudioOn ? 'Sesi kapat' : 'Sesi aç',
-                  onTap: () => setState(() => _viewerAudioOn = !_viewerAudioOn),
-                ),
-                if (streamId != null && streamId.isNotEmpty)
+                if (s.isHost) ...[
+                  if (pkEnabled)
+                    tile(
+                      icon: Icons.sports_mma_rounded,
+                      label: 'PK Başlat',
+                      onTap: () => unawaited(_openPkPanel()),
+                    ),
                   tile(
-                    icon: Icons.flag_outlined,
-                    label: 'Bildir',
-                    onTap: () => openReportFlow(
-                      context,
-                      ReportTarget(
-                        type: ReportTargetType.liveStream,
-                        targetId: streamId,
-                        displayTitle: s.streamerName ?? 'Canlı yayın',
-                      ),
+                    icon: Icons.auto_awesome_rounded,
+                    label: 'Kontrol merkezi ($pendingFortune)',
+                    onTap: () => unawaited(_openControlCenter()),
+                  ),
+                  tile(
+                    icon: Icons.settings_rounded,
+                    label: 'Yayın ayarları',
+                    onTap: () => showLiveBroadcastSettingsSheet(
+                      context: context,
+                      ref: ref,
                     ),
                   ),
-              ],
-              tile(
-                icon: Icons.share_rounded,
-                label: 'Paylaş',
-                onTap: () => unawaited(_shareLive()),
-              ),
-              if (giftsEnabled)
+                  tile(
+                    icon: Icons.face_retouching_natural_rounded,
+                    label: 'Güzellik filtresi',
+                    onTap: () => showLiveBeautyFilterSheet(
+                      context: context,
+                      ref: ref,
+                    ),
+                  ),
+                  tile(
+                    icon: Icons.tune_rounded,
+                    label: 'Yayın araçları',
+                    onTap: () => unawaited(_openHostTools()),
+                  ),
+                ] else ...[
+                  tile(
+                    icon: Icons.volume_up_rounded,
+                    label: _viewerAudioOn ? 'Sesi kapat' : 'Sesi aç',
+                    onTap: () => setState(() => _viewerAudioOn = !_viewerAudioOn),
+                  ),
+                  if (streamId != null && streamId.isNotEmpty)
+                    tile(
+                      icon: Icons.flag_outlined,
+                      label: 'Bildir',
+                      onTap: () => openReportFlow(
+                        context,
+                        ReportTarget(
+                          type: ReportTargetType.liveStream,
+                          targetId: streamId,
+                          displayTitle: s.streamerName ?? 'Canlı yayın',
+                        ),
+                      ),
+                    ),
+                ],
                 tile(
-                  icon: Icons.card_giftcard_rounded,
-                  label: 'Hediye kutusu',
-                  onTap: () =>
-                      ref.read(liveGiftControllerProvider).setPanelOpen(true),
+                  icon: Icons.share_rounded,
+                  label: 'Paylaş',
+                  onTap: () => unawaited(_shareLive()),
                 ),
-              const SizedBox(height: 8),
-            ],
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         );
       },
@@ -1598,14 +1691,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     required LiveGiftController giftCtrl,
   }) {
     return LiveMockupSideRail(
-      likeLabel: _fmtLikes(interaction.likeCount),
+      likeLabel: _likeRailLabel(interaction),
       onLike: _onDoubleTapHeart,
       showFortune: !s.isHost && _isFortuneBroadcast(s),
       onFortune: !s.isHost && _isFortuneBroadcast(s)
           ? () => unawaited(_onFortuneRequest(s))
           : null,
-      onGiftPackages: () => giftCtrl.setPanelOpen(true),
     );
+  }
+
+  String _likeRailLabel(LiveRoomInteractionState interaction) {
+    final total = _fmtLikes(interaction.likeCount);
+    final mine = interaction.myLikeCount;
+    if (mine <= 0) return total;
+    return '$total\nSen: $mine';
   }
 
   Widget _videoLayer(LiveBroadcastSession s) {
@@ -1951,11 +2050,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 giftName: ev.giftName,
               );
         }
-        final emoji = LiveGiftCatalog.emojiById[ev.giftId] ?? '💖';
-        _particlesKey.currentState?.burst(
-          emoji,
-          count: 6 + (ev.quantity * ev.coinCost ~/ 100).clamp(0, 12),
-        );
         if (hasStream) {
           final battle = ref.read(liveVideoPkProvider(streamId)).battle;
           if (battle != null && battle['status'] == 'active') {
@@ -1991,6 +2085,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
     final pkExtras = _pkBattleExtras(pkState?.battle);
     final pkStatus = pkState?.status ?? '';
+    final hostId = s.hostUserId?.trim() ?? '';
+    final hostRankAsync = hostId.isNotEmpty
+        ? ref.watch(liveHostRankProvider(hostId))
+        : const AsyncValue<LiveHostRankInfo?>.data(null);
+    final hostRank = hostRankAsync.valueOrNull;
+    final tournamentsAsync = ref.watch(gameTournamentsProvider);
+    final tournamentRank = tournamentsAsync.valueOrNull?.isNotEmpty == true
+        ? (tournamentsAsync.valueOrNull!.first.rank ?? 3)
+        : null;
 
     return GiftEventListener(
       sessionKey: streamId ?? '',
@@ -2041,10 +2144,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             LiveInteractionEffectsOverlay(
               burstToken: interaction.heartBurstToken,
               superLikeToken: interaction.superLikeToken,
-              emojiRainToken: interaction.emojiRainToken,
+              emojiRainToken: 0,
               applauseToken: interaction.applauseToken,
             ),
-            FloatingGiftParticles(key: _particlesKey),
             Positioned.fill(
               child: IgnorePointer(
                 child: VoiceGiftFlightOverlay(
@@ -2102,14 +2204,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 right: 12,
                 top: top + 108,
                 child: LiveStarTournamentCard(
-                  rank: 3,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Yıldız Turnuvası yakında'),
-                      ),
-                    );
-                  },
+                  rank: tournamentRank ?? hostRank?.popularRank ?? 3,
+                  onTap: () => unawaited(showLiveStarTournamentSheet(context, ref)),
+                ),
+              ),
+            if (hasStream && interaction.userLikeCounts.isNotEmpty)
+              Positioned(
+                left: 12,
+                bottom: 268,
+                child: _LiveLikeContributorsChip(
+                  counts: interaction.userLikeCounts,
                 ),
               ),
             if (hasStream)
@@ -2140,8 +2244,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                       topGifters: hasStream
                           ? ref.watch(liveGiftLeaderboardProvider(streamId))
                           : const [],
-                      popularRank: s.isHost || s.viewerCount > 0 ? 1 : null,
-                      leagueLabel: 'Lig 1',
+                      popularRank: hostRank?.popularRank,
+                      leagueLabel: hostRank?.leagueLabel,
+                      onPopularTap: () => context.push('/pk/leaderboard'),
+                      onLeagueTap: () => context.push('/pk/leaderboard'),
                       onViewersTap: hasStream
                           ? () => showLiveViewersSheet(
                                 context,
@@ -2365,20 +2471,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                       chatVisible: _chatVisible,
                       onToggleChat: () =>
                           setState(() => _chatVisible = !_chatVisible),
-                      onGuest: !s.isHost &&
-                              broadcastSettings.guestsEnabled &&
-                              hasStream
-                          ? () => unawaited(_requestGuestJoin())
-                          : s.isHost && hasStream
-                              ? () => unawaited(_openControlCenter())
-                              : null,
-                      onCoBroadcast: s.isHost && hasStream
-                          ? () => unawaited(_openPkPanel())
-                          : broadcastSettings.guestsEnabled && hasStream
-                              ? () => unawaited(_requestGuestJoin())
-                              : null,
-                      onGames: () => unawaited(_openGamesHub()),
-                      onShare: () => unawaited(_shareLive()),
                       onMore: () => unawaited(
                         _openLiveMoreMenu(
                           s: s,
@@ -2395,9 +2487,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                               _trtc.setCameraEnabled(!_trtc.cameraOn);
                               setState(() => _localPreviewKey = UniqueKey());
                             }
-                          : null,
-                      onGift: broadcastSettings.giftsEnabled
-                          ? () => giftCtrl.setPanelOpen(true)
                           : null,
                       onSend: () {
                         final t = _chat.text.trim();
@@ -2522,6 +2611,41 @@ class _LastJoinedChip extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LiveLikeContributorsChip extends StatelessWidget {
+  const _LiveLikeContributorsChip({required this.counts});
+
+  final Map<String, int> counts;
+
+  @override
+  Widget build(BuildContext context) {
+    final top = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final line = top
+        .take(3)
+        .map((e) => '❤️ ${e.value}')
+        .join('  ');
+    if (line.isEmpty) return const SizedBox.shrink();
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Text(
+          line,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
     );
