@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -328,7 +330,7 @@ class _VoicePremiumGiftPanel2026State
       }
       final gross = g.price * _qty;
       final revenue = result.revenue;
-      await ref.read(giftSoundServiceProvider).playFor(g.toEntity());
+      unawaited(ref.read(giftSoundServiceProvider).playFor(g.toEntity()));
       final raw = LiveGiftEvent(
         id: 'local-${DateTime.now().microsecondsSinceEpoch}',
         senderId: user?.id,
@@ -349,7 +351,6 @@ class _VoicePremiumGiftPanel2026State
         rarity: PremiumGiftCatalog2026.rarity(g.id),
       );
       ref.refreshWalletCache(force: true);
-      ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier).refresh();
       if (mounted) {
         widget.onSent(raw);
         widget.onClose();

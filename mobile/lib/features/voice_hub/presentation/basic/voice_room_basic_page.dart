@@ -26,9 +26,6 @@ import '../../../gifts/domain/session_gift_summary_builder.dart';
 import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../../gifts/domain/gift_revenue_display.dart';
 import '../../../gifts/presentation/sync/gift_event_listener.dart';
-import '../../../gifts/presentation/sync/gift_session_controller.dart';
-import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
-import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import '../providers/staff_entrance_marquee_provider.dart';
 import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_leaderboard_provider.dart';
@@ -47,7 +44,7 @@ import '../utils/voice_room_permissions.dart';
 import '../utils/voice_room_error_display.dart';
 import '../utils/voice_room_speak_access.dart';
 import '../theme/voice_room_tokens.dart';
-import '../widgets/premium/voice_gift_flight_overlay.dart';
+import '../widgets/premium/voice_gift_stage_overlays.dart';
 import '../widgets/premium_2026/voice_cosmic_background.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
@@ -583,10 +580,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
     final sessionKey =
         room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-    final giftSession = ref.watch(giftSessionProvider(sessionKey));
-    final flightEvents = giftSession.activeAnimation != null
-        ? [giftSession.activeAnimation!]
-        : const <LiveGiftEvent>[];
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
     final jeton = ref.watch(
       walletBalancesProvider.select((a) => a.valueOrNull?.jeton ?? 0),
@@ -891,18 +884,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
               ],
             ),
             ),
-            VoiceGiftFlightOverlay(
-              events: flightEvents,
-              enabled: ui.giftAnimationsEnabled,
-              stageContext: GiftStageContext.voiceRoom,
-              onFinished: (id) => ref
-                  .read(giftSessionProvider(sessionKey).notifier)
-                  .dequeueAnimation(id),
-            ),
-            SafePremiumGiftFullscreenOverlay(
-              event: giftSession.activeFullscreen,
-              stageContext: GiftStageContext.voiceRoom,
-            ),
+            VoiceGiftStageOverlays(sessionKey: sessionKey),
             if (_showVipEntrance && user != null)
               Builder(
                 builder: (context) {

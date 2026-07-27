@@ -25,8 +25,6 @@ import '../domain/voice_official_join.dart';
 import '../../gifts/domain/session_gift_summary_builder.dart';
 import '../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
-import '../../gifts/presentation/widgets/gift_stage_layout.dart';
-import '../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import '../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../gifts/presentation/widgets/lucky_gift_wins_ticker.dart';
 import 'providers/voice_gift_combo_tracker.dart';
@@ -71,7 +69,7 @@ import 'utils/voice_room_permissions.dart';
 import 'utils/voice_room_error_display.dart';
 import 'utils/voice_room_speak_access.dart';
 import 'utils/voice_room_responsive_metrics.dart';
-import 'widgets/premium/voice_gift_flight_overlay.dart';
+import 'widgets/premium/voice_gift_stage_overlays.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
 import 'widgets/voice_room/voice_room_spec_footer.dart';
@@ -79,7 +77,6 @@ import 'sheets/voice_room_commands_panel.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import 'widgets/premium_2026/voice_gift_announcement_ticker.dart';
 import '../../gifts/presentation/sync/gift_event_listener.dart';
-import '../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../gifts/presentation/widgets/unified_recent_gifters_box.dart';
 import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
 import 'utils/kick_strike_ui.dart';
@@ -1094,10 +1091,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final ui = ref.watch(voiceRoomUiProvider);
     final sessionKey =
         room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-    final giftSession = ref.watch(giftSessionProvider(sessionKey));
-    final flightEvents = giftSession.activeAnimation != null
-        ? [giftSession.activeAnimation!]
-        : const <LiveGiftEvent>[];
     final online = live.onlineCountFor(room);
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _perms(user, live.presence, server: live.serverPermissions);
@@ -1796,18 +1789,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 ),
               ],
             ),
-            VoiceGiftFlightOverlay(
-              events: flightEvents,
-              enabled: ui.giftAnimationsEnabled,
-              stageContext: GiftStageContext.voiceRoom,
-              onFinished: (id) => ref
-                  .read(giftSessionProvider(sessionKey).notifier)
-                  .dequeueAnimation(id),
-            ),
-            SafePremiumGiftFullscreenOverlay(
-              event: giftSession.activeFullscreen,
-              stageContext: GiftStageContext.voiceRoom,
-            ),
+            VoiceGiftStageOverlays(sessionKey: sessionKey),
             if (_showVipEntrance && user != null)
               Builder(
                 builder: (context) {

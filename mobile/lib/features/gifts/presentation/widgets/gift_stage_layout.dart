@@ -91,7 +91,6 @@ class GiftStageLargeDisplay extends StatelessWidget {
             event: event,
             size: giftSize,
             preferPremiumVisual: false,
-            repeat: true,
           ),
         ),
       ],
