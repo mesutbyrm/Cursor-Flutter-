@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../live/domain/entities/live_gift_event.dart';
+import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../gifts/domain/gift_render_meta.dart';
 import '../../../gifts/presentation/widgets/gift_animation_player.dart';
 import '../../../gifts/presentation/widgets/gift_stage_layout.dart';

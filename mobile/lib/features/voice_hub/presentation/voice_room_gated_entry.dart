@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../live/domain/entities/voice_room_entity.dart';
-import '../../../vip_gold/presentation/widgets/vip_locked_room_sheet.dart';
-import '../../../vip_gold/domain/voice_room_access.dart';
+import '../../live/domain/entities/voice_room_entity.dart';
+import '../../vip_gold/presentation/widgets/vip_locked_room_sheet.dart';
+import '../../vip_gold/domain/voice_room_access.dart';
 import 'basic/voice_room_page.dart';
 import 'widgets/voice_room_error_boundary.dart';
 

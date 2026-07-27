@@ -4,15 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../live/domain/entities/live_gift_event.dart';
-import '../../../gifts/presentation/sync/gift_session_controller.dart';
+import '../../../../gifts/presentation/sync/gift_session_controller.dart';
 
 class _SenderTag {
   _SenderTag({
     required this.id,
+    required this.senderId,
     required this.name,
   });
 
   final String id;
+  final String senderId;
   final String name;
 }
 
@@ -53,7 +55,11 @@ class _VoiceGiftSenderTagsPanelState
     final qty = event.quantity > 0 ? event.quantity : 1;
     _counts[senderId] = (_counts[senderId] ?? 0) + qty;
 
-    final tag = _SenderTag(id: '${event.id}-$senderId', name: name);
+    final tag = _SenderTag(
+      id: '${event.id}-$senderId',
+      senderId: senderId,
+      name: name,
+    );
     setState(() {
       _visible.removeWhere((t) => t.id == tag.id);
       _visible.insert(0, tag);
@@ -92,6 +98,7 @@ class _VoiceGiftSenderTagsPanelState
             _FadingNameChip(
               key: ValueKey(tag.id),
               name: tag.name,
+              count: _counts[tag.senderId] ?? 1,
             ),
         ],
       ),
@@ -103,9 +110,11 @@ class _FadingNameChip extends StatefulWidget {
   const _FadingNameChip({
     super.key,
     required this.name,
+    required this.count,
   });
 
   final String name;
+  final int count;
 
   @override
   State<_FadingNameChip> createState() => _FadingNameChipState();
@@ -149,7 +158,7 @@ class _FadingNameChipState extends State<_FadingNameChip>
             border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
           ),
           child: Text(
-            widget.name,
+            '${widget.name} ×${widget.count}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -163,14 +172,3 @@ class _FadingNameChipState extends State<_FadingNameChip>
     );
   }
 }
-
-/// Her cihazda gönderen başına toplam hediye sayısı.
-final voiceGiftSenderCountsProvider = Provider.autoDispose
-    .family<Map<String, int>, String>((ref) {
-  ref.watch(
-    giftSessionProvider.select(
-      (s) => s.latestEvent?.id,
-    ),
-  );
-  return const {};
-});

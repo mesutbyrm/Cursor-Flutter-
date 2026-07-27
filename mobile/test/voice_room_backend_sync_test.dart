@@ -3,12 +3,12 @@ import 'package:canlifal_social/features/voice_hub/domain/entities/voice_room_st
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('parseVoiceRoomSeatMap pads to 15 seats', () {
+  test('parseVoiceRoomSeatMap pads to 11 seats', () {
     final seats = parseVoiceRoomSeatMap([
       {'index': 0, 'userId': 'u1', 'name': 'Ali', 'micOn': true},
       null,
     ]);
-    expect(seats.length, 15);
+    expect(seats.length, 11);
     expect(seats[0].userId, 'u1');
     expect(seats[0].micOn, true);
     expect(seats[1].isEmpty, true);

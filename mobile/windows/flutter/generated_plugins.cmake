@@ -3,7 +3,6 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  agora_rtc_engine
   audioplayers_windows
   cloud_firestore
   connectivity_plus
@@ -16,7 +15,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_secure_storage_windows
   flutter_tts
   flutter_webrtc
-  iris_method_channel
   livekit_client
   permission_handler_windows
   record_windows

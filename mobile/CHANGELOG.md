@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.89+116 (2026-07-27)
+
+### CI düzeltmesi — TRTC ve hediye paketi
+- **Derleme:** Agora motoru tamamen kaldırıldı; import yolları ve güzellik filtresi düzeltildi
+- **11 koltuk:** `parseVoiceRoomSeatMap` ve oda düzeni 11 koltukla hizalandı
+- **Gönderen paneli:** Hediye atan kişinin toplam adedi (×N) koltuk sol altında görünür
+
 ## 1.0.88+115 (2026-07-27)
 
 ### Canlı Falcılar, TRTC, hediye ve oda sistemi

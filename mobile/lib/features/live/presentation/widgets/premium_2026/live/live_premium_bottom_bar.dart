@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../agora/presentation/agora_room_manager.dart';
 import '../../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../broadcast_room/live_camera_control.dart';
 
@@ -15,7 +14,6 @@ class LivePremiumBottomBar extends StatelessWidget {
     required this.chatController,
     required this.onSend,
     required this.isHost,
-    this.agora,
     this.trtc,
     this.onGift,
     this.onToggleCamera,
@@ -35,7 +33,6 @@ class LivePremiumBottomBar extends StatelessWidget {
   final TextEditingController chatController;
   final VoidCallback onSend;
   final bool isHost;
-  final AgoraRoomManager? agora;
   final TrtcRoomManager? trtc;
   final VoidCallback? onGift;
   final VoidCallback? onToggleCamera;
@@ -87,7 +84,7 @@ class LivePremiumBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
-    final hasRtc = agora != null || trtc != null;
+    final hasRtc = trtc != null;
     final rtcChanged = onRtcStateChanged ?? onToggleCamera;
     final guestAction = onGuest ?? onJoinBroadcast;
 
@@ -113,22 +110,16 @@ class LivePremiumBottomBar extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     LiveMicToggleButton(
-                      agora: agora,
-                      trtc: trtc,
+                      trtc: trtc!,
                       size: 40,
                       onChanged: rtcChanged,
                     ),
                     LiveCameraToggleButton(
-                      agora: agora,
-                      trtc: trtc,
+                      trtc: trtc!,
                       size: 40,
                       onChanged: rtcChanged,
                     ),
-                    LiveCameraSwitchButton(
-                      agora: agora,
-                      trtc: trtc,
-                      size: 40,
-                    ),
+                    LiveCameraSwitchButton(trtc: trtc!),
                     if (onEnd != null)
                       _MiniControl(
                         icon: Icons.stop_circle_rounded,

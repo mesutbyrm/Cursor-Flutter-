@@ -68,28 +68,28 @@ class VoiceRoomSeatSlot extends Equatable {
   List<Object?> get props => [index, userId, name, image, micOn];
 }
 
-/// 15 koltukluk harita — backend sırası korunur.
+/// 11 koltukluk harita — backend sırası korunur.
 List<VoiceRoomSeatSlot> parseVoiceRoomSeatMap(dynamic raw) {
   if (raw is List) {
     final out = <VoiceRoomSeatSlot>[];
     for (var i = 0; i < raw.length; i++) {
       out.add(VoiceRoomSeatSlot.fromJson(raw[i], fallbackIndex: i));
     }
-    while (out.length < 15) {
+    while (out.length < 11) {
       out.add(VoiceRoomSeatSlot.empty(out.length));
     }
-    return out.take(15).toList();
+    return out.take(11).toList();
   }
   if (raw is Map) {
     final map = Map<String, dynamic>.from(raw);
     final seats = map['seats'] ?? map['items'] ?? map['slots'];
     if (seats is List) return parseVoiceRoomSeatMap(seats);
     final out = <VoiceRoomSeatSlot>[];
-    for (var i = 0; i < 15; i++) {
+    for (var i = 0; i < 11; i++) {
       final entry = map['$i'] ?? map[i.toString()];
       out.add(VoiceRoomSeatSlot.fromJson(entry, fallbackIndex: i));
     }
     return out;
   }
-  return List.generate(15, VoiceRoomSeatSlot.empty);
+  return List.generate(11, VoiceRoomSeatSlot.empty);
 }

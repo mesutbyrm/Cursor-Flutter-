@@ -319,7 +319,7 @@ class _SvgaPlayerState extends State<_SvgaPlayer> {
         url: icon,
         width: widget.size,
         height: widget.size,
-        fit: fit,
+        fit: BoxFit.contain,
         errorWidget: _pulseEmoji(widget.emoji, widget.size),
       );
     }
