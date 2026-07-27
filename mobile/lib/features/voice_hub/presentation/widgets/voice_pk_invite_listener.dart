@@ -13,7 +13,7 @@ import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_pk_owned_rooms_socket_provider.dart';
 
-/// Sesli oda PK davetleri — Socket.IO + SSE; HTTP polling yok.
+/// Sesli oda PK davetleri — Socket.IO + SSE + periyodik REST yedek.
 class VoicePkInviteListener extends ConsumerStatefulWidget {
   const VoicePkInviteListener({super.key, required this.child});
 
@@ -219,6 +219,51 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         );
       }
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _pollTimer = Timer.periodic(const Duration(seconds: 6), (_) {
+      unawaited(_pollPendingInvites());
+    });
+    Future.microtask(_pollPendingInvites);
+  }
+
+  Timer? _pollTimer;
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _pollPendingInvites() async {
+    if (_showing || !mounted) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return;
+    try {
+      final api = ref.read(pkBattleRemoteDataSourceProvider);
+      final invites = await api.fetchMyInvites();
+      for (final battle in invites) {
+        if (!battle.isPending) continue;
+        _onBattleUpdate(battle);
+        return;
+      }
+      final rooms = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
+      for (final room in _ownedRooms(rooms, user.id)) {
+        final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+        if (key.isEmpty) continue;
+        final alt = room.slug != key ? room.slug : null;
+        final battle = await ref
+            .read(pkBattleRemoteProvider.notifier)
+            .loadRoomBattle(key, alternateRoomId: alt);
+        if (battle?.isPending == true) {
+          _onBattleUpdate(battle);
+          return;
+        }
+      }
+    } catch (_) {}
   }
 
   @override

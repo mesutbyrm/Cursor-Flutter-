@@ -39,9 +39,7 @@ class _VoicePkInviteBannerState extends ConsumerState<VoicePkInviteBanner> {
   @override
   void initState() {
     super.initState();
-    if (widget.isOwner) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _loadOnce());
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadOnce());
   }
 
   @override
@@ -51,9 +49,7 @@ class _VoicePkInviteBannerState extends ConsumerState<VoicePkInviteBanner> {
   }
 
   Future<void> _loadOnce() async {
-    if (!mounted || !widget.isOwner) return;
-    final live = ref.read(voiceRoomLiveProvider(widget.liveKey));
-    if (live.sseConnected) return;
+    if (!mounted) return;
     final key = widget.room.apiRoomKey.isNotEmpty
         ? widget.room.apiRoomKey
         : widget.room.id;

@@ -55,6 +55,9 @@ class PkBattleSocketService {
 
         for (final ev in const [
           'pk:invite',
+          'pk_invite',
+          'PK_INVITE',
+          'pkInvite',
           'pk:accept',
           'pk:reject',
           'pk:start',
@@ -94,10 +97,19 @@ class PkBattleSocketService {
   void _handleEvent(String eventName, dynamic data) {
     if (data is! Map) return;
     final map = Map<String, dynamic>.from(data);
-    final raw = map['battle'] ?? map['pk'] ?? map;
-    if (raw is! Map) return;
-    final battle = PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
-    if (battle.id.isEmpty) return;
+    final raw = map['battle'] ??
+        map['pk'] ??
+        map['invite'] ??
+        map['pendingInvite'] ??
+        map;
+    PkBattleRemote? battle;
+    if (raw is Map) {
+      battle = PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
+    }
+    if (battle == null || battle.effectiveId.isEmpty) {
+      battle = PkBattleRemote.fromJson(map);
+    }
+    if (battle.effectiveId.isEmpty) return;
     _battleId = battle.id;
     _onUpdate?.call(battle, map['event']?.toString() ?? eventName);
   }

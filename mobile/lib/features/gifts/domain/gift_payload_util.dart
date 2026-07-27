@@ -17,11 +17,34 @@ abstract final class GiftPayloadUtil {
     return type.contains('gift');
   }
 
-  static Map<String, dynamic> unwrap(Map<String, dynamic> map) {
-    final nested = map['gift'] ?? map['giftType'] ?? map['data'];
-    if (nested is Map) {
-      return Map<String, dynamic>.from(nested);
+  /// Dış zarf + iç hediye birleştir — sender/jeton alanları kaybolmaz.
+  static Map<String, dynamic> mergeEnvelope(Map<String, dynamic> outer) {
+    final nested = outer['gift'] ?? outer['giftType'] ?? outer['data'];
+    if (nested is! Map) return outer;
+    final inner = asJsonMap(nested);
+    final merged = Map<String, dynamic>.from(inner);
+    for (final entry in outer.entries) {
+      if (entry.key == 'gift' ||
+          entry.key == 'giftType' ||
+          entry.key == 'data') {
+        continue;
+      }
+      final v = entry.value;
+      if (v == null) continue;
+      if (!merged.containsKey(entry.key) || _isEmpty(merged[entry.key])) {
+        merged[entry.key] = v;
+      }
     }
-    return map;
+    return merged;
+  }
+
+  static Map<String, dynamic> unwrap(Map<String, dynamic> map) =>
+      mergeEnvelope(map);
+
+  static bool _isEmpty(dynamic v) {
+    if (v == null) return true;
+    if (v is String) return v.trim().isEmpty;
+    if (v is num) return v == 0;
+    return false;
   }
 }

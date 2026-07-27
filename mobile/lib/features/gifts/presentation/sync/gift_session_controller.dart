@@ -20,6 +20,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   static const _maxRecent = 5;
   static const _comboWindow = Duration(seconds: 5);
   static const _maxProcessedIds = 256;
+  /// Sunucu saati / saniye-ms farkı için katılım öncesi tolerans.
+  static const _joinGraceMs = 15000;
 
   final _recentExpiryTimers = <String, Timer>{};
   final _comboKeys = <String, GiftRecentItem>{};
@@ -149,11 +151,11 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     final jeton = event.jetonAmount;
     final roomTotal = state.roomTotalJeton + jeton;
 
-    final sseOnly = source == 'sse';
+    final sseOnly = source == 'sse' || source == 'live_realtime';
     final joinedMs = _joinTimestampMs;
     final beforeJoin = joinedMs != null &&
         event.eventTimestampMs > 0 &&
-        event.eventTimestampMs < joinedMs;
+        event.eventTimestampMs < joinedMs - _joinGraceMs;
     final animate = sseOnly && !beforeJoin;
 
     state = state.copyWith(

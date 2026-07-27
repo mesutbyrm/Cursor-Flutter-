@@ -1117,6 +1117,7 @@ class VoiceRoomLiveController
               streamId: _roomKey,
             );
             if (ev == null) return;
+            ref.read(voiceRoomGiftRealtimeProvider).publishRemote(ev);
             ref
                 .read(giftSessionProvider(_roomKey).notifier)
                 .onVoiceGiftSent(ev, source: 'sse');

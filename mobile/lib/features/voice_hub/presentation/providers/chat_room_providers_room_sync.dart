@@ -203,6 +203,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       occupantImage: payload['image']?.toString(),
     );
     state = state.copyWith(presence: nextPresence, seatSlots: nextSeats);
+    unawaited(_tryAutoPrivilegedSeat());
   }
 
   void _applyRoomEventOwnerChanged(Map<String, dynamic> payload) {

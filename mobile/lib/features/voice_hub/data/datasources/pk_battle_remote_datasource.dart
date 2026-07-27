@@ -404,4 +404,29 @@ class PkBattleRemoteDataSource {
 
     return null;
   }
+
+  /// Bekleyen PK davetleri — socket yedek poll.
+  Future<List<PkBattleRemote>> fetchMyInvites() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.pkMeInvites,
+        forceRefresh: true,
+      );
+      final map = _unwrap(res.data);
+      final list = map?['items'] ??
+          map?['invites'] ??
+          map?['pending'] ??
+          res.data;
+      final out = <PkBattleRemote>[];
+      for (final raw in asJsonList(list)) {
+        final battle = _parseBattle(raw) ??
+            PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
+        if (battle.effectiveId.isNotEmpty) out.add(battle);
+      }
+      return out;
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return const [];
+      rethrow;
+    }
+  }
 }

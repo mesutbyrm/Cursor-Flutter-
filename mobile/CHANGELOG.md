@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.92+119 (2026-07-27)
+
+### Hediye görünürlüğü, otomatik koltuk, PK iletimi, performans
+- **Hediye/jeton:** SSE hediyeleri tekrar `publishRemote` ile koltuk rozeti, liderlik ve kazanç panellerine iletilir
+- **Payload:** Dış zarf sender/jeton alanları `mergeEnvelope` ile korunur; `giftId` parse düzeltmesi
+- **Animasyon:** Katılım öncesi 15 sn tolerans; canlı socket kaynağı da animasyon tetikler
+- **Otomatik koltuk:** Oda sahibi önceliği; `seatSlots` doluluk haritası; `seat_changed` sonrası yeniden deneme
+- **PK:** `pk_invite`/`PK_INVITE` socket olayları; `/api/pk/me/invites` 6 sn poll yedek
+- **Yükleme:** Hediye katalog prefetch kabukta (mevcut kademe korunur)
+
 ## 1.0.91+118 (2026-07-27)
 
 ### Backend §9 uyumu — SSE hediye, Last-Event-ID, assetFormat

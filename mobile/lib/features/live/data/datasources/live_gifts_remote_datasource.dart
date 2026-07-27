@@ -179,20 +179,23 @@ class LiveGiftsRemoteDataSource {
     Map<String, dynamic> json, {
     required String streamId,
   }) {
-    final giftId = _resolveCatalogGiftId(json);
-    if (giftId == null || giftId.isEmpty) return null;
+    final catalogId = _resolveCatalogGiftId(json);
+    if (catalogId == null || catalogId.isEmpty) return null;
 
-    final tsMs = asInt(pick(json, ['timestamp', 'ts', 'eventTimestamp']));
+    final tsMs = _normalizeTimestampMs(
+      pick(json, ['timestamp', 'ts', 'eventTimestamp']),
+      pick(json, ['createdAt', 'created_at'])?.toString(),
+    );
     final ts = tsMs > 0
         ? DateTime.fromMillisecondsSinceEpoch(tsMs)
-        : (DateTime.tryParse(
-                pick(json, ['createdAt', 'created_at'])?.toString() ?? '',
-              ) ??
-            DateTime.now());
+        : DateTime.now();
 
-    var id = pick(json, ['id', '_id', 'giftEventId', 'giftId'])?.toString();
+    var id = pick(json, ['id', '_id', 'giftEventId'])?.toString();
     if (id == null || id.isEmpty) {
-      id = '$streamId-${ts.millisecondsSinceEpoch}-${_resolveCatalogGiftId(json) ?? 'gift'}';
+      id = pick(json, ['giftId'])?.toString();
+    }
+    if (id == null || id.isEmpty) {
+      id = '$streamId-$tsMs-$catalogId';
     }
 
     final sender = _resolvePersonName(
@@ -221,9 +224,9 @@ class LiveGiftsRemoteDataSource {
 
     // İsim geçersizse (ikon URL'i, JSON parçası, çok uzun metin) hediyeyi
     // DÜŞÜRME — güvenli varsayılan adla göster; animasyon yine çalışsın.
-    var giftName = _resolveGiftName(json, giftId);
+    var giftName = _resolveGiftName(json, catalogId);
     if (!_isValidLabel(giftName)) {
-      giftName = LiveGiftCatalog.displayNameOverrides[giftId] ?? 'Hediye';
+      giftName = LiveGiftCatalog.displayNameOverrides[catalogId] ?? 'Hediye';
     }
 
     final qtyRaw = asInt(pick(json, ['quantity', 'count', 'amount', 'giftCount']));
@@ -339,7 +342,7 @@ class LiveGiftsRemoteDataSource {
       receiverId: _resolveReceiverId(json),
       senderName: sender,
       receiverName: receiver,
-      giftId: giftId,
+      giftId: catalogId,
       giftName: giftName,
       quantity: qty,
       coinCost: unitPrice,
@@ -426,14 +429,22 @@ class LiveGiftsRemoteDataSource {
     return data;
   }
 
+  int _normalizeTimestampMs(dynamic raw, String? iso) {
+    var ms = asInt(raw);
+    if (ms > 0 && ms < 10000000000) ms *= 1000;
+    if (ms > 0) return ms;
+    final parsed = DateTime.tryParse(iso ?? '');
+    return parsed?.millisecondsSinceEpoch ?? 0;
+  }
+
   String? _resolveCatalogGiftId(Map<String, dynamic> json) {
     final nested = pick(json, ['giftType', 'gift']);
     if (nested is Map) {
       final m = asJsonMap(nested);
-      final id = pick(m, ['id', 'slug', 'giftTypeId'])?.toString();
+      final id = pick(m, ['id', 'slug', 'giftTypeId', 'giftId'])?.toString();
       if (id != null && id.isNotEmpty) return id;
     }
-    return pick(json, ['giftTypeId', 'type', 'slug'])?.toString();
+    return pick(json, ['giftTypeId', 'giftId', 'type', 'slug'])?.toString();
   }
 
   String? _resolveGiftId(Map<String, dynamic> json) => _resolveCatalogGiftId(json);

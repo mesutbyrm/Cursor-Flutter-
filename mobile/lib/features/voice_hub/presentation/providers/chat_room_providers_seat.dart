@@ -12,6 +12,11 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     ChatRoomMyPermissions? server,
     ChatRoomPresence? self,
   ) {
+    final ownerId = (state.ownerId ?? _roomMeta.ownerId ?? '').trim();
+    if (ownerId.isNotEmpty && ownerId == user.id) {
+      return VoiceRoomSeatPriority.tierFounder;
+    }
+
     final staff = ref.read(staffAccessProvider);
     if (staff.isFounder) {
       return VoiceRoomSeatPriority.tierAdmin;
@@ -58,6 +63,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       myTier: myPriority,
       presence: presence,
       room: _roomMeta,
+      seatSlots: state.seatSlots,
     );
   }
 
