@@ -107,15 +107,26 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       'seat': seatIndex,
       'priority': priority,
     });
-    // Manuel "Koltuğa Al" ile AYNI çalışan yolu kullan (voiceSeatRestService
-    // .takeSeat). Eski joinSeat ucu 200 dönüp koltuğa oturtmuyordu; bu yüzden
-    // yetkili otomatik koltuğa geçmiyordu.
-    final err = await assignSeat(seatIndex: seatIndex);
-    if (err == null) {
-      _autoSeatAttempted = true;
-      return;
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        await ref.read(chatRoomRemoteProvider).joinSeat(
+              roomKey: _roomKey,
+              alternateKey: _musicAlternateKey,
+              seatIndex: seatIndex,
+            );
+        await _refreshSeatsFromBackend();
+        _autoSeatAttempted = true;
+        return;
+      } catch (_) {
+        final err = await assignSeat(seatIndex: seatIndex);
+        if (err == null) {
+          _applyOptimisticSeat(userId: user.id, seatIndex: seatIndex);
+          _autoSeatAttempted = true;
+          return;
+        }
+        await Future<void>.delayed(Duration(milliseconds: 400 * (attempt + 1)));
+      }
     }
-    // İzinler veya presence gecikirse bir sonraki poll'da tekrar dene.
     for (final p in state.presence) {
       if (p.id == user.id && p.seatIndex != null) {
         _autoSeatAttempted = true;

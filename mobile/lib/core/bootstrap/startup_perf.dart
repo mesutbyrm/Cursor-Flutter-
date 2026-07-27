@@ -7,7 +7,7 @@ abstract final class StartupPerf {
   static const authBootTimeout = Duration(seconds: 12);
 
   /// runApp sonrası ağır SDK init gecikmesi (AdMob, analytics).
-  static const deferredSdkDelay = Duration(milliseconds: 800);
+  static const deferredSdkDelay = Duration(milliseconds: 400);
 
   /// Kabuk prefetch — yalnızca cüzdan (ilk kare sonrası).
   static const shellPrefetchDelay = Duration(milliseconds: 200);

@@ -8,37 +8,47 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
   Future<void> _loadBackendSnapshot() async {
     if (_roomKey.isEmpty) return;
     VoiceRoomDebugLog.log('api.state.fetch', {'room': _roomKey});
+    final remote = ref.read(chatRoomRemoteProvider);
+    VoiceRoomStateSnapshot? snapshot;
+    List<VoiceRoomSeatSlot> seats = const [];
     try {
-      final snapshot = await ref.read(chatRoomRemoteProvider).fetchRoomState(
-            _roomKey,
-            alternateKey: _musicAlternateKey,
-          );
-      _applyStateSnapshot(snapshot);
-      VoiceRoomDebugLog.log('api.state.ok', {
-        'room': _roomKey,
-        'participants': snapshot.participants.length,
-        'owner': snapshot.ownerId,
-      });
-    } on Object catch (e) {
-      VoiceRoomDebugLog.log('api.state.fail', {'error': e.toString()});
-    }
-
-    VoiceRoomDebugLog.log('api.seats.fetch', {'room': _roomKey});
-    try {
-      final seats = await ref.read(chatRoomRemoteProvider).fetchSeats(
-            _roomKey,
-            alternateKey: _musicAlternateKey,
-          );
-      state = state.copyWith(seatSlots: seats);
+      final results = await Future.wait<Object?>([
+        remote
+            .fetchRoomState(_roomKey, alternateKey: _musicAlternateKey)
+            .catchError((Object e) {
+          VoiceRoomDebugLog.log('api.state.fail', {'error': e.toString()});
+          return null;
+        }),
+        remote
+            .fetchSeats(_roomKey, alternateKey: _musicAlternateKey)
+            .catchError((Object e) {
+          VoiceRoomDebugLog.log('api.seats.fail', {'error': e.toString()});
+          return <VoiceRoomSeatSlot>[];
+        }),
+      ], eagerError: false);
+      snapshot = results[0] as VoiceRoomStateSnapshot?;
+      seats = (results[1] as List<VoiceRoomSeatSlot>?) ?? const [];
+      if (snapshot != null) {
+        _applyStateSnapshot(snapshot);
+        VoiceRoomDebugLog.log('api.state.ok', {
+          'room': _roomKey,
+          'participants': snapshot.participants.length,
+          'owner': snapshot.ownerId,
+        });
+      }
+      if (seats.isNotEmpty) {
+        state = state.copyWith(seatSlots: seats);
+      }
       VoiceRoomDebugLog.log('api.seats.ok', {
         'room': _roomKey,
         'count': seats.length,
       });
     } on Object catch (e) {
-      VoiceRoomDebugLog.log('api.seats.fail', {'error': e.toString()});
+      VoiceRoomDebugLog.log('api.snapshot.fail', {'error': e.toString()});
     }
 
     state = state.copyWith(backendSyncReady: true, loading: false);
+    unawaited(_tryAutoPrivilegedSeat());
   }
 
   void _applyStateSnapshot(VoiceRoomStateSnapshot snapshot) {

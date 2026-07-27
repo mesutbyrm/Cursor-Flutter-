@@ -4,6 +4,7 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../../../core/config/env.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../../../gifts/domain/gift_payload_util.dart';
 import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import 'voice_room_debug_log.dart';
@@ -113,10 +114,8 @@ class VoiceRoomGiftSocket {
 
   void _emit(dynamic data, String roomId) {
     if (data is! Map) return;
-    final ev = _remote.parseGiftEvent(
-      Map<String, dynamic>.from(data),
-      streamId: roomId,
-    );
+    final payload = GiftPayloadUtil.unwrap(Map<String, dynamic>.from(data));
+    final ev = _remote.parseGiftEvent(payload, streamId: roomId);
     if (ev != null) _onEvent?.call(ev);
   }
 

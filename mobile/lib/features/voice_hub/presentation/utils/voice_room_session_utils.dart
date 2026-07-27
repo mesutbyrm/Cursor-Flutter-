@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/sse/sse_hub_provider.dart';
@@ -23,11 +25,11 @@ Future<void> teardownVoiceRoomBeforeSwitch(
   ref.read(voiceRoomGiftRealtimeProvider).stop();
   ref.read(voiceRecentGiftsProvider.notifier).clear();
   ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(liveKey);
-  try {
-    await ref
+  unawaited(
+    ref
         .read(voiceRoomLiveProvider(liveKey).notifier)
-        .leaveRoomSession(source: source);
-  } catch (_) {}
+        .leaveRoomSession(source: source),
+  );
 }
 
 /// Önceki oda (varsa) tamamen kapatılır, ardından yeni oda kaydedilir.

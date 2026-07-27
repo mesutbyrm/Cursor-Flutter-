@@ -9,6 +9,7 @@ abstract final class GiftAnimationPolicy {
 
   static const fullscreenFlashDuration = Duration(milliseconds: 600);
   static const queueGapDuration = Duration(milliseconds: 300);
+  static const minFullscreenMs = 3000;
 
   /// FIFO kuyruk oynatma süresi (fiyat eşikleri).
   static Duration queueDuration({
@@ -16,7 +17,9 @@ abstract final class GiftAnimationPolicy {
     int? animationDurationMs,
   }) {
     if (animationDurationMs != null && animationDurationMs > 0) {
-      return Duration(milliseconds: animationDurationMs);
+      return Duration(
+        milliseconds: animationDurationMs.clamp(minFullscreenMs, 12000),
+      );
     }
     if (jetonPrice >= luxuryJetonThreshold) {
       return const Duration(seconds: 5);
@@ -35,10 +38,13 @@ abstract final class GiftAnimationPolicy {
       jetonPrice: jetonPrice,
       animationDurationMs: animationDurationMs,
     );
+    final resolved = base.inMilliseconds < minFullscreenMs
+        ? const Duration(milliseconds: minFullscreenMs)
+        : base;
     if (shouldFullscreenFlash(jetonPrice)) {
-      return base + fullscreenFlashDuration;
+      return resolved + fullscreenFlashDuration;
     }
-    return base;
+    return resolved;
   }
 
   static bool shouldFullscreenFlash(int jetonPrice) =>
@@ -53,9 +59,7 @@ abstract final class GiftAnimationPolicy {
     if (catalog?.isFullscreen == true) return true;
     final dt = displayType ?? catalog?.displayType;
     if (dt != null && dt.isFullscreenLayer) return true;
-    if (hasNetworkAnimation && jetonPrice >= expensiveJetonThreshold) {
-      return true;
-    }
+    if (hasNetworkAnimation) return true;
     return jetonPrice >= expensiveJetonThreshold;
   }
 }

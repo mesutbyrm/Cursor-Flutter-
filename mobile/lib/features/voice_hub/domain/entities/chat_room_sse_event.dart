@@ -79,6 +79,8 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
       return ChatRoomSseEventType.announcement;
     case 'gift':
     case 'giftsent':
+    case 'gift_sent':
+    case 'gift-sent':
       return ChatRoomSseEventType.gift;
     case 'presence':
     case 'roomusers':

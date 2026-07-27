@@ -7,6 +7,7 @@ import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
+import '../../../gifts/domain/gift_payload_util.dart';
 import '../../presentation/utils/voice_sse_dj_payload.dart';
 import 'voice_room_debug_log.dart';
 
@@ -245,6 +246,10 @@ class ChatRoomSseService extends BaseSseService {
         if (users.isNotEmpty) _onTyping?.call(users);
         return;
       case ChatRoomSseEventType.unknown:
+        if (GiftPayloadUtil.looksLikeGift(map)) {
+          _onGift?.call(map);
+          return;
+        }
         if (map['typing'] is List) {
           final users = (map['typing'] as List)
               .map((e) => e.toString())

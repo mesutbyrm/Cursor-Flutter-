@@ -74,6 +74,7 @@ import '../../video/domain/youtube_video_id.dart';
 import '../../video/presentation/room_video_controller.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/domain/gift_system_message.dart';
+import '../../../gifts/domain/gift_payload_util.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import 'voice_gift_providers.dart';
 import 'voice_gift_leaderboard_provider.dart';
@@ -614,6 +615,9 @@ class VoiceRoomLiveController
   /// Odaya giriş — sıra: presence join → GET state → GET seats → SSE → UI.
   /// TRTC sayfa tarafında `backendSyncReady` + `roomTrtc` ile bağlanır.
   Future<void> _beginRoomSession() async {
+    _autoSeatAttempted = false;
+    _sseStarted = false;
+    _sessionActive = true;
     registerVoiceRoomLiveSession(ref, _roomKey);
     ref
         .read(voiceRoomMusicSessionProvider.notifier)
@@ -904,7 +908,11 @@ class VoiceRoomLiveController
     );
     _knownPresenceIds.clear();
     try {
-      await _leavePresenceWithSeatClear().timeout(const Duration(seconds: 4));
+      unawaited(
+        _leavePresenceWithSeatClear()
+            .timeout(const Duration(seconds: 4))
+            .catchError((_) {}),
+      );
     } catch (_) {}
     _poll?.cancel();
     _presenceHeartbeat?.cancel();
@@ -1099,10 +1107,8 @@ class VoiceRoomLiveController
           },
           onGift: (payload) {
             GiftSyncLog.broadcast(_roomKey, 'sse', payload['id']?.toString() ?? '');
-            final giftRaw = payload['gift'] ?? payload['data'] ?? payload;
-            if (giftRaw is! Map) return;
             final ev = giftsRemote.parseGiftEvent(
-              Map<String, dynamic>.from(giftRaw),
+              GiftPayloadUtil.unwrap(payload),
               streamId: _roomKey,
             );
             if (ev != null) {

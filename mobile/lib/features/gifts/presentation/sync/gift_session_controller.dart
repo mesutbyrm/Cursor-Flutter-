@@ -9,6 +9,7 @@ import '../../domain/gift_entity.dart';
 import '../../domain/gift_event_catalog_enricher.dart';
 import '../../domain/premium_gift_catalog_2026.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
+import 'gift_hourly_reset.dart';
 import 'gift_session_state.dart';
 import 'gift_sync_log.dart';
 
@@ -22,21 +23,44 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   final _recentExpiryTimers = <String, Timer>{};
   final _comboKeys = <String, GiftRecentItem>{};
   Timer? _animationTimer;
+  Timer? _fullscreenTimer;
+  void Function()? _cancelHourlyReset;
   late String _roomId;
 
   @override
   GiftSessionState build(String roomId) {
     _roomId = roomId;
     ref.onDispose(_disposeTimers);
+    GiftHourlyReset.scheduleRepeating(
+      _resetHourlyTotals,
+      onCancel: (cancel) => _cancelHourlyReset = cancel,
+    );
     return const GiftSessionState();
   }
 
+  void _resetHourlyTotals() {
+    _comboKeys.clear();
+    for (final t in _recentExpiryTimers.values) {
+      t.cancel();
+    }
+    _recentExpiryTimers.clear();
+    state = state.copyWith(
+      recentGifts: const [],
+      animationQueue: const [],
+      roomTotalJeton: 0,
+      clearActiveAnimation: true,
+      clearActiveFullscreen: true,
+    );
+  }
+
   void _disposeTimers() {
+    _cancelHourlyReset?.call();
     for (final t in _recentExpiryTimers.values) {
       t.cancel();
     }
     _recentExpiryTimers.clear();
     _animationTimer?.cancel();
+    _fullscreenTimer?.cancel();
   }
 
   /// Tüm roller aynı yolu kullanır — host/guest ayrımı yok.
@@ -102,7 +126,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
         jetonPrice: jeton,
         animationDurationMs: catalog?.animationDurationMs,
       );
-      Timer(duration, () {
+      _fullscreenTimer?.cancel();
+      _fullscreenTimer = Timer(duration, () {
         if (state.activeFullscreen?.id == event.id) {
           state = state.copyWith(clearActiveFullscreen: true);
         }

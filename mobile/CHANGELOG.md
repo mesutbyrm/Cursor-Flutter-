@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.84+111 (2026-07-27)
+
+### Hediye görünürlük, tam ekran ve oda performansı
+- **CMS animasyon:** Ağ URL'si olan hediyeler her fiyatta tam ekran; minimum 3 sn süre
+- **SSE/socket:** `gift_sent` tipi + payload birleştirme — tüm katılımcılar hediye/jeton görür
+- **Canlı yayın:** Socket.IO hediye köprüsü ana yayın sayfasında
+- **Sesli oda:** State+seats paralel, hızlı çıkış/oda geçişi, TRTC bekleme 4 sn
+- **Yetkili otomatik koltuk:** `/join-seat` + 3 deneme, snapshot sonrası hemen oturma
+- **Saatlik sıfırlama:** Oda jeton toplamı ve sıralama her saat başı yenilenir
+
 ## 1.0.83+110 (2026-07-24)
 
 ### Hediye kataloğu + koleksiyon örnekleri

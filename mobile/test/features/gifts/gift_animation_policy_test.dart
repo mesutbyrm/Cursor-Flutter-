@@ -25,6 +25,16 @@ void main() {
       expect(GiftAnimationPolicy.shouldFullscreenFlash(199), isFalse);
       expect(GiftAnimationPolicy.shouldFullscreenFlash(200), isTrue);
     });
+
+    test('network animation triggers fullscreen at any price', () {
+      expect(
+        GiftAnimationPolicy.shouldFullscreen(
+          jetonPrice: 10,
+          hasNetworkAnimation: true,
+        ),
+        isTrue,
+      );
+    });
   });
 
   group('GiftEntity schema fields', () {

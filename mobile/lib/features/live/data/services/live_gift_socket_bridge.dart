@@ -3,6 +3,7 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/live_debug_log.dart';
+import '../../../gifts/domain/gift_payload_util.dart';
 import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
 import '../datasources/live_gifts_remote_datasource.dart';
@@ -80,10 +81,8 @@ class LiveGiftSocketBridge {
     void Function(LiveGiftEvent event)? onEvent,
   ) {
     if (onEvent == null || data is! Map) return;
-    final ev = _remote.parseGiftEvent(
-      Map<String, dynamic>.from(data),
-      streamId: streamId,
-    );
+    final payload = GiftPayloadUtil.unwrap(Map<String, dynamic>.from(data));
+    final ev = _remote.parseGiftEvent(payload, streamId: streamId);
     if (ev != null) onEvent(ev);
   }
 

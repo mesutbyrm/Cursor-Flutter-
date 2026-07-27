@@ -528,7 +528,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             _audioError = null;
           });
         }
-        final deadline = DateTime.now().add(const Duration(seconds: 12));
+        final deadline = DateTime.now().add(const Duration(seconds: 4));
         while (DateTime.now().isBefore(deadline)) {
           await Future<void>.delayed(const Duration(milliseconds: 200));
           if (!mounted) return;

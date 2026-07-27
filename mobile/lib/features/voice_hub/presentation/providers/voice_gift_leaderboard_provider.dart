@@ -1,15 +1,26 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
+import '../../../gifts/presentation/sync/gift_hourly_reset.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 
 /// Oturum içi hediye sıralaması — socket/poll olaylarından türetilir.
 class VoiceSessionGiftLeaderboard extends Notifier<List<GiftLeaderboardEntry>> {
   final _totals = <String, _Agg>{};
   final _recordedIds = <String>{};
+  void Function()? _cancelHourlyReset;
 
   @override
-  List<GiftLeaderboardEntry> build() => const [];
+  List<GiftLeaderboardEntry> build() {
+    GiftHourlyReset.scheduleRepeating(
+      clear,
+      onCancel: (cancel) => _cancelHourlyReset = cancel,
+    );
+    ref.onDispose(() => _cancelHourlyReset?.call());
+    return const [];
+  }
 
   void seedFromApi(List<GiftLeaderboardEntry> entries) {
     _totals.clear();
