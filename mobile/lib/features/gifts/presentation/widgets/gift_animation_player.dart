@@ -26,6 +26,7 @@ class GiftAnimationPlayer extends ConsumerWidget {
     this.size = 220,
     this.repeat = false,
     this.preferPremiumVisual = false,
+    this.fit = BoxFit.contain,
   });
 
   final String giftId;
@@ -34,6 +35,7 @@ class GiftAnimationPlayer extends ConsumerWidget {
   final double size;
   final bool repeat;
   final bool preferPremiumVisual;
+  final BoxFit fit;
 
   GiftEntity _resolve(WidgetRef ref) {
     if (gift != null) return gift!;
@@ -79,16 +81,19 @@ class GiftAnimationPlayer extends ConsumerWidget {
               emoji: emoji,
               size: size,
               durationMs: g.animationDurationMs,
+              fit: fit,
             ),
           GiftAnimationKind.gif => _GifPlayer(
               url: networkUrl ?? g.displayIconUrl ?? '',
               emoji: emoji,
               size: size,
+              fit: fit,
             ),
           GiftAnimationKind.image => _IconOrEmoji(
               iconUrl: networkUrl ?? g.displayIconUrl,
               emoji: emoji,
               size: size,
+              fit: fit,
             ),
           GiftAnimationKind.lottie => _LottiePlayer(
               asset: GiftCatalogMaps.lottieAsset(g),
@@ -96,6 +101,7 @@ class GiftAnimationPlayer extends ConsumerWidget {
               emoji: emoji,
               size: size,
               repeat: repeat,
+              fit: fit,
             ),
           GiftAnimationKind.rive => PremiumGiftIcon(
               giftId: canonical,
@@ -125,6 +131,7 @@ class _LottiePlayer extends StatelessWidget {
     required this.emoji,
     required this.size,
     required this.repeat,
+    this.fit = BoxFit.contain,
   });
 
   final String? asset;
@@ -132,6 +139,7 @@ class _LottiePlayer extends StatelessWidget {
   final String emoji;
   final double size;
   final bool repeat;
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +150,7 @@ class _LottiePlayer extends StatelessWidget {
         width: size,
         height: size,
         repeat: repeat,
-        fit: BoxFit.contain,
+        fit: fit,
         errorBuilder: (_, _, _) =>
             Text(emoji, style: TextStyle(fontSize: size * 0.45)),
       );
@@ -168,12 +176,14 @@ class _NetworkVideoPlayer extends StatefulWidget {
     required this.emoji,
     required this.size,
     this.durationMs = 0,
+    this.fit = BoxFit.contain,
   });
 
   final String url;
   final String emoji;
   final double size;
   final int durationMs;
+  final BoxFit fit;
 
   @override
   State<_NetworkVideoPlayer> createState() => _NetworkVideoPlayerState();
@@ -236,7 +246,7 @@ class _NetworkVideoPlayerState extends State<_NetworkVideoPlayer> {
       );
     }
     return FittedBox(
-      fit: BoxFit.contain,
+      fit: widget.fit,
       child: SizedBox(
         width: c.value.size.width,
         height: c.value.size.height,
@@ -251,11 +261,13 @@ class _GifPlayer extends StatelessWidget {
     required this.url,
     required this.emoji,
     required this.size,
+    this.fit = BoxFit.contain,
   });
 
   final String url;
   final String emoji;
   final double size;
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
@@ -266,7 +278,7 @@ class _GifPlayer extends StatelessWidget {
       url: url,
       width: size,
       height: size,
-      fit: BoxFit.contain,
+      fit: fit,
       errorWidget: Text(emoji, style: TextStyle(fontSize: size * 0.45)),
     );
   }
@@ -307,7 +319,7 @@ class _SvgaPlayerState extends State<_SvgaPlayer> {
         url: icon,
         width: widget.size,
         height: widget.size,
-        fit: BoxFit.contain,
+        fit: fit,
         errorWidget: _pulseEmoji(widget.emoji, widget.size),
       );
     }
@@ -330,11 +342,13 @@ class _IconOrEmoji extends StatelessWidget {
     required this.iconUrl,
     required this.emoji,
     required this.size,
+    this.fit = BoxFit.contain,
   });
 
   final String? iconUrl;
   final String emoji;
   final double size;
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
@@ -343,7 +357,7 @@ class _IconOrEmoji extends StatelessWidget {
         url: iconUrl!,
         width: size,
         height: size,
-        fit: BoxFit.contain,
+        fit: fit,
         errorWidget: Text(emoji, style: TextStyle(fontSize: size * 0.45)),
       );
     }

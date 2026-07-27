@@ -77,7 +77,7 @@ import 'sheets/voice_room_commands_panel.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import 'widgets/premium_2026/voice_gift_announcement_ticker.dart';
 import '../../gifts/presentation/sync/gift_event_listener.dart';
-import '../../gifts/presentation/widgets/unified_recent_gifters_box.dart';
+import 'widgets/premium/voice_gift_sender_tags_panel.dart';
 import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
 import 'utils/kick_strike_ui.dart';
 import 'audio/voice_trtc_engine.dart';
@@ -1552,26 +1552,33 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           liveKey: _liveRoomKey,
                           isOwner: isOwner,
                         ),
-                        VoiceWebOwnerStage(
-                          room: room,
-                          presence: live.presence,
-                          djUserIds: mergedDjIds,
-                          speakingUserIds: speakingIds,
-                          onUserTap: _openUser,
-                          onSeatTap: (seatIndex, user) => unawaited(
-                            _onSeatTap(
-                              context,
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            VoiceWebOwnerStage(
                               room: room,
-                              live: live,
-                              perms: perms,
-                              internalSeatIndex: seatIndex,
-                              occupant: user,
+                              presence: live.presence,
+                              djUserIds: mergedDjIds,
+                              speakingUserIds: speakingIds,
+                              onUserTap: _openUser,
+                              onSeatTap: (seatIndex, user) => unawaited(
+                                _onSeatTap(
+                                  context,
+                                  room: room,
+                                  live: live,
+                                  perms: perms,
+                                  internalSeatIndex: seatIndex,
+                                  occupant: user,
+                                ),
+                              ),
+                              trtc: _audio?.trtcManager,
+                              trtcReady: _audioReady,
+                              selfUserId: user?.id,
+                              remoteTrtcUserId:
+                                  _audio?.trtcManager.remoteAnchorUserId,
                             ),
-                          ),
-                          trtc: _audio?.trtcManager,
-                          trtcReady: _audioReady,
-                          selfUserId: user?.id,
-                          remoteTrtcUserId: _audio?.trtcManager.remoteAnchorUserId,
+                            VoiceGiftSenderTagsPanel(sessionKey: sessionKey),
+                          ],
                         ),
                         Consumer(
                           builder: (context, ref, _) {
@@ -1627,13 +1634,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             contextId: room.apiRoomKey.isNotEmpty
                                 ? room.apiRoomKey
                                 : room.id,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: UnifiedRecentGiftersBox(sessionKey: sessionKey),
                           ),
                         ),
                         RoomVideoOverlay(

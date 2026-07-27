@@ -75,6 +75,12 @@ void _pushInAppPath(GoRouter router, String path) {
     router.go(p);
     return;
   }
+  if (p.startsWith('/voice-room/') ||
+      p.startsWith('/live/') ||
+      p.startsWith('/chat/')) {
+    router.go(p);
+    return;
+  }
   router.push(p);
 }
 
