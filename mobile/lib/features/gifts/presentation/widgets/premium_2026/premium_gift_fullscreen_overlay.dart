@@ -16,11 +16,13 @@ class SafePremiumGiftFullscreenOverlay extends StatelessWidget {
     this.event,
     this.onDismissed,
     this.stageContext = GiftStageContext.voiceRoom,
+    this.lightweight = false,
   });
 
   final LiveGiftEvent? event;
   final VoidCallback? onDismissed;
   final GiftStageContext stageContext;
+  final bool lightweight;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +33,7 @@ class SafePremiumGiftFullscreenOverlay extends StatelessWidget {
         event: event,
         onDismissed: onDismissed,
         stageContext: stageContext,
+        lightweight: lightweight,
       ),
     );
   }
@@ -43,11 +46,13 @@ class PremiumGiftFullscreenOverlay extends StatefulWidget {
     this.event,
     this.onDismissed,
     this.stageContext = GiftStageContext.voiceRoom,
+    this.lightweight = false,
   });
 
   final LiveGiftEvent? event;
   final VoidCallback? onDismissed;
   final GiftStageContext stageContext;
+  final bool lightweight;
 
   @override
   State<PremiumGiftFullscreenOverlay> createState() =>
@@ -57,15 +62,17 @@ class PremiumGiftFullscreenOverlay extends StatefulWidget {
 class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverlay>
     with TickerProviderStateMixin {
   final _particlesKey = GlobalKey<FloatingGiftParticlesState>();
-  late AnimationController _glowCtrl;
+  AnimationController? _glowCtrl;
 
   @override
   void initState() {
     super.initState();
-    _glowCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2400),
-    )..repeat();
+    if (!widget.lightweight) {
+      _glowCtrl = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 2400),
+      )..repeat();
+    }
     if (widget.event != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && widget.event != null) _triggerEffects(widget.event!);
@@ -84,6 +91,7 @@ class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverl
   }
 
   void _triggerEffects(LiveGiftEvent e) {
+    if (widget.lightweight) return;
     final emoji = PremiumGiftCatalog2026.emoji(e.giftId);
     final comboBonus = (e.jetonAmount ~/ 50).clamp(0, 12);
     _particlesKey.currentState?.burst(emoji, count: 8 + comboBonus);
@@ -91,7 +99,7 @@ class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverl
 
   @override
   void dispose() {
-    _glowCtrl.dispose();
+    _glowCtrl?.dispose();
     super.dispose();
   }
 
@@ -112,23 +120,25 @@ class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverl
             child: Stack(
               fit: StackFit.expand,
               children: [
-                AnimatedBuilder(
-                  animation: _glowCtrl,
-                  builder: (context, _) {
-                    return CustomPaint(
-                      painter: _StageGlowPainter(
-                        phase: _glowCtrl.value,
-                        glow: glow,
-                      ),
-                      size: Size.infinite,
-                    );
-                  },
-                ),
-                FloatingGiftParticles(
-                  key: _particlesKey,
-                  emojis: [PremiumGiftCatalog2026.emoji(e.giftId), '✨'],
-                  spawnFromGiftId: e.giftId,
-                ),
+                if (!widget.lightweight && _glowCtrl != null)
+                  AnimatedBuilder(
+                    animation: _glowCtrl!,
+                    builder: (context, _) {
+                      return CustomPaint(
+                        painter: _StageGlowPainter(
+                          phase: _glowCtrl!.value,
+                          glow: glow,
+                        ),
+                        size: Size.infinite,
+                      );
+                    },
+                  ),
+                if (!widget.lightweight)
+                  FloatingGiftParticles(
+                    key: _particlesKey,
+                    emojis: [PremiumGiftCatalog2026.emoji(e.giftId), '✨'],
+                    spawnFromGiftId: e.giftId,
+                  ),
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final size = GiftStageMetrics.giftSizeFor(constraints);

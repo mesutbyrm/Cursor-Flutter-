@@ -109,19 +109,18 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     final jeton = event.jetonAmount;
     final roomTotal = state.roomTotalJeton + jeton;
 
+    final showFs = _shouldFullscreen(event, jeton, catalog);
+
     state = state.copyWith(
       recentGifts: recent,
       roomTotalJeton: roomTotal,
       remainingBalance: event.remainingBalance ?? state.remainingBalance,
       processedEventIds: ids,
       latestEvent: event,
+      activeFullscreen: showFs ? event : state.activeFullscreen,
     );
 
-    _enqueueAnimation(event, catalog);
-
-    final showFs = _shouldFullscreen(event, jeton, catalog);
     if (showFs) {
-      state = state.copyWith(activeFullscreen: event);
       final duration = GiftAnimationPolicy.fullscreenDuration(
         jetonPrice: jeton,
         animationDurationMs: catalog?.animationDurationMs,
@@ -132,6 +131,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
           state = state.copyWith(clearActiveFullscreen: true);
         }
       });
+    } else {
+      _enqueueAnimation(event, catalog);
     }
 
     GiftSyncLog.eventProcessed(roomId, event.id, combo: event.combo);
@@ -145,14 +146,19 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   }
 
   void dequeueAnimation(String eventId) {
-    if (state.activeAnimation?.id == eventId) {
-      state = state.copyWith(clearActiveAnimation: true);
-      _pumpAnimationQueue();
+    final clearingActive = state.activeAnimation?.id == eventId;
+    final filteredQueue =
+        state.animationQueue.where((e) => e.id != eventId).toList();
+    if (!clearingActive && filteredQueue.length == state.animationQueue.length) {
+      return;
     }
     state = state.copyWith(
-      animationQueue:
-          state.animationQueue.where((e) => e.id != eventId).toList(),
+      clearActiveAnimation: clearingActive,
+      animationQueue: filteredQueue,
     );
+    if (clearingActive) {
+      _pumpAnimationQueue();
+    }
   }
 
   LiveGiftEvent _normalizeCombo(LiveGiftEvent raw) {

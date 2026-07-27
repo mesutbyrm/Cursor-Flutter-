@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.86+113 (2026-07-27)
+
+### Sesli oda hediye donması (ANR)
+- **Performans:** Hediye animasyonları izole widget’ta; oda sayfası her hediyede yeniden çizilmez
+- **Gönderim:** Hediye sonrası gereksiz oda `refresh()` kaldırıldı; ses arka planda çalar
+- **Animasyon:** Sesli odada parçacık/glow kapatıldı; tekrarlayan Lottie decode azaltıldı
+- **State:** Hediye oturumu tek seferde güncellenir
+
 ## 1.0.85+112 (2026-07-27)
 
 ### Büyük hediye sahnesi

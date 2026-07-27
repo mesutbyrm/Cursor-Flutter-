@@ -7,9 +7,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/presentation/sync/gift_event_listener.dart';
-import '../../../gifts/presentation/sync/gift_session_controller.dart';
-import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
-import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/widgets/broadcast_room/live_pk_score_bar.dart';
@@ -25,9 +22,8 @@ import '../providers/staff_entrance_marquee_provider.dart';
 import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_leaderboard_provider.dart';
 import '../providers/voice_gift_providers.dart';
-import '../providers/voice_room_ui_provider.dart';
 import '../theme/voice_room_tokens.dart';
-import '../widgets/premium/voice_gift_flight_overlay.dart';
+import '../widgets/premium/voice_gift_stage_overlays.dart';
 import '../widgets/premium_2026/voice_cosmic_background.dart';
 import '../widgets/premium_2026/pk/pk_action_bottom_bar.dart';
 import '../widgets/premium_2026/pk/pk_animated_score_bar.dart';
@@ -169,11 +165,6 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     final room = widget.room;
     final sessionKey =
         room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-    final ui = ref.watch(voiceRoomUiProvider);
-    final giftSession = ref.watch(giftSessionProvider(sessionKey));
-    final flightEvents = giftSession.activeAnimation != null
-        ? [giftSession.activeAnimation!]
-        : const <LiveGiftEvent>[];
 
     return GiftEventListener(
       sessionKey: sessionKey,
@@ -303,18 +294,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
             onRestart: () => ref.read(pkBattleProvider.notifier).restart(),
             onClose: () => context.pop(),
           ),
-          VoiceGiftFlightOverlay(
-            events: flightEvents,
-            enabled: ui.giftAnimationsEnabled,
-            stageContext: GiftStageContext.voiceRoom,
-            onFinished: (id) => ref
-                .read(giftSessionProvider(sessionKey).notifier)
-                .dequeueAnimation(id),
-          ),
-          SafePremiumGiftFullscreenOverlay(
-            event: giftSession.activeFullscreen,
-            stageContext: GiftStageContext.voiceRoom,
-          ),
+          VoiceGiftStageOverlays(sessionKey: sessionKey),
         ],
       ),
       ),
