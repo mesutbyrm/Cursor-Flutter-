@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.91+118 (2026-07-27)
+
+### Backend §9 uyumu — SSE hediye, Last-Event-ID, assetFormat
+- **Hediye animasyonu:** Yalnızca SSE `source: sse`; katılım öncesi hediyeler atlanır; poll SSE açıkken kapalı
+- **Render meta:** `assetFormat`, `imageUrl`, `videoUrl`, `thumbnailUrl` parse + oynatıcı seçimi
+- **SSE reconnect:** `Last-Event-ID` header ile kaçırılan olaylar
+- **Heartbeat:** Presence 15 sn (backend 45 sn stale penceresi)
+- **Jeton UI:** Canlı yayın koltuk/host panelinde yalnızca sayı
+
 ## 1.0.90+117 (2026-07-27)
 
 ### Canlı oda senkronizasyonu

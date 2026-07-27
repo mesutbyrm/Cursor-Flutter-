@@ -40,6 +40,14 @@ class LiveGiftEvent extends Equatable {
     this.screenPosition,
     this.displayDurationMs,
     this.tier,
+    this.assetFormat,
+    this.imageUrl,
+    this.videoUrl,
+    this.thumbnailUrl,
+    this.animationDurationMs,
+    this.startDelayMs,
+    this.effectColor,
+    this.musicUrl,
   });
 
   final String id;
@@ -77,6 +85,16 @@ class LiveGiftEvent extends Equatable {
   final String? screenPosition;
   final int? displayDurationMs;
   final String? tier;
+  final String? assetFormat;
+  final String? imageUrl;
+  final String? videoUrl;
+  final String? thumbnailUrl;
+  final int? animationDurationMs;
+  final int? startDelayMs;
+  final String? effectColor;
+  final String? musicUrl;
+
+  int get eventTimestampMs => timestamp.millisecondsSinceEpoch;
 
   /// Ekranda gösterilecek jeton — asla çift çarpım yapmaz; totalCoin öncelikli.
   int get jetonAmount {
@@ -134,5 +152,13 @@ class LiveGiftEvent extends Equatable {
         screenPosition,
         displayDurationMs,
         tier,
+        assetFormat,
+        imageUrl,
+        videoUrl,
+        thumbnailUrl,
+        animationDurationMs,
+        startDelayMs,
+        effectColor,
+        musicUrl,
       ];
 }

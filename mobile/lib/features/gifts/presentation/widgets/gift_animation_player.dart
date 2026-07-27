@@ -47,16 +47,7 @@ class GiftAnimationPlayer extends ConsumerWidget {
     final ev = event;
     if (ev != null) {
       final animUrl = GiftRenderMeta.animationUrl(ev, fromCatalog);
-      final kindFromAsset = ev.assetType != null && ev.assetType!.trim().isNotEmpty
-          ? GiftAnimationKind.parse(ev.assetType)
-          : GiftAnimationKind.none;
-      final kindFromUrl = GiftAnimationKind.fromUrl(animUrl);
-      final kind = kindFromAsset != GiftAnimationKind.none
-          ? kindFromAsset
-          : (ev.animationKind != GiftAnimationKind.lottie &&
-                  ev.animationKind != GiftAnimationKind.none
-              ? ev.animationKind
-              : kindFromUrl);
+      final kind = GiftRenderMeta.animationKindFor(ev, fromCatalog);
       return GiftEntity(
         id: giftId,
         name: ev.giftName,
@@ -66,8 +57,11 @@ class GiftAnimationPlayer extends ConsumerWidget {
         animationKind: kind != GiftAnimationKind.none
             ? kind
             : (fromCatalog?.animationKind ?? GiftAnimationKind.lottie),
-        iconUrl: ev.giftImageUrl ?? ev.iconUrl ?? fromCatalog?.iconUrl,
-        animationDurationMs: ev.displayDurationMs ?? fromCatalog?.animationDurationMs ?? 0,
+        iconUrl: ev.giftImageUrl ?? ev.iconUrl ?? ev.thumbnailUrl ?? fromCatalog?.iconUrl,
+        animationDurationMs: ev.animationDurationMs ??
+            ev.displayDurationMs ??
+            fromCatalog?.animationDurationMs ??
+            0,
       );
     }
     if (fromCatalog != null) return fromCatalog;

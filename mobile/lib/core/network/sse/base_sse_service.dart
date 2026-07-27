@@ -24,7 +24,11 @@ abstract class BaseSseService {
   Future<bool> Function()? _refreshTokens;
   var _stopped = true;
   var _reconnectAttempt = 0;
+  String? _lastEventId;
   DateTime? _lastEventAt;
+
+  /// Son SSE `id:` — reconnect'te Last-Event-ID olarak gönderilir.
+  String? get lastEventId => _lastEventId;
 
   static const heartbeatTimeout = Duration(seconds: 20);
 
@@ -122,6 +126,10 @@ abstract class BaseSseService {
     if (token != null && token.trim().isNotEmpty) {
       headers['Authorization'] = 'Bearer ${token.trim()}';
     }
+    final lastId = _lastEventId?.trim();
+    if (lastId != null && lastId.isNotEmpty) {
+      headers['Last-Event-ID'] = lastId;
+    }
 
     _dio = connectionDio();
     _cancel = CancelToken();
@@ -153,7 +161,13 @@ abstract class BaseSseService {
         (chunk) {
           _lastEventAt = DateTime.now();
           buffer.write(utf8.decode(chunk, allowMalformed: true));
-          drainSseBuffer(buffer, onSseBlock);
+          drainSseBuffer(buffer, (block) {
+            final eventId = parseSseEventId(block);
+            if (eventId != null && eventId.isNotEmpty) {
+              _lastEventId = eventId;
+            }
+            onSseBlock(block);
+          });
         },
         onError: (Object e) {
           status.emit(
@@ -274,6 +288,16 @@ abstract class BaseSseService {
     buffer
       ..clear()
       ..write(raw);
+  }
+
+  /// SSE bloğundaki `id:` satırı.
+  static String? parseSseEventId(String block) {
+    for (final line in block.split('\n')) {
+      if (line.startsWith('id:')) {
+        return line.substring(3).trim();
+      }
+    }
+    return null;
   }
 
   /// `data:` satırlarından JSON map çıkarır.

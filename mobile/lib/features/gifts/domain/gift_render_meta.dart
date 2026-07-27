@@ -1,4 +1,5 @@
 import '../../live/domain/entities/live_gift_event.dart';
+import 'gift_animation_kind.dart';
 import 'gift_entity.dart';
 
 /// Backend render meta — SSE/HTTP hediye olaylarından tam ekran / sahne kararı.
@@ -49,8 +50,42 @@ abstract final class GiftRenderMeta {
   }
 
   static String? animationUrl(LiveGiftEvent event, [GiftEntity? catalog]) {
+    final fmt = event.assetFormat?.toLowerCase().trim();
+    if (fmt == 'mp4' || fmt == 'webm') {
+      final video = event.videoUrl?.trim();
+      if (video != null && video.isNotEmpty) return video;
+    }
+    final image = event.imageUrl?.trim();
+    if (image != null && image.isNotEmpty) return image;
     final url = event.assetUrl ?? event.animationKey;
     if (url != null && url.trim().isNotEmpty) return url.trim();
     return catalog?.networkAnimationUrl;
+  }
+
+  static GiftAnimationKind animationKindFor(
+    LiveGiftEvent event, [
+    GiftEntity? catalog,
+  ]) {
+    final fmt = event.assetFormat?.toLowerCase().trim();
+    if (fmt != null && fmt.isNotEmpty) {
+      final fromFmt = GiftAnimationKind.parse(fmt);
+      if (fromFmt != GiftAnimationKind.none) return fromFmt;
+    }
+    if (event.animationKind != GiftAnimationKind.lottie &&
+        event.animationKind != GiftAnimationKind.none) {
+      return event.animationKind;
+    }
+    final url = animationUrl(event, catalog);
+    final fromUrl = GiftAnimationKind.fromUrl(url);
+    if (fromUrl != GiftAnimationKind.none) return fromUrl;
+    return catalog?.animationKind ?? GiftAnimationKind.none;
+  }
+
+  static String? posterUrl(LiveGiftEvent event) {
+    final thumb = event.thumbnailUrl?.trim();
+    if (thumb != null && thumb.isNotEmpty) return thumb;
+    final fmt = event.assetFormat?.toLowerCase();
+    if (fmt == 'mp4' || fmt == 'webm') return event.imageUrl;
+    return null;
   }
 }

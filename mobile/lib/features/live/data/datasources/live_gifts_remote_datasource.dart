@@ -179,18 +179,20 @@ class LiveGiftsRemoteDataSource {
     Map<String, dynamic> json, {
     required String streamId,
   }) {
-    final giftId = _resolveGiftId(json);
+    final giftId = _resolveCatalogGiftId(json);
     if (giftId == null || giftId.isEmpty) return null;
 
-    final ts = DateTime.tryParse(
-          pick(json, ['createdAt', 'created_at', 'timestamp'])?.toString() ??
-              '',
-        ) ??
-        DateTime.now();
+    final tsMs = asInt(pick(json, ['timestamp', 'ts', 'eventTimestamp']));
+    final ts = tsMs > 0
+        ? DateTime.fromMillisecondsSinceEpoch(tsMs)
+        : (DateTime.tryParse(
+                pick(json, ['createdAt', 'created_at'])?.toString() ?? '',
+              ) ??
+            DateTime.now());
 
-    var id = pick(json, ['id', '_id', 'giftEventId'])?.toString();
+    var id = pick(json, ['id', '_id', 'giftEventId', 'giftId'])?.toString();
     if (id == null || id.isEmpty) {
-      id = '$streamId-${ts.millisecondsSinceEpoch}-$giftId';
+      id = '$streamId-${ts.millisecondsSinceEpoch}-${_resolveCatalogGiftId(json) ?? 'gift'}';
     }
 
     final sender = _resolvePersonName(
@@ -392,6 +394,28 @@ class LiveGiftsRemoteDataSource {
         pick(render, ['displayDurationMs', 'display_duration_ms']),
       ),
       tier: pick(render, ['tier'])?.toString(),
+      assetFormat: pick(render, ['assetFormat', 'asset_format'])?.toString() ??
+          pick(json, ['assetFormat', 'asset_format'])?.toString(),
+      imageUrl: _resolveImageUrl(
+        pick(render, ['imageUrl', 'image_url'])?.toString() ??
+            pick(json, ['imageUrl', 'image_url'])?.toString(),
+      ),
+      videoUrl: _resolveImageUrl(
+        pick(render, ['videoUrl', 'video_url'])?.toString() ??
+            pick(json, ['videoUrl', 'video_url'])?.toString(),
+      ),
+      thumbnailUrl: _resolveImageUrl(
+        pick(render, ['thumbnailUrl', 'thumbnail_url'])?.toString() ??
+            pick(json, ['thumbnailUrl', 'thumbnail_url'])?.toString(),
+      ),
+      animationDurationMs: asInt(
+        pick(render, ['animationDurationMs', 'animation_duration_ms']),
+      ),
+      startDelayMs: asInt(pick(render, ['startDelayMs', 'start_delay_ms'])),
+      effectColor: pick(render, ['effectColor', 'effect_color'])?.toString(),
+      musicUrl: _resolveImageUrl(
+        pick(render, ['musicUrl', 'music_url', 'soundUrl'])?.toString(),
+      ),
     );
   }
 
@@ -402,15 +426,17 @@ class LiveGiftsRemoteDataSource {
     return data;
   }
 
-  String? _resolveGiftId(Map<String, dynamic> json) {
+  String? _resolveCatalogGiftId(Map<String, dynamic> json) {
     final nested = pick(json, ['giftType', 'gift']);
     if (nested is Map) {
       final m = asJsonMap(nested);
       final id = pick(m, ['id', 'slug', 'giftTypeId'])?.toString();
       if (id != null && id.isNotEmpty) return id;
     }
-    return pick(json, ['giftTypeId', 'giftId', 'type'])?.toString();
+    return pick(json, ['giftTypeId', 'type', 'slug'])?.toString();
   }
+
+  String? _resolveGiftId(Map<String, dynamic> json) => _resolveCatalogGiftId(json);
 
   String? _resolveImageUrl(String? raw) {
     if (raw == null || raw.isEmpty) return null;

@@ -271,7 +271,7 @@ class _SlotCell extends ConsumerWidget {
             Positioned(
               left: 6,
               top: 6,
-              child: _badge(Icons.monetization_on_rounded, '$_displayJeton jeton'),
+              child: _badge(Icons.monetization_on_rounded, '$_displayJeton'),
             ),
           if (isHost && slot.index > 0 && onAction != null)
             Positioned(

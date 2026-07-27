@@ -924,6 +924,7 @@ class VoiceRoomLiveController
     unawaited(_stopTyping());
     ref.read(voiceRoomGiftSocketProvider).disconnect();
     ref.read(voiceRoomGiftRealtimeProvider).stop();
+    ref.read(voiceRoomGiftRealtimeProvider).setSseActive(false);
     ref.read(pkBattleRemoteProvider.notifier).clear();
     ref.read(voiceRoomDiagnosticProvider.notifier).resetForRoom(_roomKey);
 
@@ -1079,6 +1080,7 @@ class VoiceRoomLiveController
             if (!state.sseConnected) {
               state = state.copyWith(sseConnected: true, clearError: true);
             }
+            ref.read(voiceRoomGiftRealtimeProvider).setSseActive(true);
             if (!state.selfInRoom || !_presenceJoined) {
               unawaited(_joinPresence());
             }
@@ -1114,9 +1116,12 @@ class VoiceRoomLiveController
               GiftPayloadUtil.unwrap(payload),
               streamId: _roomKey,
             );
-            if (ev != null) {
-              ref.read(voiceRoomGiftRealtimeProvider).publishRemote(ev);
-            }
+            if (ev == null) return;
+            ref
+                .read(giftSessionProvider(_roomKey).notifier)
+                .onVoiceGiftSent(ev, source: 'sse');
+            ref.read(voiceRecentGiftsProvider.notifier).record(ev);
+            appendGiftChatMessage(ev);
           },
           onMessage: (msg) {
             if (msg.kind == ChatMessageKind.systemJoin) {

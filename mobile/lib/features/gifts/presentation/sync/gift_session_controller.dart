@@ -27,10 +27,12 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   Timer? _fullscreenTimer;
   void Function()? _cancelHourlyReset;
   late String _roomId;
+  int? _joinTimestampMs;
 
   @override
   GiftSessionState build(String roomId) {
     _roomId = roomId;
+    _joinTimestampMs = DateTime.now().millisecondsSinceEpoch;
     ref.onDispose(_disposeTimers);
     GiftHourlyReset.scheduleRepeating(
       _resetHourlyTotals,
@@ -147,8 +149,12 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     final jeton = event.jetonAmount;
     final roomTotal = state.roomTotalJeton + jeton;
 
-    final showFs = GiftRenderMeta.isFullscreenLayer(event, catalog) ||
-        (!stageOverlayOnly && _shouldFullscreen(event, jeton, catalog));
+    final sseOnly = source == 'sse';
+    final joinedMs = _joinTimestampMs;
+    final beforeJoin = joinedMs != null &&
+        event.eventTimestampMs > 0 &&
+        event.eventTimestampMs < joinedMs;
+    final animate = sseOnly && !beforeJoin;
 
     state = state.copyWith(
       recentGifts: recent,
@@ -156,6 +162,22 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       remainingBalance: event.remainingBalance ?? state.remainingBalance,
       processedEventIds: ids,
       latestEvent: event,
+    );
+
+    if (!animate) {
+      if (beforeJoin) {
+        GiftSyncLog.dedupeSkipped(roomId, event.id, 'before_join');
+      } else if (!sseOnly) {
+        GiftSyncLog.dedupeSkipped(roomId, event.id, 'non_sse_source');
+      }
+      GiftSyncLog.eventProcessed(roomId, event.id, combo: event.combo);
+      return;
+    }
+
+    final showFs = GiftRenderMeta.isFullscreenLayer(event, catalog) ||
+        (!stageOverlayOnly && _shouldFullscreen(event, jeton, catalog));
+
+    state = state.copyWith(
       activeFullscreen: showFs ? event : state.activeFullscreen,
     );
 
@@ -179,6 +201,7 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   void clear() {
     _disposeTimers();
     _comboKeys.clear();
+    _joinTimestampMs = null;
     state = const GiftSessionState();
   }
 

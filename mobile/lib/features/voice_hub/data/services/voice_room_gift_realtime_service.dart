@@ -17,6 +17,13 @@ class VoiceRoomGiftRealtimeService {
   String? _roomId;
   DateTime? _since;
   var _socketPreferred = false;
+  var _sseActive = false;
+
+  /// SSE bağlıyken REST hediye poll kapalı — animasyon yalnızca SSE'den.
+  void setSseActive(bool active) {
+    _sseActive = active;
+    if (active) stop();
+  }
 
   Stream<LiveGiftEvent> get events => _local.stream;
 
@@ -84,6 +91,7 @@ class VoiceRoomGiftRealtimeService {
   }
 
   Future<void> _pollOnce() async {
+    if (_sseActive) return;
     final id = _roomId;
     if (id == null) return;
     try {

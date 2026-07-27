@@ -72,7 +72,7 @@ class ChatRoomRemoteDataSource {
   static String typingPath(String roomId) => ApiEndpoints.chatRoomTyping(roomId);
 
   /// Üretim presence/voice — kılavuz §9.3 + PART4/PART10 (20–30 sn; 25 sn).
-  static const presenceHeartbeatInterval = Duration(seconds: 25);
+  static const presenceHeartbeatInterval = Duration(seconds: 15);
 
   /// Heartbeat — `PATCH /presence` (kılavuz §9.3 / üretim).
   Future<void> presenceHeartbeat(

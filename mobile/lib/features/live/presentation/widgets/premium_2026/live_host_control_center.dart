@@ -768,7 +768,7 @@ class _StatsTab extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _statRow('Toplam Jeton', '${dash.totalJeton}'),
+        _statRow('💎', '${dash.totalJeton}'),
         _statRow('Dakikalık', '${dash.perMinuteJeton}'),
         _statRow('Saatlik', '${dash.perHourJeton}'),
         _statRow('Hediye', '${dash.giftCount}'),
