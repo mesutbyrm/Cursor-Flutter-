@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/presentation/sync/gift_event_listener.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
+import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
 import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -305,11 +306,15 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
           VoiceGiftFlightOverlay(
             events: flightEvents,
             enabled: ui.giftAnimationsEnabled,
+            stageContext: GiftStageContext.voiceRoom,
             onFinished: (id) => ref
                 .read(giftSessionProvider(sessionKey).notifier)
                 .dequeueAnimation(id),
           ),
-          SafePremiumGiftFullscreenOverlay(event: giftSession.activeFullscreen),
+          SafePremiumGiftFullscreenOverlay(
+            event: giftSession.activeFullscreen,
+            stageContext: GiftStageContext.voiceRoom,
+          ),
         ],
       ),
       ),

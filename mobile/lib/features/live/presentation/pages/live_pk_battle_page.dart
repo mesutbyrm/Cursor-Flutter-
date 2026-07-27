@@ -25,6 +25,7 @@ import '../../domain/pk/pk_unified_bridge.dart';
 import '../../../gifts/presentation/sync/gift_event_listener.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/presentation/sync/gift_session_state.dart';
+import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
 import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import '../../../voice_hub/presentation/widgets/premium/voice_gift_flight_overlay.dart';
 import '../providers/pk_room_providers.dart';
@@ -375,13 +376,17 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
             child: IgnorePointer(
               child: VoiceGiftFlightOverlay(
                 events: flightEvents,
+                stageContext: GiftStageContext.liveStream,
                 onFinished: (id) => ref
                     .read(giftSessionProvider(streamId).notifier)
                     .dequeueAnimation(id),
               ),
             ),
           ),
-          SafePremiumGiftFullscreenOverlay(event: giftSession.activeFullscreen),
+          SafePremiumGiftFullscreenOverlay(
+            event: giftSession.activeFullscreen,
+            stageContext: GiftStageContext.liveStream,
+          ),
           PkWinnerCelebration(
             state: pkState,
             onRestart: () {

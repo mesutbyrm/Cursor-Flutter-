@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.85+112 (2026-07-27)
+
+### Büyük hediye sahnesi
+- **Sesli oda / canlı yayın:** Hediyeler koltukların altından mesaj alanına kadar büyük gösterilir
+- **Etiket:** Yalnızca sol üstte «gönderen → alıcı»; jeton/ad/isim şeritleri kaldırıldı
+- **Tam ekran hediyeler:** Aynı sahne bandında, aynı boyutta oynatılır
+
 ## 1.0.84+111 (2026-07-27)
 
 ### Hediye görünürlük, tam ekran ve oda performansı

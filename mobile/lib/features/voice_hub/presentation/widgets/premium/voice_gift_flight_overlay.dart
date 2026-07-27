@@ -1,258 +1,110 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../gifts/domain/premium_gift_catalog_2026.dart';
+import '../../../../gifts/presentation/widgets/gift_stage_layout.dart';
 import '../../../../live/domain/entities/live_gift_event.dart';
-import '../../theme/voice_room_tokens.dart';
 
-/// TikTok tarzı sürekli uçan hediye animasyonu.
+/// Sesli oda / canlı yayın — koltuk altı ↔ mesaj alanı arasında büyük hediye.
 class VoiceGiftFlightOverlay extends StatefulWidget {
   const VoiceGiftFlightOverlay({
     super.key,
     required this.events,
     required this.onFinished,
     this.enabled = true,
+    this.stageContext = GiftStageContext.voiceRoom,
   });
 
   final List<LiveGiftEvent> events;
   final void Function(String eventId) onFinished;
   final bool enabled;
+  final GiftStageContext stageContext;
 
   @override
   State<VoiceGiftFlightOverlay> createState() => _VoiceGiftFlightOverlayState();
 }
 
 class _VoiceGiftFlightOverlayState extends State<VoiceGiftFlightOverlay>
-    with TickerProviderStateMixin {
-  final _rand = Random();
-  final _active = <_FlightItem>[];
-  final _ambient = <_AmbientParticle>[];
-  Timer? _ambientTimer;
+    with SingleTickerProviderStateMixin {
   final Set<String> _started = {};
+  LiveGiftEvent? _current;
+  AnimationController? _ctrl;
+
+  @override
+  void dispose() {
+    _ctrl?.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
-    _ambientTimer = Timer.periodic(const Duration(milliseconds: 1400), (_) {
-      if (!widget.enabled || !mounted) return;
-      if (_active.isEmpty && _ambient.isEmpty) return;
-      setState(() {
-        _ambient.add(_AmbientParticle(
-          id: _rand.nextInt(1 << 30),
-          emoji: const ['✨', '💖', '🌹', '⭐', '🎁'][_rand.nextInt(5)],
-          x: _rand.nextDouble(),
-        ));
-        if (_ambient.length > 8) _ambient.removeAt(0);
-      });
-    });
+    _tryStartNext();
   }
 
   @override
   void didUpdateWidget(covariant VoiceGiftFlightOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _tryStartNext();
+  }
+
+  void _tryStartNext() {
+    if (_current != null) return;
     for (final e in widget.events) {
-      if (_started.add(e.id)) _spawnFlight(e);
+      if (_started.add(e.id)) {
+        _show(e);
+        break;
+      }
     }
   }
 
-  void _spawnFlight(LiveGiftEvent e) {
-    final ctrl = AnimationController(
+  void _show(LiveGiftEvent e) {
+    _ctrl?.dispose();
+    _ctrl = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 2200 + _rand.nextInt(800)),
+      duration: const Duration(milliseconds: 3600),
     );
-    final item = _FlightItem(
-      event: e,
-      controller: ctrl,
-      startX: 0.15 + _rand.nextDouble() * 0.7,
-      wobble: _rand.nextDouble() * 0.15,
-    );
-    _active.add(item);
-    ctrl.forward().then((_) {
+    setState(() => _current = e);
+    _ctrl!.forward().then((_) {
       if (!mounted) return;
       widget.onFinished(e.id);
       setState(() {
-        _active.remove(item);
-        ctrl.dispose();
+        _current = null;
+        _ctrl?.dispose();
+        _ctrl = null;
       });
+      for (final next in widget.events) {
+        if (_started.add(next.id)) {
+          _show(next);
+          break;
+        }
+      }
     });
-    setState(() {});
-  }
-
-  @override
-  void dispose() {
-    _ambientTimer?.cancel();
-    for (final a in _active) {
-      a.controller.dispose();
-    }
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.enabled) return const SizedBox.shrink();
+    if (!widget.enabled || _current == null) return const SizedBox.shrink();
 
-    final size = MediaQuery.sizeOf(context);
-
+    final event = _current!;
     return IgnorePointer(
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          for (final p in _ambient)
-            _AmbientWidget(
-              particle: p,
-              height: size.height,
-              width: size.width,
-            ),
-          for (final f in _active)
-            AnimatedBuilder(
-              animation: f.controller,
-              builder: (context, _) {
-                final t = Curves.easeOutCubic.transform(f.controller.value);
-                final x = size.width * (f.startX + sin(t * pi) * f.wobble);
-                final y = size.height * (0.88 - t * 0.72);
-                final scale = 0.6 + t * 0.9;
-                return Positioned(
-                  left: x - 28,
-                  top: y,
-                  child: Opacity(
-                    opacity: (1 - t * 0.85).clamp(0.0, 1.0),
-                    child: Transform.scale(
-                      scale: scale,
-                      child: _GiftFlightBubble(event: f.event),
-                    ),
-                  ),
+          GiftStageBand(
+            stage: widget.stageContext,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final size = GiftStageMetrics.giftSizeFor(constraints);
+                return GiftStageLargeDisplay(
+                  event: event,
+                  giftSize: size,
                 );
               },
             ),
+          ),
         ],
       ),
-    );
-  }
-}
-
-class _GiftFlightBubble extends StatelessWidget {
-  const _GiftFlightBubble({required this.event});
-
-  final LiveGiftEvent event;
-
-  @override
-  Widget build(BuildContext context) {
-    final emoji = _emojiFor(event);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                VoiceRoomTokens.neonPink.withValues(alpha: 0.85),
-                VoiceRoomTokens.neonPurple.withValues(alpha: 0.75),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: VoiceRoomTokens.neonGlow(VoiceRoomTokens.neonPink),
-          ),
-          child: Text(
-            event.receiverName.trim().isNotEmpty
-                ? '${event.senderName} → ${event.receiverName}'
-                : event.senderName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        const SizedBox(height: 2),
-        if (event.giftName.trim().isNotEmpty)
-          Text(
-            '${event.giftName.trim()}${event.combo > 1 ? ' x${event.combo}' : ''}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              color: Colors.white.withValues(alpha: 0.9),
-            ),
-          ),
-        const SizedBox(height: 4),
-        Text(emoji, style: const TextStyle(fontSize: 36))
-            .animate(onPlay: (c) => c.repeat(reverse: true))
-            .scale(
-              begin: const Offset(0.92, 0.92),
-              end: const Offset(1.08, 1.08),
-              duration: 400.ms,
-            ),
-        if (event.quantity > 1 || event.jetonAmount > 0)
-          Text(
-            '${event.jetonAmount} jeton',
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              color: AppThemeColors.coinGold,
-              fontSize: 12,
-            ),
-          ),
-      ],
-    );
-  }
-
-  String _emojiFor(LiveGiftEvent e) =>
-      PremiumGiftCatalog2026.emoji(e.giftId);
-}
-
-class _FlightItem {
-  _FlightItem({
-    required this.event,
-    required this.controller,
-    required this.startX,
-    required this.wobble,
-  });
-
-  final LiveGiftEvent event;
-  final AnimationController controller;
-  final double startX;
-  final double wobble;
-}
-
-class _AmbientParticle {
-  _AmbientParticle({required this.id, required this.emoji, required this.x});
-  final int id;
-  final String emoji;
-  final double x;
-}
-
-class _AmbientWidget extends StatefulWidget {
-  const _AmbientWidget({
-    required this.particle,
-    required this.height,
-    required this.width,
-  });
-
-  final _AmbientParticle particle;
-  final double height;
-  final double width;
-
-  @override
-  State<_AmbientWidget> createState() => _AmbientWidgetState();
-}
-
-class _AmbientWidgetState extends State<_AmbientWidget> {
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      left: widget.width * widget.particle.x,
-      bottom: widget.height * 0.1,
-      child: Text(widget.particle.emoji, style: const TextStyle(fontSize: 16))
-          .animate()
-          .moveY(begin: 0, end: -widget.height * 0.55, duration: 3.2.seconds)
-          .fadeOut(duration: 2.8.seconds),
     );
   }
 }

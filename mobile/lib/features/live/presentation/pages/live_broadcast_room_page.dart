@@ -29,6 +29,7 @@ import '../../../gifts/presentation/sync/gift_event_listener.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/presentation/sync/gift_session_state.dart';
 import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
+import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
 import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import '../../../gifts/presentation/widgets/unified_recent_gifters_box.dart';
 import '../../../voice_hub/presentation/widgets/premium/voice_gift_flight_overlay.dart';
@@ -2049,6 +2050,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 child: VoiceGiftFlightOverlay(
                   events: flightEvents,
                   enabled: broadcastSettings.giftsEnabled,
+                  stageContext: GiftStageContext.liveStream,
                   onFinished: (id) {
                     if (!hasStream) return;
                     ref
@@ -2058,7 +2060,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 ),
               ),
             ),
-            SafePremiumGiftFullscreenOverlay(event: giftSession.activeFullscreen),
+            SafePremiumGiftFullscreenOverlay(
+              event: giftSession.activeFullscreen,
+              stageContext: GiftStageContext.liveStream,
+            ),
             if (hasStream && pkState?.battle != null &&
                 (pkStatus == 'active' || pkStatus == 'ended'))
               LivePkPremiumOverlay(

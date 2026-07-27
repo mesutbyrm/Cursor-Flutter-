@@ -25,6 +25,7 @@ import '../domain/voice_official_join.dart';
 import '../../gifts/domain/session_gift_summary_builder.dart';
 import '../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
+import '../../gifts/presentation/widgets/gift_stage_layout.dart';
 import '../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import '../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../gifts/presentation/widgets/lucky_gift_wins_ticker.dart';
@@ -1798,11 +1799,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             VoiceGiftFlightOverlay(
               events: flightEvents,
               enabled: ui.giftAnimationsEnabled,
+              stageContext: GiftStageContext.voiceRoom,
               onFinished: (id) => ref
                   .read(giftSessionProvider(sessionKey).notifier)
                   .dequeueAnimation(id),
             ),
-            SafePremiumGiftFullscreenOverlay(event: giftSession.activeFullscreen),
+            SafePremiumGiftFullscreenOverlay(
+              event: giftSession.activeFullscreen,
+              stageContext: GiftStageContext.voiceRoom,
+            ),
             if (_showVipEntrance && user != null)
               Builder(
                 builder: (context) {
