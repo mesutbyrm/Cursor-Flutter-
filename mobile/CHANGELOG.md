@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.88+115 (2026-07-27)
+
+### Canlı Falcılar, TRTC, hediye ve oda sistemi
+- **TRTC tek motor:** Agora bağımlılığı kaldırıldı; ses/görüntü yalnızca Tencent TRTC
+- **11 koltuk:** Backend ile uyumlu 0–10; yetkili kullanıcılar (+ ve üzeri) otomatik oturur
+- **Hediye render:** Backend meta ile tam ekran `cover`; sesli odada koltuk altı–mesaj kutusu bandı
+- **Gönderen paneli:** Koltuk sol altında son 3 isim, 4 sn karararak kapanır
+- **VIP şifre:** Derin bağlantıda şifre kapısı; bildirim tıklanınca anında ekran açılır
+
 ## 1.0.87+114 (2026-07-27)
 
 ### Sesli oda hediye donması + yükleme hızı

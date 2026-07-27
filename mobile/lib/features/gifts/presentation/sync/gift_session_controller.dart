@@ -7,6 +7,7 @@ import '../providers/gift_catalog_index_provider.dart';
 import '../../domain/gift_animation_policy.dart';
 import '../../domain/gift_entity.dart';
 import '../../domain/gift_event_catalog_enricher.dart';
+import '../../domain/gift_render_meta.dart';
 import '../../domain/premium_gift_catalog_2026.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import 'gift_hourly_reset.dart';
@@ -141,8 +142,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     final jeton = event.jetonAmount;
     final roomTotal = state.roomTotalJeton + jeton;
 
-    final showFs =
-        !stageOverlayOnly && _shouldFullscreen(event, jeton, catalog);
+    final showFs = GiftRenderMeta.isFullscreenLayer(event, catalog) ||
+        (!stageOverlayOnly && _shouldFullscreen(event, jeton, catalog));
 
     state = state.copyWith(
       recentGifts: recent,
@@ -154,17 +155,15 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     );
 
     if (showFs) {
-      final duration = GiftAnimationPolicy.fullscreenDuration(
-        jetonPrice: jeton,
-        animationDurationMs: catalog?.animationDurationMs,
-      );
+      final duration = GiftRenderMeta.displayDuration(event, catalog);
       _fullscreenTimer?.cancel();
       _fullscreenTimer = Timer(duration, () {
         if (state.activeFullscreen?.id == event.id) {
           state = state.copyWith(clearActiveFullscreen: true);
         }
       });
-    } else {
+    } else if (GiftRenderMeta.isStageBandLayer(event, catalog) ||
+        !stageOverlayOnly) {
       _enqueueAnimation(event, catalog);
     }
 
@@ -222,6 +221,15 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       senderAvatar: raw.senderAvatar,
       receiverAvatar: raw.receiverAvatar,
       giftType: raw.giftType,
+      giftIcon: raw.giftIcon,
+      assetUrl: raw.assetUrl,
+      assetType: raw.assetType,
+      displayType: raw.displayType,
+      isFullscreen: raw.isFullscreen,
+      visibleAsFullscreen: raw.visibleAsFullscreen,
+      screenPosition: raw.screenPosition,
+      displayDurationMs: raw.displayDurationMs,
+      tier: raw.tier,
     );
   }
 

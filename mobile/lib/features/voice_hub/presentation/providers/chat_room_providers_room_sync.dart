@@ -240,8 +240,8 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
   }) {
     var slots = current.isNotEmpty
         ? List<VoiceRoomSeatSlot>.from(current)
-        : List.generate(15, VoiceRoomSeatSlot.empty);
-    while (slots.length < 15) {
+        : List.generate(11, VoiceRoomSeatSlot.empty);
+    while (slots.length < 11) {
       slots.add(VoiceRoomSeatSlot.empty(slots.length));
     }
     if (previousIndex != null &&

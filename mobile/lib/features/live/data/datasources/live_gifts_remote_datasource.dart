@@ -325,6 +325,12 @@ class LiveGiftsRemoteDataSource {
     final finalAnimType =
         resolvedAnimType != GiftAnimationKind.none ? resolvedAnimType : animType;
 
+    final render = () {
+      final r = json['giftRender'] ?? json['render'];
+      if (r is Map) return asJsonMap(r);
+      return json;
+    }();
+
     return LiveGiftEvent(
       id: id,
       senderId: _resolvePersonId(json),
@@ -366,6 +372,26 @@ class LiveGiftsRemoteDataSource {
         ])?.toString(),
       ),
       giftType: pick(json, ['giftType', 'type', 'gift_type'])?.toString(),
+      giftIcon: pick(render, ['giftIcon', 'icon', 'gift_icon'])?.toString() ??
+          pick(json, ['giftIcon'])?.toString(),
+      assetUrl: _resolveImageUrl(
+        pick(render, ['assetUrl', 'animationUrl', 'animation'])?.toString() ??
+            nestedAnimUrl ??
+            resolvedAnimKey,
+      ),
+      assetType: pick(render, ['assetType', 'animationType'])?.toString() ??
+          nestedAssetType,
+      displayType:
+          pick(render, ['displayType', 'display_type'])?.toString(),
+      isFullscreen: pick(render, ['isFullscreen']) == true ||
+          json['isFullscreen'] == true,
+      visibleAsFullscreen: pick(render, ['visibleAsFullscreen']) == true,
+      screenPosition:
+          pick(render, ['screenPosition', 'screen_position'])?.toString(),
+      displayDurationMs: asInt(
+        pick(render, ['displayDurationMs', 'display_duration_ms']),
+      ),
+      tier: pick(render, ['tier'])?.toString(),
     );
   }
 

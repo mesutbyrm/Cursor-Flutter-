@@ -31,6 +31,15 @@ class LiveGiftEvent extends Equatable {
     this.senderAvatar,
     this.receiverAvatar,
     this.giftType,
+    this.giftIcon,
+    this.assetUrl,
+    this.assetType,
+    this.displayType,
+    this.isFullscreen,
+    this.visibleAsFullscreen,
+    this.screenPosition,
+    this.displayDurationMs,
+    this.tier,
   });
 
   final String id;
@@ -59,6 +68,15 @@ class LiveGiftEvent extends Equatable {
   final String? senderAvatar;
   final String? receiverAvatar;
   final String? giftType;
+  final String? giftIcon;
+  final String? assetUrl;
+  final String? assetType;
+  final String? displayType;
+  final bool? isFullscreen;
+  final bool? visibleAsFullscreen;
+  final String? screenPosition;
+  final int? displayDurationMs;
+  final String? tier;
 
   /// Ekranda gösterilecek jeton — asla çift çarpım yapmaz; totalCoin öncelikli.
   int get jetonAmount {
@@ -107,5 +125,14 @@ class LiveGiftEvent extends Equatable {
         senderAvatar,
         receiverAvatar,
         giftType,
+        giftIcon,
+        assetUrl,
+        assetType,
+        displayType,
+        isFullscreen,
+        visibleAsFullscreen,
+        screenPosition,
+        displayDurationMs,
+        tier,
       ];
 }

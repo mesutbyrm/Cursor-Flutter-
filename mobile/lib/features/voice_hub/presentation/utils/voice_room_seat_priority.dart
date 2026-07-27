@@ -132,11 +132,12 @@ abstract final class VoiceRoomSeatPriority {
     return tier;
   }
 
-  /// Oda sahibi, admin (%), moderatör (@), SOP (&), kurucu (~) — `+` hariç.
-  static bool shouldAutoSit(int tier) => tier >= tierOp;
+  /// Yetkili kullanıcılar (+ ve üzeri, VIP, DJ, oda sahibi) otomatik oturur.
+  static bool shouldAutoSit(int tier) => tier >= tierVoice;
 
   static bool shouldAutoSitForSymbol(String? symbol) {
     switch (symbol?.trim()) {
+      case '+':
       case '~':
       case '&':
       case '@':

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../gifts/presentation/sync/gift_session_controller.dart';
+import '../../../../gifts/presentation/widgets/gift_fullscreen_cover_overlay.dart';
 import '../../../../gifts/presentation/widgets/gift_stage_layout.dart';
-import '../../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import '../../../../live/domain/entities/live_gift_event.dart';
 import '../../providers/voice_room_ui_provider.dart';
 import 'voice_gift_flight_overlay.dart';
@@ -46,10 +46,12 @@ class VoiceGiftStageOverlays extends ConsumerWidget {
               .read(giftSessionProvider(sessionKey).notifier)
               .dequeueAnimation(id),
         ),
-        if (stageContext == GiftStageContext.liveStream)
-          SafePremiumGiftFullscreenOverlay(
-            event: activeFullscreen,
-            stageContext: stageContext,
+        if (animationsEnabled && activeFullscreen != null)
+          Positioned.fill(
+            child: GiftFullscreenCoverOverlay(
+              event: activeFullscreen,
+              stage: stageContext,
+            ),
           ),
       ],
     );

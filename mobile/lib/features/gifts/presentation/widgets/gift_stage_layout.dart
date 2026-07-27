@@ -3,9 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../../live/domain/entities/live_gift_event.dart';
-import '../../domain/premium_gift_catalog_2026.dart';
 import 'gift_animation_player.dart';
-import 'premium_2026/premium_gift_icon.dart';
 
 /// Hediye sahnesi — koltukların altından mesaj alanına kadar.
 enum GiftStageContext {
@@ -45,13 +43,11 @@ class GiftStageLargeDisplay extends StatelessWidget {
     required this.event,
     required this.giftSize,
     this.showBackdrop = false,
-    this.preferFastVisual = false,
   });
 
   final LiveGiftEvent event;
   final double giftSize;
   final bool showBackdrop;
-  final bool preferFastVisual;
 
   String get _senderReceiverLabel {
     final sender = event.senderName.trim();
@@ -90,18 +86,13 @@ class GiftStageLargeDisplay extends StatelessWidget {
           child: _SenderReceiverChip(label: _senderReceiverLabel),
         ),
         Center(
-          child: preferFastVisual
-              ? PremiumGiftIcon(
-                  giftId: PremiumGiftCatalog2026.canonicalId(event.giftId) ??
-                      event.giftId,
-                  size: giftSize,
-                )
-              : GiftAnimationPlayer(
-                  giftId: event.giftId,
-                  event: event,
-                  size: giftSize,
-                  preferPremiumVisual: false,
-                ),
+          child: GiftAnimationPlayer(
+            giftId: event.giftId,
+            event: event,
+            size: giftSize,
+            preferPremiumVisual: false,
+            fit: BoxFit.contain,
+          ),
         ),
       ],
     );

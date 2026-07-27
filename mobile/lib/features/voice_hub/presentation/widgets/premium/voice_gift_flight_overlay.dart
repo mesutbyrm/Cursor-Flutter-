@@ -99,8 +99,6 @@ class _VoiceGiftFlightOverlayState extends State<VoiceGiftFlightOverlay>
                 return GiftStageLargeDisplay(
                   event: event,
                   giftSize: size,
-                  preferFastVisual:
-                      widget.stageContext == GiftStageContext.voiceRoom,
                 );
               },
             ),
