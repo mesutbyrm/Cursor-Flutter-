@@ -70,6 +70,38 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     String? userRole,
     bool isHost = false,
   }) {
+    _onGiftSentImpl(
+      raw,
+      source: source,
+      userRole: userRole,
+      isHost: isHost,
+      stageOverlayOnly: false,
+    );
+  }
+
+  /// Sesli oda — ağır tam ekran katmanı yerine yalnızca sahne bandı.
+  void onVoiceGiftSent(
+    LiveGiftEvent raw, {
+    required String source,
+    String? userRole,
+    bool isHost = false,
+  }) {
+    _onGiftSentImpl(
+      raw,
+      source: source,
+      userRole: userRole,
+      isHost: isHost,
+      stageOverlayOnly: true,
+    );
+  }
+
+  void _onGiftSentImpl(
+    LiveGiftEvent raw, {
+    required String source,
+    String? userRole,
+    bool isHost = false,
+    required bool stageOverlayOnly,
+  }) {
     final roomId = _roomId;
     if (!_isDisplayable(raw)) {
       GiftSyncLog.dedupeSkipped(roomId, raw.id, 'not_displayable');
@@ -109,7 +141,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     final jeton = event.jetonAmount;
     final roomTotal = state.roomTotalJeton + jeton;
 
-    final showFs = _shouldFullscreen(event, jeton, catalog);
+    final showFs =
+        !stageOverlayOnly && _shouldFullscreen(event, jeton, catalog);
 
     state = state.copyWith(
       recentGifts: recent,
@@ -241,10 +274,6 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   }
 
   void _enqueueAnimation(LiveGiftEvent event, GiftEntity? catalog) {
-    final jeton = event.jetonAmount;
-    final showFs = _shouldFullscreen(event, jeton, catalog);
-    if (showFs) return;
-
     state = state.copyWith(
       animationQueue: [...state.animationQueue, event],
     );

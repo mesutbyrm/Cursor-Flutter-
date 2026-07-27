@@ -46,11 +46,11 @@ class VoiceGiftStageOverlays extends ConsumerWidget {
               .read(giftSessionProvider(sessionKey).notifier)
               .dequeueAnimation(id),
         ),
-        SafePremiumGiftFullscreenOverlay(
-          event: activeFullscreen,
-          stageContext: stageContext,
-          lightweight: stageContext == GiftStageContext.voiceRoom,
-        ),
+        if (stageContext == GiftStageContext.liveStream)
+          SafePremiumGiftFullscreenOverlay(
+            event: activeFullscreen,
+            stageContext: stageContext,
+          ),
       ],
     );
   }

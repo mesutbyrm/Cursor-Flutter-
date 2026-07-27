@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,21 +17,21 @@ class UnifiedRecentGiftersBox extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final items = ref.watch(giftSessionProvider(sessionKey)).recentGifts;
+    final items = ref.watch(
+      giftSessionProvider(sessionKey).select((s) => s.recentGifts),
+    );
     if (items.isEmpty) return const SizedBox.shrink();
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          constraints: const BoxConstraints(minWidth: 140, maxWidth: 280),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.55),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: accentColor.withValues(alpha: 0.45)),
-          ),
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 140, maxWidth: 280),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: accentColor.withValues(alpha: 0.45)),
+        ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -57,7 +55,6 @@ class UnifiedRecentGiftersBox extends ConsumerWidget {
               ...items.map((g) => _Row(item: g, accent: accentColor)),
             ],
           ),
-        ),
       ),
     );
   }

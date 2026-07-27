@@ -28,7 +28,8 @@ final liveGiftCatalogProvider = FutureProvider<List<GiftEntity>>((ref) async {
 });
 
 /// Sesli oda hediye listesi — CMS katalog (admin panelinden eklenen hediyeler dahil).
-final voiceRoomGiftCatalogProvider = FutureProvider.autoDispose<List<GiftEntity>>((ref) async {
+final voiceRoomGiftCatalogProvider = FutureProvider<List<GiftEntity>>((ref) async {
+  ref.keepAlive();
   final repo = ref.watch(giftRepositoryProvider);
   final general = await ref.watch(liveGiftCatalogProvider.future);
   final voice = await repo.fetchCatalog(
@@ -43,7 +44,8 @@ final voiceRoomGiftCatalogProvider = FutureProvider.autoDispose<List<GiftEntity>
 });
 
 /// Canlı yayın hediye listesi.
-final liveStreamGiftCatalogProvider = FutureProvider.autoDispose<List<GiftEntity>>((ref) async {
+final liveStreamGiftCatalogProvider = FutureProvider<List<GiftEntity>>((ref) async {
+  ref.keepAlive();
   final repo = ref.watch(giftRepositoryProvider);
   final general = await ref.watch(liveGiftCatalogProvider.future);
   final live = await repo.fetchCatalog(

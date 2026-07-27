@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.87+114 (2026-07-27)
+
+### Sesli oda hediye donması + yükleme hızı
+- **Gönderim:** Panel hemen kapanır; hediye yayını ve animasyon arka planda işlenir
+- **Sesli oda animasyon:** Ağır tam ekran/Lottie yerine hızlı sahne ikonu; API zaman aşımı 25 sn
+- **Katalog:** Hediye listesi önbellekte; panel her açılışta yeniden indirmez
+- **Genel:** Son hediyeler kutusunda blur kaldırıldı; katalog prefetch ile canlı/sesli bölümler hızlandı
+
 ## 1.0.86+113 (2026-07-27)
 
 ### Sesli oda hediye donması (ANR)

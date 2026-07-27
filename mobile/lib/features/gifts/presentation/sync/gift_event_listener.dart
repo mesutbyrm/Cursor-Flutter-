@@ -81,24 +81,37 @@ class _GiftEventListenerState extends ConsumerState<GiftEventListener> {
 
   void _onEvent(LiveGiftEvent event) {
     if (!mounted) return;
-    ref.read(giftSessionProvider(widget.sessionKey).notifier).onGiftSent(
+    scheduleMicrotask(() {
+      if (!mounted) return;
+      final notifier =
+          ref.read(giftSessionProvider(widget.sessionKey).notifier);
+      if (widget.useVoiceRealtime) {
+        notifier.onVoiceGiftSent(
           event,
-          source: widget.useLiveRealtime ? 'live_realtime' : 'voice_realtime',
+          source: 'voice_realtime',
           userRole: widget.userRole,
           isHost: widget.isHost,
         );
-    ref.read(voiceRecentGiftsProvider.notifier).record(event);
-
-    if (widget.useVoiceRealtime && widget.sessionKey.isNotEmpty) {
-      ref
-          .read(voiceRoomLiveProvider(widget.sessionKey).notifier)
-          .appendGiftChatMessage(event);
-    }
-    if (widget.useLiveRealtime && widget.liveStreamId != null) {
-      ref
-          .read(liveRoomProvider(widget.liveStreamId!).notifier)
-          .appendGiftSystemMessage(event);
-    }
+      } else {
+        notifier.onGiftSent(
+          event,
+          source: 'live_realtime',
+          userRole: widget.userRole,
+          isHost: widget.isHost,
+        );
+      }
+      ref.read(voiceRecentGiftsProvider.notifier).record(event);
+      if (widget.useVoiceRealtime && widget.sessionKey.isNotEmpty) {
+        ref
+            .read(voiceRoomLiveProvider(widget.sessionKey).notifier)
+            .appendGiftChatMessage(event);
+      }
+      if (widget.useLiveRealtime && widget.liveStreamId != null) {
+        ref
+            .read(liveRoomProvider(widget.liveStreamId!).notifier)
+            .appendGiftSystemMessage(event);
+      }
+    });
   }
 
   @override

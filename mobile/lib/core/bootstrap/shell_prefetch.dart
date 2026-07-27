@@ -8,6 +8,7 @@ import '../../../features/profile/presentation/providers/profile_providers.dart'
 import '../../../features/shorts/domain/repositories/shorts_repository.dart';
 import '../../../features/shorts/presentation/providers/shorts_providers.dart';
 import 'startup_perf.dart';
+import '../../../features/gifts/presentation/providers/gift_providers.dart';
 import '../../../features/voice_hub/presentation/providers/voice_gift_providers.dart';
 import '../performance/voice_room_entry_perf.dart';
 
@@ -32,8 +33,13 @@ void prefetchShellData(
     }),
   );
 
+  // Canlı yayın / sesli oda hediye katalogları — ilk açılışta önbelleğe al.
   unawaited(
     Future<void>.delayed(StartupPerf.shellPrefetchTier1bDelay, () {
+      try {
+        ref.read(liveStreamGiftCatalogProvider.future).ignore();
+        ref.read(voiceRoomGiftCatalogProvider.future).ignore();
+      } catch (_) {}
       // Rozetler yüklendikten sonra tam liste yenileme (sessiz).
       try {
         ref.read(walletBalancesProvider.notifier).refresh(force: false);

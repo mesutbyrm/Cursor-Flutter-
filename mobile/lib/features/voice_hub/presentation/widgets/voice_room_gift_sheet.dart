@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,7 +35,6 @@ Future<void> showVoiceRoomGiftPicker(
   ChatRoomPresence? initialReceiver,
   VoidCallback? onGiftSent,
 }) {
-  ref.invalidate(voiceRoomGiftCatalogProvider);
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -48,10 +49,15 @@ Future<void> showVoiceRoomGiftPicker(
             initialReceiver: initialReceiver,
             onClose: () => Navigator.pop(context),
             onSent: (raw) {
-              final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
-              ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
-              ref.read(voiceRoomGiftRealtimeProvider).publishLocal(event);
-              onGiftSent?.call();
+              scheduleMicrotask(() {
+                final event =
+                    ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
+                ref
+                    .read(voiceSessionGiftLeaderboardProvider.notifier)
+                    .record(event);
+                ref.read(voiceRoomGiftRealtimeProvider).publishLocal(event);
+                onGiftSent?.call();
+              });
             },
           );
         },

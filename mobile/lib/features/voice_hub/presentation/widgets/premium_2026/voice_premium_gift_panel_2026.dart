@@ -291,7 +291,9 @@ class _VoicePremiumGiftPanel2026State
       final activePk = ref.read(pkBattleRemoteProvider);
       final pkBattleId =
           (activePk != null && activePk.isActive) ? activePk.id : null;
-      final result = await ref.read(chatRoomGiftsRemoteProvider).sendGift(
+      final result = await ref
+          .read(chatRoomGiftsRemoteProvider)
+          .sendGift(
             roomId: roomKey,
             giftTypeId: g.id,
             quantity: _qty,
@@ -300,7 +302,8 @@ class _VoicePremiumGiftPanel2026State
             receiverId: receiver.id,
             battleId: pkBattleId,
             isLucky: g.isLucky,
-          );
+          )
+          .timeout(const Duration(seconds: 25));
       if (result.luckyResult != null) {
         final lucky = result.luckyResult!;
         ref.refreshWalletCache(force: true);
@@ -352,26 +355,30 @@ class _VoicePremiumGiftPanel2026State
       );
       ref.refreshWalletCache(force: true);
       if (mounted) {
-        widget.onSent(raw);
+        final messenger = ScaffoldMessenger.maybeOf(context);
         widget.onClose();
-        final myId = user?.id.trim() ?? '';
-        final receiverNet = GiftRevenueDisplay.voiceReceiverNet(
-          gross: gross,
-          receiverIsOwner: receiverIsOwner,
-          revenue: revenue,
-        );
-        var msg = '${raw.giftName} x$_qty gönderildi ($gross jeton)';
-        if (myId.isNotEmpty && myId == receiver.id.trim()) {
-          msg = '${raw.giftName} aldınız — size $receiverNet jeton kaldı';
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
+        scheduleMicrotask(() {
+          widget.onSent(raw);
+          final myId = user?.id.trim() ?? '';
+          final receiverNet = GiftRevenueDisplay.voiceReceiverNet(
+            gross: gross,
+            receiverIsOwner: receiverIsOwner,
+            revenue: revenue,
+          );
+          var msg = '${raw.giftName} x$_qty gönderildi ($gross jeton)';
+          if (myId.isNotEmpty && myId == receiver.id.trim()) {
+            msg = '${raw.giftName} aldınız — size $receiverNet jeton kaldı';
+          }
+          messenger?.showSnackBar(SnackBar(content: Text(msg)));
+        });
       }
     } catch (e) {
       if (mounted) {
+        final msg = e is TimeoutException
+            ? 'Hediye gönderimi zaman aşımına uğradı. Tekrar deneyin.'
+            : ApiException.userMessage(e);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
+          SnackBar(content: Text(msg)),
         );
       }
     } finally {

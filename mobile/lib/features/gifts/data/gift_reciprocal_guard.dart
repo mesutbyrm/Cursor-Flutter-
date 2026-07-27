@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 
 import '../../../core/network/api_endpoints.dart';
@@ -15,10 +17,12 @@ Future<void> assertReciprocalGiftAllowed(
   final id = receiverUserId.trim();
   if (id.isEmpty) return;
   try {
-    final res = await dio.safeGet<dynamic>(
-      ApiEndpoints.giftsCheckReciprocal,
-      query: {'userId': id},
-    );
+    final res = await dio
+        .safeGet<dynamic>(
+          ApiEndpoints.giftsCheckReciprocal,
+          query: {'userId': id},
+        )
+        .timeout(const Duration(seconds: 3));
     var body = res.data;
     if (body is Map && body['data'] is Map) {
       body = body['data'];
@@ -38,5 +42,7 @@ Future<void> assertReciprocalGiftAllowed(
   } on ApiException catch (e) {
     if (e.statusCode == 404 || e.statusCode == 405) return;
     rethrow;
+  } on TimeoutException {
+    return;
   }
 }

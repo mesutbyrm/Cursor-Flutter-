@@ -38,7 +38,7 @@ class GiftAnimationPlayer extends ConsumerWidget {
   GiftEntity _resolve(WidgetRef ref) {
     if (gift != null) return gift!;
     final fromCatalog = lookupGiftCatalog(
-      ref.watch(giftCatalogByIdProvider),
+      ref.read(giftCatalogByIdProvider),
       giftId,
     );
     if (fromCatalog != null) return fromCatalog;
