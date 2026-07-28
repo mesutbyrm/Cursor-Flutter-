@@ -133,20 +133,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
       );
     }
 
-    if (stats.likes == 0 && stats.giftsReceivedCount > 0) {
-      stats = ProfileStatsEntity(
-        liveStreams: stats.liveStreams,
-        likes: stats.giftsReceivedCount,
-        followers: stats.followers,
-        following: stats.following,
-        giftsReceivedCount: stats.giftsReceivedCount,
-        giftsReceivedCoins: stats.giftsReceivedCoins,
-        earningsJeton: stats.earningsJeton,
-        approvedTopUpTotal: stats.approvedTopUpTotal,
-        profileViews: stats.profileViews,
-      );
-    }
-
     return stats;
   }
 

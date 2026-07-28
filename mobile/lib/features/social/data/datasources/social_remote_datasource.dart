@@ -21,12 +21,16 @@ class SocialRemoteDataSource {
     int page = 1,
     String? authorId,
     String? currentUserId,
+    String feed = 'following',
+    bool forceRefresh = false,
   }) async {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.socialPosts,
+      forceRefresh: forceRefresh,
       query: {
         'page': page,
         'limit': 20,
+        'feed': feed,
         if (authorId != null && authorId.isNotEmpty) 'authorId': authorId,
       },
     );
@@ -42,7 +46,10 @@ class SocialRemoteDataSource {
     if (m == null) {
       return (posts: const <PostDto>[], hasMore: false);
     }
-    var rawPosts = m['posts'];
+    var rawPosts = pick(m, ['posts', 'items', 'results', 'data']);
+    if (rawPosts is! List && m['posts'] is List) {
+      rawPosts = m['posts'];
+    }
     if (rawPosts is! List && body is List) {
       rawPosts = body;
     }

@@ -1,6 +1,29 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.95+122 (2026-07-28)
+
+### Yükleme, fal ödeme, profil ve VIP
+- **Sesli odalar:** `GET /api/chat/rooms?type=voice` düzeltmesi; ana sayfada API sayısı ile liste (SSE beklemeden)
+- **Canlı yayın:** `/api/live/rooms` 401'de video-streams yedeğine düşme
+- **Sosyal feed:** `feed=following` + `items`/`data` parse; giriş sonrası otomatik yenileme
+- **Fal&Tarot:** Kayıt/profil doğum tarihi kullanımı; jeton veya CFC ile ödeme; tek reklam → +10 CFC → otomatik fal açılışı
+- **Profil istatistikleri:** Beğeni/izlenme gerçek API; hediye sayısı beğeni yerine kullanılmaz
+- **VIP ayrıcalıkları:** Site üyelik tablosu ile uyumlu liste; tıklanınca kademe karşılaştırması
+
+## 1.0.94+121 (2026-07-28)
+
+### Performans — soğuk açılış, sesli oda giriş/çıkış, bellek
+- **Startup:** Hive, API önbelleği ve çerez yükleme runApp sonrasına ertelendi; ilk kare daha hızlı
+- **Ana sayfa:** Bildirim/mesaj/cüzdan rozetleri T+200ms shell prefetch ile yüklenir (ilk karede API yok)
+- **Cüzdan:** Auth jeton değeri anında gösterilir; arka planda sessiz yenileme
+- **Sesli oda giriş:** Snapshot sonrası gereksiz `refresh()` kaldırıldı; hediye katalog önbelleği atlanır
+- **PK socket:** Tek sahip (provider); sayfa tarafında çift bağlantı yok
+- **SSE oda güncellemesi:** 450ms debounce ile gereksiz yenileme azaltıldı
+- **Oda çıkışı:** TRTC `leave()`, SSE kapatma ve oturum temizliği oda değişiminde await
+- **RTC/Basic sayfa:** Çift `audio.leave()` ve paylaşılan coordinator `dispose` hatası düzeltildi
+- **SDK init:** OneSignal, Firebase, Sentry paralel başlatılır
+
 ## 1.0.93+120 (2026-07-27)
 
 ### Canlı yayın UX — alt bar, beğeni, turnuva, performans

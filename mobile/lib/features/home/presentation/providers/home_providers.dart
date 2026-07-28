@@ -107,17 +107,15 @@ final homeLiveVoiceRoomsProvider = Provider<AsyncValue<List<VoiceRoomEntity>>>(
       loading: () => const AsyncValue.loading(),
       error: (e, st) => AsyncValue.error(e, st),
       data: (rooms) {
-        final live = rooms
-            .where((r) => !r.isVipGoldRoom)
-            .map((r) {
-              final count = presence.countFor(r);
-              if (count <= 0) return null;
-              return r.copyWith(onlineCount: count, userCount: count);
-            })
-            .whereType<VoiceRoomEntity>()
-            .toList();
+        final live = rooms.where((r) => !r.isVipGoldRoom).map((r) {
+          final sseCount = presence.countFor(r);
+          final apiCount = r.displayOnline;
+          final count = sseCount > 0 ? sseCount : apiCount;
+          if (count <= 0) return r;
+          return r.copyWith(onlineCount: count, userCount: count);
+        }).toList();
         final sorted = sortVoiceRoomsByPopularity(live).take(12).toList();
-        return AsyncValue.data(sorted);
+        return AsyncValue.data(sorted.isNotEmpty ? sorted : rooms.take(12).toList());
       },
     );
   },

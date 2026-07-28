@@ -157,7 +157,7 @@ class ShortsProfileStatsRow extends ConsumerWidget {
           fallbackFollowing,
         ),
         likes: pick(stats.totalLikes, hubLikes, fallbackLikes),
-        views: pick(stats.totalViews, hubViews, fallbackViews),
+        views: pick(stats.totalViews, 0, fallbackViews),
       ),
     );
   }

@@ -8,6 +8,7 @@ import '../../../../core/media/cloud_upload_service.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../providers/profile_providers.dart';
@@ -41,6 +42,9 @@ Future<void> refreshProfileHub(WidgetRef ref, {String? userId}) async {
   ref.invalidate(profileExtendedProvider);
   ref.invalidate(profileUserStatisticsProvider);
   ref.invalidate(profileStatsProvider);
+  if (userId != null && userId.isNotEmpty) {
+    ref.invalidate(shortVideoProfileStatsProvider(userId));
+  }
   ref.invalidate(userLevelProvider);
   ref.invalidate(giftsReceivedSummaryProvider);
   ref.invalidate(userAchievementsProvider);

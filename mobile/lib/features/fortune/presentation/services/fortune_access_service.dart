@@ -39,6 +39,7 @@ class FortuneAccessService {
     final wallet = _ref.read(walletBalancesProvider).valueOrNull;
     final tier = _ref.read(vipTierProvider);
     final jeton = wallet?.jeton ?? 0;
+    final cfc = wallet?.cfc ?? 0;
     final serverCredits = wallet?.fortuneAdCredits;
     final adCredits = serverCredits ?? store.adCredits;
     if (serverCredits != null && serverCredits != store.adCredits) {
@@ -50,6 +51,7 @@ class FortuneAccessService {
       adCredits: adCredits,
       adsWatchedToday: store.adsWatchedToday,
       jetonBalance: jeton,
+      cfcBalance: cfc,
       isPremiumUnlimited: isPremium,
     );
   }
@@ -94,6 +96,19 @@ class FortuneAccessService {
         await _ref.read(walletBalancesProvider.notifier).refresh(force: true);
         _ref.invalidate(fortuneAccessStateProvider);
         return;
+      case FortuneAccessMethod.cfc:
+        final config = await _ref.read(fortuneAccessConfigProvider.future);
+        try {
+          await _remote.consumeCfcAccess(
+            slug: type.slug,
+            cfcCost: grant.jetonCost > 0 ? grant.jetonCost : config.jetonCost,
+          );
+        } catch (_) {}
+        await _ref.read(walletBalancesProvider.notifier).refresh(force: true);
+        _ref.invalidate(fortuneAccessStateProvider);
+        return;
+      case FortuneAccessMethod.adUnlocked:
+        return;
     }
   }
 
@@ -135,6 +150,8 @@ class FortuneAccessService {
       FortuneAccessMethod.premium => 'premium',
       FortuneAccessMethod.adCredit => 'ad_credit',
       FortuneAccessMethod.jeton => 'jeton',
+      FortuneAccessMethod.cfc => 'cfc',
+      FortuneAccessMethod.adUnlocked => 'ad_reward',
     };
   }
 }
