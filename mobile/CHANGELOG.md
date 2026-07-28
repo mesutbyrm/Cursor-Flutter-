@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.99+126 (2026-07-28)
+
+### Videolu hediyeler + performans + hızlı koltuk
+- **Sesli oda / canlı:** `voice_realtime` ve `voice_announce` kaynaklı hediyeler artık animasyon kuyruğuna girer
+- **Katalog zenginleştirme:** CMS'den `videoUrl`, `thumbnailUrl`, `assetFormat`, `engineAnimationType` otomatik eklenir
+- **Video tanıma:** `assetType: video` ve uzantısız CDN URL'leri doğru şekilde MP4/WEBM olarak oynatılır
+- **Performans:** Video tam indirme kaldırıldı (VideoPlayer akış); yalnızca küçük önizleme önbelleği
+- **Oda girişi:** Presence sonrası erken otomatik koltuk; hediye katalog önbelleği atlanır; ses bekleme 1,5 sn
+
 ## 1.0.98+125 (2026-07-28)
 
 ### Sesli oda hediye animasyonu — ambient katman

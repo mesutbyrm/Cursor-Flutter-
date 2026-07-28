@@ -51,9 +51,15 @@ abstract final class GiftRenderMeta {
 
   static String? animationUrl(LiveGiftEvent event, [GiftEntity? catalog]) {
     final fmt = event.assetFormat?.toLowerCase().trim();
-    if (fmt == 'mp4' || fmt == 'webm') {
-      final video = event.videoUrl?.trim();
+    final asset = event.assetType?.toLowerCase().trim() ?? '';
+    final isVideo = asset == 'video' || fmt == 'mp4' || fmt == 'webm';
+    if (isVideo) {
+      final video = event.videoUrl?.trim() ??
+          event.assetUrl?.trim() ??
+          event.animationKey?.trim();
       if (video != null && video.isNotEmpty) return video;
+      final catalogUrl = catalog?.networkAnimationUrl;
+      if (catalogUrl != null && catalogUrl.isNotEmpty) return catalogUrl;
     }
     final image = event.imageUrl?.trim();
     if (image != null && image.isNotEmpty) return image;

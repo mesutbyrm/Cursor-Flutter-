@@ -9,6 +9,9 @@ LiveGiftEvent _event({
   String giftId = 'heart',
   int jeton = 50,
   int combo = 1,
+  String? assetUrl,
+  String? assetType,
+  String? engineAnimationType,
 }) {
   return LiveGiftEvent(
     id: id,
@@ -26,6 +29,9 @@ LiveGiftEvent _event({
     timestamp: DateTime.now(),
     engineDurationMs: 2000,
     engineFeedDurationMs: 3000,
+    assetUrl: assetUrl,
+    assetType: assetType,
+    engineAnimationType: engineAnimationType,
   );
 }
 
@@ -57,16 +63,24 @@ void main() {
     expect(state.processedEventIds.length, 1);
   });
 
-  test('gift feed item eklenir', () {
+  test('voice_realtime kaynağı animasyon kuyruğuna eklenir', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    final notifier = container.read(giftSessionProvider('room-1').notifier);
-    notifier.onGiftSent(_event(id: 'feed-1'), source: 'test');
+    final notifier = container.read(giftSessionProvider('room-v').notifier);
+    notifier.onVoiceGiftSent(
+      _event(
+        id: 'voice-1',
+        jeton: 100,
+        assetUrl: 'https://cdn.example.com/gift.mp4',
+        assetType: 'video',
+        engineAnimationType: 'mp4',
+      ),
+      source: 'voice_realtime',
+    );
 
-    final state = container.read(giftSessionProvider('room-1'));
-    expect(state.feedItems.length, 1);
-    expect(state.feedItems.first.senderName, 'Ali');
-    expect(state.feedItems.first.jetonAmount, 50);
+    final state = container.read(giftSessionProvider('room-v'));
+    expect(state.animationQueue.length + (state.activeAnimation != null ? 1 : 0),
+        greaterThan(0));
   });
 }

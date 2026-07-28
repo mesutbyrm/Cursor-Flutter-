@@ -133,6 +133,15 @@ abstract final class GiftEngineParser {
     if (resolvedAnim == GiftEngineAnimationType.none) {
       resolvedAnim = GiftEngineAnimationType.inferFromUrl(videoUrl ?? assetUrl);
     }
+    final assetType = event?.assetType?.toLowerCase().trim();
+    if (assetType == 'video' &&
+        (resolvedAnim == GiftEngineAnimationType.none ||
+            resolvedAnim == GiftEngineAnimationType.png)) {
+      resolvedAnim = GiftEngineAnimationType.inferFromUrl(videoUrl ?? assetUrl);
+      if (resolvedAnim == GiftEngineAnimationType.none) {
+        resolvedAnim = GiftEngineAnimationType.mp4;
+      }
+    }
 
     return GiftEngineConfig(
       priority: priority,

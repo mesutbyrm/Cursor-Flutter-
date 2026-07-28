@@ -73,6 +73,7 @@ import '../services/voice_room_music_control_delegate.dart';
 import '../../video/domain/youtube_video_id.dart';
 import '../../video/presentation/room_video_controller.dart';
 import '../../../gifts/presentation/providers/gift_providers.dart';
+import '../../../gifts/presentation/providers/gift_catalog_index_provider.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/domain/gift_system_message.dart';
 import '../../../gifts/domain/gift_payload_util.dart';
@@ -631,6 +632,7 @@ class VoiceRoomLiveController
 
     try {
       await _joinPresence();
+      unawaited(_tryAutoPrivilegedSeat());
       await _loadBackendSnapshot();
     } catch (_) {
       state = state.copyWith(loading: false);
@@ -675,6 +677,7 @@ class VoiceRoomLiveController
 
   Future<void> _preloadGiftCatalog() async {
     try {
+      if (ref.read(allGiftCatalogByIdProvider).isNotEmpty) return;
       final cached = ref.read(voiceRoomGiftCatalogProvider).valueOrNull;
       if (cached != null && cached.isNotEmpty) return;
       await ref.read(chatRoomGiftsRemoteProvider).fetchGiftTypes();

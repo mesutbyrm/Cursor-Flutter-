@@ -1,7 +1,9 @@
 import '../../live/domain/entities/live_gift_event.dart';
 import '../data/gift_catalog_maps.dart';
 import 'gift_animation_kind.dart';
+import 'gift_asset_type.dart';
 import 'gift_entity.dart';
+import 'gift_engine_models.dart';
 
 /// SSE hediye olayını CMS katalog satırı ile zenginleştirir (video/Lottie URL).
 LiveGiftEvent enrichGiftEventFromCatalog(
@@ -14,8 +16,16 @@ LiveGiftEvent enrichGiftEventFromCatalog(
   final icon = event.iconUrl ??
       event.giftImageUrl ??
       catalog.displayIconUrl;
+  final isVideo = catalog.assetType == GiftAssetType.video ||
+      kind == GiftAnimationKind.video;
   final hasAnim = animUrl != null && kind != GiftAnimationKind.none;
   if (!hasAnim && icon == event.iconUrl) return event;
+
+  final thumb = event.thumbnailUrl ?? catalog.thumbnailUrl;
+  final videoUrl = event.videoUrl ?? (isVideo ? animUrl : null);
+  final assetFormat = event.assetFormat ?? _assetFormatFrom(catalog, animUrl);
+  final engineAnimType = event.engineAnimationType ??
+      _engineAnimationType(catalog, kind, animUrl);
 
   return LiveGiftEvent(
     id: event.id,
@@ -50,13 +60,50 @@ LiveGiftEvent enrichGiftEventFromCatalog(
     isFullscreen: event.isFullscreen ?? catalog.isFullscreen,
     animationDurationMs:
         event.animationDurationMs ?? catalog.animationDurationMs,
+    assetFormat: assetFormat,
+    imageUrl: event.imageUrl ?? thumb,
+    videoUrl: videoUrl,
+    thumbnailUrl: thumb,
     enginePriority: event.enginePriority,
     engineDisplayArea: event.engineDisplayArea,
-    engineAnimationType: event.engineAnimationType,
+    engineAnimationType: engineAnimType,
     engineDurationMs: event.engineDurationMs,
     engineQueueGapMs: event.engineQueueGapMs,
     engineFeedDurationMs: event.engineFeedDurationMs,
     engineSeatEffects: event.engineSeatEffects,
     engineParticleKey: event.engineParticleKey,
   );
+}
+
+String? _assetFormatFrom(GiftEntity catalog, String? animUrl) {
+  if (catalog.assetType == GiftAssetType.video) {
+    final inferred = GiftEngineAnimationType.inferFromUrl(animUrl);
+    if (inferred == GiftEngineAnimationType.webm) return 'webm';
+    return 'mp4';
+  }
+  return switch (catalog.animationKind) {
+    GiftAnimationKind.gif => 'gif',
+    GiftAnimationKind.lottie => 'lottie',
+    GiftAnimationKind.svga => 'svga',
+    GiftAnimationKind.video => 'mp4',
+    _ => null,
+  };
+}
+
+String? _engineAnimationType(
+  GiftEntity catalog,
+  GiftAnimationKind kind,
+  String? animUrl,
+) {
+  if (catalog.assetType == GiftAssetType.video || kind == GiftAnimationKind.video) {
+    final inferred = GiftEngineAnimationType.inferFromUrl(animUrl);
+    return inferred == GiftEngineAnimationType.webm ? 'webm' : 'mp4';
+  }
+  return switch (kind) {
+    GiftAnimationKind.lottie => 'lottie',
+    GiftAnimationKind.svga => 'svga',
+    GiftAnimationKind.gif => 'gif',
+    GiftAnimationKind.image => 'png',
+    _ => null,
+  };
 }

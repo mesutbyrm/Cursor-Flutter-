@@ -1,4 +1,5 @@
 import '../domain/gift_animation_kind.dart';
+import '../domain/gift_asset_type.dart';
 import '../domain/gift_entity.dart';
 
 /// Yerel animasyon / emoji eşlemesi (API `animation: lottie:rose` vb.).
@@ -85,6 +86,9 @@ abstract final class GiftCatalogMaps {
       '🎁';
 
   static GiftAnimationKind resolvedKind(GiftEntity gift) {
+    if (gift.assetType == GiftAssetType.video) {
+      return GiftAnimationKind.video;
+    }
     if (gift.animationKind != GiftAnimationKind.lottie &&
         gift.animationKind != GiftAnimationKind.none) {
       return gift.animationKind;

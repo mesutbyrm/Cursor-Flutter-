@@ -9,7 +9,6 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/presentation/gifts/widgets/floating_gift_particles.dart';
-import '../../data/gift_cache_service.dart';
 import '../../domain/gift_engine_models.dart';
 import '../../domain/gift_engine_parser.dart';
 import '../sync/gift_session_controller.dart';
@@ -120,7 +119,6 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
     final url = config.videoUrl ?? config.resolvedAssetUrl;
     if (url == null || !url.startsWith('http')) return;
     try {
-      await GiftCacheService.instance.getBytes(url);
       final c = VideoPlayerController.networkUrl(Uri.parse(url));
       await c.initialize();
       if (!mounted || _activeId != ev.id) {

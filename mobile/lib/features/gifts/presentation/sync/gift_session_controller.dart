@@ -137,12 +137,18 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     final jeton = event.jetonAmount;
     final roomTotal = state.roomTotalJeton + jeton;
 
-    final sseOnly = source == 'sse' || source == 'live_realtime';
+    const animatedSources = {
+      'sse',
+      'live_realtime',
+      'voice_realtime',
+      'voice_announce',
+    };
+    final canAnimate = animatedSources.contains(source);
     final joinedMs = _joinTimestampMs;
     final beforeJoin = joinedMs != null &&
         event.eventTimestampMs > 0 &&
         event.eventTimestampMs < joinedMs - _joinGraceMs;
-    final animate = sseOnly && !beforeJoin;
+    final animate = canAnimate && !beforeJoin;
 
     state = state.copyWith(
       recentGifts: recent,
@@ -157,8 +163,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     if (!animate) {
       if (beforeJoin) {
         GiftSyncLog.dedupeSkipped(roomId, event.id, 'before_join');
-      } else if (!sseOnly) {
-        GiftSyncLog.dedupeSkipped(roomId, event.id, 'non_sse_source');
+      } else if (!canAnimate) {
+        GiftSyncLog.dedupeSkipped(roomId, event.id, 'non_animated_source');
       }
       GiftSyncLog.eventProcessed(roomId, event.id, combo: event.combo);
       return;

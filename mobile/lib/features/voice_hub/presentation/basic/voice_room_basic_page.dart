@@ -209,7 +209,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     try {
       final roomId = room.apiRoomKey;
       if (!ref.read(voiceRoomLiveProvider(_liveRoomKey)).backendSyncReady) {
-        final deadline = DateTime.now().add(const Duration(seconds: 12));
+        final deadline = DateTime.now().add(const Duration(milliseconds: 1500));
         while (DateTime.now().isBefore(deadline)) {
           await Future<void>.delayed(const Duration(milliseconds: 200));
           if (!mounted) return;
