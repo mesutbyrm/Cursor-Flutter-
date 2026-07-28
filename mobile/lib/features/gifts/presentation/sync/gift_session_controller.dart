@@ -2,31 +2,25 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/gift_engine_models.dart';
+import '../../domain/gift_engine_parser.dart';
 import '../../domain/gift_revenue_display.dart';
+import '../engine/gift_engine_preloader.dart';
 import '../providers/gift_catalog_index_provider.dart';
-import '../../domain/gift_animation_policy.dart';
-import '../../domain/gift_entity.dart';
 import '../../domain/gift_event_catalog_enricher.dart';
-import '../../domain/gift_render_meta.dart';
-import '../../domain/premium_gift_catalog_2026.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import 'gift_hourly_reset.dart';
 import 'gift_session_state.dart';
 import 'gift_sync_log.dart';
 
-/// Oturum hediye state — tek kaynak (SSE/socket/poll → buraya).
+/// Gift Engine oturum kontrolcüsü — tek FIFO kuyruk, backend render.
 class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, String> {
-  static const _recentTtl = Duration(seconds: 5);
   static const _maxRecent = 5;
-  static const _comboWindow = Duration(seconds: 5);
   static const _maxProcessedIds = 256;
-  /// Sunucu saati / saniye-ms farkı için katılım öncesi tolerans.
   static const _joinGraceMs = 15000;
 
-  final _recentExpiryTimers = <String, Timer>{};
-  final _comboKeys = <String, GiftRecentItem>{};
+  final _feedExpiryTimers = <String, Timer>{};
   Timer? _animationTimer;
-  Timer? _fullscreenTimer;
   void Function()? _cancelHourlyReset;
   late String _roomId;
   int? _joinTimestampMs;
@@ -44,31 +38,28 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   }
 
   void _resetHourlyTotals() {
-    _comboKeys.clear();
-    for (final t in _recentExpiryTimers.values) {
+    for (final t in _feedExpiryTimers.values) {
       t.cancel();
     }
-    _recentExpiryTimers.clear();
+    _feedExpiryTimers.clear();
     state = state.copyWith(
       recentGifts: const [],
       animationQueue: const [],
+      feedItems: const [],
       roomTotalJeton: 0,
       clearActiveAnimation: true,
-      clearActiveFullscreen: true,
     );
   }
 
   void _disposeTimers() {
     _cancelHourlyReset?.call();
-    for (final t in _recentExpiryTimers.values) {
+    for (final t in _feedExpiryTimers.values) {
       t.cancel();
     }
-    _recentExpiryTimers.clear();
+    _feedExpiryTimers.clear();
     _animationTimer?.cancel();
-    _fullscreenTimer?.cancel();
   }
 
-  /// Tüm roller aynı yolu kullanır — host/guest ayrımı yok.
   void onGiftSent(
     LiveGiftEvent raw, {
     required String source,
@@ -80,11 +71,9 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       source: source,
       userRole: userRole,
       isHost: isHost,
-      stageOverlayOnly: false,
     );
   }
 
-  /// Sesli oda — ağır tam ekran katmanı yerine yalnızca sahne bandı.
   void onVoiceGiftSent(
     LiveGiftEvent raw, {
     required String source,
@@ -96,7 +85,6 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       source: source,
       userRole: userRole,
       isHost: isHost,
-      stageOverlayOnly: true,
     );
   }
 
@@ -105,7 +93,6 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     required String source,
     String? userRole,
     bool isHost = false,
-    required bool stageOverlayOnly,
   }) {
     final roomId = _roomId;
     if (!_isDisplayable(raw)) {
@@ -139,15 +126,13 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       ref.read(allGiftCatalogByIdProvider),
       raw.giftId,
     );
-    final event = _normalizeCombo(
-      enrichGiftEventFromCatalog(raw, catalog),
-    );
+    final event = enrichGiftEventFromCatalog(raw, catalog);
     final ids = {...state.processedEventIds, event.id};
     if (ids.length > _maxProcessedIds) {
       ids.remove(ids.first);
     }
 
-    final recent = _upsertRecent(event);
+    final recent = _appendRecent(event);
     final jeton = event.jetonAmount;
     final roomTotal = state.roomTotalJeton + jeton;
 
@@ -166,6 +151,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       latestEvent: event,
     );
 
+    _addFeedItem(event);
+
     if (!animate) {
       if (beforeJoin) {
         GiftSyncLog.dedupeSkipped(roomId, event.id, 'before_join');
@@ -176,33 +163,15 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       return;
     }
 
-    final showFs = GiftRenderMeta.isFullscreenLayer(event, catalog) ||
-        (!stageOverlayOnly && _shouldFullscreen(event, jeton, catalog));
-
-    state = state.copyWith(
-      activeFullscreen: showFs ? event : state.activeFullscreen,
-    );
-
-    if (showFs) {
-      final duration = GiftRenderMeta.displayDuration(event, catalog);
-      _fullscreenTimer?.cancel();
-      _fullscreenTimer = Timer(duration, () {
-        if (state.activeFullscreen?.id == event.id) {
-          state = state.copyWith(clearActiveFullscreen: true);
-        }
-      });
-    } else if (GiftRenderMeta.isStageBandLayer(event, catalog) ||
-        !stageOverlayOnly) {
-      _enqueueAnimation(event, catalog);
-    }
+    unawaited(GiftEnginePreloader.prefetch(event));
+    _enqueueAnimation(event);
 
     GiftSyncLog.eventProcessed(roomId, event.id, combo: event.combo);
-    GiftSyncLog.uiRender(roomId, 'recent+animation+${showFs ? 'fullscreen' : 'flight'}');
+    GiftSyncLog.uiRender(roomId, 'gift_engine_queue');
   }
 
   void clear() {
     _disposeTimers();
-    _comboKeys.clear();
     _joinTimestampMs = null;
     state = const GiftSessionState();
   }
@@ -214,6 +183,7 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     if (!clearingActive && filteredQueue.length == state.animationQueue.length) {
       return;
     }
+    _animationTimer?.cancel();
     state = state.copyWith(
       clearActiveAnimation: clearingActive,
       animationQueue: filteredQueue,
@@ -223,122 +193,90 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     }
   }
 
-  LiveGiftEvent _normalizeCombo(LiveGiftEvent raw) {
-    if (raw.combo > 1) return raw;
-    return LiveGiftEvent(
-      id: raw.id,
-      senderId: raw.senderId,
-      receiverId: raw.receiverId,
-      senderName: raw.senderName,
-      receiverName: raw.receiverName,
-      giftId: raw.giftId,
-      giftName: raw.giftName,
-      quantity: raw.quantity,
-      coinCost: raw.coinCost,
-      giftPrice: raw.giftPrice,
-      totalCoin: raw.totalCoin,
-      totalDiamond: raw.totalDiamond,
-      combo: 1,
-      timestamp: raw.timestamp,
-      iconUrl: raw.iconUrl,
-      giftImageUrl: raw.giftImageUrl,
-      animationKey: raw.animationKey,
-      rarity: raw.rarity,
-      animationKind: raw.animationKind,
-      soundKey: raw.soundKey,
-      remainingBalance: raw.remainingBalance,
-      seatIndex: raw.seatIndex,
-      senderAvatar: raw.senderAvatar,
-      receiverAvatar: raw.receiverAvatar,
-      giftType: raw.giftType,
-      giftIcon: raw.giftIcon,
-      assetUrl: raw.assetUrl,
-      assetType: raw.assetType,
-      displayType: raw.displayType,
-      isFullscreen: raw.isFullscreen,
-      visibleAsFullscreen: raw.visibleAsFullscreen,
-      screenPosition: raw.screenPosition,
-      displayDurationMs: raw.displayDurationMs,
-      tier: raw.tier,
+  List<GiftRecentItem> _appendRecent(LiveGiftEvent event) {
+    final senderId = (event.senderId ?? event.senderName).trim();
+    final item = GiftRecentItem(
+      id: 'recent-${event.id}',
+      senderId: senderId,
+      senderName: event.senderName.trim().isNotEmpty
+          ? event.senderName.trim()
+          : 'Biri',
+      receiverName: event.receiverName.trim().isNotEmpty
+          ? event.receiverName.trim()
+          : 'kullanıcı',
+      giftId: event.giftId,
+      giftName: event.giftName.trim().isNotEmpty
+          ? event.giftName.trim()
+          : 'hediye',
+      jetonAmount: event.jetonAmount,
+      combo: event.combo > 1 ? event.combo : 1,
+      at: DateTime.now(),
+      iconUrl: event.displayImageUrl,
+      seatIndex: event.seatIndex,
+    );
+    final merged = [item, ...state.recentGifts]
+        .take(_maxRecent)
+        .toList(growable: false);
+    return merged;
+  }
+
+  void _addFeedItem(LiveGiftEvent event) {
+    final config = GiftEngineParser.fromEvent(event);
+    final item = GiftFeedItem(
+      id: 'feed-${event.id}',
+      senderName: event.senderName.trim().isNotEmpty
+          ? event.senderName.trim()
+          : 'Biri',
+      giftName: event.giftName.trim().isNotEmpty
+          ? event.giftName.trim()
+          : 'Hediye',
+      jetonAmount: event.jetonAmount,
+      combo: config.combo,
+      expiresAt: DateTime.now().add(
+        Duration(milliseconds: config.feedDurationMs),
+      ),
+      iconUrl: event.displayImageUrl,
+      giftIcon: event.giftIcon,
+    );
+
+    final items = [item, ...state.feedItems].take(6).toList();
+    state = state.copyWith(feedItems: items);
+
+    _feedExpiryTimers[item.id]?.cancel();
+    _feedExpiryTimers[item.id] = Timer(
+      Duration(milliseconds: config.feedDurationMs),
+      () {
+        _feedExpiryTimers.remove(item.id);
+        state = state.copyWith(
+          feedItems: state.feedItems.where((f) => f.id != item.id).toList(),
+        );
+      },
     );
   }
 
-  List<GiftRecentItem> _upsertRecent(LiveGiftEvent event) {
-    final senderId = (event.senderId ?? event.senderName).trim();
-    final comboKey = '$senderId|${event.giftId}';
-    final now = DateTime.now();
-
-    GiftRecentItem item;
-    final existing = _comboKeys[comboKey];
-    if (existing != null &&
-        now.difference(existing.at) < _comboWindow) {
-      item = existing.bumpCombo(event.jetonAmount);
-    } else {
-      item = GiftRecentItem(
-        id: 'recent-$comboKey-${now.microsecondsSinceEpoch}',
-        senderId: senderId,
-        senderName: event.senderName.trim().isNotEmpty
-            ? event.senderName.trim()
-            : 'Biri',
-        receiverName: event.receiverName.trim().isNotEmpty
-            ? event.receiverName.trim()
-            : 'kullanıcı',
-        giftId: event.giftId,
-        giftName: event.giftName.trim().isNotEmpty
-            ? event.giftName.trim()
-            : 'hediye',
-        jetonAmount: event.jetonAmount,
-        combo: event.combo > 1 ? event.combo : 1,
-        at: now,
-        iconUrl: event.displayImageUrl,
-        seatIndex: event.seatIndex,
-      );
-    }
-    _comboKeys[comboKey] = item;
-
-    _recentExpiryTimers[comboKey]?.cancel();
-    _recentExpiryTimers[comboKey] = Timer(_recentTtl, () {
-      _comboKeys.remove(comboKey);
-      _recentExpiryTimers.remove(comboKey);
-      state = state.copyWith(
-        recentGifts: _comboKeys.values.toList()
-          ..sort((a, b) => b.at.compareTo(a.at)),
-      );
-    });
-
-    final ordered = _comboKeys.values.toList()
-      ..sort((a, b) => b.at.compareTo(a.at));
-    return ordered.take(_maxRecent).toList();
-  }
-
-  void _enqueueAnimation(LiveGiftEvent event, GiftEntity? catalog) {
+  void _enqueueAnimation(LiveGiftEvent event) {
     state = state.copyWith(
       animationQueue: [...state.animationQueue, event],
     );
-    _pumpAnimationQueue(catalog);
+    _pumpAnimationQueue();
   }
 
-  GiftEntity? _catalogFor(String giftId) =>
-      lookupGiftCatalog(ref.read(allGiftCatalogByIdProvider), giftId);
-
-  void _pumpAnimationQueue([GiftEntity? catalogHint]) {
+  void _pumpAnimationQueue() {
     if (state.activeAnimation != null) return;
     if (state.animationQueue.isEmpty) return;
 
     final next = state.animationQueue.first;
-    final catalog = catalogHint ?? _catalogFor(next.giftId);
     final rest = state.animationQueue.length > 1
         ? state.animationQueue.sublist(1)
         : <LiveGiftEvent>[];
 
     state = state.copyWith(activeAnimation: next, animationQueue: rest);
 
+    final config = GiftEngineParser.fromEvent(next);
+    final totalMs = config.startDelayMs + config.durationMs + config.queueGapMs;
+
     _animationTimer?.cancel();
-    final duration = GiftAnimationPolicy.queueDuration(
-      jetonPrice: next.jetonAmount,
-      animationDurationMs: catalog?.animationDurationMs,
-    );
-    _animationTimer = Timer(duration + GiftAnimationPolicy.queueGapDuration, () {
+    _animationTimer = Timer(Duration(milliseconds: totalMs), () {
       if (state.activeAnimation?.id == next.id) {
         state = state.copyWith(clearActiveAnimation: true);
       }
@@ -346,34 +284,11 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     });
   }
 
-  bool _shouldFullscreen(
-    LiveGiftEvent event,
-    int jeton,
-    GiftEntity? catalog,
-  ) {
-    if (GiftAnimationPolicy.shouldFullscreen(
-      catalog: catalog,
-      jetonPrice: jeton,
-      displayType: catalog?.displayType,
-      hasNetworkAnimation: (event.animationKey ?? '').startsWith('http'),
-    )) {
-      return true;
-    }
-    if (PremiumGiftCatalog2026.triggersFullscreen(
-      giftId: event.giftId,
-      coinCost: jeton,
-    )) {
-      return true;
-    }
-    return false;
-  }
-
   bool _isDisplayable(LiveGiftEvent e) {
     bool ok(String s) => s.trim().isNotEmpty && !s.startsWith('{');
     return ok(e.giftName) || e.giftId.isNotEmpty;
   }
 
-  /// Yayıncı net kazancı (canlı yayın özetleri için).
   int broadcasterNetDelta(LiveGiftEvent event) =>
       GiftRevenueDisplay.liveBroadcasterNet(event.jetonAmount);
 }

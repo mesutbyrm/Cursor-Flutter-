@@ -1,8 +1,9 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../live/domain/entities/live_gift_event.dart';
+import '../../domain/gift_engine_models.dart';
 
-/// Son hediyeler kutusu — combo ile (❤️ x1 → x2 → x3).
+/// Son hediyeler kutusu — combo backend'den.
 class GiftRecentItem extends Equatable {
   const GiftRecentItem({
     required this.id,
@@ -32,20 +33,6 @@ class GiftRecentItem extends Equatable {
 
   String get comboLabel => combo > 1 ? ' x$combo' : '';
 
-  GiftRecentItem bumpCombo(int addJeton) => GiftRecentItem(
-        id: id,
-        senderId: senderId,
-        senderName: senderName,
-        receiverName: receiverName,
-        giftId: giftId,
-        giftName: giftName,
-        jetonAmount: jetonAmount + addJeton,
-        combo: combo + 1,
-        at: DateTime.now(),
-        iconUrl: iconUrl,
-        seatIndex: seatIndex,
-      );
-
   @override
   List<Object?> get props => [
         id,
@@ -62,13 +49,13 @@ class GiftRecentItem extends Equatable {
       ];
 }
 
-/// Tek oturum hediye state — host/guest/moderatör aynı kaynak.
+/// Tek oturum hediye state — Gift Engine kuyruk + feed.
 class GiftSessionState extends Equatable {
   const GiftSessionState({
     this.recentGifts = const [],
     this.animationQueue = const [],
     this.activeAnimation,
-    this.activeFullscreen,
+    this.feedItems = const [],
     this.roomTotalJeton = 0,
     this.remainingBalance,
     this.processedEventIds = const {},
@@ -78,7 +65,7 @@ class GiftSessionState extends Equatable {
   final List<GiftRecentItem> recentGifts;
   final List<LiveGiftEvent> animationQueue;
   final LiveGiftEvent? activeAnimation;
-  final LiveGiftEvent? activeFullscreen;
+  final List<GiftFeedItem> feedItems;
   final int roomTotalJeton;
   final int? remainingBalance;
   final Set<String> processedEventIds;
@@ -89,8 +76,7 @@ class GiftSessionState extends Equatable {
     List<LiveGiftEvent>? animationQueue,
     LiveGiftEvent? activeAnimation,
     bool clearActiveAnimation = false,
-    LiveGiftEvent? activeFullscreen,
-    bool clearActiveFullscreen = false,
+    List<GiftFeedItem>? feedItems,
     int? roomTotalJeton,
     int? remainingBalance,
     bool clearRemainingBalance = false,
@@ -103,9 +89,7 @@ class GiftSessionState extends Equatable {
       animationQueue: animationQueue ?? this.animationQueue,
       activeAnimation:
           clearActiveAnimation ? null : (activeAnimation ?? this.activeAnimation),
-      activeFullscreen: clearActiveFullscreen
-          ? null
-          : (activeFullscreen ?? this.activeFullscreen),
+      feedItems: feedItems ?? this.feedItems,
       roomTotalJeton: roomTotalJeton ?? this.roomTotalJeton,
       remainingBalance: clearRemainingBalance
           ? null
@@ -120,7 +104,7 @@ class GiftSessionState extends Equatable {
         recentGifts,
         animationQueue,
         activeAnimation,
-        activeFullscreen,
+        feedItems,
         roomTotalJeton,
         remainingBalance,
         processedEventIds,

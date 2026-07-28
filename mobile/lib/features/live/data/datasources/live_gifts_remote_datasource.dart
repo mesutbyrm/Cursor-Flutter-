@@ -331,10 +331,18 @@ class LiveGiftsRemoteDataSource {
         resolvedAnimType != GiftAnimationKind.none ? resolvedAnimType : animType;
 
     final render = () {
-      final r = json['giftRender'] ?? json['render'];
+      final r = json['giftRender'] ?? json['render'] ?? json['giftEngine'];
       if (r is Map) return asJsonMap(r);
       return json;
     }();
+
+    List<String> seatEffects = const [];
+    final rawEffects = pick(render, ['seatEffects', 'seat_effects', 'seatEffect']);
+    if (rawEffects is List) {
+      seatEffects = rawEffects.map((e) => e.toString()).toList();
+    } else if (rawEffects != null) {
+      seatEffects = [rawEffects.toString()];
+    }
 
     return LiveGiftEvent(
       id: id,
@@ -419,6 +427,29 @@ class LiveGiftsRemoteDataSource {
       musicUrl: _resolveImageUrl(
         pick(render, ['musicUrl', 'music_url', 'soundUrl'])?.toString(),
       ),
+      enginePriority: pick(render, ['priority', 'giftPriority'])?.toString(),
+      engineDisplayArea:
+          pick(render, ['displayArea', 'display_area'])?.toString(),
+      engineAnimationType: pick(render, [
+        'animationType',
+        'animation_type',
+        'assetFormat',
+      ])?.toString(),
+      engineDurationMs: asInt(
+        pick(render, ['durationMs', 'duration_ms']),
+      ),
+      engineQueueGapMs: asInt(
+        pick(render, ['queueGapMs', 'queue_gap_ms', 'gapMs']),
+      ),
+      engineFeedDurationMs: asInt(
+        pick(render, ['feedDurationMs', 'feed_duration_ms']),
+      ),
+      engineSeatEffects: seatEffects,
+      engineParticleKey: pick(render, [
+        'particleKey',
+        'particle_key',
+        'particleEffect',
+      ])?.toString(),
     );
   }
 

@@ -8,6 +8,7 @@ LiveGiftEvent _event({
   String senderId = 'u1',
   String giftId = 'heart',
   int jeton = 50,
+  int combo = 1,
 }) {
   return LiveGiftEvent(
     id: id,
@@ -21,24 +22,26 @@ LiveGiftEvent _event({
     giftPrice: jeton,
     totalCoin: jeton,
     totalDiamond: 0,
-    combo: 1,
+    combo: combo,
     timestamp: DateTime.now(),
+    engineDurationMs: 2000,
+    engineFeedDurationMs: 3000,
   );
 }
 
 void main() {
-  test('combo artar, aynı kullanıcı aynı hediyede yeni satır açmaz', () {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('backend combo değeri recent satırında korunur', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
     final notifier = container.read(giftSessionProvider('room-1').notifier);
-    notifier.onGiftSent(_event(id: 'e1'), source: 'test');
-    notifier.onGiftSent(_event(id: 'e2'), source: 'test');
+    notifier.onGiftSent(_event(id: 'e1', combo: 5), source: 'test');
 
     final state = container.read(giftSessionProvider('room-1'));
     expect(state.recentGifts.length, 1);
-    expect(state.recentGifts.first.combo, 2);
-    expect(state.processedEventIds.length, 2);
+    expect(state.recentGifts.first.combo, 5);
   });
 
   test('duplicate event id yok sayılır', () {
@@ -51,6 +54,19 @@ void main() {
 
     final state = container.read(giftSessionProvider('room-1'));
     expect(state.recentGifts.length, 1);
-    expect(state.recentGifts.first.combo, 1);
+    expect(state.processedEventIds.length, 1);
+  });
+
+  test('gift feed item eklenir', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final notifier = container.read(giftSessionProvider('room-1').notifier);
+    notifier.onGiftSent(_event(id: 'feed-1'), source: 'test');
+
+    final state = container.read(giftSessionProvider('room-1'));
+    expect(state.feedItems.length, 1);
+    expect(state.feedItems.first.senderName, 'Ali');
+    expect(state.feedItems.first.jetonAmount, 50);
   });
 }

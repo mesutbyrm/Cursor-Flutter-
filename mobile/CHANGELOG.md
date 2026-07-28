@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.97+124 (2026-07-28)
+
+### Gift Engine — backend render (web paritesi)
+- **FIFO kuyruk:** Aynı anda tek animasyon; bitince sıradaki otomatik oynar (üst üste bindirme yok)
+- **Priority:** SMALL / MEDIUM (%35) / LARGE (%60) / ULTRA (tam ekran) — backend `priority`
+- **Display Area:** FULL_SCREEN, CENTER, SEAT, TOP, BOTTOM — backend `displayArea` / `screenPosition`
+- **Animasyon türleri:** PNG, SVG, Lottie, MP4, WEBM, Particle (+ Rive/SVGA fallback)
+- **Koltuk efektleri:** Glow, Border, Shake, Pulse, Particle — backend `seatEffects`
+- **Combo:** x2 / x5 / x10 / x100 rozeti — backend `combo` (istemci hesaplamaz)
+- **Gift Feed:** Sağ panel; gönderen + hediye + jeton; `feedDurationMs` sonra kaybolur
+- **Performans:** Asset preload, RepaintBoundary, bellek/video önbelleği, controller dispose
+
 ## 1.0.96+123 (2026-07-28)
 
 ### Çerez / oturum düzeltmesi (kritik)
