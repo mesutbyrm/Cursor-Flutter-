@@ -44,6 +44,7 @@ import '../utils/voice_room_permissions.dart';
 import '../utils/voice_room_error_display.dart';
 import '../utils/voice_room_speak_access.dart';
 import '../theme/voice_room_tokens.dart';
+import '../../../gifts/presentation/engine/voice_gift_ambient_overlay.dart';
 import '../widgets/premium/voice_gift_stage_overlays.dart';
 import '../widgets/premium_2026/voice_cosmic_background.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
@@ -756,6 +757,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
+            VoiceGiftAmbientOverlay(sessionKey: sessionKey),
             SafeArea(
               bottom: false,
               child: Column(
@@ -878,7 +880,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
               ],
             ),
             ),
-            VoiceGiftStageOverlays(sessionKey: sessionKey),
+            VoiceGiftHudOverlays(sessionKey: sessionKey),
             if (_showVipEntrance && user != null)
               Builder(
                 builder: (context) {

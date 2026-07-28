@@ -9,6 +9,7 @@ import '../engine/gift_engine_preloader.dart';
 import '../providers/gift_catalog_index_provider.dart';
 import '../../domain/gift_event_catalog_enricher.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
+import '../engine/voice_gift_ambient_overlay.dart';
 import 'gift_hourly_reset.dart';
 import 'gift_session_state.dart';
 import 'gift_sync_log.dart';
@@ -273,14 +274,18 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     state = state.copyWith(activeAnimation: next, animationQueue: rest);
 
     final config = GiftEngineParser.fromEvent(next);
-    final totalMs = config.startDelayMs + config.durationMs + config.queueGapMs;
+    final watchdogMs = config.startDelayMs +
+        config.durationMs +
+        config.queueGapMs +
+        VoiceGiftAmbientOverlay.fadeInMs +
+        VoiceGiftAmbientOverlay.fadeOutMs +
+        5000;
 
     _animationTimer?.cancel();
-    _animationTimer = Timer(Duration(milliseconds: totalMs), () {
+    _animationTimer = Timer(Duration(milliseconds: watchdogMs), () {
       if (state.activeAnimation?.id == next.id) {
-        state = state.copyWith(clearActiveAnimation: true);
+        dequeueAnimation(next.id);
       }
-      _pumpAnimationQueue();
     });
   }
 

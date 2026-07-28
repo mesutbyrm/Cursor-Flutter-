@@ -69,6 +69,7 @@ import 'utils/voice_room_permissions.dart';
 import 'utils/voice_room_error_display.dart';
 import 'utils/voice_room_speak_access.dart';
 import 'utils/voice_room_responsive_metrics.dart';
+import '../../gifts/presentation/engine/voice_gift_ambient_overlay.dart';
 import 'widgets/premium/voice_gift_stage_overlays.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
@@ -1350,6 +1351,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
             VoiceRoomYoutubeEmbedHost(roomKey: _liveRoomKey),
+            VoiceGiftAmbientOverlay(sessionKey: sessionKey),
             Column(
               children: [
                 Expanded(
@@ -1767,7 +1769,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 ),
               ],
             ),
-            VoiceGiftStageOverlays(sessionKey: sessionKey),
+            VoiceGiftHudOverlays(sessionKey: sessionKey),
             if (_showVipEntrance && user != null)
               Builder(
                 builder: (context) {

@@ -34,4 +34,17 @@ void main() {
     expect(config.displayArea, GiftEngineDisplayArea.fullScreen);
     expect(config.durationMs, 5000);
   });
+
+  test('URL uzantısından video türü çıkarılır', () {
+    expect(
+      GiftEngineAnimationType.inferFromUrl('https://cdn.example.com/gift.mp4'),
+      GiftEngineAnimationType.mp4,
+    );
+    expect(
+      GiftEngineParser.fromJson({
+        'assetUrl': 'https://cdn.example.com/rocket.webm',
+      }).animationType,
+      GiftEngineAnimationType.webm,
+    );
+  });
 }

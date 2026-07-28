@@ -117,9 +117,22 @@ abstract final class GiftEngineParser {
         render['seatEffect']);
 
     final animType = GiftEngineAnimationType.parse(animTypeRaw);
-    final resolvedAnim = animType == GiftEngineAnimationType.none
+    final assetUrl = _pick(render, ['assetUrl', 'animationUrl', 'animation']);
+    final videoUrlRaw = _pick(render, ['videoUrl', 'video_url']);
+    final videoUrl = videoUrlRaw ??
+        (GiftEngineAnimationType.inferFromUrl(assetUrl) ==
+                    GiftEngineAnimationType.mp4 ||
+                GiftEngineAnimationType.inferFromUrl(assetUrl) ==
+                    GiftEngineAnimationType.webm
+            ? assetUrl
+            : null);
+
+    var resolvedAnim = animType == GiftEngineAnimationType.none
         ? GiftEngineAnimationType.parse(event?.assetFormat ?? event?.assetType)
         : animType;
+    if (resolvedAnim == GiftEngineAnimationType.none) {
+      resolvedAnim = GiftEngineAnimationType.inferFromUrl(videoUrl ?? assetUrl);
+    }
 
     return GiftEngineConfig(
       priority: priority,
@@ -131,9 +144,9 @@ abstract final class GiftEngineParser {
       startDelayMs: startDelayMs.clamp(0, 10000),
       combo: combo.clamp(1, 9999),
       seatEffects: seatEffects,
-      assetUrl: _pick(render, ['assetUrl', 'animationUrl', 'animation']),
+      assetUrl: assetUrl,
       imageUrl: _pick(render, ['imageUrl', 'image_url', 'iconUrl', 'icon']),
-      videoUrl: _pick(render, ['videoUrl', 'video_url']),
+      videoUrl: videoUrl,
       thumbnailUrl: _pick(render, ['thumbnailUrl', 'thumbnail_url']),
       effectColor: _pick(render, ['effectColor', 'effect_color']),
       particleKey: _pick(render, ['particleKey', 'particle_key', 'particleEffect', 'animation']),
