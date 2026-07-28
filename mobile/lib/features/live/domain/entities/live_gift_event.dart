@@ -48,6 +48,14 @@ class LiveGiftEvent extends Equatable {
     this.startDelayMs,
     this.effectColor,
     this.musicUrl,
+    this.enginePriority,
+    this.engineDisplayArea,
+    this.engineAnimationType,
+    this.engineDurationMs,
+    this.engineQueueGapMs,
+    this.engineFeedDurationMs,
+    this.engineSeatEffects = const [],
+    this.engineParticleKey,
   });
 
   final String id;
@@ -93,6 +101,14 @@ class LiveGiftEvent extends Equatable {
   final int? startDelayMs;
   final String? effectColor;
   final String? musicUrl;
+  final String? enginePriority;
+  final String? engineDisplayArea;
+  final String? engineAnimationType;
+  final int? engineDurationMs;
+  final int? engineQueueGapMs;
+  final int? engineFeedDurationMs;
+  final List<String> engineSeatEffects;
+  final String? engineParticleKey;
 
   int get eventTimestampMs => timestamp.millisecondsSinceEpoch;
 
@@ -160,5 +176,13 @@ class LiveGiftEvent extends Equatable {
         startDelayMs,
         effectColor,
         musicUrl,
+        enginePriority,
+        engineDisplayArea,
+        engineAnimationType,
+        engineDurationMs,
+        engineQueueGapMs,
+        engineFeedDurationMs,
+        engineSeatEffects,
+        engineParticleKey,
       ];
 }

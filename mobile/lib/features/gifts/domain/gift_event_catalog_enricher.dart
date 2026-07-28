@@ -43,5 +43,20 @@ LiveGiftEvent enrichGiftEventFromCatalog(
     senderAvatar: event.senderAvatar,
     receiverAvatar: event.receiverAvatar,
     giftType: event.giftType,
+    giftIcon: event.giftIcon,
+    assetUrl: event.assetUrl ?? animUrl,
+    assetType: event.assetType ?? catalog.assetType.name,
+    displayType: event.displayType ?? catalog.displayType.name,
+    isFullscreen: event.isFullscreen ?? catalog.isFullscreen,
+    animationDurationMs:
+        event.animationDurationMs ?? catalog.animationDurationMs,
+    enginePriority: event.enginePriority,
+    engineDisplayArea: event.engineDisplayArea,
+    engineAnimationType: event.engineAnimationType,
+    engineDurationMs: event.engineDurationMs,
+    engineQueueGapMs: event.engineQueueGapMs,
+    engineFeedDurationMs: event.engineFeedDurationMs,
+    engineSeatEffects: event.engineSeatEffects,
+    engineParticleKey: event.engineParticleKey,
   );
 }

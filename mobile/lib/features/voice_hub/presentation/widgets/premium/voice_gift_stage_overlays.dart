@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../gifts/presentation/engine/gift_engine_overlay.dart';
+import '../../../../gifts/presentation/engine/gift_engine_seat_effects_overlay.dart';
+import '../../../../gifts/presentation/engine/gift_feed_panel.dart';
 import '../../../../gifts/presentation/sync/gift_session_controller.dart';
-import '../../../../gifts/presentation/widgets/gift_fullscreen_cover_overlay.dart';
 import '../../../../gifts/presentation/widgets/gift_stage_layout.dart';
-import '../../../../live/domain/entities/live_gift_event.dart';
 import '../../providers/voice_room_ui_provider.dart';
-import 'voice_gift_flight_overlay.dart';
 
-/// Hediye animasyonları — yalnızca bu widget giftSession dinler; oda sayfası yeniden çizilmez.
+/// Gift Engine — tek kuyruk, backend render, sohbet/koltuklar görünür kalır.
 class VoiceGiftStageOverlays extends ConsumerWidget {
   const VoiceGiftStageOverlays({
     super.key,
@@ -27,32 +27,21 @@ class VoiceGiftStageOverlays extends ConsumerWidget {
     final activeAnimation = ref.watch(
       giftSessionProvider(sessionKey).select((s) => s.activeAnimation),
     );
-    final activeFullscreen = ref.watch(
-      giftSessionProvider(sessionKey).select((s) => s.activeFullscreen),
-    );
-    final flightEvents = activeAnimation != null
-        ? [activeAnimation]
-        : const <LiveGiftEvent>[];
 
     return Stack(
       clipBehavior: Clip.none,
       fit: StackFit.passthrough,
       children: [
-        VoiceGiftFlightOverlay(
-          events: flightEvents,
+        GiftEngineSeatEffectsOverlay(event: activeAnimation),
+        GiftEngineOverlay(
+          event: activeAnimation,
           enabled: animationsEnabled,
-          stageContext: stageContext,
+          stage: stageContext,
           onFinished: (id) => ref
               .read(giftSessionProvider(sessionKey).notifier)
               .dequeueAnimation(id),
         ),
-        if (animationsEnabled && activeFullscreen != null)
-          Positioned.fill(
-            child: GiftFullscreenCoverOverlay(
-              event: activeFullscreen,
-              stage: stageContext,
-            ),
-          ),
+        GiftFeedPanel(sessionKey: sessionKey),
       ],
     );
   }

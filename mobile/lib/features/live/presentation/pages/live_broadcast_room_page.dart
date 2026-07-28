@@ -28,11 +28,12 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../gifts/presentation/sync/gift_event_listener.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/presentation/sync/gift_session_state.dart';
+import '../../../gifts/presentation/engine/gift_engine_overlay.dart';
+import '../../../gifts/presentation/engine/gift_engine_seat_effects_overlay.dart';
+import '../../../gifts/presentation/engine/gift_feed_panel.dart';
 import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
 import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
-import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import '../../../gifts/presentation/widgets/unified_recent_gifters_box.dart';
-import '../../../voice_hub/presentation/widgets/premium/voice_gift_flight_overlay.dart';
 import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
@@ -1902,9 +1903,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final giftSession = hasStream
         ? ref.watch(giftSessionProvider(streamId))
         : const GiftSessionState();
-    final flightEvents = giftSession.activeAnimation != null
-        ? [giftSession.activeAnimation!]
-        : const <LiveGiftEvent>[];
+    final activeGift = giftSession.activeAnimation;
     final user = ref.watch(authControllerProvider).valueOrNull;
     final interaction = hasStream
         ? ref.watch(liveRoomInteractionProvider(streamId))
@@ -2147,12 +2146,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               emojiRainToken: 0,
               applauseToken: interaction.applauseToken,
             ),
+            GiftEngineSeatEffectsOverlay(event: activeGift),
             Positioned.fill(
               child: IgnorePointer(
-                child: VoiceGiftFlightOverlay(
-                  events: flightEvents,
+                child: GiftEngineOverlay(
+                  event: activeGift,
                   enabled: broadcastSettings.giftsEnabled,
-                  stageContext: GiftStageContext.liveStream,
+                  stage: GiftStageContext.liveStream,
                   onFinished: (id) {
                     if (!hasStream) return;
                     ref
@@ -2162,10 +2162,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 ),
               ),
             ),
-            SafePremiumGiftFullscreenOverlay(
-              event: giftSession.activeFullscreen,
-              stageContext: GiftStageContext.liveStream,
-            ),
+            if (hasStream) GiftFeedPanel(sessionKey: streamId),
             if (hasStream && pkState?.battle != null &&
                 (pkStatus == 'active' || pkStatus == 'ended'))
               LivePkPremiumOverlay(
