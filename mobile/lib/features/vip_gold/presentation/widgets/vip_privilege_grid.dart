@@ -4,6 +4,7 @@ import '../../domain/vip_privilege.dart';
 import '../../domain/vip_tier.dart';
 import '../theme/vip_gold_tokens.dart';
 import 'vip_luxury_card.dart';
+import 'vip_privilege_detail_sheet.dart';
 
 /// 3x2 ayrıcalık grid — SVIP tarzı.
 class VipPrivilegeGrid extends StatelessWidget {
@@ -52,6 +53,11 @@ class VipPrivilegeGrid extends StatelessWidget {
             return VipLuxuryCard(
               padding: const EdgeInsets.all(10),
               highlighted: p.unlocked && tier.isVip,
+              onTap: () => showVipPrivilegeDetailSheet(
+                context,
+                privilege: p,
+                currentTier: tier,
+              ),
               child: Opacity(
                 opacity: p.unlocked ? 1 : 0.45,
                 child: Column(

@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/bootstrap/session_data_refresh.dart';
 import '../../../../core/bootstrap/app_startup_log.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/config/env.dart';
@@ -14,6 +16,9 @@ import '../../../../core/network/loading_timeout.dart';
 import '../../../../core/performance/network_perf.dart';
 import '../../../../core/auth/session_user_cache.dart';
 import '../../../../core/network/token_storage.dart';
+import '../../../fortune/data/fortune_birth_profile_store.dart';
+import '../../../fortune/presentation/providers/fortune_birth_profile_provider.dart';
+import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/datasources/native_auth_datasource.dart';
@@ -199,8 +204,36 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
   Future<void> _afterAuthSuccess(UserEntity? user) async {
     if (user == null || user.id.isEmpty) return;
+    invalidateAuthenticatedShellData(ref);
     unawaited(OneSignalBootstrap.login(user.id));
     unawaited(TrtcBootstrapService.prewarmAfterAuth());
+    unawaited(_seedFortuneBirthFromProfile(user.id));
+  }
+
+  Future<void> _seedFortuneBirthFromProfile(String userId) async {
+    try {
+      final ext = await ref.read(profileExtendedProvider.future);
+      final date = ext.birthDate;
+      if (date == null) return;
+      final store = await ref.read(fortuneBirthProfileStoreProvider.future);
+      if (store.read(userId) != null) return;
+      TimeOfDay time = const TimeOfDay(hour: 12, minute: 0);
+      final raw = ext.birthTime;
+      if (raw != null && raw.contains(':')) {
+        final parts = raw.split(':');
+        if (parts.length >= 2) {
+          time = TimeOfDay(
+            hour: (int.tryParse(parts[0]) ?? 12).clamp(0, 23),
+            minute: (int.tryParse(parts[1]) ?? 0).clamp(0, 59),
+          );
+        }
+      }
+      await store.save(
+        userId,
+        FortuneBirthProfile(birthDate: date, birthTime: time),
+      );
+      ref.invalidate(fortuneBirthProfileProvider);
+    } catch (_) {}
   }
 
   Future<void> login(String identifier, String password) async {
@@ -250,6 +283,27 @@ class AuthController extends AsyncNotifier<UserEntity?> {
         );
         final resolved = await _withSiteProfile(u);
         await _afterAuthSuccess(resolved);
+        if (birthDate != null &&
+            birthTime != null &&
+            birthDate.isNotEmpty &&
+            birthTime.isNotEmpty &&
+            resolved != null) {
+          final date = DateTime.tryParse(birthDate);
+          if (date != null) {
+            final parts = birthTime.split(':');
+            final time = TimeOfDay(
+              hour: parts.isNotEmpty ? (int.tryParse(parts[0]) ?? 12) : 12,
+              minute: parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0,
+            );
+            final store =
+                await ref.read(fortuneBirthProfileStoreProvider.future);
+            await store.save(
+              resolved.id,
+              FortuneBirthProfile(birthDate: date, birthTime: time),
+            );
+            ref.invalidate(fortuneBirthProfileProvider);
+          }
+        }
         return resolved;
       });
       _clearGuestModeOnSuccess();

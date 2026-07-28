@@ -28,6 +28,7 @@ class FortuneAccessState {
     required this.adCredits,
     required this.adsWatchedToday,
     required this.jetonBalance,
+    required this.cfcBalance,
     required this.isPremiumUnlimited,
   });
 
@@ -35,6 +36,7 @@ class FortuneAccessState {
   final int adCredits;
   final int adsWatchedToday;
   final int jetonBalance;
+  final int cfcBalance;
   final bool isPremiumUnlimited;
 
   bool get hasAdCredits => adCredits > 0;
@@ -43,6 +45,8 @@ class FortuneAccessState {
       config.adsEnabled && adsWatchedToday < config.dailyAdLimit;
 
   bool get hasEnoughJeton => jetonBalance >= config.jetonCost;
+
+  bool get hasEnoughCfc => cfcBalance >= config.jetonCost;
 }
 
 final fortuneAccessStateProvider =

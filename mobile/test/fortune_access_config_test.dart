@@ -39,6 +39,7 @@ void main() {
         adCredits: 0,
         adsWatchedToday: 0,
         jetonBalance: 10,
+        cfcBalance: 0,
         isPremiumUnlimited: false,
       );
       expect(state.hasEnoughJeton, isTrue);
@@ -51,6 +52,7 @@ void main() {
         adCredits: 0,
         adsWatchedToday: 3,
         jetonBalance: 0,
+        cfcBalance: 0,
         isPremiumUnlimited: false,
       );
       expect(state.canWatchMoreAds, isFalse);

@@ -60,6 +60,8 @@ enum FortuneAccessMethod {
   premium,
   adCredit,
   jeton,
+  cfc,
+  adUnlocked,
 }
 
 class FortuneAccessGrant {

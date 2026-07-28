@@ -18,6 +18,7 @@ import '../widgets/fortune_image_capture_panel.dart';
 import '../widgets/premium_ai/premium_fortune_open_button.dart';
 import '../../domain/fortune_access_config.dart';
 import 'fortune_access_gate.dart';
+import '../widgets/fortune_zodiac_hub_card.dart';
 import 'fortune_ambient_audio.dart';
 import 'fortune_fullscreen_ad_gate.dart';
 import 'fortune_reading_service.dart';
@@ -88,11 +89,14 @@ class FortuneReadingCoordinator {
     }
 
     final paidWithJeton = accessGrant?.method == FortuneAccessMethod.jeton;
-    if (!await FortuneFullscreenAdGate.showBeforeFortune(
-      context: context,
-      paidWithJeton: paidWithJeton,
-      ref: ref,
-    )) {
+    final skipSecondAd = accessGrant != null &&
+        accessGrant.method != FortuneAccessMethod.jeton;
+    if (!skipSecondAd &&
+        !await FortuneFullscreenAdGate.showBeforeFortune(
+          context: context,
+          paidWithJeton: paidWithJeton,
+          ref: ref,
+        )) {
       return null;
     }
     if (!context.mounted) return null;
@@ -105,11 +109,25 @@ class FortuneReadingCoordinator {
     final resolvedYesNo = type.kind == FortuneSessionKind.yesNo
         ? (yesNoChoice ?? _rng.nextBool())
         : yesNoChoice;
-    final resolvedBirth = birthDate ??
-        await _resolveBirthDate(ref, type) ??
-        (type.kind == FortuneSessionKind.numberInput
-            ? DateTime(1995, 6, 15)
-            : null);
+    var resolvedBirth = birthDate ?? await _resolveBirthDate(ref, type);
+    if (resolvedBirth == null &&
+        (type.kind == FortuneSessionKind.numberInput ||
+            type.kind == FortuneSessionKind.zodiacWheel ||
+            type.slug == 'numeroloji' ||
+            type.slug == 'yildiz-haritasi')) {
+      await showFortuneBirthProfileSheet(context, ref);
+      if (!context.mounted) return null;
+      resolvedBirth = birthDate ?? await _resolveBirthDate(ref, type);
+      if (resolvedBirth == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Doğum tarihi ve saati gerekli — lütfen profilinize ekleyin'),
+          ),
+        );
+        return null;
+      }
+    }
+    final resolvedBirthTime = await _resolveBirthTime(ref, type);
 
     final imageHint = _imageHint(type, images);
 
@@ -161,6 +179,7 @@ class FortuneReadingCoordinator {
               userInput: userInput,
               yesNoChoice: resolvedYesNo,
               birthDate: resolvedBirth,
+              birthTime: resolvedBirthTime,
               images: cloudImages,
               accessToken: accessToken,
               paymentMethod: paymentMethod,
@@ -183,11 +202,12 @@ class FortuneReadingCoordinator {
         }
         if (loadingCancelled) return null;
         if (!streamed) {
-          final remote = await ref.read(fortuneRepositoryProvider).readFortune(
+          final remote = await ref.read(fortuneRemoteProvider).readFortune(
                 type: type,
                 userInput: userInput,
                 yesNoChoice: resolvedYesNo,
                 birthDate: resolvedBirth,
+                birthTime: resolvedBirthTime,
                 images: cloudImages,
                 paymentMethod: paymentMethod,
                 jetonCost: jetonCost,
@@ -309,14 +329,30 @@ class FortuneReadingCoordinator {
     WidgetRef ref,
     FortuneTypeEntity type,
   ) async {
-    if (type.kind != FortuneSessionKind.zodiacWheel &&
-        type.slug != 'yildiz-haritasi' &&
-        type.slug != 'burc-yorumu') {
-      return null;
-    }
+    final needsBirth = type.kind == FortuneSessionKind.zodiacWheel ||
+        type.kind == FortuneSessionKind.numberInput ||
+        type.slug == 'yildiz-haritasi' ||
+        type.slug == 'burc-yorumu' ||
+        type.slug == 'numeroloji';
+    if (!needsBirth) return null;
     try {
       final profile = await ref.read(fortuneBirthProfileProvider.future);
       return profile?.birthDate;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<String?> _resolveBirthTime(WidgetRef ref, FortuneTypeEntity type) async {
+    final needsBirth = type.kind == FortuneSessionKind.zodiacWheel ||
+        type.kind == FortuneSessionKind.numberInput ||
+        type.slug == 'yildiz-haritasi' ||
+        type.slug == 'burc-yorumu' ||
+        type.slug == 'numeroloji';
+    if (!needsBirth) return null;
+    try {
+      final profile = await ref.read(fortuneBirthProfileProvider.future);
+      return profile?.birthTimeIso;
     } catch (_) {
       return null;
     }
@@ -328,6 +364,7 @@ class FortuneReadingCoordinator {
     String? userInput,
     bool? yesNoChoice,
     DateTime? birthDate,
+    String? birthTime,
     FortuneCloudImageInput? images,
     required String accessToken,
     String? paymentMethod,
@@ -339,6 +376,7 @@ class FortuneReadingCoordinator {
           userInput: userInput,
           yesNoChoice: yesNoChoice,
           birthDate: birthDate,
+          birthTime: birthTime,
           images: images,
           accessToken: accessToken,
           paymentMethod: paymentMethod,

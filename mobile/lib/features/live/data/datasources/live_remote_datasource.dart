@@ -35,7 +35,9 @@ class LiveRemoteDataSource {
           .toList();
       if (fromLive.isNotEmpty) return fromLive;
     } on ApiException catch (e) {
-      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      if (e.statusCode != 404 && e.statusCode != 405 && e.statusCode != 401) {
+        rethrow;
+      }
     } catch (_) {}
 
     final query = <String, String>{
@@ -159,12 +161,14 @@ class LiveRemoteDataSource {
           .toList();
       if (fromLive.isNotEmpty) return fromLive;
     } on ApiException catch (e) {
-      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      if (e.statusCode != 404 && e.statusCode != 405 && e.statusCode != 401) {
+        rethrow;
+      }
     } catch (_) {}
 
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.chatRooms,
-      query: const {'withCounts': 'true'},
+      query: const {'type': 'voice', 'withCounts': 'true'},
     );
     final body = res.data;
     dynamic list = body;

@@ -6,9 +6,8 @@ import '../../domain/fortune_access_config.dart';
 import '../providers/fortune_access_providers.dart';
 import '../widgets/fortune_access_sheet.dart';
 import 'ad_reward_celebration.dart';
-import 'fortune_access_service.dart';
 
-/// Fal açmadan önce erişim kapısı — premium / reklam / jeton.
+/// Fal açmadan önce erişim kapısı — premium / reklam / jeton / CFC.
 class FortuneAccessGate {
   FortuneAccessGate._();
 
@@ -48,6 +47,13 @@ class FortuneAccessGate {
         );
       }
 
+      if (choice == FortuneAccessChoice.payCfc && state.hasEnoughCfc) {
+        return FortuneAccessGrant(
+          method: FortuneAccessMethod.cfc,
+          jetonCost: state.config.jetonCost,
+        );
+      }
+
       if (choice == FortuneAccessChoice.payJeton) {
         if (state.hasEnoughJeton) {
           return FortuneAccessGrant(
@@ -62,47 +68,49 @@ class FortuneAccessGate {
         );
         if (!context.mounted) return null;
         if (insufficient == FortuneAccessChoice.watchAdForCredit) {
-          final ok = await _watchAdAndGrant(context, ref, service, type.slug);
-          if (!ok) return null;
-          state = await ref.read(fortuneAccessStateProvider.future);
-          if (state.hasAdCredits) {
-            return FortuneAccessGrant(
-              method: FortuneAccessMethod.adCredit,
-              jetonCost: state.config.jetonCost,
-            );
-          }
+          final grant = await _watchAdForFortuneUnlock(
+            context,
+            ref,
+            state.config.jetonCost,
+          );
+          if (grant != null) return grant;
         }
         continue;
       }
 
       if (choice == FortuneAccessChoice.watchAdForCredit) {
-        final ok = await _watchAdAndGrant(context, ref, service, type.slug);
-        if (!ok) return null;
-        state = await ref.read(fortuneAccessStateProvider.future);
-        if (state.hasAdCredits) {
-          return FortuneAccessGrant(
-            method: FortuneAccessMethod.adCredit,
-            jetonCost: state.config.jetonCost,
-          );
-        }
+        final grant = await _watchAdForFortuneUnlock(
+          context,
+          ref,
+          state.config.jetonCost,
+        );
+        if (grant != null) return grant;
         continue;
       }
     }
     return null;
   }
 
-  static Future<bool> _watchAdAndGrant(
+  /// Reklam izle → +10 CFC → falı otomatik aç (tek reklam).
+  static Future<FortuneAccessGrant?> _watchAdForFortuneUnlock(
     BuildContext context,
     WidgetRef ref,
-    FortuneAccessService service,
-    String slug,
+    int cost,
   ) async {
-    return AdRewardCelebration.watchAndCelebrate(
+    final ok = await AdRewardCelebration.watchAndCelebrate(
       context: context,
       ref: ref,
-      onAdWatched: () async {
-        await service.grantFortuneAdCreditAfterWatch(slug: slug);
-      },
+      fallbackAmount: 10,
     );
+    if (!ok || !context.mounted) return null;
+
+    final state = await ref.read(fortuneAccessStateProvider.future);
+    if (state.hasEnoughCfc) {
+      return FortuneAccessGrant(method: FortuneAccessMethod.cfc, jetonCost: cost);
+    }
+    if (state.hasEnoughJeton) {
+      return FortuneAccessGrant(method: FortuneAccessMethod.jeton, jetonCost: cost);
+    }
+    return const FortuneAccessGrant(method: FortuneAccessMethod.adUnlocked);
   }
 }

@@ -58,6 +58,26 @@ class FortuneAccessRemoteDataSource {
     }
   }
 
+  Future<void> consumeCfcAccess({
+    required String slug,
+    required int cfcCost,
+  }) async {
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.fortuneAccessConsume,
+        data: {
+          'slug': slug,
+          'method': 'cfc',
+          'cfcCost': cfcCost,
+          'platform': 'mobile',
+        },
+      );
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return;
+      rethrow;
+    }
+  }
+
   int _parseReward(dynamic body) {
     if (body is! Map) return 1;
     final map = _unwrap(body);
