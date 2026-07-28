@@ -1,6 +1,12 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.96+123 (2026-07-28)
+
+### Çerez / oturum düzeltmesi (kritik)
+- **"Failed to load cookies for the request"** hatası giderildi: `PersistCookieJar` artık `getApplicationSupportDirectory()` altında (`canlifal_cookies`) saklanıyor; okunamaz `.cookies` kök dizini kullanılmıyor
+- Çerez jar `runApp` öncesinde `forceInit` ile hazırlanıyor — sosyal feed, sesli odalar, canlı yayın, yönetim paneli ve hediye ekranları tekrar API'ye bağlanır
+
 ## 1.0.95+122 (2026-07-28)
 
 ### Yükleme, fal ödeme, profil ve VIP

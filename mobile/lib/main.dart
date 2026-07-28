@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'app/app.dart';
 import 'core/bootstrap/app_deferred_bootstrap.dart';
@@ -75,9 +76,16 @@ Future<void> main() async {
   };
 
   GoogleFonts.config.allowRuntimeFetching = false;
-  AppPerfMetrics.end('cold_start');
 
-  final jar = PersistCookieJar();
+  AppStartupLog.log('cookie jar init begin');
+  final supportDir = await getApplicationSupportDirectory();
+  final jar = PersistCookieJar(
+    storage: FileStorage('${supportDir.path}/canlifal_cookies'),
+    persistSession: true,
+  );
+  await jar.forceInit();
+  AppStartupLog.log('cookie jar init done');
+  AppPerfMetrics.end('cold_start');
 
   runZonedGuarded(
     () {
@@ -89,7 +97,7 @@ Future<void> main() async {
         ),
       );
       scheduleDeferredAppBootstrap();
-      unawaited(runDeferredStorageInit(jar));
+      unawaited(runDeferredStorageInit());
     },
     (error, stack) => VoiceRoomDebugLog.recordZoneError(error, stack),
   );
