@@ -77,6 +77,27 @@ enum GiftEngineAnimationType {
       _ => GiftEngineAnimationType.none,
     };
   }
+
+  /// URL uzantısından animasyon türü (yeni CMS hediyeleri).
+  static GiftEngineAnimationType inferFromUrl(String? url) {
+    if (url == null || url.trim().isEmpty) return GiftEngineAnimationType.none;
+    final lower = url.toLowerCase().split('?').first;
+    if (lower.endsWith('.mp4')) return GiftEngineAnimationType.mp4;
+    if (lower.endsWith('.webm')) return GiftEngineAnimationType.webm;
+    if (lower.endsWith('.gif')) return GiftEngineAnimationType.gif;
+    if (lower.endsWith('.json')) return GiftEngineAnimationType.lottie;
+    if (lower.endsWith('.svg')) return GiftEngineAnimationType.svg;
+    if (lower.endsWith('.svga')) return GiftEngineAnimationType.svga;
+    if (lower.endsWith('.riv')) return GiftEngineAnimationType.rive;
+    if (lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.avif')) {
+      return GiftEngineAnimationType.png;
+    }
+    return GiftEngineAnimationType.none;
+  }
 }
 
 /// Koltuk efektleri — backend listesinden.

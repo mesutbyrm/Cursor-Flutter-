@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.98+125 (2026-07-28)
+
+### Sesli oda hediye animasyonu — ambient katman
+- Video/animasyon arka plan üstünde, UI (koltuk/sohbet/bar) altında oynar
+- Opaklık %40, üst LinearGradient fade — sert siyah kesim kaldırıldı
+- BoxFit.cover ile doğal birleşim; bitişte yumuşak fade-out
+- IgnorePointer + RepaintBoundary; yeni CMS videoları URL uzantısından tanınır
+
 ## 1.0.97+124 (2026-07-28)
 
 ### Gift Engine — backend render (web paritesi)
