@@ -8,9 +8,11 @@ import '../../../features/profile/presentation/providers/profile_providers.dart'
 import '../../../features/shorts/domain/repositories/shorts_repository.dart';
 import '../../../features/shorts/presentation/providers/shorts_providers.dart';
 import 'startup_perf.dart';
+import '../../../features/notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../../features/gifts/presentation/providers/gift_providers.dart';
 import '../../../features/voice_hub/presentation/providers/voice_gift_providers.dart';
 import '../performance/voice_room_entry_perf.dart';
+import 'shell_header_badges_provider.dart';
 
 /// Ana kabuk açıldığında sık kullanılan verileri kademeli önceden yükler.
 ///
@@ -25,7 +27,8 @@ void prefetchShellData(
   unawaited(
     Future<void>.delayed(delay, () {
       VoiceRoomEntryPerf.prewarmShell();
-      // Cüzdan/bildirim HomeHeader rozetleri tarafından zaten yüklenir — yalnızca profil.
+      enableShellHeaderBadges(ref);
+      unawaited(ref.read(notificationsListNotifierProvider.future));
       unawaited(ref.read(profileStatsProvider.future));
       try {
         ref.read(chatRoomGiftsRemoteProvider).fetchGiftTypes().ignore();
@@ -40,7 +43,6 @@ void prefetchShellData(
         ref.read(liveStreamGiftCatalogProvider.future).ignore();
         ref.read(voiceRoomGiftCatalogProvider.future).ignore();
       } catch (_) {}
-      // Rozetler yüklendikten sonra tam liste yenileme (sessiz).
       try {
         ref.read(walletBalancesProvider.notifier).refresh(force: false);
       } catch (_) {}

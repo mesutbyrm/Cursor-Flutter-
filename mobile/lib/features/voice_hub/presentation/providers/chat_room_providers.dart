@@ -72,6 +72,7 @@ import '../services/voice_room_sse_audio_player.dart';
 import '../services/voice_room_music_control_delegate.dart';
 import '../../video/domain/youtube_video_id.dart';
 import '../../video/presentation/room_video_controller.dart';
+import '../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/domain/gift_system_message.dart';
 import '../../../gifts/domain/gift_payload_util.dart';
@@ -336,6 +337,7 @@ class VoiceRoomLiveController
   Timer? _moderationToastTimer;
   Timer? _kickWarningTimer;
   Timer? _seatRefreshDebounce;
+  Timer? _sseRoomRefreshDebounce;
   final _pollPaused = false;
   var _pollTick = 0;
   String? _lastDjPlaybackSignature;
@@ -356,7 +358,8 @@ class VoiceRoomLiveController
   var _typingActive = false;
   var _sseStarted = false;
   var _giftSocketStarted = false;
-  var _sessionActive = true;
+  var _sessionActive = false;
+  var _entryBegun = false;
   var _autoSeatAttempted = false;
   /// Odaya girince eski giriş/çıkış mesajları duyurulmasın.
   var _entrancesArmed = false;
@@ -606,6 +609,8 @@ class VoiceRoomLiveController
   /// Odaya giriş — sıra: presence join → GET state → GET seats → SSE → UI.
   /// TRTC sayfa tarafında `backendSyncReady` + `roomTrtc` ile bağlanır.
   Future<void> _beginRoomSession() async {
+    if (_entryBegun) return;
+    _entryBegun = true;
     _autoSeatAttempted = false;
     _sseStarted = false;
     _sessionActive = true;
@@ -670,6 +675,8 @@ class VoiceRoomLiveController
 
   Future<void> _preloadGiftCatalog() async {
     try {
+      final cached = ref.read(voiceRoomGiftCatalogProvider).valueOrNull;
+      if (cached != null && cached.isNotEmpty) return;
       await ref.read(chatRoomGiftsRemoteProvider).fetchGiftTypes();
     } catch (_) {}
   }
@@ -732,18 +739,24 @@ class VoiceRoomLiveController
 
   Future<void> _bootstrapRoomData() async {
     unawaited(_loadBannedWords());
-    try {
-      await _warmBackgrounds();
-    } catch (_) {
-      state = state.copyWith(loading: false);
-    }
+    unawaited(
+      _warmBackgrounds().catchError((_) {
+        state = state.copyWith(loading: false);
+      }),
+    );
 
     final includeDj = VoiceRoomBasicMode.enabled
         ? VoiceRoomBasicMode.musicEnabled
         : true;
-    try {
-      await refresh(includeDj: includeDj);
-    } catch (_) {}
+    if (state.backendSyncReady) {
+      if (includeDj) {
+        unawaited(refresh(includeDj: true, skipPresenceAndMessages: true));
+      }
+    } else {
+      try {
+        await refresh(includeDj: includeDj);
+      } catch (_) {}
+    }
 
     if (VoiceRoomBasicMode.enabled) {
       if (VoiceRoomBasicMode.musicEnabled) {
@@ -878,7 +891,15 @@ class VoiceRoomLiveController
       state = state.copyWith(backgroundUrl: bg);
     }
 
-    unawaited(refresh(includeDj: true));
+    _scheduleSseRoomRefresh();
+  }
+
+  void _scheduleSseRoomRefresh() {
+    _sseRoomRefreshDebounce?.cancel();
+    _sseRoomRefreshDebounce = Timer(const Duration(milliseconds: 450), () {
+      if (!_sessionActive) return;
+      unawaited(refresh(includeDj: true, skipPresenceAndMessages: true));
+    });
   }
 
   void _cancelSessionTimers() {
@@ -892,6 +913,7 @@ class VoiceRoomLiveController
     _moderationToastTimer?.cancel();
     _kickWarningTimer?.cancel();
     _seatRefreshDebounce?.cancel();
+    _sseRoomRefreshDebounce?.cancel();
   }
 
   /// Odadan çıkış — presence, SSE ve müzik temizliği (RTC sayfası).
@@ -899,6 +921,7 @@ class VoiceRoomLiveController
   Future<void> leaveRoomSession({String source = 'ui_leave'}) async {
     if (!_sessionActive) return;
     _sessionActive = false;
+    _entryBegun = false;
     VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: source);
     _cancelSessionTimers();
     try {
@@ -1608,7 +1631,10 @@ class VoiceRoomLiveController
         t == '/komutlar';
   }
 
-  Future<void> refresh({bool includeDj = true}) async {
+  Future<void> refresh({
+    bool includeDj = true,
+    bool skipPresenceAndMessages = false,
+  }) async {
     if (_roomKey.isEmpty) return;
     final room = _roomMeta;
     final remote = ref.read(chatRoomRemoteProvider);
@@ -1626,71 +1652,86 @@ class VoiceRoomLiveController
       String? myNickname = state.myNickname;
       var roomMuted = state.roomMuted;
 
-      final skipMessagePoll = state.sseConnected;
-      final results = await Future.wait<Object?>([
-        if (skipMessagePoll)
-          ref.read(chatRoomRemoteProvider).fetchMyPermissions(
-                _roomKey,
-                alternateKey: _musicAlternateKey,
-              ).then((p) => (
-                    messages: state.messages,
-                    myPermissions: p ?? state.serverPermissions,
-                    myNickname: state.myNickname,
-                    roomMuted: state.roomMuted,
-                  )).catchError((Object e) {
+      if (!skipPresenceAndMessages) {
+        final skipMessagePoll = state.sseConnected;
+        final results = await Future.wait<Object?>([
+          if (skipMessagePoll)
+            remote
+                .fetchMyPermissions(
+                  _roomKey,
+                  alternateKey: _musicAlternateKey,
+                )
+                .then((p) => (
+                      messages: state.messages,
+                      myPermissions: p ?? state.serverPermissions,
+                      myNickname: state.myNickname,
+                      roomMuted: state.roomMuted,
+                    ))
+                .catchError((Object e) {
+              refreshError ??= e;
+              return (
+                messages: state.messages,
+                myPermissions: state.serverPermissions,
+                myNickname: state.myNickname,
+                roomMuted: state.roomMuted,
+              );
+            })
+          else
+            remote.fetchMessages(_roomKey, since: since).catchError((Object e) {
+              refreshError ??= e;
+              return (
+                messages: state.messages,
+                myPermissions: state.serverPermissions,
+                myNickname: state.myNickname,
+                roomMuted: state.roomMuted,
+              );
+            }),
+          remote.fetchPresence(_roomKey).catchError((Object e) {
             refreshError ??= e;
-            return (
-              messages: state.messages,
-              myPermissions: state.serverPermissions,
-              myNickname: state.myNickname,
-              roomMuted: state.roomMuted,
-            );
-          })
-        else
-          remote.fetchMessages(_roomKey, since: since).catchError((Object e) {
-            refreshError ??= e;
-            return (
-              messages: state.messages,
-              myPermissions: state.serverPermissions,
-              myNickname: state.myNickname,
-              roomMuted: state.roomMuted,
-            );
+            return state.presence;
           }),
-        remote.fetchPresence(_roomKey).catchError((Object e) {
-          refreshError ??= e;
-          return state.presence;
-        }),
-      ]);
-      final msgResult = results[0]! as ({
-        List<ChatRoomMessage> messages,
-        ChatRoomMyPermissions? myPermissions,
-        String? myNickname,
-        bool? roomMuted,
-      });
-      fetchedMsgs = msgResult.messages;
-      serverPerms = msgResult.myPermissions ?? serverPerms;
-      if ((serverPerms == null || !serverPerms.hasAnyServerFlag) &&
-          _isClientRoomOwnerForRefresh(user)) {
-        serverPerms = const ChatRoomMyPermissions(
-          isRoomOwner: true,
-          canGiveVoice: true,
-          canGiveOp: true,
-          canGiveSop: true,
-          canGiveFounder: true,
-          canManageRoom: true,
-          canMuteUsers: true,
-          canKickUsers: true,
-          canBanUsers: true,
-          canMuteRoom: true,
-          role: '~',
+        ]);
+        final msgResult = results[0]! as ({
+          List<ChatRoomMessage> messages,
+          ChatRoomMyPermissions? myPermissions,
+          String? myNickname,
+          bool? roomMuted,
+        });
+        fetchedMsgs = msgResult.messages;
+        serverPerms = msgResult.myPermissions ?? serverPerms;
+        if ((serverPerms == null || !serverPerms.hasAnyServerFlag) &&
+            _isClientRoomOwnerForRefresh(user)) {
+          serverPerms = const ChatRoomMyPermissions(
+            isRoomOwner: true,
+            canGiveVoice: true,
+            canGiveOp: true,
+            canGiveSop: true,
+            canGiveFounder: true,
+            canManageRoom: true,
+            canMuteUsers: true,
+            canKickUsers: true,
+            canBanUsers: true,
+            canMuteRoom: true,
+            role: '~',
+          );
+        }
+        myNickname = msgResult.myNickname ?? myNickname;
+        if (msgResult.roomMuted != null) roomMuted = msgResult.roomMuted!;
+        presence = _mergePresenceStable(
+          results[1]! as List<ChatRoomPresence>,
+          source: 'refresh',
         );
+      } else if (state.sseConnected) {
+        try {
+          final perms = await remote.fetchMyPermissions(
+            _roomKey,
+            alternateKey: _musicAlternateKey,
+          );
+          if (perms != null) serverPerms = perms;
+        } catch (e) {
+          refreshError ??= e;
+        }
       }
-      myNickname = msgResult.myNickname ?? myNickname;
-      if (msgResult.roomMuted != null) roomMuted = msgResult.roomMuted!;
-      presence = _mergePresenceStable(
-        results[1]! as List<ChatRoomPresence>,
-        source: 'refresh',
-      );
 
       String? bgFromDj;
       var playDjInBackground = false;

@@ -416,13 +416,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
     unawaited(liveCtrl.leaveRoomSession(source: 'basic_leave'));
     if (audio != null) {
-      unawaited(
-        audio.leave().whenComplete(() {
-          try {
-            audio.dispose();
-          } catch (_) {}
-        }),
-      );
+      unawaited(audio.leave());
     }
 
     if (!mounted) return;

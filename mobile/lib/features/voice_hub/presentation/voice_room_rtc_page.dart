@@ -109,6 +109,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   final _chatScrollCtrl = ScrollController();
   var _scrollChatToLatest = false;
   var _audioJoining = false;
+  var _audioJoinInFlight = false;
   var _audioReady = false;
   String? _audioError;
   String? _loginError;
@@ -239,7 +240,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     if (audio != null) {
       unawaited(audio.leave());
     }
-    unawaited(_audio?.leave());
     super.dispose();
   }
 
@@ -454,7 +454,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   }
 
   Future<void> _joinAudioBackground() async {
-    if (!mounted) return;
+    if (!mounted || _audioJoinInFlight || _audioReady) return;
+    _audioJoinInFlight = true;
     setState(() {
       _audioJoining = true;
       _audioError = null;
@@ -463,10 +464,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final user = await _waitForAuth(timeout: VoiceRoomEntryPerf.entryBudget);
     if (!mounted) return;
     if (user == null) {
-      setState(() {
-        _audioJoining = false;
-        _loginError = 'Odaya girmek için giriş yapın';
-      });
+      if (mounted) {
+        setState(() {
+          _audioJoining = false;
+          _loginError = 'Odaya girmek için giriş yapın';
+        });
+      }
+      _audioJoinInFlight = false;
       return;
     }
 
@@ -497,11 +501,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           _audioError = 'Oda bilgisi yükleniyor…';
         });
       }
+      _audioJoinInFlight = false;
       return;
     }
 
     _startGiftRealtime();
-    unawaited(_connectPkBattle());
 
     _audio = ref.read(voiceRoomAudioCoordinatorProvider);
     if (!_audio!.isSupported) {
@@ -511,8 +515,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           _audioError = 'Ses bağlantısı bu cihazda desteklenmiyor; sohbet çalışır';
         });
       }
-      _startGiftRealtime();
-      unawaited(_connectPkBattle());
+      _audioJoinInFlight = false;
       return;
     }
 
@@ -576,9 +579,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           _audioError = msg;
         });
         _startGiftRealtime();
-        unawaited(_connectPkBattle());
       }
     } finally {
+      _audioJoinInFlight = false;
       if (mounted && _audioJoining) {
         setState(() => _audioJoining = false);
       }
@@ -591,34 +594,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final roomKey = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
     if (roomKey.isEmpty) return;
     final remote = ref.read(pkBattleRemoteProvider.notifier);
-    remote.connectSocket(
-      roomId: roomKey,
-      alternateRoomId: r.slug != roomKey ? r.slug : null,
-    );
     unawaited(remote.loadRoomBattle(
       roomKey,
       alternateRoomId: r.slug != roomKey ? r.slug : null,
     ));
-    if (!mounted) return;
-    final battle = ref.read(pkBattleRemoteProvider);
-    if (battle == null || battle.isEnded) {
-      if (battle != null && battle.isEnded) remote.clear();
-      return;
-    }
-    if (battle.isPending && !battle.isActive) {
-      final userId = ref.read(authControllerProvider).valueOrNull?.id;
-      final involved = isPkInviteTarget(battle, r, userId: userId) ||
-          isPkChallengerRoom(battle, r);
-      if (!involved) {
-        remote.clear();
-        return;
-      }
-    }
-    remote.connectSocket(
-      roomId: roomKey,
-      alternateRoomId: r.slug != roomKey ? r.slug : null,
-      battleId: battle.id,
-    );
   }
 
   Future<void> _leaveRoom() async {
@@ -632,7 +611,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final liveCtrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
     final audio = _audio;
     _audio = null;
-    unawaited(_audio?.leave());
     if (mounted) setState(() => _audioReady = false);
 
     final room = _effectiveRoom();

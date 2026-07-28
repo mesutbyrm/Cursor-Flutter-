@@ -6,6 +6,7 @@ import '../../../../core/network/token_storage.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
@@ -79,7 +80,13 @@ class WalletBalancesNotifier extends AsyncNotifier<WalletBalances> {
   @override
   Future<WalletBalances> build() async {
     ref.keepAlive();
-    return _load(force: true);
+    final authJeton = ref.read(authControllerProvider).valueOrNull?.coinBalance;
+    if (authJeton != null) {
+      _cached = WalletBalances(jeton: authJeton);
+      _lastFetchedAt = DateTime.now();
+    }
+    Future.microtask(() => refresh(force: false));
+    return _cached ?? WalletBalances.empty;
   }
 
   Future<WalletBalances> refresh({bool force = false}) async {
