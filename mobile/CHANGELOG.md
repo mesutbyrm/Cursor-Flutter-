@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.99+128 (2026-07-29)
+
+### Hediye medya — backend paritesi
+- **GiftMediaWidget:** PNG, SVG, WEBP, MP4 tek oynatıcıda; `mediaType==video` → VideoPlayer (Image değil)
+- **Video:** disk önbelleği (`VideoCacheService`), muted + looping, init bitene kadar thumbnail
+- **AspectRatio:** backend `width`/`height` (veya `mediaWidth`/`mediaHeight`); `BoxFit.contain`
+- **CDN:** R2 `gift/gifts/*` → `cdn.girlive.com` (`CloudMediaUrl`)
+- **Katalog:** 45 sn'de bir `giftVersion` kontrolü — yeni hediyeler uygulama yeniden başlatmadan görünür
+
 ## 1.0.99+126 (2026-07-28)
 
 ### Videolu hediyeler + performans + hızlı koltuk

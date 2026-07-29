@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/video/video_cache_service.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import 'gift_cache_service.dart';
+import '../domain/gift_asset_type.dart';
 import '../domain/gift_entity.dart';
 import '../domain/gift_leaderboard_entry.dart';
 import '../domain/gift_platform.dart';
@@ -102,8 +106,18 @@ class GiftRepository {
       await cache.writeVersion(remoteVersion.giftVersion);
     }
     GiftCacheService.instance.prefetchUrls(
-      merged.map((g) => g.networkAnimationUrl).whereType<String>(),
+      merged
+          .where((g) => g.assetType != GiftAssetType.video)
+          .map((g) => g.networkAnimationUrl)
+          .whereType<String>(),
     );
+    for (final g in merged) {
+      if (g.assetType != GiftAssetType.video) continue;
+      final url = g.networkAnimationUrl;
+      if (url != null && url.isNotEmpty) {
+        unawaited(VideoCacheService.instance.prefetch(url));
+      }
+    }
     return merged;
   }
 

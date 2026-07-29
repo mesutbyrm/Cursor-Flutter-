@@ -1,5 +1,6 @@
 import '../../live/domain/entities/live_gift_event.dart';
 import 'gift_engine_models.dart';
+import 'gift_media_spec.dart';
 
 /// Backend giftRender / giftEngine JSON → [GiftEngineConfig].
 /// Jeton fiyatına göre hesaplama yapılmaz; yalnızca sunucu alanları okunur.
@@ -37,6 +38,11 @@ abstract final class GiftEngineParser {
       'animationDurationMs': event.animationDurationMs,
       'assetFormat': event.assetFormat,
       'assetType': event.assetType,
+      'mediaType': event.mediaType,
+      'width': event.mediaWidth,
+      'height': event.mediaHeight,
+      'mediaWidth': event.mediaWidth,
+      'mediaHeight': event.mediaHeight,
     };
   }
 
@@ -159,6 +165,10 @@ abstract final class GiftEngineParser {
       thumbnailUrl: _pick(render, ['thumbnailUrl', 'thumbnail_url']),
       effectColor: _pick(render, ['effectColor', 'effect_color']),
       particleKey: _pick(render, ['particleKey', 'particle_key', 'particleEffect', 'animation']),
+      mediaType: GiftMediaSpec.parseMediaType(render),
+      assetFormat: _pick(render, ['assetFormat', 'asset_format']),
+      mediaWidth: GiftMediaSpec.parseDimensions(render).$1,
+      mediaHeight: GiftMediaSpec.parseDimensions(render).$2,
     );
   }
 

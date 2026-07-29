@@ -72,6 +72,9 @@ LiveGiftEvent enrichGiftEventFromCatalog(
     engineFeedDurationMs: event.engineFeedDurationMs,
     engineSeatEffects: event.engineSeatEffects,
     engineParticleKey: event.engineParticleKey,
+    mediaType: event.mediaType ?? catalog.mediaType,
+    mediaWidth: event.mediaWidth ?? catalog.mediaWidth,
+    mediaHeight: event.mediaHeight ?? catalog.mediaHeight,
   );
 }
 

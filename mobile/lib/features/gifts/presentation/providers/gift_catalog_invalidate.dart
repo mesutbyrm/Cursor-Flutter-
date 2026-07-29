@@ -18,7 +18,7 @@ Future<void> invalidateAllGiftCatalogs(WidgetRef ref) async {
 }
 
 /// Provider invalidate — repository erişimi olmayan yerler için.
-void invalidateGiftCatalogProviders(WidgetRef ref) {
+void invalidateGiftCatalogProviders(Ref ref) {
   ref.invalidate(liveGiftCatalogProvider);
   ref.invalidate(voiceRoomGiftCatalogProvider);
   ref.invalidate(liveStreamGiftCatalogProvider);

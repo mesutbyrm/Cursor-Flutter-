@@ -24,6 +24,7 @@ import '../../core/bootstrap/voice_rooms_presence_scope.dart';
 import '../../core/network/sse/connectivity_sse_reconnect_provider.dart';
 import '../../core/sse_client_provider.dart';
 import '../../core/widgets/offline_status_banner.dart';
+import '../../features/gifts/presentation/providers/gift_catalog_version_watcher.dart';
 import '../../features/notifications/presentation/widgets/notifications_realtime_listener.dart';
 
 /// MaterialApp.router [builder] içeriği — [ListenableBuilder] kullanmaz.
@@ -110,6 +111,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
   @override
   Widget build(BuildContext context) {
     ref.watch(connectivitySseReconnectProvider);
+    watchGiftCatalogVersion(ref);
 
     final router = ref.read(goRouterProvider);
     if (!identical(router, _router)) {

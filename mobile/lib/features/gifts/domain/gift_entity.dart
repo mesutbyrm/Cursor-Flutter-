@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/media/cloud_media_url.dart';
 import '../../../core/util/json_util.dart';
 import 'gift_animation_kind.dart';
 import 'gift_animation_policy.dart';
@@ -38,6 +39,10 @@ class GiftEntity extends Equatable {
     this.isHidden = false,
     this.visibleInVoiceRoom = true,
     this.visibleInLiveStream = true,
+    this.mediaType,
+    this.assetFormat,
+    this.mediaWidth,
+    this.mediaHeight,
   });
 
   factory GiftEntity.fromJson(Map<String, dynamic> json, {String siteOrigin = ''}) {
@@ -141,6 +146,28 @@ class GiftEntity extends Equatable {
       isHidden: json['isHidden'] == true,
       visibleInVoiceRoom: json['visibleInVoiceRoom'] != false,
       visibleInLiveStream: json['visibleInLiveStream'] != false,
+      mediaType: pick(json, [
+        'mediaType',
+        'media_type',
+        'assetType',
+        'asset_type',
+      ])?.toString(),
+      assetFormat:
+          pick(json, ['assetFormat', 'asset_format'])?.toString(),
+      mediaWidth: _parsePositiveInt(pick(json, [
+        'mediaWidth',
+        'media_width',
+        'width',
+        'videoWidth',
+        'video_width',
+      ])),
+      mediaHeight: _parsePositiveInt(pick(json, [
+        'mediaHeight',
+        'media_height',
+        'height',
+        'videoHeight',
+        'video_height',
+      ])),
     );
   }
 
@@ -171,15 +198,24 @@ class GiftEntity extends Equatable {
   final bool isHidden;
   final bool visibleInVoiceRoom;
   final bool visibleInLiveStream;
+  final String? mediaType;
+  final String? assetFormat;
+  final int? mediaWidth;
+  final int? mediaHeight;
 
   /// Görüntüleme için en iyi ikon URL'si (thumbnail öncelikli).
   String? get displayIconUrl => thumbnailUrl ?? iconUrl ?? assetUrl;
 
-  String? get networkAnimationUrl {
+  String? get resolvedThumbnailUrl =>
+      CloudMediaUrl.resolve(thumbnailUrl) ?? thumbnailUrl;
+
+  String? get resolvedMediaUrl {
     final ref = animationRef ?? assetUrl;
-    if (ref != null && ref.startsWith('http')) return ref;
-    return null;
+    if (ref == null || ref.isEmpty) return null;
+    return CloudMediaUrl.resolve(ref) ?? (ref.startsWith('http') ? ref : null);
   }
+
+  String? get networkAnimationUrl => resolvedMediaUrl;
 
   bool get hasCmsAnimation {
     final url = networkAnimationUrl;
@@ -229,18 +265,22 @@ class GiftEntity extends Equatable {
         isHidden,
         visibleInVoiceRoom,
         visibleInLiveStream,
+        mediaType,
+        assetFormat,
+        mediaWidth,
+        mediaHeight,
       ];
 }
 
-bool _isResolvableUrl(String value) {
-  final v = value.trim();
-  if (v.isEmpty) return false;
-  return v.startsWith('http') || v.startsWith('/');
-}
+bool _isResolvableUrl(String value) => CloudMediaUrl.isResolvable(value);
 
-String? _resolveUrl(String? path, String origin) {
-  if (path == null || path.isEmpty) return null;
-  if (path.startsWith('http')) return path;
-  final o = origin.trim().replaceAll(RegExp(r'/+$'), '');
-  return path.startsWith('/') ? '$o$path' : '$o/$path';
+String? _resolveUrl(String? path, String origin) =>
+    CloudMediaUrl.resolve(path, siteOrigin: origin);
+
+int? _parsePositiveInt(dynamic raw) {
+  if (raw == null) return null;
+  if (raw is int && raw > 0) return raw;
+  final p = int.tryParse(raw.toString());
+  if (p != null && p > 0) return p;
+  return null;
 }

@@ -56,6 +56,9 @@ class LiveGiftEvent extends Equatable {
     this.engineFeedDurationMs,
     this.engineSeatEffects = const [],
     this.engineParticleKey,
+    this.mediaType,
+    this.mediaWidth,
+    this.mediaHeight,
   });
 
   final String id;
@@ -109,6 +112,9 @@ class LiveGiftEvent extends Equatable {
   final int? engineFeedDurationMs;
   final List<String> engineSeatEffects;
   final String? engineParticleKey;
+  final String? mediaType;
+  final int? mediaWidth;
+  final int? mediaHeight;
 
   int get eventTimestampMs => timestamp.millisecondsSinceEpoch;
 
@@ -184,5 +190,8 @@ class LiveGiftEvent extends Equatable {
         engineFeedDurationMs,
         engineSeatEffects,
         engineParticleKey,
+        mediaType,
+        mediaWidth,
+        mediaHeight,
       ];
 }
