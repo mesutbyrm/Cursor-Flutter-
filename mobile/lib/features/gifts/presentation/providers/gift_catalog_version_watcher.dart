@@ -24,7 +24,7 @@ final giftCatalogVersionWatcherProvider = Provider<void>((ref) {
 
       if (knownVersion > 0 && version > knownVersion) {
         await repo.syncCatalogIfNeeded(forceRefresh: true);
-        invalidateGiftCatalogProviders(ref);
+        invalidateGiftCatalogProvidersFromRef(ref);
       } else if (knownVersion == 0) {
         await repo.syncCatalogIfNeeded();
       }
