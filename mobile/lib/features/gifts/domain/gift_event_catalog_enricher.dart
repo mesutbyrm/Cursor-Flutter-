@@ -57,17 +57,23 @@ LiveGiftEvent enrichGiftEventFromCatalog(
     assetUrl: event.assetUrl ?? animUrl,
     assetType: event.assetType ?? catalog.assetType.name,
     displayType: event.displayType ?? catalog.displayType.name,
-    isFullscreen: event.isFullscreen ?? catalog.isFullscreen,
-    animationDurationMs:
-        event.animationDurationMs ?? catalog.animationDurationMs,
+    isFullscreen: event.isFullscreen ?? catalog.isFullscreen ?? isVideo,
+    animationDurationMs: event.animationDurationMs ??
+        (catalog.animationDurationMs > 0
+            ? catalog.animationDurationMs
+            : (isVideo ? 8000 : 0)),
     assetFormat: assetFormat,
     imageUrl: event.imageUrl ?? thumb,
     videoUrl: videoUrl,
     thumbnailUrl: thumb,
-    enginePriority: event.enginePriority,
-    engineDisplayArea: event.engineDisplayArea,
+    engineDisplayArea: event.engineDisplayArea ??
+        (isVideo ? 'FULL_SCREEN' : null),
+    enginePriority: event.enginePriority ?? (isVideo ? 'LARGE' : null),
     engineAnimationType: engineAnimType,
-    engineDurationMs: event.engineDurationMs,
+    engineDurationMs: event.engineDurationMs ??
+        (catalog.animationDurationMs > 0
+            ? catalog.animationDurationMs
+            : (isVideo ? 8000 : null)),
     engineQueueGapMs: event.engineQueueGapMs,
     engineFeedDurationMs: event.engineFeedDurationMs,
     engineSeatEffects: event.engineSeatEffects,

@@ -757,7 +757,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
-            VoiceGiftAmbientOverlay(sessionKey: sessionKey),
+            Positioned.fill(
+              child: VoiceGiftAmbientOverlay(sessionKey: sessionKey),
+            ),
             SafeArea(
               bottom: false,
               child: Column(

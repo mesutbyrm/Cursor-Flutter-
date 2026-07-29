@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.99+130 (2026-07-29)
+
+### Sesli oda hediye görünürlüğü
+- **Animasyon katmanı:** Tam ekran/video hediyeler %100 opaklık; `Positioned.fill` ile arka plan üstünde net görünür
+- **Video varsayılanları:** CMS'den gelmeyen video hediyeler `FULL_SCREEN`, `LARGE` öncelik, 8 sn süre
+- **Koltuk altı:** Hediye atanlar etiket paneli (`VoiceGiftSenderTagsPanel`) kaldırıldı
+
 ## 1.0.99+128 (2026-07-29)
 
 ### Hediye medya — backend paritesi

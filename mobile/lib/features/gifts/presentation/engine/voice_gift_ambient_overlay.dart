@@ -7,14 +7,16 @@ import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/presentation/gifts/widgets/floating_gift_particles.dart';
 import '../../domain/gift_engine_models.dart';
 import '../../domain/gift_engine_parser.dart';
+import '../../domain/gift_entity.dart';
 import '../../domain/gift_media_spec.dart';
 import '../../domain/gift_media_type.dart';
+import '../providers/gift_catalog_index_provider.dart';
 import '../sync/gift_session_controller.dart';
 import '../widgets/gift_animation_player.dart';
 import '../widgets/gift_media_widget.dart';
 import '../../../voice_hub/presentation/providers/voice_room_ui_provider.dart';
 
-/// Sesli oda hediye katmanı — arka plan üstünde, UI altında.
+/// Sesli oda hediye katmanı — arka plan üstünde, koltuk/chat altında tam ekran.
 class VoiceGiftAmbientOverlay extends ConsumerStatefulWidget {
   const VoiceGiftAmbientOverlay({
     super.key,
@@ -23,7 +25,6 @@ class VoiceGiftAmbientOverlay extends ConsumerStatefulWidget {
 
   final String sessionKey;
 
-  static const ambientOpacity = 0.4;
   static const fadeInMs = 320;
   static const fadeOutMs = 480;
 
@@ -125,18 +126,36 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
     }
 
     final config = GiftEngineParser.fromEvent(event);
+    final catalog = lookupGiftCatalog(
+      ref.watch(giftCatalogByIdProvider),
+      event.giftId,
+    );
+    final isFullScreen = config.isFullScreen ||
+        config.displayArea == GiftEngineDisplayArea.fullScreen;
+    final isVideo = config.animationType == GiftEngineAnimationType.mp4 ||
+        config.animationType == GiftEngineAnimationType.webm;
+    final layerOpacity = isFullScreen || isVideo ? 1.0 : 0.88;
 
-    return IgnorePointer(
-      child: RepaintBoundary(
-        child: FadeTransition(
-          opacity: CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeInOut),
-          child: Opacity(
-            opacity: VoiceGiftAmbientOverlay.ambientOpacity,
-            child: _AmbientMask(
-              child: _AmbientContent(
-                event: event,
-                config: config,
-              ),
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: RepaintBoundary(
+          child: FadeTransition(
+            opacity: CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeInOut),
+            child: Opacity(
+              opacity: layerOpacity,
+              child: isFullScreen
+                  ? _AmbientContent(
+                      event: event,
+                      config: config,
+                      catalog: catalog,
+                    )
+                  : _AmbientMask(
+                      child: _AmbientContent(
+                        event: event,
+                        config: config,
+                        catalog: catalog,
+                      ),
+                    ),
             ),
           ),
         ),
@@ -163,7 +182,7 @@ class _AmbientMask extends StatelessWidget {
           Colors.white,
           Colors.transparent,
         ],
-        stops: [0.0, 0.14, 0.82, 1.0],
+        stops: [0.0, 0.1, 0.88, 1.0],
       ).createShader(bounds),
       child: child,
     );
@@ -174,10 +193,12 @@ class _AmbientContent extends StatelessWidget {
   const _AmbientContent({
     required this.event,
     required this.config,
+    required this.catalog,
   });
 
   final LiveGiftEvent event;
   final GiftEngineConfig config;
+  final GiftEntity? catalog;
 
   @override
   Widget build(BuildContext context) {
@@ -185,24 +206,38 @@ class _AmbientContent extends StatelessWidget {
       builder: (context, constraints) {
         final w = constraints.maxWidth;
         final h = constraints.maxHeight;
+        final isFull = config.isFullScreen ||
+            config.displayArea == GiftEngineDisplayArea.fullScreen;
         final sizeFactor = switch (config.displayArea) {
-          GiftEngineDisplayArea.seat => 0.28,
-          GiftEngineDisplayArea.top || GiftEngineDisplayArea.bottom => 0.45,
-          _ => 1.0,
+          GiftEngineDisplayArea.seat => 0.32,
+          GiftEngineDisplayArea.top || GiftEngineDisplayArea.bottom => 0.5,
+          GiftEngineDisplayArea.fullScreen => 1.0,
+          _ => isFull ? 1.0 : 0.72,
         };
-        final child = _buildMedia(w * sizeFactor, h * sizeFactor);
+        final child = _buildMedia(
+          w * sizeFactor,
+          h * sizeFactor,
+          catalog,
+        );
 
         return switch (config.displayArea) {
           GiftEngineDisplayArea.top => Align(
               alignment: Alignment.topCenter,
-              child: SizedBox(width: w, height: h * 0.5, child: child),
+              child: SizedBox(width: w, height: h * 0.55, child: child),
             ),
           GiftEngineDisplayArea.bottom => Align(
               alignment: Alignment.bottomCenter,
-              child: SizedBox(width: w, height: h * 0.45, child: child),
+              child: SizedBox(width: w, height: h * 0.5, child: child),
             ),
           GiftEngineDisplayArea.seat => _seatAligned(context, child),
-          _ => SizedBox(width: w, height: h, child: child),
+          GiftEngineDisplayArea.fullScreen => SizedBox(width: w, height: h, child: child),
+          _ => Center(
+              child: SizedBox(
+                width: w,
+                height: h * (isFull ? 1.0 : 0.78),
+                child: child,
+              ),
+            ),
         };
       },
     );
@@ -219,15 +254,15 @@ class _AmbientContent extends StatelessWidget {
         Positioned(
           left: 8 + col * (w - 16) / cols,
           top: 100 + row * 84,
-          width: 88,
-          height: 88,
+          width: 96,
+          height: 96,
           child: child,
         ),
       ],
     );
   }
 
-  Widget _buildMedia(double w, double h) {
+  Widget _buildMedia(double w, double h, GiftEntity? catalog) {
     final emoji = event.giftIcon ?? '🎁';
 
     if (config.animationType == GiftEngineAnimationType.particle) {
@@ -243,29 +278,30 @@ class _AmbientContent extends StatelessWidget {
       return GiftAnimationPlayer(
         giftId: event.giftId,
         event: event,
+        gift: catalog,
         size: h,
         preferPremiumVisual: false,
         fit: BoxFit.contain,
       );
     }
 
-    final spec = GiftMediaSpec.fromEvent(event, engine: config);
+    final spec = GiftMediaSpec.fromEvent(event, catalog: catalog, engine: config);
     if (spec.mediaType == GiftMediaType.unknown &&
         !spec.hasPlayableUrl &&
         spec.thumbnailUrl == null) {
       return GiftAnimationPlayer(
         giftId: event.giftId,
         event: event,
+        gift: catalog,
         size: h,
         preferPremiumVisual: false,
         fit: BoxFit.contain,
       );
     }
 
-    final fit = config.isFullScreen ||
-            config.displayArea == GiftEngineDisplayArea.fullScreen
-        ? BoxFit.cover
-        : BoxFit.contain;
+    final isFull = config.isFullScreen ||
+        config.displayArea == GiftEngineDisplayArea.fullScreen;
+    final fit = isFull || spec.mediaType.isVideo ? BoxFit.cover : BoxFit.contain;
 
     return GiftMediaWidget(
       spec: spec,

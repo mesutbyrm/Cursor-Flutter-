@@ -91,37 +91,6 @@ abstract final class GiftEngineParser {
       }
     }
 
-    final durationMs = _int(render, [
-          'durationMs',
-          'duration_ms',
-          'displayDurationMs',
-          'display_duration_ms',
-          'animationDurationMs',
-          'animation_duration_ms',
-        ]) ??
-        3000;
-
-    final queueGapMs =
-        _int(render, ['queueGapMs', 'queue_gap_ms', 'gapMs', 'gap_ms']) ?? 300;
-
-    final feedDurationMs = _int(render, [
-          'feedDurationMs',
-          'feed_duration_ms',
-          'feedTtlMs',
-        ]) ??
-        3000;
-
-    final startDelayMs =
-        _int(render, ['startDelayMs', 'start_delay_ms']) ?? 0;
-
-    final combo = _int(render, ['combo', 'comboCount']) ??
-        event?.combo ??
-        1;
-
-    final seatEffects = _parseSeatEffects(render['seatEffects'] ??
-        render['seat_effects'] ??
-        render['seatEffect']);
-
     final animType = GiftEngineAnimationType.parse(animTypeRaw);
     final assetUrl = _pick(render, ['assetUrl', 'animationUrl', 'animation']);
     final videoUrlRaw = _pick(render, ['videoUrl', 'video_url']);
@@ -148,6 +117,51 @@ abstract final class GiftEngineParser {
         resolvedAnim = GiftEngineAnimationType.mp4;
       }
     }
+
+    final isVideoAnim = resolvedAnim == GiftEngineAnimationType.mp4 ||
+        resolvedAnim == GiftEngineAnimationType.webm;
+    if (isVideoAnim &&
+        displayArea == GiftEngineDisplayArea.center &&
+        displayRaw == null) {
+      displayArea = GiftEngineDisplayArea.fullScreen;
+      if (priority == GiftEnginePriority.medium) {
+        priority = GiftEnginePriority.large;
+      }
+    }
+
+    var durationMs = _int(render, [
+          'durationMs',
+          'duration_ms',
+          'displayDurationMs',
+          'display_duration_ms',
+          'animationDurationMs',
+          'animation_duration_ms',
+        ]) ??
+        3000;
+    if (isVideoAnim && durationMs <= 3000) {
+      durationMs = 8000;
+    }
+
+    final queueGapMs =
+        _int(render, ['queueGapMs', 'queue_gap_ms', 'gapMs', 'gap_ms']) ?? 300;
+
+    final feedDurationMs = _int(render, [
+          'feedDurationMs',
+          'feed_duration_ms',
+          'feedTtlMs',
+        ]) ??
+        3000;
+
+    final startDelayMs =
+        _int(render, ['startDelayMs', 'start_delay_ms']) ?? 0;
+
+    final combo = _int(render, ['combo', 'comboCount']) ??
+        event?.combo ??
+        1;
+
+    final seatEffects = _parseSeatEffects(render['seatEffects'] ??
+        render['seat_effects'] ??
+        render['seatEffect']);
 
     return GiftEngineConfig(
       priority: priority,

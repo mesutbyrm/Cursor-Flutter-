@@ -78,7 +78,6 @@ import 'sheets/voice_room_commands_panel.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import 'widgets/premium_2026/voice_gift_announcement_ticker.dart';
 import '../../gifts/presentation/sync/gift_event_listener.dart';
-import 'widgets/premium/voice_gift_sender_tags_panel.dart';
 import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
 import 'utils/kick_strike_ui.dart';
 import 'audio/voice_trtc_engine.dart';
@@ -1351,7 +1350,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
             VoiceRoomYoutubeEmbedHost(roomKey: _liveRoomKey),
-            VoiceGiftAmbientOverlay(sessionKey: sessionKey),
+            Positioned.fill(
+              child: VoiceGiftAmbientOverlay(sessionKey: sessionKey),
+            ),
             Column(
               children: [
                 Expanded(
@@ -1532,10 +1533,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           liveKey: _liveRoomKey,
                           isOwner: isOwner,
                         ),
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            VoiceWebOwnerStage(
+                        VoiceWebOwnerStage(
                               room: room,
                               presence: live.presence,
                               djUserIds: mergedDjIds,
@@ -1557,9 +1555,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               remoteTrtcUserId:
                                   _audio?.trtcManager.remoteAnchorUserId,
                             ),
-                            VoiceGiftSenderTagsPanel(sessionKey: sessionKey),
-                          ],
-                        ),
                         Consumer(
                           builder: (context, ref, _) {
                             final banner = ref.watch(
