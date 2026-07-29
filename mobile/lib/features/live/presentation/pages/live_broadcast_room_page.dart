@@ -33,7 +33,6 @@ import '../../../gifts/presentation/engine/gift_engine_seat_effects_overlay.dart
 import '../../../gifts/presentation/engine/gift_feed_panel.dart';
 import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
 import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
-import '../../../gifts/presentation/widgets/unified_recent_gifters_box.dart';
 import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
@@ -2344,8 +2343,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                                       name: roomState.lastJoinedDisplayName!,
                                     ),
                                   ),
-                                if (hasStream && streamId != null)
-                                  UnifiedRecentGiftersBox(sessionKey: streamId),
                                 const SizedBox(height: 6),
                                 LiveRoomChatFalPanel(
                                   messages: roomState.messages.isEmpty

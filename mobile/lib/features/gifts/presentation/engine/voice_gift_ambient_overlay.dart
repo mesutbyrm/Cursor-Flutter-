@@ -262,11 +262,16 @@ class _AmbientContent extends StatelessWidget {
       );
     }
 
+    final fit = config.isFullScreen ||
+            config.displayArea == GiftEngineDisplayArea.fullScreen
+        ? BoxFit.cover
+        : BoxFit.contain;
+
     return GiftMediaWidget(
       spec: spec,
       width: w,
       height: h,
-      fit: BoxFit.contain,
+      fit: fit,
       fallbackEmoji: emoji,
     );
   }

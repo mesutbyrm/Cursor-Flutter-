@@ -209,11 +209,16 @@ class _GiftEngineAnimation extends StatelessWidget {
       );
     }
 
+    final fit = config.isFullScreen ||
+            config.displayArea == GiftEngineDisplayArea.fullScreen
+        ? BoxFit.cover
+        : BoxFit.contain;
+
     return GiftMediaWidget(
       spec: spec,
       width: size,
       height: size,
-      fit: BoxFit.contain,
+      fit: fit,
       fallbackEmoji: emoji,
     );
   }
