@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/media/cloud_media_url.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
@@ -480,12 +481,8 @@ class LiveGiftsRemoteDataSource {
 
   String? _resolveGiftId(Map<String, dynamic> json) => _resolveCatalogGiftId(json);
 
-  String? _resolveImageUrl(String? raw) {
-    if (raw == null || raw.isEmpty) return null;
-    if (raw.startsWith('http')) return raw;
-    if (_isBareAssetFilename(raw)) return null;
-    return '${Env.siteOrigin}${raw.startsWith('/') ? raw : '/$raw'}';
-  }
+  String? _resolveImageUrl(String? raw) =>
+      CloudMediaUrl.resolve(raw, siteOrigin: Env.siteOrigin);
 
   bool _isBareAssetFilename(String s) {
     final l = s.trim().toLowerCase();

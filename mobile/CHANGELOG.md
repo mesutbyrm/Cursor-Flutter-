@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.99+127 (2026-07-29)
+
+### Hediye video URL (R2 cloud path)
+- `gift/gifts/*.mp4` gibi R2 yolları otomatik `https://cdn.girlive.com/...` CDN URL'sine çevrilir
+- Katalog, SSE hediye olayı ve admin önizleme aynı `CloudMediaUrl` çözümleyicisini kullanır
+- `CDN_MEDIA_BASE_URL` dart-define ile CDN kökü değiştirilebilir
+
 ## 1.0.99+126 (2026-07-28)
 
 ### Videolu hediyeler + performans + hızlı koltuk

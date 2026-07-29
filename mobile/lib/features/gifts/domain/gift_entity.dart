@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/media/cloud_media_url.dart';
 import '../../../core/util/json_util.dart';
 import 'gift_animation_kind.dart';
 import 'gift_animation_policy.dart';
@@ -232,15 +233,7 @@ class GiftEntity extends Equatable {
       ];
 }
 
-bool _isResolvableUrl(String value) {
-  final v = value.trim();
-  if (v.isEmpty) return false;
-  return v.startsWith('http') || v.startsWith('/');
-}
+bool _isResolvableUrl(String value) => CloudMediaUrl.isResolvable(value);
 
-String? _resolveUrl(String? path, String origin) {
-  if (path == null || path.isEmpty) return null;
-  if (path.startsWith('http')) return path;
-  final o = origin.trim().replaceAll(RegExp(r'/+$'), '');
-  return path.startsWith('/') ? '$o$path' : '$o/$path';
-}
+String? _resolveUrl(String? path, String origin) =>
+    CloudMediaUrl.resolve(path, siteOrigin: origin);

@@ -1,3 +1,4 @@
+import '../../../core/media/cloud_media_url.dart';
 import '../../../gifts/domain/gift_animation_kind.dart';
 import '../../../gifts/domain/gift_entity.dart';
 import '../../../gifts/domain/gift_platform.dart';
@@ -78,8 +79,6 @@ class LiveVideoGiftType {
     final p = iconPath;
     if (p == null || p.isEmpty) return '';
     if (displayEmoji != null) return '';
-    if (p.startsWith('http')) return p;
-    final o = siteOrigin.trim().replaceAll(RegExp(r'/+$'), '');
-    return p.startsWith('/') ? '$o$p' : '$o/$p';
+    return CloudMediaUrl.resolve(p, siteOrigin: siteOrigin) ?? '';
   }
 }

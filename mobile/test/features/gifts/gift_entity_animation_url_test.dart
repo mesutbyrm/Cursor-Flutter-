@@ -39,5 +39,23 @@ void main() {
       'https://canlifal.com/uploads/gifts/rocket.webm',
     );
     expect(gift.animationKind, GiftAnimationKind.video);
+  test('GiftEntity.fromJson resolves R2 gift cloud path to CDN', () {
+    final gift = GiftEntity.fromJson(
+      {
+        'id': 'r2-video',
+        'name': 'R2 Video',
+        'price': 100,
+        'animationUrl': 'gift/gifts/60de072e-66c3-4ac2-9acd-cac8b076097d.mp4',
+        'animationType': 'video',
+      },
+      siteOrigin: 'https://canlifal.com',
+    );
+
+    expect(
+      gift.networkAnimationUrl,
+      'https://cdn.girlive.com/gift/gifts/60de072e-66c3-4ac2-9acd-cac8b076097d.mp4',
+    );
+    expect(gift.animationKind, GiftAnimationKind.video);
+    expect(gift.hasCmsAnimation, isTrue);
   });
 }

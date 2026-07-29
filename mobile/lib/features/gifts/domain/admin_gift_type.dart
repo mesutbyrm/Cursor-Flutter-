@@ -1,4 +1,5 @@
 import '../../../core/config/env.dart';
+import '../../../core/media/cloud_media_url.dart';
 import '../../../core/util/json_util.dart';
 
 /// Admin katalog satırı — `GET /api/admin/gifts` (`gift_types` şeması).
@@ -127,13 +128,8 @@ class AdminGiftType {
   }
 }
 
-String? _resolveAdminMediaUrl(String? raw, String siteOrigin) {
-  if (raw == null || raw.isEmpty) return null;
-  if (raw.startsWith('http')) return raw;
-  final origin = siteOrigin.trim().replaceAll(RegExp(r'/+$'), '');
-  if (origin.isEmpty) return raw;
-  return raw.startsWith('/') ? '$origin$raw' : '$origin/$raw';
-}
+String? _resolveAdminMediaUrl(String? raw, String siteOrigin) =>
+    CloudMediaUrl.resolve(raw, siteOrigin: siteOrigin);
 
 /// Desteklenen `assetType` değerleri — `gift_types.assetType`.
 abstract final class AdminGiftAnimationTypes {

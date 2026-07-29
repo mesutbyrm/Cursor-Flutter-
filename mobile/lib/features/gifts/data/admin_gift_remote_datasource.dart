@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../core/media/cloud_media_url.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
@@ -20,7 +21,8 @@ class AdminGiftUploadedAsset {
   /// Kullanıcı önizlemesi için CDN URL'si; DTO'ya cloud path diye yazılmaz.
   final String? publicUrl;
 
-  String get previewUrl => publicUrl ?? cloudPath;
+  String get previewUrl =>
+      publicUrl ?? CloudMediaUrl.resolve(cloudPath) ?? cloudPath;
 }
 
 /// Admin hediye yönetimi — `canlifal.com` `/api/admin/gifts/*` (JWT admin/yonetici).
