@@ -138,6 +138,10 @@ class GiftEngineConfig extends Equatable {
     this.thumbnailUrl,
     this.effectColor,
     this.particleKey,
+    this.mediaType,
+    this.assetFormat,
+    this.mediaWidth,
+    this.mediaHeight,
   });
 
   final GiftEnginePriority priority;
@@ -155,6 +159,10 @@ class GiftEngineConfig extends Equatable {
   final String? thumbnailUrl;
   final String? effectColor;
   final String? particleKey;
+  final String? mediaType;
+  final String? assetFormat;
+  final int? mediaWidth;
+  final int? mediaHeight;
 
   bool get isFullScreen =>
       displayArea == GiftEngineDisplayArea.fullScreen ||
@@ -195,6 +203,10 @@ class GiftEngineConfig extends Equatable {
         thumbnailUrl,
         effectColor,
         particleKey,
+        mediaType,
+        assetFormat,
+        mediaWidth,
+        mediaHeight,
       ];
 }
 

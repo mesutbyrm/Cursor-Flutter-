@@ -2,16 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:lottie/lottie.dart';
-import 'package:video_player/video_player.dart';
-import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/presentation/gifts/widgets/floating_gift_particles.dart';
 import '../../domain/gift_engine_models.dart';
 import '../../domain/gift_engine_parser.dart';
+import '../../domain/gift_media_spec.dart';
+import '../../domain/gift_media_type.dart';
 import '../widgets/gift_animation_player.dart';
+import '../widgets/gift_media_widget.dart';
 import '../widgets/gift_stage_layout.dart';
 
 /// Backend Gift Engine — tek aktif animasyon, alan ve öncelik backend'den.
@@ -149,7 +148,7 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
   Widget _seatPositioned(BuildContext context, int? seatIndex, Widget child) {
     final idx = seatIndex ?? 0;
     final w = MediaQuery.sizeOf(context).width;
-    final cols = 4;
+    const cols = 4;
     final col = idx % cols;
     final row = idx ~/ cols;
     final left = 16 + col * (w - 32) / cols;
@@ -164,7 +163,7 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
   }
 }
 
-class _GiftEngineAnimation extends StatefulWidget {
+class _GiftEngineAnimation extends StatelessWidget {
   const _GiftEngineAnimation({
     required this.event,
     required this.config,
@@ -176,116 +175,48 @@ class _GiftEngineAnimation extends StatefulWidget {
   final double size;
 
   @override
-  State<_GiftEngineAnimation> createState() => _GiftEngineAnimationState();
-}
-
-class _GiftEngineAnimationState extends State<_GiftEngineAnimation> {
-  VideoPlayerController? _video;
-
-  @override
-  void initState() {
-    super.initState();
-    _initVideo();
-  }
-
-  Future<void> _initVideo() async {
-    final type = widget.config.animationType;
-    if (type != GiftEngineAnimationType.mp4 &&
-        type != GiftEngineAnimationType.webm) {
-      return;
-    }
-    final url = widget.config.videoUrl ?? widget.config.resolvedAssetUrl;
-    if (url == null || !url.startsWith('http')) return;
-    try {
-      final c = VideoPlayerController.networkUrl(Uri.parse(url));
-      await c.initialize();
-      if (!mounted) {
-        await c.dispose();
-        return;
-      }
-      c.setLooping(false);
-      await c.play();
-      setState(() => _video = c);
-    } catch (_) {}
-  }
-
-  @override
-  void dispose() {
-    _video?.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final config = widget.config;
-    final url = config.resolvedAssetUrl;
-    final emoji = widget.event.giftIcon ?? '🎁';
+    final emoji = event.giftIcon ?? '🎁';
 
-    return SizedBox(
-      width: widget.size,
-      height: widget.size,
-      child: switch (config.animationType) {
-        GiftEngineAnimationType.particle => FloatingGiftParticles(
-            emojis: [emoji],
-            spawnFromGiftId: widget.event.giftId,
-          ),
-        GiftEngineAnimationType.svg when url != null && url.isNotEmpty =>
-          SvgPicture.network(
-            url,
-            width: widget.size,
-            height: widget.size,
-            fit: BoxFit.contain,
-            placeholderBuilder: (_) => _fallback(emoji),
-          ),
-        GiftEngineAnimationType.lottie when url != null && url.isNotEmpty =>
-          Lottie.network(
-            url,
-            width: widget.size,
-            height: widget.size,
-            repeat: false,
-            fit: BoxFit.contain,
-            errorBuilder: (_, _, _) => _fallback(emoji),
-          ),
-        GiftEngineAnimationType.mp4 || GiftEngineAnimationType.webm => () {
-            final c = _video;
-            if (c != null && c.value.isInitialized) {
-              return FittedBox(
-                fit: BoxFit.contain,
-                child: SizedBox(
-                  width: c.value.size.width,
-                  height: c.value.size.height,
-                  child: VideoPlayer(c),
-                ),
-              );
-            }
-            return const Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white54,
-              ),
-            );
-          }(),
-        GiftEngineAnimationType.png ||
-        GiftEngineAnimationType.gif =>
-          CanlifalNetworkImage(
-            url: url ?? widget.event.displayImageUrl ?? '',
-            width: widget.size,
-            height: widget.size,
-            fit: BoxFit.contain,
-            errorWidget: _fallback(emoji),
-          ),
-        _ => GiftAnimationPlayer(
-            giftId: widget.event.giftId,
-            event: widget.event,
-            size: widget.size,
-            preferPremiumVisual: false,
-          ),
-      },
+    if (config.animationType == GiftEngineAnimationType.particle) {
+      return FloatingGiftParticles(
+        emojis: [emoji],
+        spawnFromGiftId: event.giftId,
+      );
+    }
+
+    if (config.animationType == GiftEngineAnimationType.lottie ||
+        config.animationType == GiftEngineAnimationType.rive ||
+        config.animationType == GiftEngineAnimationType.svga) {
+      return GiftAnimationPlayer(
+        giftId: event.giftId,
+        event: event,
+        size: size,
+        preferPremiumVisual: false,
+        fit: BoxFit.contain,
+      );
+    }
+
+    final spec = GiftMediaSpec.fromEvent(event, engine: config);
+    if (spec.mediaType == GiftMediaType.unknown &&
+        !spec.hasPlayableUrl &&
+        spec.thumbnailUrl == null) {
+      return GiftAnimationPlayer(
+        giftId: event.giftId,
+        event: event,
+        size: size,
+        preferPremiumVisual: false,
+      );
+    }
+
+    return GiftMediaWidget(
+      spec: spec,
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      fallbackEmoji: emoji,
     );
   }
-
-  Widget _fallback(String emoji) =>
-      Text(emoji, style: TextStyle(fontSize: widget.size * 0.45));
 }
 
 class _ComboBadge extends StatelessWidget {

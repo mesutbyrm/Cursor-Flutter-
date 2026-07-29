@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/media/cloud_media_url.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
@@ -11,6 +12,7 @@ import '../../../gifts/data/gift_reciprocal_guard.dart';
 import '../../../gifts/domain/gift_animation_kind.dart';
 import '../../../gifts/domain/gift_entity.dart';
 import '../../../gifts/domain/gift_platform.dart';
+import '../../../gifts/domain/gift_media_spec.dart';
 import '../../../gifts/domain/gift_rarity.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_gift_event.dart';
@@ -450,6 +452,9 @@ class LiveGiftsRemoteDataSource {
         'particle_key',
         'particleEffect',
       ])?.toString(),
+      mediaType: GiftMediaSpec.parseMediaType(render),
+      mediaWidth: GiftMediaSpec.parseDimensions(render).$1,
+      mediaHeight: GiftMediaSpec.parseDimensions(render).$2,
     );
   }
 
@@ -482,9 +487,12 @@ class LiveGiftsRemoteDataSource {
 
   String? _resolveImageUrl(String? raw) {
     if (raw == null || raw.isEmpty) return null;
+    if (CloudMediaUrl.isCloudStoragePath(raw)) {
+      return CloudMediaUrl.resolve(raw, siteOrigin: Env.siteOrigin);
+    }
     if (raw.startsWith('http')) return raw;
     if (_isBareAssetFilename(raw)) return null;
-    return '${Env.siteOrigin}${raw.startsWith('/') ? raw : '/$raw'}';
+    return CloudMediaUrl.resolve(raw, siteOrigin: Env.siteOrigin);
   }
 
   bool _isBareAssetFilename(String s) {
