@@ -57,7 +57,7 @@ LiveGiftEvent enrichGiftEventFromCatalog(
     assetUrl: event.assetUrl ?? animUrl,
     assetType: event.assetType ?? catalog.assetType.name,
     displayType: event.displayType ?? catalog.displayType.name,
-    isFullscreen: event.isFullscreen ?? catalog.isFullscreen ?? isVideo,
+    isFullscreen: event.isFullscreen ?? (catalog.isFullscreen || isVideo),
     animationDurationMs: event.animationDurationMs ??
         (catalog.animationDurationMs > 0
             ? catalog.animationDurationMs

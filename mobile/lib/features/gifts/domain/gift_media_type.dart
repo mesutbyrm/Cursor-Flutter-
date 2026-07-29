@@ -40,6 +40,9 @@ enum GiftMediaType {
     if (animationKind == GiftAnimationKind.gif) return GiftMediaType.gif;
     if (animationKind == GiftAnimationKind.image) return GiftMediaType.png;
 
+    final fromUrl = _fromUrl(url);
+    if (fromUrl != GiftMediaType.unknown) return fromUrl;
+
     final inferred = GiftEngineAnimationType.inferFromUrl(url);
     return switch (inferred) {
       GiftEngineAnimationType.mp4 || GiftEngineAnimationType.webm =>
@@ -48,7 +51,7 @@ enum GiftMediaType {
       GiftEngineAnimationType.gif => GiftMediaType.gif,
       GiftEngineAnimationType.lottie => GiftMediaType.lottie,
       GiftEngineAnimationType.png => GiftMediaType.png,
-      _ => _fromUrl(url),
+      _ => GiftMediaType.unknown,
     };
   }
 

@@ -1,6 +1,11 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.99+131 (2026-07-29)
+
+### Düzeltme
+- **GiftMediaType:** `.webp` URL'leri doğru algılanır (CI test düzeltmesi)
+
 ## 1.0.99+130 (2026-07-29)
 
 ### Sesli oda hediye görünürlüğü
