@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../live/domain/entities/voice_room_entity.dart';
-import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
 import '../utils/voice_room_permissions.dart';
 import 'voice_room_management_panel.dart';

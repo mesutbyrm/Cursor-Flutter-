@@ -23,6 +23,7 @@ import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import 'voice_room_commands_panel.dart';
 import 'voice_room_hub_settings.dart';
+import 'voice_room_menu_sheet.dart' show VoiceRoomMenuRole;
 import 'voice_room_moderation_sheet.dart';
 import 'voice_room_muted_users_sheet.dart';
 import 'voice_room_sheets.dart';
