@@ -120,6 +120,10 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         roomName: _roomMeta.nameTr,
       );
       if (banner.isNotEmpty && _markEntranceOnce(banner)) {
+        ref.read(staffEntranceMarqueeProvider.notifier).enqueue(
+              banner,
+              roomName: _roomMeta.nameTr,
+            );
         state = state.copyWith(enterBanner: banner);
         _enterBannerTimer?.cancel();
         _enterBannerTimer = Timer(const Duration(seconds: 5), () {
@@ -137,7 +141,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       roomName: _roomMeta.nameTr,
     );
     if (!_markEntranceOnce(line)) return;
-    // Tek kanal: koltuk altı banner (global marquee sesli odada zaten gizli).
+    ref.read(staffEntranceMarqueeProvider.notifier).enqueue(line, roomName: _roomMeta.nameTr);
     state = state.copyWith(enterBanner: line);
     _enterBannerTimer?.cancel();
     _enterBannerTimer = Timer(const Duration(seconds: 5), () {

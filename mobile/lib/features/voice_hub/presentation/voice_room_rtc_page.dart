@@ -1535,11 +1535,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: VoiceRoomDiagnosticCard(state: diagnostic),
                           ),
-                        VoicePkInviteBanner(
-                          room: room,
-                          liveKey: _liveRoomKey,
-                          isOwner: isOwner,
-                        ),
                         VoiceWebOwnerStage(
                               room: room,
                               presence: live.presence,
@@ -1573,6 +1568,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               enterBanner: banner,
                             );
                           },
+                        ),
+                        VoicePkInviteBanner(
+                          room: room,
+                          liveKey: _liveRoomKey,
+                          isOwner: isOwner,
                         ),
                         Consumer(
                           builder: (context, ref, _) {

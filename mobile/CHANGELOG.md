@@ -1,5 +1,22 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.103+136 (2026-07-30)
+
+### Duyuru şeridi & giriş
+- **1000+ jeton hediyeler** ve **Gold/admin girişleri** tüm sayfalarda üst şeritte (navbar altı)
+- Ana sayfa arama altındaki hediye şeridi kaldırıldı (çift gösterim yok)
+- Sesli odada yetkili/sahip/admin girişi koltukların **altında** sağdan sola kayar
+
+### Sohbet stilleri
+- Gold üyeler ve admin nick kullanıcılar tüm sesli oda sohbetlerinde şekilli profil + neon yazı
+
+### PK daveti
+- B odası sahibine popup: «X odası size PK isteği attı — Kabul / Reddet»
+- Aktif oda + sahip odaları için socket; 3 sn poll yedek; çift popup önlendi
+
+### Sesli oda
+- Oda sahibi, yetkili ve DJ odaya girince otomatik koltuğa oturur
+
 ## 1.0.102+135 (2026-07-30)
 
 ### Performans (production)

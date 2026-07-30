@@ -89,9 +89,10 @@ class _ChatMessageBody extends ConsumerWidget {
     final vip = user?.isBroadcaster == true || tier.index >= VipTier.gold.index;
     final rank = VoiceStaffChatStyle.rankOf(user);
     final isStaff = VoiceStaffChatStyle.isStaffUser(user);
+    final isPremiumChat = isStaff || VoiceStaffChatStyle.isGoldOrAdminChatUser(user);
     final showIstek = _isIstekLine(message.content);
 
-    if (isStaff) {
+    if (isPremiumChat) {
       return _StaffChatLine(
         name: name,
         content: message.content,
@@ -177,7 +178,14 @@ class _StaffChatLine extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onDoubleTap;
 
-  Color get _accent => VoiceStaffChatStyle.accentForUser(user);
+  Color get _accent {
+    if (VoiceStaffChatStyle.isGoldOrAdminChatUser(user) &&
+        VoiceStaffRankParser.powerLevel(rank) <
+            VoiceStaffRankParser.powerLevel(VoiceStaffRank.voice)) {
+      return VoiceRoomTokens.gold;
+    }
+    return VoiceStaffChatStyle.accentForUser(user);
+  }
 
   @override
   Widget build(BuildContext context) {

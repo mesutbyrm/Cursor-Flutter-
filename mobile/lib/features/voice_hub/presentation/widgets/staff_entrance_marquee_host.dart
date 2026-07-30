@@ -18,10 +18,8 @@ class StaffEntranceMarqueeHost extends ConsumerWidget {
 
   static bool hideForRoute(String? location) {
     final path = Uri.tryParse(location ?? '')?.path ?? location ?? '';
-    if (path.startsWith('/voice-room/')) return true;
-    // Ana sayfada şerit arama çubuğunun altında (HomeFeedMarquee).
-    if (path == '/feed' || path == '/' || path.isEmpty) return true;
-    return false;
+    // Sesli odada koltuk altı banner kullanılır; üst şerit çakışmasın.
+    return path.startsWith('/voice-room/');
   }
 
   @override

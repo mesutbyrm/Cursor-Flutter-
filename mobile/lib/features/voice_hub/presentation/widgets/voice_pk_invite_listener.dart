@@ -2,18 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
-import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
-import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_pk_owned_rooms_socket_provider.dart';
+import '../utils/pk_invite_dialog_helper.dart';
 
-/// Sesli oda PK davetleri — Socket.IO + SSE + periyodik REST yedek.
+/// Sesli oda PK davetleri — Socket.IO + REST poll; hedef odada popup.
 class VoicePkInviteListener extends ConsumerStatefulWidget {
   const VoicePkInviteListener({super.key, required this.child});
 
@@ -25,49 +22,23 @@ class VoicePkInviteListener extends ConsumerStatefulWidget {
 }
 
 class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
-  final Set<String> _seenInvites = {};
   final Set<String> _seenRejections = {};
   var _showing = false;
+  Timer? _pollTimer;
 
-  List<VoiceRoomEntity> _ownedRooms(List<VoiceRoomEntity> rooms, String userId) {
-    if (userId.isEmpty) return const [];
-    return rooms
-        .where((r) => (r.ownerId?.trim() ?? '') == userId)
-        .toList(growable: false);
+  @override
+  void initState() {
+    super.initState();
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      unawaited(_pollPendingInvites());
+    });
+    Future.microtask(_pollPendingInvites);
   }
 
-  String _roomLabel(PkBattleRemote battle, VoiceRoomEntity? fallbackRoom) {
-    final rooms = ref.read(voiceRoomsProvider).valueOrNull;
-    final roomId = battle.voiceRoomId?.trim() ?? '';
-    if (rooms != null && roomId.isNotEmpty) {
-      for (final r in rooms) {
-        if (r.apiRoomKey == roomId || r.id == roomId || r.slug == roomId) {
-          final name = r.nameTr.trim();
-          return name.isNotEmpty ? name : r.slug;
-        }
-      }
-    }
-    final challenger = battle.challenger?.displayName?.trim();
-    if (challenger != null && challenger.isNotEmpty) return challenger;
-    final fb = fallbackRoom?.nameTr.trim();
-    if (fb != null && fb.isNotEmpty) return fb;
-    return fallbackRoom?.slug ?? 'Bir oda';
-  }
-
-  String _opponentRoomLabel(PkBattleRemote battle) {
-    final rooms = ref.read(voiceRoomsProvider).valueOrNull;
-    final roomId = battle.opponentVoiceRoomId?.trim() ?? '';
-    if (rooms != null && roomId.isNotEmpty) {
-      for (final r in rooms) {
-        if (r.apiRoomKey == roomId || r.id == roomId || r.slug == roomId) {
-          final name = r.nameTr.trim();
-          return name.isNotEmpty ? name : r.slug;
-        }
-      }
-    }
-    final opp = battle.opponent?.displayName?.trim();
-    if (opp != null && opp.isNotEmpty) return opp;
-    return 'Karşı oda';
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
   }
 
   void _onBattleUpdate(PkBattleRemote? battle) {
@@ -75,167 +46,44 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
 
-    final rooms = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
-    final owned = _ownedRooms(rooms, user.id);
-
     if (battle.isPending) {
-      // Önce sahip olunan odalar; ownerId eksikse rakip oda veya kullanıcı eşleşmesi.
-      final oppRoomId = battle.opponentVoiceRoomId?.trim() ?? '';
-      final candidates = <VoiceRoomEntity>[
-        ...owned,
-        ...rooms.where((r) {
-          if (oppRoomId.isEmpty) return false;
-          return r.apiRoomKey == oppRoomId ||
-              r.id == oppRoomId ||
-              r.slug == oppRoomId;
-        }),
-      ];
-      // Tekilleştir
-      final seen = <String>{};
-      final unique = <VoiceRoomEntity>[];
-      for (final r in candidates) {
-        final k = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
-        if (k.isEmpty || !seen.add(k)) continue;
-        unique.add(r);
-      }
-
-      for (final room in unique) {
-        if (!isPkInviteTarget(battle, room, userId: user.id)) continue;
+      final room = resolvePkInviteTargetRoom(ref, battle, user.id);
+      if (room != null) {
         final inviteId = battle.effectiveId;
-        if (inviteId.isEmpty || !_seenInvites.add(inviteId)) continue;
-        unawaited(_showInviteDialog(battle, room));
-        return;
-      }
-
-      // ownerId boş olsa bile rakip kullanıcı bizsek dialog göster.
-      final oppId = battle.opponentId?.trim() ?? '';
-      final oppUser = battle.opponent?.userId.trim() ?? '';
-      if (oppId == user.id || oppUser == user.id) {
-        final inviteId = battle.effectiveId;
-        if (inviteId.isNotEmpty && _seenInvites.add(inviteId)) {
-          VoiceRoomEntity? room;
-          if (unique.isNotEmpty) {
-            room = unique.first;
-          } else {
-            for (final r in rooms) {
-              if (isPkInviteTarget(battle, r, userId: user.id)) {
-                room = r;
-                break;
-              }
-            }
-            room ??= rooms.isNotEmpty ? rooms.first : null;
-          }
-          if (room != null) {
-            unawaited(_showInviteDialog(battle, room));
-          }
+        if (inviteId.isNotEmpty) {
+          unawaited(_showInviteDialog(battle, room));
         }
       }
+      return;
     }
 
     if (battle.status == 'rejected') {
-      for (final room in owned) {
-        if (!isPkChallengerRoom(battle, room)) continue;
-        final id = battle.effectiveId;
-        if (id.isEmpty || !_seenRejections.add(id)) continue;
-        final opp = _opponentRoomLabel(battle);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$opp odası isteğinizi reddetti')),
-          );
-        }
-        ref.read(pkBattleRemoteProvider.notifier).clear();
-        return;
-      }
-    }
-  }
-
-  Future<void> _showInviteDialog(PkBattleRemote battle, VoiceRoomEntity room) async {
-    if (!mounted || _showing) return;
-    _showing = true;
-    final roomLabel = _roomLabel(battle, room);
-    final inviteId = battle.effectiveId;
-    final minutes = (battle.durationSeconds / 60).round();
-    final durationHint = minutes > 0 ? '\nSüre: $minutes dk' : '';
-    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-    final alt = room.slug != key ? room.slug : null;
-    final remote = ref.read(pkBattleRemoteProvider.notifier);
-    final accept = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A0F2E),
-        title: const Text('PK Daveti', style: TextStyle(color: Colors.white)),
-        content: Text(
-          '$roomLabel odasında PK isteği var.$durationHint\nKabul ediyor musunuz?',
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Reddet'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Kabul Et'),
-          ),
-        ],
-      ),
-    ).timeout(
-      const Duration(seconds: 30),
-      onTimeout: () => null,
-    );
-    _showing = false;
-    if (!mounted) return;
-
-    try {
-      if (accept == null) {
-        await remote.reject(inviteId, roomId: key, alternateRoomId: alt);
-        remote.clear();
-        return;
-      }
-      if (accept) {
-        await remote.accept(inviteId, roomId: key, alternateRoomId: alt);
-        if (!mounted) return;
-        VoiceRoomEntryPerf.prewarmOnRoomTap(ref, room);
-        context.push('/voice-room/$key/pk', extra: room);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('PK başladı')),
-          );
-        }
-      } else {
-        await remote.reject(inviteId, roomId: key, alternateRoomId: alt);
-        remote.clear();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('PK daveti reddedildi')),
-          );
-        }
-      }
-    } catch (e) {
+      final id = battle.effectiveId;
+      if (id.isEmpty || !_seenRejections.add(id)) return;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
+          SnackBar(
+            content: Text(
+              '${pkChallengerRoomLabel(ref, battle)} odası isteğinizi reddetti',
+            ),
+          ),
         );
       }
+      ref.read(pkBattleRemoteProvider.notifier).clear();
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 6), (_) {
-      unawaited(_pollPendingInvites());
-    });
-    Future.microtask(_pollPendingInvites);
-  }
-
-  Timer? _pollTimer;
-
-  @override
-  void dispose() {
-    _pollTimer?.cancel();
-    super.dispose();
+  Future<void> _showInviteDialog(
+    PkBattleRemote battle,
+    VoiceRoomEntity room,
+  ) async {
+    if (!mounted || _showing) return;
+    _showing = true;
+    try {
+      await showPkInviteDialog(context, ref, battle: battle, room: room);
+    } finally {
+      _showing = false;
+    }
   }
 
   Future<void> _pollPendingInvites() async {
@@ -249,19 +97,6 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         if (!battle.isPending) continue;
         _onBattleUpdate(battle);
         return;
-      }
-      final rooms = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
-      for (final room in _ownedRooms(rooms, user.id)) {
-        final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-        if (key.isEmpty) continue;
-        final alt = room.slug != key ? room.slug : null;
-        final battle = await ref
-            .read(pkBattleRemoteProvider.notifier)
-            .loadRoomBattle(key, alternateRoomId: alt);
-        if (battle?.isPending == true) {
-          _onBattleUpdate(battle);
-          return;
-        }
       }
     } catch (_) {}
   }

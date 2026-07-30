@@ -5,6 +5,7 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/services/voice_room_socket_helper.dart';
 import 'pk_battle_remote_provider.dart';
+import 'voice_room_session_registry.dart';
 
 /// Sahip olunan sesli odalar için global PK socket — HTTP polling yok.
 final voicePkOwnedRoomsSocketProvider = Provider<void>((ref) {
@@ -15,7 +16,8 @@ final voicePkOwnedRoomsSocketProvider = Provider<void>((ref) {
       return;
     }
     final rooms = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
-    final keys = _ownedRoomKeys(rooms, user.id);
+    final active = ref.read(voiceRoomActiveLiveKeyProvider);
+    final keys = ownedAndActiveRoomKeys(rooms, user.id, activeLiveKey: active);
     if (keys.isEmpty) {
       ref.read(pkBattleRemoteProvider.notifier).disconnectOwnedRoomsSocket();
       return;
@@ -25,6 +27,7 @@ final voicePkOwnedRoomsSocketProvider = Provider<void>((ref) {
 
   ref.listen(voiceRoomsProvider, (_, __) => sync());
   ref.listen(authControllerProvider, (_, __) => sync());
+  ref.listen(voiceRoomActiveLiveKeyProvider, (_, __) => sync());
   ref.onDispose(() {
     ref.read(pkBattleRemoteProvider.notifier).disconnectOwnedRoomsSocket();
   });
@@ -47,4 +50,17 @@ List<String> _ownedRoomKeys(List<VoiceRoomEntity> rooms, String userId) {
     }
   }
   return out;
+}
+
+List<String> ownedAndActiveRoomKeys(
+  List<VoiceRoomEntity> rooms,
+  String userId, {
+  String? activeLiveKey,
+}) {
+  final keys = _ownedRoomKeys(rooms, userId).toList();
+  final active = activeLiveKey?.trim() ?? '';
+  if (active.isNotEmpty && !keys.contains(active)) {
+    keys.add(active);
+  }
+  return keys;
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/auth/voice_staff_rank.dart';
+import '../../../vip_gold/domain/vip_tier.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../theme/voice_room_tokens.dart';
 
@@ -31,6 +32,19 @@ abstract final class VoiceStaffChatStyle {
     final rank = rankOf(user);
     return VoiceStaffRankParser.powerLevel(rank) >=
         VoiceStaffRankParser.powerLevel(VoiceStaffRank.voice);
+  }
+
+  /// Gold üyeler ve admin nick — tüm sohbetlerde şekilli profil/yazı.
+  static bool isGoldOrAdminChatUser(ChatRoomUserRef? user) {
+    if (user == null) return false;
+    final tier = VipTier.fromMembership(user.membership);
+    if (tier.index >= VipTier.gold.index) return true;
+    final nick = user.nickname ?? user.name;
+    if (VoiceStaffRankParser.fromUsername(nick) != VoiceStaffRank.none) {
+      return true;
+    }
+    final role = user.chatRole?.toLowerCase() ?? '';
+    return role == 'admin' || role == 'superadmin';
   }
 
   static VoiceStaffRank rankOf(ChatRoomUserRef? user) {

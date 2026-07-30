@@ -134,7 +134,7 @@ abstract final class VoiceRoomSeatPriority {
   }
 
   /// Yetkili kullanıcılar (+ ve üzeri, VIP, DJ, oda sahibi) otomatik oturur.
-  static bool shouldAutoSit(int tier) => tier >= tierVoice;
+  static bool shouldAutoSit(int tier) => tier >= tierDj;
 
   static bool shouldAutoSitForSymbol(String? symbol) {
     switch (symbol?.trim()) {
