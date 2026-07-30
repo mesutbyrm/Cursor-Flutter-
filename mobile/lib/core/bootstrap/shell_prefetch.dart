@@ -36,9 +36,9 @@ void prefetchShellData(
     }),
   );
 
-  // Canlı yayın / sesli oda hediye katalogları — ilk açılışta önbelleğe al.
+  // Hediye katalogları — erken önbellek (oda / panel açılışı).
   unawaited(
-    Future<void>.delayed(StartupPerf.shellPrefetchTier1bDelay, () {
+    Future<void>.delayed(StartupPerf.shellPrefetchDelay, () {
       try {
         ref.read(liveStreamGiftCatalogProvider.future).ignore();
         ref.read(voiceRoomGiftCatalogProvider.future).ignore();

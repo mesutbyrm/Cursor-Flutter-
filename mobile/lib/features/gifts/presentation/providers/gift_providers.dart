@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../data/gift_repository.dart';
+import '../../data/gift_sound_pool.dart';
 import '../../data/gift_sound_service.dart';
 import '../../domain/gift_playable_filter.dart';
 import '../../domain/gift_entity.dart';
@@ -13,9 +14,14 @@ final giftRepositoryProvider = Provider<GiftRepository>((ref) {
   return GiftRepository(ref.watch(dioProvider));
 });
 
+final giftSoundPoolProvider = Provider<GiftSoundPool>((ref) {
+  final pool = GiftSoundPool();
+  ref.onDispose(pool.dispose);
+  return pool;
+});
+
 final giftSoundServiceProvider = Provider<GiftSoundService>((ref) {
-  final svc = GiftSoundService();
-  ref.onDispose(svc.dispose);
+  final svc = GiftSoundService(ref.watch(giftSoundPoolProvider));
   return svc;
 });
 

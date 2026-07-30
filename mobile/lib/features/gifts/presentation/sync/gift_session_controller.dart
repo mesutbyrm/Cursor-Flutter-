@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/gift_sound_pool.dart';
 import '../../domain/gift_engine_models.dart';
 import '../../domain/gift_engine_parser.dart';
 import '../../domain/gift_revenue_display.dart';
 import '../engine/gift_engine_preloader.dart';
 import '../providers/gift_catalog_index_provider.dart';
+import '../providers/gift_providers.dart';
 import '../../domain/gift_event_catalog_enricher.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../engine/voice_gift_ambient_overlay.dart';
@@ -14,15 +16,18 @@ import 'gift_hourly_reset.dart';
 import 'gift_session_state.dart';
 import 'gift_sync_log.dart';
 
-/// Gift Engine oturum kontrolcüsü — tek FIFO kuyruk, backend render.
+/// Gift Engine oturum kontrolcüsü — ses → animasyon → jeton sırası.
 class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, String> {
   static const _maxRecent = 5;
   static const _maxProcessedIds = 256;
   static const _joinGraceMs = 15000;
 
   final _feedExpiryTimers = <String, Timer>{};
+  final _deferredByEventId = <String, GiftDeferredApply>{};
+  final _receivedAtMs = <String, int>{};
   Timer? _animationTimer;
   void Function()? _cancelHourlyReset;
+  var _pumping = false;
   late String _roomId;
   int? _joinTimestampMs;
 
@@ -43,6 +48,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       t.cancel();
     }
     _feedExpiryTimers.clear();
+    _deferredByEventId.clear();
+    _receivedAtMs.clear();
     state = state.copyWith(
       recentGifts: const [],
       animationQueue: const [],
@@ -59,6 +66,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     }
     _feedExpiryTimers.clear();
     _animationTimer?.cancel();
+    _deferredByEventId.clear();
+    _receivedAtMs.clear();
   }
 
   void onGiftSent(
@@ -111,6 +120,9 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       return;
     }
 
+    final receivedMs = DateTime.now().millisecondsSinceEpoch;
+    _receivedAtMs[raw.id] = receivedMs;
+
     GiftSyncLog.eventReceived(
       roomId: roomId,
       source: source,
@@ -133,10 +145,6 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       ids.remove(ids.first);
     }
 
-    final recent = _appendRecent(event);
-    final jeton = event.jetonAmount;
-    final roomTotal = state.roomTotalJeton + jeton;
-
     const animatedSources = {
       'sse',
       'live_realtime',
@@ -150,17 +158,20 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
         event.eventTimestampMs < joinedMs - _joinGraceMs;
     final animate = canAnimate && !beforeJoin;
 
-    state = state.copyWith(
-      recentGifts: recent,
-      roomTotalJeton: roomTotal,
-      remainingBalance: event.remainingBalance ?? state.remainingBalance,
-      processedEventIds: ids,
-      latestEvent: event,
-    );
-
-    _addFeedItem(event);
+    final jeton = event.jetonAmount;
+    final roomTotal = state.roomTotalJeton + jeton;
+    final recentItem = _buildRecentItem(event);
+    final feedItem = _buildFeedItem(event);
 
     if (!animate) {
+      state = state.copyWith(
+        recentGifts: _prependRecent(recentItem),
+        roomTotalJeton: roomTotal,
+        remainingBalance: event.remainingBalance ?? state.remainingBalance,
+        processedEventIds: ids,
+        latestEvent: event,
+      );
+      _applyFeedItem(feedItem, event);
       if (beforeJoin) {
         GiftSyncLog.dedupeSkipped(roomId, event.id, 'before_join');
       } else if (!canAnimate) {
@@ -170,11 +181,21 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       return;
     }
 
-    unawaited(GiftEnginePreloader.prefetch(event));
-    _enqueueAnimation(event);
+    _deferredByEventId[event.id] = GiftDeferredApply(
+      event: event,
+      recentItem: recentItem,
+      feedItem: feedItem,
+      roomTotalJeton: roomTotal,
+      remainingBalance: event.remainingBalance,
+    );
 
+    state = state.copyWith(
+      processedEventIds: ids,
+      latestEvent: event,
+    );
+
+    _enqueueAnimation(event);
     GiftSyncLog.eventProcessed(roomId, event.id, combo: event.combo);
-    GiftSyncLog.uiRender(roomId, 'gift_engine_queue');
   }
 
   void clear() {
@@ -184,6 +205,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   }
 
   void dequeueAnimation(String eventId) {
+    _applyDeferred(eventId);
+
     final clearingActive = state.activeAnimation?.id == eventId;
     final filteredQueue =
         state.animationQueue.where((e) => e.id != eventId).toList();
@@ -200,9 +223,23 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     }
   }
 
-  List<GiftRecentItem> _appendRecent(LiveGiftEvent event) {
+  void _applyDeferred(String eventId) {
+    final deferred = _deferredByEventId.remove(eventId);
+    _receivedAtMs.remove(eventId);
+    if (deferred == null) return;
+
+    state = state.copyWith(
+      recentGifts: _prependRecent(deferred.recentItem),
+      roomTotalJeton: deferred.roomTotalJeton,
+      remainingBalance: deferred.remainingBalance ?? state.remainingBalance,
+    );
+    _applyFeedItem(deferred.feedItem, deferred.event);
+    GiftSyncLog.pipelineStage(eventId, 'balance_applied');
+  }
+
+  GiftRecentItem _buildRecentItem(LiveGiftEvent event) {
     final senderId = (event.senderId ?? event.senderName).trim();
-    final item = GiftRecentItem(
+    return GiftRecentItem(
       id: 'recent-${event.id}',
       senderId: senderId,
       senderName: event.senderName.trim().isNotEmpty
@@ -221,15 +258,15 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       iconUrl: event.displayImageUrl,
       seatIndex: event.seatIndex,
     );
-    final merged = [item, ...state.recentGifts]
-        .take(_maxRecent)
-        .toList(growable: false);
-    return merged;
   }
 
-  void _addFeedItem(LiveGiftEvent event) {
+  List<GiftRecentItem> _prependRecent(GiftRecentItem item) {
+    return [item, ...state.recentGifts].take(_maxRecent).toList(growable: false);
+  }
+
+  GiftFeedItem _buildFeedItem(LiveGiftEvent event) {
     final config = GiftEngineParser.fromEvent(event);
-    final item = GiftFeedItem(
+    return GiftFeedItem(
       id: 'feed-${event.id}',
       senderName: event.senderName.trim().isNotEmpty
           ? event.senderName.trim()
@@ -245,13 +282,17 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       iconUrl: event.displayImageUrl,
       giftIcon: event.giftIcon,
     );
+  }
 
+  void _applyFeedItem(GiftFeedItem item, LiveGiftEvent event) {
     final items = [item, ...state.feedItems].take(6).toList();
     state = state.copyWith(feedItems: items);
 
     _feedExpiryTimers[item.id]?.cancel();
     _feedExpiryTimers[item.id] = Timer(
-      Duration(milliseconds: config.feedDurationMs),
+      Duration(
+        milliseconds: GiftEngineParser.fromEvent(event).feedDurationMs,
+      ),
       () {
         _feedExpiryTimers.remove(item.id);
         state = state.copyWith(
@@ -269,30 +310,85 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   }
 
   void _pumpAnimationQueue() {
-    if (state.activeAnimation != null) return;
+    if (_pumping || state.activeAnimation != null) return;
+    if (state.animationQueue.isEmpty) return;
+    unawaited(_pumpAnimationQueueAsync());
+  }
+
+  Future<void> _pumpAnimationQueueAsync() async {
+    if (_pumping || state.activeAnimation != null) return;
     if (state.animationQueue.isEmpty) return;
 
+    _pumping = true;
     final next = state.animationQueue.first;
-    final rest = state.animationQueue.length > 1
-        ? state.animationQueue.sublist(1)
-        : <LiveGiftEvent>[];
 
-    state = state.copyWith(activeAnimation: next, animationQueue: rest);
+    try {
+      final catalog = lookupGiftCatalog(
+        ref.read(allGiftCatalogByIdProvider),
+        next.giftId,
+      );
+      final receivedMs = _receivedAtMs[next.id] ?? DateTime.now().millisecondsSinceEpoch;
 
-    final config = GiftEngineParser.fromEvent(next);
-    final watchdogMs = config.startDelayMs +
-        config.durationMs +
-        config.queueGapMs +
-        VoiceGiftAmbientOverlay.fadeInMs +
-        VoiceGiftAmbientOverlay.fadeOutMs +
-        5000;
+      GiftSyncLog.pipelineStage(next.id, 'prefetch');
+      final tPrefetch = DateTime.now();
+      try {
+        await GiftEnginePreloader.prefetch(next).timeout(
+          const Duration(milliseconds: 280),
+        );
+      } catch (_) {}
+      GiftSyncLog.pipelineMs(
+        next.id,
+        'prefetch',
+        DateTime.now().difference(tPrefetch).inMilliseconds,
+      );
 
-    _animationTimer?.cancel();
-    _animationTimer = Timer(Duration(milliseconds: watchdogMs), () {
-      if (state.activeAnimation?.id == next.id) {
-        dequeueAnimation(next.id);
+      if (catalog != null) {
+        unawaited(ref.read(giftSoundPoolProvider).preloadGift(catalog));
       }
-    });
+
+      GiftSyncLog.pipelineStage(next.id, 'sound');
+      final tSound = DateTime.now();
+      try {
+        await ref
+            .read(giftSoundPoolProvider)
+            .playForEvent(next, catalog: catalog)
+            .timeout(const Duration(milliseconds: 150));
+      } catch (_) {}
+      GiftSyncLog.pipelineMs(
+        next.id,
+        'sound',
+        DateTime.now().difference(tSound).inMilliseconds,
+      );
+
+      final rest = state.animationQueue.length > 1
+          ? state.animationQueue.sublist(1)
+          : <LiveGiftEvent>[];
+      state = state.copyWith(activeAnimation: next, animationQueue: rest);
+
+      final totalMs = DateTime.now().millisecondsSinceEpoch - receivedMs;
+      GiftSyncLog.pipelineTotal(next.id, totalMs);
+      GiftSyncLog.uiRender(_roomId, 'gift_engine_queue');
+
+      final config = GiftEngineParser.fromEvent(next);
+      final watchdogMs = config.startDelayMs +
+          config.durationMs +
+          config.queueGapMs +
+          VoiceGiftAmbientOverlay.fadeInMs +
+          VoiceGiftAmbientOverlay.fadeOutMs +
+          5000;
+
+      _animationTimer?.cancel();
+      _animationTimer = Timer(Duration(milliseconds: watchdogMs), () {
+        if (state.activeAnimation?.id == next.id) {
+          dequeueAnimation(next.id);
+        }
+      });
+    } finally {
+      _pumping = false;
+      if (state.activeAnimation == null && state.animationQueue.isNotEmpty) {
+        _pumpAnimationQueue();
+      }
+    }
   }
 
   bool _isDisplayable(LiveGiftEvent e) {

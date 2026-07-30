@@ -49,6 +49,32 @@ class GiftRecentItem extends Equatable {
       ];
 }
 
+/// Animasyon bitince uygulanacak jeton / feed güncellemesi.
+class GiftDeferredApply extends Equatable {
+  const GiftDeferredApply({
+    required this.event,
+    required this.recentItem,
+    required this.feedItem,
+    required this.roomTotalJeton,
+    this.remainingBalance,
+  });
+
+  final LiveGiftEvent event;
+  final GiftRecentItem recentItem;
+  final GiftFeedItem feedItem;
+  final int roomTotalJeton;
+  final int? remainingBalance;
+
+  @override
+  List<Object?> get props => [
+        event.id,
+        recentItem,
+        feedItem,
+        roomTotalJeton,
+        remainingBalance,
+      ];
+}
+
 /// Tek oturum hediye state — Gift Engine kuyruk + feed.
 class GiftSessionState extends Equatable {
   const GiftSessionState({

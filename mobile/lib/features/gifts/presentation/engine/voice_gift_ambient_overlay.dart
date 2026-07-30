@@ -25,8 +25,8 @@ class VoiceGiftAmbientOverlay extends ConsumerStatefulWidget {
 
   final String sessionKey;
 
-  static const fadeInMs = 320;
-  static const fadeOutMs = 480;
+  static const fadeInMs = 100;
+  static const fadeOutMs = 150;
 
   @override
   ConsumerState<VoiceGiftAmbientOverlay> createState() =>
