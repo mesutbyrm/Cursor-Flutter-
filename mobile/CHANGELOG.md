@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.104+137 (2026-07-30)
+
+### Sesli oda yönetimi (birleştirme)
+- **Tek moderasyon merkezi:** Ayarlar → Kullanıcı yönetimi → kullanıcı seç → ses ver, koltuğa al, koltuktan indir, kanaldan at, yetki (anında koltuk)
+- Tekrarlayan «Yetki Ver», «Detaylı moderasyon» ve çift kick/ban menüleri kaldırıldı
+- **Arkaplan:** yalnızca sunucu kataloğu + yükleme sheet’i (`fetchBackgrounds`)
+- **Müzik:** şarkı isteği video (CDN arka plan) / ses (YouTube API); DJ hub doğrudan Oda yönetimi’nden
+- Oda komutları paneli sadeleştirildi (duyuru, temizle, kullanıcı yönetimi)
+
 ## 1.0.103+136 (2026-07-30)
 
 ### Duyuru şeridi & giriş

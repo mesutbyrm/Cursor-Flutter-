@@ -85,17 +85,13 @@ class VoiceModerationNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<bool> addModerator(String userId) => _run(
-        () => _live.assignRoleToUser(targetUserId: userId, roleSymbol: '@'),
-      );
+  Future<bool> addModerator(String userId) => grantRoleAndSeat(userId, '@');
 
   Future<bool> removeModerator(String userId) => _run(
         () => _live.assignRoleToUser(targetUserId: userId, roleSymbol: '+'),
       );
 
-  Future<bool> addSop(String userId) => _run(
-        () => _live.assignRoleToUser(targetUserId: userId, roleSymbol: '&'),
-      );
+  Future<bool> addSop(String userId) => grantRoleAndSeat(userId, '&');
 
   Future<bool> removeSop(String userId) => _run(
         () => _live.assignRoleToUser(targetUserId: userId, roleSymbol: '+'),
@@ -398,15 +394,15 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
       if (perms.canGiveVoice || isOwner)
         _ModBox(
           icon: targetUser.isSpeaker
-              ? Icons.mic_off_rounded
+              ? Icons.event_seat_outlined
               : Icons.record_voice_over_rounded,
-          label: targetUser.isSpeaker ? 'Yetki Al' : 'Ses Ver',
+          label: targetUser.isSpeaker ? 'Koltuktan indir' : 'Ses ver',
           color: targetUser.isSpeaker ? Colors.orange : Colors.green,
           onTap: () {
             if (targetUser.isSpeaker) {
               _run(context, notifier, () async {
                 final ok = await notifier.removeFromSeat(targetUser.id);
-                return ok ? 'Konuşma yetkisi alındı' : 'Hata';
+                return ok ? 'Koltuktan indirildi' : 'Hata';
               });
             } else {
               _run(context, notifier, () async {
@@ -466,7 +462,7 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
       if (perms.canAssignSeats || isOwner)
         _ModBox(
           icon: Icons.event_seat_rounded,
-          label: 'Koltuk Ata',
+          label: 'Koltuğa al',
           color: const Color(0xFF3B82F6),
           onTap: () => _pickEmptySeatAndAssign(context, ref, roomKey, targetUser.id),
         ),
@@ -531,11 +527,11 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
       if (perms.canKickUsers || isOwner)
         _ModBox(
           icon: Icons.logout_rounded,
-          label: 'Kick',
+          label: 'Kanaldan at',
           color: const Color(0xFFB8860B),
           onTap: () => _run(context, notifier, () async {
             final msg = await notifier.kickUser(targetUser.id);
-            return msg ?? '${targetUser.username} atıldı';
+            return msg ?? '${targetUser.username} kanaldan atıldı';
           }),
         ),
     ];
@@ -599,6 +595,22 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
           if (errorMsg != null) ...[
             const SizedBox(height: 8),
             Text(errorMsg, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+          ],
+          if (canAddModerators && (perms.canModerate || isOwner)) ...[
+            const SizedBox(height: 10),
+            _RoleQuickBar(
+              perms: perms,
+              isOwner: isOwner,
+              onPick: (sym) => _run(context, notifier, () async {
+                if (sym == '+') {
+                  final ok = await notifier.grantVoice(targetUser.id);
+                  return ok ? 'Ses verildi — koltuğa alındı' : 'Hata';
+                }
+                final ok =
+                    await notifier.grantRoleAndSeat(targetUser.id, sym);
+                return ok ? 'Yetki verildi ($sym)' : 'Hata';
+              }),
+            ),
           ],
           const SizedBox(height: 14),
           if (isLoading)
@@ -709,6 +721,55 @@ class _TargetSupporterBadge extends ConsumerWidget {
     final tier = async.asData?.value?.current;
     if (tier == null || tier.code.isEmpty) return const SizedBox.shrink();
     return SupporterBadgePill(code: tier.code, label: tier.label, compact: true);
+  }
+}
+
+class _RoleQuickBar extends StatelessWidget {
+  const _RoleQuickBar({
+    required this.perms,
+    required this.isOwner,
+    required this.onPick,
+  });
+
+  final VoiceRoomPermissions perms;
+  final bool isOwner;
+  final void Function(String roleSymbol) onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final roles = <(String, String, Color)>[];
+    if (perms.canGiveVoice || isOwner || perms.isSiteAdmin) {
+      roles.add(('+', 'Ses', const Color(0xFF3B82F6)));
+    }
+    if (perms.canGiveOp || perms.canModerate || isOwner) {
+      roles.add(('@', 'OP', const Color(0xFF25F4EE)));
+    }
+    if (perms.canGiveSop || perms.canBanUsers || isOwner) {
+      roles.add(('&', 'SOP', const Color(0xFFFF6B35)));
+    }
+    if (perms.canGiveFounder || perms.isSiteAdmin) {
+      roles.add(('~', 'Founder', const Color(0xFFFFD700)));
+    }
+    if (roles.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final r in roles)
+          ActionChip(
+            label: Text('${r.$1} ${r.$2}'),
+            backgroundColor: r.$3.withValues(alpha: 0.18),
+            side: BorderSide(color: r.$3.withValues(alpha: 0.55)),
+            labelStyle: TextStyle(
+              color: r.$3,
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
+            ),
+            onPressed: () => onPick(r.$1),
+          ),
+      ],
+    );
   }
 }
 

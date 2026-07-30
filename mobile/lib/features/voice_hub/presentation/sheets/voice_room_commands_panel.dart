@@ -12,6 +12,7 @@ import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_duyuru_access.dart';
 import '../utils/voice_room_permissions.dart';
 import 'voice_moderation_user_picker_sheet.dart';
+import 'voice_room_management_panel.dart';
 import 'voice_youtube_song_sheet.dart';
 
 /// Sağ «‹» — Oda Komutları paneli (canlifal.com).
@@ -85,7 +86,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
   static const _musicGeneral = [
     _PromoCard(
       title: 'Şarkı İsteği',
-      subtitle: "YouTube'dan şarkı iste (10 💎)",
+      subtitle: 'Video (CDN arka plan) veya ses (YouTube API) · 10 💎',
       icon: Icons.music_note_rounded,
       color: Color(0xFF7B2FF7),
       kind: _PromoKind.songRequest,
@@ -122,41 +123,12 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
       kind: _PromoKind.temizle,
     ),
     _PromoCard(
-      title: 'Kick (At)',
-      subtitle: '3 ihtar = otomatik ban',
-      icon: Icons.back_hand_rounded,
-      color: Color(0xFFEAB308),
-      kind: _PromoKind.kick,
-    ),
-    _PromoCard(
-      title: 'Banla',
-      subtitle: 'Kullanıcıyı odadan banla',
-      icon: Icons.block_rounded,
-      color: AppThemeColors.liveRed,
-      kind: _PromoKind.ban,
-    ),
-    _PromoCard(
-      title: 'Ban Kaldır',
-      subtitle: 'Banlanan kullanıcıları gör',
-      icon: Icons.lock_open_rounded,
-      color: Color(0xFF166534),
-      kind: _PromoKind.unban,
-    ),
-    _PromoCard(
-      title: 'Müzik Aç',
-      subtitle: "YouTube'dan müzik çal/yönet",
-      icon: Icons.library_music_rounded,
+      title: 'Kullanıcı yönetimi',
+      subtitle: 'Ses ver, koltuk, yetki, kanaldan at',
+      icon: Icons.people_alt_rounded,
       color: Color(0xFF7B2FF7),
-      kind: _PromoKind.musicHub,
+      kind: _PromoKind.userMgmt,
     ),
-  ];
-
-  static const _roleTags = [
-    ('~', 'Founder', Color(0xFFFFD700)),
-    ('%', 'SuperAdmin', Color(0xFFFF4FD8)),
-    ('&', 'SOP', Color(0xFFFF6B35)),
-    ('@', 'OP', Color(0xFF25F4EE)),
-    ('+', 'Voice', Color(0xFF3B82F6)),
   ];
 
   @override
@@ -240,23 +212,17 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
       case _PromoKind.temizle:
         await _runCommand('!temizle');
         return;
-      case _PromoKind.kick:
-        await _onCommandTap(_Cmd('!kick', card.subtitle, card.icon, card.color));
-        return;
-      case _PromoKind.ban:
-        await _onCommandTap(_Cmd('!ban', card.subtitle, card.icon, card.color));
-        return;
-      case _PromoKind.unban:
-        await _onCommandTap(_Cmd('!unban', card.subtitle, card.icon, card.color));
-        return;
-      case _PromoKind.musicHub:
+      case _PromoKind.userMgmt:
         Navigator.pop(context);
-        await showVoiceMusicControlHub(
+        final live = ref.read(voiceRoomLiveProvider(widget.room.liveKey));
+        await showVoiceRoomManagementPanel(
           context,
           ref,
           room: widget.room,
+          live: live,
           perms: widget.perms,
           isOwner: widget.isOwner,
+          initial: VoiceMgmtInitial.users,
         );
         return;
     }
@@ -526,25 +492,6 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
                       color: Colors.white.withValues(alpha: 0.55),
                     ),
                   ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: _roleTags
-                      .map(
-                        (t) => Chip(
-                          label: Text('${t.$1} ${t.$2}'),
-                          backgroundColor: t.$3.withValues(alpha: 0.2),
-                          side: BorderSide(color: t.$3.withValues(alpha: 0.5)),
-                          labelStyle: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: t.$3,
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
                 const SizedBox(height: 20),
                 _JetonCard(
                   balance: coinLabel,
@@ -649,10 +596,7 @@ enum _PromoKind {
   info,
   duyuru,
   temizle,
-  kick,
-  ban,
-  unban,
-  musicHub,
+  userMgmt,
 }
 
 class _PromoCard {

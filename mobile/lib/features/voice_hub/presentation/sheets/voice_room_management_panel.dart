@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
@@ -22,16 +21,16 @@ import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
-import 'voice_room_authority_sheet.dart';
 import 'voice_room_commands_panel.dart';
 import 'voice_room_hub_settings.dart';
 import 'voice_room_moderation_sheet.dart';
 import 'voice_room_muted_users_sheet.dart';
 import 'voice_room_sheets.dart';
-import 'voice_room_menu_sheet.dart';
-import 'voice_moderation_user_picker_sheet.dart';
+import 'voice_youtube_song_sheet.dart';
 
-enum _MgmtView { home, userMgmt, chatMgmt, roomMgmt, userSettings, users, userActions, penalties }
+enum VoiceMgmtInitial { home, userMgmt, users, chatMgmt, roomMgmt, userSettings }
+
+enum _MgmtView { home, userMgmt, chatMgmt, roomMgmt, userSettings, users, penalties }
 
 /// Oda ayarları — Kullanıcı / Sohbet / Oda yönetimi / Kullanıcı ayarları.
 Future<void> showVoiceRoomManagementPanel(
@@ -43,6 +42,7 @@ Future<void> showVoiceRoomManagementPanel(
   required bool isOwner,
   void Function(ChatRoomPresence user)? onUserTap,
   VoidCallback? onPkInvite,
+  VoiceMgmtInitial initial = VoiceMgmtInitial.home,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -57,6 +57,7 @@ Future<void> showVoiceRoomManagementPanel(
         isOwner: isOwner,
         onUserTap: onUserTap,
         onPkInvite: onPkInvite,
+        initial: initial,
       ),
     ),
   );
@@ -70,6 +71,7 @@ class _VoiceRoomManagementPanel extends ConsumerStatefulWidget {
     required this.isOwner,
     this.onUserTap,
     this.onPkInvite,
+    this.initial = VoiceMgmtInitial.home,
   });
 
   final VoiceRoomEntity room;
@@ -78,6 +80,7 @@ class _VoiceRoomManagementPanel extends ConsumerStatefulWidget {
   final bool isOwner;
   final void Function(ChatRoomPresence user)? onUserTap;
   final VoidCallback? onPkInvite;
+  final VoiceMgmtInitial initial;
 
   @override
   ConsumerState<_VoiceRoomManagementPanel> createState() =>
@@ -86,10 +89,18 @@ class _VoiceRoomManagementPanel extends ConsumerStatefulWidget {
 
 class _VoiceRoomManagementPanelState
     extends ConsumerState<_VoiceRoomManagementPanel> {
-  _MgmtView _view = _MgmtView.home;
-  ChatRoomPresence? _selectedUser;
+  late _MgmtView _view = _mapInitial(widget.initial);
   List<VoiceRoomBanEntry> _bans = const [];
   var _loadingBans = false;
+
+  static _MgmtView _mapInitial(VoiceMgmtInitial initial) => switch (initial) {
+        VoiceMgmtInitial.home => _MgmtView.home,
+        VoiceMgmtInitial.userMgmt => _MgmtView.userMgmt,
+        VoiceMgmtInitial.users => _MgmtView.users,
+        VoiceMgmtInitial.chatMgmt => _MgmtView.chatMgmt,
+        VoiceMgmtInitial.roomMgmt => _MgmtView.roomMgmt,
+        VoiceMgmtInitial.userSettings => _MgmtView.userSettings,
+      };
 
   VoiceRoomEntity get room => widget.room;
   VoiceRoomPermissions get perms => widget.perms;
@@ -120,13 +131,6 @@ class _VoiceRoomManagementPanelState
   void _go(_MgmtView view) => setState(() => _view = view);
 
   void _back() {
-    if (_view == _MgmtView.userActions) {
-      setState(() {
-        _view = _MgmtView.users;
-        _selectedUser = null;
-      });
-      return;
-    }
     if (_view == _MgmtView.users || _view == _MgmtView.penalties) {
       setState(() => _view = _MgmtView.userMgmt);
       return;
@@ -170,7 +174,6 @@ class _VoiceRoomManagementPanelState
                 _MgmtView.roomMgmt => _roomView(scroll),
                 _MgmtView.userSettings => _userSettingsView(scroll),
                 _MgmtView.users => _usersView(scroll),
-                _MgmtView.userActions => _userActionsView(),
                 _MgmtView.penalties => _penaltiesView(scroll),
               },
             ),
@@ -188,7 +191,6 @@ class _VoiceRoomManagementPanelState
       _MgmtView.roomMgmt => 'Oda yönetimi',
       _MgmtView.userSettings => 'Kullanıcı ayarları',
       _MgmtView.users => 'Kullanıcılar',
-      _MgmtView.userActions => _selectedUser?.displayName ?? 'Kullanıcı',
       _MgmtView.penalties => 'Cezalar',
     };
     return Row(
@@ -273,23 +275,6 @@ class _VoiceRoomManagementPanelState
               },
             ),
           ),
-        if (perms.canManageChat || perms.canModerate || isOwner)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 12, 8, 0),
-            child: OutlinedButton.icon(
-              onPressed: () => _closeAndVoid(() {
-                showVoiceRoomCommandsPanel(
-                  context,
-                  ref,
-                  room: room,
-                  perms: perms,
-                  isOwner: isOwner,
-                );
-              }),
-              icon: const Icon(Icons.terminal_rounded),
-              label: const Text('Oda komutları (!duyuru, !kick…)'),
-            ),
-          ),
       ],
     );
   }
@@ -301,29 +286,9 @@ class _VoiceRoomManagementPanelState
         _hubTile(
           Icons.people_outline_rounded,
           'Odadaki kullanıcılar',
-          'Ses ver, yetki, sustur',
+          'Ses ver, koltuk, yetki, kanaldan at',
           () => _go(_MgmtView.users),
         ),
-        if (perms.canGiveVoice ||
-            perms.canGiveOp ||
-            perms.canGiveSop ||
-            perms.canModerate ||
-            isOwner)
-          _hubTile(
-            Icons.admin_panel_settings_outlined,
-            'Yetki ver',
-            'Rol ata — ses verilince koltuğa alınır',
-            () => _closeAndVoid(() {
-              showVoiceRoomAuthoritySheet(
-                context,
-                ref,
-                room: room,
-                live: _live,
-                perms: perms,
-                isOwner: isOwner,
-              );
-            }),
-          ),
         _hubTile(
           Icons.gavel_outlined,
           'Cezalar',
@@ -616,189 +581,41 @@ class _VoiceRoomManagementPanelState
                 .join(' · '),
           ),
           trailing: const Icon(Icons.chevron_right_rounded),
-          onTap: () {
-            setState(() {
-              _selectedUser = u;
-              _view = _MgmtView.userActions;
-            });
-          },
+          onTap: () => _openUserModeration(u),
         );
       },
     );
   }
 
-  Widget _userActionsView() {
-    final u = _selectedUser;
-    if (u == null) return const SizedBox.shrink();
+  void _openUserModeration(ChatRoomPresence u) {
     final canMod = perms.canModerate ||
         isOwner ||
         perms.canMuteUsers ||
         perms.canKickUsers ||
-        perms.canBanUsers;
+        perms.canBanUsers ||
+        perms.canGiveVoice ||
+        perms.canGiveOp ||
+        perms.canGiveSop ||
+        perms.canAssignSeats;
     if (!canMod) {
-      return Center(
-        child: TextButton(
-          onPressed: () => widget.onUserTap?.call(u),
-          child: const Text('Profili aç'),
-        ),
-      );
+      widget.onUserTap?.call(u);
+      return;
     }
     final target = VoiceRoomModerationTarget.fromPresence(u);
     final isDj = room.djUserIds.contains(u.id) ||
         _live.dj.djUsers.any((d) => d.id == u.id);
-
-    return GridView.count(
-      crossAxisCount: 2,
-      padding: const EdgeInsets.all(8),
-      mainAxisSpacing: 8,
-      crossAxisSpacing: 8,
-      childAspectRatio: 1.4,
-      children: [
-        _actionTile('Sustur', Icons.mic_off_rounded, () => _muteUser(u.id)),
-        _actionTile('Kanaldan at', Icons.logout_rounded, () => _kickUser(u.id)),
-        _actionTile('Engelle', Icons.block_rounded, () => _banUser(u.id)),
-        _actionTile('Yetki ver', Icons.admin_panel_settings_outlined,
-            () => _showRolePicker(u)),
-        if (perms.canGiveVoice || isOwner)
-          _actionTile('Ses ver (koltuk)', Icons.mic_rounded, () async {
-            final mod = ref.read(voiceModerationProvider(room.liveKey).notifier);
-            final ok = await mod.grantVoice(u.id);
-            if (!mounted) return;
-            Navigator.pop(context);
-            await _snack(ok ? 'Ses verildi — koltuğa alındı' : 'İşlem başarısız');
-          }),
-        if (target.isModerator || target.isSop || target.isSpeaker)
-          _actionTile('Yetki kaldır', Icons.remove_moderator_outlined,
-              () => _revokeRole(u)),
-        _actionTile('Ban kaldır', Icons.lock_open_rounded, () => _unbanUser(u.id)),
-        _actionTile('Detaylı moderasyon', Icons.more_horiz_rounded, () {
-          Navigator.pop(context);
-          showVoiceRoomModerationSheet(
-            context: context,
-            ref: ref,
-            room: room,
-            targetUser: target,
-            isOwnerOrMod: true,
-            perms: perms,
-            isOwner: isOwner,
-            isTargetDj: isDj,
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _actionTile(String label, IconData icon, VoidCallback onTap) {
-    return Material(
-      color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: VoiceRoomTokens.neonBlue),
-            const SizedBox(height: 6),
-            Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showRolePicker(ChatRoomPresence u) async {
-    final options = <(String, String)>[];
-    if (perms.canGiveVoice || isOwner || perms.isSiteAdmin) {
-      options.add(('+', '+V Ses'));
-    }
-    if (perms.canGiveOp || perms.canModerate || isOwner) {
-      options.add(('@', 'Moderatör (@)'));
-    }
-    if (perms.canGiveSop || perms.canBanUsers || isOwner) {
-      options.add(('&', 'Yetkili (&)'));
-    }
-    if (perms.canGiveFounder || perms.isSiteAdmin) {
-      options.add(('~', 'Kurucu (~)'));
-    }
-    if (options.isEmpty) {
-      await _snack('Yetki verme izniniz yok');
-      return;
-    }
-
-    final sym = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: const Color(0xFF12082A),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                'Yetki seç',
-                style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
-              ),
-            ),
-            for (final e in options)
-              ListTile(
-                title: Text(e.$2, style: const TextStyle(color: Colors.white)),
-                onTap: () => Navigator.pop(ctx, e.$1),
-              ),
-          ],
-        ),
-      ),
-    );
-    if (sym == null || !mounted) return;
-
-    final mod = ref.read(voiceModerationProvider(room.liveKey).notifier);
-    if (sym == '+') {
-      final ok = await mod.grantVoice(u.id);
-      if (!mounted) return;
-      Navigator.pop(context);
-      await _snack(ok ? 'Ses verildi — koltuğa alındı' : 'İşlem başarısız');
-      return;
-    }
-
-    final err = await _ctrl.assignRoleToUser(targetUserId: u.id, roleSymbol: sym);
-    if (!mounted) return;
-    Navigator.pop(context);
-    await _snack(err ?? 'Yetki verildi ($sym)');
-  }
-
-  Future<void> _revokeRole(ChatRoomPresence u) async {
-    final err = await _ctrl.assignRoleToUser(targetUserId: u.id, roleSymbol: '+');
-    await _snack(err ?? 'Yetki kaldırıldı');
-  }
-
-  Future<void> _muteUser(String userId) async {
-    try {
-      await ref.read(chatRoomRemoteProvider).muteUser(
-            roomKey: room.liveKey,
-            userId: userId,
-            minutes: 30,
-            reason: 'Oda moderasyonu',
-          );
-      await _ctrl.refresh();
-      await _snack('Kullanıcı susturuldu');
-    } catch (e) {
-      await _snack(ApiException.userMessage(e));
-    }
-  }
-
-  Future<void> _kickUser(String userId) async {
-    final result = await _ctrl.kickUserModeration(userId: userId);
-    await _snack(result?.feedbackMessage ?? 'Kullanıcı atıldı');
-  }
-
-  Future<void> _banUser(String userId) async {
-    final err = await _ctrl.banUserModeration(userId: userId);
-    await _snack(err ?? 'Kullanıcı engellendi (ban)');
-  }
-
-  Future<void> _unbanUser(String userId) async {
-    final err = await _ctrl.unbanUserModeration(userId: userId);
-    await _snack(err ?? 'Ban kaldırıldı');
+    _closeAndVoid(() {
+      showVoiceRoomModerationSheet(
+        context: context,
+        ref: ref,
+        room: room,
+        targetUser: target,
+        isOwnerOrMod: true,
+        perms: perms,
+        isOwner: isOwner,
+        isTargetDj: isDj,
+      );
+    });
   }
 
   Widget _roomView(ScrollController scroll) {
@@ -831,9 +648,9 @@ class _VoiceRoomManagementPanelState
           ListTile(
             leading: const Icon(Icons.library_music_rounded),
             title: const Text('Müzik kontrolü'),
-            subtitle: const Text('YouTube şarkı isteği ve DJ'),
+            subtitle: const Text('Şarkı isteği (video/ses) ve DJ'),
             onTap: () => _closeAndVoid(() {
-              showVoiceRoomCommandsPanel(
+              showVoiceMusicControlHub(
                 context,
                 ref,
                 room: room,
@@ -842,22 +659,25 @@ class _VoiceRoomManagementPanelState
               );
             }),
           ),
-        if (canBg) ...[
+        ListTile(
+          leading: const Icon(Icons.music_note_rounded),
+          title: const Text('Şarkı isteği'),
+          subtitle: const Text('Video (CDN) veya ses (YouTube API)'),
+          onTap: () => _closeAndVoid(() {
+            showVoiceYoutubeSongSheet(context, ref, room: room);
+          }),
+        ),
+        if (canBg)
           ListTile(
             leading: const Icon(Icons.photo_library_rounded),
-            title: const Text('Arkaplan resmini değiştir'),
-            subtitle: const Text('Galeriden veya kameradan yükle'),
+            title: const Text('Arkaplan'),
+            subtitle: const Text('Sunucudaki hazır görseller veya yükle'),
             onTap: () {
               Navigator.pop(context);
               showVoiceRoomBackgroundSheet(context, ref, room: room);
             },
-          ),
-          ListTile(
-            leading: const Icon(Icons.collections_rounded),
-            title: const Text('Hazır arkaplanlar'),
-            onTap: _pickCatalogBackground,
-          ),
-        ] else
+          )
+        else
           const ListTile(
             title: Text('Arkaplan değiştirme yetkiniz yok'),
           ),
@@ -1022,49 +842,6 @@ class _VoiceRoomManagementPanelState
     return '$v';
   }
 
-  Future<void> _pickCatalogBackground() async {
-    try {
-      final urls = await _ctrl.fetchBackgrounds();
-      if (!mounted || urls.isEmpty) {
-        await _snack('Arkaplan listesi boş');
-        return;
-      }
-      final picked = await showModalBottomSheet<String>(
-        context: context,
-        backgroundColor: const Color(0xFF12082A),
-        isScrollControlled: true,
-        builder: (ctx) => SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.45,
-          child: GridView.builder(
-            padding: const EdgeInsets.all(12),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemCount: urls.length,
-            itemBuilder: (_, i) => GestureDetector(
-              onTap: () => Navigator.pop(ctx, urls[i]),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: CanlifalNetworkImage(
-                  url: urls[i],
-                  thumbnailWidth: 240,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-      if (picked == null) return;
-      final err = await _ctrl.setRoomBackground(picked);
-      await _snack(err ?? 'Arkaplan güncellendi');
-    } catch (e) {
-      await _snack(ApiException.userMessage(e));
-    }
-  }
-
   Future<void> _setRoomPassword() async {
     final controller = TextEditingController();
     try {
@@ -1178,18 +955,10 @@ class _VoiceRoomManagementPanelState
             padding: const EdgeInsets.only(top: 8),
             child: OutlinedButton.icon(
               onPressed: () {
-                Navigator.pop(context);
-                showVoiceModerationUserPicker(
-                  context: context,
-                  ref: ref,
-                  room: room,
-                  perms: perms,
-                  action: VoiceModerationPickerAction.kick,
-                  presence: _live.presence,
-                );
+                _go(_MgmtView.users);
               },
-              icon: const Icon(Icons.person_remove_rounded),
-              label: const Text('Kullanıcı at (kick)'),
+              icon: const Icon(Icons.people_outline_rounded),
+              label: const Text('Kullanıcı seç ve kanaldan at'),
             ),
           ),
       ],
