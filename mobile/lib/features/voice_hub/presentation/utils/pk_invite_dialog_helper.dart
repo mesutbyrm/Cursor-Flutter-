@@ -16,7 +16,7 @@ final pkSeenInviteIdsProvider = StateProvider<Set<String>>((ref) => {});
 
 /// Gelen PK daveti için oda eşlemesi.
 VoiceRoomEntity? resolvePkInviteTargetRoom(
-  Ref ref,
+  WidgetRef ref,
   PkBattleRemote battle,
   String userId,
 ) {
@@ -69,7 +69,7 @@ VoiceRoomEntity? resolvePkInviteTargetRoom(
   return null;
 }
 
-String pkChallengerRoomLabel(Ref ref, PkBattleRemote battle) {
+String pkChallengerRoomLabel(WidgetRef ref, PkBattleRemote battle) {
   final rooms = ref.read(voiceRoomsProvider).valueOrNull;
   final roomId = battle.voiceRoomId?.trim() ?? '';
   if (rooms != null && roomId.isNotEmpty) {
