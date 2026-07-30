@@ -5,7 +5,7 @@ import 'package:just_audio/just_audio.dart';
 
 import '../domain/gift_entity.dart';
 import '../domain/gift_rarity.dart';
-import '../../../live/domain/entities/live_gift_event.dart';
+import '../../live/domain/entities/live_gift_event.dart';
 
 /// Kısa hediye SFX havuzu — eşzamanlı çalma, önbellekli kaynak.
 class GiftSoundPool {
@@ -53,24 +53,15 @@ class GiftSoundPool {
     _haptic(rarity);
   }
 
-  Future<void> playFor(GiftEntity gift) => playForEvent(
-        LiveGiftEvent(
-          id: 'local-sfx',
-          senderName: '',
-          receiverName: '',
-          giftId: gift.id,
-          giftName: gift.name,
-          quantity: 1,
-          coinCost: gift.price,
-          giftPrice: gift.price,
-          totalCoin: gift.price,
-          totalDiamond: 0,
-          combo: 1,
-          timestamp: DateTime.now(),
-          soundKey: gift.soundKey,
-        ),
-        catalog: gift,
-      );
+  Future<void> playFor(GiftEntity gift) async {
+    final played = await _playUrl(gift.soundUrl) ||
+        await _playAsset(gift.soundKey) ||
+        await _playAsset(_rarityAsset(gift.rarity));
+    if (!played) {
+      await _playSystem(gift.rarity);
+    }
+    _haptic(gift.rarity);
+  }
 
   Future<bool> _playUrl(String? url) async {
     if (url == null || url.isEmpty || !url.startsWith('http')) return false;
