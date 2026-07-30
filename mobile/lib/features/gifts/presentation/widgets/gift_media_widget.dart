@@ -73,7 +73,8 @@ class _GiftMediaWidgetState extends State<GiftMediaWidget> {
       return;
     }
     try {
-      final c = await VideoCacheService.instance.createController(url);
+      final warm = VideoCacheService.instance.takeWarmController(url);
+      final c = warm ?? await VideoCacheService.instance.createController(url);
       if (!mounted) {
         await c.dispose();
         return;
@@ -98,7 +99,12 @@ class _GiftMediaWidgetState extends State<GiftMediaWidget> {
     _videoReady = false;
     if (c != null) {
       widget.onVideoControllerChanged?.call(null);
-      c.dispose();
+      final url = widget.spec.mediaUrl?.trim();
+      if (url != null && url.isNotEmpty) {
+        VideoCacheService.instance.releaseWarmController(url, c);
+      } else {
+        c.dispose();
+      }
     }
   }
 

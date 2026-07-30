@@ -1,5 +1,8 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/util/json_util.dart';
+import 'short_video_liker.dart';
+
 /// Kısa video içerik üreticisi analitikleri.
 class ShortVideoAnalytics extends Equatable {
   const ShortVideoAnalytics({
@@ -13,6 +16,7 @@ class ShortVideoAnalytics extends Equatable {
     this.completionRate = 0,
     this.duetsCount = 0,
     this.profileVisits = 0,
+    this.recentLikers = const [],
   });
 
   final String videoId;
@@ -25,6 +29,7 @@ class ShortVideoAnalytics extends Equatable {
   final double completionRate;
   final int duetsCount;
   final int profileVisits;
+  final List<ShortVideoLiker> recentLikers;
 
   factory ShortVideoAnalytics.fromJson(
     String videoId,
@@ -35,6 +40,22 @@ class ShortVideoAnalytics extends Equatable {
 
     final stats = json['stats'] ?? json['analytics'] ?? json;
     final m = stats is Map ? Map<String, dynamic>.from(stats) : json;
+
+    final likersRaw = pick(m, [
+          'recentLikers',
+          'likers',
+          'likedBy',
+          'likes',
+        ]) ??
+        pick(json, ['recentLikers', 'likers', 'likedBy']);
+    final likers = <ShortVideoLiker>[];
+    if (likersRaw is List) {
+      for (final item in likersRaw) {
+        if (item is Map) {
+          likers.add(ShortVideoLiker.fromJson(Map<String, dynamic>.from(item)));
+        }
+      }
+    }
 
     return ShortVideoAnalytics(
       videoId: videoId,
@@ -47,6 +68,7 @@ class ShortVideoAnalytics extends Equatable {
       completionRate: d(m['completionRate'] ?? m['completion']),
       duetsCount: i(m['duetsCount'] ?? m['duets']),
       profileVisits: i(m['profileVisits'] ?? m['profileClicks']),
+      recentLikers: likers,
     );
   }
 
@@ -69,5 +91,11 @@ class ShortVideoAnalytics extends Equatable {
   }
 
   @override
-  List<Object?> get props => [videoId, viewsCount, likesCount, sharesCount];
+  List<Object?> get props => [
+        videoId,
+        viewsCount,
+        likesCount,
+        sharesCount,
+        recentLikers,
+      ];
 }

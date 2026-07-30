@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../fortune/presentation/data/fortune_catalog.dart';
-import '../../../../fortune/presentation/data/fortune_type_images.dart';
+import '../../data/section_visual_catalog.dart';
 import '../../../../fortune/presentation/widgets/fortune_type_cover_image.dart';
 import '../../../domain/entities/home_fortune_card_entity.dart';
 import '../../providers/home_providers.dart';
@@ -78,7 +78,7 @@ class FortuneSection extends ConsumerWidget {
         accent: catalog?.accent ?? c.accent,
         imageUrl: apiImage != null && apiImage.isNotEmpty
             ? CanlifalImageUrls.resolve(apiImage)
-            : FortuneTypeImages.urlFor(slug, width: 480),
+            : SectionVisualCatalog.fortuneCard(slug, width: 400),
       );
     }).toList();
   }
@@ -94,7 +94,7 @@ class FortuneSection extends ConsumerWidget {
           emoji: type.emoji,
           title: type.title,
           accent: type.accent,
-          imageUrl: FortuneTypeImages.urlFor(type.slug, width: 480),
+          imageUrl: SectionVisualCatalog.fortuneCard(type.slug, width: 400),
         ));
       }
     }

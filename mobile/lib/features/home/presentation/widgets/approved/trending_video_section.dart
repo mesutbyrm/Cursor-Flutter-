@@ -13,6 +13,7 @@ import 'home_section_title.dart';
 import '../../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../../../shorts/presentation/utils/short_video_player_util.dart';
 import '../../../../../core/network/dio_provider.dart';
+import '../../../../../core/images/canlifal_image_urls.dart';
 import '../../data/section_visual_catalog.dart';
 
 /// Ana sayfa — yüklenen kısa videolar (R2/CDN). YouTube trend içeriği gösterilmez.
@@ -124,9 +125,15 @@ class _TrendThumb extends StatelessWidget {
   final HomeTrendVideoEntity video;
   final VoidCallback onTap;
 
-  String? get _thumbUrl {
+  String get _thumbUrl {
     final raw = video.thumbnailUrl?.trim();
-    if (raw != null && raw.isNotEmpty) return raw;
+    if (raw != null && raw.isNotEmpty) {
+      return CanlifalImageUrls.thumbnail(raw, width: 480);
+    }
+    final fromVideo = CanlifalImageUrls.thumbFromVideoUrl(video.videoUrl);
+    if (fromVideo != null && fromVideo.isNotEmpty) {
+      return CanlifalImageUrls.thumbnail(fromVideo, width: 480);
+    }
     return SectionVisualCatalog.trendFallback(index);
   }
 
@@ -143,8 +150,9 @@ class _TrendThumb extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               CanlifalNetworkImage(
-                url: _thumbUrl!,
+                url: _thumbUrl,
                 fit: BoxFit.cover,
+                thumbnailWidth: 480,
               ),
               DecoratedBox(
                 decoration: BoxDecoration(
@@ -160,9 +168,9 @@ class _TrendThumb extends StatelessWidget {
               ),
               Positioned(
                 left: 8,
+                right: 8,
                 bottom: 8,
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(
                       Icons.play_arrow_rounded,
@@ -172,6 +180,21 @@ class _TrendThumb extends StatelessWidget {
                     const SizedBox(width: 2),
                     Text(
                       _formatViews(video.viewCount),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    const Icon(
+                      Icons.favorite_rounded,
+                      size: 12,
+                      color: Color(0xFFFF4FD8),
+                    ),
+                    const SizedBox(width: 2),
+                    Text(
+                      _formatViews(video.likesCount),
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,

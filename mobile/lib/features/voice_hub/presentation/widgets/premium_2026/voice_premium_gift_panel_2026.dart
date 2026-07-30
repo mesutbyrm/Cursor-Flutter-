@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
@@ -125,28 +126,15 @@ class _VoicePremiumGiftPanel2026State
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: Container(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
           height: MediaQuery.sizeOf(context).height * 0.72,
           decoration: BoxDecoration(
-            color: const Color(0xFF0C0C18).withValues(alpha: 0.98),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppThemeColors.accentPink.withValues(alpha: 0.35),
-                const Color(0xFF0C0C18).withValues(alpha: 0.97),
-              ],
-            ),
+            color: Colors.black.withValues(alpha: 0.52),
             border: Border(
-              top: BorderSide(color: AppThemeColors.accentPink.withValues(alpha: 0.55)),
+              top: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: AppThemeColors.accentPurple.withValues(alpha: 0.3),
-                blurRadius: 36,
-                offset: const Offset(0, -10),
-              ),
-            ],
           ),
           child: Column(
             children: [
@@ -271,6 +259,7 @@ class _VoicePremiumGiftPanel2026State
             ],
           ),
         ),
+      ),
     ).animate().slideY(begin: 1, end: 0, duration: 360.ms, curve: Curves.easeOutCubic);
   }
 
