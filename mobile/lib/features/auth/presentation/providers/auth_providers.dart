@@ -121,6 +121,27 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     }
   }
 
+  /// Önbellekten hızlı açılış sonrası oturumu arka planda doğrula.
+  Future<void> _validateSessionInBackground(
+    String token,
+    SessionUserCache sessionCache,
+  ) async {
+    try {
+      final user = await LoadingTimeout.run(
+        _sessionUser(),
+        timeout: _bootTimeout,
+        message: 'Oturum kontrolü zaman aşımına uğradı',
+      );
+      if (user != null) {
+        await sessionCache.write(user);
+        if (state.valueOrNull?.id == user.id) {
+          state = AsyncValue.data(user);
+        }
+        unawaited(_enrichUserAfterBoot(user));
+      }
+    } catch (_) {}
+  }
+
   void _cancelBootWatchdog() {
     _bootWatchdog?.cancel();
     _bootWatchdog = null;
@@ -142,16 +163,19 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
     final tokenStorage = ref.read(tokenStorageProvider);
     final sessionCache = ref.read(sessionUserCacheProvider);
-    final token = await tokenStorage.readAccess();
+    final tokenFuture = tokenStorage.readAccess();
+    final cacheFuture = sessionCache.read();
+    final token = await tokenFuture;
     final hasToken = token != null &&
         token.isNotEmpty &&
         token != TokenStorage.sessionCookieMarker;
 
     if (hasToken) {
-      final cached = await sessionCache.read();
+      final cached = await cacheFuture;
       if (cached != null) {
         AppStartupLog.authFinish(hasUser: true);
         unawaited(_enrichUserAfterBoot(cached));
+        unawaited(_validateSessionInBackground(token, sessionCache));
         return cached;
       }
     }

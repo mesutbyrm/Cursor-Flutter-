@@ -131,6 +131,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     _messageCtrl.dispose();
     _giftSub?.cancel();
     _giftSub = null;
+    ref.read(voiceRoomGiftRealtimeProvider).stop();
+    ref.read(pkBattleRemoteProvider.notifier).clear();
     final liveKey = _pinnedLiveRoomKey;
     if (liveKey != null && liveKey.isNotEmpty) {
       unawaited(

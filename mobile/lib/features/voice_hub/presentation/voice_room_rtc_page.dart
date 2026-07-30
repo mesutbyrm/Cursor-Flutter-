@@ -121,6 +121,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   final _messageFocus = FocusNode();
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
+  var _giftRealtimeStarted = false;
   /// Riverpod oturum anahtarı — metadata değişince provider dispose olmasın.
   String? _pinnedLiveRoomKey;
 
@@ -155,7 +156,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       if (roomKey.isEmpty) {
         unawaited(ref.read(voiceRoomsProvider.future));
       }
-      _startGiftRealtime();
+      _ensureGiftRealtime();
       final user = ref.read(authControllerProvider).valueOrNull;
       if (user != null) _maybeShowEntrance(user);
       unawaited(_joinAudioBackground());
@@ -221,6 +222,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   void dispose() {
     _giftSub?.cancel();
     _giftSub = null;
+    _giftRealtimeStarted = false;
     _sseParticipantsSub?.cancel();
     _sseParticipantsSub = null;
     _participants.clear();
@@ -235,6 +237,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       );
     }
     ref.read(voiceRoomGiftRealtimeProvider).stop();
+    ref.read(pkBattleRemoteProvider.notifier).clear();
     final audio = _audio;
     _audio = null;
     if (audio != null) {
@@ -407,15 +410,19 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
   }
 
-  void _startGiftRealtime() {
+  void _ensureGiftRealtime() {
+    if (_giftRealtimeStarted) return;
     final service = ref.read(voiceRoomGiftRealtimeProvider);
     final room = _effectiveRoom();
     final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
     if (key.isEmpty) return;
+    _giftRealtimeStarted = true;
     service.start(key);
     _giftSub?.cancel();
     _giftSub = service.events.listen(_onGiftEvent);
   }
+
+  void _startGiftRealtime() => _ensureGiftRealtime();
 
   void _onGiftEvent(LiveGiftEvent raw) {
     if (!mounted) return;

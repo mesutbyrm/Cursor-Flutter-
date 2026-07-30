@@ -1,17 +1,15 @@
 import 'dart:async';
 
-import 'package:cookie_jar/cookie_jar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:path_provider/path_provider.dart';
 
 import 'app/app.dart';
 import 'core/bootstrap/app_deferred_bootstrap.dart';
 import 'core/bootstrap/app_startup_log.dart';
 import 'core/bootstrap/storage_deferred_init.dart';
-import 'core/network/cookie_jar_provider.dart';
+import 'core/network/lazy_cookie_jar.dart';
 import 'core/performance/app_perf_metrics.dart';
 import 'features/voice_hub/data/services/voice_room_debug_log.dart';
 
@@ -76,26 +74,17 @@ Future<void> main() async {
   };
 
   GoogleFonts.config.allowRuntimeFetching = false;
-
-  AppStartupLog.log('cookie jar init begin');
-  final supportDir = await getApplicationSupportDirectory();
-  final jar = PersistCookieJar(
-    storage: FileStorage('${supportDir.path}/canlifal_cookies'),
-    persistSession: true,
-  );
-  await jar.forceInit();
-  AppStartupLog.log('cookie jar init done');
   AppPerfMetrics.end('cold_start');
 
   runZonedGuarded(
     () {
       AppStartupLog.log('runApp');
       runApp(
-        ProviderScope(
-          overrides: [cookieJarProvider.overrideWithValue(jar)],
-          child: const CanlifalApp(),
+        const ProviderScope(
+          child: CanlifalApp(),
         ),
       );
+      LazyCookieJar.instance.prewarm();
       scheduleDeferredAppBootstrap();
       unawaited(runDeferredStorageInit());
     },

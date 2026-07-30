@@ -1,7 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.102+135 (2026-07-30)
 
-<<<<<<< Updated upstream
+### Performans (production)
+- **Soğuk açılış:** Çerez jar `LazyCookieJar` ile runApp sonrası; splash yolu kısaldı
+- **Auth:** Token + oturum önbelleği paralel okunur; arka planda doğrulama (stale-while-revalidate)
+- **Mobil config:** İlk kareden 600ms sonra yüklenir (ağ rekabeti azalır)
+- **Kabuk prefetch:** Tek timer; hediye katalog önbellekteyse tekrar istek yok
+- **Sesli oda giriş:** Presence sonrası SSE hemen; state/seats arka planda; gereksiz refresh kaldırıldı
+- **Oda çıkış:** Gift realtime + PK + SSE + TRTC ses dispose tamamlandı
+- **API önbellek:** SharedPreferences max 80 kayıt — otomatik budama
+
 ## 1.0.101+134 (2026-07-30)
 
 ### Ana sayfa & videolar
@@ -43,13 +52,12 @@
 - **Animasyon katmanı:** Tam ekran/video hediyeler %100 opaklık; `Positioned.fill` ile arka plan üstünde net görünür
 - **Video varsayılanları:** CMS'den gelmeyen video hediyeler `FULL_SCREEN`, `LARGE` öncelik, 8 sn süre
 - **Koltuk altı:** Hediye atanlar etiket paneli (`VoiceGiftSenderTagsPanel`) kaldırıldı
-=======
+
 ## 1.0.99+129 (2026-07-29)
 
 ### UI
 - Sesli oda ve canlı yayında **Son hediyeler** kutusu kaldırıldı (duyuru şeridi kaldı)
 - Tam ekran hediye motoru ayarında video `BoxFit.cover` ile ekranı doldurur
->>>>>>> Stashed changes
 
 ## 1.0.99+128 (2026-07-29)
 

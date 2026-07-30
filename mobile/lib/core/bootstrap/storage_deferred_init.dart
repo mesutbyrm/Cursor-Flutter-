@@ -8,7 +8,7 @@ import '../storage/theme_preferences.dart';
 import 'app_startup_log.dart';
 
 /// Hive, tema tercihi ve API önbelleği — runApp sonrası.
-/// Çerez jar [main] içinde uygulama dizinine yazılarak başlatılır.
+/// Çerez jar [LazyCookieJar] ile ilk kullanımda başlatılır.
 Future<void> runDeferredStorageInit() async {
   try {
     await Future.wait<void>([

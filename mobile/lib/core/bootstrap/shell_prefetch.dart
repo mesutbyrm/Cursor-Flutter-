@@ -10,13 +10,14 @@ import '../../../features/shorts/presentation/providers/shorts_providers.dart';
 import 'startup_perf.dart';
 import '../../../features/notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../../features/gifts/presentation/providers/gift_providers.dart';
+import '../../../features/gifts/presentation/providers/gift_catalog_index_provider.dart';
 import '../../../features/voice_hub/presentation/providers/voice_gift_providers.dart';
 import '../performance/voice_room_entry_perf.dart';
 import 'shell_header_badges_provider.dart';
 
 /// Ana kabuk açıldığında sık kullanılan verileri kademeli önceden yükler.
 ///
-/// Kademe 1 (T+200ms): cüzdan + bildirim + profil istatistikleri (paralel).
+/// Kademe 1 (T+200ms): cüzdan + bildirim + profil + hediye katalogları (tek timer).
 /// Kademe 2 (T+1100ms): sohbet listesi.
 /// Kademe 3 (T+2200ms): shorts For You feed.
 /// Kademe 4 (T+3500ms): jeton paketleri.
@@ -31,21 +32,17 @@ void prefetchShellData(
       unawaited(ref.read(notificationsListNotifierProvider.future));
       unawaited(ref.read(profileStatsProvider.future));
       try {
-        ref.read(chatRoomGiftsRemoteProvider).fetchGiftTypes().ignore();
-      } catch (_) {}
-    }),
-  );
-
-  // Hediye katalogları — erken önbellek (oda / panel açılışı).
-  unawaited(
-    Future<void>.delayed(StartupPerf.shellPrefetchDelay, () {
-      try {
-        ref.read(liveStreamGiftCatalogProvider.future).ignore();
-        ref.read(voiceRoomGiftCatalogProvider.future).ignore();
-      } catch (_) {}
-      try {
         ref.read(walletBalancesProvider.notifier).refresh(force: false);
       } catch (_) {}
+      final giftCached = ref.read(allGiftCatalogByIdProvider).isNotEmpty ||
+          ref.read(voiceRoomGiftCatalogProvider).valueOrNull?.isNotEmpty == true;
+      if (!giftCached) {
+        try {
+          ref.read(chatRoomGiftsRemoteProvider).fetchGiftTypes().ignore();
+          ref.read(liveStreamGiftCatalogProvider.future).ignore();
+          ref.read(voiceRoomGiftCatalogProvider.future).ignore();
+        } catch (_) {}
+      }
     }),
   );
 

@@ -7,6 +7,7 @@ import '../performance/json_isolate_perf.dart';
 /// GET yanıtları için TTL'li offline önbellek (feed, profil, oda listesi).
 abstract final class ApiCacheStore {
   static const _prefix = 'api_cache_v1_';
+  static const _maxEntries = 80;
 
   static SharedPreferences? _prefs;
 
@@ -46,6 +47,7 @@ abstract final class ApiCacheStore {
       'data': data,
     };
     await _prefs!.setString('$_prefix$key', jsonEncode(envelope));
+    await _pruneIfNeeded();
   }
 
   static Future<void> clear(String key) async {
@@ -83,6 +85,7 @@ abstract final class ApiCacheStore {
       'body': body,
     };
     await _prefs!.setString('$_prefix$key', jsonEncode(envelope));
+    await _pruneIfNeeded();
   }
 
   static Future<void> clearRaw(String key) async {
@@ -104,6 +107,32 @@ abstract final class ApiCacheStore {
     final keys = _prefs!.getKeys().where((k) => k.startsWith(_prefix)).toList();
     for (final k in keys) {
       await _prefs!.remove(k);
+    }
+  }
+
+  /// Eski kayıtları sil — SharedPreferences şişmesini önler.
+  static Future<void> _pruneIfNeeded() async {
+    await init();
+    final keys =
+        _prefs!.getKeys().where((k) => k.startsWith(_prefix)).toList();
+    if (keys.length <= _maxEntries) return;
+    final dated = <({String key, DateTime at})>[];
+    for (final k in keys) {
+      final raw = _prefs!.getString(k);
+      if (raw == null) continue;
+      try {
+        final envelope = await JsonIsolatePerf.decodeMap(raw);
+        final savedAt =
+            DateTime.tryParse(envelope?['savedAt']?.toString() ?? '');
+        dated.add((key: k, at: savedAt ?? DateTime.fromMillisecondsSinceEpoch(0)));
+      } catch (_) {
+        dated.add((key: k, at: DateTime.fromMillisecondsSinceEpoch(0)));
+      }
+    }
+    dated.sort((a, b) => a.at.compareTo(b.at));
+    final removeCount = dated.length - _maxEntries;
+    for (var i = 0; i < removeCount; i++) {
+      await _prefs!.remove(dated[i].key);
     }
   }
 }

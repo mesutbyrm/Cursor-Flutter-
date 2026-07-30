@@ -24,6 +24,7 @@ import '../../data/services/chat_room_sse_service.dart';
 import '../../data/services/voice_room_gift_socket.dart';
 import '../../data/services/voice_seat_rest_service.dart';
 import 'voice_gift_providers.dart';
+import 'voice_room_audio_providers.dart';
 import 'pk_battle_provider.dart';
 import 'pk_battle_remote_provider.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
@@ -581,6 +582,8 @@ class VoiceRoomLiveController
         unawaited(_stopTyping());
         ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(_roomKey);
         ref.read(voiceRoomGiftSocketProvider).disconnect();
+        ref.read(voiceRoomGiftRealtimeProvider).stop();
+        ref.read(pkBattleRemoteProvider.notifier).clear();
       }
       final session = ref.read(voiceRoomMusicSessionProvider);
       final detachedHere =
@@ -633,21 +636,20 @@ class VoiceRoomLiveController
     try {
       await _joinPresence();
       unawaited(_tryAutoPrivilegedSeat());
-      await _loadBackendSnapshot();
+      _startSse();
+      _schedulePoll(sseConnected: false);
+
+      ref.read(pkBattleRemoteProvider.notifier).connectSocket(
+            roomId: _roomKey,
+            alternateRoomId: _musicAlternateKey,
+          );
+
+      unawaited(_loadBackendSnapshot());
+      unawaited(_parallelEntryLoad(skipPresence: true));
+      unawaited(_bootstrapRoomData());
     } catch (_) {
       state = state.copyWith(loading: false);
     }
-
-    _startSse();
-    _schedulePoll(sseConnected: false);
-
-    ref.read(pkBattleRemoteProvider.notifier).connectSocket(
-          roomId: _roomKey,
-          alternateRoomId: _musicAlternateKey,
-        );
-
-    unawaited(_parallelEntryLoad(skipPresence: true));
-    unawaited(_bootstrapRoomData());
   }
 
   Future<void> _parallelEntryLoad({bool skipPresence = false}) async {
@@ -678,8 +680,10 @@ class VoiceRoomLiveController
   Future<void> _preloadGiftCatalog() async {
     try {
       if (ref.read(allGiftCatalogByIdProvider).isNotEmpty) return;
-      final cached = ref.read(voiceRoomGiftCatalogProvider).valueOrNull;
-      if (cached != null && cached.isNotEmpty) return;
+      final voiceCached = ref.read(voiceRoomGiftCatalogProvider).valueOrNull;
+      if (voiceCached != null && voiceCached.isNotEmpty) return;
+      final liveCached = ref.read(liveStreamGiftCatalogProvider).valueOrNull;
+      if (liveCached != null && liveCached.isNotEmpty) return;
       await ref.read(chatRoomGiftsRemoteProvider).fetchGiftTypes();
     } catch (_) {}
   }
@@ -752,7 +756,7 @@ class VoiceRoomLiveController
         ? VoiceRoomBasicMode.musicEnabled
         : true;
     if (state.backendSyncReady) {
-      if (includeDj) {
+      if (includeDj && VoiceRoomBasicMode.musicEnabled) {
         unawaited(refresh(includeDj: true, skipPresenceAndMessages: true));
       }
     } else {
@@ -953,6 +957,9 @@ class VoiceRoomLiveController
     ref.read(voiceRoomGiftRealtimeProvider).setSseActive(false);
     ref.read(pkBattleRemoteProvider.notifier).clear();
     ref.read(voiceRoomDiagnosticProvider.notifier).resetForRoom(_roomKey);
+    try {
+      await ref.read(voiceRoomAudioCoordinatorProvider).leave();
+    } catch (_) {}
 
     final player = ref.read(voiceRoomDjPlayerProvider);
     final dj = state.dj;

@@ -1,9 +1,9 @@
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// [main] içinde `PersistCookieJar` ile override edilir.
+import 'lazy_cookie_jar.dart';
+
+/// Tek çerez jar — [LazyCookieJar] ile soğuk açılışta bloklanmaz.
 final cookieJarProvider = Provider<CookieJar>((ref) {
-  throw StateError(
-    'CookieJar başlatılmadı. main() içinde ProviderScope(overrides: [cookieJarProvider.overrideWithValue(...)]) ekleyin.',
-  );
+  return LazyCookieJar.instance;
 });

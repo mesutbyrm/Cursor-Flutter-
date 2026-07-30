@@ -24,6 +24,9 @@ abstract final class StartupPerf {
   /// Kabuk prefetch kademe 4 — jeton mağazası (düşük öncelik).
   static const shellPrefetchTier4Delay = Duration(milliseconds: 3500);
 
+  /// Mobil config API — auth/splash sonrası (ağ rekabetini azaltır).
+  static const mobileConfigDelay = Duration(milliseconds: 600);
+
   /// SSE presence + psikolog/ajans yenileme.
   static const shellRealtimeDelay = Duration(seconds: 3);
 
