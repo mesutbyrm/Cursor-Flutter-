@@ -14,7 +14,6 @@ import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import 'voice_moderation_user_picker_sheet.dart';
-import 'voice_room_authority_sheet.dart';
 import 'voice_room_hub_settings.dart';
 import 'voice_room_management_panel.dart';
 import 'voice_room_muted_users_sheet.dart';
@@ -233,18 +232,20 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
                   ),
                   onPressed: () {
                     Navigator.pop(context);
-                    showVoiceRoomAuthoritySheet(
+                    showVoiceRoomManagementPanel(
                       context,
                       ref,
                       room: room,
                       live: live,
                       perms: perms,
                       isOwner: isOwner,
+                      onUserTap: onUserTap,
+                      initial: VoiceMgmtInitial.users,
                     );
                   },
                   icon: const Icon(Icons.admin_panel_settings_rounded),
                   label: const Text(
-                    'Yetki Ver',
+                    'Kullanıcı yönetimi',
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
                 ),
