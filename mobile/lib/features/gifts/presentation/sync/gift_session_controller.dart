@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/gift_sound_pool.dart';
 import '../../domain/gift_engine_models.dart';
 import '../../domain/gift_engine_parser.dart';
 import '../../domain/gift_revenue_display.dart';
@@ -333,7 +332,7 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       final tPrefetch = DateTime.now();
       try {
         await GiftEnginePreloader.prefetch(next).timeout(
-          const Duration(milliseconds: 280),
+          const Duration(milliseconds: 450),
         );
       } catch (_) {}
       GiftSyncLog.pipelineMs(
@@ -348,12 +347,10 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
 
       GiftSyncLog.pipelineStage(next.id, 'sound');
       final tSound = DateTime.now();
-      try {
-        await ref
-            .read(giftSoundPoolProvider)
-            .playForEvent(next, catalog: catalog)
-            .timeout(const Duration(milliseconds: 150));
-      } catch (_) {}
+      unawaited(
+        ref.read(giftSoundPoolProvider).playForEvent(next, catalog: catalog),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 90));
       GiftSyncLog.pipelineMs(
         next.id,
         'sound',
@@ -370,12 +367,17 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       GiftSyncLog.uiRender(_roomId, 'gift_engine_queue');
 
       final config = GiftEngineParser.fromEvent(next);
+      var durationMs = config.durationMs;
+      if (config.animationType == GiftEngineAnimationType.mp4 ||
+          config.animationType == GiftEngineAnimationType.webm) {
+        durationMs = durationMs < 6000 ? 10000 : durationMs;
+      }
       final watchdogMs = config.startDelayMs +
-          config.durationMs +
+          durationMs +
           config.queueGapMs +
           VoiceGiftAmbientOverlay.fadeInMs +
           VoiceGiftAmbientOverlay.fadeOutMs +
-          5000;
+          8000;
 
       _animationTimer?.cancel();
       _animationTimer = Timer(Duration(milliseconds: watchdogMs), () {

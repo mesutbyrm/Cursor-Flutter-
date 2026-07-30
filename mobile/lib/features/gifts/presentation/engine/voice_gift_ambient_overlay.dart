@@ -82,13 +82,18 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
     _activeId = ev.id;
 
     final config = GiftEngineParser.fromEvent(ev);
+    var playMs = config.durationMs;
+    if (config.animationType == GiftEngineAnimationType.mp4 ||
+        config.animationType == GiftEngineAnimationType.webm) {
+      playMs = playMs < 6000 ? 10000 : playMs;
+    }
     Future<void>.delayed(Duration(milliseconds: config.startDelayMs), () {
       if (!mounted || _activeId != ev.id) return;
       _fadeCtrl.duration =
           const Duration(milliseconds: VoiceGiftAmbientOverlay.fadeInMs);
       _fadeCtrl.forward(from: 0);
 
-      _playTimer = Timer(Duration(milliseconds: config.durationMs), () {
+      _playTimer = Timer(Duration(milliseconds: playMs), () {
         if (!mounted || _activeId != ev.id) return;
         _fadeCtrl.duration =
             const Duration(milliseconds: VoiceGiftAmbientOverlay.fadeOutMs);

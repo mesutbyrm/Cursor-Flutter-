@@ -7,6 +7,7 @@ class HomeTrendVideoEntity {
     this.duration = '',
     this.badge,
     this.viewCount = 0,
+    this.likesCount = 0,
     this.videoUrl,
   });
 
@@ -17,6 +18,7 @@ class HomeTrendVideoEntity {
   final String duration;
   final String? badge;
   final int viewCount;
+  final int likesCount;
   /// CDN MP4 — kısa video akışına yönlendirme için.
   final String? videoUrl;
 

@@ -238,22 +238,18 @@ class HomeRemoteDataSource {
       id: _str(m, ['id', '_id']) ?? '',
       title: (desc != null && desc.isNotEmpty) ? desc : channel,
       channelName: channel,
-      thumbnailUrl: CanlifalImageUrls.resolve(
-        _str(m, [
-          'thumbnailUrl',
-          'thumbnail_url',
-          'thumbnail',
-          'coverUrl',
-          'cover_url',
-          'imageUrl',
-          'image',
-          'thumbUrl',
-          'posterUrl',
-        ]),
-      ),
+      thumbnailUrl: _resolveTrendThumb(m),
       duration: durationStr,
       viewCount: asInt(pick(m, ['viewsCount', 'views_count', 'viewCount'])),
-      videoUrl: _str(m, ['videoUrl', 'video_url']),
+      likesCount: asInt(pick(m, [
+        'likesCount',
+        'likes_count',
+        'likeCount',
+        'likes',
+      ])),
+      videoUrl: CanlifalImageUrls.resolve(
+        _str(m, ['videoUrl', 'video_url']),
+      ),
       badge: 'YENİ',
     );
   }
@@ -388,18 +384,36 @@ class HomeRemoteDataSource {
       channelName: _str(m, ['channelName', 'author', 'username']) ??
           _str(asJsonMap(m['channel'] ?? m['celebrity']), ['name', 'displayName']) ??
           'Canlifal',
-      thumbnailUrl: _str(m, [
-        'thumbnailUrl',
-        'thumbnail',
-        'imageUrl',
-        'coverUrl',
-        'image',
-      ]),
+      thumbnailUrl: _resolveTrendThumb(m),
       duration: _str(m, ['duration', 'length']) ?? '0:30',
       badge: _str(m, ['badge', 'tag', 'label']) ?? badges[idx],
       viewCount: asInt(pick(m, ['viewCount', 'views', 'viewers'])),
-      videoUrl: videoUrl,
+      likesCount: asInt(pick(m, ['likesCount', 'likes_count', 'likeCount', 'likes'])),
+      videoUrl: CanlifalImageUrls.resolve(videoUrl),
     );
+  }
+
+  String? _resolveTrendThumb(Map<String, dynamic> m) {
+    final direct = CanlifalImageUrls.resolve(
+      _str(m, [
+        'thumbnailUrl',
+        'thumbnail_url',
+        'thumbnail',
+        'coverUrl',
+        'cover_url',
+        'imageUrl',
+        'image',
+        'thumbUrl',
+        'posterUrl',
+        'cloud_storage_thumb',
+        'thumbPath',
+      ]),
+    );
+    if (direct.isNotEmpty) return direct;
+    final video = _str(m, ['videoUrl', 'video_url', 'playbackUrl']);
+    final derived = CanlifalImageUrls.thumbFromVideoUrl(video);
+    if (derived != null && derived.isNotEmpty) return derived;
+    return null;
   }
 
   DailyRewardEntity _mapDailyReward(dynamic raw) {
