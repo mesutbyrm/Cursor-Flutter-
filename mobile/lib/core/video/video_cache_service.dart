@@ -4,11 +4,13 @@ import 'dart:io';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:video_player/video_player.dart';
 
-/// Kısa video ve sosyal video için disk önbelleği.
+/// Kısa video ve sosyal video için disk önbelleği + sıcak controller havuzu.
 class VideoCacheService {
   VideoCacheService._();
 
   static final VideoCacheService instance = VideoCacheService._();
+
+  static const _maxWarmControllers = 4;
 
   final CacheManager _manager = CacheManager(
     Config(
@@ -18,6 +20,9 @@ class VideoCacheService {
       fileService: HttpFileService(),
     ),
   );
+
+  final _warmControllers = <String, VideoPlayerController>{};
+  final _warmOrder = <String>[];
 
   CacheManager get manager => _manager;
 
@@ -49,7 +54,46 @@ class VideoCacheService {
     } catch (_) {}
   }
 
+  /// Hediye kuyruğu — dosyayı indir + controller'ı ısıt.
+  Future<void> warmController(String url) async {
+    if (url.trim().isEmpty) return;
+    if (_warmControllers.containsKey(url)) return;
+    try {
+      final c = await createController(url);
+      _putWarm(url, c);
+    } catch (_) {}
+  }
+
+  VideoPlayerController? takeWarmController(String url) {
+    final c = _warmControllers.remove(url);
+    if (c != null) {
+      _warmOrder.remove(url);
+    }
+    return c;
+  }
+
+  void releaseWarmController(String url, VideoPlayerController controller) {
+    if (_warmControllers.containsKey(url)) {
+      controller.dispose();
+      return;
+    }
+    _putWarm(url, controller);
+  }
+
+  void _putWarm(String url, VideoPlayerController c) {
+    while (_warmControllers.length >= _maxWarmControllers && _warmOrder.isNotEmpty) {
+      final evict = _warmOrder.removeAt(0);
+      _warmControllers.remove(evict)?.dispose();
+    }
+    _warmControllers[url] = c;
+    _warmOrder.remove(url);
+    _warmOrder.add(url);
+  }
+
   Future<VideoPlayerController> createController(String url) async {
+    final warm = takeWarmController(url);
+    if (warm != null && warm.value.isInitialized) return warm;
+
     final file = await getCachedFile(url);
     if (file != null && await file.exists()) {
       final c = VideoPlayerController.file(file);
@@ -60,5 +104,13 @@ class VideoCacheService {
     await c.initialize();
     unawaited(_manager.downloadFile(url));
     return c;
+  }
+
+  void disposeAllWarm() {
+    for (final c in _warmControllers.values) {
+      c.dispose();
+    }
+    _warmControllers.clear();
+    _warmOrder.clear();
   }
 }

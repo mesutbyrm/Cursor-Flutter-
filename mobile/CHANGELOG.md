@@ -1,6 +1,24 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.100+132 (2026-07-30)
+
+### Ana sayfa — Keşfet & Gold 2026 premium
+- Cam kartlar (24px radius, mor neon kenarlık, blur, shimmer)
+- Yatay kaydırma, eşit boyut, CachedNetworkImage + Shimmer
+- Gold tier temaları: Basic bronz, Premium mavi, Gold altın, Diamond mor
+
+### Hediye pipeline
+- Sıra: ses → animasyon → jeton güncelleme
+- `GiftSoundPool` (just_audio, 4 kanal, preload)
+- Video controller ısıtma havuzu, prefetch öncelikli kuyruk
+- Pipeline zamanlama logları, release debug log azaltma
+
+### Performans
+- Hediye katalog prefetch erken (T+200ms)
+- Sesli oda API yanıt logları release'te kapalı
+- Voice hediye fade süreleri kısaltıldı (100/150ms)
+
 ## 1.0.99+131 (2026-07-29)
 
 ### Düzeltme

@@ -26,6 +26,7 @@ abstract final class GiftEnginePreloader {
     final videoUrl = config.videoUrl ?? config.resolvedAssetUrl;
     if (mediaType.isVideo && videoUrl != null && videoUrl.startsWith('http')) {
       await VideoCacheService.instance.prefetch(videoUrl);
+      unawaited(VideoCacheService.instance.warmController(videoUrl));
       return;
     }
 
