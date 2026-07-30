@@ -16,13 +16,10 @@ class LazyCookieJar implements CookieJar {
   bool _ignoreExpires = false;
 
   @override
-  bool get ignoreExpires => _jar?.ignoreExpires ?? _ignoreExpires;
+  bool get ignoreExpires => _ignoreExpires;
 
   @override
-  set ignoreExpires(bool value) {
-    _ignoreExpires = value;
-    _jar?.ignoreExpires = value;
-  }
+  set ignoreExpires(bool value) => _ignoreExpires = value;
 
   Future<PersistCookieJar> _ensure() {
     final existing = _jar;
@@ -36,6 +33,7 @@ class LazyCookieJar implements CookieJar {
     final jar = PersistCookieJar(
       storage: FileStorage('${supportDir.path}/canlifal_cookies'),
       persistSession: true,
+      ignoreExpires: _ignoreExpires,
     );
     await jar.forceInit();
     _jar = jar;
