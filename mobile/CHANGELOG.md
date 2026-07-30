@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.101+134 (2026-07-30)
+
+### Ana sayfa & videolar
+- Trend küçük resimler: R2/CDN + video yolundan thumb türetme
+- Trend kartlarda izlenme + beğeni sayısı
+- Fal/Keşfet/Gold fantastik görseller
+- Video analitiği: beğenenler; admin tüm videoları silebilir
+
+### Hediye
+- Panel: şeffaf siyah cam arkaplan
+- Ses öncelikli; video min 10sn oynatma; controller havuzu
+
 ## 1.0.100+132 (2026-07-30)
 
 ### Ana sayfa — Keşfet & Gold 2026 premium
