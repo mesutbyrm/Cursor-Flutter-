@@ -13,6 +13,16 @@ class LazyCookieJar implements CookieJar {
 
   PersistCookieJar? _jar;
   Future<PersistCookieJar>? _initFuture;
+  bool _ignoreExpires = false;
+
+  @override
+  bool get ignoreExpires => _jar?.ignoreExpires ?? _ignoreExpires;
+
+  @override
+  set ignoreExpires(bool value) {
+    _ignoreExpires = value;
+    _jar?.ignoreExpires = value;
+  }
 
   Future<PersistCookieJar> _ensure() {
     final existing = _jar;
