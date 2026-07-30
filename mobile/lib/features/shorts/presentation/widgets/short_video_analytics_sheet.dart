@@ -167,8 +167,7 @@ class _AnalyticsBody extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     UserAvatar(
-                      imageUrl: l.avatarUrl,
-                      name: l.label,
+                      url: l.avatarUrl,
                       radius: 22,
                     ),
                     const SizedBox(height: 4),
