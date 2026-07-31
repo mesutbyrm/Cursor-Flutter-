@@ -60,7 +60,7 @@ void main() {
       final me = RequestOptions(path: '/api/me');
       final live = RequestOptions(path: '/api/live/streams');
       expect(ApiCachePolicy.ttlFor(me), const Duration(seconds: 15));
-      expect(ApiCachePolicy.ttlFor(live), const Duration(seconds: 15));
+      expect(ApiCachePolicy.ttlFor(live), const Duration(seconds: 12));
     });
   });
 
