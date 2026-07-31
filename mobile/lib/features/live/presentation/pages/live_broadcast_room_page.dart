@@ -1568,7 +1568,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         }
 
         void showEmojiPicker() => _showLiveEmojiPicker();
-          child: SingleChildScrollView(
+        return SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1673,8 +1673,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 const SizedBox(height: 8),
               ],
             ),
-          ),
-        );
+          );
       },
     );
   }
