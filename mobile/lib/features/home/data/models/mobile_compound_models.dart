@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/util/json_util.dart';
+import '../../../../core/util/json_util.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../fortune/domain/entities/fortune_type_entity.dart';
 import '../../domain/entities/home_banner_entity.dart';

@@ -1,4 +1,4 @@
-import '../../core/util/json_util.dart';
+import '../../../../core/util/json_util.dart';
 
 /// Login / register / refresh yanıtındaki `user` nesnesi.
 class AuthUser {
