@@ -28,19 +28,14 @@ on:
         description: docs/LATEST_APK_BUILD.md commit
         type: boolean
         default: false
+  # main push: CI yeşil olmadan APK derlenmez.
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
   push:
-    branches:
-      - main
     tags:
       - 'v*'
-    paths:
-      - 'mobile/**'
-      - 'scripts/acceptance-tests/**'
-      - 'scripts/run-release-gate.sh'
-      - 'scripts/dart-analyze-gate.sh'
-      - 'scripts/run-acceptance-tests.sh'
-      - 'scripts/ci-upload-apk-latest.sh'
-      - '.github/workflows/build-apk.yml'
 
 permissions:
   contents: write
@@ -54,6 +49,10 @@ concurrency:
 jobs:
   build:
     name: APK
+    # workflow_run: yalnızca CI başarılıysa; manuel/tag push her zaman.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -74,6 +73,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Disk alanı aç (runner ön-yüklü gereksiz paketler)
         continue-on-error: true

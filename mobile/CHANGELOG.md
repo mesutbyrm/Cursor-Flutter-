@@ -2,6 +2,10 @@
 
 ## 1.0.105+138 (2026-07-31)
 
+### CI (düzeltme)
+- **CI/CodeQL:** `cancel-in-progress: false` — eşzamanlı push'ta tüm kontrollerin iptal olması engellendi
+- **APK:** `main` push'ta yalnızca CI başarılı olduktan sonra derlenir (`workflow_run`)
+
 ### Hediye senkronizasyonu & performans
 - **Gerçek zamanlı hediye:** SSE/socket → tek `publishRemote` hattı; `GiftEventListener` feed, sohbet ve son hediyeleri yönetir (çift işleme yok)
 - **Dedupe:** Oda çıkışında sıfırlanır; `_seen` üst sınırı 2048; anında feed (ertelenmiş kuyruk kaldırıldı)

@@ -20,10 +20,12 @@ on:
       - '.github/workflows/ci.yml'
   workflow_dispatch:
 
-# Aynı dalda üst üste koşan işleri iptal et (dakika tasarrufu).
+# Aynı dalda üst üste koşan işleri iptal et — yalnızca gerçekten başlamış
+# eski koşuyu kes (eşzamanlı duplicate push race'inde tüm koşuların iptal
+# olmasını önlemek için cancel-in-progress kapalı).
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   verify:
