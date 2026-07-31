@@ -1,55 +1,46 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../social/domain/entities/share_fortune_input.dart';
-import '../../../social/presentation/providers/social_providers.dart';
 import '../../data/fortune_share_preferences.dart';
 import '../../domain/entities/fortune_type_entity.dart';
 import '../providers/fortune_share_preferences_provider.dart';
+import '../../../social/presentation/services/social_fortune_feed_sync.dart';
 
-/// Fal paylaşımı — otomatik mod + manuel hedefler.
+/// Fal paylaşımı — backend tek kaynak; Flutter yalnızca senkronize eder.
 class FortuneShareHandler {
   FortuneShareHandler(this._ref);
 
   final Ref _ref;
 
+  /// Backend otomatik paylaşımı oluşturduktan sonra akışı güncelle.
   Future<bool> autoShareIfEnabled(FortuneReadingResult result) async {
     final mode = await _ref.read(fortuneAutoShareModeProvider.future);
     if (mode == FortuneAutoShareMode.off) return false;
-    // Kullanıcının seçtiği görünürlükle paylaş (varsayılan: herkese açık).
-    await _share(result, mode);
+    final me = _ref.read(authControllerProvider).valueOrNull;
+    if (me == null) return false;
+
+    await _ref.read(socialFortuneFeedSyncProvider).afterFortuneCompleted(
+          fortuneId: result.recordId,
+        );
     return true;
   }
 
   Future<void> shareToSocialFeed(FortuneReadingResult result) =>
-      _share(result, FortuneAutoShareMode.public);
+      _syncBackendShare(result);
 
   Future<void> shareToProfile(FortuneReadingResult result) =>
-      _share(result, FortuneAutoShareMode.profileOnly);
+      _syncBackendShare(result);
 
   Future<void> sharePublic(FortuneReadingResult result) =>
-      _share(result, FortuneAutoShareMode.public);
+      _syncBackendShare(result);
 
-  Future<void> _share(
-    FortuneReadingResult result,
-    FortuneAutoShareMode mode,
-  ) async {
+  Future<void> _syncBackendShare(FortuneReadingResult result) async {
     final me = _ref.read(authControllerProvider).valueOrNull;
     if (me == null) return;
 
-    await _ref.read(socialRepositoryProvider).shareFortuneAuto(
-          ShareFortuneInput(
-            fortuneSlug: result.type.slug,
-            fortuneType: result.type.title,
-            summary: result.summary,
-            detail: result.fullText,
-            imageUrl: result.imageUrl,
-            fortuneId: result.recordId,
-            visualAnalysis: result.visualAnalysis,
-            visibility: mode.apiVisibility,
-          ),
+    await _ref.read(socialFortuneFeedSyncProvider).afterFortuneCompleted(
+          fortuneId: result.recordId,
         );
-    _ref.invalidate(socialNotifierProvider);
   }
 }
 

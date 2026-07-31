@@ -12,10 +12,14 @@ class SocialRepositoryImpl implements SocialRepository {
   final String? currentUserId;
 
   @override
-  Future<SocialFeedPage> fetchPage({int page = 1}) async {
-    final r = await _remote.fetch(page: page, currentUserId: currentUserId);
+  Future<SocialFeedPage> fetchPage({int page = 1, bool forceRefresh = false}) async {
+    final r = await _remote.fetch(
+      page: page,
+      currentUserId: currentUserId,
+      forceRefresh: forceRefresh,
+    );
     return SocialFeedPage(
-      posts: r.posts.map((e) => e.toEntity()).toList(),
+      posts: r.posts,
       hasMore: r.hasMore,
     );
   }
@@ -36,7 +40,7 @@ class SocialRepositoryImpl implements SocialRepository {
       authorId: userId,
       currentUserId: currentUserId,
     );
-    var posts = r.posts.map((e) => e.toEntity()).toList();
+    var posts = r.posts;
     var hasMore = r.hasMore;
     if (posts.isEmpty && page == 1) {
       final fallback = await _remote.fetch(
@@ -44,7 +48,6 @@ class SocialRepositoryImpl implements SocialRepository {
         currentUserId: currentUserId,
       );
       posts = fallback.posts
-          .map((e) => e.toEntity())
           .where((p) => p.author.id == userId)
           .toList();
       hasMore = fallback.hasMore;

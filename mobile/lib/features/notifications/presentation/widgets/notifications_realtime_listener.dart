@@ -11,6 +11,7 @@ import '../../domain/entities/app_notification_entity.dart';
 import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
 import '../../../live/presentation/providers/live_pk_streams_provider.dart';
 import '../../../live/presentation/providers/pk_room_providers.dart';
+import '../../../social/presentation/services/social_fortune_feed_sync.dart';
 import '../providers/notifications_list_notifier.dart';
 import '../providers/notifications_providers.dart';
 
@@ -70,6 +71,13 @@ class _NotificationsRealtimeListenerState
       ref.invalidate(pkPendingInvitesProvider);
       ref.invalidate(livePkStreamsProvider);
       ref.read(livePkInviteSignalProvider.notifier).bump();
+    }
+    if (type == 'fortune_share' || type.contains('fortune_share')) {
+      unawaited(
+        ref.read(socialFortuneFeedSyncProvider).onFortuneShareNotification(
+              postId: notification.targetId,
+            ),
+      );
     }
   }
 

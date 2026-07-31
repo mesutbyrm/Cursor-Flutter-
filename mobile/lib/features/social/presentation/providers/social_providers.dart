@@ -74,6 +74,18 @@ class SocialNotifier extends AsyncNotifier<List<PostEntity>> {
       return p.copyWith(commentsCount: p.commentsCount + delta);
     }).toList());
   }
+
+  /// Backend fal paylaşımını akışın başına ekle (dedupe).
+  void prependPost(PostEntity post) {
+    if (post.id.isEmpty) return;
+    final cur = state.valueOrNull;
+    if (cur == null) {
+      state = AsyncValue.data([post]);
+      return;
+    }
+    if (cur.any((p) => p.id == post.id)) return;
+    state = AsyncValue.data([post, ...cur]);
+  }
 }
 
 final socialNotifierProvider =

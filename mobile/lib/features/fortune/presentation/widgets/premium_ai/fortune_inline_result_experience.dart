@@ -38,35 +38,13 @@ class _FortuneInlineResultExperienceState
     extends ConsumerState<FortuneInlineResultExperience> {
   final _scroll = ScrollController();
   final _shareCardKey = GlobalKey();
-  var _autoShareTried = false;
 
   FortuneReadingResult get result => widget.result;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _autoShareToSocial());
-  }
 
   @override
   void dispose() {
     _scroll.dispose();
     super.dispose();
-  }
-
-  Future<void> _autoShareToSocial() async {
-    if (_autoShareTried) return;
-    _autoShareTried = true;
-    final me = ref.read(authControllerProvider).valueOrNull;
-    if (me == null) return;
-    try {
-      final shared =
-          await ref.read(fortuneShareHandlerProvider).autoShareIfEnabled(result);
-      if (!mounted || !shared) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('CanlıFal Sosyal bölümünde paylaşıldı')),
-      );
-    } catch (_) {}
   }
 
   Future<void> _shareWithStory() async {
