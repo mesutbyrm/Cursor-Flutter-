@@ -3,12 +3,14 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/live_fortune_request_entity.dart';
 import '../../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
+import '../../providers/live_fortune_type_options_provider.dart';
 
 /// İzleyici — canlı fal isteği formu + jeton onayı.
-class LiveFortuneRequestForm extends StatefulWidget {
+class LiveFortuneRequestForm extends ConsumerStatefulWidget {
   const LiveFortuneRequestForm({
     super.key,
     required this.onSubmit,
@@ -28,10 +30,11 @@ class LiveFortuneRequestForm extends StatefulWidget {
   final int? balance;
 
   @override
-  State<LiveFortuneRequestForm> createState() => _LiveFortuneRequestFormState();
+  ConsumerState<LiveFortuneRequestForm> createState() =>
+      _LiveFortuneRequestFormState();
 }
 
-class _LiveFortuneRequestFormState extends State<LiveFortuneRequestForm> {
+class _LiveFortuneRequestFormState extends ConsumerState<LiveFortuneRequestForm> {
   final _displayName = TextEditingController();
   final _question = TextEditingController();
   var _fortuneType = 'tarot';
@@ -115,7 +118,8 @@ class _LiveFortuneRequestFormState extends State<LiveFortuneRequestForm> {
 
   @override
   Widget build(BuildContext context) {
-    final types = psychicFortuneTypes;
+    final typesAsync = ref.watch(liveFortuneTypeOptionsProvider);
+    final types = typesAsync.valueOrNull ?? psychicFortuneTypes;
     final balance = widget.balance;
 
     return ClipRRect(

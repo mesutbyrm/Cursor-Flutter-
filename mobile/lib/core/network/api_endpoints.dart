@@ -540,6 +540,18 @@ abstract final class ApiEndpoints {
   /// Oturumlu kullanıcı profili (takipçi, bio, görsel — NextAuth çerezi).
   static const userSiteProfile = '/api/user/profile';
   static const userTheme = '/api/user/theme';
+
+  /// Platform popup bildirimleri (oturum gerekir).
+  static const popups = '/api/popups';
+
+  /// Aktif reklam yerleşimleri (public).
+  static const adsActive = '/api/ads/active';
+
+  /// Reklam ödülü talebi (oturum gerekir).
+  static const adsReward = '/api/ads/reward';
+
+  /// Canlı fal türü kataloğu (public).
+  static const fortuneRequestTypes = '/api/fortune-request-types';
   static String userFollowStatus(String userId) =>
       '/api/user/$userId/follow-status';
 
@@ -690,6 +702,9 @@ abstract final class ApiEndpoints {
 
   static String videoStreamFortuneRequest(String streamId, String requestId) =>
       '/api/video-streams/$streamId/fortune-requests/$requestId';
+
+  static String videoStreamFortuneMyStatus(String streamId) =>
+      '/api/video-streams/$streamId/fortune-requests/my-status';
 
   static const liveFalRequestCreate = '/api/live/fal-request/create';
 

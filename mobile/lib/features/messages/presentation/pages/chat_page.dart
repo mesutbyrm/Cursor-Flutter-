@@ -111,23 +111,24 @@ class _ChatPageState extends ConsumerState<ChatPage>
   Future<void> _connectDmSse() async {
     try {
       final storage = ref.read(tokenStorageProvider);
-      await ref.read(messageSseServiceProvider).connectToConversation(
-            conversationId: widget.conversationId,
-            accessToken: storage.readAccess,
-            refreshTokens: () =>
-                tryRefreshAccessToken(ref.read(dioProvider), storage),
-            onEvent: (_) {
-              if (!mounted) return;
-              ref
-                  .read(
-                    chatMessagesListNotifierProvider(widget.conversationId)
-                        .notifier,
-                  )
-                  .refresh(silent: true, forceRefresh: true);
-            },
-          );
+      final connected =
+          await ref.read(messageSseServiceProvider).connectToConversation(
+                conversationId: widget.conversationId,
+                accessToken: storage.readAccess,
+                refreshTokens: () =>
+                    tryRefreshAccessToken(ref.read(dioProvider), storage),
+                onEvent: (_) {
+                  if (!mounted) return;
+                  ref
+                      .read(
+                        chatMessagesListNotifierProvider(widget.conversationId)
+                            .notifier,
+                      )
+                      .refresh(silent: true, forceRefresh: true);
+                },
+              );
       if (!mounted) return;
-      _dmSseActive = true;
+      _dmSseActive = connected;
       _startMessagePoll();
     } catch (_) {
       // Üretimde SSE yoksa poll yedek kalır.

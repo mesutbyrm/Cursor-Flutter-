@@ -1,4 +1,4 @@
-import '../../core/util/json_util.dart';
+import '../../../../core/util/json_util.dart';
 
 /// `GET /api/music/search` sonucu.
 class ChatMusicHit {

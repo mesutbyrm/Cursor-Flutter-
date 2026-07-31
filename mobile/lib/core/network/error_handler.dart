@@ -20,4 +20,8 @@ abstract final class ErrorHandler {
   static bool isNotFound(Object error) {
     return error is ApiException && error.statusCode == 404;
   }
+
+  static bool isRateLimited(Object error) {
+    return error is ApiException && error.statusCode == 429;
+  }
 }

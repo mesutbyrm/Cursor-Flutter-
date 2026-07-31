@@ -17,6 +17,12 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
     await ThemePreferences.saveThemeMode(mode);
   }
 
+  /// Sunucudan çekilen tema — yerel kayıt zaten yapıldı.
+  void applyLocal(ThemeMode mode) {
+    if (state == mode) return;
+    state = mode;
+  }
+
   void toggleLightDark() {
     final next = state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     setMode(next);

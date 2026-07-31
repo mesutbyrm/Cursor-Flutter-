@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.115+148 (2026-07-31)
+
+### Web ↔ Flutter parity (Faz 5)
+- **Platform API:** `popups`, `ads/active`, `ads/reward`, `fortune-request-types`, `user/theme`, `fortune-requests/my-status` → datasource + provider
+- **Popup UI:** `AppPopupsListener` — oturum açıkken site popup bildirimleri
+- **Tema senkronu:** Ayarlar ↔ `GET/POST /api/user/theme`; giriş sonrası sunucudan çekme
+- **Canlı fal:** API fal türü kataloğu; `my-status` uç noktası
+- **DM SSE:** 404'te reconnect durur, poll-only yedek
+- **429:** `ApiException` + `ApiSnackBar` standart rate-limit mesajı
+- **Shorts:** Preload ±2 video; keşfet grid `RepaintBoundary`
+- **Modeller:** Chat test modelleri `voice_hub/data/models` altına taşındı
+
 ## 1.0.114+147 (2026-07-31)
 
 ### Web ↔ Flutter parity (Faz 4)

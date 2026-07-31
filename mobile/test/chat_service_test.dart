@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:canlifal_social/core/api_response.dart';
-import 'package:canlifal_social/services/models/chat_music_hit.dart';
-import 'package:canlifal_social/services/models/chat_presence.dart';
-import 'package:canlifal_social/services/models/chat_room_summary.dart';
-import 'package:canlifal_social/services/models/chat_service_message.dart';
+import 'package:canlifal_social/features/voice_hub/data/models/chat_music_hit.dart';
+import 'package:canlifal_social/features/voice_hub/data/models/chat_presence.dart';
+import 'package:canlifal_social/features/voice_hub/data/models/chat_room_summary.dart';
+import 'package:canlifal_social/features/voice_hub/data/models/chat_service_message.dart';
 
 void main() {
   group('ChatRoomSummary', () {

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/user_theme_sync_provider.dart';
+
 import '../../../../core/bootstrap/session_data_refresh.dart';
 import '../../../../core/bootstrap/app_startup_log.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
@@ -120,6 +122,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     final id = base.id;
     if (id.isNotEmpty) {
       unawaited(OneSignalBootstrap.login(id));
+      unawaited(ref.read(userThemeSyncProvider).pullFromServer());
     }
   }
 

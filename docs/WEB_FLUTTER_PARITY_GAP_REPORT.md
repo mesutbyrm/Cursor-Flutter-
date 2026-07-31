@@ -2,23 +2,36 @@
 
 > **Tarih:** 31 Temmuz 2026  
 > **Tek kaynak:** [`FLUTTER_ENTegrasyon_KILAVUZU.md`](FLUTTER_ENTegrasyon_KILAVUZU.md) + canlifal.com üretim  
-> **Sürüm:** `1.0.114+147` (Faz 4 tamamlandı)
+> **Sürüm:** `1.0.115+148` (Faz 5 tamamlandı)
 
 ## Kabul kriterleri durumu
 
 | Kriter | Durum | Not |
 |--------|-------|-----|
-| Aynı endpoint'ler | 🟡 Kısmen | Gift + chat room registry; kalan §9 uçları devam |
+| Aynı endpoint'ler | 🟢 | Theme, popups, ads, fortune-request-types registry |
 | Aynı response model | 🟡 Kısmen | PostEntity metadata genişletildi |
 | Aynı event sistemi (SSE) | 🟢 | 5 kılavuz SSE + bildirim SSE → DM/home invalidation |
 | JWT / Bearer | 🟢 | Auth `features/auth/data` |
 | Cache web parity | 🟡 | Voice discover 2dk; home keepAlive SSE invalidation |
 | Gerçek zamanlı hediye | 🟢 | Canlı SSE aktifken poll kapalı |
-| Tek repository | 🟢 | Legacy `services/` kaldırıldı (modeller test için `services/models`) |
+| Tek repository | 🟢 | Legacy `services/` kaldırıldı |
 | Global state | 🟢 | Live + voice + home streams tek kaynak |
-| Performans | 🟡 | RepaintBoundary home live; liveStreams copyWithPrevious |
+| Performans | 🟡 | RepaintBoundary home live + shorts grid; preload ±2 |
 
 ---
+
+## Faz 5 — Tamamlanan (1.0.115+148)
+
+| Alan | Değişiklik |
+|------|------------|
+| Platform API | popups, ads/active, ads/reward, fortune-request-types, user/theme |
+| Popup UI | `AppPopupsListener` shell içinde |
+| Tema | `UserThemeSync` — ayarlar + giriş sonrası pull |
+| Canlı fal | API tür kataloğu; `my-status` datasource |
+| DM SSE | 404 → reconnect kapalı, poll-only |
+| 429 | `ApiSnackBar` + `ApiException` rate-limit |
+| Shorts | Controller pool ±2; keşfet grid RepaintBoundary |
+| Modeller | Chat test modelleri → `voice_hub/data/models` |
 
 ## Faz 4 — Tamamlanan (1.0.114+147)
 
@@ -31,16 +44,6 @@
 | API registry | Chat room music log → `ApiEndpoints` |
 | Cache | Voice discover bundle TTL 3dk → 2dk |
 | Performans | `RepaintBoundary` ana sayfa canlı kartları |
-
-## Faz 5 — Sıradaki
-
-1. Kalan §9 endpoint UI bağlantıları (theme, popups, ads, fortune-request-types)
-2. `services/models` chat test modellerini feature'a taşı
-3. DM SSE üretim doğrulama (404 ise poll-only)
-4. Shorts preload + grid RepaintBoundary genişletme
-5. 429 standart snackbar
-
----
 
 ## Faz 3 — Tamamlanan (1.0.113+146)
 

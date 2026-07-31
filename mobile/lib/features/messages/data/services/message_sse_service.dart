@@ -2,10 +2,9 @@ import 'dart:async';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/sse/base_sse_service.dart';
+import '../../../../core/network/sse/sse_reconnect_policy.dart';
 
-/// Mesajlaşma SSE hazırlığı — üretim uç noktası eklendiğinde etkinleştirilir.
-///
-/// Şu an `BaseSseService` yaşam döngüsünü sağlar; event işleme hazır.
+/// Mesajlaşma SSE — üretim uç noktası yoksa 404'te poll-only kalır.
 class MessageSseService extends BaseSseService {
   MessageSseService()
       : _events = StreamController<MessageSseEvent>.broadcast();
@@ -18,25 +17,33 @@ class MessageSseService extends BaseSseService {
   void Function(MessageSseEvent event)? _onEvent;
 
   @override
+  bool shouldReconnectOnHttpError(int? statusCode) => statusCode != 404;
+
+  @override
   String streamPath() {
     final id = _conversationId ?? '';
     return ApiEndpoints.conversationStream(id);
   }
 
-  Future<void> connectToConversation({
+  Future<bool> connectToConversation({
     required String conversationId,
     required Future<String?> Function() accessToken,
     Future<bool> Function()? refreshTokens,
     void Function(MessageSseEvent event)? onEvent,
   }) async {
     final id = conversationId.trim();
-    if (id.isEmpty) return;
+    if (id.isEmpty) return false;
     _conversationId = id;
     _onEvent = onEvent;
-    await super.openConnection(
-      accessToken: accessToken,
-      refreshTokens: refreshTokens,
-    );
+    try {
+      await super.openConnection(
+        accessToken: accessToken,
+        refreshTokens: refreshTokens,
+      );
+      return status.value.phase == SseConnectionPhase.connected;
+    } catch (_) {
+      return false;
+    }
   }
 
   @override

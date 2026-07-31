@@ -549,7 +549,8 @@ class _VideoTile extends StatelessWidget {
     final radius = compact ? 10.0 : 14.0;
     return HeroShortThumb(
       videoId: video.id,
-      child: GestureDetector(
+      child: RepaintBoundary(
+        child: GestureDetector(
         onTap: () => context.push('/shorts?videoId=${video.id}'),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(radius),
@@ -601,6 +602,7 @@ class _VideoTile extends StatelessWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

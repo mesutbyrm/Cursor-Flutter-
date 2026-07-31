@@ -1,4 +1,4 @@
-import '../../core/util/json_util.dart';
+import '../../../../core/util/json_util.dart';
 
 class ChatServiceUser {
   const ChatServiceUser({
