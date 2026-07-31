@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/domain/entities/post_entity.dart';
+import '../../../feed/presentation/providers/feed_providers.dart';
 import '../../../fortune/data/fortune_share_preferences.dart';
 import '../../../fortune/presentation/providers/fortune_share_preferences_provider.dart';
 import '../providers/social_providers.dart';
+import 'social_fortune_post_match.dart';
 
 /// Backend'in oluşturduğu fal paylaşımlarını sosyal akışa senkronize eder.
 ///
@@ -71,40 +73,15 @@ class SocialFortuneFeedSync {
       await Future<void>.delayed(delay);
       try {
         final page = await repo.fetchPage(page: 1, forceRefresh: true);
-        PostEntity? match;
-        for (final p in page.posts) {
-          if (postIdHint != null &&
-              postIdHint.isNotEmpty &&
-              p.id == postIdHint) {
-            match = p;
-            break;
-          }
-        }
-        if (match == null) {
-          for (final p in page.posts) {
-            if (authorId != null &&
-                authorId.isNotEmpty &&
-                p.author.id != authorId) {
-              continue;
-            }
-            if (!p.isAutoShare && p.postType != 'fortune') continue;
-            if (fortuneId != null &&
-                fortuneId.isNotEmpty &&
-                p.fortuneId != null &&
-                p.fortuneId != fortuneId) {
-              continue;
-            }
-            match = p;
-            break;
-          }
-        }
+        final match = findMatchingFortunePost(
+          posts: page.posts,
+          postIdHint: postIdHint,
+          authorId: authorId,
+          fortuneId: fortuneId,
+        );
 
         if (match != null) {
-          _ref.read(socialNotifierProvider.notifier).prependPost(match);
-          final aid = match.author.id;
-          if (aid.isNotEmpty) {
-            _ref.invalidate(userSocialPostsProvider(aid));
-          }
+          _prependToFeeds(match);
           return;
         }
       } catch (e) {
@@ -113,6 +90,16 @@ class SocialFortuneFeedSync {
     }
 
     await _ref.read(socialNotifierProvider.notifier).refresh();
+    await _ref.read(feedNotifierProvider.notifier).refresh();
+  }
+
+  void _prependToFeeds(PostEntity post) {
+    _ref.read(socialNotifierProvider.notifier).prependPost(post);
+    _ref.read(feedNotifierProvider.notifier).prependPost(post);
+    final aid = post.author.id;
+    if (aid.isNotEmpty) {
+      _ref.invalidate(userSocialPostsProvider(aid));
+    }
   }
 }
 

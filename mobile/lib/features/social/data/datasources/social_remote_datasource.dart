@@ -165,6 +165,7 @@ class SocialRemoteDataSource {
   }
 
   /// POST `/api/social/posts/auto-fortune`
+  @Deprecated('Backend creates fortune posts; use SocialFortuneFeedSync instead')
   Future<PostDto> shareFortuneAuto(ShareFortuneInput input) async {
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.socialPostsAutoFortune,

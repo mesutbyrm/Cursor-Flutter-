@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.110+143 (2026-07-31)
+
+### Fal sosyal senkron — tamamlama
+- **Ana akış:** Fal paylaşımı bulununca `feedNotifierProvider` da güncellenir (`prependPost`)
+- **Eşleştirme:** `findMatchingFortunePost` ayrı modül + birim testleri
+- **API:** `shareFortuneAuto` kullanımdan kaldırıldı (`@Deprecated`); backend tek kaynak
+
 ## 1.0.109+142 (2026-07-31)
 
 ### Fal & Tarot — otomatik sosyal paylaşım senkronizasyonu
