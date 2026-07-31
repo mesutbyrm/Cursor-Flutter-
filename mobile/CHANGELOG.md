@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.112+145 (2026-07-31)
+
+### Web ↔ Flutter parity (Faz 2)
+- **Canlı yayın:** Tek keşif kaynağı (`liveStreamsListNotifier`); `invalidateDiscoverLiveStreams` ile çift fetch önlendi
+- **Global state:** `userFollowersProvider`, `userFollowingProvider`, `postCommentsProvider`
+- **DM:** Konuşma listesindeki çift 12s poll kaldırıldı (global `DmRealtimeListener`)
+- **Falcı oda:** SSE bağlıyken oda poll 20s (3s yerine)
+- **Admin:** Ödeme SSE (`/api/admin/payments/stream`) + 30s poll yedek
+- **API registry:** Müzik kuyruğu, hediye, admin arka plan path'leri `api_endpoints.dart`'a taşındı
+
 ## 1.0.111+144 (2026-07-31)
 
 ### Web ↔ Flutter parity (Faz 1)

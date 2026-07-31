@@ -5,6 +5,7 @@ import '../../../../core/providers/auth_selectors.dart';
 import '../../../feed/domain/entities/post_entity.dart';
 import '../../data/datasources/social_remote_datasource.dart';
 import '../../data/repositories/social_repository_impl.dart';
+import '../../domain/entities/social_comment_entity.dart';
 import '../../domain/entities/social_story_ring_entity.dart';
 import '../../domain/repositories/social_repository.dart';
 
@@ -104,4 +105,11 @@ final socialStoryRingsProvider =
 final userSocialPostsProvider =
     FutureProvider.family<List<PostEntity>, String>((ref, userId) async {
   return ref.read(socialRepositoryProvider).fetchPostsByUser(userId);
+});
+
+/// Gönderi yorumları — ekranlar arası paylaşımlı cache.
+final postCommentsProvider =
+    FutureProvider.family<List<SocialCommentEntity>, String>((ref, postId) async {
+  if (postId.trim().isEmpty) return const [];
+  return ref.read(socialRepositoryProvider).fetchComments(postId);
 });

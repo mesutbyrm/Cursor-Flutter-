@@ -12,6 +12,7 @@ import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/entities/live_swipe_feed_args.dart';
 import '../providers/live_providers.dart';
+import '../providers/discover_live_streams.dart';
 
 /// TRTC oturumu hazırla — swipe ve tek yayın için ortak.
 Future<LiveBroadcastSession> buildLiveSessionForStream(
@@ -49,7 +50,7 @@ Future<void> _validateStreamStillLive(
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Yayın sona erdi')),
       );
-      ref.invalidate(liveStreamsProvider);
+      invalidateDiscoverLiveStreams(ref);
       if (context.canPop()) context.pop();
     }
   } catch (_) {}

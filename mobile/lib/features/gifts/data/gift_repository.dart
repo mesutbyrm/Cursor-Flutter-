@@ -144,7 +144,7 @@ class GiftRepository {
     GiftPlatform platform = GiftPlatform.mobile,
   }) async {
     final res = await _dio.safeGet<dynamic>(
-      '/api/gifts',
+      ApiEndpoints.giftsCatalog,
       query: {'platform': platform.queryValue},
     );
     return _parseCatalogList(_unwrap(res.data));

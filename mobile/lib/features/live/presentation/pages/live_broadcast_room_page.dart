@@ -59,6 +59,7 @@ import '../../../games/presentation/providers/game_providers.dart';
 import '../providers/pk_room_providers.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
+import 'discover_live_streams.dart';
 import '../../data/services/video_webrtc_signal_service.dart';
 import '../providers/co_broadcast_provider.dart';
 import '../providers/live_beauty_provider.dart';
@@ -328,7 +329,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         try {
           await ref.read(liveRepositoryProvider).endVideoStream(roomId);
         } catch (_) {}
-        ref.invalidate(liveStreamsProvider);
+        invalidateDiscoverLiveStreams(ref);
       }
       if (mounted) {
         if (_isBenignRtcError(e)) {
@@ -633,7 +634,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       await ref.refreshWalletCache(force: true);
     }
 
-    ref.invalidate(liveStreamsProvider);
+    invalidateDiscoverLiveStreams(ref);
     if (!context.mounted) return;
     if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
       widget.onSwipeClose!();
@@ -648,7 +649,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     try {
       await _trtc.leave();
     } catch (_) {}
-    ref.invalidate(liveStreamsProvider);
+    invalidateDiscoverLiveStreams(ref);
     if (!mounted) return;
     if (widget.onAdvanceToNextStream != null) {
       widget.onAdvanceToNextStream!();

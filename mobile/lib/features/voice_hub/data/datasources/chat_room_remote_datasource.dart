@@ -608,7 +608,7 @@ class ChatRoomRemoteDataSource {
     ];
     Object? lastError;
     for (final path in [
-      '/api/admin/voice-room-backgrounds',
+      ApiEndpoints.adminVoiceRoomBackgrounds,
       backgroundsPath(),
     ]) {
       for (final body in payloads) {
@@ -974,7 +974,7 @@ class ChatRoomRemoteDataSource {
       ),
     ];
     try {
-      final res = await _dio.safeGet<dynamic>('/api/chat/music/popular');
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.chatMusicPopular);
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['items'];
       if (raw is List && raw.isNotEmpty) {

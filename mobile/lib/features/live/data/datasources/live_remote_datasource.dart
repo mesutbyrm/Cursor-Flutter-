@@ -432,7 +432,7 @@ class LiveRemoteDataSource {
 
   Future<VoiceRoomEntity?> _fetchVoiceRoomDirect(String id) async {
     final paths = [
-      '/api/chat/rooms/$id',
+      ApiEndpoints.chatRoomDetail(id),
       '${ApiEndpoints.chatRooms}/$id',
     ];
     for (final path in paths) {
@@ -733,7 +733,7 @@ class LiveRemoteDataSource {
     try {
       await _dio.safePost<dynamic>(ApiEndpoints.videoStreamEnd(streamId));
     } catch (_) {
-      await _dio.safeDelete<dynamic>('/api/video-streams/$streamId');
+      await _dio.safeDelete<dynamic>(ApiEndpoints.videoStream(streamId));
     }
   }
 

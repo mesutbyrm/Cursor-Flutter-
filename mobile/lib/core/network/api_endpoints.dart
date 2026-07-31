@@ -76,6 +76,34 @@ abstract final class ApiEndpoints {
   static const socialPosts = '/api/social/posts';
   static const socialStories = '/api/social/stories';
 
+  static const chatMusicPopular = '/api/chat/music/popular';
+  static const adminVoiceRoomBackgrounds = '/api/admin/voice-room-backgrounds';
+  static const adminGifts = '/api/admin/gifts';
+  static String adminGift(String id) => '/api/admin/gifts/$id';
+  static const adminGiftsStats = '/api/admin/gifts/stats';
+
+  static const giftsBattles = '/api/gifts/battles';
+  static String giftsBattle(String id) => '/api/gifts/battles/$id';
+  static const giftsGoals = '/api/gifts/goals';
+  static const giftsMissions = '/api/gifts/missions';
+  static const giftsMissionsMe = '/api/gifts/missions/me';
+  static const giftsInsightsLeaderboard = '/api/gifts/insights/leaderboard';
+  static String giftsInsightsBadge(String userId) =>
+      '/api/gifts/insights/badge/$userId';
+  static const giftsInsightsMeBadge = '/api/gifts/insights/me/badge';
+  static String giftsInsightsCollection(String userId) =>
+      '/api/gifts/insights/collection/$userId';
+  static String giftsInsightsAlbum(String userId) =>
+      '/api/gifts/insights/album/$userId';
+  static String giftsInsightsFirstGifter(String context, String contextId) =>
+      '/api/gifts/insights/first-gifter/$context/$contextId';
+  static const giftsInsightsFeed = '/api/gifts/insights/feed';
+  static const giftsInsightsMap = '/api/gifts/insights/map';
+  static const giftsInsightsMeRecommendations =
+      '/api/gifts/insights/me/recommendations';
+  static const giftsInsightsMeHistory = '/api/gifts/insights/me/history';
+  static String giftsMissionClaim(String id) => '/api/gifts/missions/$id/claim';
+
   /// Site geneli istatistikler (kılavuz §9.13 — web ile aynı).
   static const publicStats = '/api/public-stats';
   static const platformStats = '/api/platform-stats';

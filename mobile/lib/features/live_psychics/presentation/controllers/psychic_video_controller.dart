@@ -210,10 +210,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _ping?.cancel();
     _ping = Timer.periodic(const Duration(seconds: 60), (_) => _sendPing());
 
-    _roomPoll?.cancel();
-    _roomPoll = Timer.periodic(const Duration(seconds: 3), (_) {
-      unawaited(_syncRoomInfo());
-    });
+    _scheduleRoomPoll();
 
     _signalPoll?.cancel();
     if (!session.isClient) {
@@ -222,6 +219,17 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       });
       unawaited(_pollRoomSignals());
     }
+  }
+
+  void _scheduleRoomPoll() {
+    _roomPoll?.cancel();
+    if (_disposed) return;
+    final interval = state.sseConnected
+        ? const Duration(seconds: 20)
+        : const Duration(seconds: 3);
+    _roomPoll = Timer.periodic(interval, (_) {
+      unawaited(_syncRoomInfo());
+    });
   }
 
   Future<void> _pollRoomSignals() async {
@@ -439,6 +447,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
             if (!state.sseConnected) {
               state = state.copyWith(sseConnected: true);
               _startChatPoll();
+              _scheduleRoomPoll();
             }
           },
           onMessage: _onSseChatMessage,

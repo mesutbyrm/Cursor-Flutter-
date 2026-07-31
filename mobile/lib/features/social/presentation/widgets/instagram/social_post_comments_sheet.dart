@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
-import '../../../domain/entities/social_comment_entity.dart';
 import '../../providers/social_providers.dart';
 
 /// Gönderi yorumları — GET/POST `/api/social/posts/:id/comments`.
@@ -61,36 +60,10 @@ class _SocialPostCommentsSheetState
     extends ConsumerState<SocialPostCommentsSheet> {
   final _controller = TextEditingController();
   var _sending = false;
-  List<SocialCommentEntity>? _items;
-  Object? _loadError;
-  var _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _reload();
-  }
 
   Future<void> _reload() async {
-    setState(() {
-      _loading = true;
-      _loadError = null;
-    });
-    try {
-      final list =
-          await ref.read(socialRepositoryProvider).fetchComments(widget.postId);
-      if (!mounted) return;
-      setState(() {
-        _items = list;
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loadError = e;
-        _loading = false;
-      });
-    }
+    ref.invalidate(postCommentsProvider(widget.postId));
+    await ref.read(postCommentsProvider(widget.postId).future);
   }
 
   @override
@@ -209,53 +182,51 @@ class _SocialPostCommentsSheetState
   }
 
   Widget _buildCommentsList(BuildContext context) {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_loadError != null) {
-      return Center(
-        child: Text(ApiException.userMessage(_loadError!)),
-      );
-    }
-    final items = _items ?? const [];
-    if (items.isEmpty) {
-      return Center(
-        child: Text(
-          widget.initialCount > 0
-              ? 'Yorumlar yüklenemedi veya gizli.'
-              : 'İlk yorumu sen yaz.',
-          style: TextStyle(color: context.colors.onSurfaceMuted),
-        ),
-      );
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: items.length,
-      separatorBuilder: (_, _) => const Divider(height: 20),
-      itemBuilder: (context, i) {
-        final c = items[i];
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            UserAvatar(url: c.author.avatarUrl, radius: 18),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    c.author.display,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(c.text),
-                ],
-              ),
+    final commentsAsync = ref.watch(postCommentsProvider(widget.postId));
+    return commentsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text(ApiException.userMessage(e))),
+      data: (items) {
+        if (items.isEmpty) {
+          return Center(
+            child: Text(
+              widget.initialCount > 0
+                  ? 'Yorumlar yüklenemedi veya gizli.'
+                  : 'İlk yorumu sen yaz.',
+              style: TextStyle(color: context.colors.onSurfaceMuted),
             ),
-          ],
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: items.length,
+          separatorBuilder: (_, _) => const Divider(height: 20),
+          itemBuilder: (context, i) {
+            final c = items[i];
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                UserAvatar(url: c.author.avatarUrl, radius: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        c.author.display,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(c.text),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );

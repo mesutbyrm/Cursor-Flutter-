@@ -20,6 +20,28 @@
 
 ---
 
+## Faz 2 — Tamamlanan (1.0.112+145)
+
+| Alan | Değişiklik |
+|------|------------|
+| Canlı keşif | `discover_live_streams.dart` — tek notifier, ortak invalidate |
+| Takip listesi | `userFollowersProvider` / `userFollowingProvider` |
+| Yorumlar | `postCommentsProvider` — sheet + feed paylaşımlı cache |
+| DM poll | `conversations_page` çift poll kaldırıldı |
+| Falcı SSE | Oda poll SSE varken 20s |
+| Admin ödeme | `AdminPaymentsSseService` |
+| Hardcoded API | room music, live remote, chat room, gifts catalog |
+
+## Faz 3 — Sıradaki
+
+1. Legacy `services/` kaldırma
+2. `voiceRoomsProvider` + home compound birleştirme
+3. Gift insights/battle/goal datasource tam registry
+4. DM gerçek zamanlı (web interval veya SSE)
+5. `feedNotifier` → `socialNotifier` migrate
+
+---
+
 ## 1. API — Eksik / yanlış endpoint'ler
 
 ### Bu oturumda düzeltilenler
