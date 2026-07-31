@@ -81,6 +81,7 @@ import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
 import 'utils/kick_strike_ui.dart';
 import 'audio/voice_trtc_engine.dart';
 import 'widgets/voice_room/voice_room_staff_join_banner.dart';
+import 'widgets/voice_room/voice_room_music_queue_section.dart';
 import 'widgets/premium_2026/voice_pk_invite_banner.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
@@ -1568,6 +1569,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               enterBanner: banner,
                             );
                           },
+                        ),
+                        VoiceRoomMusicQueueSection(
+                          dj: live.dj,
+                          coinCost: VoiceMusicAccess.audioRequestCost(live.dj),
                         ),
                         VoicePkInviteBanner(
                           room: room,

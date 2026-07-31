@@ -26,6 +26,7 @@ class PsychicRoomSseService {
   String? _sessionId;
   String? _myUserId;
   Future<String?> Function()? _accessToken;
+  Future<bool> Function()? _refreshTokens;
   void Function()? _onConnected;
   void Function(PsychicChatMessage message)? _onMessage;
   void Function(PsychicRoomEntity room)? _onRoomUpdate;
@@ -37,6 +38,7 @@ class PsychicRoomSseService {
   Future<void> connect({
     required String sessionId,
     required Future<String?> Function() accessToken,
+    Future<bool> Function()? refreshTokens,
     String? myUserId,
     void Function()? onConnected,
     void Function(PsychicChatMessage message)? onMessage,
@@ -50,6 +52,7 @@ class PsychicRoomSseService {
     _sessionId = id;
     _myUserId = myUserId;
     _accessToken = accessToken;
+    _refreshTokens = refreshTokens;
     _onConnected = onConnected;
     _onMessage = onMessage;
     _onRoomUpdate = onRoomUpdate;
@@ -102,6 +105,13 @@ class PsychicRoomSseService {
         onDone: () => _scheduleReconnect(),
         cancelOnError: false,
       );
+    } on DioException catch (e) {
+      if (kDebugMode) debugPrint('PsychicRoomSse: $e');
+      if (e.response?.statusCode == 401 && _refreshTokens != null) {
+        final ok = await _refreshTokens!();
+        if (!ok) return;
+      }
+      _scheduleReconnect();
     } catch (e) {
       if (kDebugMode) debugPrint('PsychicRoomSse: $e');
       _scheduleReconnect();
@@ -265,6 +275,7 @@ class PsychicRoomSseService {
 
   Future<void> disconnect() async {
     _stopped = true;
+    _refreshTokens = null;
     await _closeStreamOnly();
   }
 }

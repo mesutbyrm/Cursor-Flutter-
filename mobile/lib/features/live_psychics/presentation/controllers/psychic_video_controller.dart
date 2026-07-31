@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:canlifal_social/core/network/api_exception.dart';
+import 'package:canlifal_social/core/network/dio_provider.dart';
 import 'package:canlifal_social/core/network/live_debug_log.dart';
 import 'package:canlifal_social/features/auth/domain/entities/user_entity.dart';
 import 'package:canlifal_social/core/network/token_storage.dart';
@@ -415,9 +416,11 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   Future<void> _connectRoomSse() async {
     final user = ref.read(authControllerProvider).valueOrNull;
     final storage = ref.read(tokenStorageProvider);
+    final refreshDio = ref.read(refreshDioProvider);
     await ref.read(psychicRoomSseServiceProvider).connect(
           sessionId: session.sessionId,
           accessToken: storage.readAccess,
+          refreshTokens: () => tryRefreshAccessToken(refreshDio, storage),
           myUserId: user?.id,
           onConnected: () {
             if (_disposed) return;

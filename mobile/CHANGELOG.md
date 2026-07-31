@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.108+141 (2026-07-31)
+
+### Backend parity (senkronizasyon — 2. tur)
+- **Falcı SSE:** `session_cancelled` / red olayları anında dialog ve kuyruğu kapatır; 401'de token yenileme
+- **Falcı seans SSE:** 401'de JWT refresh + yeniden bağlanma (kılavuz §6)
+- **Canlı yayın VIP giriş:** Gold/Diamond/Premium/Admin katılımcıları için bölüm bazlı kayan duyuru
+- **Fal türü seçici:** Dropdown yerine ikonlu kart ızgarası (Kahve, Tarot, Astroloji vb.)
+- **Sesli oda RTC:** Koltukların altında «Sırada» müzik kuyruğu listesi
+
 ## 1.0.107+140 (2026-07-31)
 
 ### Backend parity (senkronizasyon — 1. tur)
