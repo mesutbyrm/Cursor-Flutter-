@@ -41,6 +41,17 @@ void main() {
       });
       expect(res.refreshToken, 'r');
     });
+
+    test('parseRefreshTokens without user field', () {
+      final tokens = AuthResponse.parseRefreshTokens({
+        'accessToken': 'new_acc',
+        'refreshToken': 'new_ref',
+        'tokenType': 'Bearer',
+        'expiresIn': '7d',
+      });
+      expect(tokens?.accessToken, 'new_acc');
+      expect(tokens?.refreshToken, 'new_ref');
+    });
   });
 
   group('AuthApiError', () {
