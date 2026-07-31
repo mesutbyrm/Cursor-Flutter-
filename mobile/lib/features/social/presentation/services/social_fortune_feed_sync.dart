@@ -5,8 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/domain/entities/post_entity.dart';
-import '../../../feed/presentation/providers/feed_providers.dart';
-import '../../../fortune/data/fortune_share_preferences.dart';
 import '../../../fortune/presentation/providers/fortune_share_preferences_provider.dart';
 import '../providers/social_providers.dart';
 import 'social_fortune_post_match.dart';
@@ -90,12 +88,10 @@ class SocialFortuneFeedSync {
     }
 
     await _ref.read(socialNotifierProvider.notifier).refresh();
-    await _ref.read(feedNotifierProvider.notifier).refresh();
   }
 
   void _prependToFeeds(PostEntity post) {
     _ref.read(socialNotifierProvider.notifier).prependPost(post);
-    _ref.read(feedNotifierProvider.notifier).prependPost(post);
     final aid = post.author.id;
     if (aid.isNotEmpty) {
       _ref.invalidate(userSocialPostsProvider(aid));

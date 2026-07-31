@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.113+146 (2026-07-31)
+
+### Web ↔ Flutter parity (Faz 3)
+- **Sosyal akış:** `feedNotifierProvider` → `socialNotifierProvider` (beğeni, görüntüleme, yerel paylaşım)
+- **Sesli odalar:** Tek liste kaynağı (`voiceRoomsListNotifier`); `invalidateDiscoverVoiceRooms`
+- **Hediye API:** insights/battle/goal/admin datasource path'leri `api_endpoints.dart` registry
+- **Marquee:** Büyük hediye poll `giftRepositoryProvider` (legacy `giftService` kaldırıldı)
+- **DM:** Açık sohbet global poll ile senkron; chat poll 8s; `openDmConversationIdProvider`
+- **Legacy:** Kullanılmayan `services/` provider'ları `@Deprecated`
+
 ## 1.0.112+145 (2026-07-31)
 
 ### Web ↔ Flutter parity (Faz 2)

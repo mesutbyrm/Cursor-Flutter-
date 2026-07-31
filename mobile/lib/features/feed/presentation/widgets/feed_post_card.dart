@@ -8,7 +8,7 @@ import '../../../../core/widgets/hero_tags.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../domain/entities/post_entity.dart';
-import '../providers/feed_providers.dart';
+import '../../../social/presentation/providers/social_providers.dart';
 
 class FeedPostCard extends ConsumerStatefulWidget {
   const FeedPostCard({super.key, required this.post});
@@ -29,7 +29,7 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
       _viewSent = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          ref.read(feedNotifierProvider.notifier).registerView(widget.post.id);
+          ref.read(socialNotifierProvider.notifier).registerView(widget.post.id);
         }
       });
     }
@@ -184,7 +184,7 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
                       label: '${p.likesCount}',
                       color: p.isLiked ? AppTheme.accent : Colors.white,
                       onTap: () => ref
-                          .read(feedNotifierProvider.notifier)
+                          .read(socialNotifierProvider.notifier)
                           .toggleLike(p.id),
                     ),
                     const SizedBox(width: 6),
@@ -330,7 +330,7 @@ class _FeedCommentsSheetState extends ConsumerState<_FeedCommentsSheet> {
             onPressed: () {
               if (_textController.text.trim().isEmpty) return;
               ref
-                  .read(feedNotifierProvider.notifier)
+                  .read(socialNotifierProvider.notifier)
                   .addComment(widget.post.id);
               Navigator.pop(context);
             },

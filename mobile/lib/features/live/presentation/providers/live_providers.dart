@@ -11,8 +11,10 @@ import '../../data/datasources/live_stream_extras_datasource.dart';
 import '../../data/repositories/live_repository_impl.dart';
 import '../../data/services/video_webrtc_signal_service.dart';
 import 'discover_live_streams.dart';
+import 'discover_voice_rooms.dart';
 
 export 'discover_live_streams.dart';
+export 'discover_voice_rooms.dart';
 
 final liveRemoteProvider = Provider<LiveRemoteDataSource>((ref) {
   return LiveRemoteDataSource(ref.watch(dioProvider));
@@ -31,11 +33,6 @@ final videoWebrtcSignalServiceProvider =
 
 final liveRepositoryProvider = Provider<LiveRepository>((ref) {
   return LiveRepositoryImpl(ref.watch(liveRemoteProvider));
-});
-
-final voiceRoomsProvider = FutureProvider<List<VoiceRoomEntity>>((ref) async {
-  ref.keepAlive();
-  return ref.watch(liveRepositoryProvider).fetchVoiceRooms();
 });
 
 final voiceRoomByIdProvider =

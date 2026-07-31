@@ -2,21 +2,42 @@
 
 > **Tarih:** 31 Temmuz 2026  
 > **Tek kaynak:** [`FLUTTER_ENTegrasyon_KILAVUZU.md`](FLUTTER_ENTegrasyon_KILAVUZU.md) + canlifal.com üretim  
-> **Sürüm:** `1.0.111+144` (bu oturumda başlatılan düzeltmeler)
+> **Sürüm:** `1.0.113+146` (Faz 3 tamamlandı)
 
 ## Kabul kriterleri durumu
 
 | Kriter | Durum | Not |
 |--------|-------|-----|
-| Aynı endpoint'ler | 🟡 Kısmen | ~280 mobil path; §9'da eksik olanlar eklendi/tamamlanıyor |
+| Aynı endpoint'ler | 🟡 Kısmen | Gift insights/battle/goal/admin registry tamamlandı |
 | Aynı response model | 🟡 Kısmen | PostEntity metadata genişletildi; bazı ekranlar eski DTO |
-| Aynı event sistemi (SSE) | 🟢 | 5 kılavuz SSE + PK; DM hâlâ poll |
+| Aynı event sistemi (SSE) | 🟢 | 5 kılavuz SSE + PK; DM poll optimize (12s global + 8s açık chat) |
 | JWT / Bearer | 🟢 | `mobile-refresh`, secure storage |
 | Cache web parity | 🟡 | HTTP TTL sıkılaştırıldı; hassas uçlarda stale kapalı |
 | Gerçek zamanlı hediye | 🟢 | Canlı yayında SSE aktifken poll kapatıldı |
-| Tek repository | 🔴 | `services/` legacy + çift feed/live provider |
-| Global state | 🟡 | Wallet/social iyi; live list triple-fetch |
+| Tek repository | 🟡 | Feed→social birleşti; voice rooms tek notifier; services deprecated |
+| Global state | 🟢 | Live + voice discover tek kaynak |
 | Performans | 🟡 | Skeleton var; gereksiz rebuild taraması devam |
+
+---
+
+## Faz 3 — Tamamlanan (1.0.113+146)
+
+| Alan | Değişiklik |
+|------|------------|
+| Sosyal akış | `socialNotifierProvider` — toggleLike/registerView/addLocalPost; feed migration |
+| Sesli odalar | `discover_voice_rooms.dart` + `voiceRoomsListNotifier` — home/keşif çift fetch önlendi |
+| Hediye registry | `gift_insights/goal/battle/admin` datasource → `ApiEndpoints` |
+| Marquee | `giftRepository.fetchRecentBigGifts` (legacy `giftService` kaldırıldı) |
+| DM | `openDmConversationIdProvider`; unread bump → açık chat refresh; chat poll 8s |
+| Legacy services | `@Deprecated` işaretlendi (auth/config hariç) |
+
+## Faz 4 — Sıradaki
+
+1. `services/` tamamen kaldırma (auth/config migrate)
+2. DM gerçek SSE (backend hazır olunca)
+3. Home keepAlive SSE invalidation
+4. Performans audit (const, RepaintBoundary)
+5. Kalan hardcoded `/api/` (`chat_room_providers.dart` vb.)
 
 ---
 
@@ -32,13 +53,9 @@
 | Admin ödeme | `AdminPaymentsSseService` |
 | Hardcoded API | room music, live remote, chat room, gifts catalog |
 
-## Faz 3 — Sıradaki
+## Faz 3 — Sıradaki (tamamlandı → Faz 4)
 
-1. Legacy `services/` kaldırma
-2. `voiceRoomsProvider` + home compound birleştirme
-3. Gift insights/battle/goal datasource tam registry
-4. DM gerçek zamanlı (web interval veya SSE)
-5. `feedNotifier` → `socialNotifier` migrate
+_Eski madde listesi Faz 3 bölümüne taşındı._
 
 ---
 

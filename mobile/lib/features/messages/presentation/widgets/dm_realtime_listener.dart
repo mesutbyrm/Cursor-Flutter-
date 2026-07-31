@@ -12,6 +12,9 @@ import '../providers/messages_unread_providers.dart';
 import '../providers/messages_providers.dart';
 import '../services/dm_voice_call_service.dart';
 
+/// Açık DM sohbeti — global poll yeni mesajda yeniler.
+final openDmConversationIdProvider = StateProvider<String?>((ref) => null);
+
 /// Uygulama genelinde DM güncellemesi — push dışında da liste ve rozet yenilenir.
 class DmRealtimeListener extends ConsumerStatefulWidget {
   const DmRealtimeListener({super.key, required this.child});
@@ -58,6 +61,7 @@ class _DmRealtimeListenerState extends ConsumerState<DmRealtimeListener> {
     final unread = ref.read(conversationsUnreadTotalProvider);
     if (unread > _lastUnread) {
       unawaited(DmMessageSoundService.instance.playIncoming());
+      refreshOpenDmChat(ref, ref.read(openDmConversationIdProvider));
     }
     _lastUnread = unread;
 

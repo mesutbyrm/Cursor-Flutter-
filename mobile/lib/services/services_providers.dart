@@ -54,30 +54,37 @@ final userServiceProvider = Provider<UserService>((ref) {
   return UserService(resolveAuthedDio: _resolveDio(ref));
 });
 
+@Deprecated('Migrate to feature repositories — legacy services/')
 final profileServiceProvider = Provider<ProfileService>((ref) {
   return ProfileService(resolveAuthedDio: _resolveDio(ref));
 });
 
+@Deprecated('Use giftRepositoryProvider — legacy services/')
 final giftServiceProvider = Provider<GiftService>((ref) {
   return GiftService(resolveAuthedDio: _resolveDio(ref));
 });
 
+@Deprecated('Migrate to feature repositories — legacy services/')
 final fortuneServiceProvider = Provider<FortuneService>((ref) {
   return FortuneService(sseClient: ref.watch(sseClientProvider));
 });
 
+@Deprecated('Migrate to feature repositories — legacy services/')
 final tellerServiceProvider = Provider<TellerService>((ref) {
   return TellerService(resolveAuthedDio: _resolveDio(ref));
 });
 
+@Deprecated('Use socialRepositoryProvider — legacy services/')
 final socialServiceProvider = Provider<SocialService>((ref) {
   return SocialService(resolveAuthedDio: _resolveDio(ref));
 });
 
+@Deprecated('Migrate to feature repositories — legacy services/')
 final uploadServiceProvider = Provider<UploadService>((ref) {
   return UploadService(resolveAuthedDio: _resolveDio(ref));
 });
 
+@Deprecated('Migrate to feature repositories — legacy services/')
 final shortVideoServiceProvider = Provider<ShortVideoService>((ref) {
   return ShortVideoService(
     resolveAuthedDio: _resolveDio(ref),
@@ -85,10 +92,12 @@ final shortVideoServiceProvider = Provider<ShortVideoService>((ref) {
   );
 });
 
+@Deprecated('Use messagesRepositoryProvider — legacy services/')
 final messageServiceProvider = Provider<MessageService>((ref) {
   return MessageService(resolveAuthedDio: _resolveDio(ref));
 });
 
+@Deprecated('Migrate to feature repositories — legacy services/')
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService(
     resolveAuthedDio: _resolveDio(ref),
@@ -96,18 +105,22 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
   );
 });
 
+@Deprecated('Migrate to feature repositories — legacy services/')
 final pushServiceProvider = Provider<PushService>((ref) {
   return PushService(resolveAuthedDio: _resolveDio(ref));
 });
 
+@Deprecated('Migrate to feature repositories — legacy services/')
 final paymentServiceProvider = Provider<PaymentService>((ref) {
   return PaymentService(resolveAuthedDio: _resolveDio(ref));
 });
 
+@Deprecated('Migrate to feature repositories — legacy services/')
 final gameServiceProvider = Provider<GameService>((ref) {
   return GameService(resolveAuthedDio: _resolveDio(ref));
 });
 
+@Deprecated('Migrate to feature repositories — legacy services/')
 final miscServiceProvider = Provider<MiscService>((ref) {
   return MiscService(resolveAuthedDio: _resolveDio(ref));
 });

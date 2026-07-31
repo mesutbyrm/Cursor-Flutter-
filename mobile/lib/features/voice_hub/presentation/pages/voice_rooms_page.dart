@@ -135,7 +135,8 @@ class _VoiceRoomsPageState extends ConsumerState<VoiceRoomsPage>
                 color: VoiceRoomsUiTokens.purpleGlow,
                 backgroundColor: VoiceRoomsUiTokens.bgAmoled,
                 onRefresh: () async {
-                  ref.invalidate(voiceRoomsProvider);
+                  invalidateDiscoverVoiceRooms(ref);
+                  await ref.read(voiceRoomsProvider.future);
                   await ref
                       .read(voiceRoomsDiscoverProvider.notifier)
                       .refresh();

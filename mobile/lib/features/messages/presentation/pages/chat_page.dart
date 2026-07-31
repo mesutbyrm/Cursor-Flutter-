@@ -20,6 +20,7 @@ import '../providers/chat_messages_list_notifier.dart';
 import '../providers/conversations_list_notifier.dart';
 import '../providers/messages_providers.dart';
 import '../services/dm_voice_call_service.dart';
+import '../widgets/dm_realtime_listener.dart';
 import '../widgets/chat_composer.dart';
 import '../widgets/chat_composer_bar.dart';
 import '../widgets/chat_message_actions.dart';
@@ -67,6 +68,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      ref.read(openDmConversationIdProvider.notifier).state =
+          widget.conversationId;
       _loadPeerMeta();
       ref
           .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
@@ -84,7 +87,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
             ),
       );
     });
-    _poll = Timer.periodic(const Duration(seconds: 5), (_) {
+    _poll = Timer.periodic(const Duration(seconds: 8), (_) {
       if (!mounted) return;
       ref
           .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
@@ -108,6 +111,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
   @override
   void dispose() {
+    ref.read(openDmConversationIdProvider.notifier).state = null;
     WidgetsBinding.instance.removeObserver(this);
     _poll?.cancel();
     _typingPoll?.cancel();

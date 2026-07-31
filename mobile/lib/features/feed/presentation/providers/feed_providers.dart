@@ -16,6 +16,7 @@ final feedRepositoryProvider = Provider<FeedRepository>((ref) {
   return FeedRepositoryImpl(ref.watch(feedRemoteProvider));
 });
 
+@Deprecated('Use socialNotifierProvider — feed and social share one notifier.')
 class FeedNotifier extends AsyncNotifier<List<PostEntity>> {
   int _page = 1;
   bool _end = false;
@@ -141,5 +142,6 @@ class FeedNotifier extends AsyncNotifier<List<PostEntity>> {
   }
 }
 
+@Deprecated('Use socialNotifierProvider')
 final feedNotifierProvider =
     AsyncNotifierProvider<FeedNotifier, List<PostEntity>>(FeedNotifier.new);
