@@ -13,6 +13,7 @@ import '../../../../../core/network/api_exception.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../gifts/domain/gift_revenue_display.dart';
 import '../../../../gifts/presentation/providers/gift_providers.dart';
+import '../../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../../../gifts/domain/gift_rarity.dart';
 import '../../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../../gifts/presentation/widgets/lucky_gift_badge.dart';
@@ -322,6 +323,11 @@ class _VoicePremiumGiftPanel2026State
       }
       final gross = g.price * _qty;
       final revenue = result.revenue;
+      GiftSyncLog.giftSent(
+        roomId: roomKey,
+        giftId: g.id,
+        eventId: 'api_send_${DateTime.now().millisecondsSinceEpoch}',
+      );
       unawaited(ref.read(giftSoundServiceProvider).playFor(g.toEntity()));
       ref.refreshWalletCache(force: true);
       if (mounted) {

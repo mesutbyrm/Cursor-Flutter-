@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app/app.dart';
 import 'core/bootstrap/app_deferred_bootstrap.dart';
+import 'core/bootstrap/app_session_reset.dart';
 import 'core/bootstrap/app_startup_log.dart';
 import 'core/bootstrap/storage_deferred_init.dart';
 import 'core/network/lazy_cookie_jar.dart';
@@ -15,6 +16,7 @@ import 'features/voice_hub/data/services/voice_room_debug_log.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppSessionReset.onColdStart();
   AppPerfMetrics.mark('cold_start');
   PaintingBinding.instance.imageCache
     ..maximumSize = 200

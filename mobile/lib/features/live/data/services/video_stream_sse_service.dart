@@ -7,6 +7,8 @@ import 'package:flutter/foundation.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/live_debug_log.dart';
+import '../../../../core/network/sse/sse_reconnect_policy.dart';
+import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
 import '../../../live_psychics/domain/entities/psychic_request_entity.dart';
@@ -25,7 +27,11 @@ class VideoStreamSseService {
         baseUrl: Env.apiBaseUrl,
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: Duration.zero,
-        headers: {'Accept': 'text/event-stream'},
+        headers: {
+          'Accept': 'text/event-stream',
+          'Connection': 'keep-alive',
+        },
+        persistentConnection: true,
       ),
     );
   }
@@ -39,6 +45,7 @@ class VideoStreamSseService {
   Future<String?> Function()? _accessToken;
   var _stopped = false;
   var _reconnectAttempt = 0;
+  String? _lastEventId;
 
   void Function()? _onConnected;
   void Function(int viewerCount)? _onViewerCount;
@@ -113,9 +120,14 @@ class VideoStreamSseService {
     final headers = <String, dynamic>{
       'Accept': 'text/event-stream',
       'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
     };
     if (token != null && token.trim().isNotEmpty) {
       headers['Authorization'] = 'Bearer ${token.trim()}';
+    }
+    final lastId = _lastEventId?.trim();
+    if (lastId != null && lastId.isNotEmpty) {
+      headers['Last-Event-ID'] = lastId;
     }
 
     _dio = _sseDio();
@@ -154,16 +166,17 @@ class VideoStreamSseService {
 
   void _scheduleReconnect() {
     if (_stopped || _streamId == null) return;
+    if (_reconnectAttempt >= SseReconnectPolicy.maxAttempts) return;
     _reconnectTimer?.cancel();
     _reconnectAttempt++;
-    final ms = (_reconnectAttempt.clamp(1, 4) * 500);
-    final delay = Duration(milliseconds: ms);
+    final delay = SseReconnectPolicy.delayForAttempt(_reconnectAttempt);
+    GiftSyncLog.sseReconnect(_streamId!, _reconnectAttempt, delay.inMilliseconds);
     _reconnectTimer = Timer(delay, () {
       if (!_stopped) unawaited(_openStream());
     });
   }
 
-  /// Anında yeniden bağlan (maks. ~2 sn backoff).
+  /// Anında yeniden bağlan.
   Future<void> reconnectNow() async {
     if (_stopped || _streamId == null) return;
     _reconnectTimer?.cancel();
@@ -186,16 +199,17 @@ class VideoStreamSseService {
   }
 
   void _handleBlock(String block) {
+    final eventId = _parseEventId(block);
+    if (eventId != null && eventId.isNotEmpty) {
+      _lastEventId = eventId;
+    }
+
     final dataLines = <String>[];
     for (final line in block.split('\n')) {
       if (line.startsWith('data:')) {
         dataLines.add(line.substring(5).trimLeft());
       }
     }
-    // SSE heartbeat/comment blokları `: ...` yorum satırıdır; `data:` içermez,
-    // bu yüzden dataLines boş kalır ve doğal olarak atlanır. Önceki
-    // `block.contains('heartbeat')` kontrolü, içinde "heartbeat" geçen gerçek
-    // mesaj/hediye bloklarını da düşürüyordu.
     if (dataLines.isEmpty) return;
     final payload = dataLines.join('\n').trim();
     if (payload.isEmpty) return;
@@ -205,6 +219,15 @@ class VideoStreamSseService {
       if (decoded is! Map) return;
       _dispatch(Map<String, dynamic>.from(decoded));
     } catch (_) {}
+  }
+
+  String? _parseEventId(String block) {
+    for (final line in block.split('\n')) {
+      if (line.startsWith('id:')) {
+        return line.substring(3).trim();
+      }
+    }
+    return null;
   }
 
   void _dispatch(Map<String, dynamic> map) {
@@ -293,17 +316,6 @@ class VideoStreamSseService {
     }
   }
 
-  Future<void> _closeStreamOnly() async {
-    _reconnectTimer?.cancel();
-    _reconnectTimer = null;
-    _cancel?.cancel('reconnect');
-    _cancel = null;
-    await _bytesSub?.cancel();
-    _bytesSub = null;
-    _dio?.close(force: true);
-    _dio = null;
-  }
-
   Future<void> disconnect() async {
     _stopped = true;
     _streamId = null;
@@ -322,5 +334,19 @@ class VideoStreamSseService {
     _onModeratorUpdated = null;
     await _closeStreamOnly();
     LiveDebugLog.log('stream.sse.disconnect');
+  }
+
+  Future<void> _closeStreamOnly() async {
+    _reconnectTimer?.cancel();
+    await _bytesSub?.cancel();
+    _bytesSub = null;
+    _cancel?.cancel('sse_close');
+    _cancel = null;
+    _dio?.close(force: true);
+    _dio = null;
+  }
+
+  void dispose() {
+    unawaited(disconnect());
   }
 }

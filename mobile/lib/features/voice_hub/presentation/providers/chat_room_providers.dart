@@ -1150,12 +1150,8 @@ class VoiceRoomLiveController
               streamId: _roomKey,
             );
             if (ev == null) return;
+            // Tek yol: publishRemote → GiftEventListener → giftSessionProvider
             ref.read(voiceRoomGiftRealtimeProvider).publishRemote(ev);
-            ref
-                .read(giftSessionProvider(_roomKey).notifier)
-                .onVoiceGiftSent(ev, source: 'sse');
-            ref.read(voiceRecentGiftsProvider.notifier).record(ev);
-            appendGiftChatMessage(ev);
           },
           onMessage: (msg) {
             if (msg.kind == ChatMessageKind.systemJoin) {

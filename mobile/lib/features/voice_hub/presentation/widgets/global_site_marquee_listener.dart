@@ -24,6 +24,7 @@ class _GlobalSiteMarqueeListenerState
     extends ConsumerState<GlobalSiteMarqueeListener> {
   Timer? _poll;
   final _seenGiftIds = <String>{};
+  static const _maxSeenGiftIds = 500;
 
   @override
   void initState() {
@@ -76,6 +77,9 @@ class _GlobalSiteMarqueeListenerState
             ? id
             : '${raw['senderName']}_${raw['receiverName']}_$jeton';
         if (!_seenGiftIds.add(key)) continue;
+        if (_seenGiftIds.length > _maxSeenGiftIds) {
+          _seenGiftIds.remove(_seenGiftIds.first);
+        }
         marquee.enqueueBigGift(
           senderName: _nestedName(
             raw,

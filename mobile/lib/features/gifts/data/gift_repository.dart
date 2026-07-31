@@ -118,6 +118,16 @@ class GiftRepository {
         unawaited(VideoCacheService.instance.prefetch(url));
       }
     }
+    final topVideo = merged
+        .where((g) => g.assetType == GiftAssetType.video)
+        .toList()
+      ..sort((a, b) => b.price.compareTo(a.price));
+    for (final g in topVideo.take(8)) {
+      final url = g.networkAnimationUrl;
+      if (url != null && url.isNotEmpty) {
+        unawaited(VideoCacheService.instance.warmController(url));
+      }
+    }
     return merged;
   }
 

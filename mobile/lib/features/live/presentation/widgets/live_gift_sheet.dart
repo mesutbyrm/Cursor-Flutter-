@@ -10,6 +10,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/presentation/widgets/lucky_gift_badge.dart';
 import '../../../gifts/presentation/widgets/lucky_gift_spin_overlay.dart';
 import '../../../gifts/presentation/providers/gift_providers.dart';
+import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_gift_type.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
@@ -133,6 +134,12 @@ Future<void> showLiveGiftPicker(
                                             );
                                       }
                                     } else {
+                                      GiftSyncLog.giftSent(
+                                        roomId: streamId,
+                                        giftId: g.id,
+                                        eventId:
+                                            'api_send_${DateTime.now().millisecondsSinceEpoch}',
+                                      );
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
                                         SnackBar(

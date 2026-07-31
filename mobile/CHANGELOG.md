@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.105+138 (2026-07-31)
+
+### Hediye senkronizasyonu & performans
+- **Gerçek zamanlı hediye:** SSE/socket → tek `publishRemote` hattı; `GiftEventListener` feed, sohbet ve son hediyeleri yönetir (çift işleme yok)
+- **Dedupe:** Oda çıkışında sıfırlanır; `_seen` üst sınırı 2048; anında feed (ertelenmiş kuyruk kaldırıldı)
+- **MP4 hediyeler:** İlk kare siyah önleme, thumbnail, seek(0), oynatma bitince dispose; soğuk açılışta sıcak controller temizliği
+- **PNG/SVG:** Katalog disk önbelleği (`assetType`, `animationUrl`); bozuk dosya otomatik silinir; top 8 video preload
+- **SSE canlı yayın:** `Last-Event-ID`, exponential backoff, keep-alive; yeniden bağlanma logları
+- **Oturum temizliği:** `AppSessionReset.onColdStart()`; oda çıkışında video/gift cache + realtime dedupe sıfırlama
+- **Teşhis logları:** `gift_sent`, `event_received`, `video_started/ended`, `cache_hit/miss`, `sse_reconnect`, pipeline ms
+
 ## 1.0.104+137 (2026-07-30)
 
 ### Sesli oda yönetimi (birleştirme)

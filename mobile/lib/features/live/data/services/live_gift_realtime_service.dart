@@ -38,6 +38,11 @@ class LiveGiftRealtimeService {
     _local.close();
   }
 
+  void resetDedupeState() {
+    _seen.clear();
+    _fingerprints.clear();
+  }
+
   String _fingerprint(LiveGiftEvent e) {
     final sender = (e.senderId ?? e.senderName).trim().toLowerCase();
     final receiver = (e.receiverId ?? e.receiverName).trim().toLowerCase();

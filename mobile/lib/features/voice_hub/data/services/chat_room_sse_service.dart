@@ -8,6 +8,7 @@ import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../../gifts/domain/gift_payload_util.dart';
+import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../presentation/utils/voice_sse_dj_payload.dart';
 import 'voice_room_debug_log.dart';
 
@@ -115,11 +116,13 @@ class ChatRoomSseService extends BaseSseService {
 
   @override
   void onReconnecting(int attempt) {
+    final roomId = _roomId ?? '';
     VoiceRoomDebugLog.sseReconnect(
-      roomId: _roomId ?? '',
+      roomId: roomId,
       attempt: attempt,
       delaySec: 0,
     );
+    GiftSyncLog.sseReconnect(roomId, attempt, 0);
   }
 
   @override

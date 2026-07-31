@@ -81,6 +81,9 @@ class VoiceRoomGiftRealtimeService {
 
   void publishRemote(LiveGiftEvent event) {
     if (!_seen.add(event.id)) return;
+    if (_seen.length > 2048) {
+      _seen.remove(_seen.first);
+    }
     if (_isDuplicateFingerprint(event)) return;
     if (!_local.isClosed) _local.add(event);
   }
@@ -88,6 +91,12 @@ class VoiceRoomGiftRealtimeService {
   void dispose() {
     stop();
     _local.close();
+  }
+
+  /// Oda çıkışı — dedupe setlerini sıfırla (bellek sızıntısı önleme).
+  void resetDedupeState() {
+    _seen.clear();
+    _fingerprints.clear();
   }
 
   Future<void> _pollOnce() async {

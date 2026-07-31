@@ -1,16 +1,17 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:video_player/video_player.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/video/video_cache_service.dart';
+import '../../data/gift_cache_service.dart';
 import '../../domain/gift_media_spec.dart';
 import '../../domain/gift_media_type.dart';
+import '../sync/gift_sync_log.dart';
 
 /// PNG / SVG / WEBP / MP4 — backend `mediaType` ile uyumlu tek oynatıcı.
-///
-/// Video: önbellekli [VideoPlayer], muted + looping, init bitene kadar yalnızca
-/// thumbnail; hata durumunda thumbnail fallback.
 class GiftMediaWidget extends StatefulWidget {
   const GiftMediaWidget({
     super.key,
@@ -43,12 +44,16 @@ class _GiftMediaWidgetState extends State<GiftMediaWidget> {
   VideoPlayerController? _video;
   var _videoFailed = false;
   var _videoReady = false;
+  var _firstFrameReady = false;
+  Uint8List? _svgBytes;
 
   @override
   void initState() {
     super.initState();
     if (widget.spec.mediaType.isVideo) {
       _initVideo();
+    } else if (widget.spec.mediaType == GiftMediaType.svg) {
+      _loadSvg();
     }
   }
 
@@ -60,9 +65,35 @@ class _GiftMediaWidgetState extends State<GiftMediaWidget> {
       _disposeVideo();
       _videoFailed = false;
       _videoReady = false;
+      _firstFrameReady = false;
+      _svgBytes = null;
       if (widget.spec.mediaType.isVideo) {
         _initVideo();
+      } else if (widget.spec.mediaType == GiftMediaType.svg) {
+        _loadSvg();
       }
+    }
+  }
+
+  Future<void> _loadSvg() async {
+    final url = widget.spec.mediaUrl?.trim() ?? '';
+    if (url.isEmpty) return;
+    final bytes = await GiftCacheService.instance.getBytes(url);
+    if (!mounted) return;
+    if (bytes != null) {
+      GiftSyncLog.cacheHit(url, fromMemory: true);
+      setState(() => _svgBytes = bytes);
+    } else {
+      GiftSyncLog.cacheMiss(url);
+    }
+  }
+
+  void _onVideoTick() {
+    final c = _video;
+    if (c == null || _firstFrameReady) return;
+    if (c.value.isInitialized &&
+        (c.value.isPlaying || c.value.position > Duration.zero)) {
+      setState(() => _firstFrameReady = true);
     }
   }
 
@@ -73,6 +104,13 @@ class _GiftMediaWidgetState extends State<GiftMediaWidget> {
       return;
     }
     try {
+      final cached = await VideoCacheService.instance.peekCachedFile(url);
+      if (cached != null) {
+        GiftSyncLog.cacheHit(url, fromMemory: false);
+      } else {
+        GiftSyncLog.cacheMiss(url);
+      }
+
       final warm = VideoCacheService.instance.takeWarmController(url);
       final c = warm ?? await VideoCacheService.instance.createController(url);
       if (!mounted) {
@@ -81,6 +119,8 @@ class _GiftMediaWidgetState extends State<GiftMediaWidget> {
       }
       await c.setLooping(widget.looping);
       if (widget.muted) await c.setVolume(0);
+      await c.seekTo(Duration.zero);
+      c.addListener(_onVideoTick);
       if (widget.autoplay) await c.play();
       _video = c;
       widget.onVideoControllerChanged?.call(c);
@@ -97,7 +137,9 @@ class _GiftMediaWidgetState extends State<GiftMediaWidget> {
     final c = _video;
     _video = null;
     _videoReady = false;
+    _firstFrameReady = false;
     if (c != null) {
+      c.removeListener(_onVideoTick);
       widget.onVideoControllerChanged?.call(null);
       final url = widget.spec.mediaUrl?.trim();
       if (url != null && url.isNotEmpty) {
@@ -145,7 +187,19 @@ class _GiftMediaWidgetState extends State<GiftMediaWidget> {
         child: VideoPlayer(c),
       ),
     );
-    return _wrapSized(_aspectWrap(spec, videoChild, c));
+
+    return _wrapSized(
+      Stack(
+        fit: StackFit.passthrough,
+        children: [
+          if (!_firstFrameReady) _thumbnailOrEmoji(spec, shrink: true),
+          Opacity(
+            opacity: _firstFrameReady ? 1 : 0,
+            child: _aspectWrap(spec, videoChild, c),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildStatic(GiftMediaSpec spec) {
@@ -153,11 +207,17 @@ class _GiftMediaWidgetState extends State<GiftMediaWidget> {
     if (url.isEmpty) return _thumbnailOrEmoji(spec);
 
     final child = switch (spec.mediaType) {
-      GiftMediaType.svg => SvgPicture.network(
-          url,
-          fit: widget.fit,
-          placeholderBuilder: (_) => _thumbnailOrEmoji(spec, shrink: true),
-        ),
+      GiftMediaType.svg => _svgBytes != null
+          ? SvgPicture.memory(
+              _svgBytes!,
+              fit: widget.fit,
+              placeholderBuilder: (_) => _thumbnailOrEmoji(spec, shrink: true),
+            )
+          : SvgPicture.network(
+              url,
+              fit: widget.fit,
+              placeholderBuilder: (_) => _thumbnailOrEmoji(spec, shrink: true),
+            ),
       GiftMediaType.gif ||
       GiftMediaType.png ||
       GiftMediaType.webp ||

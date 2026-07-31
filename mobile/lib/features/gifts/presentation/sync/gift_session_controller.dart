@@ -17,12 +17,11 @@ import 'gift_sync_log.dart';
 
 /// Gift Engine oturum kontrolcüsü — ses → animasyon → jeton sırası.
 class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, String> {
-  static const _maxRecent = 5;
-  static const _maxProcessedIds = 256;
+  static const _maxRecent = 8;
+  static const _maxProcessedIds = 512;
   static const _joinGraceMs = 15000;
 
   final _feedExpiryTimers = <String, Timer>{};
-  final _deferredByEventId = <String, GiftDeferredApply>{};
   final _receivedAtMs = <String, int>{};
   Timer? _animationTimer;
   void Function()? _cancelHourlyReset;
@@ -47,7 +46,6 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       t.cancel();
     }
     _feedExpiryTimers.clear();
-    _deferredByEventId.clear();
     _receivedAtMs.clear();
     state = state.copyWith(
       recentGifts: const [],
@@ -65,7 +63,6 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     }
     _feedExpiryTimers.clear();
     _animationTimer?.cancel();
-    _deferredByEventId.clear();
     _receivedAtMs.clear();
   }
 
@@ -180,18 +177,15 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       return;
     }
 
-    _deferredByEventId[event.id] = GiftDeferredApply(
-      event: event,
-      recentItem: recentItem,
-      feedItem: feedItem,
-      roomTotalJeton: roomTotal,
-      remainingBalance: event.remainingBalance,
-    );
-
+    // Feed / jeton anında — animasyon kuyruğu ayrı (yüzlerce hediye kaybolmaz).
     state = state.copyWith(
+      recentGifts: _prependRecent(recentItem),
+      roomTotalJeton: roomTotal,
+      remainingBalance: event.remainingBalance ?? state.remainingBalance,
       processedEventIds: ids,
       latestEvent: event,
     );
+    _applyFeedItem(feedItem, event);
 
     _enqueueAnimation(event);
     GiftSyncLog.eventProcessed(roomId, event.id, combo: event.combo);
@@ -204,8 +198,6 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   }
 
   void dequeueAnimation(String eventId) {
-    _applyDeferred(eventId);
-
     final clearingActive = state.activeAnimation?.id == eventId;
     final filteredQueue =
         state.animationQueue.where((e) => e.id != eventId).toList();
@@ -213,27 +205,15 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       return;
     }
     _animationTimer?.cancel();
+    _receivedAtMs.remove(eventId);
     state = state.copyWith(
       clearActiveAnimation: clearingActive,
       animationQueue: filteredQueue,
     );
     if (clearingActive) {
+      GiftSyncLog.videoEnded(_roomId, eventId);
       _pumpAnimationQueue();
     }
-  }
-
-  void _applyDeferred(String eventId) {
-    final deferred = _deferredByEventId.remove(eventId);
-    _receivedAtMs.remove(eventId);
-    if (deferred == null) return;
-
-    state = state.copyWith(
-      recentGifts: _prependRecent(deferred.recentItem),
-      roomTotalJeton: deferred.roomTotalJeton,
-      remainingBalance: deferred.remainingBalance ?? state.remainingBalance,
-    );
-    _applyFeedItem(deferred.feedItem, deferred.event);
-    GiftSyncLog.pipelineStage(eventId, 'balance_applied');
   }
 
   GiftRecentItem _buildRecentItem(LiveGiftEvent event) {
@@ -330,9 +310,10 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
 
       GiftSyncLog.pipelineStage(next.id, 'prefetch');
       final tPrefetch = DateTime.now();
+      final backlog = state.animationQueue.length;
       try {
         await GiftEnginePreloader.prefetch(next).timeout(
-          const Duration(milliseconds: 450),
+          Duration(milliseconds: backlog > 4 ? 900 : 500),
         );
       } catch (_) {}
       GiftSyncLog.pipelineMs(
@@ -365,6 +346,7 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       final totalMs = DateTime.now().millisecondsSinceEpoch - receivedMs;
       GiftSyncLog.pipelineTotal(next.id, totalMs);
       GiftSyncLog.uiRender(_roomId, 'gift_engine_queue');
+      GiftSyncLog.videoStarted(_roomId, next.id);
 
       final config = GiftEngineParser.fromEvent(next);
       var durationMs = config.durationMs;

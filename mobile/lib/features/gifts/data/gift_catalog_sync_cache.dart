@@ -43,6 +43,10 @@ class GiftCatalogSyncCache {
     }
   }
 
+  Future<void> clearCorrupt() async {
+    await clear();
+  }
+
   Future<void> writeCatalog(List<GiftEntity> gifts) async {
     final payload = jsonEncode({
       'at': DateTime.now().toIso8601String(),
@@ -70,6 +74,13 @@ class GiftCatalogSyncCache {
               'isFullscreen': g.isFullscreen,
               'isPremium': g.isPremium,
               'comboEnabled': g.comboEnabled,
+              'assetType': g.assetType.name,
+              if (g.mediaType != null) 'mediaType': g.mediaType,
+              if (g.assetFormat != null) 'assetFormat': g.assetFormat,
+              if (g.mediaWidth != null) 'mediaWidth': g.mediaWidth,
+              if (g.mediaHeight != null) 'mediaHeight': g.mediaHeight,
+              if (g.networkAnimationUrl != null)
+                'animationUrl': g.networkAnimationUrl,
             },
           )
           .toList(),

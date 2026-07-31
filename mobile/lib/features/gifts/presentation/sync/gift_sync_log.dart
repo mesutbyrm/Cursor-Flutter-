@@ -62,6 +62,44 @@ abstract final class GiftSyncLog {
     }
   }
 
+  static void sseReconnect(String roomId, int attempt, int delayMs) {
+    debugPrint(
+      '[GiftSync] sse_reconnect room=$roomId attempt=$attempt delay=${delayMs}ms',
+    );
+  }
+
+  static void giftSent({
+    required String roomId,
+    required String giftId,
+    required String eventId,
+  }) {
+    debugPrint(
+      '[GiftSync] gift_sent room=$roomId gift=$giftId id=$eventId',
+    );
+  }
+
+  static void cacheHit(String url, {required bool fromMemory}) {
+    if (kDebugMode) {
+      debugPrint(
+        '[GiftSync] cache_hit ${fromMemory ? 'memory' : 'disk'} url=$url',
+      );
+    }
+  }
+
+  static void cacheMiss(String url) {
+    if (kDebugMode) {
+      debugPrint('[GiftSync] cache_miss url=$url');
+    }
+  }
+
+  static void videoStarted(String roomId, String eventId) {
+    debugPrint('[GiftSync] video_started room=$roomId id=$eventId');
+  }
+
+  static void videoEnded(String roomId, String eventId) {
+    debugPrint('[GiftSync] video_ended room=$roomId id=$eventId');
+  }
+
   /// Pipeline aşaması — profil/release'te de ölçüm için.
   static void pipelineStage(String eventId, String stage) {
     debugPrint('[GiftPipeline] id=$eventId stage=$stage');
