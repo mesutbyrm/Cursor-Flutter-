@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:canlifal_social/app/router/app_router.dart';
+import 'package:canlifal_social/core/config/env.dart';
 import 'package:canlifal_social/core/network/dio_provider.dart';
 import 'package:canlifal_social/core/network/token_storage.dart';
+import 'package:dio/dio.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/ui/premium/live_badge.dart';
 import 'package:canlifal_social/core/ui/premium_2026/cosmic_galaxy_background.dart';
@@ -110,7 +112,17 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
 
   Future<void> _connectSse() async {
     final storage = ref.read(tokenStorageProvider);
-    final refreshDio = ref.read(refreshDioProvider);
+    final refreshDio = Dio(
+      BaseOptions(
+        baseUrl: Env.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 3),
+        receiveTimeout: const Duration(seconds: 5),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
     await ref.read(psychicRoomSseServiceProvider).connect(
           sessionId: session.sessionId,
           accessToken: storage.readAccess,

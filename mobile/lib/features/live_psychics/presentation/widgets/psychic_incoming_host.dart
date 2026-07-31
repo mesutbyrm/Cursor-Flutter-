@@ -6,8 +6,10 @@ import 'package:go_router/go_router.dart';
 
 import 'package:canlifal_social/app/router/app_router.dart';
 import 'package:canlifal_social/core/bootstrap/auth_route_paths.dart';
+import 'package:canlifal_social/core/config/env.dart';
 import 'package:canlifal_social/core/network/dio_provider.dart';
 import 'package:canlifal_social/core/network/token_storage.dart';
+import 'package:dio/dio.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_incoming_sse_service.dart';
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
@@ -189,7 +191,17 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
         _sseService ?? ref.read(psychicIncomingSseServiceProvider);
     _sseService ??= service;
     final tokens = ref.read(tokenStorageProvider);
-    final refreshDio = ref.read(refreshDioProvider);
+    final refreshDio = Dio(
+      BaseOptions(
+        baseUrl: Env.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 3),
+        receiveTimeout: const Duration(seconds: 5),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
     await service.connect(
           accessToken: tokens.readAccess,
           refreshTokens: () => tryRefreshAccessToken(refreshDio, tokens),

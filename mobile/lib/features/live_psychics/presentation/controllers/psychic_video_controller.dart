@@ -4,11 +4,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:canlifal_social/core/config/env.dart';
 import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/core/network/dio_provider.dart';
 import 'package:canlifal_social/core/network/live_debug_log.dart';
 import 'package:canlifal_social/features/auth/domain/entities/user_entity.dart';
 import 'package:canlifal_social/core/network/token_storage.dart';
+import 'package:dio/dio.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
 import 'package:canlifal_social/features/live/presentation/providers/live_beauty_provider.dart';
 import 'package:canlifal_social/features/trtc/presentation/providers/trtc_providers.dart';
@@ -416,7 +418,17 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   Future<void> _connectRoomSse() async {
     final user = ref.read(authControllerProvider).valueOrNull;
     final storage = ref.read(tokenStorageProvider);
-    final refreshDio = ref.read(refreshDioProvider);
+    final refreshDio = Dio(
+      BaseOptions(
+        baseUrl: Env.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 3),
+        receiveTimeout: const Duration(seconds: 5),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
     await ref.read(psychicRoomSseServiceProvider).connect(
           sessionId: session.sessionId,
           accessToken: storage.readAccess,
