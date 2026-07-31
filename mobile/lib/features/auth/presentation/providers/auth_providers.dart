@@ -27,7 +27,8 @@ import '../../domain/entities/active_session_entity.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../trtc/presentation/trtc_bootstrap_service.dart';
-import '../../../../services/auth_service_provider.dart';
+import '../../data/datasources/auth_service.dart';
+import 'auth_service_provider.dart';
 import '../../../../core/network/auth_token_refresh_coordinator.dart';
 
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {

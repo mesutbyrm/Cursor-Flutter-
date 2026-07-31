@@ -2,18 +2,18 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-import '../core/config/env.dart';
-import '../core/firebase/firebase_bootstrap.dart';
-import '../core/network/api_endpoints.dart';
-import '../core/network/api_exception.dart';
-import '../core/network/auth_token_refresh_coordinator.dart';
-import '../core/network/dio_provider.dart';
-import '../core/network/token_storage.dart';
-import '../core/push/push_notification_service.dart';
-import 'models/auth_api_error.dart';
-import 'models/auth_response.dart';
-import 'models/auth_user.dart';
-import 'models/apple_full_name.dart';
+import '../../../../core/config/env.dart';
+import '../../../../core/firebase/firebase_bootstrap.dart';
+import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/auth_token_refresh_coordinator.dart';
+import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/token_storage.dart';
+import '../../../../core/push/push_notification_service.dart';
+import '../models/auth_api_error.dart';
+import '../models/auth_response.dart';
+import '../models/auth_user.dart';
+import '../models/apple_full_name.dart';
 
 /// Canlifal mobil kimlik doğrulama — `https://canlifal.com` JWT API.
 ///

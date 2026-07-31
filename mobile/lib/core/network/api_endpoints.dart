@@ -845,6 +845,10 @@ abstract final class ApiEndpoints {
   static String conversationMessages(String id) =>
       '/api/messages/conversations/$id/messages';
 
+  /// DM SSE (üretim hazır olduğunda) — `GET .../stream`.
+  static String conversationStream(String id) =>
+      '/api/messages/conversations/$id/stream';
+
   static String conversationTyping(String id) =>
       '/api/messages/conversations/$id/typing';
 

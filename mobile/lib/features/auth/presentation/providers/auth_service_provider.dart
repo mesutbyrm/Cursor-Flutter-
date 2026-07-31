@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/config/env.dart';
-import '../core/network/dio_provider.dart';
-import '../core/network/token_storage.dart';
-import 'auth_service.dart';
+import '../../../../core/config/env.dart';
+import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/token_storage.dart';
+import '../../data/datasources/auth_service.dart';
 
 /// Auth uçları için Bearer eklenmeyen Dio (login, register, refresh).
 final authPublicDioProvider = Provider<Dio>((ref) {

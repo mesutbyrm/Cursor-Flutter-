@@ -5,8 +5,8 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
-import '../../../../services/mobile_compound_service.dart';
-import '../../../../services/models/mobile_compound_models.dart';
+import '../models/mobile_compound_models.dart';
+import 'mobile_compound_remote_datasource.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_fortune_card_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
@@ -14,10 +14,11 @@ import '../../domain/entities/home_trend_video_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 
 class HomeRemoteDataSource {
-  HomeRemoteDataSource(this._dio) : _compound = MobileCompoundService(_dio);
+  HomeRemoteDataSource(this._dio)
+      : _compound = MobileCompoundRemoteDataSource(_dio);
 
   final Dio _dio;
-  final MobileCompoundService _compound;
+  final MobileCompoundRemoteDataSource _compound;
 
   Future<MobileHomeBundle?> fetchMobileHome({bool force = false}) =>
       _compound.fetchHome(force: force);

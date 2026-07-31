@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 
 import '../network/api_endpoints.dart';
 import '../network/token_storage.dart';
-import '../../services/auth_service.dart';
-import '../../services/models/auth_response.dart';
+import '../../features/auth/data/datasources/auth_service.dart';
+import '../../features/auth/data/models/auth_response.dart';
 
 /// Eşzamanlı 401'lerde tek refresh — queue pattern.
 class AuthTokenRefreshCoordinator {

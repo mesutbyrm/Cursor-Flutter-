@@ -127,10 +127,12 @@ class _LiveBroadcastListState extends ConsumerState<_LiveBroadcastList> {
         itemBuilder: (context, index) {
           final stream = widget.streams[index];
           final eager = index < HomeLiveStreamsRow._eagerCount;
-          return _LiveBroadcastCard(
-            stream: stream,
-            eagerLoad: eager,
-            onTap: () => openLiveStreamNative(context, ref, stream),
+          return RepaintBoundary(
+            child: _LiveBroadcastCard(
+              stream: stream,
+              eagerLoad: eager,
+              onTap: () => openLiveStreamNative(context, ref, stream),
+            ),
           );
         },
       ),

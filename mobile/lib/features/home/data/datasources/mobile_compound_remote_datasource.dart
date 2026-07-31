@@ -1,14 +1,14 @@
 import 'package:dio/dio.dart';
 
-import '../core/network/api_endpoints.dart';
-import '../core/network/api_exception.dart';
-import '../core/network/dio_provider.dart';
-import 'models/mobile_compound_models.dart';
-import 'service_utils.dart';
+import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/dio_provider.dart';
+import '../../../../core/util/service_utils.dart';
+import '../models/mobile_compound_models.dart';
 
 /// Mobil birleşik endpoint'ler — `GET /api/mobile/*`.
-class MobileCompoundService {
-  MobileCompoundService(this._dio);
+class MobileCompoundRemoteDataSource {
+  MobileCompoundRemoteDataSource(this._dio);
 
   final Dio _dio;
 

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:canlifal_social/services/models/apple_full_name.dart';
-import 'package:canlifal_social/services/models/mobile_config.dart';
+import 'package:canlifal_social/features/auth/data/models/apple_full_name.dart';
+import 'package:canlifal_social/core/config/models/mobile_config.dart';
 import 'package:canlifal_social/services/models/user_action_models.dart';
 
 void main() {

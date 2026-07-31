@@ -4,6 +4,7 @@ import '../../../../core/performance/network_perf.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../live/presentation/providers/discover_live_streams.dart';
 import '../../../live/presentation/providers/discover_voice_rooms.dart';
+import '../../../live/presentation/providers/live_streams_list_notifier.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../social/presentation/providers/social_providers.dart';
 import '../../data/datasources/home_remote_datasource.dart';
@@ -23,6 +24,21 @@ import '../../../voice_hub/presentation/providers/voice_rooms_presence_provider.
 import '../../../vip_gold/domain/voice_room_access.dart';
 
 void _keepHomeCacheAlive(Ref ref) => ref.keepAlive();
+
+/// Ana sayfa keepAlive provider'larını SSE / realtime olayında yenile.
+void invalidateHomeKeepAliveProviders(Ref ref) {
+  ref.invalidate(homeBannersProvider);
+  ref.invalidate(homeFortuneCardsProvider);
+  ref.invalidate(homeTrendVideosProvider);
+  ref.invalidate(homeAdvisorsProvider);
+  ref.invalidate(homeGamesProvider);
+  ref.invalidate(homeDailyRewardsProvider);
+  ref.invalidate(homeTickerProvider);
+  invalidateDiscoverLiveStreams(ref);
+  invalidateDiscoverVoiceRooms(ref);
+  ref.invalidate(homeLiveStreamsProvider);
+  ref.invalidate(homeVoiceRoomsProvider);
+}
 
 final homeRemoteProvider = Provider<HomeRemoteDataSource>((ref) {
   return HomeRemoteDataSource(ref.watch(dioProvider));
@@ -81,7 +97,12 @@ final homeAdvisorsProvider =
 final homeLiveStreamsProvider =
     FutureProvider<List<LiveStreamEntity>>((ref) async {
   _keepHomeCacheAlive(ref);
-  return ref.watch(homeRepositoryProvider).fetchLiveStreams();
+  final cached = ref.watch(liveStreamsListNotifierProvider).valueOrNull;
+  if (cached != null && cached.isNotEmpty) {
+    return cached.where((s) => s.isLive).take(12).toList();
+  }
+  final all = await ref.read(liveStreamsListNotifierProvider.future);
+  return all.where((s) => s.isLive).take(12).toList();
 });
 
 final homeVoiceRoomsProvider =

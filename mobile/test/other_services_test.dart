@@ -1,20 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:canlifal_social/services/fortune_service.dart';
-import 'package:canlifal_social/services/service_utils.dart';
+import 'package:canlifal_social/core/util/service_utils.dart';
+import 'package:canlifal_social/features/fortune/domain/fortune_type_slug.dart';
 
 void main() {
-  group('FortuneService.resolveSlug', () {
+  group('FortuneTypeSlug.resolve', () {
     test('maps English types to production slugs', () {
-      expect(FortuneService.resolveSlug('coffee'), 'kahve-fali');
-      expect(FortuneService.resolveSlug('tarot'), 'tarot-fali');
-      expect(FortuneService.resolveSlug('dream'), 'ruya-yorumu');
-      expect(FortuneService.resolveSlug('birthchart'), 'dogum-haritasi');
-      expect(FortuneService.resolveSlug('kursundokme'), 'kursundokme');
+      expect(FortuneTypeSlug.resolve('coffee'), 'kahve-fali');
+      expect(FortuneTypeSlug.resolve('tarot'), 'tarot-fali');
+      expect(FortuneTypeSlug.resolve('dream'), 'ruya-yorumu');
+      expect(FortuneTypeSlug.resolve('birthchart'), 'dogum-haritasi');
+      expect(FortuneTypeSlug.resolve('kursundokme'), 'kursundokme');
     });
 
     test('passes through unknown slug', () {
-      expect(FortuneService.resolveSlug('ozel-fal'), 'ozel-fal');
+      expect(FortuneTypeSlug.resolve('ozel-fal'), 'ozel-fal');
     });
   });
 

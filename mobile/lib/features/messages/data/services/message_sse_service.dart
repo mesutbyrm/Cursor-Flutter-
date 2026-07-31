@@ -20,19 +20,23 @@ class MessageSseService extends BaseSseService {
   @override
   String streamPath() {
     final id = _conversationId ?? '';
-    return ApiEndpoints.conversationMessages(id);
+    return ApiEndpoints.conversationStream(id);
   }
 
   Future<void> connectToConversation({
     required String conversationId,
     required Future<String?> Function() accessToken,
+    Future<bool> Function()? refreshTokens,
     void Function(MessageSseEvent event)? onEvent,
   }) async {
     final id = conversationId.trim();
     if (id.isEmpty) return;
     _conversationId = id;
     _onEvent = onEvent;
-    await super.openConnection(accessToken: accessToken);
+    await super.openConnection(
+      accessToken: accessToken,
+      refreshTokens: refreshTokens,
+    );
   }
 
   @override

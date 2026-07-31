@@ -30,10 +30,7 @@ class HomeRealtimeBridge {
 
   void _tick() {
     if (_disposed || _pollTimer == null) return;
-    unawaited(_ref.refresh(homeLiveStreamsProvider.future));
-    invalidateDiscoverVoiceRooms(_ref);
-    unawaited(_ref.refresh(homeVoiceRoomsProvider.future));
-    invalidateDiscoverLiveStreams(_ref);
+    invalidateHomeKeepAliveProviders(_ref);
   }
 
   void dispose() {

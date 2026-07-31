@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.114+147 (2026-07-31)
+
+### Web ↔ Flutter parity (Faz 4)
+- **Legacy `services/`:** Auth, config, mobile compound feature katmanına taşındı; kullanılmayan servis dosyaları silindi
+- **Ana sayfa:** `homeLiveStreamsProvider` → `liveStreamsListNotifier`; `invalidateHomeKeepAliveProviders` (SSE + 60s bridge)
+- **DM:** Bildirim SSE mesaj olayında konuşma yenileme; sohbet ekranında `MessageSseService` + poll yedek (8s/15s)
+- **API registry:** `chat_room_providers` müzik log path'leri; `conversationStream` endpoint sabiti
+- **Performans:** Voice discover cache 2dk; ana sayfa canlı kartları `RepaintBoundary`
+
 ## 1.0.113+146 (2026-07-31)
 
 ### Web ↔ Flutter parity (Faz 3)

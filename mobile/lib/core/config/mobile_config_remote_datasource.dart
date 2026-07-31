@@ -1,14 +1,13 @@
 import 'package:dio/dio.dart';
 
-import '../core/api_response.dart';
-import '../core/network/api_endpoints.dart';
-import '../core/network/dio_provider.dart';
+import '../api_response.dart';
+import '../network/api_endpoints.dart';
+import '../network/dio_provider.dart';
 import 'models/mobile_config.dart';
-import 'service_utils.dart';
 
 /// Mobil uygulama yapılandırması — `GET /api/mobile/config`.
-class ConfigService {
-  ConfigService({required Dio publicDio}) : _publicDio = publicDio;
+class MobileConfigRemoteDataSource {
+  MobileConfigRemoteDataSource({required Dio publicDio}) : _publicDio = publicDio;
 
   final Dio _publicDio;
 
