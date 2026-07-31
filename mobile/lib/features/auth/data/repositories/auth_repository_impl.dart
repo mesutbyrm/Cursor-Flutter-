@@ -215,7 +215,6 @@ class AuthRepositoryImpl implements AuthRepository {
       return entity;
     } on ApiException catch (e) {
       if (e.statusCode == 401 || e.statusCode == 403) {
-        await _tokens.clear();
         await _sessionCache.clear();
       } else {
         final cached = await _sessionCache.read();

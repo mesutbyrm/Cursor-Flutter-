@@ -41,6 +41,28 @@ class AuthResponse {
     throw FormatException('Auth yanıtında $primary eksik');
   }
 
+  /// `POST /api/auth/mobile-refresh` — yalnızca token çifti (user yok).
+  static ({String accessToken, String refreshToken})? parseRefreshTokens(
+    Map<String, dynamic>? body,
+  ) {
+    if (body == null || body.isEmpty) return null;
+    var map = body;
+    if (body['success'] == true && body['data'] is Map) {
+      map = Map<String, dynamic>.from(body['data'] as Map);
+    } else if (body['data'] is Map) {
+      map = Map<String, dynamic>.from(body['data'] as Map);
+    }
+    final access = map['accessToken'] ?? map['access_token'];
+    final refresh = map['refreshToken'] ?? map['refresh_token'];
+    if (access is String &&
+        access.isNotEmpty &&
+        refresh is String &&
+        refresh.isNotEmpty) {
+      return (accessToken: access, refreshToken: refresh);
+    }
+    return null;
+  }
+
   /// `{ success: true, data: { ... } }` veya düz JSON.
   static AuthResponse parseRoot(Map<String, dynamic>? body) {
     if (body == null || body.isEmpty) {

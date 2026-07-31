@@ -6,6 +6,7 @@ import '../core/config/env.dart';
 import '../core/firebase/firebase_bootstrap.dart';
 import '../core/network/api_endpoints.dart';
 import '../core/network/api_exception.dart';
+import '../core/network/auth_token_refresh_coordinator.dart';
 import '../core/network/dio_provider.dart';
 import '../core/network/token_storage.dart';
 import '../core/push/push_notification_service.dart';
@@ -174,10 +175,48 @@ class AuthService {
 
   /// `POST /api/auth/mobile-refresh`
   Future<AuthResponse> refreshToken(String refreshToken) async {
-    return _postAuth(
-      ApiEndpoints.authMobileRefresh,
-      {'refreshToken': refreshToken},
-    );
+    try {
+      final res = await _publicDio.safePost<Map<String, dynamic>>(
+        ApiEndpoints.authMobileRefresh,
+        data: {'refreshToken': refreshToken},
+      );
+      final tokens = AuthResponse.parseRefreshTokens(res.data);
+      if (tokens != null) {
+        final userId = await _tokens.readUserId();
+        await _tokens.writeTokens(
+          access: tokens.accessToken,
+          refresh: tokens.refreshToken,
+          userId: userId,
+        );
+        final meRes = await _publicDio.safeGet<Map<String, dynamic>>(
+          ApiEndpoints.me,
+          options: Options(
+            headers: {'Authorization': 'Bearer ${tokens.accessToken}'},
+          ),
+        );
+        final body = _unwrapBody(meRes.data);
+        final userMap = body['user'] ?? body;
+        if (userMap is! Map) {
+          throw const ApiException('Oturum yenilenemedi');
+        }
+        final user = AuthUser.fromJson(
+          userMap is Map<String, dynamic>
+              ? userMap
+              : Map<String, dynamic>.from(userMap),
+        );
+        if (user.id.isNotEmpty) {
+          await _tokens.writeUserId(user.id);
+        }
+        return AuthResponse(
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          user: user,
+        );
+      }
+      return AuthResponse.parseRoot(res.data);
+    } on DioException catch (e) {
+      throw _mapDioError(e);
+    }
   }
 
   /// `POST /api/auth/forgot-password`
@@ -239,7 +278,8 @@ class AuthService {
       return user;
     } on ApiException catch (e) {
       if (e.statusCode == 401 || e.statusCode == 403) {
-        await _tokens.clear();
+        // Token temizliği yalnızca AuthTokenRefreshCoordinator üzerinden.
+        return null;
       }
       return null;
     } catch (_) {
@@ -254,6 +294,7 @@ class AuthService {
       refresh: response.refreshToken,
       userId: response.user.id,
     );
+    AuthTokenRefreshCoordinator.instance.markSessionFresh();
   }
 
   Future<AuthResponse> _postAuth(String path, Map<String, dynamic> data) async {

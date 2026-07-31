@@ -56,6 +56,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   static const _actionTimeout = Duration(seconds: 30);
 
   Timer? _bootWatchdog;
+  var _sessionEpoch = 0;
 
   Future<UserEntity?> _sessionUser() => LoadingTimeout.run(
         ref.read(authRepositoryProvider).currentUser(),
@@ -125,6 +126,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   Future<void> _validateSessionInBackground(
     String token,
     SessionUserCache sessionCache,
+    int epoch,
   ) async {
     try {
       final user = await LoadingTimeout.run(
@@ -132,6 +134,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
         timeout: _bootTimeout,
         message: 'Oturum kontrolü zaman aşımına uğradı',
       );
+      if (epoch != _sessionEpoch) return;
       if (user != null) {
         await sessionCache.write(user);
         if (state.valueOrNull?.id == user.id) {
@@ -175,7 +178,8 @@ class AuthController extends AsyncNotifier<UserEntity?> {
       if (cached != null) {
         AppStartupLog.authFinish(hasUser: true);
         unawaited(_enrichUserAfterBoot(cached));
-        unawaited(_validateSessionInBackground(token, sessionCache));
+        final epoch = _sessionEpoch;
+        unawaited(_validateSessionInBackground(token, sessionCache, epoch));
         return cached;
       }
     }
@@ -228,6 +232,9 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
   Future<void> _afterAuthSuccess(UserEntity? user) async {
     if (user == null || user.id.isEmpty) return;
+    _sessionEpoch++;
+    AuthTokenRefreshCoordinator.instance.markSessionFresh();
+    await ref.read(sessionUserCacheProvider).write(user);
     invalidateAuthenticatedShellData(ref);
     unawaited(OneSignalBootstrap.login(user.id));
     unawaited(TrtcBootstrapService.prewarmAfterAuth());
@@ -387,6 +394,8 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   Future<void> logout() async {
     ref.read(authUserActionBusyProvider.notifier).state = false;
     ref.read(guestModeProvider.notifier).state = false;
+    _sessionEpoch++;
+    AuthTokenRefreshCoordinator.instance.reset();
     await OneSignalBootstrap.logout();
     await NetworkPerf.parallel([
       ApiHttpCache.clearAll(),

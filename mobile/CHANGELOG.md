@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.106+139 (2026-07-31)
+
+### Oturum (giriş sonrası çıkış düzeltmesi)
+- **Token yenileme:** `/api/auth/mobile-refresh` yanıtı `user` alanı olmadan parse edilir (önceden refresh sessizce başarısız oluyordu)
+- **401 zinciri:** `validateSession` artık token'ı doğrudan silmez; tek yol `AuthTokenRefreshCoordinator`
+- **Giriş koruması:** Login sonrası 45 sn grace — geçici ağ/401 hatasında otomatik logout engellendi
+- **Arka plan doğrulama:** Yeni girişte eski `_validateSessionInBackground` iptal edilir (`_sessionEpoch`)
+
 ## 1.0.105+138 (2026-07-31)
 
 ### CI (düzeltme)
