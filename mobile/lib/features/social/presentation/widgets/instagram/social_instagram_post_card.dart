@@ -180,15 +180,16 @@ class _SocialInstagramPostCardState
                     ),
                     SizedBox(width: 16),
                     _ActionWithCount(
-                      icon: Icons.visibility_outlined,
-                      count: post.viewCount,
-                      hideZeroCount: false,
-                      onTap: () {},
+                      icon: Icons.ios_share_rounded,
+                      count: post.shareCount,
+                      onTap: () => _sharePost(context),
                     ),
                     SizedBox(width: 16),
-                    _ActionIcon(
-                      icon: Icons.ios_share_rounded,
-                      onTap: () => _sharePost(context),
+                    _ActionWithCount(
+                      icon: Icons.visibility_outlined,
+                      count: post.viewsCount > 0 ? post.viewsCount : post.viewCount,
+                      hideZeroCount: false,
+                      onTap: () {},
                     ),
                     const Spacer(),
                     if (_isFortunePost) ...[
@@ -381,14 +382,19 @@ class _PostHeader extends StatelessWidget {
                                     post.author.display,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 14,
                                     ),
                                   ),
                                 ),
+                                if (post.author.isVerified ||
+                                    _isPremiumRole(post.author.role)) ...[
+                                  const SizedBox(width: 4),
+                                  _MembershipBadge(role: post.author.role),
+                                ],
                                 if (timeLabel != null) ...[
-                                  SizedBox(width: 6),
+                                  const SizedBox(width: 6),
                                   Text(
                                     '· $timeLabel',
                                     style: TextStyle(
@@ -681,6 +687,45 @@ class _ActionIcon extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: Icon(icon, size: 24, color: context.colors.onSurface),
+      ),
+    );
+  }
+}
+
+bool _isPremiumRole(String? role) {
+  final r = role?.toLowerCase() ?? '';
+  return r.contains('gold') ||
+      r.contains('vip') ||
+      r.contains('diamond') ||
+      r.contains('premium') ||
+      r.contains('admin');
+}
+
+class _MembershipBadge extends StatelessWidget {
+  const _MembershipBadge({this.role});
+
+  final String? role;
+
+  @override
+  Widget build(BuildContext context) {
+    final r = role?.toLowerCase() ?? '';
+    final (label, color) = switch (r) {
+      _ when r.contains('diamond') => ('💎', const Color(0xFF22D3EE)),
+      _ when r.contains('premium') => ('⭐', const Color(0xFFB832FF)),
+      _ when r.contains('gold') || r.contains('vip') => ('👑', const Color(0xFFFFD54F)),
+      _ when r.contains('admin') => ('🛡️', const Color(0xFF4ADE80)),
+      _ => ('✨', AppThemeColors.accentPurple),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color),
       ),
     );
   }

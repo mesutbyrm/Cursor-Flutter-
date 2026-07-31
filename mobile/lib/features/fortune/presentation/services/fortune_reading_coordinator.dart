@@ -304,9 +304,8 @@ class FortuneReadingCoordinator {
         // Yerel sonuç yine gösterilir.
       }
 
-      // Bakılan fal, kullanıcının otomatik paylaşım tercihine göre sosyalde
-      // paylaşılır (varsayılan: herkese açık; ayarlardan "Kapalı" seçilirse
-      // paylaşılmaz).
+      // Backend fal sonucunu sosyal akışa otomatik ekler; Flutter yalnızca
+      // gerçek zamanlı senkronize eder (POST oluşturmaz).
       unawaited(
         ref
             .read(fortuneShareHandlerProvider)

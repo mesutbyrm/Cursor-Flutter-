@@ -19,6 +19,10 @@ class PostEntity extends Equatable {
     this.fortuneCount = 0,
     this.postType,
     this.likedByMe = false,
+    this.shareCount = 0,
+    this.fortuneId,
+    this.visibility,
+    this.fortuneSlug,
   });
 
   final String id;
@@ -39,6 +43,10 @@ class PostEntity extends Equatable {
   final String? postType;
   /// Oturumlu kullanıcı bu gönderiyi beğendi mi (API).
   final bool likedByMe;
+  final int shareCount;
+  final String? fortuneId;
+  final String? visibility;
+  final String? fortuneSlug;
 
   /// Fal / tarot içeriklerini hikâye şeridinde göstermemek için.
   bool get isFortuneContent {
@@ -65,6 +73,10 @@ class PostEntity extends Equatable {
     int? fortuneCount,
     String? postType,
     bool? likedByMe,
+    int? shareCount,
+    String? fortuneId,
+    String? visibility,
+    String? fortuneSlug,
   }) {
     final nextLiked = isLiked ?? likedByMe;
     return PostEntity(
@@ -83,6 +95,10 @@ class PostEntity extends Equatable {
       fortuneCount: fortuneCount ?? this.fortuneCount,
       postType: postType ?? this.postType,
       likedByMe: nextLiked ?? this.likedByMe,
+      shareCount: shareCount ?? this.shareCount,
+      fortuneId: fortuneId ?? this.fortuneId,
+      visibility: visibility ?? this.visibility,
+      fortuneSlug: fortuneSlug ?? this.fortuneSlug,
     );
   }
 
@@ -103,5 +119,9 @@ class PostEntity extends Equatable {
         fortuneCount,
         postType,
         likedByMe,
+        shareCount,
+        fortuneId,
+        visibility,
+        fortuneSlug,
       ];
 }

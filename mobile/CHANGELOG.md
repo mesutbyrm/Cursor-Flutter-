@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.109+142 (2026-07-31)
+
+### Fal & Tarot — otomatik sosyal paylaşım senkronizasyonu
+- **Backend tek kaynak:** Flutter artık `POST /api/social/posts/auto-fortune` ile paylaşım oluşturmaz; sunucunun oluşturduğu gönderi gösterilir
+- **Gerçek zamanlı:** Bildirim SSE (`fortune_share`) → sosyal akış otomatik güncellenir (`prependPost`)
+- **Fal tamamlanınca:** Coordinator tek noktadan senkronize eder; sonuç sayfalarındaki çift paylaşım kaldırıldı
+- **Metadata:** `shareCount`, `fortuneId`, `visibility`, `fortuneSlug`; yazar rol rozeti (Gold/Diamond/Premium/Admin)
+- **Sosyal sekme:** Uygulama ön plana gelince akış yenilenir
+
 ## 1.0.108+141 (2026-07-31)
 
 ### Backend parity (senkronizasyon — 2. tur)

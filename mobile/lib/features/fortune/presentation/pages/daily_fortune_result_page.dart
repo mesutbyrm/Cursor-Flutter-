@@ -7,7 +7,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/fortune_type_entity.dart';
-import '../services/fortune_share_handler.dart';
 import '../widgets/fortune_hub_crystal_illustration.dart';
 import '../widgets/fortune_mystic_background.dart';
 import '../widgets/fortune_mystic_bar_button.dart';
@@ -26,33 +25,7 @@ class DailyFortuneResultPage extends ConsumerStatefulWidget {
 }
 
 class _DailyFortuneResultPageState extends ConsumerState<DailyFortuneResultPage> {
-  var _autoShared = false;
-
   FortuneReadingResult get result => widget.result;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _shareToSocialFeed());
-  }
-
-  Future<void> _shareToSocialFeed() async {
-    if (_autoShared) return;
-    final me = ref.read(authControllerProvider).valueOrNull;
-    if (me == null) return;
-    _autoShared = true;
-    // Kullanıcının otomatik paylaşım tercihine saygı gösterir ("Kapalı" ise
-    // paylaşmaz; aksi halde seçilen görünürlükle paylaşır).
-    try {
-      final shared =
-          await ref.read(fortuneShareHandlerProvider).autoShareIfEnabled(result);
-      if (mounted && shared) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('CanlıFal Sosyal bölümünde paylaşıldı')),
-        );
-      }
-    } catch (_) {}
-  }
 
   (String, String) _splitSummary() {
     final s = result.summary.trim();

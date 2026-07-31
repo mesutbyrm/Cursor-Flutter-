@@ -12,7 +12,7 @@ class SocialFeedPage {
 }
 
 abstract class SocialRepository {
-  Future<SocialFeedPage> fetchPage({int page});
+  Future<SocialFeedPage> fetchPage({int page = 1, bool forceRefresh = false});
 
   /// Kullanıcı profilinde TikTok tarzı ızgara için paylaşımlar.
   Future<List<PostEntity>> fetchPostsByUser(String userId, {int page = 1});

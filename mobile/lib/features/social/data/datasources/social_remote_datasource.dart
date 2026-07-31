@@ -5,6 +5,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../auth/data/models/user_dto.dart';
+import '../../../feed/domain/entities/post_entity.dart';
 import '../../../feed/data/models/post_dto.dart';
 import '../../domain/entities/create_social_post_input.dart';
 import '../../domain/entities/share_fortune_input.dart';
@@ -17,7 +18,7 @@ class SocialRemoteDataSource {
   final Dio _dio;
 
   /// GET `/api/social/posts` — canlifal.com web `/sosyal` ile aynı JSON.
-  Future<({List<PostDto> posts, bool hasMore})> fetch({
+  Future<({List<PostEntity> posts, bool hasMore})> fetch({
     int page = 1,
     String? authorId,
     String? currentUserId,
@@ -37,14 +38,14 @@ class SocialRemoteDataSource {
     final body = res.data;
     if (body is List) {
       final posts = asJsonList(body)
-          .map((j) => PostDto.fromApiMap(j, currentUserId: currentUserId))
+          .map((j) => PostDto.entityFromApiMap(j, currentUserId: currentUserId))
           .where((p) => p.id.isNotEmpty)
           .toList();
       return (posts: posts, hasMore: posts.length >= 20);
     }
     final m = _unwrapBody(body);
     if (m == null) {
-      return (posts: const <PostDto>[], hasMore: false);
+      return (posts: const <PostEntity>[], hasMore: false);
     }
     var rawPosts = pick(m, ['posts', 'items', 'results', 'data']);
     if (rawPosts is! List && m['posts'] is List) {
@@ -54,11 +55,11 @@ class SocialRemoteDataSource {
       rawPosts = body;
     }
     if (rawPosts is! List) {
-      return (posts: const <PostDto>[], hasMore: false);
+      return (posts: const <PostEntity>[], hasMore: false);
     }
 
     final posts = asJsonList(rawPosts)
-        .map((j) => PostDto.fromApiMap(j, currentUserId: currentUserId))
+        .map((j) => PostDto.entityFromApiMap(j, currentUserId: currentUserId))
         .where((p) => p.id.isNotEmpty)
         .toList();
 
