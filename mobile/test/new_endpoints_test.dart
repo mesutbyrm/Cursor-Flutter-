@@ -1,7 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:canlifal_social/services/models/apple_full_name.dart';
-import 'package:canlifal_social/services/models/mobile_config.dart';
+import 'package:canlifal_social/features/auth/data/models/apple_full_name.dart';
+import 'package:canlifal_social/core/config/models/mobile_config.dart';
+import 'package:canlifal_social/core/network/api_endpoints.dart';
+import 'package:canlifal_social/core/network/api_exception.dart';
+import 'package:canlifal_social/features/platform/data/models/fortune_request_type.dart';
+import 'package:canlifal_social/features/platform/data/models/platform_ad.dart';
+import 'package:canlifal_social/features/platform/data/models/platform_popup.dart';
 import 'package:canlifal_social/services/models/user_action_models.dart';
 
 void main() {
@@ -48,6 +53,59 @@ void main() {
       expect(config.features.liveStream, isFalse);
       expect(config.features.chat, isTrue);
       expect(config.links.terms, 'https://canlifal.com/terms');
+    });
+  });
+
+  group('Faz 5 platform endpoints', () {
+    test('ApiEndpoints registry paths', () {
+      expect(ApiEndpoints.popups, '/api/popups');
+      expect(ApiEndpoints.adsActive, '/api/ads/active');
+      expect(ApiEndpoints.adsReward, '/api/ads/reward');
+      expect(ApiEndpoints.fortuneRequestTypes, '/api/fortune-request-types');
+      expect(ApiEndpoints.userTheme, '/api/user/theme');
+      expect(
+        ApiEndpoints.videoStreamFortuneMyStatus('s1'),
+        '/api/video-streams/s1/fortune-requests/my-status',
+      );
+    });
+
+    test('PlatformPopup parses list item', () {
+      final popup = PlatformPopup.fromJson({
+        'id': 'p1',
+        'title': 'Hoş geldin',
+        'message': 'Yeni özellikler',
+        'actionUrl': '/feed',
+      });
+      expect(popup.id, 'p1');
+      expect(popup.title, 'Hoş geldin');
+      expect(popup.actionUrl, '/feed');
+    });
+
+    test('PlatformAd parses placement', () {
+      final ad = PlatformAd.fromJson({
+        'id': 'a1',
+        'placement': 'rewarded',
+        'unitId': 'ca-app-pub-1',
+      });
+      expect(ad.id, 'a1');
+      expect(ad.placement, 'rewarded');
+    });
+
+    test('FortuneRequestType parses slug', () {
+      final type = FortuneRequestType.fromJson({
+        'slug': 'tarot',
+        'label': 'Tarot',
+        'jetonCost': 50,
+      });
+      expect(type.key, 'tarot');
+      expect(type.label, 'Tarot');
+      expect(type.jetonCost, 50);
+    });
+
+    test('ApiException maps 429', () {
+      final err = const ApiException('rate', statusCode: 429);
+      expect(err.statusCode, 429);
+      expect(ApiException.userMessage(err), contains('Çok fazla istek'));
     });
   });
 

@@ -62,6 +62,7 @@ class SocialRepositoryImpl implements SocialRepository {
   }
 
   @override
+  @Deprecated('Backend creates fortune posts; use SocialFortuneFeedSync instead')
   Future<PostEntity> shareFortuneAuto(ShareFortuneInput input) async {
     final dto = await _remote.shareFortuneAuto(input);
     return dto.toEntity();

@@ -144,7 +144,7 @@ class GiftRepository {
     GiftPlatform platform = GiftPlatform.mobile,
   }) async {
     final res = await _dio.safeGet<dynamic>(
-      '/api/gifts',
+      ApiEndpoints.giftsCatalog,
       query: {'platform': platform.queryValue},
     );
     return _parseCatalogList(_unwrap(res.data));
@@ -191,5 +191,29 @@ class GiftRepository {
     final body = _unwrap(res.data);
     if (body is Map) return Map<String, dynamic>.from(body);
     return const {};
+  }
+
+  /// Site geneli büyük hediye şeridi — `GET /api/gifts/recent-big`.
+  Future<List<Map<String, dynamic>>> fetchRecentBigGifts() async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.giftsRecentBig);
+    final body = _unwrap(res.data);
+    if (body is List) {
+      return body
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    }
+    if (body is Map) {
+      for (final key in ['gifts', 'events', 'items', 'data']) {
+        final v = body[key];
+        if (v is List) {
+          return v
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+        }
+      }
+    }
+    return const [];
   }
 }

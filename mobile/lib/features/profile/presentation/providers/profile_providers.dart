@@ -189,6 +189,20 @@ final allPaymentRequestsProvider =
   return ref.watch(walletRepositoryProvider).myPaymentRequests();
 });
 
+/// Takipçi listesi — profil ve sosyal ekranlar ortak cache.
+final userFollowersProvider =
+    FutureProvider.family<List<UserEntity>, String>((ref, userId) async {
+  if (userId.trim().isEmpty) return const [];
+  return ref.watch(profileRemoteProvider).followers(userId);
+});
+
+/// Takip edilenler listesi.
+final userFollowingProvider =
+    FutureProvider.family<List<UserEntity>, String>((ref, userId) async {
+  if (userId.trim().isEmpty) return const [];
+  return ref.watch(profileRemoteProvider).following(userId);
+});
+
 /// Yayın ekipmanı tercihleri (oturum boyunca).
 final equipmentSettingsProvider =
     NotifierProvider<EquipmentSettingsNotifier, EquipmentSettings>(

@@ -46,7 +46,7 @@ class AdminGiftRemoteDataSource {
     try {
       final res = await _withTimeout(
         () => _dio.safeGet<dynamic>(
-          '/api/admin/gifts',
+          ApiEndpoints.adminGifts,
           cancelToken: cancel,
           forceRefresh: true,
           options: _adminOptions(
@@ -94,7 +94,7 @@ class AdminGiftRemoteDataSource {
     try {
       final res = await _withTimeout(
         () => _dio.safePost<dynamic>(
-          '/api/admin/gifts',
+          ApiEndpoints.adminGifts,
           data: body,
           cancelToken: cancel,
           options: _adminOptions(
@@ -131,7 +131,7 @@ class AdminGiftRemoteDataSource {
     final cancel = CancelToken();
     final res = await _withTimeout(
       () => _dio.safePatch<dynamic>(
-        '/api/admin/gifts/$id',
+        ApiEndpoints.adminGift(id),
         data: body,
         cancelToken: cancel,
         options: _adminOptions(
@@ -151,7 +151,7 @@ class AdminGiftRemoteDataSource {
   /// Hediye sil (depodaki dosyaları da siler).
   Future<void> deleteGift(String id) async {
     await _dio.safeDelete<dynamic>(
-      '/api/admin/gifts/$id',
+      ApiEndpoints.adminGift(id),
       options: _adminOptions(null),
     );
   }
@@ -161,7 +161,7 @@ class AdminGiftRemoteDataSource {
     final cancel = CancelToken();
     final res = await _withTimeout(
       () => _dio.safeGet<dynamic>(
-        '/api/admin/gifts/stats',
+        ApiEndpoints.adminGiftsStats,
         query: period != 'all' ? {'period': period} : null,
         cancelToken: cancel,
         forceRefresh: true,

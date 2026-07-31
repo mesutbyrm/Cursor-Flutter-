@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/voice_staff_rank.dart';
 import '../../../../core/config/env.dart';
-import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../../core/performance/network_perf.dart';
@@ -2002,7 +2002,7 @@ class VoiceRoomLiveController
     VoiceRoomMusicPipelineLog.compareDjState(
       stage: 'mergeMusicQueue',
       roomId: _roomKey,
-      endpoint: '/api/chat/rooms/$_roomKey/music-queue',
+      endpoint: ApiEndpoints.chatRoomMusicQueue(_roomKey),
       dj: stabilized,
       shouldPlay: stabilized.playing && stabilized.playbackSource != null,
     );
@@ -3405,7 +3405,7 @@ class VoiceRoomLiveController
       VoiceRoomMusicPipelineLog.istekSubmitted(
         song: title,
         roomId: _roomKey,
-          requestEndpoint: '/api/chat/rooms/$_roomKey/song-request',
+          requestEndpoint: ApiEndpoints.chatRoomSongRequest(_roomKey),
         responseMusicUrl: result.musicUrl,
         responsePlaying: result.playing,
         queuePosition: result.queuePosition,

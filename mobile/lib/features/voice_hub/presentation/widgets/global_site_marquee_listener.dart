@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
-import '../../../../services/services_providers.dart';
+import '../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../home/presentation/providers/home_providers.dart';
 import '../providers/staff_entrance_marquee_provider.dart';
 
@@ -58,7 +58,7 @@ class _GlobalSiteMarqueeListenerState
   Future<void> _pollBigGifts() async {
     if (!mounted) return;
     try {
-      final list = await ref.read(giftServiceProvider).getRecentBigGifts();
+      final list = await ref.read(giftRepositoryProvider).fetchRecentBigGifts();
       final marquee = ref.read(staffEntranceMarqueeProvider.notifier);
       for (final raw in list) {
         final id = (raw['id'] ?? raw['giftId'] ?? raw['eventId'] ?? '')

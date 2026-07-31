@@ -1,5 +1,64 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.115+148 (2026-07-31)
+
+### Web ↔ Flutter parity (Faz 5)
+- **Platform API:** `popups`, `ads/active`, `ads/reward`, `fortune-request-types`, `user/theme`, `fortune-requests/my-status` → datasource + provider
+- **Popup UI:** `AppPopupsListener` — oturum açıkken site popup bildirimleri
+- **Tema senkronu:** Ayarlar ↔ `GET/POST /api/user/theme`; giriş sonrası sunucudan çekme
+- **Canlı fal:** API fal türü kataloğu; `my-status` uç noktası
+- **DM SSE:** 404'te reconnect durur, poll-only yedek
+- **429:** `ApiException` + `ApiSnackBar` standart rate-limit mesajı
+- **Shorts:** Preload ±2 video; keşfet grid `RepaintBoundary`
+- **Modeller:** Chat test modelleri `voice_hub/data/models` altına taşındı
+
+## 1.0.114+147 (2026-07-31)
+
+### Web ↔ Flutter parity (Faz 4)
+- **Legacy `services/`:** Auth, config, mobile compound feature katmanına taşındı; kullanılmayan servis dosyaları silindi
+- **Ana sayfa:** `homeLiveStreamsProvider` → `liveStreamsListNotifier`; `invalidateHomeKeepAliveProviders` (SSE + 60s bridge)
+- **DM:** Bildirim SSE mesaj olayında konuşma yenileme; sohbet ekranında `MessageSseService` + poll yedek (8s/15s)
+- **API registry:** `chat_room_providers` müzik log path'leri; `conversationStream` endpoint sabiti
+- **Performans:** Voice discover cache 2dk; ana sayfa canlı kartları `RepaintBoundary`
+
+## 1.0.113+146 (2026-07-31)
+
+### Web ↔ Flutter parity (Faz 3)
+- **Sosyal akış:** `feedNotifierProvider` → `socialNotifierProvider` (beğeni, görüntüleme, yerel paylaşım)
+- **Sesli odalar:** Tek liste kaynağı (`voiceRoomsListNotifier`); `invalidateDiscoverVoiceRooms`
+- **Hediye API:** insights/battle/goal/admin datasource path'leri `api_endpoints.dart` registry
+- **Marquee:** Büyük hediye poll `giftRepositoryProvider` (legacy `giftService` kaldırıldı)
+- **DM:** Açık sohbet global poll ile senkron; chat poll 8s; `openDmConversationIdProvider`
+- **Legacy:** Kullanılmayan `services/` provider'ları `@Deprecated`
+
+## 1.0.112+145 (2026-07-31)
+
+### Web ↔ Flutter parity (Faz 2)
+- **Canlı yayın:** Tek keşif kaynağı (`liveStreamsListNotifier`); `invalidateDiscoverLiveStreams` ile çift fetch önlendi
+- **Global state:** `userFollowersProvider`, `userFollowingProvider`, `postCommentsProvider`
+- **DM:** Konuşma listesindeki çift 12s poll kaldırıldı (global `DmRealtimeListener`)
+- **Falcı oda:** SSE bağlıyken oda poll 20s (3s yerine)
+- **Admin:** Ödeme SSE (`/api/admin/payments/stream`) + 30s poll yedek
+- **API registry:** Müzik kuyruğu, hediye, admin arka plan path'leri `api_endpoints.dart`'a taşındı
+
+## 1.0.111+144 (2026-07-31)
+
+### Web ↔ Flutter parity (Faz 1)
+- **Ağ:** Apple/verify public auth; timeout 15s/30s; GET retry 429+5xx (max 3)
+- **Cache:** Kısa TTL; wallet/me/messages/social için stale fallback kapalı; sosyal `forceRefresh`
+- **Gerçek zamanlı:** Canlı hediye SSE aktifken REST poll kapalı; SSE reconnect jitter
+- **API:** `public-stats`, `fortune-access/check`, `payment-methods`, `search`, `social/post/view`, presence heartbeat
+- **Bildirim:** `PATCH /api/notifications` web uyumlu mark-read
+- **Burç:** `POST /api/horoscope/daily` öncelikli
+- **Rapor:** `docs/WEB_FLUTTER_PARITY_GAP_REPORT.md`
+
+## 1.0.110+143 (2026-07-31)
+
+### Fal sosyal senkron — tamamlama
+- **Ana akış:** Fal paylaşımı bulununca `feedNotifierProvider` da güncellenir (`prependPost`)
+- **Eşleştirme:** `findMatchingFortunePost` ayrı modül + birim testleri
+- **API:** `shareFortuneAuto` kullanımdan kaldırıldı (`@Deprecated`); backend tek kaynak
+
 ## 1.0.109+142 (2026-07-31)
 
 ### Fal & Tarot — otomatik sosyal paylaşım senkronizasyonu

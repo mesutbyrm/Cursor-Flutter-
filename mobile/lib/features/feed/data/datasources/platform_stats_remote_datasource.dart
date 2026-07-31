@@ -14,8 +14,8 @@ class PlatformStatsRemoteDataSource {
 
   Future<PlatformStatsEntity?> fetch() async {
     for (final path in const [
-      '/api/platform-stats',
-      '/api/public-stats',
+      ApiEndpoints.publicStats,
+      ApiEndpoints.platformStats,
       ApiEndpoints.socialPublicStats,
     ]) {
       try {

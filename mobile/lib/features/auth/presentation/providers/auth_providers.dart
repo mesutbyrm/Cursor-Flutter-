@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/user_theme_sync_provider.dart';
+
 import '../../../../core/bootstrap/session_data_refresh.dart';
 import '../../../../core/bootstrap/app_startup_log.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
@@ -27,7 +29,8 @@ import '../../domain/entities/active_session_entity.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../trtc/presentation/trtc_bootstrap_service.dart';
-import '../../../../services/auth_service_provider.dart';
+import '../../data/datasources/auth_service.dart';
+import 'auth_service_provider.dart';
 import '../../../../core/network/auth_token_refresh_coordinator.dart';
 
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
@@ -119,6 +122,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     final id = base.id;
     if (id.isNotEmpty) {
       unawaited(OneSignalBootstrap.login(id));
+      unawaited(ref.read(userThemeSyncProvider).pullFromServer());
     }
   }
 

@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/theme_mode_provider.dart';
 import '../providers/amoled_dark_provider.dart';
+import '../theme/user_theme_sync_provider.dart';
 import '../theme/app_spacing.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:canlifal_social/features/profile/presentation/widgets/premium/profile_glass.dart';
@@ -52,12 +55,13 @@ class ThemeModeSelector extends ConsumerWidget {
               ),
             ],
             selected: {selected},
-            onSelectionChanged: (choice) {
+            onSelectionChanged: (choice) async {
               final pick = choice.first;
-              ref.read(themeModeProvider.notifier).setMode(ThemeMode.dark);
-              ref
+              await ref.read(themeModeProvider.notifier).setMode(ThemeMode.dark);
+              await ref
                   .read(amoledDarkProvider.notifier)
                   .setEnabled(pick == _DarkThemeChoice.amoled);
+              unawaited(ref.read(userThemeSyncProvider).pushCurrent());
             },
           ),
           const SizedBox(height: AppSpacing.sm),

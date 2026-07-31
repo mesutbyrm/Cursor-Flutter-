@@ -22,7 +22,7 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
     return CacheFirstLoader.load(
       cacheKey: cacheKey,
       forceRefresh: forceRefresh,
-      maxAge: const Duration(minutes: 3),
+      maxAge: const Duration(minutes: 2),
       fetch: () async {
         final rooms = await _remote.fetchVoiceRooms(categoryId: categoryId);
         return VoiceRoomsDiscoverBundle(

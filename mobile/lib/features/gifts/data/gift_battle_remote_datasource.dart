@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import '../domain/gift_battle.dart';
@@ -18,7 +19,7 @@ class GiftBattleRemoteDataSource {
     required List<({String id, String name})> participants,
   }) async {
     final res = await _dio.safePost<dynamic>(
-      '/api/gifts/battles',
+      ApiEndpoints.giftsBattles,
       data: {
         'context': context,
         'contextId': contextId,
@@ -44,7 +45,7 @@ class GiftBattleRemoteDataSource {
     required String contextId,
   }) async {
     final res = await _dio.safeGet<dynamic>(
-      '/api/gifts/battles',
+      ApiEndpoints.giftsBattles,
       query: {'context': context, 'contextId': contextId, 'status': 'active'},
     );
     final body = res.data;
@@ -59,7 +60,7 @@ class GiftBattleRemoteDataSource {
 
   /// Savaş durumu (poll).
   Future<GiftBattle?> getBattle(String id) async {
-    final res = await _dio.safeGet<dynamic>('/api/gifts/battles/$id');
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.giftsBattle(id));
     final body = res.data;
     if (body is Map) {
       final m = asJsonMap(body);

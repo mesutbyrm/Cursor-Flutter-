@@ -169,6 +169,21 @@ class LiveFortuneRequestDataSource {
     );
   }
 
+  Future<Map<String, dynamic>?> fetchMyStatus(String streamId) async {
+    final id = streamId.trim();
+    if (id.isEmpty) return null;
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.videoStreamFortuneMyStatus(id),
+      );
+      final body = res.data;
+      if (body is Map) return Map<String, dynamic>.from(body);
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   List<LiveFortuneRequestEntity> _parseList(dynamic body) {
     dynamic list;
     if (body is Map) {

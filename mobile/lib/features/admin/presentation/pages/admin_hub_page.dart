@@ -15,6 +15,7 @@ import '../../../../core/performance/network_perf.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../data/services/admin_payments_sse_service.dart';
 import '../../domain/admin_payment_review.dart';
 import '../providers/admin_providers.dart';
 import '../providers/staff_access_provider.dart';
@@ -32,6 +33,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
   Timer? _poll;
+  StreamSubscription<void>? _paymentsSseSub;
 
   @override
   void initState() {
@@ -39,22 +41,43 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
     _tabs = TabController(length: 3, vsync: this);
     _poll = Timer.periodic(const Duration(seconds: 30), (_) {
       if (!mounted) return;
-      ref.invalidate(adminPaymentRequestsProvider);
-      ref.invalidate(adminPaymentNotificationsProvider);
+      _refreshPaymentProviders();
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_connectPaymentsSse());
+    });
+  }
+
+  Future<void> _connectPaymentsSse() async {
+    await connectAdminPaymentsSse(ref);
+    _paymentsSseSub?.cancel();
+    _paymentsSseSub = ref
+        .read(adminPaymentsSseServiceProvider)
+        .onPaymentEvent
+        .listen((_) {
+      if (!mounted) return;
+      _refreshPaymentProviders();
+    });
+  }
+
+  void _refreshPaymentProviders() {
+    ref.invalidate(adminPaymentRequestsProvider);
+    ref.invalidate(adminPaymentNotificationsProvider);
   }
 
   @override
   void dispose() {
     _poll?.cancel();
+    unawaited(_paymentsSseSub?.cancel());
+    unawaited(disconnectAdminPaymentsSse(ref));
     _tabs.dispose();
     super.dispose();
   }
 
   void _refreshAll() {
-      ref.invalidate(adminPaymentRequestsProvider);
-      ref.invalidate(adminPaymentNotificationsProvider);
-      ref.invalidate(adminSitePaymentSettingsProvider);
+    _refreshPaymentProviders();
+    ref.invalidate(adminSitePaymentSettingsProvider);
   }
 
   @override

@@ -162,7 +162,7 @@ class RoomMusicRemoteDataSource {
       if (!withVideo) 'videoMode': 'audio',
     };
     final res = await _dio.post<dynamic>(
-      '/api/chat/rooms/$roomId/song-request',
+      ApiEndpoints.chatRoomSongRequest(roomId),
       data: body,
     );
     return _parseQueueResponse(res.data);
@@ -211,10 +211,10 @@ class RoomMusicRemoteDataSource {
     return int.tryParse('$raw');
   }
 
-  static String _musicPath(String roomId) => '/api/chat/rooms/$roomId/music';
+  static String _musicPath(String roomId) => ApiEndpoints.chatRoomMusic(roomId);
 
   Future<RoomPlaybackSync?> fetchDjSync(String roomId) async {
-    final res = await _dio.get<dynamic>('/api/chat/rooms/$roomId/music-queue');
+    final res = await _dio.get<dynamic>(ApiEndpoints.chatRoomMusicQueue(roomId));
     final data = res.data;
     if (data is! Map) return null;
     return RoomPlaybackSync.fromPayload(Map<String, dynamic>.from(data));
@@ -235,10 +235,10 @@ class RoomMusicRemoteDataSource {
   }
 
   Future<void> skipQueue(String roomId) async {
-    await _dio.post<dynamic>('/api/chat/rooms/$roomId/music-queue/advance');
+    await _dio.post<dynamic>(ApiEndpoints.chatRoomMusicQueueAdvance(roomId));
   }
 
   Future<void> stopQueue(String roomId) async {
-    await _dio.delete<dynamic>('/api/chat/rooms/$roomId/music-queue');
+    await _dio.delete<dynamic>(ApiEndpoints.chatRoomMusicQueue(roomId));
   }
 }

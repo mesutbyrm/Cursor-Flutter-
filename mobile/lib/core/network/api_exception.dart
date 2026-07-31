@@ -54,6 +54,13 @@ class ApiException implements Exception {
     if (code == 404) {
       return ApiException('İstenen kaynak bulunamadı (404).', statusCode: code);
     }
+    if (code == 429) {
+      return const ApiException(
+        'Çok fazla istek gönderildi. Lütfen biraz bekleyip tekrar deneyin.',
+        statusCode: 429,
+        errorCode: 'rate_limited',
+      );
+    }
 
     if (e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.sendTimeout ||

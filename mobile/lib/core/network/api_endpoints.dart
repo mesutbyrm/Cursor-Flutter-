@@ -76,7 +76,39 @@ abstract final class ApiEndpoints {
   static const socialPosts = '/api/social/posts';
   static const socialStories = '/api/social/stories';
 
-  /// Site geneli istatistikler (mobil ana sayfa).
+  static const chatMusicPopular = '/api/chat/music/popular';
+  static const adminVoiceRoomBackgrounds = '/api/admin/voice-room-backgrounds';
+  static const adminGifts = '/api/admin/gifts';
+  static String adminGift(String id) => '/api/admin/gifts/$id';
+  static const adminGiftsStats = '/api/admin/gifts/stats';
+
+  static const giftsBattles = '/api/gifts/battles';
+  static String giftsBattle(String id) => '/api/gifts/battles/$id';
+  static const giftsGoals = '/api/gifts/goals';
+  static const giftsMissions = '/api/gifts/missions';
+  static const giftsMissionsMe = '/api/gifts/missions/me';
+  static const giftsInsightsLeaderboard = '/api/gifts/insights/leaderboard';
+  static String giftsInsightsBadge(String userId) =>
+      '/api/gifts/insights/badge/$userId';
+  static const giftsInsightsMeBadge = '/api/gifts/insights/me/badge';
+  static String giftsInsightsCollection(String userId) =>
+      '/api/gifts/insights/collection/$userId';
+  static String giftsInsightsAlbum(String userId) =>
+      '/api/gifts/insights/album/$userId';
+  static String giftsInsightsFirstGifter(String context, String contextId) =>
+      '/api/gifts/insights/first-gifter/$context/$contextId';
+  static const giftsInsightsFeed = '/api/gifts/insights/feed';
+  static const giftsInsightsMap = '/api/gifts/insights/map';
+  static const giftsInsightsMeRecommendations =
+      '/api/gifts/insights/me/recommendations';
+  static const giftsInsightsMeHistory = '/api/gifts/insights/me/history';
+  static String giftsMissionClaim(String id) => '/api/gifts/missions/$id/claim';
+
+  /// Site geneli istatistikler (kılavuz §9.13 — web ile aynı).
+  static const publicStats = '/api/public-stats';
+  static const platformStats = '/api/platform-stats';
+
+  /// @deprecated — [publicStats] kullanın.
   static const socialPublicStats = '/api/social/public-stats';
 
   /// Ana sayfa promosyon slider.
@@ -271,6 +303,13 @@ abstract final class ApiEndpoints {
 
   static String socialPostComments(String postId) =>
       '/api/social/posts/$postId/comments';
+
+  /// Gönderi görüntülenme — kılavuz §9.10.
+  static String socialPostView(String postId) =>
+      '/api/social/posts/$postId/view';
+
+  /// Kullanıcı profil paylaşımları — kılavuz §9.10.
+  static String userPosts(String userId) => '/api/users/$userId/posts';
 
   /// Oturumlu kullanıcının takipçi / takip listesi.
   static const userFollowers = '/api/user/followers';
@@ -500,6 +539,21 @@ abstract final class ApiEndpoints {
 
   /// Oturumlu kullanıcı profili (takipçi, bio, görsel — NextAuth çerezi).
   static const userSiteProfile = '/api/user/profile';
+  static const userTheme = '/api/user/theme';
+
+  /// Platform popup bildirimleri (oturum gerekir).
+  static const popups = '/api/popups';
+
+  /// Aktif reklam yerleşimleri (public).
+  static const adsActive = '/api/ads/active';
+
+  /// Reklam ödülü talebi (oturum gerekir).
+  static const adsReward = '/api/ads/reward';
+
+  /// Canlı fal türü kataloğu (public).
+  static const fortuneRequestTypes = '/api/fortune-request-types';
+  static String userFollowStatus(String userId) =>
+      '/api/user/$userId/follow-status';
 
   /// Jeton / kredi bakiyesi (NextAuth).
   static const userCredits = '/api/user/credits';
@@ -516,6 +570,7 @@ abstract final class ApiEndpoints {
   static const profileFrames = '/api/profile-frames';
 
   static const paymentConfig = '/api/payment/config';
+  static const paymentMethods = '/api/payment-methods';
   static const paymentRequests = '/api/payment/requests';
   static const paymentRequestsCancel = '/api/payment/requests';
   static const adminCfcPaymentRequests = '/api/admin/cfc-payment-requests';
@@ -648,6 +703,9 @@ abstract final class ApiEndpoints {
   static String videoStreamFortuneRequest(String streamId, String requestId) =>
       '/api/video-streams/$streamId/fortune-requests/$requestId';
 
+  static String videoStreamFortuneMyStatus(String streamId) =>
+      '/api/video-streams/$streamId/fortune-requests/my-status';
+
   static const liveFalRequestCreate = '/api/live/fal-request/create';
 
   static String liveFalRequestUpdate(String requestId) =>
@@ -720,6 +778,23 @@ abstract final class ApiEndpoints {
   static String usersSearch(String query) =>
       '/api/users/search?q=${Uri.encodeComponent(query.trim())}';
 
+  /// Genel arama — kılavuz §9.13.
+  static String searchAll(String query) =>
+      '/api/search?q=${Uri.encodeComponent(query.trim())}';
+
+  /// Gelişmiş arama — kılavuz §9.13.
+  static String searchAdvanced({
+    required String query,
+    String? type,
+  }) {
+    final q = Uri.encodeComponent(query.trim());
+    final t = type?.trim();
+    if (t != null && t.isNotEmpty) {
+      return '/api/search/advanced?q=$q&type=${Uri.encodeComponent(t)}';
+    }
+    return '/api/search/advanced?q=$q';
+  }
+
   /// Oturumlu kullanıcının fal geçmişi.
   static const userFortunes = '/api/user/fortunes';
 
@@ -727,6 +802,9 @@ abstract final class ApiEndpoints {
 
   /// AI fal erişim ayarları (admin panel — mobil salt okunur).
   static const fortuneAccessSettings = '/api/fortune-access/settings';
+
+  /// Fal erişim kontrolü — kılavuz §9.5 `?fortuneType=`.
+  static const fortuneAccessCheck = '/api/fortune-access/check';
 
   /// Jeton ile fal kilidi tüketimi (opsiyonel; yoksa fal POST'unda düşülür).
   static const fortuneAccessConsume = '/api/fortune-access/consume';
@@ -781,6 +859,10 @@ abstract final class ApiEndpoints {
   static const conversations = messages;
   static String conversationMessages(String id) =>
       '/api/messages/conversations/$id/messages';
+
+  /// DM SSE (üretim hazır olduğunda) — `GET .../stream`.
+  static String conversationStream(String id) =>
+      '/api/messages/conversations/$id/stream';
 
   static String conversationTyping(String id) =>
       '/api/messages/conversations/$id/typing';

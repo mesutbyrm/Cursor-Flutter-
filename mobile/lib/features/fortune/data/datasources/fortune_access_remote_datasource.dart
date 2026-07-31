@@ -23,6 +23,21 @@ class FortuneAccessRemoteDataSource {
     }
   }
 
+  /// Kılavuz §9.5 — fal açılmadan önce erişim kontrolü.
+  Future<Map<String, dynamic>?> checkAccess({required String fortuneType}) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.fortuneAccessCheck,
+        query: {'fortuneType': fortuneType},
+        forceRefresh: true,
+      );
+      if (res.data is! Map) return null;
+      return _unwrap(res.data);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Reklam izlendikten sonra +1 fal hakkı (veya sunucunun verdiği miktar).
   Future<int> rewardFortuneAdCredit({required String slug}) async {
     final res = await _dio.safePost<dynamic>(

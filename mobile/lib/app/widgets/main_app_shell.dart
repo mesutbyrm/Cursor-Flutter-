@@ -27,6 +27,7 @@ import '../../core/sse_client_provider.dart';
 import '../../core/widgets/offline_status_banner.dart';
 import '../../features/gifts/presentation/providers/gift_catalog_version_watcher.dart';
 import '../../features/notifications/presentation/widgets/notifications_realtime_listener.dart';
+import '../../features/platform/presentation/widgets/app_popups_listener.dart';
 
 /// MaterialApp.router [builder] içeriği — [ListenableBuilder] kullanmaz.
 ///
@@ -129,6 +130,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
 
     var body = widget.child;
     if (!isAuthRoute) {
+      body = AppPopupsListener(child: body);
       body = NotificationsRealtimeListener(child: body);
       body = DmRealtimeListener(child: body);
       body = DmVoiceCallHost(child: body);

@@ -11,6 +11,10 @@ import '../../domain/entities/app_notification_entity.dart';
 import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
 import '../../../live/presentation/providers/live_pk_streams_provider.dart';
 import '../../../live/presentation/providers/pk_room_providers.dart';
+import '../../../home/presentation/providers/home_providers.dart';
+import '../../../messages/presentation/providers/conversations_list_notifier.dart';
+import '../../../messages/presentation/providers/messages_providers.dart';
+import '../../../messages/presentation/widgets/dm_realtime_listener.dart';
 import '../../../social/presentation/services/social_fortune_feed_sync.dart';
 import '../providers/notifications_list_notifier.dart';
 import '../providers/notifications_providers.dart';
@@ -78,6 +82,24 @@ class _NotificationsRealtimeListenerState
               postId: notification.targetId,
             ),
       );
+    }
+    if (type.contains('message') ||
+        type.contains('chat') ||
+        type.contains('dm')) {
+      unawaited(
+        ref.read(conversationsListNotifierProvider.notifier).refresh(
+              silent: true,
+              forceRefresh: true,
+            ),
+      );
+      ref.invalidate(conversationsProvider);
+      refreshOpenDmChat(ref, ref.read(openDmConversationIdProvider));
+    }
+    if (type.contains('live') ||
+        type.contains('stream') ||
+        type.contains('gift') ||
+        type.contains('voice')) {
+      invalidateHomeKeepAliveProviders(ref);
     }
   }
 

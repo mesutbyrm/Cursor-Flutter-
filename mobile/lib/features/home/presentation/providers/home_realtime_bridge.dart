@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/env.dart';
 import 'home_providers.dart';
+import '../../../live/presentation/providers/discover_live_streams.dart';
+import '../../../live/presentation/providers/discover_voice_rooms.dart';
 
 /// Socket.IO olaylarında ana sayfa listelerini yeniler.
 final homeRealtimeBridgeProvider = Provider<HomeRealtimeBridge>((ref) {
@@ -28,10 +30,7 @@ class HomeRealtimeBridge {
 
   void _tick() {
     if (_disposed || _pollTimer == null) return;
-    // invalidate yerine refresh — önceki veri korunur, iskelet flash olmaz.
-    unawaited(_ref.refresh(homeLiveStreamsProvider.future));
-    unawaited(_ref.refresh(homeVoiceRoomsProvider.future));
-    // voiceRoomsProvider: SSE presence (voiceRoomsPresenceProvider) ile güncellenir.
+    invalidateHomeKeepAliveProviders(_ref);
   }
 
   void dispose() {

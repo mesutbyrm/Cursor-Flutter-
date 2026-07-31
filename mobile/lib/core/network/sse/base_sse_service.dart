@@ -56,6 +56,9 @@ abstract class BaseSseService {
   /// İsteğe bağlı — auth zorunlu mu?
   bool get requiresAuth => true;
 
+  /// Alt sınıflar belirli HTTP kodlarında reconnect'i durdurabilir (ör. DM SSE 404).
+  bool shouldReconnectOnHttpError(int? statusCode) => true;
+
   /// Alt sınıf her SSE bloğunu işler.
   void onSseBlock(String block);
 
@@ -184,6 +187,18 @@ abstract class BaseSseService {
       );
     } on DioException catch (e) {
       if (kDebugMode) debugPrint('$runtimeType SSE: $e');
+      final statusCode = e.response?.statusCode;
+      if (!shouldReconnectOnHttpError(statusCode)) {
+        _stopped = true;
+        status.emit(
+          SseConnectionStatus(
+            phase: SseConnectionPhase.failed,
+            attempt: _reconnectAttempt,
+            lastError: e,
+          ),
+        );
+        return;
+      }
       // Kılavuz §6: 401 → refresh sonra yeniden bağlan.
       if (e.response?.statusCode == 401 && _refreshTokens != null) {
         final ok = await _refreshTokens!.call();

@@ -20,7 +20,6 @@ class ConversationsPage extends ConsumerStatefulWidget {
 }
 
 class _ConversationsPageState extends ConsumerState<ConversationsPage> {
-  Timer? _poll;
   final _scroll = ScrollController();
   final _search = TextEditingController();
   var _query = '';
@@ -30,18 +29,11 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
-    _poll = Timer.periodic(const Duration(seconds: 12), (_) {
-      if (!mounted) return;
-      ref.read(conversationsListNotifierProvider.notifier).refresh(
-            silent: true,
-            forceRefresh: true,
-          );
-    });
+    // Global poll: DmRealtimeListener (12s) — çift istek önlenir.
   }
 
   @override
   void dispose() {
-    _poll?.cancel();
     _search.dispose();
     _scroll.removeListener(_onScroll);
     _scroll.dispose();

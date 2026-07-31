@@ -23,6 +23,10 @@ abstract class SocialRepository {
   Future<PostEntity> createPost(CreateSocialPostInput input);
 
   /// Fal baktırıldığında otomatik sosyal gönderi.
+  ///
+  /// **Kullanılmıyor:** Backend fal tamamlanınca paylaşımı oluşturur; mobil yalnızca
+  /// `SocialFortuneFeedSync` ile senkronize eder.
+  @Deprecated('Backend creates fortune posts; use SocialFortuneFeedSync instead')
   Future<PostEntity> shareFortuneAuto(ShareFortuneInput input);
 
   Future<void> deletePost(String postId);

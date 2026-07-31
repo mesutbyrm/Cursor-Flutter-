@@ -40,7 +40,9 @@ class LiveStreamsListNotifier extends AsyncNotifier<List<LiveStreamEntity>> {
   }
 
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
+    final previous = state;
+    state = const AsyncValue<List<LiveStreamEntity>>.loading()
+        .copyWithPrevious(previous);
     state = await AsyncValue.guard(() async {
       _page = 1;
       _end = false;
