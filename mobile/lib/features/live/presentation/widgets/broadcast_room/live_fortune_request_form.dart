@@ -145,18 +145,19 @@ class _LiveFortuneRequestFormState extends State<LiveFortuneRequestForm> {
               const SizedBox(height: 8),
               _field(_question, 'Fal Sorusu', 'Sorunuzu yazın…', maxLines: 3),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: types.any((t) => t.key == _fortuneType)
-                    ? _fortuneType
-                    : types.first.key,
-                dropdownColor: const Color(0xFF1A1030),
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-                decoration: _decoration('Fal Türü'),
-                items: [
-                  for (final t in types)
-                    DropdownMenuItem(value: t.key, child: Text(t.label)),
-                ],
-                onChanged: (v) => setState(() => _fortuneType = v ?? 'tarot'),
+              Text(
+                'Fal Türü Seçin',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.75),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              _FortuneTypeGrid(
+                types: types,
+                selected: _fortuneType,
+                onSelected: (key) => setState(() => _fortuneType = key),
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<LiveFortunePriority>(
@@ -280,6 +281,88 @@ class _LiveFortuneRequestFormState extends State<LiveFortuneRequestForm> {
       maxLines: maxLines,
       style: const TextStyle(color: Colors.white, fontSize: 13),
       decoration: _decoration(label).copyWith(hintText: hint),
+    );
+  }
+}
+
+class _FortuneTypeGrid extends StatelessWidget {
+  const _FortuneTypeGrid({
+    required this.types,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final List<PsychicFortuneType> types;
+  final String selected;
+  final ValueChanged<String> onSelected;
+
+  static IconData _iconFor(String key) => switch (key) {
+        'coffee' => Icons.coffee_rounded,
+        'tarot' => Icons.style_rounded,
+        'astrology' => Icons.nightlight_round,
+        'palmistry' => Icons.back_hand_rounded,
+        'numerology' => Icons.pin_rounded,
+        _ => Icons.auto_awesome_rounded,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final t in types)
+          GestureDetector(
+            onTap: () => onSelected(t.key),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 96,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: selected == t.key
+                    ? const LinearGradient(
+                        colors: [Color(0xFF9C27FF), Color(0xFF7C4DFF)],
+                      )
+                    : null,
+                color: selected == t.key
+                    ? null
+                    : Colors.white.withValues(alpha: 0.06),
+                border: Border.all(
+                  color: selected == t.key
+                      ? const Color(0xFFB832FF)
+                      : Colors.white.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _iconFor(t.key),
+                    size: 22,
+                    color: selected == t.key
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.7),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    t.label,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      color: selected == t.key
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.75),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

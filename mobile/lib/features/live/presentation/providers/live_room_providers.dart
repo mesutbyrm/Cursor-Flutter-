@@ -22,6 +22,10 @@ import '../../../gifts/domain/gift_system_message.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../voice_hub/presentation/providers/voice_recent_gifts_provider.dart';
+import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
+import '../../../voice_hub/presentation/utils/voice_staff_chat_style.dart';
+import '../../../voice_hub/domain/voice_official_join.dart';
+import '../../../voice_hub/domain/entities/chat_room_message.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import 'live_fortune_request_provider.dart';
 import 'live_broadcast_settings_provider.dart';
@@ -193,6 +197,29 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
           next = next.copyWith(viewerCount: count.round());
         }
         if (name.isNotEmpty) {
+          final userRef = ChatRoomUserRef(
+            id: joinId,
+            name: name,
+            nickname: user['nickname']?.toString(),
+            membership: user['membership']?.toString() ??
+                user['tier']?.toString() ??
+                user['vipTier']?.toString(),
+            chatRole: user['chatRole']?.toString() ?? user['role']?.toString(),
+          );
+          if (VoiceOfficialJoin.isEntranceWorthy(
+            content: name,
+            membership: userRef.membership,
+            chatRole: userRef.chatRole,
+          )) {
+            final banner = VoiceStaffChatStyle.formatTierEntranceLine(
+              displayName: name,
+              user: userRef,
+              section: 'canlı yayına',
+            );
+            if (banner.isNotEmpty) {
+              ref.read(staffEntranceMarqueeProvider.notifier).enqueue(banner);
+            }
+          }
           final msgId =
               'join-$joinId-${DateTime.now().millisecondsSinceEpoch}';
           if (_seenIds.add(msgId)) {

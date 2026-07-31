@@ -20,7 +20,9 @@ class PsychicIncomingSseService {
   StreamSubscription<List<int>>? _bytesSub;
   Timer? _reconnectTimer;
   Future<String?> Function()? _accessToken;
+  Future<bool> Function()? _refreshTokens;
   void Function(PsychicRequestEntity request)? _onRequest;
+  void Function(String sessionId)? _onSessionCancelled;
   void Function()? _onPresenceTick;
   var _stopped = false;
   var _reconnectAttempt = 0;
@@ -28,11 +30,15 @@ class PsychicIncomingSseService {
   Future<void> connect({
     required Future<String?> Function() accessToken,
     required void Function(PsychicRequestEntity request) onRequest,
+    Future<bool> Function()? refreshTokens,
+    void Function(String sessionId)? onSessionCancelled,
     void Function()? onPresenceTick,
   }) async {
     _stopped = false;
     _accessToken = accessToken;
+    _refreshTokens = refreshTokens;
     _onRequest = onRequest;
+    _onSessionCancelled = onSessionCancelled;
     _onPresenceTick = onPresenceTick;
     await _openStream();
   }
@@ -80,6 +86,13 @@ class PsychicIncomingSseService {
         onDone: () => _scheduleReconnect(),
         cancelOnError: false,
       );
+    } on DioException catch (e) {
+      if (kDebugMode) debugPrint('PsychicIncomingSse: $e');
+      if (e.response?.statusCode == 401 && _refreshTokens != null) {
+        final ok = await _refreshTokens!();
+        if (!ok) return;
+      }
+      _scheduleReconnect();
     } catch (e) {
       if (kDebugMode) debugPrint('PsychicIncomingSse: $e');
       _scheduleReconnect();
@@ -125,6 +138,22 @@ class PsychicIncomingSseService {
           type.contains('status')) {
         _onPresenceTick?.call();
       }
+      if (type.contains('cancel') ||
+          type == 'rejected' ||
+          type == 'session_cancelled' ||
+          type == 'session_rejected') {
+        final sessionId = (map['sessionId'] ??
+                map['id'] ??
+                (map['session'] is Map
+                    ? (map['session'] as Map)['id']
+                    : null))
+            ?.toString()
+            .trim();
+        if (sessionId != null && sessionId.isNotEmpty) {
+          _onSessionCancelled?.call(sessionId);
+        }
+        return;
+      }
       if (type.contains('request') ||
           type.contains('session') ||
           type.contains('invite') ||
@@ -133,8 +162,13 @@ class PsychicIncomingSseService {
           map.containsKey('session')) {
         final req = parsePsychicIncomingPayload(map) ??
             parsePsychicSsePayload(map);
-        if (req != null && req.sessionId.isNotEmpty && req.isPending) {
-          _onRequest?.call(req);
+        if (req != null && req.sessionId.isNotEmpty) {
+          if (req.isPending) {
+            _onRequest?.call(req);
+          } else if (!req.isPending &&
+              (type.contains('cancel') || type.contains('reject'))) {
+            _onSessionCancelled?.call(req.sessionId);
+          }
         }
       }
     } catch (_) {}
@@ -165,7 +199,9 @@ class PsychicIncomingSseService {
   Future<void> disconnect() async {
     _stopped = true;
     _onRequest = null;
+    _onSessionCancelled = null;
     _onPresenceTick = null;
+    _refreshTokens = null;
     await _closeStreamOnly();
   }
 }
