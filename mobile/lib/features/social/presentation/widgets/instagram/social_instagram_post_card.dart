@@ -42,6 +42,13 @@ class _SocialInstagramPostCardState
   void initState() {
     super.initState();
     _syncFromPost(widget.post);
+    final postId = widget.post.id;
+    if (postId.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(socialRemoteProvider).registerPostView(postId);
+      });
+    }
   }
 
   @override

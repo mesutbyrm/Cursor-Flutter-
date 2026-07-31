@@ -58,13 +58,21 @@ class MiscService {
     }
   }
 
-  /// `GET /api/horoscope/daily`
+  /// `POST /api/horoscope/daily` — kılavuz §9.5; GET yedek.
   Future<Map<String, dynamic>> getDailyHoroscope(String sign) async {
-    final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.horoscopeDaily,
-      query: {'sign': sign, 'zodiacSign': sign},
-    );
-    return ServiceUtils.unwrapMap(res.data) ?? asJsonMap(res.data);
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.horoscopeDaily,
+        data: {'zodiacSign': sign, 'sign': sign},
+      );
+      return ServiceUtils.unwrapMap(res.data) ?? asJsonMap(res.data);
+    } catch (_) {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.horoscopeDaily,
+        query: {'sign': sign, 'zodiacSign': sign},
+      );
+      return ServiceUtils.unwrapMap(res.data) ?? asJsonMap(res.data);
+    }
   }
 
   /// `GET /api/daily-login`

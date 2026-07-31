@@ -15,10 +15,26 @@ class LiveGiftRealtimeService {
   Timer? _pollTimer;
   String? _streamId;
   DateTime? _since;
+  var _sseActive = false;
+
+  /// SSE bağlıyken REST hediye poll kapalı — animasyon yalnızca SSE'den.
+  void setSseActive(bool active) {
+    _sseActive = active;
+    if (active) {
+      _pollTimer?.cancel();
+      _pollTimer = null;
+    } else if (_streamId != null && _streamId!.isNotEmpty) {
+      start(_streamId!);
+    }
+  }
 
   Stream<LiveGiftEvent> get events => _local.stream;
 
   void start(String streamId) {
+    if (_sseActive) {
+      _streamId = streamId;
+      return;
+    }
     if (_streamId == streamId && _pollTimer != null) return;
     stop();
     _streamId = streamId;
@@ -75,6 +91,7 @@ class LiveGiftRealtimeService {
   }
 
   Future<void> _poll() async {
+    if (_sseActive) return;
     final id = _streamId;
     if (id == null || id.isEmpty) return;
     try {

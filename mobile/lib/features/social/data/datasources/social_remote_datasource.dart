@@ -192,6 +192,14 @@ class SocialRemoteDataSource {
     await _dio.safeDelete(ApiEndpoints.socialPostDelete(postId));
   }
 
+  /// POST `/api/social/posts/:id/view` — kılavuz §9.10.
+  Future<void> registerPostView(String postId) async {
+    if (postId.trim().isEmpty) return;
+    try {
+      await _dio.safePost<dynamic>(ApiEndpoints.socialPostView(postId));
+    } catch (_) {}
+  }
+
   /// POST `/api/social/posts/:id/likes` — beğeni toggle.
   Future<({bool liked, int likesCount})> toggleLike(String postId) async {
     final res = await _dio.safePost<dynamic>(

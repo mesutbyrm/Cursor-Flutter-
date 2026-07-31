@@ -81,6 +81,20 @@ class NotificationsRemoteDataSource {
   }
 
   Future<void> markRead(String id) async {
+    try {
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.notifications,
+        data: {'notificationId': id},
+      );
+      return;
+    } catch (_) {}
+    try {
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.notifications,
+        data: {'id': id, 'read': true},
+      );
+      return;
+    } catch (_) {}
     await _dio.safePatch(ApiEndpoints.notificationRead(id), data: const {});
   }
 

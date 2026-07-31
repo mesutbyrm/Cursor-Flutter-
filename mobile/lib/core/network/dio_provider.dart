@@ -25,8 +25,11 @@ bool _isPublicAuthPath(String path) {
   return path == ApiEndpoints.authMobileLogin ||
       path == ApiEndpoints.authMobileRegister ||
       path == ApiEndpoints.authMobileGoogle ||
+      path == ApiEndpoints.authMobileApple ||
       path == ApiEndpoints.authMobileTiktok ||
       path == ApiEndpoints.authMobileRefresh ||
+      path == ApiEndpoints.authMobileSendVerification ||
+      path == ApiEndpoints.authMobileVerifyEmail ||
       path == ApiEndpoints.authForgotPassword ||
       path == ApiEndpoints.authResetPassword ||
       path == ApiEndpoints.authLogin ||
@@ -47,8 +50,8 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
   final dio = Dio(
     BaseOptions(
       baseUrl: Env.apiBaseUrl,
-      connectTimeout: const Duration(seconds: 3),
-      receiveTimeout: const Duration(seconds: 5),
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 30),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -134,8 +137,8 @@ final dioProvider = Provider<Dio>((ref) {
   final refreshOnly = Dio(
     BaseOptions(
       baseUrl: Env.apiBaseUrl,
-      connectTimeout: const Duration(seconds: 3),
-      receiveTimeout: const Duration(seconds: 5),
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 30),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',

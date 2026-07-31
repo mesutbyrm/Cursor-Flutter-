@@ -34,11 +34,14 @@ class SocialNotifier extends AsyncNotifier<List<PostEntity>> {
   }
 
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
+    final previous = state;
+    state = const AsyncValue<List<PostEntity>>.loading().copyWithPrevious(previous);
     state = await AsyncValue.guard(() async {
       _page = 1;
       _end = false;
-      final bundle = await ref.read(socialRepositoryProvider).fetchPage(page: 1);
+      final bundle = await ref
+          .read(socialRepositoryProvider)
+          .fetchPage(page: 1, forceRefresh: true);
       _end = !bundle.hasMore;
       return bundle.posts;
     });

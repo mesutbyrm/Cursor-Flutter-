@@ -2,8 +2,9 @@ import 'package:dio/dio.dart';
 
 /// GET istekleri için TTL ve cache kuralları.
 abstract final class ApiCachePolicy {
-  static const defaultTtl = Duration(seconds: 60);
-  static const staleMaxAge = Duration(days: 7);
+  static const defaultTtl = Duration(seconds: 45);
+  /// Ağ hatasında eski veri — hassas uçlar hariç en fazla 1 saat.
+  static const staleMaxAge = Duration(hours: 1);
 
   /// Bu istek HTTP cache katmanından geçmez.
   static bool isCacheable(RequestOptions options) {
@@ -58,28 +59,48 @@ abstract final class ApiCachePolicy {
     '/webhook',
   ];
 
+  static bool allowsStaleFallback(String path) {
+    final normalized = normalizedPath(path);
+    for (final blocked in _noStaleFallbackPrefixes) {
+      if (normalized.startsWith(blocked)) return false;
+    }
+    return true;
+  }
+
+  static const _noStaleFallbackPrefixes = [
+    '/api/me',
+    '/api/wallet',
+    '/api/jeton',
+    '/api/messages',
+    '/api/user/credits',
+    '/api/notifications',
+    '/api/social/posts',
+    '/api/video-streams',
+    '/api/chat/rooms',
+  ];
+
   static const _ttlRules = [
-    _TtlRule(prefix: '/api/me', ttl: Duration(seconds: 45)),
-    _TtlRule(prefix: '/api/messages', ttl: Duration(seconds: 30)),
-    _TtlRule(prefix: '/api/notifications', ttl: Duration(minutes: 2)),
-    _TtlRule(prefix: '/api/chat/rooms', ttl: Duration(seconds: 30)),
-    _TtlRule(prefix: '/api/live', ttl: Duration(seconds: 15)),
-    _TtlRule(prefix: '/api/video', ttl: Duration(seconds: 15)),
-    _TtlRule(prefix: '/api/banners', ttl: Duration(minutes: 5)),
-    _TtlRule(prefix: '/api/homepage', ttl: Duration(minutes: 5)),
-    _TtlRule(prefix: '/api/advisors', ttl: Duration(minutes: 2)),
-    _TtlRule(prefix: '/api/short-videos', ttl: Duration(seconds: 25)),
-    _TtlRule(prefix: '/api/fortune-tellers', ttl: Duration(minutes: 2)),
-    _TtlRule(prefix: '/api/user/stats', ttl: Duration(minutes: 2)),
-    _TtlRule(prefix: '/api/user/activity', ttl: Duration(minutes: 2)),
-    _TtlRule(prefix: '/api/users/me/stats', ttl: Duration(minutes: 2)),
-    _TtlRule(prefix: '/api/users/me/activity', ttl: Duration(minutes: 2)),
-    _TtlRule(prefix: '/api/wallet', ttl: Duration(seconds: 20)),
-    _TtlRule(prefix: '/api/jeton', ttl: Duration(minutes: 3)),
-    _TtlRule(prefix: '/api/social/posts', ttl: Duration(seconds: 45)),
-    _TtlRule(prefix: '/api/social/stories', ttl: Duration(seconds: 45)),
-    _TtlRule(contains: '/music-queue', ttl: Duration(seconds: 10)),
-    _TtlRule(contains: '/presence', ttl: Duration(seconds: 8)),
+    _TtlRule(prefix: '/api/me', ttl: Duration(seconds: 15)),
+    _TtlRule(prefix: '/api/messages', ttl: Duration(seconds: 20)),
+    _TtlRule(prefix: '/api/notifications', ttl: Duration(seconds: 45)),
+    _TtlRule(prefix: '/api/chat/rooms', ttl: Duration(seconds: 20)),
+    _TtlRule(prefix: '/api/live', ttl: Duration(seconds: 12)),
+    _TtlRule(prefix: '/api/video', ttl: Duration(seconds: 12)),
+    _TtlRule(prefix: '/api/banners', ttl: Duration(minutes: 3)),
+    _TtlRule(prefix: '/api/homepage', ttl: Duration(minutes: 3)),
+    _TtlRule(prefix: '/api/advisors', ttl: Duration(seconds: 90)),
+    _TtlRule(prefix: '/api/short-videos', ttl: Duration(seconds: 20)),
+    _TtlRule(prefix: '/api/fortune-tellers', ttl: Duration(seconds: 90)),
+    _TtlRule(prefix: '/api/user/stats', ttl: Duration(seconds: 90)),
+    _TtlRule(prefix: '/api/user/activity', ttl: Duration(seconds: 90)),
+    _TtlRule(prefix: '/api/users/me/stats', ttl: Duration(seconds: 90)),
+    _TtlRule(prefix: '/api/users/me/activity', ttl: Duration(seconds: 90)),
+    _TtlRule(prefix: '/api/wallet', ttl: Duration(seconds: 8)),
+    _TtlRule(prefix: '/api/jeton', ttl: Duration(seconds: 45)),
+    _TtlRule(prefix: '/api/social/posts', ttl: Duration(seconds: 25)),
+    _TtlRule(prefix: '/api/social/stories', ttl: Duration(seconds: 25)),
+    _TtlRule(contains: '/music-queue', ttl: Duration(seconds: 8)),
+    _TtlRule(contains: '/presence', ttl: Duration(seconds: 6)),
   ];
 }
 

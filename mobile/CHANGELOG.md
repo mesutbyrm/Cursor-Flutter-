@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.111+144 (2026-07-31)
+
+### Web ↔ Flutter parity (Faz 1)
+- **Ağ:** Apple/verify public auth; timeout 15s/30s; GET retry 429+5xx (max 3)
+- **Cache:** Kısa TTL; wallet/me/messages/social için stale fallback kapalı; sosyal `forceRefresh`
+- **Gerçek zamanlı:** Canlı hediye SSE aktifken REST poll kapalı; SSE reconnect jitter
+- **API:** `public-stats`, `fortune-access/check`, `payment-methods`, `search`, `social/post/view`, presence heartbeat
+- **Bildirim:** `PATCH /api/notifications` web uyumlu mark-read
+- **Burç:** `POST /api/horoscope/daily` öncelikli
+- **Rapor:** `docs/WEB_FLUTTER_PARITY_GAP_REPORT.md`
+
 ## 1.0.110+143 (2026-07-31)
 
 ### Fal sosyal senkron — tamamlama

@@ -57,6 +57,11 @@ class FortuneReadingCoordinator {
     final authed = ref.read(authControllerProvider).valueOrNull;
     FortuneAccessGrant? accessGrant;
     if (authed != null) {
+      unawaited(
+        ref.read(fortuneAccessRemoteProvider).checkAccess(
+              fortuneType: type.slug,
+            ),
+      );
       accessGrant = await FortuneAccessGate.request(
         context: context,
         ref: ref,

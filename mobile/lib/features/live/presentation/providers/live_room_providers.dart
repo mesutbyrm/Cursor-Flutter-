@@ -103,6 +103,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       _liveSocket?.disconnect();
       _liveSocket = null;
       ref.read(liveGiftSocketBridgeProvider).disconnect();
+      ref.read(liveGiftRealtimeProvider).setSseActive(false);
       ref.read(sseConnectionHubProvider).releaseVideoStream(streamId);
       unawaited(ref.read(liveRemoteProvider).leaveVideoStream(streamId));
     });
@@ -157,6 +158,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       accessToken: storage.readAccess,
       onConnected: () {
         state = state.copyWith(sseConnected: true);
+        ref.read(liveGiftRealtimeProvider).setSseActive(true);
         GiftSyncLog.broadcast(streamId, 'sse', 'connected');
         GiftSyncLog.sseConnected(streamId);
         LiveDebugLog.log('stream.room.sse_ok', {'streamId': streamId});
