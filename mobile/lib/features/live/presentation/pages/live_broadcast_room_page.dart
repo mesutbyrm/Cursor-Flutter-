@@ -1506,6 +1506,39 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     );
   }
 
+  void _showLiveEmojiPicker() {
+    const emojis = [
+      '😀', '😂', '❤️', '🔥', '👏', '🎉', '💎', '🎤',
+      '🙏', '✨', '💜', '😍', '🤣', '👋', '🌙', '⭐',
+    ];
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (eCtx) => Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        decoration: BoxDecoration(
+          color: const Color(0xFF14101F).withValues(alpha: 0.96),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: emojis
+              .map(
+                (e) => InkWell(
+                  onTap: () {
+                    _chat.text = '${_chat.text}$e';
+                    Navigator.pop(eCtx);
+                  },
+                  child: Text(e, style: const TextStyle(fontSize: 28)),
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+  }
+
   Future<void> _openLiveMoreMenu({
     required LiveBroadcastSession s,
     required bool giftsEnabled,
@@ -1534,40 +1567,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           );
         }
 
-        void showEmojiPicker() {
-          const emojis = [
-            '😀', '😂', '❤️', '🔥', '👏', '🎉', '💎', '🎤',
-            '🙏', '✨', '💜', '😍', '🤣', '👋', '🌙', '⭐',
-          ];
-          showModalBottomSheet<void>(
-            context: context,
-            backgroundColor: Colors.transparent,
-            builder: (eCtx) => Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              decoration: BoxDecoration(
-                color: const Color(0xFF14101F).withValues(alpha: 0.96),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: emojis
-                    .map(
-                      (e) => InkWell(
-                        onTap: () {
-                          _chat.text = '${_chat.text}$e';
-                          Navigator.pop(eCtx);
-                        },
-                        child: Text(e, style: const TextStyle(fontSize: 28)),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ),
-          );
-        }
-
-        return SafeArea(
+        void showEmojiPicker() => _showLiveEmojiPicker();
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -2465,6 +2465,24 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                       chatVisible: _chatVisible,
                       onToggleChat: () =>
                           setState(() => _chatVisible = !_chatVisible),
+                      onEmoji: _showLiveEmojiPicker,
+                      onGift: !s.isHost && broadcastSettings.giftsEnabled && streamId != null
+                          ? () => ref
+                              .read(liveGiftControllerProvider)
+                              .setPanelOpen(true)
+                          : null,
+                      onTip: !s.isHost && streamId != null
+                          ? () {
+                              ref.read(liveGiftControllerProvider).setPanelOpen(true);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Bahşiş jeton hediyesi olarak gönderilir.',
+                                  ),
+                                ),
+                              );
+                            }
+                          : null,
                       onMore: () => unawaited(
                         _openLiveMoreMenu(
                           s: s,

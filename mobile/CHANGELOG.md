@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.107+140 (2026-07-31)
+
+### Backend parity (senkronizasyon — 1. tur)
+- **Canlı yayın sohbet:** Alt bara emoji, hediye, bahşiş ve gönder butonları eklendi (web parity)
+- **VIP/yetkili duyuru:** Diamond/Premium/Gold/Admin/Moderatör için bölüm bazlı kayan metin (`formatTierEntranceLine`)
+- **Falcı bahşiş:** Gönderen «Bahşişiniz başarıyla gönderildi»; falcı «X size N Jeton bahşiş gönderdi» (backend event ile)
+
+### Mevcut (önceki sürümlerden)
+- Canlı falcı: SSE istek/kabul, TRTC görüşme, bahşiş API
+- Sesli oda: `!istek`, müzik kuyruğu, YouTube embed
+- Hediye: gerçek zamanlı SSE, MP4/PNG/SVG cache
+
 ## 1.0.106+139 (2026-07-31)
 
 ### Oturum (giriş sonrası çıkış düzeltmesi)

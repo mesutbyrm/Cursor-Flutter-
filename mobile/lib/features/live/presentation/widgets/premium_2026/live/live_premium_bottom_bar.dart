@@ -6,7 +6,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import '../../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../broadcast_room/live_camera_control.dart';
 
-/// Mockup alt bar — mesaj + Daha fazla (emoji, hediye, misafir, oyunlar menüde).
+/// Mockup alt bar — mesaj + hediye/emoji/bahşiş + Daha fazla.
 class LivePremiumBottomBar extends StatelessWidget {
   const LivePremiumBottomBar({
     super.key,
@@ -18,6 +18,9 @@ class LivePremiumBottomBar extends StatelessWidget {
     this.onRtcStateChanged,
     this.onEnd,
     this.onMore,
+    this.onGift,
+    this.onEmoji,
+    this.onTip,
     this.onToggleChat,
     this.chatVisible = true,
     this.commentsEnabled = true,
@@ -31,6 +34,9 @@ class LivePremiumBottomBar extends StatelessWidget {
   final VoidCallback? onRtcStateChanged;
   final VoidCallback? onEnd;
   final VoidCallback? onMore;
+  final VoidCallback? onGift;
+  final VoidCallback? onEmoji;
+  final VoidCallback? onTip;
   final VoidCallback? onToggleChat;
   final bool chatVisible;
   final bool commentsEnabled;
@@ -98,6 +104,24 @@ class LivePremiumBottomBar extends StatelessWidget {
                         active: chatVisible,
                       ),
                     ),
+                  if (onEmoji != null)
+                    _ActionIcon(
+                      icon: Icons.emoji_emotions_outlined,
+                      label: 'Emoji',
+                      onTap: onEmoji,
+                    ),
+                  if (onGift != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 2),
+                      child: _GiftBoxButton(onTap: onGift!),
+                    ),
+                  if (onTip != null)
+                    _ActionIcon(
+                      icon: Icons.volunteer_activism_rounded,
+                      label: 'Bahşiş',
+                      onTap: onTip,
+                    ),
+                  const SizedBox(width: 4),
                   Expanded(
                     child: Container(
                       height: 40,
@@ -139,6 +163,11 @@ class LivePremiumBottomBar extends StatelessWidget {
                         ],
                       ),
                     ),
+                  ),
+                  IconButton(
+                    onPressed: commentsEnabled ? onSend : null,
+                    icon: const Icon(Icons.send_rounded, color: Colors.white),
+                    tooltip: 'Gönder',
                   ),
                   if (onMore != null)
                     _ActionIcon(

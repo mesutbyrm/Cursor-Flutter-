@@ -115,9 +115,10 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       membership: user.membership,
       chatRole: user.chatRole,
     )) {
-      final banner = VoiceOfficialJoin.formatEntranceBanner(
-        line,
-        roomName: _roomMeta.nameTr,
+      final banner = VoiceStaffChatStyle.formatTierEntranceLine(
+        displayName: name,
+        user: userRef,
+        section: 'sesli odaya',
       );
       if (banner.isNotEmpty && _markEntranceOnce(banner)) {
         ref.read(staffEntranceMarqueeProvider.notifier).enqueue(

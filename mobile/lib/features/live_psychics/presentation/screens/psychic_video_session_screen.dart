@@ -225,9 +225,24 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '${state.tipThankYouAmount} jeton bahşiş gönderildi — teşekkürler!',
+                            'Bahşişiniz başarıyla gönderildi.',
                             textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                            ),
                           ),
+                          if (state.tipThankYouAmount != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(
+                                '${state.tipThankYouAmount} jeton',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.75),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -258,7 +273,7 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'size ${state.tipReceivedAmount} jetonluk hediye gönderdi!',
+                            '${state.tipReceivedFrom?.trim().isNotEmpty == true ? state.tipReceivedFrom!.trim() : 'Danışan'} size ${state.tipReceivedAmount} Jeton bahşiş gönderdi.',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Color(0xFFFFD54F),
