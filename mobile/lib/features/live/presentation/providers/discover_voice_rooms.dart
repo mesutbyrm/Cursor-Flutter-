@@ -4,7 +4,7 @@ import '../../domain/entities/voice_room_entity.dart';
 import 'voice_rooms_list_notifier.dart';
 
 /// Sesli oda keşif listesi — tek kaynak (`voiceRoomsListNotifierProvider`).
-void invalidateDiscoverVoiceRooms(Ref ref) {
+void invalidateDiscoverVoiceRooms(dynamic ref) {
   ref.invalidate(voiceRoomsListNotifierProvider);
 }
 

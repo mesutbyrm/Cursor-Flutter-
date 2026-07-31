@@ -59,7 +59,7 @@ import '../../../games/presentation/providers/game_providers.dart';
 import '../providers/pk_room_providers.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
-import 'discover_live_streams.dart';
+import '../providers/discover_live_streams.dart';
 import '../../data/services/video_webrtc_signal_service.dart';
 import '../providers/co_broadcast_provider.dart';
 import '../providers/live_beauty_provider.dart';

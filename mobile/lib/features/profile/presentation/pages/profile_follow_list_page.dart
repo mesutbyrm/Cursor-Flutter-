@@ -65,7 +65,7 @@ class _FollowList extends StatelessWidget {
         final u = users[index];
         return ListTile(
           leading: UserAvatar(url: u.avatarUrl, radius: 22),
-          title: Text(u.display, style: context.textTheme.titleSmall),
+          title: Text(u.display, style: Theme.of(context).textTheme.titleSmall),
           subtitle: Text('@${u.username}'),
           onTap: () => context.push('/profile/${u.id}'),
         );

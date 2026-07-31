@@ -4,7 +4,7 @@ import '../../domain/entities/live_stream_entity.dart';
 import 'live_streams_list_notifier.dart';
 
 /// Canlı yayın keşif listesi — tek kaynak (`liveStreamsListNotifierProvider`).
-void invalidateDiscoverLiveStreams(Ref ref) {
+void invalidateDiscoverLiveStreams(dynamic ref) {
   ref.invalidate(liveStreamsListNotifierProvider);
 }
 

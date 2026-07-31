@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/domain/entities/post_entity.dart';
+import '../../../fortune/data/fortune_share_preferences.dart';
 import '../../../fortune/presentation/providers/fortune_share_preferences_provider.dart';
 import '../providers/social_providers.dart';
 import 'social_fortune_post_match.dart';

@@ -59,7 +59,7 @@ void main() {
     test('ttl varies by path', () {
       final me = RequestOptions(path: '/api/me');
       final live = RequestOptions(path: '/api/live/streams');
-      expect(ApiCachePolicy.ttlFor(me), const Duration(seconds: 45));
+      expect(ApiCachePolicy.ttlFor(me), const Duration(seconds: 15));
       expect(ApiCachePolicy.ttlFor(live), const Duration(seconds: 15));
     });
   });

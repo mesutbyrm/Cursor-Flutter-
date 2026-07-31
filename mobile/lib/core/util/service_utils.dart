@@ -1,4 +1,4 @@
-import '../core/util/json_util.dart';
+import 'json_util.dart';
 
 /// Servis katmanı ortak JSON yardımcıları.
 abstract final class ServiceUtils {
