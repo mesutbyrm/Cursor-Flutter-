@@ -300,10 +300,19 @@ jobs:
               echo ""
               bash scripts/extract-changelog-head.sh
             } >> /tmp/release_notes_min.md
+          elif [[ "${{ github.ref }}" == "refs/heads/main" && "${{ github.event_name }}" == "workflow_run" ]]; then
+            {
+              echo ""
+              echo "## Bu sürümde (CHANGELOG)"
+              echo ""
+              bash scripts/extract-changelog-head.sh
+            } >> /tmp/release_notes_min.md
           fi
 
-      - name: apk-latest yükle (main push)
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      - name: apk-latest yükle (main)
+        if: >-
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' || github.event_name == 'workflow_run')
         uses: actions/github-script@v7
         env:
           RELEASE_TITLE: Canlifal APK ${{ steps.meta.outputs.version }}
@@ -484,8 +493,10 @@ jobs:
           files: canlifal-mobile-release.apk
           make_latest: true
 
-      - name: docs/LATEST_APK_BUILD.md (opsiyonel)
-        if: github.event_name == 'workflow_dispatch' && inputs.update_build_doc == true
+      - name: docs/LATEST_APK_BUILD.md
+        if: >-
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' || github.event_name == 'workflow_run')
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
