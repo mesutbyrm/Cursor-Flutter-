@@ -27,7 +27,7 @@ import '../../../vip_gold/domain/voice_room_access.dart';
 void _keepHomeCacheAlive(Ref ref) => ref.keepAlive();
 
 /// Ana sayfa keepAlive provider'larını SSE / realtime olayında yenile.
-void invalidateHomeKeepAliveProviders(Ref ref) {
+void invalidateHomeKeepAliveProviders(dynamic ref) {
   ref.invalidate(homeBannersProvider);
   ref.invalidate(homeFortuneCardsProvider);
   ref.invalidate(homeTrendVideosProvider);

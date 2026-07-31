@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:canlifal_social/features/auth/data/models/apple_full_name.dart';
@@ -103,9 +104,17 @@ void main() {
     });
 
     test('ApiException maps 429', () {
-      final err = const ApiException('rate', statusCode: 429);
+      final err = ApiException.fromDio(
+        DioException(
+          requestOptions: RequestOptions(path: '/api/test'),
+          response: Response(
+            requestOptions: RequestOptions(path: '/api/test'),
+            statusCode: 429,
+          ),
+        ),
+      );
       expect(err.statusCode, 429);
-      expect(ApiException.userMessage(err), contains('Çok fazla istek'));
+      expect(err.message, contains('Çok fazla istek'));
     });
   });
 
