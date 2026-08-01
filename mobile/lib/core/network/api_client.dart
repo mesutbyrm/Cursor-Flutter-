@@ -1,37 +1,28 @@
-import 'package:dio/dio.dart';
-
-import 'api.dart';
-import 'api_endpoints.dart';
-import 'dio_provider.dart';
-
-/// Tek merkezi HTTP istemcisi — tüm feature katmanları [dioProvider] / [Api.dio] kullanır.
+/// Merkezi HTTP istemci katmanı — tek giriş noktası.
 ///
-/// Yeni kod doğrudan Dio çağırmamalı; repository veya remote datasource üzerinden gider.
-/// Servis eşlemesi (web ile aynı backend uçları):
+/// **Kullanım**
+/// ```dart
+/// final dio = ref.watch(dioProvider);
+/// final res = await dio.safeGet<Map>(ApiEndpoints.me);
+/// final parsed = parseResponse(res, (j) => UserDto.fromJson(j));
+/// ```
 ///
-/// | Facade | Modül |
-/// |--------|-------|
-/// | Auth | `features/auth/` |
-/// | User / Profile / Wallet | `features/profile/` |
-/// | Room / Chat / Music | `features/voice_hub/` |
-/// | Live / PK | `features/live/` |
-/// | Gift | `features/gifts/` |
-/// | Notification | `features/notifications/` |
-/// | Story / Social | `features/social/` |
-/// | Shorts | `features/shorts/` |
-/// | Search / Follow | `features/search/`, `features/profile/` |
-/// | Admin | `features/admin/` |
-abstract final class ApiClient {
-  ApiClient._();
+/// **Katmanlar** ([dio_provider.dart]):
+/// - [ApiVersionInterceptor] — `/api/v1` öneki
+/// - Auth Bearer + 401 refresh ([TokenStorage] + [AuthTokenRefreshCoordinator])
+/// - [ApiRetryInterceptor] — 429/5xx exponential backoff
+/// - [ApiCacheInterceptor] — GET önbellek (Cache-Control / ETag)
+/// - SSE gerçek zamanlı — polling değil ([BaseSseService])
+///
+/// **Modeller:** [ApiResponse], [ApiError], [Pagination] — [api_response.dart]
+/// **Hata kodları:** [ApiErrorCode] — [models/api_error_code.dart]
+/// **Yapılandırma:** [ApiConfig] — [config/api_config.dart]
+library;
 
-  /// Paylaşımlı Dio — interceptors: auth, refresh, retry, routing, cache.
-  static Dio get dio => Api.dio;
-
-  static String get baseUrl => dio.options.baseUrl;
-
-  static void bind(Dio client) => Api.bind(client);
-
-  static void setToken(String? token) => Api.setToken(token);
-
-  static Future<bool> healthy() => Api.healthy();
-}
+export '../api_response.dart';
+export '../config/api_config.dart';
+export 'api_exception.dart';
+export 'api_path_v1.dart';
+export 'dio_provider.dart';
+export 'models/api_error_code.dart';
+export 'token_storage.dart';

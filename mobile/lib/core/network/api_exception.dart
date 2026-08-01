@@ -1,11 +1,19 @@
 import 'package:dio/dio.dart';
 
+import 'models/api_error_code.dart';
+
 class ApiException implements Exception {
-  const ApiException(this.message, {this.statusCode, this.errorCode});
+  const ApiException(
+    this.message, {
+    this.statusCode,
+    this.errorCode,
+    this.apiErrorCode,
+  });
 
   final String message;
   final int? statusCode;
   final String? errorCode;
+  final ApiErrorCode? apiErrorCode;
 
   /// Dio hatalarını kullanıcıya gösterilebilir metne çevirir.
   static ApiException fromDio(DioException e) {
@@ -55,10 +63,11 @@ class ApiException implements Exception {
       return ApiException('İstenen kaynak bulunamadı (404).', statusCode: code);
     }
     if (code == 429) {
-      return const ApiException(
-        'Çok fazla istek gönderildi. Lütfen biraz bekleyip tekrar deneyin.',
+      return ApiException(
+        ApiErrorCode.rateLimited.defaultMessage(),
         statusCode: 429,
-        errorCode: 'rate_limited',
+        errorCode: ApiErrorCode.rateLimited.wireName,
+        apiErrorCode: ApiErrorCode.rateLimited,
       );
     }
 

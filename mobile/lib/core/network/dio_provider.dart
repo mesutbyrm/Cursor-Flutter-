@@ -17,6 +17,7 @@ import 'api_timing_interceptor.dart';
 import 'connectivity/connectivity_service.dart';
 import 'cookie_jar_provider.dart';
 import 'gateway_fallback_interceptor.dart';
+import 'interceptors/api_version_interceptor.dart';
 import 'payment_request_interceptor.dart';
 import 'token_storage.dart';
 import 'voice_room_api_log_interceptor.dart';
@@ -66,6 +67,8 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
     contentLengthIsolateThreshold: JsonIsolatePerf.largeThreshold,
   );
 
+  // `/api/...` → `/api/v1/...` (FLUTTER_BACKEND_ENTEGRASYON_PROMPT.md).
+  dio.interceptors.add(ApiVersionInterceptor());
   // Backend seçimi — her istek doğru origin'e gider.
   dio.interceptors.add(BackendRoutingInterceptor());
   dio.interceptors.add(CookieManager(cookieJar));
