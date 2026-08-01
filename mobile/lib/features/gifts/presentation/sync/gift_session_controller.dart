@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/gift_engine_models.dart';
+import '../../domain/gift_entity.dart';
 import '../../domain/gift_engine_parser.dart';
 import '../../domain/gift_revenue_display.dart';
 import '../engine/gift_engine_preloader.dart';
@@ -168,6 +169,9 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
         latestEvent: event,
       );
       _applyFeedItem(feedItem, event);
+      if (!beforeJoin) {
+        _playGiftSound(event, catalog);
+      }
       if (beforeJoin) {
         GiftSyncLog.dedupeSkipped(roomId, event.id, 'before_join');
       } else if (!canAnimate) {
@@ -281,6 +285,15 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     );
   }
 
+  void _playGiftSound(LiveGiftEvent event, GiftEntity? catalog) {
+    if (catalog != null) {
+      unawaited(ref.read(giftSoundPoolProvider).preloadGift(catalog));
+    }
+    unawaited(
+      ref.read(giftSoundPoolProvider).playForEvent(event, catalog: catalog),
+    );
+  }
+
   void _enqueueAnimation(LiveGiftEvent event) {
     state = state.copyWith(
       animationQueue: [...state.animationQueue, event],
@@ -328,9 +341,7 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
 
       GiftSyncLog.pipelineStage(next.id, 'sound');
       final tSound = DateTime.now();
-      unawaited(
-        ref.read(giftSoundPoolProvider).playForEvent(next, catalog: catalog),
-      );
+      _playGiftSound(next, catalog);
       await Future<void>.delayed(const Duration(milliseconds: 90));
       GiftSyncLog.pipelineMs(
         next.id,

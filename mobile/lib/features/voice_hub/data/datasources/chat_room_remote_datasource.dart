@@ -724,23 +724,41 @@ class ChatRoomRemoteDataSource {
     required String roomKey,
     String? alternateKey,
     String? musicUrl,
+    String? videoId,
+    String? title,
     required bool playing,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       if (!playing) {
         try {
-          await _dio.safeDelete<dynamic>(musicPath(key));
+          await _dio.safePost<dynamic>(
+            musicPath(key),
+            data: const {'action': 'pause'},
+          );
         } on ApiException catch (e) {
           if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+          try {
+            await _dio.safeDelete<dynamic>(musicPath(key));
+          } on ApiException catch (del) {
+            if (del.statusCode != 404 && del.statusCode != 405) rethrow;
+          }
         }
         return fetchDj(key);
       }
+
+      final resolvedVideoId = (videoId?.trim().isNotEmpty == true)
+          ? videoId!.trim()
+          : ChatRoomDjState.videoIdFromLoose(musicUrl ?? '');
+      final body = <String, dynamic>{
+        'action': 'play',
+        if (resolvedVideoId != null && resolvedVideoId.isNotEmpty)
+          'videoId': resolvedVideoId,
+        if (title != null && title.trim().isNotEmpty) 'title': title.trim(),
+        if (musicUrl != null && musicUrl.isNotEmpty) 'musicUrl': musicUrl,
+      };
       final res = await _dio.safePost<dynamic>(
         musicPath(key),
-        data: <String, dynamic>{
-          if (musicUrl != null && musicUrl.isNotEmpty) 'musicUrl': musicUrl,
-          'playing': true,
-        },
+        data: body,
       );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       return ChatRoomDjState.fromJson(map);
@@ -831,6 +849,15 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _dio.safePost<dynamic>(
+          musicPath(key),
+          data: const {'action': 'skip'},
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
       await _dio.safePost<dynamic>(ApiEndpoints.chatRoomMusicQueueAdvance(key));
     });
   }

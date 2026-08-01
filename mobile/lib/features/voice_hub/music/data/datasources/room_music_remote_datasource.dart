@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../../core/network/api_endpoints.dart';
 import '../../../../../core/network/api_exception.dart';
+import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/room_playback_sync.dart';
 import '../../../presentation/audio/voice_room_dj_stream_loader.dart';
@@ -224,12 +225,18 @@ class RoomMusicRemoteDataSource {
     await _dio.delete<dynamic>(_musicPath(roomId));
   }
 
-  Future<void> resumeDj(String roomId, {String? musicUrl}) async {
+  Future<void> resumeDj(String roomId, {String? musicUrl, String? videoId, String? title}) async {
+    final resolvedVideoId = (videoId?.trim().isNotEmpty == true)
+        ? videoId!.trim()
+        : ChatRoomDjState.videoIdFromLoose(musicUrl ?? '');
     await _dio.post<dynamic>(
       _musicPath(roomId),
       data: {
-        'playing': true,
-        if (musicUrl != null) 'musicUrl': musicUrl,
+        'action': 'play',
+        if (resolvedVideoId != null && resolvedVideoId.isNotEmpty)
+          'videoId': resolvedVideoId,
+        if (title != null && title.trim().isNotEmpty) 'title': title.trim(),
+        if (musicUrl != null && musicUrl.isNotEmpty) 'musicUrl': musicUrl,
       },
     );
   }

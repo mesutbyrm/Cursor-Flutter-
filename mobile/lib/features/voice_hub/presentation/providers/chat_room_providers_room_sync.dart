@@ -37,7 +37,11 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         });
       }
       if (seats.isNotEmpty) {
-        state = state.copyWith(seatSlots: seats);
+        final nextPresence = _syncPresenceSeatIndexFromSlots(
+          state.presence,
+          seats,
+        );
+        state = state.copyWith(seatSlots: seats, presence: nextPresence);
       }
       VoiceRoomDebugLog.log('api.seats.ok', {
         'room': _roomKey,
@@ -326,7 +330,24 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
             _roomKey,
             alternateKey: _musicAlternateKey,
           );
-      state = state.copyWith(seatSlots: seats);
+      final hadOccupied =
+          state.seatSlots.any((s) => (s.userId?.trim().isNotEmpty ?? false));
+      final incomingOccupied =
+          seats.any((s) => (s.userId?.trim().isNotEmpty ?? false));
+      // Geçici boş yanıt koltuktan düşmeyi tetiklemesin.
+      if (seats.isEmpty || (hadOccupied && !incomingOccupied)) {
+        VoiceRoomDebugLog.log('sse.seat_update.skip_empty', {
+          'room': _roomKey,
+          'hadOccupied': hadOccupied,
+          'incomingCount': seats.length,
+        });
+        return;
+      }
+      final nextPresence = _syncPresenceSeatIndexFromSlots(
+        state.presence,
+        seats,
+      );
+      state = state.copyWith(seatSlots: seats, presence: nextPresence);
       VoiceRoomDebugLog.log('sse.seat_update.refresh', {
         'room': _roomKey,
         'count': seats.length,
@@ -334,5 +355,52 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     } on Object catch (e) {
       VoiceRoomDebugLog.log('sse.seat_update.fail', {'error': e.toString()});
     }
+  }
+
+  /// Koltuk haritası otoriter — presence.seatIndex yalnızca slot'ta görününce güncellenir.
+  List<ChatRoomPresence> _syncPresenceSeatIndexFromSlots(
+    List<ChatRoomPresence> presence,
+    List<VoiceRoomSeatSlot> slots,
+  ) {
+    if (slots.isEmpty) return presence;
+    final seatByUser = <String, int>{};
+    for (final slot in slots) {
+      final uid = slot.userId?.trim() ?? '';
+      if (uid.isNotEmpty && slot.index >= 0) {
+        seatByUser[uid] = slot.index;
+      }
+    }
+    if (seatByUser.isEmpty) return presence;
+
+    var changed = false;
+    final next = <ChatRoomPresence>[];
+    for (final p in presence) {
+      final fromSlot = seatByUser[p.id];
+      if (fromSlot == null) {
+        next.add(p);
+        continue;
+      }
+      if (p.seatIndex == fromSlot) {
+        next.add(p);
+        continue;
+      }
+      changed = true;
+      next.add(
+        ChatRoomPresence(
+          id: p.id,
+          name: p.name,
+          nickname: p.nickname,
+          image: p.image,
+          chatRole: p.chatRole,
+          roleSymbol: p.roleSymbol,
+          membership: p.membership,
+          seatIndex: fromSlot,
+          isSpeaking: p.isSpeaking,
+          isMuted: p.isMuted,
+          micOn: p.micOn,
+        ),
+      );
+    }
+    return changed ? next : presence;
   }
 }
