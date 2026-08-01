@@ -2995,7 +2995,23 @@ class VoiceRoomLiveController
           break;
         case 'dj':
           if (target == null) return;
-          await Future<void>.delayed(const Duration(milliseconds: 900));
+          final isDj = state.dj.djUsers.any((d) => d.id == target.id) ||
+              _roomMeta.djUserIds.contains(target.id);
+          if (isDj) {
+            await remote.removeRoomDj(
+              roomKey: _roomKey,
+              alternateKey: _roomMeta.slug,
+              targetUserId: target.id,
+              targetLabel: target.displayName,
+            );
+          } else {
+            await remote.addRoomDj(
+              roomKey: _roomKey,
+              alternateKey: _roomMeta.slug,
+              targetUserId: target.id,
+              targetLabel: target.displayName,
+            );
+          }
           break;
         case 'muzik':
           await _syncMusicFromServerIfNeeded();

@@ -55,6 +55,7 @@ abstract final class ApiBackendRouter {
 
   /// Üyelik planları + satın alma (`/api/membership/plans`, `/purchase`) modern
   static bool _isLiveGamesBackendPath(String path) =>
+      path == '/api/live/pk' ||
       path.startsWith('/api/live/pk/') ||
       path.startsWith('/api/live/guest/');
 

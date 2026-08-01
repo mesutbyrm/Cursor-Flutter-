@@ -762,14 +762,22 @@ class ChatRoomRemoteDataSource {
         query: {'limit': 128},
       );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
-      final raw = map['backgrounds'] ?? map['items'] ?? map['data'];
+      final raw = map['backgrounds'] ??
+          map['items'] ??
+          map['data'] ??
+          (map.isNotEmpty && map.values.first is List ? map.values.first : null);
       for (final url in VoiceRoomBackgroundCatalog.parseApiList(raw)) {
         addUrl(url);
       }
+      // Düz URL listesi (bazı sürümler doğrudan dizi döner).
+      if (res.data is List) {
+        for (final url in VoiceRoomBackgroundCatalog.parseApiList(res.data)) {
+          addUrl(url);
+        }
+      }
     } catch (_) {}
-    if (urls.isNotEmpty) return urls;
 
-    // Backend boş/erişilemezse web ile aynı yerleşik arka planlar fallback.
+    // API + yerleşik arka planlar birlikte (web ile aynı katalog).
     for (final url in VoiceRoomBackgroundCatalog.siteDefaults()) {
       addUrl(url);
     }
