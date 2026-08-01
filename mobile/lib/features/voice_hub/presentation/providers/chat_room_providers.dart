@@ -3201,7 +3201,12 @@ class VoiceRoomLiveController
           .updateDj(
             roomKey: _roomKey,
             alternateKey: _musicAlternateKey,
-            musicUrl: state.dj.musicUrl ?? url,
+            musicUrl: state.dj.musicUrl,
+            videoId: state.dj.nowPlaying?.videoIdField ??
+                ChatRoomDjState.videoIdFromLoose(
+                  state.dj.nowPlaying?.youtubeUrl ?? state.dj.musicUrl ?? '',
+                ),
+            title: state.dj.nowPlaying?.title,
             playing: true,
           );
       final dj = await _applyDjPlayback(state.dj.copyWith(playing: true));

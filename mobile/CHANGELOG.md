@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.117+150 (2026-08-01)
+
+### Sesli oda — PK, koltuk, hediye sesi, müzik
+- **PK daveti:** `action: create` (sunucunun kabul ettiği tek davet aksiyonu; `invite` kaldırıldı)
+- **Koltuk stabilitesi:** Boş/geçici seat yanıtı koltuğu silmez; `seatSlots` → `presence.seatIndex` senkronu
+- **Hediye sesi:** Animasyon kapalı veya poll kaynaklı hediyelerde de SFX çalar
+- **Müzik kontrolü:** `POST /music` gövdesi `{ action: play|pause|skip, videoId?, title? }` (kılavuz §9)
+
 ## 1.0.116+149 (2026-08-01)
 
 ### Sesli oda yönetimi — backend uyumu

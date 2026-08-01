@@ -144,51 +144,50 @@ class PkBattleRemoteDataSource {
     final durationStr = '$duration';
 
     // Birincil: POST /api/live/pk — games backend (canlifalapi).
+    // Üretim: geçerli action değerleri create, accept, reject, cancel, end.
     try {
       for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
-        for (final action in ['invite', 'create']) {
-          final liveBattle = await LiveFieldApiRemoteDataSource(_dio).pk.pkAction(
-            action: action,
-            roomId: key,
-            targetRoomId: oppRoom,
-            guestUserId: guest.isNotEmpty ? guest : null,
-            durationSeconds: duration,
-          );
-          if (liveBattle != null && liveBattle.id.isNotEmpty) {
-            final parsed = _parseBattle({
-              'battle': {
-                'id': liveBattle.id,
-                'status': liveBattle.status ?? 'pending',
-                'challengerScore': liveBattle.room1Score,
-                'opponentScore': liveBattle.room2Score,
-                'durationSeconds': liveBattle.durationSeconds ?? duration,
-                'opponentVoiceRoomId': oppRoom,
-                if (guest.isNotEmpty) 'opponentId': guest,
-              },
-            });
-            if (parsed != null) return parsed;
-          }
+        final liveBattle = await LiveFieldApiRemoteDataSource(_dio).pk.pkAction(
+          action: 'create',
+          roomId: key,
+          targetRoomId: oppRoom,
+          guestUserId: guest.isNotEmpty ? guest : null,
+          durationSeconds: duration,
+        );
+        if (liveBattle != null && liveBattle.id.isNotEmpty) {
+          final parsed = _parseBattle({
+            'battle': {
+              'id': liveBattle.id,
+              'status': liveBattle.status ?? 'pending',
+              'challengerScore': liveBattle.room1Score,
+              'opponentScore': liveBattle.room2Score,
+              'durationSeconds': liveBattle.durationSeconds ?? duration,
+              'opponentVoiceRoomId': oppRoom,
+              if (guest.isNotEmpty) 'opponentId': guest,
+            },
+          });
+          if (parsed != null) return parsed;
         }
       }
     } on ApiException catch (_) {
       // chat-room PK yedeğine düş
     } catch (_) {}
 
-    // Üretim sözleşmesi (ENDPOINTS.md): action + targetRoomId + duration.
+    // Üretim sözleşmesi: action create + targetRoomId + duration.
     final bodies = <Map<String, dynamic>>[
       {
-        'action': 'invite',
+        'action': 'create',
         'targetRoomId': oppRoom,
         'duration': durationStr,
       },
       {
-        'action': 'invite',
+        'action': 'create',
         'targetRoomId': oppRoom,
         'durationSec': duration,
       },
       if (guest.isNotEmpty)
         {
-          'action': 'invite',
+          'action': 'create',
           'targetRoomId': oppRoom,
           'duration': durationStr,
           'guestUserId': guest,
