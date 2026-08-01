@@ -41,7 +41,10 @@ class LiveFieldPkApi {
         if (guestUserId != null && guestUserId.isNotEmpty)
           'guestUserId': guestUserId,
         if (battleId != null && battleId.isNotEmpty) 'battleId': battleId,
-        if (durationSeconds != null) 'durationSeconds': durationSeconds,
+        if (durationSeconds != null) ...{
+          'durationSeconds': durationSeconds,
+          'duration': '$durationSeconds',
+        },
       },
     );
     final map = LiveFieldApiUtil.unwrapData(res.data);

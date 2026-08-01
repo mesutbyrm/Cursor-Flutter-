@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.116+149 (2026-08-01)
+
+### Sesli oda yönetimi — backend uyumu
+- **PK daveti:** Üretim sözleşmesi `{ action, targetRoomId, duration }`; `/api/live/pk` games backend yönlendirmesi
+- **Oda komutları:** Hub ayarlarından doğru komut paneli; `!dj` → DJ assign/remove API
+- **Arkaplan:** API + yerleşik 40 görsel birleşik liste; boş ekran düzeltmesi
+- **Hediye savaşı:** Games API gövdesi (`roomId`, `duration`, zarf parse) ve yedek `action: start`
+
 ## 1.0.115+148 (2026-07-31)
 
 ### Web ↔ Flutter parity (Faz 5)
