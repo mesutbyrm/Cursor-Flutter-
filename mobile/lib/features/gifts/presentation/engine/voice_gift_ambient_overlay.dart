@@ -72,7 +72,10 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
   void _onVideoProgress() {
     final c = _videoController;
     if (c == null || !c.value.isInitialized || _activeId == null) return;
-    if (c.value.processingState == ProcessingState.completed) {
+    final dur = c.value.duration;
+    final pos = c.value.position;
+    if (dur > Duration.zero &&
+        pos >= dur - const Duration(milliseconds: 250)) {
       _scheduleFadeOut();
     }
   }
