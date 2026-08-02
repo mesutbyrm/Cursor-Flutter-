@@ -57,7 +57,6 @@ import 'providers/voice_room_audio_providers.dart';
 import 'providers/voice_room_diagnostic_provider.dart';
 import 'providers/voice_room_sse_provider.dart';
 import 'providers/voice_room_ui_provider.dart';
-import 'sheets/voice_room_speak_queue_sheet.dart';
 import 'sheets/voice_room_management_panel.dart';
 import 'sheets/voice_room_moderation_sheet.dart';
 import 'sheets/voice_room_sheets.dart';
@@ -912,10 +911,23 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       }
       return;
     }
-    await _requestSpeakFromSeat(
+  }
+
+  Future<void> _onSeatLongPress(
+    BuildContext context, {
+    required VoiceRoomEntity room,
+    required VoiceRoomLiveState live,
+    required VoiceRoomPermissions perms,
+    required int internalSeatIndex,
+  }) async {
+    if (!perms.canAssignSeats) return;
+    await _showAssignSeatSheet(
       context,
-      room,
-      ref.read(voiceRoomUiProvider),
+      room: room,
+      live: live,
+      seatIndex: internalSeatIndex,
+      perms: perms,
+      showAllMembers: true,
     );
   }
 
@@ -925,13 +937,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     required VoiceRoomLiveState live,
     required int seatIndex,
     required VoiceRoomPermissions perms,
+    bool showAllMembers = false,
   }) async {
     final self = ref.read(authControllerProvider).valueOrNull;
     final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
     final onStage = voiceWebOnStageIds(room: room, presence: live.presence);
-    final candidates = live.presence
-        .where((p) => !onStage.contains(p.id) || p.seatIndex == seatIndex)
-        .toList();
+    final candidates = showAllMembers
+        ? List<ChatRoomPresence>.from(live.presence)
+        : live.presence
+            .where((p) => !onStage.contains(p.id) || p.seatIndex == seatIndex)
+            .toList();
     final canManageDj = perms.isRoomOwner ||
         perms.isSiteAdmin ||
         perms.canManageDj ||
@@ -948,7 +963,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Koltuk $seatIndex',
+              showAllMembers ? 'Koltuk $seatIndex — kim otursun?' : 'Koltuk $seatIndex',
               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
             ),
             const SizedBox(height: 8),
@@ -1020,37 +1035,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Future<void> _requestSpeakFromSeat(
-    BuildContext context,
-    VoiceRoomEntity room,
-    VoiceRoomUiState ui,
-  ) async {
-    final liveCtrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
-    final err = ui.requestSpeakPending
-        ? await liveCtrl.cancelSpeakRequest()
-        : await liveCtrl.requestSpeak();
-    if (!context.mounted) return;
-    if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-      return;
-    }
-    showVoiceRequestSpeakSheet(
-      context,
-      ref,
-      pending: ref.read(voiceRoomUiProvider).requestSpeakPending,
-      onPrimary: () async {
-        final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
-        final pendingNow = ref.read(voiceRoomUiProvider).requestSpeakPending;
-        final e = pendingNow
-            ? await ctrl.cancelSpeakRequest()
-            : await ctrl.requestSpeak();
-        if (context.mounted && e != null) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e)));
-        }
-      },
     );
   }
 
@@ -1463,20 +1447,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             perms: perms,
                             isOwner: isOwner,
                           ),
-                          onRoomPanel: perms.canAssignSeats
-                              ? () => showVoiceSpeakQueueSheet(
-                                    context,
-                                    ref,
-                                    room: room,
-                                    live: live,
-                                    perms: perms,
-                                  )
-                              : () => showVoiceSpeakerListSheet(
-                                    context,
-                                    presence: live.presence,
-                                    room: room,
-                                    onUserTap: _openUser,
-                                  ),
+                          onRoomPanel: () => showVoiceSpeakerListSheet(
+                            context,
+                            presence: live.presence,
+                            room: room,
+                            onUserTap: _openUser,
+                          ),
                           onShare: _shareRoom,
                         ),
                         Expanded(
@@ -1550,6 +1526,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                   perms: perms,
                                   internalSeatIndex: seatIndex,
                                   occupant: user,
+                                ),
+                              ),
+                              onSeatLongPress: (seatIndex) => unawaited(
+                                _onSeatLongPress(
+                                  context,
+                                  room: room,
+                                  live: live,
+                                  perms: perms,
+                                  internalSeatIndex: seatIndex,
                                 ),
                               ),
                               trtc: _audio?.trtcManager,

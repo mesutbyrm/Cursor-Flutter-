@@ -56,7 +56,7 @@ abstract final class VoiceMusicAccess {
     return jetonBalance >= cost;
   }
 
-  /// Müziği durdurma — yalnızca oda sahibi, site admin veya isteyen.
+  /// Müziği durdurma / !kapat — oda sahibi, admin veya isteyen.
   static bool canStopMusic({
     required UserEntity? user,
     required VoiceRoomPermissions perms,
@@ -64,6 +64,13 @@ abstract final class VoiceMusicAccess {
   }) {
     if (user == null) return false;
     if (perms.isRoomOwner || perms.isSiteAdmin) return true;
+    if (perms.canModerate ||
+        perms.canManageRoom ||
+        perms.canManageDj ||
+        perms.canBanUsers ||
+        perms.canKickUsers) {
+      return true;
+    }
     return nowPlaying?.requestedBy?.id == user.id;
   }
 

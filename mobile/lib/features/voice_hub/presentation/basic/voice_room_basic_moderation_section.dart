@@ -199,12 +199,6 @@ Future<void> onVoiceRoomBasicSeatTap({
     }
     return;
   }
-  await requestVoiceRoomBasicSpeak(
-    context: context,
-    ref: ref,
-    liveKey: liveKey,
-    pending: ref.read(voiceRoomUiProvider).requestSpeakPending,
-  );
 }
 
 Future<void> showVoiceRoomBasicAssignSeatSheet({

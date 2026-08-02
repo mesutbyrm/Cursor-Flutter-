@@ -9,7 +9,7 @@ import '../../live/domain/entities/live_gift_event.dart';
 
 /// Kısa hediye SFX havuzu — eşzamanlı çalma, önbellekli kaynak.
 class GiftSoundPool {
-  GiftSoundPool({this.poolSize = 4}) {
+  GiftSoundPool({this.poolSize = 6}) {
     for (var i = 0; i < poolSize; i++) {
       final p = AudioPlayer();
       p.setVolume(1);
@@ -44,13 +44,25 @@ class GiftSoundPool {
     final key = catalog?.soundKey ?? event.soundKey;
     final rarity = catalog?.rarity ?? GiftRarity.common;
 
-    final played = await _playUrl(url) ||
-        await _playAsset(key) ||
-        await _playAsset(_rarityAsset(rarity));
+    final played = await _playWithRetry(() async =>
+            await _playUrl(url) ||
+            await _playAsset(key) ||
+            await _playAsset(_rarityAsset(rarity))) ||
+        false;
     if (!played) {
       await _playSystem(rarity);
     }
     _haptic(rarity);
+  }
+
+  Future<bool> _playWithRetry(Future<bool> Function() play) async {
+    for (var attempt = 0; attempt < 3; attempt++) {
+      if (await play()) return true;
+      if (attempt < 2) {
+        await Future<void>.delayed(Duration(milliseconds: 40 * (attempt + 1)));
+      }
+    }
+    return false;
   }
 
   Future<void> playFor(GiftEntity gift) async {

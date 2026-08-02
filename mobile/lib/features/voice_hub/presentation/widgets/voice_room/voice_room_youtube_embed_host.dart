@@ -9,16 +9,24 @@ class VoiceRoomYoutubeEmbedHost extends ConsumerWidget {
     super.key,
     required this.roomKey,
     this.compact = false,
+    this.fillBackground = true,
   });
 
   final String roomKey;
   final bool compact;
+  /// Video isteğinde tam ekran arka plan (koltukların arkasında).
+  final bool fillBackground;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return YoutubeVideoBackground(
+    final child = YoutubeVideoBackground(
       roomKey: roomKey,
       compact: compact,
+      fillBackground: fillBackground,
     );
+    if (fillBackground && !compact) {
+      return Positioned.fill(child: child);
+    }
+    return child;
   }
 }

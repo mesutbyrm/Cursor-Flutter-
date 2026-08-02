@@ -2443,8 +2443,24 @@ class VoiceRoomLiveController
       await VoiceRoomMusicAudioSession.activateForPlayback();
 
       if (isVideoRequest && hasYoutube) {
-        await player.stop();
         _syncRoomVideo(effectiveDj, sync: sync);
+        final resolvedStream = await _resolveDjStreamUrl(effectiveDj, sync: sync);
+        if (!sameTrack) {
+          await player.stop();
+        }
+        if (resolvedStream != null && resolvedStream.isNotEmpty) {
+          await player.sync(
+            musicUrl: resolvedStream,
+            resolveSeed: effectiveDj.playbackResolveSeed,
+            fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
+            nowPlaying: effectiveDj.nowPlaying,
+            playing: true,
+            muted: muted,
+            serverStreamUrl: resolvedStream,
+            preResolvedStream: resolvedStream,
+            startPosition: sameTrack ? startPos : startPos,
+          );
+        }
         _lastDjPlaybackSignature = sig;
         return effectiveDj;
       }
@@ -2766,7 +2782,17 @@ class VoiceRoomLiveController
     unawaited(_stopTyping());
 
     if (VoiceMusicSync.isKapatCommand(trimmed)) {
-      await closeMusicPlayer();
+      if (!_canStopMusic()) {
+        state = state.copyWith(
+          error:
+              'Müziği yalnızca oda sahibi, admin veya şarkıyı isteyen kapatabilir.',
+        );
+        return;
+      }
+      final err = await skipMusic();
+      if (err != null) {
+        state = state.copyWith(error: err);
+      }
       return;
     }
 

@@ -326,7 +326,16 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       final backlog = state.animationQueue.length;
       try {
         await GiftEnginePreloader.prefetch(next).timeout(
-          Duration(milliseconds: backlog > 4 ? 900 : 500),
+          Duration(
+            milliseconds: backlog > 4
+                ? 1800
+                : (GiftEngineParser.fromEvent(next).animationType ==
+                        GiftEngineAnimationType.mp4 ||
+                    GiftEngineParser.fromEvent(next).animationType ==
+                        GiftEngineAnimationType.webm
+                    ? 2500
+                    : 900),
+          ),
         );
       } catch (_) {}
       GiftSyncLog.pipelineMs(
@@ -363,14 +372,14 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       var durationMs = config.durationMs;
       if (config.animationType == GiftEngineAnimationType.mp4 ||
           config.animationType == GiftEngineAnimationType.webm) {
-        durationMs = durationMs < 6000 ? 10000 : durationMs;
+        durationMs = durationMs < 8000 ? 12000 : durationMs;
       }
       final watchdogMs = config.startDelayMs +
           durationMs +
           config.queueGapMs +
           VoiceGiftAmbientOverlay.fadeInMs +
           VoiceGiftAmbientOverlay.fadeOutMs +
-          8000;
+          12000;
 
       _animationTimer?.cancel();
       _animationTimer = Timer(Duration(milliseconds: watchdogMs), () {

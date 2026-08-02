@@ -21,11 +21,14 @@ class YoutubeVideoBackground extends ConsumerStatefulWidget {
     super.key,
     required this.roomKey,
     this.compact = false,
+    this.fillBackground = false,
   });
 
   final String roomKey;
   /// Koltuk altı şerit — tam genişlik, kenarlık/gölge yok.
   final bool compact;
+  /// Video isteğinde oda arka planında tam ekran YouTube.
+  final bool fillBackground;
 
   @override
   ConsumerState<YoutubeVideoBackground> createState() =>
@@ -313,10 +316,38 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
       );
     }
 
-    // Video isteği (!istek video): koltukların altında, kenarlardan sıfır
-    // tam genişlik şerit. Ortada yüzen kart / tam ekran kaplama yok.
+    // Video isteği (!istek video): arka planda tam ekran veya koltuk altı şerit.
     final width = MediaQuery.sizeOf(context).width;
     final stripHeight = (width * 9 / 16).clamp(140.0, 230.0);
+    final videoChild = RepaintBoundary(
+      child: IgnorePointer(
+        child: ClipRect(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (_loadFailed) _thumbFallback(video),
+              FittedBox(
+                fit: BoxFit.cover,
+                clipBehavior: Clip.hardEdge,
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: width,
+                  height: width * 9 / 16,
+                  child: web,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (widget.fillBackground && !widget.compact) {
+      return SizedBox.expand(
+        child: Opacity(opacity: 0.72, child: videoChild),
+      );
+    }
+
     return RepaintBoundary(
       child: IgnorePointer(
         child: SizedBox(
