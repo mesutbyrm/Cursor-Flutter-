@@ -204,10 +204,34 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
   }
 
   Future<String?> assignSeat({required int seatIndex, String? userId}) async {
+    final selfId = userId ?? ref.read(authControllerProvider).valueOrNull?.id;
     try {
       await ref
           .read(voiceSeatRestServiceProvider)
           .takeSeat(_roomKey, seatIndex, userId: userId);
+      if (selfId != null && selfId.isNotEmpty) {
+        ChatRoomPresence? occupant;
+        for (final p in state.presence) {
+          if (p.id == selfId) {
+            occupant = p;
+            break;
+          }
+        }
+        _applyOptimisticSeat(userId: selfId, seatIndex: seatIndex);
+        final nextSlots = _patchSeatSlots(
+          state.seatSlots,
+          userId: selfId,
+          newIndex: seatIndex,
+          previousIndex: occupant?.seatIndex,
+          occupantName: occupant?.displayName,
+          occupantImage: occupant?.image,
+        );
+        final nextPresence = _syncPresenceSeatIndexFromSlots(
+          state.presence,
+          nextSlots,
+        );
+        state = state.copyWith(seatSlots: nextSlots, presence: nextPresence);
+      }
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

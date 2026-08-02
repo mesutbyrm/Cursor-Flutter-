@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.118+151 (2026-08-02)
+
+### Sesli oda UX — hediye, koltuk, müzik, komutlar
+- **Hediye sesi:** SFX havuzu genişletildi, yeniden deneme; video preload süresi uzatıldı, tam oynatma (loop kapalı, bitişte dequeue)
+- **Koltuk:** Boş koltuğa uzun bas → odadaki herkes listesi → seçilen kişi oturur; oturma sonrası anında senkron
+- **Koltuk stabilitesi:** Kendi koltuğun geçici boş yanıtta korunur; yetki/internet dışı düşme azaltıldı
+- **Ses ver:** Ayarlar/oda panelinden kaldırıldı; boş koltuk dokunuşu artık söz hakkı istemez
+- **!istek video:** YouTube tam ekran arka plan + just_audio yedek ses
+- **!kapat:** Sıradaki şarkıya geçer (skip); yalnızca oda sahibi, admin veya isteyen
+
 ## 1.0.117+150 (2026-08-01)
 
 ### Sesli oda — PK, koltuk, hediye sesi, müzik

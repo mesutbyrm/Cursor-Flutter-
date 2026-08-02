@@ -19,6 +19,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
     this.speakingUserIds = const {},
     this.onUserTap,
     this.onSeatTap,
+    this.onSeatLongPress,
     this.trtc,
     this.trtcReady = false,
     this.selfUserId,
@@ -32,6 +33,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
   final Set<String> speakingUserIds;
   final void Function(ChatRoomPresence user)? onUserTap;
   final void Function(int internalSeatIndex, ChatRoomPresence? user)? onSeatTap;
+  final void Function(int internalSeatIndex)? onSeatLongPress;
   final TrtcRoomManager? trtc;
   final bool trtcReady;
   final String? selfUserId;
@@ -89,6 +91,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
                   djUserIds: _effectiveDjIds,
                   speaking: _isSpeaking(host),
                   onTap: () => onSeatTap?.call(1, host),
+                  onLongPress: host == null ? () => onSeatLongPress?.call(1) : null,
                   trtc: trtc,
                   trtcReady: trtcReady,
                   selfUserId: selfUserId,
@@ -147,6 +150,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
           djUserIds: _effectiveDjIds,
           speaking: _isSpeaking(user),
           onTap: () => onSeatTap?.call(internal, user),
+          onLongPress: user == null ? () => onSeatLongPress?.call(internal) : null,
           trtc: trtc,
           trtcReady: trtcReady,
           selfUserId: selfUserId,

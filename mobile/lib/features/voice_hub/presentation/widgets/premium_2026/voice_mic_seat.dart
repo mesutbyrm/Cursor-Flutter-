@@ -28,6 +28,7 @@ class VoiceMicSeat extends ConsumerWidget {
     this.room,
     this.djUserIds = const [],
     this.onTap,
+    this.onLongPress,
     this.trtc,
     this.trtcReady = false,
     this.selfUserId,
@@ -45,6 +46,7 @@ class VoiceMicSeat extends ConsumerWidget {
   final VoiceRoomEntity? room;
   final List<String> djUserIds;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final TrtcRoomManager? trtc;
   final bool trtcReady;
   final String? selfUserId;
@@ -60,6 +62,7 @@ class VoiceMicSeat extends ConsumerWidget {
         size: size,
         locked: locked,
         onTap: onTap,
+        onLongPress: onLongPress,
       );
     }
 
@@ -252,17 +255,20 @@ class _EmptySeat extends StatelessWidget {
     required this.size,
     required this.locked,
     this.onTap,
+    this.onLongPress,
   });
 
   final int seatIndex;
   final double size;
   final bool locked;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: locked ? null : onTap,
+      onLongPress: locked ? null : onLongPress,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

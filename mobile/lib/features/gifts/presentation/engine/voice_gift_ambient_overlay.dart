@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/presentation/gifts/widgets/floating_gift_particles.dart';
@@ -39,6 +40,7 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
   Timer? _playTimer;
   String? _activeId;
   String? _boundId;
+  VideoPlayerController? _videoController;
 
   @override
   void initState() {
@@ -61,9 +63,32 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
   @override
   void dispose() {
     _playTimer?.cancel();
+    _videoController?.removeListener(_onVideoProgress);
     _fadeCtrl.removeStatusListener(_onFadeStatus);
     _fadeCtrl.dispose();
     super.dispose();
+  }
+
+  void _onVideoProgress() {
+    final c = _videoController;
+    if (c == null || !c.value.isInitialized || _activeId == null) return;
+    if (c.value.processingState == ProcessingState.completed) {
+      _scheduleFadeOut();
+    }
+  }
+
+  void _scheduleFadeOut() {
+    _playTimer?.cancel();
+    if (!mounted || _activeId == null) return;
+    _fadeCtrl.duration =
+        const Duration(milliseconds: VoiceGiftAmbientOverlay.fadeOutMs);
+    _fadeCtrl.reverse();
+  }
+
+  void _bindVideoController(VideoPlayerController? controller) {
+    _videoController?.removeListener(_onVideoProgress);
+    _videoController = controller;
+    controller?.addListener(_onVideoProgress);
   }
 
   void _bindEvent(LiveGiftEvent? ev, bool enabled) {
@@ -85,7 +110,11 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
     var playMs = config.durationMs;
     if (config.animationType == GiftEngineAnimationType.mp4 ||
         config.animationType == GiftEngineAnimationType.webm) {
-      playMs = playMs < 6000 ? 10000 : playMs;
+      playMs = playMs < 8000 ? 12000 : playMs;
+      final videoDur = _videoController?.value.duration;
+      if (videoDur != null && videoDur.inMilliseconds > playMs) {
+        playMs = videoDur.inMilliseconds + 400;
+      }
     }
     Future<void>.delayed(Duration(milliseconds: config.startDelayMs), () {
       if (!mounted || _activeId != ev.id) return;
@@ -95,9 +124,7 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
 
       _playTimer = Timer(Duration(milliseconds: playMs), () {
         if (!mounted || _activeId != ev.id) return;
-        _fadeCtrl.duration =
-            const Duration(milliseconds: VoiceGiftAmbientOverlay.fadeOutMs);
-        _fadeCtrl.reverse();
+        _scheduleFadeOut();
       });
     });
   }
@@ -153,12 +180,14 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
                       event: event,
                       config: config,
                       catalog: catalog,
+                      onVideoControllerChanged: _bindVideoController,
                     )
                   : _AmbientMask(
                       child: _AmbientContent(
                         event: event,
                         config: config,
                         catalog: catalog,
+                        onVideoControllerChanged: _bindVideoController,
                       ),
                     ),
             ),
@@ -199,11 +228,13 @@ class _AmbientContent extends StatelessWidget {
     required this.event,
     required this.config,
     required this.catalog,
+    this.onVideoControllerChanged,
   });
 
   final LiveGiftEvent event;
   final GiftEngineConfig config;
   final GiftEntity? catalog;
+  final ValueChanged<VideoPlayerController?>? onVideoControllerChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -313,7 +344,9 @@ class _AmbientContent extends StatelessWidget {
       width: w,
       height: h,
       fit: fit,
+      looping: false,
       fallbackEmoji: emoji,
+      onVideoControllerChanged: onVideoControllerChanged,
     );
   }
 }
