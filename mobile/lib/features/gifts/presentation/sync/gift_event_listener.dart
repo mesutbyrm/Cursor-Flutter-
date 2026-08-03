@@ -10,6 +10,9 @@ import '../../../voice_hub/presentation/providers/voice_gift_providers.dart';
 import '../../../voice_hub/presentation/providers/voice_recent_gifts_provider.dart';
 import '../../../voice_hub/presentation/providers/chat_room_providers.dart';
 import '../../../voice_hub/presentation/providers/voice_room_provider.dart';
+import '../../../voice_hub/presentation/providers/voice_gift_combo_tracker.dart';
+import '../../../voice_hub/presentation/providers/voice_gift_leaderboard_provider.dart';
+import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import 'gift_session_controller.dart';
 import 'gift_sync_log.dart';
 
@@ -83,28 +86,44 @@ class _GiftEventListenerState extends ConsumerState<GiftEventListener> {
     if (!mounted) return;
     scheduleMicrotask(() {
       if (!mounted) return;
+      final enriched = widget.useVoiceRealtime
+          ? ref.read(voiceGiftComboTrackerProvider.notifier).enrich(event)
+          : event;
+      if (widget.useVoiceRealtime) {
+        ref
+            .read(voiceSessionGiftLeaderboardProvider.notifier)
+            .record(enriched);
+        if (enriched.jetonAmount >= 1000) {
+          ref.read(staffEntranceMarqueeProvider.notifier).enqueueBigGift(
+                senderName: enriched.senderName,
+                receiverName: enriched.receiverName,
+                jeton: enriched.jetonAmount,
+                giftName: enriched.giftName,
+              );
+        }
+      }
       final notifier =
           ref.read(giftSessionProvider(widget.sessionKey).notifier);
       if (widget.useVoiceRealtime) {
         notifier.onVoiceGiftSent(
-          event,
+          enriched,
           source: 'voice_realtime',
           userRole: widget.userRole,
           isHost: widget.isHost,
         );
       } else {
         notifier.onGiftSent(
-          event,
+          enriched,
           source: 'live_realtime',
           userRole: widget.userRole,
           isHost: widget.isHost,
         );
       }
-      ref.read(voiceRecentGiftsProvider.notifier).record(event);
+      ref.read(voiceRecentGiftsProvider.notifier).record(enriched);
       if (widget.useVoiceRealtime && widget.sessionKey.isNotEmpty) {
         ref
             .read(voiceRoomLiveProvider(widget.sessionKey).notifier)
-            .appendGiftChatMessage(event);
+            .appendGiftChatMessage(enriched);
       }
       if (widget.useLiveRealtime && widget.liveStreamId != null) {
         ref

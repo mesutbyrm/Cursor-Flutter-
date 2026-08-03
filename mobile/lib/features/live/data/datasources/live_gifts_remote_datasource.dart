@@ -455,6 +455,16 @@ class LiveGiftsRemoteDataSource {
       mediaType: GiftMediaSpec.parseMediaType(render),
       mediaWidth: GiftMediaSpec.parseDimensions(render).$1,
       mediaHeight: GiftMediaSpec.parseDimensions(render).$2,
+      engine: json['engine'] == true,
+      engineEvent: pick(json, ['event'])?.toString(),
+      giftHistoryId: pick(json, [
+        'giftHistoryId',
+        'historyId',
+      ])?.toString(),
+      queueItemId: pick(json, [
+        'queueItemId',
+        'queueId',
+      ])?.toString(),
     );
   }
 

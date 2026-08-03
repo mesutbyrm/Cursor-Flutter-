@@ -31,13 +31,12 @@ android {
 
     defaultConfig {
         applicationId = "com.mesutbyrm.canlifal"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         ndk {
-            // Play Store hedefi: yalnızca 64-bit ARM (~%40 daha küçük APK; minSdk 24).
-            abiFilters += listOf("arm64-v8a")
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
     }
 
@@ -57,15 +56,7 @@ android {
                 "**/libliteavsdk.so",
                 "**/libc++_shared.so",
             )
-            // ffmpeg_kit / plugin AAR'ları tüm ABI'leri getirir; yalnızca arm64 bırak.
             excludes += listOf(
-                "lib/armeabi-v7a/**",
-                "lib/x86/**",
-                "lib/x86_64/**",
-                "lib/armeabi-v7a/libliteavsdk.so",
-                "lib/x86_64/libliteavsdk.so",
-                // Agora AI/eklenti modülleri (~45MB) — temel ses/video RTC yeterli.
-                // libagora_ffmpeg.so DAHİL EDİLMELİ — libagora-rtc-sdk.so buna bağlıdır.
                 "**/libagora_clear_vision_extension.so",
                 "**/libagora_lip_sync_extension.so",
                 "**/libagora_spatial_audio_extension.so",

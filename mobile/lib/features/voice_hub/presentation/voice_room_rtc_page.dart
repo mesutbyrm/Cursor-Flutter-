@@ -27,8 +27,6 @@ import '../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../gifts/presentation/widgets/lucky_gift_wins_ticker.dart';
-import 'providers/voice_gift_combo_tracker.dart';
-import 'providers/voice_gift_leaderboard_provider.dart';
 import '../../auth/domain/entities/user_entity.dart';
 import '../../vip_gold/domain/vip_tier.dart';
 import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
@@ -44,7 +42,6 @@ import '../domain/entities/chat_room_my_permissions.dart';
 import 'audio/voice_room_audio_coordinator.dart';
 import 'audio/voice_room_music_audio_session.dart';
 import 'providers/chat_room_providers.dart';
-import 'providers/staff_entrance_marquee_provider.dart';
 import '../music/presentation/widgets/music_search_picker_sheet.dart';
 import 'sheets/music_mode_picker_sheet.dart';
 import 'sheets/voice_room_hub_settings.dart';
@@ -101,9 +98,6 @@ class VoiceRoomRtcPage extends ConsumerStatefulWidget {
 
 class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   VoiceRoomAudioCoordinator? _audio;
-  StreamSubscription<LiveGiftEvent>? _giftSub;
-  StreamSubscription<ChatRoomSseEvent>? _sseParticipantsSub;
-  var _participants = <String, Map<String, dynamic>>{};
   final _messageCtrl = TextEditingController();
   final _chatScrollCtrl = ScrollController();
   var _scrollChatToLatest = false;
@@ -155,34 +149,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       if (roomKey.isEmpty) {
         unawaited(ref.read(voiceRoomsProvider.future));
       }
-      _ensureGiftRealtime();
+      _startGiftRealtimePoll();
       final user = ref.read(authControllerProvider).valueOrNull;
       if (user != null) _maybeShowEntrance(user);
       unawaited(_joinAudioBackground());
       _prefetchRoomImages();
-      _bindSseParticipants();
-    });
-  }
-
-  void _bindSseParticipants() {
-    _sseParticipantsSub?.cancel();
-    _sseParticipantsSub =
-        ref.read(voiceRoomSseForProvider(_liveRoomKey)).events.listen((event) {
-      if (!mounted) return;
-      if (event.type == ChatRoomSseEventType.presence) {
-        final raw = event.data['users'] ?? event.data['presence'];
-        if (raw is! List) return;
-        final users = List<Map<String, dynamic>>.from(
-          raw.whereType<Map>().map((u) => Map<String, dynamic>.from(u)),
-        );
-        if (!mounted) return;
-        setState(() {
-          _participants = {
-            for (final u in users)
-              (u['id']?.toString() ?? ''): u,
-          }..removeWhere((key, _) => key.isEmpty);
-        });
-      }
     });
   }
 
@@ -219,12 +190,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   @override
   void dispose() {
-    _giftSub?.cancel();
-    _giftSub = null;
     _giftRealtimeStarted = false;
-    _sseParticipantsSub?.cancel();
-    _sseParticipantsSub = null;
-    _participants.clear();
     _messageCtrl.dispose();
     _chatScrollCtrl.dispose();
     _messageFocus.dispose();
@@ -232,16 +198,20 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       unawaited(
         ref
             .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
-            .leaveRoomSession(source: 'rtc_dispose'),
+            .leaveRoomSession(source: 'rtc_dispose')
+            .then((_) async {
+          final audio = _audio;
+          _audio = null;
+          if (audio != null) await audio.leave();
+        }),
       );
+    } else {
+      final audio = _audio;
+      _audio = null;
+      if (audio != null) unawaited(audio.leave());
     }
     ref.read(voiceRoomGiftRealtimeProvider).stop();
     ref.read(pkBattleRemoteProvider.notifier).clear();
-    final audio = _audio;
-    _audio = null;
-    if (audio != null) {
-      unawaited(audio.leave());
-    }
     super.dispose();
   }
 
@@ -409,34 +379,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
   }
 
-  void _ensureGiftRealtime() {
+  void _startGiftRealtimePoll() {
     if (_giftRealtimeStarted) return;
-    final service = ref.read(voiceRoomGiftRealtimeProvider);
     final room = _effectiveRoom();
     final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
     if (key.isEmpty) return;
     _giftRealtimeStarted = true;
-    service.start(key);
-    _giftSub?.cancel();
-    _giftSub = service.events.listen(_onGiftEvent);
+    ref.read(voiceRoomGiftRealtimeProvider).start(key);
   }
 
-  void _startGiftRealtime() => _ensureGiftRealtime();
-
-  void _onGiftEvent(LiveGiftEvent raw) {
-    if (!mounted) return;
-    final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
-    ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
-
-    if (event.jetonAmount >= 1000) {
-      ref.read(staffEntranceMarqueeProvider.notifier).enqueueBigGift(
-            senderName: event.senderName,
-            receiverName: event.receiverName,
-            jeton: event.jetonAmount,
-            giftName: event.giftName,
-          );
-    }
-  }
+  void _startGiftRealtime() => _startGiftRealtimePoll();
 
   Future<UserEntity?> _waitForAuth({Duration timeout = const Duration(seconds: 1)}) async {
     final cached = ref.read(authControllerProvider).valueOrNull;
@@ -611,8 +563,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _leaving = true;
     ref.read(pkBattleRemoteProvider.notifier).clear();
     ref.read(voiceRoomGiftRealtimeProvider).stop();
-    _giftSub?.cancel();
-    _giftSub = null;
 
     final liveCtrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
     final audio = _audio;
@@ -631,10 +581,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     );
     await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
 
-    // Oturumu ve ses motorunu arka planda kapat — UI donmasın.
-    unawaited(liveCtrl.leaveRoomSession(source: 'rtc_leave'));
+    await liveCtrl.leaveRoomSession(source: 'rtc_leave');
     if (audio != null) {
-      unawaited(audio.leave());
+      await audio.leave();
     }
 
     if (!mounted) return;

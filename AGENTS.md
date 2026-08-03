@@ -55,7 +55,7 @@ Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-ra
 
 ### Ortam
 
-- Flutter SDK: `/opt/flutter/bin` (v3.41.x)
+- Flutter SDK: `/opt/flutter/bin` (stable **3.44.x** — `mobile/.flutter-version`)
 - Node.js: `nvm` — `api/` bağımlılıkları için
 - Güncelleme: `.cursor/environment.json` → `bash scripts/cursor-update.sh; exit 0` (betik de her zaman **exit 0**; adımlar zaman aşımıyla atlanabilir)
 - Başlangıç: `bash scripts/cursor-start.sh; exit 0`

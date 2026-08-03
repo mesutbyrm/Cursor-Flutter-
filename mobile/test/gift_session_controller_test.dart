@@ -1,3 +1,4 @@
+import 'package:canlifal_social/features/gifts/domain/gift_engine_sse_router.dart';
 import 'package:canlifal_social/features/gifts/presentation/sync/gift_session_controller.dart';
 import 'package:canlifal_social/features/live/domain/entities/live_gift_event.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -82,5 +83,28 @@ void main() {
     final state = container.read(giftSessionProvider('room-v'));
     expect(state.animationQueue.length + (state.activeAnimation != null ? 1 : 0),
         greaterThan(0));
+  });
+
+  test('legacy blocked after engine gift_received for same history', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final notifier = container.read(giftSessionProvider('room-e').notifier);
+    expect(
+      notifier.routeGiftSsePayload({
+        'engine': true,
+        'event': 'gift_received',
+        'giftHistoryId': 'hist-1',
+      }),
+      GiftEngineSseAction.visualize,
+    );
+    expect(
+      notifier.routeGiftSsePayload({
+        'type': 'gift',
+        'giftHistoryId': 'hist-1',
+        'giftTypeId': 'rose',
+      }),
+      GiftEngineSseAction.skip,
+    );
   });
 }

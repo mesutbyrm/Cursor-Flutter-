@@ -59,6 +59,10 @@ class LiveGiftEvent extends Equatable {
     this.mediaType,
     this.mediaWidth,
     this.mediaHeight,
+    this.engine = false,
+    this.engineEvent,
+    this.giftHistoryId,
+    this.queueItemId,
   });
 
   final String id;
@@ -115,6 +119,12 @@ class LiveGiftEvent extends Equatable {
   final String? mediaType;
   final int? mediaWidth;
   final int? mediaHeight;
+  /// Backend Gift Engine — `engine:true` motor payload'ı.
+  final bool engine;
+  /// Motor olay adı: `gift_received`, `gift_queue_updated`, `gift_finished`.
+  final String? engineEvent;
+  final String? giftHistoryId;
+  final String? queueItemId;
 
   int get eventTimestampMs => timestamp.millisecondsSinceEpoch;
 
@@ -193,5 +203,9 @@ class LiveGiftEvent extends Equatable {
         mediaType,
         mediaWidth,
         mediaHeight,
+        engine,
+        engineEvent,
+        giftHistoryId,
+        queueItemId,
       ];
 }
