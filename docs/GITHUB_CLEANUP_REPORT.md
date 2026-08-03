@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-08-03 18:47 UTC
+Oluşturulma: 2026-08-03 22:25 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -9,8 +9,8 @@ Base: `main`
 
 | Metrik | Adet |
 |--------|------|
-| Kapatılan PR | 1 |
-| Silinen remote dal | 1 |
+| Kapatılan PR | 0 |
+| Silinen remote dal | 2 |
 | Kalan açık PR | 2 |
 | Korunan / aktif dal | 0 |
 
@@ -18,13 +18,14 @@ Base: `main`
 
 | PR | Neden |
 |----|-------|
-| #299 | cursor/* obsolete PR (0 gün, main doğrudan geliştirme) |
+| — | — |
 
 ## Silinen dallar (cursor/*)
 
 | Dal | Neden |
 |-----|-------|
-| cursor/istek-video-audio-df6c | merged into main |
+| cursor/flutter-platform-upgrade-df6c | merged into main |
+| cursor/voice-room-arch-df6c | merged into main |
 
 ## Kalan açık PR'lar
 
