@@ -60,8 +60,11 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     _knownPresenceIds
       ..clear()
       ..addAll(participants.map((p) => p.id).where((id) => id.isNotEmpty));
+    final mergedPresence = participants.isEmpty
+        ? state.presence
+        : _mergePresenceStable(participants, source: 'state_snapshot');
     state = state.copyWith(
-      presence: participants,
+      presence: mergedPresence,
       seatSlots: snapshot.seats.isNotEmpty ? snapshot.seats : state.seatSlots,
       ownerId: snapshot.ownerId,
       roomTrtc: snapshot.trtc,

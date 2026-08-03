@@ -596,13 +596,6 @@ class VoiceRoomLiveController
       }
     });
     Future.microtask(() => _beginRoomSession());
-    _presenceHeartbeat = Timer.periodic(
-      ChatRoomRemoteDataSource.presenceHeartbeatInterval,
-      (_) {
-      if (state.selfInRoom) {
-        unawaited(_presenceHeartbeatTick());
-      }
-    });
     return VoiceRoomLiveState(
       backgroundUrl: room.backgroundImageUrl?.trim().isNotEmpty == true
           ? room.backgroundImageUrl
@@ -633,6 +626,15 @@ class VoiceRoomLiveController
       backendSyncReady: false,
     );
     _seedOptimisticSelfPresence();
+    _presenceHeartbeat?.cancel();
+    _presenceHeartbeat = Timer.periodic(
+      ChatRoomRemoteDataSource.presenceHeartbeatInterval,
+      (_) {
+        if (_sessionActive && state.selfInRoom) {
+          unawaited(_presenceHeartbeatTick());
+        }
+      },
+    );
 
     try {
       await _joinPresence();
@@ -645,9 +647,13 @@ class VoiceRoomLiveController
             alternateRoomId: _musicAlternateKey,
           );
 
-      unawaited(_loadBackendSnapshot());
-      unawaited(_parallelEntryLoad(skipPresence: true));
-      unawaited(_bootstrapRoomData());
+      await _loadBackendSnapshot();
+      await Future.wait<void>([
+        _loadInitialMessages(),
+        _preloadPkStatus(),
+        _preloadGiftCatalog(),
+      ], eagerError: false);
+      await _bootstrapRoomData();
     } catch (_) {
       state = state.copyWith(loading: false);
     }
@@ -1120,6 +1126,8 @@ class VoiceRoomLiveController
               state = state.copyWith(sseConnected: true, clearError: true);
             }
             ref.read(voiceRoomGiftRealtimeProvider).setSseActive(true);
+            ref.read(voiceRoomGiftSocketProvider).disconnect();
+            _giftSocketStarted = false;
             if (!state.selfInRoom || !_presenceJoined) {
               unawaited(_joinPresence());
             }

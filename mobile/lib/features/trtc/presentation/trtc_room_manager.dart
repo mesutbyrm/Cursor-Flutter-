@@ -19,6 +19,7 @@ class TrtcRoomManager {
   TXDeviceManager? _device;
   TRTCCloudListener? _listener;
   Completer<int>? _enterRoomCompleter;
+  Completer<void>? _exitRoomCompleter;
 
   bool _inRoom = false;
   bool _previewOnly = false;
@@ -192,6 +193,8 @@ class TrtcRoomManager {
       onExitRoom: (reason) {
         debugPrint('TRTC exitRoom: $reason');
         _inRoom = false;
+        final c = _exitRoomCompleter;
+        if (c != null && !c.isCompleted) c.complete();
       },
       onConnectionLost: () {
         debugPrint('TRTC connection lost');
@@ -408,10 +411,19 @@ class TrtcRoomManager {
       _cloud!.stopLocalPreview();
       _cloud!.stopLocalAudio();
       if (_inRoom) {
+        _exitRoomCompleter = Completer<void>();
         _cloud!.exitRoom();
+        try {
+          await _exitRoomCompleter!.future.timeout(
+            const Duration(milliseconds: 500),
+            onTimeout: () {},
+          );
+        } catch (_) {}
+        _exitRoomCompleter = null;
       }
       if (_listener != null) {
         _cloud!.unRegisterListener(_listener!);
+        _listener = null;
       }
     }
     _inRoom = false;
@@ -424,10 +436,9 @@ class TrtcRoomManager {
   }
 
   void dispose() {
-    leave();
+    unawaited(leave());
     _cloud = null;
     _device = null;
-    _listener = null;
   }
 
   static void destroyEngine() {

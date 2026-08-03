@@ -73,7 +73,13 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
       final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
       if (key.isEmpty) continue;
       keys.add(key);
-      if (_subs.containsKey(key)) continue;
+      final hub = ref.read(sseConnectionHubProvider);
+      final service = hub.voiceRoom(key);
+      final live = service.isLiveForRoom(key);
+      if (_subs.containsKey(key) && live) continue;
+      if (_subs.containsKey(key) && !live) {
+        _disconnectRoom(key, releaseHub: false);
+      }
       _connectRoom(key);
     }
     for (final key in _subs.keys.toList()) {
@@ -139,9 +145,11 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
     state = state.copyWith(counts: counts);
   }
 
-  void _disconnectRoom(String roomId) {
+  void _disconnectRoom(String roomId, {bool releaseHub = true}) {
     _subs.remove(roomId)?.cancel();
-    ref.read(sseConnectionHubProvider).releaseVoiceRoom(roomId);
+    if (releaseHub) {
+      ref.read(sseConnectionHubProvider).releaseVoiceRoom(roomId);
+    }
   }
 
   void _disposeAll() {

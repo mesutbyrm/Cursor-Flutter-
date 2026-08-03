@@ -64,6 +64,13 @@ extension VoiceRoomGiftControls on VoiceRoomLiveController {
 
   void _startGiftSocket() {
     if (_roomKey.isEmpty) return;
+    if (state.sseConnected) {
+      VoiceRoomDebugLog.log('socket.subscribe.skip', {
+        'roomId': _roomKey,
+        'reason': 'sse_active',
+      });
+      return;
+    }
     if (_giftSocketStarted) {
       VoiceRoomDebugLog.log('socket.subscribe.skip', {'roomId': _roomKey});
       return;
