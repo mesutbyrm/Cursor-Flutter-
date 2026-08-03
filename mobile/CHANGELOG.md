@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.123+156 (2026-08-03)
+
+### Tam senkronizasyon — oda çıkışı + hediye süresi
+- **Odadan çık:** TRTC/SSE/state anında temizlenir; sayfa hemen kapanır; backend leave arka planda
+- **Tekrar giriş:** `ensureActiveSession()` — PiP müzik sonrası eski presence kalmaz
+- **Hediye video:** Backend `durationMs` birebir; erken kapanma (12s zorlama) kaldırıldı
+- **Hediye sesi:** SFX fade-in ile senkron (video başlangıcıyla)
+- **Kuyruk:** FIFO + `gift_finished` SSE dequeue korunur
+
 ## 1.0.122+155 (2026-08-03)
 
 ### Platform & SDK güncellemesi

@@ -930,44 +930,56 @@ class VoiceRoomLiveController
     _sseRoomRefreshDebounce?.cancel();
   }
 
-  /// Odadan çıkış — presence, SSE ve müzik temizliği (RTC sayfası).
-  /// Ağır işlemler UI'ı bloklamaz; navigasyon hemen yapılabilir.
-  Future<void> leaveRoomSession({String source = 'ui_leave'}) async {
+  /// Odadan çıkış — önce yerel/TRTC temizliği, backend isteği arka planda.
+  Future<void> leaveRoomSession({
+    String source = 'ui_leave',
+    bool awaitBackend = true,
+  }) async {
     if (!_sessionActive) return;
     _sessionActive = false;
     _entryBegun = false;
     VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: source);
     _cancelSessionTimers();
-    try {
-      await _leavePresenceWithSeatClear()
-          .timeout(const Duration(seconds: 5))
-          .catchError((_) {});
-    } catch (_) {}
+
+    // 1) UI/state hemen sıfırla — tekrar girişte eski presence görünmesin.
     clearVoiceRoomLiveSession(ref, _roomKey);
     _removeSelfFromPresenceOptimistic();
+    _knownPresenceIds.clear();
+    _sseStarted = false;
+    _giftSocketStarted = false;
+    _presenceJoined = false;
+    _voiceJoined = false;
     state = state.copyWith(
       presence: const [],
       seatSlots: const [],
+      typingUsers: const [],
       clearOwnerId: true,
       clearRoomTrtc: true,
       backendSyncReady: false,
       selfInRoom: false,
+      sseConnected: false,
+      loading: false,
     );
-    _knownPresenceIds.clear();
-    _sseStarted = false;
-    _giftSocketStarted = false;
+
+    // 2) SSE, hediye, PK — anında kes.
     ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
-    unawaited(_leaveVoiceSession());
-    unawaited(_stopTyping());
     ref.read(voiceRoomGiftSocketProvider).disconnect();
     ref.read(voiceRoomGiftRealtimeProvider).stop();
     ref.read(voiceRoomGiftRealtimeProvider).setSseActive(false);
+    ref.read(voiceRoomGiftRealtimeProvider).resetDedupeState();
     ref.read(pkBattleRemoteProvider.notifier).clear();
     ref.read(voiceRoomDiagnosticProvider.notifier).resetForRoom(_roomKey);
+    unawaited(_stopTyping());
+
+    // 3) TRTC / ses motoru — öncelikli (≤500ms).
     try {
-      await ref.read(voiceRoomAudioCoordinatorProvider).leave();
+      await ref
+          .read(voiceRoomAudioCoordinatorProvider)
+          .leave()
+          .timeout(const Duration(milliseconds: 600));
     } catch (_) {}
 
+    // 4) Müzik — oda dışı PiP veya tam kapatma.
     final player = ref.read(voiceRoomDjPlayerProvider);
     final dj = state.dj;
     final stillPlaying = player.playback.value.playing ||
@@ -993,6 +1005,31 @@ class VoiceRoomLiveController
       }
       _closeRoomKeepAlive();
     }
+
+    // 5) Backend leave — arka plan veya await.
+    final backend = _leaveRoomBackend();
+    if (awaitBackend) {
+      await backend;
+    } else {
+      unawaited(backend);
+    }
+  }
+
+  /// Müzik PiP sonrası aynı odaya dönüş — oturumu yeniden başlat.
+  void ensureActiveSession() {
+    if (_sessionActive) return;
+    _entryBegun = false;
+    _sessionActive = false;
+    unawaited(_beginRoomSession());
+  }
+
+  Future<void> _leaveRoomBackend() async {
+    try {
+      await _leavePresenceWithSeatClear()
+          .timeout(const Duration(seconds: 5))
+          .catchError((_) {});
+    } catch (_) {}
+    unawaited(_leaveVoiceSession());
   }
 
   bool _hasDjPlayableSource(

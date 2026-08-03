@@ -144,6 +144,18 @@ Bu oturumda sesli oda yaşam döngüsü (TRTC/SSE/hediye) için P0 mimari düzel
 - `gift_event_listener.dart` — merkezi combo/leaderboard/marquee
 - `gift_engine_sse_router.dart`, `gift_sse_dispatch.dart` (cherry-pick #299)
 
+## 8. Oturum 1.0.123+156 — Oda çıkışı + hediye süresi
+
+### Odadan çıkış (P0)
+- `leaveRoomSession(awaitBackend: false)` — TRTC/SSE/state anında; backend arka planda
+- RTC/basic sayfa: pop önce, özet sheet kaldırıldı (anında çıkış)
+- `ensureActiveSession()` — PiP müzik sonrası tekrar girişte eski presence yok
+
+### Hediye süresi (P0)
+- Backend `engineDurationMs` birebir kullanılır (12s zorlama kaldırıldı)
+- Video: `max(backendDuration, videoLength)` — erken kapanmaz
+- SFX: fade-in ile video senkron başlar
+
 ---
 
-*Backend dokunulmadı. Tüm endpoint'ler `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9 ile uyumludur.*
+*Backend dokunulmadı. API: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md`*
