@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/util/json_util.dart';
 import '../../domain/gift_engine_models.dart';
 import '../../domain/gift_entity.dart';
 import '../../domain/gift_engine_parser.dart';
+import '../../domain/gift_engine_sse_router.dart';
 import '../../domain/gift_revenue_display.dart';
 import '../engine/gift_engine_preloader.dart';
 import '../providers/gift_catalog_index_provider.dart';
@@ -24,6 +26,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
 
   final _feedExpiryTimers = <String, Timer>{};
   final _receivedAtMs = <String, int>{};
+  final _engineGiftKeys = <String>{};
+  final _legacyBlockedKeys = <String>{};
   Timer? _animationTimer;
   void Function()? _cancelHourlyReset;
   var _pumping = false;
@@ -65,6 +69,77 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     _feedExpiryTimers.clear();
     _animationTimer?.cancel();
     _receivedAtMs.clear();
+    _engineGiftKeys.clear();
+    _legacyBlockedKeys.clear();
+  }
+
+  /// SSE ham payload — motor/legacy ayrımı (web ile aynı).
+  GiftEngineSseAction routeGiftSsePayload(Map<String, dynamic> payload) {
+    final action = GiftEngineSseRouter.classify(payload);
+    final key = GiftEngineSseRouter.dedupeKey(payload);
+    switch (action) {
+      case GiftEngineSseAction.visualize:
+        if (key != null) {
+          _engineGiftKeys.add(key);
+          _legacyBlockedKeys.add(key);
+        }
+        return action;
+      case GiftEngineSseAction.queueSync:
+      case GiftEngineSseAction.finished:
+        if (key != null) _engineGiftKeys.add(key);
+        return action;
+      case GiftEngineSseAction.legacyVisualize:
+        if (key != null && _legacyBlockedKeys.contains(key)) {
+          GiftSyncLog.dedupeSkipped(_roomId, key, 'legacy_after_engine');
+          return GiftEngineSseAction.skip;
+        }
+        if (key != null) _legacyBlockedKeys.add(key);
+        return action;
+      case GiftEngineSseAction.skip:
+        return action;
+    }
+  }
+
+  /// Motor `gift_queue_updated` — sırayı güncelle, animasyon başlatma.
+  void onEngineQueueUpdated(
+    Map<String, dynamic> payload, {
+    LiveGiftEvent Function(Map<String, dynamic> item)? parseItem,
+  }) {
+    final items = GiftEngineSseRouter.queueItems(payload);
+    if (items.isEmpty) return;
+
+    final pending = <LiveGiftEvent>[];
+    for (final raw in items) {
+      final key = GiftEngineSseRouter.dedupeKey(raw);
+      if (key != null) _engineGiftKeys.add(key);
+      final id = pick(raw, ['id', 'queueItemId', 'giftHistoryId'])?.toString();
+      if (id != null && state.processedEventIds.contains(id)) continue;
+      if (parseItem == null) continue;
+      final ev = parseItem(raw);
+      if (!_isDisplayable(ev)) continue;
+      if (state.processedEventIds.contains(ev.id)) continue;
+      pending.add(ev);
+    }
+    if (pending.isEmpty) return;
+
+    // FIFO — sunucu sırasına göre kuyruğa ekle (çift animasyon yok).
+    final merged = <LiveGiftEvent>[...state.animationQueue];
+    for (final ev in pending) {
+      if (merged.any((e) => e.id == ev.id)) continue;
+      if (state.activeAnimation?.id == ev.id) continue;
+      merged.add(ev);
+    }
+    state = state.copyWith(animationQueue: merged);
+    _pumpAnimationQueue();
+    GiftSyncLog.pipelineStage('queue_sync', 'engine_queue_updated');
+  }
+
+  /// Motor `gift_finished` — aktif veya bekleyen animasyonu kaldır.
+  void onEngineGiftFinished(Map<String, dynamic> payload) {
+    final id = GiftEngineSseRouter.finishedItemId(payload);
+    if (id == null || id.isEmpty) return;
+    dequeueAnimation(id);
+    GiftSyncLog.pipelineStage(id, 'engine_gift_finished');
   }
 
   void onGiftSent(

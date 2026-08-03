@@ -102,8 +102,6 @@ class VoiceRoomRtcPage extends ConsumerStatefulWidget {
 class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   VoiceRoomAudioCoordinator? _audio;
   StreamSubscription<LiveGiftEvent>? _giftSub;
-  StreamSubscription<ChatRoomSseEvent>? _sseParticipantsSub;
-  var _participants = <String, Map<String, dynamic>>{};
   final _messageCtrl = TextEditingController();
   final _chatScrollCtrl = ScrollController();
   var _scrollChatToLatest = false;
@@ -160,29 +158,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       if (user != null) _maybeShowEntrance(user);
       unawaited(_joinAudioBackground());
       _prefetchRoomImages();
-      _bindSseParticipants();
-    });
-  }
-
-  void _bindSseParticipants() {
-    _sseParticipantsSub?.cancel();
-    _sseParticipantsSub =
-        ref.read(voiceRoomSseForProvider(_liveRoomKey)).events.listen((event) {
-      if (!mounted) return;
-      if (event.type == ChatRoomSseEventType.presence) {
-        final raw = event.data['users'] ?? event.data['presence'];
-        if (raw is! List) return;
-        final users = List<Map<String, dynamic>>.from(
-          raw.whereType<Map>().map((u) => Map<String, dynamic>.from(u)),
-        );
-        if (!mounted) return;
-        setState(() {
-          _participants = {
-            for (final u in users)
-              (u['id']?.toString() ?? ''): u,
-          }..removeWhere((key, _) => key.isEmpty);
-        });
-      }
     });
   }
 
@@ -222,9 +197,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _giftSub?.cancel();
     _giftSub = null;
     _giftRealtimeStarted = false;
-    _sseParticipantsSub?.cancel();
-    _sseParticipantsSub = null;
-    _participants.clear();
     _messageCtrl.dispose();
     _chatScrollCtrl.dispose();
     _messageFocus.dispose();

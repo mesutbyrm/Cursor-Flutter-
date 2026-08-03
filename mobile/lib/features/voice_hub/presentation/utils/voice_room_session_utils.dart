@@ -25,7 +25,6 @@ Future<void> teardownVoiceRoomBeforeSwitch(
   ref.read(pkBattleRemoteProvider.notifier).clear();
   ref.read(voiceRoomGiftRealtimeProvider).stop();
   ref.read(voiceRecentGiftsProvider.notifier).clear();
-  ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(liveKey);
   try {
     await ref.read(voiceRoomAudioCoordinatorProvider).leave();
   } catch (_) {}

@@ -30,7 +30,8 @@ abstract class BaseSseService {
   /// Son SSE `id:` — reconnect'te Last-Event-ID olarak gönderilir.
   String? get lastEventId => _lastEventId;
 
-  static const heartbeatTimeout = Duration(seconds: 20);
+  /// Üretim heartbeat 15 sn — 3× tolerans (denetim raporu §9.4).
+  static const heartbeatTimeout = Duration(seconds: 45);
 
   static Dio createSseDio() {
     return Dio(

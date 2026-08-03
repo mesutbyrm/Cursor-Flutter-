@@ -19,6 +19,7 @@ import 'live_providers.dart';
 import 'live_stream_engagement_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/domain/gift_system_message.dart';
+import '../../../gifts/presentation/sync/gift_sse_dispatch.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../voice_hub/presentation/providers/voice_recent_gifts_provider.dart';
@@ -167,9 +168,14 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         if (count >= 0) state = state.copyWith(viewerCount: count);
       },
       onMessage: (msg) => _mergeMessages([msg]),
-      onGift: (ev) {
-        GiftSyncLog.broadcast(streamId, 'sse', ev.id);
-        ref.read(liveGiftRealtimeProvider).publishRemote(ev);
+      onGift: (payload) {
+        dispatchGiftSsePayloadRef(
+          ref: ref,
+          sessionKey: streamId,
+          payload: payload,
+          giftsRemote: ref.read(liveGiftsRemoteProvider),
+          voiceRealtime: false,
+        );
       },
       onStreamEnded: () {
         state = state.copyWith(streamEnded: true);
