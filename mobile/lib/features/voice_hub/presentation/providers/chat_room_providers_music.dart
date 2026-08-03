@@ -30,6 +30,20 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
   Future<List<PopularMusicSuggestion>> fetchPopularMusic() =>
       ref.read(chatRoomRemoteProvider).fetchPopularMusic();
 
+  /// WebView video yüklenemezse — görsel kapat, [just_audio] ile ses moduna geç.
+  Future<void> fallbackVideoToAudioOnly() async {
+    final np = state.dj.nowPlaying;
+    if (np == null || !np.isVideoRequest) return;
+    ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+    final audioNp = np.asAudioRequest();
+    final dj = state.dj.copyWith(nowPlaying: audioNp);
+    _lastDjPlaybackSignature = '';
+    state = state.copyWith(dj: dj);
+    final applied = await _applyDjPlayback(dj);
+    state = state.copyWith(dj: applied);
+    _showMusicRequestFlashLine('📺 Video açılamadı — ses moduna geçildi.');
+  }
+
   Future<String?> skipMusic() async {
     if (!_canControlMusic()) {
       return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';

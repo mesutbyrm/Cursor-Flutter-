@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.120+153 (2026-08-03)
+
+### !istek müzik — web paritesi (videolu / sesli)
+- **Videolu Çal:** YouTube arka planda blur + karartma; sohbet üstte; iframe sessiz (ses `just_audio`)
+- **Sadece Ses Çal:** Video render yok — yalnızca `just_audio` (düşük CPU/RAM)
+- **Oda oynatıcı:** Kapak, sanatçı, ilerleme, ses, oynat/duraklat/sonraki, videolu/sesli göstergesi
+- **Hata:** Video açılamazsa otomatik ses moduna geçiş
+- **PiP:** Odadan çıkınca global mini oynatıcı videolu modda da görünür
+
 ## 1.0.118+151 (2026-08-02)
 
 ### Sesli oda UX — hediye, koltuk, müzik, komutlar

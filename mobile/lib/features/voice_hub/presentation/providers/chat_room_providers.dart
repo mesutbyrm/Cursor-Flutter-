@@ -1004,6 +1004,11 @@ class VoiceRoomLiveController
   }
 
   Future<void> _handleUnplayableEmbed() async {
+    final wasVideo = state.dj.nowPlaying?.isVideoRequest == true;
+    if (wasVideo) {
+      await fallbackVideoToAudioOnly();
+      return;
+    }
     _showMusicRequestFlashLine(
       '⚠️ Bu şarkı çalınamıyor, lütfen başka bir şarkı deneyin.',
     );

@@ -3,14 +3,17 @@ abstract final class YoutubeEmbedHtml {
   static const refererOrigin = 'https://canlifal.com';
 
   /// İlk yükleme: IFrame API ile oynatıcı oluşturur.
+  /// [visualOnly]: true ise iframe sessiz kalır — ses [just_audio] üzerinden.
   static String build({
     required String videoId,
     required bool playing,
     int startSec = 0,
+    bool visualOnly = false,
   }) {
     final autoplay = playing ? 1 : 0;
     final start = startSec.clamp(0, 86400);
     final origin = refererOrigin;
+    final visualOnlyJs = visualOnly ? 'true' : 'false';
     return '''
 <!DOCTYPE html>
 <html>
@@ -63,16 +66,18 @@ abstract final class YoutubeEmbedHtml {
         events: {
           onReady: function(e) {
             post('ready');
-            try { e.target.unMute(); e.target.setVolume(100); } catch (err) {}
+            if (!($visualOnlyJs)) {
+              try { e.target.unMute(); e.target.setVolume(100); } catch (err) {}
+            }
             if ($autoplay === 1) e.target.playVideo();
           },
           onStateChange: function(e) {
             if (e.data === YT.PlayerState.ENDED) post('ended');
             else if (e.data === YT.PlayerState.PLAYING) {
               post('playing');
-              // Muted-autoplay tuzağı: onReady'deki unMute genelde tutmuyor;
-              // oynatma GERÇEKTEN başladığında unmute güvenilir şekilde çalışır.
-              try { e.target.unMute(); e.target.setVolume(100); } catch (err) {}
+              if (!($visualOnlyJs)) {
+                try { e.target.unMute(); e.target.setVolume(100); } catch (err) {}
+              }
             }
             else if (e.data === YT.PlayerState.PAUSED) post('paused');
           },

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show ImageFilter;
 
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
@@ -45,6 +46,7 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
   var _loadFailed = false;
   var _endingHandled = false;
   var _disposed = false;
+  var _visualOnlyActive = false;
   Timer? _endingResetTimer;
 
   @override
@@ -107,12 +109,15 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     final msg = message.message.trim();
     if (msg == 'ready') {
       _playerReady = true;
-      unawaited(_runCmd({'action': 'unmute', 'volume': 100}));
+      if (!_visualOnlyActive) {
+        unawaited(_runCmd({'action': 'unmute', 'volume': 100}));
+      }
       return;
     }
     if (msg == 'playing') {
-      // Oynatma başladı — muted-autoplay ihtimaline karşı unmute'u pekiştir.
-      unawaited(_runCmd({'action': 'unmute', 'volume': 100}));
+      if (!_visualOnlyActive) {
+        unawaited(_runCmd({'action': 'unmute', 'volume': 100}));
+      }
       return;
     }
     if (msg == 'ended') {
@@ -162,8 +167,10 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
   Future<void> _loadInitialVideo(
     String videoId,
     bool playing,
-    int startSec,
-  ) async {
+    int startSec, {
+    required bool visualOnly,
+  }) async {
+    _visualOnlyActive = visualOnly;
     await _ensureWebView();
     final ctrl = _controller;
     if (ctrl == null) return;
@@ -172,6 +179,7 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
       videoId: videoId,
       playing: playing,
       startSec: startSec,
+      visualOnly: visualOnly,
     );
 
     try {
@@ -192,6 +200,13 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
         'error': e.toString(),
         'stack': st.toString().split('\n').take(2).join(' '),
       });
+      if (visualOnly) {
+        unawaited(
+          ref
+              .read(voiceRoomLiveProvider(widget.roomKey).notifier)
+              .fallbackVideoToAudioOnly(),
+        );
+      }
     }
   }
 
@@ -202,18 +217,19 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     final playing = video.isPlaying;
     final sig = _playbackSig(videoId, playing);
     final startSec = (video.resolvedPositionMs() / 1000).floor();
+    final visualOnly = video.showsVideo;
 
     if (_loadedVideoId != videoId) {
       _loadedVideoId = videoId;
       _loadedPlaybackSig = sig;
       _lastSeekSec = startSec;
       _endingHandled = false;
-      await _loadInitialVideo(videoId, playing, startSec);
+      await _loadInitialVideo(videoId, playing, startSec, visualOnly: visualOnly);
       return;
     }
 
     if (_webView == null) {
-      await _loadInitialVideo(videoId, playing, startSec);
+      await _loadInitialVideo(videoId, playing, startSec, visualOnly: visualOnly);
       _loadedVideoId = videoId;
       _loadedPlaybackSig = sig;
       _lastSeekSec = startSec;
@@ -303,17 +319,8 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
       );
     }
 
-    // Ses-only müzik: sabit boyutlu gizli WebView — 1px yükseklik klavye/
-    // layout değişiminde Android'de oynatmayı durduruyordu.
     if (video.audioOnly) {
-      return SizedBox(
-        width: 128,
-        height: 128,
-        child: Opacity(
-          opacity: 0.01,
-          child: IgnorePointer(child: web),
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
     // Video isteği (!istek video): arka planda tam ekran veya koltuk altı şerit.
@@ -344,7 +351,20 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
 
     if (widget.fillBackground && !widget.compact) {
       return SizedBox.expand(
-        child: Opacity(opacity: 0.72, child: videoChild),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            RepaintBoundary(child: videoChild),
+            ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.42),
+                ),
+              ),
+            ),
+          ],
+        ),
       );
     }
 

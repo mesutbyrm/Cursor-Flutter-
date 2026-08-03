@@ -7,11 +7,13 @@ import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../../providers/chat_room_providers.dart';
+import '../../providers/voice_room_ui_provider.dart';
 import '../../utils/voice_room_responsive_metrics.dart';
 import 'voice_chat_cleared_banner.dart';
 import 'voice_room_music_request_flash.dart';
+import 'voice_room_web_music_bar.dart';
 
-/// Kuyruk + çalan parça + istek duyurusu — mesaj kutusunun hemen üstünde sabit blok.
+/// Kuyruk + tam müzik oynatıcı — mesaj kutusunun hemen üstünde sabit blok.
 class VoiceRoomBottomDock extends ConsumerWidget {
   const VoiceRoomBottomDock({
     super.key,
@@ -42,8 +44,11 @@ class VoiceRoomBottomDock extends ConsumerWidget {
     final m = VoiceRoomResponsiveMetrics.of(context);
     final dj = live.dj;
     final waiting = _waitingQueueItems(dj);
-    final now = dj.nowPlaying;
     final flash = live.musicRequestFlash;
+    final liveKey = session.liveKey;
+    final ctrl = ref.read(voiceRoomLiveProvider(liveKey).notifier);
+    final ui = ref.watch(voiceRoomUiProvider);
+    final hasPlayer = dj.nowPlaying != null || dj.playing;
 
     return RepaintBoundary(
       child: DecoratedBox(
@@ -65,17 +70,49 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                 padding: EdgeInsets.fromLTRB(m.horizontalPad, 0, m.horizontalPad, 4),
                 child: VoiceRoomMusicRequestFlash(message: flash),
               ),
-            if (now != null || dj.playing)
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: m.horizontalPad),
-                child: _NowPlayingStrip(track: now, playing: dj.playing),
+            if (hasPlayer)
+              VoiceRoomWebMusicBar(
+                dj: dj,
+                isVideoMode: dj.nowPlaying?.isVideoRequest == true,
+                musicMuted: !ui.backgroundMusicEnabled,
+                canControlMusic: canControlMusic,
+                onPlayPause: () async {
+                  if (dj.playing) {
+                    await ctrl.pauseMusic();
+                  } else {
+                    await ctrl.resumeMusic();
+                  }
+                },
+                onStop: canStopMusic
+                    ? () async {
+                        await ctrl.closeMusicPlayer();
+                      }
+                    : null,
+                onSkipNext: canControlMusic
+                    ? () async {
+                        await ctrl.skipMusic();
+                      }
+                    : null,
+                onMuteToggle: () {
+                  ref.read(voiceRoomUiProvider.notifier).toggleBackgroundMusic();
+                },
+                onQueueTap: waiting.isNotEmpty
+                    ? () => showRoomMusicQueueSheet(
+                          context,
+                          ref,
+                          liveKey: liveKey,
+                          dj: dj,
+                          canControlMusic: canControlMusic,
+                          canStopMusic: canStopMusic,
+                        )
+                    : null,
               ),
-            if (waiting.isNotEmpty)
+            if (waiting.isNotEmpty && !hasPlayer)
               GestureDetector(
                 onTap: () => showRoomMusicQueueSheet(
                   context,
                   ref,
-                  liveKey: session.liveKey,
+                  liveKey: liveKey,
                   dj: live.dj,
                   canControlMusic: canControlMusic,
                   canStopMusic: canStopMusic,
@@ -91,66 +128,6 @@ class VoiceRoomBottomDock extends ConsumerWidget {
               ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _NowPlayingStrip extends StatelessWidget {
-  const _NowPlayingStrip({required this.track, required this.playing});
-
-  final MusicQueueItem? track;
-  final bool playing;
-
-  @override
-  Widget build(BuildContext context) {
-    final title = track?.title.trim();
-    if (title == null || title.isEmpty) return const SizedBox.shrink();
-    final who = track?.requesterLabel;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: const Color(0xFF7C3AED).withValues(alpha: 0.28),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            playing ? Icons.graphic_eq_rounded : Icons.music_note_rounded,
-            color: Colors.white.withValues(alpha: 0.9),
-            size: 18,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                if (who != null)
-                  Text(
-                    'İsteyen: $who',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.white.withValues(alpha: 0.72),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
