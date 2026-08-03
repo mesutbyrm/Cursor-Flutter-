@@ -54,7 +54,12 @@ class SseConnectionHub {
     }
   }
 
-  /// Odadan çıkış / oda değişimi — anında SSE kesilir (ref sayacı yok sayılır).
+  /// Odadan çıkış — ref sayacını düşür; keşif SSE'si açık kalabilir.
+  void releaseVoiceRoomSession(String roomId) {
+    releaseVoiceRoom(roomId);
+  }
+
+  /// Zorunlu kapatma — tüm ref'leri sıfırla (yalnızca oda değişimi acil durum).
   void forceReleaseVoiceRoom(String roomId) {
     final id = roomId.trim();
     final lease = _voiceRooms[id];
@@ -116,9 +121,14 @@ class SseConnectionHub {
     _videoStreams.clear();
   }
 
-  /// İnternet geri gelince aktif sesli oda SSE bağlantılarını yeniden kur.
+  /// İnternet geri gelince aktif SSE bağlantılarını yeniden kur.
   Future<void> reconnectAllActive() async {
     for (final lease in _voiceRooms.values) {
+      if (lease.refCount > 0) {
+        await lease.service.reconnectNow();
+      }
+    }
+    for (final lease in _videoStreams.values) {
       if (lease.refCount > 0) {
         await lease.service.reconnectNow();
       }

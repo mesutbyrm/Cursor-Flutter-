@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.121+154 (2026-08-03)
+
+### Sesli oda mimari — TRTC/SSE/hediye performans (web paritesi)
+- **TRTC:** `exitRoom` tamamlanana kadar beklenir; yeniden giriş öncesi dispose garantisi
+- **SSE:** Oda çıkışında `releaseVoiceRoom` — keşif presence bağlantısı korunur
+- **Gift Engine SSE:** `gift_received` / `gift_queue_updated` / `gift_finished` motor yönlendirmesi
+- **Gift socket:** SSE aktifken Socket.IO hediye dinleyicisi kapatılır (çift teslimat önlenir)
+- **RTC:** İkinci SSE presence + çift hediye listener kaldırıldı
+- **Join:** Giriş bootstrap sıralı — gereksiz paralel GET azaltıldı
+- **Heartbeat:** Oturum başında tek timer; çıkışta iptal
+- **Rapor:** `docs/FLUTTER_WEB_ARCHITECTURE_REPORT.md`
+
 ## 1.0.120+153 (2026-08-03)
 
 ### !istek müzik — web paritesi (videolu / sesli)
@@ -8,6 +20,16 @@
 - **Oda oynatıcı:** Kapak, sanatçı, ilerleme, ses, oynat/duraklat/sonraki, videolu/sesli göstergesi
 - **Hata:** Video açılamazsa otomatik ses moduna geçiş
 - **PiP:** Odadan çıkınca global mini oynatıcı videolu modda da görünür
+
+## 1.0.119+152 (2026-08-03)
+
+### Web senkronizasyon — hediye motoru SSE + performans
+- **Gift Engine SSE:** `gift_received` animasyon, `gift_queue_updated` yalnızca kuyruk, `gift_finished` dequeue; legacy motor sonrası yok sayılır (backend denetim §9)
+- **SSE heartbeat:** 45 sn timeout (15 sn × 3) — sesli oda + video yayın
+- **SSE ref-count:** Oda çıkışında `releaseVoiceRoom` — keşif presence bağlantısı korunur
+- **Video SSE gift:** Tam payload (`engine` üst seviye) parse
+- **RTC:** Gereksiz ikinci SSE presence listener kaldırıldı
+- **Rapor:** `docs/FLUTTER_WEB_SYNC_REPORT.md`
 
 ## 1.0.118+151 (2026-08-02)
 

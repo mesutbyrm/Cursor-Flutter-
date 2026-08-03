@@ -9,7 +9,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/live_debug_log.dart';
 import '../../../../core/network/sse/sse_reconnect_policy.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
-import '../../domain/entities/live_gift_event.dart';
+import '../../../gifts/domain/gift_payload_util.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
 import '../../../live_psychics/domain/entities/psychic_request_entity.dart';
 import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
@@ -40,6 +40,8 @@ class VideoStreamSseService {
   CancelToken? _cancel;
   StreamSubscription<List<int>>? _bytesSub;
   Timer? _reconnectTimer;
+  Timer? _heartbeatWatchdog;
+  DateTime? _lastEventAt;
 
   String? _streamId;
   Future<String?> Function()? _accessToken;
@@ -50,7 +52,7 @@ class VideoStreamSseService {
   void Function()? _onConnected;
   void Function(int viewerCount)? _onViewerCount;
   void Function(LiveStreamChatMessage message)? _onMessage;
-  void Function(LiveGiftEvent event)? _onGift;
+  void Function(Map<String, dynamic> payload)? _onGift;
   VoidCallback? _onStreamEnded;
   void Function(Map<String, dynamic> battle)? _onPkBattle;
 
@@ -79,7 +81,7 @@ class VideoStreamSseService {
     void Function()? onConnected,
     void Function(int viewerCount)? onViewerCount,
     void Function(LiveStreamChatMessage message)? onMessage,
-    void Function(LiveGiftEvent event)? onGift,
+    void Function(Map<String, dynamic> payload)? onGift,
     VoidCallback? onStreamEnded,
     void Function(Map<String, dynamic> battle)? onPkBattle,
     void Function(PsychicRequestEntity request)? onFortuneRequest,
@@ -148,9 +150,12 @@ class VideoStreamSseService {
       }
 
       _reconnectAttempt = 0;
+      _lastEventAt = DateTime.now();
+      _startHeartbeatWatchdog();
       final buffer = StringBuffer();
       _bytesSub = byteStream.listen(
         (chunk) {
+          _lastEventAt = DateTime.now();
           buffer.write(utf8.decode(chunk, allowMalformed: true));
           _drainBuffer(buffer);
         },
@@ -255,14 +260,7 @@ class VideoStreamSseService {
       case 'gift':
       case 'giftsent':
       case 'gift_sent':
-        final giftRaw = map['gift'] ?? map['data'] ?? map;
-        if (giftRaw is Map && _streamId != null) {
-          final ev = _giftsRemote.parseGiftEvent(
-            Map<String, dynamic>.from(giftRaw),
-            streamId: _streamId!,
-          );
-          if (ev != null) _onGift?.call(ev);
-        }
+        _onGift?.call(GiftPayloadUtil.unwrap(map));
         return;
       case 'streamEnded':
         _onStreamEnded?.call();
@@ -336,8 +334,25 @@ class VideoStreamSseService {
     LiveDebugLog.log('stream.sse.disconnect');
   }
 
+  void _startHeartbeatWatchdog() {
+    _heartbeatWatchdog?.cancel();
+    _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 5), (_) {
+      final last = _lastEventAt;
+      if (last == null || _stopped) return;
+      if (DateTime.now().difference(last) >
+          const Duration(seconds: 45)) {
+        if (kDebugMode) {
+          debugPrint('VideoStreamSseService: heartbeat timeout — reconnecting');
+        }
+        unawaited(_openStream());
+      }
+    });
+  }
+
   Future<void> _closeStreamOnly() async {
     _reconnectTimer?.cancel();
+    _heartbeatWatchdog?.cancel();
+    _heartbeatWatchdog = null;
     await _bytesSub?.cancel();
     _bytesSub = null;
     _cancel?.cancel('sse_close');

@@ -79,7 +79,7 @@ import '../../../gifts/presentation/providers/gift_catalog_index_provider.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/domain/gift_system_message.dart';
 import '../../../gifts/domain/gift_payload_util.dart';
-import '../../../gifts/presentation/sync/gift_sync_log.dart';
+import '../../../gifts/presentation/sync/gift_sse_dispatch.dart';
 import 'voice_gift_providers.dart';
 import 'voice_gift_leaderboard_provider.dart';
 import 'voice_recent_gifts_provider.dart';
@@ -581,7 +581,7 @@ class VoiceRoomLiveController
         unawaited(_leaveVoiceSession());
         unawaited(_leavePresenceWithSeatClear());
         unawaited(_stopTyping());
-        ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(_roomKey);
+        ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
         ref.read(voiceRoomGiftSocketProvider).disconnect();
         ref.read(voiceRoomGiftRealtimeProvider).stop();
         ref.read(pkBattleRemoteProvider.notifier).clear();
@@ -950,7 +950,7 @@ class VoiceRoomLiveController
     _knownPresenceIds.clear();
     _sseStarted = false;
     _giftSocketStarted = false;
-    ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(_roomKey);
+    ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
     unawaited(_leaveVoiceSession());
     unawaited(_stopTyping());
     ref.read(voiceRoomGiftSocketProvider).disconnect();
@@ -1150,14 +1150,13 @@ class VoiceRoomLiveController
             unawaited(_applyDjRealtimePayload(payload));
           },
           onGift: (payload) {
-            GiftSyncLog.broadcast(_roomKey, 'sse', payload['id']?.toString() ?? '');
-            final ev = giftsRemote.parseGiftEvent(
-              GiftPayloadUtil.unwrap(payload),
-              streamId: _roomKey,
+            dispatchGiftSsePayloadRef(
+              ref: ref,
+              sessionKey: _roomKey,
+              payload: payload,
+              giftsRemote: giftsRemote,
+              voiceRealtime: true,
             );
-            if (ev == null) return;
-            // Tek yol: publishRemote → GiftEventListener → giftSessionProvider
-            ref.read(voiceRoomGiftRealtimeProvider).publishRemote(ev);
           },
           onMessage: (msg) {
             if (msg.kind == ChatMessageKind.systemJoin) {
