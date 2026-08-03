@@ -48,6 +48,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.44.8'
           cache: true
 
       - name: Flutter — dart analyze (yalnızca ERROR)

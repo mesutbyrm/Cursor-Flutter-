@@ -10,7 +10,7 @@ allprojects {
 // Flutter plugins (e.g. iris_method_channel) default to compileSdk 31 via safeExtGet.
 extra.apply {
     set("compileSdkVersion", 36)
-    set("minSdkVersion", 24)
+    set("minSdkVersion", 26)
     set("targetSdkVersion", 36)
 }
 

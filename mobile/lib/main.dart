@@ -11,6 +11,7 @@ import 'core/bootstrap/app_session_reset.dart';
 import 'core/bootstrap/app_startup_log.dart';
 import 'core/bootstrap/storage_deferred_init.dart';
 import 'core/network/lazy_cookie_jar.dart';
+import 'core/performance/device_perf_tuning.dart';
 import 'core/performance/app_perf_metrics.dart';
 import 'features/voice_hub/data/services/voice_room_debug_log.dart';
 
@@ -18,9 +19,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   AppSessionReset.onColdStart();
   AppPerfMetrics.mark('cold_start');
-  PaintingBinding.instance.imageCache
-    ..maximumSize = 200
-    ..maximumSizeBytes = 100 << 20;
+  DevicePerfTuning.apply();
   AppStartupLog.log('main() begin');
 
   // Release'de hata detayı gösterme; debug'da teşhis için bırak.

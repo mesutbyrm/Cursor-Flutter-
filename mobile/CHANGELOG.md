@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.122+155 (2026-08-03)
+
+### Platform & SDK güncellemesi
+- **Flutter:** Stable `3.44.8` (CI + `.flutter-version`)
+- **Dart:** `3.12.x` (`>=3.8.0 <4.0.0`)
+- **Android:** minSdk **26** (Android 8+), targetSdk **36** (Android 16 hazır)
+- **ABI:** `arm64-v8a`, `armeabi-v7a`, `x86_64` — CI `--split-per-abi`
+- **iOS:** minimum deployment **15.0**
+- **Gradle:** AGP 8.13, Kotlin 2.2.21, Gradle 8.14, R8 full mode
+- **Cihaz:** Tablet/katlanır ekran (`resizeableActivity`, `supports-screens`, PiP)
+- **Performans:** `DevicePerfTuning` — düşük RAM image cache küçültme
+- **Build:** tree-shake-icons, obfuscate, split-debug-info (CI)
+- **Rapor:** `docs/FLUTTER_PLATFORM_UPGRADE.md`
+
 ## 1.0.121+154 (2026-08-03)
 
 ### Sesli oda mimari — TRTC/SSE/hediye performans (web paritesi)
