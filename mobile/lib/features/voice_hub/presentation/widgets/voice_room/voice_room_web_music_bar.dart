@@ -20,7 +20,9 @@ class VoiceRoomWebMusicBar extends ConsumerStatefulWidget {
     this.onMuteToggle,
     this.onClose,
     this.onQueueTap,
+    this.onSkipNext,
     this.musicMuted = false,
+    this.isVideoMode = false,
     this.canControlMusic = false,
     this.showDebug = false,
   });
@@ -31,7 +33,9 @@ class VoiceRoomWebMusicBar extends ConsumerStatefulWidget {
   final VoidCallback? onMuteToggle;
   final VoidCallback? onClose;
   final VoidCallback? onQueueTap;
+  final VoidCallback? onSkipNext;
   final bool musicMuted;
+  final bool isVideoMode;
   final bool canControlMusic;
   final bool showDebug;
 
@@ -121,6 +125,27 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
                     children: [
                       Row(
                         children: [
+                          Icon(
+                            widget.isVideoMode
+                                ? Icons.music_video_rounded
+                                : Icons.headphones_rounded,
+                            size: 12,
+                            color: Colors.white.withValues(alpha: 0.85),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            widget.isVideoMode ? 'Videolu' : 'Sesli',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white.withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
                           if (loading)
                             const SizedBox(
                               width: 56,
@@ -196,6 +221,15 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
                                   ? Icons.pause_rounded
                                   : Icons.play_arrow_rounded,
                               tooltip: audioActive ? 'Duraklat' : 'Devam et',
+                            ),
+                          ],
+                          if (widget.canControlMusic && widget.onSkipNext != null) ...[
+                            const SizedBox(width: 4),
+                            _BarIconButton(
+                              onPressed: widget.onSkipNext,
+                              color: const Color(0xFF5E35B1),
+                              icon: Icons.skip_next_rounded,
+                              tooltip: 'Sonraki',
                             ),
                           ],
                           if (widget.canControlMusic && widget.onStop != null) ...[

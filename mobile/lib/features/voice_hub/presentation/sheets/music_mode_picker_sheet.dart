@@ -67,7 +67,7 @@ Future<bool?> showMusicModePickerSheet(
           const SizedBox(height: 20),
           _ModeTile(
             icon: Icons.music_note_rounded,
-            title: 'Sadece Ses',
+            title: 'Sadece Ses Çal',
             subtitle: '$audioCost Jeton',
             gradient: const [Color(0xFF4A00E0), Color(0xFF8B5CF6)],
             onTap: () => Navigator.pop(ctx, false),
@@ -75,7 +75,7 @@ Future<bool?> showMusicModePickerSheet(
           const SizedBox(height: 10),
           _ModeTile(
             icon: Icons.music_video_rounded,
-            title: 'Videolu',
+            title: 'Videolu Çal',
             subtitle: '$videoCost Jeton',
             gradient: const [Color(0xFFFF0080), Color(0xFF7B2FF7)],
             onTap: () => Navigator.pop(ctx, true),

@@ -36,15 +36,11 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
       return const SizedBox.shrink();
     }
     final room = session.room!;
-    final videoActive =
-        ref.watch(roomVideoControllerProvider(room.liveKey)).hasActiveVideo;
-    if (videoActive) {
-      return const SizedBox.shrink();
-    }
-
     final liveKey = room.liveKey;
     final ctrl = ref.read(voiceRoomLiveProvider(liveKey).notifier);
     final ui = ref.watch(voiceRoomUiProvider);
+    final isVideo =
+        ref.watch(roomVideoControllerProvider(room.liveKey)).showsVideo;
 
     return Material(
       color: Colors.transparent,
@@ -59,6 +55,7 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
           ),
           child: VoiceRoomWebMusicBar(
             dj: session.dj,
+            isVideoMode: isVideo,
             musicMuted: !ui.backgroundMusicEnabled,
             canControlMusic: session.canSyncServer,
             onPlayPause: () async {
