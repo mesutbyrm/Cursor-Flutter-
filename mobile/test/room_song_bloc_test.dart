@@ -33,8 +33,20 @@ void main() {
       expect(ev, isA<RoomSongQueueUpdated>());
     });
 
-    test('returns null for unknown type', () {
-      expect(RoomSongBloc.eventFromSse({'type': 'dj'}), isNull);
+    test('parses unified dj payload', () {
+      final ev = RoomSongBloc.eventFromSse({
+        'type': 'dj',
+        'playing': true,
+        'nowPlaying': {
+          'videoId': 'abc123',
+          'title': 'Test',
+          'elapsedSeconds': 42,
+        },
+        'musicQueue': [
+          {'id': 'q1', 'videoId': 'v1', 'title': 'A'},
+        ],
+      });
+      expect(ev, isA<RoomSongStarted>());
     });
   });
 

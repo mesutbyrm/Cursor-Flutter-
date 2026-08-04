@@ -78,16 +78,17 @@ import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
 import 'utils/kick_strike_ui.dart';
 import 'audio/voice_trtc_engine.dart';
 import 'widgets/voice_room/voice_room_staff_join_banner.dart';
-import 'widgets/voice_room/voice_room_music_queue_section.dart';
-import 'widgets/premium_2026/voice_pk_invite_banner.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
+import 'widgets/voice_room/voice_room_music_background_layer.dart';
+import 'widgets/voice_room/voice_room_music_queue_mini_card.dart';
+import 'widgets/voice_room/voice_room_music_request_fab.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import '../video/presentation/widgets/room_video_overlay.dart';
 import 'sheets/voice_youtube_song_sheet.dart';
-import 'widgets/voice_room/voice_room_seat_video_strip.dart';
+import 'widgets/premium_2026/voice_pk_invite_banner.dart';
 
 /// Sesli sohbet odası — Tencent TRTC + canlifal.com chat API.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
@@ -1055,6 +1056,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       perms: perms,
       jetonBalance: jeton,
     );
+    final showMusicRequestFab = live.dj.musicEnabled;
+    final audioRequestCost = VoiceMusicAccess.audioRequestCost(live.dj);
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
     final isDj = perms.canManageDj ||
         live.dj.canPlayMusic ||
@@ -1457,6 +1460,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
+                              if (!keyboardOpen)
+                                VoiceRoomMusicBackgroundLayer(
+                                  roomKey: sessionKey,
+                                ),
                               LayoutBuilder(
                                   builder: (context, constraints) {
                                     final chatH = keyboardOpen
@@ -1538,7 +1545,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               remoteTrtcUserId:
                                   _audio?.trtcManager.remoteAnchorUserId,
                             ),
-                        VoiceRoomSeatVideoStrip(roomKey: sessionKey),
                         Consumer(
                           builder: (context, ref, _) {
                             final banner = ref.watch(
@@ -1550,10 +1556,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               enterBanner: banner,
                             );
                           },
-                        ),
-                        VoiceRoomMusicQueueSection(
-                          dj: live.dj,
-                          coinCost: VoiceMusicAccess.audioRequestCost(live.dj),
                         ),
                         VoicePkInviteBanner(
                           room: room,
@@ -1752,26 +1754,51 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
                       onChanged: _onChatChanged,
                       joinNotificationsEnabled: ui.chatNotificationSoundEnabled,
-                      showMusicRequest: canRequestMusic,
-                      onMusicRequest: canRequestMusic
-                          ? () => showVoiceYoutubeSongSheet(
-                                context,
-                                ref,
-                                room: room,
-                              )
-                          : null,
+                      showMusicRequest: false,
                     );
                   },
                 ),
               ],
             ),
             VoiceGiftHudOverlays(sessionKey: sessionKey),
+            if (!keyboardOpen && showMusicRequestFab)
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 118),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      VoiceRoomMusicQueueMiniCard(
+                        dj: live.dj,
+                        liveKey: _liveRoomKey,
+                        canControlMusic: canControlMusic,
+                        canStopMusic: canCloseMusic,
+                      ),
+                      const SizedBox(height: 8),
+                      VoiceRoomMusicRequestFab(
+                        enabled: showMusicRequestFab,
+                        active: canRequestMusic,
+                        audioCost: audioRequestCost,
+                        onPressed: () => showVoiceYoutubeSongSheet(
+                          context,
+                          ref,
+                          room: room,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            VoiceRoomHiddenAudioPlayer(roomKey: sessionKey),
             if (_liveRoomKey.isNotEmpty)
               RoomSongMiniPlayer(
                 roomId: _liveRoomKey,
                 canControl: canControlMusic,
                 bottomInset: 118,
                 muted: musicMuted,
+                hidden: true,
               ),
             if (_showVipEntrance && user != null)
               Builder(

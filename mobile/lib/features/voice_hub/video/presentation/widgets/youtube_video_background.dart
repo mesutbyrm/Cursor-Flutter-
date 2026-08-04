@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui' show ImageFilter;
 
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
@@ -309,7 +308,9 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
 
     final web = _webView;
     if (web == null) {
-      if (video.audioOnly) return const SizedBox.shrink();
+      if (video.audioOnly) {
+        return const SizedBox(width: 1, height: 1);
+      }
       // Video henüz hazır değil — sınırlı yükseklikli şerit thumb (Column güvenli).
       final w = MediaQuery.sizeOf(context).width;
       return SizedBox(
@@ -320,7 +321,18 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     }
 
     if (video.audioOnly) {
-      return const SizedBox.shrink();
+      return RepaintBoundary(
+        child: IgnorePointer(
+          child: Opacity(
+            opacity: 0.01,
+            child: SizedBox(
+              width: 1,
+              height: 1,
+              child: web,
+            ),
+          ),
+        ),
+      );
     }
 
     // Video isteği (!istek video): arka planda tam ekran veya koltuk altı şerit.
@@ -350,22 +362,7 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     );
 
     if (widget.fillBackground && !widget.compact) {
-      return SizedBox.expand(
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            RepaintBoundary(child: videoChild),
-            ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.42),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+      return SizedBox.expand(child: videoChild);
     }
 
     return RepaintBoundary(

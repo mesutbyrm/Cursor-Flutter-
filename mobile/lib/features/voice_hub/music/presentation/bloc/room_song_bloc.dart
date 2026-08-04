@@ -110,9 +110,13 @@ class RoomSongBloc extends Bloc<RoomSongEvent, RoomSongState> {
     await _remote.skip(roomId);
   }
 
-  /// SSE payload → bloc event.
+  /// SSE payload → bloc event (`song_*` ve birleşik `type: dj`).
   static RoomSongEvent? eventFromSse(Map<String, dynamic> payload) {
-    final type = payload['type']?.toString() ?? '';
+    final type = payload['type']?.toString().toLowerCase() ?? '';
+    if (type == 'dj' || type == 'dj_update') {
+      return _eventFromDjPayload(payload);
+    }
+
     RoomSongDto? parseCurrent() {
       final raw = payload['currentSong'];
       if (raw is Map) {
@@ -160,5 +164,46 @@ class RoomSongBloc extends Bloc<RoomSongEvent, RoomSongState> {
       default:
         return null;
     }
+  }
+
+  static RoomSongEvent? _eventFromDjPayload(Map<String, dynamic> payload) {
+    final playing = payload['playing'] == true || payload['isPlaying'] == true;
+    if (!playing &&
+        payload['nowPlaying'] == null &&
+        payload['musicUrl'] == null) {
+      return const RoomSongFinished();
+    }
+
+    RoomSongDto? songFromNowPlaying() {
+      final np = payload['nowPlaying'];
+      if (np is! Map) return null;
+      final map = Map<String, dynamic>.from(np);
+      if (map['elapsedSeconds'] != null && map['elapsedMs'] == null) {
+        final sec = map['elapsedSeconds'];
+        if (sec is num) {
+          map['elapsedMs'] = (sec * 1000).round();
+        }
+      }
+      return RoomSongDto.fromJson(map);
+    }
+
+    List<RoomSongQueueItemDto> parseMusicQueue() {
+      final raw = payload['musicQueue'] ?? payload['queue'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map>()
+          .map((e) => RoomSongQueueItemDto.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
+
+    final song = songFromNowPlaying();
+    final queue = parseMusicQueue();
+    if (song != null && playing) {
+      return RoomSongStarted(song);
+    }
+    if (queue.isNotEmpty || song != null) {
+      return RoomSongQueueUpdated(queue, current: song);
+    }
+    return null;
   }
 }

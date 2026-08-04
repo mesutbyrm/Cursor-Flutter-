@@ -18,6 +18,7 @@ import '../sheets/music_mode_picker_sheet.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_music_access.dart';
 import '../utils/voice_room_permissions.dart';
+import '../widgets/music_az_letter_bar.dart';
 
 /// Web ile aynı modal — şarkı isteği (10 jeton).
 Future<void> showVoiceYoutubeSongSheet(
@@ -239,7 +240,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
-                      'Şarkı İsteği',
+                      'Müzik İste',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 18,
@@ -307,6 +308,13 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
                 onChanged: _onQueryChanged,
                 onSubmitted: _search,
               ),
+            ),
+            const SizedBox(height: 8),
+            MusicAzLetterBar(
+              onArtistSelected: (artist) {
+                _queryCtrl.text = artist;
+                _search(artist);
+              },
             ),
             if (_error != null)
               Padding(

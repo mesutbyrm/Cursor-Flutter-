@@ -17,12 +17,16 @@ class RoomSongMiniPlayer extends StatefulWidget {
     this.canControl = false,
     this.bottomInset = 72,
     this.muted = false,
+    this.hidden = false,
   });
 
   final String roomId;
   final bool canControl;
   final double bottomInset;
   final bool muted;
+
+  /// Yalnızca IFrame senkronu — görünür mini bar yok (web müzik bar / arka plan kullanılır).
+  final bool hidden;
 
   @override
   State<RoomSongMiniPlayer> createState() => _RoomSongMiniPlayerState();
@@ -119,6 +123,16 @@ class _RoomSongMiniPlayerState extends State<RoomSongMiniPlayer> {
           p.progress != n.progress,
       builder: (context, state) {
         if (!state.hasTrack) return const SizedBox.shrink();
+
+        if (widget.hidden) {
+          return Offstage(
+            child: SizedBox(
+              width: 1,
+              height: 1,
+              child: _yt != null ? YoutubePlayer(controller: _yt!) : null,
+            ),
+          );
+        }
 
         if (state.fullscreen && _yt != null) {
           return Material(

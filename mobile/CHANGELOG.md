@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.130+164 (2026-08-04)
+
+### Sesli oda müzik / !istek (web parity)
+- **Müzik İste:** Sağ alt FAB — yetersiz jetonda pasif, yeterli jetonda aktif
+- **Arama modalı:** YouTube `GET /api/youtube/search` + A-Z sanatçı hızlı gezinme
+- **Mod seçimi:** «🎵 Sadece Ses (10 Jeton)» / «🎬 Videolu (20 Jeton)»
+- **Videolu mod:** Koltuk altından mesaj alanına çerçevesiz YouTube arka plan
+- **Ses modu:** Gizli 1×1 embed — yalnızca ses
+- **Mini kuyruk kartı:** Sağ altta sıradaki ilk 3 istek
+- **SSE:** Birleşik `type: dj` olayı → `RoomSongBloc` senkronu
+- **Performans:** `RepaintBoundary`, seçici `ref.watch`, gizli oynatıcı
+
 ## 1.0.129+163 (2026-08-04)
 
 ### Backend ↔ Flutter senkronizasyon — tamamlama
