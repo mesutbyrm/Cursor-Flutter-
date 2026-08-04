@@ -275,6 +275,11 @@ abstract final class ApiEndpoints {
   static String celebrity(String id) => '/api/celebrities/$id';
   static String celebrityFollow(String id) => '/api/celebrities/$id/follow';
   static String celebrityPosts(String id) => '/api/celebrities/$id/posts';
+  static const football = '/api/football';
+  static String translations({String lang = 'tr'}) =>
+      '/api/translations?lang=${Uri.encodeComponent(lang)}';
+  static const broadcastImages = '/api/broadcast-images';
+  static const onlineFal = '/api/online-fal';
   static const fanClubs = '/api/fan-clubs';
   static const fanClubsPopular = '/api/fan-clubs/popular';
   static String fanClubJoin(String id) => '/api/fan-clubs/$id/join';
@@ -314,6 +319,7 @@ abstract final class ApiEndpoints {
   /// Oturumlu kullanıcının takipçi / takip listesi.
   static const userFollowers = '/api/user/followers';
   static const userFollowing = '/api/user/following';
+  static const userLikers = '/api/user/likers';
 
   /// Başka kullanıcının takipçileri (dizi döner).
   static String userPublicFollowers(String userId) =>

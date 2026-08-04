@@ -1,6 +1,4 @@
-/// Aktif sesli oda motoru.
+/// Aktif sesli oda motoru (üretim: Tencent TRTC).
 enum VoiceAudioEngineKind {
-  agora,
-  livekit,
   trtc,
 }

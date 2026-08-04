@@ -25,3 +25,30 @@ final fortuneRequestTypesProvider =
     FutureProvider.autoDispose<List<FortuneRequestType>>((ref) async {
   return ref.watch(platformContentRemoteDataSourceProvider).fetchFortuneRequestTypes();
 });
+
+final broadcastImagesProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  return ref.watch(platformContentRemoteDataSourceProvider).fetchBroadcastImages();
+});
+
+final footballMatchesProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  return ref.watch(platformContentRemoteDataSourceProvider).fetchFootball();
+});
+
+final onlineFalSectionsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  return ref.watch(platformContentRemoteDataSourceProvider).fetchOnlineFal();
+});
+
+final appTranslationsProvider = FutureProvider.autoDispose
+    .family<Map<String, String>, String>((ref, lang) async {
+  return ref
+      .watch(platformContentRemoteDataSourceProvider)
+      .fetchTranslations(lang: lang);
+});
+
+final userLikersProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  return ref.watch(platformContentRemoteDataSourceProvider).fetchUserLikers();
+});

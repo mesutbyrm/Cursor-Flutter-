@@ -16,11 +16,13 @@ class RoomSongMiniPlayer extends StatefulWidget {
     required this.roomId,
     this.canControl = false,
     this.bottomInset = 72,
+    this.muted = false,
   });
 
   final String roomId;
   final bool canControl;
   final double bottomInset;
+  final bool muted;
 
   @override
   State<RoomSongMiniPlayer> createState() => _RoomSongMiniPlayerState();
@@ -40,6 +42,15 @@ class _RoomSongMiniPlayerState extends State<RoomSongMiniPlayer> {
             RoomSongSeekTick(DateTime.now().millisecondsSinceEpoch),
           );
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant RoomSongMiniPlayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.muted != widget.muted) {
+      final bloc = context.read<RoomSongBloc>();
+      unawaited(_syncPlayer(bloc.state));
+    }
   }
 
   @override
@@ -82,7 +93,7 @@ class _RoomSongMiniPlayerState extends State<RoomSongMiniPlayer> {
     if (driftMs > RoomSongBloc.driftThresholdMs || state.localDriftMs > RoomSongBloc.driftThresholdMs) {
       await c.seekTo(seconds: targetSec, allowSeekAhead: true);
     }
-    if (state.current!.paused) {
+    if (state.current!.paused || widget.muted) {
       await c.pauseVideo();
     } else {
       await c.playVideo();

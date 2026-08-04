@@ -97,22 +97,4 @@ class Env {
 
   static bool get hasTikTokLogin =>
       tiktokClientKey.trim().isNotEmpty && !kIsWeb;
-
-  /// Sesli sohbet Agora — App ID only (token yok).
-  static const agoraVoiceAppId = String.fromEnvironment(
-    'AGORA_VOICE_APP_ID',
-    defaultValue: 'f1cf983a38114b04a4e9102c303ba63e',
-  );
-
-  /// `auto` | `livekit` | `trtc` | `agora` — sesli oda ses motoru.
-  static const String voiceEngine = String.fromEnvironment(
-    'VOICE_ENGINE',
-    defaultValue: 'auto',
-  );
-
-  static bool get preferLiveKit =>
-      voiceEngine == 'livekit' ||
-      (voiceEngine == 'auto' && !kIsWeb);
-
-  static bool get forceTrtc => voiceEngine == 'trtc';
 }
