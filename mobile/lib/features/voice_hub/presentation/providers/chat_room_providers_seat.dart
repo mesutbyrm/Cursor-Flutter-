@@ -238,6 +238,34 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     }
   }
 
+  Future<String?> lockSeat({required int seatIndex}) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).lockSeat(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            seatIndex: seatIndex,
+          );
+      await _refreshSeatsFromBackend();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> kickFromSeat({required int seatIndex}) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).kickFromSeat(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            seatIndex: seatIndex,
+          );
+      await _refreshSeatsFromBackend();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
   void _applyOptimisticSeat({
     required String userId,
     required int seatIndex,

@@ -38,6 +38,7 @@ import '../domain/entities/chat_room_message.dart';
 import '../domain/entities/chat_room_presence.dart';
 import '../domain/entities/chat_room_sse_event.dart';
 import '../domain/entities/chat_room_my_permissions.dart';
+import '../domain/entities/voice_room_seat_slot.dart';
 import 'audio/voice_room_audio_coordinator.dart';
 import 'audio/voice_room_music_audio_session.dart';
 import 'providers/chat_room_providers.dart';
@@ -890,6 +891,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final self = ref.read(authControllerProvider).valueOrNull;
     final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
     final onStage = voiceWebOnStageIds(room: room, presence: live.presence);
+    VoiceRoomSeatSlot? seatSlot;
+    for (final s in live.seatSlots) {
+      if (s.index == seatIndex) {
+        seatSlot = s;
+        break;
+      }
+    }
     final candidates = showAllMembers
         ? List<ChatRoomPresence>.from(live.presence)
         : live.presence
@@ -915,6 +923,33 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
             ),
             const SizedBox(height: 8),
+            if (perms.canAssignSeats) ...[
+              if (seatSlot != null && !seatSlot.isEmpty)
+                ListTile(
+                  leading: const Icon(Icons.person_off_rounded, color: Colors.orange),
+                  title: Text('${seatSlot.name ?? 'Kullanıcı'} koltuktan at'),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final err = await ctrl.kickFromSeat(seatIndex: seatIndex);
+                    if (context.mounted && err != null) {
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(content: Text(err)));
+                    }
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.lock_rounded, color: Colors.amber),
+                title: const Text('Koltuğu kilitle'),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final err = await ctrl.lockSeat(seatIndex: seatIndex);
+                  if (context.mounted && err != null) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(err)));
+                  }
+                },
+              ),
+            ],
             if (self != null)
               ListTile(
                 leading: const Icon(Icons.event_seat_rounded),

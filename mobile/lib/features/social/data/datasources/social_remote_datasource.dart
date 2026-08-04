@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 
+import '../../../../core/media/cloud_upload_service.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
@@ -13,9 +16,11 @@ import '../../domain/entities/social_comment_entity.dart';
 import '../../domain/entities/social_story_ring_entity.dart';
 
 class SocialRemoteDataSource {
-  SocialRemoteDataSource(this._dio);
+  SocialRemoteDataSource(this._dio, {CloudMediaUploadService? upload})
+      : _upload = upload;
 
   final Dio _dio;
+  final CloudMediaUploadService? _upload;
 
   /// GET `/api/social/posts` — canlifal.com web `/sosyal` ile aynı JSON.
   Future<({List<PostEntity> posts, bool hasMore})> fetch({
@@ -290,36 +295,27 @@ class SocialRemoteDataSource {
     );
   }
 
-  /// POST `/api/stories` — görsel hikâye (multipart).
+  /// POST `/api/stories` — presigned yükleme + JSON (üretim sözleşmesi).
   Future<void> createStoryImage(String imagePath) async {
-    Object? lastError;
-    for (final path in [ApiEndpoints.feed, ApiEndpoints.userStory]) {
-      try {
-        final now = DateTime.now().millisecondsSinceEpoch;
-        final form = FormData.fromMap({
-          'image': await MultipartFile.fromFile(
-            imagePath,
-            filename: 'story_$now.jpg',
-          ),
-          'media': await MultipartFile.fromFile(
-            imagePath,
-            filename: 'story_$now.jpg',
-          ),
-          'mediaType': 'image',
-          'type': 'image',
-        });
-        await _dio.safePost<dynamic>(
-          path,
-          data: form,
-          options: Options(contentType: 'multipart/form-data'),
-        );
-        return;
-      } catch (e) {
-        lastError = e;
-      }
+    final upload = _upload;
+    if (upload == null) {
+      throw const ApiException('Hikâye yüklemesi kullanılamıyor');
     }
-    throw ApiException(
-      ApiException.userMessage(lastError ?? 'Hikâye paylaşılamadı'),
+    final file = File(imagePath);
+    if (!await file.exists()) {
+      throw const ApiException('Görsel bulunamadı');
+    }
+    final mediaUrl = await upload.uploadImageFile(
+      file,
+      folder: 'stories',
+      isPublic: true,
+    );
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.feed,
+      data: <String, dynamic>{
+        'mediaUrl': mediaUrl,
+        'mediaType': 'image',
+      },
     );
   }
 

@@ -196,7 +196,7 @@ class _SocialInstagramPostCardState
                       icon: Icons.visibility_outlined,
                       count: post.viewsCount > 0 ? post.viewsCount : post.viewCount,
                       hideZeroCount: false,
-                      onTap: () {},
+                      onTap: () => _openPostDetail(context),
                     ),
                     const Spacer(),
                     if (_isFortunePost) ...[
@@ -319,6 +319,11 @@ class _SocialInstagramPostCardState
         SnackBar(content: Text(ApiException.userMessage(e))),
       );
     }
+  }
+
+  void _openPostDetail(BuildContext context) {
+    if (post.id.isEmpty) return;
+    context.push('/social/post/${Uri.encodeComponent(post.id)}');
   }
 
   void _openComments(BuildContext context) {

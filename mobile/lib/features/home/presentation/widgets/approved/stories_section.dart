@@ -24,8 +24,25 @@ class StoriesSection extends ConsumerWidget {
     final me = ref.watch(authControllerProvider).valueOrNull;
 
     return ringsAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      loading: () => SizedBox(
+        height: HomeApprovedDesign.storySize + 36,
+        child: const Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      ),
+      error: (_, __) => SizedBox(
+        height: HomeApprovedDesign.storySize + 36,
+        child: Center(
+          child: TextButton(
+            onPressed: () => ref.invalidate(socialStoryRingsProvider),
+            child: const Text('Hikâyeler yüklenemedi — tekrar dene'),
+          ),
+        ),
+      ),
       data: (rings) {
         final withStories = rings
             .where(
@@ -34,7 +51,6 @@ class StoriesSection extends ConsumerWidget {
                   (r.previewUrl?.trim().isNotEmpty ?? false),
             )
             .toList();
-        if (withStories.isEmpty) return const SizedBox.shrink();
         final others =
             withStories.where((r) => r.user.id != me?.id).toList();
         return SizedBox(

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/providers/auth_selectors.dart';
+import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/domain/entities/post_entity.dart';
@@ -12,7 +13,10 @@ import '../../domain/entities/social_story_ring_entity.dart';
 import '../../domain/repositories/social_repository.dart';
 
 final socialRemoteProvider = Provider<SocialRemoteDataSource>((ref) {
-  return SocialRemoteDataSource(ref.watch(dioProvider));
+  return SocialRemoteDataSource(
+    ref.watch(dioProvider),
+    upload: ref.watch(cloudMediaUploadProvider),
+  );
 });
 
 final socialRepositoryProvider = Provider<SocialRepository>((ref) {
