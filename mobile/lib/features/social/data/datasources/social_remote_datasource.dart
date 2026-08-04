@@ -77,6 +77,25 @@ class SocialRemoteDataSource {
     return (posts: posts, hasMore: hasMore);
   }
 
+  /// GET `/api/social/posts/{postId}` — tek gönderi detayı (kılavuz §9.10).
+  Future<PostEntity?> fetchPost(
+    String postId, {
+    String? currentUserId,
+  }) async {
+    final id = postId.trim();
+    if (id.isEmpty) return null;
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.socialPost(id));
+      final m = _unwrapBody(res.data);
+      if (m == null) return null;
+      final postJson = m['post'] is Map ? asJsonMap(m['post']) : m;
+      return PostDto.entityFromApiMap(postJson, currentUserId: currentUserId);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
   /// POST `/api/social/posts` — metin veya görsel paylaşım (multipart / JSON).
   Future<PostDto> createPost(CreateSocialPostInput input) async {
     final caption = input.caption.trim();

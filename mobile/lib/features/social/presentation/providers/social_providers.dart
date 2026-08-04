@@ -171,6 +171,13 @@ final userSocialPostsProvider =
   return ref.read(socialRepositoryProvider).fetchPostsByUser(userId);
 });
 
+/// Tek gönderi detayı — kılavuz §9.10.
+final postDetailProvider =
+    FutureProvider.family<PostEntity?, String>((ref, postId) async {
+  if (postId.trim().isEmpty) return null;
+  return ref.read(socialRepositoryProvider).fetchPost(postId);
+});
+
 /// Gönderi yorumları — ekranlar arası paylaşımlı cache.
 final postCommentsProvider =
     FutureProvider.family<List<SocialCommentEntity>, String>((ref, postId) async {

@@ -2235,6 +2235,48 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  /// Kılavuz §9.3 — koltuk kilitle.
+  Future<void> lockSeat({
+    required String roomKey,
+    String? alternateKey,
+    required int seatIndex,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final payload = {'action': 'lock', 'seatIndex': seatIndex};
+      for (final send in [_dio.safePost<dynamic>, _dio.safePatch<dynamic>]) {
+        try {
+          await send(seatsPath(key), data: payload);
+          return;
+        } on ApiException catch (e) {
+          if (e.statusCode == 404 || e.statusCode == 405) continue;
+          rethrow;
+        }
+      }
+      throw const ApiException('Koltuk kilitlenemedi');
+    });
+  }
+
+  /// Kılavuz §9.3 — koltuktan at.
+  Future<void> kickFromSeat({
+    required String roomKey,
+    String? alternateKey,
+    required int seatIndex,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final payload = {'action': 'kick', 'seatIndex': seatIndex};
+      for (final send in [_dio.safePost<dynamic>, _dio.safePatch<dynamic>]) {
+        try {
+          await send(seatsPath(key), data: payload);
+          return;
+        } on ApiException catch (e) {
+          if (e.statusCode == 404 || e.statusCode == 405) continue;
+          rethrow;
+        }
+      }
+      throw const ApiException('Koltuktan atılamadı');
+    });
+  }
+
   List<String> _parseDjUserIdsResponse(dynamic body) {
     final map = _unwrapMap(body) ?? asJsonMap(body);
     final raw = map['djUserIds'];

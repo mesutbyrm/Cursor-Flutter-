@@ -16,7 +16,6 @@ class PlatformStatsRemoteDataSource {
     for (final path in const [
       ApiEndpoints.publicStats,
       ApiEndpoints.platformStats,
-      ApiEndpoints.socialPublicStats,
     ]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);

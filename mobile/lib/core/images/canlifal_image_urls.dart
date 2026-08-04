@@ -19,8 +19,34 @@ abstract final class CanlifalImageUrls {
     if (trimmed.startsWith('//')) return 'https:$trimmed';
     final cloud = CloudMediaUrl.resolve(trimmed);
     if (cloud != null && cloud.startsWith('http')) return cloud;
+    // Hediye / sticker / emoji paketleri — CDN öncelikli.
+    if (_isCdnRelativePath(trimmed)) {
+      final cdn = CloudMediaUrl.resolve(trimmed);
+      if (cdn != null) return cdn;
+    }
     final base = Env.siteOrigin;
     return trimmed.startsWith('/') ? '$base$trimmed' : '$base/$trimmed';
+  }
+
+  static bool _isCdnRelativePath(String path) {
+    final lower = path.toLowerCase();
+    const prefixes = [
+      'gift/',
+      'gifts/',
+      'stickers/',
+      'emoji/',
+      'shorts/',
+      'stories/',
+      'reels/',
+      'avatars/',
+      'banners/',
+      'effects/',
+      'splash/',
+    ];
+    for (final p in prefixes) {
+      if (lower.startsWith(p)) return true;
+    }
+    return false;
   }
 
   /// Video yolundan küçük resim URL'si türet (`shorts/videos/x.mp4` → `shorts/thumbs/x.jpg`).

@@ -19,6 +19,9 @@ abstract class SocialRepository {
 
   Future<SocialFeedPage> fetchPostsByUserPage(String userId, {int page = 1});
 
+  /// Tek gönderi — kılavuz §9.10 `getPost`.
+  Future<PostEntity?> fetchPost(String postId);
+
   /// Instagram / Facebook tarzı yeni paylaşım.
   Future<PostEntity> createPost(CreateSocialPostInput input);
 
