@@ -9,7 +9,11 @@ export type MusicLogAction =
   | "stop"
   | "close"
   | "skip"
-  | "unauthorized";
+  | "unauthorized"
+  | "queue_add"
+  | "queue_remove"
+  | "song_started"
+  | "song_finished";
 
 export async function logMusicAction(input: {
   roomId: string;

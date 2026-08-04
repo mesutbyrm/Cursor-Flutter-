@@ -169,10 +169,11 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
       ref.watch(giftCatalogByIdProvider),
       event.giftId,
     );
-    final isFullScreen = config.isFullScreen ||
-        config.displayArea == GiftEngineDisplayArea.fullScreen;
     final isVideo = config.animationType == GiftEngineAnimationType.mp4 ||
         config.animationType == GiftEngineAnimationType.webm;
+    final isFullScreen = config.isFullScreen ||
+        config.displayArea == GiftEngineDisplayArea.fullScreen ||
+        isVideo;
     final layerOpacity = isFullScreen || isVideo ? 1.0 : 0.88;
 
     return Positioned.fill(

@@ -28,6 +28,7 @@ class ChatRoomSseService extends BaseSseService {
   void Function(Map<String, dynamic> payload)? _onUserLeave;
   void Function(Map<String, dynamic> payload)? _onDjUpdate;
   void Function(Map<String, dynamic> payload)? _onSong;
+  void Function(Map<String, dynamic> payload)? _onSongQueue;
   void Function(Map<String, dynamic> payload)? _onGift;
   void Function(Map<String, dynamic> payload)? _onRoomUpdate;
   void Function(Map<String, dynamic> payload)? _onModeration;
@@ -71,6 +72,7 @@ class ChatRoomSseService extends BaseSseService {
     void Function(Map<String, dynamic> payload)? onUserLeave,
     void Function(Map<String, dynamic> payload)? onDjUpdate,
     void Function(Map<String, dynamic> payload)? onSong,
+    void Function(Map<String, dynamic> payload)? onSongQueue,
     void Function(Map<String, dynamic> payload)? onGift,
     void Function(Map<String, dynamic> payload)? onRoomUpdate,
     void Function(Map<String, dynamic> payload)? onModeration,
@@ -91,6 +93,7 @@ class ChatRoomSseService extends BaseSseService {
     _onUserLeave = onUserLeave;
     _onDjUpdate = onDjUpdate;
     _onSong = onSong;
+    _onSongQueue = onSongQueue;
     _onGift = onGift;
     _onRoomUpdate = onRoomUpdate;
     _onModeration = onModeration;
@@ -192,6 +195,14 @@ class ChatRoomSseService extends BaseSseService {
         _onDjUpdate?.call(djMap);
         return;
       }
+      case ChatRoomSseEventType.songStarted:
+      case ChatRoomSseEventType.songPaused:
+      case ChatRoomSseEventType.songResumed:
+      case ChatRoomSseEventType.songFinished:
+      case ChatRoomSseEventType.queueUpdated:
+      case ChatRoomSseEventType.songRemoved:
+        _onSongQueue?.call(map);
+        return;
       case ChatRoomSseEventType.gift:
         _onGift?.call(map);
         return;

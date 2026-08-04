@@ -131,7 +131,11 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       merged.add(ev);
     }
     state = state.copyWith(animationQueue: merged);
-    _pumpAnimationQueue();
+
+    // Kuyruk güncellemesinde baş aktif değilse hemen animasyonu başlat.
+    if (state.activeAnimation == null && merged.isNotEmpty) {
+      _pumpAnimationQueue();
+    }
     GiftSyncLog.pipelineStage('queue_sync', 'engine_queue_updated');
   }
 
@@ -398,6 +402,13 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
 
     _pumping = true;
     final next = state.animationQueue.first;
+    final rest = state.animationQueue.length > 1
+        ? state.animationQueue.sublist(1)
+        : <LiveGiftEvent>[];
+
+    // Animasyonu hemen başlat — prefetch arka planda (video hediyeler gecikmesin).
+    state = state.copyWith(activeAnimation: next, animationQueue: rest);
+    GiftSyncLog.uiRender(_roomId, 'gift_engine_queue_immediate');
 
     try {
       final catalog = lookupGiftCatalog(
@@ -409,8 +420,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       GiftSyncLog.pipelineStage(next.id, 'prefetch');
       final tPrefetch = DateTime.now();
       final backlog = state.animationQueue.length;
-      try {
-        await GiftEnginePreloader.prefetch(next).timeout(
+      unawaited(
+        GiftEnginePreloader.prefetch(next).timeout(
           Duration(
             milliseconds: backlog > 4
                 ? 1800
@@ -421,8 +432,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
                     ? 2500
                     : 900),
           ),
-        );
-      } catch (_) {}
+        ).catchError((_) {}),
+      );
       GiftSyncLog.pipelineMs(
         next.id,
         'prefetch',
@@ -433,26 +444,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
         unawaited(ref.read(giftSoundPoolProvider).preloadGift(catalog));
       }
 
-      GiftSyncLog.pipelineStage(next.id, 'sound');
-      final tSound = DateTime.now();
-      // SFX overlay fade-in ile senkron — burada yalnızca preload.
-      if (catalog != null) {
-        unawaited(ref.read(giftSoundPoolProvider).preloadGift(catalog));
-      }
-      GiftSyncLog.pipelineMs(
-        next.id,
-        'sound',
-        DateTime.now().difference(tSound).inMilliseconds,
-      );
-
-      final rest = state.animationQueue.length > 1
-          ? state.animationQueue.sublist(1)
-          : <LiveGiftEvent>[];
-      state = state.copyWith(activeAnimation: next, animationQueue: rest);
-
       final totalMs = DateTime.now().millisecondsSinceEpoch - receivedMs;
       GiftSyncLog.pipelineTotal(next.id, totalMs);
-      GiftSyncLog.uiRender(_roomId, 'gift_engine_queue');
       GiftSyncLog.videoStarted(_roomId, next.id);
 
       final config = GiftEngineParser.fromEvent(next);

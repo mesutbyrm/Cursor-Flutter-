@@ -57,6 +57,19 @@ import {
   emitChatRoomMessage,
   emitChatRoomPresence,
 } from "../socket/giftHub";
+import {
+  songQueueClear,
+  songQueueGetCurrent,
+  songQueueGetQueue,
+  songQueuePause,
+  songQueueRemove,
+  songQueueRequest,
+  songQueueResume,
+  songQueueSearch,
+  songQueueSkip,
+  finishCurrentSong,
+} from "../lib/songQueueService";
+import { subscribeSongSse, unsubscribeSongSse } from "../lib/songQueueSse";
 import { getActiveBattleForRoom } from "../lib/pkBattleService";
 import { listRoomGiftEvents, sendRoomGift } from "./gifts";
 import {
@@ -329,6 +342,39 @@ chatRoomsRouter.post("/rooms/:roomId/song-request", requireAuth, async (req, res
         ? req.body.message
         : null;
   const priority = req.body?.priority === true;
+  const videoId =
+    typeof req.body?.videoId === "string"
+      ? req.body.videoId.trim()
+      : null;
+  if (videoId) {
+    const sqResult = await songQueueRequest(roomId, user, {
+      videoId,
+      title: title || (typeof req.body?.songName === "string" ? req.body.songName : ""),
+      thumbnail: thumbUrl,
+      duration: typeof req.body?.duration === "string" ? req.body.duration : null,
+      channel: typeof req.body?.artist === "string" ? req.body.artist : null,
+      youtubeUrl: youtubeUrl || undefined,
+      priority,
+    });
+    if (!sqResult.ok) {
+      const code =
+        sqResult.error?.includes("jeton") ||
+        (sqResult as { code?: string }).code === "INSUFFICIENT_JETON"
+          ? 402
+          : 400;
+      return fail(res, code, "BAD_REQUEST", sqResult.error ?? "İstek başarısız");
+    }
+    emitChatRoomDjUpdate(roomId);
+    return res.status(200).json({
+      success: true,
+      item: sqResult.item,
+      queue: sqResult.queue,
+      newBalance: sqResult.newBalance,
+      coinBalance: sqResult.newBalance,
+      cost: sqResult.cost,
+      queuePosition: sqResult.queue.length,
+    });
+  }
   const result = await requestMusicQueue(roomId, user, {
     title,
     youtubeUrl,
@@ -507,6 +553,94 @@ chatRoomsRouter.patch(
   },
 );
 
+/** SongQueueService — TikTok/Bigo benzeri oda müzik API */
+chatRoomsRouter.get("/rooms/:roomId/current-song", optionalAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  if (!getChatRoom(roomId)) {
+    return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+  }
+  const current = await songQueueGetCurrent(roomId);
+  return res.status(200).json({ currentSong: current, serverTime: current.serverTime });
+});
+
+chatRoomsRouter.get("/rooms/:roomId/queue", optionalAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  if (!getChatRoom(roomId)) {
+    return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+  }
+  const data = await songQueueGetQueue(roomId);
+  return res.status(200).json(data);
+});
+
+chatRoomsRouter.post("/rooms/:roomId/skip", requireAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  const user = await loadUser(req.userId);
+  if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+  const result = await songQueueSkip(roomId, user);
+  if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error ?? "Yetki yok");
+  emitChatRoomDjUpdate(roomId);
+  return res.status(200).json({ success: true, currentSong: result.current });
+});
+
+chatRoomsRouter.post("/rooms/:roomId/pause", requireAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  const user = await loadUser(req.userId);
+  if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+  const result = await songQueuePause(roomId, user);
+  if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error ?? "Yetki yok");
+  emitChatRoomDjUpdate(roomId);
+  return res.status(200).json({ success: true, currentSong: result.current });
+});
+
+chatRoomsRouter.post("/rooms/:roomId/resume", requireAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  const user = await loadUser(req.userId);
+  if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+  const result = await songQueueResume(roomId, user);
+  if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error ?? "Yetki yok");
+  emitChatRoomDjUpdate(roomId);
+  return res.status(200).json({ success: true, currentSong: result.current });
+});
+
+chatRoomsRouter.delete(
+  "/rooms/:roomId/song/:queueId",
+  requireAuth,
+  async (req, res) => {
+    const roomId = req.params.roomId;
+    const user = await loadUser(req.userId);
+    if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+    const result = await songQueueRemove(roomId, user, req.params.queueId);
+    if (!result.ok) {
+      return fail(res, 403, "FORBIDDEN", result.error ?? "İşlem başarısız");
+    }
+    emitChatRoomDjUpdate(roomId);
+    return res.status(200).json({ success: true, queue: result.queue });
+  },
+);
+
+chatRoomsRouter.delete("/rooms/:roomId/queue", requireAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  const user = await loadUser(req.userId);
+  if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+  const result = await songQueueClear(roomId, user);
+  if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error ?? "Yetki yok");
+  emitChatRoomDjUpdate(roomId);
+  return res.status(200).json({ success: true, queue: result.queue });
+});
+
+chatRoomsRouter.get("/rooms/:roomId/youtube-search", optionalAuth, async (req, res) => {
+  const q = typeof req.query.q === "string" ? req.query.q : "";
+  if (q.trim().length < 2) {
+    return res.status(200).json({ items: [] });
+  }
+  try {
+    const items = await songQueueSearch(q.trim(), 12);
+    return res.status(200).json({ items });
+  } catch {
+    return res.status(200).json({ items: [] });
+  }
+});
+
 chatRoomsRouter.get("/rooms/:roomId/song-request", optionalAuth, async (req, res) => {
   const roomId = req.params.roomId;
   if (!getChatRoom(roomId)) {
@@ -634,10 +768,24 @@ chatRoomsRouter.get("/rooms/:roomId/stream", optionalAuth, async (req, res) => {
   };
 
   send({ type: "connected", roomId });
+  subscribeSongSse(roomId, res);
 
   const msgs = listMessages(roomId);
   let lastId = msgs.length > 0 ? msgs[msgs.length - 1]!.id : "";
   let lastDjSig = "";
+
+  void songQueueGetCurrent(roomId).then((current) => {
+    if (current.videoId) {
+      send({
+        type: "song_started",
+        roomId: resolveRoomId(roomId),
+        currentSong: current,
+        serverTime: current.serverTime,
+        elapsed: current.elapsedMs / 1000,
+        paused: current.paused,
+      });
+    }
+  });
 
   const timer = setInterval(() => {
     try {
@@ -675,7 +823,10 @@ chatRoomsRouter.get("/rooms/:roomId/stream", optionalAuth, async (req, res) => {
     }
   }, 3000);
 
-  req.on("close", () => clearInterval(timer));
+  req.on("close", () => {
+    clearInterval(timer);
+    unsubscribeSongSse(roomId, res);
+  });
 });
 
 chatRoomsRouter.get("/rooms/:roomId/messages", optionalAuth, async (req, res) => {

@@ -507,6 +507,68 @@ model ShortVideoView {
   @@index([videoId])
 }
 
+/// Oda şarkı kuyruğu (SongQueueService — FIFO).
+model RoomSongQueue {
+  id        String   @id @default(cuid())
+  roomId    String
+  userId    String
+  username  String?
+  videoId   String
+  title     String
+  thumbnail String?
+  duration  String?
+  channel   String?
+  status    String   @default("queued")
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([roomId, status, position])
+  @@map("room_song_queue")
+}
+
+/// Oda şu an çalan şarkı (senkron otorite).
+model RoomCurrentSong {
+  id         String    @id @default(cuid())
+  roomId     String    @unique
+  queueId    String?
+  videoId    String?
+  title      String?
+  thumbnail  String?
+  durationSec Int?
+  channel    String?
+  ownerId    String?
+  ownerName  String?
+  startedAt  DateTime?
+  pausedAt   DateTime?
+  paused     Boolean   @default(false)
+  elapsedMs  Int       @default(0)
+  updatedAt  DateTime  @updatedAt
+
+  @@map("room_current_song")
+}
+
+/// Oda şarkı geçmişi — kim istedi, kaç kez çalındı.
+model RoomSongHistory {
+  id            String    @id @default(cuid())
+  roomId        String
+  queueId       String?
+  videoId       String
+  title         String
+  thumbnail     String?
+  durationSec   Int?
+  channel       String?
+  requestedById String
+  requestedBy   String?
+  playCount     Int       @default(1)
+  playedAt      DateTime  @default(now())
+  finishedAt    DateTime?
+  skipped       Boolean   @default(false)
+
+  @@index([roomId, playedAt])
+  @@index([videoId])
+  @@map("room_song_history")
+}
+
 /// Sesli oda müzik kuyruğu — oda başına sıralı şarkı istekleri.
 model MusicQueue {
   id         String   @id @default(cuid())
