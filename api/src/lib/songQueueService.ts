@@ -473,7 +473,7 @@ export async function songQueueRequest(
     roomId: roomKey(roomId),
     userId: user.id,
     username: row.username,
-    action: "Queue Add",
+    action: "queue_add",
     metadata: { videoId, title },
   });
 
@@ -538,7 +538,7 @@ async function startNextSong(roomId: string) {
     roomId: roomKey(roomId),
     userId: next.userId,
     username: next.username,
-    action: "Song started",
+    action: "song_started",
     metadata: { videoId: next.videoId, title: next.title },
   });
 
@@ -585,7 +585,7 @@ export async function finishCurrentSong(
     roomId: roomKey(roomId),
     userId: playing?.userId,
     username: playing?.username,
-    action: opts?.skipped ? "Skip" : "Song finished",
+    action: opts?.skipped ? "skip" : "song_finished",
     metadata: playing ? { videoId: playing.videoId, title: playing.title } : {},
   });
 
@@ -637,7 +637,7 @@ export async function songQueuePause(roomId: string, user: User) {
     roomId: roomKey(roomId),
     userId: user.id,
     username: user.username ?? user.displayName,
-    action: "Pause",
+    action: "pause",
   });
 
   emitSongSse(roomId, {
@@ -674,7 +674,7 @@ export async function songQueueResume(roomId: string, user: User) {
     roomId: roomKey(roomId),
     userId: user.id,
     username: user.username ?? user.displayName,
-    action: "Resume",
+    action: "resume",
   });
 
   emitSongSse(roomId, {
@@ -730,7 +730,7 @@ export async function songQueueRemove(
     roomId: roomKey(roomId),
     userId: user.id,
     username: user.username ?? user.displayName,
-    action: "Queue Remove",
+    action: "queue_remove",
     metadata: { queueId, videoId: item.videoId },
   });
 

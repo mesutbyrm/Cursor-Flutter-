@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
-import 'bloc/room_song_bloc.dart';
-import 'bloc/room_song_event.dart';
-import 'bloc/room_song_state.dart';
+import '../bloc/room_song_bloc.dart';
+import '../bloc/room_song_event.dart';
+import '../bloc/room_song_state.dart';
 
 /// TikTok/Bigo benzeri mini player — resmi YouTube IFrame Player API.
 class RoomSongMiniPlayer extends StatefulWidget {
