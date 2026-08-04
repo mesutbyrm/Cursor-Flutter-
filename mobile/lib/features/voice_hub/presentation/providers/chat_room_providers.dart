@@ -2324,9 +2324,9 @@ class VoiceRoomLiveController
           .whereType<Map>()
           .map((e) => MusicQueueItem.fromJson(Map<String, dynamic>.from(e)))
           .toList();
-      final player = ref.read(voiceRoomDjPlayerProvider);
-      final musicActive =
-          dj.playing || state.dj.playing || player.playback.value.playing;
+      final songActive = _roomKey.isNotEmpty &&
+          ref.read(roomSongBlocProvider(_roomKey)).state.hasTrack;
+      final musicActive = dj.playing || state.dj.playing || songActive;
       if (queue.isNotEmpty || !musicActive) {
         dj = dj.copyWith(musicQueue: queue);
       } else if (state.dj.musicQueue.isNotEmpty) {
@@ -2501,10 +2501,14 @@ class VoiceRoomLiveController
 
   Future<void> _syncMusicFromServerIfNeeded({bool force = false}) async {
     if (!force) {
-      final player = ref.read(voiceRoomDjPlayerProvider);
-      if (player.playback.value.playing) return;
+      final songActive = _roomKey.isNotEmpty &&
+          ref.read(roomSongBlocProvider(_roomKey)).state.hasTrack;
+      if (songActive) return;
       await Future<void>.delayed(const Duration(milliseconds: 700));
-      if (ref.read(voiceRoomDjPlayerProvider).playback.value.playing) return;
+      if (_roomKey.isNotEmpty &&
+          ref.read(roomSongBlocProvider(_roomKey)).state.hasTrack) {
+        return;
+      }
     }
     await _syncMusicFromServer();
   }
