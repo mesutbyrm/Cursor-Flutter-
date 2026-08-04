@@ -569,11 +569,12 @@ class LivePsychicsRemoteDataSource {
   }) async {
     final merged = <PsychicRequestEntity>[];
     final seen = <String>{};
+    // Üretim kılavuz §9: GET /api/fortune-tellers/sessions (incoming yalnızca yerel ayna).
     for (final path in [
-      ApiEndpoints.fortuneTellerIncomingSessions,
       ApiEndpoints.fortuneTellerSessionsWithStatus('pending'),
-      ApiEndpoints.liveFalPending,
       ApiEndpoints.fortuneTellerSessions,
+      ApiEndpoints.liveFalPending,
+      ApiEndpoints.fortuneTellerIncomingSessions,
     ]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);

@@ -43,6 +43,10 @@ class LiveModerationNotifier extends StateNotifier<AsyncValue<void>> {
         () => _ds.muteViewer(streamId: streamId, viewerId: userId),
       );
 
+  Future<bool> unmuteUser(String userId) => _run(
+        () => _ds.unmuteViewer(streamId: streamId, viewerId: userId),
+      );
+
   Future<bool> kickUser(String userId) => _run(
         () => _ds.banViewer(
           streamId: streamId,
@@ -57,6 +61,10 @@ class LiveModerationNotifier extends StateNotifier<AsyncValue<void>> {
           userId: userId,
           reason: 'block',
         ),
+      );
+
+  Future<bool> unbanUser(String userId) => _run(
+        () => _ds.unbanViewer(streamId: streamId, userId: userId),
       );
 }
 
@@ -228,6 +236,21 @@ class _LiveModerationSheet extends ConsumerWidget {
               },
             ),
             _ActionTile(
+              icon: Icons.mic_rounded,
+              label: 'Susturmayı Kaldır',
+              color: Colors.greenAccent,
+              onTap: () async {
+                final ok = await notifier.unmuteUser(targetUserId);
+                if (!context.mounted) return;
+                Navigator.pop(context);
+                _showSnack(
+                  context,
+                  ok ? '$targetDisplayName susturması kaldırıldı' : 'Hata',
+                  ok,
+                );
+              },
+            ),
+            _ActionTile(
               icon: Icons.logout_rounded,
               label: 'Yayından At',
               color: Colors.redAccent,
@@ -258,6 +281,21 @@ class _LiveModerationSheet extends ConsumerWidget {
                 _showSnack(
                   context,
                   ok ? '$targetDisplayName banlandı' : 'Hata',
+                  ok,
+                );
+              },
+            ),
+            _ActionTile(
+              icon: Icons.lock_open_rounded,
+              label: 'Banı Kaldır',
+              color: Colors.tealAccent,
+              onTap: () async {
+                final ok = await notifier.unbanUser(targetUserId);
+                if (!context.mounted) return;
+                Navigator.pop(context);
+                _showSnack(
+                  context,
+                  ok ? '$targetDisplayName banı kaldırıldı' : 'Hata',
                   ok,
                 );
               },

@@ -56,6 +56,10 @@ class SocialRepositoryImpl implements SocialRepository {
   }
 
   @override
+  Future<PostEntity?> fetchPost(String postId) =>
+      _remote.fetchPost(postId, currentUserId: currentUserId);
+
+  @override
   Future<PostEntity> createPost(CreateSocialPostInput input) async {
     final dto = await _remote.createPost(input);
     return dto.toEntity();

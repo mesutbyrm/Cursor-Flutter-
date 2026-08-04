@@ -300,7 +300,10 @@ abstract final class ApiEndpoints {
   /// Okunmamış bildirim sayısı (yoksa liste üzerinden hesaplanır).
   static const notificationsUnread = '/api/notifications/unread';
   static const socialPostsAutoFortune = '/api/social/posts/auto-fortune';
-  static String socialPostDelete(String id) => '/api/social/posts/$id';
+  /// Tek gönderi detayı — kılavuz §9.10 `getPost`.
+  static String socialPost(String postId) => '/api/social/posts/$postId';
+
+  static String socialPostDelete(String id) => socialPost(id);
 
   /// Beğeni toggle — POST (canlifal.com).
   static String socialPostLikes(String postId) =>
@@ -658,10 +661,6 @@ abstract final class ApiEndpoints {
   static const livePk = '/api/live/pk';
   static const livePkScore = '/api/live/pk/score';
   static const liveOnlineUsers = '/api/live/online-users';
-  static const livekitToken = '/api/livekit/token';
-
-  /// Agora RTC token — canlı video yayını.
-  static const agoraToken = '/api/agora/token';
 
   /// Canlı yayın hediye kataloğu (Tencent / site ile aynı liste).
   static const videoStreamGiftsCatalog = '/api/video-streams/gifts';

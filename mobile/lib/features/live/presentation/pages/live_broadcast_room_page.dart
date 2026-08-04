@@ -9,7 +9,6 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/performance/live_entry_perf.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -37,8 +36,8 @@ import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
+import '../../../trtc/presentation/trtc_live_room_coordinator.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
-import '../../../trtc/domain/entities/trtc_credentials.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../data/host_live_stream_recovery.dart';
 import '../../domain/entities/live_broadcast_session.dart';
@@ -117,6 +116,8 @@ class LiveBroadcastRoomPage extends ConsumerStatefulWidget {
 class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     with WidgetsBindingObserver {
   final _trtc = TrtcRoomManager();
+  TrtcLiveRoomCoordinator? _trtcCoordinator;
+  StreamSubscription<void>? _trtcReconnectSub;
   var _rtcReady = false;
   String? _rtcError;
   final _chat = TextEditingController();
@@ -280,37 +281,31 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         throw StateError('Yayın odası kimliği eksik');
       }
 
-      var cred = widget.session.trtc;
-      if (cred == null || !cred.matchesRoom(roomId)) {
-        cred = LiveEntryPerf.takeTrtc(userId: user.id, streamId: roomId);
-      }
-      if (cred == null || !cred.matchesRoom(roomId)) {
-        if (widget.session.isHost) {
-          cred = await ref.read(trtcRemoteProvider).fetchToken(
-                roomId: roomId,
-                role: 'host',
-                userId: user.id,
-              );
-        } else {
-          cred = await LiveEntryPerf.fetchTrtcParallel(
-            ref: ref,
-            streamId: roomId,
-            role: 'audience',
-            userId: user.id,
-          );
-        }
-      }
-
-      final resolvedCred = cred;
-      if (resolvedCred == null || !resolvedCred.matchesRoom(roomId)) {
-        throw StateError('TRTC oturumu alınamadı');
-      }
-
-      await _trtc.join(
-        credentials: resolvedCred,
-        isHost: widget.session.isHost,
-        audioOnly: false,
+      _trtcCoordinator ??= TrtcLiveRoomCoordinator(
+        liveRoom: ref.read(liveRoomRemoteProvider),
+        trtcRemote: ref.read(trtcRemoteProvider),
+        roomManager: _trtc,
       );
+      _trtcReconnectSub ??= _trtcCoordinator!.onConnectionLost.listen((_) {
+        if (!mounted || _leaving) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Bağlantı koptu — yeniden bağlanılıyor…'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      });
+
+      await _trtcCoordinator!.join(
+        roomId: roomId,
+        roomType: 'stream',
+        userId: user.id,
+        isHost: widget.session.isHost,
+        twoWayVideo: true,
+        expectedAnchorUserId: widget.session.hostUserId,
+        useCompoundJoin: true,
+      );
+
       if (widget.session.isHost) {
         _trtc.setCameraEnabled(widget.session.initialCameraOn);
         _trtc.setMicEnabled(widget.session.initialMicOn);
@@ -363,6 +358,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _coBroadcastPoll?.cancel();
     _hostHeartbeat?.cancel();
     _signalService?.stop();
+    _trtcReconnectSub?.cancel();
     if (_remoteUidsListener != null) {
       _trtc.remoteUserIdsNotifier.removeListener(_remoteUidsListener!);
     }
@@ -374,10 +370,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       if (widget.session.isHost &&
           widget.session.streamId?.isNotEmpty == true) {
         unawaited(HostLiveStreamRecovery.save(widget.session));
-      } else if (_trtc.inChannel) {
-        unawaited(_trtc.leave());
+      } else {
+        unawaited(_trtcCoordinator?.leave());
       }
+    } else {
+      unawaited(_trtcCoordinator?.leave());
     }
+    _trtcCoordinator?.dispose();
+    _trtcCoordinator = null;
     _trtc.dispose();
     super.dispose();
   }

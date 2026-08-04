@@ -1,5 +1,18 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.128+162 (2026-08-04)
+
+### Backend ↔ Flutter senkronizasyon (devam)
+- **RTC:** `flutter_webrtc` kaldırıldı; Agora/LiveKit token sabitleri silindi
+- **Canlı yayın:** `TrtcLiveRoomCoordinator` — heartbeat + otomatik TRTC reconnect
+- **Canlı moderasyon:** Susturmayı kaldır / banı kaldır UI
+- **Falcı:** Gelen istek poll sırası üretim `GET /sessions?status=pending` öncelikli
+- **Sosyal:** `GET /api/social/posts/{id}` — `fetchPost` + `postDetailProvider`
+- **Sesli oda:** `lockSeat` / `kickFromSeat` (kılavuz §9.3)
+- **CDN:** Hediye/shorts/story/banner göreli yolları CDN üzerinden çözümleme
+- **Stats:** `socialPublicStats` fallback kaldırıldı → `/api/public-stats`
+- **Rapor:** `docs/BACKEND_FLUTTER_SYNC_REPORT.md`
+
 ## 1.0.127+161 (2026-08-04)
 
 ### Audit tamamlama — müzik IFrame, TRTC-only, platform API
