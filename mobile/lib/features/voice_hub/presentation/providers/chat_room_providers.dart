@@ -80,6 +80,7 @@ import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/domain/gift_system_message.dart';
 import '../../../gifts/domain/gift_payload_util.dart';
 import '../../../gifts/presentation/sync/gift_sse_dispatch.dart';
+import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import 'voice_gift_providers.dart';
 import 'voice_gift_leaderboard_provider.dart';
 import 'voice_recent_gifts_provider.dart';

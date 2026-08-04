@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.122+156 (2026-08-04)
+
+### CI düzeltmesi
+- **GiftSyncLog:** `chat_room_providers.dart` eksik import — APK derleme gate test derlemesi düzeltildi
+- **Gift SSE:** `parseGiftEvent` nullable dönüş — `onEngineQueueUpdated` imzası uyumlu
+
 ## 1.0.122+155 (2026-08-03)
 
 ### Platform & SDK güncellemesi

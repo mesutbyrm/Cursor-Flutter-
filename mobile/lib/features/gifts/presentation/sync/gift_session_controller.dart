@@ -103,7 +103,7 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   /// Motor `gift_queue_updated` — sırayı güncelle, animasyon başlatma.
   void onEngineQueueUpdated(
     Map<String, dynamic> payload, {
-    LiveGiftEvent Function(Map<String, dynamic> item)? parseItem,
+    LiveGiftEvent? Function(Map<String, dynamic> item)? parseItem,
   }) {
     final items = GiftEngineSseRouter.queueItems(payload);
     if (items.isEmpty) return;
@@ -116,7 +116,7 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       if (id != null && state.processedEventIds.contains(id)) continue;
       if (parseItem == null) continue;
       final ev = parseItem(raw);
-      if (!_isDisplayable(ev)) continue;
+      if (ev == null || !_isDisplayable(ev)) continue;
       if (state.processedEventIds.contains(ev.id)) continue;
       pending.add(ev);
     }
