@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.122+157 (2026-08-04)
+
+### CI / Gradle
+- **ABI:** `ndk.abiFilters` kaldırıldı — CI `--split-per-abi` ile çakışma (Gate 9) giderildi
+
 ## 1.0.122+156 (2026-08-04)
 
 ### CI düzeltmesi
