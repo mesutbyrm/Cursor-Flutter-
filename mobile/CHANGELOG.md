@@ -1,6 +1,12 @@
 # Sürüm notları — canlifal_social
 
-# Sürüm notları — canlifal_social
+## 1.0.125+159 (2026-08-04)
+
+### Oda müzik sistemi (SongQueueService) + hediye düzeltmesi
+- **Backend:** `SongQueueService`, `room_song_queue` / `room_current_song` / `room_song_history`, SSE `song_*` olayları, `serverTime` senkronu
+- **API:** `current-song`, `queue`, `skip`, `pause`, `resume`, `DELETE song/:queueId` — yalnızca YouTube Data API + IFrame (stream URL yok)
+- **Flutter:** `flutter_bloc` + `RoomSongMiniPlayer` (`youtube_player_iframe`), 500 ms drift seek
+- **Hediye:** Videolu hediyeler gecikmesiz tam ekran; prefetch arka planda; 🎁 yerine thumbnail
 
 ## 1.0.124+158 (2026-08-04)
 

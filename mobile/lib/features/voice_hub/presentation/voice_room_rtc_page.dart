@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/env.dart';
@@ -40,6 +41,8 @@ import '../domain/entities/chat_room_my_permissions.dart';
 import 'audio/voice_room_audio_coordinator.dart';
 import 'audio/voice_room_music_audio_session.dart';
 import 'providers/chat_room_providers.dart';
+import '../music/presentation/providers/room_music_providers.dart';
+import '../music/presentation/widgets/room_song_mini_player.dart';
 import '../music/presentation/widgets/music_search_picker_sheet.dart';
 import 'sheets/music_mode_picker_sheet.dart';
 import 'sheets/voice_room_hub_settings.dart';
@@ -1279,7 +1282,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       }
     });
 
-    return GiftEventListener(
+    return BlocProvider.value(
+      value: ref.watch(roomSongBlocProvider(_liveRoomKey)),
+      child: GiftEventListener(
       sessionKey: sessionKey,
       isHost: isOwner,
       child: PopScope(
@@ -1727,6 +1732,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               ],
             ),
             VoiceGiftHudOverlays(sessionKey: sessionKey),
+            if (_liveRoomKey.isNotEmpty)
+              RoomSongMiniPlayer(
+                roomId: _liveRoomKey,
+                canControl: canControlMusic,
+                bottomInset: 118,
+              ),
             if (_showVipEntrance && user != null)
               Builder(
                 builder: (context) {
@@ -1756,6 +1767,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           ],
         ),
       ),
+    ),
     ),
     );
   }

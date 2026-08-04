@@ -353,6 +353,29 @@ abstract final class ApiEndpoints {
   static String chatRoomSongRequest(String roomId) =>
       '/api/chat/rooms/$roomId/song-request';
 
+  /// SongQueueService — şu an çalan şarkı.
+  static String chatRoomCurrentSong(String roomId) =>
+      '/api/chat/rooms/$roomId/current-song';
+
+  /// SongQueueService — FIFO kuyruk.
+  static String chatRoomSongQueue(String roomId) =>
+      '/api/chat/rooms/$roomId/queue';
+
+  static String chatRoomSongSkip(String roomId) =>
+      '/api/chat/rooms/$roomId/skip';
+
+  static String chatRoomSongPause(String roomId) =>
+      '/api/chat/rooms/$roomId/pause';
+
+  static String chatRoomSongResume(String roomId) =>
+      '/api/chat/rooms/$roomId/resume';
+
+  static String chatRoomSongRemove(String roomId, String queueId) =>
+      '/api/chat/rooms/$roomId/song/$queueId';
+
+  static String chatRoomSongQueueClear(String roomId) =>
+      '/api/chat/rooms/$roomId/queue';
+
   /// Oda arka planları — kılavuz §9.3 `getBackgrounds`.
   static const chatRoomBackgrounds = '/api/chat/rooms/backgrounds';
 

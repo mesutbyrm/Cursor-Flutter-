@@ -270,6 +270,24 @@ class _GiftMediaWidgetState extends State<GiftMediaWidget> {
           fit: widget.fit,
           width: shrink ? widget.width : null,
           height: shrink ? widget.height : null,
+          errorWidget: _imageUrlOrEmoji(spec),
+        ),
+      );
+    }
+    return _imageUrlOrEmoji(spec);
+  }
+
+  Widget _imageUrlOrEmoji(GiftMediaSpec spec) {
+    final img = spec.mediaUrl?.trim();
+    if (spec.mediaType.isVideo &&
+        img != null &&
+        img.isNotEmpty &&
+        !img.endsWith('.mp4') &&
+        !img.endsWith('.webm')) {
+      return _wrapSized(
+        CanlifalNetworkImage(
+          url: img,
+          fit: widget.fit,
           errorWidget: _emojiFallback(),
         ),
       );

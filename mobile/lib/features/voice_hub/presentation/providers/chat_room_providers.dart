@@ -33,6 +33,7 @@ import '../../data/youtube_music_search_cache.dart';
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../../music/domain/entities/room_playback_sync.dart';
 import '../../music/presentation/providers/room_music_providers.dart';
+import '../../music/presentation/bloc/room_song_bloc.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
@@ -1206,6 +1207,12 @@ class VoiceRoomLiveController
               _applyRoomVideoPayload(payload);
             }
             unawaited(_applyDjRealtimePayload(payload));
+          },
+          onSongQueue: (payload) {
+            final ev = RoomSongBloc.eventFromSse(payload);
+            if (ev != null) {
+              ref.read(roomSongBlocProvider(_roomKey)).add(ev);
+            }
           },
           onGift: (payload) {
             dispatchGiftSsePayloadRef(
