@@ -95,6 +95,7 @@ part 'chat_room_providers_seat.dart';
 part 'chat_room_providers_gift.dart';
 part 'chat_room_providers_room_sync.dart';
 part 'chat_room_providers_presence.dart';
+part 'chat_room_providers_dj_sync.dart';
 
 final youtubeStreamResolverProvider = Provider<YoutubeStreamResolver>((ref) {
   final resolver = YoutubeStreamResolver(ref.watch(dioProvider));
@@ -343,7 +344,8 @@ class VoiceRoomLiveState {
 }
 
 class VoiceRoomLiveController
-    extends AutoDisposeFamilyNotifier<VoiceRoomLiveState, String> {
+    extends AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
+    with VoiceRoomDjSyncMixin {
   Timer? _poll;
   Timer? _presenceHeartbeat;
   Timer? _typingStopTimer;
@@ -505,12 +507,6 @@ class VoiceRoomLiveController
       );
     }
     return dj.copyWith(djUsers: users);
-  }
-
-  /// Oda müziği yalnızca [RoomSongMiniPlayer] (YouTube IFrame) ile çalar.
-  void _syncRoomSongBloc() {
-    if (_roomKey.isEmpty) return;
-    ref.read(roomSongBlocProvider(_roomKey)).add(RoomSongJoinSync(_roomKey));
   }
 
   DateTime? get _lastMessageAt {
@@ -1009,31 +1005,6 @@ class VoiceRoomLiveController
     if (sync?.streamUrl?.trim().isNotEmpty == true) return true;
     if (dj.musicUrl?.trim().isNotEmpty == true) return true;
     return false;
-  }
-
-  Future<void> _handleUnplayableEmbed() async {
-    final wasVideo = state.dj.nowPlaying?.isVideoRequest == true;
-    if (wasVideo) {
-      await fallbackVideoToAudioOnly();
-      return;
-    }
-    _showMusicRequestFlashLine(
-      '⚠️ Bu şarkı çalınamıyor, lütfen başka bir şarkı deneyin.',
-    );
-    if (!_canControlMusic() && !_canStopMusic()) return;
-    try {
-      final result = await ref.read(chatRoomRemoteProvider).clearMusicQueue(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-          );
-      if (result.autoAdvanced) {
-        await refresh();
-      } else {
-        await _handleMusicStoppedFromSse();
-      }
-    } catch (_) {
-      await _handleMusicStoppedFromSse();
-    }
   }
 
   Future<void> joinVoiceSession() async {
@@ -2232,287 +2203,6 @@ class VoiceRoomLiveController
     return MusicQueueItem.fromJson(json);
   }
 
-  Future<void> _handleMusicStoppedFromSse() async {
-    VoiceRoomDebugLog.log('music.sse.stopped', {'room': _roomKey});
-    await ref.read(voiceRoomDjPlayerProvider).stop();
-    ref.read(voiceRoomMusicSessionProvider.notifier).dismissFromServerStop();
-    ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
-    state = state.copyWith(
-      dj: state.dj.copyWith(
-        playing: false,
-        clearNowPlaying: true,
-        clearMusicUrl: true,
-        musicQueue: const [],
-      ),
-      musicLikeCount: 0,
-    );
-    _lastDjPlaybackSignature = '';
-  }
-
-  Future<void> _applyDjRealtimePayload(Map<String, dynamic> payload) async {
-    final map = unwrapVoiceSseDjPayload(payload);
-    final signal = voiceSseMusicSignal(map);
-    if (signal == VoiceSseMusicSignal.stopped) {
-      await _handleMusicStoppedFromSse();
-      return;
-    }
-    if (signal == VoiceSseMusicSignal.started) {
-      ref.read(voiceRoomMusicSessionProvider.notifier).onMusicStartedFromServer();
-      ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
-      VoiceRoomDebugLog.log('music.sse.started', {
-        'room': _roomKey,
-        'musicUrl': map['musicUrl']?.toString(),
-      });
-    }
-    final likes = voiceSseLikeCount(map);
-    final np = map['nowPlaying'];
-    String? title;
-    String? eventVideoId;
-    if (np is Map) {
-      title = np['title']?.toString();
-      eventVideoId = np['videoId']?.toString() ?? np['youtubeUrl']?.toString();
-    }
-    eventVideoId ??= map['currentVideoId']?.toString() ?? map['videoId']?.toString();
-    VoiceRoomDebugLog.djUpdate(
-      roomId: _roomKey,
-      playing: voiceSseDjIsPlaying(map),
-      musicUrl: map['musicUrl']?.toString(),
-      videoId: eventVideoId,
-      title: title,
-      source: map['type']?.toString() ?? 'realtime',
-    );
-    VoiceRoomDebugLog.log('music.realtime.recv', {
-      'playing': map['playing'],
-      'isPlaying': map['isPlaying'],
-      'hasUrl': map['musicUrl'] != null,
-      'hasQueue': map['queue'] != null,
-      'type': map['type'],
-    });
-    var dj = state.dj;
-    final isPlaying = voiceSseDjIsPlaying(map);
-    if (map.containsKey('playing') ||
-        map.containsKey('isPlaying') ||
-        isPlaying) {
-      dj = dj.copyWith(playing: isPlaying);
-    }
-    if (map['musicUrl'] != null) {
-      final url = map['musicUrl'].toString().trim();
-      if (url.isNotEmpty) dj = dj.copyWith(musicUrl: url);
-    }
-    if (map['nowPlaying'] is Map) {
-      dj = dj.copyWith(
-        nowPlaying: _mergeNowPlayingFromSse(
-          Map<String, dynamic>.from(map['nowPlaying'] as Map),
-          previous: state.dj.nowPlaying,
-        ),
-        playing: isPlaying || dj.playing,
-      );
-    } else if (isPlaying && dj.nowPlaying == null) {
-      final queueRaw = map['queue'] ?? map['musicQueue'];
-      if (queueRaw is List && queueRaw.isNotEmpty && queueRaw.first is Map) {
-        dj = dj.copyWith(
-          nowPlaying: MusicQueueItem.fromJson(
-            Map<String, dynamic>.from(queueRaw.first as Map),
-          ),
-          playing: true,
-        );
-      }
-    }
-    final queueRaw = map['queue'] ?? map['musicQueue'];
-    if (queueRaw is List) {
-      final queue = queueRaw
-          .whereType<Map>()
-          .map((e) => MusicQueueItem.fromJson(Map<String, dynamic>.from(e)))
-          .toList();
-      final songActive = _roomKey.isNotEmpty &&
-          ref.read(roomSongBlocProvider(_roomKey)).state.hasTrack;
-      final musicActive = dj.playing || state.dj.playing || songActive;
-      if (queue.isNotEmpty || !musicActive) {
-        dj = dj.copyWith(musicQueue: queue);
-      } else if (state.dj.musicQueue.isNotEmpty) {
-        dj = dj.copyWith(musicQueue: state.dj.musicQueue);
-      }
-    }
-    if (map['djUserIds'] is List) {
-      final ids = (map['djUserIds'] as List)
-          .map((e) => e.toString())
-          .where((s) => s.isNotEmpty)
-          .toList();
-      dj = _enrichDjUsers(
-        dj.copyWith(
-          djUsers: ids
-              .map(
-                (id) => dj.djUsers.where((u) => u.id == id).firstOrNull ??
-                    ChatRoomUserRef(
-                      id: id,
-                      name: _djChatLabel(id) ?? 'DJ',
-                      chatRole: 'dj',
-                    ),
-              )
-              .toList(),
-        ),
-        state.presence,
-      );
-    } else if (map['djUsers'] is List) {
-      final users = (map['djUsers'] as List)
-          .whereType<Map>()
-          .map(
-            (e) => ChatRoomUserRef(
-              id: (e['id'] ?? e['userId'] ?? '').toString(),
-              name: (e['name'] ?? e['displayName'] ?? 'DJ').toString(),
-              nickname: e['nickname']?.toString(),
-              image: e['image']?.toString() ?? e['avatarUrl']?.toString(),
-              chatRole: (e['chatRole'] ?? 'dj').toString(),
-            ),
-          )
-          .where((u) => u.id.isNotEmpty)
-          .toList();
-      if (users.isNotEmpty) {
-        dj = dj.copyWith(djUsers: users);
-      }
-    } else if (state.dj.djUsers.isNotEmpty) {
-      dj = dj.copyWith(djUsers: state.dj.djUsers);
-    }
-    _commitDjUi(dj);
-    if (likes != null) {
-      state = state.copyWith(musicLikeCount: likes);
-    }
-    final sync = RoomPlaybackSync.fromPayload(map);
-    final ui = ref.read(voiceRoomUiProvider);
-    final sig = _djPlaybackSignature(dj, muted: ui.effectiveMusicMuted);
-    final wantsPlay = (dj.playing || sync.isPlaying) &&
-        _hasDjPlayableSource(
-          dj,
-          sync: sync,
-          videoId: eventVideoId,
-        );
-    final songIdle = _roomKey.isEmpty ||
-        !ref.read(roomSongBlocProvider(_roomKey)).state.hasTrack;
-    if (sig != _lastDjPlaybackSignature || (wantsPlay && songIdle)) {
-      unawaited(_playDjInBackground(dj, sync: sync));
-      return;
-    }
-    if (!wantsPlay && (map['queue'] != null || map['musicQueue'] != null)) {
-      unawaited(_syncMusicFromServerIfNeeded(force: true));
-    }
-    if (!sync.isPlaying) {
-      return;
-    }
-    _syncRoomSongBloc();
-  }
-
-  ChatRoomDjState _djWithQueuePlaybackFallback(ChatRoomDjState dj) {
-    if (dj.playing) return dj;
-    if (dj.musicQueue.isEmpty && dj.nowPlaying == null) return dj;
-    if (!_hasDjPlayableSource(dj)) return dj;
-    return dj.copyWith(playing: true);
-  }
-
-  Future<ChatRoomDjState> _applyDjPlayback(
-    ChatRoomDjState dj, {
-    RoomPlaybackSync? sync,
-  }) async {
-    final ui = ref.read(voiceRoomUiProvider);
-    final muted = ui.effectiveMusicMuted;
-    final session = ref.read(voiceRoomMusicSessionProvider);
-    final player = ref.read(voiceRoomDjPlayerProvider);
-
-    // Tek yol: RoomSongMiniPlayer (YouTube IFrame). just_audio / WebView yok.
-    await player.stop();
-    if (_roomKey.isNotEmpty) {
-      ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
-    }
-
-    if (session.userDismissedPlayer) {
-      _lastDjPlaybackSignature = _djPlaybackSignature(dj, muted: muted);
-      return dj;
-    }
-
-    if (!dj.musicEnabled) {
-      _lastDjPlaybackSignature = _djPlaybackSignature(dj, muted: muted);
-      return dj.copyWith(playing: false);
-    }
-
-    final effectiveDj = dj;
-    final videoId = YoutubeVideoId.fromDj(
-      currentVideoId: sync?.currentVideoId,
-      nowPlayingUrl: effectiveDj.nowPlaying?.youtubeUrl,
-    );
-    final shouldPlay = (sync?.isPlaying ?? effectiveDj.playing) &&
-        _hasDjPlayableSource(effectiveDj, sync: sync, videoId: videoId);
-    final sig = _djPlaybackSignature(effectiveDj, muted: muted);
-
-    if (shouldPlay) {
-      await VoiceRoomMusicAudioSession.activateForPlayback();
-      _syncRoomSongBloc();
-      _lastDjPlaybackSignature = sig;
-      return effectiveDj;
-    }
-
-    _lastDjPlaybackSignature = _djPlaybackSignature(effectiveDj, muted: muted);
-    return effectiveDj.copyWith(playing: false);
-  }
-
-  Future<void> _syncMusicFromServer({bool optimisticUi = true}) async {
-    if (_roomKey.isEmpty) return;
-    try {
-      VoiceRoomDebugLog.log('music.sync.start', {'room': _roomKey});
-      final pair = await Future.wait([
-        ref.read(chatRoomRemoteProvider).fetchDj(
-          _roomKey,
-          alternateKey: _musicAlternateKey,
-        ),
-        ref.read(chatRoomRemoteProvider).fetchMusicQueue(
-          _roomKey,
-          alternateKey: _musicAlternateKey,
-        ),
-      ]);
-      var dj = _mergeMusicQueueRecord(
-        pair[0] as ChatRoomDjState,
-        pair[1]
-            as ({
-              List<MusicQueueItem> queue,
-              int cost,
-              int videoRequestCost,
-              int maxMusicQueue,
-              bool musicEnabled,
-              MusicQueueItem? nowPlaying,
-              bool? playing,
-              bool? canRequestMusic,
-              String? musicUrl,
-            }),
-      );
-      if (optimisticUi) {
-        _commitDjUi(dj);
-        unawaited(_playDjInBackground(dj));
-      } else {
-        dj = await _applyDjPlayback(dj);
-        state = state.copyWith(dj: dj, clearError: true);
-      }
-      invalidateWalletCacheFromRef(ref);
-      VoiceRoomDebugLog.log('music.sync.ok', {
-        'playing': dj.playing,
-        'queue': dj.musicQueue.length,
-      });
-    } catch (e) {
-      VoiceRoomDebugLog.log('music.sync.fail', {'error': '$e'});
-    }
-  }
-
-  Future<void> _syncMusicFromServerIfNeeded({bool force = false}) async {
-    if (!force) {
-      final songActive = _roomKey.isNotEmpty &&
-          ref.read(roomSongBlocProvider(_roomKey)).state.hasTrack;
-      if (songActive) return;
-      await Future<void>.delayed(const Duration(milliseconds: 700));
-      if (_roomKey.isNotEmpty &&
-          ref.read(roomSongBlocProvider(_roomKey)).state.hasTrack) {
-        return;
-      }
-    }
-    await _syncMusicFromServer();
-  }
-
   Future<void> _handleSongRequestFree(
     SongRequestFreePayload payload, {
     ChatRoomUserRef? requester,
@@ -3598,10 +3288,12 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
     required bool canSyncServer,
     required bool canStopMusic,
   }) {
-    final playing =
-        dj.playing ||
-        ref.read(voiceRoomDjPlayerProvider).playback.value.playing;
-    final hasTrack = dj.nowPlaying != null || dj.musicQueue.isNotEmpty;
+    final liveKey = room.liveKey.trim();
+    final songActive = liveKey.isNotEmpty &&
+        ref.read(roomSongBlocProvider(liveKey)).state.hasTrack;
+    final playing = dj.playing || songActive;
+    final hasTrack =
+        dj.nowPlaying != null || dj.musicQueue.isNotEmpty || songActive;
 
     if (state.userDismissedPlayer) {
       if (!playing && !hasTrack) {
