@@ -59,7 +59,6 @@ import 'sheets/voice_room_management_panel.dart';
 import 'sheets/voice_room_moderation_sheet.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'utils/voice_music_access.dart';
-import 'widgets/voice_room/voice_room_youtube_embed_host.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
 import 'utils/voice_room_error_display.dart';
@@ -1047,6 +1046,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final keyboardOpen = metrics.keyboardOpen;
     final chatMaxH = metrics.chatBlockH;
     final musicSession = ref.watch(voiceRoomMusicSessionProvider);
+    final musicMuted = ref.watch(voiceRoomUiProvider).effectiveMusicMuted;
     final hasActiveMusicPlayer = (live.dj.playing ||
             live.dj.nowPlaying != null ||
             live.dj.musicQueue.isNotEmpty) &&
@@ -1300,7 +1300,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
-            VoiceRoomYoutubeEmbedHost(roomKey: _liveRoomKey),
             Positioned.fill(
               child: VoiceGiftAmbientOverlay(sessionKey: sessionKey),
             ),
@@ -1737,6 +1736,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 roomId: _liveRoomKey,
                 canControl: canControlMusic,
                 bottomInset: 118,
+                muted: musicMuted,
               ),
             if (_showVipEntrance && user != null)
               Builder(

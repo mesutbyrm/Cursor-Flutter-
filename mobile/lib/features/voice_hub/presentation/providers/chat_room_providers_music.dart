@@ -8,11 +8,12 @@ part of 'chat_room_providers.dart';
 /// `part` olduğundan aynı kütüphanededir: private alan/metotlara erişir ve
 /// davranış birebir korunur (yalnızca fiziksel konum değişti).
 extension VoiceRoomMusicControls on VoiceRoomLiveController {
-  /// Hoparlör aç/kapa — müzik ve video çıkışını anında kes veya (kullanıcı isterse) sürdür.
+  /// Hoparlör aç/kapa — müzik çıkışını anında kes veya (kullanıcı isterse) sürdür.
   Future<void> applyAudioOutputGate({required bool speakerOn}) async {
     if (!speakerOn) {
-      await ref.read(voiceRoomDjPlayerProvider).pause();
+      await ref.read(voiceRoomDjPlayerProvider).stop();
       if (_roomKey.isNotEmpty) {
+        ref.read(roomSongBlocProvider(_roomKey)).add(const RoomSongUserPause());
         ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
       }
       return;
@@ -46,7 +47,7 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
   Future<List<PopularMusicSuggestion>> fetchPopularMusic() =>
       ref.read(chatRoomRemoteProvider).fetchPopularMusic();
 
-  /// WebView video yüklenemezse — görsel kapat, [just_audio] ile ses moduna geç.
+  /// Video yüklenemezse — ses moduna geç (IFrame mini player).
   Future<void> fallbackVideoToAudioOnly() async {
     final np = state.dj.nowPlaying;
     if (np == null || !np.isVideoRequest) return;
@@ -55,8 +56,7 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
     final dj = state.dj.copyWith(nowPlaying: audioNp);
     _lastDjPlaybackSignature = '';
     state = state.copyWith(dj: dj);
-    final applied = await _applyDjPlayback(dj);
-    state = state.copyWith(dj: applied);
+    _syncRoomSongBloc();
     _showMusicRequestFlashLine('📺 Video açılamadı — ses moduna geçildi.');
   }
 
