@@ -368,8 +368,9 @@ class TrtcRoomManager {
     if (!_inRoom && !_previewOnly) return;
     if (enabled) {
       _cloud?.startLocalAudio(TRTCAudioQuality.speech);
+      _cloud?.muteLocalAudio(false);
     } else {
-      _cloud?.stopLocalAudio();
+      _cloud?.muteLocalAudio(true);
     }
     _micOn = enabled;
   }

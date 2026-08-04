@@ -33,6 +33,13 @@ class VoiceRoomUiState {
   final bool chatNotificationSoundEnabled;
   final bool autoOpenMic;
 
+  /// Hoparlör kapalı veya müzik sessize alınmış.
+  bool get effectiveMusicMuted =>
+      !backgroundMusicEnabled || !headphonesOn;
+
+  /// RTC, hediye SFX ve müzik çıkışı için hoparlör açık mı.
+  bool get roomOutputEnabled => headphonesOn;
+
   VoiceRoomUiState copyWith({
     bool? headphonesOn,
     bool? requestSpeakPending,

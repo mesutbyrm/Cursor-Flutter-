@@ -13,6 +13,7 @@ import '../providers/gift_catalog_index_provider.dart';
 import '../providers/gift_providers.dart';
 import '../../domain/gift_event_catalog_enricher.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
+import '../../../voice_hub/presentation/providers/voice_room_ui_provider.dart';
 import '../engine/voice_gift_ambient_overlay.dart';
 import 'gift_hourly_reset.dart';
 import 'gift_session_state.dart';
@@ -270,6 +271,14 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     GiftSyncLog.eventProcessed(roomId, event.id, combo: event.combo);
   }
 
+  void playActiveGiftSound(LiveGiftEvent event) {
+    final catalog = lookupGiftCatalog(
+      ref.read(allGiftCatalogByIdProvider),
+      event.giftId,
+    );
+    _playGiftSound(event, catalog);
+  }
+
   void clear() {
     _disposeTimers();
     _joinTimestampMs = null;
@@ -361,6 +370,7 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   }
 
   void _playGiftSound(LiveGiftEvent event, GiftEntity? catalog) {
+    if (!ref.read(voiceRoomUiProvider).roomOutputEnabled) return;
     if (catalog != null) {
       unawaited(ref.read(giftSoundPoolProvider).preloadGift(catalog));
     }
@@ -425,8 +435,10 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
 
       GiftSyncLog.pipelineStage(next.id, 'sound');
       final tSound = DateTime.now();
-      _playGiftSound(next, catalog);
-      await Future<void>.delayed(const Duration(milliseconds: 90));
+      // SFX overlay fade-in ile senkron — burada yalnızca preload.
+      if (catalog != null) {
+        unawaited(ref.read(giftSoundPoolProvider).preloadGift(catalog));
+      }
       GiftSyncLog.pipelineMs(
         next.id,
         'sound',
@@ -444,17 +456,13 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       GiftSyncLog.videoStarted(_roomId, next.id);
 
       final config = GiftEngineParser.fromEvent(next);
-      var durationMs = config.durationMs;
-      if (config.animationType == GiftEngineAnimationType.mp4 ||
-          config.animationType == GiftEngineAnimationType.webm) {
-        durationMs = durationMs < 8000 ? 12000 : durationMs;
-      }
+      final durationMs = config.durationMs;
       final watchdogMs = config.startDelayMs +
           durationMs +
           config.queueGapMs +
           VoiceGiftAmbientOverlay.fadeInMs +
           VoiceGiftAmbientOverlay.fadeOutMs +
-          12000;
+          2500;
 
       _animationTimer?.cancel();
       _animationTimer = Timer(Duration(milliseconds: watchdogMs), () {

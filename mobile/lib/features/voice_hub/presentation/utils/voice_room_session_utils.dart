@@ -30,7 +30,7 @@ Future<void> teardownVoiceRoomBeforeSwitch(
   } catch (_) {}
   await ref
       .read(voiceRoomLiveProvider(liveKey).notifier)
-      .leaveRoomSession(source: source);
+      .leaveRoomSession(source: source, awaitBackend: true);
 }
 
 /// Önceki oda (varsa) tamamen kapatılır, ardından yeni oda kaydedilir.

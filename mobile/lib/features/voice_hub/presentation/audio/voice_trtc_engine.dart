@@ -197,7 +197,6 @@ class VoiceTrtcEngine {
 
     _manager.setMicEnabled(enabled);
     _micOn = enabled;
-    if (!enabled) _publishMic = false;
   }
 
   void setRemoteAudioMuted(bool muted) {

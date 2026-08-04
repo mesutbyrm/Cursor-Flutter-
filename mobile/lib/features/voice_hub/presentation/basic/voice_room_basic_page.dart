@@ -121,6 +121,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       if (widget.room.apiRoomKey.isEmpty) {
         unawaited(ref.read(voiceRoomsProvider.future));
       }
+      ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).ensureActiveSession();
       _startPremiumRealtime(ref.read(authControllerProvider).valueOrNull);
       unawaited(_joinAudioBackground());
     });
@@ -329,7 +330,13 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
   void _toggleSpeaker() {
     ref.read(voiceRoomUiProvider.notifier).toggleHeadphones();
-    _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
+    final on = ref.read(voiceRoomUiProvider).headphonesOn;
+    _audio?.setHeadphonesOn(on);
+    unawaited(
+      ref
+          .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+          .applyAudioOutputGate(speakerOn: on),
+    );
     if (mounted) setState(() {});
   }
 
@@ -395,38 +402,23 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   Future<void> _leaveRoom() async {
     if (_leaving) return;
     _leaving = true;
-
-    ref.read(pkBattleRemoteProvider.notifier).clear();
-    ref.read(voiceRoomGiftRealtimeProvider).stop();
-    _giftSub?.cancel();
-    _giftSub = null;
-
-    final liveCtrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+    final liveKey = _liveRoomKey;
     final audio = _audio;
     _audio = null;
 
-    final room = _effectiveRoom();
-    final user = ref.read(authControllerProvider).valueOrNull;
-    final summary = SessionGiftSummaryBuilder.forVoiceRoom(
-      ref: ref,
-      roomTitle: room.nameTr,
-      ownerUserId: room.ownerId,
-      ownerDisplayName: room.ownerName,
-      myUserId: user?.id,
-      myDisplayName: user?.display,
+    unawaited(
+      Future.wait<void>([
+        if (audio != null) audio.leave(),
+        ref
+            .read(voiceRoomLiveProvider(liveKey).notifier)
+            .leaveRoomSession(source: 'basic_leave', awaitBackend: false),
+      ]),
     );
-    await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
 
-    unawaited(liveCtrl.leaveRoomSession(source: 'basic_leave'));
-    if (audio != null) {
-      unawaited(audio.leave());
+    if (!mounted) {
+      _leaving = false;
+      return;
     }
-
-    if (!mounted) return;
-    if (summary.hasData) {
-      await showSessionGiftSummarySheet(context, summary: summary);
-    }
-    if (!mounted) return;
     if (context.canPop()) {
       context.pop();
     } else {

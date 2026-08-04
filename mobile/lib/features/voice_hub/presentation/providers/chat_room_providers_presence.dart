@@ -249,6 +249,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
 
   void _patchHubPresenceCount(int count) {
     if (_roomKey.isEmpty) return;
+    state = state.copyWith(hubOnlineCount: count);
     ref.read(voiceRoomsPresenceProvider.notifier).patchRoomCount(_roomKey, count);
     final alt = _roomMeta.slug.trim();
     if (alt.isNotEmpty && alt != _roomKey) {

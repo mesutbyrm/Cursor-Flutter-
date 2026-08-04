@@ -130,7 +130,7 @@ class VoiceRoomAudioCoordinator {
 
       if (enabled) {
         final ds = _remote;
-        if (ds != null) {
+        if (ds != null && !_trtc.inChannel) {
           try {
             await ds.joinVoiceSession(channel);
           } on Object catch (e) {
@@ -141,23 +141,21 @@ class VoiceRoomAudioCoordinator {
             if (!_staffBypassVoiceApi) rethrow;
           }
         }
-        await _trtc.joinVoice(
-          channel,
-          publishMic: true,
-          userId: _lastUserId,
-        );
-        _engine = VoiceAudioEngineKind.trtc;
+        if (!_trtc.inChannel) {
+          await _trtc.joinVoice(
+            channel,
+            publishMic: true,
+            userId: _lastUserId,
+          );
+          _engine = VoiceAudioEngineKind.trtc;
+        } else {
+          await _trtc.setMicEnabled(true);
+        }
         return;
       }
 
       if (_trtc.inChannel) {
         await _trtc.setMicEnabled(false);
-      }
-      final ds = _remote;
-      if (ds != null) {
-        try {
-          await ds.leaveVoiceSession(channel);
-        } catch (_) {}
       }
     } catch (e, st) {
       VoiceRoomDebugLog.log('audio.trtc.mic_toggle.fail', {

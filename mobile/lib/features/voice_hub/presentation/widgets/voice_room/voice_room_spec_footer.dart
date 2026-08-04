@@ -31,6 +31,8 @@ class VoiceRoomSpecFooter extends StatelessWidget {
     this.onEmojiTap,
     this.onChanged,
     this.joinNotificationsEnabled = true,
+    this.onMusicRequest,
+    this.showMusicRequest = false,
   });
 
   final TextEditingController controller;
@@ -51,6 +53,8 @@ class VoiceRoomSpecFooter extends StatelessWidget {
   final VoidCallback? onEmojiTap;
   final ValueChanged<String>? onChanged;
   final bool joinNotificationsEnabled;
+  final VoidCallback? onMusicRequest;
+  final bool showMusicRequest;
 
   @override
   Widget build(BuildContext context) {
@@ -123,6 +127,26 @@ class VoiceRoomSpecFooter extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (showMusicRequest && onMusicRequest != null) ...[
+                  const SizedBox(width: 6),
+                  Material(
+                    color: VoiceRoomTokens.gold.withValues(alpha: 0.92),
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: onMusicRequest,
+                      child: const SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: Icon(
+                          Icons.music_note_rounded,
+                          color: Colors.black87,
+                          size: 21,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(width: 4),
                 Material(
                   color: VoiceRoomTokens.neonPurple,

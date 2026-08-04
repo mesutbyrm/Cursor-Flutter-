@@ -137,8 +137,20 @@ abstract final class GiftEngineParser {
           'animationDurationMs',
           'animation_duration_ms',
         ]) ??
-        3000;
-    if (isVideoAnim && durationMs <= 3000) {
+        0;
+    if (durationMs <= 0 && event != null) {
+      if ((event.engineDurationMs ?? 0) > 0) {
+        durationMs = event.engineDurationMs!;
+      } else if ((event.animationDurationMs ?? 0) > 0) {
+        durationMs = event.animationDurationMs!;
+      } else if ((event.displayDurationMs ?? 0) > 0) {
+        durationMs = event.displayDurationMs!;
+      }
+    }
+    if (durationMs <= 0) {
+      durationMs = 3000;
+    }
+    if (isVideoAnim && durationMs <= 3000 && (event?.engineDurationMs ?? 0) <= 0) {
       durationMs = 8000;
     }
 

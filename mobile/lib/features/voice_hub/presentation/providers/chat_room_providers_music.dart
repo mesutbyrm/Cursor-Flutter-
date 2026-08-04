@@ -8,6 +8,22 @@ part of 'chat_room_providers.dart';
 /// `part` olduğundan aynı kütüphanededir: private alan/metotlara erişir ve
 /// davranış birebir korunur (yalnızca fiziksel konum değişti).
 extension VoiceRoomMusicControls on VoiceRoomLiveController {
+  /// Hoparlör aç/kapa — müzik ve video çıkışını anında kes veya (kullanıcı isterse) sürdür.
+  Future<void> applyAudioOutputGate({required bool speakerOn}) async {
+    if (!speakerOn) {
+      await ref.read(voiceRoomDjPlayerProvider).pause();
+      if (_roomKey.isNotEmpty) {
+        ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+      }
+      return;
+    }
+    final ui = ref.read(voiceRoomUiProvider);
+    if (!ui.backgroundMusicEnabled) return;
+    final dj = state.dj;
+    if (!_hasDjPlayableSource(dj)) return;
+    unawaited(_playDjInBackground(dj));
+  }
+
   Future<List<YoutubeSearchHit>> searchYoutube(String query) =>
       ref.read(chatRoomRemoteProvider).searchYoutube(query);
 

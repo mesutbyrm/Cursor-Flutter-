@@ -113,10 +113,11 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
     var playMs = config.durationMs;
     if (config.animationType == GiftEngineAnimationType.mp4 ||
         config.animationType == GiftEngineAnimationType.webm) {
-      playMs = playMs < 8000 ? 12000 : playMs;
       final videoDur = _videoController?.value.duration;
-      if (videoDur != null && videoDur.inMilliseconds > playMs) {
-        playMs = videoDur.inMilliseconds + 400;
+      if (videoDur != null && videoDur.inMilliseconds > 0) {
+        playMs = playMs > videoDur.inMilliseconds
+            ? playMs
+            : videoDur.inMilliseconds + 400;
       }
     }
     Future<void>.delayed(Duration(milliseconds: config.startDelayMs), () {
@@ -124,6 +125,9 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
       _fadeCtrl.duration =
           const Duration(milliseconds: VoiceGiftAmbientOverlay.fadeInMs);
       _fadeCtrl.forward(from: 0);
+      ref
+          .read(giftSessionProvider(widget.sessionKey).notifier)
+          .playActiveGiftSound(ev);
 
       _playTimer = Timer(Duration(milliseconds: playMs), () {
         if (!mounted || _activeId != ev.id) return;

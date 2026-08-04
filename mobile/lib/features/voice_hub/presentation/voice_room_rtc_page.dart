@@ -22,8 +22,6 @@ import '../../live/presentation/providers/live_providers.dart';
 import '../data/services/voice_room_debug_log.dart';
 import '../domain/entities/voice_room_realtime_event.dart';
 import '../domain/voice_official_join.dart';
-import '../../gifts/domain/session_gift_summary_builder.dart';
-import '../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../gifts/presentation/widgets/lucky_gift_wins_ticker.dart';
@@ -85,6 +83,8 @@ import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import '../video/presentation/widgets/room_video_overlay.dart';
+import 'sheets/voice_youtube_song_sheet.dart';
+import 'widgets/voice_room/voice_room_seat_video_strip.dart';
 
 /// Sesli sohbet odası — Tencent TRTC + canlifal.com chat API.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
@@ -149,6 +149,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       if (roomKey.isEmpty) {
         unawaited(ref.read(voiceRoomsProvider.future));
       }
+      ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).ensureActiveSession();
       _startGiftRealtimePoll();
       final user = ref.read(authControllerProvider).valueOrNull;
       if (user != null) _maybeShowEntrance(user);
@@ -198,7 +199,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       unawaited(
         ref
             .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
-            .leaveRoomSession(source: 'rtc_dispose')
+            .leaveRoomSession(source: 'rtc_dispose', awaitBackend: false)
             .then((_) async {
           final audio = _audio;
           _audio = null;
@@ -376,7 +377,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   void _toggleHeadphones() {
     ref.read(voiceRoomUiProvider.notifier).toggleHeadphones();
-    _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
+    final on = ref.read(voiceRoomUiProvider).headphonesOn;
+    _audio?.setHeadphonesOn(on);
+    unawaited(
+      ref
+          .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+          .applyAudioOutputGate(speakerOn: on),
+    );
   }
 
   void _startGiftRealtimePoll() {
@@ -561,36 +568,26 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   Future<void> _leaveRoom() async {
     if (_leaving) return;
     _leaving = true;
-    ref.read(pkBattleRemoteProvider.notifier).clear();
-    ref.read(voiceRoomGiftRealtimeProvider).stop();
+    final liveKey = _liveRoomKey;
 
-    final liveCtrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
     final audio = _audio;
     _audio = null;
     if (mounted) setState(() => _audioReady = false);
 
-    final room = _effectiveRoom();
-    final user = ref.read(authControllerProvider).valueOrNull;
-    final summary = SessionGiftSummaryBuilder.forVoiceRoom(
-      ref: ref,
-      roomTitle: room.nameTr,
-      ownerUserId: room.ownerId,
-      ownerDisplayName: room.ownerName,
-      myUserId: user?.id,
-      myDisplayName: user?.display,
+    // TRTC + yerel temizlik — navigasyonu bloklamaz.
+    unawaited(
+      Future.wait<void>([
+        if (audio != null) audio.leave(),
+        ref
+            .read(voiceRoomLiveProvider(liveKey).notifier)
+            .leaveRoomSession(source: 'rtc_leave', awaitBackend: false),
+      ]),
     );
-    await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
 
-    await liveCtrl.leaveRoomSession(source: 'rtc_leave');
-    if (audio != null) {
-      await audio.leave();
+    if (!mounted) {
+      _leaving = false;
+      return;
     }
-
-    if (!mounted) return;
-    if (summary.hasData) {
-      await showSessionGiftSummarySheet(context, summary: summary);
-    }
-    if (!mounted) return;
     if (context.canPop()) {
       context.pop();
     } else {
@@ -1011,8 +1008,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final sessionKey =
         room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
     final online = live.onlineCountFor(room);
+    final jeton = ref.watch(
+      walletBalancesProvider.select((a) => a.valueOrNull?.jeton ?? 0),
+    );
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _perms(user, live.presence, server: live.serverPermissions);
+    final canRequestMusic = VoiceMusicAccess.canRequestSongs(
+      dj: live.dj,
+      perms: perms,
+      jetonBalance: jeton,
+    );
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
     final isDj = perms.canManageDj ||
         live.dj.canPlayMusic ||
@@ -1377,6 +1382,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         VoiceWebRoomHeader(
                           room: room,
                           onlineCount: online,
+                          coinBalance: jeton,
+                          onCoinsTap: () => openJetonStore(context, ref: ref),
                           roomAvatarUrl: headerAvatar,
                           onBack: _leave,
                           onExit: _leave,
@@ -1492,6 +1499,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               remoteTrtcUserId:
                                   _audio?.trtcManager.remoteAnchorUserId,
                             ),
+                        VoiceRoomSeatVideoStrip(roomKey: sessionKey),
                         Consumer(
                           builder: (context, ref, _) {
                             final banner = ref.watch(
@@ -1705,6 +1713,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
                       onChanged: _onChatChanged,
                       joinNotificationsEnabled: ui.chatNotificationSoundEnabled,
+                      showMusicRequest: canRequestMusic,
+                      onMusicRequest: canRequestMusic
+                          ? () => showVoiceYoutubeSongSheet(
+                                context,
+                                ref,
+                                room: room,
+                              )
+                          : null,
                     );
                   },
                 ),

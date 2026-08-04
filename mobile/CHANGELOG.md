@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+# Sürüm notları — canlifal_social
+
+## 1.0.124+158 (2026-08-04)
+
+### Sesli oda tam senkronizasyon
+- **Oda çıkışı:** Anında TRTC/SSE/state temizliği; navigasyon bloklanmaz; PK socket kapatılır
+- **Hediye video:** Backend `durationMs` birebir; erken kapanma kaldırıldı
+- **Hoparlör/mikrofon:** TRTC `muteLocalAudio`; hoparlör kapalıyken müzik/hediye/RTC sessiz
+- **Çevrimiçi:** Backend `onlineCount` + AppBar jeton yanında premium rozet
+- **Müzik:** Koltuk altı 1x1 YouTube kutusu; sağ altta müzik istek butonu (jetonlu)
+- **!istek:** SSE `dj_update` sonrası oynatma gate düzeltmesi
+
 ## 1.0.122+157 (2026-08-04)
 
 ### CI / Gradle

@@ -181,6 +181,7 @@ class VoiceRoomLiveState {
     this.ownerId,
     this.roomTrtc,
     this.backendSyncReady = false,
+    this.hubOnlineCount,
   });
 
   final List<ChatRoomMessage> messages;
@@ -216,15 +217,20 @@ class VoiceRoomLiveState {
   final TrtcCredentials? roomTrtc;
   /// Join → state → seats tamamlandı; TRTC bağlanabilir.
   final bool backendSyncReady;
+  /// Backend/SSE `onlineCount` — presence listesinden bağımsız.
+  final int? hubOnlineCount;
 
   bool get isAnyoneTyping => typingUsers.isNotEmpty;
 
   int onlineCountFor(VoiceRoomEntity room) {
-    if (presence.isNotEmpty) return presence.length;
-    if (selfInRoom) return 1;
-    if (backendSyncReady) return 0;
-    if (room.displayOnline > 0) return room.displayOnline;
-    return 0;
+    final local = presence.length;
+    final backend = hubOnlineCount ??
+        (room.displayOnline > 0 ? room.displayOnline : null);
+    if (backend != null && backend > local) return backend;
+    if (local > 0) return local;
+    if (selfInRoom) return backend ?? 1;
+    if (backendSyncReady) return backend ?? 0;
+    return backend ?? 0;
   }
 
   VoiceRoomLiveState copyWith({
@@ -270,6 +276,8 @@ class VoiceRoomLiveState {
     TrtcCredentials? roomTrtc,
     bool clearRoomTrtc = false,
     bool? backendSyncReady,
+    int? hubOnlineCount,
+    bool clearHubOnlineCount = false,
     bool clearError = false,
   }) {
     return VoiceRoomLiveState(
@@ -325,6 +333,9 @@ class VoiceRoomLiveState {
       ownerId: clearOwnerId ? null : (ownerId ?? this.ownerId),
       roomTrtc: clearRoomTrtc ? null : (roomTrtc ?? this.roomTrtc),
       backendSyncReady: backendSyncReady ?? this.backendSyncReady,
+      hubOnlineCount: clearHubOnlineCount
+          ? null
+          : (hubOnlineCount ?? this.hubOnlineCount),
     );
   }
 }
@@ -931,44 +942,57 @@ class VoiceRoomLiveController
     _sseRoomRefreshDebounce?.cancel();
   }
 
-  /// Odadan çıkış — presence, SSE ve müzik temizliği (RTC sayfası).
-  /// Ağır işlemler UI'ı bloklamaz; navigasyon hemen yapılabilir.
-  Future<void> leaveRoomSession({String source = 'ui_leave'}) async {
+  /// Odadan çıkış — önce yerel/TRTC temizliği, backend isteği arka planda.
+  Future<void> leaveRoomSession({
+    String source = 'ui_leave',
+    bool awaitBackend = true,
+  }) async {
     if (!_sessionActive) return;
     _sessionActive = false;
     _entryBegun = false;
     VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: source);
     _cancelSessionTimers();
-    try {
-      await _leavePresenceWithSeatClear()
-          .timeout(const Duration(seconds: 5))
-          .catchError((_) {});
-    } catch (_) {}
+
+    // 1) UI/state hemen sıfırla — tekrar girişte eski presence görünmesin.
     clearVoiceRoomLiveSession(ref, _roomKey);
     _removeSelfFromPresenceOptimistic();
+    _knownPresenceIds.clear();
+    _sseStarted = false;
+    _giftSocketStarted = false;
+    _presenceJoined = false;
+    _voiceJoined = false;
     state = state.copyWith(
       presence: const [],
       seatSlots: const [],
+      typingUsers: const [],
       clearOwnerId: true,
       clearRoomTrtc: true,
       backendSyncReady: false,
       selfInRoom: false,
+      sseConnected: false,
+      loading: false,
     );
-    _knownPresenceIds.clear();
-    _sseStarted = false;
-    _giftSocketStarted = false;
+
+    // 2) SSE, hediye, PK — anında kes.
     ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
-    unawaited(_leaveVoiceSession());
-    unawaited(_stopTyping());
     ref.read(voiceRoomGiftSocketProvider).disconnect();
     ref.read(voiceRoomGiftRealtimeProvider).stop();
     ref.read(voiceRoomGiftRealtimeProvider).setSseActive(false);
+    ref.read(voiceRoomGiftRealtimeProvider).resetDedupeState();
     ref.read(pkBattleRemoteProvider.notifier).clear();
+    ref.read(pkBattleRemoteProvider.notifier).disconnectSocket();
     ref.read(voiceRoomDiagnosticProvider.notifier).resetForRoom(_roomKey);
+    unawaited(_stopTyping());
+
+    // 3) TRTC / ses motoru — öncelikli (≤500ms).
     try {
-      await ref.read(voiceRoomAudioCoordinatorProvider).leave();
+      await ref
+          .read(voiceRoomAudioCoordinatorProvider)
+          .leave()
+          .timeout(const Duration(milliseconds: 600));
     } catch (_) {}
 
+    // 4) Müzik — oda dışı PiP veya tam kapatma.
     final player = ref.read(voiceRoomDjPlayerProvider);
     final dj = state.dj;
     final stillPlaying = player.playback.value.playing ||
@@ -994,6 +1018,31 @@ class VoiceRoomLiveController
       }
       _closeRoomKeepAlive();
     }
+
+    // 5) Backend leave — arka plan veya await.
+    final backend = _leaveRoomBackend();
+    if (awaitBackend) {
+      await backend;
+    } else {
+      unawaited(backend);
+    }
+  }
+
+  /// Müzik PiP sonrası aynı odaya dönüş — oturumu yeniden başlat.
+  void ensureActiveSession() {
+    if (_sessionActive) return;
+    _entryBegun = false;
+    _sessionActive = false;
+    unawaited(_beginRoomSession());
+  }
+
+  Future<void> _leaveRoomBackend() async {
+    try {
+      await _leavePresenceWithSeatClear()
+          .timeout(const Duration(seconds: 5))
+          .catchError((_) {});
+    } catch (_) {}
+    unawaited(_leaveVoiceSession());
   }
 
   bool _hasDjPlayableSource(
@@ -1831,7 +1880,7 @@ class VoiceRoomLiveController
         _prefetchYoutubePlayback(dj);
         bgFromDj = dj.backgroundImage?.trim();
         final ui = ref.read(voiceRoomUiProvider);
-        final sig = _djPlaybackSignature(dj, muted: !ui.backgroundMusicEnabled);
+        final sig = _djPlaybackSignature(dj, muted: ui.effectiveMusicMuted);
         playDjInBackground = sig != _lastDjPlaybackSignature;
       }
       presence = _mergeSelf(presence);
@@ -1901,7 +1950,7 @@ class VoiceRoomLiveController
         ref.read(voiceRoomMusicSessionProvider.notifier).dismissFromServerStop();
         _lastDjPlaybackSignature = _djPlaybackSignature(
           dj,
-          muted: !ref.read(voiceRoomUiProvider).backgroundMusicEnabled,
+          muted: ref.read(voiceRoomUiProvider).effectiveMusicMuted,
         );
         return;
       }
@@ -2372,7 +2421,7 @@ class VoiceRoomLiveController
     final sync = RoomPlaybackSync.fromPayload(map);
     _syncRoomVideo(dj, sync: sync);
     final ui = ref.read(voiceRoomUiProvider);
-    final sig = _djPlaybackSignature(dj, muted: !ui.backgroundMusicEnabled);
+    final sig = _djPlaybackSignature(dj, muted: ui.effectiveMusicMuted);
     final player = ref.read(voiceRoomDjPlayerProvider);
     final wantsPlay = (dj.playing || sync.isPlaying) &&
         _hasDjPlayableSource(
@@ -2413,7 +2462,7 @@ class VoiceRoomLiveController
     RoomPlaybackSync? sync,
   }) async {
     final ui = ref.read(voiceRoomUiProvider);
-    final muted = !ui.backgroundMusicEnabled;
+    final muted = ui.effectiveMusicMuted;
     final session = ref.read(voiceRoomMusicSessionProvider);
     final player = ref.read(voiceRoomDjPlayerProvider);
 
