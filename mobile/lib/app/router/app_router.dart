@@ -45,6 +45,7 @@ import '../../features/live/presentation/pages/live_page.dart';
 import '../../features/live/presentation/pages/live_swipe_viewer_page.dart';
 import '../../features/social/presentation/pages/social_create_post_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
+import '../../features/social/presentation/pages/social_post_detail_page.dart';
 import '../../features/gifts/presentation/pages/gift_collection_page.dart';
 import '../../features/gifts/domain/admin_gift_type.dart';
 import '../../features/gifts/presentation/pages/admin_gift_management_page.dart';
@@ -196,6 +197,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(
+        path: '/sosyal',
+        redirect: (context, state) {
+          final postId = state.uri.queryParameters['post']?.trim();
+          if (postId != null && postId.isNotEmpty) {
+            return '/social/post/${Uri.encodeComponent(postId)}';
+          }
+          return '/social';
+        },
+      ),
+      GoRoute(
         path: '/login',
         redirect: (context, state) => '/feed',
       ),
@@ -309,6 +320,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                             initialCaption: state.extra as String?,
                           ),
                         ),
+                  ),
+                  GoRoute(
+                    path: 'post/:postId',
+                    pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+                      key: state.pageKey,
+                      child: SocialPostDetailPage(
+                        postId: state.pathParameters['postId'] ?? '',
+                      ),
+                    ),
                   ),
                 ],
               ),

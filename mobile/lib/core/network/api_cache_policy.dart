@@ -98,6 +98,7 @@ abstract final class ApiCachePolicy {
     _TtlRule(prefix: '/api/wallet', ttl: Duration(seconds: 8)),
     _TtlRule(prefix: '/api/jeton', ttl: Duration(seconds: 45)),
     _TtlRule(prefix: '/api/social/posts', ttl: Duration(seconds: 25)),
+    _TtlRule(prefix: '/api/stories', ttl: Duration(seconds: 30)),
     _TtlRule(prefix: '/api/social/stories', ttl: Duration(seconds: 25)),
     _TtlRule(contains: '/music-queue', ttl: Duration(seconds: 8)),
     _TtlRule(contains: '/presence', ttl: Duration(seconds: 6)),

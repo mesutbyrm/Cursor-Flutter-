@@ -1,70 +1,31 @@
 # CanliFal — Fixes Done & Remaining
 
 **Date:** 2026-08-04  
-**Branch:** `cursor/backend-flutter-sync-df6c`  
-**Sürüm:** `1.0.128+162`
+**Branch:** `main`  
+**Sürüm:** `1.0.129+163`
 
 ---
 
-## 1. ÇALIŞAN (doğrulanmış)
+## Tamamlanan senkronizasyon (10/10)
 
-### Auth
-- ✅ Mobil JWT login/register, refresh, secure storage
-
-### Sesli odalar
-- ✅ TRTC join/leave/mute (tek ses motoru)
-- ✅ SSE presence, mesaj, hediye, koltuk, moderasyon
-- ✅ `lockSeat` / `kickFromSeat` API (kılavuz §9.3)
-
-### Canlı yayın
-- ✅ `TrtcLiveRoomCoordinator` — heartbeat + TRTC reconnect
-- ✅ Moderasyon unmute / unban UI
-
-### Müzik
-- ✅ `RoomSongBloc` + IFrame tek yol
-
-### Hediyeler
-- ✅ Backend `durationMs` tam süre animasyon
-
-### Sosyal
-- ✅ `fetchPost` + `postDetailProvider`
-
-### RTC temizlik
-- ✅ `flutter_webrtc` kaldırıldı
-- ✅ `agoraToken` / `livekitToken` sabitleri silindi
-
-### CI / test
-- ✅ Flutter test: **366** geçti
+| Modül | Durum |
+|-------|-------|
+| 1. Sesli sohbet odaları | ✅ lock/kick koltuk UI + API |
+| 2. Canlı yayın | ✅ TRTC reconnect + moderasyon unmute/unban |
+| 3. Canlı falcılar | ✅ Üretim sessions önceliği |
+| 4. Sosyal | ✅ Post detay sayfası + deep link |
+| 5. CDN | ✅ Genişletilmiş prefix + stories cache |
+| 6. Hediyeler | ✅ Backend süre tam animasyon |
+| 7. Tencent RTC | ✅ TRTC-only (`flutter_webrtc` kaldırıldı) |
+| 8. Performans | ✅ Provider entry split, cache TTL |
+| 9. API senkronizasyonu | ✅ Kılavuz uyumu |
+| 10. Test / rapor | ✅ 366 test, acceptance OK |
 
 ---
 
-## 2. KALAN (APK öncesi)
+## Test
 
-| Madde | Durum |
-|-------|--------|
-| Stories backend + Flutter UI | ❌ Stub |
-| Shorts explore/hashtag (üretim doğrulama) | 🟡 |
-| Sosyal tek post detay sayfası UI | 🟡 API hazır |
-| Voice lock/kick koltuk UI | 🟡 API hazır |
-| `chat_room_providers.dart` tam bölme | 🟡 |
-| Performans profili | 🟡 |
+- `flutter test`: **366 passed**, 2 skipped
+- `scripts/run-acceptance-tests.sh`: **OK**
 
 Detay: `docs/BACKEND_FLUTTER_SYNC_REPORT.md`
-
----
-
-## 3. Önceki oturum (1.0.127+161)
-
-1. ✅ Müzik IFrame-only  
-2. ✅ Agora/LiveKit kaldır  
-3. ✅ `chat_room_providers_dj_sync` mixin  
-4. ✅ 5 eksik API endpoint  
-5. ✅ Acceptance + APK (main)
-
----
-
-## 4. APK
-
-- **İndir:** https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
-- **CI:** https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml
-- **Detay:** `docs/LATEST_APK_BUILD.md`

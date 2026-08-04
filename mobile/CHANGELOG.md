@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.129+163 (2026-08-04)
+
+### Backend ↔ Flutter senkronizasyon — tamamlama
+- **Sosyal:** `SocialPostDetailPage` + `/social/post/:id` + `/sosyal?post=` deep link
+- **Stories:** Presigned upload + `POST /api/stories` JSON; ana sayfa hikâye şeridi her zaman görünür
+- **Sesli oda:** Koltuk kilitle / koltuktan at UI + controller
+- **Shorts:** Keşfet/hashtag API 404'de feed tabanlı yedek
+- **Provider:** `chat_room_providers_entry.dart` — giriş/bootstrap ayrımı
+- **CDN cache:** `/api/stories` TTL
+
 ## 1.0.128+162 (2026-08-04)
 
 ### Backend ↔ Flutter senkronizasyon (devam)
