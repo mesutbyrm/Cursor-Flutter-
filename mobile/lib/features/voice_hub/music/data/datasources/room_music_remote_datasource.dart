@@ -48,6 +48,8 @@ class RoomMusicRemoteDataSource {
     return m;
   }
 
+  /// @deprecated IFrame-only oynatma — yalnızca geriye dönük uyumluluk.
+  @Deprecated('RoomSongBloc IFrame oynatma kullanın; stream URL çözümlemesi kaldırıldı')
   Future<String?> resolveStreamUrl({
     required String roomId,
     required String videoId,

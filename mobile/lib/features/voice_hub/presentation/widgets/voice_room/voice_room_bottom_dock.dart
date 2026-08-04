@@ -73,6 +73,7 @@ class VoiceRoomBottomDock extends ConsumerWidget {
             if (hasPlayer)
               VoiceRoomWebMusicBar(
                 dj: dj,
+                roomLiveKey: liveKey,
                 isVideoMode: dj.nowPlaying?.isVideoRequest == true,
                 musicMuted: !ui.backgroundMusicEnabled,
                 canControlMusic: canControlMusic,

@@ -8,6 +8,7 @@ import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../../providers/chat_room_providers.dart';
+import '../../../music/presentation/providers/room_music_providers.dart';
 import '../../services/voice_room_dj_player.dart';
 
 /// Modern müzik oynatıcı — şu an çalan, isteyen, süre, kuyruk sayısı.
@@ -15,6 +16,7 @@ class VoiceRoomWebMusicBar extends ConsumerStatefulWidget {
   const VoiceRoomWebMusicBar({
     super.key,
     required this.dj,
+    this.roomLiveKey,
     this.onPlayPause,
     this.onStop,
     this.onMuteToggle,
@@ -28,6 +30,7 @@ class VoiceRoomWebMusicBar extends ConsumerStatefulWidget {
   });
 
   final ChatRoomDjState dj;
+  final String? roomLiveKey;
   final VoidCallback? onPlayPause;
   final VoidCallback? onStop;
   final VoidCallback? onMuteToggle;
@@ -76,6 +79,13 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
     final player = ref.watch(voiceRoomDjPlayerProvider);
     final playback = player.playback;
     final diagnostics = player.diagnostics;
+    final liveKey = widget.roomLiveKey?.trim();
+    final songState = liveKey != null && liveKey.isNotEmpty
+        ? ref.watch(roomSongBlocProvider(liveKey)).state
+        : null;
+    final iframePlaying =
+        songState?.hasTrack == true && songState!.current?.paused != true;
+    final iframeProgress = songState?.progress ?? 0.0;
 
     return ValueListenableBuilder<VoiceRoomDjPlayback>(
       valueListenable: playback,
@@ -83,8 +93,8 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
         return ValueListenableBuilder<VoiceRoomMusicDiagnostics>(
           valueListenable: diagnostics,
           builder: (context, diag, _) {
-            final audioActive = pb.playing;
-            final hasDuration = pb.duration.inMilliseconds > 0;
+            final audioActive = pb.playing || iframePlaying;
+            final hasDuration = pb.duration.inMilliseconds > 0 || iframeProgress > 0;
             final showPlaying =
                 audioActive || (dj.playing && hasDuration) || loading;
             final effectiveVolume = widget.musicMuted ? 0.0 : _volume;
@@ -94,9 +104,11 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
             final total = displayTrack.duration?.isNotEmpty == true
                 ? displayTrack.duration!
                 : (hasDuration ? _format(pb.duration) : '—:—');
-            final progress = hasDuration && pb.duration.inMilliseconds > 0
-                ? pb.progress
-                : (loading ? null : 0.0);
+            final progress = iframeProgress > 0
+                ? iframeProgress
+                : (hasDuration && pb.duration.inMilliseconds > 0
+                    ? pb.progress
+                    : (loading ? null : 0.0));
 
             return Padding(
               padding: const EdgeInsets.fromLTRB(12, 4, 12, 6),

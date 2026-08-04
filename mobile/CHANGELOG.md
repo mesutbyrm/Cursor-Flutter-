@@ -1,5 +1,20 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.127+161 (2026-08-04)
+
+### Audit tamamlama — müzik IFrame, TRTC-only, platform API
+- **Müzik tek yol:** `_applyDjPlayback` yalnızca `RoomSongBloc` + IFrame; `just_audio` stream resolve kaldırıldı
+- **DJ sync:** `chat_room_providers_dj_sync.dart` mixin — SSE/poll müzik senkronu ayrıldı
+- **Agora/LiveKit:** Modüller ve `livekit_client` kaldırıldı; ses motoru TRTC-only
+- **Platform API:** `broadcast-images`, `football`, `online-fal`, `translations`, `user/likers` bağlandı
+- **Global müzik şeridi:** `VoiceRoomWebMusicBar` IFrame ilerleme (`RoomSongBloc`)
+- **Hediye test:** `gift_session_controller_test` flaky düzeltmesi
+
+## 1.0.126+160 (2026-08-04)
+
+### IFrame-only + platform API (ara sürüm)
+- DJ realtime `RoomSongBloc` durumu; Agora/LiveKit temizliği başlangıcı
+
 ## 1.0.125+159 (2026-08-04)
 
 ### Oda müzik sistemi (SongQueueService) + hediye düzeltmesi

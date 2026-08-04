@@ -55,6 +55,7 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
           ),
           child: VoiceRoomWebMusicBar(
             dj: session.dj,
+            roomLiveKey: liveKey,
             isVideoMode: isVideo,
             musicMuted: !ui.backgroundMusicEnabled,
             canControlMusic: session.canSyncServer,

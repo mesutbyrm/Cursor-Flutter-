@@ -81,8 +81,9 @@ void main() {
     );
 
     final state = container.read(giftSessionProvider('room-v'));
-    expect(state.animationQueue.length + (state.activeAnimation != null ? 1 : 0),
-        greaterThan(0));
+    expect(state.processedEventIds, contains('voice-1'));
+    expect(state.recentGifts, isNotEmpty);
+    expect(state.latestEvent?.id, 'voice-1');
   });
 
   test('legacy blocked after engine gift_received for same history', () {
