@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-08-04 10:04 UTC
+Oluşturulma: 2026-08-04 11:42 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -10,7 +10,7 @@ Base: `main`
 | Metrik | Adet |
 |--------|------|
 | Kapatılan PR | 0 |
-| Silinen remote dal | 2 |
+| Silinen remote dal | 1 |
 | Kalan açık PR | 2 |
 | Korunan / aktif dal | 0 |
 
@@ -24,8 +24,7 @@ Base: `main`
 
 | Dal | Neden |
 |-----|-------|
-| cursor/voice-chat-sync-df6c | merged into main |
-| cursor/voice-full-sync-df6c | merged into main |
+| cursor/room-music-system-df6c | merged into main |
 
 ## Kalan açık PR'lar
 
