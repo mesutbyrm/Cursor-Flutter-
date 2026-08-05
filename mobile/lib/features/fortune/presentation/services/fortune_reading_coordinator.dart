@@ -309,8 +309,7 @@ class FortuneReadingCoordinator {
         // Yerel sonuç yine gösterilir.
       }
 
-      // Backend fal sonucunu sosyal akışa otomatik ekler; Flutter yalnızca
-      // gerçek zamanlı senkronize eder (POST oluşturmaz).
+      // Backend auto-fortune (web parity) — FortuneShareHandler.
       unawaited(
         ref
             .read(fortuneShareHandlerProvider)

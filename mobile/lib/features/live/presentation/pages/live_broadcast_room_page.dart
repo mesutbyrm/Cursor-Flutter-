@@ -680,6 +680,35 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (mounted) context.go('/live');
   }
 
+  /// Sunucu SSE `streamEnded` — sessizlik / moderasyon ile otomatik kapanma.
+  Future<void> _showHostStreamEndedByServer(String streamId) async {
+    if (!mounted) return;
+    invalidateDiscoverLiveStreams(ref);
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Yayın sonlandı'),
+        content: const Text(
+          'Yayın sunucu tarafından sonlandırıldı '
+          '(ör. uzun süre ses/video yok veya bağlantı kesildi).',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Tamam'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+      widget.onSwipeClose!();
+    } else {
+      context.go('/feed');
+    }
+  }
+
   Future<void> _enterHostGracePeriod({required bool notifyViewers}) async {
     if (!widget.session.isHost || _leaving || _hostAway) return;
     final streamId = widget.session.streamId?.trim();
@@ -2097,9 +2126,18 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 .clearFortuneAnsweredNotice();
           });
         }
-        if (next.streamEnded && !(prev?.streamEnded ?? false) && !s.isHost) {
+        if (next.streamEnded && !(prev?.streamEnded ?? false)) {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             if (!mounted || _leaving) return;
+            if (s.isHost) {
+              _leaving = true;
+              try {
+                await _trtc.leave();
+              } catch (_) {}
+              if (!mounted) return;
+              await _showHostStreamEndedByServer(streamId);
+              return;
+            }
             _leaving = true;
             try {
               await _trtc.leave();
