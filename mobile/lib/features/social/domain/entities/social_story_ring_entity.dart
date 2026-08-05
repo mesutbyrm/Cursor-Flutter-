@@ -16,6 +16,19 @@ class SocialStoryRingEntity extends Equatable {
   final List<SocialStoryItemEntity> stories;
   final bool isOwn;
 
+  SocialStoryRingEntity copyWith({
+    UserEntity? user,
+    String? previewUrl,
+    List<SocialStoryItemEntity>? stories,
+    bool? isOwn,
+  }) =>
+      SocialStoryRingEntity(
+        user: user ?? this.user,
+        previewUrl: previewUrl ?? this.previewUrl,
+        stories: stories ?? this.stories,
+        isOwn: isOwn ?? this.isOwn,
+      );
+
   @override
   List<Object?> get props => [user, previewUrl, stories, isOwn];
 }

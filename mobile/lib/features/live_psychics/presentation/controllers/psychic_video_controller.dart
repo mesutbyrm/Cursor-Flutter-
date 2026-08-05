@@ -28,6 +28,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/providers/li
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_peer_left_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/diagnostics/psychic_rtc_session_report.dart';
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
 
 enum PsychicRtcBackend { none, trtc }
@@ -167,6 +168,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   Future<void> _bootstrap() async {
     LiveDebugLog.log('psychic.session.bootstrap', {
+      'sessionId': session.sessionId,
+      'isClient': session.isClient,
+    });
+    PsychicRtcSessionReport.record('bootstrap', {
       'sessionId': session.sessionId,
       'isClient': session.isClient,
     });
@@ -663,6 +668,13 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     LiveDebugLog.log('psychic.trtc.join.ok', {
       'sessionId': session.sessionId,
       'roomId': roomId,
+    });
+    PsychicRtcSessionReport.record('join_ok', {
+      'sessionId': session.sessionId,
+      'roomId': roomId,
+      'micOn': _trtc.micOn,
+      'cameraOn': _trtc.cameraOn,
+      'isClient': session.isClient,
     });
     state = state.copyWith(
       rtcReady: true,

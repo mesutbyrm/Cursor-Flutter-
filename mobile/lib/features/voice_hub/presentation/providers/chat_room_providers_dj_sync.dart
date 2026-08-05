@@ -227,10 +227,17 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
       await VoiceRoomMusicAudioSession.activateForPlayback();
       _syncRoomSongBloc();
       _live._syncRoomVideo(effectiveDj, sync: sync);
+      await _syncTrtcMusicPublish(
+        playing: true,
+        videoId: videoId,
+        sync: sync,
+        dj: effectiveDj,
+      );
       _live._lastDjPlaybackSignature = sig;
       return effectiveDj;
     }
 
+    await _syncTrtcMusicPublish(playing: false, videoId: videoId, sync: sync, dj: effectiveDj);
     await player.stop();
     if (key.isNotEmpty) {
       ref.read(roomVideoControllerProvider(key).notifier).clear();
@@ -301,5 +308,28 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
       }
     }
     await _syncMusicFromServer();
+  }
+
+  /// DJ / oda sahibi — müziği TRTC uplink'e karıştır (uzak dinleyiciler).
+  Future<void> _syncTrtcMusicPublish({
+    required bool playing,
+    required String? videoId,
+    RoomPlaybackSync? sync,
+    required ChatRoomDjState dj,
+  }) async {
+    if (!_live._canControlMusic()) {
+      ref.read(voiceRoomTrtcMusicMixerProvider).stop();
+      return;
+    }
+    final key = _live._roomKey;
+    if (key.isEmpty) return;
+    await ref.read(voiceRoomTrtcMusicMixerProvider).sync(
+          enabled: dj.musicEnabled,
+          playing: playing,
+          roomId: key,
+          videoId: videoId ?? sync?.currentVideoId ?? dj.nowPlaying?.videoIdField,
+          remote: ref.read(roomMusicRemoteProvider),
+          startMs: sync?.playbackPositionMs,
+        );
   }
 }

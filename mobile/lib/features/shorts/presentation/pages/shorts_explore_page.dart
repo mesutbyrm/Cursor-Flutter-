@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
@@ -15,6 +16,7 @@ import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_explore_providers.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/shorts_count_format.dart';
+import 'short_music_feed_page.dart';
 import '../widgets/shorts_premium_theme.dart';
 
 /// Keşfet — trend, sana özel, AI, konum, hashtag ve müzik.
@@ -71,6 +73,42 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
                 ),
               ),
               const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final service = await Geolocator.isLocationServiceEnabled();
+                  if (!service) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Konum servisi kapalı')),
+                      );
+                    }
+                    return;
+                  }
+                  var perm = await Geolocator.checkPermission();
+                  if (perm == LocationPermission.denied) {
+                    perm = await Geolocator.requestPermission();
+                  }
+                  if (perm == LocationPermission.denied ||
+                      perm == LocationPermission.deniedForever) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Konum izni gerekli')),
+                      );
+                    }
+                    return;
+                  }
+                  final pos = await Geolocator.getCurrentPosition();
+                  if (context.mounted) {
+                    Navigator.pop(
+                      context,
+                      '__gps__:${pos.latitude},${pos.longitude}',
+                    );
+                  }
+                },
+                icon: const Icon(Icons.my_location_rounded),
+                label: const Text('GPS konumumu kullan'),
+              ),
+              const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
                 children: [
@@ -98,6 +136,17 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
     if (!mounted || picked == null) return;
     if (picked == '__clear__') {
       await ref.read(shortExploreLocationProvider.notifier).clear();
+    } else if (picked.startsWith('__gps__:')) {
+      final coords = picked.substring('__gps__:'.length).split(',');
+      if (coords.length == 2) {
+        final lat = double.tryParse(coords[0]);
+        final lng = double.tryParse(coords[1]);
+        await ref.read(shortExploreLocationProvider.notifier).setLocation(
+              'Konumum',
+              lat: lat,
+              lng: lng,
+            );
+      }
     } else if (picked.isNotEmpty) {
       await ref.read(shortExploreLocationProvider.notifier).setLocation(picked);
     }
@@ -474,7 +523,7 @@ class _MusicTile extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       animateIn: false,
       borderRadius: BorderRadius.circular(12),
-      onTap: () => context.push('/shorts/upload'),
+      onTap: () => openShortMusicFeed(context, music: music),
       child: Row(
         children: [
           ClipRRect(

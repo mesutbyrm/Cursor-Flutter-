@@ -59,6 +59,7 @@ import '../../features/gifts/presentation/pages/gift_leaderboard_center_page.dar
 import '../../features/shorts/presentation/pages/shorts_feed_page.dart';
 import '../../features/shorts/presentation/pages/shorts_explore_page.dart';
 import '../../features/shorts/presentation/pages/short_hashtag_page.dart';
+import '../../features/shorts/presentation/pages/short_music_feed_page.dart';
 import '../../features/shorts/presentation/studio/shorts_studio_page.dart';
 import '../../features/shorts/presentation/utils/short_studio_launch.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
@@ -877,6 +878,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               key: state.pageKey,
               child: ShortHashtagPage(
                 name: state.pathParameters['name'] ?? '',
+              ),
+            ),
+          ),
+          GoRoute(
+            path: 'music/:musicId',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: ShortMusicFeedPage(
+                musicId: state.pathParameters['musicId'] ?? '',
+                title: state.uri.queryParameters['title'],
               ),
             ),
           ),

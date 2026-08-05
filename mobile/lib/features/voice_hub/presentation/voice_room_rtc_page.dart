@@ -534,6 +534,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           _audioReady = true;
           _isMicMuted = !_audio!.micOn;
         });
+        ref.read(voiceRoomTrtcMusicMixerProvider).bind(_audio!.trtcManager);
         _startGiftRealtime();
         ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(true);
         _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
@@ -578,6 +579,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     final audio = _audio;
     _audio = null;
+    ref.read(voiceRoomTrtcMusicMixerProvider).bind(null);
+    ref.read(voiceRoomTrtcMusicMixerProvider).stop();
     if (mounted) setState(() => _audioReady = false);
 
     // TRTC + yerel temizlik — navigasyonu bloklamaz.

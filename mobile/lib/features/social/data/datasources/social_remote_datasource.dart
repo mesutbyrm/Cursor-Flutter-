@@ -319,6 +319,18 @@ class SocialRemoteDataSource {
     );
   }
 
+  /// DELETE `/api/stories` — `{ storyId }` veya `{ id }`.
+  Future<void> deleteStory(String storyId) async {
+    final id = storyId.trim();
+    if (id.isEmpty) {
+      throw const ApiException('Hikâye kimliği boş');
+    }
+    await _dio.safeDelete<dynamic>(
+      ApiEndpoints.feed,
+      data: <String, dynamic>{'storyId': id, 'id': id},
+    );
+  }
+
   /// GET `/api/stories` — birincil (prod). `/api/social/stories` yalnızca yedek.
   Future<List<SocialStoryRingEntity>> fetchStoryRings() async {
     final res = await _dio.safeGet<dynamic>(

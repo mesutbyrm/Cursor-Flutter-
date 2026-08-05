@@ -59,7 +59,6 @@ import '../providers/pk_room_providers.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
 import '../providers/discover_live_streams.dart';
-import '../../data/services/video_webrtc_signal_service.dart';
 import '../providers/co_broadcast_provider.dart';
 import '../providers/live_beauty_provider.dart';
 import '../providers/live_guest_grid_provider.dart';
@@ -127,7 +126,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   var _leaving = false;
   var _chatVisible = true;
   var _viewerAudioOn = true;
-  VideoWebrtcSignalService? _signalService;
+  Timer? _signalPoll;
+  String? _signalSince;
   Timer? _guestJoinPoll;
   Timer? _fortunePoll;
   Timer? _lazyGiftsTimer;
@@ -362,7 +362,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _fortunePoll?.cancel();
     _coBroadcastPoll?.cancel();
     _hostHeartbeat?.cancel();
-    _signalService?.stop();
+    _stopLiveSignalPoll();
     _trtcReconnectSub?.cancel();
     if (_remoteUidsListener != null) {
       _trtc.remoteUserIdsNotifier.removeListener(_remoteUidsListener!);
@@ -872,16 +872,42 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       unawaited(_applyGuestPresenceFromApi(streamId));
     }
 
-    _signalService = ref.read(videoWebrtcSignalServiceProvider);
-    _signalService?.onSignal = (sig) {
-      if (!mounted) return;
-      handleLiveLikeSignal(ref, streamId: streamId, signal: sig);
-      _handlePkSignal(streamId, sig);
-    };
-    _signalService?.start(streamId: streamId);
+    _startLiveSignalPoll(streamId);
     if (widget.session.isHost) {
       unawaited(_bootstrapPkInvites(streamId));
     }
+  }
+
+  void _startLiveSignalPoll(String streamId) {
+    _stopLiveSignalPoll();
+    _signalSince = null;
+    _signalPoll = Timer.periodic(const Duration(seconds: 2), (_) {
+      unawaited(_tickLiveSignals(streamId));
+    });
+    unawaited(_tickLiveSignals(streamId));
+  }
+
+  void _stopLiveSignalPoll() {
+    _signalPoll?.cancel();
+    _signalPoll = null;
+    _signalSince = null;
+  }
+
+  Future<void> _tickLiveSignals(String streamId) async {
+    if (!mounted || streamId.isEmpty) return;
+    try {
+      final remote = ref.read(liveStreamExtrasProvider);
+      final signals = await remote.pollSignals(streamId, since: _signalSince);
+      for (final sig in signals) {
+        final created = sig['createdAt']?.toString();
+        if (created != null && created.isNotEmpty) {
+          _signalSince = created;
+        }
+        if (!mounted) return;
+        handleLiveLikeSignal(ref, streamId: streamId, signal: sig);
+        _handlePkSignal(streamId, sig);
+      }
+    } catch (_) {}
   }
 
   /// PK skor sinyali — anlık senkron (poll'u beklemeden).

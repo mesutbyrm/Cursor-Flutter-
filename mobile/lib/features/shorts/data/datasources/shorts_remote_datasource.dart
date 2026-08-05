@@ -802,15 +802,20 @@ class ShortsRemoteDataSource {
         .toList();
   }
 
-  Future<List<ShortVideoEntity>> fetchHashtagVideos(String name) async {
+  Future<List<ShortVideoEntity>> fetchHashtagVideos(
+    String name, {
+    int page = 1,
+    int limit = 20,
+  }) async {
     final tag = name.replaceAll('#', '').trim();
     try {
       final encoded = Uri.encodeComponent(tag);
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.shortVideosHashtag(encoded),
+        query: {'page': page, 'limit': limit},
       );
       final m = _unwrap(res.data);
-      return _videosFrom(m?['videos']);
+      return _videosFrom(m?['videos'] ?? m?['items']);
     } on ApiException catch (e) {
       if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       final feed = await fetchFeed(limit: 50);
@@ -820,6 +825,27 @@ class ShortsRemoteDataSource {
             (v) => v.hashtags.any((h) => h.toLowerCase() == lower),
           )
           .toList();
+    }
+  }
+
+  Future<List<ShortVideoEntity>> fetchMusicVideos(
+    String musicId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final id = musicId.trim();
+    if (id.isEmpty) return const [];
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.shortVideosMusic,
+        query: {'musicId': id, 'page': page, 'limit': limit},
+      );
+      final m = _unwrap(res.data);
+      return _videosFrom(m?['videos'] ?? m?['items']);
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      final feed = await fetchFeed(limit: 50);
+      return feed.videos.where((v) => v.music?.id == id).toList();
     }
   }
 

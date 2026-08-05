@@ -8,6 +8,7 @@ import 'package:tencent_rtc_sdk/trtc_cloud.dart';
 import 'package:tencent_rtc_sdk/trtc_cloud_def.dart';
 import 'package:tencent_rtc_sdk/trtc_cloud_listener.dart';
 import 'package:tencent_rtc_sdk/trtc_cloud_video_view.dart';
+import 'package:tencent_rtc_sdk/tx_audio_effect_manager.dart';
 import 'package:tencent_rtc_sdk/tx_device_manager.dart';
 
 import '../../voice_hub/data/services/voice_room_debug_log.dart';
@@ -389,6 +390,7 @@ class TrtcRoomManager {
   }
 
   Future<void> leave() async {
+    stopPublishedMusic();
     onConnectionLost = null;
     networkQuality.value = null;
     remoteVideoAvailable.value = false;
@@ -424,7 +426,63 @@ class TrtcRoomManager {
     _cameraOn = false;
   }
 
+  static const int voiceRoomMusicId = 88001;
+  String? _publishedMusicUrl;
+  var _publishedMusicPlaying = false;
+
+  /// DJ / !istek müziğini TRTC uplink'e karıştır (uzak dinleyiciler duyar).
+  Future<void> playPublishedMusic(
+    String url, {
+    int startMs = 0,
+    int publishVolume = 80,
+  }) async {
+    if (!isSupported || _cloud == null || url.trim().isEmpty) return;
+    final path = url.trim();
+    stopPublishedMusic();
+    final effect = _cloud!.getAudioEffectManager();
+    effect.startPlayMusic(
+      AudioMusicParam(
+        id: voiceRoomMusicId,
+        path: path,
+        publish: true,
+        loopCount: 0,
+        startTimeMS: startMs.clamp(0, 1 << 30),
+      ),
+    );
+    effect.setMusicPublishVolume(voiceRoomMusicId, publishVolume);
+    _publishedMusicUrl = path;
+    _publishedMusicPlaying = true;
+    VoiceRoomDebugLog.log('trtc.music.publish.start', {
+      'url': path.length > 64 ? '${path.substring(0, 64)}…' : path,
+      'startMs': startMs,
+    });
+  }
+
+  void pausePublishedMusic() {
+    if (_cloud == null || !_publishedMusicPlaying) return;
+    _cloud!.getAudioEffectManager().pausePlayMusic(voiceRoomMusicId);
+    _publishedMusicPlaying = false;
+    VoiceRoomDebugLog.log('trtc.music.publish.pause', {});
+  }
+
+  void resumePublishedMusic() {
+    if (_cloud == null) return;
+    _cloud!.getAudioEffectManager().resumePlayMusic(voiceRoomMusicId);
+    _publishedMusicPlaying = true;
+    VoiceRoomDebugLog.log('trtc.music.publish.resume', {});
+  }
+
+  void stopPublishedMusic() {
+    if (_cloud == null) return;
+    try {
+      _cloud!.getAudioEffectManager().stopPlayMusic(voiceRoomMusicId);
+    } catch (_) {}
+    _publishedMusicUrl = null;
+    _publishedMusicPlaying = false;
+  }
+
   void dispose() {
+    stopPublishedMusic();
     unawaited(leave());
     _cloud = null;
     _device = null;

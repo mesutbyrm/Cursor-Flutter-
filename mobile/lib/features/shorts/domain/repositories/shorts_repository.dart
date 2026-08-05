@@ -108,7 +108,17 @@ abstract class ShortsRepository {
 
   Future<List<ShortMusicEntity>> searchMusic(String query);
 
-  Future<List<ShortVideoEntity>> fetchHashtagVideos(String name);
+  Future<List<ShortVideoEntity>> fetchHashtagVideos(
+    String name, {
+    int page = 1,
+    int limit = 20,
+  });
+
+  Future<List<ShortVideoEntity>> fetchMusicVideos(
+    String musicId, {
+    int page = 1,
+    int limit = 20,
+  });
 
   Future<List<ShortVideoAuthor>> searchMentions(String query);
 

@@ -85,7 +85,8 @@ class _StoriesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final others = rings.where((r) => r.user.id != me?.id).toList();
+    final others = rings.where((r) => !r.isOwn).toList();
+    final ownRing = rings.where((r) => r.isOwn).firstOrNull;
     final itemCount = 1 + others.length;
 
     return LazyHorizontalListView(
@@ -93,7 +94,7 @@ class _StoriesList extends StatelessWidget {
       itemCount: itemCount,
       itemBuilder: (context, index) {
         if (index == 0) {
-          return _OwnStoryChip(user: me);
+          return _OwnStoryChip(user: me, ownRing: ownRing);
         }
         final ring = others[index - 1];
         return Padding(
@@ -106,9 +107,10 @@ class _StoriesList extends StatelessWidget {
 }
 
 class _OwnStoryChip extends ConsumerWidget {
-  const _OwnStoryChip({this.user});
+  const _OwnStoryChip({this.user, this.ownRing});
 
   final UserEntity? user;
+  final SocialStoryRingEntity? ownRing;
 
   Future<void> _addStory(BuildContext context, WidgetRef ref) async {
     final me = ref.read(authControllerProvider).valueOrNull;
@@ -143,12 +145,26 @@ class _OwnStoryChip extends ConsumerWidget {
     }
   }
 
+  void _openOwnStories(BuildContext context) {
+    final ring = ownRing;
+    if (ring == null || ring.stories.isEmpty) return;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => StoryViewerPage(ring: ring.copyWith(isOwn: true)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final hasStories = ownRing != null && ownRing!.stories.isNotEmpty;
     return _StoryRingFrame(
       label: 'Hikayen',
       isOwn: true,
-      onTap: () => _addStory(context, ref),
+      onTap: hasStories
+          ? () => _openOwnStories(context)
+          : () => _addStory(context, ref),
+      onLongPress: hasStories ? () => _addStory(context, ref) : null,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -207,18 +223,21 @@ class _StoryRingFrame extends StatelessWidget {
     required this.label,
     required this.child,
     this.onTap,
+    this.onLongPress,
     this.isOwn = false,
   });
 
   final String label;
   final Widget child;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final bool isOwn;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: SizedBox(
         width: 76,
         child: Column(

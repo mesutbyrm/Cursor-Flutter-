@@ -166,7 +166,14 @@ final socialNotifierProvider =
 /// Üst hikâye şeridi — canlifal.com `/api/stories`.
 final socialStoryRingsProvider =
     FutureProvider<List<SocialStoryRingEntity>>((ref) async {
-  return ref.read(socialRemoteProvider).fetchStoryRings();
+  final rings = await ref.read(socialRemoteProvider).fetchStoryRings();
+  final me = ref.read(authControllerProvider).valueOrNull;
+  if (me == null) return rings;
+  return rings
+      .map(
+        (r) => r.user.id == me.id ? r.copyWith(isOwn: true) : r,
+      )
+      .toList();
 });
 
 /// Profil sayfası — kullanıcının paylaşımları (TikTok ızgara).

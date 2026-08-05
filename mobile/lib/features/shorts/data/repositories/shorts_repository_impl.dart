@@ -151,8 +151,19 @@ class ShortsRepositoryImpl implements ShortsRepository {
       _remote.searchMusic(query);
 
   @override
-  Future<List<ShortVideoEntity>> fetchHashtagVideos(String name) =>
-      _remote.fetchHashtagVideos(name);
+  Future<List<ShortVideoEntity>> fetchHashtagVideos(
+    String name, {
+    int page = 1,
+    int limit = 20,
+  }) =>
+      _remote.fetchHashtagVideos(name, page: page, limit: limit);
+
+  Future<List<ShortVideoEntity>> fetchMusicVideos(
+    String musicId, {
+    int page = 1,
+    int limit = 20,
+  }) =>
+      _remote.fetchMusicVideos(musicId, page: page, limit: limit);
 
   @override
   Future<List<ShortVideoAuthor>> searchMentions(String query) =>

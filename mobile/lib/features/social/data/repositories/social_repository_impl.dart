@@ -92,4 +92,7 @@ class SocialRepositoryImpl implements SocialRepository {
   @override
   Future<void> createStoryImage(String imagePath) =>
       _remote.createStoryImage(imagePath);
+
+  @override
+  Future<void> deleteStory(String storyId) => _remote.deleteStory(storyId);
 }

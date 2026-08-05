@@ -1,5 +1,30 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.135+169 (2026-08-05) — WIP senkronizasyon (3)
+
+### Push (sunucu)
+- `docs/PSYCHIC_ONESIGNAL_ACTION_BUTTONS.md` — Kabul/Reddet `actionId` ve REST örneği
+
+### Sesli oda / TRTC
+- `!istek` müzik: TRTC `TXAudioEffectManager` ile uplink karışımı (`VoiceRoomTrtcMusicMixer`)
+- `chat_room_providers` parçalama: SSE (`chat_room_providers_sse.dart`), pause/resume (`chat_room_providers_playback.dart`)
+
+### Hikâyeler
+- Video oynatma (`video_player`), 5 sn otomatik ilerleme, basılı tutunca duraklat
+- Kendi hikâyesini görüntüleme; `DELETE /api/stories` ile silme
+
+### Shorts
+- Hashtag sayfalandırma (`ShortHashtagNotifier`)
+- Müzik detay akışı (`/shorts/music/:id`)
+- Keşfet GPS konum (`geolocator`)
+
+### Canlı yayın
+- `VideoWebrtcSignalService` kaldırıldı — sinyal poll doğrudan sayfada
+
+### Performans / tanılama
+- `docs/RTC_LIFECYCLE.md`
+- `PsychicRtcSessionReport` — falcı 1:1 RTC olay günlüğü
+
 ## 1.0.134+168 (2026-08-05) — WIP senkronizasyon (2)
 
 ### Sesli oda

@@ -41,4 +41,7 @@ abstract class SocialRepository {
   Future<SocialCommentEntity> addComment(String postId, String text);
 
   Future<void> createStoryImage(String imagePath);
+
+  /// DELETE `/api/stories` — üretim sözleşmesi.
+  Future<void> deleteStory(String storyId);
 }
