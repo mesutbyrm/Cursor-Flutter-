@@ -41,7 +41,13 @@ class TrtcLiveRoomCoordinator {
   Timer? _heartbeat;
   var _disposed = false;
   var _reconnecting = false;
+  var _reconnectSuspended = false;
   var _micOnBeforeReconnect = true;
+
+  /// Dış join/rejoin sırasında heartbeat yeniden bağlanmasını durdur.
+  void setReconnectSuspended(bool suspended) {
+    _reconnectSuspended = suspended;
+  }
 
   String? _roomId;
   String? _roomType;
@@ -149,7 +155,7 @@ class TrtcLiveRoomCoordinator {
           'roomId': roomId,
           'error': ApiException.userMessage(e),
         });
-        if (!_reconnecting) {
+        if (!_reconnecting && !_reconnectSuspended) {
           unawaited(reconnect());
         }
       }
@@ -163,7 +169,7 @@ class TrtcLiveRoomCoordinator {
   }
 
   Future<void> reconnect() async {
-    if (_disposed || _reconnecting) return;
+    if (_disposed || _reconnecting || _reconnectSuspended) return;
     final roomId = _roomId;
     final userId = _userId;
     if (roomId == null || userId == null) return;

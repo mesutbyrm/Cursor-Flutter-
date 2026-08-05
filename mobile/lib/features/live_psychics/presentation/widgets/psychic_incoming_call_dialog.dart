@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/network/api_exception.dart';
@@ -76,10 +78,36 @@ class _PsychicIncomingCallDialog extends ConsumerStatefulWidget {
       _PsychicIncomingCallDialogState();
 }
 
+/// Falcı bildiriminde otomatik red süresi (saniye).
+const psychicIncomingCallTimeoutSeconds = 60;
+
 class _PsychicIncomingCallDialogState
     extends ConsumerState<_PsychicIncomingCallDialog> {
   var _busy = false;
   String? _busyAction;
+  Timer? _timeoutTimer;
+  var _remainingSeconds = psychicIncomingCallTimeoutSeconds;
+
+  @override
+  void initState() {
+    super.initState();
+    _timeoutTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || _busy) return;
+      final next = _remainingSeconds - 1;
+      if (next <= 0) {
+        _timeoutTimer?.cancel();
+        unawaited(_respond('reject'));
+        return;
+      }
+      setState(() => _remainingSeconds = next);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timeoutTimer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _respond(String action) async {
     if (_busy) return;
@@ -324,6 +352,23 @@ class _PsychicIncomingCallDialogState
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    Icon(
+                      Icons.timer_outlined,
+                      size: 14,
+                      color: Colors.white.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Kalan: $_remainingSeconds sn',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: _remainingSeconds <= 15
+                            ? const Color(0xFFFF5252)
+                            : Colors.white.withValues(alpha: 0.55),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
                     Icon(
                       Icons.access_time_rounded,
                       size: 14,

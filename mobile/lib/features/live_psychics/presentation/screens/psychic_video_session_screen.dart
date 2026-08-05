@@ -19,13 +19,42 @@ final _psychicSessionChatProvider =
 );
 
 /// Canlı fal video oturumu — Tencent TRTC + süre + sohbet.
-class PsychicVideoSessionScreen extends ConsumerWidget {
+class PsychicVideoSessionScreen extends ConsumerStatefulWidget {
   const PsychicVideoSessionScreen({super.key, required this.session});
 
   final PsychicSessionEntity session;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PsychicVideoSessionScreen> createState() =>
+      _PsychicVideoSessionScreenState();
+}
+
+class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref
+          .read(psychicVideoControllerProvider(widget.session).notifier)
+          .onAppResumed();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final session = widget.session;
     final state = ref.watch(psychicVideoControllerProvider(session));
     final ctrl = ref.read(psychicVideoControllerProvider(session).notifier);
     final chat = ref.watch(_psychicSessionChatProvider(session));

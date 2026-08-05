@@ -4,17 +4,22 @@
 
 ### Canlı falcı TRTC
 - Tek join kilidi (`_joiningRtc`); SSE/room poll ile çakışan rejoin engellendi
+- Heartbeat reconnect join sırasında askıya alınır (`setReconnectSuspended`)
 - `startLocalPreview(viewId=0)` kaldırıldı — kamera flip-flop düzeltmesi
 - Yerel PiP sabit viewId; kamera aç/kapa yalnızca mute/unmute
 - `expectedAnchorUserId` 1:1 görüşmede zorunlu
 - Bootstrap: önce TRTC join, sonra SSE (paralel rejoin yok)
+- Uygulama ön plana dönünce `onAppResumed` → RTC yeniden bağlanma
+- Medya durumu `/api/room/signal` ile `media_state` yayını (kamera/mic)
 
 ### Sesli oda !istek / DJ
 - SSE `dj` → `RoomSongBloc.eventFromSse` doğrudan besleme
+- DJ payload: `musicUrl`/`videoId`/`elapsedSeconds` ile geç katılan senkronu
 - Oynatma sırasında video katmanı sıfırlanmıyor; `_syncRoomVideo` çağrılıyor
 
 ### Push (falcı çevrimdışı)
 - OneSignal bildirim aksiyonu: Kabul/Reddet → `respondSession` + deep link
+- Gelen çağrı diyaloğu: 60 sn geri sayım, süre dolunca otomatik red
 
 ## 1.0.132+166 (2026-08-05)
 

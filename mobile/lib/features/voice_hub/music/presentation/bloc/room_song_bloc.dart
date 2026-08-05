@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/datasources/room_song_remote_datasource.dart';
 import '../../data/dto/room_song_dto.dart';
+import '../../../video/domain/youtube_video_id.dart';
 import 'room_song_event.dart';
 import 'room_song_state.dart';
 
@@ -47,9 +48,29 @@ class RoomSongBloc extends Bloc<RoomSongEvent, RoomSongState> {
   }
 
   void _onStarted(RoomSongStarted event, Emitter<RoomSongState> emit) {
+    var song = event.song;
+    final elapsed = event.elapsedSeconds;
+    if (elapsed != null && elapsed > 0) {
+      final elapsedMs = (elapsed * 1000).round();
+      song = RoomSongDto(
+        queueId: song.queueId,
+        videoId: song.videoId,
+        title: song.title,
+        thumbnail: song.thumbnail,
+        durationSec: song.durationSec,
+        channel: song.channel,
+        ownerId: song.ownerId,
+        ownerName: song.ownerName,
+        startedAtMs: DateTime.now().millisecondsSinceEpoch,
+        paused: song.paused,
+        pausedAtMs: song.pausedAtMs,
+        elapsedMs: elapsedMs,
+        serverTimeMs: song.serverTimeMs ?? DateTime.now().millisecondsSinceEpoch,
+      );
+    }
     emit(state.copyWith(
-      current: event.song,
-      serverTimeMs: event.song.serverTimeMs,
+      current: song,
+      serverTimeMs: song.serverTimeMs,
       localDriftMs: 0,
     ));
   }
@@ -170,21 +191,58 @@ class RoomSongBloc extends Bloc<RoomSongEvent, RoomSongState> {
     final playing = payload['playing'] == true || payload['isPlaying'] == true;
     if (!playing &&
         payload['nowPlaying'] == null &&
-        payload['musicUrl'] == null) {
+        payload['musicUrl'] == null &&
+        payload['currentVideoId'] == null &&
+        payload['videoId'] == null) {
       return const RoomSongFinished();
     }
 
-    RoomSongDto? songFromNowPlaying() {
+    double? parseElapsedSeconds() {
+      final raw = payload['elapsedSeconds'] ??
+          payload['currentPosition'] ??
+          payload['position'];
+      if (raw is num) return raw.toDouble();
+      if (raw is String) return double.tryParse(raw.trim());
+      return null;
+    }
+
+    RoomSongDto? songFromPayload() {
       final np = payload['nowPlaying'];
-      if (np is! Map) return null;
-      final map = Map<String, dynamic>.from(np);
-      if (map['elapsedSeconds'] != null && map['elapsedMs'] == null) {
-        final sec = map['elapsedSeconds'];
-        if (sec is num) {
-          map['elapsedMs'] = (sec * 1000).round();
+      if (np is Map) {
+        final map = Map<String, dynamic>.from(np);
+        if (map['elapsedSeconds'] != null && map['elapsedMs'] == null) {
+          final sec = map['elapsedSeconds'];
+          if (sec is num) {
+            map['elapsedMs'] = (sec * 1000).round();
+          }
         }
+        final song = RoomSongDto.fromJson(map);
+        if (song.hasTrack) return song;
       }
-      return RoomSongDto.fromJson(map);
+
+      final musicUrl = payload['musicUrl']?.toString();
+      final videoId = YoutubeVideoId.fromDj(
+        currentVideoId: payload['currentVideoId']?.toString() ??
+            payload['videoId']?.toString(),
+        nowPlayingUrl: musicUrl,
+      );
+      if (videoId == null) return null;
+
+      final elapsed = parseElapsedSeconds();
+      final elapsedMs = elapsed != null ? (elapsed * 1000).round() : 0;
+      final title = payload['title']?.toString() ??
+          (np is Map ? np['title']?.toString() : null) ??
+          'Çalıyor';
+      return RoomSongDto(
+        videoId: videoId,
+        title: title,
+        thumbnail: payload['thumbUrl']?.toString() ??
+            (np is Map ? np['thumbUrl']?.toString() : null),
+        elapsedMs: elapsedMs,
+        startedAtMs: playing ? DateTime.now().millisecondsSinceEpoch : null,
+        serverTimeMs: DateTime.now().millisecondsSinceEpoch,
+        paused: !playing,
+      );
     }
 
     List<RoomSongQueueItemDto> parseMusicQueue() {
@@ -196,10 +254,11 @@ class RoomSongBloc extends Bloc<RoomSongEvent, RoomSongState> {
           .toList();
     }
 
-    final song = songFromNowPlaying();
+    final song = songFromPayload();
     final queue = parseMusicQueue();
+    final elapsed = parseElapsedSeconds();
     if (song != null && playing) {
-      return RoomSongStarted(song);
+      return RoomSongStarted(song, elapsedSeconds: elapsed);
     }
     if (queue.isNotEmpty || song != null) {
       return RoomSongQueueUpdated(queue, current: song);

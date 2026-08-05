@@ -212,12 +212,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _scheduleRoomPoll();
 
     _signalPoll?.cancel();
-    if (!session.isClient) {
-      _signalPoll = Timer.periodic(const Duration(seconds: 3), (_) {
-        unawaited(_pollRoomSignals());
-      });
+    _signalPoll = Timer.periodic(const Duration(seconds: 3), (_) {
       unawaited(_pollRoomSignals());
-    }
+    });
+    unawaited(_pollRoomSignals());
   }
 
   void _scheduleRoomPoll() {
@@ -232,7 +230,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   Future<void> _pollRoomSignals() async {
-    if (_disposed || state.leaving || session.isClient) return;
+    if (_disposed || state.leaving) return;
     final repo = ref.read(livePsychicsRepositoryProvider);
     final signals = await repo.fetchRoomSignals(session.sessionId);
     if (_disposed) return;
@@ -241,30 +239,71 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           '${sig['type']}_${sig['createdAt'] ?? sig['timestamp']}';
       if (id.isEmpty || !_seenSignalIds.add(id)) continue;
       final type = (sig['type'] ?? '').toString().toLowerCase();
-      if (!type.contains('tip') &&
-          !type.contains('bahsis') &&
-          !type.contains('gift') &&
-          !type.contains('hediye')) continue;
-      final data = sig['data'] is Map
-          ? Map<String, dynamic>.from(sig['data'] as Map)
-          : sig;
-      final amountRaw = data['amount'] ??
-          data['jeton'] ??
-          data['tipAmount'] ??
-          data['giftValue'] ??
-          data['coins'] ??
-          data['coin'] ??
-          data['price'] ??
-          data['value'] ??
-          sig['amount'];
-      final amount = amountRaw is num
-          ? amountRaw.round()
-          : int.tryParse('$amountRaw') ?? 0;
-      final from = data['fromName']?.toString() ??
-          data['senderName']?.toString() ??
-          data['from']?.toString();
-      _onTipReceived(amount, from, eventId: id);
+      if (type.contains('session_end') || type.contains('end_session')) {
+        unawaited(_handleRemoteSessionEnded(PsychicSessionStatus.ended));
+        return;
+      }
+      if (type.contains('media_state') || type.contains('rtc_state')) {
+        _onPeerMediaSignal(sig);
+        continue;
+      }
+      if (!session.isClient &&
+          (type.contains('tip') ||
+              type.contains('bahsis') ||
+              type.contains('gift') ||
+              type.contains('hediye'))) {
+        final data = sig['data'] is Map
+            ? Map<String, dynamic>.from(sig['data'] as Map)
+            : sig;
+        final amountRaw = data['amount'] ??
+            data['jeton'] ??
+            data['tipAmount'] ??
+            data['giftValue'] ??
+            data['coins'] ??
+            data['coin'] ??
+            data['price'] ??
+            data['value'] ??
+            sig['amount'];
+        final amount = amountRaw is num
+            ? amountRaw.round()
+            : int.tryParse('$amountRaw') ?? 0;
+        final from = data['fromName']?.toString() ??
+            data['senderName']?.toString() ??
+            data['from']?.toString();
+        _onTipReceived(amount, from, eventId: id);
+      }
     }
+  }
+
+  void _onPeerMediaSignal(Map<String, dynamic> sig) {
+    // Karşı tarafın medya durumu — yalnızca log; TRTC akışı zorlanmaz.
+    final data = sig['data'] is Map
+        ? Map<String, dynamic>.from(sig['data'] as Map)
+        : sig;
+    LiveDebugLog.log('psychic.media.peer', {
+      'sessionId': session.sessionId,
+      'cameraEnabled': data['cameraEnabled'] ?? data['cameraOn'],
+      'micEnabled': data['micEnabled'] ?? data['micOn'],
+    });
+  }
+
+  Future<void> _broadcastMediaState() async {
+    if (_disposed || state.leaving) return;
+    final peerId = session.remotePeerIdFor(room: state.room);
+    if (peerId.isEmpty) return;
+    unawaited(
+      ref.read(livePsychicsRepositoryProvider).sendRoomSignal(
+            sessionId: session.sessionId,
+            type: 'media_state',
+            data: {
+              'cameraEnabled': _trtc.cameraOn,
+              'micEnabled': _trtc.micOn,
+              'videoPublished': _trtc.cameraOn,
+              'audioPublished': _trtc.micOn,
+            },
+            receiverId: peerId,
+          ),
+    );
   }
 
   Future<void> _syncRoomInfo({bool startTimerIfTeller = false}) async {
@@ -380,6 +419,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     }
 
     _rejoiningRtc = true;
+    _trtcCoordinator?.setReconnectSuspended(true);
     _joinedTrtcRoom = null;
     state = state.copyWith(rtcReady: false, clearRtcError: true);
     try {
@@ -408,6 +448,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     } catch (e) {
       state = state.copyWith(rtcError: ApiException.userMessage(e));
     } finally {
+      _trtcCoordinator?.setReconnectSuspended(false);
       _rejoiningRtc = false;
     }
   }
@@ -592,6 +633,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }) async {
     if (_joiningRtc || _rejoiningRtc) return;
     _joiningRtc = true;
+    _trtcCoordinator?.setReconnectSuspended(true);
     try {
     LiveDebugLog.log('psychic.trtc.join.request', {
       'sessionId': session.sessionId,
@@ -630,7 +672,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (!session.isClient && !state.timerStarted) {
       unawaited(_ensureTimerStarted());
     }
+    unawaited(_broadcastMediaState());
     } finally {
+      _trtcCoordinator?.setReconnectSuspended(false);
       _joiningRtc = false;
     }
   }
@@ -811,10 +855,14 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     await leave(silent: true);
   }
 
-  void toggleMic() => _trtc.setMicEnabled(!_trtc.micOn);
+  void toggleMic() {
+    _trtc.setMicEnabled(!_trtc.micOn);
+    unawaited(_broadcastMediaState());
+  }
 
   void toggleCamera() {
     _trtc.setCameraEnabled(!_trtc.cameraOn);
+    unawaited(_broadcastMediaState());
   }
 
   void switchCamera() => _trtc.switchCamera();
@@ -941,7 +989,12 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   void onAppResumed() {
-    if (!_disposed && !state.leaving && !state.rtcReady && state.rtcError == null) {
+    if (_disposed || state.leaving) return;
+    if (!state.rtcReady && state.rtcError == null) {
+      unawaited(_rejoinRtc());
+      return;
+    }
+    if (state.rtcReady && !_trtc.inRoom) {
       unawaited(_rejoinRtc());
     }
   }
