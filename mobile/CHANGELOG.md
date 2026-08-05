@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.138+172 (2026-08-05) — Müzik sistemi (web parity)
+
+- `!istek` akışı: SSE `song_started` / `song_changed` / `player_state` / `queue_updated` → oynatıcı
+- **Ses modu:** `just_audio` (`setUrl` + `play`) — gizli YouTube iframe kaldırıldı
+- **Video modu:** Mevcut `YoutubeVideoBackground` / hediye video renderer
+- `SongPlaybackFields`: `musicUrl` → `videoUrl` → `youtubeUrl` → `videoId` null-safe çözümleme
+- `RoomSongDto.hasTrack` yalnızca `videoId` değil, tüm URL alanlarını kabul eder
+- `[MusicPipeline]` teşhis logları: Song Event, Parsed VideoId/MusicUrl, Starting Audio/Video
+
 ## 1.0.137+171 (2026-08-05) — Derleme düzeltmeleri
 
 - Shorts: `const` scroll physics düzeltmesi; müzik tile go_router navigasyonu

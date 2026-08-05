@@ -215,6 +215,7 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
     }
 
     final effectiveDj = dj;
+    final isVideoMode = effectiveDj.nowPlaying?.isVideoRequest == true;
     final videoId = YoutubeVideoId.fromDj(
       currentVideoId: sync?.currentVideoId,
       nowPlayingUrl: effectiveDj.nowPlaying?.youtubeUrl,
@@ -222,11 +223,55 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
     final shouldPlay = (sync?.isPlaying ?? effectiveDj.playing) &&
         _live._hasDjPlayableSource(effectiveDj, sync: sync, videoId: videoId);
     final sig = _live._djPlaybackSignature(effectiveDj, muted: muted);
+    final startPosition = sync != null
+        ? Duration(
+            milliseconds: sync.resolvedPositionMs().clamp(0, 86400000),
+          )
+        : Duration.zero;
 
     if (shouldPlay) {
       await VoiceRoomMusicAudioSession.activateForPlayback();
       _syncRoomSongBloc();
-      _live._syncRoomVideo(effectiveDj, sync: sync);
+
+      if (isVideoMode) {
+        VoiceRoomMusicPipelineLog.songEvent(
+          event: 'starting_video',
+          parsedVideoId: videoId,
+          parsedMusicUrl: sync?.streamUrl ?? effectiveDj.musicUrl,
+        );
+        await player.stop();
+        _live._syncRoomVideo(effectiveDj, sync: sync);
+      } else {
+        VoiceRoomMusicPipelineLog.songEvent(
+          event: 'starting_audio',
+          parsedMusicUrl: sync?.streamUrl ?? effectiveDj.musicUrl,
+          parsedVideoId: videoId,
+        );
+        if (key.isNotEmpty) {
+          ref.read(roomVideoControllerProvider(key).notifier).clear();
+        }
+        final musicUrl = sync?.streamUrl ?? effectiveDj.musicUrl;
+        final started = await player.sync(
+          musicUrl: musicUrl,
+          resolveSeed: effectiveDj.playbackResolveSeed,
+          fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
+          nowPlaying: effectiveDj.nowPlaying,
+          playing: true,
+          muted: muted,
+          serverStreamUrl: musicUrl,
+          startPosition: startPosition,
+        );
+        if (started) {
+          VoiceRoomMusicPipelineLog.songEvent(event: 'player_ready');
+        } else {
+          VoiceRoomMusicPipelineLog.songEvent(
+            event: 'player_error',
+            detail: 'just_audio sync returned false',
+            parsedMusicUrl: musicUrl,
+          );
+        }
+      }
+
       await _syncTrtcMusicPublish(
         playing: true,
         videoId: videoId,
@@ -237,7 +282,12 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
       return effectiveDj;
     }
 
-    await _syncTrtcMusicPublish(playing: false, videoId: videoId, sync: sync, dj: effectiveDj);
+    await _syncTrtcMusicPublish(
+      playing: false,
+      videoId: videoId,
+      sync: sync,
+      dj: effectiveDj,
+    );
     await player.stop();
     if (key.isNotEmpty) {
       ref.read(roomVideoControllerProvider(key).notifier).clear();

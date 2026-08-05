@@ -2,6 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/datasources/room_song_remote_datasource.dart';
 import '../../data/dto/room_song_dto.dart';
+import '../../../data/services/voice_room_music_pipeline_log.dart';
+import '../../domain/song_playback_fields.dart';
 import '../../../video/domain/youtube_video_id.dart';
 import 'room_song_event.dart';
 import 'room_song_state.dart';
@@ -134,14 +136,23 @@ class RoomSongBloc extends Bloc<RoomSongEvent, RoomSongState> {
   /// SSE payload → bloc event (`song_*` ve birleşik `type: dj`).
   static RoomSongEvent? eventFromSse(Map<String, dynamic> payload) {
     final type = payload['type']?.toString().toLowerCase() ?? '';
-    if (type == 'dj' || type == 'dj_update') {
-      return _eventFromDjPayload(payload);
+    VoiceRoomMusicPipelineLog.songEvent(
+      event: type.isEmpty ? 'unknown' : type,
+      receivedJson: payload,
+    );
+    if (type == 'dj' ||
+        type == 'dj_update' ||
+        type == 'player_state' ||
+        type == 'song_changed') {
+      return _eventFromDjPayload(payload, eventType: type);
     }
 
     RoomSongDto? parseCurrent() {
-      final raw = payload['currentSong'];
-      if (raw is Map) {
-        return RoomSongDto.fromJson(Map<String, dynamic>.from(raw));
+      for (final key in const ['currentSong', 'current', 'nowPlaying']) {
+        final raw = payload[key];
+        if (raw is Map) {
+          return RoomSongDto.fromJson(Map<String, dynamic>.from(raw));
+        }
       }
       return null;
     }
@@ -187,10 +198,14 @@ class RoomSongBloc extends Bloc<RoomSongEvent, RoomSongState> {
     }
   }
 
-  static RoomSongEvent? _eventFromDjPayload(Map<String, dynamic> payload) {
+  static RoomSongEvent? _eventFromDjPayload(
+    Map<String, dynamic> payload, {
+    String eventType = 'dj',
+  }) {
     final playing = payload['playing'] == true || payload['isPlaying'] == true;
     if (!playing &&
         payload['nowPlaying'] == null &&
+        payload['currentSong'] == null &&
         payload['musicUrl'] == null &&
         payload['currentVideoId'] == null &&
         payload['videoId'] == null) {
@@ -199,6 +214,7 @@ class RoomSongBloc extends Bloc<RoomSongEvent, RoomSongState> {
 
     double? parseElapsedSeconds() {
       final raw = payload['elapsedSeconds'] ??
+          payload['elapsed'] ??
           payload['currentPosition'] ??
           payload['position'];
       if (raw is num) return raw.toDouble();
@@ -207,41 +223,59 @@ class RoomSongBloc extends Bloc<RoomSongEvent, RoomSongState> {
     }
 
     RoomSongDto? songFromPayload() {
-      final np = payload['nowPlaying'];
-      if (np is Map) {
-        final map = Map<String, dynamic>.from(np);
-        if (map['elapsedSeconds'] != null && map['elapsedMs'] == null) {
-          final sec = map['elapsedSeconds'];
-          if (sec is num) {
-            map['elapsedMs'] = (sec * 1000).round();
+      for (final key in const ['nowPlaying', 'currentSong', 'current']) {
+        final np = payload[key];
+        if (np is Map) {
+          final map = Map<String, dynamic>.from(np);
+          if (map['elapsedSeconds'] != null && map['elapsedMs'] == null) {
+            final sec = map['elapsedSeconds'];
+            if (sec is num) {
+              map['elapsedMs'] = (sec * 1000).round();
+            }
           }
+          final song = RoomSongDto.fromJson(map);
+          if (song.hasTrack) return song;
         }
-        final song = RoomSongDto.fromJson(map);
-        if (song.hasTrack) return song;
       }
 
-      final musicUrl = payload['musicUrl']?.toString();
+      final fields = SongPlaybackFields.parseQuiet(payload);
+      final streamUrl = fields.resolvedStreamUrl;
       final videoId = YoutubeVideoId.fromDj(
-        currentVideoId: payload['currentVideoId']?.toString() ??
+        currentVideoId: fields.videoId ??
+            payload['currentVideoId']?.toString() ??
             payload['videoId']?.toString(),
-        nowPlayingUrl: musicUrl,
+        nowPlayingUrl: streamUrl,
       );
-      if (videoId == null) return null;
+      if (videoId == null && (streamUrl == null || streamUrl.isEmpty)) {
+        VoiceRoomMusicPipelineLog.songEvent(
+          event: '$eventType.no_track',
+          receivedJson: payload,
+          detail: 'no playable source after field resolution',
+        );
+        return null;
+      }
 
       final elapsed = parseElapsedSeconds();
       final elapsedMs = elapsed != null ? (elapsed * 1000).round() : 0;
-      final title = payload['title']?.toString() ??
+      final np = payload['nowPlaying'] ?? payload['currentSong'];
+      final title = fields.title ??
+          payload['title']?.toString() ??
           (np is Map ? np['title']?.toString() : null) ??
           'Çalıyor';
       return RoomSongDto(
         videoId: videoId,
+        musicUrl: fields.musicUrl ?? streamUrl,
+        youtubeUrl: fields.youtubeUrl,
         title: title,
-        thumbnail: payload['thumbUrl']?.toString() ??
+        thumbnail: fields.thumbnail ??
+            payload['thumbUrl']?.toString() ??
             (np is Map ? np['thumbUrl']?.toString() : null),
         elapsedMs: elapsedMs,
         startedAtMs: playing ? DateTime.now().millisecondsSinceEpoch : null,
         serverTimeMs: DateTime.now().millisecondsSinceEpoch,
         paused: !playing,
+        playMode: fields.playMode,
+        isVideoRequest: fields.isVideoRequest,
       );
     }
 

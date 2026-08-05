@@ -1852,7 +1852,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ),
                 ),
               ),
-            VoiceRoomHiddenAudioPlayer(roomKey: sessionKey),
             if (_liveRoomKey.isNotEmpty)
               RoomSongMiniPlayer(
                 roomId: _liveRoomKey,

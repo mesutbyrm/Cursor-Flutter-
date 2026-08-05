@@ -65,7 +65,21 @@ class _RoomSongMiniPlayerState extends State<RoomSongMiniPlayer> {
   }
 
   Future<void> _syncPlayer(RoomSongState state) async {
-    final videoId = state.current?.videoId;
+    final song = state.current;
+    if (song == null || !song.hasTrack) {
+      _boundVideoId = null;
+      await _yt?.close();
+      _yt = null;
+      return;
+    }
+    if (!song.isVideoRequest) {
+      _boundVideoId = null;
+      await _yt?.close();
+      _yt = null;
+      return;
+    }
+
+    final videoId = song.resolvedVideoId;
     if (videoId == null || videoId.isEmpty) {
       _boundVideoId = null;
       await _yt?.close();
@@ -123,6 +137,7 @@ class _RoomSongMiniPlayerState extends State<RoomSongMiniPlayer> {
           p.progress != n.progress,
       builder: (context, state) {
         if (!state.hasTrack) return const SizedBox.shrink();
+        if (state.current?.isVideoRequest != true) return const SizedBox.shrink();
 
         if (widget.hidden) {
           return Offstage(

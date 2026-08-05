@@ -79,8 +79,7 @@ class RoomVideoState extends Equatable {
     RoomPlaybackSync? sync,
   }) {
     final np = dj.nowPlaying;
-    // Video isteği görünür şerit; diğer YouTube müzik ses-only (gizli iframe).
-    if (np == null) {
+    if (np == null || !np.isVideoRequest) {
       return const RoomVideoState();
     }
     final videoId = YoutubeVideoId.fromDj(
@@ -99,8 +98,7 @@ class RoomVideoState extends Equatable {
       positionMs: sync?.currentPositionMs ?? 0,
       trackStartedAtMs: sync?.trackStartedAtMs,
       nowPlaying: np,
-      // Sesli odada müzik yalnızca arka planda çalar; video isteğinde görünür şerit.
-      audioOnly: !np.isVideoRequest,
+      audioOnly: false,
     );
   }
 

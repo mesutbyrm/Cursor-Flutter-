@@ -14,9 +14,16 @@ class RoomSongRemoteDataSource {
     final data = res.data;
     if (data is! Map) return null;
     final map = Map<String, dynamic>.from(data);
-    final raw = map['currentSong'] ?? map;
-    if (raw is! Map) return null;
-    return RoomSongDto.fromJson(Map<String, dynamic>.from(raw));
+    Map<String, dynamic>? raw;
+    for (final key in const ['currentSong', 'current', 'nowPlaying']) {
+      final candidate = map[key];
+      if (candidate is Map) {
+        raw = Map<String, dynamic>.from(candidate);
+        break;
+      }
+    }
+    raw ??= map;
+    return RoomSongDto.fromJson(raw);
   }
 
   Future<({RoomSongDto? current, List<RoomSongQueueItemDto> queue})> fetchQueue(

@@ -201,8 +201,15 @@ class ChatRoomSseService extends BaseSseService {
       case ChatRoomSseEventType.songFinished:
       case ChatRoomSseEventType.queueUpdated:
       case ChatRoomSseEventType.songRemoved:
+      case ChatRoomSseEventType.songChanged:
         _onSongQueue?.call(map);
         return;
+      case ChatRoomSseEventType.playerState: {
+        final djMap = unwrapVoiceSseDjPayload(map);
+        _onDjUpdate?.call(djMap);
+        _onSongQueue?.call(map);
+        return;
+      }
       case ChatRoomSseEventType.gift:
         _onGift?.call(map);
         return;

@@ -80,7 +80,8 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
     final songState = liveKey != null && liveKey.isNotEmpty
         ? ref.watch(roomSongBlocProvider(liveKey)).state
         : null;
-    final iframeMode = songState?.hasTrack == true;
+    final iframeMode = songState?.hasTrack == true &&
+        songState?.current?.isVideoRequest == true;
     final iframeSong = songState?.current;
     final iframePlaying = iframeMode && iframeSong?.paused != true;
     final iframeProgress = songState?.progress ?? 0.0;

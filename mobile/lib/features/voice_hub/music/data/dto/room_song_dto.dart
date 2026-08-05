@@ -1,10 +1,15 @@
 import 'package:equatable/equatable.dart';
 
+import '../../domain/song_playback_fields.dart';
+
 /// Sunucu `current-song` / SSE `song_*` yanıtı.
 class RoomSongDto extends Equatable {
   const RoomSongDto({
     this.queueId,
     this.videoId,
+    this.musicUrl,
+    this.youtubeUrl,
+    this.videoUrl,
     this.title,
     this.thumbnail,
     this.durationSec,
@@ -16,10 +21,15 @@ class RoomSongDto extends Equatable {
     this.pausedAtMs,
     this.elapsedMs = 0,
     this.serverTimeMs,
+    this.playMode,
+    this.isVideoRequest = false,
   });
 
   final String? queueId;
   final String? videoId;
+  final String? musicUrl;
+  final String? youtubeUrl;
+  final String? videoUrl;
   final String? title;
   final String? thumbnail;
   final int? durationSec;
@@ -31,8 +41,27 @@ class RoomSongDto extends Equatable {
   final int? pausedAtMs;
   final int elapsedMs;
   final int? serverTimeMs;
+  final String? playMode;
+  final bool isVideoRequest;
 
-  bool get hasTrack => videoId != null && videoId!.isNotEmpty;
+  bool get hasTrack {
+    if (videoId != null && videoId!.isNotEmpty) return true;
+    if (musicUrl != null && musicUrl!.isNotEmpty) return true;
+    if (youtubeUrl != null && youtubeUrl!.isNotEmpty) return true;
+    if (videoUrl != null && videoUrl!.isNotEmpty) return true;
+    return false;
+  }
+
+  /// Mini player / IFrame için çözümlenmiş YouTube kimliği.
+  String? get resolvedVideoId {
+    final direct = videoId?.trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+    return SongPlaybackFields.parseQuiet({
+      if (musicUrl != null) 'musicUrl': musicUrl,
+      if (videoUrl != null) 'videoUrl': videoUrl,
+      if (youtubeUrl != null) 'youtubeUrl': youtubeUrl,
+    }).videoId;
+  }
 
   double resolvedElapsedSeconds({DateTime? now}) {
     final t = now ?? DateTime.now();
@@ -45,6 +74,7 @@ class RoomSongDto extends Equatable {
   }
 
   factory RoomSongDto.fromJson(Map<String, dynamic> json) {
+    final fields = SongPlaybackFields.fromJson(json);
     final owner = json['owner'];
     String? ownerId;
     String? ownerName;
@@ -65,9 +95,12 @@ class RoomSongDto extends Equatable {
 
     return RoomSongDto(
       queueId: json['queueId']?.toString(),
-      videoId: json['videoId']?.toString(),
-      title: json['title']?.toString(),
-      thumbnail: json['thumbnail']?.toString(),
+      videoId: fields.videoId,
+      musicUrl: fields.musicUrl,
+      youtubeUrl: fields.youtubeUrl,
+      videoUrl: fields.videoUrl,
+      title: fields.title ?? json['title']?.toString(),
+      thumbnail: fields.thumbnail,
       durationSec: _int(json['duration'] ?? json['durationSec']),
       channel: json['channel']?.toString(),
       ownerId: ownerId,
@@ -77,6 +110,8 @@ class RoomSongDto extends Equatable {
       pausedAtMs: _int(json['pausedAt']),
       elapsedMs: _int(json['elapsedMs']) ?? 0,
       serverTimeMs: _int(json['serverTime']),
+      playMode: fields.playMode,
+      isVideoRequest: fields.isVideoRequest,
     );
   }
 
@@ -91,10 +126,12 @@ class RoomSongDto extends Equatable {
   List<Object?> get props => [
         queueId,
         videoId,
-        title,
+        musicUrl,
+        youtubeUrl,
         paused,
         elapsedMs,
         serverTimeMs,
+        isVideoRequest,
       ];
 }
 
@@ -109,6 +146,10 @@ class RoomSongQueueItemDto extends Equatable {
     this.ownerId,
     this.ownerName,
     this.position = 0,
+    this.musicUrl,
+    this.youtubeUrl,
+    this.playMode,
+    this.isVideoRequest = false,
   });
 
   final String queueId;
@@ -120,19 +161,31 @@ class RoomSongQueueItemDto extends Equatable {
   final String? ownerId;
   final String? ownerName;
   final int position;
+  final String? musicUrl;
+  final String? youtubeUrl;
+  final String? playMode;
+  final bool isVideoRequest;
 
   factory RoomSongQueueItemDto.fromJson(Map<String, dynamic> json) {
+    final fields = SongPlaybackFields.fromJson(json);
     final owner = json['owner'];
     return RoomSongQueueItemDto(
       queueId: (json['queueId'] ?? json['id'])?.toString() ?? '',
-      videoId: json['videoId']?.toString() ?? '',
-      title: json['title']?.toString() ?? 'Şarkı',
-      thumbnail: json['thumbnail']?.toString(),
-      duration: json['duration']?.toString(),
+      videoId: fields.videoId ?? '',
+      title: fields.title ?? json['title']?.toString() ?? 'Şarkı',
+      thumbnail: fields.thumbnail,
+      duration: fields.duration ?? json['duration']?.toString(),
       channel: json['channel']?.toString(),
-      ownerId: owner is Map ? owner['id']?.toString() : json['ownerId']?.toString(),
-      ownerName: owner is Map ? owner['name']?.toString() : json['ownerName']?.toString(),
+      ownerId:
+          owner is Map ? owner['id']?.toString() : json['ownerId']?.toString(),
+      ownerName: owner is Map
+          ? owner['name']?.toString()
+          : json['ownerName']?.toString(),
       position: RoomSongDto._int(json['position']) ?? 0,
+      musicUrl: fields.musicUrl,
+      youtubeUrl: fields.youtubeUrl,
+      playMode: fields.playMode,
+      isVideoRequest: fields.isVideoRequest,
     );
   }
 
@@ -156,12 +209,14 @@ class YoutubeSearchResultDto extends Equatable {
   final String? channel;
 
   factory YoutubeSearchResultDto.fromJson(Map<String, dynamic> json) {
+    final fields = SongPlaybackFields.fromJson(json);
     return YoutubeSearchResultDto(
-      videoId: (json['videoId'] ?? json['id'])?.toString() ?? '',
-      title: json['title']?.toString() ?? '',
+      videoId: fields.videoId ?? (json['videoId'] ?? json['id'])?.toString() ?? '',
+      title: fields.title ?? json['title']?.toString() ?? '',
       thumbnail: (json['thumbnail'] ?? json['thumbUrl'])?.toString(),
-      duration: json['duration']?.toString(),
-      channel: (json['channel'] ?? json['channelTitle'] ?? json['uploader'])?.toString(),
+      duration: fields.duration ?? json['duration']?.toString(),
+      channel: (json['channel'] ?? json['channelTitle'] ?? json['uploader'])
+          ?.toString(),
     );
   }
 

@@ -70,7 +70,10 @@ class RoomPlaybackSync extends Equatable {
       currentPositionMs: pos is num ? pos.round() : 0,
       isPlaying: voiceSseDjIsPlaying(flat),
       trackStartedAtMs: voiceSseTrackStartedAtMs(started),
-      streamUrl: flat['musicUrl']?.toString() ?? flat['streamUrl']?.toString(),
+      streamUrl: flat['musicUrl']?.toString() ??
+          flat['streamUrl']?.toString() ??
+          flat['videoUrl']?.toString() ??
+          flat['youtubeUrl']?.toString(),
       elapsedSeconds: elapsed,
       embedUrl: embed,
     );

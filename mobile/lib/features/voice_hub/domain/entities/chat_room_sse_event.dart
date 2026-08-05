@@ -14,6 +14,8 @@ enum ChatRoomSseEventType {
   songFinished,
   queueUpdated,
   songRemoved,
+  songChanged,
+  playerState,
   userJoin,
   userLeave,
   roomUpdate,
@@ -73,6 +75,10 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
       return ChatRoomSseEventType.queueUpdated;
     case 'song_removed':
       return ChatRoomSseEventType.songRemoved;
+    case 'song_changed':
+      return ChatRoomSseEventType.songChanged;
+    case 'player_state':
+      return ChatRoomSseEventType.playerState;
     case 'user_join':
     case 'user_joined':
     case 'userjoined':
