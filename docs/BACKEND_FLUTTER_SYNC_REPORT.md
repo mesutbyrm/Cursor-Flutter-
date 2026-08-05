@@ -104,9 +104,9 @@ Flutter: `joinSeat` → önce `join-seat` (404 toleranslı), sonra `seats`. Oda 
 
 ### P2 — Tam parity
 - [ ] `FEATURE_PARITY_REPORT.md` maddeleri tek tek kapat
-- [ ] Jeton animasyonları — yalnızca backend event'lerinden
+- [x] Jeton animasyonları — yalnızca backend event'lerinden (belgelendi, 1.0.142)
 - [ ] Eksik admin/moderasyon ekranları
-- [ ] Oda ayarları tek sayfa (`voice_room_management_panel` canonical)
+- [x] Oda ayarları tek sayfa (`voice_room_management_panel` canonical, 1.0.142)
 
 ---
 
