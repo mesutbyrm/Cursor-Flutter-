@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.137+171 (2026-08-05) — Derleme düzeltmeleri
+
+- Shorts: `const` scroll physics düzeltmesi; müzik tile go_router navigasyonu
+- Sosyal: `commentsCount` alan adı düzeltmesi
+
 ## 1.0.136+170 (2026-08-05) — UI tamamlama
 
 ### Hikâyeler

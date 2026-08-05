@@ -92,11 +92,11 @@ class SocialPostDetailPage extends ConsumerWidget {
               ListTile(
                 leading: const Icon(Icons.mode_comment_outlined),
                 title: const Text('Yorumları gör'),
-                subtitle: Text('${post.commentCount} yorum'),
+                subtitle: Text('${post.commentsCount} yorum'),
                 onTap: () => SocialPostCommentsSheet.show(
                   context,
                   postId: postId,
-                  initialCount: post.commentCount,
+                  initialCount: post.commentsCount,
                 ),
               ),
             ],

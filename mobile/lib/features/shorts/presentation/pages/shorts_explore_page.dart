@@ -534,7 +534,10 @@ class _MusicTile extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       animateIn: false,
       borderRadius: BorderRadius.circular(12),
-      onTap: () => openShortMusicFeed(context, music: music),
+      onTap: () => context.push(
+        '/shorts/music/${Uri.encodeComponent(music.id)}'
+        '?title=${Uri.encodeComponent(music.title)}',
+      ),
       child: Row(
         children: [
           ClipRRect(

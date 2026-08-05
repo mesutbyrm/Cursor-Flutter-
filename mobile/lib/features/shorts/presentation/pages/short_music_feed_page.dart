@@ -6,7 +6,6 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
-import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../../core/widgets/hero_tags.dart';
 import '../providers/shorts_providers.dart';
 import '../widgets/shorts_premium_theme.dart';
@@ -76,7 +75,7 @@ class _ShortMusicFeedPageState extends ConsumerState<ShortMusicFeedPage> {
             return GridView.builder(
               padding: const EdgeInsets.all(12),
               physics: const AlwaysScrollableScrollPhysics(
-                parent: PremiumMotion.listPhysics,
+                parent: BouncingScrollPhysics(),
               ),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,

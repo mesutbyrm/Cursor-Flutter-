@@ -8,7 +8,6 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
-import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../../core/widgets/hero_tags.dart';
 import '../providers/shorts_providers.dart';
 import '../widgets/shorts_premium_theme.dart';
@@ -83,7 +82,7 @@ class _ShortHashtagPageState extends ConsumerState<ShortHashtagPage> {
             return CustomScrollView(
               controller: _scroll,
               physics: const AlwaysScrollableScrollPhysics(
-                parent: PremiumMotion.listPhysics,
+                parent: BouncingScrollPhysics(),
               ),
               slivers: [
                 SliverToBoxAdapter(
