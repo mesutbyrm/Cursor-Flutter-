@@ -102,13 +102,14 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
   }
 
   void syncCoBroadcasters(List<Map<String, dynamic>> guests) {
-    if (guests.isEmpty) return;
+    final approved = guests.where(_isApprovedCoGuest).toList();
+    if (approved.isEmpty) return;
     if (state.layout == LiveGuestLayout.solo) {
-      setLayout(resolveGuestLayout(guestCount: guests.length));
+      setLayout(resolveGuestLayout(guestCount: approved.length));
     }
     final list = [...state.slots];
     var slot = 1;
-    for (final g in guests) {
+    for (final g in approved) {
       if (slot >= list.length) break;
       final userId = g['userId']?.toString() ?? '';
       final name = g['userName']?.toString() ??
@@ -151,6 +152,15 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
     );
     state = state.copyWith(slots: list);
   }
+}
+
+bool _isApprovedCoGuest(Map<String, dynamic> g) {
+  final status =
+      (g['status'] ?? g['state'] ?? 'approved').toString().toLowerCase();
+  return status == 'approved' ||
+      status == 'active' ||
+      status == 'joined' ||
+      status == 'live';
 }
 
 String? _guestRtcUserId(Map<String, dynamic> guest) {

@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.131+165 (2026-08-05)
+
+### Hediye, canlı yayın ve falcı senkron düzeltmeleri
+- **Sesli oda hediyeleri:** Canlı yayınla aynı Gift Engine overlay — tüm hediyeler hızlı gösterim
+- **Hediye sesi:** Sesli oda, canlı yayın ve PK'da hediye sesi her yerde çalar
+- **Canlı yayın mikrofon:** İzleyici hesabı yayıncı onayı olmadan ses/video yayınlamaz
+- **Çoklu yayın isteği:** Yayıncı kabul etmeden misafir koltuğuna çıkmaz; bekleyen istek banner'ı
+- **PK daveti:** SSE ile anında iletim (canlı yayın + sesli oda)
+- **Canlı Falcılar:** Karşılıklı görüşmede kamera aç/kapa döngüsü düzeltildi (PiP katman)
+- **Bahşiş popup:** Falcıya «Danışan size bahşiş gönderdi» bildirimi
+
 ## 1.0.130+164 (2026-08-04)
 
 ### Sesli oda müzik / !istek (web parity)

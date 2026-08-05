@@ -183,6 +183,11 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       },
       onPkBattle: (battle) {
         ref.read(liveVideoPkProvider(streamId).notifier).applyRemoteBattle(battle);
+        final status = (battle['status'] ?? '').toString().toLowerCase();
+        if (status == 'pending' || status == 'invited') {
+          ref.read(livePkInviteSignalProvider.notifier).bump();
+          ref.invalidate(pkPendingInvitesProvider);
+        }
       },
       onLike: (count) {
         ref

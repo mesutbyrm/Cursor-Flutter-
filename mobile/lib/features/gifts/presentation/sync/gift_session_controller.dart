@@ -13,7 +13,6 @@ import '../providers/gift_catalog_index_provider.dart';
 import '../providers/gift_providers.dart';
 import '../../domain/gift_event_catalog_enricher.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
-import '../../../voice_hub/presentation/providers/voice_room_ui_provider.dart';
 import '../engine/voice_gift_ambient_overlay.dart';
 import 'gift_hourly_reset.dart';
 import 'gift_session_state.dart';
@@ -374,7 +373,6 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   }
 
   void _playGiftSound(LiveGiftEvent event, GiftEntity? catalog) {
-    if (!ref.read(voiceRoomUiProvider).roomOutputEnabled) return;
     if (catalog != null) {
       unawaited(ref.read(giftSoundPoolProvider).preloadGift(catalog));
     }

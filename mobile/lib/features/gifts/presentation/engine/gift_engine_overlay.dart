@@ -9,6 +9,8 @@ import '../../domain/gift_engine_models.dart';
 import '../../domain/gift_engine_parser.dart';
 import '../../domain/gift_media_spec.dart';
 import '../../domain/gift_media_type.dart';
+import '../providers/gift_catalog_index_provider.dart';
+import '../sync/gift_session_controller.dart';
 import '../widgets/gift_animation_player.dart';
 import '../widgets/gift_media_widget.dart';
 import '../widgets/gift_stage_layout.dart';
@@ -22,6 +24,7 @@ class GiftEngineOverlay extends ConsumerStatefulWidget {
     this.enabled = true,
     this.onFinished,
     this.seatIndex,
+    this.sessionKey,
   });
 
   final LiveGiftEvent? event;
@@ -29,6 +32,9 @@ class GiftEngineOverlay extends ConsumerStatefulWidget {
   final bool enabled;
   final ValueChanged<String>? onFinished;
   final int? seatIndex;
+
+  /// Hediye sesi için oturum anahtarı (canlı yayın / sesli oda).
+  final String? sessionKey;
 
   @override
   ConsumerState<GiftEngineOverlay> createState() => _GiftEngineOverlayState();
@@ -65,6 +71,10 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
     Future<void>.delayed(delay, () {
       if (!mounted || widget.event?.id != ev.id) return;
       setState(() => _visible = true);
+      final key = widget.sessionKey?.trim();
+      if (key != null && key.isNotEmpty) {
+        ref.read(giftSessionProvider(key).notifier).playActiveGiftSound(ev);
+      }
       _finishTimer = Timer(duration, () {
         if (!mounted) return;
         widget.onFinished?.call(ev.id);

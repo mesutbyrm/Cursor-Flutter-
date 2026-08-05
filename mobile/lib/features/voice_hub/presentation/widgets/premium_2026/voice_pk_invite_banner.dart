@@ -9,7 +9,7 @@ import '../../../domain/pk/pk_battle_remote_models.dart';
 import '../../providers/pk_battle_remote_provider.dart';
 import '../../utils/pk_invite_dialog_helper.dart';
 
-/// Koltukların altında — gelen PK daveti için popup tetikler (oda sahibi).
+/// SSE + poll — gelen PK daveti anında popup (oda sahibi).
 class VoicePkInviteBanner extends ConsumerStatefulWidget {
   const VoicePkInviteBanner({
     super.key,
@@ -30,13 +30,14 @@ class VoicePkInviteBanner extends ConsumerStatefulWidget {
 class _VoicePkInviteBannerState extends ConsumerState<VoicePkInviteBanner> {
   Timer? _pollTimer;
   var _dialogOpen = false;
+  String? _lastShownBattleId;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_loadOnce());
-      _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) {
         unawaited(_loadOnce());
       });
     });
@@ -46,6 +47,25 @@ class _VoicePkInviteBannerState extends ConsumerState<VoicePkInviteBanner> {
   void dispose() {
     _pollTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _maybeShow(PkBattleRemote battle) async {
+    if (!mounted || !widget.isOwner || _dialogOpen) return;
+    if (!battle.isPending) return;
+    final battleId = battle.effectiveId;
+    if (battleId == _lastShownBattleId) return;
+
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    final room = resolvePkInviteTargetRoom(ref, battle, userId ?? '');
+    if (room == null) return;
+
+    _dialogOpen = true;
+    _lastShownBattleId = battleId;
+    try {
+      await showPkInviteDialog(context, ref, battle: battle, room: room);
+    } finally {
+      _dialogOpen = false;
+    }
   }
 
   Future<void> _loadOnce() async {
@@ -59,18 +79,19 @@ class _VoicePkInviteBannerState extends ConsumerState<VoicePkInviteBanner> {
             key,
             alternateRoomId: widget.room.slug != key ? widget.room.slug : null,
           );
-      if (!mounted || battle == null || !battle.isPending) return;
-      final userId = ref.read(authControllerProvider).valueOrNull?.id;
-      final room = resolvePkInviteTargetRoom(ref, battle, userId ?? '');
-      if (room == null) return;
-      _dialogOpen = true;
-      await showPkInviteDialog(context, ref, battle: battle, room: room);
-      _dialogOpen = false;
+      if (battle != null) await _maybeShow(battle);
     } catch (_) {
       _dialogOpen = false;
     }
   }
 
   @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
+  Widget build(BuildContext context) {
+    ref.listen<PkBattleRemote?>(pkBattleRemoteProvider, (prev, next) {
+      if (next != null && next != prev) {
+        unawaited(_maybeShow(next));
+      }
+    });
+    return const SizedBox.shrink();
+  }
 }

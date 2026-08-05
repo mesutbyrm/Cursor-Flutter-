@@ -21,9 +21,11 @@ import '../providers/pk_battle_remote_provider.dart';
 import '../providers/staff_entrance_marquee_provider.dart';
 import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_leaderboard_provider.dart';
-import '../providers/voice_gift_providers.dart';
+import '../providers/voice_room_ui_provider.dart';
 import '../theme/voice_room_tokens.dart';
-import '../../../gifts/presentation/engine/voice_gift_ambient_overlay.dart';
+import '../../../gifts/presentation/engine/gift_engine_overlay.dart';
+import '../../../gifts/presentation/sync/gift_session_controller.dart';
+import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
 import '../widgets/premium/voice_gift_stage_overlays.dart';
 import '../widgets/premium_2026/voice_cosmic_background.dart';
 import '../widgets/premium_2026/pk/pk_action_bottom_bar.dart';
@@ -175,7 +177,32 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
         fit: StackFit.expand,
         children: [
           const VoiceCosmicBackground(),
-          VoiceGiftAmbientOverlay(sessionKey: sessionKey),
+          Consumer(
+            builder: (context, ref, _) {
+              final activeGift = ref.watch(
+                giftSessionProvider(sessionKey)
+                    .select((s) => s.activeAnimation),
+              );
+              final giftsOn = ref.watch(
+                voiceRoomUiProvider.select((s) => s.giftAnimationsEnabled),
+              );
+              return Positioned.fill(
+                child: IgnorePointer(
+                  child: GiftEngineOverlay(
+                    event: activeGift,
+                    enabled: giftsOn,
+                    stage: GiftStageContext.voiceRoom,
+                    sessionKey: sessionKey,
+                    onFinished: (id) {
+                      ref
+                          .read(giftSessionProvider(sessionKey).notifier)
+                          .dequeueAnimation(id);
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
           PkFloatingReactions(
             burstToken: pk.reactionBurst,
             enabled: pk.isActive,

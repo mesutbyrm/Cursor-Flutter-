@@ -12,7 +12,7 @@ import 'package:canlifal_social/features/profile/presentation/widgets/premium/pr
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_peer_left_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
-import 'package:canlifal_social/features/trtc/presentation/trtc_room_manager.dart';
+import '../widgets/psychic_video_call_layer.dart';
 
 final _psychicSessionChatProvider =
     StateProvider.autoDispose.family<TextEditingController, PsychicSessionEntity>(
@@ -105,7 +105,7 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
           fit: StackFit.expand,
           children: [
             Positioned.fill(
-              child: _VideoLayer(
+              child: PsychicVideoCallLayer(
                 session: session,
                 state: state,
                 ctrl: ctrl,
@@ -263,17 +263,17 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                           const Text('🎁', style: TextStyle(fontSize: 40)),
                           const SizedBox(height: 10),
                           Text(
-                            state.tipReceivedFrom?.trim().isNotEmpty == true
-                                ? state.tipReceivedFrom!
-                                : 'Danışan',
+                            'Danışan size bahşiş gönderdi',
+                            textAlign: TextAlign.center,
                             style: const TextStyle(
+                              color: Colors.white,
                               fontWeight: FontWeight.w900,
-                              fontSize: 18,
+                              fontSize: 17,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Text(
-                            '${state.tipReceivedFrom?.trim().isNotEmpty == true ? state.tipReceivedFrom!.trim() : 'Danışan'} size ${state.tipReceivedAmount} Jeton bahşiş gönderdi.',
+                            '${state.tipReceivedAmount} Jeton',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Color(0xFFFFD54F),
@@ -499,103 +499,6 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
       ),
     );
   }
-}
-
-class _VideoLayer extends StatelessWidget {
-  const _VideoLayer({
-    required this.session,
-    required this.state,
-    required this.ctrl,
-  });
-
-  final PsychicSessionEntity session;
-  final PsychicVideoState state;
-  final PsychicVideoController ctrl;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!state.rtcReady) {
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          const LiveRoomVideoBackground(),
-          Center(
-            child: ProfileGlass(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              borderRadius: 20,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (state.rtcError != null) ...[
-                    Text(
-                      state.rtcError!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: ctrl.retryRtc,
-                      child: const Text('Yeniden Bağlan'),
-                    ),
-                  ] else ...[
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Bağlantı kuruluyor…',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
-    if (!session.isClient) {
-      return ValueListenableBuilder<String?>(
-        valueListenable: ctrl.trtc.remoteAnchorUserIdNotifier,
-        builder: (context, remoteUserId, _) {
-          if (remoteUserId != null && remoteUserId.isNotEmpty) {
-            return TrtcRemoteVideoView(
-              key: ValueKey('remote-$remoteUserId'),
-              manager: ctrl.trtc,
-              userId: remoteUserId,
-            );
-          }
-          return TrtcLocalVideoView(
-            key: ValueKey(state.localPreviewKey),
-            manager: ctrl.trtc,
-          );
-        },
-      );
-    }
-
-    return ValueListenableBuilder<String?>(
-      valueListenable: ctrl.trtc.remoteAnchorUserIdNotifier,
-      builder: (context, remoteUserId, _) {
-        if (remoteUserId != null && remoteUserId.isNotEmpty) {
-          return TrtcRemoteVideoView(
-            key: ValueKey('remote-$remoteUserId'),
-            manager: ctrl.trtc,
-            userId: remoteUserId,
-          );
-        }
-        return const LiveRoomVideoBackground();
-      },
-    );
-  }
-}
-
-Widget _buildLocalPreview(PsychicVideoController ctrl, PsychicVideoState state) {
-  return TrtcLocalVideoView(
-    key: ValueKey(state.localPreviewKey),
-    manager: ctrl.trtc,
-  );
 }
 
 class _ControlBtn extends StatelessWidget {

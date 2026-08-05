@@ -350,19 +350,33 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     // kimliği null'dan gerçek değere dönse bile normalize kanal aynıysa
     // (room_{sessionId}) gereksiz yeniden bağlanma yapıp gecikme yaratma.
     if (newRoomId != null && newRoomId.isNotEmpty) {
-      if (_joinedTrtcRoom != null &&
-          newRoomId != _joinedTrtcRoom &&
+      final joined = _joinedTrtcRoom;
+      if (joined != null &&
+          _canonicalRoomChannel(newRoomId) != _canonicalRoomChannel(joined) &&
           (state.rtcReady || state.rtcError != null)) {
         await _rejoinRtc();
       }
     }
   }
 
+  String _canonicalRoomChannel(String? raw) {
+    final id = raw?.trim() ?? '';
+    if (id.isEmpty) return session.sessionId.trim();
+    final base = session.sessionId.trim();
+    if (id == base || id == 'room_$base') return base;
+    if (id.startsWith('room_')) return id.substring(5);
+    return id;
+  }
+
   Future<void> _rejoinRtc() async {
     if (_disposed || state.leaving || _rejoiningRtc) return;
     final roomId = _activeTrtcRoomId();
     if (roomId.isEmpty) return;
-    if (_joinedTrtcRoom == roomId && state.rtcReady) return;
+    if (_canonicalRoomChannel(_joinedTrtcRoom) ==
+            _canonicalRoomChannel(roomId) &&
+        state.rtcReady) {
+      return;
+    }
 
     _rejoiningRtc = true;
     _joinedTrtcRoom = null;
@@ -468,21 +482,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     final id = eventId?.trim();
     if (id != null && id.isNotEmpty && !_seenTipEventIds.add(id)) return;
 
-    final authId = ref.read(authControllerProvider).valueOrNull?.id?.trim();
-    final tellerUid = (session.tellerUserId ??
-            state.room?.tellerUserId ??
-            session.psychic.userId)
-        ?.trim();
-
     // Danışan yalnızca kendi gönderim teşekkürünü görür; falcı SSE/sinyal popup alır.
     if (session.isClient) return;
-    if (tellerUid != null &&
-        tellerUid.isNotEmpty &&
-        authId != null &&
-        authId.isNotEmpty &&
-        authId != tellerUid) {
-      return;
-    }
 
     final total = state.sessionTipsTotal + amount;
     state = state.copyWith(
@@ -527,8 +528,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     );
     if (info.roomId != null && info.roomId!.isNotEmpty) {
       final newRoomId = info.roomId!;
-      if (_joinedTrtcRoom != null &&
-          newRoomId != _joinedTrtcRoom &&
+      final joined = _joinedTrtcRoom;
+      if (joined != null &&
+          _canonicalRoomChannel(newRoomId) != _canonicalRoomChannel(joined) &&
           (state.rtcReady || state.rtcError != null)) {
         unawaited(_rejoinRtc());
       }

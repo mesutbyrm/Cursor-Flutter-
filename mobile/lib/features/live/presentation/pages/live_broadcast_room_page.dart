@@ -139,6 +139,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   final Set<String> _seenPkInviteIds = {};
   final Set<String> _seenVipEntrances = {};
   var _coHostUpgraded = false;
+  var _joinRequestPending = false;
   String? _vipBannerName;
   VoidCallback? _remoteUidsListener;
   VoidCallback? _remoteVideoListener;
@@ -301,7 +302,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         roomType: 'stream',
         userId: user.id,
         isHost: widget.session.isHost,
-        twoWayVideo: true,
+        twoWayVideo: widget.session.isHost || _coHostUpgraded,
         expectedAnchorUserId: widget.session.hostUserId,
         useCompoundJoin: true,
       );
@@ -312,6 +313,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         try {
           await ref.read(liveRemoteProvider).notifyLiveStarted(roomId);
         } catch (_) {}
+      } else if (!_coHostUpgraded) {
+        // İzleyici — yayıncı onayı olmadan ses/video yayınlama.
+        _trtc.setMicEnabled(false);
+        _trtc.setCameraEnabled(false);
       }
       _onRtcJoinSuccess(user);
     } catch (e) {
@@ -932,6 +937,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     try {
       await ref.read(coBroadcastProvider.notifier).requestJoin(streamId);
       if (!mounted) return;
+      setState(() => _joinRequestPending = true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Yayına katılma isteği gönderildi')),
       );
@@ -1097,16 +1103,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Future<void> _upgradeToCoHost(String streamId, UserEntity user) async {
     if (_coHostUpgraded || widget.session.isHost || !_rtcReady) return;
     try {
-      final cred = await ref.read(trtcRemoteProvider).fetchToken(
-            roomId: streamId,
-            role: 'host',
-            userId: user.id,
-          );
-      await _trtc.leave();
-      await _trtc.join(credentials: cred, isHost: true, audioOnly: false);
+      _coHostUpgraded = true;
+      _joinRequestPending = false;
+      await _trtcCoordinator?.leave();
+      await _trtcCoordinator!.join(
+        roomId: streamId,
+        roomType: 'stream',
+        userId: user.id,
+        isHost: true,
+        twoWayVideo: true,
+        expectedAnchorUserId: widget.session.hostUserId,
+        useCompoundJoin: true,
+      );
       _trtc.setCameraEnabled(true);
       _trtc.setMicEnabled(true);
-      _coHostUpgraded = true;
       _enableMultiGuestLayout(
         LiveGuestLayout.duo,
         [
@@ -1314,9 +1324,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   void _onRemoteUidsChanged() {
-    ref
-        .read(liveGuestGridProvider.notifier)
-        .syncRemoteUserIds(_trtc.remoteUserIdsNotifier.value);
+    // Yalnızca onaylı ortak yayıncılar koltuklara yerleşir — ham TRTC UID değil.
+    final co = ref.read(coBroadcastProvider).coBroadcasters;
+    if (co.isEmpty) return;
+    ref.read(liveGuestGridProvider.notifier).syncCoBroadcasters(co);
   }
 
   void _onGuestAction(int slotIndex, String action) {
@@ -2152,6 +2163,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   event: activeGift,
                   enabled: broadcastSettings.giftsEnabled,
                   stage: GiftStageContext.liveStream,
+                  sessionKey: streamId,
                   onFinished: (id) {
                     if (!hasStream) return;
                     ref
@@ -2181,6 +2193,43 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 child: LiveVipEntranceBanner(
                   displayName: _vipBannerName!,
                   onDone: () => setState(() => _vipBannerName = null),
+                ),
+              ),
+            if (_joinRequestPending && !s.isHost && !_coHostUpgraded)
+              Positioned(
+                top: top + 72,
+                left: 16,
+                right: 16,
+                child: Material(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white70,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Yayına katılma isteği gönderildi — yayıncı onayı bekleniyor',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.white,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             if (hasStream)
