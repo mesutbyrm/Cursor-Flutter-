@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_close_dialog.dart';
-import 'package:canlifal_social/features/live/presentation/widgets/broadcast_room/live_room_video_background.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_video_controller.dart';
 import 'package:canlifal_social/features/profile/presentation/widgets/premium/profile_glass.dart';
@@ -148,57 +147,23 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-            if (state.rtcReady && !session.isClient)
-              Positioned(
-                top: MediaQuery.paddingOf(context).top + 56,
-                right: 12,
-                child: Material(
-                  elevation: 4,
-                  borderRadius: BorderRadius.circular(10),
-                  clipBehavior: Clip.antiAlias,
-                  child: SizedBox(
-                    width: 88,
-                    height: 120,
-                    child: _buildLocalPreview(ctrl, state),
-                  ),
-                ),
-              ),
             if (state.rtcReady && session.isClient)
               Positioned(
-                top: MediaQuery.paddingOf(context).top + 56,
-                right: 12,
+                top: MediaQuery.paddingOf(context).top + 56 + 140 - 28,
+                right: 16,
                 child: Material(
-                  elevation: 4,
-                  borderRadius: BorderRadius.circular(10),
-                  clipBehavior: Clip.antiAlias,
-                  child: SizedBox(
-                    width: 88,
-                    height: 120,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        _buildLocalPreview(ctrl, state),
-                        Positioned(
-                          right: 4,
-                          bottom: 4,
-                          child: Material(
-                            color: Colors.black54,
-                            shape: const CircleBorder(),
-                            child: InkWell(
-                              onTap: ctrl.switchCamera,
-                              customBorder: const CircleBorder(),
-                              child: const Padding(
-                                padding: EdgeInsets.all(4),
-                                child: Icon(
-                                  Icons.cameraswitch_rounded,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                  color: Colors.black54,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    onTap: ctrl.switchCamera,
+                    customBorder: const CircleBorder(),
+                    child: const Padding(
+                      padding: EdgeInsets.all(6),
+                      child: Icon(
+                        Icons.cameraswitch_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
                   ),
                 ),

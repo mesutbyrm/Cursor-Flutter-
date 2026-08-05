@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:canlifal_social/features/profile/presentation/widgets/profile_glass.dart';
+import 'package:canlifal_social/features/profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../live/presentation/widgets/broadcast_room/live_room_video_background.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../domain/entities/psychic_session_entity.dart';
