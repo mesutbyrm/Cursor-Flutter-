@@ -13,7 +13,9 @@
 | Canlı yayın | `POST /api/video-streams`, SSE `streamEnded` | ✅ Host `streamEnded` UI (1.0.139) | Doğrula |
 | Canlı falcı | SSE + `/api/room/*` | ✅ 1.0.140 SSE-primary poll | Tamam |
 | Sesli oda koltuk | `POST .../seats` `{action:take}` | ✅ `_tryAutoPrivilegedSeat` | Doğrula |
-| Oda ayarları | `PATCH .../settings` | ⚠️ 2 ölü sheet `@Deprecated` + aktif panel | P2 |
+> **Sürüm:** `1.0.142+176` (P2 oda ayarları + canlı yayın parse)
+
+| Oda ayarları | `PATCH .../settings` | ✅ Tek panel (`voice_room_management_panel`) | Tamam |
 | Jeton | Sunucu hesaplar | ✅ `wallet`/`credits` okuma | İzle |
 | Performans | SSE tercih | ✅ RTC selective watch (1.0.141) | Tamam |
 
@@ -82,14 +84,16 @@ Flutter: `joinSeat` → önce `join-seat` (404 toleranslı), sonra `seats`. Oda 
 | `psychic_incoming_host.dart` | SSE istek → event bus yayını (1.0.140) |
 | `voice_room_sheets.dart` / `voice_room_hub_settings.dart` | Ölü sheet'ler `@Deprecated` (1.0.140) |
 | `voice_room_rtc_page.dart` | Selective `ref.watch` + izole alt widget'lar (1.0.141) |
+| `voice_room_sheets.dart` / `voice_room_hub_settings.dart` | Deprecated sheet'ler → `showVoiceRoomManagementPanel` (1.0.142) |
+| `live_remote_datasource.dart` | `createVideoStream` id parse + teşhis log (1.0.142) |
 
 ---
 
 ## 3) Kalan işler (öncelik sırası)
 
 ### P0 — Kritik
-- [ ] Canlı yayın açılmama: TRTC token / `createVideoStream` yanıt parse — sahada log topla
-- [ ] Fal paylaşım: bu oturum fix'i cihazda doğrula
+- [ ] Canlı yayın açılmama: TRTC token — `createVideoStream` parse iyileştirildi (1.0.142); sahada log topla
+- [ ] Fal paylaşım: cihazda doğrula
 
 ### P1 — Senkron + performans
 - [x] `psychic_video_controller.dart` — SSE-primary, poll azalt (1.0.140)

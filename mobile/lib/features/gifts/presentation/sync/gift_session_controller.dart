@@ -227,6 +227,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       'voice_realtime',
       'voice_announce',
     };
+    // Jeton/hediye animasyonu yalnızca sunucu SSE/socket olaylarından —
+    // REST yanıtı veya local-* id ile client-side animasyon yok.
     final canAnimate = animatedSources.contains(source);
     final joinedMs = _joinTimestampMs;
     final beforeJoin = joinedMs != null &&

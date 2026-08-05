@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.142+176 (2026-08-05) — P2 oda ayarları + canlı yayın parse
+
+- **Oda ayarları tek panel:** `showVoiceRoomSettingsSheet` / `showVoiceRoomHubSettingsSheet` artık `showVoiceRoomManagementPanel`'e yönlendiriyor
+- **Canlı yayın oluşturma:** `createVideoStream` yanıt parse — `videoStreamId`, `liveStreamId`, `liveStream` alias + `create.parse_fail` teşhis logu
+- **Jeton animasyonu:** Hediye animasyonu yalnızca SSE/socket kaynaklarından (mevcut kural belgelendi)
+
 ## 1.0.141+175 (2026-08-05) — Sesli oda RTC performans
 
 - `voice_room_rtc_page.dart`: selective `ref.watch` — footer UI, müzik mini oynatıcı, VIP giriş, teşhis banner izole widget'lara taşındı

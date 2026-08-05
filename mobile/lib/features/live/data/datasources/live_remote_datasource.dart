@@ -610,6 +610,14 @@ class LiveRemoteDataSource {
     );
     final streamId = _extractStreamId(res.data);
     if (streamId == null || streamId.isEmpty) {
+      final preview = res.data?.toString();
+      LiveDebugLog.log('create.parse_fail', {
+        'status': res.statusCode,
+        'bodyType': res.data?.runtimeType.toString(),
+        'preview': preview != null && preview.length > 240
+            ? '${preview.substring(0, 240)}…'
+            : preview,
+      });
       throw ApiException(
         'Yayın oluşturuldu ancak oda kimliği alınamadı. '
         'Yanıt: ${res.statusCode}',
@@ -701,6 +709,10 @@ class LiveRemoteDataSource {
     if (body is String && body.trim().isNotEmpty && !body.contains('<html')) {
       return body.trim();
     }
+    if (body is num) {
+      final asStr = body.toString().trim();
+      return asStr.isNotEmpty ? asStr : null;
+    }
     Map<String, dynamic>? map;
     if (body is Map<String, dynamic>) {
       map = body;
@@ -711,13 +723,25 @@ class LiveRemoteDataSource {
     if (map['success'] == true && map['data'] != null) {
       return _extractStreamId(map['data']);
     }
-    final streamObj = map['stream'] ?? map['videoStream'] ?? map['broadcast'];
+    if (map['success'] == false) return null;
+    final streamObj = map['stream'] ??
+        map['videoStream'] ??
+        map['broadcast'] ??
+        map['liveStream'];
     if (streamObj is Map) {
       final nested = _extractStreamId(streamObj);
       if (nested != null) return nested;
     }
-    final id = pick(map, ['id', '_id', 'streamId', 'roomId']);
-    return id?.toString();
+    final id = pick(map, [
+      'id',
+      '_id',
+      'streamId',
+      'roomId',
+      'videoStreamId',
+      'liveStreamId',
+      'broadcastId',
+    ]);
+    return id?.toString().trim();
   }
 
   Future<void> endVideoStream(String streamId) async {

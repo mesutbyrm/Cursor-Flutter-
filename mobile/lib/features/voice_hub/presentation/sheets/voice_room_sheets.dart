@@ -13,6 +13,7 @@ import '../theme/voice_room_tokens.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import '../widgets/voice_room_gift_sheet.dart';
+import 'voice_room_management_panel.dart';
 
 Future<void> showVoiceSpeakerListSheet(
   BuildContext context, {
@@ -76,22 +77,16 @@ Future<void> showVoiceRoomSettingsSheet(
   required List<ChatRoomPresence> presence,
   void Function(ChatRoomPresence user)? onUserTap,
 }) {
-  return showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => Consumer(
-      builder: (_, sheetRef, _) => _RoomSettingsSheet(
-        ref: sheetRef,
-        room: room,
-        isOwner: isOwner,
-        perms: perms,
-        presence: presence,
-        onUserTap: onUserTap,
-        state: sheetRef.watch(voiceRoomUiProvider),
-        notifier: sheetRef.read(voiceRoomUiProvider.notifier),
-      ),
-    ),
+  final live = ref.read(voiceRoomLiveProvider(room.liveKey));
+  return showVoiceRoomManagementPanel(
+    context,
+    ref,
+    room: room,
+    live: live,
+    perms: perms,
+    isOwner: isOwner,
+    onUserTap: onUserTap,
+    initial: VoiceMgmtInitial.roomMgmt,
   );
 }
 

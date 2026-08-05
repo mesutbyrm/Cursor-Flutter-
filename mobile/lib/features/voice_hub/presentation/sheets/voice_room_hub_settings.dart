@@ -48,17 +48,15 @@ Future<void> showVoiceRoomHubSettingsSheet(
   required bool isOwner,
   void Function(ChatRoomPresence user)? onUserTap,
 }) {
-  return showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => _HubSettingsSheet(
-      room: room,
-      live: live,
-      perms: perms,
-      isOwner: isOwner,
-      onUserTap: onUserTap,
-    ),
+  return showVoiceRoomManagementPanel(
+    context,
+    ref,
+    room: room,
+    live: live,
+    perms: perms,
+    isOwner: isOwner,
+    onUserTap: onUserTap,
+    initial: VoiceMgmtInitial.chatMgmt,
   );
 }
 
