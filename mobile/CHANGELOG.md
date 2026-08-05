@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.139+173 (2026-08-05) — Backend senkron (fal paylaşım + canlı yayın)
+
+- **Fal otomatik paylaşım:** `POST /api/social/posts/auto-fortune` (web parity) — anında akışa prepend
+- **Canlı yayın:** Host SSE `streamEnded` → yayın sonu diyaloğu
+- **Rapor:** `docs/BACKEND_FLUTTER_SYNC_REPORT.md` — backend-first gap analizi
+
 ## 1.0.138+172 (2026-08-05) — Müzik sistemi (web parity)
 
 - `!istek` akışı: SSE `song_started` / `song_changed` / `player_state` / `queue_updated` → oynatıcı
