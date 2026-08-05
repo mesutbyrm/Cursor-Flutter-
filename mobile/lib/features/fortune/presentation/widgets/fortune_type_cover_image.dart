@@ -14,6 +14,7 @@ class FortuneTypeCoverImage extends StatelessWidget {
     this.fit = BoxFit.cover,
     this.imageWidth = 1400,
     this.showOverlay = true,
+    this.networkUrlOverride,
   });
 
   final String slug;
@@ -22,9 +23,15 @@ class FortuneTypeCoverImage extends StatelessWidget {
   final int imageWidth;
   final bool showOverlay;
 
+  /// API/CDN kapak — yoksa yerel asset + Unsplash yedek.
+  final String? networkUrlOverride;
+
   @override
   Widget build(BuildContext context) {
-    final url = FortuneTypeImages.urlFor(slug, width: imageWidth);
+    final override = networkUrlOverride?.trim();
+    final url = override != null && override.isNotEmpty
+        ? override
+        : FortuneTypeImages.urlFor(slug, width: imageWidth);
     final assetPath = FortuneTypeImages.assetPathFor(slug);
     final overlays = FortuneTypeImages.overlayColors(slug);
 

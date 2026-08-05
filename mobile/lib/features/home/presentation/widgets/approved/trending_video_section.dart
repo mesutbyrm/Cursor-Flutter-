@@ -3,18 +3,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import 'package:canlifal_social/core/images/canlifal_image_urls.dart';
 
 import '../../../../../core/ui/premium/premium_skeleton.dart';
+import '../../../../../core/network/dio_provider.dart';
 import '../../../domain/entities/home_trend_video_entity.dart';
 import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_section_title.dart';
 import '../../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../../../shorts/presentation/utils/short_video_player_util.dart';
-import '../../../../../core/network/dio_provider.dart';
-import '../../../../../core/images/canlifal_image_urls.dart';
 import '../../data/section_visual_catalog.dart';
+import '../home_mystic_cover.dart';
 
 /// Ana sayfa — yüklenen kısa videolar (R2/CDN). YouTube trend içeriği gösterilmez.
 class TrendingVideoSection extends ConsumerWidget {
@@ -125,7 +125,7 @@ class _TrendThumb extends StatelessWidget {
   final HomeTrendVideoEntity video;
   final VoidCallback onTap;
 
-  String get _thumbUrl {
+  String? get _networkThumbUrl {
     final raw = video.thumbnailUrl?.trim();
     if (raw != null && raw.isNotEmpty) {
       return CanlifalImageUrls.thumbnail(raw, width: 480);
@@ -134,8 +134,17 @@ class _TrendThumb extends StatelessWidget {
     if (fromVideo != null && fromVideo.isNotEmpty) {
       return CanlifalImageUrls.thumbnail(fromVideo, width: 480);
     }
-    return SectionVisualCatalog.trendFallback(index);
+    return null;
   }
+
+  static const _trendAccents = [
+    Color(0xFFB832FF),
+    Color(0xFF8B5CF6),
+    Color(0xFFFFD700),
+    Color(0xFF38BDF8),
+    Color(0xFFA855F7),
+    Color(0xFFE11D48),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -149,9 +158,10 @@ class _TrendThumb extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              CanlifalNetworkImage(
-                url: _thumbUrl,
-                fit: BoxFit.cover,
+              HomeMysticCover(
+                slug: SectionVisualCatalog.trendFallbackSlug(index),
+                accent: _trendAccents[index % _trendAccents.length],
+                networkUrl: _networkThumbUrl,
                 thumbnailWidth: 480,
               ),
               DecoratedBox(

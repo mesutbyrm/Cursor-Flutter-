@@ -123,7 +123,10 @@ class GoldSection extends ConsumerWidget {
               return PremiumHomeGlassCard(
                 title: pkg.title,
                 subtitle: '₺${pkg.priceJeton ~/ 2}/ay · +${pkg.bonusJeton} jeton',
-                imageUrl: SectionVisualCatalog.goldTier(
+                coverSlug: SectionVisualCatalog.goldSlug(
+                  pkg.planId.isNotEmpty ? pkg.planId : pkg.id,
+                ),
+                networkUrl: SectionVisualCatalog.goldTier(
                   pkg.planId.isNotEmpty ? pkg.planId : pkg.id,
                   width: 400,
                 ),

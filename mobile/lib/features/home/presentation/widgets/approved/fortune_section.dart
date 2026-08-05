@@ -1,10 +1,8 @@
 import 'package:canlifal_social/core/images/canlifal_image_urls.dart';
-import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../fortune/presentation/data/fortune_catalog.dart';
-import '../../data/section_visual_catalog.dart';
 import '../../../../fortune/presentation/widgets/fortune_type_cover_image.dart';
 import '../../../domain/entities/home_fortune_card_entity.dart';
 import '../../providers/home_providers.dart';
@@ -78,7 +76,7 @@ class FortuneSection extends ConsumerWidget {
         accent: catalog?.accent ?? c.accent,
         imageUrl: apiImage != null && apiImage.isNotEmpty
             ? CanlifalImageUrls.resolve(apiImage)
-            : SectionVisualCatalog.fortuneCard(slug, width: 400),
+            : null,
       );
     }).toList();
   }
@@ -94,7 +92,7 @@ class FortuneSection extends ConsumerWidget {
           emoji: type.emoji,
           title: type.title,
           accent: type.accent,
-          imageUrl: SectionVisualCatalog.fortuneCard(type.slug, width: 400),
+          imageUrl: null,
         ));
       }
     }
@@ -143,17 +141,12 @@ class _FortuneCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (imageUrl != null && imageUrl!.trim().isNotEmpty)
-              CanlifalNetworkImage(
-                url: imageUrl!,
-                fit: BoxFit.cover,
-              )
-            else
-              FortuneTypeCoverImage(
-                slug: slug,
-                accent: accent,
-                imageWidth: 480,
-              ),
+            FortuneTypeCoverImage(
+              slug: slug,
+              accent: accent,
+              imageWidth: 480,
+              networkUrlOverride: imageUrl,
+            ),
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(

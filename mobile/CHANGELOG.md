@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.132+166 (2026-08-05)
+
+### Ana sayfa görselleri
+- **Trend videolar:** CDN küçük resim + yerel mistik kapak yedeği
+- **Fal & Tarot:** Yerel `.webp` mistik kapaklar (tarot, kahve, katina vb.)
+- **Keşfet / Gold:** Unsplash yerine yerel mistik görseller; ağ katmanı isteğe bağlı
+- **API:** `/api/mobile/home` fal kartı `image` alanı düzgün çözümlenir
+
 ## 1.0.131+165 (2026-08-05)
 
 ### Hediye, canlı yayın ve falcı senkron düzeltmeleri

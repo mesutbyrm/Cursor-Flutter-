@@ -1,18 +1,18 @@
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_visual.dart';
+import '../home_mystic_cover.dart';
 
 /// 2026 premium ana sayfa cam kartı — Keşfet / Gold satırları.
 class PremiumHomeGlassCard extends StatelessWidget {
   const PremiumHomeGlassCard({
     super.key,
     required this.title,
-    required this.imageUrl,
+    required this.coverSlug,
+    this.networkUrl,
     this.subtitle,
     this.heroTag,
     this.width = 148,
@@ -24,7 +24,8 @@ class PremiumHomeGlassCard extends StatelessWidget {
 
   final String title;
   final String? subtitle;
-  final String imageUrl;
+  final String coverSlug;
+  final String? networkUrl;
   final String? heroTag;
   final double width;
   final double height;
@@ -45,7 +46,12 @@ class PremiumHomeGlassCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              _BackgroundImage(url: imageUrl),
+              HomeMysticCover(
+                slug: coverSlug,
+                accent: accentColor,
+                networkUrl: networkUrl,
+                thumbnailWidth: 480,
+              ),
               DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -149,35 +155,5 @@ class PremiumHomeGlassCard extends StatelessWidget {
 
     if (heroTag == null) return tappable;
     return Hero(tag: heroTag!, child: tappable);
-  }
-}
-
-class _BackgroundImage extends StatelessWidget {
-  const _BackgroundImage({required this.url});
-
-  final String url;
-
-  @override
-  Widget build(BuildContext context) {
-    return CachedNetworkImage(
-      imageUrl: url,
-      fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 180),
-      placeholder: (_, _) => Shimmer.fromColors(
-        baseColor: const Color(0xFF1E1630),
-        highlightColor: const Color(0xFF3D2A5C),
-        child: const ColoredBox(color: Color(0xFF1E1630)),
-      ),
-      errorWidget: (_, _, _) => DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              DiscoverPremiumVisual.primary.withValues(alpha: 0.35),
-              DiscoverPremiumVisual.backgroundMid,
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

@@ -43,7 +43,8 @@ class DiscoverSection extends StatelessWidget {
               return PremiumHomeGlassCard(
                 title: tile.label,
                 subtitle: _subtitles[tile.id],
-                imageUrl: SectionVisualCatalog.discoverTile(tile.id),
+                coverSlug: SectionVisualCatalog.discoverSlug(tile.id),
+                networkUrl: SectionVisualCatalog.discoverTile(tile.id),
                 heroTag: 'home-discover-${tile.id}',
                 width: _cardW,
                 height: _cardH,

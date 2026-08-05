@@ -1,6 +1,4 @@
-import 'package:canlifal_social/core/images/canlifal_image_urls.dart';
-
-/// Ana sayfa bölümleri — fantastik Unsplash görselleri.
+/// Ana sayfa bölümleri — yerel mistik kapaklar + isteğe bağlı Unsplash katmanı.
 abstract final class SectionVisualCatalog {
   static const _base = 'https://images.unsplash.com';
 
@@ -28,7 +26,39 @@ abstract final class SectionVisualCatalog {
     'balık': '1506905925346-21bda4d32df4',
   };
 
-  /// Keşfet — neon fantezi temalar.
+  /// Keşfet kartı — yerel mistik kapak slug'ı.
+  static String discoverSlug(String id) => switch (id) {
+        'trends' => 'tarot',
+        'invite' => 'ask-fali',
+        'gifts' => 'melek-kartlari',
+        _ => 'tarot',
+      };
+
+  /// Gold tier — yerel mistik kapak slug'ı.
+  static String goldSlug(String planId) {
+    return switch (planId.toLowerCase()) {
+      'basic' => 'evet-hayir',
+      'premium' => 'yildiz-haritasi',
+      'gold' => 'katina',
+      'diamond' => 'cin-fali',
+      _ => 'tarot',
+    };
+  }
+
+  /// Trend video yedek — slug döngüsü.
+  static String trendFallbackSlug(int index) {
+    const slugs = [
+      'tarot',
+      'cin-fali',
+      'melek-kartlari',
+      'yildiz-haritasi',
+      'katina',
+      'numeroloji',
+    ];
+    return slugs[index % slugs.length];
+  }
+
+  /// Keşfet — neon fantezi temalar (ağ katmanı, isteğe bağlı).
   static String discoverTile(String id, {int width = 480}) {
     final photo = switch (id) {
       'trends' => '1635070041078-e363dbe005cb', // neon cyber city

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/images/canlifal_image_urls.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../fortune/domain/entities/fortune_type_entity.dart';
@@ -212,7 +213,9 @@ HomeFortuneCardEntity _mapFortuneCard(Map<String, dynamic> m) {
     title: _str(m, ['title', 'name']) ?? '',
     slug: slug,
     icon: _str(m, ['icon', 'emoji']) ?? '🔮',
-    imageUrl: _str(m, ['iconUrl', 'imageUrl', 'thumbnail']),
+    imageUrl: CanlifalImageUrls.resolve(
+      _str(m, ['image', 'imageUrl', 'iconUrl', 'thumbnail']),
+    ),
   );
 }
 
