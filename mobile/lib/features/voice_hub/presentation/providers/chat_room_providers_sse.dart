@@ -2,22 +2,24 @@ part of 'chat_room_providers.dart';
 
 /// SSE aboneliği — [VoiceRoomLiveController] monolith'ten ayrıldı.
 mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String> {
+  VoiceRoomLiveController get _sse => this as VoiceRoomLiveController;
 
   void _startSse() {
-    if (_roomKey.isEmpty) return;
-    if (_sseStarted) {
-      VoiceRoomDebugLog.log('sse.subscribe.skip', {'roomId': _roomKey});
+    final roomKey = _sse._roomKey;
+    if (roomKey.isEmpty) return;
+    if (_sse._sseStarted) {
+      VoiceRoomDebugLog.log('sse.subscribe.skip', {'roomId': roomKey});
       return;
     }
-    _sseStarted = true;
+    _sse._sseStarted = true;
     final storage = ref.read(tokenStorageProvider);
     final hub = ref.read(sseConnectionHubProvider);
-    hub.attachVoiceRoom(_roomKey);
-    final sse = hub.voiceRoom(_roomKey);
+    hub.attachVoiceRoom(roomKey);
+    final sse = hub.voiceRoom(roomKey);
     VoiceRoomDebugLog.log('sse.subscribe', {
-      'url': ChatRoomSseService.streamUrlFor(_roomKey),
-      'roomId': _roomKey,
-      'refs': hub.voiceRoomRefCount(_roomKey),
+      'url': ChatRoomSseService.streamUrlFor(roomKey),
+      'roomId': roomKey,
+      'refs': hub.voiceRoomRefCount(roomKey),
     });
     final giftsRemote = ref.read(liveGiftsRemoteProvider);
     final refreshDio = Dio(
@@ -33,27 +35,27 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
     );
     sse
         .connect(
-          roomId: _roomKey,
+          roomId: roomKey,
           accessToken: storage.readAccess,
           refreshTokens: () => tryRefreshAccessToken(refreshDio, storage),
           onConnected: () {
-            _markSseActivity();
-            GiftSyncLog.sseConnected(_roomKey);
+            _sse._markSseActivity();
+            GiftSyncLog.sseConnected(roomKey);
             if (!state.sseConnected) {
               state = state.copyWith(sseConnected: true, clearError: true);
             }
             ref.read(voiceRoomGiftRealtimeProvider).setSseActive(true);
             ref.read(voiceRoomGiftSocketProvider).disconnect();
-            _giftSocketStarted = false;
-            if (!state.selfInRoom || !_presenceJoined) {
-              unawaited(_joinPresence());
+            _sse._giftSocketStarted = false;
+            if (!state.selfInRoom || !_sse._presenceJoined) {
+              unawaited(_sse._joinPresence());
             }
             ref.read(voiceRoomDiagnosticProvider.notifier).setSse(true);
             if (!VoiceRoomBasicMode.enabled ||
                 VoiceRoomBasicMode.premiumEnabled) {
               ref.read(voiceRoomGiftRealtimeProvider).setSocketPreferred(false);
             }
-            _notifyRealtimeIfBasic(
+            _sse._notifyRealtimeIfBasic(
               VoiceRoomRealtimeKind.system,
               'Canlı bağlantı kuruldu',
             );
@@ -61,29 +63,29 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
           onDjUpdate: (payload) {
             if (payload.isNotEmpty) {
               if (VoiceRoomBasicMode.musicEnabled) {
-                _applyRoomVideoPayload(payload);
+                _sse._applyRoomVideoPayload(payload);
               }
-              unawaited(_applyDjRealtimePayload(payload));
+              unawaited(_sse._applyDjRealtimePayload(payload));
             } else {
-              unawaited(refresh(includeDj: true));
+              unawaited(_sse.refresh(includeDj: true));
             }
           },
           onSong: (payload) {
             if (VoiceRoomBasicMode.musicEnabled) {
-              _applyRoomVideoPayload(payload);
+              _sse._applyRoomVideoPayload(payload);
             }
-            unawaited(_applyDjRealtimePayload(payload));
+            unawaited(_sse._applyDjRealtimePayload(payload));
           },
           onSongQueue: (payload) {
             final ev = RoomSongBloc.eventFromSse(payload);
             if (ev != null) {
-              ref.read(roomSongBlocProvider(_roomKey)).add(ev);
+              ref.read(roomSongBlocProvider(roomKey)).add(ev);
             }
           },
           onGift: (payload) {
             dispatchGiftSsePayloadRef(
               ref: ref,
-              sessionKey: _roomKey,
+              sessionKey: roomKey,
               payload: payload,
               giftsRemote: giftsRemote,
               voiceRealtime: true,
@@ -91,7 +93,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
           },
           onMessage: (msg) {
             if (msg.kind == ChatMessageKind.systemJoin) {
-              _pushBasicChatEvent(msg);
+              _sse._pushBasicChatEvent(msg);
               return;
             }
             if (VoiceRoomBasicMode.enabled && !VoiceRoomBasicMode.premiumEnabled) {
@@ -100,22 +102,22 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             final exists = state.messages.any((m) => m.id == msg.id);
             if (exists) return;
             state = state.copyWith(messages: [...state.messages, msg]);
-            _onMusicRelatedChatMessage(msg);
-            _pushBasicChatEvent(msg);
+            _sse._onMusicRelatedChatMessage(msg);
+            _sse._pushBasicChatEvent(msg);
             if (msg.kind == ChatMessageKind.systemJoin &&
                 VoiceOfficialJoin.isEntranceWorthy(
                   content: msg.content,
                   membership: msg.user?.membership,
                   chatRole: msg.user?.chatRole,
                 ) &&
-                _markEntranceOnce(msg.content)) {
-              _showEnterBanner(msg.content);
+                _sse._markEntranceOnce(msg.content)) {
+              _sse._showEnterBanner(msg.content);
             }
           },
           onPresence: (users) {
-            final merged = _mergePresenceStable(users, source: 'sse');
-            _detectMicChanges(merged);
-            _syncPresenceJoinAnnouncements(merged);
+            final merged = _sse._mergePresenceStable(users, source: 'sse');
+            _sse._detectMicChanges(merged);
+            _sse._syncPresenceJoinAnnouncements(merged);
             final wasSse = state.sseConnected;
             state = state.copyWith(
               presence: merged,
@@ -127,12 +129,12 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             ref
                 .read(voiceRoomDiagnosticProvider.notifier)
                 .setPresence(joined: true, count: merged.length);
-            _patchHubPresenceCount(merged.length);
-            if (!wasSse) _schedulePoll();
+            _sse._patchHubPresenceCount(merged.length);
+            if (!wasSse) _sse._schedulePoll();
           },
-          onUserJoin: _handleSseUserJoin,
-          onUserLeave: _handleSseUserLeave,
-          onRoomEvent: _handleRoomEvent,
+          onUserJoin: _sse._handleSseUserJoin,
+          onUserLeave: _sse._handleSseUserLeave,
+          onRoomEvent: _sse._handleRoomEvent,
           onTyping: (users) {
             state = state.copyWith(typingUsers: users);
           },
@@ -146,20 +148,19 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             if (VoiceRoomBasicMode.enabled && !VoiceRoomBasicMode.premiumEnabled) {
               return;
             }
-            // PK battle — artık ayrı bir Socket.IO bağlantısı yerine
-            // odanın ana SSE akışından besleniyor.
             ref.read(pkBattleProvider.notifier).applyRemoteBattle(battle);
             ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
             VoiceRoomDebugLog.log('sse.pk', {
-              'roomId': _roomKey,
+              'roomId': roomKey,
               'battleId': battle.id,
               'event': event,
               'status': battle.status,
             });
           },
-          onSystem: _handleSseSystemEvent,
-          onAnnouncement: _handleSseAnnouncement,
-          onModeration: _handleSseModeration,
-          onRoomUpdate: _handleSseRoomUpdate,
+          onSystem: _sse._handleSseSystemEvent,
+          onAnnouncement: _sse._handleSseAnnouncement,
+          onModeration: _sse._handleSseModeration,
+          onRoomUpdate: _sse._handleSseRoomUpdate,
         );
+  }
 }

@@ -329,7 +329,7 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
           roomId: key,
           videoId: videoId ?? sync?.currentVideoId ?? dj.nowPlaying?.videoIdField,
           remote: ref.read(roomMusicRemoteProvider),
-          startMs: sync?.playbackPositionMs,
+          startMs: sync?.resolvedPositionMs(),
         );
   }
 }
