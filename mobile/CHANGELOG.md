@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.141+175 (2026-08-05) — Sesli oda RTC performans
+
+- `voice_room_rtc_page.dart`: selective `ref.watch` — footer UI, müzik mini oynatıcı, VIP giriş, teşhis banner izole widget'lara taşındı
+- `roomSongBlocProvider` artık yalnızca mini oynatıcı alt ağacında dinlenir (tüm sayfa yeniden çizilmez)
+- `voiceRoomUiProvider` / `voiceRoomMusicSessionProvider` tam state yerine `select` kullanımı
+
 ## 1.0.140+174 (2026-08-05) — Backend senkron P1 (SSE poll azaltma)
 
 - **Canlı falcı seansı:** SSE bağlıyken sinyal poll 30 sn (önceden 3 sn); oda/sohbet poll zaten SSE-aware

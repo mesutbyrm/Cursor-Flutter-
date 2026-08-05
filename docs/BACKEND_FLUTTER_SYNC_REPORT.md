@@ -2,7 +2,7 @@
 
 > **Tarih:** 5 Ağustos 2026  
 > **Tek kaynak:** `https://canlifal.com` + `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` + `api/` mirror  
-> **Sürüm:** `1.0.140+174` (SSE poll azaltma P1)
+> **Sürüm:** `1.0.141+175` (RTC selective watch)
 
 ## Özet
 
@@ -15,7 +15,7 @@
 | Sesli oda koltuk | `POST .../seats` `{action:take}` | ✅ `_tryAutoPrivilegedSeat` | Doğrula |
 | Oda ayarları | `PATCH .../settings` | ⚠️ 2 ölü sheet `@Deprecated` + aktif panel | P2 |
 | Jeton | Sunucu hesaplar | ✅ `wallet`/`credits` okuma | İzle |
-| Performans | SSE tercih | ⚠️ `voice_room_rtc_page` mega-widget | P1 |
+| Performans | SSE tercih | ✅ RTC selective watch (1.0.141) | Tamam |
 
 ---
 
@@ -81,7 +81,7 @@ Flutter: `joinSeat` → önce `join-seat` (404 toleranslı), sonra `seats`. Oda 
 | `psychic_teller_dashboard_screen.dart` | Event bus + 20 sn yedek poll (1.0.140) |
 | `psychic_incoming_host.dart` | SSE istek → event bus yayını (1.0.140) |
 | `voice_room_sheets.dart` / `voice_room_hub_settings.dart` | Ölü sheet'ler `@Deprecated` (1.0.140) |
-| `docs/BACKEND_FLUTTER_SYNC_REPORT.md` | Bu rapor |
+| `voice_room_rtc_page.dart` | Selective `ref.watch` + izole alt widget'lar (1.0.141) |
 
 ---
 
@@ -95,7 +95,7 @@ Flutter: `joinSeat` → önce `join-seat` (404 toleranslı), sonra `seats`. Oda 
 - [x] `psychic_video_controller.dart` — SSE-primary, poll azalt (1.0.140)
 - [x] `psychic_teller_dashboard_screen.dart` — event bus + yavaş yedek poll (1.0.140)
 - [x] `live_broadcast_room_page.dart` — SSE bağlıyken poll yavaşlat (1.0.140)
-- [ ] `voice_room_rtc_page.dart` — selective `ref.watch` / widget bölme
+- [x] `voice_room_rtc_page.dart` — selective `ref.watch` / widget bölme (1.0.141)
 - [x] Ölü `voice_room_sheets.dart` / `voice_room_hub_settings.dart` → `@Deprecated`
 
 ### P2 — Tam parity

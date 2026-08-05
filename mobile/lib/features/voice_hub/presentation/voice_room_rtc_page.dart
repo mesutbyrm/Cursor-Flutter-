@@ -1068,8 +1068,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
     final roomErrorBanner =
         VoiceRoomErrorDisplay.bannerMessage(live.error, live: live);
-    final diagnostic = ref.watch(voiceRoomDiagnosticProvider);
-    final ui = ref.watch(voiceRoomUiProvider);
     final sessionKey =
         room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
     final online = live.onlineCountFor(room);
@@ -1110,13 +1108,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final metrics = VoiceRoomResponsiveMetrics.of(context);
     final keyboardOpen = metrics.keyboardOpen;
     final chatMaxH = metrics.chatBlockH;
-    final musicSession = ref.watch(voiceRoomMusicSessionProvider);
-    final musicMuted = ref.watch(voiceRoomUiProvider).effectiveMusicMuted;
+    final musicDismissed = ref.watch(
+      voiceRoomMusicSessionProvider.select(
+        (s) => s.dismissed || s.userDismissedPlayer,
+      ),
+    );
     final hasActiveMusicPlayer = (live.dj.playing ||
             live.dj.nowPlaying != null ||
             live.dj.musicQueue.isNotEmpty) &&
-        !musicSession.dismissed &&
-        !musicSession.userDismissedPlayer;
+        !musicDismissed;
     final duyuru = ((room.descTr ?? room.rulesTr)?.trim().isNotEmpty == true)
         ? (room.descTr ?? room.rulesTr)!.trim()
         : 'Sohbet odasına hoş geldiniz. Saygılı olun, keyifli sohbetler!';
@@ -1347,9 +1347,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       }
     });
 
-    return BlocProvider.value(
-      value: ref.watch(roomSongBlocProvider(_liveRoomKey)),
-      child: GiftEventListener(
+    return GiftEventListener(
       sessionKey: sessionKey,
       isHost: isOwner,
       child: PopScope(
@@ -1563,11 +1561,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        if (diagnostic.uiBuildError != null)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: VoiceRoomDiagnosticCard(state: diagnostic),
-                          ),
+                        const _VoiceRoomRtcDiagnosticBanner(),
                         VoiceWebOwnerStage(
                               room: room,
                               presence: live.presence,
@@ -1786,12 +1780,19 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         (s) => (s.messages, s.realtimeEvents, s.presence),
                       ),
                     );
+                    final headphonesOn = ref.watch(
+                      voiceRoomUiProvider.select((s) => s.headphonesOn),
+                    );
+                    final joinNotificationsEnabled = ref.watch(
+                      voiceRoomUiProvider
+                          .select((s) => s.chatNotificationSoundEnabled),
+                    );
                     return VoiceRoomSpecFooter(
                       controller: _messageCtrl,
                       focusNode: _messageFocus,
                       onSend: () => _sendChatMessage(room),
                       onToggleAudioOutput: _toggleHeadphones,
-                      headphonesOn: ui.headphonesOn,
+                      headphonesOn: headphonesOn,
                       onMicToggle: _toggleMic,
                       micOn: !_isMicMuted,
                       micEnabled: _audioReady,
@@ -1814,7 +1815,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       messages: footerLive.$1,
                       onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
                       onChanged: _onChatChanged,
-                      joinNotificationsEnabled: ui.chatNotificationSoundEnabled,
+                      joinNotificationsEnabled: joinNotificationsEnabled,
                       showMusicRequest: showMusicRequestFab,
                     );
                   },
@@ -1853,36 +1854,19 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 ),
               ),
             if (_liveRoomKey.isNotEmpty)
-              RoomSongMiniPlayer(
-                roomId: _liveRoomKey,
-                canControl: canControlMusic,
-                bottomInset: 118,
-                muted: musicMuted,
-                hidden: true,
+              BlocProvider.value(
+                value: ref.read(roomSongBlocProvider(_liveRoomKey)),
+                child: _VoiceRoomRtcSongMiniPlayer(
+                  roomId: _liveRoomKey,
+                  canControl: canControlMusic,
+                  bottomInset: 118,
+                ),
               ),
             if (_showVipEntrance && user != null)
-              Builder(
-                builder: (context) {
-                  final name = user.displayName?.trim().isNotEmpty == true
-                      ? user.displayName!.trim()
-                      : user.username;
-                  final cosmetic = ref.watch(resolvedEntranceEffectProvider);
-                  if (cosmetic != null) {
-                    return CosmeticEntranceOverlay(
-                      userName: name,
-                      effectKind: cosmetic.effectKind,
-                      onFinished: () {
-                        if (mounted) setState(() => _showVipEntrance = false);
-                      },
-                    );
-                  }
-                  return VipEntranceOverlay(
-                    tier: ref.watch(vipTierProvider),
-                    userName: name,
-                    onFinished: () {
-                      if (mounted) setState(() => _showVipEntrance = false);
-                    },
-                  );
+              _VoiceRoomRtcVipEntrance(
+                user: user,
+                onFinished: () {
+                  if (mounted) setState(() => _showVipEntrance = false);
                 },
               ),
             // Sesli sohbet prompt: sağ kayar DJ paneli kaldırıldı; müzik !istek + komutlar.
@@ -1890,7 +1874,79 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         ),
       ),
     ),
-    ),
+    );
+  }
+}
+
+/// Teşhis kartı — yalnızca hata varken provider dinler.
+class _VoiceRoomRtcDiagnosticBanner extends ConsumerWidget {
+  const _VoiceRoomRtcDiagnosticBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final diagnostic = ref.watch(voiceRoomDiagnosticProvider);
+    if (diagnostic.uiBuildError == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: VoiceRoomDiagnosticCard(state: diagnostic),
+    );
+  }
+}
+
+/// Müzik mini oynatıcı — Bloc + mute durumu izole.
+class _VoiceRoomRtcSongMiniPlayer extends ConsumerWidget {
+  const _VoiceRoomRtcSongMiniPlayer({
+    required this.roomId,
+    required this.canControl,
+    required this.bottomInset,
+  });
+
+  final String roomId;
+  final bool canControl;
+  final double bottomInset;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final muted = ref.watch(
+      voiceRoomUiProvider.select((s) => s.effectiveMusicMuted),
+    );
+    return RoomSongMiniPlayer(
+      roomId: roomId,
+      canControl: canControl,
+      bottomInset: bottomInset,
+      muted: muted,
+      hidden: true,
+    );
+  }
+}
+
+/// VIP giriş animasyonu — kozmetik/tier provider'ları izole.
+class _VoiceRoomRtcVipEntrance extends ConsumerWidget {
+  const _VoiceRoomRtcVipEntrance({
+    required this.user,
+    required this.onFinished,
+  });
+
+  final UserEntity user;
+  final VoidCallback onFinished;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final name = user.displayName?.trim().isNotEmpty == true
+        ? user.displayName!.trim()
+        : user.username;
+    final cosmetic = ref.watch(resolvedEntranceEffectProvider);
+    if (cosmetic != null) {
+      return CosmeticEntranceOverlay(
+        userName: name,
+        effectKind: cosmetic.effectKind,
+        onFinished: onFinished,
+      );
+    }
+    return VipEntranceOverlay(
+      tier: ref.watch(vipTierProvider),
+      userName: name,
+      onFinished: onFinished,
     );
   }
 }
