@@ -213,6 +213,7 @@ class TrtcRoomManager {
         } else if (remoteAnchorUserId == userId) {
           remoteVideoAvailable.value = false;
           stopRemoteView(userId);
+          _clearRemoteAnchor();
         }
       },
       onUserAudioAvailable: (userId, available) {
@@ -268,10 +269,8 @@ class TrtcRoomManager {
     } else if (publishAsAnchor) {
       _cloud!.startLocalAudio(TRTCAudioQuality.speech);
       _cloud!.muteLocalVideo(TRTCVideoStreamType.big, false);
-      try {
-        // View henüz yokken yayınlamayı dene; gerçek view bağlanınca yeniden bağlanır.
-        _cloud!.startLocalPreview(true, 0);
-      } catch (_) {}
+      // Yerel önizleme yalnızca TrtcLocalVideoView.onViewCreated ile bağlanır.
+      // viewId=0 kullanımı uzak tam ekran yüzeyini ele geçirip kamera flip-flop yapar.
       _micOn = true;
       _cameraOn = true;
       _device?.setAudioRoute(TXAudioRoute.speakerPhone);
@@ -309,9 +308,7 @@ class TrtcRoomManager {
 
   void _setRemoteAnchor(String userId) {
     if (userId.isEmpty || userId == _localUserId) return;
-    if (!_twoWayVideo &&
-        _expectedAnchorUserId != null &&
-        userId != _expectedAnchorUserId) {
+    if (_expectedAnchorUserId != null && userId != _expectedAnchorUserId) {
       return;
     }
     remoteAnchorUserId = userId;
@@ -379,16 +376,7 @@ class TrtcRoomManager {
     if (_cloud == null) return;
     if (!_inRoom && !_previewOnly) return;
     if (!_isHost && !_twoWayVideo && !_previewOnly) return;
-    if (enabled) {
-      _cloud!.muteLocalVideo(TRTCVideoStreamType.big, false);
-      if (_twoWayVideo || _isHost) {
-        try {
-          _cloud!.startLocalPreview(true, 0);
-        } catch (_) {}
-      }
-    } else {
-      _cloud!.muteLocalVideo(TRTCVideoStreamType.big, true);
-    }
+    _cloud!.muteLocalVideo(TRTCVideoStreamType.big, !enabled);
     _cameraOn = enabled;
   }
 

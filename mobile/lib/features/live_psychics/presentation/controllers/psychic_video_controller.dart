@@ -151,6 +151,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   final _seenTipEventIds = <String>{};
   String? _joinedTrtcRoom;
   var _rejoiningRtc = false;
+  var _joiningRtc = false;
 
   TrtcRoomManager get trtc => _trtc;
   bool get micOn => _trtc.micOn;
@@ -172,10 +173,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     await PsychicSessionStore.save(session);
     _startTimers();
     await _syncRoomInfo(startTimerIfTeller: true);
-    await Future.wait([
-      _joinRtc(),
-      _connectRoomSse(),
-    ]);
+    await _joinRtc();
+    await _connectRoomSse();
     _startChatPoll();
     if (!session.isClient && !state.timerStarted) {
       unawaited(_ensureTimerStarted());
@@ -353,7 +352,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       final joined = _joinedTrtcRoom;
       if (joined != null &&
           _canonicalRoomChannel(newRoomId) != _canonicalRoomChannel(joined) &&
-          (state.rtcReady || state.rtcError != null)) {
+          (state.rtcReady || state.rtcError != null) &&
+          !_joiningRtc &&
+          !_rejoiningRtc) {
         await _rejoinRtc();
       }
     }
@@ -369,7 +370,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   Future<void> _rejoinRtc() async {
-    if (_disposed || state.leaving || _rejoiningRtc) return;
+    if (_disposed || state.leaving || _rejoiningRtc || _joiningRtc) return;
     final roomId = _activeTrtcRoomId();
     if (roomId.isEmpty) return;
     if (_canonicalRoomChannel(_joinedTrtcRoom) ==
@@ -531,7 +532,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       final joined = _joinedTrtcRoom;
       if (joined != null &&
           _canonicalRoomChannel(newRoomId) != _canonicalRoomChannel(joined) &&
-          (state.rtcReady || state.rtcError != null)) {
+          (state.rtcReady || state.rtcError != null) &&
+          !_joiningRtc &&
+          !_rejoiningRtc) {
         unawaited(_rejoinRtc());
       }
     }
@@ -587,12 +590,16 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     required UserEntity user,
     required String roomId,
   }) async {
+    if (_joiningRtc || _rejoiningRtc) return;
+    _joiningRtc = true;
+    try {
     LiveDebugLog.log('psychic.trtc.join.request', {
       'sessionId': session.sessionId,
       'roomId': roomId,
       'userId': user.id,
     });
 
+    await _trtcCoordinator?.leave();
     _trtcCoordinator?.dispose();
     _trtcCoordinator = createTrtcLiveRoomCoordinator(ref);
 
@@ -622,6 +629,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     );
     if (!session.isClient && !state.timerStarted) {
       unawaited(_ensureTimerStarted());
+    }
+    } finally {
+      _joiningRtc = false;
     }
   }
 
@@ -805,7 +815,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   void toggleCamera() {
     _trtc.setCameraEnabled(!_trtc.cameraOn);
-    state = state.copyWith(localPreviewKey: state.localPreviewKey + 1);
   }
 
   void switchCamera() => _trtc.switchCamera();

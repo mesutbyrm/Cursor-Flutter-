@@ -79,29 +79,31 @@ class PsychicVideoCallLayer extends StatelessWidget {
               )
             else
               const LiveRoomVideoBackground(),
-            if (ctrl.cameraOn)
-              Positioned(
-                top: 12,
-                right: 12,
-                width: 100,
-                height: 140,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.35),
-                      width: 1.5,
+            Positioned(
+              top: 12,
+              right: 12,
+              width: 100,
+              height: 140,
+              child: Opacity(
+                opacity: ctrl.cameraOn ? 1 : 0,
+                child: IgnorePointer(
+                  ignoring: !ctrl.cameraOn,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.35),
+                        width: 1.5,
+                      ),
                     ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: TrtcLocalVideoView(
-                      key: ValueKey(state.localPreviewKey),
-                      manager: ctrl.trtc,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: TrtcLocalVideoView(manager: ctrl.trtc),
                     ),
                   ),
                 ),
               ),
+            ),
           ],
         );
       },

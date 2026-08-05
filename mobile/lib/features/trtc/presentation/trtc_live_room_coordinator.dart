@@ -219,5 +219,6 @@ class TrtcLiveRoomCoordinator {
     _heartbeat?.cancel();
     _connectionLostController.close();
     _roomManager.onConnectionLost = null;
+    unawaited(leave());
   }
 }

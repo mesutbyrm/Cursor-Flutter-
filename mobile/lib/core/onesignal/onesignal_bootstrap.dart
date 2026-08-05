@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 import '../push/push_navigation_handler.dart';
 import 'onesignal_config.dart';
+import '../../features/live_psychics/presentation/controllers/psychic_push_action_bridge.dart';
 
 typedef OneSignalTokenRefreshCallback = void Function();
 
@@ -38,9 +41,22 @@ class OneSignalBootstrap {
       });
 
       OneSignal.Notifications.addClickListener((event) {
-        PushNavigationHandler.handleNotificationTap(
-          event.notification.additionalData,
-        );
+        final actionId = event.result.actionId;
+        final data = event.notification.additionalData;
+        final map = data == null
+            ? <String, dynamic>{}
+            : Map<String, dynamic>.from(
+                data.map((k, v) => MapEntry(k.toString(), v)),
+              );
+        unawaited(() async {
+          final handled = await PsychicPushActionBridge.handle(
+            actionId: actionId,
+            data: map.isEmpty ? null : map,
+          );
+          if (!handled) {
+            PushNavigationHandler.handleNotificationTap(map.isEmpty ? null : map);
+          }
+        }());
       });
 
       OneSignal.Notifications.addForegroundWillDisplayListener((event) {

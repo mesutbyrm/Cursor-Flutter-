@@ -1,5 +1,21 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.133+167 (2026-08-05) — WIP senkronizasyon
+
+### Canlı falcı TRTC
+- Tek join kilidi (`_joiningRtc`); SSE/room poll ile çakışan rejoin engellendi
+- `startLocalPreview(viewId=0)` kaldırıldı — kamera flip-flop düzeltmesi
+- Yerel PiP sabit viewId; kamera aç/kapa yalnızca mute/unmute
+- `expectedAnchorUserId` 1:1 görüşmede zorunlu
+- Bootstrap: önce TRTC join, sonra SSE (paralel rejoin yok)
+
+### Sesli oda !istek / DJ
+- SSE `dj` → `RoomSongBloc.eventFromSse` doğrudan besleme
+- Oynatma sırasında video katmanı sıfırlanmıyor; `_syncRoomVideo` çağrılıyor
+
+### Push (falcı çevrimdışı)
+- OneSignal bildirim aksiyonu: Kabul/Reddet → `respondSession` + deep link
+
 ## 1.0.132+166 (2026-08-05)
 
 ### Ana sayfa görselleri

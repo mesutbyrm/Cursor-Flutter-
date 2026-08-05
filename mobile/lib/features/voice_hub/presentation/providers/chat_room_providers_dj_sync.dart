@@ -157,6 +157,10 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
     if (likes != null) {
       state = state.copyWith(musicLikeCount: likes);
     }
+    final blocEv = RoomSongBloc.eventFromSse(map);
+    if (blocEv != null && key.isNotEmpty) {
+      ref.read(roomSongBlocProvider(key)).add(blocEv);
+    }
     final sync = RoomPlaybackSync.fromPayload(map);
     final ui = ref.read(voiceRoomUiProvider);
     final sig = _live._djPlaybackSignature(dj, muted: ui.effectiveMusicMuted);
@@ -198,11 +202,6 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
     final session = ref.read(voiceRoomMusicSessionProvider);
     final player = ref.read(voiceRoomDjPlayerProvider);
 
-    await player.stop();
-    if (key.isNotEmpty) {
-      ref.read(roomVideoControllerProvider(key).notifier).clear();
-    }
-
     if (session.userDismissedPlayer) {
       _live._lastDjPlaybackSignature =
           _live._djPlaybackSignature(dj, muted: muted);
@@ -227,8 +226,14 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
     if (shouldPlay) {
       await VoiceRoomMusicAudioSession.activateForPlayback();
       _syncRoomSongBloc();
+      _live._syncRoomVideo(effectiveDj, sync: sync);
       _live._lastDjPlaybackSignature = sig;
       return effectiveDj;
+    }
+
+    await player.stop();
+    if (key.isNotEmpty) {
+      ref.read(roomVideoControllerProvider(key).notifier).clear();
     }
 
     _live._lastDjPlaybackSignature =

@@ -9,6 +9,7 @@ import '../../features/admin/presentation/providers/staff_access_provider.dart';
 import '../../features/auth/domain/entities/user_entity.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/live_psychics/presentation/controllers/psychic_flow.dart';
+import '../../features/live_psychics/presentation/controllers/psychic_push_action_bridge.dart';
 import '../../features/live_psychics/presentation/controllers/psychic_invite_coordinator.dart';
 import '../../features/live_psychics/presentation/controllers/psychic_incoming_controller.dart';
 import '../../features/live_psychics/presentation/providers/live_psychics_providers.dart';
@@ -133,6 +134,27 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
       );
       PushNavigationHandler.staffCanManagePayments = () =>
           ref.read(staffAccessProvider).canManagePayments;
+      PsychicPushActionBridge.onRespond = (
+        String sessionId,
+        String action,
+        Map<String, dynamic> data,
+      ) async {
+        final repo = ref.read(livePsychicsRepositoryProvider);
+        await repo.respondSession(sessionId, action: action);
+        if (action == 'accept') {
+          final tellerId = data['tellerId']?.toString() ??
+              data['tellerUserId']?.toString();
+          await PsychicFlow.resumeFromPush(
+            router: ref.read(goRouterProvider),
+            sessionId: sessionId,
+            tellerId: tellerId,
+            repo: repo,
+          );
+        } else {
+          ref.read(psychicIncomingQueueProvider.notifier).remove(sessionId);
+          ref.read(psychicSessionCancelSignalProvider.notifier).signal(sessionId);
+        }
+      };
       _queuePushSync(null, ref.read(authControllerProvider));
     });
 
