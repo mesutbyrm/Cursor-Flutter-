@@ -46,6 +46,8 @@ import '../../features/live/presentation/pages/live_swipe_viewer_page.dart';
 import '../../features/social/presentation/pages/social_create_post_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
 import '../../features/social/presentation/pages/social_post_detail_page.dart';
+import '../../features/social/presentation/pages/story_viewer_page.dart';
+import '../../features/social/presentation/utils/story_viewer_args.dart';
 import '../../features/gifts/presentation/pages/gift_collection_page.dart';
 import '../../features/gifts/domain/admin_gift_type.dart';
 import '../../features/gifts/presentation/pages/admin_gift_management_page.dart';
@@ -330,6 +332,27 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                         postId: state.pathParameters['postId'] ?? '',
                       ),
                     ),
+                  ),
+                  GoRoute(
+                    path: 'stories/view',
+                    pageBuilder: (context, state) {
+                      final args = state.extra;
+                      if (args is! StoryViewerArgs) {
+                        return AppPageTransitions.fadeSlide(
+                          key: state.pageKey,
+                          child: const Scaffold(
+                            body: Center(child: Text('Hikâye bulunamadı')),
+                          ),
+                        );
+                      }
+                      return AppPageTransitions.fadeSlide(
+                        key: state.pageKey,
+                        child: StoryViewerPage(
+                          ring: args.ring,
+                          initialIndex: args.initialIndex,
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

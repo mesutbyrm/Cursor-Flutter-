@@ -1916,6 +1916,19 @@ class VoiceRoomLiveController
   void _showMusicRequestFlashLine(String line) {
     if (line.trim().isEmpty) return;
     _appendSongRequestChatLine(line);
+    pulseMusicRequestFlash(line);
+  }
+
+  /// Üst müzik paneli / flash banner — kısa süreli görünür mesaj.
+  void pulseMusicRequestFlash(String line) {
+    final text = line.trim();
+    if (text.isEmpty || !_sessionActive) return;
+    _musicRequestFlashTimer?.cancel();
+    state = state.copyWith(musicRequestFlash: text);
+    _musicRequestFlashTimer = Timer(const Duration(seconds: 6), () {
+      if (!_sessionActive) return;
+      state = state.copyWith(clearMusicRequestFlash: true);
+    });
   }
 
   void _appendSongRequestChatLine(String line, {String? dedupeKey}) {

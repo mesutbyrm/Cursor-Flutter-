@@ -14,6 +14,8 @@ import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_r
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_invite_diagnostic_card.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_rtc_session_report_card.dart';
 
 class PsychicTellerDashboardState {
   const PsychicTellerDashboardState({
@@ -319,7 +321,7 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                 ref.read(psychicTellerDashboardProvider.notifier).refresh(),
             child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-              itemCount: 6 + requests.length,
+              itemCount: 8 + requests.length,
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return RepaintBoundary(
@@ -360,6 +362,19 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                   );
                 }
                 if (index == 4) {
+                  return const RepaintBoundary(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: PsychicInviteDiagnosticCard(),
+                    ),
+                  );
+                }
+                if (index == 5) {
+                  return const RepaintBoundary(
+                    child: PsychicRtcSessionReportCard(),
+                  );
+                }
+                if (index == 6) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 16, bottom: 12),
                     child: Text(
@@ -368,7 +383,7 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                     ),
                   );
                 }
-                if (index == 5) {
+                if (index == 7) {
                   if (requests.isEmpty) {
                     return Text(
                       profile.isOnline
@@ -379,7 +394,7 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                   }
                   return const SizedBox.shrink();
                 }
-                final req = requests[index - 6];
+                final req = requests[index - 8];
                 return RepaintBoundary(
                   child: _PendingTile(
                     request: req,

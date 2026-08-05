@@ -330,6 +330,7 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
           videoId: videoId ?? sync?.currentVideoId ?? dj.nowPlaying?.videoIdField,
           remote: ref.read(roomMusicRemoteProvider),
           startMs: sync?.resolvedPositionMs(),
+          onError: _live.pulseMusicRequestFlash,
         );
   }
 }

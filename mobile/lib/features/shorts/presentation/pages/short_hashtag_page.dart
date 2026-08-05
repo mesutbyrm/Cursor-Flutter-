@@ -80,53 +80,76 @@ class _ShortHashtagPageState extends ConsumerState<ShortHashtagPage> {
                 ],
               );
             }
-            return GridView.builder(
+            return CustomScrollView(
               controller: _scroll,
-              padding: const EdgeInsets.all(12),
               physics: const AlwaysScrollableScrollPhysics(
                 parent: PremiumMotion.listPhysics,
               ),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 9 / 14,
-              ),
-              itemCount: list.length + (state.loadingMore ? 1 : 0),
-              itemBuilder: (context, i) {
-                if (i >= list.length) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  );
-                }
-                final v = list[i];
-                return ListPerf.repaint(
-                  HeroShortThumb(
-                    videoId: v.id,
-                    child: GestureDetector(
-                      onTap: () => context.push('/shorts?videoId=${v.id}'),
-                      child: ClipRRect(
-                        borderRadius: ShortsPremiumTheme.tileRadius,
-                        child: v.thumbnailUrl != null
-                            ? CanlifalNetworkImage(
-                                url: v.thumbnailUrl!,
-                                fit: BoxFit.cover,
-                              )
-                            : ColoredBox(
-                                color: context.colors.surfaceElevated,
-                                child: Icon(
-                                  Icons.play_circle_outline,
-                                  color: context.colors.onSurfaceMuted,
-                                ),
-                              ),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                    child: Text(
+                      '${list.length}${state.hasMore ? '+' : ''} video',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: context.colors.onSurfaceMuted,
                       ),
                     ),
                   ),
-                );
-              },
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.all(12),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 9 / 14,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, i) {
+                        if (i >= list.length) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          );
+                        }
+                        final v = list[i];
+                        return ListPerf.repaint(
+                          HeroShortThumb(
+                            videoId: v.id,
+                            child: GestureDetector(
+                              onTap: () =>
+                                  context.push('/shorts?videoId=${v.id}'),
+                              child: ClipRRect(
+                                borderRadius: ShortsPremiumTheme.tileRadius,
+                                child: v.thumbnailUrl != null
+                                    ? CanlifalNetworkImage(
+                                        url: v.thumbnailUrl!,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : ColoredBox(
+                                        color: context.colors.surfaceElevated,
+                                        child: Icon(
+                                          Icons.play_circle_outline,
+                                          color: context.colors.onSurfaceMuted,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      childCount:
+                          list.length + (state.loadingMore ? 1 : 0),
+                    ),
+                  ),
+                ),
+              ],
             );
           },
         ),

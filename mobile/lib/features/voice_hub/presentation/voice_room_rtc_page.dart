@@ -84,6 +84,7 @@ import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_music_background_layer.dart';
+import 'widgets/voice_room/voice_room_center_music_panel.dart';
 import 'widgets/voice_room/voice_room_music_queue_mini_card.dart';
 import 'widgets/voice_room/voice_room_music_request_fab.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
@@ -1599,6 +1600,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               remoteTrtcUserId:
                                   _audio?.trtcManager.remoteAnchorUserId,
                             ),
+                        VoiceRoomCenterMusicPanel(
+                          room: room,
+                          live: live,
+                          canControlMusic: canControlMusic,
+                          canCloseMusic: canCloseMusic,
+                        ),
                         Consumer(
                           builder: (context, ref, _) {
                             final banner = ref.watch(
@@ -1808,7 +1815,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
                       onChanged: _onChatChanged,
                       joinNotificationsEnabled: ui.chatNotificationSoundEnabled,
-                      showMusicRequest: false,
+                      showMusicRequest: showMusicRequestFab,
                     );
                   },
                 ),

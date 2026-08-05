@@ -128,6 +128,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   var _viewerAudioOn = true;
   Timer? _signalPoll;
   String? _signalSince;
+  var _signalPollFailures = 0;
+  String? _signalPollError;
   Timer? _guestJoinPoll;
   Timer? _fortunePoll;
   Timer? _lazyGiftsTimer;
@@ -881,6 +883,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   void _startLiveSignalPoll(String streamId) {
     _stopLiveSignalPoll();
     _signalSince = null;
+    _signalPollFailures = 0;
+    _signalPollError = null;
     _signalPoll = Timer.periodic(const Duration(seconds: 2), (_) {
       unawaited(_tickLiveSignals(streamId));
     });
@@ -891,6 +895,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _signalPoll?.cancel();
     _signalPoll = null;
     _signalSince = null;
+    _signalPollFailures = 0;
+    _signalPollError = null;
   }
 
   Future<void> _tickLiveSignals(String streamId) async {
@@ -898,6 +904,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     try {
       final remote = ref.read(liveStreamExtrasProvider);
       final signals = await remote.pollSignals(streamId, since: _signalSince);
+      if (mounted && _signalPollError != null) {
+        setState(() => _signalPollError = null);
+      }
+      _signalPollFailures = 0;
       for (final sig in signals) {
         final created = sig['createdAt']?.toString();
         if (created != null && created.isNotEmpty) {
@@ -907,7 +917,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         handleLiveLikeSignal(ref, streamId: streamId, signal: sig);
         _handlePkSignal(streamId, sig);
       }
-    } catch (_) {}
+    } catch (e) {
+      if (!mounted) return;
+      _signalPollFailures++;
+      if (_signalPollFailures >= 3) {
+        setState(() {
+          _signalPollError =
+              'Canlı sinyal bağlantısı kesildi — yeniden deneniyor…';
+        });
+      }
+    }
   }
 
   /// PK skor sinyali — anlık senkron (poll'u beklemeden).
@@ -1812,6 +1831,25 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               left: 16,
               bottom: 128,
               child: _liveConnectingBadge(),
+            ),
+          if (_signalPollError != null && _rtcError == null)
+            Positioned(
+              top: MediaQuery.paddingOf(context).top + 52,
+              left: 16,
+              right: 16,
+              child: Material(
+                color: Colors.orange.withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Text(
+                    _signalPollError!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 12, color: Colors.white),
+                  ),
+                ),
+              ),
             ),
           if (_rtcError != null)
             Center(

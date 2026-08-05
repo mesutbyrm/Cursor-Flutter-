@@ -15,6 +15,7 @@ import '../../domain/entities/short_explore_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_explore_providers.dart';
 import '../providers/shorts_providers.dart';
+import '../utils/reverse_geocode_helper.dart';
 import '../utils/shorts_count_format.dart';
 import 'short_music_feed_page.dart';
 import '../widgets/shorts_premium_theme.dart';
@@ -98,10 +99,15 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
                     return;
                   }
                   final pos = await Geolocator.getCurrentPosition();
+                  if (!context.mounted) return;
+                  final label = await reverseGeocodeLabel(
+                    pos.latitude,
+                    pos.longitude,
+                  );
                   if (context.mounted) {
                     Navigator.pop(
                       context,
-                      '__gps__:${pos.latitude},${pos.longitude}',
+                      '__gps__:${pos.latitude},${pos.longitude}:$label',
                     );
                   }
                 },
@@ -137,12 +143,17 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
     if (picked == '__clear__') {
       await ref.read(shortExploreLocationProvider.notifier).clear();
     } else if (picked.startsWith('__gps__:')) {
-      final coords = picked.substring('__gps__:'.length).split(',');
+      final body = picked.substring('__gps__:'.length);
+      final parts = body.split(':');
+      final coords = parts.first.split(',');
       if (coords.length == 2) {
         final lat = double.tryParse(coords[0]);
         final lng = double.tryParse(coords[1]);
+        final label = parts.length > 1 && parts[1].trim().isNotEmpty
+            ? parts.sublist(1).join(':')
+            : 'Konumum';
         await ref.read(shortExploreLocationProvider.notifier).setLocation(
-              'Konumum',
+              label,
               lat: lat,
               lng: lng,
             );

@@ -296,16 +296,23 @@ class SocialRemoteDataSource {
   }
 
   /// POST `/api/stories` — presigned yükleme + JSON (üretim sözleşmesi).
-  Future<void> createStoryImage(String imagePath) async {
+  Future<void> createStoryImage(String imagePath) =>
+      _createStory(imagePath, mediaType: 'image');
+
+  /// POST `/api/stories` — video hikâye.
+  Future<void> createStoryVideo(String videoPath) =>
+      _createStory(videoPath, mediaType: 'video');
+
+  Future<void> _createStory(String localPath, {required String mediaType}) async {
     final upload = _upload;
     if (upload == null) {
       throw const ApiException('Hikâye yüklemesi kullanılamıyor');
     }
-    final file = File(imagePath);
+    final file = File(localPath);
     if (!await file.exists()) {
-      throw const ApiException('Görsel bulunamadı');
+      throw const ApiException('Medya bulunamadı');
     }
-    final mediaUrl = await upload.uploadImageFile(
+    final mediaUrl = await upload.uploadMediaFile(
       file,
       folder: 'stories',
       isPublic: true,
@@ -314,7 +321,7 @@ class SocialRemoteDataSource {
       ApiEndpoints.feed,
       data: <String, dynamic>{
         'mediaUrl': mediaUrl,
-        'mediaType': 'image',
+        'mediaType': mediaType,
       },
     );
   }

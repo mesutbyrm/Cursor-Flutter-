@@ -42,6 +42,8 @@ abstract class SocialRepository {
 
   Future<void> createStoryImage(String imagePath);
 
+  Future<void> createStoryVideo(String videoPath);
+
   /// DELETE `/api/stories` — üretim sözleşmesi.
   Future<void> deleteStory(String storyId);
 }

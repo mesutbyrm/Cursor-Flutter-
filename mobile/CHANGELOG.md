@@ -1,5 +1,30 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.136+170 (2026-08-05) — UI tamamlama
+
+### Hikâyeler
+- Video hikâye yükleme (`createStoryVideo`, galeri seçici)
+- Paylaşılan `showStoryCreateSheet` — fotoğraf veya video
+- Görüntüleyici: yerel silme listesi, video yükleme göstergesi, basılı tutunca video duraklatma
+- Ana sayfa `StoriesSection` — kendi hikâyeni görüntüle / uzun basarak ekle
+- go_router `/social/stories/view`
+
+### Sesli oda
+- `VoiceRoomCenterMusicPanel` RTC sahnesine bağlandı
+- TRTC müzik karışım hatası → flash banner (`pulseMusicRequestFlash`)
+- Footer `!istek` butonu müzik açıkken görünür
+
+### Falcı paneli
+- `PsychicInviteDiagnosticCard` + `PsychicRtcSessionReportCard` (debug RTC günlüğü)
+
+### Shorts
+- Müzik detay sayfası `RefreshIndicator`
+- Hashtag video sayısı üst bilgi
+- GPS etiketi ters coğrafi kodlama (Nominatim)
+
+### Canlı yayın
+- Sinyal poll ardışık hata banner'ı
+
 ## 1.0.135+169 (2026-08-05) — WIP senkronizasyon (3)
 
 ### Push (sunucu)

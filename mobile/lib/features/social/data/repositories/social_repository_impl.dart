@@ -94,5 +94,9 @@ class SocialRepositoryImpl implements SocialRepository {
       _remote.createStoryImage(imagePath);
 
   @override
+  Future<void> createStoryVideo(String videoPath) =>
+      _remote.createStoryVideo(videoPath);
+
+  @override
   Future<void> deleteStory(String storyId) => _remote.deleteStory(storyId);
 }

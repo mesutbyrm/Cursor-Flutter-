@@ -26,6 +26,7 @@ class VoiceRoomTrtcMusicMixer {
     required String? videoId,
     required RoomMusicRemoteDataSource remote,
     int? startMs,
+    void Function(String message)? onError,
   }) async {
     final mgr = _manager;
     if (!enabled || mgr == null || !mgr.inRoom) {
@@ -50,18 +51,27 @@ class VoiceRoomTrtcMusicMixer {
       return;
     }
 
-    final url = await remote.resolveStreamUrl(roomId: roomId, videoId: vid);
-    if (url == null || url.isEmpty) {
-      VoiceRoomDebugLog.log('trtc.music.mix.skip', {
-        'reason': 'no_stream_url',
+    try {
+      final url = await remote.resolveStreamUrl(roomId: roomId, videoId: vid);
+      if (url == null || url.isEmpty) {
+        VoiceRoomDebugLog.log('trtc.music.mix.skip', {
+          'reason': 'no_stream_url',
+          'videoId': vid,
+        });
+        onError?.call('🎵 Müzik TRTC kanalına karıştırılamadı — akış URL yok');
+        return;
+      }
+      _lastVideoId = vid;
+      _lastStreamUrl = url;
+      _paused = false;
+      await mgr.playPublishedMusic(url, startMs: startMs ?? 0);
+    } catch (e) {
+      VoiceRoomDebugLog.log('trtc.music.mix.error', {
         'videoId': vid,
+        'error': e.toString(),
       });
-      return;
+      onError?.call('🎵 Müzik TRTC kanalına karıştırılamadı');
     }
-    _lastVideoId = vid;
-    _lastStreamUrl = url;
-    _paused = false;
-    await mgr.playPublishedMusic(url, startMs: startMs ?? 0);
   }
 
   void stop() {

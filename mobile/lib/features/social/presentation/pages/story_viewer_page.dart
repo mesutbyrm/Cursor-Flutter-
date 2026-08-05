@@ -28,18 +28,22 @@ class StoryViewerPage extends ConsumerStatefulWidget {
 }
 
 class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
+  late List<SocialStoryItemEntity> _stories = _initialStories();
   late var _index = widget.initialIndex.clamp(0, _stories.length - 1);
   Timer? _advanceTimer;
   VideoPlayerController? _video;
   var _progress = 0.0;
   var _deleting = false;
+  var _mediaLoading = false;
+  var _mediaError = false;
+  var _holdPaused = false;
 
   static const _imageDuration = Duration(seconds: 5);
 
-  List<SocialStoryItemEntity> get _stories {
-    if (widget.ring.stories.isNotEmpty) return widget.ring.stories;
+  List<SocialStoryItemEntity> _initialStories() {
+    if (widget.ring.stories.isNotEmpty) return List.of(widget.ring.stories);
     final preview = widget.ring.previewUrl;
-    if (preview == null || preview.isEmpty) return const [];
+    if (preview == null || preview.isEmpty) return [];
     return [SocialStoryItemEntity(id: 'preview', mediaUrl: preview)];
   }
 
@@ -84,6 +88,7 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
     final v = _video;
     _video = null;
     if (v != null) {
+      v.removeListener(_onVideoTick);
       await v.dispose();
     }
   }
@@ -95,6 +100,12 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
     final story = _current;
     if (story == null) return;
 
+    setState(() {
+      _mediaLoading = true;
+      _mediaError = false;
+      _holdPaused = false;
+    });
+
     if (_isVideo) {
       try {
         final ctrl = VideoPlayerController.networkUrl(Uri.parse(story.mediaUrl));
@@ -104,16 +115,30 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
         ctrl.setLooping(false);
         await ctrl.play();
         ctrl.addListener(_onVideoTick);
-        setState(() {});
+        setState(() {
+          _mediaLoading = false;
+          _mediaError = false;
+        });
         return;
       } catch (_) {
         await _disposeVideo();
+        if (!mounted) return;
+        setState(() {
+          _mediaLoading = false;
+          _mediaError = true;
+        });
+        _startImageTimer();
+        return;
       }
+    }
+    if (mounted) {
+      setState(() => _mediaLoading = false);
     }
     _startImageTimer();
   }
 
   void _onVideoTick() {
+    if (_holdPaused) return;
     final v = _video;
     if (v == null || !v.value.isInitialized) return;
     final dur = v.value.duration.inMilliseconds;
@@ -134,6 +159,7 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
     final total = _imageDuration.inMilliseconds;
     var elapsed = 0;
     _advanceTimer = Timer.periodic(tick, (t) {
+      if (_holdPaused) return;
       elapsed += tick.inMilliseconds;
       if (!mounted) {
         t.cancel();
@@ -147,10 +173,27 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
     });
   }
 
+  void _pausePlayback() {
+    _holdPaused = true;
+    _cancelAdvance();
+    _video?.pause();
+  }
+
+  void _resumePlayback() {
+    if (!_holdPaused) return;
+    _holdPaused = false;
+    final v = _video;
+    if (_isVideo && v != null && v.value.isInitialized) {
+      unawaited(v.play());
+      v.addListener(_onVideoTick);
+      return;
+    }
+    unawaited(_prepareCurrent());
+  }
+
   void _next() {
-    final stories = _stories;
-    if (stories.isEmpty) return;
-    if (_index >= stories.length - 1) {
+    if (_stories.isEmpty) return;
+    if (_index >= _stories.length - 1) {
       context.pop();
       return;
     }
@@ -172,7 +215,7 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
 
   Future<void> _deleteCurrent() async {
     final story = _current;
-    if (story == null || _deleting) return;
+    if (story == null || _deleting || story.id == 'preview') return;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -196,13 +239,18 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
       await ref.read(socialRepositoryProvider).deleteStory(story.id);
       ref.invalidate(socialStoryRingsProvider);
       if (!mounted) return;
-      if (_stories.length <= 1) {
+      final updated = List<SocialStoryItemEntity>.from(_stories)
+        ..removeAt(_index);
+      if (updated.isEmpty) {
         context.pop();
         return;
       }
-      if (_index >= _stories.length - 1) {
-        setState(() => _index = (_index - 1).clamp(0, _stories.length - 2));
-      }
+      setState(() {
+        _stories = updated;
+        if (_index >= _stories.length) {
+          _index = _stories.length - 1;
+        }
+      });
       unawaited(_prepareCurrent());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -222,7 +270,6 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final stories = _stories;
     final story = _current;
     final url = story?.mediaUrl;
     final video = _video;
@@ -241,7 +288,7 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
                 child: VideoPlayer(video),
               ),
             )
-          else if (url != null && url.isNotEmpty)
+          else if (url != null && url.isNotEmpty && !_mediaLoading)
             CanlifalNetworkImage(
               url: url,
               fit: BoxFit.contain,
@@ -253,12 +300,33 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
                 ),
               ),
             )
+          else if (_mediaLoading)
+            const Center(
+              child: CircularProgressIndicator(color: Colors.white70),
+            )
           else
             Center(
               child: Text(
                 '${widget.ring.user.display}\nHikâye önizlemesi yok',
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.white70),
+              ),
+            ),
+          if (_mediaError)
+            Positioned(
+              top: MediaQuery.paddingOf(context).top + 56,
+              left: 16,
+              right: 16,
+              child: Material(
+                color: Colors.orange.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(8),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Text(
+                    'Video yüklenemedi — görsel süre ile devam ediliyor',
+                    style: TextStyle(fontSize: 12, color: Colors.white),
+                  ),
+                ),
               ),
             ),
           Positioned.fill(
@@ -268,16 +336,16 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
                   child: GestureDetector(
                     behavior: HitTestBehavior.translucent,
                     onTap: _previous,
-                    onLongPressDown: (_) => _cancelAdvance(),
-                    onLongPressEnd: (_) => unawaited(_prepareCurrent()),
+                    onLongPressDown: (_) => _pausePlayback(),
+                    onLongPressEnd: (_) => _resumePlayback(),
                   ),
                 ),
                 Expanded(
                   child: GestureDetector(
                     behavior: HitTestBehavior.translucent,
                     onTap: _next,
-                    onLongPressDown: (_) => _cancelAdvance(),
-                    onLongPressEnd: (_) => unawaited(_prepareCurrent()),
+                    onLongPressDown: (_) => _pausePlayback(),
+                    onLongPressEnd: (_) => _resumePlayback(),
                   ),
                 ),
               ],
@@ -286,12 +354,12 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
           SafeArea(
             child: Column(
               children: [
-                if (stories.length > 1)
+                if (_stories.length > 1)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
                     child: Row(
                       children: [
-                        for (var i = 0; i < stories.length; i++)
+                        for (var i = 0; i < _stories.length; i++)
                           Expanded(
                             child: Container(
                               height: 3,
@@ -349,9 +417,9 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
                               )
                             : const Icon(Icons.delete_outline, color: Colors.white),
                       ),
-                    if (stories.length > 1)
+                    if (_stories.length > 1)
                       Text(
-                        '${_index + 1}/${stories.length}',
+                        '${_index + 1}/${_stories.length}',
                         style: const TextStyle(color: Colors.white70),
                       ),
                     TextButton(
