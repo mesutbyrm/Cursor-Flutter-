@@ -843,6 +843,21 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       _openUser(occupant, perms: perms, room: room, isOwner: perms.isRoomOwner);
       return;
     }
+    VoiceRoomSeatSlot? slot;
+    for (final s in live.seatSlots) {
+      if (s.index == internalSeatIndex) {
+        slot = s;
+        break;
+      }
+    }
+    if (slot?.isLocked == true && !perms.canAssignSeats) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bu koltuk kilitli')),
+        );
+      }
+      return;
+    }
     if (perms.canAssignSeats) {
       await _showAssignSeatSheet(
         context,
@@ -942,10 +957,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 ),
               ListTile(
                 leading: const Icon(Icons.lock_rounded, color: Colors.amber),
-                title: const Text('Koltuğu kilitle'),
+                title: Text(
+                  seatSlot?.isLocked == true
+                      ? 'Kilidi aç'
+                      : 'Koltuğu kilitle',
+                ),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  final err = await ctrl.lockSeat(seatIndex: seatIndex);
+                  final err = seatSlot?.isLocked == true
+                      ? await ctrl.unlockSeat(seatIndex: seatIndex)
+                      : await ctrl.lockSeat(seatIndex: seatIndex);
                   if (context.mounted && err != null) {
                     ScaffoldMessenger.of(context)
                         .showSnackBar(SnackBar(content: Text(err)));
@@ -1546,6 +1567,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         VoiceWebOwnerStage(
                               room: room,
                               presence: live.presence,
+                              seatSlots: live.seatSlots,
                               djUserIds: mergedDjIds,
                               speakingUserIds: speakingIds,
                               onUserTap: _openUser,

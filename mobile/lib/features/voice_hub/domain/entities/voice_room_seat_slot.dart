@@ -8,6 +8,7 @@ class VoiceRoomSeatSlot extends Equatable {
     this.name,
     this.image,
     this.micOn,
+    this.isLocked = false,
   });
 
   final int index;
@@ -15,6 +16,7 @@ class VoiceRoomSeatSlot extends Equatable {
   final String? name;
   final String? image;
   final bool? micOn;
+  final bool isLocked;
 
   bool get isEmpty => userId == null || userId!.isEmpty;
 
@@ -37,6 +39,7 @@ class VoiceRoomSeatSlot extends Equatable {
         name: u['name']?.toString() ?? u['displayName']?.toString(),
         image: u['image']?.toString() ?? u['avatarUrl']?.toString(),
         micOn: _bool(u['micOn'] ?? u['isMicOn']),
+        isLocked: _bool(map['isLocked'] ?? map['locked']) ?? false,
       );
     }
     return VoiceRoomSeatSlot(
@@ -45,6 +48,7 @@ class VoiceRoomSeatSlot extends Equatable {
       name: map['name']?.toString() ?? map['displayName']?.toString(),
       image: map['image']?.toString() ?? map['avatarUrl']?.toString(),
       micOn: _bool(map['micOn'] ?? map['isMicOn']),
+      isLocked: _bool(map['isLocked'] ?? map['locked']) ?? false,
     );
   }
 
@@ -65,7 +69,7 @@ class VoiceRoomSeatSlot extends Equatable {
   }
 
   @override
-  List<Object?> get props => [index, userId, name, image, micOn];
+  List<Object?> get props => [index, userId, name, image, micOn, isLocked];
 }
 
 /// 11 koltukluk harita — backend sırası korunur.

@@ -156,7 +156,8 @@ class ApiException implements Exception {
     }
     if (error is DioException) return fromDio(error).message;
     // VoiceAgoraException — döngüsel import olmaması için tip adı ile kontrol.
-    if (error.runtimeType.toString() == 'VoiceAgoraException') {
+    if (error.runtimeType.toString() == 'VoiceTrtcException' ||
+        error.runtimeType.toString() == 'VoiceAgoraException') {
       return error.toString();
     }
     final raw = error.toString();

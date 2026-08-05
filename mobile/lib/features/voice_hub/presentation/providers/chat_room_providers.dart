@@ -2646,6 +2646,8 @@ class VoiceRoomLiveController
       return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
     }
     try {
+      final blocActive = _roomKey.isNotEmpty &&
+          ref.read(roomSongBlocProvider(_roomKey)).state.hasTrack;
       if (_roomKey.isNotEmpty) {
         ref.read(roomSongBlocProvider(_roomKey)).add(const RoomSongUserPause());
       }
@@ -2657,7 +2659,9 @@ class VoiceRoomLiveController
             musicUrl: state.dj.musicUrl,
             playing: false,
           );
-      await ref.read(voiceRoomDjPlayerProvider).stop();
+      if (!blocActive) {
+        await ref.read(voiceRoomDjPlayerProvider).stop();
+      }
       state = state.copyWith(dj: state.dj.copyWith(playing: false));
       return null;
     } catch (e) {
@@ -2669,8 +2673,20 @@ class VoiceRoomLiveController
     if (!_canControlMusic()) {
       return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
     }
+    final blocSong = _roomKey.isNotEmpty
+        ? ref.read(roomSongBlocProvider(_roomKey)).state.current
+        : null;
     final url = state.dj.playbackSource;
-    if (url == null) return 'Çalınacak şarkı yok';
+    final videoId = blocSong?.videoId ??
+        state.dj.nowPlaying?.videoIdField ??
+        ChatRoomDjState.videoIdFromLoose(
+          state.dj.nowPlaying?.youtubeUrl ?? state.dj.musicUrl ?? '',
+        );
+    if ((url == null || url.isEmpty) &&
+        (videoId == null || videoId.isEmpty) &&
+        blocSong == null) {
+      return 'Çalınacak şarkı yok';
+    }
     try {
       if (_roomKey.isNotEmpty) {
         ref.read(roomSongBlocProvider(_roomKey)).add(const RoomSongUserResume());
@@ -2681,11 +2697,8 @@ class VoiceRoomLiveController
             roomKey: _roomKey,
             alternateKey: _musicAlternateKey,
             musicUrl: state.dj.musicUrl,
-            videoId: state.dj.nowPlaying?.videoIdField ??
-                ChatRoomDjState.videoIdFromLoose(
-                  state.dj.nowPlaying?.youtubeUrl ?? state.dj.musicUrl ?? '',
-                ),
-            title: state.dj.nowPlaying?.title,
+            videoId: videoId,
+            title: state.dj.nowPlaying?.title ?? blocSong?.title,
             playing: true,
           );
       final dj = await _applyDjPlayback(state.dj.copyWith(playing: true));

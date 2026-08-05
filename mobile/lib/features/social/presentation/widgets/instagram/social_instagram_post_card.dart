@@ -23,10 +23,12 @@ class SocialInstagramPostCard extends ConsumerStatefulWidget {
     super.key,
     required this.post,
     this.openProfileOnTap = true,
+    this.onDeleted,
   });
 
   final PostEntity post;
   final bool openProfileOnTap;
+  final VoidCallback? onDeleted;
 
   @override
   ConsumerState<SocialInstagramPostCard> createState() =>
@@ -261,6 +263,7 @@ class _SocialInstagramPostCardState
     try {
       await ref.read(socialRepositoryProvider).deletePost(post.id);
       await ref.read(socialNotifierProvider.notifier).refresh();
+      widget.onDeleted?.call();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Gönderi silindi')),

@@ -2241,8 +2241,35 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     required int seatIndex,
   }) async {
+    await _seatAction(
+      roomKey: roomKey,
+      alternateKey: alternateKey,
+      payload: {'action': 'lock', 'seatIndex': seatIndex},
+      failMessage: 'Koltuk kilitlenemedi',
+    );
+  }
+
+  /// Kılavuz §9.3 — koltuk kilidini aç (`action: unlock`).
+  Future<void> unlockSeat({
+    required String roomKey,
+    String? alternateKey,
+    required int seatIndex,
+  }) async {
+    await _seatAction(
+      roomKey: roomKey,
+      alternateKey: alternateKey,
+      payload: {'action': 'unlock', 'seatIndex': seatIndex},
+      failMessage: 'Koltuk kilidi açılamadı',
+    );
+  }
+
+  Future<void> _seatAction({
+    required String roomKey,
+    String? alternateKey,
+    required Map<String, dynamic> payload,
+    required String failMessage,
+  }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final payload = {'action': 'lock', 'seatIndex': seatIndex};
       for (final send in [_dio.safePost<dynamic>, _dio.safePatch<dynamic>]) {
         try {
           await send(seatsPath(key), data: payload);
@@ -2252,7 +2279,7 @@ class ChatRoomRemoteDataSource {
           rethrow;
         }
       }
-      throw const ApiException('Koltuk kilitlenemedi');
+      throw ApiException(failMessage);
     });
   }
 
@@ -2262,19 +2289,12 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     required int seatIndex,
   }) async {
-    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final payload = {'action': 'kick', 'seatIndex': seatIndex};
-      for (final send in [_dio.safePost<dynamic>, _dio.safePatch<dynamic>]) {
-        try {
-          await send(seatsPath(key), data: payload);
-          return;
-        } on ApiException catch (e) {
-          if (e.statusCode == 404 || e.statusCode == 405) continue;
-          rethrow;
-        }
-      }
-      throw const ApiException('Koltuktan atılamadı');
-    });
+    await _seatAction(
+      roomKey: roomKey,
+      alternateKey: alternateKey,
+      payload: {'action': 'kick', 'seatIndex': seatIndex},
+      failMessage: 'Koltuktan atılamadı',
+    );
   }
 
   List<String> _parseDjUserIdsResponse(dynamic body) {

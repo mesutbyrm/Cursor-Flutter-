@@ -76,16 +76,55 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
             ? displayTrack.artistLine.split(' • ').first
             : '');
 
-    final player = ref.watch(voiceRoomDjPlayerProvider);
-    final playback = player.playback;
-    final diagnostics = player.diagnostics;
     final liveKey = widget.roomLiveKey?.trim();
     final songState = liveKey != null && liveKey.isNotEmpty
         ? ref.watch(roomSongBlocProvider(liveKey)).state
         : null;
-    final iframePlaying =
-        songState?.hasTrack == true && songState!.current?.paused != true;
+    final iframeMode = songState?.hasTrack == true;
+    final iframeSong = songState?.current;
+    final iframePlaying = iframeMode && iframeSong?.paused != true;
     final iframeProgress = songState?.progress ?? 0.0;
+
+    if (iframeMode && iframeSong != null) {
+      final elapsedSec = iframeSong.resolvedElapsedSeconds();
+      final durSec = iframeSong.durationSec ?? 0;
+      final iframeTrack = MusicQueueItem(
+        id: iframeSong.queueId ?? iframeSong.videoId ?? displayTrack.id,
+        title: iframeSong.title ?? displayTrack.title,
+        youtubeUrl: iframeSong.videoId != null
+            ? 'https://www.youtube.com/watch?v=${iframeSong.videoId}'
+            : displayTrack.youtubeUrl,
+        thumbUrl: iframeSong.thumbnail ?? displayTrack.thumbUrl,
+        createdAt: displayTrack.createdAt,
+        requestedBy: displayTrack.requestedBy,
+        duration: durSec > 0 ? _format(Duration(seconds: durSec)) : displayTrack.duration,
+      );
+      return _buildBarShell(
+        context,
+        displayTrack: iframeTrack,
+        waitingCount: waitingCount,
+        requester: requester,
+        artist: artist,
+        audioActive: iframePlaying,
+        showPlaying: iframePlaying || loading,
+        elapsed: _format(Duration(seconds: elapsedSec.round())),
+        total: durSec > 0
+            ? _format(Duration(seconds: durSec))
+            : (displayTrack.duration?.isNotEmpty == true
+                ? displayTrack.duration!
+                : '—:—'),
+        progress: iframeProgress > 0 ? iframeProgress : null,
+        effectiveVolume: widget.musicMuted ? 0.0 : _volume,
+        loading: loading,
+        showVolume: false,
+        player: null,
+        diag: null,
+      );
+    }
+
+    final player = ref.watch(voiceRoomDjPlayerProvider);
+    final playback = player.playback;
+    final diagnostics = player.diagnostics;
 
     return ValueListenableBuilder<VoiceRoomDjPlayback>(
       valueListenable: playback,
@@ -94,13 +133,13 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
           valueListenable: diagnostics,
           builder: (context, diag, _) {
             final audioActive = pb.playing || iframePlaying;
-            final hasDuration = pb.duration.inMilliseconds > 0 || iframeProgress > 0;
+            final hasDuration =
+                pb.duration.inMilliseconds > 0 || iframeProgress > 0;
             final showPlaying =
                 audioActive || (dj.playing && hasDuration) || loading;
             final effectiveVolume = widget.musicMuted ? 0.0 : _volume;
-            final elapsed = hasDuration
-                ? _format(pb.position)
-                : '00:00';
+            final elapsed =
+                hasDuration ? _format(pb.position) : '00:00';
             final total = displayTrack.duration?.isNotEmpty == true
                 ? displayTrack.duration!
                 : (hasDuration ? _format(pb.duration) : '—:—');
@@ -110,269 +149,307 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
                     ? pb.progress
                     : (loading ? null : 0.0));
 
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(12, 4, 12, 6),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF6A1B9A).withValues(alpha: 0.92),
-                      const Color(0xFF311B92).withValues(alpha: 0.95),
-                    ],
-                  ),
-                  border: Border.all(
-                    color: AppThemeColors.accentPurple.withValues(alpha: 0.5),
-                  ),
-                  boxShadow: AppThemeColors.glowShadow(
-                    AppThemeColors.accentPurple,
-                    blur: 14,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            widget.isVideoMode
-                                ? Icons.music_video_rounded
-                                : Icons.headphones_rounded,
-                            size: 12,
-                            color: Colors.white.withValues(alpha: 0.85),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            widget.isVideoMode ? 'Videolu' : 'Sesli',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white.withValues(alpha: 0.8),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          if (loading)
-                            const SizedBox(
-                              width: 56,
-                              height: 56,
-                              child: Padding(
-                                padding: EdgeInsets.all(12),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            )
-                          else
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: SizedBox(
-                                width: 56,
-                                height: 56,
-                                child: _thumb(displayTrack),
-                              ),
-                            ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  displayTrack.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                if (artist.isNotEmpty)
-                                  Text(
-                                    artist,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.white.withValues(alpha: 0.75),
-                                    ),
-                                  ),
-                                Text(
-                                  'İsteyen: $requester'
-                                  '${waitingCount > 0 ? ' • Sırada: $waitingCount' : ''}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    color: Colors.white.withValues(alpha: 0.62),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (widget.onQueueTap != null && waitingCount > 0)
-                            _BarIconButton(
-                              onPressed: widget.onQueueTap,
-                              color: const Color(0xFF4527A0),
-                              icon: Icons.queue_music_rounded,
-                              tooltip: 'Kuyruk',
-                            ),
-                          if (widget.onPlayPause != null) ...[
-                            const SizedBox(width: 4),
-                            _BarIconButton(
-                              onPressed: widget.onPlayPause,
-                              color: const Color(0xFFFF9800),
-                              icon: audioActive
-                                  ? Icons.pause_rounded
-                                  : Icons.play_arrow_rounded,
-                              tooltip: audioActive ? 'Duraklat' : 'Devam et',
-                            ),
-                          ],
-                          if (widget.canControlMusic && widget.onSkipNext != null) ...[
-                            const SizedBox(width: 4),
-                            _BarIconButton(
-                              onPressed: widget.onSkipNext,
-                              color: const Color(0xFF5E35B1),
-                              icon: Icons.skip_next_rounded,
-                              tooltip: 'Sonraki',
-                            ),
-                          ],
-                          if (widget.canControlMusic && widget.onStop != null) ...[
-                            const SizedBox(width: 4),
-                            _BarIconButton(
-                              onPressed: widget.onStop,
-                              color: const Color(0xFF546E7A),
-                              icon: Icons.stop_rounded,
-                              tooltip: 'Durdur',
-                            ),
-                          ],
-                          if (widget.onMuteToggle != null) ...[
-                            const SizedBox(width: 4),
-                            _BarIconButton(
-                              onPressed: widget.onMuteToggle,
-                              color: const Color(0xFF7B1FA2),
-                              icon: effectiveVolume <= 0
-                                  ? Icons.volume_off_rounded
-                                  : Icons.volume_up_rounded,
-                              tooltip: effectiveVolume <= 0 ? 'Sesi aç' : 'Sessiz',
-                            ),
-                          ],
-                          if (widget.onClose != null) ...[
-                            const SizedBox(width: 4),
-                            _BarIconButton(
-                              onPressed: widget.onClose,
-                              color: const Color(0xFFC62828),
-                              icon: Icons.close_rounded,
-                              tooltip: 'Kapat',
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            effectiveVolume <= 0
-                                ? Icons.volume_off_rounded
-                                : Icons.volume_down_rounded,
-                            size: 14,
-                            color: Colors.white54,
-                          ),
-                          Expanded(
-                            child: SliderTheme(
-                              data: SliderTheme.of(context).copyWith(
-                                trackHeight: 2,
-                                thumbShape: const RoundSliderThumbShape(
-                                  enabledThumbRadius: 5,
-                                ),
-                              ),
-                              child: Slider(
-                                value: effectiveVolume,
-                                min: 0,
-                                max: 1,
-                                activeColor: AppThemeColors.accentPink,
-                                inactiveColor: Colors.white24,
-                                onChanged: widget.musicMuted
-                                    ? null
-                                    : (v) {
-                                        setState(() => _volume = v);
-                                        unawaited(player.setVolumeLevel(v));
-                                      },
-                              ),
-                            ),
-                          ),
-                          const Icon(
-                            Icons.volume_up_rounded,
-                            size: 14,
-                            color: Colors.white54,
-                          ),
-                        ],
-                      ),
-                      if (showPlaying && !loading) ...[
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Text(
-                              elapsed,
-                              style: TextStyle(
-                                fontSize: 8,
-                                color: Colors.white.withValues(alpha: 0.55),
-                              ),
-                            ),
-                            Expanded(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 6),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: LinearProgressIndicator(
-                                    value: progress,
-                                    minHeight: 3,
-                                    backgroundColor: Colors.white12,
-                                    color: AppThemeColors.accentPink,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Text(
-                              total,
-                              style: TextStyle(
-                                fontSize: 8,
-                                color: Colors.white.withValues(alpha: 0.55),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                      if (widget.showDebug) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          _debugLine(diag, dj, displayTrack),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 7,
-                            height: 1.15,
-                            fontFamily: 'monospace',
-                            color: Colors.white.withValues(alpha: 0.42),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
+            return _buildBarShell(
+              context,
+              displayTrack: displayTrack,
+              waitingCount: waitingCount,
+              requester: requester,
+              artist: artist,
+              audioActive: audioActive,
+              showPlaying: showPlaying,
+              elapsed: elapsed,
+              total: total,
+              progress: progress,
+              effectiveVolume: effectiveVolume,
+              loading: loading,
+              showVolume: true,
+              player: player,
+              diag: diag,
             );
           },
         );
       },
+    );
+  }
+
+  Widget _buildBarShell(
+    BuildContext context, {
+    required MusicQueueItem displayTrack,
+    required int waitingCount,
+    required String requester,
+    required String artist,
+    required bool audioActive,
+    required bool showPlaying,
+    required String elapsed,
+    required String total,
+    required double? progress,
+    required double effectiveVolume,
+    required bool loading,
+    required bool showVolume,
+    VoiceRoomDjPlayer? player,
+    VoiceRoomMusicDiagnostics? diag,
+  }) {
+    final dj = widget.dj;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 6),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF6A1B9A).withValues(alpha: 0.92),
+              const Color(0xFF311B92).withValues(alpha: 0.95),
+            ],
+          ),
+          border: Border.all(
+            color: AppThemeColors.accentPurple.withValues(alpha: 0.5),
+          ),
+          boxShadow: AppThemeColors.glowShadow(
+            AppThemeColors.accentPurple,
+            blur: 14,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    widget.isVideoMode
+                        ? Icons.music_video_rounded
+                        : Icons.headphones_rounded,
+                    size: 12,
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    widget.isVideoMode ? 'Videolu' : 'Sesli',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  if (loading)
+                    const SizedBox(
+                      width: 56,
+                      height: 56,
+                      child: Padding(
+                        padding: EdgeInsets.all(12),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    )
+                  else
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: SizedBox(
+                        width: 56,
+                        height: 56,
+                        child: _thumb(displayTrack),
+                      ),
+                    ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          displayTrack.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                        if (artist.isNotEmpty)
+                          Text(
+                            artist,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white.withValues(alpha: 0.75),
+                            ),
+                          ),
+                        Text(
+                          'İsteyen: $requester'
+                          '${waitingCount > 0 ? ' • Sırada: $waitingCount' : ''}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: Colors.white.withValues(alpha: 0.62),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (widget.onQueueTap != null && waitingCount > 0)
+                    _BarIconButton(
+                      onPressed: widget.onQueueTap,
+                      color: const Color(0xFF4527A0),
+                      icon: Icons.queue_music_rounded,
+                      tooltip: 'Kuyruk',
+                    ),
+                  if (widget.onPlayPause != null) ...[
+                    const SizedBox(width: 4),
+                    _BarIconButton(
+                      onPressed: widget.onPlayPause,
+                      color: const Color(0xFFFF9800),
+                      icon: audioActive
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
+                      tooltip: audioActive ? 'Duraklat' : 'Devam et',
+                    ),
+                  ],
+                  if (widget.canControlMusic && widget.onSkipNext != null) ...[
+                    const SizedBox(width: 4),
+                    _BarIconButton(
+                      onPressed: widget.onSkipNext,
+                      color: const Color(0xFF5E35B1),
+                      icon: Icons.skip_next_rounded,
+                      tooltip: 'Sonraki',
+                    ),
+                  ],
+                  if (widget.canControlMusic && widget.onStop != null) ...[
+                    const SizedBox(width: 4),
+                    _BarIconButton(
+                      onPressed: widget.onStop,
+                      color: const Color(0xFF546E7A),
+                      icon: Icons.stop_rounded,
+                      tooltip: 'Durdur',
+                    ),
+                  ],
+                  if (widget.onMuteToggle != null) ...[
+                    const SizedBox(width: 4),
+                    _BarIconButton(
+                      onPressed: widget.onMuteToggle,
+                      color: const Color(0xFF7B1FA2),
+                      icon: effectiveVolume <= 0
+                          ? Icons.volume_off_rounded
+                          : Icons.volume_up_rounded,
+                      tooltip: effectiveVolume <= 0 ? 'Sesi aç' : 'Sessiz',
+                    ),
+                  ],
+                  if (widget.onClose != null) ...[
+                    const SizedBox(width: 4),
+                    _BarIconButton(
+                      onPressed: widget.onClose,
+                      color: const Color(0xFFC62828),
+                      icon: Icons.close_rounded,
+                      tooltip: 'Kapat',
+                    ),
+                  ],
+                ],
+              ),
+              if (showVolume) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      effectiveVolume <= 0
+                          ? Icons.volume_off_rounded
+                          : Icons.volume_down_rounded,
+                      size: 14,
+                      color: Colors.white54,
+                    ),
+                    Expanded(
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 2,
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 5,
+                          ),
+                        ),
+                        child: Slider(
+                          value: effectiveVolume,
+                          min: 0,
+                          max: 1,
+                          activeColor: AppThemeColors.accentPink,
+                          inactiveColor: Colors.white24,
+                          onChanged: widget.musicMuted || player == null
+                              ? null
+                              : (v) {
+                                  setState(() => _volume = v);
+                                  unawaited(player.setVolumeLevel(v));
+                                },
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.volume_up_rounded,
+                      size: 14,
+                      color: Colors.white54,
+                    ),
+                  ],
+                ),
+              ],
+              if (showPlaying && !loading) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Text(
+                      elapsed,
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: Colors.white.withValues(alpha: 0.55),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 3,
+                            backgroundColor: Colors.white12,
+                            color: AppThemeColors.accentPink,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      total,
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: Colors.white.withValues(alpha: 0.55),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              if (widget.showDebug && diag != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  _debugLine(diag, dj, displayTrack),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 7,
+                    height: 1.15,
+                    fontFamily: 'monospace',
+                    color: Colors.white.withValues(alpha: 0.42),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 

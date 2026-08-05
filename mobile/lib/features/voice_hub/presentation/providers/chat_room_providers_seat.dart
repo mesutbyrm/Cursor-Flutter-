@@ -252,6 +252,20 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     }
   }
 
+  Future<String?> unlockSeat({required int seatIndex}) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).unlockSeat(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            seatIndex: seatIndex,
+          );
+      await _refreshSeatsFromBackend();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
   Future<String?> kickFromSeat({required int seatIndex}) async {
     try {
       await ref.read(chatRoomRemoteProvider).kickFromSeat(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
+import '../../../domain/entities/voice_room_seat_slot.dart';
 import '../../utils/voice_room_seat_layout.dart';
 import '../../utils/voice_room_seat_priority.dart';
 import 'voice_mic_seat.dart';
@@ -14,6 +15,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
     super.key,
     required this.room,
     required this.presence,
+    this.seatSlots = const [],
     this.djUserIds,
     this.speakingUserId,
     this.speakingUserIds = const {},
@@ -28,6 +30,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
 
   final VoiceRoomEntity room;
   final List<ChatRoomPresence> presence;
+  final List<VoiceRoomSeatSlot> seatSlots;
   final List<String>? djUserIds;
   final String? speakingUserId;
   final Set<String> speakingUserIds;
@@ -47,6 +50,24 @@ class VoiceWebOwnerStage extends StatelessWidget {
     return speakingUserIds.contains(user.id) ||
         speakingUserId == user.id ||
         user.isSpeaking;
+  }
+
+  VoiceRoomSeatSlot? _slotFor(int seatIndex) {
+    for (final s in seatSlots) {
+      if (s.index == seatIndex) return s;
+    }
+    return null;
+  }
+
+  bool _isLocked(int seatIndex, ChatRoomPresence? user) {
+    if (user != null) return false;
+    return _slotFor(seatIndex)?.isLocked == true;
+  }
+
+  bool? _micOpenFor(ChatRoomPresence? user, int seatIndex) {
+    if (user == null) return null;
+    final slot = _slotFor(seatIndex);
+    return slot?.micOn ?? user.micOpen;
   }
 
   @override
@@ -90,6 +111,8 @@ class VoiceWebOwnerStage extends StatelessWidget {
                   room: room,
                   djUserIds: _effectiveDjIds,
                   speaking: _isSpeaking(host),
+                  locked: _isLocked(1, host),
+                  micOpen: _micOpenFor(host, 1),
                   onTap: () => onSeatTap?.call(1, host),
                   onLongPress: host == null ? () => onSeatLongPress?.call(1) : null,
                   trtc: trtc,
@@ -149,6 +172,8 @@ class VoiceWebOwnerStage extends StatelessWidget {
           room: room,
           djUserIds: _effectiveDjIds,
           speaking: _isSpeaking(user),
+          locked: _isLocked(internal, user),
+          micOpen: _micOpenFor(user, internal),
           onTap: () => onSeatTap?.call(internal, user),
           onLongPress: user == null ? () => onSeatLongPress?.call(internal) : null,
           trtc: trtc,

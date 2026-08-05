@@ -6,7 +6,7 @@ import '../../../trtc/data/datasources/trtc_remote_datasource.dart';
 import '../../../trtc/domain/entities/trtc_credentials.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../data/services/voice_room_debug_log.dart';
-import 'voice_agora_exception.dart';
+import 'voice_trtc_exception.dart';
 
 /// Sesli sohbet — Tencent TRTC (`POST /api/trtc/token`).
 class VoiceTrtcEngine {
@@ -52,7 +52,7 @@ class VoiceTrtcEngine {
     String? userId,
   }) async {
     if (!isSupported) {
-      throw const VoiceAgoraException(
+      throw const VoiceTrtcException(
         'TRTC yalnızca Android ve iOS cihazlarda desteklenir.',
         phase: 'platform',
       );
@@ -60,7 +60,7 @@ class VoiceTrtcEngine {
 
     final rawRoomId = roomId.trim();
     if (rawRoomId.isEmpty && prefetchedCredentials == null) {
-      throw const VoiceAgoraException(
+      throw const VoiceTrtcException(
         'Oda kimliği boş — ses bağlantısı kurulamadı.',
         phase: 'validate',
       );
@@ -79,7 +79,7 @@ class VoiceTrtcEngine {
     try {
       final micOk = await requestMicrophonePermission();
       if (!micOk) {
-        throw const VoiceAgoraException(
+        throw const VoiceTrtcException(
           'Mikrofon izni verilmedi. Ayarlardan mikrofonu açıp tekrar deneyin.',
           phase: 'permission',
         );
@@ -122,7 +122,7 @@ class VoiceTrtcEngine {
       }
 
       if (credentials == null || !credentials.isValid) {
-        throw const VoiceAgoraException(
+        throw const VoiceTrtcException(
           'TRTC token geçersiz veya süresi dolmuş. Odaya tekrar girin.',
           phase: 'token',
         );
@@ -156,7 +156,7 @@ class VoiceTrtcEngine {
         'roomId': trtcRoom,
         'mic': publishMic,
       });
-    } on VoiceAgoraException {
+    } on VoiceTrtcException {
       rethrow;
     } catch (e, st) {
       VoiceRoomDebugLog.log('audio.trtc.join.fail', {
@@ -164,7 +164,7 @@ class VoiceTrtcEngine {
         'error': e.toString(),
         'stack': st.toString(),
       });
-      throw VoiceAgoraException(
+      throw VoiceTrtcException(
         'Ses bağlantısı kurulamadı: $e',
         cause: e,
         stackTrace: st,

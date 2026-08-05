@@ -1,5 +1,22 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.134+168 (2026-08-05) — WIP senkronizasyon (2)
+
+### Sesli oda
+- `!istek` müzik barı: `RoomSongBloc`/IFrame tek kaynak; pause/resume bloc-first
+- Koltuk kilidi: `isLocked` parse, UI kilit ikonu, kilitli koltuğa oturma engeli, kilidi aç
+- `unlockSeat` API (`action: unlock`)
+
+### Sosyal
+- Sosyal sekmesine hikâye şeridi (`SocialStoriesRail`)
+- Gönderi detay: paylaş, yorumlar, silince geri dön
+
+### Shorts
+- Hashtag sayfası pull-to-refresh
+
+### RTC temizlik
+- `VoiceTrtcException` (eski Agora adı typedef ile uyumlu)
+
 ## 1.0.133+167 (2026-08-05) — WIP senkronizasyon
 
 ### Canlı falcı TRTC

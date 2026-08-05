@@ -27,7 +27,12 @@ class ShortHashtagPage extends ConsumerWidget {
         elevation: 0,
         title: Text('#${name.replaceAll('#', '')}'),
       ),
-      body: videos.when(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(shortHashtagVideosProvider(name));
+          await ref.read(shortHashtagVideosProvider(name).future);
+        },
+        child: videos.when(
         loading: () => const PremiumShortGridSkeleton(count: 8),
         error: (e, _) => Center(child: Text('$e')),
         data: (list) {
@@ -41,7 +46,9 @@ class ShortHashtagPage extends ConsumerWidget {
           }
           return GridView.builder(
             padding: const EdgeInsets.all(12),
-            physics: PremiumMotion.listPhysics,
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: PremiumMotion.listPhysics,
+            ),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 8,
@@ -77,6 +84,7 @@ class ShortHashtagPage extends ConsumerWidget {
             },
           );
         },
+        ),
       ),
     );
   }

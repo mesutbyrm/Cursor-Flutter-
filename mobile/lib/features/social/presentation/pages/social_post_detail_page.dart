@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../providers/social_providers.dart';
 import '../widgets/instagram/social_instagram_post_card.dart';
+import '../widgets/instagram/social_post_comments_sheet.dart';
 
 /// Tek gönderi detayı — `GET /api/social/posts/{postId}` (kılavuz §9.10).
 class SocialPostDetailPage extends ConsumerWidget {
@@ -26,6 +28,24 @@ class SocialPostDetailPage extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share_outlined),
+            tooltip: 'Paylaş',
+            onPressed: () {
+              final link = 'https://canlifal.com/sosyal?post=$postId';
+              Share.share(link, subject: 'Canlifal gönderisi');
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline_rounded),
+            tooltip: 'Yorumlar',
+            onPressed: () => SocialPostCommentsSheet.show(
+              context,
+              postId: postId,
+            ),
+          ),
+        ],
       ),
       body: postAsync.when(
         loading: () => const PremiumPostSkeleton(),
@@ -60,7 +80,25 @@ class SocialPostDetailPage extends ConsumerWidget {
           }
           return ListView(
             children: [
-              SocialInstagramPostCard(post: post, openProfileOnTap: true),
+              SocialInstagramPostCard(
+                post: post,
+                openProfileOnTap: true,
+                onDeleted: () {
+                  ref.invalidate(postDetailProvider(postId));
+                  if (context.mounted) context.pop();
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.mode_comment_outlined),
+                title: const Text('Yorumları gör'),
+                subtitle: Text('${post.commentCount} yorum'),
+                onTap: () => SocialPostCommentsSheet.show(
+                  context,
+                  postId: postId,
+                  initialCount: post.commentCount,
+                ),
+              ),
             ],
           );
         },

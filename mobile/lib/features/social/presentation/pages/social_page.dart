@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/social_providers.dart';
+import '../widgets/instagram/social_stories_rail.dart';
 import '../widgets/instagram/social_instagram_app_bar.dart';
 import '../widgets/instagram/social_feed_composer.dart';
 import '../widgets/social_feed_scroll_view.dart';
@@ -66,6 +67,7 @@ class _SocialPageState extends ConsumerState<SocialPage>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const RepaintBoundary(child: SocialInstagramAppBar()),
+            const RepaintBoundary(child: SocialStoriesRail()),
             const RepaintBoundary(child: SocialFeedComposer()),
             Expanded(
               child: SocialFeedScrollView(
