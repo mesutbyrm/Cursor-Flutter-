@@ -149,6 +149,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   DateTime? _graceEndsAt;
   var _hostAwayViewerNotified = false;
   var _hadHostVideo = false;
+  var _liveSseConnected = false;
+  String? _streamExtrasStreamId;
 
   @override
   void initState() {
@@ -861,6 +863,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   void _initStreamExtras() {
     final streamId = widget.session.streamId?.trim();
     if (streamId == null || streamId.isEmpty) return;
+    _streamExtrasStreamId = streamId;
+    final sseConnected = ref.read(liveRoomProvider(streamId)).sseConnected;
+    if (sseConnected != _liveSseConnected) {
+      _liveSseConnected = sseConnected;
+    }
 
     if (widget.session.isHost) {
       final layout = widget.session.guestLayout;
@@ -874,31 +881,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       unawaited(ref.read(coBroadcastProvider.notifier).refresh());
       unawaited(ref.read(coBroadcastProvider.notifier).refreshStream(streamId));
       unawaited(_applyGuestPresenceFromApi(streamId));
-      _guestJoinPoll?.cancel();
-      _guestJoinPoll = Timer.periodic(const Duration(seconds: 8), (_) {
-        if (!mounted) return;
-        unawaited(
-          ref.read(coBroadcastProvider.notifier).refreshStream(streamId),
-        );
-        // İzleyici: bekleyen ortak yayın davetlerini de yenile.
-        if (!widget.session.isHost) {
-          unawaited(ref.read(coBroadcastProvider.notifier).refresh());
-        }
-      });
+      _startHostGuestPoll(streamId);
       unawaited(ref.read(liveFortuneRequestsProvider(streamId).notifier).refresh());
-      _fortunePoll?.cancel();
-      _fortunePoll = Timer.periodic(const Duration(seconds: 6), (_) {
-        if (!mounted) return;
-        unawaited(
-          ref.read(liveFortuneRequestsProvider(streamId).notifier).refresh(),
-        );
-      });
+      _startHostFortunePoll(streamId);
     } else {
-      _coBroadcastPoll?.cancel();
-      _coBroadcastPoll = Timer.periodic(const Duration(seconds: 8), (_) {
-        if (!mounted) return;
-        unawaited(_syncCoBroadcastGuest(streamId));
-      });
+      _startViewerCoBroadcastPoll(streamId);
       unawaited(_syncCoBroadcastGuest(streamId));
       unawaited(_applyGuestPresenceFromApi(streamId));
     }
@@ -909,12 +896,69 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
   }
 
+  void _onLiveSseConnectionChanged(bool connected) {
+    if (_liveSseConnected == connected) return;
+    _liveSseConnected = connected;
+    final streamId = _streamExtrasStreamId;
+    if (streamId == null || streamId.isEmpty || !mounted) return;
+    _startLiveSignalPoll(streamId);
+    if (widget.session.isHost) {
+      _startHostFortunePoll(streamId);
+      _startHostGuestPoll(streamId);
+    } else {
+      _startViewerCoBroadcastPoll(streamId);
+    }
+  }
+
+  void _startHostGuestPoll(String streamId) {
+    _guestJoinPoll?.cancel();
+    final interval = _liveSseConnected
+        ? const Duration(seconds: 20)
+        : const Duration(seconds: 8);
+    _guestJoinPoll = Timer.periodic(interval, (_) {
+      if (!mounted) return;
+      unawaited(
+        ref.read(coBroadcastProvider.notifier).refreshStream(streamId),
+      );
+      if (!widget.session.isHost) {
+        unawaited(ref.read(coBroadcastProvider.notifier).refresh());
+      }
+    });
+  }
+
+  void _startHostFortunePoll(String streamId) {
+    _fortunePoll?.cancel();
+    final interval = _liveSseConnected
+        ? const Duration(seconds: 30)
+        : const Duration(seconds: 6);
+    _fortunePoll = Timer.periodic(interval, (_) {
+      if (!mounted) return;
+      unawaited(
+        ref.read(liveFortuneRequestsProvider(streamId).notifier).refresh(),
+      );
+    });
+  }
+
+  void _startViewerCoBroadcastPoll(String streamId) {
+    _coBroadcastPoll?.cancel();
+    final interval = _liveSseConnected
+        ? const Duration(seconds: 20)
+        : const Duration(seconds: 8);
+    _coBroadcastPoll = Timer.periodic(interval, (_) {
+      if (!mounted) return;
+      unawaited(_syncCoBroadcastGuest(streamId));
+    });
+  }
+
   void _startLiveSignalPoll(String streamId) {
     _stopLiveSignalPoll();
     _signalSince = null;
     _signalPollFailures = 0;
     _signalPollError = null;
-    _signalPoll = Timer.periodic(const Duration(seconds: 2), (_) {
+    final interval = _liveSseConnected
+        ? const Duration(seconds: 10)
+        : const Duration(seconds: 2);
+    _signalPoll = Timer.periodic(interval, (_) {
       unawaited(_tickLiveSignals(streamId));
     });
     unawaited(_tickLiveSignals(streamId));
@@ -2113,6 +2157,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
     if (hasStream) {
       ref.listen(liveRoomProvider(streamId), (prev, next) {
+        if (next.sseConnected != (prev?.sseConnected ?? false)) {
+          _onLiveSseConnectionChanged(next.sseConnected);
+        }
         if (next.fortuneAnsweredNotice != null &&
             next.fortuneAnsweredNotice != prev?.fortuneAnsweredNotice) {
           final notice = next.fortuneAnsweredNotice!;

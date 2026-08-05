@@ -37,6 +37,8 @@ Future<void> showVoiceRoomBackgroundSheet(
   );
 }
 
+/// @deprecated [showVoiceRoomManagementPanel] kullanın — tek oda ayarları paneli.
+@Deprecated('Use showVoiceRoomManagementPanel instead')
 Future<void> showVoiceRoomHubSettingsSheet(
   BuildContext context,
   WidgetRef ref, {

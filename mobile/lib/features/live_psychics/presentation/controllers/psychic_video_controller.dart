@@ -215,9 +215,18 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _ping = Timer.periodic(const Duration(seconds: 60), (_) => _sendPing());
 
     _scheduleRoomPoll();
+    _scheduleSignalPoll();
+  }
 
+  void _scheduleSignalPoll() {
     _signalPoll?.cancel();
-    _signalPoll = Timer.periodic(const Duration(seconds: 3), (_) {
+    if (_disposed) return;
+    // SSE bağlıyken oturum sonu / bahşiş SSE'den gelir; sinyal poll yalnızca
+    // media_state (RTC) için yedek — daha seyrek.
+    final interval = state.sseConnected
+        ? const Duration(seconds: 30)
+        : const Duration(seconds: 3);
+    _signalPoll = Timer.periodic(interval, (_) {
       unawaited(_pollRoomSignals());
     });
     unawaited(_pollRoomSignals());
@@ -509,6 +518,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
               state = state.copyWith(sseConnected: true);
               _startChatPoll();
               _scheduleRoomPoll();
+              _scheduleSignalPoll();
             }
           },
           onMessage: _onSseChatMessage,

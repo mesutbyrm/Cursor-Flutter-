@@ -225,6 +225,8 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   void _onSseRequest(PsychicRequestEntity req) {
     if (!mounted || !_mayRunTellerBackgroundSync()) return;
     if (!req.isPending) return;
+    final bus = ref.read(psychicLiveEventBusProvider);
+    if (!bus.isClosed) bus.add(req);
     final uid = ref.read(authControllerProvider).valueOrNull?.id;
     if (!shouldPresentPsychicIncomingInvite(
       authUserId: uid,

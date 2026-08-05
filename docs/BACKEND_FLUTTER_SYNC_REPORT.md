@@ -2,20 +2,20 @@
 
 > **Tarih:** 5 Ağustos 2026  
 > **Tek kaynak:** `https://canlifal.com` + `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` + `api/` mirror  
-> **Sürüm:** `1.0.138+172` (müzik düzeltmesi sonrası)
+> **Sürüm:** `1.0.140+174` (SSE poll azaltma P1)
 
 ## Özet
 
 | Alan | Backend durumu | Flutter durumu | Öncelik |
 |------|----------------|----------------|---------|
 | Müzik `!istek` | `song_*` SSE + `musicUrl` | ✅ 1.0.138 düzeltildi | Tamam |
-| Fal otomatik paylaşım | `POST /api/social/posts/auto-fortune` | ⚠️ Poll-only (bu oturumda düzeltiliyor) | P0 |
-| Canlı yayın | `POST /api/video-streams`, SSE `streamEnded` | ⚠️ Host sonlandırma UI eksik | P0 |
-| Canlı falcı | SSE + `/api/room/*` | ⚠️ Gereksiz HTTP poll | P1 |
+| Fal otomatik paylaşım | `POST /api/social/posts/auto-fortune` | ✅ 1.0.139 düzeltildi | Tamam |
+| Canlı yayın | `POST /api/video-streams`, SSE `streamEnded` | ✅ Host `streamEnded` UI (1.0.139) | Doğrula |
+| Canlı falcı | SSE + `/api/room/*` | ✅ 1.0.140 SSE-primary poll | Tamam |
 | Sesli oda koltuk | `POST .../seats` `{action:take}` | ✅ `_tryAutoPrivilegedSeat` | Doğrula |
-| Oda ayarları | `PATCH .../settings` | ⚠️ 2 ölü sheet + 1 aktif panel | P2 |
+| Oda ayarları | `PATCH .../settings` | ⚠️ 2 ölü sheet `@Deprecated` + aktif panel | P2 |
 | Jeton | Sunucu hesaplar | ✅ `wallet`/`credits` okuma | İzle |
-| Performans | SSE tercih | ⚠️ Çoklu poll + mega-widget | P1 |
+| Performans | SSE tercih | ⚠️ `voice_room_rtc_page` mega-widget | P1 |
 
 ---
 
@@ -36,7 +36,7 @@
 
 **İş kuralı (mirror `api/src/routes/video_streams.ts`):** Yayın `POST /` ile oluşturulur; `status: live`. İzleyici `join` yalnızca `live` iken. `end` yalnızca yayıncı. SSE `streamEnded` tüm istemcilere gider.
 
-**Flutter sapması:** `live_broadcast_room_page.dart` yalnızca **izleyici** için `streamEnded` dinliyor; yayıncı backend otomatik kapattığında özet ekranı yok.
+**Flutter sapması:** ~~yalnızca izleyici~~ → 1.0.139'da host `streamEnded` eklendi. 1.0.140'da SSE bağlıyken poll aralıkları yavaşlatıldı.
 
 ### Fal otomatik paylaşım
 
@@ -46,7 +46,7 @@
 
 **Kaynak:** `api/src/routes/socialPosts.ts` — sunucu `SocialPost` oluşturur, `isAutoShare: true`, takipçilere `fortune_share` bildirimi.
 
-**Flutter sapması (P0):** `FortuneShareHandler` yalnızca `GET /api/social/posts` poll yapıyor; web'in çağırdığı `POST auto-fortune` devre dışı bırakılmış (`@Deprecated`). Bu yüzden paylaşım gecikmeli veya hiç görünmüyor.
+**Flutter:** 1.0.139'da `FortuneShareHandler` → `POST auto-fortune` + feed prepend.
 
 ### Sesli oda koltuk (kılavuz §9.3)
 
@@ -66,17 +66,21 @@ Flutter: `joinSeat` → önce `join-seat` (404 toleranslı), sonra `seats`. Oda 
 | SSE incoming | GET | `/api/fortune-tellers/sessions/stream` |
 | SSE room | GET | `/api/room/{id}/stream` |
 
-**Sapma:** `psychic_video_controller.dart` SSE varken 3–20 sn HTTP poll sürdürüyor.
+**Durum (1.0.140):** SSE bağlıyken sinyal poll 30 sn; oda/sohbet poll 20 sn. Falcı paneli event bus + 20 sn yedek HTTP.
 
 ---
 
-## 2) Bu oturumda düzeltilenler
+## 2) Düzeltilenler
 
 | Dosya | Değişiklik |
 |-------|------------|
-| `fortune_share_handler.dart` | `POST /api/social/posts/auto-fortune` + anında feed prepend |
+| `fortune_share_handler.dart` | `POST /api/social/posts/auto-fortune` + anında feed prepend (1.0.139) |
 | `social_*_datasource/repository` | `@Deprecated` kaldırıldı — backend sözleşmesi geçerli |
-| `live_broadcast_room_page.dart` | Host için `streamEnded` → yayın sonu ekranı |
+| `live_broadcast_room_page.dart` | Host `streamEnded` UI (1.0.139); SSE-aware poll (1.0.140) |
+| `psychic_video_controller.dart` | SSE bağlıyken sinyal poll 30 sn (1.0.140) |
+| `psychic_teller_dashboard_screen.dart` | Event bus + 20 sn yedek poll (1.0.140) |
+| `psychic_incoming_host.dart` | SSE istek → event bus yayını (1.0.140) |
+| `voice_room_sheets.dart` / `voice_room_hub_settings.dart` | Ölü sheet'ler `@Deprecated` (1.0.140) |
 | `docs/BACKEND_FLUTTER_SYNC_REPORT.md` | Bu rapor |
 
 ---
@@ -88,11 +92,11 @@ Flutter: `joinSeat` → önce `join-seat` (404 toleranslı), sonra `seats`. Oda 
 - [ ] Fal paylaşım: bu oturum fix'i cihazda doğrula
 
 ### P1 — Senkron + performans
-- [ ] `psychic_video_controller.dart` — SSE-primary, poll azalt
-- [ ] `psychic_teller_dashboard_screen.dart` — 3s poll → incoming SSE
-- [ ] `live_broadcast_room_page.dart` — host poll'ları SSE bağlıyken durdur
+- [x] `psychic_video_controller.dart` — SSE-primary, poll azalt (1.0.140)
+- [x] `psychic_teller_dashboard_screen.dart` — event bus + yavaş yedek poll (1.0.140)
+- [x] `live_broadcast_room_page.dart` — SSE bağlıyken poll yavaşlat (1.0.140)
 - [ ] `voice_room_rtc_page.dart` — selective `ref.watch` / widget bölme
-- [ ] Ölü `voice_room_sheets.dart` / `voice_room_hub_settings.dart` kaldır veya birleştir
+- [x] Ölü `voice_room_sheets.dart` / `voice_room_hub_settings.dart` → `@Deprecated`
 
 ### P2 — Tam parity
 - [ ] `FEATURE_PARITY_REPORT.md` maddeleri tek tek kapat

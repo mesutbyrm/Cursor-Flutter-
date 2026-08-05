@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.140+174 (2026-08-05) — Backend senkron P1 (SSE poll azaltma)
+
+- **Canlı falcı seansı:** SSE bağlıyken sinyal poll 30 sn (önceden 3 sn); oda/sohbet poll zaten SSE-aware
+- **Falcı paneli:** Event bus + 20 sn yedek HTTP poll (önceden 3 sn); `PsychicIncomingHost` SSE → bus yayını
+- **Canlı yayın:** Host/izleyici poll aralıkları `liveRoomProvider.sseConnected` ile yavaşlatılır (sinyal 10 sn, fal 30 sn, misafir 20 sn)
+- **Sesli oda:** Kullanılmayan `showVoiceRoomSettingsSheet` / `showVoiceRoomHubSettingsSheet` `@Deprecated` — `showVoiceRoomManagementPanel` kullanın
+
 ## 1.0.139+173 (2026-08-05) — Backend senkron (fal paylaşım + canlı yayın)
 
 - **Fal otomatik paylaşım:** `POST /api/social/posts/auto-fortune` (web parity) — anında akışa prepend

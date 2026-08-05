@@ -14,6 +14,8 @@ import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_r
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_live_event_bus.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_invite_diagnostic_card.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_rtc_session_report_card.dart';
 
@@ -54,13 +56,54 @@ class PsychicTellerDashboardState {
 class PsychicTellerDashboardController
     extends AutoDisposeNotifier<PsychicTellerDashboardState> {
   Timer? _poll;
+  StreamSubscription<PsychicRequestEntity>? _liveBusSub;
 
   @override
   PsychicTellerDashboardState build() {
-    ref.onDispose(() => _poll?.cancel());
+    ref.onDispose(() {
+      _poll?.cancel();
+      _liveBusSub?.cancel();
+    });
+    _liveBusSub?.cancel();
+    _liveBusSub =
+        ref.read(psychicLiveEventBusProvider).stream.listen(_onLiveRequest);
+    ref.listen<PsychicSessionCancelEvent?>(
+      psychicSessionCancelSignalProvider,
+      (prev, next) {
+        if (next == null) return;
+        _removeRequest(next.sessionId);
+      },
+    );
     Future.microtask(refresh);
-    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _pollRequests());
+    _schedulePoll();
     return const PsychicTellerDashboardState();
+  }
+
+  void _schedulePoll() {
+    _poll?.cancel();
+    // PsychicIncomingHost SSE + event bus gerçek zamanlı; HTTP yalnızca yedek.
+    _poll = Timer.periodic(const Duration(seconds: 20), (_) => _pollRequests());
+  }
+
+  void _onLiveRequest(PsychicRequestEntity req) {
+    if (!req.isPending) return;
+    final profile = state.profile;
+    if (profile == null || !profile.isUsable) return;
+    final tellerId = req.tellerId.trim();
+    if (tellerId.isNotEmpty && tellerId != profile.id) return;
+    final list = [...state.requests];
+    list.removeWhere((r) => r.sessionId == req.sessionId);
+    list.insert(0, req);
+    state = state.copyWith(requests: list);
+  }
+
+  void _removeRequest(String sessionId) {
+    if (sessionId.isEmpty) return;
+    final next = state.requests
+        .where((r) => r.sessionId != sessionId)
+        .toList(growable: false);
+    if (next.length == state.requests.length) return;
+    state = state.copyWith(requests: next);
   }
 
   Future<void> refresh() async {
