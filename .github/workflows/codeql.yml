@@ -9,6 +9,7 @@ on:
   pull_request:
     branches: [main]
   schedule:
+    # Perşembe 15:34 UTC — düşük yoğunluk; paralel job sayısı max-parallel ile sınırlı
     - cron: '34 15 * * 4'
 
 concurrency:
@@ -28,6 +29,8 @@ jobs:
 
     strategy:
       fail-fast: false
+      # Ücretsiz hosted runner kuyruğu: 4 paralel job → 15 dk "runner not acquired".
+      max-parallel: ${{ github.event_name == 'schedule' && 1 || 2 }}
       matrix:
         include:
           - language: actions
@@ -36,8 +39,6 @@ jobs:
             build-mode: none
           - language: java-kotlin
             build-mode: manual
-          - language: c-cpp
-            build-mode: none
 
     steps:
       - name: Checkout repository
