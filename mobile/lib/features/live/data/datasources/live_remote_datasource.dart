@@ -584,50 +584,111 @@ class LiveRemoteDataSource {
   }) async {
     final started = DateTime.now();
     LiveDebugLog.log('create.request', {'title': title});
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.videoStreams,
-      data: {
-        'title': title,
-        'name': title,
-        if (description != null && description.isNotEmpty)
-          'description': description,
-        if (category != null && category.isNotEmpty) 'category': category,
-        if (tags != null && tags.isNotEmpty) 'tags': tags,
-        if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
-          'thumbnailUrl': thumbnailUrl,
-        if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
-          'coverUrl': thumbnailUrl,
-        if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
-          'broadcastImage': thumbnailUrl,
-        if (backgroundUrl != null && backgroundUrl.isNotEmpty)
-          'backgroundUrl': backgroundUrl,
-        'isPrivate': isPrivate,
-        'private': isPrivate,
-        'isImageMode': isImageMode,
-        'requestType': 'live',
-        'status': 'live',
-      },
+    final writeOptions = Options(
+      receiveTimeout: const Duration(seconds: 25),
+      sendTimeout: const Duration(seconds: 20),
     );
-    final streamId = _extractStreamId(res.data);
-    if (streamId == null || streamId.isEmpty) {
-      final preview = res.data?.toString();
-      LiveDebugLog.log('create.parse_fail', {
-        'status': res.statusCode,
-        'bodyType': res.data?.runtimeType.toString(),
-        'preview': preview != null && preview.length > 240
-            ? '${preview.substring(0, 240)}…'
-            : preview,
-      });
-      throw ApiException(
-        'Yayın oluşturuldu ancak oda kimliği alınamadı. '
-        'Yanıt: ${res.statusCode}',
-      );
+    Object? lastError;
+    for (var attempt = 1; attempt <= 2; attempt++) {
+      try {
+        final res = await _dio.safePost<dynamic>(
+          ApiEndpoints.videoStreams,
+          data: _createVideoStreamPayload(
+            title: title,
+            description: description,
+            category: category,
+            tags: tags,
+            thumbnailUrl: thumbnailUrl,
+            isPrivate: isPrivate,
+            isImageMode: isImageMode,
+            backgroundUrl: backgroundUrl,
+          ),
+          options: writeOptions,
+        );
+        final streamId = _extractStreamId(res.data);
+        if (streamId == null || streamId.isEmpty) {
+          final preview = res.data?.toString();
+          LiveDebugLog.log('create.parse_fail', {
+            'status': res.statusCode,
+            'bodyType': res.data?.runtimeType.toString(),
+            'preview': preview != null && preview.length > 240
+                ? '${preview.substring(0, 240)}…'
+                : preview,
+          });
+          throw ApiException(
+            'Yayın oluşturuldu ancak oda kimliği alınamadı. '
+            'Yanıt: ${res.statusCode}',
+          );
+        }
+        LiveDebugLog.log('create.ok', {
+          'streamId': streamId,
+          'elapsedMs': DateTime.now().difference(started).inMilliseconds,
+          'attempt': attempt,
+        });
+        return streamId;
+      } catch (e) {
+        lastError = e;
+        if (attempt < 2 && _isRetryableWriteError(e)) {
+          LiveDebugLog.log('create.retry', {'attempt': attempt, 'error': '$e'});
+          await Future<void>.delayed(Duration(milliseconds: 400 * attempt));
+          continue;
+        }
+        throw e is ApiException ? e : ApiException(ApiException.userMessage(e));
+      }
     }
-    LiveDebugLog.log('create.ok', {
-      'streamId': streamId,
-      'elapsedMs': DateTime.now().difference(started).inMilliseconds,
-    });
-    return streamId;
+    throw ApiException(ApiException.userMessage(lastError ?? 'Yayın oluşturulamadı'));
+  }
+
+  Map<String, dynamic> _createVideoStreamPayload({
+    required String title,
+    String? description,
+    String? category,
+    List<String>? tags,
+    String? thumbnailUrl,
+    bool isPrivate = false,
+    bool isImageMode = false,
+    String? backgroundUrl,
+  }) {
+    return {
+      'title': title,
+      'name': title,
+      if (description != null && description.isNotEmpty)
+        'description': description,
+      if (category != null && category.isNotEmpty) 'category': category,
+      if (tags != null && tags.isNotEmpty) 'tags': tags,
+      if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
+        'thumbnailUrl': thumbnailUrl,
+      if (thumbnailUrl != null && thumbnailUrl.isNotEmpty) 'coverUrl': thumbnailUrl,
+      if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
+        'broadcastImage': thumbnailUrl,
+      if (backgroundUrl != null && backgroundUrl.isNotEmpty)
+        'backgroundUrl': backgroundUrl,
+      'isPrivate': isPrivate,
+      'private': isPrivate,
+      'isImageMode': isImageMode,
+      'requestType': 'live',
+      'status': 'live',
+    };
+  }
+
+  bool _isRetryableWriteError(Object error) {
+    if (error is ApiException) {
+      final code = error.statusCode;
+      if (code == 429) return true;
+      if (code != null && code >= 500) return true;
+      final lower = error.message.toLowerCase();
+      return lower.contains('zaman aşımı') ||
+          lower.contains('timeout') ||
+          lower.contains('bağlantı') ||
+          lower.contains('yanıt vermedi');
+    }
+    if (error is DioException) {
+      return error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.receiveTimeout ||
+          error.type == DioExceptionType.sendTimeout ||
+          error.type == DioExceptionType.connectionError;
+    }
+    return false;
   }
 
   /// Yayıncı bağlantı canlılığı — 15 sn aralıkla sinyal ping.

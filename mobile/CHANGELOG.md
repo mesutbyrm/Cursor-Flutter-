@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.144+178 (2026-08-07) — Production master P0
+
+- **Canlı yayın oluşturma:** `createVideoStream` — 25s write timeout, timeout/5xx/429 için 1 retry; prep ekranında JWT ön kontrol; çift 15s timeout kaldırıldı (Dio + ApiException mesajları)
+- **Falcı paneli:** `PsychicInviteDiagnosticCard` yalnızca `kDebugMode`; release listede debug slot'lar kaldırıldı
+- **approvedPsychicProvider:** önce `my-profile`, hata durumunda onaylı profil cache korunur (`src=error` yerine `cached_profile`)
+- **Durum matrisi:** `docs/FLUTTER_PRODUCTION_MASTER_STATUS.md`
+
 ## 1.0.143+177 (2026-08-07) — Stabil entegrasyon (1.0.138–142 paketi)
 
 Tüm son backend senkron değişiklikleri `main` üzerinde birleştirildi; `dart analyze` + 374 test geçti.

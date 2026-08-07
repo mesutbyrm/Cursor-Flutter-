@@ -309,8 +309,25 @@ class ApprovedPsychicNotifier extends Notifier<ApprovedPsychicState> {
       state = const ApprovedPsychicState(checked: true);
       return;
     }
+    final previousDiagnostic = state.lastDiagnostic;
+  final cachedProfile = state.profile;
     state = state.copyWith(loading: true);
     try {
+      final myProfile = await LoadingTimeout.run(
+        ref.read(livePsychicsRepositoryProvider).fetchMyProfile(),
+        timeout: const Duration(seconds: 10),
+        message: 'Falcı profili yüklenemedi',
+      );
+      if (myProfile != null && myProfile.isUsable) {
+        state = ApprovedPsychicState(
+          profile: myProfile,
+          loading: false,
+          checked: true,
+          lastDiagnostic: 'my-profile',
+        );
+        return;
+      }
+
       final quick = await LoadingTimeout.run(
         ref
             .read(livePsychicsRepositoryProvider)
@@ -332,7 +349,7 @@ class ApprovedPsychicNotifier extends Notifier<ApprovedPsychicState> {
         ref
             .read(fortuneTellerProfileResolverProvider)
             .resolveFortuneTellerProfile(user),
-        timeout: const Duration(seconds: 15),
+        timeout: const Duration(seconds: 12),
         message: 'Falcı profili yüklenemedi',
       );
       final diagnostic = TellerRoleDiagnostic.fromResolve(
@@ -348,11 +365,14 @@ class ApprovedPsychicNotifier extends Notifier<ApprovedPsychicState> {
       );
     } catch (e, st) {
       debugPrint('[TellerDebug] refresh failed: $e\n$st');
+      final preserved = cachedProfile ?? state.profile;
       state = ApprovedPsychicState(
-        profile: state.profile,
+        profile: preserved,
         loading: false,
         checked: true,
-        lastDiagnostic: 'error',
+        lastDiagnostic: preserved?.isUsable == true
+            ? (previousDiagnostic ?? 'cached_profile')
+            : 'error',
       );
     }
   }

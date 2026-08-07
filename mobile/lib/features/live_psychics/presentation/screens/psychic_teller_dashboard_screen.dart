@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -364,8 +365,12 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                 ref.read(psychicTellerDashboardProvider.notifier).refresh(),
             child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-              itemCount: 8 + requests.length,
+              itemCount: (kDebugMode ? 8 : 6) + requests.length,
               itemBuilder: (context, index) {
+                final debugSlotCount = kDebugMode ? 2 : 0;
+                final requestsHeaderIndex = 4 + debugSlotCount;
+                final requestsEmptyIndex = requestsHeaderIndex + 1;
+                final requestsStartIndex = requestsEmptyIndex + 1;
                 if (index == 0) {
                   return RepaintBoundary(
                     child: _ProfileHeader(
@@ -404,7 +409,7 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                     ),
                   );
                 }
-                if (index == 4) {
+                if (kDebugMode && index == 4) {
                   return const RepaintBoundary(
                     child: Padding(
                       padding: EdgeInsets.only(top: 12),
@@ -412,12 +417,12 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                     ),
                   );
                 }
-                if (index == 5) {
+                if (kDebugMode && index == 5) {
                   return const RepaintBoundary(
                     child: PsychicRtcSessionReportCard(),
                   );
                 }
-                if (index == 6) {
+                if (index == requestsHeaderIndex) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 16, bottom: 12),
                     child: Text(
@@ -426,7 +431,7 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                     ),
                   );
                 }
-                if (index == 7) {
+                if (index == requestsEmptyIndex) {
                   if (requests.isEmpty) {
                     return Text(
                       profile.isOnline
@@ -437,7 +442,7 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                   }
                   return const SizedBox.shrink();
                 }
-                final req = requests[index - 8];
+                final req = requests[index - requestsStartIndex];
                 return RepaintBoundary(
                   child: _PendingTile(
                     request: req,

@@ -8,6 +8,7 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/token_storage.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../trtc/domain/entities/trtc_credentials.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
@@ -219,44 +220,40 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
 
       var roomId = 'live-${DateTime.now().millisecondsSinceEpoch}';
       if (Env.useMobileAuth) {
+        final token = await ref.read(tokenStorageProvider).readAccess();
+        if (token == null || token.isEmpty) {
+          throw const ApiException(
+            'Oturum süresi doldu. Çıkış yapıp tekrar giriş yapın.',
+            statusCode: 401,
+          );
+        }
         final apiCategory = liveStreamApiCategory(
           label: _args.category,
           isFortune: _args.isFortune,
         );
-        try {
-          roomId = await ref
-              .read(liveRepositoryProvider)
-              .createVideoStream(
-                title: _title.text.trim(),
-                description: _args.subtitle ?? _args.category,
-                category: apiCategory,
-                tags: [_args.fortuneTypeSlug ?? _args.category],
-                thumbnailUrl: user.avatarUrl,
-                isPrivate: false,
-                isImageMode: false,
-                backgroundUrl: _backgroundUrl,
-              )
-              .timeout(const Duration(seconds: 15));
-        } on TimeoutException {
-          throw StateError(
-            'Yayın oluşturulamadı: sunucu yanıt vermiyor. Lütfen tekrar deneyin.',
-          );
-        }
+        roomId = await ref.read(liveRepositoryProvider).createVideoStream(
+              title: _title.text.trim(),
+              description: _args.subtitle ?? _args.category,
+              category: apiCategory,
+              tags: [_args.fortuneTypeSlug ?? _args.category],
+              thumbnailUrl: user.avatarUrl,
+              isPrivate: false,
+              isImageMode: false,
+              backgroundUrl: _backgroundUrl,
+            );
         createdStreamId = roomId;
         _orphanStreamId = roomId;
       }
 
-      final TrtcCredentials trtc;
-      try {
-        trtc = await ref
-            .read(trtcRemoteProvider)
-            .fetchToken(roomId: roomId, role: 'host')
-            .timeout(const Duration(seconds: 15));
-      } on TimeoutException {
-        throw StateError(
-          'Yayın anahtarı alınamadı: sunucu yanıt vermiyor. Lütfen tekrar deneyin.',
-        );
-      }
+      final TrtcCredentials trtc = await ref
+          .read(trtcRemoteProvider)
+          .fetchToken(roomId: roomId, role: 'host')
+          .timeout(
+            const Duration(seconds: 20),
+            onTimeout: () => throw const ApiException(
+              'Yayın anahtarı alınamadı: sunucu yanıt vermiyor. Lütfen tekrar deneyin.',
+            ),
+          );
 
       if (!mounted) {
         await _cleanupOrphanStream();

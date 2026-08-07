@@ -92,7 +92,7 @@ Flutter: `joinSeat` → önce `join-seat` (404 toleranslı), sonra `seats`. Oda 
 ## 3) Kalan işler (öncelik sırası)
 
 ### P0 — Kritik
-- [ ] Canlı yayın açılmama: TRTC token — `createVideoStream` parse iyileştirildi (1.0.142); sahada log topla
+- [x] Canlı yayın açılmama: retry + JWT ön kontrol + hata ayrımı (1.0.144)
 - [ ] Fal paylaşım: cihazda doğrula
 
 ### P1 — Senkron + performans
