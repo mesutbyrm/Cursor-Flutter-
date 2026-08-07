@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.143+177 (2026-08-07) — Stabil entegrasyon (1.0.138–142 paketi)
+
+Tüm son backend senkron değişiklikleri `main` üzerinde birleştirildi; `dart analyze` + 374 test geçti.
+
+- **Müzik (1.0.138):** `!istek` SSE + `just_audio` / YouTube video parity
+- **Fal paylaşım (1.0.139):** `POST /api/social/posts/auto-fortune`
+- **Canlı yayın (1.0.139–142):** Host `streamEnded`, SSE-aware poll, `createVideoStream` parse
+- **Canlı falcı (1.0.140):** SSE-primary poll, falcı paneli event bus
+- **Sesli oda (1.0.141–143):** RTC selective watch, tek oda ayarları paneli, güvenli roomKey yönlendirme
+- **CI:** CodeQL runner kuyruğu (`max-parallel`, `c-cpp` kaldırıldı)
+
 ## 1.0.142+176 (2026-08-05) — P2 oda ayarları + canlı yayın parse
 
 - **Oda ayarları tek panel:** `showVoiceRoomSettingsSheet` / `showVoiceRoomHubSettingsSheet` artık `showVoiceRoomManagementPanel`'e yönlendiriyor

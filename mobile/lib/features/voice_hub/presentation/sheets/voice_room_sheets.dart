@@ -77,7 +77,9 @@ Future<void> showVoiceRoomSettingsSheet(
   required List<ChatRoomPresence> presence,
   void Function(ChatRoomPresence user)? onUserTap,
 }) {
-  final live = ref.read(voiceRoomLiveProvider(room.liveKey));
+  final roomKey =
+      room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id.trim();
+  final live = ref.read(voiceRoomLiveProvider(roomKey));
   return showVoiceRoomManagementPanel(
     context,
     ref,
