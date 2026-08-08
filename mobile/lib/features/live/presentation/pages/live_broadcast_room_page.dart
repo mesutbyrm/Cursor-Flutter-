@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/live_event_log.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -86,6 +87,15 @@ import '../widgets/live_playback_bridge.dart';
 import '../widgets/premium_2026/live/live_star_tournament_sheet.dart';
 import '../widgets/premium_2026/live_premium_2026.dart';
 
+/// Canlı oturum fazı — UI ve reconnect davranışı için ayrı tutulur.
+enum LiveSessionPhase {
+  joining,
+  live,
+  reconnecting,
+  ended,
+  error,
+}
+
 /// Premium 2026 canlı yayın — TRTC + immersive overlay + hediye + kalpler.
 class LiveBroadcastRoomPage extends ConsumerStatefulWidget {
   const LiveBroadcastRoomPage({
@@ -119,6 +129,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   StreamSubscription<void>? _trtcReconnectSub;
   var _rtcReady = false;
   String? _rtcError;
+  LiveSessionPhase _phase = LiveSessionPhase.joining;
+  var _viewerPausedForBackground = false;
   final _chat = TextEditingController();
 
   final _heartsKey = GlobalKey<LiveFloatingHeartsOverlayState>();
@@ -215,8 +227,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   void _handleRtcError(Object e) {
     debugPrint('[TRTC] error: $e');
+    LiveEventLog.error('rtc', e, streamId: widget.session.streamId);
     if (_isBenignRtcError(e)) return;
     if (!mounted) return;
+    setState(() => _phase = LiveSessionPhase.error);
     if (widget.session.isHost && !_leaving) {
       unawaited(_enterHostGracePeriod(notifyViewers: true));
       return;
@@ -231,8 +245,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     setState(() {
       _rtcReady = true;
       _rtcError = null;
+      _phase = LiveSessionPhase.live;
       _localPreviewKey = UniqueKey();
     });
+    final streamId = widget.session.streamId?.trim() ?? '';
+    if (widget.session.isHost) {
+      LiveEventLog.localAudio(enabled: widget.session.initialMicOn, streamId: streamId);
+      LiveEventLog.localVideo(enabled: widget.session.initialCameraOn, streamId: streamId);
+    }
+    LiveEventLog.joinSuccess(streamId: streamId, isHost: widget.session.isHost);
     ref.read(liveBeautyProvider.notifier).bindRtc(trtc: _trtc);
     final layout = _resolveGuestLayout();
     ref.read(liveGuestGridProvider.notifier)
@@ -286,13 +307,24 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         throw StateError('Yayın odası kimliği eksik');
       }
 
+      LiveEventLog.joinStart(streamId: roomId, isHost: widget.session.isHost);
+      setState(() => _phase = LiveSessionPhase.joining);
+
       _trtcCoordinator ??= TrtcLiveRoomCoordinator(
         liveRoom: ref.read(liveRoomRemoteProvider),
         trtcRemote: ref.read(trtcRemoteProvider),
         roomManager: _trtc,
       );
+      _trtcCoordinator!.onReconnected = () {
+        if (!mounted || _leaving) return;
+        setState(() {
+          _rtcReady = true;
+          _phase = LiveSessionPhase.live;
+        });
+      };
       _trtcReconnectSub ??= _trtcCoordinator!.onConnectionLost.listen((_) {
         if (!mounted || _leaving) return;
+        setState(() => _phase = LiveSessionPhase.reconnecting);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Bağlantı koptu — yeniden bağlanılıyor…'),
@@ -346,8 +378,25 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           _rtcError = msg.contains('TRTC') || msg.contains('token')
               ? 'Yayına bağlanılamadı'
               : msg;
+          _phase = LiveSessionPhase.error;
         });
       }
+    }
+  }
+
+  Future<void> _leaveLiveSession({String? endReason}) async {
+    _hostHeartbeat?.cancel();
+    _hostHeartbeat = null;
+    _stopLiveSignalPoll();
+    final streamId = widget.session.streamId?.trim() ?? '';
+    if (streamId.isNotEmpty && endReason != null) {
+      LiveEventLog.ended(streamId: streamId, reason: endReason);
+    }
+    try {
+      await _trtcCoordinator?.leave();
+    } catch (_) {}
+    if (mounted) {
+      setState(() => _phase = LiveSessionPhase.ended);
     }
   }
 
@@ -380,10 +429,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           widget.session.streamId?.isNotEmpty == true) {
         unawaited(HostLiveStreamRecovery.save(widget.session));
       } else {
-        unawaited(_trtcCoordinator?.leave());
+        unawaited(_leaveLiveSession());
       }
     } else {
-      unawaited(_trtcCoordinator?.leave());
+      unawaited(_leaveLiveSession());
     }
     _trtcCoordinator?.dispose();
     _trtcCoordinator = null;
@@ -395,12 +444,31 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (_leaving) return;
     if (!widget.session.isHost) {
-      if (state == AppLifecycleState.paused ||
-          state == AppLifecycleState.inactive ||
-          state == AppLifecycleState.detached) {
-        unawaited(_exitBroadcast(context, skipHostConfirm: true));
+      switch (state) {
+        case AppLifecycleState.paused:
+        case AppLifecycleState.hidden:
+          if (!_viewerPausedForBackground) {
+            _viewerPausedForBackground = true;
+            _trtc.muteAllRemoteAudioStreams(true);
+          }
+          return;
+        case AppLifecycleState.resumed:
+          if (_viewerPausedForBackground) {
+            _viewerPausedForBackground = false;
+            if (_viewerAudioOn) {
+              _applyActiveAudio();
+              if (!widget.embeddedInSwipe) {
+                _trtc.muteAllRemoteAudioStreams(false);
+              }
+            }
+          }
+          return;
+        case AppLifecycleState.detached:
+          unawaited(_exitBroadcast(context, skipHostConfirm: true));
+          return;
+        case AppLifecycleState.inactive:
+          return;
       }
-      return;
     }
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
@@ -604,7 +672,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final user = ref.read(authControllerProvider).valueOrNull;
 
     if (widget.session.isHost && streamId.isNotEmpty) {
-      unawaited(_trtc.leave());
       unawaited(
         ref.read(liveRemoteProvider).sendStreamMessage(
               streamId: streamId,
@@ -618,10 +685,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         ),
       );
       ref.read(liveRoomProvider(streamId).notifier).markStreamEnded();
+      await _leaveLiveSession(endReason: 'host_exit');
     } else {
-      try {
-        await _trtc.leave();
-      } catch (_) {}
+      await _leaveLiveSession();
     }
 
     if (streamId.isNotEmpty && user != null) {
@@ -655,9 +721,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Future<void> _showViewerStreamEndedSummary(String streamId) async {
     if (_leaving || !mounted) return;
     _leaving = true;
-    try {
-      await _trtc.leave();
-    } catch (_) {}
+    await _leaveLiveSession(endReason: 'stream_ended');
     invalidateDiscoverLiveStreams(ref);
     if (!mounted) return;
     if (widget.onAdvanceToNextStream != null) {
@@ -730,7 +794,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             );
       } catch (_) {}
     }
-    if (mounted) setState(() => _rtcReady = false);
+    if (mounted) setState(() {
+      _rtcReady = false;
+      _phase = LiveSessionPhase.reconnecting;
+    });
   }
 
   void _startHostHeartbeat() {
@@ -1857,6 +1924,43 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   Widget _mainVideo(LiveBroadcastSession s) {
+    if (_phase == LiveSessionPhase.reconnecting && !_rtcReady) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          if (!s.isHost)
+            LivePlaybackBridge(
+              playbackUrl: s.playbackUrl,
+              thumbnailUrl: s.coverImageUrl ?? s.avatarUrl,
+            )
+          else
+            _imageModeLayer(s),
+          const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Yeniden bağlanılıyor…',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
     if (!_rtcReady) {
       return Stack(
         fit: StackFit.expand,
@@ -2178,19 +2282,23 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             if (!mounted || _leaving) return;
             if (s.isHost) {
               _leaving = true;
-              try {
-                await _trtc.leave();
-              } catch (_) {}
+              await _leaveLiveSession(endReason: 'server_ended');
               if (!mounted) return;
               await _showHostStreamEndedByServer(streamId);
               return;
             }
             _leaving = true;
-            try {
-              await _trtc.leave();
-            } catch (_) {}
+            await _leaveLiveSession(endReason: 'server_ended');
             await _showViewerStreamEndedSummary(streamId);
           });
+        }
+        final joined = next.lastJoinedDisplayName;
+        final prevJoined = prev?.lastJoinedDisplayName;
+        if (joined != null &&
+            joined.isNotEmpty &&
+            joined != prevJoined &&
+            s.isHost) {
+          LiveEventLog.viewerJoined(streamId: streamId, userId: joined);
         }
       });
     }

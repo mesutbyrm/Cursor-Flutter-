@@ -8,6 +8,7 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/live_event_log.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../trtc/domain/entities/trtc_credentials.dart';
@@ -205,6 +206,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
     }
 
     setState(() => _starting = true);
+    LiveEventLog.createStart(title: _title.text.trim());
     String? createdStreamId;
     try {
       if (mounted) {
@@ -243,6 +245,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
             );
         createdStreamId = roomId;
         _orphanStreamId = roomId;
+        LiveEventLog.createSuccess(streamId: roomId);
       }
 
       final TrtcCredentials trtc = await ref
@@ -288,6 +291,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         }
       }
     } catch (e) {
+      LiveEventLog.error('create', e, streamId: createdStreamId);
       if (createdStreamId != null) {
         await _cleanupOrphanStream();
       }

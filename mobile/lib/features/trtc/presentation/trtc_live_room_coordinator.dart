@@ -2,6 +2,7 @@ import 'dart:async';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/live_debug_log.dart';
+import '../../../core/network/live_event_log.dart';
 import '../data/datasources/live_room_remote_datasource.dart';
 import '../data/datasources/trtc_remote_datasource.dart';
 import '../data/trtc_session_store.dart';
@@ -59,6 +60,7 @@ class TrtcLiveRoomCoordinator {
   LiveJoinRoomResult? joinSnapshot;
   final _connectionLostController = StreamController<void>.broadcast();
   Stream<void> get onConnectionLost => _connectionLostController.stream;
+  void Function()? onReconnected;
 
   TrtcRoomManager get roomManager => _roomManager;
 
@@ -107,6 +109,10 @@ class TrtcLiveRoomCoordinator {
 
     TrtcSessionStore.put(cred);
     await _enterTrtc(cred);
+    LiveEventLog.trtcJoin(
+      streamId: _roomId!,
+      role: _rtcRole,
+    );
     _startHeartbeat();
     return compound ??
         LiveJoinRoomResult(
@@ -148,6 +154,7 @@ class TrtcLiveRoomCoordinator {
       if (_disposed || !_roomManager.inRoom) return;
       try {
         await _liveRoom.heartbeat(roomId: roomId, roomType: roomType);
+        LiveEventLog.heartbeat(streamId: roomId);
       } catch (e) {
         LiveDebugLog.log('live.heartbeat.fail', {
           'roomId': roomId,
@@ -183,6 +190,7 @@ class TrtcLiveRoomCoordinator {
       await _enterTrtc(cred);
       _roomManager.setMicEnabled(_micOnBeforeReconnect);
       LiveDebugLog.log('trtc.reconnect.ok', {'roomId': roomId});
+      onReconnected?.call();
     } catch (e) {
       LiveDebugLog.log('trtc.reconnect.fail', {
         'roomId': roomId,
@@ -202,6 +210,9 @@ class TrtcLiveRoomCoordinator {
 
     final roomId = _roomId;
     final roomType = _roomType;
+    if (roomId != null) {
+      LiveEventLog.leave(streamId: roomId, isHost: _isHost);
+    }
     if (roomId != null && roomType != null) {
       try {
         await _liveRoom.leaveRoom(roomId: roomId, roomType: roomType);
