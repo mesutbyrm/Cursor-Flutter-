@@ -129,7 +129,7 @@ class LiveFieldGiftSendResult {
         pick(json, ['newBalance', 'senderBalance', 'balance']),
       ),
       message: json['message']?.toString(),
-      giftId: gift?['id']?.toString(),
+      giftId: gift['id']?.toString(),
     );
   }
 }

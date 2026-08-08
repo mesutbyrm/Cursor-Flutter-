@@ -235,8 +235,12 @@ class _ConsumerFallbackList extends ConsumerWidget {
         ref.invalidate(adminGiftListProvider);
         ref.invalidate(liveGiftCatalogProvider);
         await Future.wait([
-          ref.read(adminGiftListProvider.future).catchError((_) => const []),
-          ref.read(liveGiftCatalogProvider.future).catchError((_) => const []),
+          ref
+              .read(adminGiftListProvider.future)
+              .catchError((_) => const <AdminGiftType>[]),
+          ref
+              .read(liveGiftCatalogProvider.future)
+              .catchError((_) => const <GiftEntity>[]),
         ]);
       },
       child: liveCatalog.when(

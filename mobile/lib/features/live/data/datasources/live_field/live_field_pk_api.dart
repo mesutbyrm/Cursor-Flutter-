@@ -97,10 +97,10 @@ class LiveFieldPkBattle {
       id: json['id']?.toString() ?? '',
       status: json['status']?.toString(),
       durationSeconds: (json['durationSeconds'] as num?)?.toInt(),
-      room1Score: (r1?['score'] as num?)?.toInt() ??
+      room1Score: (r1['score'] as num?)?.toInt() ??
           (json['room1Score'] as num?)?.toInt() ??
           0,
-      room2Score: (r2?['score'] as num?)?.toInt() ??
+      room2Score: (r2['score'] as num?)?.toInt() ??
           (json['room2Score'] as num?)?.toInt() ??
           0,
     );
