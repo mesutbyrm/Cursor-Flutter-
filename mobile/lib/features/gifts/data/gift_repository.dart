@@ -143,8 +143,9 @@ class GiftRepository {
   Future<List<GiftEntity>> fetchCatalogV2({
     GiftPlatform platform = GiftPlatform.mobile,
   }) async {
+    // Production `/api/gifts` is a page route; `/api/gifts/types` is the JSON catalog.
     final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.giftsCatalog,
+      ApiEndpoints.giftsTypes,
       query: {'platform': platform.queryValue},
     );
     return _parseCatalogList(_unwrap(res.data));
