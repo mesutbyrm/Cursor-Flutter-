@@ -10,7 +10,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_http_cache.dart';
-import '../../../voice_hub/presentation/widgets/voice_room_gift_sheet.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../wallet/domain/wallet_balances.dart';
@@ -19,7 +18,6 @@ import '../../domain/admin_gift_dto_mapper.dart';
 import '../../domain/admin_gift_type.dart';
 import '../providers/admin_gift_providers.dart';
 import '../providers/gift_catalog_invalidate.dart';
-import '../providers/gift_providers.dart';
 import '../widgets/admin_gift_media_preview.dart';
 
 /// Tam özellikli hediye oluşturma / düzenleme ekranı.
