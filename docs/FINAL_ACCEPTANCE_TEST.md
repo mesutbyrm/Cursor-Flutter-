@@ -9,9 +9,13 @@ This is the current repository acceptance matrix after the backend/Flutter sync 
 | Check | Status | Evidence |
 |---|---|---|
 | Backend TypeScript typecheck | PASS | `cd api && npm run typecheck` |
-| Flutter analyze | PENDING | Run after documentation commit |
-| Flutter test | PENDING | Run after documentation commit |
-| APK build | PENDING | Run after Flutter analyze/test |
+| Backend unit tests | PASS | `cd api && npm test` |
+| Backend production build | PASS | `cd api && npm run build` |
+| Flutter SDK bootstrap | PASS | Installed Flutter `3.44.8` from the repo version tag for this run |
+| Flutter dependencies | PASS | `cd mobile && flutter pub get` |
+| Flutter analyze | FAIL | `cd mobile && dart analyze` reports 297 existing warnings/infos; no new compile error from this pass was observed |
+| Flutter test | PASS | `cd mobile && flutter test` -> 374 passed, 2 skipped |
+| APK build | PASS | `cd mobile && flutter build apk --release` -> `build/app/outputs/flutter-apk/app-release.apk` (258.5MB) |
 
 ## Functional acceptance
 
@@ -58,3 +62,9 @@ This is the current repository acceptance matrix after the backend/Flutter sync 
 3. Production TRTC token response sample.
 4. Production CDN/R2 URL conventions.
 5. Two test accounts with wallet/jeton balance for safe gift/PK tests.
+
+## Analyze blocker
+
+The Cloud image initially had no Flutter or Android SDK. Flutter `3.44.8` and Android SDK commandline tools were installed inside this run, allowing tests and release APK build to pass.
+
+Standard `dart analyze` still fails because the existing repository has 297 warnings/infos, mostly unused imports, deprecated APIs, null-aware cleanup warnings, and pre-existing analyzer hygiene issues. These are tracked as a separate cleanup task; analyzer settings were not weakened to hide them.
