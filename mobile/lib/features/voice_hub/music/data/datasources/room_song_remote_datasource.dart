@@ -93,15 +93,15 @@ class RoomSongRemoteDataSource {
   }
 
   Future<void> skip(String roomId) async {
-    await _dio.post<dynamic>(ApiEndpoints.chatRoomSongSkip(roomId));
+    await _dio.delete<dynamic>(ApiEndpoints.chatRoomSongSkip(roomId));
   }
 
   Future<void> pause(String roomId) async {
-    await _dio.post<dynamic>(ApiEndpoints.chatRoomSongPause(roomId));
+    throw UnsupportedError('Backend MUSIC_API does not define pause.');
   }
 
   Future<void> resume(String roomId) async {
-    await _dio.post<dynamic>(ApiEndpoints.chatRoomSongResume(roomId));
+    throw UnsupportedError('Backend MUSIC_API does not define resume.');
   }
 
   Future<void> removeFromQueue(String roomId, String queueId) async {

@@ -370,14 +370,18 @@ abstract final class ApiEndpoints {
   static String chatRoomSongQueue(String roomId) =>
       '/api/chat/rooms/$roomId/queue';
 
-  static String chatRoomSongSkip(String roomId) =>
-      '/api/chat/rooms/$roomId/skip';
+  /// MUSIC_API canonical skip: `DELETE /api/chat/rooms/{roomId}/music`.
+  static String chatRoomSongSkip(String roomId) => chatRoomMusic(roomId);
 
-  static String chatRoomSongPause(String roomId) =>
-      '/api/chat/rooms/$roomId/pause';
+  /// MUSIC_API canonical stop: `POST /api/chat/rooms/{roomId}/music/stop`.
+  static String chatRoomSongStop(String roomId) =>
+      '${chatRoomMusic(roomId)}/stop';
 
-  static String chatRoomSongResume(String roomId) =>
-      '/api/chat/rooms/$roomId/resume';
+  @Deprecated('Backend docs do not define pause; keep local UI state only.')
+  static String chatRoomSongPause(String roomId) => chatRoomMusic(roomId);
+
+  @Deprecated('Backend docs do not define resume; use chatRoomMusic POST play.')
+  static String chatRoomSongResume(String roomId) => chatRoomMusic(roomId);
 
   static String chatRoomSongRemove(String roomId, String queueId) =>
       '/api/chat/rooms/$roomId/song/$queueId';
@@ -593,18 +597,18 @@ abstract final class ApiEndpoints {
   /// Jeton paketleri / fiyat listesi (oturum gerekir).
   static const jetonCatalog = '/api/jeton';
 
-  static const membershipPackages = '/api/membership/plans';
+  static const membershipPackages = '/api/memberships/packages';
   /// CanlifalTV API doc alias (§12).
   static const membershipsCatalog = '/api/memberships';
-  static const membershipPurchase = '/api/membership/purchase';
+  static const membershipPurchase = '/api/memberships/purchase';
   static const membershipsPurchase = '/api/memberships/purchase';
   static const membershipBadges = '/api/membership-badges';
   static const profileFrames = '/api/profile-frames';
 
-  static const paymentConfig = '/api/payment/config';
-  static const paymentMethods = '/api/payment-methods';
-  static const paymentRequests = '/api/payment/requests';
-  static const paymentRequestsCancel = '/api/payment/requests';
+  static const paymentConfig = '/api/payments/config';
+  static const paymentMethods = '/api/payments/methods';
+  static const paymentRequests = '/api/payments/requests';
+  static const paymentRequestsCancel = '/api/payments/requests';
   static const adminCfcPaymentRequests = '/api/admin/cfc-payment-requests';
   static const adminCfcPaymentPatch = '/api/admin/cfc-payment-requests';
   static const adminCfcSettings = '/api/admin/cfc-settings';

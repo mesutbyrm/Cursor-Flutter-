@@ -3,7 +3,7 @@ Date: 2026-08-08
 Source: uploaded `endpoints_index__1__8c3d.json`, `openapi__2__605a.json`, Flutter `api_endpoints.dart`.
 Status legend: CONNECTED = normalized Flutter path exists; MISSING = backend endpoint has no matching Flutter endpoint constant; WRONG = Flutter endpoint path is not in backend index; PARTIAL = connected but auth/body/runtime still needs feature test; DEPRECATED = documented old/removed path.
 
-Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized paths `441`, connected normalized paths `251`, Flutter-only normalized paths `190`.
+Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized paths `437`, connected normalized paths `255`, Flutter-only normalized paths `182`.
 
 ## Backend -> Flutter matrix (all backend handlers)
 | Backend Endpoint | Method | Auth | Flutter Service | Flutter Method | Request Model | Response Model | SSE | Status |
@@ -441,7 +441,7 @@ Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized 
 | `/api/games/sos/{gameId}/viewers` | POST | dual | `gameSosViewers` | `gameSosViewers` | `-` | OpenAPI/docs | NO | CONNECTED |
 | `/api/gift-engine/finish` | POST | dual | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
 | `/api/gift-engine/gifts` | GET | public | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
-| `/api/gift-engine/queue` | GET | public | `-` | `-` | `-` | OpenAPI/docs | YES | MISSING |
+| `/api/gift-engine/queue` | GET | public | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
 | `/api/gifts/catalog` | GET | dual | `giftsCatalogCms` | `giftsCatalogCms` | `-` | OpenAPI/docs | NO | CONNECTED |
 | `/api/gifts/check-reciprocal` | POST | dual | `giftsCheckReciprocal` | `giftsCheckReciprocal` | `recipientId` | OpenAPI/docs | NO | CONNECTED |
 | `/api/gifts/lucky/config` | GET | dual | `giftsLuckyConfig` | `giftsLuckyConfig` | `-` | OpenAPI/docs | NO | CONNECTED |
@@ -481,8 +481,8 @@ Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized 
 | `/api/me` | PATCH | dual | `me` | `me` | `-` | OpenAPI/docs | NO | CONNECTED |
 | `/api/membership-badges` | GET | public | `membershipBadges` | `membershipBadges` | `-` | OpenAPI/docs | NO | CONNECTED |
 | `/api/memberships` | GET | public | `membershipsCatalog` | `membershipsCatalog` | `-` | OpenAPI/docs | NO | CONNECTED |
-| `/api/memberships/packages` | GET | public | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
-| `/api/memberships/purchase` | POST | dual | `membershipsPurchase` | `membershipsPurchase` | `paymentMethod, planId` | OpenAPI/docs | NO | CONNECTED |
+| `/api/memberships/packages` | GET | public | `membershipPackages` | `membershipPackages` | `-` | OpenAPI/docs | NO | CONNECTED |
+| `/api/memberships/purchase` | POST | dual | `membershipPurchase, membershipsPurchase` | `membershipPurchase, membershipsPurchase` | `paymentMethod, planId` | OpenAPI/docs | NO | CONNECTED |
 | `/api/messages` | GET | dual | `messages` | `messages` | `-` | OpenAPI/docs | NO | CONNECTED |
 | `/api/messages/request` | PATCH | dual | `messagesRequest` | `messagesRequest` | `action, requestId` | OpenAPI/docs | NO | CONNECTED |
 | `/api/messages/request` | POST | dual | `messagesRequest` | `messagesRequest` | `message, receiverId` | OpenAPI/docs | NO | CONNECTED |
@@ -500,12 +500,12 @@ Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized 
 | `/api/notifications` | POST | dual | `notifications` | `notifications` | `markAll, notificationIds` | OpenAPI/docs | NO | CONNECTED |
 | `/api/notifications/stream` | GET | dual | `notificationsStream` | `notificationsStream` | `-` | OpenAPI/docs | YES | CONNECTED |
 | `/api/online-fal` | GET | public | `onlineFal` | `onlineFal` | `-` | OpenAPI/docs | NO | CONNECTED |
-| `/api/payments/config` | GET | dual | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
-| `/api/payments/methods` | GET | public | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
+| `/api/payments/config` | GET | dual | `paymentConfig` | `paymentConfig` | `-` | OpenAPI/docs | NO | CONNECTED |
+| `/api/payments/methods` | GET | public | `paymentMethods` | `paymentMethods` | `-` | OpenAPI/docs | NO | CONNECTED |
 | `/api/payments/notify` | GET | dual | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
 | `/api/payments/notify` | POST | dual | `-` | `-` | `amount, notes, paymentMethod, senderName, transactionId` | OpenAPI/docs | NO | MISSING |
-| `/api/payments/requests` | GET | dual | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
-| `/api/payments/requests` | POST | dual | `-` | `-` | `amount, method, notes, senderInfo` | OpenAPI/docs | NO | MISSING |
+| `/api/payments/requests` | GET | dual | `paymentRequests, paymentRequestsCancel` | `paymentRequests, paymentRequestsCancel` | `-` | OpenAPI/docs | NO | CONNECTED |
+| `/api/payments/requests` | POST | dual | `paymentRequests, paymentRequestsCancel` | `paymentRequests, paymentRequestsCancel` | `amount, method, notes, senderInfo` | OpenAPI/docs | NO | CONNECTED |
 | `/api/payments/settings` | GET | public | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
 | `/api/platform/commission-rate` | GET | public | `platformCommissionRate` | `platformCommissionRate` | `-` | OpenAPI/docs | NO | CONNECTED |
 | `/api/popups` | GET | dual | `popups` | `popups` | `-` | OpenAPI/docs | NO | CONNECTED |
@@ -746,13 +746,10 @@ Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized 
 | `/api/chat/rooms/{param}/music-settings` | `chatRoomMusicSettings` | WRONG |
 | `/api/chat/rooms/{param}/music-stream` | `chatRoomMusicStream` | WRONG |
 | `/api/chat/rooms/{param}/mute` | `chatRoomMute` | WRONG |
-| `/api/chat/rooms/{param}/pause` | `chatRoomSongPause` | WRONG |
 | `/api/chat/rooms/{param}/pk/{param}/end` | `chatRoomPkEnd` | WRONG |
 | `/api/chat/rooms/{param}/pk/{param}/respond` | `chatRoomPkRespond` | WRONG |
 | `/api/chat/rooms/{param}/queue` | `chatRoomSongQueue, chatRoomSongQueueClear` | WRONG |
-| `/api/chat/rooms/{param}/resume` | `chatRoomSongResume` | WRONG |
 | `/api/chat/rooms/{param}/roles` | `chatRoomRoles` | WRONG |
-| `/api/chat/rooms/{param}/skip` | `chatRoomSongSkip` | WRONG |
 | `/api/chat/rooms/{param}/song/{param}` | `chatRoomSongRemove` | WRONG |
 | `/api/chat/rooms/{param}/speak-request` | `chatRoomSpeakRequest` | WRONG |
 | `/api/chat/rooms/{param}/speak-requests` | `chatRoomSpeakRequests` | WRONG |
@@ -805,8 +802,6 @@ Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized 
 | `/api/live/guest/list` | `liveGuestList` | WRONG |
 | `/api/live/pk/active` | `livePkActive` | WRONG |
 | `/api/live/pk/sweep` | `livePkSweep` | WRONG |
-| `/api/membership/plans` | `membershipPackages` | WRONG |
-| `/api/membership/purchase` | `membershipPurchase` | WRONG |
 | `/api/messages/conversations` | `messagesConversations` | WRONG |
 | `/api/messages/conversations/{param}/messages` | `conversationMessages` | WRONG |
 | `/api/messages/conversations/{param}/stream` | `conversationStream` | WRONG |
@@ -815,9 +810,6 @@ Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized 
 | `/api/notifications/payment` | `notificationsPaymentClear` | WRONG |
 | `/api/notifications/unread` | `notificationsUnread` | WRONG |
 | `/api/notifications/{param}/read` | `notificationRead` | WRONG |
-| `/api/payment-methods` | `paymentMethods` | WRONG |
-| `/api/payment/config` | `paymentConfig` | DEPRECATED |
-| `/api/payment/requests` | `paymentRequests, paymentRequestsCancel` | DEPRECATED |
 | `/api/pk/active` | `pkActive` | WRONG |
 | `/api/pk/admin/ban` | `pkAdminBan` | WRONG |
 | `/api/pk/admin/bans` | `pkAdminBans` | WRONG |

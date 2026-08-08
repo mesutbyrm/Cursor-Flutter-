@@ -16,7 +16,7 @@ Date: 2026-08-08
 
 ## Critical verified findings
 
-1. `/api/gifts` is a page route in production probe; Flutter must use JSON endpoints such as `/api/gifts/types`, `/api/gifts/catalog` where auth permits, or context send/list endpoints.
+1. `/api/gifts` is a page route in production probe; Flutter now uses `/api/gifts/types` for public JSON fallback.
 2. Uploaded docs mark removed old paths: `/api/payment/*` -> `/api/payments/*`, `/api/membership/packages` -> `/api/memberships/packages`, old `/api/rooms/{id}/music/*` -> `/api/chat/rooms/{roomId}/music*`.
 3. Music canonical flow: `POST/GET /api/chat/rooms/{roomId}/song-request`, `GET/POST/DELETE /api/chat/rooms/{roomId}/music`, `GET /api/chat/rooms/{roomId}/music-queue`, `GET /api/youtube/search?q=`.
 4. TRTC canonical token endpoint remains `/api/trtc/token`; Flutter must not bypass with tokenless `/usersig` in production.
@@ -28,34 +28,21 @@ Date: 2026-08-08
 |---|---:|
 | Backend handlers | 690 |
 | Backend unique paths | 438 |
-| Flutter normalized paths | 441 |
-| Connected normalized paths | 251 |
-| Flutter-only normalized paths | 190 |
-| Mobile-relevant backend handlers sampled | 302 |
+| Flutter normalized paths | 437 |
+| Backend ↔ Flutter connected | 255 |
+| Flutter-only normalized paths | 182 |
+| MCP tools | 10 |
+| Flutter runtime MCP | 0 |
 
-## Highest priority mismatches
+## Fixed after audit
 
-- `/api/payment/config`: verify or migrate to backend-documented canonical path before relying on it.
-- `/api/payment/requests`: verify or migrate to backend-documented canonical path before relying on it.
-- `/api/payment-methods`: verify or migrate to backend-documented canonical path before relying on it.
-- `/api/membership/packages`: verify or migrate to backend-documented canonical path before relying on it.
-- `/api/video-streams/gifts/catalog`: verify or migrate to backend-documented canonical path before relying on it.
-- `/api/gifts`: verify or migrate to backend-documented canonical path before relying on it.
-- `/api/youtube/search`: verify or migrate to backend-documented canonical path before relying on it.
-- `/api/chat/rooms/{param}/skip`: verify or migrate to backend-documented canonical path before relying on it.
-- `/api/chat/rooms/{param}/pause`: verify or migrate to backend-documented canonical path before relying on it.
-- `/api/chat/rooms/{param}/resume`: verify or migrate to backend-documented canonical path before relying on it.
+- Payment production constants now use `/api/payments/config`, `/api/payments/methods`, `/api/payments/requests`.
+- Membership package/purchase constants now use `/api/memberships/packages`, `/api/memberships/purchase`.
+- Gift catalog fallback now uses `/api/gifts/types`, not page route `/api/gifts`.
+- Music skip now uses canonical `DELETE /api/chat/rooms/{roomId}/music`; stop constant is `/api/chat/rooms/{roomId}/music/stop`.
 
-## Duplicate / deprecated risks
+## Remaining high-priority review
 
-- Legacy auth paths `/api/auth/login`, `/api/auth/register`, `/api/auth/refresh`, `/api/auth/me` appear in Flutter constants but uploaded docs define mobile JWT as `/api/auth/mobile-*` and `/api/me`.
-- Payment constants still include singular `/api/payment/*`; uploaded docs require plural `/api/payments/*`.
-- Some music helpers use skip/pause/resume aliases; uploaded MUSIC API canonicalizes `DELETE /api/chat/rooms/{roomId}/music` and `POST /api/chat/rooms/{roomId}/music/stop`.
-
-## Next code actions
-
-1. Replace singular payment endpoints with `/api/payments/*`.
-2. Remove or isolate legacy auth constants from production flows.
-3. Align music queue/skip/stop methods with `MUSIC_API`.
-4. Continue analyzer cleanup without weakening rules.
-5. Add endpoint contract tests for high-risk migrated paths.
+- Legacy auth constants remain for non-production compatibility but must not be used in mobile production auth flow.
+- `/api/video-streams/gifts/catalog` is not in backend docs and should remain unused.
+- Backend has many admin/session-only endpoints; mobile runtime should not add MCP or session-only admin calls unless product explicitly requires them.
