@@ -52,6 +52,19 @@ void main() {
       expect(tokens?.accessToken, 'new_acc');
       expect(tokens?.refreshToken, 'new_ref');
     });
+
+    test('parseRefreshTokens supports wrapped data response', () {
+      final tokens = AuthResponse.parseRefreshTokens({
+        'success': true,
+        'data': {
+          'accessToken': 'wrapped_acc',
+          'refreshToken': 'wrapped_ref',
+          'user': {'id': 'u1'},
+        },
+      });
+      expect(tokens?.accessToken, 'wrapped_acc');
+      expect(tokens?.refreshToken, 'wrapped_ref');
+    });
   });
 
   group('AuthApiError', () {
