@@ -10,8 +10,9 @@ void main() {
     test('fetchCatalogV2 uses the production JSON gift types endpoint', () async {
       RequestOptions? captured;
       final dio = Dio()
-        ..httpClientAdapter = _FakeAdapter((options, _, __) {
+        ..httpClientAdapter = _FakeAdapter((options, _, cancelFuture) async {
           captured = options;
+          await cancelFuture;
           return ResponseBody.fromString(
             '[{"id":"canlifal_1","name":"CanlıFal","price":1}]',
             200,
