@@ -1,0 +1,18 @@
+{
+  "name": "canlifal-backend-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Read-only Canlifal backend API reference MCP server for Cursor.",
+  "main": "index.mjs",
+  "bin": {
+    "canlifal-backend-mcp": "index.mjs"
+  },
+  "scripts": {
+    "start": "node index.mjs",
+    "selftest": "node index.mjs --selftest"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
