@@ -294,7 +294,7 @@ class TrtcRoomManager {
   Future<void> setStreamQuality(dynamic preset) async {}
 
   void muteRemoteAudio(String userId, bool mute) {
-    _cloud?.muteRemoteAudio(userId, !mute);
+    _cloud?.muteRemoteAudio(userId, mute);
   }
 
   void _configureAudioProcessing() {
@@ -481,11 +481,15 @@ class TrtcRoomManager {
     _publishedMusicPlaying = false;
   }
 
-  void dispose() {
+  Future<void> disposeAsync() async {
     stopPublishedMusic();
-    unawaited(leave());
+    await leave();
     _cloud = null;
     _device = null;
+  }
+
+  void dispose() {
+    unawaited(disposeAsync());
   }
 
   static void destroyEngine() {
