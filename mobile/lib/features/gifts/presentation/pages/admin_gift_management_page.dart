@@ -7,6 +7,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../domain/admin_gift_stats.dart';
 import '../../domain/admin_gift_type.dart';
+import '../../domain/gift_entity.dart';
 import '../providers/admin_gift_providers.dart';
 import '../providers/gift_catalog_invalidate.dart';
 import '../providers/gift_providers.dart';

@@ -19,7 +19,7 @@ class LiveFieldPkApi {
     final map = LiveFieldApiUtil.unwrapData(res.data);
     if (map == null) return null;
     final battle = asJsonMap(map['battle']);
-    if (battle == null) return null;
+    if (battle.isEmpty) return null;
     return LiveFieldPkBattle.fromJson(battle);
   }
 
@@ -50,7 +50,7 @@ class LiveFieldPkApi {
     final map = LiveFieldApiUtil.unwrapData(res.data);
     if (map == null) return null;
     final battle = asJsonMap(map['battle'] ?? map);
-    if (battle == null) return null;
+    if (battle.isEmpty) return null;
     return LiveFieldPkBattle.fromJson(battle);
   }
 
