@@ -2,12 +2,12 @@ import 'env.dart';
 
 /// Tek kaynak — backend sözleşmesi (`FLUTTER_BACKEND_ENTEGRASYON_PROMPT.md`).
 ///
-/// Production: `https://canlifal.com` + `/api/v1` öneki.
-/// Eski `/api/...` yolları geriye dönük çalışır; yeni kod [path] ile v1 üretir.
+/// Production: `https://canlifal.com` + `/api` öneki.
+/// `/api/v1` yalnızca özel/self-hosted backend açıkça istendiğinde kullanılır.
 abstract final class ApiConfig {
   static String get baseUrl => Env.siteOrigin;
 
-  /// Versiyonlu API öneki — yeni endpoint'ler için zorunlu.
+  /// Opsiyonel versiyonlu API öneki.
   static const String apiPrefix = '/api/v1';
 
   /// Eski (geriye dönük) önek.
@@ -25,9 +25,10 @@ abstract final class ApiConfig {
   /// [Env.apiBaseUrl] ile uyumlu tam path tabanı (mevcut `ApiEndpoints` stili).
   static String get legacyDioBaseUrl => baseUrl;
 
-  /// `dart-define=USE_API_V1=false` ile eski `/api/...` yollarına dön.
+  /// Kılavuzdaki production contract `/api/...` olduğu için varsayılan kapalı.
+  /// Self-hosted `/api/v1` mirror gerekiyorsa `dart-define=USE_API_V1=true`.
   static const bool useApiV1 = bool.fromEnvironment(
     'USE_API_V1',
-    defaultValue: true,
+    defaultValue: false,
   );
 }
