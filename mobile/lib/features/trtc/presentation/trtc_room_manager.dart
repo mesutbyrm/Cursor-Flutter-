@@ -427,7 +427,6 @@ class TrtcRoomManager {
   }
 
   static const int voiceRoomMusicId = 88001;
-  String? _publishedMusicUrl;
   var _publishedMusicPlaying = false;
 
   /// DJ / !istek müziğini TRTC uplink'e karıştır (uzak dinleyiciler duyar).
@@ -450,7 +449,6 @@ class TrtcRoomManager {
       ),
     );
     effect.setMusicPublishVolume(voiceRoomMusicId, publishVolume);
-    _publishedMusicUrl = path;
     _publishedMusicPlaying = true;
     VoiceRoomDebugLog.log('trtc.music.publish.start', {
       'url': path.length > 64 ? '${path.substring(0, 64)}…' : path,
@@ -477,7 +475,6 @@ class TrtcRoomManager {
     try {
       _cloud!.getAudioEffectManager().stopPlayMusic(voiceRoomMusicId);
     } catch (_) {}
-    _publishedMusicUrl = null;
     _publishedMusicPlaying = false;
   }
 
