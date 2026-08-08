@@ -32,6 +32,7 @@ void main() {
       expect(literals.where((path) => path.startsWith('/api/payment/')), isEmpty);
       expect(literals, isNot(contains('/api/payment-methods')));
       expect(literals, isNot(contains('/api/membership/packages')));
+      expect(literals, isNot(contains('/api/gifts')));
       expect(literals, isNot(contains(r'/api/chat/rooms/$roomId/skip')));
       expect(literals, isNot(contains(r'/api/chat/rooms/$roomId/pause')));
       expect(literals, isNot(contains(r'/api/chat/rooms/$roomId/resume')));

@@ -28,9 +28,9 @@ Date: 2026-08-08
 |---|---:|
 | Backend handlers | 690 |
 | Backend unique paths | 438 |
-| Flutter normalized paths | 437 |
+| Flutter normalized paths | 436 |
 | Backend ↔ Flutter connected | 256 |
-| Flutter-only normalized paths | 181 |
+| Flutter-only normalized paths | 180 |
 | MCP tools | 10 |
 | Flutter runtime MCP | 0 |
 

@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_http_cache.dart';
 import '../../../voice_hub/presentation/widgets/voice_room_gift_sheet.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
@@ -353,7 +354,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
       // bile yeni hediye 15–60 sn eski disk/memory cache'inden okunabiliyordu.
       await Future.wait([
         ApiHttpCache.invalidatePath('/api/video-streams/gifts'),
-        ApiHttpCache.invalidatePath('/api/gifts'),
+        ApiHttpCache.invalidatePath(ApiEndpoints.giftsTypes),
         ApiHttpCache.invalidatePath('/api/gifts/catalog'),
         ApiHttpCache.invalidatePath('/api/gifts/version'),
       ]);

@@ -5,10 +5,10 @@ Date: 2026-08-08
 | Metric | Count |
 |---|---:|
 | Backend unique paths | 438 |
-| Flutter normalized paths | 437 |
+| Flutter normalized paths | 436 |
 | Backend ↔ Flutter connected | 256 |
 | Missing backend->Flutter normalized paths | 182 |
-| Wrong/Flutter-only normalized paths | 181 |
+| Wrong/Flutter-only normalized paths | 180 |
 | Deprecated risk paths | 3 |
 | MCP tools | 10 |
 | Flutter runtime MCP | 0 |

@@ -3,7 +3,7 @@ Date: 2026-08-08
 Source: uploaded `endpoints_index__1__8c3d.json`, `openapi__2__605a.json`, Flutter `api_endpoints.dart`.
 Status legend: CONNECTED = normalized Flutter path exists; MISSING = backend endpoint has no matching Flutter endpoint constant; WRONG = Flutter endpoint path is not in backend index; PARTIAL = connected but auth/body/runtime still needs feature test; DEPRECATED = documented old/removed path.
 
-Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized paths `437`, connected normalized paths `256`, Flutter-only normalized paths `181`.
+Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized paths `436`, connected normalized paths `256`, Flutter-only normalized paths `180`.
 
 ## Backend -> Flutter matrix (all backend handlers)
 | Backend Endpoint | Method | Auth | Flutter Service | Flutter Method | Request Model | Response Model | SSE | Status |
@@ -773,7 +773,6 @@ Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized 
 | `/api/games/room/{param}/join` | `gameRoomJoinLegacy` | WRONG |
 | `/api/games/rooms` | `gameRooms` | WRONG |
 | `/api/games/sos/create` | `gameSosCreate` | WRONG |
-| `/api/gifts` | `giftsCatalog` | WRONG |
 | `/api/gifts/battles` | `giftsBattles` | WRONG |
 | `/api/gifts/battles/{param}` | `giftsBattle` | WRONG |
 | `/api/gifts/goals` | `giftsGoals` | WRONG |

@@ -757,7 +757,8 @@ abstract final class ApiEndpoints {
   static String videoStreamAutoClose(String streamId) =>
       '/api/video-streams/$streamId/auto-close';
 
-  static const giftsCatalog = '/api/gifts';
+  /// Public hediye JSON kataloğu. Production `/api/gifts` sayfa route'udur.
+  static const giftsCatalog = giftsTypes;
 
   /// CMS katalog versiyonu (public, hafif).
   static const giftsVersion = '/api/gifts/version';
