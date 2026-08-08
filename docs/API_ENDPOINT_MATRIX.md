@@ -3,7 +3,7 @@ Date: 2026-08-08
 Source: uploaded `endpoints_index__1__8c3d.json`, `openapi__2__605a.json`, Flutter `api_endpoints.dart`.
 Status legend: CONNECTED = normalized Flutter path exists; MISSING = backend endpoint has no matching Flutter endpoint constant; WRONG = Flutter endpoint path is not in backend index; PARTIAL = connected but auth/body/runtime still needs feature test; DEPRECATED = documented old/removed path.
 
-Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized paths `437`, connected normalized paths `255`, Flutter-only normalized paths `182`.
+Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized paths `437`, connected normalized paths `256`, Flutter-only normalized paths `181`.
 
 ## Backend -> Flutter matrix (all backend handlers)
 | Backend Endpoint | Method | Auth | Flutter Service | Flutter Method | Request Model | Response Model | SSE | Status |
@@ -692,7 +692,7 @@ Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized 
 | `/api/video-streams/{streamId}/stream` | GET | dual | `videoStreamSse` | `videoStreamSse` | `-` | OpenAPI/docs | YES | CONNECTED |
 | `/api/video-streams/{streamId}/viewers` | GET | public | `videoStreamViewers` | `videoStreamViewers` | `-` | OpenAPI/docs | YES | CONNECTED |
 | `/api/wallet` | GET | dual | `wallet` | `wallet` | `-` | OpenAPI/docs | NO | CONNECTED |
-| `/api/warmup` | GET | public | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
+| `/api/warmup` | GET | public | `apiHealth` | `apiHealth` | `-` | OpenAPI/docs | NO | CONNECTED |
 | `/api/weekly-dream-report` | GET | dual | `weeklyDreamReport` | `weeklyDreamReport` | `-` | OpenAPI/docs | NO | CONNECTED |
 | `/api/weekly-dream-report` | POST | dual | `weeklyDreamReport` | `weeklyDreamReport` | `-` | OpenAPI/docs | NO | CONNECTED |
 | `/api/withdrawals` | GET | dual | `withdrawals` | `withdrawals` | `-` | OpenAPI/docs | NO | CONNECTED |
@@ -877,7 +877,6 @@ Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized 
 | `/api/users/me/stats` | `meStats` | WRONG |
 | `/api/users/{param}/followers` | `userPublicFollowers, followers` | WRONG |
 | `/api/users/{param}/following` | `following` | WRONG |
-| `/api/v1/health` | `apiHealth` | WRONG |
 | `/api/video-streams/{param}/background` | `videoStreamBackground` | WRONG |
 | `/api/video-streams/{param}/fortune-requests/{param}` | `videoStreamFortuneRequest` | WRONG |
 | `/api/video-streams/{param}/gifts/leaderboard` | `videoStreamGiftLeaderboard` | WRONG |

@@ -228,8 +228,8 @@ abstract final class ApiEndpoints {
   static String gameRoomJoinLegacy(String roomId) =>
       '/api/games/room/$roomId/join';
 
-  /// Sağlık kontrolü — Redis + DB durumu.
-  static const apiHealth = '/api/v1/health';
+  /// Public warmup/health kontrolü — backend canonical `/api/warmup`.
+  static const apiHealth = '/api/warmup';
   static String gameRoomChat(String roomId) => '/api/games/room/$roomId/chat';
   static String gameRoomViewers(String roomId) =>
       '/api/games/room/$roomId/viewers';

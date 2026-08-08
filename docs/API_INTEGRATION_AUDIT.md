@@ -29,8 +29,8 @@ Date: 2026-08-08
 | Backend handlers | 690 |
 | Backend unique paths | 438 |
 | Flutter normalized paths | 437 |
-| Backend ↔ Flutter connected | 255 |
-| Flutter-only normalized paths | 182 |
+| Backend ↔ Flutter connected | 256 |
+| Flutter-only normalized paths | 181 |
 | MCP tools | 10 |
 | Flutter runtime MCP | 0 |
 
@@ -40,6 +40,7 @@ Date: 2026-08-08
 - Membership package/purchase constants now use `/api/memberships/packages`, `/api/memberships/purchase`.
 - Gift catalog fallback now uses `/api/gifts/types`, not page route `/api/gifts`.
 - Music skip now uses canonical `DELETE /api/chat/rooms/{roomId}/music`; stop constant is `/api/chat/rooms/{roomId}/music/stop`.
+- Health/warmup check now uses backend-indexed `/api/warmup`, not `/api/v1/health`.
 
 ## Remaining high-priority review
 

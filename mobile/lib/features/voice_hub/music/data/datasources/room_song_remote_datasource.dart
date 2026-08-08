@@ -79,16 +79,17 @@ class RoomSongRemoteDataSource {
     String? channel,
     bool priority = false,
   }) async {
+    final data = <String, dynamic>{
+      'videoId': videoId,
+      'title': title,
+      'priority': priority,
+    };
+    if (thumbnail != null) data['thumbUrl'] = thumbnail;
+    if (duration != null) data['duration'] = duration;
+    if (channel != null) data['artist'] = channel;
     await _dio.post<dynamic>(
       ApiEndpoints.chatRoomSongRequest(roomId),
-      data: {
-        'videoId': videoId,
-        'title': title,
-        if (thumbnail != null) 'thumbUrl': thumbnail,
-        if (duration != null) 'duration': duration,
-        if (channel != null) 'artist': channel,
-        'priority': priority,
-      },
+      data: data,
     );
   }
 

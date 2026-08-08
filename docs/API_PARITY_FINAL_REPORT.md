@@ -6,9 +6,9 @@ Date: 2026-08-08
 |---|---:|
 | Backend unique paths | 438 |
 | Flutter normalized paths | 437 |
-| Backend ↔ Flutter connected | 255 |
-| Missing backend->Flutter normalized paths | 183 |
-| Wrong/Flutter-only normalized paths | 182 |
+| Backend ↔ Flutter connected | 256 |
+| Missing backend->Flutter normalized paths | 182 |
+| Wrong/Flutter-only normalized paths | 181 |
 | Deprecated risk paths | 3 |
 | MCP tools | 10 |
 | Flutter runtime MCP | 0 |
@@ -19,6 +19,7 @@ Date: 2026-08-08
 - MEMBERSHIP: `/api/membership/*` production constants migrated to `/api/memberships/*`.
 - GIFT: public JSON catalog fallback uses `/api/gifts/types`; `/api/gifts` page route is not parsed as JSON.
 - MUSIC: skip uses canonical DELETE `/api/chat/rooms/{roomId}/music`; unsupported pause/resume no longer call fake endpoints.
+- HEALTH: `/api/v1/health` literal removed; warmup uses `/api/warmup`.
 - Regression tests added for canonical endpoint literals.
 
 ## Feature status
