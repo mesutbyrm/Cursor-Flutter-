@@ -34,6 +34,12 @@ class TrtcRoomManager {
   final ValueNotifier<String?> remoteAnchorUserIdNotifier =
       ValueNotifier<String?>(null);
   final ValueNotifier<bool> remoteVideoAvailable = ValueNotifier(false);
+  /// Katılımcı bazlı uzak video durumu — yerel kamera ile karıştırılmaz.
+  final ValueNotifier<Map<String, bool>> remoteVideoByUser =
+      ValueNotifier<Map<String, bool>>({});
+  /// Katılımcı bazlı uzak ses durumu — yerel mikrofon ile karıştırılmaz.
+  final ValueNotifier<Map<String, bool>> remoteAudioByUser =
+      ValueNotifier<Map<String, bool>>({});
 
   int? _boundRemoteViewId;
   String? _boundRemoteUserId;
@@ -221,6 +227,7 @@ class TrtcRoomManager {
         debugPrint('TRTC video $userId available=$available');
         if (userId == _localUserId) return;
         _trtcLog('remote_video', {'userId': userId, 'available': available});
+        _setRemoteVideoState(userId, available);
         if (!_twoWayVideo && _isHost) return;
         if (available) {
           _setRemoteAnchor(userId);
@@ -235,6 +242,7 @@ class TrtcRoomManager {
         debugPrint('TRTC audio $userId available=$available');
         if (userId == _localUserId) return;
         _trtcLog('remote_audio', {'userId': userId, 'available': available});
+        _setRemoteAudioState(userId, available);
         if (!_twoWayVideo && _isHost) return;
         if (available) {
           _cloud?.muteRemoteAudio(userId, false);
@@ -303,6 +311,28 @@ class TrtcRoomManager {
     } else {
       _device?.setAudioRoute(TXAudioRoute.speakerPhone);
     }
+  }
+
+  void _setRemoteVideoState(String userId, bool available) {
+    if (userId.isEmpty || userId == _localUserId) return;
+    final next = Map<String, bool>.from(remoteVideoByUser.value);
+    if (available) {
+      next[userId] = true;
+    } else {
+      next.remove(userId);
+    }
+    remoteVideoByUser.value = next;
+  }
+
+  void _setRemoteAudioState(String userId, bool available) {
+    if (userId.isEmpty || userId == _localUserId) return;
+    final next = Map<String, bool>.from(remoteAudioByUser.value);
+    if (available) {
+      next[userId] = true;
+    } else {
+      next.remove(userId);
+    }
+    remoteAudioByUser.value = next;
   }
 
   void _trackRemoteUser(String userId, {required bool joined}) {
@@ -431,6 +461,8 @@ class TrtcRoomManager {
     _clearRemoteAnchor();
     _remoteUserIds.clear();
     remoteUserIdsNotifier.value = const [];
+    remoteVideoByUser.value = const {};
+    remoteAudioByUser.value = const {};
     if (_cloud != null) {
       _cloud!.stopLocalPreview();
       _cloud!.stopLocalAudio();

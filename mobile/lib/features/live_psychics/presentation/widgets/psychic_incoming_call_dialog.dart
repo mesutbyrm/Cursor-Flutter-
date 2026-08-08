@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/network/api_exception.dart';
+import 'package:canlifal_social/core/network/psychic_event_log.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/widgets/user_avatar.dart';
 
@@ -130,6 +131,7 @@ class _PsychicIncomingCallDialogState
 
       if (action == 'accept') {
         if (respond.success) {
+          PsychicEventLog.accept(sessionId: widget.sessionId);
           Navigator.pop(
             context,
             PsychicIncomingDialogClose(
@@ -171,6 +173,9 @@ class _PsychicIncomingCallDialogState
           respond: respond,
         ),
       );
+      if (action == 'reject') {
+        PsychicEventLog.reject(sessionId: widget.sessionId);
+      }
     } catch (e, st) {
       debugPrint(
         '[PsychicInviteDialog] $action session=${widget.sessionId} '

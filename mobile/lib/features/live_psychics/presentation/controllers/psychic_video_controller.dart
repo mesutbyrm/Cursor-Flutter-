@@ -8,6 +8,7 @@ import 'package:canlifal_social/core/config/env.dart';
 import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/core/network/dio_provider.dart';
 import 'package:canlifal_social/core/network/live_debug_log.dart';
+import 'package:canlifal_social/core/network/psychic_event_log.dart';
 import 'package:canlifal_social/features/auth/domain/entities/user_entity.dart';
 import 'package:canlifal_social/core/network/token_storage.dart';
 import 'package:dio/dio.dart';
@@ -16,6 +17,7 @@ import 'package:canlifal_social/features/live/presentation/providers/live_beauty
 import 'package:canlifal_social/features/trtc/presentation/providers/trtc_providers.dart';
 import 'package:canlifal_social/features/trtc/presentation/trtc_live_room_coordinator.dart';
 import 'package:canlifal_social/features/trtc/presentation/trtc_room_manager.dart';
+import 'package:canlifal_social/features/live_psychics/domain/psychic_session_phase.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_extend_sheet.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_tip_sheet.dart';
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
@@ -35,6 +37,7 @@ enum PsychicRtcBackend { none, trtc }
 
 class PsychicVideoState {
   const PsychicVideoState({
+    this.phase = PsychicSessionPhase.joining,
     this.rtcReady = false,
     this.rtcError,
     this.rtcBackend = PsychicRtcBackend.none,
@@ -52,8 +55,11 @@ class PsychicVideoState {
     this.sseConnected = false,
     this.localPreviewKey = 0,
     this.timeUpPending = false,
+    this.remoteCamera = const {},
+    this.remoteMicrophone = const {},
   });
 
+  final PsychicSessionPhase phase;
   final bool rtcReady;
   final String? rtcError;
   final PsychicRtcBackend rtcBackend;
@@ -71,6 +77,10 @@ class PsychicVideoState {
   final bool sseConnected;
   final int localPreviewKey;
   final bool timeUpPending;
+  /// Uzak katılımcı kamera durumu — userId → açık mı (yerel kameradan bağımsız).
+  final Map<String, bool> remoteCamera;
+  /// Uzak katılımcı mikrofon durumu — userId → açık mı (yerel mikrofondan bağımsız).
+  final Map<String, bool> remoteMicrophone;
 
   String get timerLabel {
     final m = remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -79,6 +89,7 @@ class PsychicVideoState {
   }
 
   PsychicVideoState copyWith({
+    PsychicSessionPhase? phase,
     bool? rtcReady,
     String? rtcError,
     PsychicRtcBackend? rtcBackend,
@@ -99,8 +110,11 @@ class PsychicVideoState {
     bool? sseConnected,
     int? localPreviewKey,
     bool? timeUpPending,
+    Map<String, bool>? remoteCamera,
+    Map<String, bool>? remoteMicrophone,
   }) {
     return PsychicVideoState(
+      phase: phase ?? this.phase,
       rtcReady: rtcReady ?? this.rtcReady,
       rtcError: clearRtcError ? null : (rtcError ?? this.rtcError),
       rtcBackend: rtcBackend ?? this.rtcBackend,
@@ -122,6 +136,8 @@ class PsychicVideoState {
       sseConnected: sseConnected ?? this.sseConnected,
       localPreviewKey: localPreviewKey ?? this.localPreviewKey,
       timeUpPending: timeUpPending ?? this.timeUpPending,
+      remoteCamera: remoteCamera ?? this.remoteCamera,
+      remoteMicrophone: remoteMicrophone ?? this.remoteMicrophone,
     );
   }
 }
@@ -153,6 +169,56 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   String? _joinedTrtcRoom;
   var _rejoiningRtc = false;
   var _joiningRtc = false;
+
+  var _joiningRtc = false;
+  VoidCallback? _remoteVideoListener;
+  VoidCallback? _remoteAudioListener;
+
+  void _setPhase(PsychicSessionPhase next) {
+    final from = state.phase;
+    final allowed = PsychicSessionPhaseGuard.transition(from, next);
+    if (allowed == null) return;
+    PsychicEventLog.phase(from.name, allowed.name, sessionId: session.sessionId);
+    state = state.copyWith(phase: allowed);
+  }
+
+  void _attachRemoteMediaListeners() {
+    _remoteVideoListener ??= () {
+      if (_disposed) return;
+      final map = Map<String, bool>.from(_trtc.remoteVideoByUser.value);
+      state = state.copyWith(remoteCamera: map);
+      for (final entry in map.entries) {
+        PsychicEventLog.remoteVideo(
+          sessionId: session.sessionId,
+          userId: entry.key,
+          available: entry.value,
+        );
+      }
+    };
+    _remoteAudioListener ??= () {
+      if (_disposed) return;
+      final map = Map<String, bool>.from(_trtc.remoteAudioByUser.value);
+      state = state.copyWith(remoteMicrophone: map);
+      for (final entry in map.entries) {
+        PsychicEventLog.remoteAudio(
+          sessionId: session.sessionId,
+          userId: entry.key,
+          available: entry.value,
+        );
+      }
+    };
+    _trtc.remoteVideoByUser.addListener(_remoteVideoListener!);
+    _trtc.remoteAudioByUser.addListener(_remoteAudioListener!);
+  }
+
+  void _detachRemoteMediaListeners() {
+    if (_remoteVideoListener != null) {
+      _trtc.remoteVideoByUser.removeListener(_remoteVideoListener!);
+    }
+    if (_remoteAudioListener != null) {
+      _trtc.remoteAudioByUser.removeListener(_remoteAudioListener!);
+    }
+  }
 
   TrtcRoomManager get trtc => _trtc;
   bool get micOn => _trtc.micOn;
@@ -435,6 +501,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _rejoiningRtc = true;
     _trtcCoordinator?.setReconnectSuspended(true);
     _joinedTrtcRoom = null;
+    _setPhase(PsychicSessionPhase.reconnecting);
     state = state.copyWith(rtcReady: false, clearRtcError: true);
     try {
       final user = await _waitForAuth();
@@ -458,8 +525,11 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       );
       _joinedTrtcRoom = roomId;
       ref.read(liveBeautyProvider.notifier).bindRtc(trtc: _trtc);
+      _attachRemoteMediaListeners();
       state = state.copyWith(rtcReady: true, clearRtcError: true);
+      _setPhase(PsychicSessionPhase.connected);
     } catch (e) {
+      _setPhase(PsychicSessionPhase.error);
       state = state.copyWith(rtcError: ApiException.userMessage(e));
     } finally {
       _trtcCoordinator?.setReconnectSuspended(false);
@@ -648,8 +718,13 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }) async {
     if (_joiningRtc || _rejoiningRtc) return;
     _joiningRtc = true;
+    _setPhase(PsychicSessionPhase.joining);
     _trtcCoordinator?.setReconnectSuspended(true);
     try {
+    PsychicEventLog.joinStart(
+      sessionId: session.sessionId,
+      roomId: roomId,
+    );
     LiveDebugLog.log('psychic.trtc.join.request', {
       'sessionId': session.sessionId,
       'roomId': roomId,
@@ -672,9 +747,17 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       twoWayVideo: true,
       expectedAnchorUserId: session.remotePeerIdFor(room: state.room),
     );
+    PsychicEventLog.trtcJoin(
+      sessionId: session.sessionId,
+      role: session.isClient ? 'client' : 'host',
+    );
 
     _joinedTrtcRoom = roomId;
     ref.read(liveBeautyProvider.notifier).bindRtc(trtc: _trtc);
+    _attachRemoteMediaListeners();
+    PsychicEventLog.joinSuccess(sessionId: session.sessionId, roomId: roomId);
+    PsychicEventLog.localAudio(enabled: _trtc.micOn, sessionId: session.sessionId);
+    PsychicEventLog.localVideo(enabled: _trtc.cameraOn, sessionId: session.sessionId);
     LiveDebugLog.log('psychic.trtc.join.ok', {
       'sessionId': session.sessionId,
       'roomId': roomId,
@@ -691,10 +774,15 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       rtcBackend: PsychicRtcBackend.trtc,
       clearRtcError: true,
     );
+    _setPhase(PsychicSessionPhase.connected);
     if (!session.isClient && !state.timerStarted) {
       unawaited(_ensureTimerStarted());
     }
     unawaited(_broadcastMediaState());
+    } catch (e) {
+      PsychicEventLog.error('join', e, sessionId: session.sessionId);
+      _setPhase(PsychicSessionPhase.error);
+      state = state.copyWith(rtcError: ApiException.userMessage(e));
     } finally {
       _trtcCoordinator?.setReconnectSuspended(false);
       _joiningRtc = false;
@@ -878,12 +966,16 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   void toggleMic() {
-    _trtc.setMicEnabled(!_trtc.micOn);
+    final next = !_trtc.micOn;
+    _trtc.setMicEnabled(next);
+    PsychicEventLog.localAudio(enabled: next, sessionId: session.sessionId);
     unawaited(_broadcastMediaState());
   }
 
   void toggleCamera() {
-    _trtc.setCameraEnabled(!_trtc.cameraOn);
+    final next = !_trtc.cameraOn;
+    _trtc.setCameraEnabled(next);
+    PsychicEventLog.localVideo(enabled: next, sessionId: session.sessionId);
     unawaited(_broadcastMediaState());
   }
 
@@ -894,7 +986,11 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     String? peerEndedMessage,
   }) async {
     if (state.leaving) return;
+    _setPhase(PsychicSessionPhase.ending);
     state = state.copyWith(leaving: true);
+    _detachRemoteMediaListeners();
+    _trtc.setMicEnabled(false);
+    _trtc.setCameraEnabled(false);
     _tick?.cancel();
     _chatPoll?.cancel();
     _ping?.cancel();
@@ -954,6 +1050,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     ));
 
     unawaited(PsychicSessionStore.clear());
+    PsychicEventLog.sessionEnd(sessionId: sessionId, reason: 'leave');
+    _setPhase(PsychicSessionPhase.ended);
     invalidateWalletCacheFromRef(ref);
   }
 
@@ -1024,6 +1122,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   @override
   void dispose() {
     _disposed = true;
+    _detachRemoteMediaListeners();
     _tick?.cancel();
     _chatPoll?.cancel();
     _ping?.cancel();
