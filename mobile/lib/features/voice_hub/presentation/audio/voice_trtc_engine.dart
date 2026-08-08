@@ -99,26 +99,11 @@ class VoiceTrtcEngine {
       TrtcCredentials? credentials = prefetchedCredentials;
       final tokenSource = _tokenSource;
       if (credentials == null && tokenSource != null) {
-        try {
-          credentials = await tokenSource.fetchToken(
-            roomId: rawRoomId,
-            role: effectiveRole,
-            userId: userId,
-          );
-        } catch (e) {
-          VoiceRoomDebugLog.log('audio.trtc.token.fallback', {
-            'roomId': rawRoomId,
-            'error': e.toString(),
-          });
-          if (userId != null && userId.isNotEmpty) {
-            credentials = await tokenSource.fetchUserSig(
-              userId: userId,
-              roomId: rawRoomId,
-            );
-          } else {
-            rethrow;
-          }
-        }
+        credentials = await tokenSource.fetchToken(
+          roomId: rawRoomId,
+          role: effectiveRole,
+          userId: userId,
+        );
       }
 
       if (credentials == null || !credentials.isValid) {

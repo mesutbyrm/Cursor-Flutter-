@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
@@ -39,7 +40,7 @@ class TrtcRemoteDataSource {
       return cred;
     } on ApiException catch (e) {
       // Kılavuz §9.13: POST /api/trtc/usersig yedek.
-      if (e.statusCode == 404 || e.statusCode == 405) {
+      if (!Env.useMobileAuth && (e.statusCode == 404 || e.statusCode == 405)) {
         final uid = userId?.trim() ?? '';
         if (uid.isNotEmpty) {
           return fetchUserSig(userId: uid, roomId: roomId);
@@ -47,7 +48,8 @@ class TrtcRemoteDataSource {
       }
       rethrow;
     } on DioException catch (e) {
-      if (e.response?.statusCode == 404 || e.response?.statusCode == 405) {
+      if (!Env.useMobileAuth &&
+          (e.response?.statusCode == 404 || e.response?.statusCode == 405)) {
         final uid = userId?.trim() ?? '';
         if (uid.isNotEmpty) {
           return fetchUserSig(userId: uid, roomId: roomId);

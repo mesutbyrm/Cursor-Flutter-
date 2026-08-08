@@ -121,11 +121,11 @@ class TrtcLiveRoomCoordinator {
     required String roomId,
     required String userId,
   }) async {
-    try {
-      return await _trtcRemote.fetchToken(roomId: roomId, role: _rtcRole);
-    } catch (_) {
-      return _trtcRemote.fetchUserSig(userId: userId, roomId: roomId);
-    }
+    return _trtcRemote.fetchToken(
+      roomId: roomId,
+      role: _rtcRole,
+      userId: userId,
+    );
   }
 
   Future<void> _enterTrtc(TrtcCredentials cred) async {

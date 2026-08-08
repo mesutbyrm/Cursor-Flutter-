@@ -37,7 +37,9 @@ class VoiceRoomsPresenceState {
 }
 
 class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
-  static const maxTrackedRooms = 12;
+  /// Discover ekranında aynı anda yalnızca görünür/öncelikli odalar izlenir.
+  /// Tüm liste için oda başına SSE açmak üretimde batarya ve bağlantı yükü yaratır.
+  static const maxTrackedRooms = 4;
 
   final Map<String, StreamSubscription<ChatRoomSseEvent>> _subs = {};
 

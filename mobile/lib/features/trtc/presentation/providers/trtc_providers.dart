@@ -18,17 +18,11 @@ final liveRoomRemoteProvider = Provider<LiveRoomRemoteDataSource>((ref) {
 final trtcUserSigProvider = FutureProvider.family<TrtcCredentials, TrtcRoomKey>(
   (ref, key) async {
     final remote = ref.read(trtcRemoteProvider);
-    try {
-      return await remote.fetchToken(
-        roomId: key.roomId,
-        role: key.role ?? 'audience',
-      );
-    } catch (_) {
-      return remote.fetchUserSig(
-        userId: key.userId,
-        roomId: key.roomId,
-      );
-    }
+    return remote.fetchToken(
+      roomId: key.roomId,
+      role: key.role ?? 'audience',
+      userId: key.userId,
+    );
   },
 );
 
