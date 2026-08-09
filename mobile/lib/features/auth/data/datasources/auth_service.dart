@@ -188,6 +188,17 @@ class AuthService {
           refresh: tokens.refreshToken,
           userId: userId,
         );
+        final refreshedUser = _userFromBody(res.data);
+        if (refreshedUser != null) {
+          if (refreshedUser.id.isNotEmpty) {
+            await _tokens.writeUserId(refreshedUser.id);
+          }
+          return AuthResponse(
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            user: refreshedUser,
+          );
+        }
         final meRes = await _publicDio.safeGet<Map<String, dynamic>>(
           ApiEndpoints.me,
           options: Options(
@@ -321,6 +332,14 @@ class AuthService {
       );
     }
     return ApiException.fromDio(e);
+  }
+
+  AuthUser? _userFromBody(Map<String, dynamic>? body) {
+    final root = _unwrapBody(body);
+    final raw = root['user'];
+    if (raw is Map<String, dynamic>) return AuthUser.fromJson(raw);
+    if (raw is Map) return AuthUser.fromJson(Map<String, dynamic>.from(raw));
+    return null;
   }
 
   Future<void> _deregisterFcmToken() async {

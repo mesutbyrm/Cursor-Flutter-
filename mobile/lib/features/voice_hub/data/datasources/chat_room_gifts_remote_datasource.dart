@@ -80,21 +80,30 @@ class ChatRoomGiftsRemoteDataSource {
         context: 'voice_room',
         contextId: roomId,
       );
-      return VoiceGiftSendResult(luckyResult: lucky);
+      return VoiceGiftSendResult(
+        luckyResult: lucky,
+        newBalance: lucky.newBalance,
+      );
     }
     if (receiverId != null && receiverId.isNotEmpty) {
       await assertReciprocalGiftAllowed(_dio, receiverId);
     }
     try {
-      await LiveFieldApiRemoteDataSource(_dio).gifts.sendGift(
+      final field = await LiveFieldApiRemoteDataSource(_dio).gifts.sendGift(
+            roomId: roomId,
+            roomType: 'voice',
+            giftTypeId: giftTypeId,
+            recipientId: receiverId,
+            quantity: quantity,
+            isLucky: isLucky,
+          );
+      return _mapSendResponse(
+        body: field.raw,
         roomId: roomId,
-        roomType: 'voice',
-        giftTypeId: giftTypeId,
-        recipientId: receiverId,
-        quantity: quantity,
-        isLucky: isLucky,
+        fallbackSpent: field.spentAmount,
+        newBalance: field.senderBalance,
+        transactionId: field.transactionId,
       );
-      return const VoiceGiftSendResult();
     } on ApiException catch (e) {
       if (e.statusCode != 404 && e.statusCode != 405) rethrow;
     } catch (_) {}
@@ -119,12 +128,64 @@ class ChatRoomGiftsRemoteDataSource {
     );
     final body = res.data;
     Map<String, dynamic>? revenueMap;
+    Map<String, dynamic>? payload;
     if (body is Map) {
+      payload = Map<String, dynamic>.from(body);
       final rev = body['revenue'];
       if (rev is Map) revenueMap = Map<String, dynamic>.from(rev);
     }
-    return VoiceGiftSendResult(
+    return _mapSendResponse(
+      body: payload ?? const {},
+      roomId: roomId,
       revenue: VoiceGiftRevenueBreakdown.fromJson(revenueMap),
+    );
+  }
+
+  VoiceGiftSendResult _mapSendResponse({
+    required Map<String, dynamic> body,
+    required String roomId,
+    VoiceGiftRevenueBreakdown? revenue,
+    int? fallbackSpent,
+    int? newBalance,
+    String? transactionId,
+  }) {
+    final unwrapped = body['data'] is Map
+        ? Map<String, dynamic>.from(body['data'] as Map)
+        : body;
+    final event = _liveGifts.parseGiftEvent(unwrapped, streamId: roomId);
+    final balance = newBalance ??
+        asInt(
+          pick(unwrapped, [
+            'newBalance',
+            'balance',
+            'coinBalance',
+            'senderBalance',
+          ]),
+        );
+    final spent = fallbackSpent ??
+        event?.jetonAmount ??
+        asInt(
+          pick(unwrapped, [
+            'spentAmount',
+            'coinCost',
+            'totalCoin',
+            'totalCost',
+            'price',
+          ]),
+        );
+    final txId = transactionId ??
+        pick(unwrapped, ['id', 'giftEventId', 'transactionId'])?.toString();
+    return VoiceGiftSendResult(
+      revenue: revenue ??
+          VoiceGiftRevenueBreakdown.fromJson(
+            unwrapped['revenue'] is Map
+                ? Map<String, dynamic>.from(unwrapped['revenue'] as Map)
+                : null,
+          ),
+      newBalance: balance == 0 ? null : balance,
+      spentAmount: spent == 0 ? null : spent,
+      giftEvent: event,
+      transactionId: txId,
     );
   }
 

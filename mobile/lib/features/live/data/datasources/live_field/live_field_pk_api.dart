@@ -19,7 +19,7 @@ class LiveFieldPkApi {
     final map = LiveFieldApiUtil.unwrapData(res.data);
     if (map == null) return null;
     final battle = asJsonMap(map['battle']);
-    if (battle == null) return null;
+    if (battle.isEmpty) return null;
     return LiveFieldPkBattle.fromJson(battle);
   }
 
@@ -50,7 +50,7 @@ class LiveFieldPkApi {
     final map = LiveFieldApiUtil.unwrapData(res.data);
     if (map == null) return null;
     final battle = asJsonMap(map['battle'] ?? map);
-    if (battle == null) return null;
+    if (battle.isEmpty) return null;
     return LiveFieldPkBattle.fromJson(battle);
   }
 
@@ -97,10 +97,10 @@ class LiveFieldPkBattle {
       id: json['id']?.toString() ?? '',
       status: json['status']?.toString(),
       durationSeconds: (json['durationSeconds'] as num?)?.toInt(),
-      room1Score: (r1?['score'] as num?)?.toInt() ??
+      room1Score: (r1['score'] as num?)?.toInt() ??
           (json['room1Score'] as num?)?.toInt() ??
           0,
-      room2Score: (r2?['score'] as num?)?.toInt() ??
+      room2Score: (r2['score'] as num?)?.toInt() ??
           (json['room2Score'] as num?)?.toInt() ??
           0,
     );

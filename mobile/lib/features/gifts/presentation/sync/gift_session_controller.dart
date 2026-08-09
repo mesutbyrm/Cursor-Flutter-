@@ -181,42 +181,54 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     bool isHost = false,
   }) {
     final roomId = _roomId;
-    if (!_isDisplayable(raw)) {
-      GiftSyncLog.dedupeSkipped(roomId, raw.id, 'not_displayable');
-      return;
-    }
-
-    if (raw.id.startsWith('local-')) {
-      GiftSyncLog.dedupeSkipped(roomId, raw.id, 'local_blocked');
-      return;
-    }
-
-    if (state.processedEventIds.contains(raw.id)) {
-      GiftSyncLog.dedupeSkipped(roomId, raw.id, 'duplicate_id');
-      return;
-    }
-
-    final receivedMs = DateTime.now().millisecondsSinceEpoch;
-    _receivedAtMs[raw.id] = receivedMs;
-
-    GiftSyncLog.eventReceived(
-      roomId: roomId,
-      source: source,
-      role: userRole,
-      event: raw,
-    );
-    if (isHost) {
-      GiftSyncLog.hostReceived(roomId, raw.id);
-    } else {
-      GiftSyncLog.guestReceived(roomId, raw.id);
-    }
-
     final catalog = lookupGiftCatalog(
       ref.read(allGiftCatalogByIdProvider),
       raw.giftId,
     );
     final event = enrichGiftEventFromCatalog(raw, catalog);
-    final ids = {...state.processedEventIds, event.id};
+
+    if (!_isDisplayable(event)) {
+      GiftSyncLog.dedupeSkipped(roomId, raw.id, 'not_displayable');
+      return;
+    }
+    if (event.jetonAmount <= 0) {
+      GiftSyncLog.dedupeSkipped(roomId, event.id, 'zero_jeton');
+      return;
+    }
+
+    if (event.id.startsWith('local-')) {
+      GiftSyncLog.dedupeSkipped(roomId, event.id, 'local_blocked');
+      return;
+    }
+
+    final dedupeKeys = <String>{
+      event.id,
+      if (event.giftHistoryId != null && event.giftHistoryId!.isNotEmpty)
+        event.giftHistoryId!,
+      if (event.queueItemId != null && event.queueItemId!.isNotEmpty)
+        event.queueItemId!,
+    };
+    if (dedupeKeys.any(state.processedEventIds.contains)) {
+      GiftSyncLog.dedupeSkipped(roomId, event.id, 'duplicate_id');
+      return;
+    }
+
+    final receivedMs = DateTime.now().millisecondsSinceEpoch;
+    _receivedAtMs[event.id] = receivedMs;
+
+    GiftSyncLog.eventReceived(
+      roomId: roomId,
+      source: source,
+      role: userRole,
+      event: event,
+    );
+    if (isHost) {
+      GiftSyncLog.hostReceived(roomId, event.id);
+    } else {
+      GiftSyncLog.guestReceived(roomId, event.id);
+    }
+
+    final ids = {...state.processedEventIds, ...dedupeKeys};
     if (ids.length > _maxProcessedIds) {
       ids.remove(ids.first);
     }

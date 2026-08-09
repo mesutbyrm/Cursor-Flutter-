@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "canlifal-backend": {
+      "command": "node",
+      "args": [
+        "/workspace/mcp-server/index.mjs"
+      ]
+    }
+  }
+}

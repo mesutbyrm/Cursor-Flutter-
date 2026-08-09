@@ -115,21 +115,45 @@ class LiveFieldGiftSendResult {
     this.message,
     this.giftId,
     this.luckyResult,
+    this.spentAmount,
+    this.transactionId,
+    this.raw = const {},
   });
 
   final int? senderBalance;
   final String? message;
   final String? giftId;
   final LuckyGiftSpinResult? luckyResult;
+  final int? spentAmount;
+  final String? transactionId;
+  final Map<String, dynamic> raw;
 
   factory LiveFieldGiftSendResult.fromJson(Map<String, dynamic> json) {
     final gift = asJsonMap(json['gift']);
     return LiveFieldGiftSendResult(
       senderBalance: asInt(
-        pick(json, ['newBalance', 'senderBalance', 'balance']),
+        pick(json, ['newBalance', 'senderBalance', 'balance', 'coinBalance']),
       ),
       message: json['message']?.toString(),
-      giftId: gift?['id']?.toString(),
+      giftId: gift['id']?.toString() ??
+          pick(json, ['giftId', 'giftTypeId', 'slug'])?.toString(),
+      spentAmount: asInt(
+        pick(json, [
+          'spentAmount',
+          'coinCost',
+          'totalCoin',
+          'totalCost',
+          'totalPrice',
+          'price',
+        ]),
+      ),
+      transactionId: pick(json, [
+        'id',
+        'giftEventId',
+        'transactionId',
+        'giftHistoryId',
+      ])?.toString(),
+      raw: json,
     );
   }
 }

@@ -18,6 +18,7 @@ import 'connectivity/connectivity_service.dart';
 import 'cookie_jar_provider.dart';
 import 'gateway_fallback_interceptor.dart';
 import 'interceptors/api_version_interceptor.dart';
+import 'json_content_type_guard_interceptor.dart';
 import 'payment_request_interceptor.dart';
 import 'token_storage.dart';
 import 'voice_room_api_log_interceptor.dart';
@@ -76,6 +77,7 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
   dio.interceptors.add(VoiceRoomApiLogInterceptor());
   dio.interceptors.add(ApiMonitorInterceptor());
   dio.interceptors.add(ApiTimingInterceptor());
+  dio.interceptors.add(JsonContentTypeGuardInterceptor());
 
   final connectivity = ref.read(connectivityServiceProvider);
   dio.interceptors.add(

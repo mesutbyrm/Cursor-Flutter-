@@ -297,6 +297,7 @@ class YoutubeStreamResolver {
     return null;
   }
 
+  /// Invidious üçüncü taraf API — canlifal `/api/v1` değil.
   Future<String?> _resolveViaInvidious(String host, String id) async {
     try {
       final res = await _dio.get<dynamic>(

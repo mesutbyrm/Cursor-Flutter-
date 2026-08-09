@@ -174,15 +174,28 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   }) {
     final previous = state.presence;
     final withSelf = _mergeSelf(incoming);
+
+    // Otoriter kaynaklarda boş liste = gerçekten boş; hayalet kullanıcı tutma.
+    final trustEmpty = source == 'refresh' ||
+        source == 'poll' ||
+        source == 'join' ||
+        source == 'state_snapshot' ||
+        source == 'sse' ||
+        source == 'preload';
+
     if (withSelf.isEmpty && previous.isNotEmpty) {
-      VoiceRoomDebugLog.presenceUpdate(
-        roomId: _roomKey,
-        previousCount: previous.length,
-        incomingCount: 0,
-        mergedCount: previous.length,
-        source: '$source.keep_previous',
-      );
-      return previous;
+      if (!trustEmpty) {
+        VoiceRoomDebugLog.presenceUpdate(
+          roomId: _roomKey,
+          previousCount: previous.length,
+          incomingCount: 0,
+          mergedCount: previous.length,
+          source: '$source.keep_previous',
+        );
+        return previous;
+      }
+      VoiceEventLog.presenceUpdate(roomId: _roomKey, count: withSelf.length);
+      return withSelf;
     }
     final prevById = <String, ChatRoomPresence>{
       for (final p in previous) p.id: p,
@@ -397,6 +410,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
           .read(voiceRoomDiagnosticProvider.notifier)
           .setPresence(joined: true, count: merged.length);
       _patchHubPresenceCount(merged.length);
+      _startPresenceHeartbeat();
       unawaited(_tryAutoPrivilegedSeat());
       unawaited(_broadcastStaffEntryIfNeeded());
       unawaited(refreshServerPermissions());
@@ -465,12 +479,25 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     if (_roomKey.isEmpty) return;
     // selfInRoom=true means join was acknowledged by backend; even if the
     // _presenceJoined flag wasn't set yet (race during room switch), still
-    // send DELETE to avoid the user appearing in the old room.
+    // send leave to avoid the user appearing in the old room.
     if (!_presenceJoined && !state.selfInRoom) return;
     _presenceJoined = false;
+    _presenceHeartbeat?.cancel();
+    _presenceHeartbeat = null;
     try {
       await ref.read(chatRoomRemoteProvider).leavePresence(_roomKey);
     } catch (_) {}
+  }
+
+  void _startPresenceHeartbeat() {
+    _presenceHeartbeat?.cancel();
+    _presenceHeartbeat = Timer.periodic(
+      ChatRoomRemoteDataSource.presenceHeartbeatInterval,
+      (_) {
+        if (!_sessionActive || !_presenceJoined || !state.selfInRoom) return;
+        unawaited(_presenceHeartbeatTick());
+      },
+    );
   }
 
   void _removeSelfFromPresenceOptimistic() {
@@ -507,6 +534,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       return;
     }
     try {
+      VoiceEventLog.heartbeat(roomId: _roomKey);
       VoiceRoomDebugLog.log('api.presence.heartbeat', {'room': _roomKey});
       await ref.read(chatRoomRemoteProvider).presenceHeartbeat(_roomKey);
     } catch (e) {

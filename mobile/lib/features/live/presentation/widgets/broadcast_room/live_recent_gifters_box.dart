@@ -13,6 +13,7 @@ class LiveRecentGiftersBox extends StatelessWidget {
     final recent = <LiveGiftEvent>[];
     final seen = <String>{};
     for (final e in notifications) {
+      if (e.jetonAmount <= 0) continue;
       final key = (e.senderId ?? e.senderName).trim();
       if (key.isEmpty || !seen.add(key)) continue;
       recent.add(e);

@@ -33,6 +33,7 @@ class VoiceDiscoverHub2026 extends ConsumerStatefulWidget {
     required this.liveStreams,
     required this.onRoomTap,
     required this.onSearchChanged,
+    this.onLoadMore,
     this.topPadding = 0,
   });
 
@@ -40,6 +41,7 @@ class VoiceDiscoverHub2026 extends ConsumerStatefulWidget {
   final List<LiveStreamEntity> liveStreams;
   final ValueChanged<VoiceRoomEntity> onRoomTap;
   final ValueChanged<String> onSearchChanged;
+  final VoidCallback? onLoadMore;
   final double topPadding;
 
   @override
@@ -102,6 +104,8 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
           _visibleRooms = (_visibleRooms + ListPerf.defaultPageSize)
               .clamp(0, total);
         });
+      } else {
+        widget.onLoadMore?.call();
       }
     }
   }

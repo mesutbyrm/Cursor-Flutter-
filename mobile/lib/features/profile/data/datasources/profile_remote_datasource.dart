@@ -703,7 +703,7 @@ class WalletRemoteDataSource {
             ));
   }
 
-  /// Bekleyen ödeme talebini iptal — `PATCH /api/payment/requests`.
+  /// Bekleyen ödeme talebini iptal — `PATCH /api/payments/requests`.
   Future<void> cancelPaymentRequest(String requestId) async {
     final id = requestId.trim();
     if (id.isEmpty) {

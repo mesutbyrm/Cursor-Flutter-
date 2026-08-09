@@ -13,6 +13,10 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     _sseStarted = false;
     _sessionActive = true;
     registerVoiceRoomLiveSession(ref, _roomKey);
+    VoiceEventLog.joinStart(roomId: _roomKey);
+    ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
+          VoiceSessionPhase.joining,
+        );
     ref
         .read(voiceRoomMusicSessionProvider.notifier)
         .prepareForRoomEntry(_roomMeta);
@@ -26,15 +30,6 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
       backendSyncReady: false,
     );
     _seedOptimisticSelfPresence();
-    _presenceHeartbeat?.cancel();
-    _presenceHeartbeat = Timer.periodic(
-      ChatRoomRemoteDataSource.presenceHeartbeatInterval,
-      (_) {
-        if (_sessionActive && state.selfInRoom) {
-          unawaited(_presenceHeartbeatTick());
-        }
-      },
-    );
 
     try {
       await _joinPresence();
@@ -54,7 +49,18 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
         _preloadGiftCatalog(),
       ], eagerError: false);
       await _bootstrapRoomData();
-    } catch (_) {
+      VoiceEventLog.joinSuccess(
+        roomId: _roomKey,
+        presenceCount: state.presence.length,
+      );
+      ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
+            VoiceSessionPhase.connected,
+          );
+    } catch (e) {
+      VoiceEventLog.error('join', e);
+      ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
+            VoiceSessionPhase.error,
+          );
       state = state.copyWith(loading: false);
     }
   }

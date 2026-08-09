@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/pk_event_log.dart';
 import '../../../../core/network/token_storage.dart';
+import '../../../live/domain/pk/pk_session_phase.dart';
+import '../../../live/presentation/providers/pk_session_phase_provider.dart';
 import '../../data/datasources/pk_battle_remote_datasource.dart';
 import '../../data/services/pk_battle_socket_service.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
@@ -95,7 +98,10 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
       opponentRoomId: opponentRoomId,
       durationSeconds: durationSeconds,
     );
-    if (battle != null) _apply(battle, 'pk:invite');
+    if (battle != null) {
+      PkEventLog.requestSuccess(battleId: battle.id);
+      _apply(battle, 'pk:invite');
+    }
     return battle;
   }
 
@@ -121,6 +127,8 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     String? alternateRoomId,
     String? streamId,
   }) async {
+    PkEventLog.acceptStart(inviteId: battleId);
+    ref.read(pkSessionPhaseProvider.notifier).transitionTo(PkSessionPhase.accepting);
     final PkBattleRemote? battle;
     if (roomId != null && roomId.trim().isNotEmpty) {
       battle = await _api.acceptBattle(
@@ -137,7 +145,10 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     } else {
       return null;
     }
-    if (battle != null) _apply(battle, 'pk:accept');
+    if (battle != null) {
+      PkEventLog.acceptSuccess(battleId: battle.id);
+      _apply(battle, 'pk:accept');
+    }
     return battle;
   }
 
@@ -147,6 +158,8 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     String? alternateRoomId,
     String? streamId,
   }) async {
+    PkEventLog.reject(inviteId: battleId);
+    ref.read(pkSessionPhaseProvider.notifier).transitionTo(PkSessionPhase.rejecting);
     final PkBattleRemote? battle;
     if (roomId != null && roomId.trim().isNotEmpty) {
       battle = await _api.rejectBattle(
@@ -163,7 +176,9 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     } else {
       return null;
     }
-    if (battle != null) _apply(battle, 'pk:reject');
+    if (battle != null) {
+      _apply(battle, 'pk:reject');
+    }
     return battle;
   }
 
@@ -173,6 +188,8 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     String? alternateRoomId,
     String? streamId,
   }) async {
+    PkEventLog.ending(battleId: battleId);
+    ref.read(pkSessionPhaseProvider.notifier).transitionTo(PkSessionPhase.ending);
     final PkBattleRemote? battle;
     if (roomId != null && roomId.trim().isNotEmpty) {
       battle = await _api.endBattle(
@@ -189,7 +206,10 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     } else {
       return null;
     }
-    if (battle != null) _apply(battle, 'pk:end');
+    if (battle != null) {
+      PkEventLog.ended(battleId: battleId);
+      _apply(battle, 'pk:end');
+    }
     return battle;
   }
 
@@ -252,11 +272,37 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
 
   void _apply(PkBattleRemote battle, String event) {
     state = battle;
+    _syncPhase(battle, event);
     ref.read(pkBattleProvider.notifier).applyRemoteBattle(battle);
+  }
+
+  void _syncPhase(PkBattleRemote battle, String event) {
+    final phase = ref.read(pkSessionPhaseProvider.notifier);
+    if (battle.isEnded) {
+      if (battle.status == 'rejected') {
+        phase.transitionTo(PkSessionPhase.rejected);
+      } else {
+        phase.transitionTo(PkSessionPhase.ended);
+      }
+      return;
+    }
+    if (battle.isActive) {
+      phase.transitionTo(PkSessionPhase.connecting);
+      phase.transitionTo(PkSessionPhase.active);
+      return;
+    }
+    if (battle.isPending) {
+      if (event.contains('invite')) {
+        phase.transitionTo(PkSessionPhase.requesting);
+      } else {
+        phase.transitionTo(PkSessionPhase.incoming);
+      }
+    }
   }
 
   void clear() {
     state = null;
+    ref.read(pkSessionPhaseProvider.notifier).reset();
   }
 }
 

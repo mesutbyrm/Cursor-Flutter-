@@ -19,7 +19,9 @@ LiveGiftEvent enrichGiftEventFromCatalog(
   final isVideo = catalog.assetType == GiftAssetType.video ||
       kind == GiftAnimationKind.video;
   final hasAnim = animUrl != null && kind != GiftAnimationKind.none;
-  if (!hasAnim && icon == event.iconUrl) return event;
+  final needsJetonEnrich =
+      event.totalCoin <= 0 && catalog.price > 0 && event.quantity > 0;
+  if (!hasAnim && icon == event.iconUrl && !needsJetonEnrich) return event;
 
   final thumb = event.thumbnailUrl ?? catalog.thumbnailUrl;
   final videoUrl = event.videoUrl ?? (isVideo ? animUrl : null);
@@ -38,7 +40,11 @@ LiveGiftEvent enrichGiftEventFromCatalog(
     quantity: event.quantity,
     coinCost: event.coinCost > 0 ? event.coinCost : catalog.price,
     giftPrice: event.giftPrice > 0 ? event.giftPrice : catalog.price,
-    totalCoin: event.totalCoin,
+    totalCoin: event.totalCoin > 0
+        ? event.totalCoin
+        : (catalog.price > 0
+            ? catalog.price * (event.quantity > 0 ? event.quantity : 1)
+            : 0),
     totalDiamond: event.totalDiamond,
     combo: event.combo,
     timestamp: event.timestamp,

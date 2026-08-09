@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
@@ -51,6 +52,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
       if (room != null) {
         final inviteId = battle.effectiveId;
         if (inviteId.isNotEmpty) {
+          PkEventLog.incomingRequest(inviteId: inviteId);
           unawaited(_showInviteDialog(battle, room));
         }
       }

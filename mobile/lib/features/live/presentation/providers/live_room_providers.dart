@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/live_debug_log.dart';
+import '../../../../core/network/live_event_log.dart';
 import '../../../../core/performance/network_perf.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../../../core/network/token_storage.dart';
@@ -254,6 +255,9 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
           }
         }
         state = next;
+      },
+      onUserLeft: (userId) {
+        LiveEventLog.viewerLeft(streamId: streamId, userId: userId);
       },
       onModeratorUpdated: (userId, isModerator) {
         _applyModeratorFlag(userId: userId, isModerator: isModerator);

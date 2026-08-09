@@ -7,6 +7,7 @@ import '../../../../core/auth/voice_staff_rank.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/voice_event_log.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../../core/performance/network_perf.dart';
@@ -53,6 +54,8 @@ import '../utils/voice_room_duyuru_access.dart';
 import '../utils/voice_room_mention.dart';
 import '../utils/voice_room_seat_priority.dart';
 import '../utils/voice_staff_chat_style.dart';
+import 'voice_session_phase_provider.dart';
+import '../../domain/voice/voice_session_phase.dart';
 import 'staff_entrance_marquee_provider.dart';
 import '../utils/voice_room_message_merge.dart';
 import 'voice_rooms_presence_provider.dart';
@@ -382,6 +385,7 @@ class VoiceRoomLiveController
   var _giftSocketStarted = false;
   var _sessionActive = false;
   var _entryBegun = false;
+  var _leaveInFlight = false;
   var _autoSeatAttempted = false;
   /// Odaya girince eski giriş/çıkış mesajları duyurulmasın.
   var _entrancesArmed = false;
@@ -707,18 +711,36 @@ class VoiceRoomLiveController
     _sseRoomRefreshDebounce?.cancel();
   }
 
-  /// Odadan çıkış — önce yerel/TRTC temizliği, backend isteği arka planda.
+  /// Odadan çıkış — backend leave önce, sonra TRTC/SSE temizliği.
   Future<void> leaveRoomSession({
     String source = 'ui_leave',
     bool awaitBackend = true,
   }) async {
-    if (!_sessionActive) return;
+    if (!_sessionActive || _leaveInFlight) return;
+    _leaveInFlight = true;
     _sessionActive = false;
     _entryBegun = false;
+    VoiceEventLog.leaveStart(roomId: _roomKey);
+    ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
+          VoiceSessionPhase.leaving,
+        );
     VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: source);
+
+    // Heartbeat/poll hemen durdur — hayalet presence sinyali gönderilmesin.
     _cancelSessionTimers();
 
-    // 1) UI/state hemen sıfırla — tekrar girişte eski presence görünmesin.
+    // Backend presence + koltuk temizliği önce (diğer kullanıcılar hemen görsün).
+    final backendLeave = _leavePresenceWithSeatClear()
+        .timeout(const Duration(seconds: 5))
+        .catchError((_) {});
+    if (awaitBackend) {
+      await backendLeave;
+    } else {
+      unawaited(backendLeave);
+    }
+    unawaited(_leaveVoiceSession());
+
+    // Yerel UI/state sıfırla.
     clearVoiceRoomLiveSession(ref, _roomKey);
     _removeSelfFromPresenceOptimistic();
     _knownPresenceIds.clear();
@@ -738,7 +760,7 @@ class VoiceRoomLiveController
       loading: false,
     );
 
-    // 2) SSE, hediye, PK — anında kes.
+    // SSE, hediye, PK — anında kes.
     ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
     ref.read(voiceRoomGiftSocketProvider).disconnect();
     ref.read(voiceRoomGiftRealtimeProvider).stop();
@@ -749,7 +771,7 @@ class VoiceRoomLiveController
     ref.read(voiceRoomDiagnosticProvider.notifier).resetForRoom(_roomKey);
     unawaited(_stopTyping());
 
-    // 3) TRTC / ses motoru — öncelikli (≤500ms).
+    // TRTC / ses motoru.
     try {
       await ref
           .read(voiceRoomAudioCoordinatorProvider)
@@ -757,7 +779,7 @@ class VoiceRoomLiveController
           .timeout(const Duration(milliseconds: 600));
     } catch (_) {}
 
-    // 4) Müzik — oda dışı PiP veya tam kapatma.
+    // Müzik — oda dışı PiP veya tam kapatma.
     final player = ref.read(voiceRoomDjPlayerProvider);
     final dj = state.dj;
     final stillPlaying = player.playback.value.playing ||
@@ -784,13 +806,11 @@ class VoiceRoomLiveController
       _closeRoomKeepAlive();
     }
 
-    // 5) Backend leave — arka plan veya await.
-    final backend = _leaveRoomBackend();
-    if (awaitBackend) {
-      await backend;
-    } else {
-      unawaited(backend);
-    }
+    VoiceEventLog.leaveSuccess(roomId: _roomKey);
+    ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
+          VoiceSessionPhase.disconnected,
+        );
+    _leaveInFlight = false;
   }
 
   /// Müzik PiP sonrası aynı odaya dönüş — oturumu yeniden başlat.
@@ -1757,6 +1777,17 @@ class VoiceRoomLiveController
   }) async {
     state = state.copyWith(sending: true, clearPendingMusicSearch: true);
     try {
+      final videoId = hit.videoId.trim();
+      if (videoId.isEmpty) {
+        state = state.copyWith(sending: false);
+        return 'Geçersiz şarkı seçimi.';
+      }
+      final alreadyQueued = state.dj.nowPlaying?.videoIdField == videoId ||
+          state.dj.musicQueue.any((e) => e.videoIdField == videoId);
+      if (alreadyQueued) {
+        state = state.copyWith(sending: false);
+        return 'Bu şarkı zaten kuyrukta.';
+      }
       if (!skipPayment) {
         final balances = ref.read(walletBalancesProvider).valueOrNull;
         final jeton = VoiceMusicAccess.jetonFromBalances(balances);

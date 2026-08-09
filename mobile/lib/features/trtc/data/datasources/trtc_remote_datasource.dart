@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
@@ -12,12 +14,21 @@ class TrtcRemoteDataSource {
 
   final Dio _dio;
 
+  void _log(String event, Map<String, Object?> fields) {
+    final safe = Map<String, Object?>.from(fields)
+      ..remove('userSig')
+      ..remove('token')
+      ..remove('accessToken');
+    debugPrint('[TRTC] $event $safe');
+  }
+
   Future<TrtcCredentials> fetchToken({
     required String roomId,
     String role = 'audience',
     String? userId,
   }) async {
     final started = DateTime.now();
+    _log('token_request', {'endpoint': ApiEndpoints.trtcToken, 'roomId': roomId, 'role': role});
     LiveDebugLog.log('trtc.token.request', {'roomId': roomId, 'role': role});
     try {
       final res = await _dio.safePost<dynamic>(
@@ -32,6 +43,11 @@ class TrtcRemoteDataSource {
         );
       }
       final cred = _validate(TrtcCredentials.fromJson(map, requestedRoomId: roomId));
+      _log('token_received', {
+        'roomId': cred.effectiveStrRoomId,
+        'sdkAppId': cred.sdkAppId,
+        'userId': cred.userId,
+      });
       LiveDebugLog.log('trtc.token.ok', {
         'roomId': cred.roomId,
         'elapsedMs': DateTime.now().difference(started).inMilliseconds,
@@ -39,7 +55,7 @@ class TrtcRemoteDataSource {
       return cred;
     } on ApiException catch (e) {
       // Kılavuz §9.13: POST /api/trtc/usersig yedek.
-      if (e.statusCode == 404 || e.statusCode == 405) {
+      if (!Env.useMobileAuth && (e.statusCode == 404 || e.statusCode == 405)) {
         final uid = userId?.trim() ?? '';
         if (uid.isNotEmpty) {
           return fetchUserSig(userId: uid, roomId: roomId);
@@ -47,7 +63,8 @@ class TrtcRemoteDataSource {
       }
       rethrow;
     } on DioException catch (e) {
-      if (e.response?.statusCode == 404 || e.response?.statusCode == 405) {
+      if (!Env.useMobileAuth &&
+          (e.response?.statusCode == 404 || e.response?.statusCode == 405)) {
         final uid = userId?.trim() ?? '';
         if (uid.isNotEmpty) {
           return fetchUserSig(userId: uid, roomId: roomId);

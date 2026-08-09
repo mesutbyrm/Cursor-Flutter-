@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/pk_room_models.dart';
@@ -61,6 +62,7 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
         if (uid.isNotEmpty && inv.hostUserId == uid) continue;
         if (!_isRecipient(inv, uid)) continue;
         if (!_seen.add(inv.id)) continue;
+        PkEventLog.incomingRequest(matchId: inv.id);
         await _showDialog(inv);
         break;
       }
@@ -131,10 +133,18 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
       return;
     }
     try {
+      if (accept) {
+        PkEventLog.acceptStart(matchId: inv.id);
+      } else {
+        PkEventLog.reject(matchId: inv.id);
+      }
       await ref.read(pkUnifiedInviteProvider).respond(
             matchId: inv.id,
             accept: accept,
           );
+      if (accept) {
+        PkEventLog.acceptSuccess(matchId: inv.id);
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

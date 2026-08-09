@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/pk_event_log.dart';
 
 import '../../../voice_hub/domain/pk/pk_duration_options.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
@@ -27,6 +28,7 @@ class LivePkInvitePage extends ConsumerStatefulWidget {
 
 class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
   var _loading = false;
+  var _inviting = false;
   var _durationSeconds = pkDefaultDurationSeconds;
   String? _error;
   Timer? _listRefresh;
@@ -58,15 +60,44 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
       setState(() => _error = 'Yayın kimliği bulunamadı');
       return;
     }
+    if (_inviting) return;
+    _inviting = true;
     setState(() {
       _loading = true;
       _error = null;
     });
+    PkEventLog.requestStart(
+      streamId: streamId,
+      targetId: opponent.id,
+    );
     try {
-      // API dokümanı §8: POST /api/video-streams/pk + birleşik /api/pk/request
-      // (LivePkInviteListener birleşik invites dinler).
       Object? lastErr;
-      var sent = false;
+
+      // Birincil: birleşik PK API — tek istek; başarılıysa legacy'ye düşme.
+      try {
+        final unified = await ref.read(pkUnifiedInviteProvider).inviteStream(
+              streamId: streamId,
+              opponentStreamId: opponent.id,
+              durationSeconds: _durationSeconds,
+            );
+        if (unified != null && unified.id.isNotEmpty) {
+          PkEventLog.requestSuccess(matchId: unified.id);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${opponent.streamerName ?? opponent.title} kullanıcısına PK daveti gönderildi',
+              ),
+            ),
+          );
+          context.pop();
+          return;
+        }
+      } catch (e) {
+        lastErr = e;
+      }
+
+      // Yedek: kılavuz §9.4 video-streams PK
       try {
         final legacy =
             await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
@@ -74,35 +105,29 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
                   opponentStreamId: opponent.id,
                   durationSeconds: _durationSeconds,
                 );
-        if (legacy != null) sent = true;
-      } catch (e) {
-        lastErr = e;
-      }
-      try {
-        await ref.read(pkUnifiedInviteProvider).inviteStream(
-              streamId: streamId,
-              opponentStreamId: opponent.id,
-              durationSeconds: _durationSeconds,
-            );
-        sent = true;
+        if (legacy != null) {
+          PkEventLog.requestSuccess(battleId: legacy.id);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${opponent.streamerName ?? opponent.title} kullanıcısına PK daveti gönderildi',
+              ),
+            ),
+          );
+          context.pop();
+          return;
+        }
       } catch (e) {
         lastErr ??= e;
       }
-      if (!sent) {
-        throw lastErr ?? Exception('PK daveti gönderilemedi');
-      }
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${opponent.streamerName ?? opponent.title} kullanıcısına PK daveti gönderildi',
-          ),
-        ),
-      );
-      context.pop();
+
+      throw lastErr ?? Exception('PK daveti gönderilemedi');
     } catch (e) {
+      PkEventLog.error('request', e);
       if (mounted) setState(() => _error = ApiException.userMessage(e));
     } finally {
+      _inviting = false;
       if (mounted) setState(() => _loading = false);
     }
   }

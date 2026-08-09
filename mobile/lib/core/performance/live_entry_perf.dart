@@ -67,12 +67,11 @@ abstract final class LiveEntryPerf {
 
     try {
       final remote = ref.read(trtcRemoteProvider);
-      TrtcCredentials cred;
-      try {
-        cred = await remote.fetchToken(roomId: streamId, role: role);
-      } catch (_) {
-        cred = await remote.fetchUserSig(userId: userId, roomId: streamId);
-      }
+      final cred = await remote.fetchToken(
+        roomId: streamId,
+        role: role,
+        userId: userId,
+      );
       _trtcCache[key] = _TrtcCacheEntry(cred, DateTime.now());
     } catch (_) {}
   }
@@ -94,11 +93,7 @@ abstract final class LiveEntryPerf {
         final cached = takeTrtc(userId: userId, streamId: streamId);
         if (cached != null) return cached;
         final remote = ref.read(trtcRemoteProvider);
-        try {
-          return await remote.fetchToken(roomId: streamId, role: role);
-        } catch (_) {
-          return remote.fetchUserSig(userId: userId, roomId: streamId);
-        }
+        return remote.fetchToken(roomId: streamId, role: role, userId: userId);
       }(),
     ]).then((list) => list.first);
   }

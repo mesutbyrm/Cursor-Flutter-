@@ -5,6 +5,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/presentation/sync/gift_event_listener.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
@@ -292,6 +293,40 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                   flex: 2,
                   child: PkGiftFeedPanel(messages: live.messages),
                 ),
+                if (pk.isActive)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final remote = ref.read(pkBattleRemoteProvider);
+                          final battleId = remote?.effectiveId ?? '';
+                          if (battleId.isEmpty) return;
+                          final r = widget.room;
+                          final roomKey =
+                              r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+                          PkEventLog.ending(battleId: battleId);
+                          await ref.read(pkBattleRemoteProvider.notifier).end(
+                                battleId,
+                                roomId: roomKey,
+                                alternateRoomId:
+                                    r.slug != roomKey ? r.slug : null,
+                              );
+                          PkEventLog.ended(battleId: battleId);
+                          if (context.mounted) context.pop();
+                        },
+                        icon: const Icon(Icons.stop_circle_outlined, size: 18),
+                        label: const Text('PK\'yi Bitir'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.45),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 PkActionBottomBar(
                   onSupport: () {
                     ScaffoldMessenger.of(context).showSnackBar(

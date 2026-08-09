@@ -36,9 +36,9 @@ class LiveFieldRoomDiscoveryApi {
     final pagination = asJsonMap(map['pagination']);
     return LiveFieldRoomsPage(
       rooms: rooms,
-      page: (pagination?['page'] as num?)?.toInt() ?? page,
-      limit: (pagination?['limit'] as num?)?.toInt() ?? limit,
-      total: (pagination?['total'] as num?)?.toInt(),
+      page: (pagination['page'] as num?)?.toInt() ?? page,
+      limit: (pagination['limit'] as num?)?.toInt() ?? limit,
+      total: (pagination['total'] as num?)?.toInt(),
     );
   }
 }

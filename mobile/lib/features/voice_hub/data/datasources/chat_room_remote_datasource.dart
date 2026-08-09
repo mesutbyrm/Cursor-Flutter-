@@ -533,17 +533,18 @@ class ChatRoomRemoteDataSource {
 
   Future<void> leavePresence(String roomKey, {String? alternateKey}) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      try {
-        await _dio.safeDelete<dynamic>('${presencePath(key)}?leave=1');
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-      } catch (_) {}
+      // Kılavuz §9.3 — canonical leave önce.
       try {
         await _dio.safePost<dynamic>(
           presencePath(key),
           data: const {'action': 'leave'},
         );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      } catch (_) {}
+      try {
+        await _dio.safeDelete<dynamic>('${presencePath(key)}?leave=1');
         return;
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
@@ -2149,24 +2150,67 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     String? userId,
   }) async {
-    final body = <String, dynamic>{
-      'seatIndex': -1,
-      if (userId != null && userId.isNotEmpty) 'userId': userId,
-    };
+    final uid = userId?.trim();
+    final bodies = <Map<String, dynamic>>[
+      if (uid == null || uid.isEmpty)
+        const {'action': 'leave'}
+      else
+        {
+          'action': 'leave',
+          'userId': uid,
+          'targetUserId': uid,
+        },
+      {
+        'seatIndex': -1,
+        if (uid != null && uid.isNotEmpty) 'userId': uid,
+      },
+    ];
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      for (final body in bodies) {
+        try {
+          await _dio.safePost<dynamic>(seatsPath(key), data: body);
+          return;
+        } on ApiException catch (e) {
+          if (e.statusCode == 405 || e.statusCode == 404 || e.statusCode == 400) {
+            continue;
+          }
+          rethrow;
+        }
+      }
+      for (final body in bodies) {
+        try {
+          await _dio.safePatch<dynamic>(seatsPath(key), data: body);
+          return;
+        } on ApiException catch (e) {
+          if (e.statusCode == 405 || e.statusCode == 404) continue;
+          rethrow;
+        }
+      }
+      await _dio.safePost<dynamic>(
+        presencePath(key),
+        data: bodies.first,
+      );
+    });
+  }
+
+  /// Koltuk değiştir — backend `action: swap` (desteklenmiyorsa take fallback).
+  Future<void> swapSeat({
+    required String roomKey,
+    String? alternateKey,
+    required int seatIndex,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final payload = {'action': 'swap', 'seatIndex': seatIndex};
       try {
-        await _dio.safePatch<dynamic>(seatsPath(key), data: body);
+        await _dio.safePost<dynamic>(seatsPath(key), data: payload);
         return;
       } on ApiException catch (e) {
-        if (e.statusCode != 405 && e.statusCode != 404) rethrow;
+        if (e.statusCode == 404 || e.statusCode == 405 || e.statusCode == 400) {
+          await assignSeat(roomKey: key, seatIndex: seatIndex);
+          return;
+        }
+        rethrow;
       }
-      try {
-        await _dio.safePost<dynamic>(seatsPath(key), data: body);
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode != 405 && e.statusCode != 404) rethrow;
-      }
-      await _dio.safePost<dynamic>(presencePath(key), data: body);
     });
   }
 

@@ -15,6 +15,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       final results = await Future.wait<Object?>([
         remote
             .fetchRoomState(_roomKey, alternateKey: _musicAlternateKey)
+            .then<Object?>((value) => value)
             .catchError((Object e) {
           VoiceRoomDebugLog.log('api.state.fail', {'error': e.toString()});
           return null;

@@ -13,6 +13,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/ui/premium/live_badge.dart';
 import 'package:canlifal_social/core/ui/premium_2026/cosmic_galaxy_background.dart';
 import 'package:canlifal_social/core/widgets/user_avatar.dart';
+import 'package:canlifal_social/core/network/psychic_event_log.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_booking_feedback_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_close_dialog.dart';
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
@@ -48,10 +49,10 @@ class PsychicWaitingState {
   final int remainingSeconds;
 
   String get statusLabel => switch (phase) {
-        PsychicWaitingPhase.waiting => 'Bekliyor',
-        PsychicWaitingPhase.accepted => 'Kabul',
-        PsychicWaitingPhase.rejected => 'Red',
-        PsychicWaitingPhase.expired => 'Süre doldu',
+        PsychicWaitingPhase.waiting => 'REQUESTING',
+        PsychicWaitingPhase.accepted => 'ACCEPTING',
+        PsychicWaitingPhase.rejected => 'REJECTED',
+        PsychicWaitingPhase.expired => 'TIMEOUT',
       };
 
   String get remainingLabel {
@@ -89,6 +90,10 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
 
   Future<void> _init() async {
     await PsychicSessionStore.save(session);
+    PsychicEventLog.requestSend(
+      sessionId: session.sessionId,
+      tellerId: session.psychic.id,
+    );
     _poll = Timer.periodic(const Duration(seconds: 1), (_) => _checkStatus());
     _timeout = Timer.periodic(const Duration(seconds: 1), (_) => _tickTimeout());
     unawaited(_checkStatus());

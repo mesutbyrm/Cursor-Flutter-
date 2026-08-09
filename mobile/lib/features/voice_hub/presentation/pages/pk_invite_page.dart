@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/pk_event_log.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/pk/pk_duration_options.dart';
@@ -24,6 +25,7 @@ class PkInvitePage extends ConsumerStatefulWidget {
 
 class _PkInvitePageState extends ConsumerState<PkInvitePage> {
   var _loading = false;
+  var _inviting = false;
   var _syncing = true;
   var _durationSeconds = pkDefaultDurationSeconds;
   String? _error;
@@ -77,10 +79,13 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
   }
 
   Future<void> _invite(VoiceRoomEntity opponent) async {
+    if (_inviting) return;
+    _inviting = true;
     setState(() {
       _loading = true;
       _error = null;
     });
+    PkEventLog.requestStart(roomId: _roomKey, targetId: opponent.id);
     try {
       final remote = ref.read(pkBattleRemoteProvider.notifier);
       await remote.prepareRoomForInvite(
@@ -119,6 +124,7 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
             'PK daveti gönderilemedi. Oda veya rakip bulunamadı — tekrar deneyin.');
         return;
       }
+      PkEventLog.requestSuccess(battleId: battle.id);
       remote.connectSocket(
         roomId: _roomKey,
         alternateRoomId: _altRoomKey,
@@ -134,6 +140,7 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
       );
       context.pop();
     } catch (e) {
+      PkEventLog.error('request', e);
       if (mounted) {
         var msg = ApiException.userMessage(e);
         final lower = msg.toLowerCase();
@@ -148,6 +155,7 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
         setState(() => _error = msg);
       }
     } finally {
+      _inviting = false;
       if (mounted) setState(() => _loading = false);
     }
   }

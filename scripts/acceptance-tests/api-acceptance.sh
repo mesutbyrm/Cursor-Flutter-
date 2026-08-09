@@ -63,7 +63,7 @@ test_02_login_username() {
     return 0
   fi
   local resp tok
-  resp=$(mobile_login "{\"emailOrUsername\":\"$USER_USERNAME\",\"password\":\"$USER_PASSWORD\"}")
+  resp=$(mobile_login_identifier username "$USER_USERNAME" "$USER_PASSWORD")
   tok=$(extract_token "$resp")
   if [[ -n "$tok" ]]; then
     USER_TOKEN="${USER_TOKEN:-$tok}"
@@ -152,12 +152,12 @@ test_06_jeton_store() {
 # --- 7. Sohbet odaları ---
 test_07_chat_rooms() {
   local code body
-  code=$(http_code "$BASE/api/chat/rooms?limit=5")
-  body=$(curl_json "$BASE/api/chat/rooms?limit=5")
+  code=$(http_code "$BASE/api/chat/rooms?limit=5&withCounts=true")
+  body=$(curl_json "$BASE/api/chat/rooms?limit=5&withCounts=true")
   ROOM_ID=$(printf '%s' "$body" | python3 -c "
 import json,sys
 d=json.load(sys.stdin)
-rooms=d.get('rooms') or d.get('data',{}).get('rooms') or d.get('items') or []
+rooms=d if isinstance(d,list) else d.get('rooms') or d.get('data',{}).get('rooms') or d.get('items') or []
 if isinstance(rooms,list) and rooms:
     print(rooms[0].get('id',''))
 " 2>/dev/null || echo "")
@@ -210,33 +210,20 @@ test_09_live_open() {
     return 0
   fi
   local resp
-  resp=$(mobile_login "{\"email\":\"$HOST_EMAIL\",\"password\":\"$HOST_PASSWORD\"}")
+  resp=$(mobile_login_identifier email "$HOST_EMAIL" "$HOST_PASSWORD")
   HOST_TOKEN=$(extract_token "$resp")
   if [[ -z "$HOST_TOKEN" ]]; then
     record 9 "Canlı yayın açma" FAIL "host token yok"
     return
   fi
-  local create_resp
-  create_resp=$(curl -sS -X POST "$BASE/api/live" \
-    -H "Authorization: Bearer $HOST_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d "{\"title\":\"Acceptance $RUN_ID\",\"status\":\"live\",\"requestType\":\"live\"}")
-  STREAM_ID=$(printf '%s' "$create_resp" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-for path in [
-    lambda x: x.get('id'),
-    lambda x: x.get('streamId'),
-    lambda x: (x.get('stream') or {}).get('id'),
-    lambda x: (x.get('data') or {}).get('id'),
-]:
-    v=path(d)
-    if v: print(v); break
-" 2>/dev/null || echo "")
+  local create_result create_code
+  create_result=$(create_video_stream "$HOST_TOKEN" "Acceptance $RUN_ID")
+  STREAM_ID="${create_result%%|*}"
+  create_code="${create_result##*|}"
   if [[ -n "$STREAM_ID" ]]; then
     record 9 "Canlı yayın açma" PASS "streamId=$STREAM_ID"
   else
-    record 9 "Canlı yayın açma" FAIL "stream oluşturulamadı"
+    record 9 "Canlı yayın açma" FAIL "stream oluşturulamadı (HTTP ${create_code:-?})"
   fi
 }
 
@@ -284,11 +271,12 @@ test_11_fortune_request() {
   fi
   local token="${VIEWER_TOKEN:-$USER_TOKEN}"
   skip_unless_user_token 11 "Canlı yayında fal isteği" || return 0
+  clear_pending_fortune_request "$STREAM_ID" "$token" || true
   local resp
   resp=$(curl -sS -X POST "$BASE/api/video-streams/$STREAM_ID/fortune-requests" \
     -H "Authorization: Bearer $token" \
     -H "Content-Type: application/json" \
-    -d '{"displayName":"Acceptance","question":"Test fal sorusu","fortuneType":"tarot","type":"tarot","priority":"normal","jetonCost":10}')
+    -d '{"typeId":"tek-soru","question":"Acceptance test fal sorusu uzun mu?","isHidden":false,"nickname":"Acceptance"}')
   FORTUNE_REQUEST_ID=$(printf '%s' "$resp" | python3 -c "
 import json,sys
 d=json.load(sys.stdin)
@@ -328,7 +316,7 @@ test_12_teller_sees_request() {
 import json,sys
 rid=sys.argv[1]
 d=json.load(sys.stdin)
-items=d.get('requests') or d.get('items') or d.get('data') or []
+items=d if isinstance(d,list) else d.get('requests') or d.get('items') or d.get('data') or []
 if isinstance(items,dict): items=items.get('requests') or items.get('items') or []
 ok=any(str(x.get('id',''))==rid for x in items if isinstance(x,dict))
 print('yes' if ok else 'no')
@@ -343,11 +331,15 @@ print('yes' if ok else 'no')
 # --- 13. Falcının isteği kabul etmesi ---
 test_13_teller_accepts() {
   skip_unless_live_chain 13 "Falcının isteği kabul etmesi" || return 0
-  local code
-  code=$(http_code -X PATCH "$BASE/api/video-streams/$STREAM_ID/fortune-requests/$FORTUNE_REQUEST_ID" \
-    -H "Authorization: Bearer $HOST_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d '{"status":"reviewing"}')
+  local code resp
+  resp=$(patch_fortune_request_action "$STREAM_ID" "$HOST_TOKEN" "$FORTUNE_REQUEST_ID" "select")
+  code=$(echo "$resp" | tail -1 | sed 's/HTTP://')
+  if [[ "$code" != "200" && "$code" != "201" ]]; then
+    code=$(http_code -X PATCH "$BASE/api/video-streams/$STREAM_ID/fortune-requests/$FORTUNE_REQUEST_ID" \
+      -H "Authorization: Bearer $HOST_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{"status":"reviewing"}')
+  fi
   if [[ "$code" != "200" && "$code" != "201" ]]; then
     code=$(http_code -X POST "$BASE/api/live/fal-request/$FORTUNE_REQUEST_ID/update" \
       -H "Authorization: Bearer $HOST_TOKEN" \

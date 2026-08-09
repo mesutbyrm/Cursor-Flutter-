@@ -206,9 +206,36 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
   Future<String?> assignSeat({required int seatIndex, String? userId}) async {
     final selfId = userId ?? ref.read(authControllerProvider).valueOrNull?.id;
     try {
-      await ref
-          .read(voiceSeatRestServiceProvider)
-          .takeSeat(_roomKey, seatIndex, userId: userId);
+      if (userId == null && selfId != null && selfId.isNotEmpty) {
+        ChatRoomPresence? self;
+        for (final p in state.presence) {
+          if (p.id == selfId) {
+            self = p;
+            break;
+          }
+        }
+        final currentSeat = self?.seatIndex;
+        if (currentSeat != null &&
+            currentSeat != seatIndex &&
+            currentSeat >= 0) {
+          VoiceEventLog.seatTake(roomId: _roomKey, seatIndex: seatIndex);
+          await ref.read(chatRoomRemoteProvider).swapSeat(
+                roomKey: _roomKey,
+                alternateKey: _musicAlternateKey,
+                seatIndex: seatIndex,
+              );
+        } else {
+          VoiceEventLog.seatTake(roomId: _roomKey, seatIndex: seatIndex);
+          await ref
+              .read(voiceSeatRestServiceProvider)
+              .takeSeat(_roomKey, seatIndex, userId: userId);
+        }
+      } else {
+        VoiceEventLog.seatTake(roomId: _roomKey, seatIndex: seatIndex);
+        await ref
+            .read(voiceSeatRestServiceProvider)
+            .takeSeat(_roomKey, seatIndex, userId: userId);
+      }
       if (selfId != null && selfId.isNotEmpty) {
         ChatRoomPresence? occupant;
         for (final p in state.presence) {
@@ -341,6 +368,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     ];
     state = state.copyWith(presence: prev);
     try {
+      VoiceEventLog.seatLeave(roomId: _roomKey);
       await ref.read(chatRoomRemoteProvider).clearSeat(
             roomKey: _roomKey,
             alternateKey: _musicAlternateKey,
