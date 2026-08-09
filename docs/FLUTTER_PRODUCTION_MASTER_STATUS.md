@@ -1,6 +1,6 @@
 # Flutter Production Master — Durum Matrisi
 
-> **Tarih:** 7 Ağustos 2026  
+> **Tarih:** 9 Ağustos 2026 (Stage 4 gate)  
 > **Sürüm:** `1.0.144+178`  
 > **Tek kaynak:** `https://canlifal.com` + `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9  
 > **Üretim envanteri:** 692 handler / 440 benzersiz yol (ENDPOINTS.md)
@@ -36,11 +36,27 @@
 - Falcı panel SSE-primary, debug kartları release'te gizli (1.0.144)
 - Sesli oda RTC performans + tek yönetim paneli
 
-### Açık P0
+### P0 / P1 Gap Matrix (Stage 4)
+
+| ID | Öncelik | Madde | STATUS | Not |
+|----|---------|-------|--------|-----|
+| P0-1 | P0 | Canlı yayın alan doğrulama + create | **VERIFIED** | API 400 + prep sayfası; reconcile retry (duplicate guard) |
+| P0-2 | P0 | Fal paylaşım cihaz testi | **BLOCKED** | `adb devices` boş |
+| P0-3 | P0 | Endpoint raporu CI otomasyonu | **BLOCKED** | `generate-endpoint-report.sh` + secrets yok |
+| P1-1 | P1 | createVideoStream duplicate room | **FIXED** | `_reconcileCreatedStreamId` retry öncesi |
+| P1-2 | P1 | TRTC backend-only token | **VERIFIED** | Agora prod RTC yok |
+| P1-3 | P1 | approvedPsychicProvider fallback | **VERIFIED** | Kod + liste API; session E2E **BLOCKED** |
+| P1-4 | P1 | Gift/jeton hard-coded 0 | **VERIFIED** | `coinCost` toplam; insufficient API mesajı |
+| P1-5 | P1 | Music pause backend+player | **VERIFIED** | `controlPlayback` + duplicate videoId guard |
+| P1-6 | P1 | Voice leave → peer offline | **VERIFIED** | Kod; cihaz **BLOCKED** |
+| P1-7 | P1 | SSE 20-cycle leak | **VERIFIED** | Unit + network 20/20 |
+| P1-8 | P1 | Legacy path temizliği | **VERIFIED** | `api_endpoint_canonical_contract_test` |
+
+### Açık P0 (cihaz / CI)
 
 | Madde | Dosya / alan | Not |
 |-------|--------------|-----|
-| Canlı yayın sahada doğrulama | `live_broadcast_prep_page.dart` | Production JWT ile create + TRTC |
+| Canlı yayın sahada doğrulama | `live_broadcast_prep_page.dart` | NOT_A_TELLER + adb yok |
 | Fal paylaşım cihaz testi | `fortune_share_handler.dart` | auto-fortune feed prepend |
 | Eksik endpoint raporu otomasyonu | `scripts/` | CI rapor üretici planlı |
 

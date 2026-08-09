@@ -668,6 +668,14 @@ class LiveRemoteDataSource {
       } catch (e) {
         lastError = e;
         if (attempt < 2 && _isRetryableWriteError(e)) {
+          final reconciled = await _reconcileCreatedStreamId(title);
+          if (reconciled != null && reconciled.isNotEmpty) {
+            LiveDebugLog.log('create.reconciled', {
+              'streamId': reconciled,
+              'attempt': attempt,
+            });
+            return reconciled;
+          }
           LiveDebugLog.log('create.retry', {'attempt': attempt, 'error': '$e'});
           await Future<void>.delayed(Duration(milliseconds: 400 * attempt));
           continue;
@@ -708,6 +716,25 @@ class LiveRemoteDataSource {
       'requestType': 'live',
       'status': 'live',
     };
+  }
+
+  /// Belirsiz timeout/5xx sonrası yinelenen POST yerine mevcut canlı yayını bul.
+  Future<String?> _reconcileCreatedStreamId(String title) async {
+    final normalized = title.trim().toLowerCase();
+    if (normalized.isEmpty) return null;
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.videoStreams,
+        query: {'limit': '20', 'status': 'live'},
+      );
+      for (final stream in _parseStreamList(res.data)) {
+        if (!stream.isLive || stream.id.isEmpty) continue;
+        if (stream.title.trim().toLowerCase() == normalized) {
+          return stream.id;
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 
   bool _isRetryableWriteError(Object error) {

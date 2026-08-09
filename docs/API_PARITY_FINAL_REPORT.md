@@ -115,7 +115,19 @@ UI → Service/State (Riverpod) → Repository → ApiClient/Dio → https://can
 2. **Split backend routing** — PK / bazı game uçları `ApiBackendRouter` ile abacus game backend'e yönlendirilir; ana site stub döndürür.
 3. **Admin endpoints** — `ApiEndpoints` içinde admin sabitleri var; normal mobil akışta çağrılmaz.
 
+## Stage 4 (Final Gate — 2026-08-09)
+
+| Değişiklik | Durum |
+|---|---|
+| `createVideoStream` reconcile retry | ✅ `_reconcileCreatedStreamId` — duplicate stream ID önleme |
+| `live_create_stream_retry_test.dart` | ✅ Retry policy unit test |
+| `docs/API_PARITY_STAGE4_FINAL_GATE.md` | ✅ Feature gate matrix |
+| Gerçek cihaz (TRTC/LIVE/PK/MUSIC/GIFT) | ⏭️ BLOCKED — adb yok, 0 jeton, NOT_A_TELLER |
+
+Stage 3/4 acceptance: **15 PASS, 0 FAIL, 10 BLOCKED** (`api-stage3-phase.sh`).
+
 ## Conclusion
 
-**Kod parity (Phase 2):** Legacy path'ler üretim kodundan temiz; canonical contract kullanılıyor; regression testleri genişletildi.  
-**Production readiness:** Otomatik testler PASS; gerçek cihaz acceptance BLOCKED — **API PARITY KOD TARAFI TAMAM**, **ÜRETİM RELEASE HAZIR DEĞİL** (cihaz + jeton testi gerekli).
+**Kod parity (Phase 2–4):** Legacy path'ler üretim kodundan temiz; canonical contract kullanılıyor; regression + Stage 3/4 gate testleri geçti.  
+**API PARITY TAMAMLANDI:** **HAYIR** — AUTH, PROFILE, VOICE, TRTC, LIVE, PK, GIFT, MUSIC, SSE, CHAT, LIVE FALCI gerçek cihazda PASS değil.  
+**Production readiness:** Otomatik testler PASS; gerçek cihaz acceptance BLOCKED — **ÜRETİM RELEASE HAZIR DEĞİL** (cihaz + jeton + teller hesabı gerekli).
