@@ -127,7 +127,7 @@ class PkBattleRemoteDataSource {
     return const [];
   }
 
-  /// `POST /api/chat/rooms/{myRoomId}/pk` — üretim: `{ action, targetRoomId, duration }`.
+  /// `POST /api/chat/rooms/{myRoomId}/pk` — kılavuz §9.3: `{ guestUserId, durationSec }`.
   Future<PkBattleRemote?> inviteVoiceRoom({
     required String roomId,
     String? alternateRoomId,
@@ -141,10 +141,41 @@ class PkBattleRemoteDataSource {
       throw const ApiException('PK daveti için rakip oda seçilmeli');
     }
     final duration = durationSeconds.clamp(60, 3600);
-    final durationStr = '$duration';
 
-    // Birincil: POST /api/live/pk — games backend (canlifalapi).
-    // Üretim: geçerli action değerleri create, accept, reject, cancel, end.
+    // 1) Canonical chat-room PK (§9.3)
+    final canonicalBodies = <Map<String, dynamic>>[
+      if (guest.isNotEmpty)
+        {
+          'guestUserId': guest,
+          'durationSec': duration,
+        },
+      {
+        'guestUserId': guest.isNotEmpty ? guest : oppRoom,
+        'durationSec': duration,
+        'targetRoomId': oppRoom,
+      },
+    ];
+
+    ApiException? lastError;
+    for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
+      for (final body in canonicalBodies) {
+        try {
+          final res = await _dio.safePost<dynamic>(
+            ApiEndpoints.chatRoomPk(key),
+            data: body,
+          );
+          final battle = _parseBattle(res.data);
+          if (battle != null) return battle;
+        } on ApiException catch (e) {
+          lastError = e;
+          if (e.statusCode == 404 || e.statusCode == 405) break;
+          if (e.statusCode == 400 || e.statusCode == 422) continue;
+          rethrow;
+        }
+      }
+    }
+
+    // 2) Games backend yedek: POST /api/live/pk
     try {
       for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
         final liveBattle = await LiveFieldApiRemoteDataSource(_dio).pk.pkAction(
@@ -169,17 +200,13 @@ class PkBattleRemoteDataSource {
           if (parsed != null) return parsed;
         }
       }
-    } on ApiException catch (_) {
-      // chat-room PK yedeğine düş
+    } on ApiException catch (e) {
+      lastError = e;
     } catch (_) {}
 
-    // Üretim sözleşmesi: action create + targetRoomId + duration.
-    final bodies = <Map<String, dynamic>>[
-      {
-        'action': 'create',
-        'targetRoomId': oppRoom,
-        'duration': durationStr,
-      },
+    // 3) Eski action:create gövdeleri (son çare)
+    final durationStr = '$duration';
+    final legacyBodies = <Map<String, dynamic>>[
       {
         'action': 'create',
         'targetRoomId': oppRoom,
@@ -192,24 +219,10 @@ class PkBattleRemoteDataSource {
           'duration': durationStr,
           'guestUserId': guest,
         },
-      // Eski / kılavuz yedekleri
-      if (guest.isNotEmpty)
-        {
-          'guestUserId': guest,
-          'durationSec': duration,
-          'targetRoomId': oppRoom,
-        },
-      if (guest.isNotEmpty)
-        {
-          'guestUserId': guest,
-          'durationSec': duration,
-          'opponentRoomId': oppRoom,
-        },
     ];
 
-    ApiException? lastError;
     for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
-      for (final body in bodies) {
+      for (final body in legacyBodies) {
         try {
           final res = await _dio.safePost<dynamic>(
             ApiEndpoints.chatRoomPk(key),

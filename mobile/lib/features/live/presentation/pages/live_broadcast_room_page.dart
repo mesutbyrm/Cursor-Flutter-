@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/live_event_log.dart';
+import '../../../../core/network/pk_event_log.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -18,6 +19,7 @@ import '../../../live_psychics/presentation/controllers/psychic_flow.dart';
 import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
 import '../../../live_psychics/presentation/widgets/psychic_booking_sheet.dart';
 import '../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
+import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../../../voice_hub/presentation/providers/voice_recent_gifts_provider.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../../../voice_hub/presentation/providers/voice_room_session_registry.dart';
@@ -384,11 +386,40 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
   }
 
+  Future<void> _tearDownActivePk(String streamId) async {
+    if (streamId.isEmpty) return;
+    try {
+      final pkState = ref.read(liveVideoPkProvider(streamId));
+      final status = pkState.status.toLowerCase();
+      if (status != 'active' && status != 'pending') return;
+      PkEventLog.ending(
+        matchId: pkState.unifiedMatchId,
+        battleId: pkState.battle?['id']?.toString(),
+      );
+      final notifier = ref.read(liveVideoPkProvider(streamId).notifier);
+      if (status == 'pending') {
+        await notifier.cancel();
+      } else {
+        await notifier.end();
+      }
+      PkEventLog.ended(
+        matchId: pkState.unifiedMatchId,
+        reason: 'broadcast_leave',
+      );
+    } catch (e) {
+      PkEventLog.error('teardown', e);
+    }
+    ref.read(pkBattleRemoteProvider.notifier).clear();
+  }
+
   Future<void> _leaveLiveSession({String? endReason}) async {
+    final streamId = widget.session.streamId?.trim() ?? '';
+    if (streamId.isNotEmpty) {
+      unawaited(_tearDownActivePk(streamId));
+    }
     _hostHeartbeat?.cancel();
     _hostHeartbeat = null;
     _stopLiveSignalPoll();
-    final streamId = widget.session.streamId?.trim() ?? '';
     if (streamId.isNotEmpty && endReason != null) {
       LiveEventLog.ended(streamId: streamId, reason: endReason);
     }
@@ -794,10 +825,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             );
       } catch (_) {}
     }
-    if (mounted) setState(() {
-      _rtcReady = false;
-      _phase = LiveSessionPhase.reconnecting;
-    });
+    if (mounted) {
+      setState(() {
+        _rtcReady = false;
+        _phase = LiveSessionPhase.reconnecting;
+      });
+    }
   }
 
   void _startHostHeartbeat() {
@@ -1392,6 +1425,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
     final id = battle['id']?.toString() ?? '';
     if (id.isEmpty || !_seenPkInviteIds.add(id)) return;
+    PkEventLog.incomingRequest(matchId: id);
     final hostStream = battle['hostStreamId']?.toString();
     if (hostStream != null && hostStream.isNotEmpty && hostStream == streamId) {
       return;
@@ -1432,6 +1466,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     );
     if (!mounted || accept == null) return;
     try {
+      if (accept) {
+        PkEventLog.acceptStart(matchId: battleId);
+      } else {
+        PkEventLog.reject(matchId: battleId);
+      }
       if (battle['unifiedPk'] == true) {
         await ref.read(pkUnifiedInviteProvider).respond(
               matchId: battleId,
@@ -1445,6 +1484,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           await pk.reject();
         }
       }
+      if (accept) {
+        PkEventLog.acceptSuccess(matchId: battleId);
+      }
       if (accept && mounted) {
         await ref.read(liveVideoPkProvider(streamId).notifier).refresh();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1452,6 +1494,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         );
       }
     } catch (e) {
+      PkEventLog.error(accept ? 'accept' : 'reject', e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ApiException.userMessage(e))),

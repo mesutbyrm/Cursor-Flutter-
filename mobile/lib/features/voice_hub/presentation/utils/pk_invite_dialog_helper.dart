@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/performance/voice_room_entry_perf.dart';
+import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
@@ -136,11 +137,13 @@ Future<void> showPkInviteDialog(
 
   try {
     if (accept == null) {
+      PkEventLog.reject(inviteId: inviteId);
       await remote.reject(inviteId, roomId: key, alternateRoomId: alt);
       remote.clear();
       return;
     }
     if (accept) {
+      PkEventLog.acceptStart(inviteId: inviteId);
       await remote.accept(inviteId, roomId: key, alternateRoomId: alt);
       if (!context.mounted) return;
       VoiceRoomEntryPerf.prewarmOnRoomTap(ref, room);
@@ -149,6 +152,7 @@ Future<void> showPkInviteDialog(
         const SnackBar(content: Text('PK başladı')),
       );
     } else {
+      PkEventLog.reject(inviteId: inviteId);
       await remote.reject(inviteId, roomId: key, alternateRoomId: alt);
       remote.clear();
       ScaffoldMessenger.of(context).showSnackBar(
