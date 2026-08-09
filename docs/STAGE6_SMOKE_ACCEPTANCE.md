@@ -2,11 +2,11 @@
 
 | Alan | Değer |
 |------|--------|
-| Tarih | 2026-08-09 10:27:46 UTC |
-| Run | local-1786271262 |
+| Tarih | 2026-08-09 10:41:05 UTC |
+| Run | local-1786272060 |
 | API | https://canlifal.com |
-| Geçti | 7 |
-| Başarısız | 4 |
+| Geçti | 9 |
+| Başarısız | 2 |
 | Atlandı | 1 |
 
 ## Sonuçlar
@@ -19,10 +19,10 @@
 | S6 | TRTC credentials | ✅ PASS | sdkAppId+userSig backend OK |
 | S6 | ADB device | ⏸️ BLOCKED | cihaz bağlı değil — RTC/ses/camera test edilemez |
 | S6 | Admin jeton top-up | ❌ FAIL | ACCEPTANCE_ADMIN_* yok — test jetonu otomatik eklenemez |
-| S6 | VIEWER jeton | ❌ FAIL | bakiye=10 — hediye/müzik için test jetonu gerekli |
+| S6 | VIEWER jeton | ✅ PASS | before=97850 after=97850 (min=600) |
 | S6 | Auth JWT | ✅ PASS | me=200 anon=401 |
-| S6 | Live create | ✅ PASS | streamId=cmslnsgpg00ovpk08jqzfm0bg |
-| S6 | Gift send | ❌ FAIL | HTTP 400 before=10 after=10 |
+| S6 | Live create | ✅ PASS | streamId=cmslo9l1l00u5pk08rhendvci |
+| S6 | Gift send | ✅ PASS | elmas spent=1000 |
 | S6 | Auto fortune share | ✅ PASS | POST /api/social/posts + feed OK |
 | S6 | Live fortune request | ❌ FAIL | HTTP 500 — backend 500 |
 

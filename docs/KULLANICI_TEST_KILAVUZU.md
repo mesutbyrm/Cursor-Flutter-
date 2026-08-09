@@ -47,9 +47,9 @@ Jeton: her hesapta **~5000** (hediye ve müzik testleri için).
 | PK iki kullanıcı (oluştur→kabul→bitir) | ✅ Otomatik geçti | — |
 | TRTC token (sunucu) | ✅ Otomatik geçti | — |
 | Gift SSE olayı | ✅ Otomatik geçti | — |
-| **Canlı yayın açma** | ❌ Bekliyor | **Siz — admin onayı** |
-| Falcı isteği kabul | ❌ Bekliyor | Falcı hesabı secret veya sizin onaylı hesap |
-| Ses / kamera / TRTC oda | ❌ Bekliyor | **Telefon + USB** (Cloud sunucuda emülatör yok) |
+| **Canlı yayın açma** | ✅ Otomatik geçti | Host onaylandı |
+| Falcı isteği kabul | ❌ Bekliyor | Falcı hesabı secret (isteğe bağlı) |
+| Ses / kamera / TRTC oda | ⏳ Sonraki iş | Bilgisayar + telefon (şimdilik atlandı) |
 
 ---
 
@@ -70,4 +70,4 @@ Admin ile otomatik host onayı için:
 
 Detaylı teknik rapor: `docs/STAGE5_REAL_E2E_ACCEPTANCE_REPORT.md`
 
-**Özet:** Jeton ve API testleri hazır. Sizden tek zorunlu iş: **host hesabını admin panelden onaylamak**. Ses/kamera için telefon bağlamak isteğe bağlı.
+**Özet:** API testleri (giriş, jeton, hediye, müzik, canlı yayın oluşturma, PK, TRTC token) **geçti**. Telefon/ses testi bilgisayarınız olduğunda yapılır.
