@@ -5,7 +5,7 @@ import 'payment_debug_log.dart';
 
 bool isPaymentApiPath(String path) {
   final p = path.toLowerCase();
-  return p.contains('/payment/') ||
+  return p.contains('/payments/') ||
       p.contains('/jeton/payment') ||
       p.contains('cfc-payment');
 }

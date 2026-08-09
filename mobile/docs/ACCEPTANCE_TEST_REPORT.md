@@ -2,8 +2,8 @@
 
 | Alan | Değer |
 |------|--------|
-| Tarih | 2026-08-09 00:51:59 UTC |
-| Run | local-1786236707 |
+| Tarih | 2026-08-09 01:02:34 UTC |
+| Run | local-1786237341 |
 | API | https://canlifal.com |
 | Geçti | 3 |
 | Başarısız | 0 |
@@ -14,7 +14,7 @@
 | # | Test | Durum | Detay |
 |---|------|-------|-------|
 | 8 | Kullanıcı adı ile giriş | ✅ PASS | token alındı (@cursorusr1786235468) |
-| 7 | Profil ekranı < 2 sn | ✅ PASS | /api/me 151ms |
+| 7 | Profil ekranı < 2 sn | ✅ PASS | /api/me 392ms |
 | 6 | SSE bağlantıları | ✅ PASS | chat stream veri alındı |
 | 4 | Canlı yayın fal isteği | ⏭️ SKIP | yayın oluşturma 403; canlı liste API erişilebilir |
 | 3 | Canlı falcı görüntülü görüşme | ⏭️ SKIP | ACCEPTANCE_TELLER_* yok |

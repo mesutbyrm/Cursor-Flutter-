@@ -17,7 +17,7 @@ import '../providers/profile_providers.dart';
 
 enum CfcPaymentMethod { whatsapp, papara, bank_transfer }
 
-/// CFC yükleme — canlifal.com `POST /api/payment/requests`.
+/// CFC yükleme — canlifal.com `POST /api/payments/requests`.
 class CfcNativeCheckout extends ConsumerStatefulWidget {
   const CfcNativeCheckout({
     super.key,

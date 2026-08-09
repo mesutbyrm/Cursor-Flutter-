@@ -1,6 +1,6 @@
 import '../domain/entities/jeton_package_entity.dart';
 
-/// Özel TL/jeton tutarıyla jeton talebi — site `POST /api/payment/requests`.
+/// Özel TL/jeton tutarıyla jeton talebi — site `POST /api/payments/requests`.
 Map<String, dynamic> buildCustomJetonPaymentRequest({
   required int coins,
   required double priceTry,
@@ -44,7 +44,7 @@ Map<String, dynamic> buildCustomJetonPaymentRequest({
   };
 }
 
-/// canlifal.com `POST /api/payment/requests` — jeton talebi gövdesi.
+/// canlifal.com `POST /api/payments/requests` — jeton talebi gövdesi.
 /// Yalnızca `coins` gönderilir; `amount` üretimde çift krediye yol açabiliyor.
 Map<String, dynamic> buildJetonPaymentRequest({
   required JetonPackageEntity package,
@@ -80,7 +80,7 @@ Map<String, dynamic> buildJetonPaymentRequest({
   };
 }
 
-/// Gold üyelik — site `POST /api/payment/requests` (admin onayı sonrası üyelik).
+/// Gold üyelik — site `POST /api/payments/requests` (admin onayı sonrası üyelik).
 Map<String, dynamic> buildMembershipPaymentRequest({
   required JetonPackageEntity package,
   required String method,

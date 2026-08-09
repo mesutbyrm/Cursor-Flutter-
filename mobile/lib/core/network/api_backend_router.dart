@@ -13,7 +13,6 @@ abstract final class ApiBackendRouter {
   /// İstek path'ine göre hedef backend (gateway hariç).
   static ApiBackendKind resolve(String path, {String method = 'GET'}) {
     final p = _normalizePath(path);
-    if (p == '/api/v1/health') return ApiBackendKind.game;
     if (_isPkBackendPath(p)) return ApiBackendKind.game;
     if (_isVoiceRoomPkBackendPath(p)) return ApiBackendKind.game;
     if (_isGiftBattleBackendPath(p)) return ApiBackendKind.game;

@@ -880,13 +880,8 @@ Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized 
 | `/api/video-streams/{param}/fortune-requests/{param}` | `videoStreamFortuneRequest` | WRONG |
 | `/api/video-streams/{param}/gifts/leaderboard` | `videoStreamGiftLeaderboard` | WRONG |
 | `/api/video-streams/{param}/image` | `videoStreamImage` | WRONG |
-| `/api/video-streams/{param}/moderator` | `videoStreamModerator` | WRONG |
-| `;
-
-  / Canlı fal seans SSE — mesaj, timer, durum (üretim `GET /api/room/{param}/stream`).
-  static String liveFortuneRoomStream(String sessionId) =>
-      ` | `;
-
-  /// Canlı fal seans SSE — mesaj, timer, durum (üretim `GET /api/room/{id}/stream`).
-  static String liveFortuneRoomStream(String sessionId) =>
-      ` | WRONG |
+| `/api/video-streams/{param}/moderator` | `videoStreamModerator` | BACKEND_CONFIRMED |
+| `/api/video-streams/{param}/auto-close` | `videoStreamAutoClose` | BACKEND_CONFIRMED |
+| `/api/room/{param}/stream` | `liveFortuneRoomStream` | BACKEND_CONFIRMED |
+| `/api/room/{param}/messages` | `liveFortuneRoomMessages` | BACKEND_CONFIRMED |
+| `/api/room/signal` | `liveFortuneRoomSignal` | BACKEND_CONFIRMED |
