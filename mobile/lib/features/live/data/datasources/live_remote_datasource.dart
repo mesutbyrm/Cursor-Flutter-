@@ -12,6 +12,7 @@ import '../models/live_stream_dto.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/entities/voice_room_entity.dart';
+import '../../domain/entities/voice_rooms_page.dart';
 
 class LiveRemoteDataSource {
   LiveRemoteDataSource(this._dio);
@@ -148,27 +149,58 @@ class LiveRemoteDataSource {
     return s == 'true' || s == '1' || s == 'yes';
   }
 
-  /// canlifal.com `/api/chat/rooms` — site ile aynı oda kartları.
+  static const int voiceRoomsPageSize = 30;
+
+  /// İlk sayfa — geriye dönük uyumluluk.
   Future<List<VoiceRoomEntity>> fetchVoiceRooms() async {
+    final page = await fetchVoiceRoomsPage(page: 1, limit: voiceRoomsPageSize);
+    return page.rooms;
+  }
+
+  /// Sayfalanmış sesli oda listesi — uygulama açılışında tümünü yüklemez.
+  Future<VoiceRoomsPage> fetchVoiceRoomsPage({
+    int page = 1,
+    int limit = voiceRoomsPageSize,
+  }) async {
+    final safeLimit = limit.clamp(1, 100);
     try {
       final livePage = await _liveField.discovery.fetchRooms(
         type: 'voice',
-        limit: 100,
+        page: page,
+        limit: safeLimit,
       );
       final fromLive = livePage.rooms
           .where((r) => r.isVoice && r.id.isNotEmpty)
           .map(_mapLiveFieldVoice)
           .toList();
-      if (fromLive.isNotEmpty) return fromLive;
+      if (fromLive.isNotEmpty) {
+        final total = livePage.total;
+        final hasMore = total != null
+            ? page * safeLimit < total
+            : fromLive.length >= safeLimit;
+        return VoiceRoomsPage(
+          rooms: fromLive,
+          page: page,
+          hasMore: hasMore,
+        );
+      }
     } on ApiException catch (e) {
       if (e.statusCode != 404 && e.statusCode != 405 && e.statusCode != 401) {
         rethrow;
       }
     } catch (_) {}
 
+    if (page > 1) {
+      return VoiceRoomsPage(rooms: const [], page: page, hasMore: false);
+    }
+
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.chatRooms,
-      query: const {'type': 'voice', 'withCounts': 'true'},
+      query: {
+        'type': 'voice',
+        'withCounts': 'true',
+        'limit': '$safeLimit',
+      },
     );
     final body = res.data;
     dynamic list = body;
@@ -180,11 +212,18 @@ class LiveRemoteDataSource {
         list = pick(body, ['rooms', 'items', 'data']) ?? body;
       }
     }
-    if (list is! List) return const [];
-    return asJsonList(list)
+    if (list is! List) {
+      return VoiceRoomsPage(rooms: const [], page: page, hasMore: false);
+    }
+    final rooms = asJsonList(list)
         .map(_mapVoiceRoom)
         .where((r) => r.apiRoomKey.isNotEmpty)
         .toList();
+    return VoiceRoomsPage(
+      rooms: rooms,
+      page: page,
+      hasMore: rooms.length >= safeLimit,
+    );
   }
 
   static const int voiceRoomNormalOpenJetonCost = 2500;

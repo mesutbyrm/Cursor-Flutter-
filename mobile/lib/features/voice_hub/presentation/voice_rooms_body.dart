@@ -16,6 +16,7 @@ import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/domain/entities/voice_room_sort.dart';
 import '../../live/presentation/providers/live_providers.dart';
 import '../../live/presentation/providers/discover_live_streams.dart';
+import '../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import 'providers/voice_rooms_presence_provider.dart';
 import 'utils/open_voice_chat_room_flow.dart';
 import '../../vip_gold/domain/voice_room_access.dart';
@@ -134,6 +135,9 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
               topPadding: topPad,
               onRoomTap: (r) => openVoiceRoomWithVipGate(context, ref, r),
               onSearchChanged: (_) {},
+              onLoadMore: () => ref
+                  .read(voiceRoomsListNotifierProvider.notifier)
+                  .loadMore(),
             ),
           ),
         );

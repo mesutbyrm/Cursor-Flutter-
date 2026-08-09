@@ -15,6 +15,7 @@ import '../../../core/network/token_storage.dart';
 import '../../../core/widgets/cached_cover_image.dart';
 import '../../../core/navigation/wallet_navigation.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/network/voice_event_log.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../profile/presentation/providers/profile_providers.dart';
 import '../../live/domain/entities/live_gift_event.dart';
@@ -206,12 +207,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       unawaited(
         ref
             .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
-            .leaveRoomSession(source: 'rtc_dispose', awaitBackend: false)
-            .then((_) async {
-          final audio = _audio;
-          _audio = null;
-          if (audio != null) await audio.leave();
-        }),
+            .leaveRoomSession(source: 'rtc_dispose', awaitBackend: true)
+            .timeout(const Duration(seconds: 6))
+            .catchError((_) {}),
       );
     } else {
       final audio = _audio;
@@ -493,6 +491,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     try {
       final roomId = room.apiRoomKey;
+      VoiceEventLog.trtcConnecting(roomId: roomId);
       final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
       if (!live.backendSyncReady) {
         if (mounted) {
@@ -524,6 +523,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         backendTrtc: sync.roomTrtc,
       );
       if (mounted) {
+        VoiceEventLog.trtcConnected(roomId: roomId);
         ref.read(voiceRoomDiagnosticProvider.notifier).setTrtc(
               roomId: sync.roomTrtc?.effectiveStrRoomId ?? roomId,
               result: 1,
@@ -578,21 +578,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _leaving = true;
     final liveKey = _liveRoomKey;
 
-    final audio = _audio;
-    _audio = null;
     ref.read(voiceRoomTrtcMusicMixerProvider).bind(null);
     ref.read(voiceRoomTrtcMusicMixerProvider).stop();
     if (mounted) setState(() => _audioReady = false);
 
-    // TRTC + yerel temizlik — navigasyonu bloklamaz.
-    unawaited(
-      Future.wait<void>([
-        if (audio != null) audio.leave(),
-        ref
-            .read(voiceRoomLiveProvider(liveKey).notifier)
-            .leaveRoomSession(source: 'rtc_leave', awaitBackend: false),
-      ]),
-    );
+    _audio = null;
+
+    try {
+      await ref
+          .read(voiceRoomLiveProvider(liveKey).notifier)
+          .leaveRoomSession(source: 'rtc_leave', awaitBackend: true)
+          .timeout(const Duration(seconds: 8));
+    } catch (_) {}
 
     if (!mounted) {
       _leaving = false;

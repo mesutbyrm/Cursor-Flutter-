@@ -1,10 +1,13 @@
 import '../entities/live_stream_entity.dart';
 import '../entities/voice_room_entity.dart';
+import '../entities/voice_rooms_page.dart';
 
 abstract class LiveRepository {
   Future<List<LiveStreamEntity>> fetchStreams({int page = 1, String? category});
 
   Future<List<VoiceRoomEntity>> fetchVoiceRooms();
+
+  Future<VoiceRoomsPage> fetchVoiceRoomsPage({int page = 1, int limit = 30});
 
   Future<VoiceRoomEntity?> fetchVoiceRoomById(String id);
 

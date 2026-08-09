@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../vip_gold/presentation/widgets/vip_locked_room_sheet.dart';
 import '../../vip_gold/domain/voice_room_access.dart';
+import '../utils/voice_room_session_utils.dart';
 import 'basic/voice_room_page.dart';
 import 'widgets/voice_room_error_boundary.dart';
 
@@ -38,6 +39,11 @@ class _VoiceRoomGatedEntryState extends ConsumerState<VoiceRoomGatedEntry> {
         return;
       }
     }
+    final key = widget.room.apiRoomKey.isNotEmpty
+        ? widget.room.apiRoomKey
+        : widget.room.id;
+    await prepareVoiceRoomSwitch(ref, nextLiveKey: key, source: 'deep_link');
+    if (!mounted) return;
     setState(() => _ready = true);
   }
 
