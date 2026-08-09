@@ -2,8 +2,8 @@
 
 | Alan | Değer |
 |------|--------|
-| Tarih | 2026-08-09 00:55:42 UTC |
-| Run | local-1786236936 |
+| Tarih | 2026-08-09 00:55:50 UTC |
+| Run | local-1786236942 |
 | API | https://canlifal.com |
 | Geçti | 5 |
 | Başarısız | 0 |
@@ -13,10 +13,10 @@
 
 | # | Test | Durum | Detay |
 |---|------|-------|-------|
-| CATALOG | Gift catalog | ✅ PASS | 25 hediye |
+| SEARCH | Music search | ✅ PASS | 12 sonuç, videoId+title |
 | AUTH | Login | ✅ PASS | token alındı |
-| WALLET | Wallet | ✅ PASS | bakiye=0 |
-| INSUFF | Yetersiz jeton | ✅ PASS | HTTP 400 (insufficient_jeton) |
-| SSE | SSE gift stream | ✅ PASS | stream açık |
+| QUEUE | Queue costs | ✅ PASS | kuyruk OK, audio=10 jeton |
+| SONGREQ | Song request | ✅ PASS | HTTP 400 (Yetersiz jeton. 10 jeton gerekiyor.) |
+| SSE_DJ | SSE dj stream | ✅ PASS | stream açık |
 
 **API acceptance testleri geçti** — istemci testleri bekleniyor.

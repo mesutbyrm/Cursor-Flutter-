@@ -6,10 +6,10 @@
   "skip": 0,
   "results": [
     {
-      "id": "CATALOG",
-      "name": "Gift catalog",
+      "id": "SEARCH",
+      "name": "Music search",
       "status": "✅ PASS",
-      "detail": "25 hediye"
+      "detail": "12 sonuç, videoId+title"
     },
     {
       "id": "AUTH",
@@ -18,20 +18,20 @@
       "detail": "token alındı"
     },
     {
-      "id": "WALLET",
-      "name": "Wallet",
+      "id": "QUEUE",
+      "name": "Queue costs",
       "status": "✅ PASS",
-      "detail": "bakiye=0"
+      "detail": "kuyruk OK, audio=10 jeton"
     },
     {
-      "id": "INSUFF",
-      "name": "Yetersiz jeton",
+      "id": "SONGREQ",
+      "name": "Song request",
       "status": "✅ PASS",
-      "detail": "HTTP 400 (insufficient_jeton)"
+      "detail": "HTTP 400 (Yetersiz jeton. 10 jeton gerekiyor.)"
     },
     {
-      "id": "SSE",
-      "name": "SSE gift stream",
+      "id": "SSE_DJ",
+      "name": "SSE dj stream",
       "status": "✅ PASS",
       "detail": "stream açık"
     }

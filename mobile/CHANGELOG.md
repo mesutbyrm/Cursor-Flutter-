@@ -4,6 +4,7 @@
 
 - **Aşama 6 hediye/jeton:** Backend `coinCost`/`spentAmount` toplam jeton parse; katalog enrich sıfır `totalCoin` doldurur; voice send yanıtı `newBalance`/`spentAmount`; `insufficient_jeton` hata eşlemesi; UI'da 0 jeton satırları gizlenir
 - **Aşama 7 müzik/!istek:** `controlPlayback` switch fall-through düzeltmesi; pause POST `action:pause`; pauseMusic yerel player duraklatma; duplicate videoId kuyruk engeli
+- **Aşama 8 final:** Otomatik acceptance betiği (`api-final-phase.sh`); APK split-per-abi ~94MB arm64 (universal ~247MB); release/security audit raporu
 - **Canlı yayın oluşturma:** `createVideoStream` — 25s write timeout, timeout/5xx/429 için 1 retry; prep ekranında JWT ön kontrol; çift 15s timeout kaldırıldı (Dio + ApiException mesajları)
 - **Falcı paneli:** `PsychicInviteDiagnosticCard` yalnızca `kDebugMode`; release listede debug slot'lar kaldırıldı
 - **approvedPsychicProvider:** önce `my-profile`, hata durumunda onaylı profil cache korunur (`src=error` yerine `cached_profile`)
