@@ -13,28 +13,15 @@
 
 ---
 
-## Adım 2 — Host hesabını onaylatın (önemli)
+## Adım 2 — Host hesabı onayı ✅ (tamamlandı)
 
-`cursor.host.1786235468@mailinator.com` hesabı **canlı yayıncı başvurusu bekliyor**. Bu onay olmadan canlı yayın testi yapılamaz.
-
-**Siz ne yapacaksınız:** Canlifal **admin paneline** girin → bu hesabın **falcı / canlı yayıncı başvurusunu onaylayın**.
-
-> Onayladıktan sonra bize “onayladım” yazmanız yeterli; geri kalan testleri biz tekrar çalıştırırız.
+`cursor.host.1786235468@mailinator.com` hesabı **onaylandı** — canlı yayın API testi geçti.
 
 ---
 
-## Adım 3 — (İsteğe bağlı) Telefonu bilgisayara bağlayın
+## Adım 3 — Telefon testi (sonraki iş — bilgisayar gerekir)
 
-Sadece **ses, mikrofon ve kamera** testleri için gerekli. API testleri telefon olmadan da çalışır.
-
-1. Telefonda: **Ayarlar → Telefon hakkında** → Yapı numarasına **7 kez** dokunun (geliştirici modu açılır).
-2. **Ayarlar → Geliştirici seçenekleri → USB hata ayıklama** → AÇIK.
-3. USB kabloyla bilgisayara bağlayın.
-4. Bilgisayarda şu komutu çalıştırın (veya bize “telefon bağlı” deyin):
-
-```bash
-bash scripts/run-tests-for-user.sh
-```
+Ses, mikrofon ve kamera testleri için **bilgisayar + USB kablo + Android telefon** gerekir. Şimdilik atlanabilir; API tarafı hazır.
 
 ---
 
