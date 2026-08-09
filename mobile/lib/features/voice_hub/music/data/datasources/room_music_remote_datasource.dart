@@ -224,7 +224,18 @@ class RoomMusicRemoteDataSource {
   }
 
   Future<void> pauseDj(String roomId) async {
-    await _dio.delete<dynamic>(_musicPath(roomId));
+    try {
+      await _dio.post<dynamic>(
+        _musicPath(roomId),
+        data: const {'action': 'pause'},
+      );
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404 || e.response?.statusCode == 405) {
+        await _dio.delete<dynamic>(_musicPath(roomId));
+        return;
+      }
+      rethrow;
+    }
   }
 
   Future<void> resumeDj(String roomId, {String? musicUrl, String? videoId, String? title}) async {

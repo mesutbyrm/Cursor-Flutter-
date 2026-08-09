@@ -9,8 +9,6 @@ extension VoiceRoomPlaybackControls on VoiceRoomLiveController {
       return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
     }
     try {
-      final blocActive = _roomKey.isNotEmpty &&
-          ref.read(roomSongBlocProvider(_roomKey)).state.hasTrack;
       if (_roomKey.isNotEmpty) {
         ref.read(roomSongBlocProvider(_roomKey)).add(const RoomSongUserPause());
       }
@@ -22,9 +20,7 @@ extension VoiceRoomPlaybackControls on VoiceRoomLiveController {
             musicUrl: state.dj.musicUrl,
             playing: false,
           );
-      if (!blocActive) {
-        await ref.read(voiceRoomDjPlayerProvider).stop();
-      }
+      await ref.read(voiceRoomDjPlayerProvider).pause();
       state = state.copyWith(dj: state.dj.copyWith(playing: false));
       return null;
     } catch (e) {

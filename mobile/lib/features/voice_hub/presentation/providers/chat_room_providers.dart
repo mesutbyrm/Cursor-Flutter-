@@ -1777,6 +1777,17 @@ class VoiceRoomLiveController
   }) async {
     state = state.copyWith(sending: true, clearPendingMusicSearch: true);
     try {
+      final videoId = hit.videoId.trim();
+      if (videoId.isEmpty) {
+        state = state.copyWith(sending: false);
+        return 'Geçersiz şarkı seçimi.';
+      }
+      final alreadyQueued = state.dj.nowPlaying?.videoIdField == videoId ||
+          state.dj.musicQueue.any((e) => e.videoIdField == videoId);
+      if (alreadyQueued) {
+        state = state.copyWith(sending: false);
+        return 'Bu şarkı zaten kuyrukta.';
+      }
       if (!skipPayment) {
         final balances = ref.read(walletBalancesProvider).valueOrNull;
         final jeton = VoiceMusicAccess.jetonFromBalances(balances);

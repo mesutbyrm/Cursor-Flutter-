@@ -85,12 +85,16 @@ class RoomMusicRepositoryImpl implements RoomMusicRepository {
       switch (action) {
         case 'pause':
           await _remote.pauseDj(key);
+          break;
         case 'resume':
           await _remote.resumeDj(key);
+          break;
         case 'stop':
           await _remote.stopQueue(key);
+          break;
         case 'next':
           await _remote.skipQueue(key);
+          break;
         default:
           break;
       }
