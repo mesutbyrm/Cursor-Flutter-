@@ -170,7 +170,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   var _rejoiningRtc = false;
   var _joiningRtc = false;
 
-  var _joiningRtc = false;
   VoidCallback? _remoteVideoListener;
   VoidCallback? _remoteAudioListener;
 
