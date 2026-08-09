@@ -276,6 +276,88 @@ login_as_admin() {
   [[ -n "${ADMIN_TOKEN:-}" ]]
 }
 
+# Test kullanıcısına jeton ekle — yalnızca ACCEPTANCE_ADMIN_* ile; production gerçek kullanıcıya dokunmaz.
+top_up_test_jeton() {
+  local user_id="$1" target_balance="${2:-1500}" reason="${3:-acceptance-stage5}"
+  local current need amount body code
+  if [[ -z "$user_id" ]]; then
+    return 1
+  fi
+  if ! login_as_admin; then
+    return 2
+  fi
+  current=$(curl_json "$BASE/api/admin/users/$user_id" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" 2>/dev/null | python3 -c "
+import json,sys
+raw=sys.stdin.read().strip()
+if not raw: sys.exit(0)
+d=json.loads(raw)
+u=d.get('user') or d.get('data') or d
+for k in ('jetonBalance','coins','jeton'):
+    v=u.get(k) if isinstance(u,dict) else d.get(k)
+    if v is not None:
+        print(int(v)); break
+" 2>/dev/null || echo "")
+  if [[ -z "$current" ]]; then
+    current=0
+  fi
+  need=$((target_balance - current))
+  if [[ "$need" -le 0 ]]; then
+    printf '%s' "$current"
+    return 0
+  fi
+  amount="$need"
+  for body in \
+    "$(USER_ID="$user_id" AMOUNT="$amount" REASON="$reason" python3 -c 'import json,os; print(json.dumps({"userId":os.environ["USER_ID"],"type":"jeton","amount":int(os.environ["AMOUNT"]),"action":"add","reason":os.environ["REASON"]}))')" \
+    "$(USER_ID="$user_id" AMOUNT="$amount" REASON="$reason" python3 -c 'import json,os; print(json.dumps({"userId":os.environ["USER_ID"],"creditType":"jeton","amount":int(os.environ["AMOUNT"]),"operation":"add","note":os.environ["REASON"]}))')"
+  do
+    code=$(http_code -X POST "$BASE/api/admin/credits" \
+      -H "Authorization: Bearer $ADMIN_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "$body")
+    if [[ "$code" == "200" || "$code" == "201" ]]; then
+      sleep 1
+      printf '%s' "$target_balance"
+      return 0
+    fi
+    code=$(http_code -X PATCH "$BASE/api/admin/users/credits" \
+      -H "Authorization: Bearer $ADMIN_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "$body")
+    if [[ "$code" == "200" || "$code" == "201" ]]; then
+      sleep 1
+      printf '%s' "$target_balance"
+      return 0
+    fi
+  done
+  return 3
+}
+
+user_jeton_balance_from_me() {
+  local token="$1"
+  curl_json "$BASE/api/me" -H "Authorization: Bearer $token" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for k in ('jetonBalance','coins','credits'):
+    v=d.get(k)
+    if v is None and isinstance(d.get('user'),dict):
+        v=d['user'].get(k)
+    if v is not None:
+        print(int(v)); break
+" 2>/dev/null || echo "0"
+}
+
+fetch_me_field() {
+  local token="$1" field="$2"
+  curl_json "$BASE/api/me" -H "Authorization: Bearer $token" | python3 -c "
+import json,sys
+field=sys.argv[1]
+d=json.load(sys.stdin)
+u=d.get('user') or {}
+print(d.get(field) or u.get(field) or '')
+" "$field" 2>/dev/null || true
+}
+
 find_payment_in_admin_list() {
   local list="$1" rid="$2" ref="$3"
   printf '%s' "$list" | python3 -c "
@@ -544,6 +626,7 @@ record() {
     PASS) icon="✅"; PASS=$((PASS + 1)) ;;
     FAIL) icon="❌"; FAIL=$((FAIL + 1)) ;;
     SKIP) icon="⏭️"; SKIP=$((SKIP + 1)) ;;
+    BLOCKED) icon="⏸️"; SKIP=$((SKIP + 1)) ;;
     *) icon="•" ;;
   esac
   RESULT_LINES+=("| $id | $name | $icon $status | ${detail//|/\\|} |")
