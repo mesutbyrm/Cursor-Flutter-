@@ -13,6 +13,24 @@ class LiveFortuneRequestDataSource {
 
   final Dio _dio;
 
+  static const _defaultTypeId = 'tek-soru';
+
+  /// Eski UI slug → üretim `typeId` (katalog `GET /api/fortune-request-types`).
+  static String resolveTypeId(String fortuneType) {
+    final raw = fortuneType.trim();
+    if (raw.isEmpty) return _defaultTypeId;
+    final lower = raw.toLowerCase();
+    return switch (lower) {
+      'tarot' || 'coffee' || 'astrology' || 'palmistry' || 'numerology' =>
+        _defaultTypeId,
+      'evet-hayir' || 'evet_hayir' => 'evet-hayır',
+      'detayli-fal' || 'detayli_fal' => 'detaylı-fal',
+      _ => raw.contains('-') || raw.contains('ı') || raw.contains('ş')
+          ? raw
+          : _defaultTypeId,
+    };
+  }
+
   Future<List<LiveFortuneRequestEntity>> fetchRequests(String streamId) async {
     final id = streamId.trim();
     if (id.isEmpty) return const [];
@@ -53,9 +71,54 @@ class LiveFortuneRequestDataSource {
     int? jetonCost,
   }) async {
     final id = streamId.trim();
-    // Serbest miktar (20-1000) — verilmezse öncelik kademesinden türetilir.
+    final typeId = resolveTypeId(fortuneType);
+    final productionBody = {
+      'typeId': typeId,
+      'question': question.trim(),
+      'isHidden': false,
+      'nickname': displayName.trim(),
+    };
+
+    final primaryPath = ApiEndpoints.videoStreamFortuneRequests(id);
+    LiveDebugLog.log('fal.request.create', {
+      'streamId': id,
+      'path': primaryPath,
+      'typeId': typeId,
+      'priority': priority.name,
+    });
+
+    try {
+      final res = await _dio.safePost<dynamic>(
+        primaryPath,
+        data: productionBody,
+      );
+      LiveDebugLog.log('fal.request.create.ok', {
+        'streamId': id,
+        'status': res.statusCode,
+        'path': primaryPath,
+      });
+      final row = _unwrap(res.data);
+      if (row != null) return LiveFortuneRequestEntity.fromJson(row);
+    } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      LiveDebugLog.log('fal.request.create.primary.fail', {
+        'streamId': id,
+        'path': primaryPath,
+        'status': code,
+        'error': ApiException.userMessage(e),
+      });
+      if (code != 404 && code != 405) rethrow;
+    } catch (e) {
+      LiveDebugLog.log('fal.request.create.primary.fail', {
+        'streamId': id,
+        'path': primaryPath,
+        'error': ApiException.userMessage(e),
+      });
+    }
+
+    // Yerel mirror / eski üretim gövdesi.
     final cost = (jetonCost ?? priority.jetonCost).clamp(20, 1000);
-    final body = {
+    final legacyBody = {
       'displayName': displayName.trim(),
       'question': question.trim(),
       'message': question.trim(),
@@ -65,33 +128,6 @@ class LiveFortuneRequestDataSource {
       'jetonCost': cost,
     };
 
-    final primaryPath = ApiEndpoints.videoStreamFortuneRequests(id);
-    LiveDebugLog.log('fal.request.create', {
-      'streamId': id,
-      'path': primaryPath,
-      'priority': priority.name,
-    });
-
-    try {
-      final res = await _dio.safePost<dynamic>(
-        primaryPath,
-        data: body,
-      );
-      LiveDebugLog.log('fal.request.create.ok', {
-        'streamId': id,
-        'status': res.statusCode,
-        'path': primaryPath,
-      });
-      final row = _unwrap(res.data);
-      if (row != null) return LiveFortuneRequestEntity.fromJson(row);
-    } catch (e) {
-      LiveDebugLog.log('fal.request.create.primary.fail', {
-        'streamId': id,
-        'path': primaryPath,
-        'error': ApiException.userMessage(e),
-      });
-    }
-
     final fallbackPath = ApiEndpoints.liveFalRequestCreate;
     LiveDebugLog.log('fal.request.create.fallback', {
       'streamId': id,
@@ -99,7 +135,7 @@ class LiveFortuneRequestDataSource {
     });
     final res = await _dio.safePost<dynamic>(
       fallbackPath,
-      data: {...body, 'streamId': id},
+      data: {...legacyBody, 'streamId': id},
     );
     LiveDebugLog.log('fal.request.create.fallback.ok', {
       'streamId': id,
@@ -120,8 +156,37 @@ class LiveFortuneRequestDataSource {
     required String requestId,
     required LiveFortuneRequestStatus status,
   }) async {
-    final body = {'status': status.name};
+    final action = _productionAction(status);
+    if (action != null) {
+      try {
+        final res = await _dio.safePatch<dynamic>(
+          ApiEndpoints.videoStreamFortuneRequests(streamId.trim()),
+          data: {'action': action, 'requestId': requestId},
+        );
+        final row = _unwrap(res.data);
+        if (row != null) return LiveFortuneRequestEntity.fromJson(row);
+        return LiveFortuneRequestEntity(
+          id: requestId,
+          streamId: streamId,
+          userId: '',
+          displayName: '',
+          question: '',
+          fortuneType: _defaultTypeId,
+          priority: LiveFortunePriority.standard,
+          status: status,
+          jetonCost: 0,
+          createdAt: DateTime.now(),
+        );
+      } catch (e) {
+        LiveDebugLog.log('fal.request.update.production.fail', {
+          'requestId': requestId,
+          'action': action,
+          'error': ApiException.userMessage(e),
+        });
+      }
+    }
 
+    final body = {'status': status.name};
     try {
       final res = await _dio.safePatch<dynamic>(
         ApiEndpoints.videoStreamFortuneRequest(streamId.trim(), requestId),
@@ -184,7 +249,23 @@ class LiveFortuneRequestDataSource {
     }
   }
 
+  String? _productionAction(LiveFortuneRequestStatus status) => switch (status) {
+        LiveFortuneRequestStatus.reviewing => 'select',
+        LiveFortuneRequestStatus.answered => 'complete',
+        LiveFortuneRequestStatus.cancelled => 'refund',
+        _ => null,
+      };
+
   List<LiveFortuneRequestEntity> _parseList(dynamic body) {
+    if (body is List) {
+      return body
+          .whereType<Map>()
+          .map((e) => LiveFortuneRequestEntity.fromJson(
+                Map<String, dynamic>.from(e),
+              ))
+          .where((r) => r.id.isNotEmpty)
+          .toList();
+    }
     dynamic list;
     if (body is Map) {
       list = pick(Map<String, dynamic>.from(body), [

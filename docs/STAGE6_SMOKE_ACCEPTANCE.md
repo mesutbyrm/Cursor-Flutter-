@@ -2,11 +2,11 @@
 
 | Alan | Değer |
 |------|--------|
-| Tarih | 2026-08-09 10:41:05 UTC |
-| Run | local-1786272060 |
+| Tarih | 2026-08-09 10:48:28 UTC |
+| Run | local-1786272503 |
 | API | https://canlifal.com |
-| Geçti | 9 |
-| Başarısız | 2 |
+| Geçti | 10 |
+| Başarısız | 1 |
 | Atlandı | 1 |
 
 ## Sonuçlar
@@ -19,11 +19,11 @@
 | S6 | TRTC credentials | ✅ PASS | sdkAppId+userSig backend OK |
 | S6 | ADB device | ⏸️ BLOCKED | cihaz bağlı değil — RTC/ses/camera test edilemez |
 | S6 | Admin jeton top-up | ❌ FAIL | ACCEPTANCE_ADMIN_* yok — test jetonu otomatik eklenemez |
-| S6 | VIEWER jeton | ✅ PASS | before=97850 after=97850 (min=600) |
+| S6 | VIEWER jeton | ✅ PASS | before=95680 after=95680 (min=600) |
 | S6 | Auth JWT | ✅ PASS | me=200 anon=401 |
-| S6 | Live create | ✅ PASS | streamId=cmslo9l1l00u5pk08rhendvci |
+| S6 | Live create | ✅ PASS | streamId=cmsloj2xn00z6pk087yek9bwj |
 | S6 | Gift send | ✅ PASS | elmas spent=1000 |
 | S6 | Auto fortune share | ✅ PASS | POST /api/social/posts + feed OK |
-| S6 | Live fortune request | ❌ FAIL | HTTP 500 — backend 500 |
+| S6 | Live fortune accept | ✅ PASS | action=select HTTP 200 |
 
 **Release APK oluşturulmadı** — yukarıdaki başarısız testleri düzeltin.

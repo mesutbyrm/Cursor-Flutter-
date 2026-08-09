@@ -692,27 +692,30 @@ try_resolve_gate_stream() {
 
 post_fortune_request() {
   local stream_id="$1" token="$2" host_token="${3:-}"
-  local jeton_cost body resp code rid err attempt
-  jeton_cost=$(user_jeton_balance "$token")
-  if [[ -z "$jeton_cost" || "$jeton_cost" -lt 1 ]]; then
-    jeton_cost=10
-  elif [[ "$jeton_cost" -gt 500 ]]; then
-    jeton_cost=10
+  local body resp code rid err nickname question
+  nickname="GateTest"
+  question="Release gate canlı yayın test fal sorusu?"
+  clear_pending_fortune_request "$stream_id" "$token" || true
+  body=$(QUESTION="$question" NICK="$nickname" python3 -c 'import json,os; print(json.dumps({
+    "typeId":"tek-soru",
+    "question":os.environ["QUESTION"],
+    "isHidden":False,
+    "nickname":os.environ["NICK"]
+  }))')
+  resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/video-streams/$stream_id/fortune-requests" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -d "$body")
+  code=$(echo "$resp" | tail -1 | sed 's/HTTP://')
+  resp=$(echo "$resp" | sed '$d')
+  rid=$(extract_request_id "$resp")
+  if [[ -n "$rid" ]]; then
+    printf '%s|%s|' "$rid" "$code"
+    return 0
   fi
-  local question="Release gate canlı yayın test fal sorusu?"
-  for attempt in 1 2; do
-    if [[ "$attempt" -eq 1 ]]; then
-      body=$(QUESTION="$question" JETON_COST="$jeton_cost" python3 -c 'import json,os; print(json.dumps({
-        "displayName":"GateTest",
-        "question":os.environ["QUESTION"],
-        "fortuneType":"tarot","type":"tarot",
-        "priority":"standard","jetonCost":int(os.environ["JETON_COST"])
-      }))')
-    else
-      body=$(QUESTION="$question" python3 -c 'import json,os; print(json.dumps({
-        "type":"tarot","fortuneType":"tarot","question":os.environ["QUESTION"]
-      }))')
-    fi
+  err=$(login_error_detail "$resp")
+  if [[ "$code" == "400" && "$err" == *"bekleyen"* ]]; then
+    clear_pending_fortune_request "$stream_id" "$token" || true
     resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/video-streams/$stream_id/fortune-requests" \
       -H "Authorization: Bearer $token" \
       -H "Content-Type: application/json" \
@@ -725,10 +728,7 @@ post_fortune_request() {
       return 0
     fi
     err=$(login_error_detail "$resp")
-    if [[ "$code" != "500" && "$code" != "502" && "$code" != "503" ]]; then
-      break
-    fi
-  done
+  fi
   if [[ -n "$host_token" ]]; then
     local list found_id
     list=$(curl_json "$BASE/api/video-streams/$stream_id/fortune-requests" \
@@ -762,6 +762,47 @@ for x in items(d):
     fi
   fi
   printf '|%s|%s' "$code" "$err"
+}
+
+clear_pending_fortune_request() {
+  local stream_id="$1" token="$2"
+  local pending rid
+  pending=$(curl_json "$BASE/api/video-streams/$stream_id/fortune-requests/my-status" \
+    -H "Authorization: Bearer $token" | python3 -c "
+import json,sys
+try:
+    d=json.load(sys.stdin)
+except json.JSONDecodeError:
+    sys.exit(0)
+if d.get('hasPendingRequest'):
+    print(d.get('requestId') or d.get('id') or 'yes')
+" 2>/dev/null || echo "")
+  [[ -z "$pending" ]] && return 0
+  rid="$pending"
+  if [[ "$rid" == "yes" ]]; then
+    rid=$(curl_json "$BASE/api/video-streams/$stream_id/fortune-requests" \
+      -H "Authorization: Bearer $token" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+items=d if isinstance(d,list) else d.get('requests') or []
+for x in items:
+    if isinstance(x,dict) and x.get('status')=='pending':
+        print(x.get('id','')); break
+" 2>/dev/null || echo "")
+  fi
+  [[ -z "$rid" ]] && return 0
+  curl -sS -o /dev/null -X DELETE "$BASE/api/video-streams/$stream_id/fortune-requests" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -d "{\"requestId\":\"$rid\"}" || true
+}
+
+patch_fortune_request_action() {
+  local stream_id="$1" host_token="$2" request_id="$3" action="$4"
+  curl -sS -w "\nHTTP:%{http_code}" -X PATCH "$BASE/api/video-streams/$stream_id/fortune-requests" \
+    -H "Authorization: Bearer $host_token" \
+    -H "Content-Type: application/json" \
+    -d "{\"action\":\"$action\",\"requestId\":\"$request_id\"}"
 }
 
 user_jeton_balance() {

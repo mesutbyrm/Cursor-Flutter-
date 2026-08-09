@@ -2,8 +2,8 @@
 
 | Alan | Değer |
 |------|--------|
-| Tarih | 2026-08-09 09:51:08 UTC |
-| Run | local-1786269062 |
+| Tarih | 2026-08-09 10:51:50 UTC |
+| Run | local-1786272703 |
 | API | https://canlifal.com |
 | Geçti | 4 |
 | Başarısız | 0 |
@@ -15,7 +15,7 @@
 |---|------|-------|-------|
 | CATALOG | Gift catalog | ✅ PASS | 25 hediye |
 | AUTH | Login | ✅ PASS | token alındı |
-| WALLET | Wallet | ✅ PASS | bakiye=5280 |
+| WALLET | Wallet | ✅ PASS | bakiye=92628 |
 | INSUFF | Yetersiz jeton | ⏭️ SKIP | hesapta yeterli jeton var — 500 jeton testi mümkün |
 | SSE | SSE gift stream | ✅ PASS | stream açık |
 

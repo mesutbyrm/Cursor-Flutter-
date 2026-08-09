@@ -211,17 +211,25 @@ for p in posts:
 }
 
 stage6_live_fortune_request() {
-  local result sid out rid code
+  local result sid out rid code patch_resp patch_code
   result=$(create_video_stream "$HOST_TOKEN" "Stage6 FalReq $RUN_ID")
   sid="${result%%|*}"
   [[ -z "$sid" ]] && { s6_row "Live Falcı" "FAIL" "stream yok" "-" "pending"; return; }
   out=$(post_fortune_request "$sid" "$VIEWER_TOKEN" "$HOST_TOKEN")
   rid="${out%%|*}"; code="${out#*|}"; code="${code%%|*}"
   if [[ -n "$rid" ]]; then
-    s6_row "Live Falcı" "PASS (live fortune req)" "-" "-" "PASS"
+    patch_resp=$(patch_fortune_request_action "$sid" "$HOST_TOKEN" "$rid" "select")
+    patch_code=$(echo "$patch_resp" | tail -1 | sed 's/HTTP://')
+    if [[ "$patch_code" == "200" || "$patch_code" == "201" ]]; then
+      s6_record "Live fortune accept" PASS "action=select HTTP $patch_code"
+      s6_row "Live Falcı" "PASS (create+select)" "eski body 500 → typeId fix" "Flutter+test script" "PASS"
+    else
+      s6_record "Live fortune accept" FAIL "select HTTP $patch_code"
+      s6_row "Live Falcı" "PASS (create only)" "select HTTP $patch_code" "host action" "partial"
+    fi
   else
-    s6_record "Live fortune request" FAIL "HTTP $code — backend 500"
-    s6_row "Live Falcı" "FAIL" "POST fortune-requests HTTP $code" "backend fix" "pending"
+    s6_record "Live fortune request" FAIL "HTTP $code — yanlış body (typeId gerekli)"
+    s6_row "Live Falcı" "FAIL" "POST fortune-requests HTTP $code" "typeId/nickname fix" "pending"
   fi
   curl -sS -o /dev/null -X DELETE "$BASE/api/video-streams/$sid" -H "Authorization: Bearer $HOST_TOKEN" || true
 }

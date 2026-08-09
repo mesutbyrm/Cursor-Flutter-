@@ -271,11 +271,12 @@ test_11_fortune_request() {
   fi
   local token="${VIEWER_TOKEN:-$USER_TOKEN}"
   skip_unless_user_token 11 "Canlı yayında fal isteği" || return 0
+  clear_pending_fortune_request "$STREAM_ID" "$token" || true
   local resp
   resp=$(curl -sS -X POST "$BASE/api/video-streams/$STREAM_ID/fortune-requests" \
     -H "Authorization: Bearer $token" \
     -H "Content-Type: application/json" \
-    -d '{"displayName":"Acceptance","question":"Test fal sorusu","fortuneType":"tarot","type":"tarot","priority":"normal","jetonCost":10}')
+    -d '{"typeId":"tek-soru","question":"Acceptance test fal sorusu uzun mu?","isHidden":false,"nickname":"Acceptance"}')
   FORTUNE_REQUEST_ID=$(printf '%s' "$resp" | python3 -c "
 import json,sys
 d=json.load(sys.stdin)
@@ -315,7 +316,7 @@ test_12_teller_sees_request() {
 import json,sys
 rid=sys.argv[1]
 d=json.load(sys.stdin)
-items=d.get('requests') or d.get('items') or d.get('data') or []
+items=d if isinstance(d,list) else d.get('requests') or d.get('items') or d.get('data') or []
 if isinstance(items,dict): items=items.get('requests') or items.get('items') or []
 ok=any(str(x.get('id',''))==rid for x in items if isinstance(x,dict))
 print('yes' if ok else 'no')
@@ -330,11 +331,15 @@ print('yes' if ok else 'no')
 # --- 13. Falcının isteği kabul etmesi ---
 test_13_teller_accepts() {
   skip_unless_live_chain 13 "Falcının isteği kabul etmesi" || return 0
-  local code
-  code=$(http_code -X PATCH "$BASE/api/video-streams/$STREAM_ID/fortune-requests/$FORTUNE_REQUEST_ID" \
-    -H "Authorization: Bearer $HOST_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d '{"status":"reviewing"}')
+  local code resp
+  resp=$(patch_fortune_request_action "$STREAM_ID" "$HOST_TOKEN" "$FORTUNE_REQUEST_ID" "select")
+  code=$(echo "$resp" | tail -1 | sed 's/HTTP://')
+  if [[ "$code" != "200" && "$code" != "201" ]]; then
+    code=$(http_code -X PATCH "$BASE/api/video-streams/$STREAM_ID/fortune-requests/$FORTUNE_REQUEST_ID" \
+      -H "Authorization: Bearer $HOST_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{"status":"reviewing"}')
+  fi
   if [[ "$code" != "200" && "$code" != "201" ]]; then
     code=$(http_code -X POST "$BASE/api/live/fal-request/$FORTUNE_REQUEST_ID/update" \
       -H "Authorization: Bearer $HOST_TOKEN" \

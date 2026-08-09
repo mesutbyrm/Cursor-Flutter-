@@ -2,7 +2,7 @@
 
 | Alan | Değer |
 |------|--------|
-| Tarih | 2026-08-09 10:41:05 UTC |
+| Tarih | 2026-08-09 10:48:28 UTC |
 | API | https://canlifal.com |
 
 ## Environment Blockers
@@ -15,8 +15,8 @@
 
 | Rol | userId | Jeton başlangıç → son |
 |-----|--------|------------------------|
-| TEST_VIEWER | cmsl2h8fe007fns08myytsk6b | 97850 → 95850 |
-| TEST_HOST | cmsl2h8tv007mns08gtxf0l8x | 2850 → 3450 |
+| TEST_VIEWER | cmsl2h8fe007fns08myytsk6b | 95680 → 93675 |
+| TEST_HOST | cmsl2h8tv007mns08gtxf0l8x | 3350 → 3950 |
 | TEST_PSYCHIC | cmsl2ix6l008cns087j17rts6 (HOST) | — |
 
 ## Sonuç Tablosu
@@ -30,7 +30,7 @@
 | Live Viewer | PASS (token) | subscribe cihaz | telefon | API PASS |
 | Gift | PASS | - | elmas fallback | PASS |
 | Auto Fortune | PASS | auto-fortune 405 → posts fallback | Flutter datasource fix | PASS |
-| Live Falcı | FAIL | POST fortune-requests HTTP 500 | backend fix | pending |
+| Live Falcı | PASS (create+select) | eski body 500 → typeId fix | Flutter+test script | PASS |
 | PK Voice | PASS | - | stage5 unblock | PASS |
 | PK Live | BLOCKED | live PK 2-stream cihaz | telefon | - |
 | Voice Room | PASS (API) | RTC cihaz | adb | API PASS |
@@ -59,7 +59,7 @@
 | Kontrol | Sonuç |
 |---------|--------|
 | flutter analyze | PASS |
-| flutter test | FAIL |
+| flutter test | PASS |
 | API acceptance | FAIL |
 | Integration (API) | FAIL |
 | Real device | BLOCKED |
