@@ -2,7 +2,7 @@
 
 | Alan | Değer |
 |------|--------|
-| Tarih | 2026-08-09 09:51:09 UTC |
+| Tarih | 2026-08-09 09:51:08 UTC |
 | Run | local-1786269062 |
 | API | https://canlifal.com |
 | Geçti | 4 |
@@ -13,10 +13,10 @@
 
 | # | Test | Durum | Detay |
 |---|------|-------|-------|
-| SEARCH | Music search | ✅ PASS | 12 sonuç, videoId+title |
+| CATALOG | Gift catalog | ✅ PASS | 25 hediye |
 | AUTH | Login | ✅ PASS | token alındı |
-| QUEUE | Queue costs | ✅ PASS | kuyruk OK (fiyat song-request yanıtından) |
-| SONGREQ | Song request | ⏭️ SKIP | hesapta yeterli jeton — E2E mümkün |
-| SSE_DJ | SSE dj stream | ✅ PASS | stream açık |
+| WALLET | Wallet | ✅ PASS | bakiye=5280 |
+| INSUFF | Yetersiz jeton | ⏭️ SKIP | hesapta yeterli jeton var — 500 jeton testi mümkün |
+| SSE | SSE gift stream | ✅ PASS | stream açık |
 
 **API testleri atlandı veya kısmen geçti** (1 atlandı) — istemci testleri bekleniyor.
