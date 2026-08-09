@@ -210,33 +210,20 @@ test_09_live_open() {
     return 0
   fi
   local resp
-  resp=$(mobile_login "{\"email\":\"$HOST_EMAIL\",\"password\":\"$HOST_PASSWORD\"}")
+  resp=$(mobile_login_identifier email "$HOST_EMAIL" "$HOST_PASSWORD")
   HOST_TOKEN=$(extract_token "$resp")
   if [[ -z "$HOST_TOKEN" ]]; then
     record 9 "Canlı yayın açma" FAIL "host token yok"
     return
   fi
-  local create_resp
-  create_resp=$(curl -sS -X POST "$BASE/api/live" \
-    -H "Authorization: Bearer $HOST_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d "{\"title\":\"Acceptance $RUN_ID\",\"status\":\"live\",\"requestType\":\"live\"}")
-  STREAM_ID=$(printf '%s' "$create_resp" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-for path in [
-    lambda x: x.get('id'),
-    lambda x: x.get('streamId'),
-    lambda x: (x.get('stream') or {}).get('id'),
-    lambda x: (x.get('data') or {}).get('id'),
-]:
-    v=path(d)
-    if v: print(v); break
-" 2>/dev/null || echo "")
+  local create_result create_code
+  create_result=$(create_video_stream "$HOST_TOKEN" "Acceptance $RUN_ID")
+  STREAM_ID="${create_result%%|*}"
+  create_code="${create_result##*|}"
   if [[ -n "$STREAM_ID" ]]; then
     record 9 "Canlı yayın açma" PASS "streamId=$STREAM_ID"
   else
-    record 9 "Canlı yayın açma" FAIL "stream oluşturulamadı"
+    record 9 "Canlı yayın açma" FAIL "stream oluşturulamadı (HTTP ${create_code:-?})"
   fi
 }
 
