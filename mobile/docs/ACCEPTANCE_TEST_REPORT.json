@@ -1,39 +1,159 @@
 {
   "runId": "",
   "baseUrl": "",
-  "pass": 5,
+  "pass": 15,
   "fail": 0,
-  "skip": 0,
+  "skip": 10,
   "results": [
     {
-      "id": "SEARCH",
-      "name": "Music search",
+      "id": "AUTH",
+      "name": "Login→JWT→storage chain",
       "status": "✅ PASS",
-      "detail": "12 sonuç, videoId+title"
+      "detail": "accessToken len=281"
     },
     {
       "id": "AUTH",
-      "name": "Login",
+      "name": "Protected /api/me",
       "status": "✅ PASS",
-      "detail": "token alındı"
+      "detail": "auth=200 anon=401"
     },
     {
-      "id": "QUEUE",
-      "name": "Queue costs",
+      "id": "AUTH",
+      "name": "401 without token",
       "status": "✅ PASS",
-      "detail": "kuyruk OK, audio=10 jeton"
+      "detail": "HTTP 401"
     },
     {
-      "id": "SONGREQ",
-      "name": "Song request",
+      "id": "AUTH",
+      "name": "Refresh token",
       "status": "✅ PASS",
-      "detail": "HTTP 400 (Yetersiz jeton. 10 jeton gerekiyor.)"
+      "detail": "yeni accessToken"
     },
     {
-      "id": "SSE_DJ",
-      "name": "SSE dj stream",
+      "id": "PROFILE",
+      "name": "GET /api/me fields",
       "status": "✅ PASS",
-      "detail": "stream açık"
+      "detail": "id=cmsl2h8fe007fns08myytsk6b user=cursorusr1786235468"
+    },
+    {
+      "id": "VOICE",
+      "name": "Join/leave presence",
+      "status": "✅ PASS",
+      "detail": "room=cmokyb9o9007iod09gi6pb1tb"
+    },
+    {
+      "id": "TRTC",
+      "name": "Backend token fields",
+      "status": "✅ PASS",
+      "detail": "sdkAppId=20040423 userId=cmsl2h8fe007fns08myytsk6b"
+    },
+    {
+      "id": "TRTC",
+      "name": "enterRoom/publish (device)",
+      "status": "⏭️ SKIP",
+      "detail": "fiziksel cihaz gerekli (adb yok)"
+    },
+    {
+      "id": "SSE",
+      "name": "Chat stream connect",
+      "status": "✅ PASS",
+      "detail": "event alındı"
+    },
+    {
+      "id": "SSE",
+      "name": "20-cycle leak test",
+      "status": "✅ PASS",
+      "detail": "network 20-cycle OK"
+    },
+    {
+      "id": "CHAT",
+      "name": "Send + list messages",
+      "status": "✅ PASS",
+      "detail": "mesaj listede"
+    },
+    {
+      "id": "GIFT",
+      "name": "Catalog + insufficient",
+      "status": "✅ PASS",
+      "detail": "api-gift-phase OK"
+    },
+    {
+      "id": "GIFT",
+      "name": "500 jeton E2E",
+      "status": "⏭️ SKIP",
+      "detail": "test hesabı 0 jeton; 2 cihaz gerekli"
+    },
+    {
+      "id": "GIFT",
+      "name": "Receiver animation",
+      "status": "⏭️ SKIP",
+      "detail": "fiziksel cihaz gerekli"
+    },
+    {
+      "id": "MUSIC",
+      "name": "Search + queue + request",
+      "status": "✅ PASS",
+      "detail": "api-music-phase OK"
+    },
+    {
+      "id": "MUSIC",
+      "name": "Playback audio",
+      "status": "⏭️ SKIP",
+      "detail": "fiziksel cihaz + jeton gerekli"
+    },
+    {
+      "id": "LIVE",
+      "name": "Create stream",
+      "status": "⏭️ SKIP",
+      "detail": "NOT_A_TELLER — teller onayı gerekli"
+    },
+    {
+      "id": "LIVE",
+      "name": "TRTC join + heartbeat (device)",
+      "status": "⏭️ SKIP",
+      "detail": "fiziksel cihaz gerekli"
+    },
+    {
+      "id": "PK",
+      "name": "Voice PK endpoint",
+      "status": "⏭️ SKIP",
+      "detail": "oda sahibi gerekli"
+    },
+    {
+      "id": "PK",
+      "name": "2-user accept flow",
+      "status": "⏭️ SKIP",
+      "detail": "ikinci kullanıcı + cihaz gerekli"
+    },
+    {
+      "id": "PK",
+      "name": "Live PK",
+      "status": "⏭️ SKIP",
+      "detail": "teller/yayın hesabı gerekli"
+    },
+    {
+      "id": "LIVE_FALCI",
+      "name": "Teller list",
+      "status": "✅ PASS",
+      "detail": "HTTP 200"
+    },
+    {
+      "id": "LIVE_FALCI",
+      "name": "Request→accept→TRTC",
+      "status": "⏭️ SKIP",
+      "detail": "ACCEPTANCE_TELLER_* yok + cihaz gerekli"
+    },
+    {
+      "id": "REGRESSION",
+      "name": "flutter analyze",
+      "status": "✅ PASS",
+      "detail": "0 error"
+    },
+    {
+      "id": "REGRESSION",
+      "name": "canonical + SSE unit",
+      "status": "✅ PASS",
+      "detail": "tests OK"
     }
   ]
 }
