@@ -347,6 +347,39 @@ for k in ('jetonBalance','coins','credits'):
 " 2>/dev/null || echo "0"
 }
 
+# Test hesabı jetonu yetersizse (yalnızca doğrulanmış test e-postası + admin secret).
+ensure_test_jeton_minimum() {
+  local token="$1" user_id="$2" email="$3" min_balance="$4" label="${5:-test}"
+  local current need
+  current=$(user_jeton_balance_from_me "$token")
+  if [[ "$current" -ge "$min_balance" ]]; then
+    printf '%s' "$current"
+    return 0
+  fi
+  if ! is_verified_test_email "$email" 2>/dev/null; then
+    echo "FAIL: $label jeton=$current < $min_balance (test e-postası doğrulanamadı)" >&2
+    return 1
+  fi
+  if ! acceptance_admin_secrets_configured; then
+    echo "FAIL: $label jeton=$current < $min_balance — ACCEPTANCE_ADMIN_* yok; admin panelden test jetonu ekleyin" >&2
+    return 2
+  fi
+  need=$((min_balance - current))
+  if top_up_test_jeton "$user_id" "$min_balance" "stage6-$label" >/dev/null 2>&1; then
+    sleep 1
+    current=$(user_jeton_balance_from_me "$token")
+    printf '%s' "$current"
+    return 0
+  fi
+  echo "FAIL: $label jeton top-up başarısız (hedef=$min_balance)" >&2
+  return 3
+}
+
+is_verified_test_email() {
+  local email="$1"
+  [[ "$email" =~ ^cursor\.(test|host)\.[0-9]+@mailinator\.com$ ]]
+}
+
 fetch_me_field() {
   local token="$1" field="$2"
   curl_json "$BASE/api/me" -H "Authorization: Bearer $token" | python3 -c "

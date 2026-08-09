@@ -189,27 +189,53 @@ class SocialRemoteDataSource {
   }
 
   /// POST `/api/social/posts/auto-fortune`
-  @Deprecated('Backend creates fortune posts; use SocialFortuneFeedSync instead')
+  ///
+  /// Production'da route deploy edilmemişse (HTTP 405) kanonik
+  /// `POST /api/social/posts` ile yedeklenir (canlifal.com web parity).
   Future<PostDto> shareFortuneAuto(ShareFortuneInput input) async {
+    final payload = {
+      'fortuneSlug': input.fortuneSlug,
+      'fortuneType': input.fortuneType ?? input.fortuneSlug,
+      'summary': input.summary,
+      if (input.detail != null && input.detail!.isNotEmpty)
+        'detail': input.detail,
+      if (input.imageUrl != null && input.imageUrl!.isNotEmpty)
+        'imageUrl': input.imageUrl,
+      if (input.fortuneId != null && input.fortuneId!.isNotEmpty)
+        'fortuneId': input.fortuneId,
+      if (input.visualAnalysis != null && input.visualAnalysis!.isNotEmpty)
+        'visualAnalysis': input.visualAnalysis,
+      if (input.visibility != null && input.visibility!.isNotEmpty)
+        'visibility': input.visibility,
+    };
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.socialPostsAutoFortune,
+        data: payload,
+      );
+      return _parseCreatedPost(res.data, caption: input.summary, type: 'fortune');
+    } on ApiException catch (e) {
+      if (e.statusCode != 405 && e.statusCode != 404) rethrow;
+      return _shareFortuneViaCanonicalPost(input);
+    }
+  }
+
+  Future<PostDto> _shareFortuneViaCanonicalPost(ShareFortuneInput input) async {
+    final caption = input.summary.trim();
     final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.socialPostsAutoFortune,
+      ApiEndpoints.socialPosts,
       data: {
-        'fortuneSlug': input.fortuneSlug,
+        'caption': caption,
+        'text': caption,
+        'content': caption,
+        'postType': 'fortune',
+        'type': 'fortune',
         'fortuneType': input.fortuneType ?? input.fortuneSlug,
-        'summary': input.summary,
-        if (input.detail != null && input.detail!.isNotEmpty)
-          'detail': input.detail,
-        if (input.imageUrl != null && input.imageUrl!.isNotEmpty)
-          'imageUrl': input.imageUrl,
         if (input.fortuneId != null && input.fortuneId!.isNotEmpty)
           'fortuneId': input.fortuneId,
-        if (input.visualAnalysis != null && input.visualAnalysis!.isNotEmpty)
-          'visualAnalysis': input.visualAnalysis,
-        if (input.visibility != null && input.visibility!.isNotEmpty)
-          'visibility': input.visibility,
       },
     );
-    return _parseCreatedPost(res.data, caption: input.summary, type: 'fortune');
+    return _parseCreatedPost(res.data, caption: caption, type: 'fortune');
   }
 
   Future<void> deletePost(String postId) async {
