@@ -10,6 +10,9 @@ import {
   createStreamFortuneRequest,
   listStreamFortuneRequests,
   updateStreamFortuneRequestStatus,
+  hasPendingFortuneRequest,
+  getPendingFortuneRequest,
+  getStreamFortuneRequest,
   listCoBroadcastJoinRequests,
   listCoBroadcasters,
   requestCoBroadcastJoin,
@@ -44,6 +47,11 @@ import {
 } from "../lib/liveStreamStore";
 import { notifyFollowersLiveStarted } from "../lib/push_events";
 import { fail, ok } from "../lib/response";
+import {
+  getFortuneType,
+  parseFortuneAction,
+  parseFortuneCreateBody,
+} from "../lib/streamFortuneRequestService";
 import { optionalAuth } from "../middleware/optionalAuth";
 import { requireAuth } from "../middleware/requireAuth";
 import {
@@ -449,6 +457,31 @@ videoStreamsRouter.post("/:id/messages", requireAuth, async (req, res) => {
   return res.status(200).json({ message: row, success: true });
 });
 
+/** GET /api/video-streams/:id/fortune-requests/my-status */
+videoStreamsRouter.get(
+  "/:id/fortune-requests/my-status",
+  requireAuth,
+  async (req, res) => {
+    const streamId = req.params.id;
+    if (!getLiveStream(streamId)) {
+      return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+    }
+    const pending = getPendingFortuneRequest(streamId, req.userId!);
+    if (!pending) {
+      return res.status(200).json({ hasPendingRequest: false });
+    }
+    const type = getFortuneType(pending.fortuneType);
+    return res.status(200).json({
+      hasPendingRequest: true,
+      requestId: pending.id,
+      status: pending.status,
+      jetonAmount: pending.jetonCost,
+      typeName: type?.name ?? pending.fortuneType,
+      typeNameEn: type?.nameEn ?? pending.fortuneType,
+    });
+  },
+);
+
 /** GET /api/video-streams/:id/fortune-requests */
 videoStreamsRouter.get("/:id/fortune-requests", requireAuth, async (req, res) => {
   const streamId = req.params.id;
@@ -456,8 +489,112 @@ videoStreamsRouter.get("/:id/fortune-requests", requireAuth, async (req, res) =>
     return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
   }
   const requests = listStreamFortuneRequests(streamId);
-  return ok(res, { requests, items: requests });
+  return ok(res, requests);
 });
+
+/** PATCH /api/video-streams/:id/fortune-requests — action tabanlı (üretim) */
+videoStreamsRouter.patch(
+  "/:id/fortune-requests",
+  requireAuth,
+  async (req, res) => {
+    const streamId = req.params.id;
+    const stream = getLiveStream(streamId);
+    if (!stream) return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+    if (stream.broadcasterId !== req.userId) {
+      return fail(res, 403, "FORBIDDEN", "Only broadcaster can manage fortune requests");
+    }
+
+    const parsed = parseFortuneAction(req.body);
+    if (!parsed) {
+      return fail(res, 400, "BAD_REQUEST", "Geçersiz işlem");
+    }
+
+    const row = getStreamFortuneRequest(parsed.requestId);
+    if (!row || row.streamId !== streamId) {
+      return fail(res, 404, "NOT_FOUND", "Request not found");
+    }
+
+    const status =
+      parsed.action === "select"
+        ? "reviewing"
+        : parsed.action === "complete"
+          ? "answered"
+          : "cancelled";
+
+    const result = updateStreamFortuneRequestStatus(
+      parsed.requestId,
+      streamId,
+      req.userId!,
+      status,
+    );
+    if (!result.ok) {
+      return fail(res, 400, "BAD_REQUEST", result.error ?? "Hata");
+    }
+
+    if (parsed.action === "refund") {
+      await prisma.user.update({
+        where: { id: row.userId },
+        data: { coins: { increment: row.jetonCost } },
+      });
+    }
+
+    emitStreamFortuneRequest(streamId, {
+      type: "fortune_request",
+      request: result.request,
+    });
+
+    return res.status(200).json({
+      success: true,
+      action:
+        parsed.action === "select"
+          ? "selected"
+          : parsed.action === "complete"
+            ? "completed"
+            : "refunded",
+      ...(parsed.action === "refund" ? { amount: row.jetonCost } : {}),
+    });
+  },
+);
+
+/** DELETE /api/video-streams/:id/fortune-requests — izleyici iade */
+videoStreamsRouter.delete(
+  "/:id/fortune-requests",
+  requireAuth,
+  async (req, res) => {
+    const streamId = req.params.id;
+    if (!getLiveStream(streamId)) {
+      return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+    }
+    const requestId = req.body?.requestId?.toString()?.trim();
+    const pending = requestId
+      ? getStreamFortuneRequest(requestId)
+      : getPendingFortuneRequest(streamId, req.userId!);
+    if (!pending || pending.userId !== req.userId) {
+      return res.status(200).json({
+        success: true,
+        message: "No pending request to refund",
+      });
+    }
+    if (pending.status !== "pending") {
+      return fail(res, 400, "BAD_REQUEST", "Yalnızca bekleyen istek iade edilebilir");
+    }
+    updateStreamFortuneRequestStatus(
+      pending.id,
+      streamId,
+      req.userId!,
+      "cancelled",
+    );
+    await prisma.user.update({
+      where: { id: req.userId },
+      data: { coins: { increment: pending.jetonCost } },
+    });
+    return res.status(200).json({
+      success: true,
+      refunded: true,
+      amount: pending.jetonCost,
+    });
+  },
+);
 
 /** POST /api/video-streams/:id/fortune-requests */
 videoStreamsRouter.post("/:id/fortune-requests", requireAuth, async (req, res) => {
@@ -468,75 +605,86 @@ videoStreamsRouter.post("/:id/fortune-requests", requireAuth, async (req, res) =
   const user = await loadUser(req.userId);
   if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
 
-  const displayName =
-    req.body?.displayName?.toString()?.trim() ||
-    req.body?.display_name?.toString()?.trim();
-  const question = req.body?.question?.toString()?.trim() ?? "";
-  const fortuneType =
-    req.body?.fortuneType?.toString()?.trim() ||
-    req.body?.type?.toString()?.trim() ||
-    "tarot";
-  const priorityRaw = (req.body?.priority?.toString()?.trim() ?? "standard").toLowerCase();
-  const priority =
-    priorityRaw === "priority" || priorityRaw === "oncelikli"
-      ? "priority"
-      : priorityRaw === "vip"
-        ? "vip"
-        : priorityRaw === "super" || priorityRaw === "superfal"
-          ? "super"
-          : priorityRaw === "urgent" || priorityRaw === "acil"
-            ? "urgent"
-            : "standard";
-
-  const costMap: Record<string, number> = {
-    standard: 500,
-    priority: 1000,
-    urgent: 1500,
-    vip: 2500,
-    super: 2500,
-  };
-  // Fal isteği jeton aralığı: 20 - 1000 (serbest miktar). İstemci jetonCost
-  // gönderir; göndermezse öncelik kademesinden türetilir ve aralığa sıkıştırılır.
-  const rawCost = Number(req.body?.jetonCost ?? costMap[priority] ?? 20);
-  const jetonCost = Math.min(1000, Math.max(20, Math.round(rawCost) || 20));
-
-  if (!displayName || displayName.length < 2) {
-    return fail(res, 400, "VALIDATION_ERROR", "Görünecek isim gerekli");
-  }
-  if (question.length < 5) {
-    return fail(res, 400, "VALIDATION_ERROR", "Fal sorusu çok kısa");
+  const parsed = parseFortuneCreateBody(req.body);
+  if (!parsed.ok) {
+    const status =
+      parsed.error.code === "INVALID_TYPE"
+        ? 400
+        : parsed.error.code === "PENDING_EXISTS"
+          ? 400
+          : 400;
+    return res.status(status).json({
+      error: parsed.error.message,
+      errorEn:
+        parsed.error.code === "INVALID_TYPE"
+          ? "Invalid fortune type"
+          : parsed.error.code === "PENDING_EXISTS"
+            ? "You already have a pending fortune request"
+            : parsed.error.message,
+    });
   }
 
-  if (user.coins < jetonCost) {
+  if (hasPendingFortuneRequest(streamId, user.id)) {
+    return res.status(400).json({
+      error: "Zaten bekleyen bir fal isteğiniz var",
+      errorEn: "You already have a pending fortune request",
+    });
+  }
+
+  const { typeId, nickname, question, isHidden, jetonAmount } = parsed.data;
+  const catalog = getFortuneType(typeId)!;
+
+  if (user.coins < jetonAmount) {
     return fail(res, 402, "INSUFFICIENT_COINS", "Yetersiz jeton");
   }
 
-  const updated = await prisma.user.update({
-    where: { id: user.id },
-    data: { coins: { decrement: jetonCost } },
-  });
+  try {
+    const updated = await prisma.$transaction(async (tx) => {
+      const u = await tx.user.update({
+        where: { id: user.id },
+        data: { coins: { decrement: jetonAmount } },
+      });
+      return u;
+    });
 
-  const request = createStreamFortuneRequest({
-    streamId,
-    userId: user.id,
-    username: user.username ?? user.displayName ?? "user",
-    displayName,
-    question,
-    fortuneType,
-    priority,
-    jetonCost,
-  });
+    const request = createStreamFortuneRequest({
+      streamId,
+      userId: user.id,
+      username: user.username ?? user.displayName ?? "user",
+      displayName: nickname,
+      question,
+      fortuneType: typeId,
+      priority: "standard",
+      jetonCost: jetonAmount,
+    });
 
-  emitStreamFortuneRequest(streamId, {
-    type: "fortune_request",
-    request,
-  });
+    emitStreamFortuneRequest(streamId, {
+      type: "fortune_request",
+      request,
+    });
 
-  return ok(res, {
-    request,
-    newBalance: updated.coins,
-    coinBalance: updated.coins,
-  });
+    return res.status(200).json({
+      id: request.id,
+      streamId,
+      userId: user.id,
+      typeId,
+      nickname,
+      isHidden,
+      question,
+      jetonAmount,
+      status: "pending",
+      refundedAt: null,
+      createdAt: request.createdAt,
+      selectedAt: null,
+      completedAt: null,
+      newBalance: updated.coins,
+      typeName: catalog.name,
+      typeNameEn: catalog.nameEn,
+    });
+  } catch (e) {
+    console.error("[fortune-request] create failed", e);
+    return res.status(500).json({ error: "Failed to create fortune request" });
+  }
 });
 
 /** PATCH /api/video-streams/:id/fortune-requests/:requestId */
