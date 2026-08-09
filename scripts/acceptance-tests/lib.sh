@@ -358,6 +358,138 @@ print(d.get(field) or u.get(field) or '')
 " "$field" 2>/dev/null || true
 }
 
+# TRTC yanıtı düz veya { success, data: { userSig, sdkAppId } } olabilir.
+trtc_response_has_sig() {
+  local body="$1"
+  printf '%s' "$body" | python3 -c "
+import json,sys
+raw=sys.stdin.read().strip()
+if not raw:
+    sys.exit(1)
+try:
+    d=json.loads(raw)
+except json.JSONDecodeError:
+    sys.exit(1)
+node=d.get('data') if isinstance(d.get('data'), dict) else d
+sig=node.get('userSig') or node.get('token') or d.get('userSig') or d.get('token')
+sdk=node.get('sdkAppId') or d.get('sdkAppId')
+if sig and sdk and len(str(sig)) > 20:
+    sys.exit(0)
+sys.exit(1)
+" 2>/dev/null
+}
+
+create_owned_chat_room() {
+  local token="$1" name="$2"
+  curl -sS -X POST "$BASE/api/chat/rooms/create" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -d "$(NAME="$name" python3 -c 'import json,os; print(json.dumps({
+      "name": os.environ["NAME"],
+      "description": "Acceptance test room",
+      "icon": "🎙️",
+      "paymentType": "jeton",
+      "roomType": "free"
+    }))')"
+}
+
+extract_chat_room_id() {
+  local body="$1"
+  printf '%s' "$body" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+r=d.get('room') or d.get('data') or {}
+if isinstance(r, dict):
+    print(r.get('id') or r.get('roomId') or '')
+" 2>/dev/null || true
+}
+
+# Kullanıcının takılı kalmış PK savaşını sonlandır (oda bazlı GET /pk).
+cleanup_room_pk() {
+  local token="$1" room_id="$2"
+  local status_body battle_id
+  [[ -z "$room_id" ]] && return 0
+  status_body=$(curl_json "$BASE/api/chat/rooms/$room_id/pk" -H "Authorization: Bearer $token" 2>/dev/null || echo "")
+  battle_id=$(printf '%s' "$status_body" | python3 -c "
+import json,sys
+raw=sys.stdin.read().strip()
+if not raw or raw=='null': sys.exit(0)
+d=json.loads(raw)
+if not isinstance(d, dict): sys.exit(0)
+if d.get('status') in ('active','pending'):
+    print(d.get('id') or '')
+" 2>/dev/null || echo "")
+  if [[ -n "$battle_id" ]]; then
+    curl -sS -o /dev/null -X POST "$BASE/api/chat/rooms/$room_id/pk" \
+      -H "Authorization: Bearer $token" \
+      -H "Content-Type: application/json" \
+      -d '{"action":"end","battleId":"'"$battle_id"'"}' || true
+    curl -sS -o /dev/null -X POST "$BASE/api/chat/rooms/$room_id/pk" \
+      -H "Authorization: Bearer $token" \
+      -H "Content-Type: application/json" \
+      -d '{"action":"cancel","battleId":"'"$battle_id"'"}' || true
+  fi
+}
+
+cleanup_user_pk_battles() {
+  local token="$1"
+  local rooms_body room_ids rid
+  rooms_body=$(curl_json "$BASE/api/chat/rooms?limit=30" -H "Authorization: Bearer $token" 2>/dev/null || echo "[]")
+  room_ids=$(printf '%s' "$rooms_body" | python3 -c "
+import json,sys
+raw=sys.stdin.read().strip()
+if not raw: sys.exit(0)
+d=json.loads(raw)
+rooms=d if isinstance(d,list) else d.get('rooms') or d.get('items') or []
+for r in rooms:
+    if isinstance(r,dict):
+        rid=str(r.get('id') or r.get('roomId') or '').strip()
+        if rid: print(rid)
+" 2>/dev/null || true)
+  while IFS= read -r rid; do
+    [[ -z "$rid" ]] && continue
+    cleanup_room_pk "$token" "$rid"
+  done <<<"$room_ids"
+}
+
+try_approve_host_teller() {
+  local host_token="$1"
+  local teller_id profile_body code
+  if ! login_as_admin; then
+    return 2
+  fi
+  profile_body=$(curl_json "$BASE/api/fortune-tellers/my-profile" \
+    -H "Authorization: Bearer $host_token" 2>/dev/null || echo "")
+  teller_id=$(printf '%s' "$profile_body" | python3 -c "
+import json,sys
+raw=sys.stdin.read().strip()
+if not raw: sys.exit(0)
+d=json.loads(raw)
+print(d.get('id') or '')
+" 2>/dev/null || echo "")
+  if [[ -z "$teller_id" ]]; then
+    return 3
+  fi
+  for endpoint in \
+    "$BASE/api/admin/teller-verification" \
+    "$BASE/api/admin/live-tellers/$teller_id/approve"
+  do
+    code=$(http_code -X POST "$endpoint" \
+      -H "Authorization: Bearer $ADMIN_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "$(TELLER_ID="$teller_id" python3 -c 'import json,os; print(json.dumps({
+        "tellerId": os.environ["TELLER_ID"],
+        "action": "approve",
+        "note": "acceptance-stage5-auto"
+      }))')")
+    if [[ "$code" == "200" || "$code" == "201" ]]; then
+      printf '%s' "$teller_id"
+      return 0
+    fi
+  done
+  return 4
+}
+
 find_payment_in_admin_list() {
   local list="$1" rid="$2" ref="$3"
   printf '%s' "$list" | python3 -c "
