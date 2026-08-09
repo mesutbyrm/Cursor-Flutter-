@@ -97,9 +97,9 @@ merge_api_gate_results() {
     IFS='|' read -ra parts <<<"${line//|/ | }"
     local num name status detail
     num=$(echo "${parts[1]:-}" | tr -d ' ')
-    name=$(echo "${parts[2]:-}" | xargs)
-    status=$(echo "${parts[3]:-}" | xargs)
-    detail=$(echo "${parts[4]:-}" | xargs)
+    name=$(echo "${parts[2]:-}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    status=$(echo "${parts[3]:-}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    detail=$(echo "${parts[4]:-}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     [[ -z "$num" || "$num" == "#" ]] && continue
     [[ ! "$num" =~ ^[0-9]+$ ]] && continue
     if echo "$status" | grep -q 'PASS'; then
