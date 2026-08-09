@@ -63,7 +63,7 @@ test_02_login_username() {
     return 0
   fi
   local resp tok
-  resp=$(mobile_login "{\"emailOrUsername\":\"$USER_USERNAME\",\"password\":\"$USER_PASSWORD\"}")
+  resp=$(mobile_login_identifier username "$USER_USERNAME" "$USER_PASSWORD")
   tok=$(extract_token "$resp")
   if [[ -n "$tok" ]]; then
     USER_TOKEN="${USER_TOKEN:-$tok}"
@@ -152,12 +152,12 @@ test_06_jeton_store() {
 # --- 7. Sohbet odaları ---
 test_07_chat_rooms() {
   local code body
-  code=$(http_code "$BASE/api/chat/rooms?limit=5")
-  body=$(curl_json "$BASE/api/chat/rooms?limit=5")
+  code=$(http_code "$BASE/api/chat/rooms?limit=5&withCounts=true")
+  body=$(curl_json "$BASE/api/chat/rooms?limit=5&withCounts=true")
   ROOM_ID=$(printf '%s' "$body" | python3 -c "
 import json,sys
 d=json.load(sys.stdin)
-rooms=d.get('rooms') or d.get('data',{}).get('rooms') or d.get('items') or []
+rooms=d if isinstance(d,list) else d.get('rooms') or d.get('data',{}).get('rooms') or d.get('items') or []
 if isinstance(rooms,list) and rooms:
     print(rooms[0].get('id',''))
 " 2>/dev/null || echo "")
