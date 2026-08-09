@@ -231,9 +231,9 @@ class LiveGiftsRemoteDataSource {
       giftName = LiveGiftCatalog.displayNameOverrides[catalogId] ?? 'Hediye';
     }
 
-    final qtyRaw = asInt(pick(json, ['quantity', 'count', 'amount', 'giftCount']));
+    final qtyRaw = asInt(pick(json, ['quantity', 'count', 'giftCount']));
     final qty = qtyRaw > 0 ? qtyRaw : 1;
-    final giftPrice = asInt(
+    final unitPriceField = asInt(
       pick(json, ['giftPrice', 'unitPrice', 'pricePerUnit', 'coinPrice']),
     );
     // SSE dokümanı: giftType.price iç içe gelebilir.
@@ -258,37 +258,44 @@ class LiveGiftsRemoteDataSource {
       }
       return 0;
     }();
-    final totalCoin = asInt(
-      pick(json, [
-        'totalCoin',
-        'totalCoins',
-        'totalCost',
-        'totalPrice',
-        'amount',
-        'coins',
-        'jeton',
-        'jetonAmount',
-        'giftJeton',
-        'coinAmount',
-      ]),
-    );
+    final coinCostTotal = asInt(pick(json, ['coinCost']));
+    final flatPrice = asInt(pick(json, ['price']));
+    final totalCoin = () {
+      final direct = asInt(
+        pick(json, [
+          'totalCoin',
+          'totalCoins',
+          'totalCost',
+          'totalPrice',
+          'spentAmount',
+          'giftValue',
+          'amount',
+          'coins',
+          'jeton',
+          'jetonAmount',
+          'giftJeton',
+          'coinAmount',
+        ]),
+      );
+      if (direct > 0) return direct;
+      if (coinCostTotal > 0) return coinCostTotal;
+      if (nestedTotalCoin > 0) return nestedTotalCoin;
+      // Üretim eventPayload: price = toplam jeton (coinCost ile aynı).
+      if (flatPrice > 0 && unitPriceField <= 0) return flatPrice;
+      return 0;
+    }();
+    final resolvedUnit = unitPriceField > 0
+        ? unitPriceField
+        : (nestedGiftPrice > 0 ? nestedGiftPrice : 0);
+    final unitPrice = resolvedUnit > 0
+        ? resolvedUnit
+        : (totalCoin > 0 && qty > 0 ? totalCoin ~/ qty : 0);
+    final resolvedTotal = totalCoin > 0
+        ? totalCoin
+        : (unitPrice > 0 ? unitPrice * qty : 0);
     final totalDiamond = asInt(
       pick(json, ['totalDiamond', 'totalDiamonds', 'diamonds']),
     );
-    final legacyPrice = asInt(pick(json, ['price', 'coinCost']));
-    final resolvedGiftPrice = giftPrice > 0 ? giftPrice : nestedGiftPrice;
-    final unitPrice = resolvedGiftPrice > 0
-        ? resolvedGiftPrice
-        : (totalCoin > 0 && qty > 0
-            ? totalCoin ~/ qty
-            : (legacyPrice > 0 && qty > 1 && legacyPrice >= qty
-                ? legacyPrice ~/ qty
-                : legacyPrice));
-    final resolvedTotal = totalCoin > 0
-        ? totalCoin
-        : (nestedTotalCoin > 0
-            ? nestedTotalCoin
-            : (unitPrice > 0 ? unitPrice * qty : legacyPrice));
     final comboRaw = asInt(pick(json, ['combo', 'comboCount']));
 
     final icon = pick(json, [
@@ -460,6 +467,8 @@ class LiveGiftsRemoteDataSource {
       giftHistoryId: pick(json, [
         'giftHistoryId',
         'historyId',
+        'transactionId',
+        'giftEventId',
       ])?.toString(),
       queueItemId: pick(json, [
         'queueItemId',

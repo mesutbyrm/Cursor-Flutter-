@@ -134,6 +134,15 @@ class ApiException implements Exception {
     }
     final flat = body['error'];
     if (flat is String && flat.trim().isNotEmpty) {
+      final code = flat.trim().toLowerCase();
+      if (code == 'insufficient_jeton' || code == 'insufficient_jetons') {
+        return ApiException(
+          'Yetersiz jeton bakiyesi.',
+          statusCode: statusCode,
+          errorCode: ApiErrorCode.insufficientJetons.wireName,
+          apiErrorCode: ApiErrorCode.insufficientJetons,
+        );
+      }
       return ApiException(flat.trim(), statusCode: statusCode);
     }
     if (body['success'] == false) {

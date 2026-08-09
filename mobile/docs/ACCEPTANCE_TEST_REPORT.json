@@ -1,0 +1,39 @@
+{
+  "runId": "",
+  "baseUrl": "",
+  "pass": 5,
+  "fail": 0,
+  "skip": 0,
+  "results": [
+    {
+      "id": "CATALOG",
+      "name": "Gift catalog",
+      "status": "✅ PASS",
+      "detail": "25 hediye"
+    },
+    {
+      "id": "AUTH",
+      "name": "Login",
+      "status": "✅ PASS",
+      "detail": "token alındı"
+    },
+    {
+      "id": "WALLET",
+      "name": "Wallet",
+      "status": "✅ PASS",
+      "detail": "bakiye=0"
+    },
+    {
+      "id": "INSUFF",
+      "name": "Yetersiz jeton",
+      "status": "✅ PASS",
+      "detail": "HTTP 400 (insufficient_jeton)"
+    },
+    {
+      "id": "SSE",
+      "name": "SSE gift stream",
+      "status": "✅ PASS",
+      "detail": "stream açık"
+    }
+  ]
+}

@@ -321,15 +321,22 @@ class _VoicePremiumGiftPanel2026State
         }
         return;
       }
-      final gross = g.price * _qty;
+      final gross = result.spentAmount ??
+          result.giftEvent?.jetonAmount ??
+          (g.price * _qty);
       final revenue = result.revenue;
       GiftSyncLog.giftSent(
         roomId: roomKey,
         giftId: g.id,
-        eventId: 'api_send_${DateTime.now().millisecondsSinceEpoch}',
+        eventId: result.transactionId ??
+            result.giftEvent?.id ??
+            'api_send_${DateTime.now().millisecondsSinceEpoch}',
       );
-      unawaited(ref.read(giftSoundServiceProvider).playFor(g.toEntity()));
-      ref.refreshWalletCache(force: true);
+      if (result.newBalance != null) {
+        ref.invalidate(walletBalancesProvider);
+      } else {
+        ref.refreshWalletCache(force: true);
+      }
       if (mounted) {
         final messenger = ScaffoldMessenger.maybeOf(context);
         widget.onClose();
@@ -341,9 +348,14 @@ class _VoicePremiumGiftPanel2026State
             receiverIsOwner: receiverIsOwner,
             revenue: revenue,
           );
-          var msg = '${PremiumGiftCatalog2026.displayName(g.id, fallback: LiveGiftCatalog.displayName(g))} x$_qty gönderildi ($gross jeton)';
+          final giftLabel = PremiumGiftCatalog2026.displayName(
+            g.id,
+            fallback: LiveGiftCatalog.displayName(g),
+          );
+          var msg = '$giftLabel x$_qty gönderildi ($gross jeton)';
           if (myId.isNotEmpty && myId == receiver.id.trim()) {
-            msg = '${PremiumGiftCatalog2026.displayName(g.id, fallback: LiveGiftCatalog.displayName(g))} aldınız — size $receiverNet jeton kaldı';
+            msg =
+                '$giftLabel aldınız — size $receiverNet jeton kaldı';
           }
           messenger?.showSnackBar(SnackBar(content: Text(msg)));
         });

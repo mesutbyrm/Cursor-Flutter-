@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:canlifal_social/features/gifts/domain/gift_entity.dart';
+import 'package:canlifal_social/features/gifts/domain/gift_event_catalog_enricher.dart';
 import 'package:canlifal_social/features/live/domain/entities/live_gift_event.dart';
 import 'package:canlifal_social/features/live/domain/entities/live_stream_entity.dart';
 import 'package:canlifal_social/features/live/domain/pk/live_pk_opponent_filter.dart';
@@ -98,18 +100,44 @@ void main() {
       expect(ev.displayImageUrl, contains('rose.png'));
     });
 
-    test('LiveGiftEvent.jetonAmount prefers totalCoin', () {
-      final ev = LiveGiftEvent(
-        id: 'x',
-        senderName: 'A',
-        receiverName: 'B',
-        giftId: 'g',
-        giftName: 'Gül',
-        quantity: 10,
-        coinCost: 0,
-        giftPrice: 50,
-        totalCoin: 500,
-        timestamp: DateTime(2026),
+    test('uses coinCost total from backend eventPayload', () {
+      final ev = ds.parseGiftEvent(
+        {
+          'id': 'evt-500',
+          'giftTypeId': 'elmas',
+          'giftName': 'Elmas',
+          'senderName': 'Ahmet',
+          'receiverName': 'Ayşe',
+          'quantity': 1,
+          'coinCost': 500,
+          'price': 500,
+        },
+        streamId: 'room-1',
+      );
+      expect(ev, isNotNull);
+      expect(ev!.jetonAmount, 500);
+      expect(ev.giftPrice, 500);
+    });
+
+    test('catalog enrich fills zero totalCoin from price', () {
+      final ev = enrichGiftEventFromCatalog(
+        LiveGiftEvent(
+          id: 'x',
+          senderName: 'A',
+          receiverName: 'B',
+          giftId: 'elmas',
+          giftName: 'Elmas',
+          quantity: 1,
+          coinCost: 0,
+          giftPrice: 0,
+          totalCoin: 0,
+          timestamp: DateTime(2026),
+        ),
+        const GiftEntity(
+          id: 'elmas',
+          name: 'Elmas',
+          price: 500,
+        ),
       );
       expect(ev.jetonAmount, 500);
     });

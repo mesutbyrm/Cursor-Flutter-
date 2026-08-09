@@ -1,4 +1,5 @@
 import '../../../gifts/domain/lucky_gift_entities.dart';
+import '../../../live/domain/entities/live_gift_event.dart';
 
 /// Hediye gönderimi sonrası backend gelir dağılımı (salt okunur).
 class VoiceGiftRevenueBreakdown {
@@ -46,8 +47,21 @@ class VoiceGiftRevenueBreakdown {
 }
 
 class VoiceGiftSendResult {
-  const VoiceGiftSendResult({this.revenue, this.luckyResult});
+  const VoiceGiftSendResult({
+    this.revenue,
+    this.luckyResult,
+    this.newBalance,
+    this.spentAmount,
+    this.giftEvent,
+    this.transactionId,
+  });
 
   final VoiceGiftRevenueBreakdown? revenue;
   final LuckyGiftSpinResult? luckyResult;
+  /// Backend `newBalance` / `coinBalance` — tek kaynak.
+  final int? newBalance;
+  /// Backend'in düşürdüğü brüt jeton (`coinCost`, `spentAmount`, …).
+  final int? spentAmount;
+  final LiveGiftEvent? giftEvent;
+  final String? transactionId;
 }
