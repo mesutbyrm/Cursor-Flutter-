@@ -99,56 +99,19 @@ class LiveFortuneRequestDataSource {
       });
       final row = _unwrap(res.data);
       if (row != null) return LiveFortuneRequestEntity.fromJson(row);
-    } on DioException catch (e) {
-      final code = e.response?.statusCode;
-      LiveDebugLog.log('fal.request.create.primary.fail', {
-        'streamId': id,
-        'path': primaryPath,
-        'status': code,
-        'error': ApiException.userMessage(e),
-      });
-      if (code != 404 && code != 405) rethrow;
-    } catch (e) {
-      LiveDebugLog.log('fal.request.create.primary.fail', {
-        'streamId': id,
-        'path': primaryPath,
-        'error': ApiException.userMessage(e),
-      });
-    }
-
-    // Yerel mirror / eski üretim gövdesi.
-    final cost = (jetonCost ?? priority.jetonCost).clamp(20, 1000);
-    final legacyBody = {
-      'displayName': displayName.trim(),
-      'question': question.trim(),
-      'message': question.trim(),
-      'fortuneType': fortuneType,
-      'type': fortuneType,
-      'priority': priority.name,
-      'jetonCost': cost,
-    };
-
-    final fallbackPath = ApiEndpoints.liveFalRequestCreate;
-    LiveDebugLog.log('fal.request.create.fallback', {
-      'streamId': id,
-      'path': fallbackPath,
-    });
-    final res = await _dio.safePost<dynamic>(
-      fallbackPath,
-      data: {...legacyBody, 'streamId': id},
-    );
-    LiveDebugLog.log('fal.request.create.fallback.ok', {
-      'streamId': id,
-      'status': res.statusCode,
-    });
-    final row = _unwrap(res.data);
-    if (row == null) {
       throw DioException(
-        requestOptions: RequestOptions(path: fallbackPath),
+        requestOptions: RequestOptions(path: primaryPath),
         message: 'Fal isteği oluşturulamadı',
       );
+    } on DioException catch (e) {
+      LiveDebugLog.log('fal.request.create.fail', {
+        'streamId': id,
+        'path': primaryPath,
+        'status': e.response?.statusCode,
+        'error': ApiException.userMessage(e),
+      });
+      rethrow;
     }
-    return LiveFortuneRequestEntity.fromJson(row);
   }
 
   Future<LiveFortuneRequestEntity> updateStatus({

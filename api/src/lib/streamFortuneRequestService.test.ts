@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  mapFortuneCreateException,
   parseFortuneAction,
   parseFortuneCreateBody,
   resolveFortuneTypeId,
@@ -91,6 +92,23 @@ describe("streamFortuneRequestService", () => {
     });
     assert.equal(r.ok, false);
     if (!r.ok) assert.equal(r.error.code, "INVALID_TYPE");
+  });
+
+  it("maps Prisma P2002 to 409", () => {
+    const r = mapFortuneCreateException({ code: "P2002" });
+    assert.equal(r.status, 409);
+    assert.equal(r.code, "CONFLICT");
+  });
+
+  it("maps Prisma P2003 to 400 invalid reference", () => {
+    const r = mapFortuneCreateException({ code: "P2003" });
+    assert.equal(r.status, 400);
+    assert.equal(r.code, "INVALID_REFERENCE");
+  });
+
+  it("maps unknown errors to 500", () => {
+    const r = mapFortuneCreateException(new Error("unexpected"));
+    assert.equal(r.status, 500);
   });
 
   it("parses fortune actions", () => {

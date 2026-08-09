@@ -49,6 +49,7 @@ import { notifyFollowersLiveStarted } from "../lib/push_events";
 import { fail, ok } from "../lib/response";
 import {
   getFortuneType,
+  mapFortuneCreateException,
   parseFortuneAction,
   parseFortuneCreateBody,
 } from "../lib/streamFortuneRequestService";
@@ -682,8 +683,16 @@ videoStreamsRouter.post("/:id/fortune-requests", requireAuth, async (req, res) =
       typeNameEn: catalog.nameEn,
     });
   } catch (e) {
-    console.error("[fortune-request] create failed", e);
-    return res.status(500).json({ error: "Failed to create fortune request" });
+    const mapped = mapFortuneCreateException(e);
+    console.error(
+      "[fortune-request] create failed",
+      { streamId, userId: user.id, status: mapped.status, code: mapped.code },
+      e,
+    );
+    return res.status(mapped.status).json({
+      error: mapped.message,
+      code: mapped.code,
+    });
   }
 });
 

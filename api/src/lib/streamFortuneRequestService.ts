@@ -172,3 +172,41 @@ export function parseFortuneAction(
   }
   return null;
 }
+
+/** Prisma / runtime hatalarını HTTP status'a map eder — beklenmeyen 500'i azaltır. */
+export function mapFortuneCreateException(error: unknown): {
+  status: number;
+  code: string;
+  message: string;
+} {
+  if (error && typeof error === "object" && "code" in error) {
+    const prismaCode = String((error as { code: string }).code);
+    switch (prismaCode) {
+      case "P2002":
+        return {
+          status: 409,
+          code: "CONFLICT",
+          message: "Bu fal isteği zaten mevcut",
+        };
+      case "P2025":
+        return {
+          status: 404,
+          code: "NOT_FOUND",
+          message: "Kullanıcı bulunamadı",
+        };
+      case "P2003":
+        return {
+          status: 400,
+          code: "INVALID_REFERENCE",
+          message: "Geçersiz fal türü veya yayın referansı",
+        };
+      default:
+        break;
+    }
+  }
+  return {
+    status: 500,
+    code: "INTERNAL",
+    message: "Failed to create fortune request",
+  };
+}
