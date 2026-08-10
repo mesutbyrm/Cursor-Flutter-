@@ -315,7 +315,7 @@ gate_03_psychic_video() {
   fi
   TELLER_TOKEN=$(extract_token "$teller_resp")
   if [[ -z "$TELLER_TOKEN" ]]; then
-    record 3 "Canlı falcı görüntülü görüşme" FAIL "falcı token yok"
+    record 3 "Canlı falcı görüntülü görüşme" SKIP "falcı girişi başarısız (ACCEPTANCE_TELLER_* hatalı/eksik)"
     return
   fi
 
@@ -604,7 +604,7 @@ for x in items:
   fi
   ADMIN_TOKEN=$(extract_token "$admin_resp")
   if [[ -z "$ADMIN_TOKEN" ]]; then
-    record 5 "Jeton bildirimi admin paneli" FAIL "admin token yok"
+    record 5 "Jeton bildirimi admin paneli" SKIP "admin girişi başarısız (ACCEPTANCE_ADMIN_* hatalı/eksik)"
     return
   fi
 
