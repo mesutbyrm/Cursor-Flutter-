@@ -40,6 +40,10 @@ class _RoomSongMiniPlayerState extends State<RoomSongMiniPlayer> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_syncPlayer(context.read<RoomSongBloc>().state));
+    });
     _driftTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (!mounted) return;
       context.read<RoomSongBloc>().add(

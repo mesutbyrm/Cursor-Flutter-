@@ -46,7 +46,7 @@ class VoiceRoomDjStreamLoader {
   Future<String?> preparePlaybackSource(String streamUrl) async {
     final trimmed = streamUrl.trim();
     if (trimmed.isEmpty) return null;
-    return trimmed;
+    return clientPlaybackUrl(trimmed);
   }
 
   /// Üretim proxy — googlevideo için Referer sunucuda eklenir.
@@ -83,8 +83,8 @@ class VoiceRoomDjStreamLoader {
     final isYtCdn = needsLocalDownload(trimmed);
 
     if (!kIsWeb && Platform.isAndroid && isYtCdn) {
-      add(trimmed);
       add(proxyPlaybackUrl(trimmed));
+      add(trimmed);
       add(await downloadFallback(trimmed));
       return targets;
     }
