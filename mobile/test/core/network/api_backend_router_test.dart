@@ -36,7 +36,7 @@ void main() {
       );
     });
 
-    test('oyun odası uçları Game backend', () {
+    test('oyun odası listeleme + eşleşme Game backend', () {
       expect(
         ApiBackendRouter.resolve('/api/games/rooms', method: 'GET'),
         ApiBackendKind.game,
@@ -49,16 +49,57 @@ void main() {
         ApiBackendRouter.resolve('/api/games/auto-match', method: 'POST'),
         ApiBackendKind.game,
       );
+    });
+
+    test('oyun odası tekil + play Main backend (B1.5 fix)', () {
       expect(
         ApiBackendRouter.resolve('/api/games/room/abc123', method: 'GET'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve('/api/games/room/abc123/join', method: 'POST'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve('/api/games/play', method: 'POST'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/games/room', method: 'POST'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/games/room/abc123/chat', method: 'POST'),
+        ApiBackendKind.main,
+      );
+    });
+
+    test('çoğul üyelik + rozetler Main backend (B1.5 fix)', () {
+      expect(
+        ApiBackendRouter.resolve('/api/memberships'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/memberships/packages'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/memberships/purchase', method: 'POST'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/membership-badges'),
+        ApiBackendKind.main,
+      );
+    });
+
+    test('tekil üyelik planları Game backend (değişmedi)', () {
+      expect(
+        ApiBackendRouter.resolve('/api/membership/plans'),
+        ApiBackendKind.game,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/membership/plans/purchase', method: 'POST'),
         ApiBackendKind.game,
       );
     });

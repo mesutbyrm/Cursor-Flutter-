@@ -46,11 +46,14 @@ abstract final class ApiBackendRouter {
       path.startsWith('/api/gifts/battles') ||
       path.startsWith('/api/gifts/goals');
 
-  /// Üyelik planları + satın alma (`/api/membership/plans`, `/purchase`) modern
-  /// uçları yalnızca abacus'ta (canlifal.com'da /purchase yok → "istenilen
-  /// kaynak bulunamadı"). Aynı DB, aynı plan kimlikleri.
+  /// Tekil üyelik planları + satın alma (`/api/membership/plans`, `/purchase`)
+  /// yalnızca abacus'ta (canlifal.com'da yok). Aynı DB, aynı plan kimlikleri.
+  ///
+  /// DİKKAT: Yalnızca `/api/membership/` (tekil + eğik çizgi) eşleşir.
+  /// Çoğul `/api/memberships*` ve `/api/membership-badges` ANA backend'dedir
+  /// (canlifal.com 200, abacus 404) — bu yüzden buraya GİRMEZ.
   static bool _isMembershipBackendPath(String path) =>
-      path.startsWith('/api/membership');
+      path.startsWith('/api/membership/');
 
   /// Yalnızca oyun backend'inde bulunan canlı yayın uçları.
   /// `/api/live/pk` ve `/api/live/pk/score` ANA backend'dedir (oyun
@@ -61,11 +64,15 @@ abstract final class ApiBackendRouter {
       path.startsWith('/api/live/guest/');
 
   /// Oyun **odası** uçları — Redis backend (Backend-2).
+  ///
+  /// DİKKAT: `/api/games/room` (tekil, oda oluşturma/durum/hamle) ve
+  /// `/api/games/play` ANA backend'dedir (canlifal.com 200, abacus 404).
+  /// Yalnızca `/api/games/rooms` (çoğul, listeleme) ve `/api/games/auto-match`
+  /// oyun backend'inde kalır.
   static bool _isGameBackendPath(String path, String method) {
     if (path == '/api/games/rooms') return true;
     if (path == '/api/games/auto-match') return true;
-    if (path.startsWith('/api/games/room')) return true;
-    if (path == '/api/games/play') return true;
+    // `/api/games/room*` ve `/api/games/play` artık ANA backend'e gider.
     // Katalog, skor, turnuva ana sitede kalır.
     return false;
   }
