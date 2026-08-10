@@ -2111,7 +2111,7 @@ class ChatRoomRemoteDataSource {
     });
   }
 
-  /// Yetkili rol (owner/admin/mod/dj) — önce `join-seat`, sonra `seats` / presence.
+  /// Yetkili rol (owner/admin/mod/dj) — önce `seats`, sonra `join-seat`.
   Future<void> joinSeat({
     required String roomKey,
     String? alternateKey,
@@ -2124,8 +2124,8 @@ class ChatRoomRemoteDataSource {
     };
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       for (final path in [
-        ApiEndpoints.chatRoomJoinSeat(key),
         seatsPath(key),
+        ApiEndpoints.chatRoomJoinSeat(key),
       ]) {
         try {
           await _dio.safePost<dynamic>(path, data: body);

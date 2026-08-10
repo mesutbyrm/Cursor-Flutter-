@@ -104,7 +104,6 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       _poll?.cancel();
       _liveSocket?.disconnect();
       _liveSocket = null;
-      ref.read(liveGiftSocketBridgeProvider).disconnect();
       ref.read(liveGiftRealtimeProvider).setSseActive(false);
       ref.read(sseConnectionHubProvider).releaseVideoStream(streamId);
       unawaited(ref.read(liveRemoteProvider).leaveVideoStream(streamId));
@@ -300,13 +299,6 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
     );
 
     _startLiveNamespaceSocket(streamId);
-    ref.read(liveGiftSocketBridgeProvider).connect(
-          streamId: streamId,
-          onEvent: (ev) {
-            GiftSyncLog.broadcast(streamId, 'socket', ev.id);
-            ref.read(liveGiftRealtimeProvider).publishRemote(ev);
-          },
-        );
   }
 
   void _startLiveNamespaceSocket(String streamId) {

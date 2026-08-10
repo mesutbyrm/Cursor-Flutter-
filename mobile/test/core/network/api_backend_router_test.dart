@@ -70,13 +70,9 @@ void main() {
       );
     });
 
-    test('canlı PK ve misafir uçları Game backend', () {
+    test('canlı PK aktif ve misafir uçları Game backend', () {
       expect(
         ApiBackendRouter.resolve('/api/live/pk/active'),
-        ApiBackendKind.game,
-      );
-      expect(
-        ApiBackendRouter.resolve('/api/live/pk/sweep', method: 'POST'),
         ApiBackendKind.game,
       );
       expect(
@@ -86,6 +82,21 @@ void main() {
       expect(
         ApiBackendRouter.resolve('/api/live/guest/list?streamId=abc'),
         ApiBackendKind.game,
+      );
+    });
+
+    test('canlı PK ana backend uçları Main backend', () {
+      expect(
+        ApiBackendRouter.resolve('/api/live/pk'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/live/pk/sweep', method: 'POST'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/live/pk/score', method: 'POST'),
+        ApiBackendKind.main,
       );
     });
 
@@ -120,26 +131,26 @@ void main() {
       );
     });
 
-    test('sesli oda PK uçları Game backend', () {
+    test('sesli oda PK uçları Main backend', () {
       expect(
         ApiBackendRouter.resolve(
           '/api/chat/rooms/cm123/pk',
         ),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve(
           '/api/chat/rooms/cm123/pk/inv-1/respond',
           method: 'POST',
         ),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve(
           '/api/chat/rooms/cm123/pk/battle-1/end',
           method: 'POST',
         ),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve('/api/chat/rooms/cm123/messages'),

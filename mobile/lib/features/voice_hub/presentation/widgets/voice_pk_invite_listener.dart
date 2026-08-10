@@ -8,10 +8,9 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../providers/pk_battle_remote_provider.dart';
-import '../providers/voice_pk_owned_rooms_socket_provider.dart';
 import '../utils/pk_invite_dialog_helper.dart';
 
-/// Sesli oda PK davetleri — Socket.IO + REST poll; hedef odada popup.
+/// Sesli oda PK davetleri — REST poll; hedef odada popup.
 class VoicePkInviteListener extends ConsumerStatefulWidget {
   const VoicePkInviteListener({super.key, required this.child});
 
@@ -30,7 +29,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       unawaited(_pollPendingInvites());
     });
     Future.microtask(_pollPendingInvites);
@@ -105,7 +104,6 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(voicePkOwnedRoomsSocketProvider);
     ref.listen<PkBattleRemote?>(pkBattleRemoteProvider, (_, next) {
       _onBattleUpdate(next);
     });

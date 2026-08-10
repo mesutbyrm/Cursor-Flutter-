@@ -10,7 +10,7 @@ class RoomSongRemoteDataSource {
   final Dio _dio;
 
   Future<RoomSongDto?> fetchCurrentSong(String roomId) async {
-    final res = await _dio.get<dynamic>(ApiEndpoints.chatRoomCurrentSong(roomId));
+    final res = await _dio.get<dynamic>(ApiEndpoints.chatRoomMusic(roomId));
     final data = res.data;
     if (data is! Map) return null;
     final map = Map<String, dynamic>.from(data);

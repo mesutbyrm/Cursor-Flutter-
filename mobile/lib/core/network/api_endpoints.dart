@@ -362,10 +362,6 @@ abstract final class ApiEndpoints {
   static String chatRoomSongRequest(String roomId) =>
       '/api/chat/rooms/$roomId/song-request';
 
-  /// SongQueueService — şu an çalan şarkı.
-  static String chatRoomCurrentSong(String roomId) =>
-      '/api/chat/rooms/$roomId/current-song';
-
   /// SongQueueService — FIFO kuyruk.
   static String chatRoomSongQueue(String roomId) =>
       '/api/chat/rooms/$roomId/queue';
@@ -522,7 +518,6 @@ abstract final class ApiEndpoints {
 
   /// Canlı PK (prod `/api/live/pk/*`) — games backend; `/api/pk/active` yedeği.
   static const livePkActive = '/api/live/pk/active';
-  static const livePkSweep = '/api/live/pk/sweep';
 
   /// Çoklu yayın misafir listesi (public) — `?streamId=` opsiyonel.
   static const liveGuestList = '/api/live/guest/list';
@@ -567,9 +562,6 @@ abstract final class ApiEndpoints {
   static String pkBattleEnd(String battleId) => '/api/pk/battles/$battleId/end';
 
   static const musicSearch = '/api/music/search';
-
-  static String chatRoomMusicStream(String roomId) =>
-      '/api/chat/rooms/$roomId/music-stream';
 
   static const chatYoutubeStream = '/api/chat/youtube-stream';
 

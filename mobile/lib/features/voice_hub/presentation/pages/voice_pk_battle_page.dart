@@ -104,12 +104,6 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
         return;
       }
     }
-
-    remote.connectSocket(
-      roomId: roomKey,
-      alternateRoomId: r.slug != roomKey ? r.slug : null,
-      battleId: battle.id,
-    );
   }
 
   void _startGiftRealtime() {
@@ -154,7 +148,6 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   @override
   void dispose() {
     _giftSub?.cancel();
-    ref.read(pkBattleRemoteProvider.notifier).disconnectSocket();
     super.dispose();
   }
 

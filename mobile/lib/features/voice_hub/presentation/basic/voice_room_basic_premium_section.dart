@@ -618,11 +618,6 @@ Future<void> connectVoiceRoomBasicPkBattle(
       return;
     }
   }
-  remote.connectSocket(
-    roomId: roomKey,
-    alternateRoomId: room.slug != roomKey ? room.slug : null,
-    battleId: battle.id,
-  );
 }
 
 Future<void> showVoiceRoomBasicIncomingPkInvite({

@@ -37,11 +37,6 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
       _startSse();
       _schedulePoll(sseConnected: false);
 
-      ref.read(pkBattleRemoteProvider.notifier).connectSocket(
-            roomId: _roomKey,
-            alternateRoomId: _musicAlternateKey,
-          );
-
       await _loadBackendSnapshot();
       await Future.wait<void>([
         _loadInitialMessages(),
@@ -182,14 +177,10 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
         player.onTrackComplete = () => unawaited(_onDjTrackComplete());
         _wireMusicControls();
       }
-      if (VoiceRoomBasicMode.premiumEnabled) {
-        _startGiftSocket();
-      }
       unawaited(_loadGiftLeaderboard());
       return;
     }
 
-    _startGiftSocket();
     final player = ref.read(voiceRoomDjPlayerProvider);
     player.onTrackComplete = () => unawaited(_onDjTrackComplete());
     _wireMusicControls();

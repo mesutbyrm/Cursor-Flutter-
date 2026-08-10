@@ -6,6 +6,7 @@ import '../config/env.dart';
 import 'auth_token_refresh_coordinator.dart';
 import '../performance/json_isolate_perf.dart';
 import 'api.dart';
+import 'api_backend_kind.dart';
 import 'api_exception.dart';
 import 'api_endpoints.dart';
 import 'api_monitor_interceptor.dart';
@@ -106,7 +107,11 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
       onError: (e, handler) async {
         final refreshPath = _refreshPath();
         final already = e.requestOptions.extra['_authRetry'] == true;
+        final backend = e.requestOptions.extra['apiBackend'];
+        final isMainOrigin =
+            backend == null || backend == ApiBackendKind.main.label;
         if (!already &&
+            isMainOrigin &&
             e.response?.statusCode == 401 &&
             e.requestOptions.path != refreshPath &&
             e.requestOptions.path != ApiEndpoints.authLogout) {

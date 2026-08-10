@@ -125,11 +125,6 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
         return;
       }
       PkEventLog.requestSuccess(battleId: battle.id);
-      remote.connectSocket(
-        roomId: _roomKey,
-        alternateRoomId: _altRoomKey,
-        battleId: battle.id,
-      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
