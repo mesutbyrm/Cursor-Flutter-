@@ -1,5 +1,7 @@
+import java.util.Base64
 import java.util.Properties
 import java.io.FileInputStream
+import org.gradle.api.GradleException
 
 plugins {
     id("com.android.application")
@@ -9,10 +11,39 @@ plugins {
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
-val hasReleaseKeystore = keystorePropertiesFile.exists()
-if (hasReleaseKeystore) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+val releaseKeystoreFile = file("release.keystore")
+
+/**
+ * Upload keystore: local [key.properties] + [release.keystore], or CI env vars
+ * (ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
+ * ANDROID_KEY_PASSWORD). Release builds must never fall back to debug signing.
+ */
+fun ensureReleaseKeystoreConfigured(): Boolean {
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+        return true
+    }
+    val base64 = System.getenv("ANDROID_KEYSTORE_BASE64")?.trim().orEmpty()
+    if (base64.isEmpty()) return false
+
+    val storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")?.trim().orEmpty()
+    val keyAlias = System.getenv("ANDROID_KEY_ALIAS")?.trim().orEmpty()
+    val keyPassword = System.getenv("ANDROID_KEY_PASSWORD")?.trim().orEmpty()
+    if (storePassword.isEmpty() || keyAlias.isEmpty() || keyPassword.isEmpty()) {
+        return false
+    }
+
+    val decoded = Base64.getDecoder().decode(base64.replace(Regex("\\s"), ""))
+    releaseKeystoreFile.outputStream().use { it.write(decoded) }
+
+    keystoreProperties["storeFile"] = releaseKeystoreFile.name
+    keystoreProperties["storePassword"] = storePassword
+    keystoreProperties["keyAlias"] = keyAlias
+    keystoreProperties["keyPassword"] = keyPassword
+    return true
 }
+
+val hasReleaseKeystore = ensureReleaseKeystoreConfigured()
 
 android {
     namespace = "com.mesutbyrm.canlifal"
@@ -87,11 +118,17 @@ android {
 
     buildTypes {
         release {
-            signingConfig = if (hasReleaseKeystore) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+            if (!hasReleaseKeystore) {
+                throw GradleException(
+                    "Release build requires Play upload keystore. " +
+                        "Provide android/key.properties + app/release.keystore locally, " +
+                        "or set ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, " +
+                        "ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD. " +
+                        "See android/key.properties.example. " +
+                        "Debug signing is not allowed for release builds.",
+                )
             }
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             isDebuggable = false

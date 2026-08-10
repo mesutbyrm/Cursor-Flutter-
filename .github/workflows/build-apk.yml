@@ -240,7 +240,8 @@ jobs:
           EOF
             echo "Release keystore hazır — sabit SHA-1 ile imzalanacak."
           else
-            echo "ANDROID_KEYSTORE_BASE64 yok — debug imza (Google girişi çalışmayabilir)."
+            echo "::error::ANDROID_KEYSTORE_BASE64 yok — release build reddedildi (debug imza yasak)."
+            exit 1
           fi
 
       - name: flutter build apk --release (Gate 9)
