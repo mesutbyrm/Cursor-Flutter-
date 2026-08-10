@@ -1,0 +1,106 @@
+# Debug APK — keystore gerektirmez; Stage 16 / main test için.
+# Sabit indirme: releases/download/apk-debug-latest/canlifal-mobile-debug.apk
+
+name: Build debug APK
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-debug-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Debug APK
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.44.8'
+          cache: true
+
+      - name: Accept Android licenses
+        run: yes | flutter doctor --android-licenses || true
+
+      - name: Free disk space for NDK
+        working-directory: ${{ github.workspace }}
+        run: |
+          chmod +x scripts/ci-free-disk-for-ndk.sh
+          bash scripts/ci-free-disk-for-ndk.sh
+
+      - name: Setup Android NDK (nttld)
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27c
+
+      - name: Link NDK for Flutter Gradle
+        working-directory: ${{ github.workspace }}
+        env:
+          ANDROID_NDK_VERSION: 27.0.12077973
+        run: |
+          chmod +x scripts/ci-link-android-ndk.sh
+          bash scripts/ci-link-android-ndk.sh
+
+      - name: flutter build apk --debug
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: |
+          flutter pub get
+          flutter build apk --debug \
+            --target-platform android-arm64 \
+            --dart-define=API_BASE_URL=https://canlifal.com
+
+      - name: Copy APK
+        run: |
+          cp build/app/outputs/flutter-apk/app-debug.apk \
+            build/app/outputs/flutter-apk/canlifal-mobile-debug.apk
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: canlifal-mobile-debug-apk
+          path: mobile/build/app/outputs/flutter-apk/canlifal-mobile-debug.apk
+          retention-days: 14
+
+      - name: Publish apk-debug-latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //')
+          gh release upload apk-debug-latest \
+            build/app/outputs/flutter-apk/canlifal-mobile-debug.apk \
+            --clobber 2>/dev/null || \
+          gh release create apk-debug-latest \
+            build/app/outputs/flutter-apk/canlifal-mobile-debug.apk \
+            --title "Canlifal Debug APK ${VERSION}" \
+            --notes "Debug imzalı test APK (keystore gerekmez). Kaynak: main. Release için apk-latest kullanın."
