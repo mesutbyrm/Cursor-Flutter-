@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -228,7 +229,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   void _handleRtcError(Object e) {
-    debugPrint('[TRTC] error: $e');
+    if (kDebugMode) debugPrint('[TRTC] error: $e');
     LiveEventLog.error('rtc', e, streamId: widget.session.streamId);
     if (_isBenignRtcError(e)) return;
     if (!mounted) return;
@@ -359,7 +360,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       _onRtcJoinSuccess(user);
     } catch (e) {
       if (_isBenignRtcError(e) && _trtc.inChannel) {
-        debugPrint('[TRTC] duplicate join ignored, channel active: $e');
+        if (kDebugMode) debugPrint('[TRTC] duplicate join ignored, channel active: $e');
         _onRtcJoinSuccess(user);
         return;
       }

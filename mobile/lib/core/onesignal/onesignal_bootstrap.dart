@@ -35,7 +35,9 @@ class OneSignalBootstrap {
       OneSignal.User.pushSubscription.addObserver((state) {
         final token = state.current.token;
         if (token != null && token.isNotEmpty) {
-          debugPrint('OneSignal push token: ${token.substring(0, 12)}…');
+          if (kDebugMode) {
+            debugPrint('OneSignal push token: ${token.substring(0, 12)}…');
+          }
           onPushTokenChanged?.call();
         }
       });

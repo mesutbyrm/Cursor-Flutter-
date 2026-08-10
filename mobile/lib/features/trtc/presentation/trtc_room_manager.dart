@@ -62,6 +62,7 @@ class TrtcRoomManager {
   bool get cameraOn => _cameraOn;
 
   void _trtcLog(String event, [Map<String, Object?> fields = const {}]) {
+    if (!kDebugMode) return;
     final safe = Map<String, Object?>.from(fields)
       ..remove('userSig')
       ..remove('token')

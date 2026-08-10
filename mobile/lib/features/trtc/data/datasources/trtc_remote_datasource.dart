@@ -15,6 +15,7 @@ class TrtcRemoteDataSource {
   final Dio _dio;
 
   void _log(String event, Map<String, Object?> fields) {
+    if (!kDebugMode) return;
     final safe = Map<String, Object?>.from(fields)
       ..remove('userSig')
       ..remove('token')
