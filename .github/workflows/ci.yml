@@ -10,14 +10,22 @@ on:
       - 'mobile/**'
       - 'api/**'
       - 'scripts/dart-analyze-gate.sh'
+      - 'scripts/run-release-gate.sh'
+      - 'scripts/acceptance-preflight.sh'
+      - 'scripts/acceptance-tests/**'
       - '.github/workflows/ci.yml'
+      - '.github/workflows/build-apk.yml'
   pull_request:
     branches: [main]
     paths:
       - 'mobile/**'
       - 'api/**'
       - 'scripts/dart-analyze-gate.sh'
+      - 'scripts/run-release-gate.sh'
+      - 'scripts/acceptance-preflight.sh'
+      - 'scripts/acceptance-tests/**'
       - '.github/workflows/ci.yml'
+      - '.github/workflows/build-apk.yml'
   workflow_dispatch:
 
 # Aynı dalda üst üste koşan işleri iptal et — yalnızca gerçekten başlamış
