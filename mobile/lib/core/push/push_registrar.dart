@@ -45,7 +45,7 @@ class PushRegistrar {
         try {
           await _dio.safePost(path, data: payload);
           _lastSentToken = token;
-          debugPrint('Push token registered via $path');
+          if (kDebugMode) debugPrint('Push token registered via $path');
           if (OneSignalBootstrap.isReady) {
             await _deregisterStaleFcmToken();
           }
@@ -73,7 +73,7 @@ class PushRegistrar {
         ApiEndpoints.registerFcmDevice,
         data: {'token': fcmToken, 'fcmToken': fcmToken},
       );
-      debugPrint('Stale FCM token deregistered from backend');
+      if (kDebugMode) debugPrint('Stale FCM token deregistered from backend');
     } catch (e) {
       debugPrint('FCM deregister skipped: $e');
     }
@@ -100,7 +100,7 @@ class PushRegistrar {
       }
     }
 
-    debugPrint('Push token unavailable; registration skipped');
+    if (kDebugMode) debugPrint('Push token unavailable; registration skipped');
     return null;
   }
 

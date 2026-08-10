@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.146+180 (2026-08-10) — Release candidate lock
+
+- **Production logging:** TRTC/FCM/OneSignal push token ve `audio.trtc.token` logları yalnızca `kDebugMode`
+- **VoiceRoomDebugLog:** `audio.trtc.token` / `audio.agora.token` release kritik log listesinden çıkarıldı
+
 ## 1.0.145+179 (2026-08-10) — Stage 16 production parity
 
 - **CI release gate:** Hatalı GitHub Secrets durumunda dokümante test hesaplarına otomatik geri dönüş; `acceptance-preflight.sh` + `set-acceptance-secrets.sh`

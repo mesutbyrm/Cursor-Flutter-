@@ -48,7 +48,9 @@ class FirebaseBootstrap {
 
       if (messaging != null) {
         messaging!.onTokenRefresh.listen((token) {
-          debugPrint('FCM token refreshed: ${token.substring(0, 12)}…');
+          if (kDebugMode) {
+            debugPrint('FCM token refreshed: ${token.substring(0, 12)}…');
+          }
           OneSignalBootstrap.onPushTokenChanged?.call();
         });
       }
@@ -70,7 +72,7 @@ class FirebaseBootstrap {
     try {
       if (!kIsWeb && !OneSignalBootstrap.isReady) {
         final token = await messaging!.getToken();
-        if (token != null) {
+        if (token != null && kDebugMode) {
           debugPrint('FCM token: ${token.substring(0, 12)}…');
         }
       }
