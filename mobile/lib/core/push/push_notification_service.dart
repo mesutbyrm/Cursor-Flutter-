@@ -203,7 +203,7 @@ class PushNotificationService {
     try {
       return await FirebaseMessaging.instance.getToken();
     } catch (e) {
-      debugPrint('FCM getToken failed: $e');
+      if (kDebugMode) debugPrint('FCM getToken failed: $e');
       return null;
     }
   }
