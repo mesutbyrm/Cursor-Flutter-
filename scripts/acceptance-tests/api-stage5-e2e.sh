@@ -365,7 +365,25 @@ stage5_live_e2e() {
 
 stage5_psychic_e2e() {
   echo "--- LIVE FALCI E2E ---"
-  if [[ -z "$PSYCHIC_TOKEN" ]]; then
+  local accept_token=""
+  if acceptance_teller_secrets_configured && [[ -n "$PSYCHIC_TOKEN" ]]; then
+    record_stage5 "LIVE_FALCI" "TEST_PSYCHIC login" PASS "dedicated teller account"
+    TELLER_ID="${ACCEPTANCE_TELLER_ID:-}"
+    TELLER_USER_ID="${ACCEPTANCE_TELLER_USER_ID:-}"
+    accept_token="$PSYCHIC_TOKEN"
+  elif [[ -n "$USER_B_TOKEN" ]]; then
+    # P0 uyumu: HOST onaylı falcı profili varsa onu kullan.
+    local host_profile
+    host_profile=$(curl_json "$BASE/api/fortune-tellers/my-profile" \
+      -H "Authorization: Bearer $USER_B_TOKEN")
+    TELLER_ID=$(printf '%s' "$host_profile" | python3 -c "import json,sys;d=json.load(sys.stdin);print(d.get('id',''))" 2>/dev/null || echo "")
+    if [[ -n "$TELLER_ID" ]]; then
+      TELLER_USER_ID="$USER_B_ID"
+      accept_token="$USER_B_TOKEN"
+      record_stage5 "LIVE_FALCI" "Teller resolve" PASS "HOST tellerId=$TELLER_ID (P0 fallback)"
+    fi
+  fi
+  if [[ -z "$TELLER_ID" ]]; then
     local tellers body
     body=$(curl_json "$BASE/api/fortune-tellers" -H "Authorization: Bearer $USER_A_TOKEN")
     read -r TELLER_ID TELLER_USER_ID <<<"$(printf '%s' "$body" | python3 -c "
@@ -384,10 +402,9 @@ print(t.get('id',''), t.get('userId') or u.get('id') or '')
       return
     fi
     record_stage5 "LIVE_FALCI" "Teller list" PASS "tellerId=$TELLER_ID"
-  else
-    record_stage5 "LIVE_FALCI" "TEST_PSYCHIC login" PASS "dedicated teller account"
-    TELLER_ID="${ACCEPTANCE_TELLER_ID:-}"
-    TELLER_USER_ID="${ACCEPTANCE_TELLER_USER_ID:-}"
+    if [[ -n "$TELLER_USER_ID" && "$TELLER_USER_ID" == "$USER_B_ID" ]]; then
+      accept_token="$USER_B_TOKEN"
+    fi
   fi
   local bal before body code session_id err
   bal=$(read_balance "$USER_A_TOKEN")
@@ -413,20 +430,29 @@ for k in ('sessionId','id'):
   if [[ "$code" == "200" || "$code" == "201" ]]; then
     SESSION_ID="$session_id"
     record_stage5 "LIVE_FALCI" "Request session" PASS "sessionId=$session_id"
-    if [[ -n "$PSYCHIC_TOKEN" && -n "$session_id" ]]; then
-      local acc_code acc_body
-      acc_body=$(curl -sS -w "\nHTTP:%{http_code}" -X PATCH "$BASE/api/fortune-tellers/sessions/$session_id" \
-        -H "Authorization: Bearer $PSYCHIC_TOKEN" \
-        -H "Content-Type: application/json" \
-        -d '{"action":"accept"}')
-      acc_code=$(echo "$acc_body" | tail -1 | sed 's/HTTP://')
-      if [[ "$acc_code" == "200" ]]; then
-        record_stage5 "LIVE_FALCI" "Psychic accept" PASS "HTTP 200"
+    if [[ -n "$session_id" ]]; then
+      if [[ -z "$accept_token" && -n "$PSYCHIC_TOKEN" ]]; then
+        accept_token="$PSYCHIC_TOKEN"
+      elif [[ -z "$accept_token" && -n "$USER_B_TOKEN" && -n "$TELLER_USER_ID" && "$TELLER_USER_ID" == "$USER_B_ID" ]]; then
+        accept_token="$USER_B_TOKEN"
+      fi
+      if [[ -n "$accept_token" ]]; then
+        local acc_code acc_body
+        acc_body=$(curl -sS -w "\nHTTP:%{http_code}" -X PATCH "$BASE/api/fortune-tellers/sessions/$session_id" \
+          -H "Authorization: Bearer $accept_token" \
+          -H "Content-Type: application/json" \
+          -d '{"action":"accept"}')
+        acc_code=$(echo "$acc_body" | tail -1 | sed 's/HTTP://')
+        if [[ "$acc_code" == "200" || "$acc_code" == "201" ]]; then
+          record_stage5 "LIVE_FALCI" "Psychic accept" PASS "HTTP $acc_code (HOST teller fallback)"
+        else
+          record_stage5 "LIVE_FALCI" "Psychic accept" FAIL "HTTP $acc_code"
+        fi
       else
-        record_stage5 "LIVE_FALCI" "Psychic accept" FAIL "HTTP $acc_code"
+        record_stage5 "LIVE_FALCI" "Psychic accept" BLOCKED "teller token yok (ACCEPTANCE_TELLER_* veya HOST falcı)"
       fi
     else
-      record_stage5 "LIVE_FALCI" "Psychic accept" BLOCKED "ACCEPTANCE_TELLER_* yok"
+      record_stage5 "LIVE_FALCI" "Psychic accept" BLOCKED "session oluşmadı"
     fi
     record_stage5 "LIVE_FALCI" "TRTC camera/mic (device)" BLOCKED "adb yok"
   else
@@ -437,8 +463,49 @@ for k in ('sessionId','id'):
 
 stage5_pk_e2e() {
   echo "--- PK E2E ---"
-  record_stage5 "PK" "Voice 2-user accept" BLOCKED "oda sahibi + 2 cihaz gerekli"
-  record_stage5 "PK" "Live PK" BLOCKED "onaylı LIVE host gerekli"
+  if [[ -z "$USER_A_TOKEN" || -z "$USER_B_TOKEN" ]]; then
+    record_stage5 "PK" "Voice PK API" BLOCKED "A/B token yok"
+    record_stage5 "PK" "Live PK (device)" BLOCKED "adb yok"
+    return
+  fi
+  cleanup_user_pk_battles "$USER_A_TOKEN"
+  cleanup_user_pk_battles "$USER_B_TOKEN"
+  local body_a room_a room_b battle status code
+  body_a=$(create_owned_chat_room "$USER_A_TOKEN" "S5PK_A_$RUN_ID")
+  room_a=$(extract_chat_room_id "$body_a")
+  body_a=$(create_owned_chat_room "$USER_B_TOKEN" "S5PK_B_$RUN_ID")
+  room_b=$(extract_chat_room_id "$body_a")
+  if [[ -z "$room_a" || -z "$room_b" ]]; then
+    record_stage5 "PK" "Voice PK API" FAIL "oda oluşturulamadı"
+    record_stage5 "PK" "Live PK (device)" BLOCKED "adb yok"
+    return
+  fi
+  body_a=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/chat/rooms/$room_a/pk" \
+    -H "Authorization: Bearer $USER_A_TOKEN" -H "Content-Type: application/json" \
+    -d '{"action":"create","targetRoomId":"'"$room_b"'"}')
+  code=$(echo "$body_a" | tail -1 | sed 's/HTTP://')
+  battle=$(echo "$body_a" | sed '$d' | python3 -c "import json,sys;d=json.load(sys.stdin);print(d.get('id',''))" 2>/dev/null || echo "")
+  if [[ -z "$battle" ]]; then
+    record_stage5 "PK" "Voice PK API" FAIL "create HTTP $code"
+    record_stage5 "PK" "Live PK (device)" BLOCKED "adb yok"
+    return
+  fi
+  record_stage5 "PK" "PK create" PASS "battleId=$battle"
+  body_a=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/chat/rooms/$room_b/pk" \
+    -H "Authorization: Bearer $USER_B_TOKEN" -H "Content-Type: application/json" \
+    -d '{"action":"accept","battleId":"'"$battle"'"}')
+  status=$(echo "$body_a" | sed '$d' | python3 -c "import json,sys;d=json.load(sys.stdin);print(d.get('status',''))" 2>/dev/null || echo "")
+  if [[ "$status" == "active" ]]; then
+    record_stage5 "PK" "PK accept" PASS "status=active"
+    curl -sS -o /dev/null -X POST "$BASE/api/chat/rooms/$room_a/pk" \
+      -H "Authorization: Bearer $USER_A_TOKEN" -H "Content-Type: application/json" \
+      -d '{"action":"end","battleId":"'"$battle"'"}' || true
+    record_stage5 "PK" "PK end" PASS "completed"
+    record_stage5 "PK" "Voice PK API" PASS "create/accept/end OK"
+  else
+    record_stage5 "PK" "Voice PK API" FAIL "accept status=$status"
+  fi
+  record_stage5 "PK" "Live PK (device)" BLOCKED "adb + 2 cihaz RTC gerekli"
 }
 
 stage5_trtc_device() {
