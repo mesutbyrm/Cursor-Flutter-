@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.145+179 (2026-08-10) — Stage 16 production parity
+
+- **PK routing:** Sesli oda PK ana backend (`canlifal.com`); games yalnızca `/api/pk/*`, `/api/live/pk/active`, `/api/live/guest/*`
+- **Socket.IO temizliği:** Ölü hediye/PK socket köprüleri kaldırıldı (SSE + REST birincil)
+- **404 cleanup:** `current-song`, `music-stream`, `live/pk/sweep`, `liveFalPending`, `fortuneTellerIncomingSessions` çağrıları kaldırıldı
+- **PK body:** Tek uç `POST /api/chat/rooms/{id}/pk` — `{ action, targetRoomId, duration, battleId }`
+- **401 refresh:** Yalnızca ana backend 401'inde token yenileme (games origin hariç)
+- **Müzik:** `youtube-stream` canonical; join-seat sırası düzeltildi
+- **Poll:** Canlı PK 8s, sesli oda davet 10s yedek
+
 ## 1.0.144+178 (2026-08-07) — Production master P0
 
 - **Aşama 6 hediye/jeton:** Backend `coinCost`/`spentAmount` toplam jeton parse; katalog enrich sıfır `totalCoin` doldurur; voice send yanıtı `newBalance`/`spentAmount`; `insufficient_jeton` hata eşlemesi; UI'da 0 jeton satırları gizlenir
