@@ -12,6 +12,9 @@ _normalize_base_url() {
 }
 
 BASE="$(_normalize_base_url "${CANLIFAL_BASE_URL:-${API_BASE_URL:-https://canlifal.com}}")"
+SCRIPT_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=defaults.sh
+source "$SCRIPT_LIB_DIR/defaults.sh"
 REPORT_DIR="${ACCEPTANCE_REPORT_DIR:-docs}"
 REPORT_JSON="${REPORT_DIR}/ACCEPTANCE_TEST_REPORT.json"
 REPORT_MD="${REPORT_DIR}/ACCEPTANCE_TEST_REPORT.md"
@@ -140,22 +143,46 @@ print(pick_id(data))
 " 2>/dev/null || true
 }
 
-# Oturum: önce kullanıcı adı, sonra e-posta.
+# Oturum: önce kullanıcı adı, sonra e-posta; secret hatalıysa dokümante varsayılanlara dön.
 bootstrap_user_token() {
-  local resp tok
+  local resp tok try_user try_email try_pass
   if [[ -n "${USER_TOKEN:-}" ]]; then
     return 0
   fi
-  if [[ -n "${ACCEPTANCE_USER_USERNAME:-}" && -n "${ACCEPTANCE_USER_PASSWORD:-}" ]]; then
-    resp=$(mobile_login_identifier username "$ACCEPTANCE_USER_USERNAME" "$ACCEPTANCE_USER_PASSWORD")
+  try_user="${USER_USERNAME:-${ACCEPTANCE_USER_USERNAME:-}}"
+  try_email="${USER_EMAIL:-${ACCEPTANCE_USER_EMAIL:-}}"
+  try_pass="${USER_PASSWORD:-${ACCEPTANCE_USER_PASSWORD:-}}"
+
+  if [[ -n "$try_user" && -n "$try_pass" ]]; then
+    resp=$(mobile_login_identifier username "$try_user" "$try_pass")
     tok=$(extract_token "$resp")
     if [[ -n "$tok" ]]; then
       USER_TOKEN="$tok"
       return 0
     fi
   fi
-  if acceptance_user_secrets_configured; then
-    resp=$(mobile_login_identifier email "$ACCEPTANCE_USER_EMAIL" "$ACCEPTANCE_USER_PASSWORD")
+  if [[ -n "$try_email" && -n "$try_pass" ]]; then
+    resp=$(mobile_login_identifier email "$try_email" "$try_pass")
+    tok=$(extract_token "$resp")
+    if [[ -n "$tok" ]]; then
+      USER_TOKEN="$tok"
+      return 0
+    fi
+  fi
+
+  if [[ -n "$try_pass" && ( -n "$try_email" || -n "$try_user" ) &&
+        ( "$try_email" != "$DEFAULT_ACCEPTANCE_USER_EMAIL" ||
+          "$try_pass" != "$DEFAULT_ACCEPTANCE_USER_PASSWORD" ||
+          ( -n "$try_user" && "$try_user" != "$DEFAULT_ACCEPTANCE_USER_USERNAME" ) ) ]]; then
+    echo "⚠️  Secret kimlik bilgileri başarısız — dokümante test hesabına dönülüyor" >&2
+    USER_EMAIL="$DEFAULT_ACCEPTANCE_USER_EMAIL"
+    USER_USERNAME="$DEFAULT_ACCEPTANCE_USER_USERNAME"
+    USER_PASSWORD="$DEFAULT_ACCEPTANCE_USER_PASSWORD"
+    HOST_EMAIL="$DEFAULT_ACCEPTANCE_HOST_EMAIL"
+    HOST_PASSWORD="$DEFAULT_ACCEPTANCE_HOST_PASSWORD"
+    VIEWER_EMAIL="$DEFAULT_ACCEPTANCE_USER_EMAIL"
+    VIEWER_PASSWORD="$DEFAULT_ACCEPTANCE_USER_PASSWORD"
+    resp=$(mobile_login_identifier email "$USER_EMAIL" "$USER_PASSWORD")
     tok=$(extract_token "$resp")
     if [[ -n "$tok" ]]; then
       USER_TOKEN="$tok"
@@ -171,6 +198,9 @@ bootstrap_host_token() {
     return 0
   fi
   if [[ -z "${HOST_EMAIL:-}" || -z "${HOST_PASSWORD:-}" ]]; then
+  apply_acceptance_credential_defaults
+  fi
+  if [[ -z "${HOST_EMAIL:-}" || -z "${HOST_PASSWORD:-}" ]]; then
     return 1
   fi
   resp=$(mobile_login_identifier email "$HOST_EMAIL" "$HOST_PASSWORD")
@@ -179,8 +209,20 @@ bootstrap_host_token() {
     HOST_TOKEN="$tok"
     return 0
   fi
-  if [[ -n "${ACCEPTANCE_USER_USERNAME:-}" ]]; then
-    resp=$(mobile_login_identifier username "$ACCEPTANCE_USER_USERNAME" "$HOST_PASSWORD")
+  if [[ -n "${USER_USERNAME:-}" ]]; then
+    resp=$(mobile_login_identifier username "$USER_USERNAME" "$HOST_PASSWORD")
+    tok=$(extract_token "$resp")
+    if [[ -n "$tok" ]]; then
+      HOST_TOKEN="$tok"
+      return 0
+    fi
+  fi
+  if [[ "$HOST_EMAIL" != "$DEFAULT_ACCEPTANCE_HOST_EMAIL" ||
+        "$HOST_PASSWORD" != "$DEFAULT_ACCEPTANCE_HOST_PASSWORD" ]]; then
+    echo "⚠️  Host secret başarısız — dokümante host hesabına dönülüyor" >&2
+    HOST_EMAIL="$DEFAULT_ACCEPTANCE_HOST_EMAIL"
+    HOST_PASSWORD="$DEFAULT_ACCEPTANCE_HOST_PASSWORD"
+    resp=$(mobile_login_identifier email "$HOST_EMAIL" "$HOST_PASSWORD")
     tok=$(extract_token "$resp")
     if [[ -n "$tok" ]]; then
       HOST_TOKEN="$tok"

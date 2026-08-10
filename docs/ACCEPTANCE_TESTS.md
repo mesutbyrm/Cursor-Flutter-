@@ -37,17 +37,26 @@ Raporlar:
 | 8 | Kullanıcı adı ile giriş (`emailOrUsername`) | API |
 | 9 | Release build başarılı (`flutter build apk --release`) | CI |
 
-## GitHub Secrets (madde 3–8 için zorunlu)
+## GitHub Secrets (madde 3–8)
 
-Repository → **Settings → Secrets and variables → Actions**:
+Repository → **Settings → Secrets and variables → Actions**.
 
-| Secret | Açıklama |
-|--------|----------|
-| `ACCEPTANCE_USER_EMAIL` | Test kullanıcı e-postası |
-| `ACCEPTANCE_USER_USERNAME` | Aynı kullanıcının kullanıcı adı |
-| `ACCEPTANCE_USER_PASSWORD` | Şifre |
-| `ACCEPTANCE_ADMIN_EMAIL` | Admin hesabı |
-| `ACCEPTANCE_ADMIN_PASSWORD` | Admin şifresi |
+**Hızlı kurulum** (repo admin, yerel `gh` oturumu):
+
+```bash
+bash scripts/set-acceptance-secrets.sh
+bash scripts/acceptance-preflight.sh   # doğrulama
+```
+
+| Secret | Açıklama | Varsayılan (secret yoksa) |
+|--------|----------|---------------------------|
+| `ACCEPTANCE_USER_EMAIL` | Test kullanıcı e-postası | `cursor.test.1786235468@mailinator.com` |
+| `ACCEPTANCE_USER_USERNAME` | Kullanıcı adı | `cursorusr1786235468` |
+| `ACCEPTANCE_USER_PASSWORD` | Şifre | `CursorTest!1786235468` |
+| `ACCEPTANCE_HOST_EMAIL` | Canlı yayın host | `cursor.host.1786235468@mailinator.com` |
+| `ACCEPTANCE_HOST_PASSWORD` | Host şifresi | `CursorTest!1786235468` |
+| `ACCEPTANCE_ADMIN_EMAIL` | Admin hesabı | — |
+| `ACCEPTANCE_ADMIN_PASSWORD` | Admin şifresi | — |
 
 İsteğe bağlı (varsayılan: `ACCEPTANCE_USER_*`):
 
@@ -71,7 +80,9 @@ Genişletilmiş kontrol listesi için `scripts/run-acceptance-tests.sh` kullanı
 ## Notlar
 
 - Testler üretim API (`https://canlifal.com`) üzerinde çalışır
-- **Secret yoksa** API testleri `SKIP` olur; `flutter analyze` + `flutter test` geçtiyse APK oluşturulur
-- Secret varken API testi başarısızsa APK **engellenir**
+- **Secret yoksa** release gate dokümante test hesaplarını kullanır (`scripts/acceptance-tests/defaults.sh`)
+- **Secret hatalıysa** otomatik olarak aynı dokümante hesaplara düşülür (uyarı loglanır)
+- Admin/teller secret yoksa ilgili maddeler `SKIP` olur
+- Secret varken ve API testi başarısızsa APK **engellenir**
 - Canlı yayın testi geçici stream oluşturur ve işlem sonunda siler
 - Jeton testi gerçek ödeme yapmaz; `POST /api/payment/requests` + admin listesi doğrulanır
