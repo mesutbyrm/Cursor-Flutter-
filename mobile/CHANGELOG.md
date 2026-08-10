@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.148+182 (2026-08-10) — Debug derleme + CI
+
+- **Gradle:** Release keystore kontrolü yalnızca `assembleRelease` / `bundleRelease` sırasında — debug ve CodeQL tekrar çalışır
+- **CI:** `build-debug-apk.yml` — keystore olmadan `apk-debug-latest` debug APK yayınlar
+
 ## 1.0.147+181 (2026-08-10) — Sesli oda müzik oynatma
 
 - **SSE oynatma kapısı:** Ses modunda `RoomSongBloc` parça tutarken just_audio yeniden başlatılmıyordu — düzeltildi

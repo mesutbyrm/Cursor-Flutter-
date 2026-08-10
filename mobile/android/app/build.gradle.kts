@@ -118,17 +118,9 @@ android {
 
     buildTypes {
         release {
-            if (!hasReleaseKeystore) {
-                throw GradleException(
-                    "Release build requires Play upload keystore. " +
-                        "Provide android/key.properties + app/release.keystore locally, " +
-                        "or set ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, " +
-                        "ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD. " +
-                        "See android/key.properties.example. " +
-                        "Debug signing is not allowed for release builds.",
-                )
+            if (hasReleaseKeystore) {
+                signingConfig = signingConfigs.getByName("release")
             }
-            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             isDebuggable = false
@@ -139,6 +131,32 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+        }
+    }
+}
+
+val releaseKeystoreErrorMessage =
+    "Release build requires Play upload keystore. " +
+        "Provide android/key.properties + app/release.keystore locally, " +
+        "or set ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, " +
+        "ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD. " +
+        "See android/key.properties.example. " +
+        "Debug signing is not allowed for release builds."
+
+// Yapılandırma aşamasında değil — yalnızca release görevi çalışırken kontrol et
+// (assembleDebug / CodeQL debug derlemesi keystore olmadan devam edebilir).
+afterEvaluate {
+    tasks.matching {
+        val n = it.name
+        n.contains("Release", ignoreCase = true) &&
+            (n.contains("assemble", ignoreCase = true) ||
+                n.contains("bundle", ignoreCase = true) ||
+                n.contains("package", ignoreCase = true))
+    }.configureEach {
+        doFirst {
+            if (!hasReleaseKeystore) {
+                throw GradleException(releaseKeystoreErrorMessage)
+            }
         }
     }
 }
