@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-08-10 03:53 UTC
+Oluşturulma: 2026-08-10 05:14 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -10,7 +10,7 @@ Base: `main`
 | Metrik | Adet |
 |--------|------|
 | Kapatılan PR | 0 |
-| Silinen remote dal | 5 |
+| Silinen remote dal | 0 |
 | Kalan açık PR | 2 |
 | Korunan / aktif dal | 0 |
 
@@ -24,11 +24,7 @@ Base: `main`
 
 | Dal | Neden |
 |-----|-------|
-| cursor/stage10-production-handoff-0cde | merged into main |
-| cursor/stage11-access-recovery-0cde | merged into main |
-| cursor/stage11-final-access-recovery-0cde | merged into main |
-| cursor/stage16-flutter-fixes-0cde | merged into main |
-| cursor/stage9-production-handoff-0cde | merged into main |
+| — | — |
 
 ## Kalan açık PR'lar
 
