@@ -2,19 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Başlangıç | 2026-08-09 10:50:41 UTC |
-| Bitiş | 2026-08-09 10:51:41 UTC |
+| Başlangıç | 2026-08-10 13:45:43 UTC |
+| Bitiş | 2026-08-10 13:46:46 UTC |
 | API | https://canlifal.com |
 | Oda | cmokyb9o9007iod09gi6pb1tb |
 | Döngü | 20 |
-| Başarılı | 20 |
-| Başarısız | 0 |
+| Başarılı döngü | 20 |
+| Başarısız döngü | 0 |
+| Header probe (TEST 20) | FAIL |
+| SSE acceptance | **19/20** |
 | Toplam byte | 10240 |
-| Sonuç | **PASS** |
+| Sonuç | **FAIL** |
 
 ## Kontrol listesi
 
 - Her döngüde ayrı curl süreci (CONNECT → READ → EXIT = DISCONNECT)
+- TEST 20: `X-Accel-Buffering: no` + Content-Type + Cache-Control (production response)
 - Ardışık 3+ HTTP hata → FAIL
 - Başarı oranı <%50 → FAIL
 - Flutter SseClient unit 20-cycle: mobile/test/sse_20_cycle_test.dart

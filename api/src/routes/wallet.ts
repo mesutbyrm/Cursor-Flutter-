@@ -727,10 +727,8 @@ walletRouter.get(
   requireAuth,
   requireStaff,
   async (req, res) => {
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-    res.flushHeaders?.();
+    const { applySseResponseHeaders } = await import("../lib/sseResponseHeaders.js");
+    applySseResponseHeaders(res);
 
     let lastCount = -1;
     let closed = false;

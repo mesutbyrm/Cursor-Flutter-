@@ -758,10 +758,8 @@ chatRoomsRouter.get("/rooms/:roomId/stream", optionalAuth, async (req, res) => {
     return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
   }
 
-  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
-  res.setHeader("Cache-Control", "no-cache, no-transform");
-  res.setHeader("Connection", "keep-alive");
-  res.flushHeaders?.();
+  const { applySseResponseHeaders } = await import("../lib/sseResponseHeaders.js");
+  applySseResponseHeaders(res);
 
   const send = (payload: Record<string, unknown>) => {
     res.write(`data: ${JSON.stringify(payload)}\n\n`);

@@ -46,7 +46,38 @@ STREAM_URL="$BASE/api/chat/rooms/$ROOM_ID/stream"
 success=0
 fail=0
 bytes_total=0
+header_pass=0
+header_fail=0
 ts_start=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+# TEST 20 — production SSE response headers (canonical anti-buffering)
+header_tmp=$(mktemp)
+curl -sS -D "$header_tmp" -o /dev/null -m 5 \
+  -H "Authorization: Bearer $USER_TOKEN" \
+  -H "Accept: text/event-stream" \
+  "$STREAM_URL" 2>/dev/null || true
+hdr_ct=$(grep -i '^content-type:' "$header_tmp" | tail -1 | tr -d '\r' || true)
+hdr_cc=$(grep -i '^cache-control:' "$header_tmp" | tail -1 | tr -d '\r' || true)
+hdr_accel=$(grep -i '^x-accel-buffering:' "$header_tmp" | tail -1 | tr -d '\r' || true)
+hdr_conn=$(grep -i '^connection:' "$header_tmp" | tail -1 | tr -d '\r' || true)
+rm -f "$header_tmp"
+
+header_ok=1
+[[ "$hdr_ct" =~ [Ee][Vv][Ee][Nn][Tt]-[Ss][Tt][Rr][Ee][Aa][Mm] ]] || header_ok=0
+[[ "$hdr_cc" =~ [Nn][Oo]-[Cc][Aa][Cc][Hh][Ee] ]] || header_ok=0
+[[ "$hdr_accel" =~ ^[Xx]-[Aa]ccel-[Bb]uffering:\ *[Nn][Oo] ]] || header_ok=0
+
+if [[ "$header_ok" -eq 1 ]]; then
+  header_pass=1
+  echo "  header probe: OK (Content-Type, Cache-Control, X-Accel-Buffering)"
+else
+  header_fail=1
+  echo "  header probe: FAIL"
+  echo "    Content-Type: ${hdr_ct:-MISSING}"
+  echo "    Cache-Control: ${hdr_cc:-MISSING}"
+  echo "    X-Accel-Buffering: ${hdr_accel:-MISSING (Cloudflare/CDN strip or backend omit)}"
+  echo "    Connection: ${hdr_conn:-(HTTP/2 may omit)}"
+fi
 
 for ((i=1; i<=CYCLES; i++)); do
   tmp=$(mktemp)
@@ -79,11 +110,21 @@ done
 
 ts_end=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
 result="PASS"
-if [[ "$fail" -gt 3 ]]; then
+if [[ "$header_fail" -gt 0 ]]; then
+  result="FAIL"
+elif [[ "$fail" -gt 3 ]]; then
   result="FAIL"
 elif [[ "$success" -lt $((CYCLES / 2)) ]]; then
   result="FAIL"
 fi
+
+if [[ "$success" -ge 19 ]]; then
+  sse_acceptance_pass=19
+else
+  sse_acceptance_pass=$success
+fi
+sse_acceptance_pass=$(( sse_acceptance_pass + header_pass ))
+sse_acceptance_total=20
 
 mkdir -p "$REPORT_DIR"
 {
@@ -96,14 +137,17 @@ mkdir -p "$REPORT_DIR"
   echo "| API | $BASE |"
   echo "| Oda | $ROOM_ID |"
   echo "| Döngü | $CYCLES |"
-  echo "| Başarılı | $success |"
-  echo "| Başarısız | $fail |"
+  echo "| Başarılı döngü | $success |"
+  echo "| Başarısız döngü | $fail |"
+  echo "| Header probe (TEST 20) | $([ "$header_pass" -eq 1 ] && echo PASS || echo FAIL) |"
+  echo "| SSE acceptance | **${sse_acceptance_pass}/${sse_acceptance_total}** |"
   echo "| Toplam byte | $bytes_total |"
   echo "| Sonuç | **$result** |"
   echo ""
   echo "## Kontrol listesi"
   echo ""
   echo "- Her döngüde ayrı curl süreci (CONNECT → READ → EXIT = DISCONNECT)"
+  echo "- TEST 20: \`X-Accel-Buffering: no\` + Content-Type + Cache-Control (production response)"
   echo "- Ardışık 3+ HTTP hata → FAIL"
   echo "- Başarı oranı <%50 → FAIL"
   echo "- Flutter SseClient unit 20-cycle: mobile/test/sse_20_cycle_test.dart"
@@ -115,7 +159,7 @@ mkdir -p "$REPORT_DIR"
 } >"$REPORT_MD"
 
 echo ""
-echo "=== SSE 20-cycle: $result ($success/$CYCLES OK, $fail fail) ==="
+echo "=== SSE acceptance: $result (${sse_acceptance_pass}/${sse_acceptance_total}, cycles $success/$CYCLES, header $([ "$header_pass" -eq 1 ] && echo OK || echo FAIL)) ==="
 echo "Rapor: $REPORT_MD"
 
 if [[ "$result" == "FAIL" ]]; then
