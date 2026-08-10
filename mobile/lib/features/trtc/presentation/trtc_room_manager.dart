@@ -62,6 +62,10 @@ class TrtcRoomManager {
   bool get cameraOn => _cameraOn;
 
   void _trtcLog(String event, [Map<String, Object?> fields = const {}]) {
+    _logTrtc(event, fields);
+  }
+
+  static void _logTrtc(String event, [Map<String, Object?> fields = const {}]) {
     if (!kDebugMode) return;
     final safe = Map<String, Object?>.from(fields)
       ..remove('userSig')
@@ -91,12 +95,10 @@ class TrtcRoomManager {
       }
       return true;
     } on MissingPluginException {
-      debugPrint(
-        'permission_handler kayıtlı değil — uygulamayı tamamen kapatıp yeniden kurun.',
-      );
+      _logTrtc('permission_plugin_missing');
       return false;
     } catch (e) {
-      debugPrint('İzin hatası: $e');
+      _logTrtc('permission_error', {'error': e.runtimeType.toString()});
       return false;
     }
   }
@@ -177,8 +179,10 @@ class TrtcRoomManager {
       _cloud!.unRegisterListener(_listener!);
     }
     _listener = TRTCCloudListener(
-      onError: (code, msg) => debugPrint('TRTC error $code: $msg'),
-      onWarning: (code, msg) => debugPrint('TRTC warning $code: $msg'),
+      onError: (code, msg) =>
+          _trtcLog('error', {'code': code, 'message': msg}),
+      onWarning: (code, msg) =>
+          _trtcLog('warning', {'code': code, 'message': msg}),
       onEnterRoom: (result) {
         _inRoom = result > 0;
         VoiceRoomDebugLog.log('audio.trtc.enter_room', {
@@ -187,7 +191,11 @@ class TrtcRoomManager {
           'host': _isHost,
           'audioOnly': audioOnly,
         });
-        debugPrint('TRTC enterRoom: $result room=$roomId host=$_isHost');
+        _trtcLog('enter_room', {
+          'result': result,
+          'roomId': roomId,
+          'host': _isHost,
+        });
         if (result > 0) {
           _trtcLog('join_success', {'roomId': roomId, 'result': result});
         }
@@ -195,7 +203,7 @@ class TrtcRoomManager {
         if (c != null && !c.isCompleted) c.complete(result);
       },
       onRemoteUserEnterRoom: (userId) {
-        debugPrint('TRTC remote enter: $userId');
+        _trtcLog('remote_enter', {'userId': userId});
         if (userId == _localUserId) return;
         _trtcLog('remote_user_joined', {'userId': userId});
         _trackRemoteUser(userId, joined: true);
@@ -205,27 +213,27 @@ class TrtcRoomManager {
         }
       },
       onRemoteUserLeaveRoom: (userId, _) {
-        debugPrint('TRTC remote leave: $userId');
+        _trtcLog('remote_leave', {'userId': userId});
         _trackRemoteUser(userId, joined: false);
         if (remoteAnchorUserId == userId) {
           _clearRemoteAnchor();
         }
       },
       onExitRoom: (reason) {
-        debugPrint('TRTC exitRoom: $reason');
+        _trtcLog('exit_room', {'reason': reason});
         _inRoom = false;
         final c = _exitRoomCompleter;
         if (c != null && !c.isCompleted) c.complete();
       },
       onConnectionLost: () {
-        debugPrint('TRTC connection lost');
+        _trtcLog('connection_lost');
         onConnectionLost?.call();
       },
       onNetworkQuality: (local, remote) {
         networkQuality.value = local.quality.index;
       },
       onUserVideoAvailable: (userId, available) {
-        debugPrint('TRTC video $userId available=$available');
+        _trtcLog('user_video', {'userId': userId, 'available': available});
         if (userId == _localUserId) return;
         _trtcLog('remote_video', {'userId': userId, 'available': available});
         _setRemoteVideoState(userId, available);
@@ -240,7 +248,7 @@ class TrtcRoomManager {
         }
       },
       onUserAudioAvailable: (userId, available) {
-        debugPrint('TRTC audio $userId available=$available');
+        _trtcLog('user_audio', {'userId': userId, 'available': available});
         if (userId == _localUserId) return;
         _trtcLog('remote_audio', {'userId': userId, 'available': available});
         _setRemoteAudioState(userId, available);
@@ -560,7 +568,9 @@ class TrtcRoomManager {
     try {
       TRTCCloud.destroySharedInstance();
     } catch (e) {
-      debugPrint('TRTC destroy: $e');
+      if (kDebugMode) {
+        debugPrint('TRTC destroy: $e');
+      }
     }
   }
 }
