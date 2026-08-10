@@ -2,6 +2,7 @@
 
 ## 1.0.145+179 (2026-08-10) — Stage 16 production parity
 
+- **CI release gate:** Hatalı GitHub Secrets durumunda dokümante test hesaplarına otomatik geri dönüş; `acceptance-preflight.sh` + `set-acceptance-secrets.sh`
 - **PK routing:** Sesli oda PK ana backend (`canlifal.com`); games yalnızca `/api/pk/*`, `/api/live/pk/active`, `/api/live/guest/*`
 - **Socket.IO temizliği:** Ölü hediye/PK socket köprüleri kaldırıldı (SSE + REST birincil)
 - **404 cleanup:** `current-song`, `music-stream`, `live/pk/sweep`, `liveFalPending`, `fortuneTellerIncomingSessions` çağrıları kaldırıldı

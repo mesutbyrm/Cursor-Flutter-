@@ -34,6 +34,8 @@ for _var in USER_EMAIL USER_USERNAME USER_PASSWORD HOST_EMAIL HOST_PASSWORD \
   fi
 done
 
+apply_acceptance_credential_defaults
+
 USER_TOKEN=""
 HOST_TOKEN=""
 VIEWER_TOKEN=""
@@ -62,32 +64,38 @@ bootstrap_user_token || true
 
 # --- 8. Kullanıcı adı ile giriş ---
 gate_08_username_login() {
-  if ! require_secret USER_PASSWORD 8 "Kullanıcı adı ile giriş"; then
+  if [[ -z "${USER_PASSWORD:-}" ]]; then
+    record 8 "Kullanıcı adı ile giriş" SKIP "şifre yok"
     return 0
   fi
   local try_username="$USER_USERNAME" resp tok err me
-  if [[ -z "$try_username" ]]; then
-    bootstrap_user_token || true
-    if [[ -n "${USER_TOKEN:-}" ]]; then
-      me=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $USER_TOKEN")
-      try_username=$(printf '%s' "$me" | json_field "['username']")
-      [[ -z "$try_username" ]] && try_username=$(printf '%s' "$me" | json_field "['user']['username']")
-    fi
-  fi
-  if [[ -z "$try_username" ]]; then
-    record 8 "Kullanıcı adı ile giriş" SKIP "ACCEPTANCE_USER_USERNAME yok"
-    return 0
-  fi
   resp=$(mobile_login_identifier username "$try_username" "$USER_PASSWORD")
   tok=$(extract_token "$resp")
   if [[ -n "$tok" ]]; then
     USER_TOKEN="$tok"
     record 8 "Kullanıcı adı ile giriş" PASS "token alındı (@$try_username)"
-  else
-    err=$(login_error_detail "$resp")
-    bootstrap_user_token || true
-    record 8 "Kullanıcı adı ile giriş" FAIL "token yok ($err)"
+    return 0
   fi
+
+  bootstrap_user_token || true
+  if [[ -n "${USER_TOKEN:-}" ]]; then
+    me=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $USER_TOKEN")
+    try_username=$(printf '%s' "$me" | json_field "['username']")
+    [[ -z "$try_username" ]] && try_username=$(printf '%s' "$me" | json_field "['user']['username']")
+    if [[ -n "$try_username" ]]; then
+      resp=$(mobile_login_identifier username "$try_username" "$USER_PASSWORD")
+      tok=$(extract_token "$resp")
+      if [[ -n "$tok" ]]; then
+        USER_TOKEN="$tok"
+        USER_USERNAME="$try_username"
+        record 8 "Kullanıcı adı ile giriş" PASS "token alındı (@$try_username)"
+        return 0
+      fi
+    fi
+  fi
+
+  err=$(login_error_detail "$resp")
+  record 8 "Kullanıcı adı ile giriş" FAIL "token yok ($err)"
 }
 
 # --- 7. Profil ekranı < 2 sn (/api/me gecikmesi) ---
