@@ -45,8 +45,6 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
               state = state.copyWith(sseConnected: true, clearError: true);
             }
             ref.read(voiceRoomGiftRealtimeProvider).setSseActive(true);
-            ref.read(voiceRoomGiftSocketProvider).disconnect();
-            _sse._giftSocketStarted = false;
             if (!state.selfInRoom || !_sse._presenceJoined) {
               unawaited(_sse._joinPresence());
             }

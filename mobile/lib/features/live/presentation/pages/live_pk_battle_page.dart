@@ -78,18 +78,6 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     } else {
       await remote.loadStreamBattle(streamId);
     }
-    remote.connectSocket(streamId: streamId, battleId: ref.read(pkBattleRemoteProvider)?.id);
-
-    ref.read(liveGiftSocketBridgeProvider).connect(
-      streamId: streamId,
-      onEvent: _onGift,
-      onPkBattle: (battle) {
-        final parsed = PkBattleRemote.fromJson(battle);
-        if (parsed.id.isEmpty) return;
-        ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(parsed);
-        ref.read(pkBattleProvider.notifier).applyRemoteBattle(parsed);
-      },
-    );
 
     ref.read(liveGiftControllerProvider).attach(
       streamId: streamId,
@@ -109,7 +97,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
 
   void _pollPk() {
     _pkPollTimer?.cancel();
-    _pkPollTimer = Timer.periodic(const Duration(seconds: 3), (t) async {
+    _pkPollTimer = Timer.periodic(const Duration(seconds: 8), (t) async {
       if (!mounted) {
         t.cancel();
         return;
@@ -133,8 +121,6 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   void dispose() {
     _pkPollTimer?.cancel();
     ref.read(liveGiftControllerProvider).detach();
-    ref.read(liveGiftSocketBridgeProvider).disconnect();
-    ref.read(pkBattleRemoteProvider.notifier).disconnectSocket();
     _trtc.dispose();
     super.dispose();
   }

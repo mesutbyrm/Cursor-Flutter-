@@ -573,8 +573,6 @@ class LivePsychicsRemoteDataSource {
     for (final path in [
       ApiEndpoints.fortuneTellerSessionsWithStatus('pending'),
       ApiEndpoints.fortuneTellerSessions,
-      ApiEndpoints.liveFalPending,
-      ApiEndpoints.fortuneTellerIncomingSessions,
     ]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);

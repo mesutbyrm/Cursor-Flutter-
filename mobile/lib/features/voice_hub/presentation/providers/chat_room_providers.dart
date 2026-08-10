@@ -23,7 +23,6 @@ import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import '../../data/services/voice_room_music_pipeline_log.dart';
 import '../../data/services/chat_room_sse_service.dart';
-import '../../data/services/voice_room_gift_socket.dart';
 import '../../data/services/voice_seat_rest_service.dart';
 import 'voice_gift_providers.dart';
 import 'voice_room_audio_providers.dart';
@@ -382,7 +381,6 @@ class VoiceRoomLiveController
   var _voiceJoined = false;
   var _typingActive = false;
   var _sseStarted = false;
-  var _giftSocketStarted = false;
   var _sessionActive = false;
   var _entryBegun = false;
   var _leaveInFlight = false;
@@ -549,7 +547,6 @@ class VoiceRoomLiveController
         unawaited(_leavePresenceWithSeatClear());
         unawaited(_stopTyping());
         ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
-        ref.read(voiceRoomGiftSocketProvider).disconnect();
         ref.read(voiceRoomGiftRealtimeProvider).stop();
         ref.read(pkBattleRemoteProvider.notifier).clear();
       }
@@ -745,7 +742,6 @@ class VoiceRoomLiveController
     _removeSelfFromPresenceOptimistic();
     _knownPresenceIds.clear();
     _sseStarted = false;
-    _giftSocketStarted = false;
     _presenceJoined = false;
     _voiceJoined = false;
     state = state.copyWith(
@@ -762,12 +758,10 @@ class VoiceRoomLiveController
 
     // SSE, hediye, PK — anında kes.
     ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
-    ref.read(voiceRoomGiftSocketProvider).disconnect();
     ref.read(voiceRoomGiftRealtimeProvider).stop();
     ref.read(voiceRoomGiftRealtimeProvider).setSseActive(false);
     ref.read(voiceRoomGiftRealtimeProvider).resetDedupeState();
     ref.read(pkBattleRemoteProvider.notifier).clear();
-    ref.read(pkBattleRemoteProvider.notifier).disconnectSocket();
     ref.read(voiceRoomDiagnosticProvider.notifier).resetForRoom(_roomKey);
     unawaited(_stopTyping());
 
@@ -1203,8 +1197,8 @@ class VoiceRoomLiveController
 
   /// Sunucu presence snapshot diff — koltuk / konuşma / rol (`roomUsers` vb.).
   void applyPresenceSnapshot(
-    List<ChatPresenceRow> previous,
-    List<ChatPresenceRow> current,
+    List<ChatRoomPresence> previous,
+    List<ChatRoomPresence> current,
   ) {
     final prevById = {for (final p in previous) p.id: p};
     for (final row in current) {

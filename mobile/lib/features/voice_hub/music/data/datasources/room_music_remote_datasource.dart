@@ -55,25 +55,19 @@ class RoomMusicRemoteDataSource {
     required String videoId,
   }) async {
     String? raw;
-    VoiceRoomMusicPipelineLog.apiResponse(
-      endpoint: ApiEndpoints.chatRoomMusicStream(roomId),
-      method: 'POST',
-      caller: 'resolveStreamUrl',
-      videoId: videoId,
-    );
     try {
-      final res = await _dio.post<dynamic>(
-        ApiEndpoints.chatRoomMusicStream(roomId),
-        data: {'videoId': videoId},
+      final res = await _dio.get<dynamic>(
+        ApiEndpoints.chatYoutubeStream,
+        queryParameters: {'videoId': videoId},
       );
       final data = res.data;
       if (data is Map) {
         raw = data['streamUrl']?.toString() ?? data['url']?.toString();
       }
       VoiceRoomMusicPipelineLog.apiResponse(
-        endpoint: ApiEndpoints.chatRoomMusicStream(roomId),
-        method: 'POST',
-        caller: 'resolveStreamUrl.ok',
+        endpoint: ApiEndpoints.chatYoutubeStream,
+        method: 'GET',
+        caller: 'resolveStreamUrl',
         statusCode: res.statusCode,
         musicUrl: raw,
         videoId: videoId,
@@ -82,36 +76,9 @@ class RoomMusicRemoteDataSource {
       VoiceRoomMusicPipelineLog.justAudioError(
         e,
         st,
-        phase: 'resolveStreamUrl.music-stream',
+        phase: 'resolveStreamUrl.youtube-stream',
         url: videoId,
       );
-    }
-    if (raw == null || !raw.startsWith('http')) {
-      try {
-        final res = await _dio.get<dynamic>(
-          ApiEndpoints.chatYoutubeStream,
-          queryParameters: {'videoId': videoId},
-        );
-        final data = res.data;
-        if (data is Map) {
-          raw = data['streamUrl']?.toString() ?? data['url']?.toString();
-        }
-        VoiceRoomMusicPipelineLog.apiResponse(
-          endpoint: ApiEndpoints.chatYoutubeStream,
-          method: 'GET',
-          caller: 'resolveStreamUrl.fallback',
-          statusCode: res.statusCode,
-          musicUrl: raw,
-          videoId: videoId,
-        );
-      } catch (e, st) {
-        VoiceRoomMusicPipelineLog.justAudioError(
-          e,
-          st,
-          phase: 'resolveStreamUrl.youtube-stream',
-          url: videoId,
-        );
-      }
     }
     if (raw == null || !raw.startsWith('http')) {
       VoiceRoomMusicPipelineLog.nullMusicUrl(

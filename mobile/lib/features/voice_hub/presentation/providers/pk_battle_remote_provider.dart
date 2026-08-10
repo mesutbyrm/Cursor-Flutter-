@@ -2,11 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/pk_event_log.dart';
-import '../../../../core/network/token_storage.dart';
 import '../../../live/domain/pk/pk_session_phase.dart';
 import '../../../live/presentation/providers/pk_session_phase_provider.dart';
 import '../../data/datasources/pk_battle_remote_datasource.dart';
-import '../../data/services/pk_battle_socket_service.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_duration_options.dart';
 import 'pk_battle_provider.dart';
@@ -15,19 +13,12 @@ final pkBattleRemoteDataSourceProvider = Provider<PkBattleRemoteDataSource>((ref
   return PkBattleRemoteDataSource(ref.watch(dioProvider));
 });
 
-/// Sunucu PK senkronu — REST + Socket.IO yedek; odadayken SSE birincil.
+/// Sunucu PK senkronu — REST + SSE; odadayken SSE birincil.
 class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   PkBattleRemoteDataSource get _api => ref.read(pkBattleRemoteDataSourceProvider);
 
-  PkBattleSocketService? _socket;
-  PkBattleSocketService? _ownedRoomsSocket;
-
   @override
   PkBattleRemote? build() {
-    ref.onDispose(() {
-      disconnectSocket();
-      disconnectOwnedRoomsSocket();
-    });
     return null;
   }
 
@@ -213,59 +204,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     return battle;
   }
 
-  /// Sahip olunan odalar için global PK socket — polling yerine anlık davet.
-  void connectOwnedRooms(List<String> roomKeys) {
-    final keys = roomKeys
-        .map((k) => k.trim())
-        .where((k) => k.isNotEmpty)
-        .toSet()
-        .toList(growable: false);
-    if (keys.isEmpty) return;
-
-    _ownedRoomsSocket ??= PkBattleSocketService();
-    final storage = ref.read(tokenStorageProvider);
-    _ownedRoomsSocket!.connect(
-      roomKeys: keys,
-      onUpdate: (battle, event) => _apply(battle, event),
-      accessToken: storage.readAccess,
-    );
-  }
-
-  void disconnectOwnedRoomsSocket() {
-    _ownedRoomsSocket?.disconnect();
-    _ownedRoomsSocket = null;
-  }
-
-  /// Socket.IO PK kanalı — web ile aynı olaylar; SSE yedek / oda dışı skor.
-  void connectSocket({
-    String? roomId,
-    String? alternateRoomId,
-    String? streamId,
-    String? battleId,
-  }) {
-    final hasRoom = roomId != null && roomId.trim().isNotEmpty;
-    final hasStream = streamId != null && streamId.trim().isNotEmpty;
-    if (!hasRoom && !hasStream) return;
-
-    _socket ??= PkBattleSocketService();
-    final storage = ref.read(tokenStorageProvider);
-    _socket!.connect(
-      roomId: roomId,
-      alternateRoomId: alternateRoomId,
-      streamId: streamId,
-      battleId: battleId,
-      onUpdate: (battle, event) => _apply(battle, event),
-      accessToken: storage.readAccess,
-    );
-  }
-
-  /// Socket.IO bağlantısını kapat.
-  void disconnectSocket() {
-    _socket?.disconnect();
-    _socket = null;
-  }
-
-  /// Oda SSE üzerinden gelen PK güncellemesi — socket bağlantısı gerekmez.
+  /// Oda SSE üzerinden gelen PK güncellemesi.
   void ingestSseBattle(PkBattleRemote battle) {
     _apply(battle, 'sse:pk');
   }
