@@ -170,9 +170,15 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
           sync: sync,
           videoId: eventVideoId,
         );
-    final songIdle =
-        key.isEmpty || !ref.read(roomSongBlocProvider(key)).state.hasTrack;
-    if (sig != _live._lastDjPlaybackSignature || (wantsPlay && songIdle)) {
+    final isVideoRequest = dj.nowPlaying?.isVideoRequest == true;
+    final playerActive = ref.read(voiceRoomDjPlayerProvider).playback.value.playing;
+    final videoActive = key.isNotEmpty &&
+        ref.read(roomVideoControllerProvider(key)).hasActiveVideo;
+    // RoomSongBloc her modda parça tutar; yalnızca video iframe aktifken
+    // just_audio yolunu atla. Ses modunda oynatıcı durmuşsa SSE tekrarında yeniden dene.
+    final needsLocalPlayback = wantsPlay &&
+        (isVideoRequest ? !videoActive : !playerActive);
+    if (sig != _live._lastDjPlaybackSignature || needsLocalPlayback) {
       unawaited(_live._playDjInBackground(dj, sync: sync));
       return;
     }

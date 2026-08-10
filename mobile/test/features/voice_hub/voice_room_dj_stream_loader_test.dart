@@ -19,15 +19,26 @@ void main() {
       }
     });
 
-    test('buildPlaybackTargets prefers direct CDN on Android', () async {
+    test('buildPlaybackTargets prefers backend proxy on Android', () async {
       final loader = VoiceRoomDjStreamLoader(Dio());
       final targets = await loader.buildPlaybackTargets(cdn);
       expect(targets, isNotEmpty);
       if (Platform.isAndroid) {
-        expect(targets.first, cdn);
-        expect(targets, contains('/api/chat/youtube-audio'));
+        expect(targets.first, contains('/api/chat/youtube-audio'));
+        expect(targets, contains(cdn));
       } else {
         expect(targets.first, cdn);
+      }
+    });
+
+    test('preparePlaybackSource rewrites googlevideo on Android', () async {
+      final loader = VoiceRoomDjStreamLoader(Dio());
+      final prepared = await loader.preparePlaybackSource(cdn);
+      expect(prepared, isNotNull);
+      if (Platform.isAndroid) {
+        expect(prepared, contains('/api/chat/youtube-audio'));
+      } else {
+        expect(prepared, cdn);
       }
     });
   });

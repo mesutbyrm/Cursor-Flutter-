@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.147+181 (2026-08-10) — Sesli oda müzik oynatma
+
+- **SSE oynatma kapısı:** Ses modunda `RoomSongBloc` parça tutarken just_audio yeniden başlatılmıyordu — düzeltildi
+- **Android stream:** googlevideo için backend proxy önce denenir (`/api/chat/youtube-audio`)
+- **Video mini player:** Odaya girildiğinde mevcut parça için ilk senkron eklendi
+
 ## 1.0.146+180 (2026-08-10) — Release candidate lock
 
 - **Production logging:** TRTC/FCM/OneSignal push token ve `audio.trtc.token` logları yalnızca `kDebugMode`
