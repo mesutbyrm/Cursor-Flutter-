@@ -2,8 +2,9 @@
 
 | Alan | Değer |
 |------|--------|
-| Tarih (UTC) | 2026-08-10 12:48 |
+| Tarih (UTC) | 2026-08-10 12:53 |
 | Sürüm | `1.0.146+180` |
+| Commit | `cd44bc3c` |
 | REAL_DEVICE_TEST | **BLOCKED** (adb boş — COMPLETE değil) |
 
 Kaynak: `docs/FINAL_RELEASE_CLOSURE.md`, `docs/BUG_CLOSURE_REPORT.md`, `docs/MASTER_ACCEPTANCE_REPORT.md`, P0/Stage5 (2026-08-10)
@@ -14,84 +15,92 @@ Kaynak: `docs/FINAL_RELEASE_CLOSURE.md`, `docs/BUG_CLOSURE_REPORT.md`, `docs/MAS
 
 **HAYIR** → `REAL_DEVICE_TEST = BLOCKED` (INCOMPLETE)
 
-Kanıt: `adb devices` boş; `device-trtc-smoke.sh` exit 2.
+Kanıt: `adb devices` boş; `device-trtc-smoke.sh` exit 2 (2026-08-10 12:53 UTC).
 
 ---
 
-## MASTER DURUM TABLOSU
+## KALAN SORUNLAR (PASS hariç)
 
-| FEATURE | BACKEND | FLUTTER | REAL DEVICE | RESULT | BLOCKER |
-|---------|---------|---------|-------------|--------|---------|
-| AUTH | PASS (API) | OK | Not run | **BLOCKED** | DEVICE |
-| TRTC AUDIO | PASS (token) | OK | Not run | **BLOCKED** | DEVICE |
-| TRTC VIDEO | PASS (token) | OK | Not run | **BLOCKED** | DEVICE |
-| LIVE | PASS (create/token) | OK | Not run | **BLOCKED** | DEVICE |
-| LIVE FALCI | PASS (request+accept) | OK | Not run | **BLOCKED** | DEVICE |
-| PK LIVE | PARTIAL (API) | OK | Not run | **BLOCKED** | DEVICE |
-| PK VOICE | PASS (API) | OK | Not run | **BLOCKED** | DEVICE |
-| VOICE ROOM | PASS (presence) | OK | Not run | **BLOCKED** | DEVICE |
-| SEAT | PARTIAL | OK | Not run | **PARTIAL** | DEVICE |
-| PRESENCE | PASS (API) | OK | Not run | **BLOCKED** | DEVICE |
-| HEARTBEAT | PARTIAL | OK | Not run | **PARTIAL** | DEVICE |
-| GIFT | PASS (txn API) | OK | Not run | **BLOCKED** | DEVICE |
-| JETON | PASS (500 API) | OK | Not run | **BLOCKED** | DEVICE |
-| SSE | PASS (stream API) | OK | Not run | **BLOCKED** | DEVICE |
-| MUSIC | PASS (paid API) | OK | Not run | **BLOCKED** | DEVICE |
-| SOCIAL | PASS (post API) | OK | Not run | **BLOCKED** | DEVICE |
-| PROFILE | PASS (/api/me) | OK | Not run | **BLOCKED** | DEVICE |
+| FEATURE | STATUS | ROOT CAUSE | CAN_FIX_NOW | ACTION |
+|---------|--------|------------|-------------|--------|
+| AUTH | BLOCKED | DEVICE | NO | USB Android + login/logout smoke |
+| TRTC AUDIO | BLOCKED | DEVICE | NO | enterRoom + A↔B ses |
+| TRTC VIDEO | BLOCKED | DEVICE | NO | A↔B video |
+| LIVE | BLOCKED | DEVICE | NO | Kod fix uygulandı — cihaz retest |
+| LIVE FALCI | BLOCKED | DEVICE | NO | Two-way A/V cihaz |
+| PK LIVE | BLOCKED | DEVICE | NO | Live PK RTC 2 cihaz |
+| PK VOICE | BLOCKED | DEVICE | NO | Kod fix uygulandı — cihaz retest |
+| VOICE ROOM | BLOCKED | DEVICE | NO | Kod fix uygulandı — cihaz retest |
+| SEAT | PARTIAL | DEVICE | NO | Seat UI+RTC cihaz |
+| PRESENCE | BLOCKED | DEVICE | NO | UI presence cihaz |
+| HEARTBEAT | PARTIAL | DEVICE | NO | Live heartbeat UI cihaz |
+| GIFT | BLOCKED | DEVICE | NO | SSE+animation cihaz |
+| JETON | BLOCKED | DEVICE | NO | UI balance cihaz (API txn OK) |
+| SSE | BLOCKED | DEVICE | NO | Reconnect/dispose cihaz |
+| MUSIC | BLOCKED | DEVICE | NO | Playback cihaz |
+| SOCIAL | BLOCKED | DEVICE | NO | Feed UI cihaz |
+| PROFILE | BLOCKED | DEVICE | NO | Profile screen cihaz |
+| 0-jeton test | BLOCKED | TEST ACCOUNT | NO | `ACCEPTANCE_ADMIN_*` |
+| Crash/ANR | BLOCKED | DEVICE | NO | Release smoke |
 
 ---
 
-## PASS
-*(Gerçek Android cihazda doğrulanmış — yok)*
+## 500 JETON (son gerçek API testi — Stage5 2026-08-10)
 
-## FAIL
-*(Cihazda kanıtlanmış — yok)*
+| Alan | Değer |
+|------|--------|
+| BEFORE | 3850 |
+| GIFT VALUE | 500 (elmas) |
+| ACTUAL DEDUCTION | 500 |
+| AFTER | 2850 |
+| TRANSACTION | `POST /api/live/gift/send` HTTP 200 |
+| RECEIVER EVENT | BLOCKED-BY-REAL-DEVICE-TEST |
+| RANKING | BLOCKED-BY-REAL-DEVICE-TEST |
+| UI DISPLAY | BLOCKED-BY-REAL-DEVICE-TEST |
 
-## PARTIAL
-SEAT, HEARTBEAT (kod+API; cihaz yok)
+---
 
-## BLOCKED
-AUTH, TRTC AUDIO, TRTC VIDEO, LIVE, LIVE FALCI, PK LIVE, PK VOICE, VOICE ROOM, PRESENCE, GIFT, JETON, SSE, MUSIC, SOCIAL, PROFILE
+## TRTC (cihaz sonucu)
 
-## MISSING
-*(yok)*
+AUDIO A→B, AUDIO B→A, VIDEO A→B, VIDEO B→A, MUTE, CAMERA, RECONNECT, LEAVE, REJOIN — **BLOCKED** (adb boş)
 
-## CRITICAL BLOCKERS
-- REAL DEVICE INCOMPLETE
-- TRTC, LIVE, LIVE FALCI, PK, VOICE ROOM, GIFT/JETON, SSE — cihaz PASS yok
-- Crash/ANR ölçülmedi (cihaz yok)
+Local media state fix (`live_guest_grid.dart` currentUserId) — kod uygulandı; cihaz retest bekliyor.
 
-## HIGH BLOCKERS
-- Music playback doğrulanmadı
-- Gift SSE→animation→UI doğrulanmadı
-- 0-jeton test (`ACCEPTANCE_ADMIN_*` yok)
+---
 
-## FIXED
+## SSE (cihaz sonucu)
+
+CONNECT/AUTH — API PASS (P0/Stage5). GIFT/PK/MESSAGE/MUSIC/RECONNECT/ROOM SWITCH/DISPOSE — **BLOCKED** (cihaz).
+
+Unit: `sse_20_cycle_test.dart` PASS (405 test suite içinde). Cihaz duplicate leak ölçülmedi.
+
+---
+
+## FIXED (kod — önceki oturumlar, cihaz retest bekliyor)
+
 - TRTC release logs (`kDebugMode`)
-- Live guest grid local/remote by userId
-- Host grace coordinator reconnect
-- Voice PK gift poll dispose
-- Voice room TRTC onDispose leave
-- Stage5 HOST teller + PK API scripts
+- Live guest grid local/remote by `currentUserId`
+- Host grace coordinator reconnect suspend/resume
+- Voice PK gift poll dispose + PK remote clear
+- Voice room TRTC `onDispose` → `voiceRoomAudioCoordinator.leave()`
+- Stage5 HOST teller + PK API automation
 
-## RETESTED
-- Release build (2026-08-10): analyze 0 error, test 405 pass, AAB/APK OK
-- API smoke: P0 25/25, Stage5 500 jeton PASS
-- Device: **not retested**
+---
 
-## REMAINING
-1. USB Android + release APK
-2. 8 kritik flow cihaz smoke
-3. TRTC A↔B, gift UI, music audio, 20× bellek
+## RETESTED (2026-08-10 12:53 UTC)
+
+- `flutter clean` → `pub get` → `analyze` (0 error, 322 info)
+- `flutter test` — **405 pass**, 2 skip
+- `appbundle --release` — **177.0 MB** PASS
+- `apk --release --split-per-abi` arm64 — **94.1 MB** PASS
+- `device-trtc-smoke.sh` — exit 2 (no device)
+
+---
 
 ## RELEASE BUILD
 **PASS**
 
-## CRASH
-Ölçülmedi (REAL DEVICE INCOMPLETE — NONE/FOUND iddia edilmez)
-
-## ANR
+## CRASH / ANR
 Ölçülmedi (REAL DEVICE INCOMPLETE — NONE/FOUND iddia edilmez)
 
 ## SECURITY
