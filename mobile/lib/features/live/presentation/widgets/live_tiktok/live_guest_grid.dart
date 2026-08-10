@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../domain/entities/live_guest_layout.dart';
 import '../../../domain/entities/live_guest_slot.dart';
 import '../../../../trtc/presentation/trtc_room_manager.dart';
@@ -192,21 +193,33 @@ class _SlotCell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentUserId = ref.watch(authControllerProvider).valueOrNull?.id;
+    final slotUserId = slot.rtcUserId ?? slot.userId;
+    final isSelf = currentUserId != null &&
+        ((slotUserId != null && slotUserId == currentUserId) ||
+            (isHost && slot.isHost && slotUserId == null));
+
     Widget child;
-    if (slot.isHost || slot.index == 0) {
+    if (isSelf) {
       child = trtc != null
           ? TrtcLocalVideoView(key: localPreviewKey, manager: trtc!)
           : _placeholder(hostName ?? 'Sen', hostAvatarUrl);
-    } else if (remoteUserId != null && trtc != null) {
-      child = TrtcRemoteVideoView(
-        key: ValueKey(remoteUserId),
-        manager: trtc!,
-        userId: remoteUserId!,
-      );
-    } else if (slot.isEmpty) {
-      return _emptySlot();
     } else {
-      child = _placeholder(slot.displayName ?? 'Konuk', null);
+      final remoteId = slotUserId ??
+          (slot.isHost || slot.index == 0 ? remoteUserId : null);
+      if (remoteId != null &&
+          remoteId != currentUserId &&
+          trtc != null) {
+        child = TrtcRemoteVideoView(
+          key: ValueKey(remoteId),
+          manager: trtc!,
+          userId: remoteId,
+        );
+      } else if (slot.isEmpty) {
+        return _emptySlot();
+      } else {
+        child = _placeholder(slot.displayName ?? hostName ?? 'Yayıncı', null);
+      }
     }
 
     return ClipRRect(

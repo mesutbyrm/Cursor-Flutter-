@@ -148,6 +148,8 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   @override
   void dispose() {
     _giftSub?.cancel();
+    ref.read(voiceRoomGiftRealtimeProvider).stop();
+    ref.read(pkBattleRemoteProvider.notifier).clear();
     super.dispose();
   }
 

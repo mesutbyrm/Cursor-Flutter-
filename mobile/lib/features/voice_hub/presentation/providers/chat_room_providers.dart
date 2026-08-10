@@ -549,6 +549,14 @@ class VoiceRoomLiveController
         ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
         ref.read(voiceRoomGiftRealtimeProvider).stop();
         ref.read(pkBattleRemoteProvider.notifier).clear();
+        unawaited(() async {
+          try {
+            await ref
+                .read(voiceRoomAudioCoordinatorProvider)
+                .leave()
+                .timeout(const Duration(milliseconds: 600));
+          } catch (_) {}
+        }());
       }
       final session = ref.read(voiceRoomMusicSessionProvider);
       final detachedHere =

@@ -813,6 +813,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (streamId == null || streamId.isEmpty) return;
     _hostAway = true;
     _graceEndsAt = DateTime.now().add(HostLiveStreamRecovery.gracePeriod);
+    _trtcCoordinator?.setReconnectSuspended(true);
     await HostLiveStreamRecovery.save(widget.session);
     if (_trtc.inChannel) {
       await _trtc.leave();
@@ -884,14 +885,21 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       }
       final user = ref.read(authControllerProvider).valueOrNull;
       if (user == null) return;
-      final cred = await ref.read(trtcRemoteProvider).fetchToken(
-            roomId: streamId,
-            role: 'host',
-            userId: user.id,
-          );
-      await _trtc.join(credentials: cred, isHost: true, audioOnly: false);
-      _trtc.setCameraEnabled(widget.session.initialCameraOn);
-      _trtc.setMicEnabled(widget.session.initialMicOn);
+      _trtcCoordinator?.setReconnectSuspended(false);
+      if (_trtcCoordinator != null) {
+        await _trtcCoordinator!.reconnect();
+        _trtc.setCameraEnabled(widget.session.initialCameraOn);
+        _trtc.setMicEnabled(widget.session.initialMicOn);
+      } else {
+        final cred = await ref.read(trtcRemoteProvider).fetchToken(
+              roomId: streamId,
+              role: 'host',
+              userId: user.id,
+            );
+        await _trtc.join(credentials: cred, isHost: true, audioOnly: false);
+        _trtc.setCameraEnabled(widget.session.initialCameraOn);
+        _trtc.setMicEnabled(widget.session.initialMicOn);
+      }
       try {
         await ref.read(liveRemoteProvider).notifyLiveStarted(streamId);
       } catch (_) {}
