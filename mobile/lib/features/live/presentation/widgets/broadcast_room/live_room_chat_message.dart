@@ -1,3 +1,5 @@
+import '../../../vip_gold/domain/entrance_theme.dart';
+
 /// Canlı yayın sohbet satırı.
 class LiveRoomChatMessage {
   const LiveRoomChatMessage({
@@ -10,6 +12,7 @@ class LiveRoomChatMessage {
     this.isModerator = false,
     this.isFortuneTeller = false,
     this.level,
+    this.entranceTheme = EntranceTheme.turkey,
   });
 
   final String? id;
@@ -21,4 +24,5 @@ class LiveRoomChatMessage {
   final bool isModerator;
   final bool isFortuneTeller;
   final int? level;
+  final EntranceTheme entranceTheme;
 }

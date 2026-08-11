@@ -52,6 +52,7 @@ import '../widgets/premium_2026/voice_cosmic_background.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../../cosmetics/presentation/widgets/cosmetic_entrance_overlay.dart';
+import '../../../vip_gold/presentation/providers/user_room_profile_provider.dart';
 import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'voice_room_basic_moderation_section.dart';
 import '../sheets/voice_room_menu_sheet.dart';
@@ -935,6 +936,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   }
                   return VipEntranceOverlay(
                     tier: ref.watch(vipTierProvider),
+                    theme: ref.watch(myEntranceThemeProvider),
                     userName: name,
                     onFinished: () {
                       if (mounted) setState(() => _showVipEntrance = false);

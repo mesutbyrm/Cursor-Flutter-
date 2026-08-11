@@ -32,6 +32,7 @@ import '../../vip_gold/domain/vip_tier.dart';
 import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../cosmetics/presentation/widgets/cosmetic_entrance_overlay.dart';
+import '../../vip_gold/presentation/providers/user_room_profile_provider.dart';
 import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import '../../trtc/presentation/trtc_room_manager.dart';
 import '../domain/entities/chat_room_dj_state.dart';
@@ -1942,6 +1943,7 @@ class _VoiceRoomRtcVipEntrance extends ConsumerWidget {
     }
     return VipEntranceOverlay(
       tier: ref.watch(vipTierProvider),
+      theme: ref.watch(myEntranceThemeProvider),
       userName: name,
       onFinished: onFinished,
     );

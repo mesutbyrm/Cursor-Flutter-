@@ -114,6 +114,7 @@ class ProfileRemoteDataSource {
     String? newPassword,
     String? birthDate,
     String? birthTime,
+    String? favoriteTeam,
   }) async {
     final onlyPasswordChange = currentPassword != null &&
         newPassword != null &&
@@ -122,7 +123,8 @@ class ProfileRemoteDataSource {
         avatarUrl == null &&
         username == null &&
         birthDate == null &&
-        birthTime == null;
+        birthTime == null &&
+        favoriteTeam == null;
 
     if (currentPassword != null && newPassword != null) {
       await _dio.safePost<dynamic>(
@@ -155,6 +157,7 @@ class ProfileRemoteDataSource {
         'username': ?username,
         if (birthDate != null && birthDate.isNotEmpty) 'birthDate': birthDate,
         if (birthTime != null && birthTime.isNotEmpty) 'birthTime': birthTime,
+        if (favoriteTeam != null) 'favoriteTeam': favoriteTeam,
       },
     );
     final body = res.data ?? {};
@@ -249,6 +252,7 @@ class ProfileRemoteDataSource {
     String? birthTime,
     String? zodiacSign,
     String? city,
+    String? favoriteTeam,
   }) async {
     final res = await _dio.safePatch<Map<String, dynamic>>(
       ApiEndpoints.userSiteProfile,
@@ -261,6 +265,7 @@ class ProfileRemoteDataSource {
         if (birthTime != null && birthTime.isNotEmpty) 'birthTime': birthTime,
         'zodiacSign': ?zodiacSign,
         'city': ?city,
+        if (favoriteTeam != null) 'favoriteTeam': favoriteTeam,
       },
     );
     final body = res.data ?? {};

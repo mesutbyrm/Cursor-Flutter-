@@ -12,6 +12,8 @@ class ProfileExtendedEntity {
     this.isOnline = false,
     this.dailyStreak = 0,
     this.vipLevel,
+    this.favoriteTeam,
+    this.teamRaw,
     this.coverImage,
     this.raw = const {},
   });
@@ -44,9 +46,16 @@ class ProfileExtendedEntity {
       'membershipTier',
     ])?.toString();
 
+    Map<String, dynamic>? teamRaw;
+    final teamNode = merged['team'];
+    if (teamNode is Map) teamRaw = asJsonMap(teamNode);
+
     return ProfileExtendedEntity(
       city: pick(merged, ['city', 'location', 'country'])?.toString(),
       zodiacSign: pick(merged, ['zodiacSign', 'zodiac', 'burc'])?.toString(),
+      favoriteTeam:
+          pick(merged, ['favoriteTeam', 'favorite_team', 'teamName'])?.toString(),
+      teamRaw: teamRaw,
       birthDate: parseDate(pick(merged, ['birthDate', 'birthday', 'dateOfBirth'])),
       birthTime: pick(merged, ['birthTime', 'birth_time'])?.toString(),
       joinedAt: parseDate(
@@ -77,6 +86,8 @@ class ProfileExtendedEntity {
   final bool isOnline;
   final int dailyStreak;
   final String? vipLevel;
+  final String? favoriteTeam;
+  final Map<String, dynamic>? teamRaw;
   final String? coverImage;
   final Map<String, dynamic> raw;
 }

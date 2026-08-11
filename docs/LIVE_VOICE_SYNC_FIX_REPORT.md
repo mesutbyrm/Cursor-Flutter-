@@ -1,6 +1,6 @@
 # LIVE_VOICE_SYNC_FIX_REPORT
 
-> **Sürüm:** `1.0.152+186`  
+> **Sürüm:** `1.0.153+187`  
 > **Tarih:** 2026-08-11  
 > **Tek kaynak:** `https://canlifal.com` + `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9
 
@@ -19,64 +19,60 @@
 | Voice PK | GET/POST | `/api/chat/rooms/{id}/pk` | SSE `pk` |
 | Live PK (unified) | POST | `/api/pk/request`, respond | SSE + socket |
 | Fal isteği | GET/POST/PATCH | `/api/video-streams/{id}/fortune-requests` | SSE `fortune_request` |
+| Profil takım | PATCH | `/api/me`, `/api/user/profile` `{favoriteTeam}` | — |
 | TRTC | POST | `/api/trtc/token` | §8 dokunulmadı |
 | Live gift (legacy) | POST | `/api/live/gift/send` | §8 dokunulmadı |
 
-## Flutter dosyaları (bu oturum)
+## Flutter dosyaları (bu oturum + önceki faz)
 
 | Dosya | Değişiklik |
 |-------|------------|
-| `live_room_providers.dart` | `tearDownSession()` idempotent çıkış |
-| `live_broadcast_room_page.dart` | `_leaveLiveSession` → tearDown; host fal kartları |
-| `live_host_fortune_request_stack.dart` | **Yeni** — max 3 fal kartı, sağ üst |
-| `voice_pk_invite_listener.dart` | SSE bağlıyken poll atlanır |
-| `api_backend_router.dart` | (1.0.151) tüm yollar `main` |
+| `entrance_theme.dart` | **Yeni** — `TeamCatalog`, `EntranceTheme`, JSON parser |
+| `user_room_profile_provider.dart` | **Yeni** — üyelik + takım tek kaynak |
+| `vip_entrance_overlay.dart` | Takım renkleri / logo / 🇹🇷 varsayılan |
+| `live_vip_chat_badge.dart` | `LiveVipEntranceBanner` takım gradient |
+| `profile_extended_entity.dart` | `favoriteTeam`, `teamRaw` |
+| `wallet_balances.dart` | `favoriteTeam`, `teamRaw` parse |
+| `profile_edit_page.dart` | Takım seçici + PATCH sync |
+| `live_stream_chat_message.dart` | VIP giriş teması mesajdan |
+| `live_broadcast_room_page.dart` | Banner'a tema aktarımı |
+| `voice_room_rtc/basic_page.dart` | `myEntranceThemeProvider` |
+| `live_room_providers.dart` | `tearDownSession()` (önceki faz) |
+| `live_host_fortune_request_stack.dart` | Host fal kartları (önceki faz) |
 
 ## Düzeltilen problemler
 
 | # | Konu | Durum |
 |---|------|-------|
-| 1 | Oda çıkışı (canlı) | **Düzeltildi** — explicit tearDown |
-| 1b | Oda çıkışı (sesli) | **Mevcut** — `leaveRoomSession` zaten tam |
-| 2 | Hediye miktarı 0 | **Mevcut** — `jetonAmount`, catalog enrich |
-| 3 | Gönderen/alıcı | **Mevcut** — `parseGiftEvent` |
-| 4 | Jeton | **Mevcut** — `totalCoin` / `spentAmount` |
-| 5 | Video hediyeler | **Mevcut** — `GiftEngineOverlay` + catalog enrich |
-| 6 | Hediye sesleri | **Mevcut** — `soundKey` / `musicUrl` |
-| 7 | PK request | **İyileştirildi** — SSE birincil, poll yedek |
-| 8 | Fal request UI | **Düzeltildi** — sağ üst stack |
-| 9 | 3 request limiti | **Düzeltildi** — `maxVisible = 3` |
-| 10 | Cevapla/Reddet/Beklet | **Düzeltildi** — backend `updateStatus` |
-| 11 | SSE reconnect | **Mevcut** — `BaseSseService` backoff |
-| 12 | Duplicate event | **Mevcut** — `gift_session_controller` dedupe |
+| 1 | Oda çıkışı (canlı) | **Düzeltildi** |
+| 1b | Oda çıkışı (sesli) | **Mevcut** |
+| 2–6 | Hediye/jeton/ses/video | **Mevcut** |
+| 7 | PK request SSE | **İyileştirildi** |
+| 8–10 | Fal isteği UI | **Düzeltildi** |
+| 11–12 | SSE/dedupe | **Mevcut** |
+| 13 | Gold giriş banner + takım | **Düzeltildi** — backend `team` / `favoriteTeam` |
+| 14 | Profil ↔ oda tek kaynak | **Düzeltildi** — `userRoomProfileProvider` |
+| 15 | PK `POST .../pk/score` 405 | **Backend** — skor hediye+SSE; mobil client POST yok |
 
 ## Test sonucu
 
 | Test | Sonuç | Not |
 |------|-------|-----|
-| TEST 1 — Canlı çıkış | **PASS*** | Kod: tearDown + TRTC leave; *cihaz E2E yok |
-| TEST 2 — Sesli çıkış | **PASS*** | Kod: leaveRoomSession sırası doğru |
-| TEST 3 — Hediye | **PASS*** | Parser + enrich; cihaz doğrulama gerekli |
-| TEST 4 — PK | **PASS*** | SSE + poll; karşı taraf cihaz testi gerekli |
-| TEST 5 — Fal isteği UI | **PASS** | Widget eklendi, font ≥11px |
-| TEST 6 — 4. fal isteği | **PASS** | En yeni 3 gösterilir |
+| TEST 1–6 | **PASS*** | Kod + unit test |
 | TEST 7 — Analyzer | **PASS** | `dart analyze` |
-| TEST 8 — Unit test | **PASS** | `flutter test` (mevcut suite) |
+| TEST 8 — Unit test | **PASS** | `entrance_theme_test.dart` + mevcut suite |
 | FİNAL 1–25 (cihaz) | **FAIL** | Cloud ortamında adb/emülatör yok |
 
 \* Kod incelemesi + unit test; üretim cihazında manuel doğrulama bekleniyor.
 
 ## Kalan işler (backend / cihaz)
 
-1. Sesli oda PK `POST .../pk/score` — backend 405 ise skor güncellemesi
-2. Gold giriş banner — takım renkleri backend `team` modelinden (profil sync)
-3. Otomatik koltuk — `_tryAutoPrivilegedSeat` mevcut; yetki backend'den
-4. Tam FİNAL acceptance — fiziksel cihaz + 2 hesap
+1. Sesli oda `POST /api/chat/rooms/{id}/pk/score` — backend 405 ise skor yalnızca hediye+SSE ile güncellenmeli
+2. Presence/SSE'de diğer kullanıcılar için `team` nesnesi tutarlı dönmeli (banner renkleri)
+3. Tam FİNAL acceptance — fiziksel cihaz + 2 hesap
 
 ## Analyzer / test
 
 ```bash
 cd mobile && dart analyze && flutter test
 ```
-
-Son çalıştırma: CI/agent oturumu — bu commit sonrası yeşil beklenir.

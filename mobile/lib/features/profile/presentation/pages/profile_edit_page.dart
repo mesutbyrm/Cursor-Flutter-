@@ -11,6 +11,7 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/presentation/widgets/auth_shell.dart';
+import '../../../vip_gold/domain/entrance_theme.dart';
 import '../providers/profile_hub_providers.dart';
 import '../providers/profile_providers.dart';
 
@@ -30,6 +31,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
   final _avatarUrlCtrl = TextEditingController();
   var _saving = false;
   String? _localAvatarDataUrl;
+  String? _favoriteTeam;
 
   @override
   void initState() {
@@ -45,6 +47,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
       if (ext != null) {
         _cityCtrl.text = ext.city ?? '';
         _zodiacCtrl.text = ext.zodiacSign ?? '';
+        _favoriteTeam = TeamCatalog.labelForKey(ext.favoriteTeam) ?? ext.favoriteTeam;
       }
     });
   }
@@ -94,6 +97,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
             username: _usernameCtrl.text.trim(),
             bio: _bioCtrl.text.trim(),
             avatarUrl: avatar,
+            favoriteTeam: _favoriteTeam,
           );
       try {
         await ref.read(profileRemoteProvider).updateProfile(
@@ -103,11 +107,13 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
               city: _cityCtrl.text.trim().isEmpty ? null : _cityCtrl.text.trim(),
               zodiacSign:
                   _zodiacCtrl.text.trim().isEmpty ? null : _zodiacCtrl.text.trim(),
+              favoriteTeam: _favoriteTeam,
             );
       } catch (_) {}
       await ref.read(authControllerProvider.notifier).refreshMe();
       ref.invalidate(profileExtendedProvider);
       ref.invalidate(profileUserStatisticsProvider);
+      ref.invalidate(walletBalancesProvider);
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e) {
@@ -218,6 +224,29 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
                         labelText: 'Şehir',
                         prefixIcon: Icons.location_city_rounded,
                       ),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String?>(
+                      value: _favoriteTeam,
+                      decoration: authInputDecoration(
+                        labelText: 'Tuttuğu takım (giriş banner renkleri)',
+                        prefixIcon: Icons.sports_soccer_rounded,
+                      ),
+                      items: [
+                        const DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text('Seçilmedi — 🇹🇷 varsayılan'),
+                        ),
+                        ...TeamCatalog.labels.map(
+                          (label) => DropdownMenuItem<String?>(
+                            value: label,
+                            child: Text(label),
+                          ),
+                        ),
+                      ],
+                      onChanged: _saving
+                          ? null
+                          : (v) => setState(() => _favoriteTeam = v),
                     ),
                     const SizedBox(height: 12),
                     TextField(
