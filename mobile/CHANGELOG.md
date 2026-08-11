@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.156+191 (2026-08-11) — Sesli oda müzik + koltuk + çıkış
+
+- **Müzik oynatma:** `song_started` SSE → DJ/just_audio + videolu WebView katmanı (basic oda)
+- **YouTube/S3:** Video arka plan + gizli IFrame senkron; `normalizeSongSseForDjPlayback`
+- **UI:** Mesaj gönder üstü müzik ikonu + ayarlar; alt bardan ayarlar kaldırıldı
+- **!istek / şarkı isteği:** `showVoiceYoutubeSongSheet` — sesli veya videolu seçim
+- **Koltuk:** `action: take` öncelikli oturma; yetkili semboller (+ V % @ & ~)
+- **Çıkış:** Anında navigasyon; presence leave arka planda
+
 ## 1.0.155+190 (2026-08-11) — Master sync tam faz (PK, sosyal, bot, fal)
 
 - **PK davet:** Canlı + sesli 8s HTTP yedek poll; `invited` durumu; `targetUserId` / `guestUserId` hedef eşlemesi

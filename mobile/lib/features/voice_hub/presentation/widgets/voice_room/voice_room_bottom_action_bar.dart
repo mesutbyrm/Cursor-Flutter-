@@ -17,11 +17,13 @@ class VoiceRoomBottomActionBar extends StatelessWidget {
     required this.onMicToggle,
     required this.onGift,
     required this.onInvite,
+    this.showSettings = true,
   });
 
   final bool headphonesOn;
   final VoidCallback onToggleAudioOutput;
   final VoidCallback onSettings;
+  final bool showSettings;
   final bool micOn;
   final bool micEnabled;
   final VoidCallback onMicToggle;
@@ -53,7 +55,7 @@ class VoiceRoomBottomActionBar extends StatelessWidget {
                   headphonesOn: headphonesOn,
                   onTap: onToggleAudioOutput,
                 ),
-                _SettingsAction(onTap: onSettings),
+                if (showSettings) _SettingsAction(onTap: onSettings),
                 Expanded(
                   child: Center(
                     child: _CenterMicButton(

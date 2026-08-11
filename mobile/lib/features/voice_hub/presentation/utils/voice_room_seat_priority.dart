@@ -143,6 +143,8 @@ abstract final class VoiceRoomSeatPriority {
       case '&':
       case '@':
       case '%':
+      case 'V':
+      case 'v':
         return true;
       default:
         return false;

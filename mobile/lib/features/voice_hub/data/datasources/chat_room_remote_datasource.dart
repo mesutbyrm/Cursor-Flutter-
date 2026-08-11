@@ -2118,30 +2118,39 @@ class ChatRoomRemoteDataSource {
     int? seatIndex,
     String? userId,
   }) async {
-    final body = <String, dynamic>{
+    final targetId = userId?.trim();
+    final isOther = targetId != null && targetId.isNotEmpty;
+    final base = <String, dynamic>{
       if (seatIndex != null) 'seatIndex': seatIndex,
-      if (userId != null && userId.isNotEmpty) 'userId': userId,
+      if (isOther) 'userId': targetId,
     };
+    final bodies = <Map<String, dynamic>>[
+      {'action': 'take', ...base},
+      if (!isOther) {'action': 'sit', ...base},
+      base,
+    ];
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      for (final path in [
-        seatsPath(key),
-        ApiEndpoints.chatRoomJoinSeat(key),
-      ]) {
-        try {
-          await _dio.safePost<dynamic>(path, data: body);
-          return;
-        } on ApiException catch (e) {
-          if (e.statusCode == 404 || e.statusCode == 405) continue;
-          rethrow;
+      for (final body in bodies) {
+        for (final path in [
+          seatsPath(key),
+          ApiEndpoints.chatRoomJoinSeat(key),
+        ]) {
+          try {
+            await _dio.safePost<dynamic>(path, data: body);
+            return;
+          } on ApiException catch (e) {
+            if (e.statusCode == 404 || e.statusCode == 405) continue;
+            rethrow;
+          }
         }
       }
       try {
-        await _dio.safePatch<dynamic>(seatsPath(key), data: body);
+        await _dio.safePatch<dynamic>(seatsPath(key), data: bodies.first);
         return;
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       }
-      await _dio.safePost<dynamic>(presencePath(key), data: body);
+      await _dio.safePost<dynamic>(presencePath(key), data: bodies.last);
     });
   }
 

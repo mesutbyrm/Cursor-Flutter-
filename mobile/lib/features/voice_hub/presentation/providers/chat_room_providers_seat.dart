@@ -115,6 +115,11 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     });
     for (var attempt = 0; attempt < 3; attempt++) {
       try {
+        final err = await assignSeat(seatIndex: seatIndex);
+        if (err == null) {
+          _autoSeatAttempted = true;
+          return;
+        }
         await ref.read(chatRoomRemoteProvider).joinSeat(
               roomKey: _roomKey,
               alternateKey: _musicAlternateKey,

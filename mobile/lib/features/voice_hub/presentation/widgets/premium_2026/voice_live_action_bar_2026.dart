@@ -14,6 +14,7 @@ class VoiceLiveActionBar2026 extends StatelessWidget {
     required this.onToggleAudioOutput,
     required this.headphonesOn,
     required this.onInvite,
+    this.showSettings = true,
   });
 
   final bool micOn;
@@ -24,6 +25,7 @@ class VoiceLiveActionBar2026 extends StatelessWidget {
   final VoidCallback onSettings;
   final VoidCallback onToggleAudioOutput;
   final VoidCallback onInvite;
+  final bool showSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +33,7 @@ class VoiceLiveActionBar2026 extends StatelessWidget {
       headphonesOn: headphonesOn,
       onToggleAudioOutput: onToggleAudioOutput,
       onSettings: onSettings,
+      showSettings: showSettings,
       micOn: micOn,
       micEnabled: micEnabled,
       onMicToggle: onMic,

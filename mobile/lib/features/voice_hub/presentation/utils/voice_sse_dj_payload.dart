@@ -10,6 +10,71 @@ Map<String, dynamic> unwrapVoiceSseDjPayload(Map<String, dynamic> raw) {
   return map;
 }
 
+String _sseEventType(Map<String, dynamic> payload) =>
+    (payload['type'] ??
+            payload['event'] ??
+            payload['eventName'] ??
+            payload['action'] ??
+            '')
+        .toString()
+        .toLowerCase()
+        .trim();
+
+/// `song_started` vb. SSE → DJ oynatıcı payload'ına normalize eder.
+Map<String, dynamic> normalizeSongSseForDjPlayback(Map<String, dynamic> raw) {
+  final map = unwrapVoiceSseDjPayload(raw);
+  final type = _sseEventType(map);
+
+  if (type == 'song_started' ||
+      type == 'song_resumed' ||
+      type == 'music_started' ||
+      type == 'musicstarted') {
+    map['playing'] = true;
+    map['isPlaying'] = true;
+  }
+
+  if (map['nowPlaying'] == null) {
+    for (final key in const ['currentSong', 'current', 'song']) {
+      final node = map[key];
+      if (node is Map) {
+        map['nowPlaying'] = Map<String, dynamic>.from(node);
+        break;
+      }
+    }
+  }
+
+  final np = map['nowPlaying'];
+  if (np is Map) {
+    final song = Map<String, dynamic>.from(np);
+    if (map['musicUrl'] == null && song['musicUrl'] != null) {
+      map['musicUrl'] = song['musicUrl'];
+    }
+    if (map['videoId'] == null && song['videoId'] != null) {
+      map['videoId'] = song['videoId'];
+    }
+    if (map['currentVideoId'] == null && song['videoId'] != null) {
+      map['currentVideoId'] = song['videoId'];
+    }
+  }
+
+  return map;
+}
+
+bool shouldApplyDjPlaybackFromSongSse(Map<String, dynamic> raw) {
+  final type = _sseEventType(raw);
+  return const {
+    'song_started',
+    'song_resumed',
+    'song_changed',
+    'queue_updated',
+    'music_started',
+    'musicstarted',
+    'player_state',
+    'dj',
+    'dj_update',
+  }.contains(type);
+}
+
 /// Sunucu `playing` / `isPlaying` bayraklarını birleştirir.
 bool voiceSseDjIsPlaying(Map<String, dynamic> payload) {
   return payload['playing'] == true || payload['isPlaying'] == true;
@@ -29,7 +94,9 @@ VoiceSseMusicSignal voiceSseMusicSignal(Map<String, dynamic> payload) {
       .trim();
   if (t == 'music_started' ||
       t == 'musicstarted' ||
-      t == 'music_start') {
+      t == 'music_start' ||
+      t == 'song_started' ||
+      t == 'song_resumed') {
     return VoiceSseMusicSignal.started;
   }
   if (t == 'music_stopped' ||

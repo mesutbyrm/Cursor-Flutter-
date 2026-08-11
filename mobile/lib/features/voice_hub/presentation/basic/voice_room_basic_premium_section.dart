@@ -269,7 +269,7 @@ class VoiceRoomBasicChatFeed extends ConsumerWidget {
   }
 }
 
-/// Sabit mesaj çubuğu — klavye üstünde.
+/// Sabit mesaj çubuğu — klavye üstünde; sağda ayarlar / müzik / gönder.
 class VoiceRoomBasicMessageBar extends StatefulWidget {
   const VoiceRoomBasicMessageBar({
     super.key,
@@ -279,6 +279,9 @@ class VoiceRoomBasicMessageBar extends StatefulWidget {
     this.onChanged,
     this.presence = const [],
     this.selfUserId,
+    this.onSettings,
+    this.onMusic,
+    this.musicEnabled = true,
   });
 
   final TextEditingController controller;
@@ -287,6 +290,9 @@ class VoiceRoomBasicMessageBar extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final List<ChatRoomPresence> presence;
   final String? selfUserId;
+  final VoidCallback? onSettings;
+  final VoidCallback? onMusic;
+  final bool musicEnabled;
 
   @override
   State<VoiceRoomBasicMessageBar> createState() => _VoiceRoomBasicMessageBarState();
@@ -334,8 +340,42 @@ class _VoiceRoomBasicMessageBarState extends State<VoiceRoomBasicMessageBar> {
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
+              ),
             ),
-          ),
+          if (widget.onSettings != null || widget.onMusic != null)
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.onSettings != null)
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints:
+                        const BoxConstraints(minWidth: 32, minHeight: 32),
+                    tooltip: 'Ayarlar',
+                    onPressed: widget.onSettings,
+                    icon: Icon(
+                      Icons.settings_rounded,
+                      size: 20,
+                      color: VoiceRoomTokens.neonBlue.withValues(alpha: 0.95),
+                    ),
+                  ),
+                if (widget.onMusic != null && widget.musicEnabled)
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints:
+                        const BoxConstraints(minWidth: 32, minHeight: 32),
+                    tooltip: 'Müzik iste',
+                    onPressed: widget.onMusic,
+                    icon: Icon(
+                      Icons.library_music_rounded,
+                      size: 20,
+                      color: VoiceRoomTokens.gold.withValues(alpha: 0.95),
+                    ),
+                  ),
+              ],
+            ),
           IconButton(
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.zero,

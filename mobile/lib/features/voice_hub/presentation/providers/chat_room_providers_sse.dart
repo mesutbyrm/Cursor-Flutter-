@@ -79,6 +79,11 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             if (ev != null) {
               ref.read(roomSongBlocProvider(roomKey)).add(ev);
             }
+            if (!VoiceRoomBasicMode.musicEnabled || payload.isEmpty) return;
+            if (!shouldApplyDjPlaybackFromSongSse(payload)) return;
+            final normalized = normalizeSongSseForDjPlayback(payload);
+            _sse._applyRoomVideoPayload(normalized);
+            unawaited(_sse._applyDjRealtimePayload(normalized));
           },
           onGift: (payload) {
             dispatchGiftSsePayloadRef(

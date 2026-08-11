@@ -38,7 +38,6 @@ import '../audio/voice_room_music_audio_session.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_audio_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
-import '../../../../core/auth/staff_roles.dart';
 import '../sheets/voice_room_commands_panel.dart';
 import '../utils/voice_room_permissions.dart';
 import '../utils/voice_room_error_display.dart';
@@ -57,10 +56,16 @@ import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'voice_room_basic_moderation_section.dart';
 import '../sheets/voice_room_menu_sheet.dart';
 import 'voice_room_basic_premium_section.dart';
+import 'voice_room_basic_mode.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
 import '../sheets/music_mode_picker_sheet.dart';
 import '../utils/voice_music_access.dart';
+import '../sheets/voice_youtube_song_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
+import '../widgets/voice_room/voice_room_music_background_layer.dart';
+import '../../music/presentation/providers/room_music_providers.dart';
+import '../../music/presentation/widgets/room_song_mini_player.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../sheets/voice_room_management_panel.dart';
 import '../widgets/premium_2026/voice_live_action_bar_2026.dart';
 import '../widgets/premium_2026/voice_live_header_2026.dart';
@@ -408,39 +413,25 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final liveKey = _liveRoomKey;
     final audio = _audio;
     _audio = null;
-    final room = _effectiveRoom();
-    final user = ref.read(authControllerProvider).valueOrNull;
     final liveNotifier = ref.read(voiceRoomLiveProvider(liveKey).notifier);
-    if (user != null) {
-      final summary = SessionGiftSummaryBuilder.forVoiceRoom(
-        ref: ref,
-        roomTitle: room.displayTitle,
-        ownerUserId: room.ownerId,
-        ownerDisplayName: room.ownerName,
-        myUserId: user.id,
-        myDisplayName: user.display,
-      );
-      await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
-      if (mounted && summary.hasData) {
-        await showSessionGiftSummarySheet(context, summary: summary);
+
+    if (mounted) {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/voice-rooms');
       }
     }
 
-    await Future.wait<void>([
+    unawaited(Future.wait<void>([
       if (audio != null) audio.leave(),
-      liveNotifier.leaveRoomSession(source: 'basic_leave', awaitBackend: true),
-    ]);
-
-    if (!mounted) {
-      _leaving = false;
-      return;
-    }
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go('/voice-rooms');
-    }
+      liveNotifier.leaveRoomSession(source: 'basic_leave', awaitBackend: false),
+    ]));
     _leaving = false;
+  }
+
+  void _openMusicRequest(VoiceRoomEntity room) {
+    unawaited(showVoiceYoutubeSongSheet(context, ref, room: room));
   }
 
   Future<void> _confirmLeave() async {
@@ -868,11 +859,18 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     contextId: _liveRoomKey,
                   ),
                   Expanded(
-                    child: VoiceRoomBasicChatFeed(
-                      liveKey: _liveRoomKey,
-                      onMention: (userId, name) => _insertMention(name),
-                      onUserPerms: (userId, name) =>
-                          _openUserById(userId, live, room, perms),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        VoiceRoomMusicBackgroundLayer(roomKey: _liveRoomKey),
+                        VoiceRoomHiddenAudioPlayer(roomKey: _liveRoomKey),
+                        VoiceRoomBasicChatFeed(
+                          liveKey: _liveRoomKey,
+                          onMention: (userId, name) => _insertMention(name),
+                          onUserPerms: (userId, name) =>
+                              _openUserById(userId, live, room, perms),
+                        ),
+                      ],
                     ),
                   ),
                   if (roomErrorBanner != null)
@@ -895,6 +893,14 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     selfUserId: user?.id,
                     onEmoji: () =>
                         showVoiceRoomBasicEmojiPicker(context, _messageCtrl),
+                    onSettings: () => _openManagementPanel(
+                      room,
+                      live,
+                      perms,
+                      isOwner,
+                    ),
+                    onMusic: () => _openMusicRequest(room),
+                    musicEnabled: VoiceRoomBasicMode.musicEnabled,
                   ),
                   VoiceLiveActionBar2026(
                     micOn: !_isMicMuted,
@@ -907,6 +913,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                       perms,
                       isOwner,
                     ),
+                    showSettings: false,
                     headphonesOn: ui.headphonesOn,
                     onToggleAudioOutput: _toggleSpeaker,
                     onInvite: () => unawaited(_shareRoom(room)),
@@ -916,6 +923,17 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             ),
             ),
             VoiceGiftHudOverlays(sessionKey: sessionKey),
+            if (_liveRoomKey.isNotEmpty)
+              BlocProvider.value(
+                value: ref.read(roomSongBlocProvider(_liveRoomKey)),
+                child: RoomSongMiniPlayer(
+                  roomId: _liveRoomKey,
+                  canControl: canControlMusic,
+                  bottomInset: 88,
+                  muted: ui.effectiveMusicMuted,
+                  hidden: true,
+                ),
+              ),
             if (_showVipEntrance && user != null)
               Builder(
                 builder: (context) {
