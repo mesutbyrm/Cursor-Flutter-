@@ -13,6 +13,8 @@ class WalletBalances extends Equatable {
     this.withdrawalLimit = 0,
     this.membership,
     this.membershipExpiresAt,
+    this.favoriteTeam,
+    this.teamRaw,
     this.fortuneAdCredits,
     this.canManagePayments,
     this.isAdminFlag,
@@ -37,6 +39,8 @@ class WalletBalances extends Equatable {
     int? withdrawalLimit,
     String? membership,
     String? membershipExpiresAt,
+    String? favoriteTeam,
+    Map<String, dynamic>? teamRaw,
     int? fortuneAdCredits,
     bool? canManagePayments,
     bool? isAdminFlag,
@@ -58,6 +62,8 @@ class WalletBalances extends Equatable {
       withdrawalLimit: withdrawalLimit ?? this.withdrawalLimit,
       membership: membership ?? this.membership,
       membershipExpiresAt: membershipExpiresAt ?? this.membershipExpiresAt,
+      favoriteTeam: favoriteTeam ?? this.favoriteTeam,
+      teamRaw: teamRaw ?? this.teamRaw,
       fortuneAdCredits: fortuneAdCredits ?? this.fortuneAdCredits,
       canManagePayments: canManagePayments ?? this.canManagePayments,
       isAdminFlag: isAdminFlag ?? this.isAdminFlag,
@@ -95,6 +101,9 @@ class WalletBalances extends Equatable {
     ]);
     final fortuneAdCredits =
         rawCredits != null ? asInt(rawCredits) : null;
+    Map<String, dynamic>? teamRaw;
+    final teamNode = json['team'];
+    if (teamNode is Map) teamRaw = asJsonMap(teamNode);
     return WalletBalances(
       jeton: jeton,
       cfc: cfc,
@@ -106,6 +115,9 @@ class WalletBalances extends Equatable {
       membership: pick(json, ['membership'])?.toString(),
       membershipExpiresAt:
           pick(json, ['membershipExpiresAt', 'membership_expires_at'])?.toString(),
+      favoriteTeam:
+          pick(json, ['favoriteTeam', 'favorite_team', 'teamName'])?.toString(),
+      teamRaw: teamRaw,
       fortuneAdCredits: fortuneAdCredits,
       canManagePayments: pick(json, ['canManagePayments']) == true,
       isAdminFlag: pick(json, ['isAdmin']) == true,
@@ -167,6 +179,8 @@ class WalletBalances extends Equatable {
   final int withdrawalLimit;
   final String? membership;
   final String? membershipExpiresAt;
+  final String? favoriteTeam;
+  final Map<String, dynamic>? teamRaw;
   final int? fortuneAdCredits;
   final bool? canManagePayments;
   final bool? isAdminFlag;
@@ -230,6 +244,9 @@ class WalletBalances extends Equatable {
         jetonTlRate,
         withdrawalLimit,
         membership,
+        membershipExpiresAt,
+        favoriteTeam,
+        teamRaw,
         fortuneAdCredits,
         canManagePayments,
         isAdminFlag,

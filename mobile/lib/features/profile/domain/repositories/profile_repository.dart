@@ -21,6 +21,7 @@ abstract class ProfileRepository {
     String? newPassword,
     String? birthDate,
     String? birthTime,
+    String? favoriteTeam,
   });
   Future<ProfileStatsEntity> myStats();
   Future<ProfileExtendedEntity> extendedProfile();

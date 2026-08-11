@@ -1,21 +1,26 @@
 import 'dart:math' as math;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+
+import '../../domain/entrance_theme.dart';
 import '../../domain/vip_tier.dart';
 import '../theme/vip_gold_tokens.dart';
 import 'vip_badge.dart';
 
-/// Özel giriş animasyonu — odaya katılımda tam ekran FX.
+/// Özel giriş animasyonu — odaya katılımda tam ekran FX (takım renkleri destekli).
 class VipEntranceOverlay extends StatefulWidget {
   const VipEntranceOverlay({
     super.key,
     required this.tier,
     required this.userName,
+    this.theme,
     this.onFinished,
   });
 
   final VipTier tier;
   final String userName;
+  final EntranceTheme? theme;
   final VoidCallback? onFinished;
 
   @override
@@ -25,6 +30,8 @@ class VipEntranceOverlay extends StatefulWidget {
 class VipEntranceOverlayState extends State<VipEntranceOverlay>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
+
+  EntranceTheme get _theme => widget.theme ?? EntranceTheme.turkey;
 
   @override
   void initState() {
@@ -47,6 +54,8 @@ class VipEntranceOverlayState extends State<VipEntranceOverlay>
   Widget build(BuildContext context) {
     if (!widget.tier.hasEntranceFx) return const SizedBox.shrink();
 
+    final theme = _theme;
+
     return IgnorePointer(
       child: AnimatedBuilder(
         animation: _ctrl,
@@ -59,7 +68,10 @@ class VipEntranceOverlayState extends State<VipEntranceOverlay>
                 color: Colors.black.withValues(alpha: (1 - t) * 0.75),
               ),
               CustomPaint(
-                painter: _ParticlePainter(phase: _ctrl.value),
+                painter: _ParticlePainter(
+                  phase: _ctrl.value,
+                  accent: theme.primary,
+                ),
                 size: Size.infinite,
               ),
               Center(
@@ -70,16 +82,41 @@ class VipEntranceOverlayState extends State<VipEntranceOverlay>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.flight_land_rounded,
-                          size: 64,
-                          color: VipGoldTokens.goldMid,
-                          shadows: VipGoldTokens.goldGlow(),
-                        ),
+                        if (theme.logoUrl != null && theme.logoUrl!.isNotEmpty)
+                          ClipOval(
+                            child: CachedNetworkImage(
+                              imageUrl: theme.logoUrl!,
+                              width: 56,
+                              height: 56,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) => Icon(
+                                Icons.sports_soccer_rounded,
+                                size: 56,
+                                color: theme.iconColor,
+                              ),
+                            ),
+                          )
+                        else if (theme.flagEmoji != null)
+                          Text(
+                            theme.flagEmoji!,
+                            style: const TextStyle(fontSize: 48),
+                          )
+                        else
+                          Icon(
+                            Icons.flight_land_rounded,
+                            size: 64,
+                            color: theme.iconColor,
+                            shadows: [
+                              Shadow(
+                                color: theme.glowColor,
+                                blurRadius: 18,
+                              ),
+                            ],
+                          ),
                         const SizedBox(height: 12),
                         ShaderMask(
                           shaderCallback: (b) =>
-                              VipGoldTokens.goldLuxury.createShader(b),
+                              theme.titleGradient.createShader(b),
                           child: Text(
                             widget.userName,
                             style: const TextStyle(
@@ -91,7 +128,10 @@ class VipEntranceOverlayState extends State<VipEntranceOverlay>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'odaya giriş yaptı',
+                          theme.teamName != null
+                              ? '${theme.teamName} taraftarı odaya giriş yaptı'
+                              : 'odaya giriş yaptı',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.8),
                             fontWeight: FontWeight.w600,
@@ -113,24 +153,30 @@ class VipEntranceOverlayState extends State<VipEntranceOverlay>
 }
 
 class _ParticlePainter extends CustomPainter {
-  _ParticlePainter({required this.phase});
+  _ParticlePainter({required this.phase, required this.accent});
 
   final double phase;
+  final Color accent;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final rand = math.Random(42);
-    for (var i = 0; i < 40; i++) {
-      final x = rand.nextDouble() * size.width;
-      final y = size.height * (1 - ((phase + i * 0.02) % 1.0));
-      canvas.drawCircle(
-        Offset(x, y),
-        2 + rand.nextDouble() * 3,
-        Paint()..color = VipGoldTokens.goldMid.withValues(alpha: 0.5 * (1 - phase)),
-      );
+    final paint = Paint()..style = PaintingStyle.fill;
+    final rng = math.Random(42);
+    for (var i = 0; i < 36; i++) {
+      final p = (phase + i * 0.03) % 1.0;
+      final x = rng.nextDouble() * size.width;
+      final y = size.height * (1 - p) + rng.nextDouble() * 40;
+      paint.color = Color.lerp(
+            accent,
+            VipGoldTokens.goldMid,
+            rng.nextDouble(),
+          )!
+          .withValues(alpha: (1 - p) * 0.65);
+      canvas.drawCircle(Offset(x, y), 2 + rng.nextDouble() * 3, paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _ParticlePainter old) => old.phase != phase;
+  bool shouldRepaint(covariant _ParticlePainter oldDelegate) =>
+      oldDelegate.phase != phase || oldDelegate.accent != accent;
 }

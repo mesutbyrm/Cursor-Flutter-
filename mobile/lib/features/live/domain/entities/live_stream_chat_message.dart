@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../vip_gold/domain/entrance_theme.dart';
+
 class LiveStreamChatMessage extends Equatable {
   const LiveStreamChatMessage({
     required this.id,
@@ -13,6 +15,7 @@ class LiveStreamChatMessage extends Equatable {
     this.isModerator = false,
     this.isFortuneTeller = false,
     this.level,
+    this.entranceTheme = EntranceTheme.turkey,
   });
 
   final String id;
@@ -26,6 +29,7 @@ class LiveStreamChatMessage extends Equatable {
   final bool isModerator;
   final bool isFortuneTeller;
   final int? level;
+  final EntranceTheme entranceTheme;
 
   static bool _flag(dynamic v) =>
       v == true || v == 1 || v == 'true' || v == '1';
@@ -51,6 +55,8 @@ class LiveStreamChatMessage extends Equatable {
           um?['isFalci'],
     );
     final level = _level(json['level'] ?? um?['level'] ?? um?['userLevel']);
+    final userMap = um ?? json;
+    final theme = entranceThemeFromUserJson(userMap);
     return LiveStreamChatMessage(
       id: json['id']?.toString() ?? '',
       content: json['content']?.toString() ?? '',
@@ -67,6 +73,7 @@ class LiveStreamChatMessage extends Equatable {
       isModerator: isMod,
       isFortuneTeller: isFal,
       level: level,
+      entranceTheme: theme,
     );
   }
 
@@ -86,5 +93,6 @@ class LiveStreamChatMessage extends Equatable {
         isModerator,
         isFortuneTeller,
         level,
+        entranceTheme,
       ];
 }

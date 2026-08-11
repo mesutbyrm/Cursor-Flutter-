@@ -14,6 +14,7 @@ import '../../../../core/network/live_event_log.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../../vip_gold/domain/entrance_theme.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live_psychics/domain/entities/psychic_entity.dart';
 import '../../../live_psychics/presentation/controllers/psychic_flow.dart';
@@ -160,6 +161,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   var _coHostUpgraded = false;
   var _joinRequestPending = false;
   String? _vipBannerName;
+  EntranceTheme? _vipBannerTheme;
   VoidCallback? _remoteUidsListener;
   VoidCallback? _remoteVideoListener;
   var _hostAway = false;
@@ -2431,7 +2433,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               final key = m.userId ?? m.user;
               if (_seenVipEntrances.add(key)) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) setState(() => _vipBannerName = m.user);
+                  if (mounted) {
+                    setState(() {
+                      _vipBannerName = m.user;
+                      _vipBannerTheme = m.entranceTheme;
+                    });
+                  }
                 });
               }
             }
@@ -2574,7 +2581,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 right: 16,
                 child: LiveVipEntranceBanner(
                   displayName: _vipBannerName!,
-                  onDone: () => setState(() => _vipBannerName = null),
+                  theme: _vipBannerTheme,
+                  onDone: () => setState(() {
+                    _vipBannerName = null;
+                    _vipBannerTheme = null;
+                  }),
                 ),
               ),
             if (_joinRequestPending && !s.isHost && !_coHostUpgraded)

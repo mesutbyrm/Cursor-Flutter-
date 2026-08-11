@@ -393,6 +393,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
           isModerator: m.isModerator,
           isFortuneTeller: m.isFortuneTeller,
           level: m.level,
+          entranceTheme: m.entranceTheme,
         ),
       );
     }
@@ -418,6 +419,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         isModerator: isModerator,
         isFortuneTeller: m.isFortuneTeller,
         level: m.level,
+        entranceTheme: m.entranceTheme,
       );
     }).toList();
     if (changed) state = state.copyWith(messages: list);

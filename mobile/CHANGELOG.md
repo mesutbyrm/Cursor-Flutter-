@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.153+187 (2026-08-11) — Gold giriş banner + takım renkleri
+
+- **Takım teması:** `TeamCatalog` + `EntranceTheme` — backend `team` nesnesi veya `favoriteTeam` (`PATCH /api/me`)
+- **Tek kaynak:** `userRoomProfileProvider` — üyelik (`walletBalances`) + takım (`profileExtended`) senkron
+- **Giriş FX:** `VipEntranceOverlay`, `LiveVipEntranceBanner` takım gradient; takım yoksa 🇹🇷 kırmızı/beyaz
+- **Profil:** Düzenle ekranında takım seçici; kayıtta cüzdan + profil invalidate
+- Rapor: `docs/LIVE_VOICE_SYNC_FIX_REPORT.md` güncellendi
+
 ## 1.0.152+186 (2026-08-11) — Canlı/sesli oda tam senkron (P0)
 
 - **Canlı çıkış:** `LiveRoomController.tearDownSession()` — SSE, socket, hediye, backend leave anında (idempotent)
