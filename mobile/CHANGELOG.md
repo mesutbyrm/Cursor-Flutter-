@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.153+188 (2026-08-11) — CI import düzeltmesi
+
+- `LiveVipEntranceBanner` / `LiveRoomChatMessage` — `EntranceTheme` package import (CodeQL derleme hatası)
+
 ## 1.0.153+187 (2026-08-11) — Gold giriş banner + takım renkleri
 
 - **Takım teması:** `TeamCatalog` + `EntranceTheme` — backend `team` nesnesi veya `favoriteTeam` (`PATCH /api/me`)

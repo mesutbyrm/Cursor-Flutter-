@@ -1,4 +1,4 @@
-import '../../../vip_gold/domain/entrance_theme.dart';
+import 'package:canlifal_social/features/vip_gold/domain/entrance_theme.dart';
 
 /// Canlı yayın sohbet satırı.
 class LiveRoomChatMessage {
