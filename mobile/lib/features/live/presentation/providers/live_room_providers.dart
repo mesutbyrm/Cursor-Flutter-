@@ -99,16 +99,33 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
   Timer? _poll;
   final Set<String> _seenIds = {};
   LiveNamespaceSocketService? _liveSocket;
+  var _tearDownDone = false;
+
+  /// Idempotent çıkış — SSE, socket, hediye poll ve backend leave.
+  Future<void> tearDownSession() async {
+    if (_tearDownDone) return;
+    _tearDownDone = true;
+    final streamId = arg;
+    _poll?.cancel();
+    _poll = null;
+    try {
+      _liveSocket?.disconnect();
+    } catch (_) {}
+    _liveSocket = null;
+    ref.read(liveGiftRealtimeProvider).setSseActive(false);
+    ref.read(liveGiftRealtimeProvider).stop();
+    ref.read(liveGiftRealtimeProvider).resetDedupeState();
+    ref.read(sseConnectionHubProvider).releaseVideoStream(streamId);
+    try {
+      await ref.read(liveRemoteProvider).leaveVideoStream(streamId);
+    } catch (_) {}
+    state = state.copyWith(sseConnected: false, streamEnded: true);
+  }
 
   @override
   LiveRoomState build(String streamId) {
     ref.onDispose(() {
-      _poll?.cancel();
-      _liveSocket?.disconnect();
-      _liveSocket = null;
-      ref.read(liveGiftRealtimeProvider).setSseActive(false);
-      ref.read(sseConnectionHubProvider).releaseVideoStream(streamId);
-      unawaited(ref.read(liveRemoteProvider).leaveVideoStream(streamId));
+      unawaited(tearDownSession());
     });
     Future.microtask(() => _bootstrap(streamId));
     return const LiveRoomState();

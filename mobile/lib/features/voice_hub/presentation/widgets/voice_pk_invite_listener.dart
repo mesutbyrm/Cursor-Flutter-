@@ -11,6 +11,7 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
+import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_room_session_registry.dart';
 import '../utils/pk_invite_dialog_helper.dart';
@@ -35,7 +36,12 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) return;
+      final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+      final sseOn = activeKey.isNotEmpty &&
+          (ref.read(voiceRoomLiveProvider(activeKey)).sseConnected);
+      if (sseOn) return;
       unawaited(_pollPendingInvites());
     });
     Future.microtask(_pollPendingInvites);
