@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.150+184 (2026-08-11) — PK, fal paneli, yayın özeti, hediye
+
+- **Sesli oda PK:** Oda bazlı poll + `guestUserId` davet body; aktif PK'da otomatik PK sayfasına yönlendirme
+- **Canlı PK:** `pkRoomProvider` skorları birleşik maçla senkron
+- **Fal yayını:** Sağ şeritte sürekli «Fal İste» paneli (`liveFortuneMyStatusProvider` durum)
+- **Yayın/oda özeti:** Kapanışta sohbete izleyici · jeton · süre sistem mesajları; sesli oda + canlı yayın
+- **Canlı hediye:** Hediye dinleyici anında bağlanır; yayın hediyeleri gecikmesiz başlatılır
+
 ## 1.0.149+183 (2026-08-11) — Backend API contract sync
 
 - **docs/BACKEND_API_REFERENCE.md** eklendi (Flutter master contract)

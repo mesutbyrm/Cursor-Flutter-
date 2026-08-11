@@ -13,7 +13,7 @@ import 'session_gift_summary.dart';
 /// Oturum sonu hediye özeti — mevcut provider verilerinden üretilir.
 abstract final class SessionGiftSummaryBuilder {
   static SessionGiftSummary forLiveBroadcast({
-    required WidgetRef ref,
+    required dynamic ref,
     required String streamId,
     required String hostUserId,
     required String hostDisplayName,
@@ -29,7 +29,9 @@ abstract final class SessionGiftSummaryBuilder {
     final grid = ref.read(liveGuestGridProvider);
     for (final slot in grid.slots) {
       if (!slot.isHost && slot.jetonEarned > 0) {
-        guestNet += slot.jetonEarned;
+        guestNet += (slot.jetonEarned is int
+            ? slot.jetonEarned as int
+            : (slot.jetonEarned as num).round());
       }
     }
 
@@ -39,7 +41,9 @@ abstract final class SessionGiftSummaryBuilder {
     if (!isHost && myId.isNotEmpty) {
       for (final slot in grid.slots) {
         if (slot.userId == myId && slot.jetonEarned > 0) {
-          myNet += slot.jetonEarned;
+          myNet += (slot.jetonEarned is int
+              ? slot.jetonEarned as int
+              : (slot.jetonEarned as num).round());
         }
       }
     }
@@ -66,7 +70,7 @@ abstract final class SessionGiftSummaryBuilder {
   }
 
   static SessionGiftSummary forVoiceRoom({
-    required WidgetRef ref,
+    required dynamic ref,
     required String roomTitle,
     required String? ownerUserId,
     required String? ownerDisplayName,
@@ -145,7 +149,7 @@ abstract final class SessionGiftSummaryBuilder {
   }
 
   /// Alıcı veya yayıncı odadan çıkınca cüzdanı yenile.
-  static Future<void> refreshWalletIfRecipient(WidgetRef ref, SessionGiftSummary s) async {
+  static Future<void> refreshWalletIfRecipient(dynamic ref, SessionGiftSummary s) async {
     if (s.myNetJeton > 0 || s.recipientOnly) {
       await ref.refreshWalletCache(force: true);
     }

@@ -83,6 +83,7 @@ import '../widgets/broadcast_room/live_moderation_sheet.dart';
 import '../providers/live_broadcast_settings_provider.dart';
 import '../widgets/broadcast_room/live_broadcast_settings_sheet.dart';
 import '../widgets/broadcast_room/live_viewers_sheet.dart';
+import '../widgets/broadcast_room/live_fortune_viewer_rail.dart';
 import '../widgets/broadcast_room/live_room_chat_fal_panel.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import '../widgets/broadcast_room/live_room_video_background.dart';
@@ -166,6 +167,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   var _hadHostVideo = false;
   var _liveSseConnected = false;
   String? _streamExtrasStreamId;
+  DateTime? _sessionJoinedAt;
 
   @override
   void initState() {
@@ -189,10 +191,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           unawaited(interaction.loadFollowingStatus(hostId));
         }
       }
+      _sessionJoinedAt = DateTime.now();
       _initTrtc();
-      _lazyGiftsTimer = Timer(LazyLoadPerf.liveRoomGifts, () {
-        if (mounted) _initGifts();
-      });
+      _initGifts();
       _lazyExtrasTimer = Timer(LazyLoadPerf.liveRoomExtras, () {
         if (mounted) _initStreamExtras();
       });
@@ -515,10 +516,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   bool _isFortuneBroadcast(LiveBroadcastSession s) {
     final cat = s.category.toLowerCase();
     if (cat.contains('fortune') || cat.contains('fal')) return true;
+    final title = s.title.toLowerCase();
+    if (title.contains('fal') || title.contains('tarot')) return true;
     return s.tags.any((t) {
       final l = t.toLowerCase();
       return l.contains('fal') ||
           l.contains('tarot') ||
+          l.contains('fortune') ||
           isLiveFortuneTypeKey(l);
     });
   }
@@ -733,8 +737,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         hostDisplayName: widget.session.streamerName ?? user.display,
         myUserId: user.id,
       );
+      final roomSnap = ref.read(liveRoomProvider(streamId));
+      ref.read(liveRoomProvider(streamId).notifier).appendSessionSummaryMessages(
+            summary,
+            viewerCount: roomSnap.viewerCount,
+            duration: _sessionJoinedAt != null
+                ? DateTime.now().difference(_sessionJoinedAt!)
+                : null,
+            endedLabel: widget.session.isHost
+                ? 'Yayını kapattınız'
+                : 'Yayından ayrıldınız',
+          );
       await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
-      if (context.mounted) {
+      if (context.mounted && summary.hasData) {
         await showSessionGiftSummarySheet(context, summary: summary);
       }
     } else {
@@ -753,6 +768,28 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Future<void> _showViewerStreamEndedSummary(String streamId) async {
     if (_leaving || !mounted) return;
     _leaving = true;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user != null) {
+      final hostId = widget.session.hostUserId?.trim() ?? '';
+      final summary = SessionGiftSummaryBuilder.forLiveBroadcast(
+        ref: ref,
+        streamId: streamId,
+        hostUserId: hostId.isNotEmpty ? hostId : user.id,
+        hostDisplayName: widget.session.streamerName ?? user.display,
+        myUserId: user.id,
+      );
+      final roomSnap = ref.read(liveRoomProvider(streamId));
+      ref.read(liveRoomProvider(streamId).notifier).appendSessionSummaryMessages(
+            summary,
+            viewerCount: roomSnap.viewerCount,
+            duration: _sessionJoinedAt != null
+                ? DateTime.now().difference(_sessionJoinedAt!)
+                : null,
+            endedLabel: 'Yayın sona erdi',
+          );
+      setState(() => _chatVisible = true);
+      await Future<void>.delayed(const Duration(milliseconds: 1800));
+    }
     await _leaveLiveSession(endReason: 'stream_ended');
     invalidateDiscoverLiveStreams(ref);
     if (!mounted) return;
@@ -2483,6 +2520,35 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               ),
             ),
             if (hasStream) GiftFeedPanel(sessionKey: streamId),
+            if (hasStream && !s.isHost && _isFortuneBroadcast(s))
+              Positioned(
+                right: 8,
+                bottom: 300,
+                child: LiveFortuneViewerRail(
+                  streamId: streamId,
+                  balance: balance,
+                  initialFortuneType: s.tags.isNotEmpty
+                      ? (isLiveFortuneTypeKey(s.tags.first)
+                          ? s.tags.first
+                          : liveFortuneCategoryToSlug(s.tags.first))
+                      : 'tarot',
+                  onSubmit: ({
+                    required displayName,
+                    required question,
+                    required fortuneType,
+                    required priority,
+                    required jetonCost,
+                  }) =>
+                      _submitStreamFortuneRequest(
+                        streamId: streamId,
+                        displayName: displayName,
+                        question: question,
+                        fortuneType: fortuneType,
+                        priority: priority,
+                        jetonCost: jetonCost,
+                      ),
+                ),
+              ),
             if (hasStream && pkState?.battle != null &&
                 (pkStatus == 'active' || pkStatus == 'ended'))
               LivePkPremiumOverlay(

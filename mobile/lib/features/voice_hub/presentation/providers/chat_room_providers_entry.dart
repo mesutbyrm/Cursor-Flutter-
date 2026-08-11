@@ -51,6 +51,8 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
       ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
             VoiceSessionPhase.connected,
           );
+      _sessionJoinedAt = DateTime.now();
+      _peakViewerCount = state.presence.length;
     } catch (e) {
       VoiceEventLog.error('join', e);
       ref.read(voiceSessionPhaseProvider.notifier).transitionTo(

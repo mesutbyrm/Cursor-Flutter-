@@ -228,6 +228,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
 
   void _applyRoomEventRoomClosed(Map<String, dynamic> payload) {
     final msg = payload['message']?.toString() ?? 'Oda kapatıldı';
+    _postVoiceSessionEndSummary(endedLabel: msg);
     state = state.copyWith(
       error: msg,
       presence: const [],

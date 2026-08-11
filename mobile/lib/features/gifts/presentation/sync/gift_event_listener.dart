@@ -48,7 +48,7 @@ class _GiftEventListenerState extends ConsumerState<GiftEventListener> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _bind());
+    _bind();
   }
 
   @override

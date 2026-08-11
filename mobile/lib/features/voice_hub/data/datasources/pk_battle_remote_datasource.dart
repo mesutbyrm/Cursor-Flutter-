@@ -170,6 +170,7 @@ class PkBattleRemoteDataSource {
     }
     final duration = durationSeconds.clamp(60, 3600);
 
+    final guest = guestUserId.trim();
     return _postPkAction(
       roomId: roomId,
       alternateRoomId: alternateRoomId,
@@ -177,6 +178,7 @@ class PkBattleRemoteDataSource {
         'action': 'create',
         'targetRoomId': oppRoom,
         'duration': duration,
+        if (guest.isNotEmpty) 'guestUserId': guest,
       },
     );
   }
