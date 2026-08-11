@@ -1,4 +1,5 @@
 import 'pk_room_models.dart';
+import 'pk_status_helper.dart';
 
 /// Gelen PK daveti bu yayın sahibine mi ait?
 bool isLivePkInviteRecipient(
@@ -46,7 +47,7 @@ bool isLivePkInviteRecipientMap(
   String? myUserId,
 }) {
   final status = battle['status']?.toString() ?? '';
-  if (status != 'pending') return false;
+  if (!isPkInvitePendingStatus(status)) return false;
   final sid = myStreamId.trim();
   final uid = myUserId?.trim() ?? '';
   final hostStream =

@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../core/util/json_util.dart';
 import '../../../core/auth/staff_roles.dart';
+import '../../../core/auth/bot_account_guard.dart';
 
 /// Jeton + CFC — `GET /api/user/credits` (canlifal.com).
 class WalletBalances extends Equatable {
@@ -19,6 +20,8 @@ class WalletBalances extends Equatable {
     this.canManagePayments,
     this.isAdminFlag,
     this.isStaffFlag,
+    this.isBotFlag,
+    this.accountType,
     this.totalEarnedJeton,
     this.pendingEarningsTl,
     this.approvedEarningsTl,
@@ -45,6 +48,8 @@ class WalletBalances extends Equatable {
     bool? canManagePayments,
     bool? isAdminFlag,
     bool? isStaffFlag,
+    bool? isBotFlag,
+    String? accountType,
     int? totalEarnedJeton,
     double? pendingEarningsTl,
     double? approvedEarningsTl,
@@ -68,6 +73,8 @@ class WalletBalances extends Equatable {
       canManagePayments: canManagePayments ?? this.canManagePayments,
       isAdminFlag: isAdminFlag ?? this.isAdminFlag,
       isStaffFlag: isStaffFlag ?? this.isStaffFlag,
+      isBotFlag: isBotFlag ?? this.isBotFlag,
+      accountType: accountType ?? this.accountType,
       totalEarnedJeton: totalEarnedJeton ?? this.totalEarnedJeton,
       pendingEarningsTl: pendingEarningsTl ?? this.pendingEarningsTl,
       approvedEarningsTl: approvedEarningsTl ?? this.approvedEarningsTl,
@@ -122,6 +129,8 @@ class WalletBalances extends Equatable {
       canManagePayments: pick(json, ['canManagePayments']) == true,
       isAdminFlag: pick(json, ['isAdmin']) == true,
       isStaffFlag: pick(json, ['isStaff']) == true,
+      isBotFlag: pick(json, ['isBot', 'is_bot']) == true,
+      accountType: pick(json, ['accountType', 'account_type'])?.toString(),
       totalEarnedJeton: asInt(pick(json, [
         'totalEarnedJeton',
         'totalEarned',
@@ -185,6 +194,8 @@ class WalletBalances extends Equatable {
   final bool? canManagePayments;
   final bool? isAdminFlag;
   final bool? isStaffFlag;
+  final bool? isBotFlag;
+  final String? accountType;
   final int? totalEarnedJeton;
   final double? pendingEarningsTl;
   final double? approvedEarningsTl;
@@ -236,6 +247,13 @@ class WalletBalances extends Equatable {
       canManagePayments == true ||
       StaffRoles.isAdminOrManager(role: role);
 
+  bool get isBot => BotAccountGuard.fromJsonMap({
+        'role': role,
+        'isBot': isBotFlag,
+        'is_bot': isBotFlag,
+        'accountType': accountType,
+      });
+
   @override
   List<Object?> get props => [
         jeton,
@@ -251,6 +269,8 @@ class WalletBalances extends Equatable {
         canManagePayments,
         isAdminFlag,
         isStaffFlag,
+        isBotFlag,
+        accountType,
         totalEarnedJeton,
         pendingEarningsTl,
         approvedEarningsTl,

@@ -48,6 +48,7 @@ class _SocialInstagramPostCardState
     if (postId.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
+        ref.read(socialNotifierProvider.notifier).registerView(postId);
         ref.read(socialRemoteProvider).registerPostView(postId);
       });
     }
@@ -148,7 +149,10 @@ class _SocialInstagramPostCardState
                           ),
                         ),
                       ),
-                    if (post.isAutoShare || post.fortuneCount > 0)
+                    if (post.isAutoShare ||
+                        post.fortuneCount > 0 ||
+                        post.viewsCount > 0 ||
+                        post.viewCount > 0)
                       Padding(
                         padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
                         child: Wrap(
@@ -158,6 +162,12 @@ class _SocialInstagramPostCardState
                             if (post.isAutoShare) const _AutoShareBadge(),
                             if (post.fortuneCount > 0)
                               _CoViewersBadge(count: post.fortuneCount),
+                            if (post.viewsCount > 0 || post.viewCount > 0)
+                              _FortuneViewsBadge(
+                                count: post.viewsCount > 0
+                                    ? post.viewsCount
+                                    : post.viewCount,
+                              ),
                           ],
                         ),
                       ),
@@ -568,6 +578,34 @@ class _CoViewersBadge extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: const Color(0xFFFFB366).withValues(alpha: 0.95),
+        ),
+      ),
+    );
+  }
+}
+
+class _FortuneViewsBadge extends StatelessWidget {
+  const _FortuneViewsBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFF38BDF8).withValues(alpha: 0.75),
+          width: 1.2,
+        ),
+      ),
+      child: Text(
+        '$count kişi baktı',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF7DD3FC).withValues(alpha: 0.95),
         ),
       ),
     );

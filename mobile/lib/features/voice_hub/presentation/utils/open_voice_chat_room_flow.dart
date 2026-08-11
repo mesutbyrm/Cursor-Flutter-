@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../core/auth/bot_account_guard.dart';
+import '../../../../core/auth/bot_account_provider.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -404,6 +406,15 @@ Future<void> _createAndEnter(
   required _OpenRoomSetup setup,
   bool loadingVisible = false,
 }) async {
+  if (BotAccountGuard.blockIfBot(
+    ref,
+    context,
+    'sesli oda açma',
+    readIsBot: () => ref.read(isBotAccountProvider),
+  )) {
+    if (loadingVisible && context.mounted) Navigator.pop(context);
+    return;
+  }
   if (!loadingVisible) {
     _showLoadingDialog(context);
   }

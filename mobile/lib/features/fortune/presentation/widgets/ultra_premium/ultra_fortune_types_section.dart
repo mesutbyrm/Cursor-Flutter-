@@ -16,8 +16,9 @@ abstract final class UltraFortuneHubCatalog {
     (slug: 'yildiz-haritasi', subtitle: 'Gökyüzü rehberin', displayTitle: 'Yıldızname'),
     (slug: 'melek-kartlari', subtitle: 'Meleklerden rehberlik al', displayTitle: null),
     (slug: 'numeroloji', subtitle: 'Sayıların enerjisini öğren', displayTitle: null),
-    (slug: 'pendul', subtitle: 'Kalbini dinle, rehberlik al', displayTitle: 'İstihare'),
-    (slug: 'runik', subtitle: 'Aura ve enerji okuması', displayTitle: 'Aura'),
+    (slug: 'istihare', subtitle: 'Kalbini dinle, rehberlik al', displayTitle: null),
+    (slug: 'aura-analizi', subtitle: 'Aura ve enerji okuması', displayTitle: 'Aura'),
+    (slug: 'kursundokme', subtitle: 'Geleneksel enerji temizliği', displayTitle: 'Kurşun Dökme'),
   ];
 
   static List<({FortuneTypeEntity type, String subtitle, String title})> get items {

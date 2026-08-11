@@ -78,6 +78,13 @@ class SocialRemoteDataSource {
         hasMore = current < totalPages;
       }
     }
+    if (!hasMore) {
+      if (m['hasMore'] == true || m['has_more'] == true) {
+        hasMore = true;
+      } else if (posts.length >= 20) {
+        hasMore = true;
+      }
+    }
 
     return (posts: posts, hasMore: hasMore);
   }

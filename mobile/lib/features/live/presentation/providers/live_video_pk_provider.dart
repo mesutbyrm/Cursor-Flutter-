@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/auth/bot_account_guard.dart';
+import '../../../../core/auth/bot_account_provider.dart';
 import '../../data/datasources/live_stream_extras_datasource.dart';
 import '../../data/pk/pk_room_remote_datasource.dart';
 import '../../domain/pk/pk_room_models.dart';
@@ -155,6 +157,13 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   }
 
   Future<void> create({String? opponentStreamId, String? targetStreamId}) async {
+    if (ref.read(isBotAccountProvider)) {
+      state = state.copyWith(
+        loading: false,
+        error: BotAccountGuard.blockedMessage('PK başlatma'),
+      );
+      return;
+    }
     state = state.copyWith(loading: true, clearError: true);
     final opponent = targetStreamId ?? opponentStreamId;
     try {

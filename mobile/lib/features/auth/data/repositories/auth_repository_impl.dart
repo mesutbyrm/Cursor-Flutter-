@@ -110,7 +110,7 @@ class AuthRepositoryImpl implements AuthRepository {
     if (um != null) {
       final merged = _mergeRoleHints(um, body);
       final dto = UserDto.fromJson(merged);
-      final entity = dto.toEntity(role: dto.roleFrom(merged));
+      final entity = dto.toEntity(role: dto.roleFrom(merged), source: merged);
       await _sessionCache.write(entity);
       return entity;
     }
@@ -118,14 +118,15 @@ class AuthRepositoryImpl implements AuthRepository {
     final um2 = _userMap(me) ?? me;
     final merged2 = _mergeRoleHints(um2, me);
     final dto = UserDto.fromJson(merged2);
-    final entity = dto.toEntity(role: dto.roleFrom(merged2));
+    final entity = dto.toEntity(role: dto.roleFrom(merged2), source: merged2);
     await _sessionCache.write(entity);
     return entity;
   }
 
   Future<UserEntity> _mapAuthResponse(AuthResponse response) async {
     final dto = UserDto.fromApiMap(response.user.toJson());
-    final entity = dto.toEntity(role: dto.roleFrom(response.user.toJson()));
+    final userJson = response.user.toJson();
+    final entity = dto.toEntity(role: dto.roleFrom(userJson), source: userJson);
     await _sessionCache.write(entity);
     return entity;
   }
@@ -210,7 +211,10 @@ class AuthRepositoryImpl implements AuthRepository {
         return null;
       }
       final dto = UserDto.fromApiMap(validated.toJson());
-      final entity = dto.toEntity(role: dto.roleFrom(validated.toJson()));
+      final entity = dto.toEntity(
+        role: dto.roleFrom(validated.toJson()),
+        source: validated.toJson(),
+      );
       await _sessionCache.write(entity);
       return entity;
     } on ApiException catch (e) {

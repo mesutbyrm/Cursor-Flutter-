@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../../core/util/json_util.dart';
+import '../../../../core/auth/bot_account_guard.dart';
 import '../../domain/entities/user_entity.dart';
 
 part 'user_dto.freezed.dart';
@@ -130,7 +131,7 @@ abstract class UserDto with _$UserDto {
     return UserDto.fromApiMap(merged);
   }
 
-  UserEntity toEntity({String? role}) => UserEntity(
+  UserEntity toEntity({String? role, Map<String, dynamic>? source}) => UserEntity(
         id: id,
         username: username,
         email: email,
@@ -142,5 +143,6 @@ abstract class UserDto with _$UserDto {
         followingCount: followingCount,
         isFollowing: isFollowing,
         coinBalance: coinBalance,
+        isBot: BotAccountGuard.fromJsonMap(source),
       );
 }

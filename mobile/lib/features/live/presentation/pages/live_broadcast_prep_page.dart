@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/auth/bot_account_guard.dart';
+import '../../../../core/auth/bot_account_provider.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/live_event_log.dart';
 import '../../../../core/network/token_storage.dart';
@@ -189,6 +191,14 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
 
   Future<void> _startLive() async {
     if (_starting) return;
+    if (BotAccountGuard.blockIfBot(
+      ref,
+      context,
+      'canlı yayın başlatma',
+      readIsBot: () => ref.read(isBotAccountProvider),
+    )) {
+      return;
+    }
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(

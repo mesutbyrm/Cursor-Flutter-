@@ -22,9 +22,9 @@ abstract final class FortuneTypeImages {
   static String heroTagFor(String slug) => 'fortune-hero-$slug';
 
   static String _sceneSlug(String slug) => switch (slug) {
-        'pendul' => 'istihare',
-        'runik' => 'aura',
         'gunluk-fal' => 'tarot',
+        'aura-analizi' => 'aura',
+        'kursundokme' => 'kursun-dokme',
         _ => slug,
       };
 

@@ -478,7 +478,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       perms: perms,
       isOwner: isOwner,
       onUserTap: (u) => _openUser(u, room, perms),
-      onPkInvite: () => openVoiceRoomBasicPkInvite(context, room),
+      onPkInvite: () => openVoiceRoomBasicPkInvite(context, ref, room),
     );
   }
 

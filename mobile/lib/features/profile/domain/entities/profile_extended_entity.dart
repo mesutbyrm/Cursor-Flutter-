@@ -1,4 +1,5 @@
 import '../../../../core/util/json_util.dart';
+import '../../../../core/auth/bot_account_guard.dart';
 
 /// Genişletilmiş profil — `GET /api/user/profile` + `GET /api/me`.
 class ProfileExtendedEntity {
@@ -90,6 +91,8 @@ class ProfileExtendedEntity {
   final Map<String, dynamic>? teamRaw;
   final String? coverImage;
   final Map<String, dynamic> raw;
+
+  bool get isBot => BotAccountGuard.fromJsonMap(raw);
 }
 
 /// Kullanıcı istatistikleri — `GET /api/user/statistics`.

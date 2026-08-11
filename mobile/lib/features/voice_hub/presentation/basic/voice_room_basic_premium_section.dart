@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/auth/bot_account_guard.dart';
+import '../../../../core/auth/bot_account_provider.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/domain/entities/user_entity.dart';
@@ -573,8 +575,17 @@ Future<void> shareVoiceRoom(BuildContext context, VoiceRoomEntity room) async {
 
 Future<void> openVoiceRoomBasicPkInvite(
   BuildContext context,
+  WidgetRef ref,
   VoiceRoomEntity room,
 ) async {
+  if (BotAccountGuard.blockIfBot(
+    ref,
+    context,
+    'PK daveti gönderme',
+    readIsBot: () => ref.read(isBotAccountProvider),
+  )) {
+    return;
+  }
   final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
   if (key.isEmpty) {
     if (!context.mounted) return;

@@ -1,6 +1,6 @@
 # Canlifal Flutter — Master Sync Audit (2026-08-11)
 
-> **Sürüm:** `1.0.154+189`  
+> **Sürüm:** `1.0.155+190`  
 > **Backend tek kaynak:** `https://canlifal.com`  
 > **Entegrasyon kılavuzu:** `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9
 
@@ -92,25 +92,23 @@
 | Voice leave | **PASS*** | P0 guard bu oturum |
 | Live leave / swipe | **PASS*** | suspend/resume eklendi |
 | Gifts jeton/animasyon | **PASS*** | Parser mevcut; cihaz E2E gerekli |
-| PK A→B delivery | **FAIL*** | Backend SSE; 2 cihaz test |
-| Social feed pagination | **Kısmi** | `PagedResult` var; tam audit backlog |
-| Fal türleri (15) | **Kısmi** | Çoğu modül var; gap analiz backlog |
-| Bot kısıt | **Kısmi** | Backend role; UI guard backlog |
+| PK A→B delivery | **PASS*** kod | Live+voice 8s poll; `invited` status; targetUserId |
+| Social feed pagination | **PASS*** kod | hasMore fallback; registerView + API view |
+| Fal türleri (15) | **PASS*** kod | aura/istihare/kursundokme/dogum-haritasi eklendi |
+| Bot kısıt | **PASS*** kod | `isBotAccountProvider` + live/voice/social/PK guard |
+| Room SSE parser | **PASS*** kod | `RoomRealtimeEventParser` |
 | FİNAL 1–25 cihaz | **FAIL** | adb/emülatör yok |
 
 \* Kod + unit test; üretim cihazında manuel doğrulama bekleniyor.
 
 ## J. Kalan sorunlar (öncelik sırası)
 
-1. **PK karşı taraf delivery** — backend SSE/event + 2 cihaz doğrulama
-2. **Social feed** — otomatik fal post pagination / viewer count API parity
-3. **Video thumbnail** — backend ffmpeg pipeline (Flutter yalnızca URL gösterir)
-4. **Bot UI guards** — role/type ile aksiyon gizleme (tüm ekranlar)
-5. **SSE stack birleştirme** — 4+ paralel implementasyon → `BaseSseService`
-6. **RoomRealtimeManager** — tek event parser katmanı
-7. **Eksik fal UI** — envanter vs `FortuneRepository` gap listesi
-8. **Performance profiling** — startup/thermal cihaz ölçümü
-9. **Google SHA-1** — Firebase Console debug+release fingerprint
+1. **PK karşı taraf delivery** — 2 cihaz üretim doğrulama (kod: SSE + 8s poll)
+2. **Video thumbnail** — backend ffmpeg pipeline (Flutter yalnızca URL gösterir)
+3. **SSE stack birleştirme** — parser birleşti; tam `BaseSseService` refactor backlog
+4. **Performance profiling** — startup/thermal cihaz ölçümü
+5. **Google SHA-1** — Firebase Console debug+release fingerprint
+6. **FİNAL 1–25 cihaz** — adb/emülatör Cloud ortamında yok
 
 ## Google ile giriş
 

@@ -62,6 +62,19 @@ class SocialFortuneFeedSync {
     String? postIdHint,
   }) async {
     final repo = _ref.read(socialRepositoryProvider);
+    final hint = postIdHint?.trim() ?? '';
+    if (hint.isNotEmpty) {
+      try {
+        final direct = await repo.fetchPost(hint);
+        if (direct != null) {
+          _prependToFeeds(direct);
+          return;
+        }
+      } catch (e) {
+        if (kDebugMode) debugPrint('SocialFortuneFeedSync fetchPost: $e');
+      }
+    }
+
     const delays = [
       Duration(milliseconds: 400),
       Duration(milliseconds: 900),

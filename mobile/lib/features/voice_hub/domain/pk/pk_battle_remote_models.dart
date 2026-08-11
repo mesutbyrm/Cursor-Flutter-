@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../live/domain/pk/pk_status_helper.dart';
+
 /// Sunucu PK durumu — web ve Flutter ortak sözleşme.
 class PkBattleRemote extends Equatable {
   const PkBattleRemote({
@@ -18,6 +20,8 @@ class PkBattleRemote extends Equatable {
     this.opponentLiveStreamId,
     this.challengerId,
     this.opponentId,
+    this.targetUserId,
+    this.guestUserId,
     this.winnerId,
     this.challenger,
     this.opponent,
@@ -40,13 +44,15 @@ class PkBattleRemote extends Equatable {
   final String? opponentLiveStreamId;
   final String? challengerId;
   final String? opponentId;
+  final String? targetUserId;
+  final String? guestUserId;
   final String? winnerId;
   final PkParticipantRemote? challenger;
   final PkParticipantRemote? opponent;
   final PkResultRemote? result;
   final List<PkGiftRemote> recentGifts;
 
-  bool get isPending => status == 'pending';
+  bool get isPending => isPkInvitePendingStatus(status);
   bool get isActive => status == 'active';
   bool get isEnded =>
       status == 'ended' ||
@@ -104,10 +110,9 @@ class PkBattleRemote extends Equatable {
       liveStreamId: json['liveStreamId']?.toString(),
       opponentLiveStreamId: json['opponentLiveStreamId']?.toString(),
       challengerId: (json['challengerId'] ?? json['hostUserId'])?.toString(),
-      opponentId: (json['opponentId'] ??
-              json['guestUserId'] ??
-              json['targetUserId'])
-          ?.toString(),
+      opponentId: (json['opponentId'] ?? json['opponentUserId'])?.toString(),
+      targetUserId: json['targetUserId']?.toString(),
+      guestUserId: json['guestUserId']?.toString(),
       winnerId: json['winnerId']?.toString(),
       challenger: json['challenger'] is Map
           ? PkParticipantRemote.fromJson(

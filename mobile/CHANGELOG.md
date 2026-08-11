@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.155+190 (2026-08-11) — Master sync tam faz (PK, sosyal, bot, fal)
+
+- **PK davet:** Canlı + sesli 8s HTTP yedek poll; `invited` durumu; `targetUserId` / `guestUserId` hedef eşlemesi
+- **Sosyal akış:** `hasMore` pagination yedeği; görüntülenme `registerView` + API; fal kartında «X kişi baktı» rozeti
+- **Fal senkron:** `SocialFortuneFeedSync` — `postIdHint` ile `fetchPost` öncelikli
+- **Bot guard:** `BotAccountGuard` / `isBotAccountProvider` — canlı, sesli oda, sosyal paylaşım, PK
+- **Fal katalog:** Aura, İstihare, Kurşun dökme, Doğum haritası; yanlış alias düzeltmeleri
+- **SSE:** `RoomRealtimeEventParser` — PK davet olay normalizasyonu
+- Rapor: `docs/FLUTTER_MASTER_SYNC_AUDIT.md` güncellendi
+
 ## 1.0.154+189 (2026-08-11) — Master sync P0: oda çıkış + swipe TRTC
 
 - **Sesli oda:** `refresh()` artık `_sessionActive` yokken presence yeniden join etmez (Music PiP stale presence)

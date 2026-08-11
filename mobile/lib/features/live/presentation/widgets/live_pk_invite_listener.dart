@@ -12,7 +12,7 @@ import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_pk_owned_streams_socket_provider.dart';
 import '../providers/pk_room_providers.dart';
 
-/// Uygulama genelinde bekleyen PK davetleri — Socket.IO + SSE; HTTP polling yok.
+/// Uygulama genelinde bekleyen PK davetleri — Socket.IO + SSE + 8s HTTP yedek.
 class LivePkInviteListener extends ConsumerStatefulWidget {
   const LivePkInviteListener({super.key, required this.child});
 
@@ -26,13 +26,24 @@ class LivePkInviteListener extends ConsumerStatefulWidget {
 class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   final Set<String> _seen = {};
   var _showing = false;
+  Timer? _pollTimer;
 
   static const _dialogTimeout = Duration(seconds: 30);
 
   @override
   void initState() {
     super.initState();
+    _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+      if (!mounted || _showing) return;
+      unawaited(_processPendingInvites());
+    });
     Future.microtask(_processPendingInvites);
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
   }
 
   bool _isRecipient(PkRoomMatch inv, String userId) {

@@ -67,6 +67,42 @@ void main() {
     expect(isPkChallengerRoom(battle, self), isTrue);
   });
 
+  test('isPkInviteTarget matches targetUserId and guestUserId', () {
+    const battleTarget = PkBattleRemote(
+      id: 'pk2',
+      battleType: 'voice_room',
+      status: 'invited',
+      challengerScore: 0,
+      opponentScore: 0,
+      secondsLeft: 300,
+      durationSeconds: 180,
+      targetScore: 1000,
+      voiceRoomId: 'room-a',
+      targetUserId: 'owner-b',
+    );
+    expect(
+      isPkInviteTarget(battleTarget, eligible, userId: 'owner-b'),
+      isTrue,
+    );
+
+    const battleGuest = PkBattleRemote(
+      id: 'pk3',
+      battleType: 'voice_room',
+      status: 'invited',
+      challengerScore: 0,
+      opponentScore: 0,
+      secondsLeft: 300,
+      durationSeconds: 180,
+      targetScore: 1000,
+      voiceRoomId: 'room-a',
+      guestUserId: 'owner-b',
+    );
+    expect(
+      isPkInviteTarget(battleGuest, eligible, userId: 'owner-b'),
+      isTrue,
+    );
+  });
+
   test('isPkBattleLive only true for active battles', () {
     const pending = PkBattleRemote(
       id: 'pk1',

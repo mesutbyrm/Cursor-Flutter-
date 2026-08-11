@@ -15,6 +15,10 @@ abstract final class FortuneTypeSlug {
     'istihare': 'istihare',
     'katina': 'katina',
     'kursundokme': 'kursundokme',
+    'kursun-dokme': 'kursundokme',
+    'aura-analizi': 'aura-analizi',
+    'dogum-haritasi': 'dogum-haritasi',
+    'birth-chart': 'dogum-haritasi',
   };
 
   static String resolve(String type) {

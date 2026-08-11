@@ -1,4 +1,5 @@
 import '../../../../core/util/json_util.dart';
+import 'pk_status_helper.dart';
 
 /// PK Faz 2 modları — birleşik `/api/pk/*` sözleşmesi.
 enum PkRoomMode {
@@ -226,7 +227,7 @@ class PkRoomMatch {
   final int? winnerSeatIndex;
   final List<PkSeat> seats;
 
-  bool get isPending => status == 'pending';
+  bool get isPending => isPkInvitePendingStatus(status);
   bool get isLive => status == 'live' || status == 'active';
   bool get isCompleted =>
       status == 'completed' || status == 'ended' || status == 'cancelled';
