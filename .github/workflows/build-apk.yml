@@ -163,6 +163,17 @@ jobs:
           chmod +x scripts/ci-link-android-ndk.sh
           bash scripts/ci-link-android-ndk.sh
 
+      - name: Release signing preflight (secrets)
+        working-directory: ${{ github.workspace }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x scripts/ci-release-signing-preflight.sh
+          bash scripts/ci-release-signing-preflight.sh
+
       - name: Release gate
         working-directory: ${{ github.workspace }}
         env:
@@ -228,24 +239,13 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          set -eu
-          if [ -n "${ANDROID_KEYSTORE_BASE64:-}" ]; then
-            printf '%s' "$ANDROID_KEYSTORE_BASE64" | tr -d '\n\r\t ' | base64 -d \
-              > mobile/android/app/release.keystore
-            cat > mobile/android/key.properties <<EOF
-          storeFile=release.keystore
-          storePassword=${ANDROID_KEYSTORE_PASSWORD}
-          keyAlias=${ANDROID_KEY_ALIAS}
-          keyPassword=${ANDROID_KEY_PASSWORD}
-          EOF
-            echo "Release keystore hazır — sabit SHA-1 ile imzalanacak."
-          else
-            echo "ANDROID_KEYSTORE_BASE64 yok — debug imza (Google girişi çalışmayabilir)."
-          fi
+          chmod +x scripts/ci-setup-release-keystore.sh
+          bash scripts/ci-setup-release-keystore.sh
 
       - name: flutter build apk --release (Gate 9)
         run: |
           set -eux
+          flutter clean
           DEFINES=""
           if [[ -f android/app/google-services.json ]]; then
             DEFINES=$(bash ../scripts/print-firebase-dart-defines.sh || true)
@@ -263,12 +263,13 @@ jobs:
           cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
             build/app/outputs/flutter-apk/app-release.apk
 
-      - name: Gate 9 — release build doğrulama
+      - name: Gate 9 — release imza doğrulama
+        working-directory: ${{ github.workspace }}
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
-          set -eux
-          test -s build/app/outputs/flutter-apk/app-release.apk
-          ls -lh build/app/outputs/flutter-apk/app-release.apk
-          echo "Gate 9: release APK oluşturuldu"
+          chmod +x scripts/verify-release-apk-signature.sh
+          bash scripts/verify-release-apk-signature.sh mobile/build/app/outputs/flutter-apk/app-release.apk
 
       - name: Copy APK
         working-directory: ${{ github.workspace }}
