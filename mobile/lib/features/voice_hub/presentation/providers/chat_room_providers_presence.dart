@@ -261,6 +261,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   }
 
   void _patchHubPresenceCount(int count) {
+    if (count > _peakViewerCount) _peakViewerCount = count;
     if (_roomKey.isEmpty) return;
     state = state.copyWith(hubOnlineCount: count);
     ref.read(voiceRoomsPresenceProvider.notifier).patchRoomCount(_roomKey, count);

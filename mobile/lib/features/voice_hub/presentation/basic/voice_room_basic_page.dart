@@ -407,13 +407,28 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final liveKey = _liveRoomKey;
     final audio = _audio;
     _audio = null;
+    final room = _effectiveRoom();
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final liveNotifier = ref.read(voiceRoomLiveProvider(liveKey).notifier);
+    if (user != null) {
+      final summary = SessionGiftSummaryBuilder.forVoiceRoom(
+        ref: ref,
+        roomTitle: room.displayTitle,
+        ownerUserId: room.ownerId,
+        ownerDisplayName: room.ownerName,
+        myUserId: user.id,
+        myDisplayName: user.display,
+      );
+      await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
+      if (mounted && summary.hasData) {
+        await showSessionGiftSummarySheet(context, summary: summary);
+      }
+    }
 
     unawaited(
       Future.wait<void>([
         if (audio != null) audio.leave(),
-        ref
-            .read(voiceRoomLiveProvider(liveKey).notifier)
-            .leaveRoomSession(source: 'basic_leave', awaitBackend: false),
+        liveNotifier.leaveRoomSession(source: 'basic_leave', awaitBackend: false),
       ]),
     );
 

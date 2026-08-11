@@ -82,6 +82,8 @@ import '../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../gifts/presentation/providers/gift_catalog_index_provider.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/domain/gift_system_message.dart';
+import '../../../gifts/domain/session_gift_summary_builder.dart';
+import '../../../gifts/domain/session_summary_message.dart';
 import '../../../gifts/domain/gift_payload_util.dart';
 import '../../../gifts/presentation/sync/gift_sse_dispatch.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
@@ -388,6 +390,8 @@ class VoiceRoomLiveController
   /// Odaya girince eski giriş/çıkış mesajları duyurulmasın.
   var _entrancesArmed = false;
   DateTime? _lastSseEventAt;
+  DateTime? _sessionJoinedAt;
+  int _peakViewerCount = 0;
 
   String? _effectiveNickname(UserEntity? user) {
     final server = state.myNickname?.trim();
@@ -630,6 +634,45 @@ class VoiceRoomLiveController
     );
   }
 
+  void appendSessionSummaryMessages(List<String> lines) {
+    for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
+      _appendSyntheticSystemMessage(trimmed, kind: ChatMessageKind.text);
+    }
+  }
+
+  Duration? sessionDurationSinceJoin() {
+    if (_sessionJoinedAt == null) return null;
+    return DateTime.now().difference(_sessionJoinedAt!);
+  }
+
+  int get peakViewerCount => _peakViewerCount;
+
+  void _postVoiceSessionEndSummary({String endedLabel = 'Oda kapandı'}) {
+    try {
+      final user = ref.read(authControllerProvider).valueOrNull;
+      final summary = SessionGiftSummaryBuilder.forVoiceRoom(
+        ref: ref,
+        roomTitle: _roomMeta.displayTitle,
+        ownerUserId: state.ownerId ?? _roomMeta.ownerId,
+        ownerDisplayName: _roomMeta.ownerName,
+        myUserId: user?.id,
+        myDisplayName: user?.display,
+      );
+      final viewers = _peakViewerCount > 0
+          ? _peakViewerCount
+          : state.presence.length;
+      final lines = SessionSummaryMessage.lines(
+        summary,
+        viewerCount: viewers > 0 ? viewers : null,
+        duration: sessionDurationSinceJoin(),
+        endedLabel: endedLabel,
+      );
+      appendSessionSummaryMessages(lines);
+    } catch (_) {}
+  }
+
   void _pushBasicChatEvent(ChatRoomMessage msg) {
     final name = msg.user?.displayName.trim().isNotEmpty == true
         ? msg.user!.displayName.trim()
@@ -731,7 +774,7 @@ class VoiceRoomLiveController
         );
     VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: source);
 
-    // Heartbeat/poll hemen durdur — hayalet presence sinyali gönderilmesin.
+    _postVoiceSessionEndSummary(endedLabel: 'Odadan ayrıldınız');
     _cancelSessionTimers();
 
     // Backend presence + koltuk temizliği önce (diğer kullanıcılar hemen görsün).

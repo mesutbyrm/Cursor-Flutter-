@@ -20,6 +20,8 @@ import 'live_providers.dart';
 import 'live_stream_engagement_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/domain/gift_system_message.dart';
+import '../../../gifts/domain/session_summary_message.dart';
+import '../../../gifts/domain/session_gift_summary.dart';
 import '../../../gifts/presentation/sync/gift_sse_dispatch.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
@@ -488,6 +490,38 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         ),
       ],
     );
+  }
+
+  void appendSessionSummaryMessages(
+    SessionGiftSummary summary, {
+    int? viewerCount,
+    Duration? duration,
+    String endedLabel = 'Yayın sona erdi',
+  }) {
+    final lines = SessionSummaryMessage.lines(
+      summary,
+      viewerCount: viewerCount,
+      duration: duration,
+      endedLabel: endedLabel,
+    );
+    for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
+      final msgId =
+          'summary-${trimmed.hashCode}-${DateTime.now().microsecondsSinceEpoch}';
+      if (!_seenIds.add(msgId)) continue;
+      state = state.copyWith(
+        messages: [
+          ...state.messages,
+          LiveRoomChatMessage(
+            id: msgId,
+            user: 'Sistem',
+            text: trimmed,
+            isSystem: true,
+          ),
+        ],
+      );
+    }
   }
 }
 

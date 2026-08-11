@@ -183,6 +183,10 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   @override
   Widget build(BuildContext context) {
     final remote = ref.watch(pkBattleRemoteProvider);
+    final unifiedId = _unifiedMatchId;
+    final unifiedMatch = unifiedId != null && unifiedId.isNotEmpty
+        ? ref.watch(pkRoomProvider(unifiedId))
+        : null;
     final pk = ref.watch(pkBattleProvider);
     final streamId = _streamId ?? '';
     final giftSession = streamId.isNotEmpty
@@ -190,9 +194,13 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
         : const GiftSessionState();
     final activeGift = giftSession.activeAnimation;
 
-    final leftScore = remote?.challengerScore ?? pk.left.total;
-    final rightScore = remote?.opponentScore ?? pk.right.total;
-    final status = remote?.status ?? (pk.isActive ? 'active' : 'pending');
+    final leftScore = unifiedMatch?.leftScore ??
+        remote?.challengerScore ??
+        pk.left.total;
+    final rightScore = unifiedMatch?.rightScore ??
+        remote?.opponentScore ??
+        pk.right.total;
+    final status = unifiedMatch?.status ?? remote?.status ?? (pk.isActive ? 'active' : 'pending');
     final isHost = widget.session.isHost;
     final leftName = widget.session.streamerName ?? 'Sen';
     final rightName = widget.opponentStream?.streamerName ??
