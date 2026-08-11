@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.152+186 (2026-08-11) — Canlı/sesli oda tam senkron (P0)
+
+- **Canlı çıkış:** `LiveRoomController.tearDownSession()` — SSE, socket, hediye, backend leave anında (idempotent)
+- **Fal isteği (yayıncı):** Sağ üst `LiveHostFortuneRequestStack` — max 3 kart, Cevapla/Reddet/Beklet
+- **Sesli PK:** SSE bağlıyken 8s poll atlanır; `pkBattleRemoteProvider` SSE birincil
+- Rapor: `docs/LIVE_VOICE_SYNC_FIX_REPORT.md`
+
 ## 1.0.151+185 (2026-08-11) — Tek backend yönlendirme
 
 - **ApiBackendRouter:** Taşınan tüm yollar (`/api/pk/*`, `/api/live/pk/active`, `/api/live/guest/*`, `/api/games/rooms`, `/api/membership/*`) artık `canlifal.com` (main)

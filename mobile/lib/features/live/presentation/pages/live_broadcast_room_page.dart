@@ -77,6 +77,7 @@ import '../widgets/broadcast_room/live_pk_score_bar.dart';
 import '../widgets/pk/pk_room_live_section.dart';
 import '../providers/live_fortune_request_provider.dart';
 import '../providers/live_stream_quality_provider.dart';
+import '../widgets/broadcast_room/live_host_fortune_request_stack.dart';
 import '../widgets/broadcast_room/live_fortune_request_form.dart';
 import '../widgets/broadcast_room/live_like_realtime.dart';
 import '../widgets/broadcast_room/live_moderation_sheet.dart';
@@ -418,6 +419,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final streamId = widget.session.streamId?.trim() ?? '';
     if (streamId.isNotEmpty) {
       unawaited(_tearDownActivePk(streamId));
+      await ref.read(liveRoomProvider(streamId).notifier).tearDownSession();
     }
     _hostHeartbeat?.cancel();
     _hostHeartbeat = null;
@@ -2520,6 +2522,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               ),
             ),
             if (hasStream) GiftFeedPanel(sessionKey: streamId),
+            if (hasStream && s.isHost)
+              LiveHostFortuneRequestStack(
+                streamId: streamId,
+                topInset: top + 52,
+              ),
             if (hasStream && !s.isHost && _isFortuneBroadcast(s))
               Positioned(
                 right: 8,
