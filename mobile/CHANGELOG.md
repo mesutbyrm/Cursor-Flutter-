@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.149+183 (2026-08-11) — Backend API contract sync
+
+- **docs/BACKEND_API_REFERENCE.md** eklendi (Flutter master contract)
+- **Battles/Goals:** `ApiBackendRouter` → ana backend (`canlifal.com`); ikinci backend yönlendirmesi kaldırıldı
+- **Gift battle/goal:** POST/GET sözleşmesi ve JSON alan eşlemesi (secondsLeft, rank, percent, totalScore, lastCallActive)
+
 ## 1.0.148+182 (2026-08-10) — Debug derleme + CI
 
 - **Gradle:** Release keystore kontrolü yalnızca `assembleRelease` / `bundleRelease` sırasında — debug ve CodeQL tekrar çalışır

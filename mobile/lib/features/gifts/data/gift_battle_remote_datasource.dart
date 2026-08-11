@@ -5,7 +5,7 @@ import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import '../domain/gift_battle.dart';
 
-/// Hediye savaşı uçları — `/api/gifts/battles` (games backend).
+/// Hediye savaşı uçları — `/api/gifts/battles` (ana backend, docs/BACKEND_API_REFERENCE.md).
 class GiftBattleRemoteDataSource {
   GiftBattleRemoteDataSource(this._dio);
 
@@ -56,40 +56,17 @@ class GiftBattleRemoteDataSource {
           'displayName': p.name,
         },
     ];
-    final bodies = <Map<String, dynamic>>[
-      {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.giftsBattles,
+      data: {
         'context': context,
         'contextId': roomId,
-        'roomId': roomId,
-        'voiceRoomId': roomId,
-        'durationSec': durationSec,
-        'duration': durationSec,
-        'participants': participantPayload,
-      },
-      {
-        'action': 'start',
-        'context': context,
-        'contextId': roomId,
-        'roomId': roomId,
         'durationSec': durationSec,
         'participants': participantPayload,
       },
-    ];
-
-    Object? lastError;
-    for (final data in bodies) {
-      try {
-        final res = await _dio.safePost<dynamic>(
-          ApiEndpoints.giftsBattles,
-          data: data,
-        );
-        final battle = _parseBattleBody(res.data);
-        if (battle != null && battle.id.isNotEmpty) return battle;
-      } on Object catch (e) {
-        lastError = e;
-      }
-    }
-    if (lastError != null) throw lastError!;
+    );
+    final battle = _parseBattleBody(res.data);
+    if (battle != null && battle.id.isNotEmpty) return battle;
     return null;
   }
 
@@ -103,7 +80,6 @@ class GiftBattleRemoteDataSource {
       query: {
         'context': context,
         'contextId': contextId,
-        'roomId': contextId,
         'status': 'active',
       },
     );

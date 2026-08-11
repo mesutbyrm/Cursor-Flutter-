@@ -131,6 +131,29 @@ void main() {
       );
     });
 
+    test('hediye savaşı ve hedefi Main backend (canlifal.com)', () {
+      expect(
+        ApiBackendRouter.resolve('/api/gifts/battles'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/gifts/battles', method: 'POST'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/gifts/battles/cm123'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/gifts/goals'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/gifts/goals', method: 'POST'),
+        ApiBackendKind.main,
+      );
+    });
+
     test('sesli oda PK uçları Main backend', () {
       expect(
         ApiBackendRouter.resolve(

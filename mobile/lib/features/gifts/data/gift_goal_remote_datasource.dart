@@ -23,6 +23,7 @@ class GiftGoalRemoteDataSource {
       data: {
         'context': context,
         'contextId': contextId,
+        'roomId': contextId,
         'title': title,
         'targetAmount': targetAmount,
       },

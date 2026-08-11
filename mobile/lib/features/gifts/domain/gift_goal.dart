@@ -11,6 +11,7 @@ class GiftGoal {
     this.context,
     this.contextId,
     this.status = 'active',
+    this.percent,
   });
 
   factory GiftGoal.fromJson(Map<String, dynamic> json) {
@@ -24,7 +25,14 @@ class GiftGoal {
       context: pick(json, ['context'])?.toString(),
       contextId: pick(json, ['contextId'])?.toString(),
       status: (pick(json, ['status']) ?? 'active').toString(),
+      percent: _parsePercent(pick(json, ['percent'])),
     );
+  }
+
+  static double? _parsePercent(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is num) return raw.toDouble();
+    return double.tryParse(raw.toString());
   }
 
   final String id;
@@ -34,9 +42,13 @@ class GiftGoal {
   final String? context;
   final String? contextId;
   final String status; // active | completed
+  final double? percent;
 
   /// 0..1 arası ilerleme oranı.
   double get progress {
+    if (percent != null && percent! >= 0) {
+      return (percent! / 100).clamp(0.0, 1.0);
+    }
     if (targetAmount <= 0) return 0;
     final r = currentAmount / targetAmount;
     return r.clamp(0.0, 1.0);
