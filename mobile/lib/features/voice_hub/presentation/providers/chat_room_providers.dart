@@ -1358,7 +1358,10 @@ class VoiceRoomLiveController
     final room = _roomMeta;
     final remote = ref.read(chatRoomRemoteProvider);
     final user = ref.read(authControllerProvider).valueOrNull;
-    if (user != null && (!_presenceJoined || !state.selfInRoom)) {
+    if (user != null &&
+        _sessionActive &&
+        !_leaveInFlight &&
+        (!_presenceJoined || !state.selfInRoom)) {
       unawaited(_joinPresence());
     }
     Object? refreshError;

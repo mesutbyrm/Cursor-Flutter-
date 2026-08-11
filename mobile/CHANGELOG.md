@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.154+189 (2026-08-11) — Master sync P0: oda çıkış + swipe TRTC
+
+- **Sesli oda:** `refresh()` artık `_sessionActive` yokken presence yeniden join etmez (Music PiP stale presence)
+- **Basic çıkış:** `awaitBackend: true` — backend leave tamamlanmadan navigasyon yok
+- **Swipe canlı:** `suspendForSwipe` / `resumeFromSwipe` — ekran dışı yayın TRTC+SSE bırakır
+- Rapor: `docs/FLUTTER_MASTER_SYNC_AUDIT.md`
+
 ## 1.0.153+188 (2026-08-11) — CI import düzeltmesi
 
 - `LiveVipEntranceBanner` / `LiveRoomChatMessage` — `EntranceTheme` package import (CodeQL derleme hatası)

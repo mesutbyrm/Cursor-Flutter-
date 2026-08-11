@@ -100,11 +100,13 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
   final Set<String> _seenIds = {};
   LiveNamespaceSocketService? _liveSocket;
   var _tearDownDone = false;
+  var _swipeSuspended = false;
 
   /// Idempotent çıkış — SSE, socket, hediye poll ve backend leave.
   Future<void> tearDownSession() async {
     if (_tearDownDone) return;
     _tearDownDone = true;
+    _swipeSuspended = false;
     final streamId = arg;
     _poll?.cancel();
     _poll = null;
@@ -120,6 +122,32 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       await ref.read(liveRemoteProvider).leaveVideoStream(streamId);
     } catch (_) {}
     state = state.copyWith(sseConnected: false, streamEnded: true);
+  }
+
+  /// Swipe feed — ekran dışına kayınca TRTC/SSE/presence yükünü bırak; geri dönünce devam.
+  Future<void> suspendForSwipe() async {
+    if (_tearDownDone || _swipeSuspended) return;
+    _swipeSuspended = true;
+    _poll?.cancel();
+    _poll = null;
+    try {
+      _liveSocket?.disconnect();
+    } catch (_) {}
+    _liveSocket = null;
+    ref.read(liveGiftRealtimeProvider).setSseActive(false);
+    ref.read(liveGiftRealtimeProvider).stop();
+    ref.read(sseConnectionHubProvider).releaseVideoStream(arg);
+    try {
+      await ref.read(liveRemoteProvider).leaveVideoStream(arg);
+    } catch (_) {}
+    state = state.copyWith(sseConnected: false);
+  }
+
+  Future<void> resumeFromSwipe() async {
+    if (_tearDownDone || !_swipeSuspended) return;
+    _swipeSuspended = false;
+    state = state.copyWith(streamEnded: false, clearError: true);
+    await _bootstrap(arg);
   }
 
   @override

@@ -142,6 +142,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   final _heartsKey = GlobalKey<LiveFloatingHeartsOverlayState>();
   Key _localPreviewKey = UniqueKey();
   var _leaving = false;
+  var _swipeSuspended = false;
   var _chatVisible = true;
   var _viewerAudioOn = true;
   Timer? _signalPoll;
@@ -207,7 +208,47 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   void didUpdateWidget(covariant LiveBroadcastRoomPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.active != widget.active) {
+      if (widget.embeddedInSwipe) {
+        if (widget.active) {
+          unawaited(_resumeSwipeLiveSession());
+        } else {
+          unawaited(_suspendSwipeLiveSession());
+        }
+      }
       _applyActiveAudio();
+    }
+  }
+
+  Future<void> _suspendSwipeLiveSession() async {
+    if (!widget.embeddedInSwipe || _swipeSuspended || _leaving) return;
+    _swipeSuspended = true;
+    final streamId = widget.session.streamId?.trim() ?? '';
+    if (streamId.isNotEmpty) {
+      await ref.read(liveRoomProvider(streamId).notifier).suspendForSwipe();
+    }
+    _hostHeartbeat?.cancel();
+    _hostHeartbeat = null;
+    _stopLiveSignalPoll();
+    try {
+      await _trtcCoordinator?.leave();
+    } catch (_) {}
+    if (mounted) {
+      setState(() {
+        _rtcReady = false;
+        _phase = LiveSessionPhase.ended;
+      });
+    }
+  }
+
+  Future<void> _resumeSwipeLiveSession() async {
+    if (!widget.embeddedInSwipe || !_swipeSuspended || _leaving) return;
+    _swipeSuspended = false;
+    final streamId = widget.session.streamId?.trim() ?? '';
+    if (streamId.isNotEmpty) {
+      await ref.read(liveRoomProvider(streamId).notifier).resumeFromSwipe();
+    }
+    if (!_rtcReady && mounted) {
+      await _initTrtc();
     }
   }
 

@@ -426,12 +426,10 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       }
     }
 
-    unawaited(
-      Future.wait<void>([
-        if (audio != null) audio.leave(),
-        liveNotifier.leaveRoomSession(source: 'basic_leave', awaitBackend: false),
-      ]),
-    );
+    await Future.wait<void>([
+      if (audio != null) audio.leave(),
+      liveNotifier.leaveRoomSession(source: 'basic_leave', awaitBackend: true),
+    ]);
 
     if (!mounted) {
       _leaving = false;
