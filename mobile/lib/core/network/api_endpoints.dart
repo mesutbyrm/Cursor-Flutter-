@@ -513,7 +513,7 @@ abstract final class ApiEndpoints {
 
   static const pkHistory = '/api/pk/history';
 
-  /// Birleşik PK (Faz 1–3) — `canlifalapi.abacusai.app` üzerinden yönlendirilir.
+  /// Birleşik PK (Faz 1–3) — ana backend (`canlifal.com`).
   static const pkActive = '/api/pk/active';
 
   /// Canlı PK (prod `/api/live/pk/*`) — games backend; `/api/pk/active` yedeği.

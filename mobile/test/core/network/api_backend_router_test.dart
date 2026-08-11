@@ -28,30 +28,24 @@ void main() {
       expect(ApiBackendRouter.resolve('/api/user/credits'), ApiBackendKind.main);
     });
 
-    test('oyun kataloğu Main backend', () {
+    test('oyun kataloğu ve odalar Main backend', () {
       expect(ApiBackendRouter.resolve('/api/games'), ApiBackendKind.main);
       expect(
         ApiBackendRouter.resolve('/api/games/leaderboard', method: 'POST'),
         ApiBackendKind.main,
       );
-    });
-
-    test('oyun odası listeleme + eşleşme Game backend', () {
       expect(
         ApiBackendRouter.resolve('/api/games/rooms', method: 'GET'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve('/api/games/rooms', method: 'POST'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve('/api/games/auto-match', method: 'POST'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
-    });
-
-    test('oyun odası tekil + play Main backend (B1.5 fix)', () {
       expect(
         ApiBackendRouter.resolve('/api/games/room/abc123', method: 'GET'),
         ApiBackendKind.main,
@@ -64,17 +58,9 @@ void main() {
         ApiBackendRouter.resolve('/api/games/play', method: 'POST'),
         ApiBackendKind.main,
       );
-      expect(
-        ApiBackendRouter.resolve('/api/games/room', method: 'POST'),
-        ApiBackendKind.main,
-      );
-      expect(
-        ApiBackendRouter.resolve('/api/games/room/abc123/chat', method: 'POST'),
-        ApiBackendKind.main,
-      );
     });
 
-    test('çoğul üyelik + rozetler Main backend (B1.5 fix)', () {
+    test('üyelik uçları Main backend', () {
       expect(
         ApiBackendRouter.resolve('/api/memberships'),
         ApiBackendKind.main,
@@ -91,48 +77,38 @@ void main() {
         ApiBackendRouter.resolve('/api/membership-badges'),
         ApiBackendKind.main,
       );
-    });
-
-    test('tekil üyelik planları Game backend (değişmedi)', () {
       expect(
         ApiBackendRouter.resolve('/api/membership/plans'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve('/api/membership/plans/purchase', method: 'POST'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
     });
 
     test('query string path normalize', () {
       expect(
         ApiBackendRouter.resolve('/api/games/rooms?limit=10'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
     });
 
-    test('canlı PK aktif ve misafir uçları Game backend', () {
+    test('canlı PK ve misafir uçları Main backend', () {
       expect(
         ApiBackendRouter.resolve('/api/live/pk/active'),
-        ApiBackendKind.game,
-      );
-      expect(
-        ApiBackendRouter.resolve('/api/live/guest/list'),
-        ApiBackendKind.game,
-      );
-      expect(
-        ApiBackendRouter.resolve('/api/live/guest/list?streamId=abc'),
-        ApiBackendKind.game,
-      );
-    });
-
-    test('canlı PK ana backend uçları Main backend', () {
-      expect(
-        ApiBackendRouter.resolve('/api/live/pk'),
         ApiBackendKind.main,
       );
       expect(
-        ApiBackendRouter.resolve('/api/live/pk/sweep', method: 'POST'),
+        ApiBackendRouter.resolve('/api/live/guest/list'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/live/guest/list?streamId=abc'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/live/pk'),
         ApiBackendKind.main,
       );
       expect(
@@ -141,19 +117,34 @@ void main() {
       );
     });
 
-    test('birleşik PK uçları Game backend', () {
-      expect(ApiBackendRouter.resolve('/api/pk/active'), ApiBackendKind.game);
+    test('birleşik PK uçları Main backend', () {
+      expect(ApiBackendRouter.resolve('/api/pk/active'), ApiBackendKind.main);
       expect(
         ApiBackendRouter.resolve('/api/pk/request', method: 'POST'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve('/api/pk/cm123/stream'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve('/api/pk/leaderboard?period=weekly'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
+      );
+    });
+
+    test('§8 dokunulmayan uçlar Main backend', () {
+      expect(
+        ApiBackendRouter.resolve('/api/live/gift/send', method: 'POST'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/trtc/token', method: 'POST'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/trtc/usersig', method: 'POST'),
+        ApiBackendKind.main,
       );
     });
 

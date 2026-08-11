@@ -6,7 +6,7 @@ import '../../../../core/network/live_debug_log.dart';
 import '../../../voice_hub/data/services/voice_room_socket_helper.dart';
 
 /// Socket.IO `/live` namespace — PK skor, misafir, yeniden bağlanma.
-/// Backend: `canlifalapi.abacusai.app/live` · auth: JWT `token`.
+/// Backend: `canlifal.com/live` · auth: JWT `token`.
 class LiveNamespaceSocketService {
   io.Socket? _socket;
   String? _streamId;
@@ -46,7 +46,7 @@ class LiveNamespaceSocketService {
         final token = await accessToken();
         _socket?.dispose();
 
-        final base = Env.gamesApiBaseUrl.trim().replaceAll(RegExp(r'/+$'), '');
+        final base = Env.apiBaseUrl.trim().replaceAll(RegExp(r'/+$'), '');
         _socket = io.io(
           '$base/live',
           VoiceRoomSocketHelper.baseOptions(bearerToken: token).build(),

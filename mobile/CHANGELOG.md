@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.151+185 (2026-08-11) — Tek backend yönlendirme
+
+- **ApiBackendRouter:** Taşınan tüm yollar (`/api/pk/*`, `/api/live/pk/active`, `/api/live/guest/*`, `/api/games/rooms`, `/api/membership/*`) artık `canlifal.com` (main)
+- **PK SSE:** `PkMatchSseService` ana backend'e bağlanır
+- **Canlı socket:** `LiveNamespaceSocketService` ana backend `/live` namespace
+- §8 korundu: `/api/live/gift/send`, `/api/trtc/token`, `/api/trtc/usersig`
+
 ## 1.0.150+184 (2026-08-11) — PK, fal paneli, yayın özeti, hediye
 
 - **Sesli oda PK:** Oda bazlı poll + `guestUserId` davet body; aktif PK'da otomatik PK sayfasına yönlendirme
