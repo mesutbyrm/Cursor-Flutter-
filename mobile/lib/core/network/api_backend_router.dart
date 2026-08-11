@@ -14,7 +14,6 @@ abstract final class ApiBackendRouter {
   static ApiBackendKind resolve(String path, {String method = 'GET'}) {
     final p = _normalizePath(path);
     if (_isPkBackendPath(p)) return ApiBackendKind.game;
-    if (_isGiftBattleBackendPath(p)) return ApiBackendKind.game;
     if (_isMembershipBackendPath(p)) return ApiBackendKind.game;
     if (_isLiveGamesBackendPath(p)) return ApiBackendKind.game;
     if (_isGameBackendPath(p, method)) return ApiBackendKind.game;
@@ -40,11 +39,8 @@ abstract final class ApiBackendRouter {
   // üretildiğinde karşı tarafa ulaşır. Bu nedenle yönlendirme kuralı
   // kaldırılmıştır.
 
-  /// Hediye savaşı / hedefi (`/api/gifts/battles`, `/api/gifts/goals`) yalnızca
-  /// abacus'ta var (canlifal.com 404). Hediye gönderimi katalog ana sitede.
-  static bool _isGiftBattleBackendPath(String path) =>
-      path.startsWith('/api/gifts/battles') ||
-      path.startsWith('/api/gifts/goals');
+  // NOT: `/api/gifts/battles` ve `/api/gifts/goals` ana backend'de (canlifal.com).
+  // docs/BACKEND_API_REFERENCE.md §7 — ikinci backend'e yönlendirme YASAK.
 
   /// Tekil üyelik planları + satın alma (`/api/membership/plans`, `/purchase`)
   /// yalnızca abacus'ta (canlifal.com'da yok). Aynı DB, aynı plan kimlikleri.

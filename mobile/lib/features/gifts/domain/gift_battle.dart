@@ -7,9 +7,16 @@ class GiftBattleParticipant {
     required this.displayName,
     this.avatarUrl,
     this.score = 0,
+    this.rank = 0,
+    this.displayScore,
   });
 
   factory GiftBattleParticipant.fromJson(Map<String, dynamic> json) {
+    final displayScore = pick(json, ['displayScore'])?.toString();
+    final score = asInt(
+      pick(json, ['score', 'coins', 'totalCoins', 'points']) ??
+          (displayScore != null ? int.tryParse(displayScore) : null),
+    );
     return GiftBattleParticipant(
       participantId:
           (pick(json, ['participantId', 'userId', 'id']) ?? '').toString(),
@@ -17,7 +24,9 @@ class GiftBattleParticipant {
           (pick(json, ['displayName', 'name', 'username']) ?? 'Yarışmacı')
               .toString(),
       avatarUrl: pick(json, ['avatarUrl', 'avatar', 'image'])?.toString(),
-      score: asInt(pick(json, ['score', 'coins', 'totalCoins', 'points'])),
+      score: score,
+      rank: asInt(pick(json, ['rank'])),
+      displayScore: displayScore,
     );
   }
 
@@ -25,6 +34,8 @@ class GiftBattleParticipant {
   final String displayName;
   final String? avatarUrl;
   final int score;
+  final int rank;
+  final String? displayScore;
 }
 
 /// Hediye savaşı durumu — poll ile güncellenir.
@@ -38,6 +49,8 @@ class GiftBattle {
     this.remainingSec = 0,
     this.participants = const [],
     this.winnerId,
+    this.totalScore = 0,
+    this.lastCallActive = false,
   });
 
   factory GiftBattle.fromJson(Map<String, dynamic> json) {
@@ -48,10 +61,16 @@ class GiftBattle {
         if (e is Map) parts.add(GiftBattleParticipant.fromJson(asJsonMap(e)));
       }
     }
-    parts.sort((a, b) => b.score.compareTo(a.score));
+    if (parts.any((p) => p.rank > 0)) {
+      parts.sort((a, b) => a.rank.compareTo(b.rank));
+    } else {
+      parts.sort((a, b) => b.score.compareTo(a.score));
+    }
 
-    // Kalan süre: doğrudan remainingSec, yoksa endsAt'tan hesapla.
-    var remaining = asInt(pick(json, ['remainingSec', 'remaining', 'secondsLeft']));
+    // Kalan süre: secondsLeft (contract), remainingSec, yoksa endsAt'tan hesapla.
+    var remaining = asInt(
+      pick(json, ['secondsLeft', 'remainingSec', 'remaining']),
+    );
     final endsAtRaw = pick(json, ['endsAt', 'endAt', 'finishAt']);
     if (remaining <= 0 && endsAtRaw != null) {
       final endsAt = DateTime.tryParse(endsAtRaw.toString());
@@ -70,6 +89,8 @@ class GiftBattle {
       remainingSec: remaining,
       participants: parts,
       winnerId: pick(json, ['winnerId', 'winner'])?.toString(),
+      totalScore: asInt(pick(json, ['totalScore'])),
+      lastCallActive: json['lastCallActive'] == true,
     );
   }
 
@@ -81,13 +102,19 @@ class GiftBattle {
   final int remainingSec;
   final List<GiftBattleParticipant> participants;
   final String? winnerId;
+  final int totalScore;
+  final bool lastCallActive;
 
-  bool get isActive => status.toLowerCase() == 'active' && remainingSec > 0;
+  bool get isActive =>
+      status.toLowerCase() == 'active' && remainingSec > 0;
   bool get isEnded => status.toLowerCase() == 'ended' || remainingSec <= 0;
-  bool get isLastCall => isActive && remainingSec <= 10;
+  bool get isLastCall =>
+      lastCallActive || (isActive && remainingSec <= 10);
 
-  int get totalScore =>
-      participants.fold(0, (sum, p) => sum + (p.score < 0 ? 0 : p.score));
+  int get computedTotalScore =>
+      totalScore > 0
+          ? totalScore
+          : participants.fold(0, (sum, p) => sum + (p.score < 0 ? 0 : p.score));
 
   GiftBattleParticipant? get leader =>
       participants.isEmpty ? null : participants.first;
