@@ -1,5 +1,7 @@
+import 'package:canlifal_social/features/live/domain/entities/voice_room_entity.dart';
 import 'package:canlifal_social/features/voice_hub/domain/entities/voice_room_seat_slot.dart';
 import 'package:canlifal_social/features/voice_hub/domain/entities/voice_room_state_snapshot.dart';
+import 'package:canlifal_social/features/voice_hub/presentation/utils/voice_room_seat_capacity.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -52,5 +54,17 @@ void main() {
     expect(snap.seatCount, 10);
     expect(snap.maxUsers, 15);
     expect(snap.seats.length, 10);
+  });
+
+  test('voiceWebOwnerSeatRows adapts to 8-seat room', () {
+    const room = VoiceRoomEntity(
+      id: 'r1',
+      slug: 'r1',
+      nameTr: 'Test',
+      seatCount: 8,
+    );
+    final rows = voiceWebOwnerSeatRows(room: room);
+    expect(rows.top, [2, 3, 4, 5]);
+    expect(rows.bottom, [6, 7, 8]);
   });
 }

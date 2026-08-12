@@ -30,6 +30,7 @@ import 'voice_room_muted_users_sheet.dart';
 import 'voice_room_sheets.dart';
 import 'voice_room_voice_users_sheet.dart';
 import 'voice_youtube_song_sheet.dart';
+import 'voice_room_speak_queue_sheet.dart';
 
 enum VoiceMgmtInitial { home, userMgmt, users, chatMgmt, roomMgmt, userSettings }
 
@@ -329,6 +330,21 @@ class _VoiceRoomManagementPanelState
             );
           }),
         ),
+        if (perms.canAssignSeats || isOwner || perms.isSiteAdmin)
+          _hubTile(
+            Icons.record_voice_over_rounded,
+            'Konuşma sırası',
+            'El kaldıranlar ve dinleyici kuyruğu',
+            () => _closeAndVoid(() {
+              showVoiceSpeakQueueSheet(
+                context,
+                ref,
+                room: room,
+                live: _live,
+                perms: perms,
+              );
+            }),
+          ),
       ],
     );
   }
@@ -723,6 +739,14 @@ class _VoiceRoomManagementPanelState
             ),
             onTap: _pickSeatCount,
           ),
+          ListTile(
+            leading: const Icon(Icons.groups_rounded),
+            title: const Text('Maksimum kullanıcı'),
+            subtitle: Text(
+              '${_live.roomMaxUsers ?? room.maxUsers ?? 15} kişi',
+            ),
+            onTap: _pickMaxUsers,
+          ),
         ],
         if (isOwner || perms.canManageRoom) ...[
           const Divider(),
@@ -978,6 +1002,37 @@ class _VoiceRoomManagementPanelState
     if (picked == null || picked == current) return;
     final err = await _ctrl.updateRoomCapacity(seatCount: picked);
     await _snack(err ?? 'Koltuk sayısı $picked olarak güncellendi');
+  }
+
+  Future<void> _pickMaxUsers() async {
+    final current = _live.roomMaxUsers ?? room.maxUsers ?? 15;
+    final options = const [15, 25, 50, 100];
+    final picked = await showDialog<int>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Maksimum kullanıcı'),
+        children: options
+            .map(
+              (n) => SimpleDialogOption(
+                onPressed: () => Navigator.pop(ctx, n),
+                child: Row(
+                  children: [
+                    if (n == current)
+                      const Icon(Icons.check_rounded, size: 20)
+                    else
+                      const SizedBox(width: 20),
+                    const SizedBox(width: 8),
+                    Text('$n kişi'),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+    if (picked == null || picked == current) return;
+    final err = await _ctrl.updateRoomCapacity(maxUsers: picked);
+    await _snack(err ?? 'Maksimum kullanıcı $picked olarak güncellendi');
   }
 
   Future<void> _setRoomPassword() async {

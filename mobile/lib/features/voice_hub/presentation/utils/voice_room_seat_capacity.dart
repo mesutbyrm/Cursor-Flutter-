@@ -72,3 +72,45 @@ int? voiceRoomAdminSeatIndex({
   );
   return max >= 11 ? 11 : null;
 }
+
+/// Web sahne (VoiceWebOwnerStage) — üst/alt koltuk satırları.
+({List<int> top, List<int> bottom}) voiceWebOwnerSeatRows({
+  required VoiceRoomEntity room,
+  List<VoiceRoomSeatSlot> seatSlots = const [],
+  int? configuredSeatCount,
+}) {
+  final max = voiceRoomLayoutMaxSeatIndex(
+    room: room,
+    seatSlots: seatSlots,
+    configuredSeatCount: configuredSeatCount,
+  );
+  final admin = voiceRoomAdminSeatIndex(
+    room: room,
+    seatSlots: seatSlots,
+    configuredSeatCount: configuredSeatCount,
+  );
+  final grid = <int>[];
+  for (var i = 2; i <= max; i++) {
+    grid.add(i);
+  }
+  if (admin != null && !grid.contains(admin)) {
+    grid.add(admin);
+  }
+  if (grid.isEmpty) return (top: const [], bottom: const []);
+  final mid = (grid.length / 2).ceil();
+  return (top: grid.sublist(0, mid), bottom: grid.sublist(mid));
+}
+
+/// Hediye koltuk efektleri için üst sınır (0 tabanlı indeks + 1).
+int voiceRoomGiftSeatEffectBound({
+  VoiceRoomEntity? room,
+  List<VoiceRoomSeatSlot>? seatSlots,
+  int? configuredSeatCount,
+}) {
+  return voiceRoomLayoutMaxSeatIndex(
+        room: room,
+        seatSlots: seatSlots,
+        configuredSeatCount: configuredSeatCount,
+      ) +
+      1;
+}

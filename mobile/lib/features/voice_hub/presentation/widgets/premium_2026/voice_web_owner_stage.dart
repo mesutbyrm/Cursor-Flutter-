@@ -5,7 +5,7 @@ import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../../domain/entities/voice_room_seat_slot.dart';
 import '../../utils/voice_room_seat_layout.dart';
-import '../../utils/voice_room_seat_priority.dart';
+import '../../utils/voice_room_seat_capacity.dart';
 import 'voice_mic_seat.dart';
 
 /// canlifal.com: sol Kurucu (koltuk 1) + sağda 2×5 (koltuk 2–11).
@@ -92,13 +92,13 @@ class VoiceWebOwnerStage extends StatelessWidget {
           presence: presence,
           seatSlots: seatSlots,
         ).build();
-        final showAdminSeat = VoiceRoomSeatPriority.showAdminSeat(seats);
         final host = seats[1];
-
-        final topInternal = const [2, 3, 4, 5, 6];
-        final bottomInternal = showAdminSeat
-            ? const [7, 8, 9, 10, 11]
-            : const [7, 8, 9, 10];
+        final rows = voiceWebOwnerSeatRows(
+          room: room,
+          seatSlots: seatSlots,
+        );
+        final topInternal = rows.top;
+        final bottomInternal = rows.bottom;
 
         return SizedBox(
           height: totalH,

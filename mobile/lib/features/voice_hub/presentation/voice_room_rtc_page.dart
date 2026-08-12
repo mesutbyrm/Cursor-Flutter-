@@ -53,6 +53,7 @@ import 'providers/pk_battle_remote_provider.dart';
 import '../domain/pk/pk_duration_options.dart';
 import '../domain/pk/pk_opponent_room_filter.dart';
 import 'utils/voice_room_image_prefetch.dart';
+import 'utils/voice_room_seat_capacity.dart';
 import 'providers/voice_gift_providers.dart';
 import 'providers/voice_room_audio_providers.dart';
 import 'providers/voice_session_phase_provider.dart';
@@ -1864,7 +1865,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 ),
               ],
             ),
-            VoiceGiftHudOverlays(sessionKey: sessionKey),
+            VoiceGiftHudOverlays(
+              sessionKey: sessionKey,
+              seatEffectBound: voiceRoomGiftSeatEffectBound(
+                room: room,
+                seatSlots: live.seatSlots,
+                configuredSeatCount: live.roomSeatCount ?? room.seatCount,
+              ),
+            ),
             if (!keyboardOpen && showMusicRequestFab)
               Align(
                 alignment: Alignment.bottomRight,

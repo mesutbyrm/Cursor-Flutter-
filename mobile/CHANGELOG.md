@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.165+200 (2026-08-12) — Oda kapasitesi ve yönetim
+
+- **maxUsers:** Yönetim panelinde maksimum kullanıcı seçici (15 / 25 / 50 / 100)
+- **Konuşma sırası:** Kullanıcı yönetimi → el kaldıranlar kuyruğu (`speak-requests`)
+- **Web sahne:** `VoiceWebOwnerStage` koltuk ızgarası `seatCount`'a göre dinamik
+- **Hediye efektleri:** Koltuk efekt sınırı oda kapasitesiyle hizalı
+
 ## 1.0.164+199 (2026-08-12) — Dinamik koltuk kapasitesi
 
 - **Backend `seatCount`:** Oda listesi, state snapshot ve `GET /seats` ile senkron
