@@ -480,6 +480,10 @@ abstract final class ApiEndpoints {
   /// Yazıyor göstergesi — `GET/POST /api/chat/rooms/{roomId}/typing`.
   static String chatRoomTyping(String roomId) => '/api/chat/rooms/$roomId/typing';
 
+  /// Oda şikayet — `POST /api/chat/rooms/{id}/report` (kılavuz §9.3).
+  static String chatRoomReport(String roomId) =>
+      '/api/chat/rooms/$roomId/report';
+
   /// Üretim PK — `GET/POST /api/chat/rooms/{roomId}/pk`
   /// POST body: `{ guestUserId, durationSec }` → pending davet.
   /// GET (public, poll): `{ roomId, activeBattle, pendingInvite }`.

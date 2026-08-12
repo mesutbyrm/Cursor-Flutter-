@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/wallet_navigation.dart';
+import '../../../moderation/domain/entities/report_target.dart';
+import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/domain/entities/user_entity.dart';
@@ -454,6 +456,27 @@ class _VoiceRoomManagementPanelState
           leading: const Icon(Icons.diamond_outlined, color: VoiceRoomTokens.gold),
           title: const Text('Jeton yükle'),
           onTap: () => _closeAndVoid(() => openJetonStore(context, ref: ref)),
+        ),
+        ListTile(
+          leading: const Icon(Icons.flag_outlined, color: VoiceRoomTokens.neonPink),
+          title: const Text('Odayı şikayet et'),
+          subtitle: const Text('Uygunsuz içerik veya davranış bildir'),
+          onTap: () {
+            final roomKey = widget.room.apiRoomKey.isNotEmpty
+                ? widget.room.apiRoomKey
+                : widget.room.id;
+            _closeAndVoid(
+              () => openReportFlow(
+                context,
+                ReportTarget(
+                  type: ReportTargetType.voiceRoom,
+                  targetId: roomKey,
+                  displayTitle: widget.room.displayTitle,
+                  contextLabel: 'Sesli oda',
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
