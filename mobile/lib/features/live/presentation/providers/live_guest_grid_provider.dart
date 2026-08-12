@@ -131,6 +131,12 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
     _upsert(0, jetonEarned: jeton);
   }
 
+  void reset() {
+    state = LiveGuestGridState(
+      slots: [const LiveGuestSlot(index: 0, isHost: true)],
+    );
+  }
+
   void _upsert(
     int index, {
     String? userId,

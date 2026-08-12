@@ -1335,7 +1335,8 @@ class VoiceRoomLiveController
       _pollTick++;
       final djActive = state.dj.playing || state.dj.nowPlaying != null;
       if (sse && !djActive && _pollTick % 2 != 0) return;
-      final fullDj = !sse || (djActive && (_pollTick % 3 == 0));
+      // SSE sağlıklıyken DJ/queue REST poll yapma — yalnızca SSE kopunca.
+      final fullDj = !sse && djActive;
       unawaited(refresh(includeDj: fullDj));
     });
   }

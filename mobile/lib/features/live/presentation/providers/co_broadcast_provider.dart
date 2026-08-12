@@ -113,6 +113,10 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
   Future<void> leave(String streamId) async {
     await _remote.patchCoBroadcast(streamId: streamId, action: 'leave');
   }
+
+  void clear() {
+    state = const CoBroadcastState();
+  }
 }
 
 final coBroadcastProvider =
