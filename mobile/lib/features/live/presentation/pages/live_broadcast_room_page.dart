@@ -15,6 +15,7 @@ import '../../../../core/network/live_event_log.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../../../core/network/token_storage.dart';
 import '../providers/live_room_music_provider.dart';
+import '../widgets/broadcast_room/live_pk_split_video_layer.dart';
 import '../widgets/broadcast_room/music_video_player.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -1180,7 +1181,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _signalPollError = null;
     final interval = _liveSseConnected
         ? const Duration(seconds: 30)
-        : const Duration(seconds: 2);
+        : const Duration(seconds: 5);
     _signalPoll = Timer.periodic(interval, (_) {
       unawaited(_tickLiveSignals(streamId));
     });
@@ -2146,7 +2147,44 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     return _mainVideo(s);
   }
 
+  Future<void> _endActivePk(String streamId) async {
+    final battleId = ref.read(liveVideoPkProvider(streamId)).battle?['id']?.toString() ??
+        ref.read(pkBattleRemoteProvider)?.effectiveId ??
+        '';
+    try {
+      if (battleId.isNotEmpty) {
+        await ref.read(pkBattleRemoteProvider.notifier).end(
+              battleId,
+              streamId: streamId,
+            );
+      }
+      await ref.read(liveVideoPkProvider(streamId).notifier).end();
+    } catch (_) {
+      try {
+        await ref.read(liveVideoPkProvider(streamId).notifier).end();
+      } catch (_) {}
+    }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('PK sona erdi')),
+      );
+    }
+  }
+
   Widget _mainVideo(LiveBroadcastSession s) {
+    final streamId = s.streamId?.trim() ?? '';
+    if (streamId.isNotEmpty) {
+      final pkStatus = ref.watch(liveVideoPkProvider(streamId)).status;
+      if (pkStatus == 'active') {
+        return LivePkSplitVideoLayer(
+          streamId: streamId,
+          session: s,
+          trtc: _trtc,
+          rtcReady: _rtcReady,
+          onEndPk: s.isHost ? () => unawaited(_endActivePk(streamId)) : null,
+        );
+      }
+    }
     if (_phase == LiveSessionPhase.reconnecting && !_rtcReady) {
       return Stack(
         fit: StackFit.expand,
@@ -2841,6 +2879,26 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                     ),
                   ),
                   if (hasStream && pkState?.battle != null && pkStatus == 'pending')
+                    Positioned(
+                      top: top + 56,
+                      left: 16,
+                      right: 16,
+                      child: Material(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            s.isHost
+                                ? 'PK daveti gönderildi — karşı yayıncının yanıtı bekleniyor…'
+                                : 'PK daveti bekleniyor…',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (hasStream && pkState?.battle != null && pkStatus == 'pending' && !s.isHost)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                       child: Builder(

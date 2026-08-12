@@ -30,7 +30,7 @@ class _GlobalGiftEventBridgeState extends ConsumerState<GlobalGiftEventBridge> {
   @override
   void initState() {
     super.initState();
-    _poll = Timer.periodic(const Duration(seconds: 12), (_) {
+    _poll = Timer.periodic(const Duration(seconds: 15), (_) {
       unawaited(_pollInsightsFeed());
     });
     Future.microtask(_pollInsightsFeed);

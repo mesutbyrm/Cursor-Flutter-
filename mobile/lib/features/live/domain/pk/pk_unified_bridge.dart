@@ -100,6 +100,8 @@ Map<String, dynamic> pkBattleRemoteToBattleMap(
     'leftName': remote.challenger?.displayName,
     'rightName': remote.opponent?.displayName,
     'challengerName': remote.challenger?.displayName,
+    'challengerAvatar': remote.challenger?.avatarUrl,
+    'opponentAvatar': remote.opponent?.avatarUrl,
     'isOpponent': isOpponent,
     'hostOnLeft': isChallenger || !isOpponent,
     'unifiedPk': false,
