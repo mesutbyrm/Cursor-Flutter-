@@ -8,10 +8,13 @@ class LivePlaybackBridge extends StatefulWidget {
     super.key,
     this.playbackUrl,
     this.thumbnailUrl,
+    this.audible = false,
   });
 
   final String? playbackUrl;
   final String? thumbnailUrl;
+  /// PK izleyici: HLS yedek oynatıcıda ses açık (varsayılan sessiz).
+  final bool audible;
 
   @override
   State<LivePlaybackBridge> createState() => _LivePlaybackBridgeState();
@@ -29,7 +32,8 @@ class _LivePlaybackBridgeState extends State<LivePlaybackBridge> {
   @override
   void didUpdateWidget(LivePlaybackBridge oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.playbackUrl != widget.playbackUrl) {
+    if (oldWidget.playbackUrl != widget.playbackUrl ||
+        oldWidget.audible != widget.audible) {
       _controller?.dispose();
       _controller = null;
       _initVideo();
@@ -44,7 +48,7 @@ class _LivePlaybackBridgeState extends State<LivePlaybackBridge> {
       c = VideoPlayerController.networkUrl(Uri.parse(url));
       await c.initialize();
       await c.setLooping(true);
-      await c.setVolume(0);
+      await c.setVolume(widget.audible ? 1.0 : 0);
       await c.play();
       if (!mounted) {
         await c.dispose();

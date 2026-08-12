@@ -83,6 +83,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                 playbackUrl: playbackFor(layout.right.streamId),
                 accent: Colors.cyanAccent,
                 preferRemoteUserId: layout.right.userId,
+                playbackAudible: !session.isHost,
               ),
             ),
           ],
@@ -121,6 +122,20 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                   ),
                 const SizedBox(width: 4),
                 Material(
+                  color: Colors.orange.withValues(alpha: 0.8),
+                  borderRadius: BorderRadius.circular(20),
+                  child: IconButton(
+                    tooltip: 'Rakibi PK\'dan çıkar',
+                    icon: const Icon(
+                      Icons.person_remove_alt_1_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    onPressed: onEndPk,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Material(
                   color: Colors.red.withValues(alpha: 0.75),
                   borderRadius: BorderRadius.circular(20),
                   child: IconButton(
@@ -145,6 +160,7 @@ class _PkPane extends StatelessWidget {
     required this.accent,
     this.playbackUrl,
     this.preferRemoteUserId,
+    this.playbackAudible = false,
   });
 
   final LivePkPaneModel pane;
@@ -153,6 +169,7 @@ class _PkPane extends StatelessWidget {
   final Color accent;
   final String? playbackUrl;
   final String? preferRemoteUserId;
+  final bool playbackAudible;
 
   @override
   Widget build(BuildContext context) {
@@ -171,6 +188,7 @@ class _PkPane extends StatelessWidget {
           video = LivePlaybackBridge(
             playbackUrl: playbackUrl,
             thumbnailUrl: pane.avatarUrl,
+            audible: playbackAudible,
           );
         } else if (pane.avatarUrl != null && pane.avatarUrl!.trim().isNotEmpty) {
           video = CanlifalNetworkImage(

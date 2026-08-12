@@ -28,7 +28,10 @@ class GiftBattleController
   void _start() {
     _timer?.cancel();
     unawaited(_tick());
-    _timer = Timer.periodic(const Duration(seconds: 2), (_) => _tick());
+    final interval = (state != null && state!.isActive)
+        ? const Duration(seconds: 3)
+        : const Duration(seconds: 6);
+    _timer = Timer.periodic(interval, (_) => _tick());
   }
 
   Future<void> _tick() async {
@@ -55,6 +58,9 @@ class GiftBattleController
         return;
       }
       state = next;
+      final nowActive = next?.isActive == true;
+      final wasActive = current?.isActive == true;
+      if (wasActive != nowActive) _start();
     } catch (_) {
       // sessiz — bir sonraki tick'te tekrar denenir
     }

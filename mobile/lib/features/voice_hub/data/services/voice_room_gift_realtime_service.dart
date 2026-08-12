@@ -43,7 +43,7 @@ class VoiceRoomGiftRealtimeService {
     _since = DateTime.now().subtract(const Duration(minutes: 2));
     final interval = _socketPreferred
         ? const Duration(seconds: 20)
-        : const Duration(seconds: 4);
+        : const Duration(seconds: 6);
     _poll = Timer.periodic(interval, (_) => _pollOnce());
     _pollOnce();
   }

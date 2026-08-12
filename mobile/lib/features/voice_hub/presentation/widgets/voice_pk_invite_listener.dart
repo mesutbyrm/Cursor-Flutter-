@@ -8,6 +8,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
+import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_room_session_registry.dart';
 import '../utils/pk_invite_dialog_helper.dart';
@@ -27,12 +28,14 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   final Set<String> _seenRejections = {};
   var _showing = false;
   Timer? _pollTimer;
+  var _pollTick = 0;
 
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 6), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) {
       if (!mounted || _showing) return;
+      _pollTick++;
       unawaited(_pollPendingInvites());
     });
     Future.microtask(_pollPendingInvites);
@@ -105,7 +108,10 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
       final api = ref.read(pkBattleRemoteDataSourceProvider);
 
       final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
-      if (activeKey.isNotEmpty) {
+      final inRoomSse = activeKey.isNotEmpty &&
+          ref.read(voiceRoomLiveProvider(activeKey)).sseConnected;
+
+      if (activeKey.isNotEmpty && !inRoomSse) {
         final roomBattle = await api.fetchRoomBattle(activeKey);
         if (roomBattle != null && !roomBattle.isEnded) {
           ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(roomBattle);
@@ -114,11 +120,16 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         }
       }
 
+      // SSE bağlıyken aktif odanın PK'si zaten push ile gelir; yalnızca diğer
+      // sahip olunan odaları seyrek poll et.
+      if (inRoomSse && _pollTick % 2 != 0) return;
+
       final rooms = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
       for (final room in rooms) {
         if ((room.ownerId?.trim() ?? '') != user.id) continue;
         final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
         if (key.isEmpty) continue;
+        if (inRoomSse && key == activeKey) continue;
         final battle = await api.fetchRoomBattle(
           key,
           alternateRoomId: room.slug != key ? room.slug : null,

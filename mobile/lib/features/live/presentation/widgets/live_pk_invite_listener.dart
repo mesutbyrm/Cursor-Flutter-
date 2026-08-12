@@ -35,7 +35,7 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) {
       if (!mounted || _showing) return;
       unawaited(_processPendingInvites());
     });
