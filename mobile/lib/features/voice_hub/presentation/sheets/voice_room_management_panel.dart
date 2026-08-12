@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../vip_gold/domain/voice_room_access.dart';
 import '../../../gifts/presentation/providers/gift_battle_providers.dart';
@@ -415,6 +416,37 @@ class _VoiceRoomManagementPanelState
             ref.read(voiceRoomUiProvider.notifier).toggleGiftAnimations();
           },
         ),
+        if (!_selfOnSeat(user))
+          ListTile(
+            leading: Icon(
+              ui.requestSpeakPending
+                  ? Icons.hourglass_top_rounded
+                  : Icons.pan_tool_alt_rounded,
+              color: VoiceRoomTokens.neonPink,
+            ),
+            title: Text(
+              ui.requestSpeakPending
+                  ? 'Konuşma isteğini iptal'
+                  : 'Konuşma isteği gönder',
+            ),
+            subtitle: Text(
+              ui.requestSpeakPending
+                  ? 'Moderatör onayı bekleniyor'
+                  : 'Onay sonrası koltuğa alınırsınız',
+            ),
+            onTap: () async {
+              final pending = ui.requestSpeakPending;
+              final err = pending
+                  ? await _ctrl.cancelSpeakRequest()
+                  : await _ctrl.requestSpeak();
+              await _snack(
+                err ??
+                    (pending
+                        ? 'Konuşma isteği iptal edildi'
+                        : 'Konuşma isteği gönderildi'),
+              );
+            },
+          ),
         ListTile(
           leading: const Icon(Icons.diamond_outlined, color: VoiceRoomTokens.gold),
           title: const Text('Jeton yükle'),
@@ -909,9 +941,19 @@ class _VoiceRoomManagementPanelState
     return '$v';
   }
 
+  bool _selfOnSeat(UserEntity? user) {
+    final id = user?.id;
+    if (id == null || id.isEmpty) return false;
+    for (final p in _live.presence) {
+      if (p.id == id && p.seatIndex != null) return true;
+    }
+    return false;
+  }
+
   Future<void> _editRoomDetails() async {
     final nameCtrl = TextEditingController(text: room.displayTitle);
     final descCtrl = TextEditingController(text: room.descTr ?? '');
+    final rulesCtrl = TextEditingController(text: room.rulesTr ?? '');
     try {
       final ok = await showDialog<bool>(
         context: context,
@@ -939,6 +981,17 @@ class _VoiceRoomManagementPanelState
                   maxLines: 3,
                   maxLength: 280,
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: rulesCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Oda kuralları',
+                    border: OutlineInputBorder(),
+                    hintText: 'Sohbette kayan kurallar metni',
+                  ),
+                  maxLines: 4,
+                  maxLength: 500,
+                ),
               ],
             ),
           ),
@@ -955,11 +1008,13 @@ class _VoiceRoomManagementPanelState
       final err = await _ctrl.updateRoomDetails(
         name: nameCtrl.text,
         description: descCtrl.text,
+        rules: rulesCtrl.text,
       );
       await _snack(err ?? 'Oda bilgileri güncellendi');
     } finally {
       nameCtrl.dispose();
       descCtrl.dispose();
+      rulesCtrl.dispose();
     }
   }
 

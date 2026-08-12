@@ -1037,6 +1037,7 @@ class ChatRoomRemoteDataSource {
     bool? isLocked,
     int? maxUsers,
     int? seatCount,
+    String? rules,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final data = <String, dynamic>{};
@@ -1060,6 +1061,12 @@ class ChatRoomRemoteDataSource {
       if (isLocked != null) data['isLocked'] = isLocked;
       if (maxUsers != null && maxUsers > 0) data['maxUsers'] = maxUsers;
       if (seatCount != null && seatCount > 0) data['seatCount'] = seatCount;
+      if (rules != null) {
+        final trimmed = rules.trim();
+        data['rules'] = trimmed;
+        data['rulesTr'] = trimmed;
+        data['roomRules'] = trimmed;
+      }
       if (data.isEmpty) return;
       try {
         await _dio.safePatch<dynamic>(

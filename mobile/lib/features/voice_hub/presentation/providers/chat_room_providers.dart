@@ -2715,6 +2715,7 @@ class VoiceRoomLiveController
   Future<String?> updateRoomDetails({
     String? name,
     String? description,
+    String? rules,
   }) async {
     final perms = _permissions();
     if (!perms.isRoomOwner && !perms.canManageRoom && !perms.isSiteAdmin) {
@@ -2722,7 +2723,7 @@ class VoiceRoomLiveController
     }
     final trimmedName = name?.trim() ?? '';
     final trimmedDesc = description?.trim() ?? '';
-    if (trimmedName.isEmpty && description == null) {
+    if (trimmedName.isEmpty && description == null && rules == null) {
       return 'Güncellenecek alan yok.';
     }
     try {
@@ -2731,6 +2732,7 @@ class VoiceRoomLiveController
             alternateKey: _roomMeta.slug,
             name: trimmedName.isNotEmpty ? trimmedName : null,
             description: description != null ? trimmedDesc : null,
+            rules: rules,
           );
       ref.invalidate(voiceRoomsProvider);
       ref.invalidate(voiceRoomByIdProvider(_roomKey));

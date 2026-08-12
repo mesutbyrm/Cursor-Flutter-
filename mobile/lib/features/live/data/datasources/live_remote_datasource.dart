@@ -288,6 +288,8 @@ class LiveRemoteDataSource {
     String? description,
     String? icon,
     String? background,
+    int seatCount = 8,
+    int maxUsers = 15,
   }) {
     final meta = voiceRoomCreateMetadata(
       roomType: roomType,
@@ -303,6 +305,9 @@ class LiveRemoteDataSource {
       'icon': (ic != null && ic.isNotEmpty) ? ic : meta.icon,
       'paymentType': normalizePaymentType(paymentType),
       'roomType': resolveRoomTypeEnum(roomType, vip: vip),
+      'type': 'voice',
+      'seatCount': seatCount.clamp(8, 15),
+      'maxUsers': maxUsers.clamp(15, 100),
       if (bg != null && bg.isNotEmpty) 'background': bg,
     };
   }

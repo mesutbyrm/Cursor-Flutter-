@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.166+201 (2026-08-12) — Oda kuralları ve konuşma isteği
+
+- **Oda kuralları:** Yönetim panelinde düzenleme → `PATCH /settings` (`rules` / `rulesTr`)
+- **Oda açma:** `POST /rooms/create` — `type: voice`, `seatCount: 8`, `maxUsers: 15` (kılavuz §9.3)
+- **Konuşma isteği:** Kullanıcı ayarları → `POST/DELETE /speak-request` (koltukta değilken)
+- **State snapshot:** `rulesTr` parse
+
 ## 1.0.165+200 (2026-08-12) — Oda kapasitesi ve yönetim
 
 - **maxUsers:** Yönetim panelinde maksimum kullanıcı seçici (15 / 25 / 50 / 100)
