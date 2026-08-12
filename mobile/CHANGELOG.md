@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.162+197 (2026-08-12) — PK canlı yayın + sesli oda düzeltmeleri
+
+- **Canlı PK davet:** Pending iken split ekran açılmaz; kabul/red sonrası `active` başlar
+- **Canlı PK split:** Sol kendi / sağ rakip; yayıncı mute + rakibi çıkar + PK bitir
+- **Canlı PK izleyici:** Rakip panelinde HLS yedek ses (`audible`)
+- **Sesli PK:** `prepareShell` — sayfa sunucu onayı gelmeden aktif sayılmaz
+- **Sesli PK taraf:** Aktif odada sol = kendi oda (`applyRemoteBattleForVoiceRoom`)
+- **Oda içi şerit:** `VoicePkRoomStrip` — aktif skor/süre; challenger bekleyen metin
+- **Sesli çıkış:** PK sayfasından dönünce remote/gift realtime oda oturumunu bozmaz
+- **Performans:** PK/hediye poll seyrekleştirildi; SSE varken sesli PK aktif oda poll atlanır
+- **SSE:** Çift `applyRemoteBattle` kaldırıldı
+
 ## 1.0.161+196 (2026-08-12) — Global hediye overlay + PK davet/kabul senkronu
 
 - **Global hediye:** `GlobalGiftOverlay` — küçük toast (~56px), kuyruk + `eventId` dedupe, admin `display-settings` (TTL 2 dk)
