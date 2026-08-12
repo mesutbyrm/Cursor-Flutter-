@@ -8,6 +8,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/router/app_router.dart';
+import '../../gifts/domain/session_gift_summary.dart';
+import '../../gifts/domain/session_gift_summary_builder.dart';
+import '../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
+
 import '../../../core/config/env.dart';
 import '../../../core/auth/staff_roles.dart';
 import '../../../core/performance/voice_room_entry_perf.dart';
@@ -79,6 +84,7 @@ import 'widgets/premium/voice_gift_stage_overlays.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
 import 'widgets/voice_room/voice_room_spec_footer.dart';
+import 'widgets/voice_room/voice_room_music_background_layer.dart';
 import 'sheets/voice_room_commands_panel.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import 'widgets/premium_2026/voice_gift_announcement_ticker.dart';
@@ -620,6 +626,21 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _audio = null;
 
     final liveNotifier = ref.read(voiceRoomLiveProvider(liveKey).notifier);
+    final live = ref.read(voiceRoomLiveProvider(liveKey));
+    final room = _effectiveRoom();
+    final user = ref.read(authControllerProvider).valueOrNull;
+    SessionGiftSummary? leaveSummary;
+    if (user != null) {
+      leaveSummary = SessionGiftSummaryBuilder.forVoiceRoom(
+        ref: ref,
+        roomTitle: room.displayTitle,
+        ownerUserId: live.ownerId ?? room.ownerId,
+        ownerDisplayName: room.ownerName,
+        myUserId: user.id,
+        myDisplayName: user.display,
+      );
+    }
+
     try {
       await liveNotifier
           .leaveRoomSession(
@@ -639,6 +660,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     } else {
       context.go('/voice-rooms');
     }
+
+    if (leaveSummary != null && leaveSummary.hasData) {
+      final rootCtx = rootNavigatorKey.currentContext;
+      if (rootCtx != null && rootCtx.mounted) {
+        await showSessionGiftSummarySheet(rootCtx, summary: leaveSummary);
+      }
+    }
+
     _leaving = false;
   }
 
@@ -1442,6 +1471,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
+            if (_liveRoomKey.isNotEmpty) ...[
+              VoiceRoomMusicBackgroundLayer(roomKey: _liveRoomKey),
+              VoiceRoomHiddenAudioPlayer(roomKey: _liveRoomKey),
+            ],
             Consumer(
               builder: (context, ref, _) {
                 final activeGift = ref.watch(

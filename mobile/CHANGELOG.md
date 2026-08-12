@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.174+209 (2026-08-12) — Müzik video, şikayet, çıkış özeti
+
+- **Videolu müzik:** `VoiceRoomMusicBackgroundLayer` + gizli ses oynatıcı Basic ve RTC stack'ine eklendi
+- **Oda şikayet:** Yönetim paneli → Kullanıcı ayarları → «Odayı şikayet et» (`POST /api/reports`, voice_room)
+- **Hediye dinleyici:** Büyük hediye marquee tek kaynak (`GiftEventListener`); Basic çift kayıt kaldırıldı
+- **RTC çıkış:** Oturum hediye özeti sheet'i (Basic ile aynı)
+
 ## 1.0.173+208 (2026-08-12) — Oda çıkış UX ve konuşma isteği
 
 - **Oda kapatıldı / yasak:** SSE veya hata sonrası diyalog + otomatik liste ekranına dönüş (Basic + RTC)

@@ -16,7 +16,6 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
-import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
@@ -29,10 +28,6 @@ import '../../../gifts/domain/session_gift_summary_builder.dart';
 import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../../gifts/domain/gift_revenue_display.dart';
 import '../../../gifts/presentation/sync/gift_event_listener.dart';
-import '../providers/staff_entrance_marquee_provider.dart';
-import '../providers/voice_gift_combo_tracker.dart';
-import '../providers/voice_gift_leaderboard_provider.dart';
-import '../providers/voice_recent_gifts_provider.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_gift_providers.dart';
 import '../audio/voice_room_audio_coordinator.dart';
@@ -77,6 +72,7 @@ import '../widgets/premium_2026/voice_live_header_2026.dart';
 import '../widgets/premium_2026/voice_online_gift_box.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../widgets/voice_room/voice_room_now_playing_bar.dart';
+import '../widgets/voice_room/voice_room_music_background_layer.dart';
 import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../../gifts/presentation/widgets/first_gifter_badge.dart';
 import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
@@ -103,8 +99,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   var _leaveSessionStarted = false;
   var _forcedExitHandled = false;
   final _messageCtrl = TextEditingController();
-  StreamSubscription<LiveGiftEvent>? _giftSub;
-  LiveGiftEvent? _fullscreenGift;
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
   int? _lastSelfSeatIndex;
@@ -145,8 +139,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   @override
   void dispose() {
     _messageCtrl.dispose();
-    _giftSub?.cancel();
-    _giftSub = null;
     ref.read(voiceRoomGiftRealtimeProvider).stop();
     ref.read(pkBattleRemoteProvider.notifier).clear();
     final liveKey = _pinnedLiveRoomKey;
@@ -385,25 +377,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final room = _effectiveRoom();
     final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
     if (key.isEmpty) return;
-    final service = ref.read(voiceRoomGiftRealtimeProvider);
-    service.start(key);
-    _giftSub?.cancel();
-    _giftSub = service.events.listen(_onGiftEvent);
-  }
-
-  void _onGiftEvent(LiveGiftEvent raw) {
-    if (!mounted) return;
-    final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
-    ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
-
-    if (event.jetonAmount >= 1000) {
-      ref.read(staffEntranceMarqueeProvider.notifier).enqueueBigGift(
-            senderName: event.senderName,
-            receiverName: event.receiverName,
-            jeton: event.jetonAmount,
-            giftName: event.giftName,
-          );
-    }
+    ref.read(voiceRoomGiftRealtimeProvider).start(key);
   }
 
   void _maybeShowVipEntrance(UserEntity user) {
@@ -832,6 +806,10 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
+            if (_liveRoomKey.isNotEmpty) ...[
+              VoiceRoomMusicBackgroundLayer(roomKey: _liveRoomKey),
+              VoiceRoomHiddenAudioPlayer(roomKey: _liveRoomKey),
+            ],
             Consumer(
               builder: (context, ref, _) {
                 final activeGift = ref.watch(
@@ -911,8 +889,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     perms: perms,
                     user: user,
                   ),
-                  // Müzik yalnızca ses — video şeridi kaldırıldı (donma önlenir).
-                  // Koltuk altı "şu an çalan şarkı" şeridi (yeşil kutu).
                   VoiceRoomNowPlayingBar(
                     roomKey: _liveRoomKey,
                     canControl: canControlMusic,
