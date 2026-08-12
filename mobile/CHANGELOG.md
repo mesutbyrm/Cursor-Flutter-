@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.171+206 (2026-08-12) — Oda çıkış + canlı PK daveti
+
+- **Sesli oda çıkış:** RTC sayfasında `leaveRoomSession` önce tamamlanıyor, sonra navigasyon (dispose sonrası `ref` hatası giderildi)
+- **Hata ekranı:** "Oda listesine dön" backend leave tetikler
+- **Canlı PK:** `POST /api/video-streams/pk` gövdesine `streamId` + `targetStreamId` eklendi (`targetStreamId gerekli` hatası)
+
 ## 1.0.170+205 (2026-08-12) — Keşfet kategori + tanı kartı
 
 - **Keşfet:** `GET /api/chat/rooms?type=voice&category=` — sunucu tarafı kategori filtresi (kılavuz §9.3)

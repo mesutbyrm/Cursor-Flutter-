@@ -32,7 +32,8 @@ class RoomLeaveCoordinator {
     }
   }
 
-  void reset() {
+  void reset({bool force = false}) {
+    if (!force && _leaving) return;
     _leaving = false;
   }
 }

@@ -616,18 +616,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
     _audio = null;
 
-    // Önce ekrandan çık — temizlik arka planda (donma önlenir).
-    if (mounted) {
-      if (context.canPop()) {
-        context.pop();
-      } else {
-        context.go('/voice-rooms');
-      }
-    }
-
+    final liveNotifier = ref.read(voiceRoomLiveProvider(liveKey).notifier);
     try {
-      await ref
-          .read(voiceRoomLiveProvider(liveKey).notifier)
+      await liveNotifier
           .leaveRoomSession(
             source: 'rtc_leave',
             awaitBackend: true,
@@ -636,6 +627,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           .timeout(const Duration(seconds: 8));
     } catch (_) {}
 
+    if (!mounted) {
+      _leaving = false;
+      return;
+    }
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/voice-rooms');
+    }
     _leaving = false;
   }
 

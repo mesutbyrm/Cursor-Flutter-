@@ -8,6 +8,28 @@ import '../../../../core/network/pk_event_log.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 
+/// Canlı PK davet gövdesi — üretim `POST /api/video-streams/pk` kontratı.
+Map<String, dynamic> livePkCreateRequestBody({
+  required String hostStreamId,
+  required String targetStreamId,
+  required int durationSeconds,
+}) {
+  final host = hostStreamId.trim();
+  final target = targetStreamId.trim();
+  final duration = durationSeconds.clamp(60, 3600);
+  return {
+    'action': 'create',
+    'streamId': host,
+    'hostStreamId': host,
+    'targetStreamId': target,
+    'opponentStreamId': target,
+    'opponentLiveStreamId': target,
+    'duration': duration,
+    'durationSeconds': duration,
+    'durationSec': duration,
+  };
+}
+
 class PkBattleRemoteDataSource {
   PkBattleRemoteDataSource(this._dio);
 
@@ -334,17 +356,21 @@ class PkBattleRemoteDataSource {
     final normalized = action.toLowerCase();
     // Üretim kontratı: POST /api/video-streams/pk — action + streamId + targetStreamId + duration (sn)
     if (normalized == 'create' && opponentStreamId != null) {
+      final target = opponentStreamId.trim();
+      final host = streamId.trim();
+      if (target.isEmpty) {
+        throw const ApiException('targetStreamId gerekli');
+      }
       final durationSec =
           duration != null ? duration.clamp(60, 3600) : 180;
-      final body = {
-        'action': 'create',
-        'opponentStreamId': opponentStreamId,
-        'opponentLiveStreamId': opponentStreamId,
-        'durationSeconds': durationSec,
-      };
+      final body = livePkCreateRequestBody(
+        hostStreamId: host,
+        targetStreamId: target,
+        durationSeconds: durationSec,
+      );
       try {
         final res = await _dio.safePost<dynamic>(
-          ApiEndpoints.videoStreamPkBattle(streamId),
+          ApiEndpoints.videoStreamPk,
           data: body,
         );
         final battle = _parseBattle(res.data);
@@ -352,27 +378,28 @@ class PkBattleRemoteDataSource {
       } on ApiException catch (e) {
         PkEventLog.apiFailure(
           method: 'POST',
-          url: ApiEndpoints.videoStreamPkBattle(streamId),
+          url: ApiEndpoints.videoStreamPk,
           statusCode: e.statusCode,
-          roomId: streamId,
-          targetUserId: opponentStreamId,
+          roomId: host,
+          targetUserId: target,
           responseBody: e.message,
         );
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       }
       try {
         final res = await _dio.safePost<dynamic>(
-          ApiEndpoints.videoStreamPk,
+          ApiEndpoints.videoStreamPkBattle(host),
           data: body,
         );
-        return _parseBattle(res.data);
+        final battle = _parseBattle(res.data);
+        if (battle != null) return battle;
       } on ApiException catch (e) {
         PkEventLog.apiFailure(
           method: 'POST',
-          url: ApiEndpoints.videoStreamPk,
+          url: ApiEndpoints.videoStreamPkBattle(host),
           statusCode: e.statusCode,
-          roomId: streamId,
-          targetUserId: opponentStreamId,
+          roomId: host,
+          targetUserId: target,
           responseBody: e.message,
         );
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;

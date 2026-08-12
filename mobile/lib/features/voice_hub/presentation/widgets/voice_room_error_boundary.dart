@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/widgets/discover/discover_empty_state.dart';
 import '../../data/services/voice_room_debug_log.dart';
+import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_diagnostic_provider.dart';
 import '../theme/voice_room_tokens.dart';
 
@@ -70,7 +73,21 @@ class _VoiceRoomErrorBoundaryState extends ConsumerState<VoiceRoomErrorBoundary>
           ref.read(voiceRoomDiagnosticProvider.notifier).setUiBuildError(null);
           setState(() => _capturedError = null);
         },
-        onLeave: () => context.go('/voice-rooms'),
+        onLeave: () {
+          final key = widget.roomId.trim();
+          if (key.isNotEmpty) {
+            unawaited(
+              ref
+                  .read(voiceRoomLiveProvider(key).notifier)
+                  .leaveRoomSession(
+                    source: 'error_boundary_leave',
+                    awaitBackend: true,
+                    force: true,
+                  ),
+            );
+          }
+          context.go('/voice-rooms');
+        },
       );
     }
     return widget.child;

@@ -787,7 +787,7 @@ class VoiceRoomLiveController
   }) async {
     if (_leaveInFlight || _leaveCoordinator.isLeaving) {
       if (force) {
-        _leaveCoordinator.reset();
+        _leaveCoordinator.reset(force: true);
         _leaveInFlight = false;
       } else {
         return;
