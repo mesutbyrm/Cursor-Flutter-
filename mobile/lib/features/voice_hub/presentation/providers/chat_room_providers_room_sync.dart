@@ -21,7 +21,11 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
           return null;
         }),
         remote
-            .fetchSeats(_roomKey, alternateKey: _musicAlternateKey)
+            .fetchSeats(
+              _roomKey,
+              alternateKey: _musicAlternateKey,
+              targetSeatCount: state.roomSeatCount ?? _roomMeta.seatCount,
+            )
             .catchError((Object e) {
           VoiceRoomDebugLog.log('api.seats.fail', {'error': e.toString()});
           return <VoiceRoomSeatSlot>[];
@@ -72,6 +76,8 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       serverPermissions: snapshot.me ?? state.serverPermissions,
       selfInRoom: true,
       clearError: true,
+      roomSeatCount: snapshot.seatCount ?? state.roomSeatCount,
+      roomMaxUsers: snapshot.maxUsers ?? state.roomMaxUsers,
     );
     if (snapshot.onlineCount != null) {
       _patchHubPresenceCount(snapshot.onlineCount!);
@@ -248,10 +254,14 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     String? occupantName,
     String? occupantImage,
   }) {
+    final target = voiceRoomSeatMapTargetCount(
+      configuredSeatCount: state.roomSeatCount ?? _roomMeta.seatCount,
+      fromListLength: current.isEmpty ? null : current.length,
+    );
     var slots = current.isNotEmpty
         ? List<VoiceRoomSeatSlot>.from(current)
-        : List.generate(11, VoiceRoomSeatSlot.empty);
-    while (slots.length < 11) {
+        : List.generate(target, VoiceRoomSeatSlot.empty);
+    while (slots.length < target) {
       slots.add(VoiceRoomSeatSlot.empty(slots.length));
     }
     if (previousIndex != null &&
@@ -334,6 +344,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       final seats = await ref.read(chatRoomRemoteProvider).fetchSeats(
             _roomKey,
             alternateKey: _musicAlternateKey,
+            targetSeatCount: state.roomSeatCount ?? _roomMeta.seatCount,
           );
       final hadOccupied =
           state.seatSlots.any((s) => (s.userId?.trim().isNotEmpty ?? false));

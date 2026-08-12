@@ -167,6 +167,10 @@ abstract final class VoiceRoomSeatPriority {
     List<VoiceRoomSeatSlot> seatSlots = const [],
   }) {
     if (room.id.trim().isEmpty && room.slug.trim().isEmpty) return null;
+    final maxSeat = room.seatCount != null && room.seatCount! > 0
+        ? room.seatCount!.clamp(8, 15)
+        : 10;
+    final adminSeat = maxSeat > 10 ? 11 : null;
     final occupied = <int, ChatRoomPresence>{
       for (final p in presence)
         if (p.seatIndex != null) p.seatIndex!: p,
@@ -186,12 +190,14 @@ abstract final class VoiceRoomSeatPriority {
     if (myTier >= tierFounder && !occupied.containsKey(1)) {
       return 1;
     }
-    for (var seat = 1; seat <= 10; seat++) {
+    for (var seat = 1; seat <= maxSeat; seat++) {
       if (!occupied.containsKey(seat)) return seat;
     }
     // Admin koltuğu görünürse ve boşsa en son seçenek olarak kullanılabilir.
-    if (myTier >= tierAdmin && !occupied.containsKey(11)) {
-      return 11;
+    if (adminSeat != null &&
+        myTier >= tierAdmin &&
+        !occupied.containsKey(adminSeat)) {
+      return adminSeat;
     }
     return null;
   }

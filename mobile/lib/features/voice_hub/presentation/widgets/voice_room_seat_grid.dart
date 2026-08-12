@@ -5,8 +5,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
+import '../../utils/voice_room_seat_capacity.dart';
 
-/// Web sesli oda koltuk düzeni (8 koltuk + merkez sahne).
+/// Web sesli oda koltuk düzeni (dinamik koltuk + merkez sahne).
 class VoiceRoomSeatGrid extends StatelessWidget {
   const VoiceRoomSeatGrid({
     super.key,
@@ -16,6 +17,7 @@ class VoiceRoomSeatGrid extends StatelessWidget {
     this.centerAvatarUrl,
     this.recentAvatars = const [],
     this.speakingUserIndex,
+    this.seatCount,
   });
 
   final String roomIcon;
@@ -24,8 +26,9 @@ class VoiceRoomSeatGrid extends StatelessWidget {
   final String? centerAvatarUrl;
   final List<String> recentAvatars;
   final int? speakingUserIndex;
+  final int? seatCount;
 
-  static const _seatCount = 8;
+  int get _seatCount => seatCount ?? kDefaultVoiceSeatCount;
 
   @override
   Widget build(BuildContext context) {

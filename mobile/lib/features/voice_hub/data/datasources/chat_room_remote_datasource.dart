@@ -415,10 +415,11 @@ class ChatRoomRemoteDataSource {
   Future<List<VoiceRoomSeatSlot>> fetchSeats(
     String roomKey, {
     String? alternateKey,
+    int? targetSeatCount,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final res = await _dio.safeGet<dynamic>(seatsPath(key));
-      return parseVoiceRoomSeatMap(res.data);
+      return parseVoiceRoomSeatMap(res.data, targetCount: targetSeatCount);
     });
   }
 

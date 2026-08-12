@@ -998,6 +998,8 @@ class LiveRemoteDataSource {
       roomType: roomType,
       isLocked: isLocked || hasPassword ? true : null,
       hasPassword: hasPassword || isLocked ? true : null,
+      seatCount: asInt(pick(json, ['seatCount', 'maxSeats', 'seats_count'])),
+      maxUsers: asInt(pick(json, ['maxUsers', 'max_users', 'userLimit'])),
     );
   }
 

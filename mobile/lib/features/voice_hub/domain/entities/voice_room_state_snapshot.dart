@@ -13,6 +13,8 @@ class VoiceRoomStateSnapshot {
     this.trtc,
     this.me,
     this.onlineCount,
+    this.seatCount,
+    this.maxUsers,
   });
 
   final String roomId;
@@ -22,6 +24,8 @@ class VoiceRoomStateSnapshot {
   final TrtcCredentials? trtc;
   final ChatRoomMyPermissions? me;
   final int? onlineCount;
+  final int? seatCount;
+  final int? maxUsers;
 
   factory VoiceRoomStateSnapshot.fromJson(
     Map<String, dynamic> json, {
@@ -40,9 +44,6 @@ class VoiceRoomStateSnapshot {
         room['participants'];
     final participants = _parseParticipants(participantsRaw);
 
-    final seatsRaw = json['seats'] ?? json['seatMap'] ?? room['seats'];
-    final seats = parseVoiceRoomSeatMap(seatsRaw);
-
     final trtcRaw = json['trtc'] ?? json['trtcCredentials'] ?? json;
     TrtcCredentials? trtc;
     if (trtcRaw is Map) {
@@ -60,6 +61,11 @@ class VoiceRoomStateSnapshot {
     }
 
     final online = _int(json['onlineCount'] ?? room['onlineCount']);
+    final seatCount = _int(room['seatCount'] ?? json['seatCount']);
+    final maxUsers = _int(room['maxUsers'] ?? json['maxUsers']);
+
+    final seatsRaw = json['seats'] ?? json['seatMap'] ?? room['seats'];
+    final seats = parseVoiceRoomSeatMap(seatsRaw, targetCount: seatCount);
 
     return VoiceRoomStateSnapshot(
       roomId: roomId,
@@ -69,6 +75,8 @@ class VoiceRoomStateSnapshot {
       trtc: trtc,
       me: me,
       onlineCount: online,
+      seatCount: seatCount,
+      maxUsers: maxUsers,
     );
   }
 

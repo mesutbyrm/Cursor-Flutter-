@@ -53,6 +53,7 @@ import '../utils/voice_music_access.dart';
 import '../utils/voice_room_duyuru_access.dart';
 import '../utils/voice_room_mention.dart';
 import '../utils/voice_room_seat_priority.dart';
+import '../utils/voice_room_seat_capacity.dart';
 import '../utils/voice_staff_chat_style.dart';
 import 'voice_session_phase_provider.dart';
 import '../../domain/voice/voice_session_phase.dart';
@@ -201,6 +202,8 @@ class VoiceRoomLiveState {
     this.roomTrtc,
     this.backendSyncReady = false,
     this.hubOnlineCount,
+    this.roomSeatCount,
+    this.roomMaxUsers,
   });
 
   final List<ChatRoomMessage> messages;
@@ -238,6 +241,9 @@ class VoiceRoomLiveState {
   final bool backendSyncReady;
   /// Backend/SSE `onlineCount` — presence listesinden bağımsız.
   final int? hubOnlineCount;
+  /// Backend `seatCount` — oda kapasitesi (8–15).
+  final int? roomSeatCount;
+  final int? roomMaxUsers;
 
   bool get isAnyoneTyping => typingUsers.isNotEmpty;
 
@@ -297,6 +303,8 @@ class VoiceRoomLiveState {
     bool? backendSyncReady,
     int? hubOnlineCount,
     bool clearHubOnlineCount = false,
+    int? roomSeatCount,
+    int? roomMaxUsers,
     bool clearError = false,
   }) {
     return VoiceRoomLiveState(
@@ -355,6 +363,8 @@ class VoiceRoomLiveState {
       hubOnlineCount: clearHubOnlineCount
           ? null
           : (hubOnlineCount ?? this.hubOnlineCount),
+      roomSeatCount: roomSeatCount ?? this.roomSeatCount,
+      roomMaxUsers: roomMaxUsers ?? this.roomMaxUsers,
     );
   }
 }
@@ -2743,6 +2753,37 @@ class VoiceRoomLiveController
           );
       ref.invalidate(voiceRoomsProvider);
       ref.invalidate(voiceRoomByIdProvider(_roomKey));
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> updateRoomCapacity({
+    int? seatCount,
+    int? maxUsers,
+  }) async {
+    final perms = _permissions();
+    if (!perms.isRoomOwner && !perms.canManageRoom && !perms.isSiteAdmin) {
+      return 'Oda kapasitesi ayarlama yetkiniz yok.';
+    }
+    if (seatCount == null && maxUsers == null) {
+      return 'Güncellenecek kapasite yok.';
+    }
+    try {
+      await ref.read(chatRoomRemoteProvider).updateRoomSettings(
+            roomKey: _roomKey.isNotEmpty ? _roomKey : _roomMeta.id,
+            alternateKey: _roomMeta.slug,
+            seatCount: seatCount,
+            maxUsers: maxUsers,
+          );
+      state = state.copyWith(
+        roomSeatCount: seatCount ?? state.roomSeatCount,
+        roomMaxUsers: maxUsers ?? state.roomMaxUsers,
+      );
+      ref.invalidate(voiceRoomsProvider);
+      ref.invalidate(voiceRoomByIdProvider(_roomKey));
+      await _refreshSeatsFromBackend();
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

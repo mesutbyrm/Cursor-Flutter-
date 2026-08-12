@@ -87,7 +87,11 @@ class VoiceWebOwnerStage extends StatelessWidget {
         final gridH = rowH * 2 + gap;
         final totalH = gridH.clamp(112.0, 176.0);
 
-        final seats = VoiceRoomSeatLayout(room: room, presence: presence).build();
+        final seats = VoiceRoomSeatLayout(
+          room: room,
+          presence: presence,
+          seatSlots: seatSlots,
+        ).build();
         final showAdminSeat = VoiceRoomSeatPriority.showAdminSeat(seats);
         final host = seats[1];
 

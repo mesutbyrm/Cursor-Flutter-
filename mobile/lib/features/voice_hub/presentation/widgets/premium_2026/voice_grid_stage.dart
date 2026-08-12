@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../utils/voice_room_seat_layout.dart';
+import '../../utils/voice_room_seat_capacity.dart';
 import 'voice_mic_seat.dart';
 
 /// 8 mikrofon: üstte 4, altta 4 (responsive ızgara).
@@ -26,6 +27,9 @@ class VoiceGridStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final micSeats = maxSeats > 0
+        ? maxSeats
+        : resolveVoiceRoomSeatCount(room: room);
     return LayoutBuilder(
       builder: (context, constraints) {
         final w = constraints.maxWidth.isFinite
@@ -41,8 +45,12 @@ class VoiceGridStage extends StatelessWidget {
         final rowH = seatSize + 28;
         final totalH = rowH * 2 + gap + pad;
 
-        final seats = VoiceRoomSeatLayout(room: room, presence: presence).build();
-        final ordered = _orderedForGrid(seats);
+        final seats = VoiceRoomSeatLayout(
+          room: room,
+          presence: presence,
+          seatCapacity: micSeats,
+        ).build();
+        final ordered = _orderedForGrid(seats, micSeats);
 
         return SizedBox(
           width: w,
@@ -74,12 +82,15 @@ class VoiceGridStage extends StatelessWidget {
     );
   }
 
-  List<ChatRoomPresence?> _orderedForGrid(Map<int, ChatRoomPresence> seats) {
+  List<ChatRoomPresence?> _orderedForGrid(
+    Map<int, ChatRoomPresence> seats,
+    int micSeats,
+  ) {
     final list = <ChatRoomPresence?>[];
-    for (var i = 1; i <= maxSeats; i++) {
+    for (var i = 1; i <= micSeats; i++) {
       list.add(seats[i]);
     }
-    while (list.length < maxSeats) {
+    while (list.length < micSeats) {
       list.add(null);
     }
     return list;
@@ -120,8 +131,14 @@ List<ChatRoomPresence> voiceAudienceOffStage({
   required VoiceRoomEntity room,
   int maxSeats = 8,
 }) {
-  final onStage =
-      VoiceRoomSeatLayout(room: room, presence: presence).build().values;
+  final micSeats = maxSeats > 0
+      ? maxSeats
+      : resolveVoiceRoomSeatCount(room: room);
+  final onStage = VoiceRoomSeatLayout(
+    room: room,
+    presence: presence,
+    seatCapacity: micSeats,
+  ).build().values;
   final onIds = onStage.map((p) => p.id).toSet();
   return presence.where((p) => !onIds.contains(p.id)).toList();
 }

@@ -1,18 +1,31 @@
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../../domain/entities/voice_room_seat_slot.dart';
+import 'voice_room_seat_capacity.dart';
 
-/// 11 koltuk: 1–11 (üretim); 1 = oda sahibi gösterimi.
+/// Koltuk haritası: 1 = oda sahibi; 11 = admin (kapasite > 10 ise).
 class VoiceRoomSeatLayout {
   VoiceRoomSeatLayout({
     required this.room,
     required this.presence,
-  });
+    this.seatSlots = const [],
+    int? seatCapacity,
+  })  : maxSeatIndex = voiceRoomLayoutMaxSeatIndex(
+          room: room,
+          seatSlots: seatSlots,
+          configuredSeatCount: seatCapacity ?? room.seatCount,
+        ),
+        adminSeatIndex = voiceRoomAdminSeatIndex(
+          room: room,
+          seatSlots: seatSlots,
+          configuredSeatCount: seatCapacity ?? room.seatCount,
+        );
 
   final VoiceRoomEntity room;
   final List<ChatRoomPresence> presence;
-
-  /// İndeksler 0–11; kullanıcı koltukları 1–11.
-  static const seatCount = 12;
+  final List<VoiceRoomSeatSlot> seatSlots;
+  final int maxSeatIndex;
+  final int? adminSeatIndex;
 
   Map<int, ChatRoomPresence> build() {
     final ownerId = room.ownerId;
@@ -21,7 +34,7 @@ class VoiceRoomSeatLayout {
 
     for (final u in presence) {
       final idx = u.seatIndex;
-      if (idx != null && idx >= 0 && idx <= seatCount - 1) {
+      if (idx != null && idx >= 0 && idx <= maxSeatIndex) {
         bySeat.putIfAbsent(idx, () => u);
       } else {
         withoutSeat.add(u);
@@ -61,16 +74,17 @@ class VoiceRoomSeatLayout {
       bySeat.remove(1);
     }
 
-    // Kalan kullanıcıları boş koltuklara doldur (sahip hariç; 11 yalnızca admin).
+    // Kalan kullanıcıları boş koltuklara doldur (sahip hariç; admin ayrı).
     var next = 0;
     void place(ChatRoomPresence u) {
       if (hostUser != null && u.id == hostUser.id) return;
       if (ownerId != null && u.id == ownerId) return;
-      while (next <= seatCount - 1 &&
-          (bySeat.containsKey(next) || next == 11)) {
+      while (next <= maxSeatIndex &&
+          (bySeat.containsKey(next) ||
+              (adminSeatIndex != null && next == adminSeatIndex))) {
         next++;
       }
-      if (next <= seatCount - 1) {
+      if (next <= maxSeatIndex) {
         bySeat[next] = u;
         next++;
       }

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.164+199 (2026-08-12) — Dinamik koltuk kapasitesi
+
+- **Backend `seatCount`:** Oda listesi, state snapshot ve `GET /seats` ile senkron
+- **Koltuk haritası:** 8–15 arası dinamik slot; admin koltuğu (11) kapasite > 10 iken
+- **Yönetim paneli:** Koltuk sayısı seçici (8 / 10 / 12 / 15) → `PATCH /settings`
+- **Sahne düzeni:** `VoiceRoomSeatLayout`, grid ve otomatik koltuk ataması backend kapasitesine göre
+
 ## 1.0.163+198 (2026-08-12) — Sesli oda backend UI hizalaması
 
 - **Oda ayarları (PATCH /settings):** Ad, açıklama, `isLocked` kilidi — yönetim paneli

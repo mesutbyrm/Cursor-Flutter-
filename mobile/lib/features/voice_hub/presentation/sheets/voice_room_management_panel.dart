@@ -19,6 +19,7 @@ import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
+import '../utils/voice_room_seat_capacity.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import 'voice_room_commands_panel.dart';
@@ -714,6 +715,14 @@ class _VoiceRoomManagementPanelState
             value: room.isLocked == true,
             onChanged: (v) => unawaited(_setRoomLocked(v)),
           ),
+          ListTile(
+            leading: const Icon(Icons.event_seat_rounded),
+            title: const Text('Koltuk sayısı'),
+            subtitle: Text(
+              '${_live.roomSeatCount ?? room.seatCount ?? kDefaultVoiceSeatCount} mikrofon',
+            ),
+            onTap: _pickSeatCount,
+          ),
         ],
         if (isOwner || perms.canManageRoom) ...[
           const Divider(),
@@ -937,6 +946,38 @@ class _VoiceRoomManagementPanelState
       return;
     }
     await _snack(locked ? 'Oda kilitlendi' : 'Oda kilidi kaldırıldı');
+  }
+
+  Future<void> _pickSeatCount() async {
+    final current =
+        _live.roomSeatCount ?? room.seatCount ?? kDefaultVoiceSeatCount;
+    final options = const [8, 10, 12, 15];
+    final picked = await showDialog<int>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Koltuk sayısı'),
+        children: options
+            .map(
+              (n) => SimpleDialogOption(
+                onPressed: () => Navigator.pop(ctx, n),
+                child: Row(
+                  children: [
+                    if (n == current)
+                      const Icon(Icons.check_rounded, size: 20)
+                    else
+                      const SizedBox(width: 20),
+                    const SizedBox(width: 8),
+                    Text('$n mikrofon'),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+    if (picked == null || picked == current) return;
+    final err = await _ctrl.updateRoomCapacity(seatCount: picked);
+    await _snack(err ?? 'Koltuk sayısı $picked olarak güncellendi');
   }
 
   Future<void> _setRoomPassword() async {

@@ -202,6 +202,8 @@ VoiceRoomEntity _mapVoiceRoom(Map<String, dynamic> m) {
     ownerName: m['hostName']?.toString(),
     ownerId: m['hostId']?.toString(),
     roomType: 'voice',
+    seatCount: _int(m['seatCount']),
+    maxUsers: _int(m['maxUsers']),
   );
 }
 
