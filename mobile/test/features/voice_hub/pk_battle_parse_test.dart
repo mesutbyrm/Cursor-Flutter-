@@ -39,6 +39,24 @@ void main() {
       expect(battle.isPending, isTrue);
     });
 
+    test('pendingInvite preferred over activeBattle when pending', () {
+      final battle = ds.parseBattleForTest({
+        'roomId': 'room-a',
+        'activeBattle': {
+          'id': 'battle-1',
+          'status': 'active',
+        },
+        'pendingInvite': {
+          'inviteId': 'inv-pending',
+          'status': 'pending',
+          'opponentLiveStreamId': 'stream-b',
+        },
+      });
+      expect(battle, isNotNull);
+      expect(battle!.effectiveId, 'inv-pending');
+      expect(battle.isPending, isTrue);
+    });
+
     test('activeBattle is parsed', () {
       final battle = ds.parseBattleForTest({
         'roomId': 'room-a',

@@ -775,7 +775,14 @@ class VoiceRoomLiveController
     bool awaitBackend = true,
     bool force = false,
   }) async {
-    if (_leaveInFlight || _leaveCoordinator.isLeaving) return;
+    if (_leaveInFlight || _leaveCoordinator.isLeaving) {
+      if (force) {
+        _leaveCoordinator.reset();
+        _leaveInFlight = false;
+      } else {
+        return;
+      }
+    }
     final stillConnected = _voiceJoined ||
         _presenceJoined ||
         _sseStarted ||

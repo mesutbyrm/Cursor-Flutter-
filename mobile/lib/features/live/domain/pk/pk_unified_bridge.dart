@@ -58,7 +58,54 @@ PkBattleRemote pkRoomMatchToBattleRemote(
   );
 }
 
-/// Birleşik `PkRoomMatch` → eski canlı yayın PK haritası (`liveVideoPkProvider`).
+/// `PkBattleRemote` → canlı yayın PK haritası (`liveVideoPkProvider`).
+Map<String, dynamic> pkBattleRemoteToBattleMap(
+  PkBattleRemote remote, {
+  String? myStreamId,
+  String? myUserId,
+}) {
+  final sid = myStreamId?.trim() ?? '';
+  final uid = myUserId?.trim() ?? '';
+  final hostStream = remote.liveStreamId?.trim() ?? '';
+  final opponentStream = remote.opponentLiveStreamId?.trim() ?? '';
+  final isChallenger =
+      (sid.isNotEmpty && hostStream == sid) ||
+      (uid.isNotEmpty && remote.challengerId == uid);
+  final isOpponent = remote.isPending &&
+      isLivePkInviteRecipientBattle(
+        remote,
+        myUserId: uid,
+        myStreamId: sid.isNotEmpty ? sid : null,
+      );
+
+  return {
+    'id': remote.effectiveId,
+    'status': remote.status,
+    'score1': remote.challengerScore,
+    'score2': remote.opponentScore,
+    'leftScore': remote.challengerScore,
+    'rightScore': remote.opponentScore,
+    'challengerScore': remote.challengerScore,
+    'opponentScore': remote.opponentScore,
+    'secondsLeft': remote.secondsLeft,
+    'durationSeconds': remote.durationSeconds,
+    'liveStreamId': remote.liveStreamId,
+    'opponentLiveStreamId': remote.opponentLiveStreamId,
+    'hostStreamId': remote.liveStreamId,
+    'opponentStreamId': remote.opponentLiveStreamId,
+    'challengerId': remote.challengerId,
+    'opponentId': remote.opponentId,
+    'targetUserId': remote.targetUserId,
+    'guestUserId': remote.guestUserId,
+    'leftName': remote.challenger?.displayName,
+    'rightName': remote.opponent?.displayName,
+    'challengerName': remote.challenger?.displayName,
+    'isOpponent': isOpponent,
+    'hostOnLeft': isChallenger || !isOpponent,
+    'unifiedPk': false,
+  };
+}
+
 Map<String, dynamic> pkRoomMatchToBattleMap(
   PkRoomMatch match, {
   String? myStreamId,

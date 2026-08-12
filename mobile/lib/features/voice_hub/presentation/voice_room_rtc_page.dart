@@ -612,10 +612,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     ref.read(voiceRoomTrtcMusicMixerProvider).bind(null);
     ref.read(voiceRoomTrtcMusicMixerProvider).stop();
-    if (mounted) setState(() => _audioReady = false);
-
     ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
     _audio = null;
+
+    // Önce ekrandan çık — temizlik arka planda (donma önlenir).
+    if (mounted) {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/voice-rooms');
+      }
+    }
 
     try {
       await ref
@@ -628,15 +635,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           .timeout(const Duration(seconds: 8));
     } catch (_) {}
 
-    if (!mounted) {
-      _leaving = false;
-      return;
-    }
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go('/voice-rooms');
-    }
     _leaving = false;
   }
 

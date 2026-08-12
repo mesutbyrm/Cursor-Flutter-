@@ -2,15 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/pk_event_log.dart';
-import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
-import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_room_session_registry.dart';
 import '../utils/pk_invite_dialog_helper.dart';
@@ -28,14 +25,13 @@ class VoicePkInviteListener extends ConsumerStatefulWidget {
 
 class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   final Set<String> _seenRejections = {};
-  final Set<String> _autoNavigatedBattleIds = {};
   var _showing = false;
   Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 6), (_) {
       if (!mounted || _showing) return;
       unawaited(_pollPendingInvites());
     });
@@ -54,7 +50,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     if (user == null) return;
 
     if (battle.isActive && !battle.isEnded) {
-      _maybeAutoNavigateToPk(battle, user.id);
+      // Otomatik PK sayfasına gitme — yalnızca kabul sonrası dialog yönlendirir.
       return;
     }
 
@@ -86,36 +82,6 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
       }
       ref.read(pkBattleRemoteProvider.notifier).clear();
     }
-  }
-
-  void _maybeAutoNavigateToPk(PkBattleRemote battle, String userId) {
-    final id = battle.effectiveId;
-    if (id.isEmpty || _autoNavigatedBattleIds.contains(id)) return;
-    final rooms = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
-    VoiceRoomEntity? room;
-    for (final r in rooms) {
-      if (isPkChallengerRoom(battle, r) ||
-          isPkInviteTarget(battle, r, userId: userId)) {
-        room = r;
-        break;
-      }
-    }
-  final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
-    if (room == null && activeKey.isNotEmpty) {
-      for (final r in rooms) {
-        if (r.apiRoomKey == activeKey || r.id == activeKey || r.slug == activeKey) {
-          room = r;
-          break;
-        }
-      }
-    }
-    if (room == null) return;
-    final route = GoRouter.of(context).routeInformationProvider.value.uri.path;
-    if (route.contains('/pk')) return;
-    _autoNavigatedBattleIds.add(id);
-    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-    VoiceRoomEntryPerf.prewarmOnRoomTap(ref, room);
-    context.push('/voice-room/$key/pk', extra: room);
   }
 
   Future<void> _showInviteDialog(

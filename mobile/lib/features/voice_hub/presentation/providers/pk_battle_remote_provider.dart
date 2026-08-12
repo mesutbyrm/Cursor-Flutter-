@@ -212,7 +212,9 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   void _apply(PkBattleRemote battle, String event) {
     state = battle;
     _syncPhase(battle, event);
-    ref.read(pkBattleProvider.notifier).applyRemoteBattle(battle);
+    if (battle.isActive || battle.isEnded) {
+      ref.read(pkBattleProvider.notifier).applyRemoteBattle(battle);
+    }
   }
 
   void _syncPhase(PkBattleRemote battle, String event) {

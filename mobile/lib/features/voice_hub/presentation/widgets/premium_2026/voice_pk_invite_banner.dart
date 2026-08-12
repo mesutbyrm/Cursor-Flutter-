@@ -37,7 +37,7 @@ class _VoicePkInviteBannerState extends ConsumerState<VoicePkInviteBanner> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_loadOnce());
-      _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+      _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) {
         unawaited(_loadOnce());
       });
     });

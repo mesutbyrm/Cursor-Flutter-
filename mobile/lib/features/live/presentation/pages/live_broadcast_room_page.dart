@@ -820,33 +820,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   Future<void> _exitBroadcast(
     BuildContext context, {
-    bool skipHostConfirm = false,
+    bool skipHostConfirm = true,
   }) async {
     if (_leaving) return;
-    if (widget.session.isHost && !skipHostConfirm) {
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Yayını sonlandır'),
-          content: const Text('Canlı yayını kapatmak istiyor musunuz?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Hayır'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Evet, kapat'),
-            ),
-          ],
-        ),
-      );
-      if (ok != true || !context.mounted) return;
-    }
     _leaving = true;
     ref.read(liveGiftControllerProvider).detach();
     final streamId = widget.session.streamId?.trim() ?? '';
     final user = ref.read(authControllerProvider).valueOrNull;
+
+    // Önce navigasyon — kullanıcı anında çıksın; temizlik arka planda.
+    if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+      widget.onSwipeClose!();
+    } else if (context.mounted) {
+      context.go('/feed');
+    }
 
     try {
       if (widget.session.isHost && streamId.isNotEmpty) {
@@ -893,29 +880,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   : 'Yayından ayrıldınız',
             );
         await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
-
         invalidateDiscoverLiveStreams(ref);
-        if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
-          widget.onSwipeClose!();
-        } else if (context.mounted) {
-          context.go('/feed');
-        }
 
         if (summary.hasData) {
           final rootCtx = rootNavigatorKey.currentContext;
           if (rootCtx != null && rootCtx.mounted) {
-            await showSessionGiftSummarySheet(rootCtx, summary: summary);
+            unawaited(showSessionGiftSummarySheet(rootCtx, summary: summary));
           }
         }
       } else {
         await ref.refreshWalletCache(force: true);
         invalidateDiscoverLiveStreams(ref);
-        if (!context.mounted) return;
-        if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
-          widget.onSwipeClose!();
-        } else {
-          context.go('/feed');
-        }
       }
     } finally {
       _leaving = false;
@@ -1731,10 +1706,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     notifier.triggerApplause();
   }
 
-  /// PK aktif/beklemede VEYA misafir modu → ekran üst/alt bölünür.
+  /// PK aktif VEYA misafir modu → ekran üst/alt bölünür (pending davet split açmaz).
   bool _isSplitStage(LiveBroadcastSession s, String pkStatus,
       {bool hasCoGuests = false}) {
-    final pkOn = pkStatus == 'active' || pkStatus == 'pending';
+    final pkOn = pkStatus == 'active';
     final guestOn =
         _resolveGuestLayout() != LiveGuestLayout.solo || hasCoGuests;
     return pkOn || guestOn;
@@ -2624,7 +2599,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       canPop: widget.embeddedInSwipe,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        await _exitBroadcast(context);
+        await _exitBroadcast(context, skipHostConfirm: true);
       },
       child: Scaffold(
         backgroundColor: Colors.black,
