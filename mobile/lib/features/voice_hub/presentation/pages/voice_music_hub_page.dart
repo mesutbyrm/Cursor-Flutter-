@@ -13,6 +13,7 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../sheets/music_mode_picker_sheet.dart';
+import '../sheets/voice_room_music_settings_sheet.dart';
 import '../providers/chat_room_providers.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_music_access.dart';
@@ -274,81 +275,10 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
   }
 
   Future<void> _openHostSettings() async {
-    final live = ref.read(voiceRoomLiveProvider(widget.room.liveKey));
-    var enabled = live.dj.musicEnabled;
-    var cost = live.dj.musicRequestCost;
-    var maxQ = live.dj.maxMusicQueue;
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => AlertDialog(
-          backgroundColor: const Color(0xFF1A0F2E),
-          title: const Text('Müzik ayarları', style: TextStyle(color: Colors.white)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SwitchListTile(
-                title: const Text('DJ sistemi', style: TextStyle(color: Colors.white70)),
-                value: enabled,
-                onChanged: (v) => setLocal(() => enabled = v),
-              ),
-              ListTile(
-                title: const Text('İstek ücreti (jeton)', style: TextStyle(color: Colors.white70)),
-                subtitle: Text('$cost', style: const TextStyle(color: Colors.white)),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      onPressed: () => setLocal(() => cost = (cost - 1).clamp(1, 500)),
-                      icon: const Icon(Icons.remove, color: Colors.white),
-                    ),
-                    IconButton(
-                      onPressed: () => setLocal(() => cost = (cost + 1).clamp(1, 500)),
-                      icon: const Icon(Icons.add, color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-              ListTile(
-                title: const Text('Maks. kuyruk', style: TextStyle(color: Colors.white70)),
-                subtitle: Text('$maxQ', style: const TextStyle(color: Colors.white)),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      onPressed: () => setLocal(() => maxQ = (maxQ - 1).clamp(1, 50)),
-                      icon: const Icon(Icons.remove, color: Colors.white),
-                    ),
-                    IconButton(
-                      onPressed: () => setLocal(() => maxQ = (maxQ + 1).clamp(1, 50)),
-                      icon: const Icon(Icons.add, color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('İptal')),
-            FilledButton(
-              onPressed: () async {
-                Navigator.pop(ctx);
-                final err = await ref
-                    .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
-                    .updateMusicSettings(
-                      musicEnabled: enabled,
-                      musicRequestCost: cost,
-                      maxMusicQueue: maxQ,
-                    );
-                if (err != null && mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-                }
-              },
-              child: const Text('Kaydet'),
-            ),
-          ],
-        ),
-      ),
+    await showVoiceRoomMusicSettingsDialog(
+      context,
+      ref,
+      room: widget.room,
     );
   }
 

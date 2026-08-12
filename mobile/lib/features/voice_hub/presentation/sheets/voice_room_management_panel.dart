@@ -32,6 +32,8 @@ import 'voice_room_sheets.dart';
 import 'voice_room_voice_users_sheet.dart';
 import 'voice_youtube_song_sheet.dart';
 import 'voice_room_speak_queue_sheet.dart';
+import 'voice_room_tools_sheet.dart';
+import 'voice_room_music_settings_sheet.dart';
 
 enum VoiceMgmtInitial { home, userMgmt, users, chatMgmt, roomMgmt, userSettings }
 
@@ -530,6 +532,21 @@ class _VoiceRoomManagementPanelState
               );
             }),
           ),
+        if (canMod)
+          ListTile(
+            leading: const Icon(Icons.block_rounded),
+            title: const Text('Yasaklı kelimeler'),
+            subtitle: Text('${_live.bannedWords.length} kelime — düzenle'),
+            onTap: () => _closeAndVoid(() {
+              showVoiceRoomToolsSheet(
+                context,
+                ref,
+                room: room,
+                perms: perms,
+                isOwner: isOwner,
+              );
+            }),
+          ),
         if (isOwner)
           ListTile(
             leading: const Icon(Icons.swap_horiz_rounded),
@@ -720,6 +737,18 @@ class _VoiceRoomManagementPanelState
                 perms: perms,
                 isOwner: isOwner,
               );
+            }),
+          ),
+        if (isOwner || perms.canManageRoom)
+          ListTile(
+            leading: const Icon(Icons.tune_rounded),
+            title: const Text('Müzik ayarları'),
+            subtitle: Text(
+              'DJ: ${_live.dj.musicEnabled ? "açık" : "kapalı"} · '
+              '${_live.dj.musicRequestCost} jeton · kuyruk ${_live.dj.maxMusicQueue}',
+            ),
+            onTap: () => _closeAndVoid(() {
+              showVoiceRoomMusicSettingsDialog(context, ref, room: room);
             }),
           ),
         ListTile(

@@ -195,10 +195,17 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
 enum _OpenRoomChoice { free, standard, vip }
 
 class _OpenRoomSetup {
-  const _OpenRoomSetup({required this.roomName, this.backgroundUrl});
+  const _OpenRoomSetup({
+    required this.roomName,
+    this.backgroundUrl,
+    this.seatCount = 8,
+    this.maxUsers = 15,
+  });
 
   final String roomName;
   final String? backgroundUrl;
+  final int seatCount;
+  final int maxUsers;
 }
 
 class _OpenRoomSetupSheet extends StatefulWidget {
@@ -219,6 +226,8 @@ class _OpenRoomSetupSheetState extends State<_OpenRoomSetupSheet> {
   List<String> _backgrounds = const [];
   String? _selectedBg;
   var _loadingBg = true;
+  int _seatCount = 8;
+  int _maxUsers = 15;
 
   @override
   void initState() {
@@ -251,7 +260,51 @@ class _OpenRoomSetupSheetState extends State<_OpenRoomSetupSheet> {
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) return;
     Navigator.of(context, rootNavigator: true).pop(
-      _OpenRoomSetup(roomName: name, backgroundUrl: _selectedBg),
+      _OpenRoomSetup(
+        roomName: name,
+        backgroundUrl: _selectedBg,
+        seatCount: _seatCount,
+        maxUsers: _maxUsers,
+      ),
+    );
+  }
+
+  Widget _capacityChips({
+    required String label,
+    required List<int> options,
+    required int value,
+    required ValueChanged<int> onSelected,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.75),
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: options.map((n) {
+            final selected = n == value;
+            return ChoiceChip(
+              label: Text('$n'),
+              selected: selected,
+              onSelected: (_) => setState(() => onSelected(n)),
+              selectedColor: AppThemeColors.accentPurple.withValues(alpha: 0.45),
+              labelStyle: TextStyle(
+                color: selected ? Colors.white : Colors.white70,
+                fontWeight: FontWeight.w700,
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
@@ -359,6 +412,20 @@ class _OpenRoomSetupSheetState extends State<_OpenRoomSetupSheet> {
                 ),
               ),
             const SizedBox(height: 16),
+            _capacityChips(
+              label: 'Koltuk sayısı',
+              options: const [8, 10, 12, 15],
+              value: _seatCount,
+              onSelected: (v) => _seatCount = v,
+            ),
+            const SizedBox(height: 12),
+            _capacityChips(
+              label: 'Maksimum kullanıcı',
+              options: const [15, 25, 50, 100],
+              value: _maxUsers,
+              onSelected: (v) => _maxUsers = v,
+            ),
+            const SizedBox(height: 16),
             FilledButton(
               onPressed: _confirm,
               style: FilledButton.styleFrom(
@@ -432,6 +499,8 @@ Future<void> _createAndEnter(
           roomType: roomType,
           roomName: setup.roomName,
           background: setup.backgroundUrl,
+          seatCount: setup.seatCount,
+          maxUsers: setup.maxUsers,
         )
         .timeout(
           const Duration(seconds: 45),

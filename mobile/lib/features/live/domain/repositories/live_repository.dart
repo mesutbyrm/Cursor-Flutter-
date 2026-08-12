@@ -20,6 +20,8 @@ abstract class LiveRepository {
     String? description,
     String? icon,
     String? background,
+    int seatCount = 8,
+    int maxUsers = 15,
   });
 
   Future<String> createVideoStream({

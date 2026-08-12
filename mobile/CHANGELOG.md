@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.167+202 (2026-08-12) — Müzik ve oda açma kapasitesi
+
+- **Müzik ayarları:** Yönetim paneli + paylaşılan dialog (`PATCH /music-settings`)
+- **Yasaklı kelimeler:** Sohbet yönetimi → araçlar sayfası kısayolu
+- **Oda açma:** Kurulumda koltuk (8–15) ve max kullanıcı (15–100) seçimi
+
 ## 1.0.166+201 (2026-08-12) — Oda kuralları ve konuşma isteği
 
 - **Oda kuralları:** Yönetim panelinde düzenleme → `PATCH /settings` (`rules` / `rulesTr`)

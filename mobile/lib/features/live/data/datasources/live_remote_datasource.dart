@@ -321,6 +321,8 @@ class LiveRemoteDataSource {
     String? description,
     String? icon,
     String? background,
+    int seatCount = 8,
+    int maxUsers = 15,
   }) async {
     final resolvedType = roomType ?? (vip ? 'vip' : 'normal');
     final payload = buildVoiceRoomCreatePayload(
@@ -331,6 +333,8 @@ class LiveRemoteDataSource {
       description: description,
       icon: icon,
       background: background,
+      seatCount: seatCount,
+      maxUsers: maxUsers,
     );
     final name = payload['name']?.toString() ?? 'Sohbet';
 
