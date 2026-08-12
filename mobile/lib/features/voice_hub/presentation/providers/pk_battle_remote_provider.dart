@@ -2,12 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/pk_event_log.dart';
+import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/domain/pk/pk_session_phase.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../live/presentation/providers/pk_session_phase_provider.dart';
 import '../../data/datasources/pk_battle_remote_datasource.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_duration_options.dart';
+import '../../domain/pk/pk_opponent_room_filter.dart';
 import 'pk_battle_provider.dart';
 import 'voice_room_session_registry.dart';
 
@@ -224,6 +226,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     if (activeKey.isNotEmpty) {
       final room = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
       if (room != null) {
+        if (!pkBattleBelongsToRoom(battle, room)) return;
         ref
             .read(pkBattleProvider.notifier)
             .applyRemoteBattleForVoiceRoom(battle, room);
@@ -266,6 +269,15 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
 final pkBattleRemoteProvider =
     NotifierProvider<PkBattleRemoteController, PkBattleRemote?>(
   PkBattleRemoteController.new,
+);
+
+/// Oda bağlamında görünen PK — global state yanlış oda ile karışmasın.
+final pkBattleForRoomProvider = Provider.family<PkBattleRemote?, VoiceRoomEntity>(
+  (ref, room) {
+    final battle = ref.watch(pkBattleRemoteProvider);
+    if (battle == null || battle.isEnded) return null;
+    return pkBattleBelongsToRoom(battle, room) ? battle : null;
+  },
 );
 
 /// PK geçmişi listesi.

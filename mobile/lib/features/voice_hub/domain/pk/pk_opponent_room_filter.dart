@@ -93,3 +93,21 @@ bool isPkInviteTarget(
 /// Menüde PK savaş ekranına gitmek için gerçekten aktif savaş var mı?
 bool isPkBattleLive(PkBattleRemote? battle) =>
     battle != null && battle.isActive && !battle.isEnded;
+
+/// PK kaydı bu sesli odaya ait mi (skor şeridi / SSE senkronu için).
+bool pkBattleBelongsToRoom(PkBattleRemote battle, VoiceRoomEntity room) {
+  final keys = {room.apiRoomKey, room.id, room.slug}
+      .where((k) => k.trim().isNotEmpty)
+      .map((k) => k.trim().toLowerCase())
+      .toSet();
+
+  bool matches(String? raw) {
+    final v = raw?.trim().toLowerCase() ?? '';
+    return v.isNotEmpty && keys.contains(v);
+  }
+
+  return matches(battle.voiceRoomId) ||
+      matches(battle.opponentVoiceRoomId) ||
+      matches(battle.challenger?.roomId) ||
+      matches(battle.opponent?.roomId);
+}

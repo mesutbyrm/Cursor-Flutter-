@@ -8,11 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/router/app_router.dart';
-import '../../gifts/domain/session_gift_summary.dart';
-import '../../gifts/domain/session_gift_summary_builder.dart';
-import '../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
-
 import '../../../core/config/env.dart';
 import '../../../core/auth/staff_roles.dart';
 import '../../../core/performance/voice_room_entry_perf.dart';
@@ -75,6 +70,7 @@ import 'utils/voice_room_permissions.dart';
 import 'utils/voice_room_error_display.dart';
 import 'utils/voice_room_speak_access.dart';
 import 'utils/voice_room_session_exit.dart';
+import 'utils/voice_room_leave_flow.dart';
 import 'basic/voice_room_basic_moderation_section.dart';
 import 'utils/voice_room_responsive_metrics.dart';
 import '../../gifts/presentation/engine/gift_engine_overlay.dart';
@@ -619,86 +615,34 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _leaving = true;
     _leaveSessionStarted = true;
     final liveKey = _liveRoomKey;
-
-    ref.read(voiceRoomTrtcMusicMixerProvider).bind(null);
-    ref.read(voiceRoomTrtcMusicMixerProvider).stop();
-    ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
-    _audio = null;
-
-    final liveNotifier = ref.read(voiceRoomLiveProvider(liveKey).notifier);
-    final live = ref.read(voiceRoomLiveProvider(liveKey));
     final room = _effectiveRoom();
-    final user = ref.read(authControllerProvider).valueOrNull;
-    SessionGiftSummary? leaveSummary;
-    if (user != null) {
-      leaveSummary = SessionGiftSummaryBuilder.forVoiceRoom(
-        ref: ref,
-        roomTitle: room.displayTitle,
-        ownerUserId: live.ownerId ?? room.ownerId,
-        ownerDisplayName: room.ownerName,
-        myUserId: user.id,
-        myDisplayName: user.display,
-      );
-    }
-
     try {
-      await liveNotifier
-          .leaveRoomSession(
-            source: 'rtc_leave',
-            awaitBackend: true,
-            force: true,
-          )
-          .timeout(const Duration(seconds: 8));
-    } catch (_) {}
-
-    if (!mounted) {
-      _leaving = false;
-      return;
+      await VoiceRoomLeaveFlow.leaveWithSummary(
+        context: context,
+        ref: ref,
+        liveKey: liveKey,
+        room: room,
+        source: 'rtc_leave',
+        prepareLeave: () async {
+          ref.read(voiceRoomTrtcMusicMixerProvider).bind(null);
+          ref.read(voiceRoomTrtcMusicMixerProvider).stop();
+          ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
+          _audio = null;
+        },
+      );
+    } finally {
+      if (mounted) _leaving = false;
     }
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go('/voice-rooms');
-    }
+  }
 
-    if (leaveSummary != null && leaveSummary.hasData) {
-      final rootCtx = rootNavigatorKey.currentContext;
-      if (rootCtx != null && rootCtx.mounted) {
-        await showSessionGiftSummarySheet(rootCtx, summary: leaveSummary);
-      }
-    }
-
-    _leaving = false;
+  Future<void> _confirmLeave() async {
+    if (_leaving) return;
+    if (!await VoiceRoomLeaveFlow.confirmLeave(context)) return;
+    if (mounted) await _leaveRoom();
   }
 
   Future<void> _leave() async {
-    final nav = Navigator.of(context);
-    if (nav.canPop()) {
-      await _leaveRoom();
-      return;
-    }
-    final leave = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A0F2E),
-        title: const Text('Odadan çık', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'Sesli sohbet listesine dönmek ister misiniz?',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Kal'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Ana liste'),
-          ),
-        ],
-      ),
-    );
-    if (leave == true && mounted) await _leaveRoom();
+    await _confirmLeave();
   }
 
   VoiceRoomPermissions _perms(
@@ -1462,7 +1406,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        await _leaveRoom();
+        await _confirmLeave();
       },
       child: Scaffold(
         backgroundColor: VoiceRoomTokens.bgDeep,
