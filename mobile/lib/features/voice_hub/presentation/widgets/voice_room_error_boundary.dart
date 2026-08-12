@@ -62,6 +62,24 @@ class _VoiceRoomErrorBoundaryState extends ConsumerState<VoiceRoomErrorBoundary>
     return VoiceRoomInlineError(message: message, compact: true);
   }
 
+  Future<void> _leaveAndNavigate() async {
+    final key = widget.roomId.trim();
+    if (key.isNotEmpty) {
+      try {
+        await ref
+            .read(voiceRoomLiveProvider(key).notifier)
+            .leaveRoomSession(
+              source: 'error_boundary_leave',
+              awaitBackend: true,
+              force: true,
+            )
+            .timeout(const Duration(seconds: 8));
+      } catch (_) {}
+    }
+    if (!mounted) return;
+    context.go('/voice-rooms');
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_capturedError != null) {
@@ -73,21 +91,7 @@ class _VoiceRoomErrorBoundaryState extends ConsumerState<VoiceRoomErrorBoundary>
           ref.read(voiceRoomDiagnosticProvider.notifier).setUiBuildError(null);
           setState(() => _capturedError = null);
         },
-        onLeave: () {
-          final key = widget.roomId.trim();
-          if (key.isNotEmpty) {
-            unawaited(
-              ref
-                  .read(voiceRoomLiveProvider(key).notifier)
-                  .leaveRoomSession(
-                    source: 'error_boundary_leave',
-                    awaitBackend: true,
-                    force: true,
-                  ),
-            );
-          }
-          context.go('/voice-rooms');
-        },
+        onLeave: () => unawaited(_leaveAndNavigate()),
       );
     }
     return widget.child;

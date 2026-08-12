@@ -47,6 +47,7 @@ import '../sheets/voice_room_commands_panel.dart';
 import '../utils/voice_room_permissions.dart';
 import '../utils/voice_room_error_display.dart';
 import '../utils/voice_room_speak_access.dart';
+import '../utils/voice_room_session_exit.dart';
 import '../theme/voice_room_tokens.dart';
 import '../../../gifts/presentation/engine/gift_engine_overlay.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
@@ -100,6 +101,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   var _isMicMuted = true;
   var _leaving = false;
   var _leaveSessionStarted = false;
+  var _forcedExitHandled = false;
   final _messageCtrl = TextEditingController();
   StreamSubscription<LiveGiftEvent>? _giftSub;
   LiveGiftEvent? _fullscreenGift;
@@ -632,6 +634,13 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _permissions(user, live, room);
     final canControlMusic = _canControlMusic(live, room, user, perms);
+    final canSpeak = VoiceRoomSpeakAccess.canSpeak(
+      user: user,
+      perms: perms,
+      room: room,
+      presence: live.presence,
+    );
+    final speakPending = ui.requestSpeakPending;
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
     final sessionKey =
         room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
@@ -652,6 +661,20 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
     ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
       if (!mounted) return;
+
+      final exitMsg = VoiceRoomSessionExit.detectExitMessage(prev: prev, next: next);
+      if (exitMsg != null && !_forcedExitHandled && !_leaving) {
+        _forcedExitHandled = true;
+        unawaited(
+          VoiceRoomSessionExit.handleForcedExit(
+            context: context,
+            ref: ref,
+            liveKey: _liveRoomKey,
+            message: exitMsg,
+          ),
+        );
+        return;
+      }
 
       final toast = next.moderationToast;
       if (toast != null && toast != prev?.moderationToast) {
@@ -677,14 +700,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             ),
           ),
         );
-      }
-
-      if (next.realtimeEvents.length > (prev?.realtimeEvents.length ?? 0)) {
-        final latest = next.realtimeEvents.first;
-        if (latest.kind == VoiceRoomRealtimeKind.moderation &&
-            latest.message.toLowerCase().contains('yasaklandınız')) {
-          unawaited(_leaveRoom());
-        }
       }
 
       final q = next.pendingMusicSearchQuery;
@@ -974,6 +989,16 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     headphonesOn: ui.headphonesOn,
                     onToggleAudioOutput: _toggleSpeaker,
                     onInvite: () => unawaited(_shareRoom(room)),
+                    showSpeakRequest: user != null && !canSpeak,
+                    speakRequestPending: speakPending,
+                    onSpeakRequest: () => unawaited(
+                      requestVoiceRoomBasicSpeak(
+                        context: context,
+                        ref: ref,
+                        liveKey: _liveRoomKey,
+                        pending: speakPending,
+                      ),
+                    ),
                   ),
                 ],
               ],

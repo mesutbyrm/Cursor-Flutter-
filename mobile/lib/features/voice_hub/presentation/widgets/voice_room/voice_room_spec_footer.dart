@@ -33,6 +33,9 @@ class VoiceRoomSpecFooter extends StatelessWidget {
     this.joinNotificationsEnabled = true,
     this.onMusicRequest,
     this.showMusicRequest = false,
+    this.onSpeakRequest,
+    this.speakRequestPending = false,
+    this.showSpeakRequest = false,
   });
 
   final TextEditingController controller;
@@ -55,6 +58,9 @@ class VoiceRoomSpecFooter extends StatelessWidget {
   final bool joinNotificationsEnabled;
   final VoidCallback? onMusicRequest;
   final bool showMusicRequest;
+  final VoidCallback? onSpeakRequest;
+  final bool speakRequestPending;
+  final bool showSpeakRequest;
 
   @override
   Widget build(BuildContext context) {
@@ -181,6 +187,9 @@ class VoiceRoomSpecFooter extends StatelessWidget {
               onMicToggle: onMicToggle,
               onGift: onGift,
               onInvite: onInvite,
+              onSpeakRequest: onSpeakRequest,
+              speakRequestPending: speakRequestPending,
+              showSpeakRequest: showSpeakRequest,
             ),
           ],
         ),

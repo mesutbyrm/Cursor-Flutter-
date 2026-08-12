@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.173+208 (2026-08-12) — Oda çıkış UX ve konuşma isteği
+
+- **Oda kapatıldı / yasak:** SSE veya hata sonrası diyalog + otomatik liste ekranına dönüş (Basic + RTC)
+- **Konuşma isteği:** Alt menüde «El kaldır» butonu — koltukta olmayan dinleyiciler için
+- **Hata ekranı:** «Oda listesine dön» backend leave tamamlanana kadar bekler
+
 ## 1.0.172+207 (2026-08-12) — Sesli oda senkron ve keşfet
 
 - **Oda kapatıldı (SSE):** `room_closed` → oturum sonlandırma, presence/koltuk temizliği, `leaveRoomSession(force: true)`

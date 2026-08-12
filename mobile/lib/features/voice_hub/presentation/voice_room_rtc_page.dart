@@ -69,6 +69,8 @@ import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
 import 'utils/voice_room_error_display.dart';
 import 'utils/voice_room_speak_access.dart';
+import 'utils/voice_room_session_exit.dart';
+import 'basic/voice_room_basic_moderation_section.dart';
 import 'utils/voice_room_responsive_metrics.dart';
 import '../../gifts/presentation/engine/gift_engine_overlay.dart';
 import '../../gifts/presentation/widgets/gift_stage_layout.dart';
@@ -120,6 +122,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _micAutoMutedByMusic = false;
   var _leaving = false;
   var _leaveSessionStarted = false;
+  var _forcedExitHandled = false;
   var _musicSearchOpen = false;
   LiveGiftEvent? _fullscreenGift;
   final _messageFocus = FocusNode();
@@ -1109,6 +1112,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     );
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _perms(user, live.presence, server: live.serverPermissions);
+    final canSpeak = VoiceRoomSpeakAccess.canSpeak(
+      user: user,
+      perms: perms,
+      room: room,
+      presence: live.presence,
+    );
+    final speakPending = ref.watch(
+      voiceRoomUiProvider.select((s) => s.requestSpeakPending),
+    );
     final canRequestMusic = VoiceMusicAccess.canRequestSongs(
       dj: live.dj,
       perms: perms,
@@ -1168,6 +1180,22 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }.toList();
     final headerAvatar = ownerPresence?.image;
     ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
+      if (!mounted) return;
+
+      final exitMsg = VoiceRoomSessionExit.detectExitMessage(prev: prev, next: next);
+      if (exitMsg != null && !_forcedExitHandled && !_leaving) {
+        _forcedExitHandled = true;
+        unawaited(
+          VoiceRoomSessionExit.handleForcedExit(
+            context: context,
+            ref: ref,
+            liveKey: _liveRoomKey,
+            message: exitMsg,
+          ),
+        );
+        return;
+      }
+
       if (prev?.error != next.error && next.error != null && mounted) {
         final err = next.error!;
         if (err.contains('jeton')) {
@@ -1860,6 +1888,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       onChanged: _onChatChanged,
                       joinNotificationsEnabled: joinNotificationsEnabled,
                       showMusicRequest: showMusicRequestFab,
+                      showSpeakRequest: user != null && !canSpeak,
+                      speakRequestPending: speakPending,
+                      onSpeakRequest: () => unawaited(
+                        requestVoiceRoomBasicSpeak(
+                          context: context,
+                          ref: ref,
+                          liveKey: _liveRoomKey,
+                          pending: speakPending,
+                        ),
+                      ),
                     );
                   },
                 ),

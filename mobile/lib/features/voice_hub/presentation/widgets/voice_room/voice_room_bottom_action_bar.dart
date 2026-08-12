@@ -18,6 +18,9 @@ class VoiceRoomBottomActionBar extends StatelessWidget {
     required this.onGift,
     required this.onInvite,
     this.showSettings = true,
+    this.onSpeakRequest,
+    this.speakRequestPending = false,
+    this.showSpeakRequest = false,
   });
 
   final bool headphonesOn;
@@ -29,6 +32,9 @@ class VoiceRoomBottomActionBar extends StatelessWidget {
   final VoidCallback onMicToggle;
   final VoidCallback onGift;
   final VoidCallback onInvite;
+  final VoidCallback? onSpeakRequest;
+  final bool speakRequestPending;
+  final bool showSpeakRequest;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +62,11 @@ class VoiceRoomBottomActionBar extends StatelessWidget {
                   onTap: onToggleAudioOutput,
                 ),
                 if (showSettings) _SettingsAction(onTap: onSettings),
+                if (showSpeakRequest && onSpeakRequest != null)
+                  _SpeakRequestAction(
+                    pending: speakRequestPending,
+                    onTap: onSpeakRequest!,
+                  ),
                 Expanded(
                   child: Center(
                     child: _CenterMicButton(
@@ -78,6 +89,51 @@ class VoiceRoomBottomActionBar extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SpeakRequestAction extends StatelessWidget {
+  const _SpeakRequestAction({
+    required this.pending,
+    required this.onTap,
+  });
+
+  final bool pending;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = pending ? VoiceRoomTokens.neonPink : VoiceRoomTokens.neonBlue;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          width: 56,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                pending ? Icons.front_hand_rounded : Icons.back_hand_outlined,
+                color: color,
+                size: 24,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                pending ? 'Bekliyor' : 'El kaldır',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                ),
+              ),
+            ],
           ),
         ),
       ),
