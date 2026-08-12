@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.169+204 (2026-08-12) — Sesli oda giriş hatası
+
+- **Kök neden:** `GiftBattleController.build()` içinde `_start()` → `state` okunuyordu → `Bad state: Tried to read the state of an uninitialized provider`
+- **Çözüm:** Poll başlatma `Future.microtask` ile ertelendi; aktif/pasif aralık parametre ile seçiliyor
+- **Ek:** Oda girişinde `_schedulePoll(musicActive: false)` — build sonrası güvenli varsayılan
+
 ## 1.0.168+203 (2026-08-12) — Oda kategorisi
 
 - **Kategori alanı:** `VoiceRoomEntity.category` — liste ve state snapshot parse

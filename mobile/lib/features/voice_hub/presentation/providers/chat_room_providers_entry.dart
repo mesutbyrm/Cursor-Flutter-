@@ -36,7 +36,7 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
       await _joinPresence();
       unawaited(_tryAutoPrivilegedSeat());
       _startSse();
-      _schedulePoll(sseConnected: false);
+      _schedulePoll(sseConnected: false, musicActive: false);
 
       await _loadBackendSnapshot();
       await Future.wait<void>([

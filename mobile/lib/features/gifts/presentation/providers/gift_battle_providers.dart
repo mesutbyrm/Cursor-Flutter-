@@ -21,14 +21,15 @@ class GiftBattleController
   @override
   GiftBattle? build(GiftBattleKey arg) {
     ref.onDispose(() => _timer?.cancel());
-    _start();
+    // build() tamamlanmadan `state` okunamaz — microtask ile poll başlat.
+    Future.microtask(() => _schedulePolling(active: false));
     return null;
   }
 
-  void _start() {
+  void _schedulePolling({required bool active}) {
     _timer?.cancel();
     unawaited(_tick());
-    final interval = (state != null && state!.isActive)
+    final interval = active
         ? const Duration(seconds: 3)
         : const Duration(seconds: 6);
     _timer = Timer.periodic(interval, (_) => _tick());
@@ -53,14 +54,14 @@ class GiftBattleController
         _timer?.cancel();
         _timer = Timer(const Duration(seconds: 6), () {
           state = null;
-          _start();
+          _schedulePolling(active: false);
         });
         return;
       }
       state = next;
       final nowActive = next?.isActive == true;
       final wasActive = current?.isActive == true;
-      if (wasActive != nowActive) _start();
+      if (wasActive != nowActive) _schedulePolling(active: nowActive);
     } catch (_) {
       // sessiz — bir sonraki tick'te tekrar denenir
     }
@@ -69,7 +70,7 @@ class GiftBattleController
   /// Savaş başlatıldıktan sonra anında takibe al.
   void adopt(GiftBattle battle) {
     state = battle;
-    _start();
+    _schedulePolling(active: battle.isActive);
   }
 }
 
