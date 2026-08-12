@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+<<<<<<< Updated upstream
+=======
+## 1.0.160+195 (2026-08-12) — Master prompt faz 1–2 (canlı, sesli, sosyal, shorts)
+
+- **Canlı yayın çıkış:** Leave coordinator — timer, co-host teardown, TRTC mute/leave, SSE; izleyici mic kapalı
+- **Canlı yayın poll:** SSE bağlıyken yedek poll aralığı uzatıldı
+- **Sesli oda çıkış:** TRTC/müzik kes → backend presence leave → SSE/state (peer offline hızlanır)
+- **Sesli oda reconnect:** `reconnecting` fazı; kopmada `leaveSeat` yok; snackbar (basic + RTC)
+- **Sesli oda DJ:** SSE sağlıklıyken REST DJ poll atlanır
+- **Sosyal akış:** `loadMore` hata toleransı; sayfalama spinner
+- **Kısa video:** `displayThumbnailUrl` (thumbnail → müzik → avatar); dispose pause; loadMore hata toleransı
+- **PK 405 + hediye:** Önceki 1.0.159 düzeltmeleri dahil (video-streams PK body, oda çıkış race, tam ekran hediye video)
+
+>>>>>>> Stashed changes
 ## 1.0.159+194 (2026-08-12) — PK 405, oda çıkışı, video hediye
 
 - **PK daveti (canlı):** `POST /api/video-streams/pk` — `action:create`, `streamId`, `targetStreamId`, `duration` (sn); legacy body yedek
