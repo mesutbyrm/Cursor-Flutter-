@@ -1,16 +1,13 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
-import '../../../domain/pk/pk_battle_remote_models.dart';
 import '../../providers/pk_battle_remote_provider.dart';
-import '../../utils/pk_invite_dialog_helper.dart';
+import 'voice_pk_room_strip.dart';
 
-/// SSE + poll — gelen PK daveti anında popup (oda sahibi).
-class VoicePkInviteBanner extends ConsumerStatefulWidget {
+/// Oda içi PK şeridi — davet popup'ı `VoicePkInviteListener` üzerinden.
+class VoicePkInviteBanner extends ConsumerWidget {
   const VoicePkInviteBanner({
     super.key,
     required this.room,
@@ -23,75 +20,28 @@ class VoicePkInviteBanner extends ConsumerStatefulWidget {
   final bool isOwner;
 
   @override
-  ConsumerState<VoicePkInviteBanner> createState() =>
-      _VoicePkInviteBannerState();
-}
-
-class _VoicePkInviteBannerState extends ConsumerState<VoicePkInviteBanner> {
-  Timer? _pollTimer;
-  var _dialogOpen = false;
-  String? _lastShownBattleId;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_loadOnce());
-      _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-        unawaited(_loadOnce());
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _pollTimer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _maybeShow(PkBattleRemote battle) async {
-    if (!mounted || !widget.isOwner || _dialogOpen) return;
-    if (!battle.isPending) return;
-    final battleId = battle.effectiveId;
-    if (battleId == _lastShownBattleId) return;
-
-    final userId = ref.read(authControllerProvider).valueOrNull?.id;
-    final room = resolvePkInviteTargetRoom(ref, battle, userId ?? '');
-    if (room == null) return;
-
-    _dialogOpen = true;
-    _lastShownBattleId = battleId;
-    try {
-      await showPkInviteDialog(context, ref, battle: battle, room: room);
-    } finally {
-      _dialogOpen = false;
-    }
-  }
-
-  Future<void> _loadOnce() async {
-    if (!mounted || !widget.isOwner || _dialogOpen) return;
-    final key = widget.room.apiRoomKey.isNotEmpty
-        ? widget.room.apiRoomKey
-        : widget.room.id;
-    if (key.isEmpty) return;
-    try {
-      final battle = await ref.read(pkBattleRemoteProvider.notifier).loadRoomBattle(
-            key,
-            alternateRoomId: widget.room.slug != key ? widget.room.slug : null,
-          );
-      if (battle != null) await _maybeShow(battle);
-    } catch (_) {
-      _dialogOpen = false;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    ref.listen<PkBattleRemote?>(pkBattleRemoteProvider, (prev, next) {
-      if (next != null && next != prev) {
-        unawaited(_maybeShow(next));
-      }
-    });
-    return const SizedBox.shrink();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    return VoicePkRoomStrip(
+      room: room,
+      onOpenPk: () {
+        if (key.isEmpty) return;
+        context.push('/voice-room/$key/pk', extra: room);
+      },
+      onEndPk: isOwner
+          ? (remote) async {
+              final roomKey =
+                  room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+              final battleId = remote.effectiveId;
+              if (battleId.isEmpty || roomKey.isEmpty) return;
+              await ref.read(pkBattleRemoteProvider.notifier).end(
+                    battleId,
+                    roomId: roomKey,
+                    alternateRoomId:
+                        room.slug != roomKey ? room.slug : null,
+                  );
+            }
+          : null,
+    );
   }
 }

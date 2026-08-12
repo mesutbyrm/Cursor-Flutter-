@@ -19,7 +19,6 @@ import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_provider.dart';
 import '../providers/pk_battle_remote_provider.dart';
-import '../providers/staff_entrance_marquee_provider.dart';
 import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_leaderboard_provider.dart';
 import '../providers/voice_gift_providers.dart';
@@ -73,14 +72,14 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
 
   void _bootstrap() {
     final live = ref.read(voiceRoomLiveProvider(widget.room.liveKey));
-    ref.read(pkBattleProvider.notifier).init(
+    ref.read(pkBattleProvider.notifier).prepareShell(
           room: widget.room,
           presence: live.presence,
           left: widget.leftUser,
           right: widget.rightUser,
         );
     _startGiftRealtime();
-    _startPkRemote();
+    unawaited(_startPkRemote());
   }
 
   Future<void> _startPkRemote() async {
@@ -134,22 +133,11 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     final toLeft = ref.read(pkBattleProvider.notifier).giftTargetsLeft(event);
     _lastGiftSideLeft = toLeft;
     ref.read(pkBattleProvider.notifier).applyGift(event, toLeft: toLeft);
-
-    if (event.jetonAmount >= 1000) {
-      ref.read(staffEntranceMarqueeProvider.notifier).enqueueBigGift(
-            senderName: event.senderName,
-            receiverName: event.receiverName,
-            jeton: event.jetonAmount,
-            giftName: event.giftName,
-          );
-    }
   }
 
   @override
   void dispose() {
     _giftSub?.cancel();
-    ref.read(voiceRoomGiftRealtimeProvider).stop();
-    ref.read(pkBattleRemoteProvider.notifier).clear();
     super.dispose();
   }
 

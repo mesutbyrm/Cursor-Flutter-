@@ -151,7 +151,6 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             if (VoiceRoomBasicMode.enabled && !VoiceRoomBasicMode.premiumEnabled) {
               return;
             }
-            ref.read(pkBattleProvider.notifier).applyRemoteBattle(battle);
             ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
             VoiceRoomDebugLog.log('sse.pk', {
               'roomId': roomKey,
