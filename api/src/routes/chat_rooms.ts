@@ -1146,3 +1146,37 @@ chatRoomsRouter.post(
     return ok(res, { battle, pk: battle });
   },
 );
+
+/** GET/POST /api/chat/rooms/:roomId/pk — üretim alias (`pk-battle` ile aynı) */
+chatRoomsRouter.get("/rooms/:roomId/pk", optionalAuth, async (req, res) => {
+  const battle = await getActiveBattleForRoom(req.params.roomId);
+  return ok(res, { battle, pk: battle, activeBattle: battle });
+});
+
+chatRoomsRouter.post(
+  "/rooms/:roomId/pk",
+  requireAuth,
+  async (req, res) => {
+    const roomId = req.params.roomId;
+    if (!getChatRoom(roomId)) {
+      return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+    }
+    const result = await handleVoiceRoomPkAction(
+      roomId,
+      req.userId!,
+      req.body ?? {},
+    );
+    if (!result.ok) {
+      return fail(res, 400, "BAD_REQUEST", result.error ?? "PK işlemi başarısız");
+    }
+    const battle = result.battle as Record<string, unknown>;
+    const events =
+      "events" in result && Array.isArray(result.events)
+        ? (result.events)
+        : "event" in result && result.event
+          ? [result.event]
+          : ["pk:invite"];
+    broadcastPkResult(battle, events);
+    return ok(res, { battle, pk: battle });
+  },
+);

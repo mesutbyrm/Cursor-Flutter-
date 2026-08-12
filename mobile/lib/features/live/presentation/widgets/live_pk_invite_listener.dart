@@ -3,16 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../domain/pk/live_pk_invite_helper.dart';
-import '../../domain/pk/pk_room_models.dart';
-import '../../domain/pk/pk_unified_bridge.dart';
+import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
+import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_pk_owned_streams_socket_provider.dart';
-import '../providers/pk_room_providers.dart';
+import '../providers/live_providers.dart';
 
-/// Uygulama genelinde bekleyen PK davetleri — Socket.IO + SSE + 8s HTTP yedek.
+/// Canlı yayın PK davetleri — ana backend (`/api/video-streams/*/pk-battle`).
 class LivePkInviteListener extends ConsumerStatefulWidget {
   const LivePkInviteListener({super.key, required this.child});
 
@@ -46,13 +46,9 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
     super.dispose();
   }
 
-  bool _isRecipient(PkRoomMatch inv, String userId) {
+  bool _isRecipient(PkBattleRemote battle, String userId) {
     if (userId.isEmpty) return false;
-    return isLivePkInviteRecipient(
-      inv,
-      myStreamId: '',
-      myUserId: userId,
-    );
+    return isLivePkInviteRecipientBattle(battle, myUserId: userId);
   }
 
   Future<void> _processPendingInvites() async {
@@ -61,33 +57,36 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
     if (user == null) return;
 
     try {
-      ref.invalidate(pkPendingInvitesProvider);
-      final invites = await ref.read(pkRoomRemoteProvider).myInvites();
-      final pendingIds =
-          invites.where((i) => i.isPending).map((i) => i.id).toSet();
-      _seen.removeWhere((id) => !pendingIds.contains(id));
+      final api = ref.read(pkBattleRemoteDataSourceProvider);
+      final streams = ref.read(liveStreamsProvider).valueOrNull ?? const [];
+      final owned = streams
+          .where((s) {
+            if (!s.isLive) return false;
+            final host = s.hostUserId?.trim() ?? '';
+            return host.isNotEmpty && host == user.id;
+          })
+          .toList(growable: false);
 
-      for (final inv in invites) {
-        if (!inv.isPending) continue;
-        final uid = user.id.trim();
-        if (uid.isNotEmpty && inv.hostUserId == uid) continue;
-        if (!_isRecipient(inv, uid)) continue;
-        if (!_seen.add(inv.id)) continue;
-        PkEventLog.incomingRequest(matchId: inv.id);
-        await _showDialog(inv);
-        break;
+      for (final stream in owned) {
+        final battle = await api.fetchStreamBattle(stream.id);
+        if (battle == null || battle.isEnded) continue;
+        if (!battle.isPending) continue;
+        if (!_isRecipient(battle, user.id)) continue;
+        if (battle.challengerId == user.id) continue;
+        final inviteId = battle.effectiveId;
+        if (inviteId.isEmpty || !_seen.add(inviteId)) continue;
+        PkEventLog.incomingRequest(inviteId: inviteId);
+        await _showDialog(battle, stream.id);
+        return;
       }
     } catch (_) {}
   }
 
-  Future<void> _showDialog(PkRoomMatch inv) async {
+  Future<void> _showDialog(PkBattleRemote battle, String myStreamId) async {
     if (!mounted || _showing) return;
     _showing = true;
-    final battle = pkRoomMatchToBattleMap(
-      inv,
-      myUserId: ref.read(authControllerProvider).valueOrNull?.id,
-    );
-    final challenger = battle['leftName']?.toString() ?? 'Yayıncı';
+    final challenger =
+        battle.challenger?.displayName?.trim() ?? 'Yayıncı';
 
     bool? accept;
     try {
@@ -96,9 +95,14 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
           backgroundColor: const Color(0xFF1A0F2E),
-          title: const Text('PK Daveti', style: TextStyle(color: Colors.white)),
+          title: const Row(
+            children: [
+              Text('🔥 ', style: TextStyle(fontSize: 22)),
+              Text('PK Daveti', style: TextStyle(color: Colors.white)),
+            ],
+          ),
           content: Text(
-            '$challenger size PK daveti gönderdi.\nKabul ediyor musunuz?',
+            '$challenger seninle PK yapmak istiyor.',
             style: const TextStyle(color: Colors.white70),
           ),
           actions: [
@@ -135,32 +139,30 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
     if (!mounted || accept == null) {
       if (accept == null && mounted) {
         try {
-          await ref.read(pkUnifiedInviteProvider).respond(
-                matchId: inv.id,
-                accept: false,
+          await ref.read(pkBattleRemoteProvider.notifier).reject(
+                battle.effectiveId,
+                streamId: myStreamId,
               );
         } catch (_) {}
       }
       return;
     }
+
+    final remote = ref.read(pkBattleRemoteProvider.notifier);
     try {
       if (accept) {
-        PkEventLog.acceptStart(matchId: inv.id);
+        PkEventLog.acceptStart(inviteId: battle.effectiveId);
+        await remote.accept(battle.effectiveId, streamId: myStreamId);
+        PkEventLog.acceptSuccess(battleId: battle.effectiveId);
       } else {
-        PkEventLog.reject(matchId: inv.id);
-      }
-      await ref.read(pkUnifiedInviteProvider).respond(
-            matchId: inv.id,
-            accept: accept,
-          );
-      if (accept) {
-        PkEventLog.acceptSuccess(matchId: inv.id);
+        PkEventLog.reject(inviteId: battle.effectiveId);
+        await remote.reject(battle.effectiveId, streamId: myStreamId);
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              accept ? 'PK kabul edildi — yayın odanıza dönün' : 'PK reddedildi',
+              accept ? 'PK kabul edildi' : 'PK daveti reddedildi',
             ),
           ),
         );
@@ -168,7 +170,7 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
+          SnackBar(content: Text(ApiException.userMessage(e))),
         );
       }
     }
@@ -180,9 +182,6 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
     ref.listen(livePkInviteSignalProvider, (_, __) {
       unawaited(_processPendingInvites());
     });
-    ref.listen(pkPendingInvitesProvider, (_, __) {
-      unawaited(_processPendingInvites());
-    });
     ref.listen(authControllerProvider, (prev, next) {
       if (prev?.valueOrNull == null && next.valueOrNull != null) {
         unawaited(_processPendingInvites());
@@ -190,4 +189,14 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
     });
     return widget.child;
   }
+}
+
+/// Canlı PK davet alıcısı — backend `opponentId` / `targetUserId` ile eşleşir.
+bool isLivePkInviteRecipientBattle(PkBattleRemote battle, {required String myUserId}) {
+  final uid = myUserId.trim();
+  if (uid.isEmpty || !battle.isPending) return false;
+  final target = battle.targetUserId?.trim() ?? battle.guestUserId?.trim() ?? '';
+  if (target.isNotEmpty) return target == uid;
+  final opponent = battle.opponentId?.trim() ?? '';
+  return opponent.isNotEmpty && opponent == uid;
 }

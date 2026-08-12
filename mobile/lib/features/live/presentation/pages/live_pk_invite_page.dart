@@ -14,7 +14,6 @@ import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_duration_pick
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../providers/live_pk_streams_provider.dart';
-import '../providers/pk_room_providers.dart';
 
 /// Canlı yayın PK daveti — tek endpoint; liste SSE/socket ile yenilenir.
 class LivePkInvitePage extends ConsumerStatefulWidget {
@@ -96,30 +95,6 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
         }
       } catch (e) {
         lastErr = e;
-      }
-
-      // Yedek: birleşik PK API (bazı ortamlarda 405 dönebilir)
-      try {
-        final unified = await ref.read(pkUnifiedInviteProvider).inviteStream(
-              streamId: streamId,
-              opponentStreamId: opponent.id,
-              durationSeconds: _durationSeconds,
-            );
-        if (unified != null && unified.id.isNotEmpty) {
-          PkEventLog.requestSuccess(matchId: unified.id);
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '${opponent.streamerName ?? opponent.title} kullanıcısına PK daveti gönderildi',
-              ),
-            ),
-          );
-          context.pop();
-          return;
-        }
-      } catch (e) {
-        lastErr ??= e;
       }
 
       throw lastErr ?? Exception('PK daveti gönderilemedi');

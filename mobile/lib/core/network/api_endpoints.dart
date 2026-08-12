@@ -769,6 +769,7 @@ abstract final class ApiEndpoints {
   static const giftsLuckyHistory = '/api/gifts/lucky/history';
 
   static const giftsRecentBig = '/api/gifts/recent-big';
+  static const giftsDisplaySettings = '/api/gifts/display-settings';
 
   /// Kılavuz §9.9 — karşılıklı hediye kontrolü (`?userId=`).
   static const giftsCheckReciprocal = '/api/gifts/check-reciprocal';

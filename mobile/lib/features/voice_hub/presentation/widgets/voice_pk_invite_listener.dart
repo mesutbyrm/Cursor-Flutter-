@@ -163,13 +163,6 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
           if (battle.isPending || battle.isActive) return;
         }
       }
-
-      final invites = await api.fetchMyInvites();
-      for (final battle in invites) {
-        if (!battle.isPending) continue;
-        _onBattleUpdate(battle);
-        return;
-      }
     } catch (_) {}
   }
 
