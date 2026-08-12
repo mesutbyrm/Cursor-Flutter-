@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.170+205 (2026-08-12) — Keşfet kategori + tanı kartı
+
+- **Keşfet:** `GET /api/chat/rooms?type=voice&category=` — sunucu tarafı kategori filtresi (kılavuz §9.3)
+- **Yedek:** Backend kategori döndürmezse istemci heuristic filtresi korunur
+- **Tanı kartı:** "Socket" → "Hediye sync"; hediye poll başlayınca işaretlenir (TRTC beklemez)
+
 ## 1.0.169+204 (2026-08-12) — Sesli oda giriş hatası
 
 - **Kök neden:** `GiftBattleController.build()` içinde `_start()` → `state` okunuyordu → `Bad state: Tried to read the state of an uninitialized provider`

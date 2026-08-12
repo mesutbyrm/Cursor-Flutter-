@@ -230,7 +230,7 @@ class VoiceRoomDiagnosticCard extends StatelessWidget {
           _row('JWT', state.hasJwt ? 'gönderildi' : 'yok'),
           _row('Presence', state.presenceJoined ? '${state.presenceCount} kişi' : 'hayır'),
           _row('SSE', state.sseConnected ? 'bağlı' : 'bekliyor'),
-          _row('Socket', state.socketConnected ? 'bağlı' : 'bekliyor'),
+          _row('Hediye sync', state.socketConnected ? 'aktif' : 'bekliyor'),
           _row(
             'TRTC',
             state.trtcEntered

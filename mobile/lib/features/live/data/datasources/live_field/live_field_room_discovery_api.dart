@@ -16,6 +16,7 @@ class LiveFieldRoomDiscoveryApi {
     int page = 1,
     int limit = 30,
     String? search,
+    String? category,
   }) async {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.liveRooms,
@@ -24,6 +25,8 @@ class LiveFieldRoomDiscoveryApi {
         'page': page,
         'limit': limit.clamp(1, 100),
         if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        if (category != null && category.trim().isNotEmpty)
+          'category': category.trim().toLowerCase(),
       },
     );
     final map = LiveFieldApiUtil.unwrapData(res.data);

@@ -406,6 +406,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     if (key.isEmpty) return;
     _giftRealtimeStarted = true;
     ref.read(voiceRoomGiftRealtimeProvider).start(key);
+    ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(true);
   }
 
   void _startGiftRealtime() => _startGiftRealtimePoll();
@@ -546,7 +547,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         ref.read(voiceRoomTrtcMusicMixerProvider).bind(_audio!.trtcManager);
         _wireAudioReconnectCallbacks();
         _startGiftRealtime();
-        ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(true);
         _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
         unawaited(_connectPkBattle());
         // Agora kamera yalnızca kullanıcı açtığında — oda girişinde otomatik değil.

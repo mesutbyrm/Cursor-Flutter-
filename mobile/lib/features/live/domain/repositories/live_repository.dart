@@ -5,9 +5,13 @@ import '../entities/voice_rooms_page.dart';
 abstract class LiveRepository {
   Future<List<LiveStreamEntity>> fetchStreams({int page = 1, String? category});
 
-  Future<List<VoiceRoomEntity>> fetchVoiceRooms();
+  Future<List<VoiceRoomEntity>> fetchVoiceRooms({String? category});
 
-  Future<VoiceRoomsPage> fetchVoiceRoomsPage({int page = 1, int limit = 30});
+  Future<VoiceRoomsPage> fetchVoiceRoomsPage({
+    int page = 1,
+    int limit = 30,
+    String? category,
+  });
 
   Future<VoiceRoomEntity?> fetchVoiceRoomById(String id);
 

@@ -152,8 +152,12 @@ class LiveRemoteDataSource {
   static const int voiceRoomsPageSize = 30;
 
   /// İlk sayfa — geriye dönük uyumluluk.
-  Future<List<VoiceRoomEntity>> fetchVoiceRooms() async {
-    final page = await fetchVoiceRoomsPage(page: 1, limit: voiceRoomsPageSize);
+  Future<List<VoiceRoomEntity>> fetchVoiceRooms({String? category}) async {
+    final page = await fetchVoiceRoomsPage(
+      page: 1,
+      limit: voiceRoomsPageSize,
+      category: category,
+    );
     return page.rooms;
   }
 
@@ -161,13 +165,16 @@ class LiveRemoteDataSource {
   Future<VoiceRoomsPage> fetchVoiceRoomsPage({
     int page = 1,
     int limit = voiceRoomsPageSize,
+    String? category,
   }) async {
     final safeLimit = limit.clamp(1, 100);
+    final categoryParam = category?.trim().toLowerCase();
     try {
       final livePage = await _liveField.discovery.fetchRooms(
         type: 'voice',
         page: page,
         limit: safeLimit,
+        category: categoryParam,
       );
       final fromLive = livePage.rooms
           .where((r) => r.isVoice && r.id.isNotEmpty)
@@ -200,6 +207,8 @@ class LiveRemoteDataSource {
         'type': 'voice',
         'withCounts': 'true',
         'limit': '$safeLimit',
+        if (categoryParam != null && categoryParam.isNotEmpty)
+          'category': categoryParam,
       },
     );
     final body = res.data;

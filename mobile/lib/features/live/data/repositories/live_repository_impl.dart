@@ -14,11 +14,16 @@ class LiveRepositoryImpl implements LiveRepository {
       _remote.fetch(page: page, category: category);
 
   @override
-  Future<List<VoiceRoomEntity>> fetchVoiceRooms() => _remote.fetchVoiceRooms();
+  Future<List<VoiceRoomEntity>> fetchVoiceRooms({String? category}) =>
+      _remote.fetchVoiceRooms(category: category);
 
   @override
-  Future<VoiceRoomsPage> fetchVoiceRoomsPage({int page = 1, int limit = 30}) =>
-      _remote.fetchVoiceRoomsPage(page: page, limit: limit);
+  Future<VoiceRoomsPage> fetchVoiceRoomsPage({
+    int page = 1,
+    int limit = 30,
+    String? category,
+  }) =>
+      _remote.fetchVoiceRoomsPage(page: page, limit: limit, category: category);
 
   @override
   Future<VoiceRoomEntity?> fetchVoiceRoomById(String id) =>

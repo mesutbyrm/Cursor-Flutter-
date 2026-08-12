@@ -7,6 +7,7 @@ import '../../../gifts/data/leaderboard_remote_datasource.dart';
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
 import '../../../live/data/datasources/live_remote_datasource.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../presentation/utils/voice_room_category_catalog.dart';
 
 /// Abacus AI / canlifal.com sesli oda keşfet veri kaynağı.
 class VoiceRoomsDiscoverRemoteDataSource {
@@ -21,12 +22,26 @@ class VoiceRoomsDiscoverRemoteDataSource {
   final LeaderboardRemoteDataSource _leaderboard;
 
   Future<List<VoiceRoomEntity>> fetchVoiceRooms({String? categoryId}) async {
-    final rooms = await _liveRemote.fetchVoiceRooms();
+    final serverCategory = _serverCategoryParam(categoryId);
+    final rooms = await _liveRemote.fetchVoiceRooms(category: serverCategory);
     if (categoryId == null || categoryId.isEmpty || categoryId == 'all') {
       return rooms;
     }
     return rooms.where((r) => _matchesCategory(r, categoryId)).toList();
   }
+
+  /// Kılavuz §9.3 — `GET /api/chat/rooms?type=voice&category=…`
+  static String? serverCategoryForDiscover(String? categoryId) {
+    final id = categoryId?.trim().toLowerCase() ?? '';
+    if (id.isEmpty || id == 'all' || id == 'popular') return null;
+    for (final c in kVoiceRoomAssignableCategories) {
+      if (c.id == id) return c.id;
+    }
+    return null;
+  }
+
+  String? _serverCategoryParam(String? categoryId) =>
+      serverCategoryForDiscover(categoryId);
 
   bool _matchesCategory(VoiceRoomEntity room, String categoryId) {
     if (categoryId == 'popular') {
