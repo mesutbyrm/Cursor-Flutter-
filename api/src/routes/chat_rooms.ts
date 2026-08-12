@@ -6,6 +6,7 @@ type RoomItemRequest = Request<{ roomId: string; itemId: string }>;
 type RoomWordRequest = Request<{ roomId: string; word: string }>;
 import { optionalAuth } from "../middleware/optionalAuth";
 import { requireAuth } from "../middleware/requireAuth";
+import { rateLimitMiddleware } from "../lib/redis/rateLimit";
 import { fail, ok } from "../lib/response";
 import {
   addTextMessage,
@@ -1148,13 +1149,19 @@ chatRoomsRouter.post(
 );
 
 /** GET/POST /api/chat/rooms/:roomId/pk — üretim alias (`pk-battle` ile aynı) */
-chatRoomsRouter.get("/rooms/:roomId/pk", optionalAuth, async (req, res) => {
+chatRoomsRouter.get(
+  "/rooms/:roomId/pk",
+  rateLimitMiddleware("api"),
+  optionalAuth,
+  async (req, res) => {
   const battle = await getActiveBattleForRoom(req.params.roomId);
   return ok(res, { battle, pk: battle, activeBattle: battle });
-});
+  },
+);
 
 chatRoomsRouter.post(
   "/rooms/:roomId/pk",
+  rateLimitMiddleware("api"),
   requireAuth,
   async (req, res) => {
     const roomId = req.params.roomId;

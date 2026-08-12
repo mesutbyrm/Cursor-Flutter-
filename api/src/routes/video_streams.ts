@@ -55,6 +55,7 @@ import {
 } from "../lib/streamFortuneRequestService";
 import { optionalAuth } from "../middleware/optionalAuth";
 import { requireAuth } from "../middleware/requireAuth";
+import { rateLimitMiddleware } from "../lib/redis/rateLimit";
 import {
   emitPkBattleUpdate,
   emitStreamEnded,
@@ -66,12 +67,17 @@ import {
 export const videoStreamsRouter = Router();
 
 /** GET /api/video-streams/pk/list — aktif PK listesi */
-videoStreamsRouter.get("/pk/list", optionalAuth, async (_req, res) => {
+videoStreamsRouter.get(
+  "/pk/list",
+  rateLimitMiddleware("api"),
+  optionalAuth,
+  async (_req, res) => {
   return ok(res, { items: [], streams: [] });
-});
+  },
+);
 
 /** POST /api/video-streams/pk — canlı PK (streamId gövdede) */
-videoStreamsRouter.post("/pk", requireAuth, async (req, res) => {
+videoStreamsRouter.post("/pk", rateLimitMiddleware("api"), requireAuth, async (req, res) => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const streamId = String(body.streamId ?? body.hostStreamId ?? "").trim();
   if (!streamId) {
@@ -91,13 +97,15 @@ videoStreamsRouter.post("/pk", requireAuth, async (req, res) => {
 });
 
 /** GET /api/video-streams/pk — aktif PK sorgusu (?streamId=) */
-videoStreamsRouter.get("/pk", optionalAuth, async (req, res) => {
+videoStreamsRouter.get("/pk", rateLimitMiddleware("api"), optionalAuth, async (req, res) => {
   const streamId = String(req.query.streamId ?? "").trim();
   if (!streamId) {
     return ok(res, { battle: null, pk: null });
   }
   const battle = await getActiveBattleForStream(streamId);
-  const legacy = battle ? legacyPkRowFromBattle(battle) : null;
+  const legacy = battle
+    ? legacyPkRowFromBattle(battle as Record<string, unknown>, streamId)
+    : null;
   return ok(res, { battle: legacy, pk: legacy, full: battle });
 });
 

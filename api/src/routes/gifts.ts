@@ -122,6 +122,8 @@ let giftDisplaySettings: Record<string, unknown> = {
   soundEnabled: true,
 };
 
+giftsRouter.use(rateLimitMiddleware("gift"));
+
 /** GET /api/gifts/display-settings — Flutter GlobalGiftOverlay */
 giftsRouter.get("/display-settings", optionalAuth, (_req, res) => {
   return res.status(200).json({ settings: giftDisplaySettings });
@@ -133,8 +135,6 @@ giftsRouter.patch("/display-settings", optionalAuth, (req, res) => {
   giftDisplaySettings = { ...giftDisplaySettings, ...body };
   return res.status(200).json({ settings: giftDisplaySettings });
 });
-
-giftsRouter.use(rateLimitMiddleware("gift"));
 
 /** GET /api/gifts?platform=mobile|web */
 giftsRouter.get("/", async (req, res) => {
