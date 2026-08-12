@@ -28,6 +28,7 @@ class TrtcRoomManager {
   bool _cameraOn = true;
   bool _isHost = false;
   bool _twoWayVideo = false;
+  bool _audioOnly = false;
   String? _localUserId;
 
   String? remoteAnchorUserId;
@@ -163,6 +164,7 @@ class TrtcRoomManager {
     }
 
     _previewOnly = false;
+    _audioOnly = audioOnly;
 
     _cloud ??= await TRTCCloud.sharedInstance();
     _device ??= _cloud!.getDeviceManager();
@@ -233,6 +235,12 @@ class TrtcRoomManager {
         networkQuality.value = local.quality.index;
       },
       onUserVideoAvailable: (userId, available) {
+        if (_audioOnly) {
+          if (available && userId != _localUserId) {
+            _cloud?.stopRemoteView(userId, TRTCVideoStreamType.big);
+          }
+          return;
+        }
         _trtcLog('user_video', {'userId': userId, 'available': available});
         if (userId == _localUserId) return;
         _trtcLog('remote_video', {'userId': userId, 'available': available});
@@ -264,7 +272,9 @@ class TrtcRoomManager {
     _configureAudioProcessing();
 
     // Canlı yayın izleyicisi: otomatik ses/video alımı (enterRoom öncesi).
-    if (!audioOnly) {
+    if (audioOnly) {
+      _cloud!.setDefaultStreamRecvMode(true, false);
+    } else {
       _cloud!.setDefaultStreamRecvMode(true, true);
     }
 
@@ -397,6 +407,7 @@ class TrtcRoomManager {
   }
 
   void startLocalPreview(int viewId) {
+    if (_audioOnly) return;
     if (_cloud == null) return;
     if (!_inRoom && !_previewOnly) return;
     _cloud!.muteLocalVideo(TRTCVideoStreamType.big, false);
@@ -413,6 +424,7 @@ class TrtcRoomManager {
   }
 
   void startRemoteView(String userId, int viewId) {
+    if (_audioOnly) return;
     if (_cloud == null || !_inRoom) return;
     _boundRemoteUserId = userId;
     _boundRemoteViewId = viewId;
@@ -493,6 +505,7 @@ class TrtcRoomManager {
     }
     _inRoom = false;
     _previewOnly = false;
+    _audioOnly = false;
     _isHost = false;
     _twoWayVideo = false;
     _localUserId = null;

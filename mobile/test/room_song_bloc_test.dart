@@ -39,6 +39,23 @@ void main() {
       });
       expect(fields.isVideoRequest, isTrue);
     });
+
+    test('resolvedAudioStreamUrl rejects youtube watch pages', () {
+      final fields = SongPlaybackFields.fromJson({
+        'musicUrl': 'https://www.youtube.com/watch?v=abc',
+        'audioUrl': 'https://canlifal.com/api/chat/youtube-audio?v=abc',
+      });
+      expect(fields.resolvedAudioStreamUrl, contains('youtube-audio'));
+    });
+
+    test('resolvedVideoStreamUrl prefers videoUrl', () {
+      final fields = SongPlaybackFields.fromJson({
+        'videoUrl': 'https://cdn.example.com/music.mp4',
+        'musicUrl': 'https://canlifal.com/api/chat/youtube-audio?v=abc',
+        'playMode': 'video',
+      });
+      expect(fields.resolvedVideoStreamUrl, contains('cdn.example.com'));
+    });
   });
 
   group('RoomSongBloc.eventFromSse', () {

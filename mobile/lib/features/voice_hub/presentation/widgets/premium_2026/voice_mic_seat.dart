@@ -221,21 +221,7 @@ class VoiceMicSeat extends ConsumerWidget {
   }
 
   Widget? _trtcVideoChild() {
-    final manager = trtc;
-    if (!trtcReady || manager == null || user == null) return null;
-    final uid = user!.id;
-    final self = selfUserId;
-    if (self != null && uid == self && manager.cameraOn) {
-      return TrtcLocalVideoView(manager: manager);
-    }
-    if (!isHost) return null;
-    final remote = remoteTrtcUserId ?? manager.remoteAnchorUserId;
-    if (remote != null &&
-        remote.isNotEmpty &&
-        uid != self &&
-        manager.remoteVideoAvailable.value) {
-      return TrtcRemoteVideoView(manager: manager, userId: remote);
-    }
+    // Sesli oda — TRTC yalnızca audio; video renderer oluşturulmaz.
     return null;
   }
 }

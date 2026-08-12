@@ -13,7 +13,7 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
   Future<void> _handleMusicStoppedFromSse() async {
     final key = _live._roomKey;
     VoiceRoomDebugLog.log('music.sse.stopped', {'room': key});
-    await ref.read(voiceRoomDjPlayerProvider).stop();
+    await ref.read(roomMusicServiceProvider).stop();
     ref.read(voiceRoomMusicSessionProvider.notifier).dismissFromServerStop();
     ref.read(roomVideoControllerProvider(key).notifier).clear();
     state = state.copyWith(
@@ -171,7 +171,8 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
           videoId: eventVideoId,
         );
     final isVideoRequest = dj.nowPlaying?.isVideoRequest == true;
-    final playerActive = ref.read(voiceRoomDjPlayerProvider).playback.value.playing;
+    final playerActive =
+        ref.read(roomMusicServiceProvider).player.playback.value.playing;
     final videoActive = key.isNotEmpty &&
         ref.read(roomVideoControllerProvider(key)).hasActiveVideo;
     // RoomSongBloc her modda parça tutar; yalnızca video iframe aktifken
@@ -206,7 +207,8 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
     final ui = ref.read(voiceRoomUiProvider);
     final muted = ui.effectiveMusicMuted;
     final session = ref.read(voiceRoomMusicSessionProvider);
-    final player = ref.read(voiceRoomDjPlayerProvider);
+    final music = ref.read(roomMusicServiceProvider);
+    music.bindRoom(key);
 
     if (session.userDismissedPlayer) {
       _live._lastDjPlaybackSignature =
@@ -221,7 +223,6 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
     }
 
     final effectiveDj = dj;
-    final isVideoMode = effectiveDj.nowPlaying?.isVideoRequest == true;
     final videoId = YoutubeVideoId.fromDj(
       currentVideoId: sync?.currentVideoId,
       nowPlayingUrl: effectiveDj.nowPlaying?.youtubeUrl,
@@ -235,64 +236,65 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
           )
         : Duration.zero;
 
+    // Sesli oda: video widget/iframe ASLA — yalnızca gerçek audio stream.
+    if (key.isNotEmpty) {
+      ref.read(roomVideoControllerProvider(key).notifier).clear();
+    }
+
     if (shouldPlay) {
       await VoiceRoomMusicAudioSession.activateForPlayback();
       _syncRoomSongBloc();
 
-      if (isVideoMode) {
-        VoiceRoomMusicPipelineLog.songEvent(
-          event: 'starting_video',
-          parsedVideoId: videoId,
-          parsedMusicUrl: sync?.streamUrl ?? effectiveDj.musicUrl,
-        );
-        _live._syncRoomVideo(effectiveDj, sync: sync);
-        final musicUrl = sync?.streamUrl ?? effectiveDj.musicUrl;
-        final audioStarted = await player.sync(
-          musicUrl: musicUrl,
-          resolveSeed: effectiveDj.playbackResolveSeed,
-          fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
-          nowPlaying: effectiveDj.nowPlaying,
-          playing: true,
-          muted: muted,
-          serverStreamUrl: musicUrl,
-          startPosition: startPosition,
-        );
-        if (!audioStarted) {
-          VoiceRoomMusicPipelineLog.songEvent(
-            event: 'player_error',
-            detail: 'video_mode audio sync returned false',
-            parsedMusicUrl: musicUrl,
-          );
-        }
+      final payload = <String, dynamic>{
+        if (sync?.streamUrl != null) 'streamUrl': sync!.streamUrl,
+        if (effectiveDj.musicUrl != null) 'musicUrl': effectiveDj.musicUrl,
+        if (effectiveDj.nowPlaying?.youtubeUrl != null)
+          'youtubeUrl': effectiveDj.nowPlaying!.youtubeUrl,
+        if (videoId != null) 'videoId': videoId,
+        if (effectiveDj.nowPlaying?.id != null)
+          'queueId': effectiveDj.nowPlaying!.id,
+        'playing': true,
+      };
+      final fields = SongPlaybackFields.parseQuiet(payload);
+      final audioUrl = fields.resolvedAudioStreamUrl ??
+          sync?.streamUrl ??
+          effectiveDj.musicUrl;
+
+      VoiceRoomMusicPipelineLog.songEvent(
+        event: 'starting_audio',
+        parsedMusicUrl: audioUrl,
+        parsedVideoId: videoId,
+      );
+
+      final started = audioUrl != null && audioUrl.isNotEmpty
+          ? await music.syncDj(
+              roomId: key,
+              musicUrl: audioUrl,
+              resolveSeed: effectiveDj.playbackResolveSeed,
+              fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
+              nowPlaying: effectiveDj.nowPlaying,
+              playing: true,
+              muted: muted,
+              serverStreamUrl: audioUrl,
+              startPosition: startPosition,
+            )
+          : await music.playVoiceRoomAudio(
+              roomId: key,
+              payload: payload,
+              nowPlaying: effectiveDj.nowPlaying,
+              playing: true,
+              muted: muted,
+              startPosition: startPosition,
+            );
+
+      if (started) {
+        VoiceRoomMusicPipelineLog.songEvent(event: 'player_ready');
       } else {
         VoiceRoomMusicPipelineLog.songEvent(
-          event: 'starting_audio',
-          parsedMusicUrl: sync?.streamUrl ?? effectiveDj.musicUrl,
-          parsedVideoId: videoId,
+          event: 'player_error',
+          detail: 'just_audio sync returned false',
+          parsedMusicUrl: audioUrl,
         );
-        if (key.isNotEmpty) {
-          ref.read(roomVideoControllerProvider(key).notifier).clear();
-        }
-        final musicUrl = sync?.streamUrl ?? effectiveDj.musicUrl;
-        final started = await player.sync(
-          musicUrl: musicUrl,
-          resolveSeed: effectiveDj.playbackResolveSeed,
-          fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
-          nowPlaying: effectiveDj.nowPlaying,
-          playing: true,
-          muted: muted,
-          serverStreamUrl: musicUrl,
-          startPosition: startPosition,
-        );
-        if (started) {
-          VoiceRoomMusicPipelineLog.songEvent(event: 'player_ready');
-        } else {
-          VoiceRoomMusicPipelineLog.songEvent(
-            event: 'player_error',
-            detail: 'just_audio sync returned false',
-            parsedMusicUrl: musicUrl,
-          );
-        }
       }
 
       await _syncTrtcMusicPublish(
@@ -311,7 +313,7 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
       sync: sync,
       dj: effectiveDj,
     );
-    await player.stop();
+    await music.stop();
     if (key.isNotEmpty) {
       ref.read(roomVideoControllerProvider(key).notifier).clear();
     }

@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.158+193 (2026-08-12) — Sesli oda + canlı yayın master fix
+
+- **Sesli oda TRTC:** Yalnızca audio — video renderer/subscription devre dışı; `setDefaultStreamRecvMode(audio-only)`
+- **Sesli oda müzik:** Tek `RoomMusicService` + `just_audio`; YouTube watch URL doğrudan oynatılmaz; video katmanları kaldırıldı
+- **Canlı yayın müzik:** `MusicVideoPlayer` (video_player) koltukların altında; gerçek `videoUrl`/`streamUrl` SSE'den
+- **Oda çıkışı:** `RoomLeaveCoordinator` — idempotent leave, müzik/TRTC/SSE/heartbeat sıralı temizlik
+- **SSE dedup:** `RoomMusicPlaybackDedupe` — aynı track/event iki kez oynatılmaz
+- **State:** `room_fragment_providers` — chat/seat/müzik/bağlantı ayrı slice rebuild
+- **SongPlaybackFields:** `resolvedAudioStreamUrl` / `resolvedVideoStreamUrl` ayrımı
+
 ## 1.0.157+192 (2026-08-12) — Canlı hediye, PK, müzik, yayın kapanış
 
 - **Canlı yayın hediyeleri:** Socket.IO `gift` + genişletilmiş SSE tipleri; REST poll SSE ile birlikte (yedek)

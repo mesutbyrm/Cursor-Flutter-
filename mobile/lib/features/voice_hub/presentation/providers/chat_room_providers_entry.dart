@@ -20,6 +20,7 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     ref
         .read(voiceRoomMusicSessionProvider.notifier)
         .prepareForRoomEntry(_roomMeta);
+    ref.read(roomMusicServiceProvider).bindRoom(_roomKey);
     unawaited(VoiceRoomMusicAudioSession.ensureConfigured());
     state = state.copyWith(
       loading: true,

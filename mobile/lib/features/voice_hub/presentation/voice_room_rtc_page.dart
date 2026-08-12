@@ -85,13 +85,11 @@ import 'widgets/voice_room/voice_room_staff_join_banner.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
-import 'widgets/voice_room/voice_room_music_background_layer.dart';
 import 'widgets/voice_room/voice_room_center_music_panel.dart';
 import 'widgets/voice_room/voice_room_music_queue_mini_card.dart';
 import 'widgets/voice_room/voice_room_music_request_fab.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
-import '../video/presentation/widgets/room_video_overlay.dart';
 import 'sheets/voice_youtube_song_sheet.dart';
 import 'widgets/premium_2026/voice_pk_invite_banner.dart';
 
@@ -1510,10 +1508,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
-                              if (!keyboardOpen)
-                                VoiceRoomMusicBackgroundLayer(
-                                  roomKey: sessionKey,
-                                ),
+                              // Sesli oda: video müzik katmanı yok — yalnızca just_audio.
                               LayoutBuilder(
                                   builder: (context, constraints) {
                                     final chatH = keyboardOpen
@@ -1658,11 +1653,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 ? room.apiRoomKey
                                 : room.id,
                           ),
-                        ),
-                        RoomVideoOverlay(
-                          roomKey: _liveRoomKey,
-                          perms: perms,
-                          isDj: isDj,
                         ),
                         if (!keyboardOpen && !hasActiveMusicPlayer)
                           VoiceRoomPersistentDuyuru(
