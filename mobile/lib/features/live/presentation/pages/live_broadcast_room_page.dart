@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/live_event_log.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../../../core/network/token_storage.dart';
 import '../providers/live_room_music_provider.dart';

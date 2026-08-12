@@ -147,6 +147,12 @@ final voiceRoomDjPlayerProvider = Provider<VoiceRoomDjPlayer>((ref) {
   return p;
 });
 
+final roomMusicServiceProvider = Provider<RoomMusicService>((ref) {
+  final service = RoomMusicService(ref.watch(voiceRoomDjPlayerProvider));
+  ref.onDispose(service.dispose);
+  return service;
+});
+
 final voiceRoomSseAudioPlayerProvider = Provider<VoiceRoomSseAudioPlayer>((ref) {
   final p = VoiceRoomSseAudioPlayer();
   ref.onDispose(p.dispose);

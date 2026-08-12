@@ -1,9 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../domain/entities/music_queue_item.dart';
-import '../../music/domain/entities/room_playback_sync.dart';
 import '../../music/domain/song_playback_fields.dart';
 import 'room_music_playback_dedupe.dart';
 import 'voice_room_dj_player.dart';
@@ -136,12 +133,6 @@ class RoomMusicService {
   void dispose() {
     _activeRoomId = null;
     _dedupe.clear();
-    unawaited(_player.dispose());
+    _player.dispose();
   }
 }
-
-final roomMusicServiceProvider = Provider<RoomMusicService>((ref) {
-  final service = RoomMusicService(ref.watch(voiceRoomDjPlayerProvider));
-  ref.onDispose(service.dispose);
-  return service;
-});

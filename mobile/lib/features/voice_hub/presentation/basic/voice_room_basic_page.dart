@@ -65,7 +65,6 @@ import '../sheets/music_mode_picker_sheet.dart';
 import '../utils/voice_music_access.dart';
 import '../sheets/voice_youtube_song_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
-import '../widgets/voice_room/voice_room_music_background_layer.dart';
 import '../../music/presentation/providers/room_music_providers.dart';
 import '../../music/presentation/widgets/room_song_mini_player.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

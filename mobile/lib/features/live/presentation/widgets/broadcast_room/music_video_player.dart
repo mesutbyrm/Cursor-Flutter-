@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
-import '../providers/live_room_music_provider.dart';
+import '../../providers/live_room_music_provider.dart';
 
 /// Canlı yayın — koltukların altında tek video player (sesli odada ASLA kullanılmaz).
 class MusicVideoPlayer extends ConsumerStatefulWidget {
