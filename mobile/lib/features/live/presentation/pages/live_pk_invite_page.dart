@@ -73,15 +73,16 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
     try {
       Object? lastErr;
 
-      // Birincil: birleşik PK API — tek istek; başarılıysa legacy'ye düşme.
+      // Birincil: üretim ana backend — POST /api/video-streams/pk (action:create)
       try {
-        final unified = await ref.read(pkUnifiedInviteProvider).inviteStream(
-              streamId: streamId,
-              opponentStreamId: opponent.id,
-              durationSeconds: _durationSeconds,
-            );
-        if (unified != null && unified.id.isNotEmpty) {
-          PkEventLog.requestSuccess(matchId: unified.id);
+        final legacy =
+            await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
+                  streamId: streamId,
+                  opponentStreamId: opponent.id,
+                  durationSeconds: _durationSeconds,
+                );
+        if (legacy != null) {
+          PkEventLog.requestSuccess(battleId: legacy.id);
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -97,16 +98,15 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
         lastErr = e;
       }
 
-      // Yedek: kılavuz §9.4 video-streams PK
+      // Yedek: birleşik PK API (bazı ortamlarda 405 dönebilir)
       try {
-        final legacy =
-            await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
-                  streamId: streamId,
-                  opponentStreamId: opponent.id,
-                  durationSeconds: _durationSeconds,
-                );
-        if (legacy != null) {
-          PkEventLog.requestSuccess(battleId: legacy.id);
+        final unified = await ref.read(pkUnifiedInviteProvider).inviteStream(
+              streamId: streamId,
+              opponentStreamId: opponent.id,
+              durationSeconds: _durationSeconds,
+            );
+        if (unified != null && unified.id.isNotEmpty) {
+          PkEventLog.requestSuccess(matchId: unified.id);
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

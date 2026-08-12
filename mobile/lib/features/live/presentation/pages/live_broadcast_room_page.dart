@@ -794,71 +794,77 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final streamId = widget.session.streamId?.trim() ?? '';
     final user = ref.read(authControllerProvider).valueOrNull;
 
-    if (widget.session.isHost && streamId.isNotEmpty) {
-      unawaited(
-        ref.read(liveRemoteProvider).sendStreamMessage(
-              streamId: streamId,
-              content: 'Yayıncı yayını kapattı.',
-            ),
-      );
-      unawaited(
-        ref.read(liveRepositoryProvider).endVideoStream(streamId).then(
-          (_) => HostLiveStreamRecovery.clear(),
-          onError: (_) => HostLiveStreamRecovery.clear(),
-        ),
-      );
-      ref.read(liveRoomProvider(streamId).notifier).markStreamEnded();
-      await _leaveLiveSession(endReason: 'host_exit');
-    } else {
-      await _leaveLiveSession();
-    }
-
-    if (streamId.isNotEmpty && user != null) {
-      final hostId = widget.session.hostUserId?.trim().isNotEmpty == true
-          ? widget.session.hostUserId!.trim()
-          : (widget.session.isHost ? user.id : '');
-      final summary = SessionGiftSummaryBuilder.forLiveBroadcast(
-        ref: ref,
-        streamId: streamId,
-        hostUserId: hostId.isNotEmpty ? hostId : user.id,
-        hostDisplayName: widget.session.streamerName ?? user.display,
-        myUserId: user.id,
-      );
-      final roomSnap = ref.read(liveRoomProvider(streamId));
-      ref.read(liveRoomProvider(streamId).notifier).appendSessionSummaryMessages(
-            summary,
-            viewerCount: roomSnap.viewerCount,
-            duration: _sessionJoinedAt != null
-                ? DateTime.now().difference(_sessionJoinedAt!)
-                : null,
-            endedLabel: widget.session.isHost
-                ? 'Yayını kapattınız'
-                : 'Yayından ayrıldınız',
-          );
-      await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
-
-      invalidateDiscoverLiveStreams(ref);
-      if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
-        widget.onSwipeClose!();
-      } else if (context.mounted) {
-        context.go('/feed');
+    try {
+      if (widget.session.isHost && streamId.isNotEmpty) {
+        unawaited(
+          ref.read(liveRemoteProvider).sendStreamMessage(
+                streamId: streamId,
+                content: 'Yayıncı yayını kapattı.',
+              ),
+        );
+        unawaited(
+          ref.read(liveRepositoryProvider).endVideoStream(streamId).then(
+            (_) => HostLiveStreamRecovery.clear(),
+            onError: (_) => HostLiveStreamRecovery.clear(),
+          ),
+        );
+        ref.read(liveRoomProvider(streamId).notifier).markStreamEnded();
+        await _leaveLiveSession(endReason: 'host_exit');
+      } else {
+        await _leaveLiveSession();
       }
 
-      if (summary.hasData) {
-        final rootCtx = rootNavigatorKey.currentContext;
-        if (rootCtx != null && rootCtx.mounted) {
-          await showSessionGiftSummarySheet(rootCtx, summary: summary);
+      if (streamId.isNotEmpty && user != null) {
+        final hostId = widget.session.hostUserId?.trim().isNotEmpty == true
+            ? widget.session.hostUserId!.trim()
+            : (widget.session.isHost ? user.id : '');
+        final summary = SessionGiftSummaryBuilder.forLiveBroadcast(
+          ref: ref,
+          streamId: streamId,
+          hostUserId: hostId.isNotEmpty ? hostId : user.id,
+          hostDisplayName: widget.session.streamerName ?? user.display,
+          myUserId: user.id,
+        );
+        final roomSnap = ref.read(liveRoomProvider(streamId));
+        ref
+            .read(liveRoomProvider(streamId).notifier)
+            .appendSessionSummaryMessages(
+              summary,
+              viewerCount: roomSnap.viewerCount,
+              duration: _sessionJoinedAt != null
+                  ? DateTime.now().difference(_sessionJoinedAt!)
+                  : null,
+              endedLabel: widget.session.isHost
+                  ? 'Yayını kapattınız'
+                  : 'Yayından ayrıldınız',
+            );
+        await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
+
+        invalidateDiscoverLiveStreams(ref);
+        if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+          widget.onSwipeClose!();
+        } else if (context.mounted) {
+          context.go('/feed');
+        }
+
+        if (summary.hasData) {
+          final rootCtx = rootNavigatorKey.currentContext;
+          if (rootCtx != null && rootCtx.mounted) {
+            await showSessionGiftSummarySheet(rootCtx, summary: summary);
+          }
+        }
+      } else {
+        await ref.refreshWalletCache(force: true);
+        invalidateDiscoverLiveStreams(ref);
+        if (!context.mounted) return;
+        if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+          widget.onSwipeClose!();
+        } else {
+          context.go('/feed');
         }
       }
-    } else {
-      await ref.refreshWalletCache(force: true);
-      invalidateDiscoverLiveStreams(ref);
-      if (!context.mounted) return;
-      if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
-        widget.onSwipeClose!();
-      } else {
-        context.go('/feed');
-      }
+    } finally {
+      _leaving = false;
     }
   }
 

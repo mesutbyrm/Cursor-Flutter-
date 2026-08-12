@@ -773,8 +773,15 @@ class VoiceRoomLiveController
   Future<void> leaveRoomSession({
     String source = 'ui_leave',
     bool awaitBackend = true,
+    bool force = false,
   }) async {
-    if (!_sessionActive || _leaveInFlight || _leaveCoordinator.isLeaving) return;
+    if (_leaveInFlight || _leaveCoordinator.isLeaving) return;
+    final stillConnected = _voiceJoined ||
+        _presenceJoined ||
+        _sseStarted ||
+        state.sseConnected ||
+        state.selfInRoom;
+    if (!force && !_sessionActive && !stillConnected) return;
     _leaveInFlight = true;
     _sessionActive = false;
     _entryBegun = false;

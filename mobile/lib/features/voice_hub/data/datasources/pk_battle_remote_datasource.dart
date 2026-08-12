@@ -184,7 +184,11 @@ class PkBattleRemoteDataSource {
         },
       );
     } on ApiException catch (e) {
-      if (e.statusCode != 400 && e.statusCode != 422) rethrow;
+      if (e.statusCode != 400 &&
+          e.statusCode != 405 &&
+          e.statusCode != 422) {
+        rethrow;
+      }
       if (guest.isEmpty) rethrow;
       return _postPkAction(
         roomId: roomId,
@@ -193,6 +197,7 @@ class PkBattleRemoteDataSource {
           'guestUserId': guest,
           'durationSec': duration,
           'duration': duration,
+          'targetRoomId': oppRoom,
         },
       );
     }
@@ -304,54 +309,86 @@ class PkBattleRemoteDataSource {
     int? duration,
   }) async {
     final normalized = action.toLowerCase();
-    // API dokümanı §8: POST /api/video-streams/pk — { opponentStreamId, durationMinutes }
+    // Üretim kontratı: POST /api/video-streams/pk — action + streamId + targetStreamId + duration (sn)
     if (normalized == 'create' && opponentStreamId != null) {
-      final durationMinutes =
-          duration != null ? (duration / 60).ceil().clamp(1, 60) : 3;
-      try {
-        final res = await _dio.safePost<dynamic>(
-          ApiEndpoints.videoStreamPk,
-          data: {
-            'opponentStreamId': opponentStreamId,
-            'hostStreamId': streamId,
-            'streamId': streamId,
-            'durationMinutes': durationMinutes,
-          },
-        );
-        final battle = _parseBattle(res.data);
-        if (battle != null) return battle;
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      final durationSec =
+          duration != null ? duration.clamp(60, 3600) : 180;
+      final durationMinutes = (durationSec / 60).ceil().clamp(1, 60);
+      final createBodies = <Map<String, dynamic>>[
+        {
+          'action': 'create',
+          'streamId': streamId,
+          'targetStreamId': opponentStreamId,
+          'duration': durationSec,
+        },
+        {
+          'opponentStreamId': opponentStreamId,
+          'hostStreamId': streamId,
+          'streamId': streamId,
+          'durationMinutes': durationMinutes,
+        },
+      ];
+      for (final body in createBodies) {
+        try {
+          final res = await _dio.safePost<dynamic>(
+            ApiEndpoints.videoStreamPk,
+            data: body,
+          );
+          final battle = _parseBattle(res.data);
+          if (battle != null) return battle;
+        } on ApiException catch (e) {
+          if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        }
       }
-      try {
-        final res = await _dio.safePost<dynamic>(
-          ApiEndpoints.videoStreamPkBattle(streamId),
-          data: {
-            'opponentStreamId': opponentStreamId,
-            'durationMinutes': durationMinutes,
-          },
-        );
-        final battle = _parseBattle(res.data);
-        if (battle != null) return battle;
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      final battleBodies = <Map<String, dynamic>>[
+        {
+          'action': 'create',
+          'targetStreamId': opponentStreamId,
+          'duration': durationSec,
+        },
+        {
+          'opponentStreamId': opponentStreamId,
+          'durationMinutes': durationMinutes,
+        },
+      ];
+      for (final body in battleBodies) {
+        try {
+          final res = await _dio.safePost<dynamic>(
+            ApiEndpoints.videoStreamPkBattle(streamId),
+            data: body,
+          );
+          final battle = _parseBattle(res.data);
+          if (battle != null) return battle;
+        } on ApiException catch (e) {
+          if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        }
       }
       return null;
     }
 
     if (normalized != 'create') {
-      // API dokümanı: { action, pkBattleId }
       final id = battleId?.trim() ?? '';
+      final actionBody = <String, dynamic>{
+        'action': action,
+        if (id.isNotEmpty) ...{
+          'battleId': id,
+          'pkBattleId': id,
+          'inviteId': id,
+        },
+      };
+      try {
+        final res = await _dio.safePost<dynamic>(
+          ApiEndpoints.videoStreamPk,
+          data: actionBody,
+        );
+        final battle = _parseBattle(res.data);
+        if (battle != null) return battle;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.videoStreamPkBattle(streamId),
-        data: {
-          'action': action,
-          if (id.isNotEmpty) ...{
-            'pkBattleId': id,
-            'battleId': id,
-            'inviteId': id,
-          },
-        },
+        data: actionBody,
       );
       return _parseBattle(res.data);
     }

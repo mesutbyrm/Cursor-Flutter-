@@ -116,6 +116,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _isMicMuted = false;
   var _micAutoMutedByMusic = false;
   var _leaving = false;
+  var _leaveSessionStarted = false;
   var _musicSearchOpen = false;
   LiveGiftEvent? _fullscreenGift;
   final _messageFocus = FocusNode();
@@ -202,15 +203,19 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _messageCtrl.dispose();
     _chatScrollCtrl.dispose();
     _messageFocus.dispose();
-    if (_liveRoomKey.isNotEmpty) {
+    if (!_leaveSessionStarted && _liveRoomKey.isNotEmpty) {
       unawaited(
         ref
             .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
-            .leaveRoomSession(source: 'rtc_dispose', awaitBackend: true)
+            .leaveRoomSession(
+              source: 'rtc_dispose',
+              awaitBackend: true,
+              force: true,
+            )
             .timeout(const Duration(seconds: 6))
             .catchError((_) {}),
       );
-    } else {
+    } else if (_liveRoomKey.isEmpty) {
       final audio = _audio;
       _audio = null;
       if (audio != null) unawaited(audio.leave());
@@ -575,6 +580,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   Future<void> _leaveRoom() async {
     if (_leaving) return;
     _leaving = true;
+    _leaveSessionStarted = true;
     final liveKey = _liveRoomKey;
 
     ref.read(voiceRoomTrtcMusicMixerProvider).bind(null);
@@ -586,7 +592,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     try {
       await ref
           .read(voiceRoomLiveProvider(liveKey).notifier)
-          .leaveRoomSession(source: 'rtc_leave', awaitBackend: true)
+          .leaveRoomSession(
+            source: 'rtc_leave',
+            awaitBackend: true,
+            force: true,
+          )
           .timeout(const Duration(seconds: 8));
     } catch (_) {}
 

@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.159+194 (2026-08-12) — PK 405, oda çıkışı, video hediye
+
+- **PK daveti (canlı):** `POST /api/video-streams/pk` — `action:create`, `streamId`, `targetStreamId`, `duration` (sn); legacy body yedek
+- **PK daveti (sesli oda):** 405'te `guestUserId` + `durationSec` yedek gövdesi
+- **Oda çıkışı:** `leaveRoomSession(force)` — bağlantı açıkken tekrar çıkış; basic oda önce leave sonra navigasyon
+- **Canlı yayın kapanış:** `_exitBroadcast` finally ile `_leaving` sıfırlanır
+- **Video hediye:** Tam sahne `BoxFit.cover`, süre 10 sn; hediye kutusu yerine video önceliği
+
 ## 1.0.158+193 (2026-08-12) — Sesli oda + canlı yayın master fix
 
 - **Sesli oda TRTC:** Yalnızca audio — video renderer/subscription devre dışı; `setDefaultStreamRecvMode(audio-only)`

@@ -220,16 +220,29 @@ class _GiftEngineAnimation extends StatelessWidget {
     }
 
     final fit = config.isFullScreen ||
-            config.displayArea == GiftEngineDisplayArea.fullScreen
+            config.displayArea == GiftEngineDisplayArea.fullScreen ||
+            spec.mediaType.isVideo
         ? BoxFit.cover
         : BoxFit.contain;
 
+    final mediaHeight = config.isFullScreen ||
+            config.displayArea == GiftEngineDisplayArea.fullScreen ||
+            spec.mediaType.isVideo
+        ? null
+        : size;
+    final mediaWidth = config.isFullScreen ||
+            config.displayArea == GiftEngineDisplayArea.fullScreen ||
+            spec.mediaType.isVideo
+        ? null
+        : size;
+
     return GiftMediaWidget(
       spec: spec,
-      width: size,
-      height: size,
+      width: mediaWidth,
+      height: mediaHeight,
       fit: fit,
       fallbackEmoji: emoji,
+      looping: false,
     );
   }
 }

@@ -97,6 +97,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   String? _loginError;
   var _isMicMuted = true;
   var _leaving = false;
+  var _leaveSessionStarted = false;
   final _messageCtrl = TextEditingController();
   StreamSubscription<LiveGiftEvent>? _giftSub;
   LiveGiftEvent? _fullscreenGift;
@@ -145,11 +146,13 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     ref.read(voiceRoomGiftRealtimeProvider).stop();
     ref.read(pkBattleRemoteProvider.notifier).clear();
     final liveKey = _pinnedLiveRoomKey;
-    if (liveKey != null && liveKey.isNotEmpty) {
+    if (!_leaveSessionStarted &&
+        liveKey != null &&
+        liveKey.isNotEmpty) {
       unawaited(
         ref
             .read(voiceRoomLiveProvider(liveKey).notifier)
-            .leaveRoomSession(source: 'basic_dispose'),
+            .leaveRoomSession(source: 'basic_dispose', force: true),
       );
     }
     final audio = _audio;
@@ -412,6 +415,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   Future<void> _leaveRoom() async {
     if (_leaving) return;
     _leaving = true;
+    _leaveSessionStarted = true;
     final liveKey = _liveRoomKey;
     final audio = _audio;
     _audio = null;
@@ -431,6 +435,17 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       );
     }
 
+    try {
+      await Future.wait<void>([
+        if (audio != null) audio.leave(),
+        liveNotifier.leaveRoomSession(
+          source: 'basic_leave',
+          awaitBackend: true,
+          force: true,
+        ),
+      ]).timeout(const Duration(seconds: 8));
+    } catch (_) {}
+
     if (mounted) {
       if (context.canPop()) {
         context.pop();
@@ -438,11 +453,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         context.go('/voice-rooms');
       }
     }
-
-    unawaited(Future.wait<void>([
-      if (audio != null) audio.leave(),
-      liveNotifier.leaveRoomSession(source: 'basic_leave', awaitBackend: false),
-    ]));
 
     if (leaveSummary != null && leaveSummary.hasData) {
       final rootCtx = rootNavigatorKey.currentContext;
