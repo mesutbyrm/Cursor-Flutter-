@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../trtc/domain/entities/trtc_credentials.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
@@ -25,9 +27,68 @@ class VoiceRoomAudioCoordinator {
 
   bool get micOn => _trtc.micOn;
   bool get isSupported => _trtc.isSupported;
+  bool get isReconnecting => _reconnecting;
   TrtcRoomManager get trtcManager => _trtc.manager;
 
   Future<void>? _micOp;
+
+  var _reconnecting = false;
+  var _reconnectSuspended = false;
+  var _desiredMicOn = false;
+
+  VoidCallback? onReconnecting;
+  VoidCallback? onReconnected;
+
+  void setReconnectSuspended(bool suspended) {
+    _reconnectSuspended = suspended;
+  }
+
+  void _bindConnectionLostHandler() {
+    _trtc.manager.onConnectionLost = () {
+      if (_reconnectSuspended || _reconnecting) return;
+      final channel = _lastRoomId?.trim();
+      if (channel == null || channel.isEmpty) return;
+      unawaited(_reconnectVoice());
+    };
+  }
+
+  Future<void> _reconnectVoice() async {
+    if (_reconnectSuspended || _reconnecting) return;
+    final channel = _lastRoomId?.trim();
+    final userId = _lastUserId;
+    if (channel == null || channel.isEmpty) return;
+
+    _reconnecting = true;
+    _desiredMicOn = _trtc.micOn;
+    onReconnecting?.call();
+    VoiceRoomDebugLog.log('audio.trtc.reconnect.start', {
+      'roomId': channel,
+      'mic': _desiredMicOn,
+    });
+
+    try {
+      await _trtc.leave();
+      await _trtc.joinVoice(
+        channel,
+        publishMic: _desiredMicOn,
+        userId: userId,
+        role: _desiredMicOn ? 'host' : 'audience',
+      );
+      if (!_desiredMicOn) {
+        await _trtc.setMicEnabled(false);
+      }
+      VoiceRoomDebugLog.log('audio.trtc.reconnect.ok', {'roomId': channel});
+      onReconnected?.call();
+    } catch (e, st) {
+      VoiceRoomDebugLog.log('audio.trtc.reconnect.fail', {
+        'roomId': channel,
+        'error': e.toString(),
+        'stack': st.toString(),
+      });
+    } finally {
+      _reconnecting = false;
+    }
+  }
 
   /// [roomId] = Prisma oda kimliği; TRTC kanalı `voice_room_{id}`.
   Future<VoiceAudioEngineKind> join({
@@ -56,6 +117,8 @@ class VoiceRoomAudioCoordinator {
     });
     _lastRoomId = channel;
     _lastUserId = userId;
+    _desiredMicOn = enableMic;
+    _reconnectSuspended = false;
 
     final role = enableMic ? 'host' : 'audience';
     final prefetched = backendTrtc ??
@@ -103,9 +166,11 @@ class VoiceRoomAudioCoordinator {
       );
     }
     _engine = VoiceAudioEngineKind.trtc;
+    _desiredMicOn = enableMic;
     if (!enableMic) {
       await _trtc.setMicEnabled(false);
     }
+    _bindConnectionLostHandler();
     VoiceRoomDebugLog.log('audio.trtc.joined', {
       'roomId': channel,
       'mic': enableMic,
@@ -114,6 +179,7 @@ class VoiceRoomAudioCoordinator {
   }
 
   Future<void> setMicEnabled(bool enabled) async {
+    _desiredMicOn = enabled;
     _micOp = _setMicEnabledSafe(enabled);
     await _micOp;
   }
@@ -148,15 +214,18 @@ class VoiceRoomAudioCoordinator {
             userId: _lastUserId,
           );
           _engine = VoiceAudioEngineKind.trtc;
+          _bindConnectionLostHandler();
         } else {
           await _trtc.setMicEnabled(true);
         }
+        _desiredMicOn = true;
         return;
       }
 
       if (_trtc.inChannel) {
         await _trtc.setMicEnabled(false);
       }
+      _desiredMicOn = false;
     } catch (e, st) {
       VoiceRoomDebugLog.log('audio.trtc.mic_toggle.fail', {
         'enabled': enabled,
@@ -172,6 +241,8 @@ class VoiceRoomAudioCoordinator {
   void setHeadphonesOn(bool on) => _trtc.setRemoteAudioMuted(!on);
 
   Future<void> leave() async {
+    _reconnectSuspended = true;
+    _trtc.manager.onConnectionLost = null;
     await _micOp;
     final ds = _remote;
     final channel = _trtc.inChannel ? _lastRoomId : null;
@@ -184,6 +255,7 @@ class VoiceRoomAudioCoordinator {
     _engine = null;
     _lastRoomId = null;
     _lastUserId = null;
+    _desiredMicOn = false;
   }
 
   String? _lastRoomId;

@@ -3,7 +3,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../../live/domain/entities/live_gift_event.dart';
+import '../../domain/gift_media_spec.dart';
+import '../../domain/gift_render_meta.dart';
 import 'gift_animation_player.dart';
+import 'gift_media_widget.dart';
 
 /// Hediye sahnesi — koltukların altından mesaj alanına kadar.
 enum GiftStageContext {
@@ -60,8 +63,13 @@ class GiftStageLargeDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final spec = GiftMediaSpec.fromEvent(event);
+    final isVideo = spec.mediaType.isVideo && spec.hasPlayableUrl;
+    final emoji = event.giftIcon ?? '🎁';
+
     return Stack(
       clipBehavior: Clip.none,
+      fit: isVideo ? StackFit.expand : StackFit.loose,
       children: [
         if (showBackdrop)
           Positioned.fill(
@@ -85,15 +93,28 @@ class GiftStageLargeDisplay extends StatelessWidget {
           right: 48,
           child: _SenderReceiverChip(label: _senderReceiverLabel),
         ),
-        Center(
-          child: GiftAnimationPlayer(
-            giftId: event.giftId,
-            event: event,
-            size: giftSize,
-            preferPremiumVisual: false,
-            fit: BoxFit.contain,
+        if (isVideo)
+          Positioned.fill(
+            child: GiftMediaWidget(
+              spec: spec,
+              fit: BoxFit.cover,
+              fallbackEmoji: emoji,
+              muted: true,
+              looping: false,
+            ),
+          )
+        else
+          Center(
+            child: GiftAnimationPlayer(
+              giftId: event.giftId,
+              event: event,
+              size: giftSize,
+              preferPremiumVisual: false,
+              fit: GiftRenderMeta.isFullscreenLayer(event)
+                  ? BoxFit.cover
+                  : BoxFit.contain,
+            ),
           ),
-        ),
       ],
     );
   }

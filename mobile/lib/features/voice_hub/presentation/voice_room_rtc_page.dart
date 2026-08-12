@@ -55,6 +55,8 @@ import '../domain/pk/pk_opponent_room_filter.dart';
 import 'utils/voice_room_image_prefetch.dart';
 import 'providers/voice_gift_providers.dart';
 import 'providers/voice_room_audio_providers.dart';
+import 'providers/voice_session_phase_provider.dart';
+import '../domain/voice/voice_session_phase.dart';
 import 'providers/voice_room_diagnostic_provider.dart';
 import 'providers/voice_room_sse_provider.dart';
 import 'providers/voice_room_ui_provider.dart';
@@ -116,12 +118,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _isMicMuted = false;
   var _micAutoMutedByMusic = false;
   var _leaving = false;
+  var _leaveSessionStarted = false;
   var _musicSearchOpen = false;
   LiveGiftEvent? _fullscreenGift;
   final _messageFocus = FocusNode();
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
   var _giftRealtimeStarted = false;
+  int? _lastSelfSeatIndex;
   /// Riverpod oturum anahtarı — metadata değişince provider dispose olmasın.
   String? _pinnedLiveRoomKey;
 
@@ -202,15 +206,19 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _messageCtrl.dispose();
     _chatScrollCtrl.dispose();
     _messageFocus.dispose();
-    if (_liveRoomKey.isNotEmpty) {
+    if (!_leaveSessionStarted && _liveRoomKey.isNotEmpty) {
       unawaited(
         ref
             .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
-            .leaveRoomSession(source: 'rtc_dispose', awaitBackend: true)
+            .leaveRoomSession(
+              source: 'rtc_dispose',
+              awaitBackend: true,
+              force: true,
+            )
             .timeout(const Duration(seconds: 6))
             .catchError((_) {}),
       );
-    } else {
+    } else if (_liveRoomKey.isEmpty) {
       final audio = _audio;
       _audio = null;
       if (audio != null) unawaited(audio.leave());
@@ -535,6 +543,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           _isMicMuted = !_audio!.micOn;
         });
         ref.read(voiceRoomTrtcMusicMixerProvider).bind(_audio!.trtcManager);
+        _wireAudioReconnectCallbacks();
         _startGiftRealtime();
         ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(true);
         _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
@@ -560,6 +569,29 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
   }
 
+  void _wireAudioReconnectCallbacks() {
+    final audio = _audio;
+    if (audio == null) return;
+    audio.onReconnecting = () {
+      if (!mounted || _leaving) return;
+      ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
+            VoiceSessionPhase.reconnecting,
+          );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ses bağlantısı koptu — yeniden bağlanılıyor…'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    };
+    audio.onReconnected = () {
+      if (!mounted || _leaving) return;
+      ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
+            VoiceSessionPhase.connected,
+          );
+    };
+  }
+
   Future<void> _connectPkBattle() async {
     if (!mounted) return;
     final r = _effectiveRoom();
@@ -575,18 +607,24 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   Future<void> _leaveRoom() async {
     if (_leaving) return;
     _leaving = true;
+    _leaveSessionStarted = true;
     final liveKey = _liveRoomKey;
 
     ref.read(voiceRoomTrtcMusicMixerProvider).bind(null);
     ref.read(voiceRoomTrtcMusicMixerProvider).stop();
     if (mounted) setState(() => _audioReady = false);
 
+    ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
     _audio = null;
 
     try {
       await ref
           .read(voiceRoomLiveProvider(liveKey).notifier)
-          .leaveRoomSession(source: 'rtc_leave', awaitBackend: true)
+          .leaveRoomSession(
+            source: 'rtc_leave',
+            awaitBackend: true,
+            force: true,
+          )
           .timeout(const Duration(seconds: 8));
     } catch (_) {}
 
@@ -1310,6 +1348,24 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           if (!canSpeak && !_isMicMuted) {
             _audio?.setMicEnabled(false);
             if (mounted) setState(() => _isMicMuted = true);
+          } else {
+            ChatRoomPresence? selfPresence;
+            for (final p in next.presence) {
+              if (p.id == user.id) {
+                selfPresence = p;
+                break;
+              }
+            }
+            final seat = selfPresence?.seatIndex;
+            if (canSpeak &&
+                seat != null &&
+                seat >= 0 &&
+                seat != _lastSelfSeatIndex &&
+                _isMicMuted) {
+              _audio?.setMicEnabled(true);
+              if (mounted) setState(() => _isMicMuted = false);
+            }
+            _lastSelfSeatIndex = seat;
           }
         }
       }

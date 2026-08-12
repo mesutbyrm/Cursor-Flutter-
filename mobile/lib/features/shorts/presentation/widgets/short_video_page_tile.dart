@@ -337,7 +337,7 @@ class _VideoThumbnailLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final thumb = video.thumbnailUrl;
+    final thumb = video.displayThumbnailUrl;
     final content = ColoredBox(
       color: Colors.black,
       child: thumb != null && thumb.isNotEmpty

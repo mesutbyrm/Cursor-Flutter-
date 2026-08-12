@@ -26,6 +26,7 @@ import '../../../live_psychics/presentation/controllers/psychic_flow.dart';
 import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
 import '../../../live_psychics/presentation/widgets/psychic_booking_sheet.dart';
 import '../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
+import '../../../voice_hub/presentation/coordinators/room_leave_coordinator.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../../../voice_hub/presentation/providers/voice_recent_gifts_provider.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
@@ -147,6 +148,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   final _heartsKey = GlobalKey<LiveFloatingHeartsOverlayState>();
   Key _localPreviewKey = UniqueKey();
   var _leaving = false;
+  final _leaveCoordinator = RoomLeaveCoordinator();
   var _liveMusicSseAttached = false;
   var _swipeSuspended = false;
   var _chatVisible = true;
@@ -406,6 +408,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       );
       _trtcCoordinator!.onReconnected = () {
         if (!mounted || _leaving) return;
+        _applyRtcPublishPolicy();
         setState(() {
           _rtcReady = true;
           _phase = LiveSessionPhase.live;
@@ -433,15 +436,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       );
 
       if (widget.session.isHost) {
-        _trtc.setCameraEnabled(widget.session.initialCameraOn);
-        _trtc.setMicEnabled(widget.session.initialMicOn);
+        _applyRtcPublishPolicy();
         try {
           await ref.read(liveRemoteProvider).notifyLiveStarted(roomId);
         } catch (_) {}
-      } else if (!_coHostUpgraded) {
-        // İzleyici — yayıncı onayı olmadan ses/video yayınlama.
-        _trtc.setMicEnabled(false);
-        _trtc.setCameraEnabled(false);
+      } else {
+        _applyRtcPublishPolicy();
       }
       _onRtcJoinSuccess(user);
     } catch (e) {
@@ -499,25 +499,83 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     ref.read(pkBattleRemoteProvider.notifier).clear();
   }
 
-  Future<void> _leaveLiveSession({String? endReason}) async {
-    final streamId = widget.session.streamId?.trim() ?? '';
-    if (streamId.isNotEmpty) {
-      _stopLiveMusicSse(streamId);
-      unawaited(_tearDownActivePk(streamId));
-      await ref.read(liveRoomProvider(streamId).notifier).tearDownSession();
+  void _applyRtcPublishPolicy() {
+    if (!_rtcReady || _leaving) return;
+    if (widget.session.isHost) {
+      _trtc.setCameraEnabled(widget.session.initialCameraOn);
+      _trtc.setMicEnabled(widget.session.initialMicOn);
+      return;
     }
+    if (_coHostUpgraded) {
+      // Onaylı misafir — kamera açık; mikrofon kullanıcı açana kadar kapalı.
+      _trtc.setCameraEnabled(true);
+      _trtc.setMicEnabled(false);
+      return;
+    }
+    _trtc.setMicEnabled(false);
+    _trtc.setCameraEnabled(false);
+  }
+
+  void _cancelLivePageTimers() {
+    _lazyGiftsTimer?.cancel();
+    _lazyGiftsTimer = null;
+    _lazyExtrasTimer?.cancel();
+    _lazyExtrasTimer = null;
+    _guestJoinPoll?.cancel();
+    _guestJoinPoll = null;
+    _fortunePoll?.cancel();
+    _fortunePoll = null;
+    _coBroadcastPoll?.cancel();
+    _coBroadcastPoll = null;
     _hostHeartbeat?.cancel();
     _hostHeartbeat = null;
     _stopLiveSignalPoll();
-    if (streamId.isNotEmpty && endReason != null) {
-      LiveEventLog.ended(streamId: streamId, reason: endReason);
-    }
-    try {
-      await _trtcCoordinator?.leave();
-    } catch (_) {}
-    if (mounted) {
-      setState(() => _phase = LiveSessionPhase.ended);
-    }
+  }
+
+  void _resetLiveGuestUiState() {
+    ref.read(liveGuestGridProvider.notifier).reset();
+    ref.read(coBroadcastProvider.notifier).clear();
+  }
+
+  Future<void> _leaveLiveSession({String? endReason}) async {
+    final streamId = widget.session.streamId?.trim() ?? '';
+    await _leaveCoordinator.leave(
+      roomId: streamId.isEmpty ? 'live' : streamId,
+      source: endReason ?? 'live_leave',
+      steps: [
+        () async => _cancelLivePageTimers(),
+        () async {
+          if (_coHostUpgraded && streamId.isNotEmpty) {
+            try {
+              await ref.read(coBroadcastProvider.notifier).leave(streamId);
+            } catch (_) {}
+            _coHostUpgraded = false;
+          }
+        },
+        () async {
+          _trtc.setMicEnabled(false);
+          _trtc.setCameraEnabled(false);
+          try {
+            await _trtcCoordinator?.leave();
+          } catch (_) {}
+        },
+        () async {
+          if (streamId.isEmpty) return;
+          _stopLiveMusicSse(streamId);
+          await _tearDownActivePk(streamId);
+          await ref.read(liveRoomProvider(streamId).notifier).tearDownSession();
+        },
+        () async {
+          _resetLiveGuestUiState();
+          if (streamId.isNotEmpty && endReason != null) {
+            LiveEventLog.ended(streamId: streamId, reason: endReason);
+          }
+          if (mounted) {
+            setState(() => _phase = LiveSessionPhase.ended);
+          }
+        },
+      ],
+    );
   }
 
   @override
@@ -531,11 +589,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
     _lazyGiftsTimer?.cancel();
     _lazyExtrasTimer?.cancel();
-    _guestJoinPoll?.cancel();
-    _fortunePoll?.cancel();
-    _coBroadcastPoll?.cancel();
-    _hostHeartbeat?.cancel();
-    _stopLiveSignalPoll();
+    _cancelLivePageTimers();
     _trtcReconnectSub?.cancel();
     if (_remoteUidsListener != null) {
       _trtc.remoteUserIdsNotifier.removeListener(_remoteUidsListener!);
@@ -794,71 +848,77 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final streamId = widget.session.streamId?.trim() ?? '';
     final user = ref.read(authControllerProvider).valueOrNull;
 
-    if (widget.session.isHost && streamId.isNotEmpty) {
-      unawaited(
-        ref.read(liveRemoteProvider).sendStreamMessage(
-              streamId: streamId,
-              content: 'Yayıncı yayını kapattı.',
-            ),
-      );
-      unawaited(
-        ref.read(liveRepositoryProvider).endVideoStream(streamId).then(
-          (_) => HostLiveStreamRecovery.clear(),
-          onError: (_) => HostLiveStreamRecovery.clear(),
-        ),
-      );
-      ref.read(liveRoomProvider(streamId).notifier).markStreamEnded();
-      await _leaveLiveSession(endReason: 'host_exit');
-    } else {
-      await _leaveLiveSession();
-    }
-
-    if (streamId.isNotEmpty && user != null) {
-      final hostId = widget.session.hostUserId?.trim().isNotEmpty == true
-          ? widget.session.hostUserId!.trim()
-          : (widget.session.isHost ? user.id : '');
-      final summary = SessionGiftSummaryBuilder.forLiveBroadcast(
-        ref: ref,
-        streamId: streamId,
-        hostUserId: hostId.isNotEmpty ? hostId : user.id,
-        hostDisplayName: widget.session.streamerName ?? user.display,
-        myUserId: user.id,
-      );
-      final roomSnap = ref.read(liveRoomProvider(streamId));
-      ref.read(liveRoomProvider(streamId).notifier).appendSessionSummaryMessages(
-            summary,
-            viewerCount: roomSnap.viewerCount,
-            duration: _sessionJoinedAt != null
-                ? DateTime.now().difference(_sessionJoinedAt!)
-                : null,
-            endedLabel: widget.session.isHost
-                ? 'Yayını kapattınız'
-                : 'Yayından ayrıldınız',
-          );
-      await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
-
-      invalidateDiscoverLiveStreams(ref);
-      if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
-        widget.onSwipeClose!();
-      } else if (context.mounted) {
-        context.go('/feed');
+    try {
+      if (widget.session.isHost && streamId.isNotEmpty) {
+        unawaited(
+          ref.read(liveRemoteProvider).sendStreamMessage(
+                streamId: streamId,
+                content: 'Yayıncı yayını kapattı.',
+              ),
+        );
+        unawaited(
+          ref.read(liveRepositoryProvider).endVideoStream(streamId).then(
+            (_) => HostLiveStreamRecovery.clear(),
+            onError: (_) => HostLiveStreamRecovery.clear(),
+          ),
+        );
+        ref.read(liveRoomProvider(streamId).notifier).markStreamEnded();
+        await _leaveLiveSession(endReason: 'host_exit');
+      } else {
+        await _leaveLiveSession();
       }
 
-      if (summary.hasData) {
-        final rootCtx = rootNavigatorKey.currentContext;
-        if (rootCtx != null && rootCtx.mounted) {
-          await showSessionGiftSummarySheet(rootCtx, summary: summary);
+      if (streamId.isNotEmpty && user != null) {
+        final hostId = widget.session.hostUserId?.trim().isNotEmpty == true
+            ? widget.session.hostUserId!.trim()
+            : (widget.session.isHost ? user.id : '');
+        final summary = SessionGiftSummaryBuilder.forLiveBroadcast(
+          ref: ref,
+          streamId: streamId,
+          hostUserId: hostId.isNotEmpty ? hostId : user.id,
+          hostDisplayName: widget.session.streamerName ?? user.display,
+          myUserId: user.id,
+        );
+        final roomSnap = ref.read(liveRoomProvider(streamId));
+        ref
+            .read(liveRoomProvider(streamId).notifier)
+            .appendSessionSummaryMessages(
+              summary,
+              viewerCount: roomSnap.viewerCount,
+              duration: _sessionJoinedAt != null
+                  ? DateTime.now().difference(_sessionJoinedAt!)
+                  : null,
+              endedLabel: widget.session.isHost
+                  ? 'Yayını kapattınız'
+                  : 'Yayından ayrıldınız',
+            );
+        await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
+
+        invalidateDiscoverLiveStreams(ref);
+        if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+          widget.onSwipeClose!();
+        } else if (context.mounted) {
+          context.go('/feed');
+        }
+
+        if (summary.hasData) {
+          final rootCtx = rootNavigatorKey.currentContext;
+          if (rootCtx != null && rootCtx.mounted) {
+            await showSessionGiftSummarySheet(rootCtx, summary: summary);
+          }
+        }
+      } else {
+        await ref.refreshWalletCache(force: true);
+        invalidateDiscoverLiveStreams(ref);
+        if (!context.mounted) return;
+        if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+          widget.onSwipeClose!();
+        } else {
+          context.go('/feed');
         }
       }
-    } else {
-      await ref.refreshWalletCache(force: true);
-      invalidateDiscoverLiveStreams(ref);
-      if (!context.mounted) return;
-      if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
-        widget.onSwipeClose!();
-      } else {
-        context.go('/feed');
-      }
+    } finally {
+      _leaving = false;
     }
   }
 
@@ -1101,7 +1161,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   void _startHostGuestPoll(String streamId) {
     _guestJoinPoll?.cancel();
     final interval = _liveSseConnected
-        ? const Duration(seconds: 20)
+        ? const Duration(seconds: 60)
         : const Duration(seconds: 8);
     _guestJoinPoll = Timer.periodic(interval, (_) {
       if (!mounted) return;
@@ -1117,7 +1177,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   void _startHostFortunePoll(String streamId) {
     _fortunePoll?.cancel();
     final interval = _liveSseConnected
-        ? const Duration(seconds: 30)
+        ? const Duration(seconds: 60)
         : const Duration(seconds: 6);
     _fortunePoll = Timer.periodic(interval, (_) {
       if (!mounted) return;
@@ -1130,7 +1190,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   void _startViewerCoBroadcastPoll(String streamId) {
     _coBroadcastPoll?.cancel();
     final interval = _liveSseConnected
-        ? const Duration(seconds: 20)
+        ? const Duration(seconds: 60)
         : const Duration(seconds: 8);
     _coBroadcastPoll = Timer.periodic(interval, (_) {
       if (!mounted) return;
@@ -1144,7 +1204,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _signalPollFailures = 0;
     _signalPollError = null;
     final interval = _liveSseConnected
-        ? const Duration(seconds: 10)
+        ? const Duration(seconds: 30)
         : const Duration(seconds: 2);
     _signalPoll = Timer.periodic(interval, (_) {
       unawaited(_tickLiveSignals(streamId));
@@ -1402,6 +1462,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       });
       if (approved) {
         await _upgradeToCoHost(streamId, user);
+      } else {
+        _checkCoHostDowngrade(streamId);
       }
     } catch (_) {}
   }
@@ -1421,8 +1483,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         expectedAnchorUserId: widget.session.hostUserId,
         useCompoundJoin: true,
       );
-      _trtc.setCameraEnabled(true);
-      _trtc.setMicEnabled(true);
+      _applyRtcPublishPolicy();
       _enableMultiGuestLayout(
         LiveGuestLayout.duo,
         [
@@ -1435,15 +1496,71 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Misafir yayınına geçildi — kamera açık')),
+          const SnackBar(
+            content: Text('Misafir yayınına geçildi — mikrofonu açmak için alttaki düğmeyi kullanın'),
+          ),
         );
       }
     } catch (e) {
+      _coHostUpgraded = false;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ApiException.userMessage(e))),
         );
       }
+    }
+  }
+
+  bool _isSelfApprovedCoGuest(
+    List<Map<String, dynamic>> guests,
+    String userId,
+  ) {
+    return guests.any((c) {
+      final uid = c['userId']?.toString() ?? c['id']?.toString();
+      final status = (c['status'] ?? c['state'] ?? 'approved').toString();
+      return uid == userId &&
+          (status == 'approved' ||
+              status == 'active' ||
+              status == 'joined');
+    });
+  }
+
+  Future<void> _downgradeFromCoHost(String streamId, UserEntity user) async {
+    if (!_coHostUpgraded || _leaving || widget.session.isHost) return;
+    _coHostUpgraded = false;
+    _trtcCoordinator?.setReconnectSuspended(true);
+    try {
+      await _trtcCoordinator?.leave();
+      await _trtcCoordinator!.join(
+        roomId: streamId,
+        roomType: 'stream',
+        userId: user.id,
+        isHost: false,
+        twoWayVideo: false,
+        expectedAnchorUserId: widget.session.hostUserId,
+        useCompoundJoin: true,
+      );
+      _applyRtcPublishPolicy();
+      ref.read(liveGuestGridProvider.notifier).reset();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Misafir yayını sonlandı')),
+        );
+      }
+    } catch (_) {
+      _applyRtcPublishPolicy();
+    } finally {
+      _trtcCoordinator?.setReconnectSuspended(false);
+    }
+  }
+
+  void _checkCoHostDowngrade(String streamId) {
+    if (!_coHostUpgraded || widget.session.isHost || _leaving) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return;
+    final guests = ref.read(coBroadcastProvider).coBroadcasters;
+    if (!_isSelfApprovedCoGuest(guests, user.id)) {
+      unawaited(_downgradeFromCoHost(streamId, user));
     }
   }
 
@@ -2376,6 +2493,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     // Misafir ortak yayın daveti (co-broadcast invite) — izleyici tarafı.
     if (hasStream && !s.isHost) {
       ref.listen(coBroadcastProvider, (prev, next) {
+        _checkCoHostDowngrade(streamId);
         for (final inv in next.invites) {
           final status = (inv['status']?.toString() ?? 'pending').toLowerCase();
           if (status != 'pending') continue;

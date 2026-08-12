@@ -151,7 +151,7 @@ abstract final class GiftEngineParser {
       durationMs = 3000;
     }
     if (isVideoAnim && durationMs <= 3000 && (event?.engineDurationMs ?? 0) <= 0) {
-      durationMs = 8000;
+      durationMs = 10000;
     }
 
     final queueGapMs =
