@@ -20,6 +20,8 @@ final class SongPlaybackFields {
     final fields = SongPlaybackFields._(
       musicUrl: _firstNonEmpty(json, _urlKeys),
       videoUrl: json['videoUrl']?.toString().trim(),
+      audioUrl: json['audioUrl']?.toString().trim(),
+      streamUrl: json['streamUrl']?.toString().trim(),
       youtubeUrl: json['youtubeUrl']?.toString().trim(),
       videoId: _resolveVideoId(json),
       title: json['title']?.toString(),
@@ -42,6 +44,8 @@ final class SongPlaybackFields {
   const SongPlaybackFields._({
     this.musicUrl,
     this.videoUrl,
+    this.audioUrl,
+    this.streamUrl,
     this.youtubeUrl,
     this.videoId,
     this.title,
@@ -53,6 +57,8 @@ final class SongPlaybackFields {
 
   final String? musicUrl;
   final String? videoUrl;
+  final String? audioUrl;
+  final String? streamUrl;
   final String? youtubeUrl;
   final String? videoId;
   final String? title;
@@ -63,6 +69,24 @@ final class SongPlaybackFields {
 
   bool get hasPlayableSource =>
       resolvedStreamUrl != null || (videoId != null && videoId!.isNotEmpty);
+
+  /// Sesli oda — doğrudan oynatılabilir audio stream (YouTube watch sayfası değil).
+  String? get resolvedAudioStreamUrl {
+    for (final raw in [musicUrl, audioUrl, streamUrl]) {
+      final normalized = _normalizePlayableMediaUrl(raw);
+      if (normalized != null) return normalized;
+    }
+    return null;
+  }
+
+  /// Canlı yayın — video player için gerçek medya URL'si.
+  String? get resolvedVideoStreamUrl {
+    for (final raw in [videoUrl, streamUrl, musicUrl]) {
+      final normalized = _normalizePlayableMediaUrl(raw);
+      if (normalized != null) return normalized;
+    }
+    return null;
+  }
 
   /// Oynatılabilir URL — sırayla dene, hiçbiri yoksa videoId'den watch URL.
   String? get resolvedStreamUrl {
@@ -100,6 +124,22 @@ final class SongPlaybackFields {
       return 'https://www.youtube.com/watch?v=$id';
     }
     return trimmed;
+  }
+
+  /// YouTube watch/embed sayfası değil — gerçek medya stream'i.
+  static String? _normalizePlayableMediaUrl(String? raw) {
+    final normalized = _normalizeUrl(raw);
+    if (normalized == null) return null;
+    final lower = normalized.toLowerCase();
+    if (lower.contains('youtube.com/watch') ||
+        lower.contains('youtu.be/') ||
+        lower.contains('youtube.com/embed')) {
+      return null;
+    }
+    if (!normalized.startsWith('http') && !normalized.startsWith('/')) {
+      return null;
+    }
+    return normalized;
   }
 
   static String? _resolveVideoId(Map<String, dynamic> json) {

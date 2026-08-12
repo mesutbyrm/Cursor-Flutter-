@@ -1510,10 +1510,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
-                              if (!keyboardOpen)
-                                VoiceRoomMusicBackgroundLayer(
-                                  roomKey: sessionKey,
-                                ),
+                              // Sesli oda: video müzik katmanı yok — yalnızca just_audio.
                               LayoutBuilder(
                                   builder: (context, constraints) {
                                     final chatH = keyboardOpen
@@ -1658,11 +1655,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 ? room.apiRoomKey
                                 : room.id,
                           ),
-                        ),
-                        RoomVideoOverlay(
-                          roomKey: _liveRoomKey,
-                          perms: perms,
-                          isDj: isDj,
                         ),
                         if (!keyboardOpen && !hasActiveMusicPlayer)
                           VoiceRoomPersistentDuyuru(

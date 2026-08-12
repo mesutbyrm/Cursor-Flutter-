@@ -32,6 +32,7 @@ import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../data/youtube_music_search_cache.dart';
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../../music/domain/entities/room_playback_sync.dart';
+import '../../music/domain/song_playback_fields.dart';
 import '../../music/presentation/providers/room_music_providers.dart';
 import '../../music/presentation/bloc/room_song_bloc.dart';
 import '../../music/presentation/bloc/room_song_event.dart';
@@ -75,6 +76,8 @@ import '../../data/youtube_stream_resolver.dart';
 import '../audio/voice_room_dj_stream_loader.dart';
 import '../services/voice_room_dj_player.dart';
 import '../services/voice_room_sse_audio_player.dart';
+import '../services/room_music_service.dart';
+import '../coordinators/room_leave_coordinator.dart';
 import '../services/voice_room_music_control_delegate.dart';
 import '../../video/domain/youtube_video_id.dart';
 import '../../video/presentation/room_video_controller.dart';
@@ -386,6 +389,7 @@ class VoiceRoomLiveController
   var _sessionActive = false;
   var _entryBegun = false;
   var _leaveInFlight = false;
+  final RoomLeaveCoordinator _leaveCoordinator = RoomLeaveCoordinator();
   var _autoSeatAttempted = false;
   /// Odaya girince eski giriş/çıkış mesajları duyurulmasın.
   var _entrancesArmed = false;
@@ -764,97 +768,120 @@ class VoiceRoomLiveController
     String source = 'ui_leave',
     bool awaitBackend = true,
   }) async {
-    if (!_sessionActive || _leaveInFlight) return;
+    if (!_sessionActive || _leaveInFlight || _leaveCoordinator.isLeaving) return;
     _leaveInFlight = true;
     _sessionActive = false;
     _entryBegun = false;
-    VoiceEventLog.leaveStart(roomId: _roomKey);
+    final roomKey = _roomKey;
+    final roomMeta = _roomMeta;
+    final canControlMusic = _canControlMusic();
+    final canStopMusic = _canStopMusic();
+    final keepAliveLink = _roomKeepAliveLink;
+    final djSnapshot = state.dj;
+
+    VoiceEventLog.leaveStart(roomId: roomKey);
     ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
           VoiceSessionPhase.leaving,
         );
-    VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: source);
+    VoiceRoomDebugLog.roomLeave(roomId: roomKey, source: source);
 
-    _postVoiceSessionEndSummary(endedLabel: 'Odadan ayrıldınız');
-    _cancelSessionTimers();
+    await _leaveCoordinator.leave(
+      roomId: roomKey,
+      source: source,
+      steps: [
+        () async {
+          _postVoiceSessionEndSummary(endedLabel: 'Odadan ayrıldınız');
+          _cancelSessionTimers();
+        },
+        () async {
+          final backendLeave = _leavePresenceWithSeatClear()
+              .timeout(const Duration(seconds: 5))
+              .catchError((_) {});
+          if (awaitBackend) {
+            await backendLeave;
+          } else {
+            unawaited(backendLeave);
+          }
+          unawaited(_leaveVoiceSession());
+        },
+        () async {
+          clearVoiceRoomLiveSession(ref, roomKey);
+          _removeSelfFromPresenceOptimistic();
+          _knownPresenceIds.clear();
+          _sseStarted = false;
+          _presenceJoined = false;
+          _voiceJoined = false;
+          state = state.copyWith(
+            presence: const [],
+            seatSlots: const [],
+            typingUsers: const [],
+            clearOwnerId: true,
+            clearRoomTrtc: true,
+            backendSyncReady: false,
+            selfInRoom: false,
+            sseConnected: false,
+            loading: false,
+          );
+        },
+        () async {
+          ref.read(sseConnectionHubProvider).releaseVoiceRoom(roomKey);
+          ref.read(voiceRoomGiftRealtimeProvider).stop();
+          ref.read(voiceRoomGiftRealtimeProvider).setSseActive(false);
+          ref.read(voiceRoomGiftRealtimeProvider).resetDedupeState();
+          ref.read(pkBattleRemoteProvider.notifier).clear();
+          ref.read(voiceRoomDiagnosticProvider.notifier).resetForRoom(roomKey);
+          unawaited(_stopTyping());
+        },
+        () async {
+          ref.read(roomMusicServiceProvider).bindRoom(null);
+          await ref
+              .read(roomMusicServiceProvider)
+              .stop()
+              .timeout(const Duration(milliseconds: 400));
+        },
+        () async {
+          try {
+            await ref
+                .read(voiceRoomAudioCoordinatorProvider)
+                .leave()
+                .timeout(const Duration(milliseconds: 600));
+          } catch (_) {}
+        },
+        () async {
+          final player = ref.read(voiceRoomDjPlayerProvider);
+          final stillPlaying = player.playback.value.playing ||
+              djSnapshot.playing ||
+              djSnapshot.nowPlaying != null ||
+              djSnapshot.musicQueue.isNotEmpty;
 
-    // Backend presence + koltuk temizliği önce (diğer kullanıcılar hemen görsün).
-    final backendLeave = _leavePresenceWithSeatClear()
-        .timeout(const Duration(seconds: 5))
-        .catchError((_) {});
-    if (awaitBackend) {
-      await backendLeave;
-    } else {
-      unawaited(backendLeave);
-    }
-    unawaited(_leaveVoiceSession());
-
-    // Yerel UI/state sıfırla.
-    clearVoiceRoomLiveSession(ref, _roomKey);
-    _removeSelfFromPresenceOptimistic();
-    _knownPresenceIds.clear();
-    _sseStarted = false;
-    _presenceJoined = false;
-    _voiceJoined = false;
-    state = state.copyWith(
-      presence: const [],
-      seatSlots: const [],
-      typingUsers: const [],
-      clearOwnerId: true,
-      clearRoomTrtc: true,
-      backendSyncReady: false,
-      selfInRoom: false,
-      sseConnected: false,
-      loading: false,
+          if (stillPlaying && keepAliveLink != null) {
+            ref.read(voiceRoomMusicSessionProvider.notifier).onRoomDetached(
+                  room: roomMeta,
+                  dj: djSnapshot,
+                  canSyncServer: canControlMusic,
+                  canStopMusic: canStopMusic,
+                  keepAliveLink: keepAliveLink,
+                );
+            _keepAliveTransferred = true;
+            _roomKeepAliveLink = null;
+          } else {
+            unawaited(ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer());
+            unawaited(ref.read(roomMusicServiceProvider).shutdown());
+            if (roomKey.isNotEmpty) {
+              ref.read(roomVideoControllerProvider(roomKey).notifier).clear();
+            }
+            _closeRoomKeepAlive();
+          }
+        },
+        () async {
+          VoiceEventLog.leaveSuccess(roomId: roomKey);
+          ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
+                VoiceSessionPhase.disconnected,
+              );
+        },
+      ],
     );
 
-    // SSE, hediye, PK — anında kes.
-    ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
-    ref.read(voiceRoomGiftRealtimeProvider).stop();
-    ref.read(voiceRoomGiftRealtimeProvider).setSseActive(false);
-    ref.read(voiceRoomGiftRealtimeProvider).resetDedupeState();
-    ref.read(pkBattleRemoteProvider.notifier).clear();
-    ref.read(voiceRoomDiagnosticProvider.notifier).resetForRoom(_roomKey);
-    unawaited(_stopTyping());
-
-    // TRTC / ses motoru.
-    try {
-      await ref
-          .read(voiceRoomAudioCoordinatorProvider)
-          .leave()
-          .timeout(const Duration(milliseconds: 600));
-    } catch (_) {}
-
-    // Müzik — oda dışı PiP veya tam kapatma.
-    final player = ref.read(voiceRoomDjPlayerProvider);
-    final dj = state.dj;
-    final stillPlaying = player.playback.value.playing ||
-        dj.playing ||
-        dj.nowPlaying != null ||
-        dj.musicQueue.isNotEmpty;
-
-    if (stillPlaying && _roomKeepAliveLink != null) {
-      ref.read(voiceRoomMusicSessionProvider.notifier).onRoomDetached(
-            room: _roomMeta,
-            dj: dj,
-            canSyncServer: _canControlMusic(),
-            canStopMusic: _canStopMusic(),
-            keepAliveLink: _roomKeepAliveLink!,
-          );
-      _keepAliveTransferred = true;
-      _roomKeepAliveLink = null;
-    } else {
-      unawaited(ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer());
-      unawaited(player.shutdown());
-      if (_roomKey.isNotEmpty) {
-        ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
-      }
-      _closeRoomKeepAlive();
-    }
-
-    VoiceEventLog.leaveSuccess(roomId: _roomKey);
-    ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
-          VoiceSessionPhase.disconnected,
-        );
     _leaveInFlight = false;
   }
 

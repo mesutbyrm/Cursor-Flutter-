@@ -887,8 +887,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        VoiceRoomMusicBackgroundLayer(roomKey: _liveRoomKey),
-                        VoiceRoomHiddenAudioPlayer(roomKey: _liveRoomKey),
                         VoiceRoomBasicChatFeed(
                           liveKey: _liveRoomKey,
                           onMention: (userId, name) => _insertMention(name),

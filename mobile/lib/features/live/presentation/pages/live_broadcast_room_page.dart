@@ -11,7 +11,10 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/network/live_event_log.dart';
+import '../../../../core/network/sse/sse_hub_provider.dart';
+import '../../../../core/network/token_storage.dart';
+import '../providers/live_room_music_provider.dart';
+import '../widgets/broadcast_room/music_video_player.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/domain/entities/user_entity.dart';
@@ -143,6 +146,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   final _heartsKey = GlobalKey<LiveFloatingHeartsOverlayState>();
   Key _localPreviewKey = UniqueKey();
   var _leaving = false;
+  var _liveMusicSseAttached = false;
   var _swipeSuspended = false;
   var _chatVisible = true;
   var _viewerAudioOn = true;
@@ -324,6 +328,41 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final quality = ref.read(liveStreamQualityProvider);
     unawaited(_trtc.setStreamQuality(quality));
     _applyActiveAudio();
+    if (streamId.isNotEmpty) {
+      _startLiveMusicSse(streamId);
+    }
+  }
+
+  void _startLiveMusicSse(String streamId) {
+    if (_liveMusicSseAttached || streamId.isEmpty) return;
+    _liveMusicSseAttached = true;
+    final hub = ref.read(sseConnectionHubProvider);
+    hub.attachVoiceRoom(streamId);
+    final sse = hub.voiceRoom(streamId);
+    final storage = ref.read(tokenStorageProvider);
+    unawaited(
+      sse.connect(
+        roomId: streamId,
+        accessToken: storage.readAccess,
+        onDjUpdate: (payload) {
+          if (!mounted) return;
+          ref.read(liveRoomMusicProvider(streamId).notifier).applyDjPayload(payload);
+        },
+        onSong: (payload) {
+          if (!mounted) return;
+          ref.read(liveRoomMusicProvider(streamId).notifier).applyDjPayload(payload);
+        },
+      ),
+    );
+  }
+
+  void _stopLiveMusicSse(String streamId) {
+    if (streamId.isEmpty) return;
+    if (_liveMusicSseAttached) {
+      _liveMusicSseAttached = false;
+      ref.read(sseConnectionHubProvider).releaseVoiceRoom(streamId);
+    }
+    ref.read(liveRoomMusicProvider(streamId).notifier).stop();
   }
 
   /// Ekranda olmayan (ısıtılmış) yayının sesini kıs; ekrandakini aç. Yayıncı
@@ -462,6 +501,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Future<void> _leaveLiveSession({String? endReason}) async {
     final streamId = widget.session.streamId?.trim() ?? '';
     if (streamId.isNotEmpty) {
+      _stopLiveMusicSse(streamId);
       unawaited(_tearDownActivePk(streamId));
       await ref.read(liveRoomProvider(streamId).notifier).tearDownSession();
     }
@@ -2620,6 +2660,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                     ),
                   ),
                 ),
+              ),
+            if (hasStream)
+              Positioned(
+                left: 12,
+                right: 12,
+                bottom: 300,
+                child: MusicVideoPlayer(streamId: streamId),
               ),
             if (hasStream)
               Positioned(
