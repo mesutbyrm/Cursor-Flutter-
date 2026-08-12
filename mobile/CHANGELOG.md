@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.175+210 (2026-08-12) — PK oda kapsamı ve çıkış akışı
+
+- **PK:** `pkBattleForRoomProvider` + `pkBattleBelongsToRoom` — yanlış odada PK şeridi / skor senkronu engellendi
+- **Çıkış:** `VoiceRoomLeaveFlow` — Basic + RTC ortak onay diyalogu ve hediye özeti
+- **RTC:** Geri tuşu artık onay diyalogu gösteriyor (Basic ile parity)
+
 ## 1.0.174+209 (2026-08-12) — Müzik video, şikayet, çıkış özeti
 
 - **Videolu müzik:** `VoiceRoomMusicBackgroundLayer` + gizli ses oynatıcı Basic ve RTC stack'ine eklendi

@@ -3,10 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../../../app/router/app_router.dart';
-
 import 'package:share_plus/share_plus.dart';
+
 import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../utils/kick_strike_ui.dart';
 import '../widgets/voice_room_error_boundary.dart';
@@ -23,10 +21,6 @@ import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
 import '../../domain/voice_official_join.dart';
-import '../../../gifts/domain/session_gift_summary.dart';
-import '../../../gifts/domain/session_gift_summary_builder.dart';
-import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
-import '../../../gifts/domain/gift_revenue_display.dart';
 import '../../../gifts/presentation/sync/gift_event_listener.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_gift_providers.dart';
@@ -43,6 +37,7 @@ import '../utils/voice_room_permissions.dart';
 import '../utils/voice_room_error_display.dart';
 import '../utils/voice_room_speak_access.dart';
 import '../utils/voice_room_session_exit.dart';
+import '../utils/voice_room_leave_flow.dart';
 import '../theme/voice_room_tokens.dart';
 import '../../../gifts/presentation/engine/gift_engine_overlay.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
@@ -419,50 +414,22 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     _leaving = true;
     _leaveSessionStarted = true;
     final liveKey = _liveRoomKey;
-    ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
-    _audio = null;
-    final liveNotifier = ref.read(voiceRoomLiveProvider(liveKey).notifier);
-    final live = ref.read(voiceRoomLiveProvider(liveKey));
     final room = _effectiveRoom();
-    final user = ref.read(authControllerProvider).valueOrNull;
-    SessionGiftSummary? leaveSummary;
-    if (user != null) {
-      leaveSummary = SessionGiftSummaryBuilder.forVoiceRoom(
-        ref: ref,
-        roomTitle: room.displayTitle,
-        ownerUserId: live.ownerId ?? room.ownerId,
-        ownerDisplayName: room.ownerName,
-        myUserId: user.id,
-        myDisplayName: user.display,
-      );
-    }
-
     try {
-      await liveNotifier
-          .leaveRoomSession(
-            source: 'basic_leave',
-            awaitBackend: true,
-            force: true,
-          )
-          .timeout(const Duration(seconds: 8));
-    } catch (_) {}
-
-    if (mounted) {
-      if (context.canPop()) {
-        context.pop();
-      } else {
-        context.go('/voice-rooms');
-      }
+      await VoiceRoomLeaveFlow.leaveWithSummary(
+        context: context,
+        ref: ref,
+        liveKey: liveKey,
+        room: room,
+        source: 'basic_leave',
+        prepareLeave: () async {
+          ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
+          _audio = null;
+        },
+      );
+    } finally {
+      _leaving = false;
     }
-
-    if (leaveSummary != null && leaveSummary.hasData) {
-      final rootCtx = rootNavigatorKey.currentContext;
-      if (rootCtx != null && rootCtx.mounted) {
-        await showSessionGiftSummarySheet(rootCtx, summary: leaveSummary);
-      }
-    }
-
-    _leaving = false;
   }
 
   void _openMusicRequest(VoiceRoomEntity room) {
@@ -470,24 +437,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   }
 
   Future<void> _confirmLeave() async {
-    final leave = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Odadan çık'),
-        content: const Text('Sesli sohbetten ayrılmak istiyor musunuz?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Kal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Çık'),
-          ),
-        ],
-      ),
-    );
-    if (leave == true && mounted) await _leaveRoom();
+    if (_leaving) return;
+    if (!await VoiceRoomLeaveFlow.confirmLeave(context)) return;
+    if (mounted) await _leaveRoom();
   }
 
   void _openManagementPanel(

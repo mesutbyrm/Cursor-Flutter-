@@ -24,7 +24,7 @@ class VoicePkRoomStrip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final remote = ref.watch(pkBattleRemoteProvider);
+    final remote = ref.watch(pkBattleForRoomProvider(room));
     if (remote == null || remote.isEnded) return const SizedBox.shrink();
 
     if (remote.isPending) {
