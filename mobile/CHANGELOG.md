@@ -5,6 +5,7 @@
 - **Müzik ayarları:** Yönetim paneli + paylaşılan dialog (`PATCH /music-settings`)
 - **Yasaklı kelimeler:** Sohbet yönetimi → araçlar sayfası kısayolu
 - **Oda açma:** Kurulumda koltuk (8–15) ve max kullanıcı (15–100) seçimi
+- **CI:** `gift_session_controller_test` — voice_realtime prefetch için path_provider mock
 
 ## 1.0.166+201 (2026-08-12) — Oda kuralları ve konuşma isteği
 
