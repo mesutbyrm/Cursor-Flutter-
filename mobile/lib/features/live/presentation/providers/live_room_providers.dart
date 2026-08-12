@@ -398,6 +398,15 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         final co = ref.read(coBroadcastProvider).coBroadcasters;
         ref.read(liveGuestGridProvider.notifier).syncCoBroadcasters(co);
       },
+      onGift: (payload) {
+        dispatchGiftSsePayloadRef(
+          ref: ref,
+          sessionKey: streamId,
+          payload: payload,
+          giftsRemote: ref.read(liveGiftsRemoteProvider),
+          voiceRealtime: false,
+        );
+      },
       onReconnect: () {
         ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
         ref.read(liveVideoPkProvider(streamId).notifier).refresh();

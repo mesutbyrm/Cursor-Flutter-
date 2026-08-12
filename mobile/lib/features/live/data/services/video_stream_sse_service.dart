@@ -260,6 +260,10 @@ class VideoStreamSseService {
       case 'gift':
       case 'giftsent':
       case 'gift_sent':
+      case 'gift_received':
+      case 'gift_queue_updated':
+      case 'gift_finished':
+      case 'giftsentevent':
         _onGift?.call(GiftPayloadUtil.unwrap(map));
         return;
       case 'streamEnded':
@@ -310,6 +314,10 @@ class VideoStreamSseService {
         }
         if (map['event']?.toString() == 'STREAM_ENDED') {
           _onStreamEnded?.call();
+          return;
+        }
+        if (GiftPayloadUtil.looksLikeGift(map)) {
+          _onGift?.call(GiftPayloadUtil.unwrap(map));
         }
     }
   }

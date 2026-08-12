@@ -55,6 +55,13 @@ Map<String, dynamic> normalizeSongSseForDjPlayback(Map<String, dynamic> raw) {
     if (map['currentVideoId'] == null && song['videoId'] != null) {
       map['currentVideoId'] = song['videoId'];
     }
+    if (song['withVideo'] == true ||
+        song['requestType']?.toString().toLowerCase() == 'video' ||
+        song['playMode']?.toString().toLowerCase() == 'video') {
+      song['withVideo'] = true;
+      song['requestType'] = 'video';
+      map['nowPlaying'] = song;
+    }
   }
 
   return map;

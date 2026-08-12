@@ -56,6 +56,34 @@ class LivePsychicsRemoteDataSource {
             .toList(growable: false);
       }
     } catch (_) {}
+    if (onlineOnly == true) {
+      try {
+        final fallbackParams = <String, dynamic>{
+          'page': page,
+          'limit': limit,
+        };
+        if (specialty != null && specialty.trim().isNotEmpty) {
+          fallbackParams['specialty'] = specialty.trim();
+        }
+        if (sort != null && sort.trim().isNotEmpty) {
+          fallbackParams['sort'] = sort.trim();
+        }
+        final res = await _dio.safeGet<dynamic>(
+          ApiEndpoints.fortuneTellers,
+          query: fallbackParams,
+        );
+        final items = PsychicModel.itemsFromBody(
+          res.data,
+          keys: const ['tellers', 'items', 'data', 'results'],
+        );
+        if (items.isNotEmpty) {
+          return items
+              .map(PsychicModel.psychicFromJson)
+              .where((p) => p.id.isNotEmpty)
+              .toList(growable: false);
+        }
+      } catch (_) {}
+    }
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.socialFortuneTellers);
       final items = PsychicModel.itemsFromBody(res.data);
