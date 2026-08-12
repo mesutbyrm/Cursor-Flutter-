@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../trtc/presentation/trtc_room_manager.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../domain/entities/live_broadcast_session.dart';
 import '../../../domain/pk/live_pk_side_resolver.dart';
 import '../../providers/live_pk_ui_providers.dart';
@@ -53,7 +53,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
       final id = targetStreamId?.trim() ?? '';
       if (id.isEmpty) return null;
       for (final s in streams) {
-        if (s.id == id) return s.playbackUrl ?? s.streamUrl;
+        if (s.id == id) return s.playbackUrl;
       }
       return null;
     }
