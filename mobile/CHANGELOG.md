@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.176+211 (2026-08-12) — Müzik, çıkış ve PK daveti düzeltmeleri
+
+- **Müzik:** Videolu isteklerde YouTube katmanı artık silinmiyor; ses modunda stream yoksa gizli YouTube yedek oynatıcı devreye girer
+- **Şarkı isteği:** Kuyruk boşta `nowPlaying` kalsa bile yeni parça çalınır (`isQueuedOnly` düzeltmesi)
+- **Çıkış:** `VoiceRoomLeaveFlow.navigateAwayFromRoom` — `leaveRoomSession` sonrası root navigator ile liste ekranına dönüş
+- **PK daveti:** Kılavuz §9.3 `{ guestUserId, durationSec }` gövdesi öncelikli; kısmi başarı yanıtı sentezlenir; rakip sahip yoksa anlamlı hata
+
 ## 1.0.175+210 (2026-08-12) — PK oda kapsamı ve çıkış akışı
 
 - **PK:** `pkBattleForRoomProvider` + `pkBattleBelongsToRoom` — yanlış odada PK şeridi / skor senkronu engellendi

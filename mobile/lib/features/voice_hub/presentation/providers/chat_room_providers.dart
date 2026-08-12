@@ -1942,9 +1942,13 @@ class VoiceRoomLiveController
       final songActive = _roomKey.isNotEmpty
           ? ref.read(roomSongBlocProvider(_roomKey)).state.hasTrack
           : false;
-      final currentlyPlaying = state.dj.playing ||
+      final playerActive =
+          ref.read(roomMusicServiceProvider).player.playback.value.playing;
+      final videoActive = _roomKey.isNotEmpty &&
+          ref.read(roomVideoControllerProvider(_roomKey)).hasActiveVideo;
+      final currentlyPlaying = (state.dj.playing && playerActive) ||
           songActive ||
-          state.dj.nowPlaying != null;
+          videoActive;
       final isQueuedOnly = currentlyPlaying;
       final shouldPlay = !currentlyPlaying &&
           (result.playing || queuePosition <= 1);

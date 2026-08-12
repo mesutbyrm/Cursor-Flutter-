@@ -42,6 +42,16 @@ abstract final class VoiceRoomLeaveFlow {
     return leave == true;
   }
 
+  static void navigateAwayFromRoom({BuildContext? context}) {
+    final nav = rootNavigatorKey.currentContext ?? context;
+    if (nav == null || !nav.mounted) return;
+    if (nav.canPop()) {
+      nav.pop();
+    } else {
+      nav.go('/voice-rooms');
+    }
+  }
+
   static Future<void> leaveWithSummary({
     required BuildContext context,
     required WidgetRef ref,
@@ -80,12 +90,7 @@ abstract final class VoiceRoomLeaveFlow {
           .timeout(const Duration(seconds: 8));
     } catch (_) {}
 
-    if (!context.mounted) return;
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go('/voice-rooms');
-    }
+    navigateAwayFromRoom();
 
     if (leaveSummary != null && leaveSummary.hasData) {
       final rootCtx = rootNavigatorKey.currentContext;

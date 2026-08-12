@@ -121,7 +121,9 @@ class PkBattleRemoteDataSource {
           ApiEndpoints.chatRoomPk(key),
           data: body,
         );
-        return _parseBattle(res.data);
+        final battle = _parseBattle(res.data);
+        if (battle != null) return battle;
+        return _synthesizePendingBattle(res.data, roomId: key);
       } on ApiException catch (e) {
         if (e.statusCode == 404 || e.statusCode == 405) {
           lastError = e;
@@ -132,6 +134,30 @@ class PkBattleRemoteDataSource {
     }
     if (lastError != null) throw lastError;
     return null;
+  }
+
+  PkBattleRemote? _synthesizePendingBattle(
+    dynamic body, {
+    required String roomId,
+  }) {
+    final map = _unwrap(body);
+    if (map == null) return null;
+    if (map['success'] == false) return null;
+    final id = (map['inviteId'] ??
+            map['id'] ??
+            map['pkBattleId'] ??
+            map['battleId'])
+        ?.toString()
+        .trim();
+    if (id == null || id.isEmpty) return null;
+    return PkBattleRemote.fromJson({
+      ...map,
+      'id': id,
+      'inviteId': id,
+      'status': map['status']?.toString() ?? 'pending',
+      'voiceRoomId': map['voiceRoomId']?.toString() ?? roomId,
+      'battleType': map['battleType']?.toString() ?? 'voice_room',
+    });
   }
 
   Future<PkBattleRemote?> fetchRoomBattle(
@@ -195,8 +221,7 @@ class PkBattleRemoteDataSource {
   }
 
   /// `POST /api/chat/rooms/{myRoomId}/pk`
-  /// Production contract: `{ action: 'create', targetRoomId, duration }`
-  /// (`duration` saniye cinsinden; sunucu varsayılanı 180).
+  /// Kılavuz §9.3: `{ guestUserId, durationSec }` — yedek: `action:create` + `targetRoomId`.
   Future<PkBattleRemote?> inviteVoiceRoom({
     required String roomId,
     String? alternateRoomId,
@@ -209,9 +234,15 @@ class PkBattleRemoteDataSource {
       throw const ApiException('PK daveti için rakip oda seçilmeli');
     }
     final duration = durationSeconds.clamp(60, 3600);
-
     final guest = guestUserId.trim();
-    final createBody = {
+
+    final guideBody = {
+      if (guest.isNotEmpty) 'guestUserId': guest,
+      'durationSec': duration,
+      if (oppRoom.isNotEmpty) 'targetRoomId': oppRoom,
+    };
+
+    final unifiedBody = {
       'action': 'create',
       'opponentRoomId': oppRoom,
       'targetRoomId': oppRoom,
@@ -222,30 +253,35 @@ class PkBattleRemoteDataSource {
       if (guest.isNotEmpty) 'guestUserId': guest,
       if (guest.isNotEmpty) 'opponentId': guest,
     };
-    try {
-      return await _postPkAction(
-        roomId: roomId,
-        alternateRoomId: alternateRoomId,
-        body: createBody,
-      );
-    } on ApiException catch (e) {
-      if (e.statusCode != 400 &&
-          e.statusCode != 405 &&
-          e.statusCode != 422) {
+
+    final bodies = <Map<String, dynamic>>[];
+    if (guest.isNotEmpty) bodies.add(guideBody);
+    bodies.add(unifiedBody);
+    if (guest.isNotEmpty) {
+      bodies.add({
+        'guestUserId': guest,
+        'durationSec': duration,
+        'targetRoomId': oppRoom,
+      });
+    }
+
+    ApiException? lastError;
+    for (final body in bodies) {
+      try {
+        final battle = await _postPkAction(
+          roomId: roomId,
+          alternateRoomId: alternateRoomId,
+          body: body,
+        );
+        if (battle != null) return battle;
+      } on ApiException catch (e) {
+        lastError = e;
+        if (e.statusCode == 400 || e.statusCode == 422) continue;
         rethrow;
       }
-      if (guest.isEmpty) rethrow;
-      return _postPkAction(
-        roomId: roomId,
-        alternateRoomId: alternateRoomId,
-        body: {
-          'guestUserId': guest,
-          'durationSec': duration,
-          'duration': duration,
-          'targetRoomId': oppRoom,
-        },
-      );
     }
+    if (lastError != null) throw lastError;
+    return null;
   }
 
   List<String> _roomKeyCandidates(String primary, String? alternate) {

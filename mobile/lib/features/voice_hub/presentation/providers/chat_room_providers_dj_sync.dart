@@ -236,14 +236,27 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
           )
         : Duration.zero;
 
-    // Sesli oda: video widget/iframe ASLA — yalnızca gerçek audio stream.
-    if (key.isNotEmpty) {
-      ref.read(roomVideoControllerProvider(key).notifier).clear();
-    }
+    final isVideoRequest = effectiveDj.nowPlaying?.isVideoRequest == true;
 
     if (shouldPlay) {
       await VoiceRoomMusicAudioSession.activateForPlayback();
       _syncRoomSongBloc();
+
+      if (isVideoRequest && key.isNotEmpty) {
+        _live._syncRoomVideo(effectiveDj, sync: sync);
+        await _syncTrtcMusicPublish(
+          playing: true,
+          videoId: videoId,
+          sync: sync,
+          dj: effectiveDj,
+        );
+        _live._lastDjPlaybackSignature = sig;
+        return effectiveDj;
+      }
+
+      if (key.isNotEmpty) {
+        ref.read(roomVideoControllerProvider(key).notifier).clear();
+      }
 
       final payload = <String, dynamic>{
         if (sync?.streamUrl != null) 'streamUrl': sync!.streamUrl,
@@ -266,7 +279,7 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
         parsedVideoId: videoId,
       );
 
-      final started = audioUrl != null && audioUrl.isNotEmpty
+      var started = audioUrl != null && audioUrl.isNotEmpty
           ? await music.syncDj(
               roomId: key,
               musicUrl: audioUrl,
@@ -289,6 +302,17 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
 
       if (started) {
         VoiceRoomMusicPipelineLog.songEvent(event: 'player_ready');
+      } else if (videoId != null && videoId.isNotEmpty && key.isNotEmpty) {
+        await music.stop();
+        ref
+            .read(roomVideoControllerProvider(key).notifier)
+            .applyAudioDjState(effectiveDj, sync: sync);
+        VoiceRoomMusicPipelineLog.songEvent(
+          event: 'player_ready',
+          detail: 'youtube_audio_only_fallback',
+          parsedVideoId: videoId,
+        );
+        started = true;
       } else {
         VoiceRoomMusicPipelineLog.songEvent(
           event: 'player_error',

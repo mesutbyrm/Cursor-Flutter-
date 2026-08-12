@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/discover/discover_empty_state.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import '../providers/chat_room_providers.dart';
+import '../utils/voice_room_leave_flow.dart';
 import '../providers/voice_room_diagnostic_provider.dart';
 import '../theme/voice_room_tokens.dart';
 
@@ -76,8 +77,7 @@ class _VoiceRoomErrorBoundaryState extends ConsumerState<VoiceRoomErrorBoundary>
             .timeout(const Duration(seconds: 8));
       } catch (_) {}
     }
-    if (!mounted) return;
-    context.go('/voice-rooms');
+    VoiceRoomLeaveFlow.navigateAwayFromRoom(context: context);
   }
 
   @override

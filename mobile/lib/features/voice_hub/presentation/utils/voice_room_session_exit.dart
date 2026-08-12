@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/voice_room_realtime_event.dart';
 import '../providers/chat_room_providers.dart';
+import 'voice_room_leave_flow.dart';
 
 /// Oda kapatma / yasak gibi zorunlu oturum sonları — liste ekranına yönlendirme.
 abstract final class VoiceRoomSessionExit {
@@ -81,11 +82,6 @@ abstract final class VoiceRoomSessionExit {
       } catch (_) {}
     }
 
-    if (!context.mounted) return;
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go('/voice-rooms');
-    }
+    VoiceRoomLeaveFlow.navigateAwayFromRoom(context: context);
   }
 }
