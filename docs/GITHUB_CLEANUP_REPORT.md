@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-08-12 18:16 UTC
+Oluşturulma: 2026-08-12 18:51 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -24,7 +24,7 @@ Base: `main`
 
 | Dal | Neden |
 |-----|-------|
-| cursor/room-category-0710 | merged into main |
+| cursor/voice-room-entry-fix-0710 | merged into main |
 
 ## Kalan açık PR'lar
 
