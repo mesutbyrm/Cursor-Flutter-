@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.163+198 (2026-08-12) — Sesli oda backend UI hizalaması
+
+- **Oda ayarları (PATCH /settings):** Ad, açıklama, `isLocked` kilidi — yönetim paneli
+- **Giriş şifresi:** Tüm oda sahipleri için (yalnızca VIP değil)
+- **Seste olanlar:** `GET /voice` → `voiceUsers` listesi (yönetim → kullanıcılar)
+- **!istek:** Doğrudan `POST …/music-request-by-query` (web ile aynı)
+- **updateRoomSettings API:** `name`, `description`, `isLocked`, `maxUsers`, `seatCount` alanları
+
 ## 1.0.162+197 (2026-08-12) — PK canlı yayın + sesli oda düzeltmeleri
 
 - **Canlı PK davet:** Pending iken split ekran açılmaz; kabul/red sonrası `active` başlar

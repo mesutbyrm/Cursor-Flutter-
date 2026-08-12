@@ -27,6 +27,7 @@ import 'voice_room_menu_sheet.dart' show VoiceRoomMenuRole;
 import 'voice_room_moderation_sheet.dart';
 import 'voice_room_muted_users_sheet.dart';
 import 'voice_room_sheets.dart';
+import 'voice_room_voice_users_sheet.dart';
 import 'voice_youtube_song_sheet.dart';
 
 enum VoiceMgmtInitial { home, userMgmt, users, chatMgmt, roomMgmt, userSettings }
@@ -314,6 +315,19 @@ class _VoiceRoomManagementPanelState
               );
             }),
           ),
+        _hubTile(
+          Icons.headset_mic_rounded,
+          'Seste olanlar',
+          'Ses kanalındaki kullanıcılar (voice API)',
+          () => _closeAndVoid(() {
+            showVoiceRoomVoiceUsersSheet(
+              context,
+              ref: ref,
+              liveKey: room.liveKey,
+              onUserTap: widget.onUserTap,
+            );
+          }),
+        ),
       ],
     );
   }
@@ -621,7 +635,6 @@ class _VoiceRoomManagementPanelState
 
   Widget _roomView(ScrollController scroll) {
     final canBg = perms.canChangeBackground || isOwner;
-    final isVip = room.isVipGoldRoom;
     final pk = ref.watch(pkBattleRemoteProvider);
     final pkLive = isPkBattleLive(pk);
     final roomKey = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
@@ -685,6 +698,26 @@ class _VoiceRoomManagementPanelState
         if (isOwner || perms.canManageRoom) ...[
           const Divider(),
           ListTile(
+            leading: const Icon(Icons.edit_rounded),
+            title: const Text('Oda adı ve açıklama'),
+            subtitle: Text(room.displayTitle),
+            onTap: _editRoomDetails,
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.lock_outline_rounded),
+            title: const Text('Oda kilidi'),
+            subtitle: Text(
+              room.isLocked == true || room.hasPassword == true
+                  ? 'Giriş kısıtlı'
+                  : 'Herkes girebilir',
+            ),
+            value: room.isLocked == true,
+            onChanged: (v) => unawaited(_setRoomLocked(v)),
+          ),
+        ],
+        if (isOwner || perms.canManageRoom) ...[
+          const Divider(),
+          ListTile(
             leading: const Icon(Icons.local_fire_department_rounded,
                 color: Color(0xFFFF7043)),
             title: const Text('Hediye Savaşı Başlat'),
@@ -698,12 +731,12 @@ class _VoiceRoomManagementPanelState
             onTap: _startGiftGoal,
           ),
         ],
-        if (isVip && (isOwner || perms.canManageRoom)) ...[
+        if (isOwner || perms.canManageRoom) ...[
           const Divider(),
           ListTile(
             leading: const Icon(Icons.lock_rounded),
-            title: const Text('Oda şifresi (VIP)'),
-            subtitle: const Text('Girenler şifreyi bilmeli'),
+            title: const Text('Giriş şifresi'),
+            subtitle: const Text('Odaya giriş için şifre belirle'),
             onTap: _setRoomPassword,
           ),
         ],
@@ -841,6 +874,69 @@ class _VoiceRoomManagementPanelState
     if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(0)}M';
     if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)}K';
     return '$v';
+  }
+
+  Future<void> _editRoomDetails() async {
+    final nameCtrl = TextEditingController(text: room.displayTitle);
+    final descCtrl = TextEditingController(text: room.descTr ?? '');
+    try {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Oda bilgileri'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Oda adı',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLength: 64,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Açıklama',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                  maxLength: 280,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('İptal')),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Kaydet'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true) return;
+      final err = await _ctrl.updateRoomDetails(
+        name: nameCtrl.text,
+        description: descCtrl.text,
+      );
+      await _snack(err ?? 'Oda bilgileri güncellendi');
+    } finally {
+      nameCtrl.dispose();
+      descCtrl.dispose();
+    }
+  }
+
+  Future<void> _setRoomLocked(bool locked) async {
+    final err = await _ctrl.setRoomLocked(locked);
+    if (err != null) {
+      await _snack(err);
+      return;
+    }
+    await _snack(locked ? 'Oda kilitlendi' : 'Oda kilidi kaldırıldı');
   }
 
   Future<void> _setRoomPassword() async {

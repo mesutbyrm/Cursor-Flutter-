@@ -2244,6 +2244,13 @@ class VoiceRoomLiveController
       ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
       if (song != null && song.isNotEmpty) {
         unawaited(_postChatLineOnly(trimmed));
+        final err = await requestMusicByQuery(song);
+        if (err != null) {
+          state = state.copyWith(error: err);
+        } else {
+          state = state.copyWith(clearError: true, clearMusicRequestFlash: true);
+        }
+        return;
       }
       state = state.copyWith(
         pendingMusicSearchQuery: song ?? '',
@@ -2689,6 +2696,133 @@ class VoiceRoomLiveController
             password: password,
             removePassword: password == null || password.isEmpty,
           );
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> updateRoomDetails({
+    String? name,
+    String? description,
+  }) async {
+    final perms = _permissions();
+    if (!perms.isRoomOwner && !perms.canManageRoom && !perms.isSiteAdmin) {
+      return 'Oda bilgilerini düzenleme yetkiniz yok.';
+    }
+    final trimmedName = name?.trim() ?? '';
+    final trimmedDesc = description?.trim() ?? '';
+    if (trimmedName.isEmpty && description == null) {
+      return 'Güncellenecek alan yok.';
+    }
+    try {
+      await ref.read(chatRoomRemoteProvider).updateRoomSettings(
+            roomKey: _roomKey.isNotEmpty ? _roomKey : _roomMeta.id,
+            alternateKey: _roomMeta.slug,
+            name: trimmedName.isNotEmpty ? trimmedName : null,
+            description: description != null ? trimmedDesc : null,
+          );
+      ref.invalidate(voiceRoomsProvider);
+      ref.invalidate(voiceRoomByIdProvider(_roomKey));
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> setRoomLocked(bool locked) async {
+    final perms = _permissions();
+    if (!perms.isRoomOwner && !perms.canManageRoom && !perms.isSiteAdmin) {
+      return 'Oda kilidi ayarlama yetkiniz yok.';
+    }
+    try {
+      await ref.read(chatRoomRemoteProvider).updateRoomSettings(
+            roomKey: _roomKey.isNotEmpty ? _roomKey : _roomMeta.id,
+            alternateKey: _roomMeta.slug,
+            isLocked: locked,
+          );
+      ref.invalidate(voiceRoomsProvider);
+      ref.invalidate(voiceRoomByIdProvider(_roomKey));
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<List<ChatRoomPresence>> fetchVoiceConnectedUsers() async {
+    if (_roomKey.isEmpty) return const [];
+    try {
+      final raw = await ref.read(chatRoomRemoteProvider).fetchVoiceUsers(
+            _roomKey,
+            alternateKey: _musicAlternateKey,
+          );
+      return raw.map((m) {
+        final id = (m['userId'] ?? m['id'] ?? '').toString();
+        return ChatRoomPresence(
+          id: id,
+          name: (m['name'] ?? m['displayName'] ?? m['nickname'] ?? 'Kullanıcı')
+              .toString(),
+          image: (m['avatarUrl'] ?? m['image'] ?? m['avatar'])?.toString(),
+          chatRole: (m['role'] ?? m['chatRole'])?.toString(),
+          isSpeaking: m['isSpeaking'] == true || m['speaking'] == true,
+        );
+      }).where((p) => p.id.isNotEmpty).toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<String?> requestMusicByQuery(String query) async {
+    final q = query.trim();
+    if (q.length < 2) return 'Şarkı adı çok kısa.';
+    try {
+      final jeton = VoiceMusicAccess.jetonFromBalances(
+        ref.read(walletBalancesProvider).valueOrNull,
+      );
+      final requiredCost = state.dj.musicRequestCost;
+      if (!VoiceMusicAccess.canRequestSongs(
+            dj: state.dj,
+            perms: _permissions(),
+            jetonBalance: jeton,
+          ) ||
+          jeton < requiredCost) {
+        return 'Şarkı isteği için en az $requiredCost jetona sahip olmalısınız.';
+      }
+      final result = await ref.read(chatRoomRemoteProvider).requestMusicByQuery(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            query: q,
+          );
+      invalidateWalletCacheFromRef(ref);
+      VoiceRoomMusicPipelineLog.istekSubmitted(
+        song: q,
+        roomId: _roomKey,
+        requestEndpoint: ApiEndpoints.chatRoomMusicRequestByQuery(_roomKey),
+        responseMusicUrl: result.musicUrl,
+        responsePlaying: result.playing,
+        queuePosition: result.queuePosition,
+      );
+      var queue = result.queue.isNotEmpty ? result.queue : state.dj.musicQueue;
+      var nowPlaying = _resolveNowPlayingFromRequest(
+        queue: queue,
+        item: result.item,
+        queuePosition: result.queuePosition,
+        fallback: state.dj.nowPlaying,
+      );
+      final shouldPlay = result.playing ||
+          result.queuePosition == 1 ||
+          (queue.isNotEmpty && nowPlaying != null);
+      var dj = state.dj.copyWith(
+        musicQueue: queue,
+        nowPlaying: nowPlaying,
+        playing: shouldPlay,
+        musicUrl: result.musicUrl ?? nowPlaying?.youtubeUrl,
+        clearMusicUrl:
+            result.musicUrl == null && nowPlaying?.id != state.dj.nowPlaying?.id,
+      );
+      state = state.copyWith(dj: dj, clearError: true);
+      _syncRoomVideo(dj);
+      pulseMusicRequestFlash('«$q» isteği gönderildi');
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

@@ -1031,6 +1031,11 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     String? password,
     bool removePassword = false,
+    String? name,
+    String? description,
+    bool? isLocked,
+    int? maxUsers,
+    int? seatCount,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final data = <String, dynamic>{};
@@ -1041,6 +1046,19 @@ class ChatRoomRemoteDataSource {
         data['password'] = password;
         data['entryPassword'] = password;
       }
+      final trimmedName = name?.trim() ?? '';
+      if (trimmedName.isNotEmpty) {
+        data['name'] = trimmedName;
+        data['title'] = trimmedName;
+      }
+      if (description != null) {
+        final desc = description.trim();
+        data['description'] = desc;
+        data['desc'] = desc;
+      }
+      if (isLocked != null) data['isLocked'] = isLocked;
+      if (maxUsers != null && maxUsers > 0) data['maxUsers'] = maxUsers;
+      if (seatCount != null && seatCount > 0) data['seatCount'] = seatCount;
       if (data.isEmpty) return;
       try {
         await _dio.safePatch<dynamic>(
