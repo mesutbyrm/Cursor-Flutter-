@@ -3,6 +3,7 @@ enum VoiceSessionPhase {
   idle,
   joining,
   connected,
+  reconnecting,
   leaving,
   disconnected,
   error,
@@ -16,11 +17,19 @@ abstract final class VoiceSessionPhaseGuard {
     },
     VoiceSessionPhase.joining: {
       VoiceSessionPhase.connected,
+      VoiceSessionPhase.reconnecting,
       VoiceSessionPhase.leaving,
       VoiceSessionPhase.disconnected,
       VoiceSessionPhase.error,
     },
     VoiceSessionPhase.connected: {
+      VoiceSessionPhase.reconnecting,
+      VoiceSessionPhase.leaving,
+      VoiceSessionPhase.disconnected,
+      VoiceSessionPhase.error,
+    },
+    VoiceSessionPhase.reconnecting: {
+      VoiceSessionPhase.connected,
       VoiceSessionPhase.leaving,
       VoiceSessionPhase.disconnected,
       VoiceSessionPhase.error,

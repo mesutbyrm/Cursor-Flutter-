@@ -769,7 +769,7 @@ class VoiceRoomLiveController
     _sseRoomRefreshDebounce?.cancel();
   }
 
-  /// Odadan çıkış — backend leave önce, sonra TRTC/SSE temizliği.
+  /// Odadan çıkış — TRTC/ses kesilir, ardından backend leave, sonra SSE/state.
   Future<void> leaveRoomSession({
     String source = 'ui_leave',
     bool awaitBackend = true,
@@ -807,6 +807,22 @@ class VoiceRoomLiveController
           _cancelSessionTimers();
         },
         () async {
+          ref.read(roomMusicServiceProvider).bindRoom(null);
+          try {
+            await ref
+                .read(roomMusicServiceProvider)
+                .stop()
+                .timeout(const Duration(milliseconds: 400));
+          } catch (_) {}
+          try {
+            await ref
+                .read(voiceRoomAudioCoordinatorProvider)
+                .leave()
+                .timeout(const Duration(milliseconds: 800));
+          } catch (_) {}
+          unawaited(_leaveVoiceSession());
+        },
+        () async {
           final backendLeave = _leavePresenceWithSeatClear()
               .timeout(const Duration(seconds: 5))
               .catchError((_) {});
@@ -815,7 +831,6 @@ class VoiceRoomLiveController
           } else {
             unawaited(backendLeave);
           }
-          unawaited(_leaveVoiceSession());
         },
         () async {
           clearVoiceRoomLiveSession(ref, roomKey);
@@ -844,21 +859,6 @@ class VoiceRoomLiveController
           ref.read(pkBattleRemoteProvider.notifier).clear();
           ref.read(voiceRoomDiagnosticProvider.notifier).resetForRoom(roomKey);
           unawaited(_stopTyping());
-        },
-        () async {
-          ref.read(roomMusicServiceProvider).bindRoom(null);
-          await ref
-              .read(roomMusicServiceProvider)
-              .stop()
-              .timeout(const Duration(milliseconds: 400));
-        },
-        () async {
-          try {
-            await ref
-                .read(voiceRoomAudioCoordinatorProvider)
-                .leave()
-                .timeout(const Duration(milliseconds: 600));
-          } catch (_) {}
         },
         () async {
           final player = ref.read(voiceRoomDjPlayerProvider);

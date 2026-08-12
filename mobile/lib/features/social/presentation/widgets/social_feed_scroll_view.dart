@@ -69,10 +69,24 @@ class SocialFeedScrollView extends ConsumerWidget {
                   ),
                 );
               }
+              final notifier = ref.read(socialNotifierProvider.notifier);
+              final loadingMore = notifier.isLoadingMore;
               final feedCount = SocialFeedLayout.itemCount(posts.length);
               return SliverList.builder(
-                itemCount: feedCount,
+                itemCount: feedCount + (loadingMore ? 1 : 0),
                 itemBuilder: (context, i) {
+                  if (i >= feedCount) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    );
+                  }
                   final postIdx = SocialFeedLayout.postIndexAt(i, posts.length);
                   if (postIdx != null) {
                     return ScrollPerf.item(

@@ -79,6 +79,8 @@ class ShortsFeedNotifier
       _cursor = page.nextCursor;
       _hasMore = page.hasMore;
       state = AsyncValue.data([...cur, ...page.videos]);
+    } catch (_) {
+      // Sayfalama hatası mevcut akışı silmesin.
     } finally {
       _loadingMore = false;
     }

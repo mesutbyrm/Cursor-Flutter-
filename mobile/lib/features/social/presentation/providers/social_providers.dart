@@ -32,6 +32,9 @@ class SocialNotifier extends AsyncNotifier<List<PostEntity>> {
   bool _loadingMore = false;
   final Set<String> _viewedPostIds = {};
 
+  bool get hasMore => !_end;
+  bool get isLoadingMore => _loadingMore;
+
   @override
   Future<List<PostEntity>> build() async {
     _page = 1;
@@ -61,6 +64,7 @@ class SocialNotifier extends AsyncNotifier<List<PostEntity>> {
     final cur = state.valueOrNull;
     if (cur == null || _end || _loadingMore) return;
     _loadingMore = true;
+    state = AsyncValue.data(List<PostEntity>.from(cur));
     final nextPage = _page + 1;
     try {
       final bundle =
@@ -72,8 +76,8 @@ class SocialNotifier extends AsyncNotifier<List<PostEntity>> {
       _page = nextPage;
       _end = !bundle.hasMore;
       state = AsyncValue.data([...cur, ...bundle.posts]);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
+    } catch (_) {
+      // Sayfalama hatası mevcut feed'i silmesin.
     } finally {
       _loadingMore = false;
     }

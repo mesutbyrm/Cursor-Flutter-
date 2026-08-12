@@ -55,6 +55,8 @@ import '../domain/pk/pk_opponent_room_filter.dart';
 import 'utils/voice_room_image_prefetch.dart';
 import 'providers/voice_gift_providers.dart';
 import 'providers/voice_room_audio_providers.dart';
+import 'providers/voice_session_phase_provider.dart';
+import '../domain/voice/voice_session_phase.dart';
 import 'providers/voice_room_diagnostic_provider.dart';
 import 'providers/voice_room_sse_provider.dart';
 import 'providers/voice_room_ui_provider.dart';
@@ -541,6 +543,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           _isMicMuted = !_audio!.micOn;
         });
         ref.read(voiceRoomTrtcMusicMixerProvider).bind(_audio!.trtcManager);
+        _wireAudioReconnectCallbacks();
         _startGiftRealtime();
         ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(true);
         _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
@@ -566,6 +569,29 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
   }
 
+  void _wireAudioReconnectCallbacks() {
+    final audio = _audio;
+    if (audio == null) return;
+    audio.onReconnecting = () {
+      if (!mounted || _leaving) return;
+      ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
+            VoiceSessionPhase.reconnecting,
+          );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ses bağlantısı koptu — yeniden bağlanılıyor…'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    };
+    audio.onReconnected = () {
+      if (!mounted || _leaving) return;
+      ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
+            VoiceSessionPhase.connected,
+          );
+    };
+  }
+
   Future<void> _connectPkBattle() async {
     if (!mounted) return;
     final r = _effectiveRoom();
@@ -588,6 +614,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     ref.read(voiceRoomTrtcMusicMixerProvider).stop();
     if (mounted) setState(() => _audioReady = false);
 
+    ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
     _audio = null;
 
     try {

@@ -40,6 +40,8 @@ import '../audio/voice_trtc_engine.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_audio_providers.dart';
+import '../providers/voice_session_phase_provider.dart';
+import '../../domain/voice/voice_session_phase.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../sheets/voice_room_commands_panel.dart';
 import '../utils/voice_room_permissions.dart';
@@ -182,6 +184,29 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     unawaited(connectVoiceRoomBasicPkBattle(ref, _effectiveRoom()));
   }
 
+  void _wireAudioReconnectCallbacks() {
+    final audio = _audio;
+    if (audio == null) return;
+    audio.onReconnecting = () {
+      if (!mounted || _leaving) return;
+      ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
+            VoiceSessionPhase.reconnecting,
+          );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ses bağlantısı koptu — yeniden bağlanılıyor…'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    };
+    audio.onReconnected = () {
+      if (!mounted || _leaving) return;
+      ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
+            VoiceSessionPhase.connected,
+          );
+    };
+  }
+
   Future<void> _joinAudioBackground() async {
     if (!mounted) return;
     setState(() {
@@ -251,6 +276,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       if (!mounted) return;
       unawaited(VoiceRoomMusicAudioSession.activateForPlayback());
       _audio!.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
+      _wireAudioReconnectCallbacks();
       setState(() {
         _audioJoining = false;
         _audioReady = true;
@@ -417,7 +443,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     _leaving = true;
     _leaveSessionStarted = true;
     final liveKey = _liveRoomKey;
-    final audio = _audio;
+    ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
     _audio = null;
     final liveNotifier = ref.read(voiceRoomLiveProvider(liveKey).notifier);
     final live = ref.read(voiceRoomLiveProvider(liveKey));
@@ -436,14 +462,13 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     }
 
     try {
-      await Future.wait<void>([
-        if (audio != null) audio.leave(),
-        liveNotifier.leaveRoomSession(
-          source: 'basic_leave',
-          awaitBackend: true,
-          force: true,
-        ),
-      ]).timeout(const Duration(seconds: 8));
+      await liveNotifier
+          .leaveRoomSession(
+            source: 'basic_leave',
+            awaitBackend: true,
+            force: true,
+          )
+          .timeout(const Duration(seconds: 8));
     } catch (_) {}
 
     if (mounted) {

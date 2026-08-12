@@ -23,6 +23,23 @@ void main() {
     );
   });
 
+  test('VoiceSessionPhaseGuard allows connected to reconnecting', () {
+    expect(
+      VoiceSessionPhaseGuard.canTransition(
+        VoiceSessionPhase.connected,
+        VoiceSessionPhase.reconnecting,
+      ),
+      isTrue,
+    );
+    expect(
+      VoiceSessionPhaseGuard.canTransition(
+        VoiceSessionPhase.reconnecting,
+        VoiceSessionPhase.connected,
+      ),
+      isTrue,
+    );
+  });
+
   test('VoiceEventLog sanitizes secrets', () {
     final out = VoiceEventLog.sanitize({
       'roomId': 'r1',

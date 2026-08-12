@@ -203,6 +203,7 @@ class _ShortsFeedPageViewState extends ConsumerState<ShortsFeedPageView> {
   @override
   void dispose() {
     _pageCtrl.removeListener(_onScroll);
+    unawaited(ref.read(shortsVideoPoolProvider).setActive(null));
     _pageCtrl.dispose();
     super.dispose();
   }
