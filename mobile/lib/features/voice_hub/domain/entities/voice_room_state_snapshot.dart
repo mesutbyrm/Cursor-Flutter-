@@ -16,6 +16,7 @@ class VoiceRoomStateSnapshot {
     this.seatCount,
     this.maxUsers,
     this.rulesTr,
+    this.category,
   });
 
   final String roomId;
@@ -28,6 +29,7 @@ class VoiceRoomStateSnapshot {
   final int? seatCount;
   final int? maxUsers;
   final String? rulesTr;
+  final String? category;
 
   factory VoiceRoomStateSnapshot.fromJson(
     Map<String, dynamic> json, {
@@ -70,6 +72,9 @@ class VoiceRoomStateSnapshot {
         room['roomRules']?.toString() ??
         json['rulesTr']?.toString() ??
         json['rules']?.toString();
+    final category = room['category']?.toString() ??
+        room['subcategory']?.toString() ??
+        json['category']?.toString();
 
     final seatsRaw = json['seats'] ?? json['seatMap'] ?? room['seats'];
     final seats = parseVoiceRoomSeatMap(seatsRaw, targetCount: seatCount);
@@ -85,6 +90,7 @@ class VoiceRoomStateSnapshot {
       seatCount: seatCount,
       maxUsers: maxUsers,
       rulesTr: rulesTr?.trim().isNotEmpty == true ? rulesTr!.trim() : null,
+      category: category?.trim().isNotEmpty == true ? category!.trim() : null,
     );
   }
 

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.168+203 (2026-08-12) — Oda kategorisi
+
+- **Kategori alanı:** `VoiceRoomEntity.category` — liste ve state snapshot parse
+- **Yönetim paneli:** Kategori seçici → `PATCH /settings` (`category`)
+- **Oda açma:** Kurulumda kategori (Sohbet, Müzik, Aşk, Oyun, Gece)
+- **Keşfet filtresi:** Backend `category` varsa doğrudan eşleşme
+
 ## 1.0.167+202 (2026-08-12) — Müzik ve oda açma kapasitesi
 
 - **Müzik ayarları:** Yönetim paneli + paylaşılan dialog (`PATCH /music-settings`)

@@ -2792,6 +2792,27 @@ class VoiceRoomLiveController
     }
   }
 
+  Future<String?> updateRoomCategory(String category) async {
+    final perms = _permissions();
+    if (!perms.isRoomOwner && !perms.canManageRoom && !perms.isSiteAdmin) {
+      return 'Oda kategorisi ayarlama yetkiniz yok.';
+    }
+    final normalized = category.trim().toLowerCase();
+    if (normalized.isEmpty) return 'Geçerli bir kategori seçin.';
+    try {
+      await ref.read(chatRoomRemoteProvider).updateRoomSettings(
+            roomKey: _roomKey.isNotEmpty ? _roomKey : _roomMeta.id,
+            alternateKey: _roomMeta.slug,
+            category: normalized,
+          );
+      ref.invalidate(voiceRoomsProvider);
+      ref.invalidate(voiceRoomByIdProvider(_roomKey));
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
   Future<List<ChatRoomPresence>> fetchVoiceConnectedUsers() async {
     if (_roomKey.isEmpty) return const [];
     try {

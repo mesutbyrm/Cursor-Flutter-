@@ -9,6 +9,7 @@ class VoiceRoomEntity extends Equatable {
     this.descTr,
     this.rulesTr,
     this.icon,
+    this.category,
     this.onlineCount = 0,
     this.userCount = 0,
     this.backgroundImageUrl,
@@ -32,6 +33,8 @@ class VoiceRoomEntity extends Equatable {
   final String? descTr;
   final String? rulesTr;
   final String? icon;
+  /// Keşfet / `POST /rooms/create` — `chat`, `music`, `love`, …
+  final String? category;
   final int onlineCount;
   final int userCount;
   final String? backgroundImageUrl;
@@ -75,6 +78,7 @@ class VoiceRoomEntity extends Equatable {
         descTr: descTr,
         rulesTr: rulesTr,
         icon: icon,
+        category: category,
         backgroundImageUrl: backgroundImageUrl,
         ownerName: ownerName,
         ownerAvatarUrl: ownerAvatarUrl,
@@ -97,14 +101,19 @@ class VoiceRoomEntity extends Equatable {
     bool? hasPassword,
     int? seatCount,
     int? maxUsers,
+    String? category,
+    String? nameTr,
+    String? descTr,
+    String? rulesTr,
   }) {
     return VoiceRoomEntity(
       id: id,
       slug: slug,
-      nameTr: nameTr,
-      descTr: descTr,
-      rulesTr: rulesTr,
+      nameTr: nameTr ?? this.nameTr,
+      descTr: descTr ?? this.descTr,
+      rulesTr: rulesTr ?? this.rulesTr,
       icon: icon,
+      category: category ?? this.category,
       onlineCount: onlineCount ?? this.onlineCount,
       userCount: userCount ?? this.userCount,
       backgroundImageUrl: backgroundImageUrl,
@@ -131,6 +140,7 @@ class VoiceRoomEntity extends Equatable {
         descTr,
         rulesTr,
         icon,
+        category,
         onlineCount,
         userCount,
         backgroundImageUrl,

@@ -290,6 +290,7 @@ class LiveRemoteDataSource {
     String? background,
     int seatCount = 8,
     int maxUsers = 15,
+    String? category,
   }) {
     final meta = voiceRoomCreateMetadata(
       roomType: roomType,
@@ -309,6 +310,8 @@ class LiveRemoteDataSource {
       'seatCount': seatCount.clamp(8, 15),
       'maxUsers': maxUsers.clamp(15, 100),
       if (bg != null && bg.isNotEmpty) 'background': bg,
+      if (category != null && category.trim().isNotEmpty)
+        'category': category.trim().toLowerCase(),
     };
   }
 
@@ -323,6 +326,7 @@ class LiveRemoteDataSource {
     String? background,
     int seatCount = 8,
     int maxUsers = 15,
+    String? category,
   }) async {
     final resolvedType = roomType ?? (vip ? 'vip' : 'normal');
     final payload = buildVoiceRoomCreatePayload(
@@ -335,6 +339,7 @@ class LiveRemoteDataSource {
       background: background,
       seatCount: seatCount,
       maxUsers: maxUsers,
+      category: category,
     );
     final name = payload['name']?.toString() ?? 'Sohbet';
 
@@ -983,6 +988,7 @@ class LiveRemoteDataSource {
       descTr: pick(json, ['descTr', 'descEn', 'description']) as String?,
       rulesTr: pick(json, ['rules', 'rulesTr', 'roomRules']) as String?,
       icon: pick(json, ['icon']) as String?,
+      category: pick(json, ['category', 'subcategory'])?.toString(),
       onlineCount: asInt(pick(json, ['onlineCount'])),
       userCount: asInt(pick(json, ['userCount'])),
       backgroundImageUrl: pick(json, ['backgroundImage']) as String?,

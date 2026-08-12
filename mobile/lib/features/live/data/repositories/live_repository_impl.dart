@@ -35,6 +35,7 @@ class LiveRepositoryImpl implements LiveRepository {
     String? background,
     int seatCount = 8,
     int maxUsers = 15,
+    String? category,
   }) =>
       _remote.createVoiceChatRoom(
         vip: vip,
@@ -46,6 +47,7 @@ class LiveRepositoryImpl implements LiveRepository {
         background: background,
         seatCount: seatCount,
         maxUsers: maxUsers,
+        category: category,
       );
 
   @override
