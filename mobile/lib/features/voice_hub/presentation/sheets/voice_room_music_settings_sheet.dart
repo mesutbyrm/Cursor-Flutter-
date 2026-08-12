@@ -13,6 +13,7 @@ Future<void> showVoiceRoomMusicSettingsDialog(
   final live = ref.read(voiceRoomLiveProvider(room.liveKey));
   var enabled = live.dj.musicEnabled;
   var cost = live.dj.musicRequestCost;
+  var videoCost = live.dj.videoRequestCost;
   var maxQ = live.dj.maxMusicQueue;
 
   await showDialog<void>(
@@ -59,6 +60,33 @@ Future<void> showVoiceRoomMusicSettingsDialog(
             ),
             ListTile(
               title: const Text(
+                'Video istek ücreti (jeton)',
+                style: TextStyle(color: Colors.white70),
+              ),
+              subtitle: Text(
+                '$videoCost',
+                style: const TextStyle(color: Colors.white),
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    onPressed: () => setLocal(
+                      () => videoCost = (videoCost - 1).clamp(0, 500),
+                    ),
+                    icon: const Icon(Icons.remove, color: Colors.white),
+                  ),
+                  IconButton(
+                    onPressed: () => setLocal(
+                      () => videoCost = (videoCost + 1).clamp(0, 500),
+                    ),
+                    icon: const Icon(Icons.add, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              title: const Text(
                 'Maks. kuyruk',
                 style: TextStyle(color: Colors.white70),
               ),
@@ -94,6 +122,7 @@ Future<void> showVoiceRoomMusicSettingsDialog(
                   .updateMusicSettings(
                     musicEnabled: enabled,
                     musicRequestCost: cost,
+                    videoRequestCost: videoCost,
                     maxMusicQueue: maxQ,
                   );
               if (err != null && context.mounted) {

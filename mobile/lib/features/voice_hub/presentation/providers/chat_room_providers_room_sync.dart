@@ -244,6 +244,14 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       clearRoomTrtc: true,
     );
     _knownPresenceIds.clear();
+    ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
+    unawaited(
+      leaveRoomSession(
+        source: 'sse_room_closed',
+        awaitBackend: true,
+        force: true,
+      ),
+    );
   }
 
   List<VoiceRoomSeatSlot> _patchSeatSlots(

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.172+207 (2026-08-12) — Sesli oda senkron ve keşfet
+
+- **Oda kapatıldı (SSE):** `room_closed` → oturum sonlandırma, presence/koltuk temizliği, `leaveRoomSession(force: true)`
+- **Konuşma isteği:** Giriş/yenileme sonrası kuyruk ile UI senkronu; çıkışta pending sıfırlanır
+- **Müzik ayarları:** Yönetim panelinde videolu istek jeton maliyeti (`videoRequestCost`) PATCH
+- **Keşfet:** API sayfalama (`fetchRoomsPage`) — yerel liste bittiğinde sonraki sayfa yüklenir; önbellek `category` + `v2` anahtarı
+
 ## 1.0.171+206 (2026-08-12) — Oda çıkış + canlı PK daveti
 
 - **Sesli oda çıkış:** RTC sayfasında `leaveRoomSession` önce tamamlanıyor, sonra navigasyon (dispose sonrası `ref` hatası giderildi)

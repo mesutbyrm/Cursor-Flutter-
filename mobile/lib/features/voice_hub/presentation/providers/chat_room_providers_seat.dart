@@ -181,6 +181,24 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     }
   }
 
+  /// Giriş / yenileme sonrası konuşma isteği kuyruğu ile UI senkronu.
+  Future<void> _syncSpeakRequestPending() async {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null || _roomKey.isEmpty) return;
+    for (final p in state.presence) {
+      if (p.id == user.id && p.seatIndex != null) {
+        ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
+        return;
+      }
+    }
+    try {
+      final ids = await fetchSpeakRequests();
+      ref
+          .read(voiceRoomUiProvider.notifier)
+          .setRequestSpeakPending(ids.contains(user.id));
+    } catch (_) {}
+  }
+
   Future<String?> approveSpeakRequest(String userId) async {
     try {
       await ref

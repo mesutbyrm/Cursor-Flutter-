@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/offline/cache_first_loader.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../live/domain/entities/voice_rooms_page.dart';
 import '../../domain/repositories/voice_rooms_discover_repository.dart';
 import '../../presentation/widgets/voice_rooms_ui/voice_rooms_mock_data.dart';
 import '../datasources/voice_rooms_discover_remote_datasource.dart';
@@ -18,18 +19,24 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
     String? categoryId,
     bool forceRefresh = false,
   }) async {
-    final cacheKey = 'voice_discover_bundle_${categoryId ?? 'all'}';
+    final cacheKey = 'voice_discover_bundle_v2_${categoryId ?? 'all'}';
     return CacheFirstLoader.load(
       cacheKey: cacheKey,
       forceRefresh: forceRefresh,
       maxAge: const Duration(minutes: 2),
       fetch: () async {
-        final rooms = await _remote.fetchVoiceRooms(categoryId: categoryId);
+        final pageResult = await _remote.fetchVoiceRoomsPage(
+          categoryId: categoryId,
+          page: 1,
+        );
+        final rooms = pageResult.rooms;
         return VoiceRoomsDiscoverBundle(
           categories: VoiceRoomsDiscoverMapper.categoriesFromApi(),
           featured: VoiceRoomsDiscoverMapper.featuredFromRooms(rooms),
           popular: VoiceRoomsDiscoverMapper.popularFromRooms(rooms),
           allRooms: rooms,
+          apiPage: pageResult.page,
+          apiHasMore: pageResult.hasMore,
         );
       },
       encode: (b) => {
@@ -74,15 +81,21 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
             )
             .toList(),
         'rooms': b.allRooms.map(_encodeRoom).toList(),
+        'apiPage': b.apiPage,
+        'apiHasMore': b.apiHasMore,
       },
       decode: (json) {
         final rooms = _decodeRooms(json['rooms']);
+        final apiPage = (json['apiPage'] as num?)?.toInt() ?? 1;
+        final apiHasMore = json['apiHasMore'] == true;
         if (rooms.isEmpty) {
           return VoiceRoomsDiscoverBundle(
             categories: VoiceRoomsDiscoverMapper.categoriesFromApi(),
             featured: VoiceRoomsMockData.featured,
             popular: VoiceRoomsMockData.popularRooms,
             allRooms: const [],
+            apiPage: apiPage,
+            apiHasMore: apiHasMore,
           );
         }
         return VoiceRoomsDiscoverBundle(
@@ -90,9 +103,19 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
           featured: _decodeFeatured(json['featured'], rooms),
           popular: _decodePopular(json['popular'], rooms),
           allRooms: rooms,
+          apiPage: apiPage,
+          apiHasMore: apiHasMore,
         );
       },
     );
+  }
+
+  @override
+  Future<VoiceRoomsPage> fetchRoomsPage({
+    String? categoryId,
+    required int page,
+  }) {
+    return _remote.fetchVoiceRoomsPage(categoryId: categoryId, page: page);
   }
 
   @override
@@ -207,6 +230,7 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
         'roomType': r.roomType,
         'isLocked': r.isLocked,
         'hasPassword': r.hasPassword,
+        'category': r.category,
       };
 
   static List<VoiceRoomEntity> _decodeRooms(dynamic raw) {
@@ -231,6 +255,7 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
         roomType: m['roomType']?.toString(),
         isLocked: m['isLocked'] as bool?,
         hasPassword: m['hasPassword'] as bool?,
+        category: m['category']?.toString(),
       );
     }).toList();
   }

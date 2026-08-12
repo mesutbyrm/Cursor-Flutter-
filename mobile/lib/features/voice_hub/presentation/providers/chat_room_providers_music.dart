@@ -186,6 +186,7 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
   Future<String?> updateMusicSettings({
     bool? musicEnabled,
     int? musicRequestCost,
+    int? videoRequestCost,
     int? maxMusicQueue,
   }) async {
     try {
@@ -195,6 +196,7 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
             roomKey: _roomKey,
             musicEnabled: musicEnabled,
             musicRequestCost: musicRequestCost,
+            videoRequestCost: videoRequestCost,
             maxMusicQueue: maxMusicQueue,
           );
       await refresh();

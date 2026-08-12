@@ -154,6 +154,7 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
   }
 
   Future<void> _bootstrapRoomData() async {
+    unawaited(_syncSpeakRequestPending());
     unawaited(_loadBannedWords());
     unawaited(
       _warmBackgrounds().catchError((_) {

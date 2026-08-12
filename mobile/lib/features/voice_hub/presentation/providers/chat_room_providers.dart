@@ -875,6 +875,7 @@ class VoiceRoomLiveController
           ref.read(voiceRoomGiftRealtimeProvider).resetDedupeState();
           ref.read(pkBattleRemoteProvider.notifier).clear();
           ref.read(voiceRoomDiagnosticProvider.notifier).resetForRoom(roomKey);
+          ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
           unawaited(_stopTyping());
         },
         () async {

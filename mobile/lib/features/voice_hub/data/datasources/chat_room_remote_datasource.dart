@@ -975,6 +975,7 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     bool? musicEnabled,
     int? musicRequestCost,
+    int? videoRequestCost,
     int? maxMusicQueue,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
@@ -983,6 +984,7 @@ class ChatRoomRemoteDataSource {
         data: <String, dynamic>{
           if (musicEnabled != null) 'musicEnabled': musicEnabled,
           if (musicRequestCost != null) 'musicRequestCost': musicRequestCost,
+          if (videoRequestCost != null) 'videoRequestCost': videoRequestCost,
           if (maxMusicQueue != null) 'maxMusicQueue': maxMusicQueue,
         },
       );
