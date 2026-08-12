@@ -18,6 +18,8 @@ import '../../features/messages/presentation/widgets/dm_realtime_listener.dart';
 import '../../features/messages/presentation/widgets/dm_voice_call_host.dart';
 import '../../features/video_call/presentation/incoming_video_call_screen.dart';
 import '../../features/voice_hub/presentation/widgets/voice_room/voice_room_global_music_bar.dart';
+import '../../features/gifts/presentation/global/global_gift_event_bridge.dart';
+import '../../features/gifts/presentation/global/global_gift_overlay.dart';
 import '../../features/voice_hub/presentation/widgets/staff_entrance_marquee_host.dart';
 import '../../features/voice_hub/presentation/widgets/global_site_marquee_listener.dart';
 import '../router/app_router.dart';
@@ -148,19 +150,23 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
     }
 
     return OfflineStatusBanner(
-      child: GlobalSiteMarqueeListener(
-        child: StaffEntranceMarqueeHost(
-          routePath: location,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              body,
-              if (showGlobalMusic)
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: VoiceRoomGlobalMusicBar(routePath: location),
-                ),
-            ],
+      child: GlobalGiftEventBridge(
+        child: GlobalGiftOverlay(
+          child: GlobalSiteMarqueeListener(
+            child: StaffEntranceMarqueeHost(
+              routePath: location,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  body,
+                  if (showGlobalMusic)
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: VoiceRoomGlobalMusicBar(routePath: location),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

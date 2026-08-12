@@ -112,4 +112,28 @@ abstract final class PkEventLog {
         'phase': phase,
         'message': error.toString().split('\n').first,
       });
+
+  /// 405 kök neden teşhisi — token/log gizli bilgi yazılmaz.
+  static void apiFailure({
+    required String method,
+    required String url,
+    int? statusCode,
+    String? roomId,
+    String? streamId,
+    String? targetUserId,
+    String? authenticatedUserId,
+    String? responseBody,
+    String? requestId,
+  }) =>
+      log('api_failure', {
+        'method': method,
+        'url': url,
+        if (statusCode != null) 'status': statusCode,
+        if (roomId != null) 'roomId': roomId,
+        if (streamId != null) 'streamId': streamId,
+        if (targetUserId != null) 'targetUserId': targetUserId,
+        if (authenticatedUserId != null) 'userId': authenticatedUserId,
+        if (responseBody != null) 'body': responseBody.split('\n').first,
+        if (requestId != null) 'requestId': requestId,
+      });
 }

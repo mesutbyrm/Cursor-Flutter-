@@ -1,7 +1,14 @@
 # Sürüm notları — canlifal_social
 
-<<<<<<< Updated upstream
-=======
+## 1.0.161+196 (2026-08-12) — Global hediye overlay + PK davet/kabul senkronu
+
+- **Global hediye:** `GlobalGiftOverlay` — küçük toast (~56px), kuyruk + `eventId` dedupe, admin `display-settings` (TTL 2 dk)
+- **Dev marquee kaldırıldı:** Büyük hediye kartı (`StaffEntranceMarquee` / `recent-big` poll) hediye için devre dışı
+- **PK 405 düzeltmesi:** Canlı PK `opponentStreamId` + `durationSeconds`; sesli PK `opponentRoomId`; `/api/pk/request` fallback kaldırıldı
+- **PK davet:** `LivePkInviteListener` / `VoicePkInviteListener` — ana backend oda/yayın poll; hedefe özel dialog
+- **API mirror:** `GET/PATCH /api/gifts/display-settings`, chat/video-stream `/pk` alias
+- **Rapor:** `docs/GIFT_PK_FLUTTER_SYNC_REPORT.md`
+
 ## 1.0.160+195 (2026-08-12) — Master prompt faz 1–2 (canlı, sesli, sosyal, shorts)
 
 - **Canlı yayın çıkış:** Leave coordinator — timer, co-host teardown, TRTC mute/leave, SSE; izleyici mic kapalı
@@ -13,7 +20,6 @@
 - **Kısa video:** `displayThumbnailUrl` (thumbnail → müzik → avatar); dispose pause; loadMore hata toleransı
 - **PK 405 + hediye:** Önceki 1.0.159 düzeltmeleri dahil (video-streams PK body, oda çıkış race, tam ekran hediye video)
 
->>>>>>> Stashed changes
 ## 1.0.159+194 (2026-08-12) — PK 405, oda çıkışı, video hediye
 
 - **PK daveti (canlı):** `POST /api/video-streams/pk` — `action:create`, `streamId`, `targetStreamId`, `duration` (sn); legacy body yedek

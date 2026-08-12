@@ -280,6 +280,59 @@ Diğer gift uçları:
 | GET/POST | `/api/gifts/lucky/config` `/send` `/history` | Bearer | şanslı hediye |
 | GET | `/api/gifts/recent-big` | opsiyonel | son büyük hediyeler |
 | GET | `/api/gifts/check-reciprocal?userId=` | Bearer | karşılıklı hediye |
+| GET | `/api/gifts/display-settings` | dual | **GlobalGiftOverlay** ayarları (public) |
+| PATCH | `/api/gifts/display-settings` | Bearer (admin) | hediye bildirim ayarlarını güncelle |
+
+## GET /api/gifts/display-settings
+- **Purpose:** Flutter `GlobalGiftOverlay` — süre, konum, boyut, kuyruk ve görünürlük bayrakları.
+- **Auth:** Yok / opsiyonel Bearer.
+- **Response 200:**
+```json
+{
+  "settings": {
+    "enabled": true,
+    "durationMs": 3000,
+    "position": "topCenter",
+    "size": "small",
+    "maxQueue": 10,
+    "animation": "slide",
+    "showSender": true,
+    "showReceiver": false,
+    "showGiftName": true,
+    "showAmount": true,
+    "showGiftIcon": true,
+    "maxVisible": 1,
+    "backgroundOpacity": 0.85,
+    "soundEnabled": true
+  }
+}
+```
+- **position:** `top` | `topCenter` | `topLeft` | `topRight`
+- **size:** `small` | `medium`
+- Flutter TTL önbellek (~2 dk); kritik değişikliklerde admin PATCH sonrası yeni GET ile güncellenir.
+
+## PATCH /api/gifts/display-settings
+- **Purpose:** Admin paneli **Gift Display Settings** — kısmi güncelleme (merge).
+- **Auth:** Bearer + admin rolü (üretimde).
+- **Request:** Yukarıdaki `settings` alanlarından herhangi bir alt küme.
+- **Response 200:** `{ "settings": { ... } }` (güncel tam nesne).
+
+### Hediye gerçek zamanlı event (SSE / socket)
+
+Oda (`GET /api/chat/rooms/{id}/stream`), yayın (`GET /api/video-streams/{id}/stream`) ve bildirim (`GET /api/notifications/stream`) kanallarında hediye olayı taşır:
+
+| Alan | Tip | Not |
+|------|-----|-----|
+| `eventId` / `id` | string | idempotent işleme anahtarı |
+| `giftId` | string | hediye türü |
+| `senderId`, `senderName` | string | gönderen |
+| `receiverId`, `receiverName` | string | alıcı |
+| `giftName`, `giftIcon` | string | görünüm |
+| `amount` / `coinCost` | number | jeton |
+| `roomId` / `streamId` | string | bağlam |
+| `timestamp` | ISO | oluşturulma |
+
+Flutter: tek `GlobalGiftOverlay` + `eventId` dedupe; dev marquee (`recent-big`) hediye için kullanılmaz.
 
 ---
 
@@ -427,16 +480,81 @@ AI fal slug'ları: `kahve-fali, tarot-fali, ruya-yorumu, el-fali, burc-yorumu, d
 
 ---
 
-### PK (Birleşik PK sistemi)
+### PK (Davet → Kabul → Savaş — ANA backend)
 
-> **Birleşik PK (`/api/pk/*`) hâlâ İKİNCİ backend'dedir** (canlifal.com'da 404). Sesli oda PK'sı (`/api/chat/rooms/{id}/pk`) ve video-stream PK'sı (`/api/video-streams/pk`) ise ANA backend'dedir. **DOKUNULMADI (§8).**
+> **Mobil PK (sesli oda + canlı yayın) yalnızca ANA backend uçlarını kullanır.** Birleşik `/api/pk/*` (ikinci backend) Flutter PK davet/savaş akışında **kullanılmamalıdır** — `canlifal.com` üzerinde 404/405 döner.
+
+#### Sesli oda PK
+
+| Method | Endpoint | Amaç |
+|--------|----------|------|
+| GET | `/api/chat/rooms/{roomId}/pk` | mevcut battle (`pending`/`active`/`ended`) |
+| POST | `/api/chat/rooms/{roomId}/pk` | `action: create` davet veya `accept`/`reject` |
+| POST | `/api/chat/rooms/{roomId}/pk/score` | skor güncelle (hediye sonrası backend) |
+| POST | `/api/chat/rooms/{roomId}/pk/{inviteId}/respond` | kabul/red (alternatif path) |
+
+**POST create (sesli):**
+```json
+{
+  "action": "create",
+  "opponentRoomId": "hedef_oda_id",
+  "targetRoomId": "hedef_oda_id",
+  "durationSeconds": 180,
+  "guestUserId": "hedef_kullanici_id"
+}
+```
+
+#### Canlı yayın PK
+
+| Method | Endpoint | Amaç |
+|--------|----------|------|
+| POST | `/api/video-streams/{streamId}/pk-battle` | **birincil** davet oluştur |
+| GET/POST | `/api/video-streams/pk` | toplu durum / create (alias) |
+| GET | `/api/video-streams/pk/list` | aktif PK listesi |
+| POST | `/api/video-streams/pk/score` | skor güncelle |
+
+**POST create (canlı):**
+```json
+{
+  "action": "create",
+  "opponentStreamId": "hedef_yayin_id",
+  "durationSeconds": 180
+}
+```
+
+> **405 kök nedeni (Flutter):** `POST /api/pk/request` veya yanlış body (`targetStreamId` önce, `opponentStreamId` eksik) — ana backend bu path'i desteklemez. Doğru path ve `opponentStreamId`/`opponentRoomId` kullanılmalıdır.
+
+#### PK state machine (backend kaynak)
+
+| status | Anlam |
+|--------|--------|
+| `pending` | davet gönderildi, hedef yanıt bekliyor |
+| `accepted` | kabul edildi, başlatılıyor |
+| `rejected` | hedef reddetti |
+| `cancelled` | gönderen iptal etti |
+| `expired` | süre doldu |
+| `started` / `active` | savaş devam ediyor |
+| `ended` | savaş bitti |
+
+#### PK SSE / socket eventleri
+
+| Event | Hedef | İçerik (özet) |
+|-------|-------|----------------|
+| `PK_INVITATION` / `pk:invite` | **yalnızca hedef yayıncı** | `invitationId`, `fromUserId`, `fromUserName`, `fromRoomId`, `targetUserId`, `targetRoomId`, `duration` |
+| `PK_ACCEPTED` | davet gönderen | `battleId`, katılımcılar |
+| `PK_REJECTED` | davet gönderen | `invitationId`, sebep |
+| `PK_STARTED` | her iki yayıncı | `battleId`, `leftParticipant`, `rightParticipant`, skorlar, `startTime`, `endTime`, `duration` |
+| `PK_SCORE_UPDATE` | her iki yayıncı | `leftScore`, `rightScore`, `battleId` |
+| `PK_ENDED` | her iki yayıncı | final skor, kazanan |
+
+Skor **backend** hesaplar; Flutter yalnızca gösterir. Aynı `eventId`/`transactionId` ikinci kez jeton düşmez.
+
+#### Birleşik PK (ikinci backend — mobil dışı / legacy)
 
 | Method | Endpoint | Backend |
 |--------|----------|---------|
 | GET | `/api/pk/active`, `/api/pk/leaderboard`, `/api/pk/battles`, `/api/pk/{matchId}` ... | İKİNCİ |
 | GET (SSE) | `/api/pk/{matchId}/stream` | İKİNCİ |
-| GET/POST | `/api/chat/rooms/{id}/pk`, `/api/chat/rooms/{id}/pk/score` | ANA |
-| GET/POST | `/api/video-streams/pk`, `/api/video-streams/pk/score` | ANA |
 
 ---
 
@@ -482,6 +600,8 @@ AI fal slug'ları: `kahve-fali, tarot-fali, ruya-yorumu, el-fali, burc-yorumu, d
 | Gift Goals | GiftGoalBar | GET | `/api/gifts/goals` | ANA | public |
 | Gift Goals | goal oluştur | POST | `/api/gifts/goals` | ANA | Bearer |
 | Gift Send | hediye paneli | POST | `/api/gifts/send` | ANA | Bearer |
+| Gift Overlay | GlobalGiftOverlay | GET | `/api/gifts/display-settings` | ANA | public/dual |
+| Gift Overlay | admin ayar | PATCH | `/api/gifts/display-settings` | ANA | admin |
 | Live | canlı yayın listesi/izleme | GET | `/api/video-streams`, `/{id}` | ANA | public/dual |
 | Live | canlı hediye | POST | `/api/live/gift/send` | ANA | Bearer |
 | Voice Rooms | oda listesi/durum | GET | `/api/chat/rooms`, `/{id}/state` | ANA | public/Bearer |

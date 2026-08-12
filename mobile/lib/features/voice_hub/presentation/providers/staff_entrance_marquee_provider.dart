@@ -28,9 +28,11 @@ class StaffEntranceMarqueeNotifier extends Notifier<StaffEntranceMarqueeState> {
   }
 
   /// Sağdan sola kayan şerit — aynı metin oturumda bir kez.
+  /// Hediye duyuruları artık [GlobalGiftOverlay] ile gösterilir; burada atlanır.
   void enqueue(String raw, {String? roomName}) {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return;
+    if (VoiceOfficialJoin.isHomeBannerGiftAnnouncement(trimmed)) return;
     final line = VoiceOfficialJoin.isHomeBannerGiftAnnouncement(trimmed)
         ? (trimmed.startsWith('📣') ? trimmed : '📣 $trimmed')
         : VoiceOfficialJoin.formatEntranceBanner(trimmed, roomName: roomName);
@@ -44,22 +46,14 @@ class StaffEntranceMarqueeNotifier extends Notifier<StaffEntranceMarqueeState> {
     });
   }
 
-  /// 1000+ jeton hediye duyurusu — site geneli kayan şerit.
+  /// 1000+ jeton hediye — global overlay kullanır; marquee'ye yazılmaz.
   void enqueueBigGift({
     required String senderName,
     required String receiverName,
     required int jeton,
     String? giftName,
   }) {
-    if (jeton < 1000) return;
-    final sender = senderName.trim().isEmpty ? 'Biri' : senderName.trim();
-    final receiver =
-        receiverName.trim().isEmpty ? 'birine' : receiverName.trim();
-    final gift = giftName?.trim();
-    final line = (gift != null && gift.isNotEmpty)
-        ? '$sender $receiver kullanıcısına $gift hediye etti! 💝 ($jeton jeton)'
-        : '$sender $receiver hediye etti! 💝 ($jeton jeton)';
-    enqueue(line);
+    // Legacy çağrılar — StaffEntranceMarquee artık hediye göstermez.
   }
 
   /// Şanslı hediye JACKPOT — site geneli kayan duyuru.

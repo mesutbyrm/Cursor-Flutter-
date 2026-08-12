@@ -12,7 +12,7 @@ import '../../../voice_hub/presentation/providers/chat_room_providers.dart';
 import '../../../voice_hub/presentation/providers/voice_room_provider.dart';
 import '../../../voice_hub/presentation/providers/voice_gift_combo_tracker.dart';
 import '../../../voice_hub/presentation/providers/voice_gift_leaderboard_provider.dart';
-import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
+import '../global/global_gift_event_bridge.dart';
 import 'gift_session_controller.dart';
 import 'gift_sync_log.dart';
 
@@ -93,14 +93,9 @@ class _GiftEventListenerState extends ConsumerState<GiftEventListener> {
         ref
             .read(voiceSessionGiftLeaderboardProvider.notifier)
             .record(enriched);
-        if (enriched.jetonAmount >= 1000) {
-          ref.read(staffEntranceMarqueeProvider.notifier).enqueueBigGift(
-                senderName: enriched.senderName,
-                receiverName: enriched.receiverName,
-                jeton: enriched.jetonAmount,
-                giftName: enriched.giftName,
-              );
-        }
+        enqueueGlobalGiftFromLiveEvent(ref, enriched);
+      } else {
+        enqueueGlobalGiftFromLiveEvent(ref, event);
       }
       final notifier =
           ref.read(giftSessionProvider(widget.sessionKey).notifier);
