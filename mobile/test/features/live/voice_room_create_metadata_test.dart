@@ -123,5 +123,13 @@ void main() {
       );
       expect(payload['paymentType'], 'cfc');
     });
+
+    test('includes category when provided', () {
+      final payload = LiveRemoteDataSource.buildVoiceRoomCreatePayload(
+        roomType: 'normal',
+        category: 'Music',
+      );
+      expect(payload['category'], 'music');
+    });
   });
 }

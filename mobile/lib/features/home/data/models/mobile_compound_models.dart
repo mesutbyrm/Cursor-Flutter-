@@ -197,6 +197,7 @@ VoiceRoomEntity _mapVoiceRoom(Map<String, dynamic> m) {
     nameTr: m['name']?.toString() ?? m['title']?.toString() ?? 'Oda',
     descTr: m['description']?.toString(),
     icon: m['icon']?.toString(),
+    category: m['category']?.toString(),
     onlineCount: _int(m['listenerCount'] ?? m['viewerCount']) ?? 0,
     userCount: _int(m['listenerCount'] ?? m['viewerCount']) ?? 0,
     backgroundImageUrl: _str(m, ['imageUrl', 'backgroundImage']),

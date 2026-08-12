@@ -16,6 +16,7 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import '../providers/chat_room_providers.dart';
+import 'voice_room_category_catalog.dart';
 
 /// canlifal.com — sesli sohbet odası aç (ücretsiz 0 / normal 2500 / VIP 5000 jeton).
 Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) async {
@@ -200,12 +201,14 @@ class _OpenRoomSetup {
     this.backgroundUrl,
     this.seatCount = 8,
     this.maxUsers = 15,
+    this.category = kDefaultVoiceRoomCategory,
   });
 
   final String roomName;
   final String? backgroundUrl;
   final int seatCount;
   final int maxUsers;
+  final String category;
 }
 
 class _OpenRoomSetupSheet extends StatefulWidget {
@@ -228,6 +231,7 @@ class _OpenRoomSetupSheetState extends State<_OpenRoomSetupSheet> {
   var _loadingBg = true;
   int _seatCount = 8;
   int _maxUsers = 15;
+  String _category = kDefaultVoiceRoomCategory;
 
   @override
   void initState() {
@@ -265,6 +269,7 @@ class _OpenRoomSetupSheetState extends State<_OpenRoomSetupSheet> {
         backgroundUrl: _selectedBg,
         seatCount: _seatCount,
         maxUsers: _maxUsers,
+        category: _category,
       ),
     );
   }
@@ -425,6 +430,39 @@ class _OpenRoomSetupSheetState extends State<_OpenRoomSetupSheet> {
               value: _maxUsers,
               onSelected: (v) => _maxUsers = v,
             ),
+            const SizedBox(height: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Kategori',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.75),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: kVoiceRoomAssignableCategories.map((c) {
+                    final selected = c.id == _category;
+                    return ChoiceChip(
+                      label: Text(c.label),
+                      selected: selected,
+                      onSelected: (_) => setState(() => _category = c.id),
+                      selectedColor:
+                          AppThemeColors.accentPurple.withValues(alpha: 0.45),
+                      labelStyle: TextStyle(
+                        color: selected ? Colors.white : Colors.white70,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: _confirm,
@@ -501,6 +539,7 @@ Future<void> _createAndEnter(
           background: setup.backgroundUrl,
           seatCount: setup.seatCount,
           maxUsers: setup.maxUsers,
+          category: setup.category,
         )
         .timeout(
           const Duration(seconds: 45),

@@ -20,6 +20,7 @@ import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
+import '../utils/voice_room_category_catalog.dart';
 import '../utils/voice_room_seat_capacity.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
@@ -781,6 +782,12 @@ class _VoiceRoomManagementPanelState
             subtitle: Text(room.displayTitle),
             onTap: _editRoomDetails,
           ),
+          ListTile(
+            leading: const Icon(Icons.category_rounded),
+            title: const Text('Kategori'),
+            subtitle: Text(voiceRoomCategoryLabel(room.category)),
+            onTap: _pickCategory,
+          ),
           SwitchListTile(
             secondary: const Icon(Icons.lock_outline_rounded),
             title: const Text('Oda kilidi'),
@@ -1054,6 +1061,38 @@ class _VoiceRoomManagementPanelState
       return;
     }
     await _snack(locked ? 'Oda kilitlendi' : 'Oda kilidi kaldırıldı');
+  }
+
+  Future<void> _pickCategory() async {
+    final current = normalizeVoiceRoomCategory(room.category);
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Oda kategorisi'),
+        children: kVoiceRoomAssignableCategories
+            .map(
+              (c) => SimpleDialogOption(
+                onPressed: () => Navigator.pop(ctx, c.id),
+                child: Row(
+                  children: [
+                    if (c.id == current)
+                      const Icon(Icons.check_rounded, size: 20)
+                    else
+                      const SizedBox(width: 20),
+                    const SizedBox(width: 8),
+                    Text(c.label),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+    if (picked == null || picked == current) return;
+    final err = await _ctrl.updateRoomCategory(picked);
+    await _snack(
+      err ?? 'Kategori ${voiceRoomCategoryLabel(picked)} olarak güncellendi',
+    );
   }
 
   Future<void> _pickSeatCount() async {

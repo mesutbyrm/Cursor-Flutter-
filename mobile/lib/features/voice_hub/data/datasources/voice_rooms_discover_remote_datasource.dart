@@ -29,10 +29,16 @@ class VoiceRoomsDiscoverRemoteDataSource {
   }
 
   bool _matchesCategory(VoiceRoomEntity room, String categoryId) {
+    if (categoryId == 'popular') {
+      return room.displayOnline >= 50;
+    }
+    final cat = room.category?.trim().toLowerCase();
+    if (cat != null && cat.isNotEmpty) {
+      return cat == categoryId;
+    }
     final hay = '${room.nameTr} ${room.descTr ?? ''} ${room.roomType ?? ''}'
         .toLowerCase();
     return switch (categoryId) {
-      'popular' => room.displayOnline >= 50,
       'chat' => true,
       'music' =>
         room.activeDjId != null ||

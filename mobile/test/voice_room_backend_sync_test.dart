@@ -56,6 +56,20 @@ void main() {
     expect(snap.seats.length, 10);
   });
 
+  test('VoiceRoomStateSnapshot parses category and rulesTr', () {
+    final snap = VoiceRoomStateSnapshot.fromJson(
+      {
+        'room': {
+          'category': 'music',
+          'rulesTr': 'Kurallara uyun',
+        },
+      },
+      roomId: 'abc',
+    );
+    expect(snap.category, 'music');
+    expect(snap.rulesTr, 'Kurallara uyun');
+  });
+
   test('voiceWebOwnerSeatRows adapts to 8-seat room', () {
     const room = VoiceRoomEntity(
       id: 'r1',

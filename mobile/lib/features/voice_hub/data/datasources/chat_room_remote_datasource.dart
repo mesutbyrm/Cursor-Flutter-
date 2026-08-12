@@ -1038,6 +1038,7 @@ class ChatRoomRemoteDataSource {
     int? maxUsers,
     int? seatCount,
     String? rules,
+    String? category,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final data = <String, dynamic>{};
@@ -1066,6 +1067,9 @@ class ChatRoomRemoteDataSource {
         data['rules'] = trimmed;
         data['rulesTr'] = trimmed;
         data['roomRules'] = trimmed;
+      }
+      if (category != null && category.trim().isNotEmpty) {
+        data['category'] = category.trim().toLowerCase();
       }
       if (data.isEmpty) return;
       try {
