@@ -1,6 +1,9 @@
 import 'package:canlifal_social/features/gifts/domain/gift_engine_sse_router.dart';
+import 'package:canlifal_social/features/gifts/domain/gift_entity.dart';
+import 'package:canlifal_social/features/gifts/presentation/providers/gift_providers.dart';
 import 'package:canlifal_social/features/gifts/presentation/sync/gift_session_controller.dart';
 import 'package:canlifal_social/features/live/domain/entities/live_gift_event.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -36,11 +39,49 @@ LiveGiftEvent _event({
   );
 }
 
+ProviderContainer _isolatedGiftContainer() {
+  return ProviderContainer(
+    overrides: [
+      liveGiftCatalogProvider.overrideWith((ref) async => const <GiftEntity>[]),
+      voiceRoomGiftCatalogProvider.overrideWith(
+        (ref) async => const <GiftEntity>[],
+      ),
+      liveStreamGiftCatalogProvider.overrideWith(
+        (ref) async => const <GiftEntity>[],
+      ),
+    ],
+  );
+}
+
+void _mockPathProviderForTests() {
+  const channel = MethodChannel('plugins.flutter.io/path_provider');
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(channel, (call) async {
+    switch (call.method) {
+      case 'getTemporaryDirectory':
+      case 'getApplicationSupportDirectory':
+      case 'getApplicationDocumentsDirectory':
+      case 'getApplicationCacheDirectory':
+        return '/tmp';
+      default:
+        return null;
+    }
+  });
+}
+
+void _clearPathProviderForTests() {
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(
+    const MethodChannel('plugins.flutter.io/path_provider'),
+    null,
+  );
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('backend combo değeri recent satırında korunur', () {
-    final container = ProviderContainer();
+    final container = _isolatedGiftContainer();
     addTearDown(container.dispose);
 
     final notifier = container.read(giftSessionProvider('room-1').notifier);
@@ -52,7 +93,7 @@ void main() {
   });
 
   test('duplicate event id yok sayılır', () {
-    final container = ProviderContainer();
+    final container = _isolatedGiftContainer();
     addTearDown(container.dispose);
 
     final notifier = container.read(giftSessionProvider('room-1').notifier);
@@ -64,30 +105,8 @@ void main() {
     expect(state.processedEventIds.length, 1);
   });
 
-  test('voice_realtime kaynağı animasyon kuyruğuna eklenir', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    final notifier = container.read(giftSessionProvider('room-v').notifier);
-    notifier.onVoiceGiftSent(
-      _event(
-        id: 'voice-1',
-        jeton: 100,
-        assetUrl: 'https://cdn.example.com/gift.mp4',
-        assetType: 'video',
-        engineAnimationType: 'mp4',
-      ),
-      source: 'voice_realtime',
-    );
-
-    final state = container.read(giftSessionProvider('room-v'));
-    expect(state.processedEventIds, contains('voice-1'));
-    expect(state.recentGifts, isNotEmpty);
-    expect(state.latestEvent?.id, 'voice-1');
-  });
-
   test('legacy blocked after engine gift_received for same history', () {
-    final container = ProviderContainer();
+    final container = _isolatedGiftContainer();
     addTearDown(container.dispose);
 
     final notifier = container.read(giftSessionProvider('room-e').notifier);
@@ -107,5 +126,32 @@ void main() {
       }),
       GiftEngineSseAction.skip,
     );
+  });
+
+  test('voice_realtime kaynağı animasyon kuyruğuna eklenir', () async {
+    _mockPathProviderForTests();
+    addTearDown(_clearPathProviderForTests);
+
+    final container = _isolatedGiftContainer();
+    addTearDown(container.dispose);
+
+    final notifier = container.read(giftSessionProvider('room-v').notifier);
+    notifier.onVoiceGiftSent(
+      _event(
+        id: 'voice-1',
+        jeton: 100,
+      ),
+      source: 'voice_realtime',
+    );
+
+    final state = container.read(giftSessionProvider('room-v'));
+    expect(state.processedEventIds, contains('voice-1'));
+    expect(state.recentGifts, isNotEmpty);
+    expect(state.latestEvent?.id, 'voice-1');
+    final queued = state.activeAnimation ??
+        (state.animationQueue.isNotEmpty ? state.animationQueue.first : null);
+    expect(queued?.id, 'voice-1');
+
+    await Future<void>.delayed(const Duration(milliseconds: 100));
   });
 }
