@@ -24,6 +24,7 @@ class LiveNamespaceSocketService {
     void Function(Map<String, dynamic> payload)? onPkInvite,
     void Function(Map<String, dynamic> guest)? onGuestJoined,
     void Function(Map<String, dynamic> payload)? onGuestLeft,
+    void Function(Map<String, dynamic> payload)? onGift,
     void Function()? onReconnect,
     void Function(bool connected)? onConnectionChanged,
   }) {
@@ -82,6 +83,11 @@ class LiveNamespaceSocketService {
           ..on('GUEST_JOINED', (data) => _emitMap(data, onGuestJoined))
           ..on('guest_left', (data) => _emitMap(data, onGuestLeft))
           ..on('guestLeft', (data) => _emitMap(data, onGuestLeft))
+          ..on('gift', (data) => _emitMap(data, onGift))
+          ..on('giftSent', (data) => _emitMap(data, onGift))
+          ..on('gift_sent', (data) => _emitMap(data, onGift))
+          ..on('GIFT_SENT', (data) => _emitMap(data, onGift))
+          ..on('gift_received', (data) => _emitMap(data, onGift))
           ..connect();
       } catch (e) {
         debugPrint('LiveNamespaceSocket: $e');

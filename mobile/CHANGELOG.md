@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.157+192 (2026-08-12) — Canlı hediye, PK, müzik, yayın kapanış
+
+- **Canlı yayın hediyeleri:** Socket.IO `gift` + genişletilmiş SSE tipleri; REST poll SSE ile birlikte (yedek)
+- **PK davet:** `durationSec` + kılavuz `respond` path; 3 sn poll yedek
+- **Sesli oda çıkış:** Hediye özeti sheet (atılan/kazanılan jeton) — anında çıkış sonrası
+- **Müzik:** Video modda `just_audio` + WebView; SSE `isVideoRequest` korunur; `streamUrl` parse
+- **Chat bar UI:** Büyük dikey ayarlar/müzik ikonları, gönder ile boşluk
+- **Yayın kapanış:** Yayıncı ve izleyici anında `/feed`
+- **Canlı Falcılar:** `online=true` hata yedeği — filtresiz ikinci istek
+
 ## 1.0.156+191 (2026-08-11) — Sesli oda müzik + koltuk + çıkış
 
 - **Müzik oynatma:** `song_started` SSE → DJ/just_audio + videolu WebView katmanı (basic oda)

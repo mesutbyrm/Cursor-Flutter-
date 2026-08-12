@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../../core/network/api_endpoints.dart';
 import '../../../../../core/network/api_exception.dart';
+import '../../../../../core/util/json_util.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/room_playback_sync.dart';
@@ -168,7 +169,7 @@ class RoomMusicRemoteDataSource {
       item: item,
       queue: queue,
       queuePosition: _parseOptionalInt(map['queuePosition']),
-      streamUrl: map['musicUrl']?.toString(),
+      streamUrl: pick(map, ['musicUrl', 'streamUrl', 'audioUrl', 'url'])?.toString(),
       playing: map['playing'] == true,
       newBalance: _parseOptionalInt(map['newBalance']) ??
           _parseOptionalInt(map['coinBalance']),

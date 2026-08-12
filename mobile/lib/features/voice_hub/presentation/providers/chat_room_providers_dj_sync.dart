@@ -245,8 +245,25 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
           parsedVideoId: videoId,
           parsedMusicUrl: sync?.streamUrl ?? effectiveDj.musicUrl,
         );
-        await player.stop();
         _live._syncRoomVideo(effectiveDj, sync: sync);
+        final musicUrl = sync?.streamUrl ?? effectiveDj.musicUrl;
+        final audioStarted = await player.sync(
+          musicUrl: musicUrl,
+          resolveSeed: effectiveDj.playbackResolveSeed,
+          fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
+          nowPlaying: effectiveDj.nowPlaying,
+          playing: true,
+          muted: muted,
+          serverStreamUrl: musicUrl,
+          startPosition: startPosition,
+        );
+        if (!audioStarted) {
+          VoiceRoomMusicPipelineLog.songEvent(
+            event: 'player_error',
+            detail: 'video_mode audio sync returned false',
+            parsedMusicUrl: musicUrl,
+          );
+        }
       } else {
         VoiceRoomMusicPipelineLog.songEvent(
           event: 'starting_audio',

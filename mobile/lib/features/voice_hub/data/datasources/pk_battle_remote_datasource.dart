@@ -171,16 +171,31 @@ class PkBattleRemoteDataSource {
     final duration = durationSeconds.clamp(60, 3600);
 
     final guest = guestUserId.trim();
-    return _postPkAction(
-      roomId: roomId,
-      alternateRoomId: alternateRoomId,
-      body: {
-        'action': 'create',
-        'targetRoomId': oppRoom,
-        'duration': duration,
-        if (guest.isNotEmpty) 'guestUserId': guest,
-      },
-    );
+    try {
+      return await _postPkAction(
+        roomId: roomId,
+        alternateRoomId: alternateRoomId,
+        body: {
+          'action': 'create',
+          'targetRoomId': oppRoom,
+          'duration': duration,
+          'durationSec': duration,
+          if (guest.isNotEmpty) 'guestUserId': guest,
+        },
+      );
+    } on ApiException catch (e) {
+      if (e.statusCode != 400 && e.statusCode != 422) rethrow;
+      if (guest.isEmpty) rethrow;
+      return _postPkAction(
+        roomId: roomId,
+        alternateRoomId: alternateRoomId,
+        body: {
+          'guestUserId': guest,
+          'durationSec': duration,
+          'duration': duration,
+        },
+      );
+    }
   }
 
   List<String> _roomKeyCandidates(String primary, String? alternate) {
@@ -228,6 +243,20 @@ class PkBattleRemoteDataSource {
     required String action,
   }) async {
     final synthesizedStatus = action == 'accept' ? 'active' : 'rejected';
+    for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
+      try {
+        final res = await _dio.safePost<dynamic>(
+          ApiEndpoints.chatRoomPkRespond(key, inviteId),
+          data: {'action': action},
+        );
+        final battle = _parseBattle(res.data);
+        if (battle != null) return battle;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) {
+          // Kılavuz path başarısız — unified body denenir.
+        }
+      }
+    }
     final battle = await _postPkAction(
       roomId: roomId,
       alternateRoomId: alternateRoomId,

@@ -340,50 +340,74 @@ class _VoiceRoomBasicMessageBarState extends State<VoiceRoomBasicMessageBar> {
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              ),
             ),
+          ),
           if (widget.onSettings != null || widget.onMusic != null)
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.onSettings != null)
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints:
-                        const BoxConstraints(minWidth: 32, minHeight: 32),
-                    tooltip: 'Ayarlar',
-                    onPressed: widget.onSettings,
-                    icon: Icon(
-                      Icons.settings_rounded,
-                      size: 20,
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (widget.onSettings != null)
+                    _MessageBarActionButton(
+                      tooltip: 'Ayarlar',
+                      onPressed: widget.onSettings!,
+                      icon: Icons.settings_rounded,
                       color: VoiceRoomTokens.neonBlue.withValues(alpha: 0.95),
                     ),
-                  ),
-                if (widget.onMusic != null && widget.musicEnabled)
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints:
-                        const BoxConstraints(minWidth: 32, minHeight: 32),
-                    tooltip: 'Müzik iste',
-                    onPressed: widget.onMusic,
-                    icon: Icon(
-                      Icons.library_music_rounded,
-                      size: 20,
+                  if (widget.onSettings != null && widget.onMusic != null)
+                    const SizedBox(height: 6),
+                  if (widget.onMusic != null && widget.musicEnabled)
+                    _MessageBarActionButton(
+                      tooltip: 'Müzik iste',
+                      onPressed: widget.onMusic!,
+                      icon: Icons.library_music_rounded,
                       color: VoiceRoomTokens.gold.withValues(alpha: 0.95),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
+          const SizedBox(width: 8),
           IconButton(
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             onPressed: widget.onSend,
-            icon: const Icon(Icons.send_rounded, size: 22),
+            icon: const Icon(Icons.send_rounded, size: 26),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MessageBarActionButton extends StatelessWidget {
+  const _MessageBarActionButton({
+    required this.tooltip,
+    required this.onPressed,
+    required this.icon,
+    required this.color,
+  });
+
+  final String tooltip;
+  final VoidCallback onPressed;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color.withValues(alpha: 0.14),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: Icon(icon, size: 26, color: color),
+        ),
       ),
     );
   }

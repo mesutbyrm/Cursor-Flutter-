@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/app_router.dart';
+
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../utils/kick_strike_ui.dart';
@@ -22,6 +24,7 @@ import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
 import '../../domain/voice_official_join.dart';
+import '../../../gifts/domain/session_gift_summary.dart';
 import '../../../gifts/domain/session_gift_summary_builder.dart';
 import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../../gifts/domain/gift_revenue_display.dart';
@@ -414,6 +417,20 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final audio = _audio;
     _audio = null;
     final liveNotifier = ref.read(voiceRoomLiveProvider(liveKey).notifier);
+    final live = ref.read(voiceRoomLiveProvider(liveKey));
+    final room = _effectiveRoom();
+    final user = ref.read(authControllerProvider).valueOrNull;
+    SessionGiftSummary? leaveSummary;
+    if (user != null) {
+      leaveSummary = SessionGiftSummaryBuilder.forVoiceRoom(
+        ref: ref,
+        roomTitle: room.displayTitle,
+        ownerUserId: live.ownerId ?? room.ownerId,
+        ownerDisplayName: room.ownerName,
+        myUserId: user.id,
+        myDisplayName: user.display,
+      );
+    }
 
     if (mounted) {
       if (context.canPop()) {
@@ -427,6 +444,14 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       if (audio != null) audio.leave(),
       liveNotifier.leaveRoomSession(source: 'basic_leave', awaitBackend: false),
     ]));
+
+    if (leaveSummary != null && leaveSummary.hasData) {
+      final rootCtx = rootNavigatorKey.currentContext;
+      if (rootCtx != null && rootCtx.mounted) {
+        await showSessionGiftSummarySheet(rootCtx, summary: leaveSummary);
+      }
+    }
+
     _leaving = false;
   }
 

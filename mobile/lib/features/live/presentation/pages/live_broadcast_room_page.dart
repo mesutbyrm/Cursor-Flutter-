@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../app/router/app_router.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/live_event_log.dart';
@@ -794,94 +795,49 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 : 'Yayından ayrıldınız',
           );
       await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
-      if (context.mounted && summary.hasData) {
-        await showSessionGiftSummarySheet(context, summary: summary);
+
+      invalidateDiscoverLiveStreams(ref);
+      if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+        widget.onSwipeClose!();
+      } else if (context.mounted) {
+        context.go('/feed');
+      }
+
+      if (summary.hasData) {
+        final rootCtx = rootNavigatorKey.currentContext;
+        if (rootCtx != null && rootCtx.mounted) {
+          await showSessionGiftSummarySheet(rootCtx, summary: summary);
+        }
       }
     } else {
       await ref.refreshWalletCache(force: true);
-    }
-
-    invalidateDiscoverLiveStreams(ref);
-    if (!context.mounted) return;
-    if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
-      widget.onSwipeClose!();
-    } else {
-      context.go('/feed');
+      invalidateDiscoverLiveStreams(ref);
+      if (!context.mounted) return;
+      if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+        widget.onSwipeClose!();
+      } else {
+        context.go('/feed');
+      }
     }
   }
 
   Future<void> _showViewerStreamEndedSummary(String streamId) async {
     if (_leaving || !mounted) return;
     _leaving = true;
-    final user = ref.read(authControllerProvider).valueOrNull;
-    if (user != null) {
-      final hostId = widget.session.hostUserId?.trim() ?? '';
-      final summary = SessionGiftSummaryBuilder.forLiveBroadcast(
-        ref: ref,
-        streamId: streamId,
-        hostUserId: hostId.isNotEmpty ? hostId : user.id,
-        hostDisplayName: widget.session.streamerName ?? user.display,
-        myUserId: user.id,
-      );
-      final roomSnap = ref.read(liveRoomProvider(streamId));
-      ref.read(liveRoomProvider(streamId).notifier).appendSessionSummaryMessages(
-            summary,
-            viewerCount: roomSnap.viewerCount,
-            duration: _sessionJoinedAt != null
-                ? DateTime.now().difference(_sessionJoinedAt!)
-                : null,
-            endedLabel: 'Yayın sona erdi',
-          );
-      setState(() => _chatVisible = true);
-      await Future<void>.delayed(const Duration(milliseconds: 1800));
-    }
     await _leaveLiveSession(endReason: 'stream_ended');
     invalidateDiscoverLiveStreams(ref);
     if (!mounted) return;
-    if (widget.onAdvanceToNextStream != null) {
-      widget.onAdvanceToNextStream!();
-      return;
-    }
     if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
       widget.onSwipeClose!();
       return;
     }
-    try {
-      final streams = await ref.read(liveStreamsProvider.future);
-      final live = streams.where((s) => s.isLive && s.id != streamId).toList();
-      if (live.isNotEmpty && mounted) {
-        context.go('/live/swipe', extra: LiveSwipeFeedArgs(
-          streams: live,
-          initialIndex: 0,
-        ));
-        return;
-      }
-    } catch (_) {}
-    if (mounted) context.go('/live');
+    context.go('/feed');
   }
 
   /// Sunucu SSE `streamEnded` — sessizlik / moderasyon ile otomatik kapanma.
   Future<void> _showHostStreamEndedByServer(String streamId) async {
     if (!mounted) return;
     invalidateDiscoverLiveStreams(ref);
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Yayın sonlandı'),
-        content: const Text(
-          'Yayın sunucu tarafından sonlandırıldı '
-          '(ör. uzun süre ses/video yok veya bağlantı kesildi).',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Tamam'),
-          ),
-        ],
-      ),
-    );
-    if (!mounted) return;
     if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
       widget.onSwipeClose!();
     } else {
@@ -2414,16 +2370,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         if (next.streamEnded && !(prev?.streamEnded ?? false)) {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             if (!mounted || _leaving) return;
-            if (s.isHost) {
-              _leaving = true;
-              await _leaveLiveSession(endReason: 'server_ended');
-              if (!mounted) return;
-              await _showHostStreamEndedByServer(streamId);
-              return;
-            }
             _leaving = true;
             await _leaveLiveSession(endReason: 'server_ended');
-            await _showViewerStreamEndedSummary(streamId);
+            invalidateDiscoverLiveStreams(ref);
+            if (!mounted) return;
+            if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+              widget.onSwipeClose!();
+            } else {
+              context.go('/feed');
+            }
           });
         }
         final joined = next.lastJoinedDisplayName;

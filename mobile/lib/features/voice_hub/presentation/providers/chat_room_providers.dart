@@ -1935,7 +1935,16 @@ class VoiceRoomLiveController
     Map<String, dynamic> json, {
     MusicQueueItem? previous,
   }) {
-    return MusicQueueItem.fromJson(json);
+    final merged = MusicQueueItem.fromJson(json);
+    if (previous != null && previous.isVideoRequest && !merged.isVideoRequest) {
+      return merged.asVideoRequest();
+    }
+    if (previous != null &&
+        !previous.isVideoRequest &&
+        merged.isVideoRequest) {
+      return merged.asAudioRequest();
+    }
+    return merged;
   }
 
   Future<void> _handleSongRequestFree(
