@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.177+212 (2026-08-13) — PK oda kapsamı ve Basic sahne parity
+
+- **PK menü/yönetim:** `pkBattleForRoomProvider` — yanlış odada PK daveti/savaş etiketi engellendi
+- **PK şeridi:** Skor ve süre doğrudan sunucu `PkBattleRemote` kaydından (oda değişiminde senkron)
+- **PK savaş:** Sunucu otoriter modda mod değiştirici gizlendi; «Destekle» hediye seçiciye bağlandı
+- **Basic sahne:** `seatSlots`, konuşma göstergesi, koltuk kilidi/atma (RTC ile parity)
+- **Basic dispose:** `leaveRoomSession(awaitBackend: true)` + 6s timeout
+
 ## 1.0.176+211 (2026-08-12) — Müzik, çıkış ve PK daveti düzeltmeleri
 
 - **Müzik:** Videolu isteklerde YouTube katmanı artık silinmiyor; ses modunda stream yoksa gizli YouTube yedek oynatıcı devreye girer

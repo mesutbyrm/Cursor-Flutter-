@@ -725,7 +725,7 @@ class _VoiceRoomManagementPanelState
 
   Widget _roomView(ScrollController scroll) {
     final canBg = perms.canChangeBackground || isOwner;
-    final pk = ref.watch(pkBattleRemoteProvider);
+    final pk = ref.watch(pkBattleForRoomProvider(room));
     final pkLive = isPkBattleLive(pk);
     final roomKey = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
 

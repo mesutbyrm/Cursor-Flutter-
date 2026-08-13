@@ -8,6 +8,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../../domain/entities/voice_room_seat_slot.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../sheets/voice_room_moderation_sheet.dart';
@@ -30,6 +31,7 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
     required this.live,
     required this.perms,
     required this.user,
+    this.isMicMuted = true,
   });
 
   final VoiceRoomEntity room;
@@ -37,9 +39,16 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
   final VoiceRoomLiveState live;
   final VoiceRoomPermissions perms;
   final UserEntity? user;
+  final bool isMicMuted;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final speakingIds = <String>{
+      for (final p in live.presence)
+        if (p.isSpeaking) p.id,
+    };
+    if (!isMicMuted && user?.id != null) speakingIds.add(user!.id);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -51,7 +60,9 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
         VoiceWebOwnerStage(
           room: room,
           presence: live.presence,
+          seatSlots: live.seatSlots,
           djUserIds: live.dj.djUsers.map((u) => u.id).toList(),
+          speakingUserIds: speakingIds,
           selfUserId: user?.id,
           onSeatTap: (seatIndex, occupant) => unawaited(
             onVoiceRoomBasicSeatTap(
@@ -63,6 +74,17 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
               perms: perms,
               internalSeatIndex: seatIndex,
               occupant: occupant,
+            ),
+          ),
+          onSeatLongPress: (seatIndex) => unawaited(
+            onVoiceRoomBasicSeatLongPress(
+              context: context,
+              ref: ref,
+              room: room,
+              liveKey: liveKey,
+              live: live,
+              perms: perms,
+              internalSeatIndex: seatIndex,
             ),
           ),
         ),
@@ -177,6 +199,21 @@ Future<void> onVoiceRoomBasicSeatTap({
     );
     return;
   }
+  VoiceRoomSeatSlot? slot;
+  for (final s in live.seatSlots) {
+    if (s.index == internalSeatIndex) {
+      slot = s;
+      break;
+    }
+  }
+  if (slot?.isLocked == true && !perms.canAssignSeats) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bu koltuk kilitli')),
+      );
+    }
+    return;
+  }
   if (perms.canAssignSeats) {
     await showVoiceRoomBasicAssignSeatSheet(
       context: context,
@@ -201,6 +238,28 @@ Future<void> onVoiceRoomBasicSeatTap({
   }
 }
 
+Future<void> onVoiceRoomBasicSeatLongPress({
+  required BuildContext context,
+  required WidgetRef ref,
+  required VoiceRoomEntity room,
+  required String liveKey,
+  required VoiceRoomLiveState live,
+  required VoiceRoomPermissions perms,
+  required int internalSeatIndex,
+}) async {
+  if (!perms.canAssignSeats) return;
+  await showVoiceRoomBasicAssignSeatSheet(
+    context: context,
+    ref: ref,
+    room: room,
+    liveKey: liveKey,
+    live: live,
+    seatIndex: internalSeatIndex,
+    perms: perms,
+    showAllMembers: true,
+  );
+}
+
 Future<void> showVoiceRoomBasicAssignSeatSheet({
   required BuildContext context,
   required WidgetRef ref,
@@ -209,13 +268,23 @@ Future<void> showVoiceRoomBasicAssignSeatSheet({
   required VoiceRoomLiveState live,
   required int seatIndex,
   required VoiceRoomPermissions perms,
+  bool showAllMembers = false,
 }) async {
   final self = ref.read(authControllerProvider).valueOrNull;
   final ctrl = ref.read(voiceRoomLiveProvider(liveKey).notifier);
   final onStage = voiceWebOnStageIds(room: room, presence: live.presence);
-  final candidates = live.presence
-      .where((p) => !onStage.contains(p.id) || p.seatIndex == seatIndex)
-      .toList();
+  VoiceRoomSeatSlot? seatSlot;
+  for (final s in live.seatSlots) {
+    if (s.index == seatIndex) {
+      seatSlot = s;
+      break;
+    }
+  }
+  final candidates = showAllMembers
+      ? List<ChatRoomPresence>.from(live.presence)
+      : live.presence
+          .where((p) => !onStage.contains(p.id) || p.seatIndex == seatIndex)
+          .toList();
   final canManageDj = perms.isRoomOwner ||
       perms.isSiteAdmin ||
       perms.canManageDj ||
@@ -232,10 +301,43 @@ Future<void> showVoiceRoomBasicAssignSeatSheet({
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Koltuk $seatIndex — sahne yönetimi',
+            showAllMembers
+                ? 'Koltuk $seatIndex — sahne yönetimi'
+                : 'Koltuk $seatIndex — sahne yönetimi',
             style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
           ),
           const SizedBox(height: 8),
+          if (perms.canAssignSeats) ...[
+            if (seatSlot != null && !seatSlot.isEmpty)
+              ListTile(
+                leading: const Icon(Icons.person_off_rounded, color: Colors.orange),
+                title: Text('${seatSlot.name ?? 'Kullanıcı'} koltuktan at'),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final err = await ctrl.kickFromSeat(seatIndex: seatIndex);
+                  if (context.mounted && err != null) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(err)));
+                  }
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.lock_rounded, color: Colors.amber),
+              title: Text(
+                seatSlot?.isLocked == true ? 'Kilidi aç' : 'Koltuğu kilitle',
+              ),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final err = seatSlot?.isLocked == true
+                    ? await ctrl.unlockSeat(seatIndex: seatIndex)
+                    : await ctrl.lockSeat(seatIndex: seatIndex);
+                if (context.mounted && err != null) {
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text(err)));
+                }
+              },
+            ),
+          ],
           if (self != null)
             ListTile(
               leading: const Icon(Icons.event_seat_rounded),

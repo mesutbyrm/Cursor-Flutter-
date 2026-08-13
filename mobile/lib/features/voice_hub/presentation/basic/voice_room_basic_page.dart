@@ -143,7 +143,13 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       unawaited(
         ref
             .read(voiceRoomLiveProvider(liveKey).notifier)
-            .leaveRoomSession(source: 'basic_dispose', force: true),
+            .leaveRoomSession(
+              source: 'basic_dispose',
+              awaitBackend: true,
+              force: true,
+            )
+            .timeout(const Duration(seconds: 6))
+            .catchError((_) {}),
       );
     }
     final audio = _audio;
@@ -840,6 +846,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     live: live,
                     perms: perms,
                     user: user,
+                    isMicMuted: _isMicMuted,
                   ),
                   VoiceRoomNowPlayingBar(
                     roomKey: _liveRoomKey,

@@ -5,7 +5,6 @@ import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/presentation/widgets/broadcast_room/live_pk_score_bar.dart';
 import '../../../domain/pk/pk_battle_remote_models.dart';
 import '../../../domain/pk/pk_opponent_room_filter.dart';
-import '../../providers/pk_battle_provider.dart';
 import '../../providers/pk_battle_remote_provider.dart';
 
 /// Oda içi PK durumu — aktif skor şeridi veya bekleyen davet metni.
@@ -60,9 +59,14 @@ class VoicePkRoomStrip extends ConsumerWidget {
 
     if (!remote.isActive) return const SizedBox.shrink();
 
-    final pk = ref.watch(pkBattleProvider);
-    final leftName = pk.left.leader?.name ?? 'Biz';
-    final rightName = pk.right.leader?.name ?? 'Rakip';
+    final isChallengerSide = isPkChallengerRoom(remote, room);
+    final leftScore =
+        isChallengerSide ? remote.challengerScore : remote.opponentScore;
+    final rightScore =
+        isChallengerSide ? remote.opponentScore : remote.challengerScore;
+    final leftName = remote.challenger?.displayName ?? 'Biz';
+    final rightName = remote.opponent?.displayName ?? 'Rakip';
+    final timerLabel = _formatPkSeconds(remote.secondsLeft);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
@@ -86,7 +90,7 @@ class VoicePkRoomStrip extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  pk.timerLabel,
+                  timerLabel,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.85),
                     fontWeight: FontWeight.w800,
@@ -99,8 +103,8 @@ class VoicePkRoomStrip extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             LivePkScoreBar(
-              leftScore: pk.left.score,
-              rightScore: pk.right.score,
+              leftScore: leftScore,
+              rightScore: rightScore,
               status: 'active',
               isHost: onEndPk != null,
               onEnd: onEndPk == null ? null : () => onEndPk!(remote),
@@ -110,4 +114,11 @@ class VoicePkRoomStrip extends ConsumerWidget {
       ),
     );
   }
+}
+
+String _formatPkSeconds(int seconds) {
+  final s = seconds.clamp(0, 86400);
+  final m = s ~/ 60;
+  final r = s % 60;
+  return '${m.toString().padLeft(2, '0')}:${r.toString().padLeft(2, '0')}';
 }

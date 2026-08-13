@@ -68,7 +68,7 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).valueOrNull;
-    final pk = ref.watch(pkBattleRemoteProvider);
+    final pk = ref.watch(pkBattleForRoomProvider(room));
     final pkLive = isPkBattleLive(pk);
     final role = VoiceRoomMenuRole.label(perms, user: user, live: live);
     final canManageAuthority = perms.isSiteAdmin ||

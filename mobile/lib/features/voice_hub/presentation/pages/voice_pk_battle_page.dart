@@ -145,7 +145,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   Widget build(BuildContext context) {
     final live = ref.watch(voiceRoomLiveProvider(widget.room.liveKey));
     final pk = ref.watch(pkBattleProvider);
-    final remote = ref.watch(pkBattleRemoteProvider);
+    final remote = ref.watch(pkBattleForRoomProvider(widget.room));
     final leadingLeft = pk.left.total >= pk.right.total;
     final isChallenger = remote != null &&
         [widget.room.apiRoomKey, widget.room.id, widget.room.slug]
@@ -203,7 +203,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                   timer: pk.timerLabel,
                   phase: pk.phase,
                   onBack: () => context.pop(),
-                  onMode: pk.isActive
+                  onMode: pk.isActive && !pk.serverAuthoritative
                       ? (m) => ref.read(pkBattleProvider.notifier).setMode(m)
                       : null,
                   mode: pk.mode,
@@ -283,8 +283,10 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         onPressed: () async {
-                          final remote = ref.read(pkBattleRemoteProvider);
-                          final battleId = remote?.effectiveId ?? '';
+                          final battle = ref.read(
+                            pkBattleForRoomProvider(widget.room),
+                          );
+                          final battleId = battle?.effectiveId ?? '';
                           if (battleId.isEmpty) return;
                           final r = widget.room;
                           final roomKey =
@@ -311,11 +313,11 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                     ),
                   ),
                 PkActionBottomBar(
-                  onSupport: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Destek skora eklendi!')),
-                    );
-                  },
+                  onSupport: () => showVoiceRoomGiftPicker(
+                    context,
+                    ref,
+                    room: widget.room,
+                  ),
                   onGift: () => showVoiceRoomGiftPicker(
                     context,
                     ref,
@@ -339,7 +341,9 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
           ),
           PkWinnerCelebration(
             state: pk,
-            onRestart: () => ref.read(pkBattleProvider.notifier).restart(),
+            onRestart: pk.serverAuthoritative
+                ? () => context.pop()
+                : () => ref.read(pkBattleProvider.notifier).restart(),
             onClose: () => context.pop(),
           ),
           VoiceGiftHudOverlays(sessionKey: sessionKey),

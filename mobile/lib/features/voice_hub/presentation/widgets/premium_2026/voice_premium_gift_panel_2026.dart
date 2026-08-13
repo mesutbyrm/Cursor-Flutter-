@@ -278,9 +278,9 @@ class _VoicePremiumGiftPanel2026State
       final receiverIsOwner =
           ownerId.isNotEmpty && receiver.id.trim() == ownerId;
       // PK aktifse: battleId ile gönder → alıcı katılımcının skoru otomatik artar.
-      final activePk = ref.read(pkBattleRemoteProvider);
+      final activePk = ref.read(pkBattleForRoomProvider(widget.room));
       final pkBattleId =
-          (activePk != null && activePk.isActive) ? activePk.id : null;
+          (activePk != null && activePk.isActive) ? activePk.effectiveId : null;
       final result = await ref
           .read(chatRoomGiftsRemoteProvider)
           .sendGift(
