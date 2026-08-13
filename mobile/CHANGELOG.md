@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.186+221 (2026-08-13) — Ana sayfa faz 8: fal türleri, popup duyuru
+
+- **Fal türleri:** `GET /api/fortune-request-types` yatay chip şeridi
+- **Duyuru şeridi:** `GET /api/popups` ilk kayıt inline banner (modal dışı)
+- **Test:** Ana sayfa entity parse birim testleri (`home_entities_test.dart`)
+- **Yenileme:** Popup ve fal türleri bootstrap + pull-to-refresh kapsamında
+
 ## 1.0.185+220 (2026-08-13) — Ana sayfa faz 7: yayın görselleri, beğenenler, reklam
 
 - **Yayın arka planları:** `GET /api/broadcast-images` yatay önizleme → `/live/prep`

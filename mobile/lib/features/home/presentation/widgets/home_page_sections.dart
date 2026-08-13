@@ -34,6 +34,8 @@ import 'home_agency_leaderboard_section.dart';
 import 'home_broadcast_images_section.dart';
 import 'home_user_likers_section.dart';
 import 'home_watch_ad_teaser.dart';
+import 'home_fortune_request_types_section.dart';
+import 'home_promo_popup_banner.dart';
 import 'home_ticker_strip.dart';
 import 'home_trending_topics_section.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
@@ -43,7 +45,15 @@ abstract final class HomePageSections {
   static List<Widget> slivers({required double bottomInset}) {
     return [
       const SliverToBoxAdapter(child: RepaintBoundary(child: HomeHeader())),
-      const SliverToBoxAdapter(child: RepaintBoundary(child: HomeTickerStrip())),
+      const SliverToBoxAdapter(
+        child: RepaintBoundary(child: HomeTickerStrip()),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeBannerDelay,
+          child: HomePromoPopupBanner(),
+        ),
+      ),
       const SliverToBoxAdapter(
         child: RepaintBoundary(child: HomePlatformStatsStrip()),
       ),
@@ -129,6 +139,12 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homeFortuneSectionDelay,
           child: FortuneSection(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeFortuneSectionDelay,
+          child: HomeFortuneRequestTypesSection(),
         ),
       ),
       const SliverToBoxAdapter(

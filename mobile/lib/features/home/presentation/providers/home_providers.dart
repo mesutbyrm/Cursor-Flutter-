@@ -40,6 +40,8 @@ import '../../domain/entities/home_user_liker_entity.dart';
 import '../../domain/entities/home_online_fal_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../platform/data/models/platform_ad.dart';
+import '../../../platform/data/models/platform_popup.dart';
+import '../../../platform/data/models/fortune_request_type.dart';
 import '../../../voice_hub/domain/voice_official_join.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../../../voice_hub/presentation/providers/voice_rooms_presence_provider.dart';
@@ -70,6 +72,8 @@ void invalidateHomeKeepAliveProviders(dynamic ref) {
   ref.invalidate(homeBroadcastImagesProvider);
   ref.invalidate(homeUserLikersProvider);
   ref.invalidate(homeActiveAdsProvider);
+  ref.invalidate(homeFortuneRequestTypesProvider);
+  ref.invalidate(homePopupsProvider);
   ref.invalidate(platformStatsProvider);
   invalidateDiscoverLiveStreams(ref);
   invalidateDiscoverVoiceRooms(ref);
@@ -297,6 +301,21 @@ final homeActiveAdsProvider = FutureProvider<List<PlatformAd>>((ref) async {
   return ref.watch(platformContentRemoteDataSourceProvider).fetchActiveAds();
 });
 
+/// Site popup duyuruları — `GET /api/popups`.
+final homePopupsProvider = FutureProvider<List<PlatformPopup>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  final popups =
+      await ref.watch(platformContentRemoteDataSourceProvider).fetchPopups();
+  return popups.where((p) => p.id.isNotEmpty && p.title.trim().isNotEmpty).take(3).toList();
+});
+
+/// Fal istek türleri — `GET /api/fortune-request-types`.
+final homeFortuneRequestTypesProvider =
+    FutureProvider<List<FortuneRequestType>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  return ref.watch(platformContentRemoteDataSourceProvider).fetchFortuneRequestTypes();
+});
+
 /// Online fal bölümleri — `GET /api/online-fal`.
 final homeOnlineFalProvider =
     FutureProvider<List<HomeOnlineFalEntity>>((ref) async {
@@ -377,6 +396,8 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(homeBroadcastImagesProvider.future),
     ref.refresh(homeUserLikersProvider.future),
     ref.refresh(homeActiveAdsProvider.future),
+    ref.refresh(homeFortuneRequestTypesProvider.future),
+    ref.refresh(homePopupsProvider.future),
     ref.refresh(platformStatsProvider.future),
     ref.refresh(referralInfoProvider.future),
     ref.refresh(userDailyTasksProvider.future),
