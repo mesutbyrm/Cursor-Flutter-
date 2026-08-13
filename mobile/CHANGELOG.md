@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.185+220 (2026-08-13) — Ana sayfa faz 7: yayın görselleri, beğenenler, reklam
+
+- **Yayın arka planları:** `GET /api/broadcast-images` yatay önizleme → `/live/prep`
+- **Seni beğenenler:** `GET /api/user/likers` şeridi (giriş gerekli)
+- **Reklam izle:** `GET /api/ads/active` teaser → `/profile/growth`
+- **Yenileme:** Yayın görselleri, beğenenler ve reklam bootstrap + pull-to-refresh kapsamında
+
 ## 1.0.184+219 (2026-08-13) — Ana sayfa faz 6: istatistik ızgarası, online fal, ajans
 
 - **Canlı istatistik ızgarası:** Oyun, sosyal, fal ve giriş metrikleri (`GET /api/public-stats`) → `/profile/broadcaster-stats`

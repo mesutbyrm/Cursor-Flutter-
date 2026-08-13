@@ -35,7 +35,11 @@ import '../../../platform/presentation/providers/platform_content_providers.dart
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../feed/presentation/providers/platform_stats_providers.dart';
 import '../../domain/entities/home_football_match_entity.dart';
+import '../../domain/entities/home_broadcast_image_entity.dart';
+import '../../domain/entities/home_user_liker_entity.dart';
 import '../../domain/entities/home_online_fal_entity.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../platform/data/models/platform_ad.dart';
 import '../../../voice_hub/domain/voice_official_join.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../../../voice_hub/presentation/providers/voice_rooms_presence_provider.dart';
@@ -63,6 +67,9 @@ void invalidateHomeKeepAliveProviders(dynamic ref) {
   ref.invalidate(homePkLeaderboardProvider);
   ref.invalidate(homeOnlineFalProvider);
   ref.invalidate(homeAgencyLeaderboardProvider);
+  ref.invalidate(homeBroadcastImagesProvider);
+  ref.invalidate(homeUserLikersProvider);
+  ref.invalidate(homeActiveAdsProvider);
   ref.invalidate(platformStatsProvider);
   invalidateDiscoverLiveStreams(ref);
   invalidateDiscoverVoiceRooms(ref);
@@ -251,6 +258,45 @@ final homeFootballMatchesProvider =
       .toList();
 });
 
+/// Yayın arka plan görselleri — `GET /api/broadcast-images`.
+final homeBroadcastImagesProvider =
+    FutureProvider<List<HomeBroadcastImageEntity>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  final raw = await ref
+      .watch(platformContentRemoteDataSourceProvider)
+      .fetchBroadcastImages();
+  return raw
+      .map(HomeBroadcastImageEntity.fromJson)
+      .where((e) => e.isValid)
+      .take(10)
+      .toList();
+});
+
+/// Profil beğenenler — `GET /api/user/likers` (giriş gerekli).
+final homeUserLikersProvider =
+    FutureProvider<List<HomeUserLikerEntity>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  if (ref.read(authControllerProvider).valueOrNull == null) {
+    return const [];
+  }
+  final raw =
+      await ref.watch(platformContentRemoteDataSourceProvider).fetchUserLikers();
+  return raw
+      .map(HomeUserLikerEntity.fromJson)
+      .where((e) => e.isValid)
+      .take(10)
+      .toList();
+});
+
+/// Aktif reklamlar — `GET /api/ads/active` (giriş gerekli).
+final homeActiveAdsProvider = FutureProvider<List<PlatformAd>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  if (ref.read(authControllerProvider).valueOrNull == null) {
+    return const [];
+  }
+  return ref.watch(platformContentRemoteDataSourceProvider).fetchActiveAds();
+});
+
 /// Online fal bölümleri — `GET /api/online-fal`.
 final homeOnlineFalProvider =
     FutureProvider<List<HomeOnlineFalEntity>>((ref) async {
@@ -328,6 +374,9 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(homePkLeaderboardProvider.future),
     ref.refresh(homeOnlineFalProvider.future),
     ref.refresh(homeAgencyLeaderboardProvider.future),
+    ref.refresh(homeBroadcastImagesProvider.future),
+    ref.refresh(homeUserLikersProvider.future),
+    ref.refresh(homeActiveAdsProvider.future),
     ref.refresh(platformStatsProvider.future),
     ref.refresh(referralInfoProvider.future),
     ref.refresh(userDailyTasksProvider.future),

@@ -31,6 +31,9 @@ import 'home_platform_stats_strip.dart';
 import 'home_platform_stats_grid.dart';
 import 'home_online_fal_section.dart';
 import 'home_agency_leaderboard_section.dart';
+import 'home_broadcast_images_section.dart';
+import 'home_user_likers_section.dart';
+import 'home_watch_ad_teaser.dart';
 import 'home_ticker_strip.dart';
 import 'home_trending_topics_section.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
@@ -54,6 +57,12 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homeBannerDelay,
           child: HomeRecentLoginsSection(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeBannerDelay,
+          child: HomeUserLikersSection(),
         ),
       ),
       const SliverToBoxAdapter(
@@ -90,6 +99,12 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homeLiveSectionDelay,
           child: LiveBroadcastSection(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeLiveSectionDelay,
+          child: HomeBroadcastImagesSection(),
         ),
       ),
       const SliverToBoxAdapter(
@@ -168,6 +183,12 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homeGameSectionDelay,
           child: HomeInviteReferralTeaser(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeGameSectionDelay,
+          child: HomeWatchAdTeaser(),
         ),
       ),
       const SliverToBoxAdapter(
