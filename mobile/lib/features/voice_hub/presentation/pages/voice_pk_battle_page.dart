@@ -39,7 +39,6 @@ import '../widgets/premium_2026/pk/pk_mode_switcher.dart';
 import '../widgets/premium_2026/pk/pk_player_hud_frame.dart';
 import '../widgets/premium_2026/pk/pk_team_battle_strip.dart';
 import '../widgets/premium_2026/pk/pk_vs_emblem.dart';
-import '../widgets/premium_2026/pk/pk_winner_celebration.dart';
 import '../widgets/voice_room_gift_sheet.dart';
 
 /// Premium 2026 PK savaş — 1v1, takım, realtime skor, hediye gücü, kazanan FX.
@@ -63,6 +62,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   StreamSubscription<LiveGiftEvent>? _giftSub;
   var _lastGiftSideLeft = true;
   var _chatOpen = false;
+  var _resultNavigated = false;
 
   @override
   void initState() {
@@ -135,6 +135,20 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     ref.read(pkBattleProvider.notifier).applyGift(event, toLeft: toLeft);
   }
 
+  void _openResultPageIfNeeded({
+    required PkBattleState pk,
+    PkBattleRemote? remote,
+  }) {
+    if (_resultNavigated || !mounted) return;
+    final ended = pk.isFinished || (remote?.isEnded ?? false);
+    if (!ended) return;
+    _resultNavigated = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.pushReplacement('/pk/result');
+    });
+  }
+
   @override
   void dispose() {
     _giftSub?.cancel();
@@ -153,6 +167,13 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     final room = widget.room;
     final sessionKey =
         room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+
+    ref.listen<PkBattleState>(pkBattleProvider, (prev, next) {
+      _openResultPageIfNeeded(pk: next, remote: remote);
+    });
+    ref.listen<PkBattleRemote?>(pkBattleForRoomProvider(widget.room), (prev, next) {
+      _openResultPageIfNeeded(pk: pk, remote: next);
+    });
 
     return GiftEventListener(
       sessionKey: sessionKey,
@@ -338,13 +359,6 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                   ),
               ],
             ),
-          ),
-          PkWinnerCelebration(
-            state: pk,
-            onRestart: pk.serverAuthoritative
-                ? () => context.pop()
-                : () => ref.read(pkBattleProvider.notifier).restart(),
-            onClose: () => context.pop(),
           ),
           VoiceGiftHudOverlays(sessionKey: sessionKey),
         ],

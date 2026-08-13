@@ -695,56 +695,6 @@ Future<void> connectVoiceRoomBasicPkBattle(
   }
 }
 
-Future<void> showVoiceRoomBasicIncomingPkInvite({
-  required BuildContext context,
-  required WidgetRef ref,
-  required VoiceRoomEntity room,
-  required String inviteId,
-}) async {
-  final battle = ref.read(pkBattleRemoteProvider);
-  final durationLabel = battle != null
-      ? pkDurationBySeconds(battle.durationSeconds).label
-      : '3 dakika';
-  final accept = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('PK Daveti'),
-      content: Text(
-        'Bir oda size PK daveti gönderdi.\nSüre: $durationLabel\n\nKabul ediyor musunuz?',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Reddet'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Kabul Et'),
-        ),
-      ],
-    ),
-  );
-  final remote = ref.read(pkBattleRemoteProvider.notifier);
-  final roomKey = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-  final altRoom = room.slug != roomKey ? room.slug : null;
-  if (accept == true) {
-    await remote.accept(
-      inviteId,
-      roomId: roomKey,
-      alternateRoomId: altRoom,
-    );
-    if (context.mounted) {
-      context.push('/voice-room/$roomKey/pk', extra: room);
-    }
-  } else if (accept == false) {
-    await remote.reject(
-      inviteId,
-      roomId: roomKey,
-      alternateRoomId: altRoom,
-    );
-  }
-}
-
 /// Profil kartı — neon avatar + rozet (chatRole).
 class VoiceRoomBasicProfilePreview extends StatelessWidget {
   const VoiceRoomBasicProfilePreview({

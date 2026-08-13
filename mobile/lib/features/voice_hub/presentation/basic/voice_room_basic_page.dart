@@ -66,7 +66,7 @@ import '../widgets/premium_2026/voice_live_action_bar_2026.dart';
 import '../widgets/premium_2026/voice_live_header_2026.dart';
 import '../widgets/premium_2026/voice_online_gift_box.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
-import '../widgets/voice_room/voice_room_now_playing_bar.dart';
+import '../widgets/voice_room/voice_room_center_music_panel.dart';
 import '../widgets/voice_room/voice_room_music_background_layer.dart';
 import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../../gifts/presentation/widgets/first_gifter_badge.dart';
@@ -566,6 +566,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _permissions(user, live, room);
     final canControlMusic = _canControlMusic(live, room, user, perms);
+    final canCloseMusic = VoiceMusicAccess.canStopMusic(
+      user: user,
+      perms: perms,
+      nowPlaying: live.dj.nowPlaying,
+    );
     final canSpeak = VoiceRoomSpeakAccess.canSpeak(
       user: user,
       perms: perms,
@@ -848,9 +853,12 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     user: user,
                     isMicMuted: _isMicMuted,
                   ),
-                  VoiceRoomNowPlayingBar(
-                    roomKey: _liveRoomKey,
-                    canControl: canControlMusic,
+                  VoiceRoomCenterMusicPanel(
+                    room: room,
+                    live: live,
+                    canControlMusic: canControlMusic,
+                    canCloseMusic: canCloseMusic,
+                    musicRequestFlash: live.musicRequestFlash,
                   ),
                   // Aktif hediye savaşı — canlı skor + geri sayım.
                   GiftBattleStrip(
