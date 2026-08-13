@@ -16,25 +16,23 @@ import 'approved/trending_video_section.dart';
 import 'approved/voice_room_section.dart';
 import 'home_banner_carousel.dart';
 import 'home_blog_recent_section.dart';
-import 'home_daily_missions_teaser.dart';
 import 'home_deferred_section.dart';
 import 'home_football_section.dart';
+import 'home_fortune_request_types_section.dart';
 import 'home_games_row.dart';
 import 'home_game_center_section.dart';
+import 'home_growth_teasers_section.dart';
 import 'home_leaderboards_section.dart';
+import 'home_platform_stats_section.dart';
 import 'home_social_strip_section.dart';
 import 'home_advisors_row.dart';
-import 'home_invite_referral_teaser.dart';
 import 'home_homepage_buttons_row.dart';
-import 'home_platform_stats_strip.dart';
-import 'home_platform_stats_grid.dart';
 import 'home_online_fal_section.dart';
 import 'home_broadcast_images_section.dart';
-import 'home_watch_ad_teaser.dart';
-import 'home_fortune_request_types_section.dart';
 import 'home_promo_popup_banner.dart';
 import 'home_ticker_strip.dart';
 import 'home_trending_topics_section.dart';
+import 'home_viewport_section.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 
 /// Ana sayfa bölümleri — küçük widget'lar, RepaintBoundary ile izole repaint.
@@ -52,13 +50,7 @@ abstract final class HomePageSections {
         ),
       ),
       const SliverToBoxAdapter(
-        child: RepaintBoundary(child: HomePlatformStatsStrip()),
-      ),
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeBannerDelay,
-          child: HomePlatformStatsGrid(),
-        ),
+        child: RepaintBoundary(child: HomePlatformStatsSection()),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
@@ -102,10 +94,13 @@ abstract final class HomePageSections {
           child: LiveBroadcastSection(),
         ),
       ),
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeLiveSectionDelay,
-          child: HomeBroadcastImagesSection(),
+          child: HomeViewportSection(
+            estimatedHeight: 140,
+            child: HomeBroadcastImagesSection(),
+          ),
         ),
       ),
       const SliverToBoxAdapter(
@@ -138,10 +133,13 @@ abstract final class HomePageSections {
           child: HomeFortuneRequestTypesSection(),
         ),
       ),
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeFortuneSectionDelay,
-          child: HomeOnlineFalSection(),
+          child: HomeViewportSection(
+            estimatedHeight: 140,
+            child: HomeOnlineFalSection(),
+          ),
         ),
       ),
       const SliverToBoxAdapter(
@@ -156,76 +154,94 @@ abstract final class HomePageSections {
           child: HomeGamesRow(),
         ),
       ),
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeGameSectionDelay,
-          child: HomeGameCenterSection(),
+          child: HomeViewportSection(
+            estimatedHeight: 160,
+            child: HomeGameCenterSection(),
+          ),
         ),
       ),
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeGameSectionDelay,
-          child: HomeLeaderboardsSection(),
+          child: HomeViewportSection(
+            estimatedHeight: 140,
+            child: HomeLeaderboardsSection(),
+          ),
         ),
       ),
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeGameSectionDelay,
-          child: HomeDailyMissionsTeaser(),
+          child: HomeViewportSection(
+            estimatedHeight: 140,
+            child: HomeGrowthTeasersSection(),
+          ),
         ),
       ),
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeGameSectionDelay,
-          child: HomeInviteReferralTeaser(),
-        ),
-      ),
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeGameSectionDelay,
-          child: HomeWatchAdTeaser(),
-        ),
-      ),
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeCelebritiesSectionDelay,
-          child: HomeCelebritiesSection(),
+          child: HomeViewportSection(
+            estimatedHeight: 180,
+            child: HomeCelebritiesSection(),
+          ),
         ),
       ),
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeFanClubSectionDelay,
-          child: FanClubSection(),
+          child: HomeViewportSection(
+            estimatedHeight: 180,
+            child: FanClubSection(),
+          ),
         ),
       ),
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeFanClubSectionDelay,
-          child: HomeFootballSection(),
+          child: HomeViewportSection(
+            estimatedHeight: 140,
+            child: HomeFootballSection(),
+          ),
         ),
       ),
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeHoroscopeSectionDelay,
-          child: HomeHoroscopeSection(),
+          child: HomeViewportSection(
+            estimatedHeight: 160,
+            child: HomeHoroscopeSection(),
+          ),
         ),
       ),
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeDiscoverSectionDelay,
-          child: HomeBlogRecentSection(),
+          child: HomeViewportSection(
+            estimatedHeight: 180,
+            child: HomeBlogRecentSection(),
+          ),
         ),
       ),
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeDiscoverSectionDelay,
-          child: DiscoverSection(),
+          child: HomeViewportSection(
+            estimatedHeight: 200,
+            child: DiscoverSection(),
+          ),
         ),
       ),
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeGoldSectionDelay,
-          child: GoldSection(),
+          child: HomeViewportSection(
+            estimatedHeight: 180,
+            child: GoldSection(),
+          ),
         ),
       ),
       SliverToBoxAdapter(child: SizedBox(height: 72 + bottomInset)),

@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.188+223 (2026-08-13) — Ana sayfa faz 10: viewport lazy, birleşik ödüller
+
+- **Viewport lazy:** Alt bölümler `HomeViewportSection` ile kaydırma yakınına gelince mount edilir
+- **İstatistikler:** Şerit + genişletilebilir detay ızgarası tek `HomePlatformStatsSection` altında
+- **Büyüme & ödüller:** Görevler, davet ve reklam teaser'ları yatay `HomeGrowthTeasersSection` şeridi
+- **Temizlik:** Faz 9'da birleştirilen eski widget dosyaları kaldırıldı
+- **Test:** `HomeViewportSection` widget testi eklendi
+
 ## 1.0.187+222 (2026-08-13) — Ana sayfa faz 9: birleşik şeritler
 
 - **Liderlik tabloları:** Hediye, PK ve ajans önizlemeleri tek sekmeli `HomeLeaderboardsSection` altında
