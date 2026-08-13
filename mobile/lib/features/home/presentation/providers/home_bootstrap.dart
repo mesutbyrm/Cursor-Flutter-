@@ -7,6 +7,7 @@ import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/performance/app_perf_metrics.dart';
 import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
 import '../../../social/presentation/providers/social_providers.dart';
+import '../../../feed/presentation/providers/platform_stats_providers.dart';
 import 'home_providers.dart';
 
 /// Ana sayfa üst bölüm API'lerini kademeli başlatır — ilk kare hızlı açılır.
@@ -42,6 +43,8 @@ Future<void> prefetchHomeCriticalSections(Ref ref) async {
         _measureFuture(ref, 'home.games', homeGamesProvider),
         _measureFuture(ref, 'home.daily_rewards', homeDailyRewardsProvider),
         _measureFuture(ref, 'home.fan_clubs', homeFanClubsProvider),
+        _measureFuture(ref, 'home.celebrities', homeCelebritiesProvider),
+        _measureFuture(ref, 'home.platform_stats', platformStatsProvider),
       ]);
     }),
   );

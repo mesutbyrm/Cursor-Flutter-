@@ -25,6 +25,8 @@ class HomeRemoteDataSource {
   Future<MobileHomeBundle?> fetchMobileHome({bool force = false}) =>
       _compound.fetchHome(force: force);
 
+  void invalidateMobileHomeCache() => _compound.invalidateHomeCache();
+
   Future<List<HomeBannerEntity>> fetchBanners() async {
     final compound = await fetchMobileHome();
     if (compound != null && compound.banners.isNotEmpty) {
@@ -156,6 +158,24 @@ class HomeRemoteDataSource {
           .toList();
       buttons.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
       return buttons;
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// `GET /api/celebrities` — ana sayfa ünlüler şeridi.
+  Future<List<HomeFanClubItem>> fetchCelebrities() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.celebrities);
+      final items = _itemsFromBody(
+        res.data,
+        keys: const ['celebrities', 'items', 'data', 'results'],
+      );
+      if (items.isEmpty) return const [];
+      return items
+          .map(_mapCelebrity)
+          .where((c) => c.id.isNotEmpty && c.title.isNotEmpty)
+          .toList();
     } catch (_) {
       return const [];
     }
@@ -485,6 +505,29 @@ class HomeRemoteDataSource {
       linkUrl: _str(m, ['linkUrl', 'href', 'route', 'path', 'url']),
       sortOrder: asInt(pick(m, ['sortOrder', 'order', 'position'])) ?? 0,
       isActive: m['isActive'] != false && m['isVisible'] != false,
+    );
+  }
+
+  HomeFanClubItem _mapCelebrity(dynamic raw) {
+    final m = asJsonMap(raw);
+    final slug = _str(m, ['slug', 'id', 'username']);
+    final routeRaw = _str(m, ['route', 'path', 'url']);
+    final route = routeRaw != null && routeRaw.startsWith('/')
+        ? routeRaw
+        : (slug != null && slug.isNotEmpty
+            ? '/celebrities/$slug'
+            : '/celebrities-hub');
+    return HomeFanClubItem(
+      id: _str(m, ['id', '_id', 'slug']) ?? '',
+      title: _str(m, ['title', 'name', 'displayName', 'username']) ?? '',
+      subtitle: _str(m, ['subtitle', 'description', 'category', 'role']),
+      imageUrl: CanlifalImageUrls.resolve(
+        _str(m, ['imageUrl', 'image', 'avatarUrl', 'profileImageUrl', 'photoUrl']),
+      ),
+      route: route,
+      memberCount: asInt(
+        pick(m, ['followerCount', 'followersCount', 'fanCount', 'memberCount']),
+      ),
     );
   }
 

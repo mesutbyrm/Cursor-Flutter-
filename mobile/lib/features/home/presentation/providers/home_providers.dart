@@ -21,6 +21,9 @@ import '../../domain/repositories/home_repository.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/domain/entities/voice_room_sort.dart';
+import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../feed/presentation/providers/platform_stats_providers.dart';
 import '../../../voice_hub/domain/voice_official_join.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../../../voice_hub/presentation/providers/voice_rooms_presence_provider.dart';
@@ -39,6 +42,7 @@ void invalidateHomeKeepAliveProviders(dynamic ref) {
   ref.invalidate(homeTickerProvider);
   ref.invalidate(homeHomepageButtonsProvider);
   ref.invalidate(homeFanClubsProvider);
+  ref.invalidate(homeCelebritiesProvider);
   invalidateDiscoverLiveStreams(ref);
   invalidateDiscoverVoiceRooms(ref);
   ref.invalidate(homeLiveStreamsProvider);
@@ -183,8 +187,15 @@ final homeFanClubsProvider = FutureProvider<List<HomeFanClubItem>>((ref) async {
   return HomeSiteCatalog.fanClubs;
 });
 
+/// `GET /api/celebrities` — ana sayfa ünlüler şeridi.
+final homeCelebritiesProvider = FutureProvider<List<HomeFanClubItem>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  return ref.watch(homeRemoteProvider).fetchCelebrities();
+});
+
 /// Tüm ana sayfa verilerini yenile (yalnızca ekranda görünen bölümler).
 Future<void> refreshHomeData(WidgetRef ref) async {
+  ref.read(homeRemoteProvider).invalidateMobileHomeCache();
   await NetworkPerf.waitSilent([
     ref.refresh(homeBannersProvider.future),
     ref.refresh(homeTickerProvider.future),
@@ -196,6 +207,10 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(homeGamesProvider.future),
     ref.refresh(homeDailyRewardsProvider.future),
     ref.refresh(homeFanClubsProvider.future),
+    ref.refresh(homeCelebritiesProvider.future),
+    ref.refresh(homeOnlinePsychicsProvider.future),
+    ref.refresh(platformStatsProvider.future),
+    ref.refresh(userDailyTasksProvider.future),
     ref.refresh(socialStoryRingsProvider.future),
   ]).timeout(
     const Duration(seconds: 12),

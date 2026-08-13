@@ -19,6 +19,10 @@ class DiscoverSection extends StatelessWidget {
     'trends': 'Kısa videolar ve trendler',
     'invite': 'Arkadaşlarını davet et',
     'gifts': 'Hediye koleksiyonun',
+    'blog': 'Yeni yazılar ve rehberler',
+    'dreams': 'Rüya yorumları ve sözlük',
+    'celebrities': 'Ünlü profilleri ve fan kulüpleri',
+    'games': 'Oyun merkezi ve turnuvalar',
   };
 
   @override

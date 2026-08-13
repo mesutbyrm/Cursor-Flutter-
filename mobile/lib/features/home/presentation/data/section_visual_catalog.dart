@@ -31,6 +31,10 @@ abstract final class SectionVisualCatalog {
         'trends' => 'tarot',
         'invite' => 'ask-fali',
         'gifts' => 'melek-kartlari',
+        'blog' => 'katina',
+        'dreams' => 'cin-fali',
+        'celebrities' => 'yildiz-haritasi',
+        'games' => 'evet-hayir',
         _ => 'tarot',
       };
 
@@ -64,6 +68,10 @@ abstract final class SectionVisualCatalog {
       'trends' => '1635070041078-e363dbe005cb', // neon cyber city
       'invite' => '1534447677768-be436bb09401', // cosmic friends
       'gifts' => '1579546929518-9fa396ef48de', // magic gift sparkle
+      'blog' => '1528454864517-dd3fba88b7fa', // books mystic
+      'dreams' => '1519682337128-7fa9a06a3995', // night dream
+      'celebrities' => '1522673609750-1b0e6a71928a', // star spotlight
+      'games' => '1610374471067-ba344bb6bc42', // arcade glow
       _ => '1518709268805-4e9042af2176',
     };
     return _url(photo, width: width, crop: 'center');

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import 'approved/discover_section.dart';
 import 'approved/fan_club_section.dart';
+import 'approved/home_celebrities_section.dart';
 import 'approved/fortune_section.dart';
 import 'approved/gold_section.dart';
 import 'approved/home_header.dart';
@@ -17,7 +18,9 @@ import 'home_banner_carousel.dart';
 import 'home_daily_missions_teaser.dart';
 import 'home_deferred_section.dart';
 import 'home_games_row.dart';
+import 'home_game_center_section.dart';
 import 'home_homepage_buttons_row.dart';
+import 'home_platform_stats_strip.dart';
 import 'home_ticker_strip.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 
@@ -27,6 +30,9 @@ abstract final class HomePageSections {
     return [
       const SliverToBoxAdapter(child: RepaintBoundary(child: HomeHeader())),
       const SliverToBoxAdapter(child: RepaintBoundary(child: HomeTickerStrip())),
+      const SliverToBoxAdapter(
+        child: RepaintBoundary(child: HomePlatformStatsStrip()),
+      ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeBannerDelay,
@@ -90,7 +96,19 @@ abstract final class HomePageSections {
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeGameSectionDelay,
+          child: HomeGameCenterSection(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeGameSectionDelay,
           child: HomeDailyMissionsTeaser(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeCelebritiesSectionDelay,
+          child: HomeCelebritiesSection(),
         ),
       ),
       const SliverToBoxAdapter(

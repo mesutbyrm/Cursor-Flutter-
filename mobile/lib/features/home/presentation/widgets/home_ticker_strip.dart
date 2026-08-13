@@ -17,6 +17,7 @@ class HomeTickerStrip extends ConsumerStatefulWidget {
 class _HomeTickerStripState extends ConsumerState<HomeTickerStrip> {
   Timer? _rotate;
   var _index = 0;
+  var _lineCount = 0;
 
   @override
   void dispose() {
@@ -24,8 +25,11 @@ class _HomeTickerStripState extends ConsumerState<HomeTickerStrip> {
     super.dispose();
   }
 
-  void _scheduleRotate(int count) {
+  void _ensureRotateTimer(int count) {
+    if (count == _lineCount) return;
+    _lineCount = count;
     _rotate?.cancel();
+    _index = 0;
     if (count <= 1) return;
     _rotate = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted) return;
@@ -41,8 +45,8 @@ class _HomeTickerStripState extends ConsumerState<HomeTickerStrip> {
       error: (_, _) => const SizedBox.shrink(),
       data: (lines) {
         if (lines.isEmpty) return const SizedBox.shrink();
+        _ensureRotateTimer(lines.length);
         if (_index >= lines.length) _index = 0;
-        _scheduleRotate(lines.length);
         final line = lines[_index];
         return Padding(
           padding: const EdgeInsets.fromLTRB(
