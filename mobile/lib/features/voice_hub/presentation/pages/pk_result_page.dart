@@ -27,7 +27,9 @@ class PkResultPage extends ConsumerWidget {
       body: pk.isFinished
           ? PkWinnerCelebration(
               state: pk,
-              onRestart: () => context.pop(),
+              onRestart: pk.serverAuthoritative
+                  ? () => context.pop()
+                  : () => ref.read(pkBattleProvider.notifier).restart(),
               onClose: () => context.pop(),
             )
           : const Center(child: Text('PK henüz bitmedi')),

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.178+213 (2026-08-13) — PK sonuç, davet poll, Basic müzik paneli
+
+- **PK sonuç:** Savaş bitince `/pk/result` sayfasına yönlendirme (`PkResultPage`)
+- **PK davet poll:** `fetchMyInvites` REST yedeği `VoicePkInviteListener` içinde
+- **Basic müzik:** `VoiceRoomCenterMusicPanel` — kuyruk özeti ve !istek flaşı (RTC parity)
+- **Temizlik:** Kullanılmayan `showVoiceRoomBasicIncomingPkInvite` kaldırıldı
+
 ## 1.0.177+212 (2026-08-13) — PK oda kapsamı ve Basic sahne parity
 
 - **PK menü/yönetim:** `pkBattleForRoomProvider` — yanlış odada PK daveti/savaş etiketi engellendi
