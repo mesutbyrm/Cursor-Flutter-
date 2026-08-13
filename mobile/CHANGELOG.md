@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.189+224 (2026-08-13) — Ana sayfa faz 11: yetim widget temizliği
+
+- **Temizlik:** 12 kullanılmayan ana sayfa widget dosyası kaldırıldı (eski mockup / yinelenen sürümler)
+- **Dokümantasyon:** `docs/HOME_PAGE_SECTIONS.md` — bölüm sırası, API ve lazy katman envanteri
+- **Referans:** `home_page_sections.dart` üst yorumunda envanter bağlantısı
+
 ## 1.0.188+223 (2026-08-13) — Ana sayfa faz 10: viewport lazy, birleşik ödüller
 
 - **Viewport lazy:** Alt bölümler `HomeViewportSection` ile kaydırma yakınına gelince mount edilir

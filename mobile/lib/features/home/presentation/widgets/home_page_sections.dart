@@ -36,6 +36,8 @@ import 'home_viewport_section.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 
 /// Ana sayfa bölümleri — küçük widget'lar, RepaintBoundary ile izole repaint.
+///
+/// Tam envanter: `docs/HOME_PAGE_SECTIONS.md`
 abstract final class HomePageSections {
   static List<Widget> slivers({required double bottomInset}) {
     return [
