@@ -46,6 +46,8 @@ Future<void> prefetchHomeCriticalSections(Ref ref) async {
         _measureFuture(ref, 'home.celebrities', homeCelebritiesProvider),
         _measureFuture(ref, 'home.trend_topics', homeTrendTopicsProvider),
         _measureFuture(ref, 'home.blog_recent', homeBlogRecentProvider),
+        _measureFuture(ref, 'home.gift_leaderboard', homeGiftLeaderboardProvider),
+        _measureFuture(ref, 'home.football', homeFootballMatchesProvider),
         _measureFuture(ref, 'home.platform_stats', platformStatsProvider),
         _measureFuture(ref, 'home.displayed_psychics', homeDisplayedPsychicsProvider),
       ]);

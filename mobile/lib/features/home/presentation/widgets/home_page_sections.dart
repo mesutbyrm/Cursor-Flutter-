@@ -18,8 +18,11 @@ import 'home_banner_carousel.dart';
 import 'home_blog_recent_section.dart';
 import 'home_daily_missions_teaser.dart';
 import 'home_deferred_section.dart';
+import 'home_football_section.dart';
 import 'home_games_row.dart';
 import 'home_game_center_section.dart';
+import 'home_gift_leaderboard_section.dart';
+import 'home_invite_referral_teaser.dart';
 import 'home_homepage_buttons_row.dart';
 import 'home_platform_stats_strip.dart';
 import 'home_ticker_strip.dart';
@@ -110,7 +113,19 @@ abstract final class HomePageSections {
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeGameSectionDelay,
+          child: HomeGiftLeaderboardSection(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeGameSectionDelay,
           child: HomeDailyMissionsTeaser(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeGameSectionDelay,
+          child: HomeInviteReferralTeaser(),
         ),
       ),
       const SliverToBoxAdapter(
@@ -123,6 +138,12 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homeFanClubSectionDelay,
           child: FanClubSection(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeFanClubSectionDelay,
+          child: HomeFootballSection(),
         ),
       ),
       const SliverToBoxAdapter(

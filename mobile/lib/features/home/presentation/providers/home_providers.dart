@@ -25,8 +25,12 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/domain/entities/voice_room_sort.dart';
 import '../../../live_psychics/domain/entities/psychic_entity.dart';
 import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
+import '../../../gifts/data/leaderboard_remote_datasource.dart';
+import '../../../gifts/domain/gift_leaderboard_entry.dart';
+import '../../../platform/presentation/providers/platform_content_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../feed/presentation/providers/platform_stats_providers.dart';
+import '../../domain/entities/home_football_match_entity.dart';
 import '../../../voice_hub/domain/voice_official_join.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../../../voice_hub/presentation/providers/voice_rooms_presence_provider.dart';
@@ -49,6 +53,8 @@ void invalidateHomeKeepAliveProviders(dynamic ref) {
   ref.invalidate(homeTrendTopicsProvider);
   ref.invalidate(homeBlogRecentProvider);
   ref.invalidate(homeDisplayedPsychicsProvider);
+  ref.invalidate(homeGiftLeaderboardProvider);
+  ref.invalidate(homeFootballMatchesProvider);
   ref.invalidate(platformStatsProvider);
   invalidateDiscoverLiveStreams(ref);
   invalidateDiscoverVoiceRooms(ref);
@@ -214,6 +220,29 @@ final homeBlogRecentProvider =
   return ref.watch(homeRemoteProvider).fetchBlogRecent();
 });
 
+/// Haftalık hediye liderleri — `GET /api/leaderboards`.
+final homeGiftLeaderboardProvider =
+    FutureProvider<List<GiftLeaderboardEntry>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  final ds = LeaderboardRemoteDataSource(ref.watch(dioProvider));
+  return ds.fetchGlobalGiftLeaderboard(
+    period: GiftLeaderboardPeriod.weekly,
+  );
+});
+
+/// Canlı futbol maçları — `GET /api/football`.
+final homeFootballMatchesProvider =
+    FutureProvider<List<HomeFootballMatchEntity>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  final raw =
+      await ref.watch(platformContentRemoteDataSourceProvider).fetchFootball();
+  return raw
+      .map(HomeFootballMatchEntity.fromJson)
+      .where((m) => m.hasTeams)
+      .take(8)
+      .toList();
+});
+
 /// Canlı falcılar — boşsa compound/API danışman listesine düşer.
 final homeDisplayedPsychicsProvider =
     FutureProvider<List<PsychicEntity>>((ref) async {
@@ -255,7 +284,10 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(homeFanClubsProvider.future),
     ref.refresh(homeCelebritiesProvider.future),
     ref.refresh(homeDisplayedPsychicsProvider.future),
+    ref.refresh(homeGiftLeaderboardProvider.future),
+    ref.refresh(homeFootballMatchesProvider.future),
     ref.refresh(platformStatsProvider.future),
+    ref.refresh(referralInfoProvider.future),
     ref.refresh(userDailyTasksProvider.future),
     ref.refresh(socialStoryRingsProvider.future),
   ]).timeout(

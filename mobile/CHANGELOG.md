@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.182+217 (2026-08-13) — Ana sayfa faz 4: davet, hediye liderliği, futbol
+
+- **Davet teaser:** Giriş yapmış kullanıcılar için `GET /api/referral` özet kartı → `/invite-friends`
+- **Hediye liderleri:** Haftalık top 3 önizleme (`GET /api/leaderboards`) → hediye sıralaması
+- **Futbol:** `GET /api/football` yatay maç kartları → web `/futbol`
+- **Yenileme:** Davet, hediye liderliği ve futbol bootstrap + pull-to-refresh kapsamında
+
+## 1.0.181+216 (2026-08-13) — Ana sayfa: trend, blog, falcı yedeği
+
+- **Trend konular:** `GET /api/trends` yatay etiket şeridi
+- **Blog önizleme:** `GET /api/blog/recent` yatay kartlar
+- **Canlı falcılar:** API boşsa compound `liveTellers` / danışman listesine düşer
+- **Yenileme:** Trend, blog ve görüntülenen falcılar refresh/bootstrap kapsamında
+
 ## 1.0.180+215 (2026-08-13) — Ana sayfa devam: ünlüler, istatistik, oyun merkezi
 
 - **Canlı istatistik:** `GET /api/public-stats` — arama altı kompakt çevrimiçi / canlı / sesli şerit
