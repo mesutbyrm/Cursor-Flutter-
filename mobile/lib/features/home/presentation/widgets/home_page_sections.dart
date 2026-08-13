@@ -21,18 +21,15 @@ import 'home_deferred_section.dart';
 import 'home_football_section.dart';
 import 'home_games_row.dart';
 import 'home_game_center_section.dart';
-import 'home_gift_leaderboard_section.dart';
+import 'home_leaderboards_section.dart';
+import 'home_social_strip_section.dart';
 import 'home_advisors_row.dart';
 import 'home_invite_referral_teaser.dart';
-import 'home_recent_logins_section.dart';
-import 'home_pk_leaderboard_section.dart';
 import 'home_homepage_buttons_row.dart';
 import 'home_platform_stats_strip.dart';
 import 'home_platform_stats_grid.dart';
 import 'home_online_fal_section.dart';
-import 'home_agency_leaderboard_section.dart';
 import 'home_broadcast_images_section.dart';
-import 'home_user_likers_section.dart';
 import 'home_watch_ad_teaser.dart';
 import 'home_fortune_request_types_section.dart';
 import 'home_promo_popup_banner.dart';
@@ -66,13 +63,7 @@ abstract final class HomePageSections {
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeBannerDelay,
-          child: HomeRecentLoginsSection(),
-        ),
-      ),
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeBannerDelay,
-          child: HomeUserLikersSection(),
+          child: HomeSocialStripSection(),
         ),
       ),
       const SliverToBoxAdapter(
@@ -174,19 +165,7 @@ abstract final class HomePageSections {
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeGameSectionDelay,
-          child: HomeGiftLeaderboardSection(),
-        ),
-      ),
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeGameSectionDelay,
-          child: HomePkLeaderboardSection(),
-        ),
-      ),
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeGameSectionDelay,
-          child: HomeAgencyLeaderboardSection(),
+          child: HomeLeaderboardsSection(),
         ),
       ),
       const SliverToBoxAdapter(
