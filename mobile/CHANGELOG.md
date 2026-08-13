@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.179+214 (2026-08-13) — Ana sayfa eksikleri tamamlandı
+
+- **Homepage butonları:** `GET /api/homepage-buttons` + compound parse; banner altı hızlı erişim şeridi
+- **Kayan yazı:** Arama altında inline ticker (`GET /api/homepage-ticker`)
+- **Oyunlar & etkinlikler:** `HomeGamesRow` ana sayfaya bağlandı (oyunlar + günlük ödüller)
+- **Fan Club:** `GET /api/fan-clubs` API; statik katalog yedek
+- **Günlük burç:** Her burç için `POST /api/horoscope/daily` bottom sheet + yıldızname yönlendirme
+- **Günlük görevler:** Ana sayfa teaser → `/profile/growth`
+- **Yenileme:** `refreshHomeData` oyun, ödül, ticker, buton ve fan club provider'larını kapsar
+- **Sıralama:** Hikayeler yukarı; yetim «Keşfet» başlığı kaldırıldı
+
 ## 1.0.178+213 (2026-08-13) — PK sonuç, davet poll, Basic müzik paneli
 
 - **PK sonuç:** Savaş bitince `/pk/result` sayfasına yönlendirme (`PkResultPage`)

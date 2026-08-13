@@ -10,8 +10,10 @@ import 'mobile_compound_remote_datasource.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_fortune_card_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
+import '../../domain/entities/home_page_button_entity.dart';
 import '../../domain/entities/home_trend_video_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
+import '../../domain/home_site_catalog.dart';
 
 class HomeRemoteDataSource {
   HomeRemoteDataSource(this._dio)
@@ -134,6 +136,61 @@ class HomeRemoteDataSource {
       }
     } catch (_) {}
     return const [];
+  }
+
+  /// `GET /api/homepage-buttons` — ana sayfa hızlı erişim butonları.
+  Future<List<HomePageButtonEntity>> fetchHomepageButtons() async {
+    final compound = await fetchMobileHome();
+    if (compound != null && compound.homepageButtons.isNotEmpty) {
+      return compound.homepageButtons;
+    }
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.homepageButtons);
+      final items = _itemsFromBody(
+        res.data,
+        keys: const ['buttons', 'homepageButtons', 'items', 'data'],
+      );
+      final buttons = items
+          .map(_mapHomepageButton)
+          .where((b) => b.id.isNotEmpty && b.isActive)
+          .toList();
+      buttons.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      return buttons;
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// `GET /api/fan-clubs` — popüler fan kulüpleri.
+  Future<List<HomeFanClubItem>> fetchFanClubs() async {
+    for (final path in [ApiEndpoints.fanClubsPopular, ApiEndpoints.fanClubs]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final items = _itemsFromBody(
+          res.data,
+          keys: const ['fanClubs', 'clubs', 'items', 'data', 'results'],
+        );
+        if (items.isEmpty) continue;
+        return items
+            .map(_mapFanClub)
+            .where((c) => c.id.isNotEmpty && c.title.isNotEmpty)
+            .toList();
+      } catch (_) {}
+    }
+    return const [];
+  }
+
+  /// `POST /api/horoscope/daily` — günlük burç yorumu.
+  Future<String?> fetchDailyHoroscope(String zodiacSign) async {
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.horoscopeDaily,
+        data: {'zodiacSign': zodiacSign},
+      );
+      return _horoscopeTextFromBody(res.data);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<List<DailyRewardEntity>> fetchDailyRewards() async {
@@ -414,6 +471,67 @@ class HomeRemoteDataSource {
     final video = _str(m, ['videoUrl', 'video_url', 'playbackUrl']);
     final derived = CanlifalImageUrls.thumbFromVideoUrl(video);
     if (derived != null && derived.isNotEmpty) return derived;
+    return null;
+  }
+
+  HomePageButtonEntity _mapHomepageButton(dynamic raw) {
+    final m = asJsonMap(raw);
+    return HomePageButtonEntity(
+      id: _str(m, ['id', '_id', 'slug']) ?? '',
+      label: _str(m, ['label', 'title', 'name']) ?? '',
+      iconUrl: CanlifalImageUrls.resolve(
+        _str(m, ['iconUrl', 'icon', 'imageUrl', 'image']),
+      ),
+      linkUrl: _str(m, ['linkUrl', 'href', 'route', 'path', 'url']),
+      sortOrder: asInt(pick(m, ['sortOrder', 'order', 'position'])) ?? 0,
+      isActive: m['isActive'] != false && m['isVisible'] != false,
+    );
+  }
+
+  HomeFanClubItem _mapFanClub(dynamic raw) {
+    final m = asJsonMap(raw);
+    final slug = _str(m, ['slug', 'id']);
+    final routeRaw = _str(m, ['route', 'path', 'url']);
+    final route = routeRaw != null && routeRaw.startsWith('/')
+        ? routeRaw
+        : (slug != null && slug.isNotEmpty
+            ? '/fan-club/$slug'
+            : '/fan-club-hub');
+    return HomeFanClubItem(
+      id: _str(m, ['id', '_id', 'slug']) ?? '',
+      title: _str(m, ['title', 'name', 'displayName']) ?? '',
+      subtitle: _str(m, ['subtitle', 'description', 'category']),
+      imageUrl: CanlifalImageUrls.resolve(
+        _str(m, ['imageUrl', 'image', 'coverUrl', 'avatarUrl', 'logoUrl']),
+      ),
+      route: route,
+      memberCount: asInt(
+        pick(m, ['memberCount', 'membersCount', 'followersCount']),
+      ),
+    );
+  }
+
+  String? _horoscopeTextFromBody(dynamic body) {
+    if (body is String) {
+      final t = body.trim();
+      return t.isEmpty ? null : t;
+    }
+    if (body is! Map) return null;
+    final m = asJsonMap(body);
+    final data = m['data'] is Map ? asJsonMap(m['data']) : m;
+    final text = pick(data, [
+      'horoscope',
+      'text',
+      'content',
+      'message',
+      'reading',
+      'summary',
+      'description',
+    ]);
+    if (text != null) {
+      final s = text.toString().trim();
+      if (s.isNotEmpty) return s;
+    }
     return null;
   }
 
