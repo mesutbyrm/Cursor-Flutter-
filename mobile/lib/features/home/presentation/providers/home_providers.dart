@@ -25,6 +25,8 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/domain/entities/voice_room_sort.dart';
 import '../../../live_psychics/domain/entities/psychic_entity.dart';
 import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
+import '../../../live/domain/pk/pk_leaderboard_models.dart';
+import '../../../live/presentation/providers/pk_room_providers.dart';
 import '../../../gifts/data/leaderboard_remote_datasource.dart';
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
 import '../../../platform/presentation/providers/platform_content_providers.dart';
@@ -55,6 +57,7 @@ void invalidateHomeKeepAliveProviders(dynamic ref) {
   ref.invalidate(homeDisplayedPsychicsProvider);
   ref.invalidate(homeGiftLeaderboardProvider);
   ref.invalidate(homeFootballMatchesProvider);
+  ref.invalidate(homePkLeaderboardProvider);
   ref.invalidate(platformStatsProvider);
   invalidateDiscoverLiveStreams(ref);
   invalidateDiscoverVoiceRooms(ref);
@@ -243,6 +246,17 @@ final homeFootballMatchesProvider =
       .toList();
 });
 
+/// Haftalık PK liderleri — `GET /api/pk/leaderboard`.
+final homePkLeaderboardProvider =
+    FutureProvider<List<PkLeaderboardEntry>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  return ref.read(pkRoomRemoteProvider).leaderboard(
+        period: 'weekly',
+        metric: 'score',
+        limit: 10,
+      );
+});
+
 /// Canlı falcılar — boşsa compound/API danışman listesine düşer.
 final homeDisplayedPsychicsProvider =
     FutureProvider<List<PsychicEntity>>((ref) async {
@@ -286,6 +300,7 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(homeDisplayedPsychicsProvider.future),
     ref.refresh(homeGiftLeaderboardProvider.future),
     ref.refresh(homeFootballMatchesProvider.future),
+    ref.refresh(homePkLeaderboardProvider.future),
     ref.refresh(platformStatsProvider.future),
     ref.refresh(referralInfoProvider.future),
     ref.refresh(userDailyTasksProvider.future),

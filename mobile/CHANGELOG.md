@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.183+218 (2026-08-13) — Ana sayfa faz 5: dinamik aksiyonlar, danışmanlar, PK
+
+- **Hızlı erişim:** `HomeQuickActions` ilk 3 `homepage-buttons` ile dinamik; kalan butonlar pill şeridinde
+- **Popüler falcılar:** `HomeAdvisorsRow` canlı danışman şeridi ana sayfaya eklendi
+- **Son girişler:** `GET /api/public-stats` → `recentLogins` yatay önizleme
+- **PK liderleri:** Haftalık top 3 (`GET /api/pk/leaderboard`) → `/pk/leaderboard`
+- **Yenileme:** PK liderliği bootstrap + pull-to-refresh kapsamında
+
 ## 1.0.182+217 (2026-08-13) — Ana sayfa faz 4: davet, hediye liderliği, futbol
 
 - **Davet teaser:** Giriş yapmış kullanıcılar için `GET /api/referral` özet kartı → `/invite-friends`

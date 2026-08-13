@@ -19,6 +19,8 @@ class HomeHomepageButtonsRow extends ConsumerWidget {
       error: (_, _) => const SizedBox.shrink(),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
+        final overflow = items.length > 3 ? items.sublist(3) : const <HomePageButtonEntity>[];
+        if (overflow.isEmpty) return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.fromLTRB(
             HomeApprovedDesign.hPad,
@@ -30,9 +32,9 @@ class HomeHomepageButtonsRow extends ConsumerWidget {
             height: 44,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: items.length,
+              itemCount: overflow.length,
               separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (_, i) => _ButtonChip(button: items[i]),
+              itemBuilder: (_, i) => _ButtonChip(button: overflow[i]),
             ),
           ),
         );
