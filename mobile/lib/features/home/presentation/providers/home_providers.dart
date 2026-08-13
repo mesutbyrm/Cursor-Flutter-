@@ -13,8 +13,10 @@ import '../../data/repositories/home_repository_impl.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_fortune_card_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
+import '../../domain/entities/home_page_button_entity.dart';
 import '../../domain/entities/home_trend_video_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
+import '../../domain/home_site_catalog.dart';
 import '../../domain/repositories/home_repository.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -35,6 +37,8 @@ void invalidateHomeKeepAliveProviders(dynamic ref) {
   ref.invalidate(homeGamesProvider);
   ref.invalidate(homeDailyRewardsProvider);
   ref.invalidate(homeTickerProvider);
+  ref.invalidate(homeHomepageButtonsProvider);
+  ref.invalidate(homeFanClubsProvider);
   invalidateDiscoverLiveStreams(ref);
   invalidateDiscoverVoiceRooms(ref);
   ref.invalidate(homeLiveStreamsProvider);
@@ -164,14 +168,34 @@ final homeTrendVideosProvider =
   return ref.watch(homeRepositoryProvider).fetchTrendVideos();
 });
 
+/// `GET /api/homepage-buttons` — banner altı hızlı erişim.
+final homeHomepageButtonsProvider =
+    FutureProvider<List<HomePageButtonEntity>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  return ref.watch(homeRemoteProvider).fetchHomepageButtons();
+});
+
+/// `GET /api/fan-clubs` — ana sayfa fan kulüpleri.
+final homeFanClubsProvider = FutureProvider<List<HomeFanClubItem>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  final remote = await ref.watch(homeRemoteProvider).fetchFanClubs();
+  if (remote.isNotEmpty) return remote;
+  return HomeSiteCatalog.fanClubs;
+});
+
 /// Tüm ana sayfa verilerini yenile (yalnızca ekranda görünen bölümler).
 Future<void> refreshHomeData(WidgetRef ref) async {
   await NetworkPerf.waitSilent([
     ref.refresh(homeBannersProvider.future),
+    ref.refresh(homeTickerProvider.future),
+    ref.refresh(homeHomepageButtonsProvider.future),
     ref.refresh(homeTrendVideosProvider.future),
     ref.refresh(homeLiveStreamsProvider.future),
     ref.refresh(homeVoiceRoomsProvider.future),
     ref.refresh(homeFortuneCardsProvider.future),
+    ref.refresh(homeGamesProvider.future),
+    ref.refresh(homeDailyRewardsProvider.future),
+    ref.refresh(homeFanClubsProvider.future),
     ref.refresh(socialStoryRingsProvider.future),
   ]).timeout(
     const Duration(seconds: 12),

@@ -51,7 +51,8 @@ abstract final class StartupPerf {
   static const homeHoroscopeSectionDelay = Duration(milliseconds: 400);
   static const homeDiscoverSectionDelay = Duration(milliseconds: 480);
   static const homeGoldSectionDelay = Duration(milliseconds: 640);
-  static const homeGameSectionDelay = Duration(milliseconds: 800);
+  static const homeGameSectionDelay = Duration(milliseconds: 560);
+  static const homeFanClubSectionDelay = Duration(milliseconds: 720);
 }
 
 /// Ekran içi lazy load gecikmeleri — Görev 2.

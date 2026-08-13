@@ -20,6 +20,8 @@ Future<void> prefetchHomeCriticalSections(Ref ref) async {
   // Dalga 1: üstte görünen bölümler (paralel).
   await Future.wait([
     _measureFuture(ref, 'home.banners', homeBannersProvider),
+    _measureFuture(ref, 'home.ticker', homeTickerProvider),
+    _measureFuture(ref, 'home.homepage_buttons', homeHomepageButtonsProvider),
     _measureFuture(ref, 'home.trend_videos', homeTrendVideosProvider),
     _measureFuture(ref, 'home.live_streams', homeLiveStreamsProvider),
   ]);
@@ -31,12 +33,15 @@ Future<void> prefetchHomeCriticalSections(Ref ref) async {
     _measureFuture(ref, 'home.psychics', homeOnlinePsychicsProvider),
   ]);
 
-  // Dalga 3: fal kartları + hikayeler (lazy).
+  // Dalga 3: fal kartları + hikayeler + oyunlar (lazy).
   unawaited(
     Future<void>.delayed(StartupPerf.homeFortuneSectionDelay, () async {
       await Future.wait([
         _measureFuture(ref, 'home.fortune_cards', homeFortuneCardsProvider),
         _measureFuture(ref, 'home.story_rings', socialStoryRingsProvider),
+        _measureFuture(ref, 'home.games', homeGamesProvider),
+        _measureFuture(ref, 'home.daily_rewards', homeDailyRewardsProvider),
+        _measureFuture(ref, 'home.fan_clubs', homeFanClubsProvider),
       ]);
     }),
   );

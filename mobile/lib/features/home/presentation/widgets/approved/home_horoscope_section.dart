@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/images/canlifal_network_image.dart';
 import '../../data/section_visual_catalog.dart';
 import '../../theme/home_approved_design.dart';
+import '../home_horoscope_daily_sheet.dart';
 import 'home_section_title.dart';
 
 /// Web ana sayfa — günlük burç şeridi (12 burç).
-class HomeHoroscopeSection extends StatelessWidget {
+class HomeHoroscopeSection extends ConsumerWidget {
   const HomeHoroscopeSection({super.key});
 
   static const signs = <(String name, String glyph, Color primary, Color secondary)>[
@@ -26,7 +28,7 @@ class HomeHoroscopeSection extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
         HomeSectionTitle(
@@ -50,7 +52,12 @@ class HomeHoroscopeSection extends StatelessWidget {
                 primary: primary,
                 secondary: secondary,
                 imageUrl: SectionVisualCatalog.horoscopeFor(name),
-                onTap: () => context.push('/fortune/yildiz-haritasi'),
+                onTap: () => showHomeHoroscopeDailySheet(
+                  context,
+                  ref,
+                  signName: name,
+                  glyph: glyph,
+                ),
               );
             },
           ),

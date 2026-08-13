@@ -6,6 +6,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../fortune/domain/entities/fortune_type_entity.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_fortune_card_entity.dart';
+import '../../domain/entities/home_page_button_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -20,6 +21,7 @@ class MobileHomeBundle {
     this.fortuneCards = const [],
     this.banners = const [],
     this.advisors = const [],
+    this.homepageButtons = const [],
     this.unreadNotifications,
     this.raw = const {},
   });
@@ -29,6 +31,7 @@ class MobileHomeBundle {
   final List<HomeFortuneCardEntity> fortuneCards;
   final List<HomeBannerEntity> banners;
   final List<OnlineAdvisorEntity> advisors;
+  final List<HomePageButtonEntity> homepageButtons;
   final int? unreadNotifications;
   final Map<String, dynamic> raw;
 
@@ -48,6 +51,9 @@ class MobileHomeBundle {
           .toList(growable: false),
       advisors: _mapList(json['liveTellers'], _mapLiveTeller)
           .where((a) => a.id.isNotEmpty)
+          .toList(growable: false),
+      homepageButtons: _mapList(json['homepageButtons'], _mapHomepageButton)
+          .where((b) => b.id.isNotEmpty && b.isActive)
           .toList(growable: false),
       unreadNotifications: _int(
         json['user'] is Map ? asJsonMap(json['user'])['unreadNotifications'] : null,
@@ -245,6 +251,19 @@ OnlineAdvisorEntity _mapLiveTeller(Map<String, dynamic> m) {
     rating: (m['rating'] as num?)?.toDouble() ?? 0,
     viewerCount: 0,
     specialties: specialties,
+  );
+}
+
+HomePageButtonEntity _mapHomepageButton(Map<String, dynamic> m) {
+  return HomePageButtonEntity(
+    id: m['id']?.toString() ?? '',
+    label: _str(m, ['label', 'title', 'name']) ?? '',
+    iconUrl: CanlifalImageUrls.resolve(
+      _str(m, ['iconUrl', 'icon', 'imageUrl', 'image']),
+    ),
+    linkUrl: _str(m, ['linkUrl', 'href', 'route', 'path', 'url']),
+    sortOrder: _int(m['sortOrder'] ?? m['order']) ?? 0,
+    isActive: m['isActive'] != false && m['isVisible'] != false,
   );
 }
 

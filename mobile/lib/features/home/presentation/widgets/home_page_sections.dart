@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
-import '../theme/home_approved_design.dart';
 import 'approved/discover_section.dart';
+import 'approved/fan_club_section.dart';
 import 'approved/fortune_section.dart';
 import 'approved/gold_section.dart';
 import 'approved/home_header.dart';
@@ -14,7 +14,11 @@ import 'approved/stories_section.dart';
 import 'approved/trending_video_section.dart';
 import 'approved/voice_room_section.dart';
 import 'home_banner_carousel.dart';
+import 'home_daily_missions_teaser.dart';
 import 'home_deferred_section.dart';
+import 'home_games_row.dart';
+import 'home_homepage_buttons_row.dart';
+import 'home_ticker_strip.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 
 /// Ana sayfa bölümleri — küçük widget'lar, RepaintBoundary ile izole repaint.
@@ -22,6 +26,7 @@ abstract final class HomePageSections {
   static List<Widget> slivers({required double bottomInset}) {
     return [
       const SliverToBoxAdapter(child: RepaintBoundary(child: HomeHeader())),
+      const SliverToBoxAdapter(child: RepaintBoundary(child: HomeTickerStrip())),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeBannerDelay,
@@ -29,25 +34,21 @@ abstract final class HomePageSections {
         ),
       ),
       const SliverToBoxAdapter(
-        child: RepaintBoundary(child: HomeQuickActions()),
+        child: RepaintBoundary(child: HomeHomepageButtonsRow()),
       ),
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: Text(
-            'Keşfet',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: HomeApprovedDesign.textPrimary,
-            ),
-          ),
-        ),
+      const SliverToBoxAdapter(
+        child: RepaintBoundary(child: HomeQuickActions()),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeTrendingSectionDelay,
           child: TrendingVideoSection(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeStoriesSectionDelay,
+          child: StoriesSection(),
         ),
       ),
       const SliverToBoxAdapter(
@@ -82,8 +83,20 @@ abstract final class HomePageSections {
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
-          delay: StartupPerf.homeStoriesSectionDelay,
-          child: StoriesSection(),
+          delay: StartupPerf.homeGameSectionDelay,
+          child: HomeGamesRow(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeGameSectionDelay,
+          child: HomeDailyMissionsTeaser(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeFanClubSectionDelay,
+          child: FanClubSection(),
         ),
       ),
       const SliverToBoxAdapter(
