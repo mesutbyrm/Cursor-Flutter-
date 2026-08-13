@@ -8,9 +8,11 @@ import '../../../../core/util/json_util.dart';
 import '../models/mobile_compound_models.dart';
 import 'mobile_compound_remote_datasource.dart';
 import '../../domain/entities/home_banner_entity.dart';
+import '../../domain/entities/home_blog_post_entity.dart';
 import '../../domain/entities/home_fortune_card_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
 import '../../domain/entities/home_page_button_entity.dart';
+import '../../domain/entities/home_trend_topic_entity.dart';
 import '../../domain/entities/home_trend_video_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 import '../../domain/home_site_catalog.dart';
@@ -161,6 +163,43 @@ class HomeRemoteDataSource {
     } catch (_) {
       return const [];
     }
+  }
+
+  /// `GET /api/trends` — trend konular.
+  Future<List<HomeTrendTopicEntity>> fetchTrendingTopics() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.trends);
+      final items = _itemsFromBody(
+        res.data,
+        keys: const ['trends', 'topics', 'tags', 'items', 'data'],
+      );
+      return items
+          .map(_mapTrendTopic)
+          .where((t) => t.tag.trim().isNotEmpty)
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// `GET /api/blog/recent` — son blog yazıları.
+  Future<List<HomeBlogPostEntity>> fetchBlogRecent() async {
+    for (final path in [ApiEndpoints.blogRecent, ApiEndpoints.blog]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final items = _itemsFromBody(
+          res.data,
+          keys: const ['posts', 'blogs', 'items', 'data', 'results'],
+        );
+        if (items.isEmpty) continue;
+        return items
+            .map(_mapBlogPost)
+            .where((p) => p.id.isNotEmpty && p.title.isNotEmpty)
+            .take(8)
+            .toList();
+      } catch (_) {}
+    }
+    return const [];
   }
 
   /// `GET /api/celebrities` — ana sayfa ünlüler şeridi.
@@ -505,6 +544,46 @@ class HomeRemoteDataSource {
       linkUrl: _str(m, ['linkUrl', 'href', 'route', 'path', 'url']),
       sortOrder: asInt(pick(m, ['sortOrder', 'order', 'position'])) ?? 0,
       isActive: m['isActive'] != false && m['isVisible'] != false,
+    );
+  }
+
+  HomeTrendTopicEntity _mapTrendTopic(dynamic raw) {
+    final m = asJsonMap(raw);
+    final tag = _str(m, ['tag', 'name', 'title', 'label', 'topic']) ?? '';
+    final views = pick(m, ['views', 'viewCount', 'count', 'posts']);
+    var viewsLabel = _str(m, ['viewsLabel', 'viewsText']);
+    if (viewsLabel == null && views is num && views > 0) {
+      viewsLabel = views >= 1000
+          ? '${(views / 1000).toStringAsFixed(1)}K'
+          : '$views';
+    }
+    final slug = _str(m, ['slug', 'id']);
+    final routeRaw = _str(m, ['route', 'path', 'url']);
+    final route = routeRaw != null && routeRaw.startsWith('/')
+        ? routeRaw
+        : (slug != null && slug.isNotEmpty ? '/shorts?tag=$slug' : '/shorts');
+    return HomeTrendTopicEntity(
+      tag: tag.startsWith('#') ? tag : '#$tag',
+      viewsLabel: viewsLabel,
+      route: route,
+    );
+  }
+
+  HomeBlogPostEntity _mapBlogPost(dynamic raw) {
+    final m = asJsonMap(raw);
+    final slug = _str(m, ['slug', 'id']);
+    final routeRaw = _str(m, ['route', 'path', 'url', 'href']);
+    final route = routeRaw != null && routeRaw.startsWith('/')
+        ? routeRaw
+        : (slug != null && slug.isNotEmpty ? '/blog/$slug' : '/blog-hub');
+    return HomeBlogPostEntity(
+      id: _str(m, ['id', '_id', 'slug']) ?? '',
+      title: _str(m, ['title', 'name', 'headline']) ?? '',
+      excerpt: _str(m, ['excerpt', 'summary', 'description', 'subtitle']),
+      imageUrl: CanlifalImageUrls.resolve(
+        _str(m, ['imageUrl', 'image', 'coverUrl', 'thumbnail']),
+      ),
+      route: route,
     );
   }
 

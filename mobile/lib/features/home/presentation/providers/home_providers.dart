@@ -13,7 +13,9 @@ import '../../data/repositories/home_repository_impl.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_fortune_card_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
+import '../../domain/entities/home_blog_post_entity.dart';
 import '../../domain/entities/home_page_button_entity.dart';
+import '../../domain/entities/home_trend_topic_entity.dart';
 import '../../domain/entities/home_trend_video_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 import '../../domain/home_site_catalog.dart';
@@ -21,6 +23,7 @@ import '../../domain/repositories/home_repository.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/domain/entities/voice_room_sort.dart';
+import '../../../live_psychics/domain/entities/psychic_entity.dart';
 import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../feed/presentation/providers/platform_stats_providers.dart';
@@ -43,6 +46,10 @@ void invalidateHomeKeepAliveProviders(dynamic ref) {
   ref.invalidate(homeHomepageButtonsProvider);
   ref.invalidate(homeFanClubsProvider);
   ref.invalidate(homeCelebritiesProvider);
+  ref.invalidate(homeTrendTopicsProvider);
+  ref.invalidate(homeBlogRecentProvider);
+  ref.invalidate(homeDisplayedPsychicsProvider);
+  ref.invalidate(platformStatsProvider);
   invalidateDiscoverLiveStreams(ref);
   invalidateDiscoverVoiceRooms(ref);
   ref.invalidate(homeLiveStreamsProvider);
@@ -193,6 +200,43 @@ final homeCelebritiesProvider = FutureProvider<List<HomeFanClubItem>>((ref) asyn
   return ref.watch(homeRemoteProvider).fetchCelebrities();
 });
 
+/// `GET /api/trends` — trend konu etiketleri.
+final homeTrendTopicsProvider =
+    FutureProvider<List<HomeTrendTopicEntity>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  return ref.watch(homeRemoteProvider).fetchTrendingTopics();
+});
+
+/// `GET /api/blog/recent` — blog önizleme kartları.
+final homeBlogRecentProvider =
+    FutureProvider<List<HomeBlogPostEntity>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  return ref.watch(homeRemoteProvider).fetchBlogRecent();
+});
+
+/// Canlı falcılar — boşsa compound/API danışman listesine düşer.
+final homeDisplayedPsychicsProvider =
+    FutureProvider<List<PsychicEntity>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  final psychics = await ref.watch(homeOnlinePsychicsProvider.future);
+  if (psychics.isNotEmpty) return psychics;
+  final advisors = await ref.watch(homeAdvisorsProvider.future);
+  return advisors
+      .map(
+        (a) => PsychicEntity(
+          id: a.id,
+          name: a.name,
+          avatarUrl: a.avatarUrl,
+          isOnline: a.isOnline,
+          rating: a.rating,
+          specialties: a.specialties,
+          category: a.category,
+        ),
+      )
+      .where((p) => p.id.isNotEmpty)
+      .toList();
+});
+
 /// Tüm ana sayfa verilerini yenile (yalnızca ekranda görünen bölümler).
 Future<void> refreshHomeData(WidgetRef ref) async {
   ref.read(homeRemoteProvider).invalidateMobileHomeCache();
@@ -201,6 +245,8 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(homeTickerProvider.future),
     ref.refresh(homeHomepageButtonsProvider.future),
     ref.refresh(homeTrendVideosProvider.future),
+    ref.refresh(homeTrendTopicsProvider.future),
+    ref.refresh(homeBlogRecentProvider.future),
     ref.refresh(homeLiveStreamsProvider.future),
     ref.refresh(homeVoiceRoomsProvider.future),
     ref.refresh(homeFortuneCardsProvider.future),
@@ -208,7 +254,7 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(homeDailyRewardsProvider.future),
     ref.refresh(homeFanClubsProvider.future),
     ref.refresh(homeCelebritiesProvider.future),
-    ref.refresh(homeOnlinePsychicsProvider.future),
+    ref.refresh(homeDisplayedPsychicsProvider.future),
     ref.refresh(platformStatsProvider.future),
     ref.refresh(userDailyTasksProvider.future),
     ref.refresh(socialStoryRingsProvider.future),

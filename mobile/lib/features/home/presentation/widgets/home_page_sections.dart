@@ -15,6 +15,7 @@ import 'approved/stories_section.dart';
 import 'approved/trending_video_section.dart';
 import 'approved/voice_room_section.dart';
 import 'home_banner_carousel.dart';
+import 'home_blog_recent_section.dart';
 import 'home_daily_missions_teaser.dart';
 import 'home_deferred_section.dart';
 import 'home_games_row.dart';
@@ -22,6 +23,7 @@ import 'home_game_center_section.dart';
 import 'home_homepage_buttons_row.dart';
 import 'home_platform_stats_strip.dart';
 import 'home_ticker_strip.dart';
+import 'home_trending_topics_section.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 
 /// Ana sayfa bölümleri — küçük widget'lar, RepaintBoundary ile izole repaint.
@@ -49,6 +51,12 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homeTrendingSectionDelay,
           child: TrendingVideoSection(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeTrendingSectionDelay,
+          child: HomeTrendingTopicsSection(),
         ),
       ),
       const SliverToBoxAdapter(
@@ -121,6 +129,12 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homeHoroscopeSectionDelay,
           child: HomeHoroscopeSection(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeDiscoverSectionDelay,
+          child: HomeBlogRecentSection(),
         ),
       ),
       const SliverToBoxAdapter(

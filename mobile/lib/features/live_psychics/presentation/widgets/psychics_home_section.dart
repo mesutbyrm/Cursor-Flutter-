@@ -7,7 +7,7 @@ import 'package:canlifal_social/core/ui/premium/premium_skeleton.dart';
 import 'package:canlifal_social/features/home/presentation/theme/home_approved_design.dart';
 import 'package:canlifal_social/features/home/presentation/widgets/approved/home_section_title.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_entity.dart';
-import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
+import '../../../home/presentation/providers/home_providers.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 /// Ana sayfa — çevrimiçi falcılar yatay liste (premium kart).
@@ -16,7 +16,7 @@ class PsychicsHomeSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final psychics = ref.watch(homeOnlinePsychicsProvider);
+    final psychics = ref.watch(homeDisplayedPsychicsProvider);
 
     return psychics.when(
       loading: () => Column(
