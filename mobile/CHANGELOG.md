@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.187+222 (2026-08-13) — Ana sayfa faz 9: birleşik şeritler
+
+- **Liderlik tabloları:** Hediye, PK ve ajans önizlemeleri tek sekmeli `HomeLeaderboardsSection` altında
+- **Sosyal şerit:** Son girişler + seni beğenenler tek `HomeSocialStripSection` (girişte beğenenler sekmesi)
+- **Temizlik:** Kullanılmayan `HomeFanClubRow` kaldırıldı
+- **Test:** Ajans ve PK liderlik entity parse testleri eklendi
+
 ## 1.0.186+221 (2026-08-13) — Ana sayfa faz 8: fal türleri, popup duyuru
 
 - **Fal türleri:** `GET /api/fortune-request-types` yatay chip şeridi
