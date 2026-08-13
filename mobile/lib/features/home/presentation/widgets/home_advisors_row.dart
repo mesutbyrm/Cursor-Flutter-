@@ -8,8 +8,9 @@ import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 import '../providers/home_providers.dart';
+import '../theme/home_approved_design.dart';
 import '../theme/home_palette.dart';
-import 'home_section_header.dart';
+import 'approved/home_section_title.dart';
 
 class HomeAdvisorsRow extends ConsumerWidget {
   const HomeAdvisorsRow({super.key});
@@ -21,16 +22,17 @@ class HomeAdvisorsRow extends ConsumerWidget {
     return advisors.when(
       loading: () => Column(
         children: [
-          const HomeSectionHeader(
+          const HomeSectionTitle(
+            emoji: '🔮',
             title: 'Popüler Falcılar',
-            subtitle: 'Çevrimiçi uzmanlar',
-            leadingDotColor: HomePalette.primary,
           ),
           SizedBox(
             height: 150,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(
+                horizontal: HomeApprovedDesign.hPad,
+              ),
               itemCount: 4,
               separatorBuilder: (_, _) => const SizedBox(width: 12),
               itemBuilder: (_, _) => const PremiumSkeleton(
@@ -49,17 +51,19 @@ class HomeAdvisorsRow extends ConsumerWidget {
         if (list.isEmpty) return const SizedBox.shrink();
         return Column(
           children: [
-            HomeSectionHeader(
+            HomeSectionTitle(
+              emoji: '🔮',
               title: 'Popüler Falcılar',
-              subtitle: 'Çevrimiçi uzmanlar',
-              leadingDotColor: HomePalette.primary,
-              onTrailing: () => context.push('/search'),
+              actionLabel: 'Ara >',
+              onAction: () => context.push('/search'),
             ),
             SizedBox(
               height: 158,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: HomeApprovedDesign.hPad,
+                ),
                 itemCount: list.length.clamp(0, 12),
                 separatorBuilder: (_, _) => const SizedBox(width: 12),
                 itemBuilder: (_, i) => _AdvisorCard(advisor: list[i]),

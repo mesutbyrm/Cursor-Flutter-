@@ -19,8 +19,7 @@ import 'home_blog_recent_section.dart';
 import 'home_deferred_section.dart';
 import 'home_football_section.dart';
 import 'home_fortune_request_types_section.dart';
-import 'home_games_row.dart';
-import 'home_game_center_section.dart';
+import 'home_games_section.dart';
 import 'home_growth_teasers_section.dart';
 import 'home_leaderboards_section.dart';
 import 'home_platform_stats_section.dart';
@@ -150,18 +149,12 @@ abstract final class HomePageSections {
           child: MoreFortunesButton(),
         ),
       ),
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeGameSectionDelay,
-          child: HomeGamesRow(),
-        ),
-      ),
       SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeGameSectionDelay,
           child: HomeViewportSection(
-            estimatedHeight: 160,
-            child: HomeGameCenterSection(),
+            estimatedHeight: 280,
+            child: HomeGamesSection(),
           ),
         ),
       ),

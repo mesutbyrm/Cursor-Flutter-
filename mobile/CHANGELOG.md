@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.190+225 (2026-08-13) — Ana sayfa faz 12: başlık birliği, oyunlar birleşik
+
+- **Başlık stili:** `HomeSectionHeader` kaldırıldı; danışmanlar ve oyunlar `HomeSectionTitle` kullanıyor
+- **Oyunlar:** `HomeGamesRow` + `HomeGameCenterSection` → tek `HomeGamesSection`
+- **Dokümantasyon:** `docs/HOME_PAGE_SECTIONS.md` güncellendi (30 bölüm)
+
 ## 1.0.189+224 (2026-08-13) — Ana sayfa faz 11: yetim widget temizliği
 
 - **Temizlik:** 12 kullanılmayan ana sayfa widget dosyası kaldırıldı (eski mockup / yinelenen sürümler)

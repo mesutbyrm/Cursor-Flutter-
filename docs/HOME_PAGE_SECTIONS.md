@@ -1,7 +1,7 @@
 # Ana sayfa bölüm envanteri
 
 Kayıt: `mobile/lib/features/home/presentation/widgets/home_page_sections.dart`  
-Sürüm notları: `mobile/CHANGELOG.md` (faz 1–11)
+Sürüm notları: `mobile/CHANGELOG.md` (faz 1–12)
 
 ## Yükleme katmanları
 
@@ -37,24 +37,24 @@ Yenileme: `refreshHomeData()` + `invalidateHomeKeepAliveProviders()` (`home_prov
 | 18 | `HomeFortuneRequestTypesSection` | `GET /api/fortune-request-types` | deferred |
 | 19 | `HomeOnlineFalSection` | `GET /api/online-fal` | deferred + viewport |
 | 20 | `MoreFortunesButton` | Fal hub yönlendirme | deferred |
-| 21 | `HomeGamesRow` | `GET /api/games` | deferred |
-| 22 | `HomeGameCenterSection` | Oyun liderliği önizleme | deferred + viewport |
-| 23 | `HomeLeaderboardsSection` | Hediye / PK / ajans liderliği | deferred + viewport |
-| 24 | `HomeGrowthTeasersSection` | Görevler, davet, reklam | deferred + viewport |
-| 25 | `HomeCelebritiesSection` | `GET /api/celebrities` | deferred + viewport |
-| 26 | `FanClubSection` | `GET /api/fan-clubs` | deferred + viewport |
-| 27 | `HomeFootballSection` | `GET /api/football` | deferred + viewport |
-| 28 | `HomeHoroscopeSection` | `POST /api/horoscope/daily` | deferred + viewport |
-| 29 | `HomeBlogRecentSection` | `GET /api/blog/recent` | deferred + viewport |
-| 30 | `DiscoverSection` | Keşfet kartları | deferred + viewport |
-| 31 | `GoldSection` | Gold üyelikler | deferred + viewport |
+| 21 | `HomeGamesSection` | `GET /api/games`, oyun merkezi, liderlik | deferred + viewport |
+| 22 | `HomeLeaderboardsSection` | Hediye / PK / ajans liderliği | deferred + viewport |
+| 23 | `HomeGrowthTeasersSection` | Görevler, davet, reklam | deferred + viewport |
+| 24 | `HomeCelebritiesSection` | `GET /api/celebrities` | deferred + viewport |
+| 25 | `FanClubSection` | `GET /api/fan-clubs` | deferred + viewport |
+| 26 | `HomeFootballSection` | `GET /api/football` | deferred + viewport |
+| 27 | `HomeHoroscopeSection` | `POST /api/horoscope/daily` | deferred + viewport |
+| 28 | `HomeBlogRecentSection` | `GET /api/blog/recent` | deferred + viewport |
+| 29 | `DiscoverSection` | Keşfet kartları | deferred + viewport |
+| 30 | `GoldSection` | Gold üyelikler | deferred + viewport |
 
-## Birleştirilmiş bölümler (faz 9–10)
+## Birleştirilmiş bölümler (faz 9–12)
 
 - **Liderlik:** `HomeGiftLeaderboardSection` + `HomePkLeaderboardSection` + `HomeAgencyLeaderboardSection` → `HomeLeaderboardsSection`
 - **Sosyal:** `HomeRecentLoginsSection` + `HomeUserLikersSection` → `HomeSocialStripSection`
 - **İstatistik:** `HomePlatformStatsStrip` + `HomePlatformStatsGrid` → `HomePlatformStatsSection`
 - **Büyüme:** `HomeDailyMissionsTeaser` + `HomeInviteReferralTeaser` + `HomeWatchAdTeaser` → `HomeGrowthTeasersSection`
+- **Oyunlar:** `HomeGamesRow` + `HomeGameCenterSection` → `HomeGamesSection` (faz 12)
 
 ## Kaldırılan / kullanılmayan (faz 11)
 
@@ -74,7 +74,6 @@ Eski mockup veya yinelenen widget'lar silindi; yerine `approved/` altındaki sü
 
 | Dosya | Kullanım |
 |-------|----------|
-| `home_section_header.dart` | Oyunlar, danışmanlar, oyun merkezi başlıkları |
+| `approved/home_section_title.dart` | Tüm bölüm başlıkları (emoji + aksiyon) |
 | `home_mystic_cover.dart` | Trend video ve premium kart kapakları |
 | `premium_2026/premium_home_glass_card.dart` | Keşfet ve Gold kartları |
-| `approved/home_section_title.dart` | Birleşik şerit başlıkları |
