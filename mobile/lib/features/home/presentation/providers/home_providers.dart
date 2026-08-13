@@ -29,10 +29,13 @@ import '../../../live/domain/pk/pk_leaderboard_models.dart';
 import '../../../live/presentation/providers/pk_room_providers.dart';
 import '../../../gifts/data/leaderboard_remote_datasource.dart';
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
+import '../../../agency/domain/entities/agency_leaderboard_entry.dart';
+import '../../../agency/presentation/providers/agency_providers.dart';
 import '../../../platform/presentation/providers/platform_content_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../feed/presentation/providers/platform_stats_providers.dart';
 import '../../domain/entities/home_football_match_entity.dart';
+import '../../domain/entities/home_online_fal_entity.dart';
 import '../../../voice_hub/domain/voice_official_join.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../../../voice_hub/presentation/providers/voice_rooms_presence_provider.dart';
@@ -58,6 +61,8 @@ void invalidateHomeKeepAliveProviders(dynamic ref) {
   ref.invalidate(homeGiftLeaderboardProvider);
   ref.invalidate(homeFootballMatchesProvider);
   ref.invalidate(homePkLeaderboardProvider);
+  ref.invalidate(homeOnlineFalProvider);
+  ref.invalidate(homeAgencyLeaderboardProvider);
   ref.invalidate(platformStatsProvider);
   invalidateDiscoverLiveStreams(ref);
   invalidateDiscoverVoiceRooms(ref);
@@ -246,6 +251,26 @@ final homeFootballMatchesProvider =
       .toList();
 });
 
+/// Online fal bölümleri — `GET /api/online-fal`.
+final homeOnlineFalProvider =
+    FutureProvider<List<HomeOnlineFalEntity>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  final raw =
+      await ref.watch(platformContentRemoteDataSourceProvider).fetchOnlineFal();
+  return raw
+      .map(HomeOnlineFalEntity.fromJson)
+      .where((s) => s.isValid)
+      .take(8)
+      .toList();
+});
+
+/// Ajans liderlik tablosu — `GET /api/agency/leaderboard`.
+final homeAgencyLeaderboardProvider =
+    FutureProvider<List<AgencyLeaderboardEntry>>((ref) async {
+  _keepHomeCacheAlive(ref);
+  return ref.read(agencyRemoteProvider).fetchLeaderboard(limit: 10);
+});
+
 /// Haftalık PK liderleri — `GET /api/pk/leaderboard`.
 final homePkLeaderboardProvider =
     FutureProvider<List<PkLeaderboardEntry>>((ref) async {
@@ -301,6 +326,8 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(homeGiftLeaderboardProvider.future),
     ref.refresh(homeFootballMatchesProvider.future),
     ref.refresh(homePkLeaderboardProvider.future),
+    ref.refresh(homeOnlineFalProvider.future),
+    ref.refresh(homeAgencyLeaderboardProvider.future),
     ref.refresh(platformStatsProvider.future),
     ref.refresh(referralInfoProvider.future),
     ref.refresh(userDailyTasksProvider.future),

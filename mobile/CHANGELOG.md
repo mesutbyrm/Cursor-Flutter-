@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.184+219 (2026-08-13) — Ana sayfa faz 6: istatistik ızgarası, online fal, ajans
+
+- **Canlı istatistik ızgarası:** Oyun, sosyal, fal ve giriş metrikleri (`GET /api/public-stats`) → `/profile/broadcaster-stats`
+- **Online fal:** `GET /api/online-fal` yatay bölüm kartları → canlı falcılar
+- **Ajans liderleri:** Top 3 önizleme (`GET /api/agency/leaderboard`) → ajans paneli
+- **Yenileme:** Online fal ve ajans liderliği bootstrap + pull-to-refresh kapsamında
+
 ## 1.0.183+218 (2026-08-13) — Ana sayfa faz 5: dinamik aksiyonlar, danışmanlar, PK
 
 - **Hızlı erişim:** `HomeQuickActions` ilk 3 `homepage-buttons` ile dinamik; kalan butonlar pill şeridinde
