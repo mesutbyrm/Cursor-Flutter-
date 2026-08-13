@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.180+215 (2026-08-13) — Ana sayfa devam: ünlüler, istatistik, oyun merkezi
+
+- **Canlı istatistik:** `GET /api/public-stats` — arama altı kompakt çevrimiçi / canlı / sesli şerit
+- **Ünlüler:** `GET /api/celebrities` yatay kart şeridi
+- **Oyun Merkezi:** `HomeGameCenterSection` — liderlik önizlemesi + CTA
+- **Keşfet:** Blog, rüyalar, ünlüler ve oyunlar kartları eklendi
+- **Yenileme:** Compound cache invalidation; falcılar, görevler ve platform stats refresh
+- **Ticker:** Çoklu satırda timer yeniden oluşturma hatası düzeltildi
+
 ## 1.0.179+214 (2026-08-13) — Ana sayfa eksikleri tamamlandı
 
 - **Homepage butonları:** `GET /api/homepage-buttons` + compound parse; banner altı hızlı erişim şeridi
