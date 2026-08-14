@@ -55,6 +55,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
 
   Future<void> _refresh() async {
     ref.invalidate(paymentConfigProvider);
+    ref.invalidate(paymentMethodsProvider);
     ref.refreshWalletCache(force: true);
     await ref.read(paymentRequestsNotifierProvider.notifier).refresh();
   }

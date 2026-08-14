@@ -56,6 +56,7 @@ class MembershipPackageEntity {
 
   bool get isGold => id == 'gold';
   bool get isDiamond => id == 'diamond';
+  bool get isSvip => id == 'svip' || id == 'super_vip';
 }
 
 class MembershipCatalogEntity {

@@ -13,9 +13,11 @@ class MembershipFeatureTable extends StatelessWidget {
 
   final MembershipTierId selectedTier;
 
-  static const _headers = ['Basic', 'Gold', 'Premium', 'Diamond'];
+  static const _headers = ['Basic', 'Gold', 'Premium', 'Diamond', 'SVIP'];
 
-  int get _selectedCol => selectedTier.index;
+  int get _columnCount => MembershipCatalogData.tiers.length;
+
+  int get _selectedCol => selectedTier.index.clamp(0, _columnCount - 1);
 
   @override
   Widget build(BuildContext context) {
@@ -23,8 +25,8 @@ class MembershipFeatureTable extends StatelessWidget {
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 420;
         final labelW = compact ? 108.0 : 140.0;
-        final colW = ((constraints.maxWidth - labelW - 24) / 4)
-            .clamp(compact ? 52.0 : 64.0, 96.0);
+        final colW = ((constraints.maxWidth - labelW - 24) / _columnCount)
+            .clamp(compact ? 48.0 : 56.0, 88.0);
 
         return Container(
           decoration: BoxDecoration(
@@ -53,7 +55,7 @@ class MembershipFeatureTable extends StatelessWidget {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: SizedBox(
-                  width: labelW + colW * 4 + 24,
+                  width: labelW + colW * _columnCount + 24,
                   child: Column(
                     children: [
                       _HeaderRow(

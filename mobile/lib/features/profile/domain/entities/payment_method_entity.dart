@@ -49,4 +49,17 @@ class PaymentMethodEntity {
         .toList();
     return parsed.isEmpty ? defaults : parsed;
   }
+
+  /// CFC / jeton checkout — bilinen kanal kimliği.
+  static String normalizeCheckoutMethodId(String id) {
+    return switch (id.toLowerCase().trim()) {
+      'bank' || 'havale' || 'iban' => 'bank_transfer',
+      _ => id.toLowerCase().trim(),
+    };
+  }
+
+  static bool isKnownCheckoutMethod(String id) {
+    final k = normalizeCheckoutMethodId(id);
+    return k == 'whatsapp' || k == 'papara' || k == 'bank_transfer';
+  }
 }

@@ -7,9 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/config/payment_defaults.dart';
-import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/network/dio_provider.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../profile/data/jeton_packages_catalog.dart';
 import '../../../profile/domain/entities/jeton_package_entity.dart';
@@ -275,10 +273,9 @@ class MembershipPage extends ConsumerWidget {
 
     if (wallet != null && priceJeton > 0 && wallet.jeton >= priceJeton) {
       try {
-        await ref.read(dioProvider).safePost<Map<String, dynamic>>(
-          ApiEndpoints.membershipPurchase,
-          data: {'planId': tier.resolvedPlanId},
-        );
+        await ref.read(membershipRemoteProvider).purchaseMembership(
+              tier.resolvedPlanId,
+            );
         await ref.read(membershipControllerProvider.notifier).refresh();
         await refreshMembershipAfterPurchase(ref);
         if (context.mounted) {
@@ -316,7 +313,7 @@ class MembershipPage extends ConsumerWidget {
       package: jetonPkg,
       priceText: '₺${tier.monthlyPriceTry} (${tier.monthlyTokens} jeton/ay)',
       paymentNotes:
-          'Gold üyelik · ${tier.title} · 30 gün · ${tier.monthlyTokens} jeton',
+          'Üyelik · ${tier.title} · 30 gün · ${tier.monthlyTokens} jeton',
       onDone: () {
         ref.invalidate(membershipCatalogProvider);
         ref.refreshWalletCache(force: true);

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../core/network/api_endpoints.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import '../../wallet/domain/wallet_balances.dart';
@@ -25,6 +26,18 @@ class MembershipRemoteDataSource {
       } catch (_) {}
     }
     return _fallbackCatalog(wallet);
+  }
+
+  /// `POST /api/memberships/purchase` — kılavuz §9 `{planId}`.
+  Future<void> purchaseMembership(String planId) async {
+    final id = planId.trim();
+    if (id.isEmpty) {
+      throw const ApiException('Plan kimliği boş');
+    }
+    await _dio.safePost<Map<String, dynamic>>(
+      ApiEndpoints.membershipPurchase,
+      data: {'planId': id},
+    );
   }
 
   MembershipCatalogEntity? _parseResponse(dynamic data, WalletBalances wallet) {

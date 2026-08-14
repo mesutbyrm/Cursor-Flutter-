@@ -68,8 +68,13 @@ class MembershipUiState {
   }
 
   String? _planIdFor(String wireId) {
+    final key = wireId.toLowerCase();
     for (final p in apiPackages) {
-      if (p.id.toLowerCase() == wireId) return p.planId;
+      final pid = p.id.toLowerCase();
+      if (pid == key) return p.planId;
+      if (key == 'svip' && (pid == 'super_vip' || pid == 'svip')) {
+        return p.planId;
+      }
     }
     return null;
   }
@@ -134,7 +139,8 @@ class MembershipController extends Notifier<MembershipUiState> {
         final selected = switch (cur) {
           'gold' => MembershipTierId.gold,
           'premium' => MembershipTierId.premium,
-          'diamond' || 'svip' || 'super_vip' => MembershipTierId.diamond,
+          'diamond' => MembershipTierId.diamond,
+          'svip' || 'super_vip' => MembershipTierId.svip,
           'basic' || 'free' || '' => MembershipTierId.basic,
           _ => MembershipTierId.gold,
         };

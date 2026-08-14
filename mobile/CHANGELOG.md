@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.201+237 (2026-08-14) — Profil üyelik faz 11
+
+- **SVIP katalog:** Üyelik planları, özellik tablosu ve fallback paketler
+- **Satın alma:** `POST /api/memberships/purchase` — `MembershipRemoteDataSource.purchaseMembership`
+- **CFC checkout:** Dinamik ödeme kanalları (`paymentMethodsProvider`)
+- **Plan kimliği:** SVIP / `super_vip` alias eşlemesi
+- **Test:** `membership_model_test.dart`
+
 ## 1.0.200+236 (2026-08-14) — Profil üyelik faz 10 (düzeltme)
 
 - **CI:** Sosyal akış import yolları ve `PaymentConfigEntity` import düzeltmesi

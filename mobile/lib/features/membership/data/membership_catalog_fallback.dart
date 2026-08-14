@@ -38,5 +38,6 @@ List<MembershipPackageEntity> fallbackMembershipPackages({
     tier(id: 'gold', title: 'Gold', priceTry: 1000, monthlyTokens: 1500),
     tier(id: 'premium', title: 'Premium', priceTry: 1500, monthlyTokens: 3500),
     tier(id: 'diamond', title: 'Diamond', priceTry: 2500, monthlyTokens: 7500),
+    tier(id: 'svip', title: 'SVIP', priceTry: 3500, monthlyTokens: 10000),
   ];
 }

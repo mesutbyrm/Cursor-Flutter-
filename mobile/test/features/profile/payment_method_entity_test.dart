@@ -40,6 +40,15 @@ void main() {
       expect(list.first.id, 'whatsapp');
       expect(list.last.id, 'papara');
     });
+
+    test('normalizeCheckoutMethodId havale alias', () {
+      expect(
+        PaymentMethodEntity.normalizeCheckoutMethodId('havale'),
+        'bank_transfer',
+      );
+      expect(PaymentMethodEntity.isKnownCheckoutMethod('papara'), isTrue);
+      expect(PaymentMethodEntity.isKnownCheckoutMethod('crypto'), isFalse);
+    });
   });
 
   group('shouldShowSocialMembershipBadge', () {
