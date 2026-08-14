@@ -41,3 +41,7 @@ ProfileMembershipInfo resolveProfileMembership({
     daysRemaining: daysRemaining,
   );
 }
+
+/// Kısa yol — ham API üyelik değerinden ücretli plan var mı?
+bool hasPaidMembershipRaw(String? rawMembership) =>
+    resolveProfileMembership(rawMembership: rawMembership).hasPaidTier;

@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.192+227 (2026-08-14) — Profil üyelik faz 2
+
+- **Para kartı:** Üyelik özeti satırı (plan, kalan gün, Yönet/Yükselt)
+- **Cüzdan başlığı:** Tüm ücretli tier'lar için banner (yalnızca Gold değil)
+- **Görevler:** `free`/`basic` premium rozeti açmıyor; VIP tier doğru
+- **Rozet çözümleme:** En yüksek uygun üyelik rozeti seçiliyor
+- **Abonelikler:** Cüzdan kartından `/premium-membership` yönlendirmesi
+
 ## 1.0.191+226 (2026-08-14) — Profil üyelik bölümü tamamlama
 
 - **isVip düzeltmesi:** `free`/`basic` artık VIP sayılmıyor; tier `VipTier` ile çözümleniyor

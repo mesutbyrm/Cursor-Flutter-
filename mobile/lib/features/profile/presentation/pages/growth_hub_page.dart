@@ -18,6 +18,7 @@ import '../../domain/entities/daily_task_entity.dart';
 import '../../domain/entities/growth_progress_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../providers/profile_providers.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../widgets/premium/profile_glass.dart';
 
 class GrowthHubPage extends ConsumerWidget {
@@ -40,7 +41,11 @@ class GrowthHubPage extends ConsumerWidget {
         rewardsAsync.valueOrNull ?? const <DailyRewardEntity>[];
     final wallet = walletAsync.valueOrNull;
     final referral = referralAsync.valueOrNull;
-    final hasPremium = (wallet?.membership ?? '').trim().isNotEmpty;
+    final membershipInfo = resolveProfileMembership(
+      rawMembership: wallet?.membership,
+      daysRemaining: wallet?.membershipDaysRemaining,
+    );
+    final hasPremium = membershipInfo.hasActiveSubscription;
     final progress = GrowthProgressEntity.fromSignals(
       stats: stats,
       dailyRewards: rewards,
@@ -113,7 +118,7 @@ class GrowthHubPage extends ConsumerWidget {
                     level: displayLevel,
                     xp: displayXp,
                     vipTier: serverLevel?.vipTier,
-                    isVip: serverLevel?.isVip ?? hasPremium,
+                    isVip: serverLevel?.isVip ?? membershipInfo.isVip,
                   ),
                   const SizedBox(height: 20),
                   const ProfileSectionTitle(title: 'Bugünün görevleri'),

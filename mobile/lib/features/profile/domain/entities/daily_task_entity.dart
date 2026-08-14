@@ -1,4 +1,5 @@
 import '../../../../core/util/json_util.dart';
+import '../../../vip_gold/domain/vip_tier.dart';
 
 class DailyTaskEntity {
   const DailyTaskEntity({
@@ -90,7 +91,9 @@ class UserLevelEntity {
       vipTier: pick(m, ['vipTier', 'membership', 'membershipTier'])?.toString(),
       isVip: m['isVip'] == true ||
           m['vip'] == true ||
-          (pick(m, ['membership'])?.toString().trim().isNotEmpty == true),
+          VipTier.fromMembership(
+            pick(m, ['membership', 'membershipTier'])?.toString(),
+          ).isVip,
     );
   }
 

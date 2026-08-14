@@ -26,6 +26,20 @@ void main() {
       expect(info.hasPaidTier, isTrue);
       expect(info.isVip, isFalse);
     });
+
+    test('hasPaidMembershipRaw kısayolu', () {
+      expect(hasPaidMembershipRaw('free'), isFalse);
+      expect(hasPaidMembershipRaw('diamond'), isTrue);
+    });
+
+    test('hasActiveSubscription süre dolmuşsa false', () {
+      final info = resolveProfileMembership(
+        rawMembership: 'gold',
+        daysRemaining: 0,
+      );
+      expect(info.hasPaidTier, isTrue);
+      expect(info.hasActiveSubscription, isFalse);
+    });
   });
 
   group('buildProfileWalletState', () {

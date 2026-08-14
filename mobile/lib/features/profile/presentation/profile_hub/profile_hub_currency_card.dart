@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../domain/entities/profile_extended_entity.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_screen_state.dart';
 import '../premium_2026/profile_theme.dart';
 import '../providers/profile_hub_providers.dart';
@@ -26,6 +28,10 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
         extAsync.valueOrNull == null &&
         level.xp <= 0 &&
         level.level <= 1;
+    final membershipInfo = resolveProfileMembership(
+      rawMembership: state.membership ?? state.wallet?.membership,
+      daysRemaining: state.membershipDays,
+    );
 
     return ProfileGlass(
       padding: const EdgeInsets.all(16),
@@ -132,7 +138,86 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          _MembershipSummaryRow(info: membershipInfo),
         ],
+      ),
+    );
+  }
+}
+
+class _MembershipSummaryRow extends StatelessWidget {
+  const _MembershipSummaryRow({required this.info});
+
+  final ProfileMembershipInfo info;
+
+  @override
+  Widget build(BuildContext context) {
+    final paid = info.hasPaidTier;
+    final days = info.daysRemaining;
+    final subtitle = paid
+        ? (days != null && days > 0
+            ? '$days gün kaldı'
+            : 'Aktif üyelik')
+        : 'Gold, Diamond ve SVIP planları';
+
+    return Material(
+      color: Colors.white.withValues(alpha: 0.06),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: () => context.push('/premium-membership'),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Icon(
+                paid ? Icons.workspace_premium_rounded : Icons.lock_open_rounded,
+                color: paid
+                    ? ProfilePremiumTheme.neonPurple
+                    : Colors.white54,
+                size: 18,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      paid ? '${info.tierLabel} Üyelik' : 'Üyelik Planları',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.55),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                paid ? 'Yönet' : 'Yükselt',
+                style: TextStyle(
+                  color: ProfilePremiumTheme.neonPurple.withValues(alpha: 0.95),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 16,
+                color: Colors.white.withValues(alpha: 0.45),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

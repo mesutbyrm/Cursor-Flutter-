@@ -1,6 +1,8 @@
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../presentation/premium_2026/profile_membership_helpers.dart';
 import 'profile_glass.dart';
 
 class ProfilePremiumBanner extends StatelessWidget {
@@ -17,13 +19,15 @@ class ProfilePremiumBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tier = membership?.toLowerCase() ?? 'basic';
-    final days = daysRemaining ?? 0;
-    final isGold = tier == 'gold' && days > 0;
-    final subtitle = isGold
-        ? 'Gold üyesiniz · $days gün kaldı'
+    final info = resolveProfileMembership(
+      rawMembership: membership,
+      daysRemaining: daysRemaining,
+    );
+    final paid = info.hasActiveSubscription;
+    final subtitle = paid && daysRemaining != null && daysRemaining! > 0
+        ? '${info.tierLabel} üyesiniz · $daysRemaining gün kaldı'
         : 'Özel rozetler, öncelikli destek ve daha fazlası';
-    final cta = isGold ? 'Uzat' : 'Ayrıcalıkları Gör';
+    final cta = paid ? 'Uzat' : 'Ayrıcalıkları Gör';
 
     return ProfileGlass(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
@@ -61,9 +65,9 @@ class ProfilePremiumBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Premium Üyelik',
-                  style: TextStyle(
+                Text(
+                  paid ? '${info.tierLabel} Üyelik' : 'Premium Üyelik',
+                  style: const TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 17,
                     letterSpacing: -0.2,
@@ -74,7 +78,7 @@ class ProfilePremiumBanner extends StatelessWidget {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: isGold
+                    color: paid
                         ? const Color(0xFFFFE082)
                         : Colors.white.withValues(alpha: 0.88),
                     fontSize: 13,
@@ -89,10 +93,12 @@ class ProfilePremiumBanner extends StatelessWidget {
             color: AppThemeColors.accentPink,
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
-              onTap: onViewPrivileges,
+              onTap: onViewPrivileges ??
+                  () => context.push('/premium-membership'),
               borderRadius: BorderRadius.circular(14),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                 child: Text(
                   cta,
                   style: const TextStyle(

@@ -186,10 +186,14 @@ final resolvedMembershipBadgeProvider = Provider<CosmeticItem?>((ref) {
   if (tier == VipTier.basic) return null;
   final catalog = ref.watch(membershipBadgesCatalogProvider).valueOrNull;
   if (catalog == null || catalog.isEmpty) return null;
-  for (final b in catalog) {
-    if (b.requiredTier == tier) return b;
+  CosmeticItem? best;
+  for (final badge in catalog) {
+    if (tier.index < badge.requiredTier.index) continue;
+    if (best == null || badge.requiredTier.index > best.requiredTier.index) {
+      best = badge;
+    }
   }
-  return catalog.first;
+  return best;
 });
 
 List<CosmeticItem> catalogForSlot(CosmeticSlot slot) {

@@ -74,7 +74,7 @@ class ProfileLazyWallet extends ConsumerWidget {
       onEarnings: () => context.push('/profile/earnings'),
       onTransactions: () => context.push('/profile/transactions'),
       onPaymentNotice: () => context.push('/profile/payment-notice'),
-      onSubscriptions: () => context.push('/wallet'),
+      onSubscriptions: () => context.push('/premium-membership'),
     );
   }
 }

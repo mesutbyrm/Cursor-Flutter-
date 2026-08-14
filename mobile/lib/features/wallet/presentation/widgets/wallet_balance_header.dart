@@ -3,6 +3,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../../core/widgets/dual_balance_chips.dart';
 
 /// CFC + Jeton + kısa yönlendirme — CFC yükle / Premium üyelik.
@@ -24,8 +25,13 @@ class WalletBalanceHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tier = membership?.toLowerCase() ?? 'basic';
-    final isGold = tier == 'gold' && (daysRemaining ?? 0) > 0;
+    final info = resolveProfileMembership(
+      rawMembership: membership,
+      daysRemaining: daysRemaining,
+    );
+    final showMembershipBanner = info.hasActiveSubscription &&
+        daysRemaining != null &&
+        daysRemaining! > 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -51,37 +57,46 @@ class WalletBalanceHeader extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         DualBalanceChips(jeton: jeton, cfc: cfc),
-        if (isGold) ...[
+        if (showMembershipBanner) ...[
           const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => context.push('/premium-membership'),
               borderRadius: BorderRadius.circular(14),
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFFFFD54F).withValues(alpha: 0.35),
-                  const Color(0xFFB8860B).withValues(alpha: 0.2),
-                ],
-              ),
-              border: Border.all(
-                color: const Color(0xFFFFD54F).withValues(alpha: 0.6),
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.workspace_premium_rounded,
-                    color: Color(0xFFFFD54F), size: 22),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'GOLD ÜYESİNİZ — $daysRemaining gün kaldı, uzatın',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                    ),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFFFD54F).withValues(alpha: 0.35),
+                      const Color(0xFFB8860B).withValues(alpha: 0.2),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: const Color(0xFFFFD54F).withValues(alpha: 0.6),
                   ),
                 ),
-              ],
+                child: Row(
+                  children: [
+                    const Icon(Icons.workspace_premium_rounded,
+                        color: Color(0xFFFFD54F), size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '${info.tierLabel.toUpperCase()} ÜYESİNİZ — $daysRemaining gün kaldı',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, size: 18),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
