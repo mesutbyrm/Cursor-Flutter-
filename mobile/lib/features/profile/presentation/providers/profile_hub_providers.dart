@@ -14,6 +14,7 @@ import '../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../premium_2026/profile_membership_helpers.dart';
+import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 
 final cloudMediaUploadProvider = Provider<CloudMediaUploadService>((ref) {
@@ -62,6 +63,7 @@ Future<void> refreshProfileHub(WidgetRef ref, {String? userId}) async {
   ref.invalidate(membershipBadgesCatalogProvider);
   ref.invalidate(membershipCatalogProvider);
   ref.invalidate(membershipControllerProvider);
+  ref.invalidate(paymentRequestsNotifierProvider);
   unawaited(ref.read(authControllerProvider.notifier).refreshMe());
   unawaited(ref.read(walletBalancesProvider.notifier).refresh(force: true));
   unawaited(ref.read(profileExtendedProvider.future));
@@ -78,6 +80,7 @@ Future<void> refreshMembershipAfterPurchase(WidgetRef ref) async {
   ref.invalidate(membershipCatalogProvider);
   ref.invalidate(membershipControllerProvider);
   ref.invalidate(walletBalancesProvider);
+  ref.invalidate(paymentRequestsNotifierProvider);
   await Future.wait([
     _ignore(ref.read(walletBalancesProvider.notifier).refresh(force: true)),
     _ignore(ref.read(membershipCatalogProvider.future)),

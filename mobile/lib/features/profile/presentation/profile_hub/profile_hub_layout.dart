@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
 import '../premium_2026/profile_lazy_sections.dart';
 import '../premium_2026/profile_screen_state.dart';
 import 'profile_hub_about_stats_row.dart';
@@ -48,6 +49,7 @@ class ProfileHubLayout extends StatelessWidget {
           fallbackLikes: state.stats.likes,
         ),
         const SizedBox(height: 14),
+        const MembershipPendingPaymentBanner(),
         ProfileHubCurrencyCard(state: state),
         const SizedBox(height: 14),
         ProfileHubMembershipSection(state: state),

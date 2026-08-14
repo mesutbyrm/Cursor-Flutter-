@@ -27,6 +27,7 @@ Future<bool> submitMembershipCfcInstant(
             cfcAmount: priceCfc,
             priceTry: tier.monthlyPriceTry.toDouble(),
             method: 'cfc_balance',
+            durationDays: tier.durationDays,
           ),
         );
     ref.refreshWalletCache(force: true);
@@ -93,7 +94,7 @@ Future<void> openMembershipCfcCheckoutFlow(
               ),
               const SizedBox(height: 6),
               Text(
-                '$priceCfc CFC · ₺${tier.monthlyPriceTry}',
+                '$priceCfc CFC · ₺${tier.monthlyPriceTry} · ${tier.durationLabel}',
                 style: TextStyle(color: Colors.white.withValues(alpha: 0.65)),
               ),
               const SizedBox(height: 16),
@@ -145,6 +146,7 @@ Future<void> _submitMembershipCfc(
             cfcAmount: priceCfc,
             priceTry: tier.monthlyPriceTry.toDouble(),
             method: method,
+            durationDays: tier.durationDays,
           ),
         );
     ref.refreshWalletCache(force: true);

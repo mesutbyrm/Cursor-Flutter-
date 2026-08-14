@@ -15,9 +15,16 @@ class MembershipFeatureTable extends StatelessWidget {
   final MembershipTierId selectedTier;
   final List<MembershipTierModel>? tiers;
 
-  static const _headers = ['Basic', 'Gold', 'Premium', 'Diamond', 'SVIP'];
+  static const _discountRowIndex = 2;
 
-  int get _columnCount => MembershipCatalogData.tiers.length;
+  List<String> get _headers {
+    if (tiers != null && tiers!.length == MembershipCatalogData.tiers.length) {
+      return [for (final t in tiers!) t.title];
+    }
+    return const ['Basic', 'Gold', 'Premium', 'Diamond', 'SVIP'];
+  }
+
+  int get _columnCount => _headers.length;
 
   int get _selectedCol => selectedTier.index.clamp(0, _columnCount - 1);
 
@@ -64,6 +71,7 @@ class MembershipFeatureTable extends StatelessWidget {
                         labelWidth: labelW,
                         colWidth: colW,
                         selectedCol: _selectedCol,
+                        headers: _headers,
                       ),
                       ..._effectiveFeatureRows()
                           .asMap()
@@ -107,6 +115,17 @@ class MembershipFeatureTable extends StatelessWidget {
           MembershipFeatureText('${t.monthlyTokens}'),
       ],
     );
+    if (rows.length > _discountRowIndex) {
+      rows[_discountRowIndex] = MembershipFeatureRow(
+        label: rows[_discountRowIndex].label,
+        values: [
+          for (final t in source)
+            MembershipFeatureText(
+              t.falDiscountPercent > 0 ? '%${t.falDiscountPercent}' : 'Yok',
+            ),
+        ],
+      );
+    }
     return rows;
   }
 }
@@ -116,11 +135,13 @@ class _HeaderRow extends StatelessWidget {
     required this.labelWidth,
     required this.colWidth,
     required this.selectedCol,
+    required this.headers,
   });
 
   final double labelWidth;
   final double colWidth;
   final int selectedCol;
+  final List<String> headers;
 
   @override
   Widget build(BuildContext context) {
@@ -146,11 +167,11 @@ class _HeaderRow extends StatelessWidget {
               ),
             ),
           ),
-          for (var i = 0; i < MembershipFeatureTable._headers.length; i++)
+          for (var i = 0; i < headers.length; i++)
             SizedBox(
               width: colWidth,
               child: Text(
-                MembershipFeatureTable._headers[i],
+                headers[i],
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: i == selectedCol

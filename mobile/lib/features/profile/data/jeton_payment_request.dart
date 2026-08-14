@@ -127,18 +127,20 @@ Map<String, dynamic> buildMembershipCfcPaymentRequest({
   required int cfcAmount,
   required double priceTry,
   required String method,
+  int durationDays = 30,
   String? notes,
   String? senderLabel,
   String? receiptReference,
 }) {
   final receipt = receiptReference?.trim();
+  final durationLabel = durationDays > 0 ? '$durationDays gün' : '30 gün';
   final baseNotes = notes ?? 'Üyelik · $tierTitle · CFC · $method';
   return {
     'requestType': 'cfc',
     'type': 'cfc',
     'method': method,
     'packageId': 'membership_$tierId',
-    'packageTitle': '$tierTitle Üyelik · 30 gün',
+    'packageTitle': '$tierTitle Üyelik · $durationLabel',
     'tierId': tierId,
     'membershipTier': tierId,
     'amount': cfcAmount,

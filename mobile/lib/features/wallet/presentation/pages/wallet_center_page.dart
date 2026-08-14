@@ -9,9 +9,12 @@ import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../profile/presentation/providers/payment_requests_notifier.dart';
+import '../../../profile/presentation/widgets/payment_methods_summary_line.dart';
 import '../widgets/wallet_balance_header.dart';
 import '../widgets/wallet_earnings_section.dart';
 import '../../domain/wallet_balances.dart';
+import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
 
 /// Cüzdan merkezi — Jeton, CFC ve Premium üyelik tek giriş.
 class WalletCenterPage extends ConsumerWidget {
@@ -49,6 +52,7 @@ class WalletCenterPage extends ConsumerWidget {
                   : ListView(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
               children: [
+                const MembershipPendingPaymentBanner(),
                 WalletBalanceHeader(
                   jeton: balances.jeton,
                   cfc: balances.cfc,
@@ -77,7 +81,12 @@ class WalletCenterPage extends ConsumerWidget {
                 _HubCard(
                   icon: Icons.diamond_rounded,
                   title: 'CFC Yükle',
-                  subtitle: 'WhatsApp · Papara · Havale/EFT',
+                  subtitleWidget: PaymentMethodsSummaryLine(
+                    prefix: '',
+                    fontSize: 12,
+                    textAlign: TextAlign.start,
+                    showRecommended: false,
+                  ),
                   color: AppThemeColors.diamondBlue,
                   onTap: () => context.push('/cfc-store'),
                 ),
@@ -101,14 +110,16 @@ class _HubCard extends StatelessWidget {
   const _HubCard({
     required this.icon,
     required this.title,
-    required this.subtitle,
     required this.color,
     required this.onTap,
-  });
+    this.subtitle,
+    this.subtitleWidget,
+  }) : assert(subtitle != null || subtitleWidget != null);
 
   final IconData icon;
   final String title;
-  final String subtitle;
+  final String? subtitle;
+  final Widget? subtitleWidget;
   final Color color;
   final VoidCallback onTap;
 
@@ -134,13 +145,14 @@ class _HubCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
-                  ),
-                ),
+                subtitleWidget ??
+                    Text(
+                      subtitle!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
+                      ),
+                    ),
               ],
             ),
           ),
