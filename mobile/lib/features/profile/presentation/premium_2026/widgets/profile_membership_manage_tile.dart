@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../premium_2026/profile_membership_helpers.dart';
-import '../providers/profile_hub_providers.dart';
+import '../profile_membership_helpers.dart';
+import '../../providers/profile_hub_providers.dart';
 
 /// Üyelik planı özeti — profil düzenleme ve ayarlar için.
 class ProfileMembershipManageTile extends ConsumerWidget {
