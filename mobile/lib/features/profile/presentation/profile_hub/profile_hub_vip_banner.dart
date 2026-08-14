@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_theme.dart';
 
-/// VIP ayrıcalıklar banner'ı.
+/// VIP / üyelik banner'ı — ücretsiz kullanıcıya plan teşviki, aktif üyeye özet.
 class ProfileHubVipBanner extends StatelessWidget {
   const ProfileHubVipBanner({
     super.key,
@@ -12,40 +13,75 @@ class ProfileHubVipBanner extends StatelessWidget {
     this.daysRemaining,
     this.expiresAt,
     this.onViewPrivileges,
+    this.onManageMembership,
   });
 
   final String? membership;
   final int? daysRemaining;
   final String? expiresAt;
   final VoidCallback? onViewPrivileges;
+  final VoidCallback? onManageMembership;
 
   @override
   Widget build(BuildContext context) {
-    final active = membership != null && membership!.trim().isNotEmpty;
-    final label = active ? membership!.trim() : 'VIP';
+    final info = resolveProfileMembership(
+      rawMembership: membership,
+      daysRemaining: daysRemaining,
+    );
+    final paid = info.hasPaidTier;
 
-    String subtitle;
-    if (active && daysRemaining != null && daysRemaining! > 0) {
+    final title = paid ? '${info.tierLabel} Ayrıcalıkları' : 'Premium Üyelik';
+
+    final String subtitle;
+    if (paid && daysRemaining != null && daysRemaining! > 0) {
       subtitle = 'Aktif üyelik · $daysRemaining gün kaldı';
-    } else if (active && expiresAt != null && expiresAt!.isNotEmpty) {
+    } else if (paid && expiresAt != null && expiresAt!.isNotEmpty) {
       final dt = DateTime.tryParse(expiresAt!);
       subtitle = dt != null
           ? 'Bitiş: ${DateFormat('d MMM yyyy', 'tr').format(dt.toLocal())}'
-          : 'Size özel ayrıcalıkların tadını çıkarın!';
-    } else if (active) {
-      subtitle = 'Size özel ayrıcalıkların tadını çıkarın!';
+          : 'Size özel ayrıcalıkların tadını çıkarın';
+    } else if (paid) {
+      subtitle = 'Rozetler, öncelikli destek ve VIP odalar';
     } else {
-      subtitle = 'Premium üyelik avantajlarını keşfedin';
+      subtitle = 'Gold, Diamond ve SVIP planlarını keşfedin';
+    }
+
+    final primaryCta = paid ? 'Ayrıcalıkları Gör' : 'Planları Gör';
+    final secondaryCta = paid ? 'Yönet' : null;
+
+    void openPrivileges() {
+      if (onViewPrivileges != null) {
+        onViewPrivileges!();
+        return;
+      }
+      if (info.isVip) {
+        context.push('/vip-gold');
+      } else {
+        context.push('/premium-membership');
+      }
+    }
+
+    void openManage() {
+      if (onManageMembership != null) {
+        onManageMembership!();
+        return;
+      }
+      context.push('/premium-membership');
     }
 
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusMd),
         gradient: LinearGradient(
-          colors: [
-            ProfilePremiumTheme.neonPurple.withValues(alpha: 0.85),
-            const Color(0xFF4A148C),
-          ],
+          colors: paid
+              ? [
+                  ProfilePremiumTheme.neonPurple.withValues(alpha: 0.85),
+                  const Color(0xFF4A148C),
+                ]
+              : [
+                  const Color(0xFF3D2060),
+                  const Color(0xFF1A0A30),
+                ],
         ),
         boxShadow: [
           BoxShadow(
@@ -59,14 +95,14 @@ class ProfileHubVipBanner extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            const Text('👑', style: TextStyle(fontSize: 28)),
+            Text(paid ? '👑' : '✨', style: const TextStyle(fontSize: 28)),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$label Ayrıcalıkları',
+                    title,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
@@ -87,11 +123,24 @@ class ProfileHubVipBanner extends StatelessWidget {
                 ],
               ),
             ),
+            if (secondaryCta != null) ...[
+              TextButton(
+                onPressed: openManage,
+                child: Text(
+                  secondaryCta,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
             TextButton(
-              onPressed: onViewPrivileges ?? () => context.push('/vip-gold'),
-              child: const Text(
-                'Ayrıcalıkları Gör >',
-                style: TextStyle(
+              onPressed: openPrivileges,
+              child: Text(
+                '$primaryCta >',
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
                   fontSize: 11,

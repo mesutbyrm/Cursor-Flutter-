@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.191+226 (2026-08-14) — Profil üyelik bölümü tamamlama
+
+- **isVip düzeltmesi:** `free`/`basic` artık VIP sayılmıyor; tier `VipTier` ile çözümleniyor
+- **Hızlı menü:** Üyelik kısayolu eklendi → `/premium-membership`
+- **VIP banner:** Ücretsiz kullanıcıya plan teşviki; aktif üyeye "Yönet" + ayrıcalıklar CTA
+- **Rozetler:** Kilit/açık durumu, tier etiketi ve plan sayfasına dokunma
+- **Ayarlar:** "Üyelik Yönetimi" satırı eklendi
+- **Test:** `profile_membership_helpers_test.dart`
+
 ## 1.0.190+225 (2026-08-13) — Ana sayfa faz 12: başlık birliği, oyunlar birleşik
 
 - **Başlık stili:** `HomeSectionHeader` kaldırıldı; danışmanlar ve oyunlar `HomeSectionTitle` kullanıyor

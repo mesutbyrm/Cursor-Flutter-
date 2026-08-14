@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_theme_colors.dart';
 import '../../widgets/premium/profile_glass.dart';
+import '../profile_membership_helpers.dart';
 import '../profile_screen_state.dart';
 import '../profile_theme.dart';
 import 'profile_action_tile.dart';
@@ -31,8 +32,11 @@ class ProfileWalletCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final membership = state.membership?.trim();
-    final hasPremium = membership != null && membership.isNotEmpty;
+    final info = resolveProfileMembership(
+      rawMembership: state.membership ?? state.wallet?.membership,
+      daysRemaining: state.membershipDays,
+    );
+    final hasPremium = info.hasPaidTier;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -90,7 +94,7 @@ class ProfileWalletCard extends StatelessWidget {
                     Expanded(
                       child: _MiniStat(
                         label: 'Premium',
-                        value: hasPremium ? membership : 'Standart',
+                        value: hasPremium ? info.tierLabel : 'Standart',
                       ),
                     ),
                     Expanded(

@@ -8,6 +8,7 @@ import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../domain/entities/profile_extended_entity.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_screen_state.dart';
 import '../premium_2026/profile_theme.dart';
 import '../providers/profile_hub_providers.dart';
@@ -201,14 +202,23 @@ class ProfileHubHeader extends ConsumerWidget {
   }
 
   String? _vipLabel(ProfileScreenState state, ProfileExtendedEntity ext) {
-    final m = state.membership?.trim();
-    if (m != null && m.isNotEmpty) return '💎 $m';
+    final info = resolveProfileMembership(
+      rawMembership: state.membership ?? state.wallet?.membership,
+      daysRemaining: state.membershipDays,
+    );
+    if (info.hasPaidTier) return '💎 ${info.tierLabel}';
     final v = ext.vipLevel?.trim();
-    if (v != null && v.isNotEmpty) return '💎 $v';
+    if (v != null && v.isNotEmpty) {
+      final extInfo = resolveProfileMembership(rawMembership: v);
+      if (extInfo.hasPaidTier) return '💎 ${extInfo.tierLabel}';
+    }
     if (state.isVip) return '💎 VIP';
-    return state.level.vipTier?.trim().isNotEmpty == true
-        ? '💎 ${state.level.vipTier}'
-        : null;
+    final levelTier = state.level.vipTier?.trim();
+    if (levelTier != null && levelTier.isNotEmpty) {
+      final levelInfo = resolveProfileMembership(rawMembership: levelTier);
+      if (levelInfo.hasPaidTier) return '💎 ${levelInfo.tierLabel}';
+    }
+    return null;
   }
 }
 

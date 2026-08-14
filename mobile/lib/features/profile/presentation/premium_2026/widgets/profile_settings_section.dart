@@ -49,6 +49,12 @@ class ProfileSettingsSection extends StatelessWidget {
               ),
               Divider(height: 1, indent: 52, color: palette.divider),
               _SettingsRow(
+                icon: Icons.workspace_premium_outlined,
+                label: 'Üyelik Yönetimi',
+                onTap: () => context.push('/premium-membership'),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              _SettingsRow(
                 icon: Icons.shield_outlined,
                 label: 'Hesap Güvenliği',
                 onTap: () => context.push('/profile/security'),

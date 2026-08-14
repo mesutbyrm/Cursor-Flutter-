@@ -104,6 +104,7 @@ class ProfileLazyPremium extends ConsumerWidget {
         membership: membership,
         daysRemaining: daysRemaining,
         onViewPrivileges: () => context.push('/vip-gold'),
+        onManageMembership: () => context.push('/premium-membership'),
       ),
     );
   }

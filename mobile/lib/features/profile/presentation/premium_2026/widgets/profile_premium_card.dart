@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../profile_membership_helpers.dart';
 import '../profile_theme.dart';
 
 /// Premium üyelik — gradient glow kart.
@@ -9,15 +11,21 @@ class ProfilePremiumCard extends StatelessWidget {
     this.membership,
     this.daysRemaining,
     this.onViewPrivileges,
+    this.onManageMembership,
   });
 
   final String? membership;
   final int? daysRemaining;
   final VoidCallback? onViewPrivileges;
+  final VoidCallback? onManageMembership;
 
   @override
   Widget build(BuildContext context) {
-    final active = membership != null && membership!.trim().isNotEmpty;
+    final info = resolveProfileMembership(
+      rawMembership: membership,
+      daysRemaining: daysRemaining,
+    );
+    final active = info.hasPaidTier;
 
     return Container(
       decoration: BoxDecoration(
@@ -49,7 +57,9 @@ class ProfilePremiumCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      active ? 'Premium · $membership' : 'Premium Üyelik',
+                      active
+                          ? '${info.tierLabel} Üyelik'
+                          : 'Premium Üyelik',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -60,7 +70,7 @@ class ProfilePremiumCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      active && daysRemaining != null
+                      active && daysRemaining != null && daysRemaining! > 0
                           ? '$daysRemaining gün kaldı · özel rozetler ve ayrıcalıklar'
                           : 'Özel rozetler, VIP odalar ve ekstra jeton fırsatları',
                       maxLines: 2,
@@ -75,17 +85,55 @@ class ProfilePremiumCard extends StatelessWidget {
                   ],
                 ),
               ),
-              FilledButton(
-                onPressed: onViewPrivileges,
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF5A2A80),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                ),
-                child: const Text(
-                  'Avantajları Gör',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
-                ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FilledButton(
+                    onPressed: onViewPrivileges ??
+                        () {
+                          if (info.isVip) {
+                            context.push('/vip-gold');
+                          } else {
+                            context.push('/premium-membership');
+                          }
+                        },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF5A2A80),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                    ),
+                    child: Text(
+                      active ? 'Ayrıcalıklar' : 'Planları Gör',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  if (active) ...[
+                    const SizedBox(height: 6),
+                    TextButton(
+                      onPressed: onManageMembership ??
+                          () => context.push('/premium-membership'),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'Yönet',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
