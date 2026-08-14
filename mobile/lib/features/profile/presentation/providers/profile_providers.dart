@@ -8,6 +8,7 @@ import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/jeton_package_entity.dart';
+import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
@@ -137,6 +138,11 @@ extension WalletCacheRefresh on WidgetRef {
 final userProfileProvider =
     FutureProvider.family<UserEntity, String>((ref, userId) async {
   return ref.watch(profileRepositoryProvider).getUser(userId);
+});
+
+final userProfileExtendedProvider =
+    FutureProvider.family<ProfileExtendedEntity, String>((ref, userId) async {
+  return ref.watch(profileRepositoryProvider).getUserExtended(userId);
 });
 
 final paymentConfigProvider = FutureProvider<PaymentConfigEntity>((ref) async {

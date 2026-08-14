@@ -10,6 +10,7 @@ import '../entities/referral_info_entity.dart';
 
 abstract class ProfileRepository {
   Future<UserEntity> getUser(String id);
+  Future<ProfileExtendedEntity> getUserExtended(String id);
   Future<void> follow(String id);
   Future<void> unfollow(String id);
   Future<UserEntity> updateMe({

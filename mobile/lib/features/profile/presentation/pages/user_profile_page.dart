@@ -12,6 +12,7 @@ import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_glass.dart';
+import '../widgets/user_profile_membership_badge.dart';
 import '../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../../shorts/presentation/widgets/shorts_profile_content.dart';
 import '../widgets/user_posts_timeline.dart';
@@ -119,6 +120,7 @@ class UserProfilePage extends ConsumerWidget {
                     const SizedBox(width: 6),
                     const ShortsVerifiedBadge(size: 20),
                   ],
+                  UserProfileMembershipBadge(userId: userId),
                 ],
               ),
               const SizedBox(height: 4),

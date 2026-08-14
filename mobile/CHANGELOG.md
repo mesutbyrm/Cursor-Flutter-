@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.196+231 (2026-08-14) — Profil üyelik faz 6
+
+- **Başka kullanıcı profili:** Ücretli üyelik rozeti (`VipBadge`) görünür
+- **API:** `getUserExtended` — compound profilden `vipLevel` / `membershipTier`
+- **Provider:** `userProfileExtendedProvider`
+- **Test:** `user_profile_membership_badge_test.dart`
+
 ## 1.0.195+230 (2026-08-14) — Profil üyelik faz 5
 
 - **ProfileHubMembershipSection:** Ücretsiz → VIP banner; ücretli → lazy `ProfilePremiumCard`

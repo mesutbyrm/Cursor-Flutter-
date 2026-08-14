@@ -43,6 +43,18 @@ class ProfileRemoteDataSource {
     return _entityFromDto(dto, {...body, ...map});
   }
 
+  Future<ProfileExtendedEntity> userExtended(String userId) async {
+    final compound = await _compound.fetchUserProfile(userId);
+    if (compound != null) {
+      return compound.extended;
+    }
+    final res = await _dio.safeGet<Map<String, dynamic>>(
+      ApiEndpoints.userProfile(userId),
+    );
+    final body = res.data ?? {};
+    return ProfileExtendedEntity.fromJson(body);
+  }
+
   static bool looksLikeUsernameKey(String id) {
     final s = id.trim();
     if (s.isEmpty || s.length > 64) return false;
