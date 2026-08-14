@@ -18,6 +18,7 @@ import '../../../profile/presentation/widgets/jeton_checkout_flow.dart';
 import '../../../profile/presentation/widgets/payment_methods_summary_line.dart';
 import '../../domain/membership_model.dart';
 import '../../../profile/presentation/providers/profile_hub_providers.dart';
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../controllers/membership_controller.dart';
 import '../widgets/common_benefits.dart';
 import '../widgets/feature_table.dart';
