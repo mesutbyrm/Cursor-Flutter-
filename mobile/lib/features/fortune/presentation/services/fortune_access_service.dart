@@ -4,6 +4,7 @@ import '../../../../core/performance/network_perf.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../data/datasources/fortune_access_remote_datasource.dart';
 import '../../data/fortune_access_local_store.dart';
 import '../../data/services/rewarded_ad_service.dart';
@@ -62,9 +63,8 @@ class FortuneAccessService {
     String? membership,
   ) {
     if (!config.premiumUnlimited) return false;
-    final hasMembership = (membership ?? '').trim().isNotEmpty &&
-        membership!.toLowerCase() != 'basic';
-    return hasMembership && tier.index >= VipTier.premium.index;
+    return hasPaidMembershipRaw(membership) &&
+        tier.index >= VipTier.premium.index;
   }
 
   /// Fal açılmadan önce ödeme / hak tüketimi.

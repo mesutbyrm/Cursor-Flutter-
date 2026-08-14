@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:canlifal_social/features/auth/domain/entities/user_entity.dart';
+import 'package:canlifal_social/features/membership/presentation/controllers/membership_controller.dart';
 import 'package:canlifal_social/features/profile/presentation/premium_2026/profile_membership_helpers.dart';
 import 'package:canlifal_social/features/profile/presentation/premium_2026/profile_screen_builder.dart';
 import 'package:canlifal_social/features/profile/presentation/premium_2026/profile_screen_state.dart';
@@ -39,6 +40,24 @@ void main() {
       );
       expect(info.hasPaidTier, isTrue);
       expect(info.hasActiveSubscription, isFalse);
+    });
+  });
+
+  group('MembershipUiState', () {
+    test('free aktif ücretli sayılmaz', () {
+      const ui = MembershipUiState(
+        currentMembership: 'free',
+        daysRemaining: 30,
+      );
+      expect(ui.hasActivePaidMembership, isFalse);
+    });
+
+    test('gold aktif ücretli sayılır', () {
+      const ui = MembershipUiState(
+        currentMembership: 'gold',
+        daysRemaining: 10,
+      );
+      expect(ui.hasActivePaidMembership, isTrue);
     });
   });
 

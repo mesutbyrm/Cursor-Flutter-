@@ -151,7 +151,7 @@ String _zodiacTr(String raw) {
   };
 }
 
-class _StatisticsCard extends StatelessWidget {
+class _StatisticsCard extends ConsumerWidget {
   const _StatisticsCard({
     required this.stats,
     required this.detail,
@@ -163,8 +163,21 @@ class _StatisticsCard extends StatelessWidget {
   final bool loading;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final membership = ref.watch(profileMembershipInfoProvider);
     final rows = <({IconData icon, String label, String value})>[
+      (
+        icon: Icons.workspace_premium_outlined,
+        label: 'Üyelik Planı',
+        value: membership.hasPaidTier ? membership.tierLabel : 'Standart',
+      ),
+      (
+        icon: Icons.timer_outlined,
+        label: 'Plan süresi',
+        value: membership.daysRemaining != null && membership.daysRemaining! > 0
+            ? '${membership.daysRemaining} gün'
+            : '—',
+      ),
       (
         icon: Icons.auto_awesome_rounded,
         label: 'Fal Baktırdığım',

@@ -203,7 +203,7 @@ class ProfileHubHeader extends ConsumerWidget {
 
   String? _vipLabel(ProfileScreenState state, ProfileExtendedEntity ext) {
     final info = resolveProfileMembership(
-      rawMembership: state.membership ?? state.wallet?.membership,
+      rawMembership: state.wallet?.membership ?? state.membership,
       daysRemaining: state.membershipDays,
     );
     if (info.hasPaidTier) return '💎 ${info.tierLabel}';

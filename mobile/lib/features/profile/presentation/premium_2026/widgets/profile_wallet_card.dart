@@ -33,7 +33,7 @@ class ProfileWalletCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final info = resolveProfileMembership(
-      rawMembership: state.membership ?? state.wallet?.membership,
+      rawMembership: state.wallet?.membership ?? state.membership,
       daysRemaining: state.membershipDays,
     );
     final hasPremium = info.hasPaidTier;

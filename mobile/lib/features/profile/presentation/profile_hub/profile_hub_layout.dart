@@ -5,6 +5,7 @@ import '../premium_2026/profile_screen_state.dart';
 import 'profile_hub_about_stats_row.dart';
 import 'profile_hub_badges_section.dart';
 import 'profile_hub_membership_badges_section.dart';
+import 'profile_hub_membership_shortcuts.dart';
 import 'profile_hub_currency_card.dart';
 import 'profile_hub_header.dart';
 import 'profile_hub_quick_menu.dart';
@@ -50,10 +51,9 @@ class ProfileHubLayout extends StatelessWidget {
         ProfileHubCurrencyCard(state: state),
         const SizedBox(height: 14),
         ProfileHubVipBanner(
-          membership: state.membership,
+          membership: state.wallet?.membership,
           daysRemaining: state.membershipDays,
           expiresAt: state.wallet?.membershipExpiresAt,
-          onViewPrivileges: null,
         ),
         const SizedBox(height: 16),
         const ProfileHubQuickMenu(),
@@ -69,6 +69,8 @@ class ProfileHubLayout extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         const ProfileHubMembershipBadgesSection(),
+        const SizedBox(height: 12),
+        const ProfileHubMembershipShortcuts(),
         const SizedBox(height: 12),
         LayoutBuilder(
           builder: (context, c) {

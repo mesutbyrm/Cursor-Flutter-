@@ -1,4 +1,5 @@
 import '../../../vip_gold/domain/vip_tier.dart';
+import '../../../wallet/domain/wallet_balances.dart';
 
 /// Profil ekranında üyelik tier / etiket çözümlemesi.
 class ProfileMembershipInfo {
@@ -45,3 +46,13 @@ ProfileMembershipInfo resolveProfileMembership({
 /// Kısa yol — ham API üyelik değerinden ücretli plan var mı?
 bool hasPaidMembershipRaw(String? rawMembership) =>
     resolveProfileMembership(rawMembership: rawMembership).hasPaidTier;
+
+/// Cüzdan ham değeri öncelikli üyelik çözümlemesi (profil state etiketi yedek).
+ProfileMembershipInfo profileMembershipFromWallet(
+  WalletBalances? wallet,
+) {
+  return resolveProfileMembership(
+    rawMembership: wallet?.membership,
+    daysRemaining: wallet?.membershipDaysRemaining,
+  );
+}

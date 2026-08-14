@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../data/membership_remote_datasource.dart';
 import '../../domain/membership_model.dart';
 import '../../domain/membership_package_entity.dart';
@@ -85,8 +86,10 @@ class MembershipUiState {
   }
 
   bool get hasActivePaidMembership {
-    final cur = currentMembership.toLowerCase();
-    return daysRemaining > 0 && cur != 'basic' && cur.isNotEmpty;
+    return resolveProfileMembership(
+      rawMembership: currentMembership,
+      daysRemaining: daysRemaining,
+    ).hasActiveSubscription;
   }
 
   MembershipUiState copyWith({

@@ -7,14 +7,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/media/cloud_upload_service.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
+import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../providers/profile_providers.dart';
 
 final cloudMediaUploadProvider = Provider<CloudMediaUploadService>((ref) {
   return CloudMediaUploadService(ref.watch(dioProvider));
+});
+
+/// Cüzdan tabanlı üyelik özeti — profil hub bileşenleri için.
+final profileMembershipInfoProvider =
+    Provider.autoDispose<ProfileMembershipInfo>((ref) {
+  final wallet = ref.watch(walletBalancesProvider).valueOrNull;
+  return profileMembershipFromWallet(wallet);
 });
 
 /// Genişletilmiş profil — şehir, burç, doğum tarihi, seri.
@@ -49,6 +59,9 @@ Future<void> refreshProfileHub(WidgetRef ref, {String? userId}) async {
   ref.invalidate(giftsReceivedSummaryProvider);
   ref.invalidate(userAchievementsProvider);
   ref.invalidate(walletBalancesProvider);
+  ref.invalidate(membershipBadgesCatalogProvider);
+  ref.invalidate(membershipCatalogProvider);
+  ref.invalidate(membershipControllerProvider);
   unawaited(ref.read(authControllerProvider.notifier).refreshMe());
   unawaited(ref.read(walletBalancesProvider.notifier).refresh(force: true));
   unawaited(ref.read(profileExtendedProvider.future));

@@ -28,10 +28,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
         extAsync.valueOrNull == null &&
         level.xp <= 0 &&
         level.level <= 1;
-    final membershipInfo = resolveProfileMembership(
-      rawMembership: state.membership ?? state.wallet?.membership,
-      daysRemaining: state.membershipDays,
-    );
+    final membershipInfo = ref.watch(profileMembershipInfoProvider);
 
     return ProfileGlass(
       padding: const EdgeInsets.all(16),

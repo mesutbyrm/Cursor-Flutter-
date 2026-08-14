@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.193+228 (2026-08-14) — Profil üyelik faz 3
+
+- **profileMembershipInfoProvider:** Cüzdan tabanlı merkezi üyelik özeti
+- **Yenileme:** Profil pull-to-refresh üyelik kataloğu ve rozetleri invalidate eder
+- **Kısayollar:** Planlar / VIP Gold / Kozmetik şeridi
+- **İstatistikler:** Üyelik planı ve kalan süre satırları
+- **Fal erişimi:** `free` artık sınırsız premium fal hakkı vermiyor
+- **Üyelik sayfası:** `hasActivePaidMembership` tier helper ile hizalandı
+
 ## 1.0.192+227 (2026-08-14) — Profil üyelik faz 2
 
 - **Para kartı:** Üyelik özeti satırı (plan, kalan gün, Yönet/Yükselt)
