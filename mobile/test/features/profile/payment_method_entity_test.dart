@@ -41,13 +41,20 @@ void main() {
       expect(list.last.id, 'papara');
     });
 
-    test('normalizeCheckoutMethodId havale alias', () {
-      expect(
-        PaymentMethodEntity.normalizeCheckoutMethodId('havale'),
-        'bank_transfer',
-      );
-      expect(PaymentMethodEntity.isKnownCheckoutMethod('papara'), isTrue);
-      expect(PaymentMethodEntity.isKnownCheckoutMethod('crypto'), isFalse);
+    test('checkoutMethods bilinmeyen kanalları filtreler', () {
+      final list = PaymentMethodEntity.checkoutMethods([
+        const PaymentMethodEntity(id: 'crypto', label: 'Kripto', enabled: true),
+        const PaymentMethodEntity(id: 'papara', label: 'Papara', enabled: true),
+      ]);
+      expect(list.length, 1);
+      expect(list.first.id, 'papara');
+    });
+
+    test('checkoutMethods yalnızca bilinmeyen varsa defaults', () {
+      final list = PaymentMethodEntity.checkoutMethods([
+        const PaymentMethodEntity(id: 'crypto', label: 'Kripto', enabled: true),
+      ]);
+      expect(list, PaymentMethodEntity.defaults);
     });
   });
 

@@ -270,7 +270,7 @@ class MembershipPage extends ConsumerWidget {
             : tier.monthlyPriceTry * 2);
     final priceCfc = CurrencyUsageInfo.cfcForTl(tier.monthlyPriceTry);
     void onPurchaseDone() {
-      unawaited(refreshMembershipAfterPurchase(ref));
+      ref.invalidate(paymentRequestsNotifierProvider);
     }
 
     Future<bool> tryInstantPurchase({String? paymentMethod}) async {

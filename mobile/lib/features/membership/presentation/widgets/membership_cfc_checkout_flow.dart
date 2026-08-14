@@ -64,10 +64,7 @@ Future<void> openMembershipCfcCheckoutFlow(
   } catch (_) {
     methods = PaymentMethodEntity.defaults;
   }
-  final list = methods
-      .where((m) => m.enabled && PaymentMethodEntity.isKnownCheckoutMethod(m.id))
-      .toList();
-  final channels = list.isNotEmpty ? list : PaymentMethodEntity.defaults;
+  final channels = PaymentMethodEntity.checkoutMethods(methods);
   final priceCfc = CurrencyUsageInfo.cfcForTl(tier.monthlyPriceTry);
   if (!context.mounted) return;
 

@@ -111,10 +111,7 @@ class _JetonPaymentMethodPage extends ConsumerWidget {
                   ],
                 ),
                 data: (methods) {
-                  final enabled =
-                      methods.where((m) => m.enabled).toList(growable: false);
-                  final list =
-                      enabled.isNotEmpty ? enabled : PaymentMethodEntity.defaults;
+                  final list = PaymentMethodEntity.checkoutMethods(methods);
                   return ListView(
                     children: [
                       for (final method in list)
@@ -526,6 +523,13 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
 
   Future<void> _showWaitDialog() async {
     final isMembership = widget.package.id.startsWith('membership_');
+    final tierName = isMembership
+        ? widget.package.title
+            .replaceAll(' Üyelik', '')
+            .split(' ·')
+            .first
+            .trim()
+        : '';
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -535,7 +539,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
           isMembership
               ? 'Talebiniz admin ekibine iletildi.\n\n'
                   'Onay süreci genellikle 5–10 dakika sürer. '
-                  'Onaylandığında Gold üyeliğiniz aktifleşir ve bildirim alırsınız.'
+                  'Onaylandığında $tierName üyeliğiniz aktifleşir ve bildirim alırsınız.'
               : 'Talebiniz admin ekibine iletildi.\n\n'
                   'Onay süreci genellikle 5–10 dakika sürer. '
                   'Onaylandığında jetonlar hesabınıza yansır ve bildirim alırsınız.',

@@ -162,14 +162,7 @@ class _JetonPremiumPurchaseViewState
     AsyncValue<List<PaymentMethodEntity>> methodsAsync,
   ) {
     return methodsAsync.when(
-      data: (methods) {
-        final enabled = methods
-            .where(
-              (m) => m.enabled && PaymentMethodEntity.isKnownCheckoutMethod(m.id),
-            )
-            .toList(growable: false);
-        return enabled.isNotEmpty ? enabled : PaymentMethodEntity.defaults;
-      },
+      data: (methods) => PaymentMethodEntity.checkoutMethods(methods),
       loading: () => PaymentMethodEntity.defaults,
       error: (_, _) => PaymentMethodEntity.defaults,
     );

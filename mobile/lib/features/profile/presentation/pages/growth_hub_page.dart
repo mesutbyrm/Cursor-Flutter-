@@ -296,15 +296,8 @@ class _MembershipStatusCard extends ConsumerWidget {
     final expired = info.isExpired;
     final active = info.hasActiveSubscription;
     final days = info.daysRemaining;
-    final wire = membershipWireId(info.raw);
     final ui = ref.watch(membershipControllerProvider);
-    MembershipTierModel? catalogTier;
-    for (final t in ui.tiers) {
-      if (t.wireId == wire) {
-        catalogTier = t;
-        break;
-      }
-    }
+    final catalogTier = catalogTierForMembership(info, ui.tiers);
 
     final title = expired
         ? '${info.tierLabel} · süresi doldu'
@@ -312,28 +305,20 @@ class _MembershipStatusCard extends ConsumerWidget {
             ? '${info.tierLabel} üyeliği'
             : 'Üyelik planları';
 
-    final subtitleParts = <String>[];
-    if (expired) {
-      subtitleParts.add('Yenileyerek rozet ve VIP avantajlarını geri aç');
-    } else if (active) {
-      if (days != null && days > 0) {
-        subtitleParts.add('$days gün kaldı');
-      } else {
-        subtitleParts.add('Aktif üyelik');
-      }
-      subtitleParts.add('görev bonusları aktif');
+    final String subtitle;
+    if (active) {
+      final plan = formatMembershipPlanDuration(
+        info: info,
+        catalogTier: catalogTier,
+        daysRemaining: days,
+      );
+      subtitle = '$plan · görev bonusları aktif';
     } else {
-      subtitleParts.add('Gold, Diamond ve SVIP ile daha hızlı ilerle');
+      subtitle = buildMembershipCatalogHintSubtitle(
+        info: info,
+        catalogTier: catalogTier,
+      );
     }
-    if (catalogTier != null) {
-      if (catalogTier.durationDays > 0 && catalogTier.durationDays != 30) {
-        subtitleParts.add('${catalogTier.durationLabel} plan');
-      }
-      if (catalogTier.falDiscountPercent > 0) {
-        subtitleParts.add('%${catalogTier.falDiscountPercent} fal indirimi');
-      }
-    }
-    final subtitle = subtitleParts.join(' · ');
 
     final accent = expired
         ? AppThemeColors.accentPink

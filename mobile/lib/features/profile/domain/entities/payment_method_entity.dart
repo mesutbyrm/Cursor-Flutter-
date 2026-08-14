@@ -62,4 +62,14 @@ class PaymentMethodEntity {
     final k = normalizeCheckoutMethodId(id);
     return k == 'whatsapp' || k == 'papara' || k == 'bank_transfer';
   }
+
+  /// Checkout listeleri — yalnızca bilinen, etkin kanallar; boşsa varsayılanlar.
+  static List<PaymentMethodEntity> checkoutMethods(
+    List<PaymentMethodEntity> methods,
+  ) {
+    final enabled = methods
+        .where((m) => m.enabled && isKnownCheckoutMethod(m.id))
+        .toList(growable: false);
+    return enabled.isNotEmpty ? enabled : defaults;
+  }
 }

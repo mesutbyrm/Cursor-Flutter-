@@ -20,7 +20,7 @@ void main() {
       expect(info.tierLabel, 'Gold');
     });
 
-    test('süresi dolmuş ücretli kullanıcı banner gösterir', () {
+    test('süresi dolmuş ücretli kullanıcı premium kart gösterir', () {
       final info = resolveProfileMembership(
         rawMembership: 'gold',
         daysRemaining: 0,
@@ -28,6 +28,10 @@ void main() {
       expect(info.hasPaidTier, isTrue);
       expect(info.hasActiveSubscription, isFalse);
       expect(info.isExpired, isTrue);
+      expect(
+        info.hasActiveSubscription || info.isExpired,
+        isTrue,
+      );
     });
   });
 }

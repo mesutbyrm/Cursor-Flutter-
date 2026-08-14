@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.208+244 (2026-08-14) — Profil üyelik faz 18
+
+- **Profil hub:** Süresi dolmuş ücretli kullanıcıya premium kart (yenile CTA)
+- **Görevler merkezi:** `buildMembershipCatalogHintSubtitle` / `formatMembershipPlanDuration`
+- **Ödeme kanalları:** `PaymentMethodEntity.checkoutMethods` — ortak whitelist + fallback
+- **Jeton checkout:** Bilinmeyen API kanalları filtrelenir; tier dinamik onay mesajı
+- **Çift refresh:** Üyelik jeton checkout `onPurchaseDone` yalnızca pending talep yeniler
+- **Destek footer:** Önerilen kanal özeti ile üst özet hizalandı
+- **Temizlik:** Kullanılmayan `jeton_native_checkout.dart` kaldırıldı
+
 ## 1.0.207+243 (2026-08-14) — Profil üyelik faz 17
 
 - **CFC senkron:** `refreshMembershipAfterPurchase` — CFC üyelik talebi / anında ödeme sonrası
