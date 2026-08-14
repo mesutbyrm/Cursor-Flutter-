@@ -17,6 +17,7 @@ import '../../data/jeton_payment_request.dart';
 import '../../data/jeton_purchase_prefs.dart';
 import '../../data/services/payment_receipt_upload_service.dart';
 import '../../domain/entities/jeton_package_entity.dart';
+import '../../domain/entities/payment_config_entity.dart';
 import '../../domain/entities/payment_method_entity.dart';
 import '../../../admin/presentation/providers/admin_providers.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';

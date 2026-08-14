@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.200+236 (2026-08-14) — Profil üyelik faz 10 (düzeltme)
+
+- **CI:** Sosyal akış import yolları ve `PaymentConfigEntity` import düzeltmesi
+
 ## 1.0.200+235 (2026-08-14) — Profil üyelik faz 10
 
 - **Ödeme yöntemleri:** `GET /api/payments/methods` — jeton checkout dinamik kanal listesi
