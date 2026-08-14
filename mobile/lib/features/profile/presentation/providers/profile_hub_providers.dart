@@ -64,6 +64,7 @@ Future<void> refreshProfileHub(WidgetRef ref, {String? userId}) async {
   ref.invalidate(membershipCatalogProvider);
   ref.invalidate(membershipControllerProvider);
   ref.invalidate(paymentRequestsNotifierProvider);
+  ref.invalidate(paymentMethodsProvider);
   unawaited(ref.read(authControllerProvider.notifier).refreshMe());
   unawaited(ref.read(walletBalancesProvider.notifier).refresh(force: true));
   unawaited(ref.read(profileExtendedProvider.future));

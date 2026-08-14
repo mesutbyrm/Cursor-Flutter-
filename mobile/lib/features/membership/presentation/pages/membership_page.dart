@@ -215,7 +215,7 @@ class MembershipPage extends ConsumerWidget {
                                 ),
                               ),
                               child: Text(
-                                '${ui.selectedTierModel.title} Üyeliği Satın Al · ₺${ui.selectedTierModel.monthlyPriceTry}',
+                                '${ui.selectedTierModel.title} Üyeliği · ${ui.selectedTierModel.durationLabel} · ₺${ui.selectedTierModel.monthlyPriceTry}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w900,
                                   fontSize: 15,

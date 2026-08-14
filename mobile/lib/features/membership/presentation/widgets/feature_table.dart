@@ -15,7 +15,7 @@ class MembershipFeatureTable extends StatelessWidget {
   final MembershipTierId selectedTier;
   final List<MembershipTierModel>? tiers;
 
-  static const _discountRowIndex = 2;
+  static const _falDiscountInsertIndex = 1;
 
   List<String> get _headers {
     if (tiers != null && tiers!.length == MembershipCatalogData.tiers.length) {
@@ -109,24 +109,37 @@ class MembershipFeatureTable extends StatelessWidget {
     );
     if (rows.isEmpty) return rows;
     rows[0] = MembershipFeatureRow(
-      label: rows[0].label,
+      label: _tokenRowLabel(source),
       values: [
         for (final t in source)
           MembershipFeatureText('${t.monthlyTokens}'),
       ],
     );
-    if (rows.length > _discountRowIndex) {
-      rows[_discountRowIndex] = MembershipFeatureRow(
-        label: rows[_discountRowIndex].label,
-        values: [
-          for (final t in source)
-            MembershipFeatureText(
-              t.falDiscountPercent > 0 ? '%${t.falDiscountPercent}' : 'Yok',
-            ),
-        ],
-      );
+    final falRow = MembershipFeatureRow(
+      label: 'Fal indirimi',
+      values: [
+        for (final t in source)
+          MembershipFeatureText(
+            t.falDiscountPercent > 0 ? '%${t.falDiscountPercent}' : 'Yok',
+          ),
+      ],
+    );
+    if (rows.length > _falDiscountInsertIndex) {
+      rows.insert(_falDiscountInsertIndex, falRow);
+    } else {
+      rows.add(falRow);
     }
     return rows;
+  }
+
+  static String _tokenRowLabel(List<MembershipTierModel> tiers) {
+    if (tiers.isEmpty) return 'Aylık Jeton';
+    final days = tiers.first.durationDays;
+    final sameDuration = tiers.every((t) => t.durationDays == days);
+    if (sameDuration && days > 0 && days != 30) {
+      return 'Jeton ($days gün)';
+    }
+    return 'Aylık Jeton';
   }
 }
 

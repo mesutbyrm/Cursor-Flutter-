@@ -22,6 +22,7 @@ import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../../membership/presentation/controllers/membership_controller.dart';
+import '../../../membership/domain/membership_model.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../widgets/premium/profile_glass.dart';
 
@@ -213,6 +214,7 @@ class GrowthHubPage extends ConsumerWidget {
     ref.invalidate(membershipCatalogProvider);
     ref.invalidate(membershipControllerProvider);
     ref.invalidate(paymentRequestsNotifierProvider);
+    ref.invalidate(paymentMethodsProvider);
     await Future.wait([
       _ignore(ref.read(authControllerProvider.notifier).refreshMe()),
       _ignore(ref.read(profileStatsProvider.future)),
@@ -282,31 +284,56 @@ class GrowthHubPage extends ConsumerWidget {
   }
 }
 
-class _MembershipStatusCard extends StatelessWidget {
+class _MembershipStatusCard extends ConsumerWidget {
   const _MembershipStatusCard({required this.info});
 
   final ProfileMembershipInfo info;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final paid = info.hasPaidTier;
     final expired = info.isExpired;
     final active = info.hasActiveSubscription;
     final days = info.daysRemaining;
+    final wire = membershipWireId(info.raw);
+    final ui = ref.watch(membershipControllerProvider);
+    MembershipTierModel? catalogTier;
+    for (final t in ui.tiers) {
+      if (t.wireId == wire) {
+        catalogTier = t;
+        break;
+      }
+    }
 
     final title = expired
         ? '${info.tierLabel} · süresi doldu'
         : paid
             ? '${info.tierLabel} üyeliği'
             : 'Üyelik planları';
-    final subtitle = expired
-        ? 'Yenileyerek rozet ve VIP avantajlarını geri aç'
-        : active
-            ? (days != null && days > 0
-                ? '$days gün kaldı · görev bonusları aktif'
-                : 'Aktif üyelik · görev bonusları')
-            : 'Gold, Diamond ve SVIP ile daha hızlı ilerle';
+
+    final subtitleParts = <String>[];
+    if (expired) {
+      subtitleParts.add('Yenileyerek rozet ve VIP avantajlarını geri aç');
+    } else if (active) {
+      if (days != null && days > 0) {
+        subtitleParts.add('$days gün kaldı');
+      } else {
+        subtitleParts.add('Aktif üyelik');
+      }
+      subtitleParts.add('görev bonusları aktif');
+    } else {
+      subtitleParts.add('Gold, Diamond ve SVIP ile daha hızlı ilerle');
+    }
+    if (catalogTier != null) {
+      if (catalogTier.durationDays > 0 && catalogTier.durationDays != 30) {
+        subtitleParts.add('${catalogTier.durationLabel} plan');
+      }
+      if (catalogTier.falDiscountPercent > 0) {
+        subtitleParts.add('%${catalogTier.falDiscountPercent} fal indirimi');
+      }
+    }
+    final subtitle = subtitleParts.join(' · ');
 
     final accent = expired
         ? AppThemeColors.accentPink

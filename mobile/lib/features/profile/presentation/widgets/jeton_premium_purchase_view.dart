@@ -20,6 +20,7 @@ import '../../../admin/presentation/providers/admin_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
 import '../../data/jeton_packages_catalog.dart';
 import '../../data/jeton_payment_request.dart';
 import '../../data/services/payment_receipt_upload_service.dart';
@@ -331,6 +332,7 @@ class _JetonPremiumPurchaseViewState
               jeton: displayJeton,
               loading: wallet.isLoading && displayJeton == null,
             ),
+            const MembershipPendingPaymentBanner(),
             if (pendingJeton.isNotEmpty) ...[
               const SizedBox(height: 12),
               PendingPaymentBanner(

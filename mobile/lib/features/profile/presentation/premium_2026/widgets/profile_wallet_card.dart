@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/theme/app_theme_colors.dart';
+import '../../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
+import '../../widgets/payment_methods_summary_line.dart';
 import '../../widgets/premium/profile_glass.dart';
 import '../profile_membership_helpers.dart';
 import '../profile_screen_state.dart';
@@ -8,7 +11,7 @@ import '../profile_theme.dart';
 import 'profile_action_tile.dart';
 
 /// Cüzdan — tek kart + alt aksiyonlar.
-class ProfileWalletCard extends StatelessWidget {
+class ProfileWalletCard extends ConsumerWidget {
   const ProfileWalletCard({
     super.key,
     required this.state,
@@ -31,7 +34,7 @@ class ProfileWalletCard extends StatelessWidget {
   final VoidCallback? onSubscriptions;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final info = resolveProfileMembership(
       rawMembership: state.wallet?.membership ?? state.membership,
       daysRemaining: state.membershipDays,
@@ -41,6 +44,7 @@ class ProfileWalletCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+          const MembershipPendingPaymentBanner(padding: EdgeInsets.only(bottom: 12)),
           const ProfileSectionTitle(title: 'Cüzdan'),
           ProfileGlass(
             padding: const EdgeInsets.all(20),
@@ -100,10 +104,14 @@ class ProfileWalletCard extends StatelessWidget {
                     Expanded(
                       child: _MiniStat(
                         label: 'Abonelik',
-                        value: state.membershipDays != null &&
-                                state.membershipDays! > 0
-                            ? '${state.membershipDays} gün'
-                            : '—',
+                        value: info.isExpired
+                            ? 'Süresi doldu'
+                            : state.membershipDays != null &&
+                                    state.membershipDays! > 0
+                                ? '${state.membershipDays} gün'
+                                : hasPremium
+                                    ? 'Aktif'
+                                    : '—',
                       ),
                     ),
                   ],
@@ -170,6 +178,13 @@ class ProfileWalletCard extends StatelessWidget {
                 ],
               );
             },
+          ),
+          const SizedBox(height: 10),
+          const PaymentMethodsSummaryLine(
+            prefix: 'Ödeme kanalları',
+            fontSize: 10,
+            textAlign: TextAlign.start,
+            showRecommended: false,
           ),
         ],
     );

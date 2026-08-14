@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.205+241 (2026-08-14) — Profil üyelik faz 15
+
+- **Özellik tablosu:** Ayrı "Fal indirimi" satırı; jeton indirimi satırı korunur
+- **Plan süresi UI:** Tier kartı, CTA ve özellik tablosu `durationDays` kullanır
+- **Ödeme özeti:** Destek footer, profil cüzdan kartı; jeton/CFC sayfalarında üyelik pending banner
+- **Görevler kartı:** Katalog `durationDays` / `falDiscountPercent` alt başlıkta
+- **Hub yenileme:** `paymentMethodsProvider` invalidation
+
 ## 1.0.204+240 (2026-08-14) — Profil üyelik faz 14
 
 - **Bekleyen üyelik talebi:** Cüzdan, görevler merkezi ve profil hub banner

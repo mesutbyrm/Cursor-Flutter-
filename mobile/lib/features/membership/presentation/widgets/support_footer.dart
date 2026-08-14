@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/payment_defaults.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../profile/presentation/widgets/payment_methods_summary_line.dart';
 import '../../domain/membership_model.dart';
 
 class MembershipSupportFooter extends ConsumerWidget {
@@ -34,15 +35,11 @@ class MembershipSupportFooter extends ConsumerWidget {
             fontSize: 13,
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'WhatsApp ${cfg.whatsappNumber} · Papara ${cfg.paparaAddress}',
+        const SizedBox(height: 6),
+        const PaymentMethodsSummaryLine(
+          prefix: 'Ödeme',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.4),
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
+          showRecommended: false,
         ),
         const SizedBox(height: 8),
         Material(

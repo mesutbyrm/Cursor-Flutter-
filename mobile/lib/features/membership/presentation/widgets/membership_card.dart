@@ -203,7 +203,7 @@ class MembershipCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '₺${tier.monthlyPriceTry}/ay',
+                    '₺${tier.monthlyPriceTry} · ${tier.durationLabel}',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.55),
                       fontSize: 10,
