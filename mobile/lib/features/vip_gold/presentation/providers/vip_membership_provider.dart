@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/vip_tier.dart';
 
 final vipTierProvider = Provider.autoDispose<VipTier>((ref) {
-  final balances = ref.watch(walletBalancesProvider).valueOrNull;
-  return VipTier.fromMembership(balances?.membership);
+  return ref.watch(profileMembershipInfoProvider).effectiveTier;
 });
 
 final vipMembershipDaysProvider = Provider.autoDispose<int?>((ref) {

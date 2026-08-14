@@ -13,6 +13,8 @@ class ProfileMembershipManageTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final info = ref.watch(profileMembershipInfoProvider);
     final paid = info.hasPaidTier;
+    final active = info.hasActiveSubscription;
+    final expired = info.isExpired;
     final days = info.daysRemaining;
 
     return Material(
@@ -34,7 +36,11 @@ class ProfileMembershipManageTile extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      paid ? '${info.tierLabel} Üyelik' : 'Üyelik Planları',
+                      expired
+                          ? '${info.tierLabel} · süresi doldu'
+                          : paid
+                              ? '${info.tierLabel} Üyelik'
+                              : 'Üyelik Planları',
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
@@ -42,11 +48,13 @@ class ProfileMembershipManageTile extends ConsumerWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      paid
-                          ? (days != null && days > 0
-                              ? '$days gün kaldı · planı yönet'
-                              : 'Aktif plan · yönet')
-                          : 'Gold, Diamond ve SVIP avantajları',
+                      expired
+                          ? 'Planı yenile · ayrıcalıkları geri aç'
+                          : active
+                              ? (days != null && days > 0
+                                  ? '$days gün kaldı · planı yönet'
+                                  : 'Aktif plan · yönet')
+                              : 'Gold, Diamond ve SVIP avantajları',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 12,

@@ -151,12 +151,14 @@ class _MembershipSummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final paid = info.hasPaidTier;
+    final expired = info.isExpired;
+    final active = info.hasActiveSubscription;
     final days = info.daysRemaining;
-    final subtitle = paid
-        ? (days != null && days > 0
-            ? '$days gün kaldı'
-            : 'Aktif üyelik')
-        : 'Gold, Diamond ve SVIP planları';
+    final subtitle = expired
+        ? 'Süresi doldu · yenile'
+        : active
+            ? (days != null && days > 0 ? '$days gün kaldı' : 'Aktif üyelik')
+            : 'Gold, Diamond ve SVIP planları';
 
     return Material(
       color: Colors.white.withValues(alpha: 0.06),
@@ -181,7 +183,11 @@ class _MembershipSummaryRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      paid ? '${info.tierLabel} Üyelik' : 'Üyelik Planları',
+                      expired
+                          ? '${info.tierLabel} · süresi doldu'
+                          : paid
+                              ? '${info.tierLabel} Üyelik'
+                              : 'Üyelik Planları',
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
@@ -200,7 +206,7 @@ class _MembershipSummaryRow extends StatelessWidget {
                 ),
               ),
               Text(
-                paid ? 'Yönet' : 'Yükselt',
+                expired ? 'Yenile' : paid ? 'Yönet' : 'Yükselt',
                 style: TextStyle(
                   color: ProfilePremiumTheme.neonPurple.withValues(alpha: 0.95),
                   fontWeight: FontWeight.w800,

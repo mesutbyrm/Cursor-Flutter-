@@ -169,14 +169,20 @@ class _StatisticsCard extends ConsumerWidget {
       (
         icon: Icons.workspace_premium_outlined,
         label: 'Üyelik Planı',
-        value: membership.hasPaidTier ? membership.tierLabel : 'Standart',
+        value: membership.isExpired
+            ? 'Süresi doldu'
+            : membership.hasPaidTier
+                ? membership.tierLabel
+                : 'Standart',
       ),
       (
         icon: Icons.timer_outlined,
         label: 'Plan süresi',
-        value: membership.daysRemaining != null && membership.daysRemaining! > 0
-            ? '${membership.daysRemaining} gün'
-            : '—',
+        value: membership.isExpired
+            ? 'Yenile'
+            : membership.daysRemaining != null && membership.daysRemaining! > 0
+                ? '${membership.daysRemaining} gün'
+                : '—',
       ),
       (
         icon: Icons.auto_awesome_rounded,

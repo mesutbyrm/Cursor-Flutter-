@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.197+232 (2026-08-14) — Profil üyelik faz 7
+
+- **Süresi dolmuş üyelik:** `effectiveTier`, hub banner yenileme, rozet kilidi
+- **Ayrıcalıklar yönlendirme:** Premium → plan sayfası; VIP → `/vip-gold`
+- **Üyelik sayfası:** Bekleyen üyelik ödemesi banner + canlı ödeme config
+- **Test:** süre dolmuş / aktif üyelik senaryoları
+
 ## 1.0.196+231 (2026-08-14) — Profil üyelik faz 6
 
 - **Başka kullanıcı profili:** Ücretli üyelik rozeti (`VipBadge`) görünür

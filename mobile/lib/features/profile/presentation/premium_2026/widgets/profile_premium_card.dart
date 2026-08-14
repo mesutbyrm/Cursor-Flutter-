@@ -25,7 +25,8 @@ class ProfilePremiumCard extends StatelessWidget {
       rawMembership: membership,
       daysRemaining: daysRemaining,
     );
-    final active = info.hasPaidTier;
+    final active = info.hasActiveSubscription;
+    final expired = info.isExpired;
 
     return Container(
       decoration: BoxDecoration(
@@ -59,7 +60,9 @@ class ProfilePremiumCard extends StatelessWidget {
                     Text(
                       active
                           ? '${info.tierLabel} Üyelik'
-                          : 'Premium Üyelik',
+                          : expired
+                              ? '${info.tierLabel} süresi doldu'
+                              : 'Premium Üyelik',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -72,7 +75,9 @@ class ProfilePremiumCard extends StatelessWidget {
                     Text(
                       active && daysRemaining != null && daysRemaining! > 0
                           ? '$daysRemaining gün kaldı · özel rozetler ve ayrıcalıklar'
-                          : 'Özel rozetler, VIP odalar ve ekstra jeton fırsatları',
+                          : expired
+                              ? 'Planı yenileyerek ayrıcalıkları geri açın'
+                              : 'Özel rozetler, VIP odalar ve ekstra jeton fırsatları',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -106,14 +111,18 @@ class ProfilePremiumCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      active ? 'Ayrıcalıklar' : 'Planları Gör',
+                      active
+                          ? 'Ayrıcalıklar'
+                          : expired
+                              ? 'Yenile'
+                              : 'Planları Gör',
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 12,
                       ),
                     ),
                   ),
-                  if (active) ...[
+                  if (active || expired) ...[
                     const SizedBox(height: 6),
                     TextButton(
                       onPressed: onManageMembership ??

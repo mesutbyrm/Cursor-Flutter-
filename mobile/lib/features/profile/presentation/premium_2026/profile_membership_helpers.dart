@@ -23,6 +23,14 @@ class ProfileMembershipInfo {
   bool get hasActiveSubscription =>
       hasPaidTier && (daysRemaining == null || daysRemaining! > 0);
 
+  /// Süresi dolmuş ücretli plan (kalan gün biliniyorsa ve ≤ 0).
+  bool get isExpired =>
+      hasPaidTier && daysRemaining != null && daysRemaining! <= 0;
+
+  /// Rozet / VIP erişimi için geçerli tier (süresi dolmuşsa basic).
+  VipTier get effectiveTier =>
+      hasActiveSubscription ? tier : VipTier.basic;
+
   /// UI'da gösterilecek kısa etiket (ör. Gold, Premium).
   String get tierLabel => tier.label;
 

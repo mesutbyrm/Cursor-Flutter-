@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:canlifal_social/features/auth/domain/entities/user_entity.dart';
+import 'package:canlifal_social/features/profile/presentation/premium_2026/profile_membership_helpers.dart';
+import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import 'package:canlifal_social/features/membership/presentation/controllers/membership_controller.dart';
 import 'package:canlifal_social/features/profile/presentation/premium_2026/profile_membership_helpers.dart';
 import 'package:canlifal_social/features/profile/presentation/premium_2026/profile_screen_builder.dart';
@@ -40,6 +42,17 @@ void main() {
       );
       expect(info.hasPaidTier, isTrue);
       expect(info.hasActiveSubscription, isFalse);
+      expect(info.isExpired, isTrue);
+      expect(info.effectiveTier, VipTier.basic);
+    });
+
+    test('effectiveTier aktif üyelikte korunur', () {
+      final info = resolveProfileMembership(
+        rawMembership: 'gold',
+        daysRemaining: 5,
+      );
+      expect(info.effectiveTier, VipTier.gold);
+      expect(info.isExpired, isFalse);
     });
   });
 

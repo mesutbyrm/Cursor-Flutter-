@@ -15,7 +15,7 @@ class ProfileHubMembershipSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final info = ref.watch(profileMembershipInfoProvider);
-    if (info.hasPaidTier) {
+    if (info.hasActiveSubscription) {
       return ProfileLazyPremium(base: state);
     }
     return ProfileHubVipBanner(

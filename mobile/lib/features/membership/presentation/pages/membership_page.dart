@@ -16,6 +16,7 @@ import '../../../profile/domain/entities/jeton_package_entity.dart';
 import '../../../profile/presentation/providers/payment_requests_notifier.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/jeton_checkout_flow.dart';
+import '../../../profile/presentation/widgets/pending_payment_banner.dart';
 import '../../domain/membership_model.dart';
 import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../controllers/membership_controller.dart';
@@ -34,6 +35,15 @@ class MembershipPage extends ConsumerWidget {
     final ui = ref.watch(membershipControllerProvider);
     final catalogAsync = ref.watch(membershipCatalogProvider);
     final padding = ResponsiveLayout.pagePadding(context);
+    final pendingRequests = ref.watch(paymentRequestsNotifierProvider);
+    final pendingMembership = pendingRequests.valueOrNull
+            ?.where((r) => r.isMembershipCheckout && r.isPending)
+            .toList() ??
+        const [];
+    final paymentCfg = ref.watch(paymentConfigProvider).valueOrNull;
+    final cfg = paymentCfg != null
+        ? PaymentDefaults.merge(paymentCfg)
+        : PaymentDefaults.config;
 
     return Scaffold(
       backgroundColor: MembershipCatalogData.bg,
@@ -94,6 +104,14 @@ class MembershipPage extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            if (pendingMembership.isNotEmpty) ...[
+                              PendingPaymentBanner(
+                                request: pendingMembership.first,
+                                kind: PendingPaymentKind.jeton,
+                                totalPending: pendingMembership.length,
+                              ),
+                              const SizedBox(height: 16),
+                            ],
                             if (ui.hasActivePaidMembership) ...[
                               _ActiveBanner(
                                 tier: ui.currentMembership,
@@ -209,8 +227,8 @@ class MembershipPage extends ConsumerWidget {
                             ),
                             const SizedBox(height: 10),
                             Text(
-                              'Ödeme: WhatsApp ${PaymentDefaults.whatsapp} · '
-                              'Papara ${PaymentDefaults.papara}',
+                              'Ödeme: WhatsApp ${cfg.whatsapp} · '
+                              'Papara ${cfg.papara}',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 11,

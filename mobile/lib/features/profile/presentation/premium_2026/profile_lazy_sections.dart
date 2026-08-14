@@ -95,7 +95,6 @@ class ProfileLazyPremium extends ConsumerWidget {
       child: ProfilePremiumCard(
         membership: info.hasPaidTier ? info.tierLabel : null,
         daysRemaining: info.daysRemaining,
-        onViewPrivileges: () => context.push('/vip-gold'),
         onManageMembership: () => context.push('/premium-membership'),
       ),
     );
