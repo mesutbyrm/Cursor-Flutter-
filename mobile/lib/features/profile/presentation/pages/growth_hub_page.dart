@@ -122,6 +122,8 @@ class GrowthHubPage extends ConsumerWidget {
                     vipTier: serverLevel?.vipTier,
                     isVip: serverLevel?.isVip ?? membershipInfo.isVip,
                   ),
+                  const SizedBox(height: 14),
+                  _MembershipStatusCard(info: membershipInfo),
                   const SizedBox(height: 20),
                   const ProfileSectionTitle(title: 'Bugünün görevleri'),
                 ]),
@@ -272,6 +274,100 @@ class GrowthHubPage extends ConsumerWidget {
         SnackBar(content: Text(ApiException.userMessage(e))),
       );
     }
+  }
+}
+
+class _MembershipStatusCard extends StatelessWidget {
+  const _MembershipStatusCard({required this.info});
+
+  final ProfileMembershipInfo info;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final paid = info.hasPaidTier;
+    final expired = info.isExpired;
+    final active = info.hasActiveSubscription;
+    final days = info.daysRemaining;
+
+    final title = expired
+        ? '${info.tierLabel} · süresi doldu'
+        : paid
+            ? '${info.tierLabel} üyeliği'
+            : 'Üyelik planları';
+    final subtitle = expired
+        ? 'Yenileyerek rozet ve VIP avantajlarını geri aç'
+        : active
+            ? (days != null && days > 0
+                ? '$days gün kaldı · görev bonusları aktif'
+                : 'Aktif üyelik · görev bonusları')
+            : 'Gold, Diamond ve SVIP ile daha hızlı ilerle';
+
+    final accent = expired
+        ? AppThemeColors.accentPink
+        : paid
+            ? AppThemeColors.coinGold
+            : AppThemeColors.accentPurple;
+
+    return ProfileGlass(
+      onTap: () => context.push(
+        paid && info.isVip ? '/vip-gold' : '/premium-membership',
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              paid ? Icons.workspace_premium_rounded : Icons.card_membership_rounded,
+              color: accent,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: c.onSurface,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: c.onSurfaceVariant,
+                    fontSize: 12,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            expired ? 'Yenile' : paid ? 'Yönet' : 'Planlar',
+            style: TextStyle(
+              color: accent,
+              fontWeight: FontWeight.w900,
+              fontSize: 12,
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: c.onSurfaceMuted, size: 20),
+        ],
+      ),
+    );
   }
 }
 

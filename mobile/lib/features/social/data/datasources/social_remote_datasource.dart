@@ -318,9 +318,10 @@ class SocialRemoteDataSource {
     final m = asJsonMap(raw);
     final userRaw = pick(m, ['user', 'author', 'profile']);
     final userMap = userRaw is Map ? asJsonMap(userRaw) : <String, dynamic>{};
+    final authorDto = UserDto.fromJson(userMap);
     return SocialCommentEntity(
       id: pick(m, ['id', '_id'])?.toString() ?? '',
-      author: UserDto.fromJson(userMap).toEntity(),
+      author: authorDto.toEntity(role: authorDto.roleFrom(userMap)),
       text: pick(m, ['content', 'text', 'body'])?.toString() ?? '',
       createdAt: DateTime.tryParse(
         pick(m, ['createdAt', 'created_at'])?.toString() ?? '',
@@ -416,7 +417,8 @@ class SocialRemoteDataSource {
       final userMap = userRaw is Map ? asJsonMap(userRaw) : <String, dynamic>{};
       if (userMap.isEmpty) continue;
 
-      final user = UserDto.fromJson(userMap).toEntity();
+      final authorDto = UserDto.fromJson(userMap);
+      final user = authorDto.toEntity(role: authorDto.roleFrom(userMap));
       if (user.id.isEmpty) continue;
 
       final stories = <SocialStoryItemEntity>[];

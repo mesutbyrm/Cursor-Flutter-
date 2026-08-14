@@ -7,6 +7,7 @@ import '../../../../core/pagination/paged_result.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
+import '../../domain/entities/payment_method_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../datasources/canlifal_user_api_datasource.dart';
@@ -246,6 +247,10 @@ class WalletRepositoryImpl implements WalletRepository {
 
   @override
   Future<PaymentConfigEntity> paymentConfig() => _remote.paymentConfig();
+
+  @override
+  Future<List<PaymentMethodEntity>> paymentMethods() =>
+      _remote.paymentMethods();
 
   @override
   Future<void> submitPaymentRequest(Map<String, dynamic> body) =>

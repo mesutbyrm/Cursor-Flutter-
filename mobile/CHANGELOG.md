@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.200+235 (2026-08-14) — Profil üyelik faz 10
+
+- **Ödeme yöntemleri:** `GET /api/payments/methods` — jeton checkout dinamik kanal listesi
+- **Görevler merkezi:** Üyelik durumu özeti kartı (aktif / süresi dolmuş / planlar)
+- **Sosyal akış:** `VipBadge` + SVIP; `membership` alanı `roleFrom` ile çözülür
+- **Doğrulama rozeti:** Verified ve üyelik rozetleri ayrı gösterilir
+- **Test:** `payment_method_entity_test.dart`
+
 ## 1.0.199+234 (2026-08-14) — Profil üyelik faz 9
 
 - **Cüzdan:** Süresi dolmuş üyelik yenileme banner'ı; aktif etiket SVIP uyumlu

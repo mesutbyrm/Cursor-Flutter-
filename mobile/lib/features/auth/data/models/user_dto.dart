@@ -75,6 +75,28 @@ abstract class UserDto with _$UserDto {
     final direct = pick(json, ['role', 'tier', 'userRole'])?.toString();
     if (direct != null && direct.trim().isNotEmpty) return direct.trim();
 
+    final membership = pick(json, [
+      'membership',
+      'membershipTier',
+      'membership_tier',
+      'vipLevel',
+      'vip_level',
+      'subscription',
+      'subscriptionTier',
+      'subscription_tier',
+      'plan',
+      'userMembership',
+    ])?.toString();
+    if (membership != null && membership.trim().isNotEmpty) {
+      final normalized = membership.trim().toLowerCase();
+      if (normalized != 'free' &&
+          normalized != 'basic' &&
+          normalized != 'member' &&
+          normalized != 'üye') {
+        return membership.trim();
+      }
+    }
+
     if (json['isFortuneTeller'] == true ||
         json['isLiveFortuneTeller'] == true ||
         json['canGoOnline'] == true) {

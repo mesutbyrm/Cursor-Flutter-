@@ -11,6 +11,7 @@ import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
+import '../../domain/entities/payment_method_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../../data/datasources/canlifal_user_api_datasource.dart';
@@ -147,6 +148,12 @@ final userProfileExtendedProvider =
 
 final paymentConfigProvider = FutureProvider<PaymentConfigEntity>((ref) async {
   return ref.watch(walletRepositoryProvider).paymentConfig();
+});
+
+final paymentMethodsProvider =
+    FutureProvider<List<PaymentMethodEntity>>((ref) async {
+  ref.keepAlive();
+  return ref.watch(walletRepositoryProvider).paymentMethods();
 });
 
 final jetonPackagesProvider =

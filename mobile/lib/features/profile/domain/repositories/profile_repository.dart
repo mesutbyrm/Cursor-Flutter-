@@ -6,6 +6,7 @@ import '../entities/profile_stats_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../entities/jeton_package_entity.dart';
 import '../entities/payment_config_entity.dart';
+import '../entities/payment_method_entity.dart';
 import '../entities/referral_info_entity.dart';
 
 abstract class ProfileRepository {
@@ -45,6 +46,7 @@ abstract class WalletRepository {
   Future<WalletBalances> balances({bool forceRefresh = false});
   Future<List<JetonPackageEntity>> jetonPackages();
   Future<PaymentConfigEntity> paymentConfig();
+  Future<List<PaymentMethodEntity>> paymentMethods();
   Future<void> submitPaymentRequest(Map<String, dynamic> body);
   Future<void> cancelPaymentRequest(String requestId);
   Future<List<CfcPaymentRequestEntity>> myPaymentRequests();

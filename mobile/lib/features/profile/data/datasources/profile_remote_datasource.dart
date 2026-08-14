@@ -17,6 +17,7 @@ import '../../../wallet/domain/wallet_balances.dart';
 import '../jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
+import '../../domain/entities/payment_method_entity.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
@@ -504,6 +505,23 @@ class WalletRemoteDataSource {
     }
     final remote = PaymentConfigEntity.fromJson(_unwrap(data));
     return PaymentDefaults.merge(remote);
+  }
+
+  /// Ödeme kanalları — `GET /api/payments/methods`.
+  Future<List<PaymentMethodEntity>> paymentMethods() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.paymentMethods);
+      final data = res.data;
+      if (data is List) {
+        return PaymentMethodEntity.parseList(data);
+      }
+      if (data is Map) {
+        final map = _unwrap(data);
+        final raw = map['methods'] ?? map['items'] ?? map['data'];
+        if (raw is List) return PaymentMethodEntity.parseList(raw);
+      }
+    } catch (_) {}
+    return PaymentMethodEntity.defaults;
   }
 
   bool _paymentRequestAccepted(dynamic data, int code) {

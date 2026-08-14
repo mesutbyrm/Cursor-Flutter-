@@ -66,6 +66,14 @@ ProfileMembershipInfo profileMembershipFromWallet(
 }
 
 /// Katalog / API için wire kimliği (`basic`, `gold`, …).
+/// Sosyal akış / yorum `author.role` — ücretli üyelik rozeti gösterilsin mi?
+bool shouldShowSocialMembershipBadge(String? role) {
+  if (role == null || role.trim().isEmpty) return false;
+  final r = role.toLowerCase();
+  if (r == 'fortune_teller' || r == 'agency') return false;
+  return resolveProfileMembership(rawMembership: role).hasPaidTier;
+}
+
 String membershipWireId(String? rawMembership) {
   final info = resolveProfileMembership(rawMembership: rawMembership);
   if (!info.hasPaidTier) return 'basic';

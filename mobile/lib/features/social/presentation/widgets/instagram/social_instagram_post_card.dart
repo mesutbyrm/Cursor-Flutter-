@@ -12,6 +12,9 @@ import '../../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../feed/domain/entities/post_entity.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/network/api_exception.dart';
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
+import '../../../shorts/presentation/widgets/shorts_profile_content.dart';
+import '../../../vip_gold/presentation/widgets/vip_badge.dart';
 import '../../providers/social_providers.dart';
 import 'social_post_caption.dart';
 import 'social_post_comments_sheet.dart';
@@ -413,10 +416,20 @@ class _PostHeader extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                if (post.author.isVerified ||
-                                    _isPremiumRole(post.author.role)) ...[
+                                if (post.author.isVerified) ...[
                                   const SizedBox(width: 4),
-                                  _MembershipBadge(role: post.author.role),
+                                  const ShortsVerifiedBadge(size: 14),
+                                ],
+                                if (shouldShowSocialMembershipBadge(
+                                  post.author.role,
+                                )) ...[
+                                  const SizedBox(width: 4),
+                                  VipBadge(
+                                    tier: resolveProfileMembership(
+                                      rawMembership: post.author.role,
+                                    ).tier,
+                                    compact: true,
+                                  ),
                                 ],
                                 if (timeLabel != null) ...[
                                   const SizedBox(width: 6),
@@ -740,45 +753,6 @@ class _ActionIcon extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: Icon(icon, size: 24, color: context.colors.onSurface),
-      ),
-    );
-  }
-}
-
-bool _isPremiumRole(String? role) {
-  final r = role?.toLowerCase() ?? '';
-  return r.contains('gold') ||
-      r.contains('vip') ||
-      r.contains('diamond') ||
-      r.contains('premium') ||
-      r.contains('admin');
-}
-
-class _MembershipBadge extends StatelessWidget {
-  const _MembershipBadge({this.role});
-
-  final String? role;
-
-  @override
-  Widget build(BuildContext context) {
-    final r = role?.toLowerCase() ?? '';
-    final (label, color) = switch (r) {
-      _ when r.contains('diamond') => ('💎', const Color(0xFF22D3EE)),
-      _ when r.contains('premium') => ('⭐', const Color(0xFFB832FF)),
-      _ when r.contains('gold') || r.contains('vip') => ('👑', const Color(0xFFFFD54F)),
-      _ when r.contains('admin') => ('🛡️', const Color(0xFF4ADE80)),
-      _ => ('✨', AppThemeColors.accentPurple),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.45)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color),
       ),
     );
   }
