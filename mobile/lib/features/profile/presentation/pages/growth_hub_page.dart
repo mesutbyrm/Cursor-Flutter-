@@ -18,6 +18,8 @@ import '../../domain/entities/daily_task_entity.dart';
 import '../../domain/entities/growth_progress_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../providers/profile_providers.dart';
+import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
+import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../widgets/premium/profile_glass.dart';
 
@@ -180,6 +182,7 @@ class GrowthHubPage extends ConsumerWidget {
                   const SizedBox(height: 20),
                   _RoadmapHintCard(
                     onVip: () => context.push('/vip-gold'),
+                    onPremium: () => context.push('/premium-membership'),
                     onInvite: () => context.push('/invite-friends'),
                     onAdReward: () => _claimAdReward(context, ref),
                   ),
@@ -200,6 +203,9 @@ class GrowthHubPage extends ConsumerWidget {
     ref.invalidate(userAchievementsProvider);
     ref.invalidate(userDailyTasksProvider);
     ref.invalidate(userLevelProvider);
+    ref.invalidate(membershipBadgesCatalogProvider);
+    ref.invalidate(membershipCatalogProvider);
+    ref.invalidate(membershipControllerProvider);
     await Future.wait([
       _ignore(ref.read(authControllerProvider.notifier).refreshMe()),
       _ignore(ref.read(profileStatsProvider.future)),
@@ -663,11 +669,13 @@ class _BadgeCard extends StatelessWidget {
 class _RoadmapHintCard extends StatelessWidget {
   const _RoadmapHintCard({
     required this.onVip,
+    required this.onPremium,
     required this.onInvite,
     required this.onAdReward,
   });
 
   final VoidCallback onVip;
+  final VoidCallback onPremium;
   final VoidCallback onInvite;
   final VoidCallback onAdReward;
 
@@ -700,12 +708,24 @@ class _RoadmapHintCard extends StatelessWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
+                  onPressed: onPremium,
+                  icon: const Icon(Icons.card_membership_rounded),
+                  label: const Text('Planlar'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton.icon(
                   onPressed: onVip,
                   icon: const Icon(Icons.workspace_premium_rounded),
                   label: const Text('VIP'),
                 ),
               ),
-              const SizedBox(width: 10),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onInvite,

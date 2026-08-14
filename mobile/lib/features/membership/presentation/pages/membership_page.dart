@@ -17,6 +17,7 @@ import '../../../profile/presentation/providers/payment_requests_notifier.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/jeton_checkout_flow.dart';
 import '../../domain/membership_model.dart';
+import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../controllers/membership_controller.dart';
 import '../widgets/common_benefits.dart';
 import '../widgets/feature_table.dart';
@@ -255,6 +256,7 @@ class MembershipPage extends ConsumerWidget {
           data: {'planId': tier.resolvedPlanId},
         );
         await ref.read(membershipControllerProvider.notifier).refresh();
+        await refreshMembershipAfterPurchase(ref);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('${tier.title} üyeliği aktif')),

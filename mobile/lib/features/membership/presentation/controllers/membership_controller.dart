@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../wallet/domain/wallet_balances.dart';
+import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../data/membership_remote_datasource.dart';
@@ -127,8 +128,8 @@ class MembershipController extends Notifier<MembershipUiState> {
         final selected = switch (cur) {
           'gold' => MembershipTierId.gold,
           'premium' => MembershipTierId.premium,
-          'diamond' => MembershipTierId.diamond,
-          'basic' => MembershipTierId.basic,
+          'diamond' || 'svip' || 'super_vip' => MembershipTierId.diamond,
+          'basic' || 'free' || '' => MembershipTierId.basic,
           _ => MembershipTierId.gold,
         };
         state = state.copyWith(
@@ -167,6 +168,7 @@ class MembershipController extends Notifier<MembershipUiState> {
 
   Future<void> refresh() async {
     ref.invalidate(membershipCatalogProvider);
+    ref.invalidate(membershipBadgesCatalogProvider);
     invalidateWalletCacheFromRef(ref);
     await ref.read(membershipCatalogProvider.future);
   }

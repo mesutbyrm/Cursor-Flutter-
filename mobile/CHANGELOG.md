@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.194+229 (2026-08-14) — Profil üyelik faz 4
+
+- **Profil düzenle:** Üyelik yönetim kartı (plan, kalan gün, plan sayfası)
+- **Satın alma senkronu:** `refreshMembershipAfterPurchase` — jeton/üyelik sonrası rozet+katalog
+- **Katalog:** `free` → `basic` normalizasyonu; SVIP tier seçimi
+- **Görevler:** Yol haritasına Planlar butonu; yenilemede üyelik provider'ları
+- **ProfileLazyPremium:** Cüzdan tabanlı tier çözümlemesi
+
 ## 1.0.193+228 (2026-08-14) — Profil üyelik faz 3
 
 - **profileMembershipInfoProvider:** Cüzdan tabanlı merkezi üyelik özeti

@@ -12,6 +12,7 @@ import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/presentation/widgets/auth_shell.dart';
 import '../../../vip_gold/domain/entrance_theme.dart';
+import '../premium_2026/widgets/profile_membership_manage_tile.dart';
 import '../providers/profile_hub_providers.dart';
 import '../providers/profile_providers.dart';
 
@@ -256,6 +257,22 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
                         prefixIcon: Icons.star_outline_rounded,
                       ),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              LiquidGlassCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Üyelik',
+                      style: PremiumTypography.label(context).copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const ProfileMembershipManageTile(),
                   ],
                 ),
               ),

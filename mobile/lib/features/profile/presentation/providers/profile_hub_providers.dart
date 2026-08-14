@@ -72,6 +72,24 @@ Future<void> refreshProfileHub(WidgetRef ref, {String? userId}) async {
   unawaited(ref.read(userAchievementsProvider.future));
 }
 
+/// Satın alma / ödeme onayı sonrası üyelik + cüzdan senkronu.
+Future<void> refreshMembershipAfterPurchase(WidgetRef ref) async {
+  ref.invalidate(membershipBadgesCatalogProvider);
+  ref.invalidate(membershipCatalogProvider);
+  ref.invalidate(membershipControllerProvider);
+  ref.invalidate(walletBalancesProvider);
+  await Future.wait([
+    _ignore(ref.read(walletBalancesProvider.notifier).refresh(force: true)),
+    _ignore(ref.read(membershipCatalogProvider.future)),
+  ]);
+}
+
+Future<void> _ignore(Future<dynamic> future) async {
+  try {
+    await future;
+  } catch (_) {}
+}
+
 /// Profil sayfasında gerçek zamanlı senkron — bildirim + periyodik yenileme.
 class ProfileRealtimeSync extends ConsumerStatefulWidget {
   const ProfileRealtimeSync({super.key, required this.child});

@@ -9,6 +9,7 @@ import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../providers/profile_providers.dart';
+import '../providers/profile_hub_providers.dart';
 import 'profile_screen_builder.dart';
 import 'profile_screen_state.dart';
 import 'widgets/profile_admin_card.dart';
@@ -86,23 +87,14 @@ class ProfileLazyPremium extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final membership = ref.watch(
-      walletBalancesProvider.select(
-        (w) => buildProfileWalletState(base, w.valueOrNull).membership,
-      ),
-    );
-    final daysRemaining = ref.watch(
-      walletBalancesProvider.select(
-        (w) => buildProfileWalletState(base, w.valueOrNull).membershipDays,
-      ),
-    );
+    final info = ref.watch(profileMembershipInfoProvider);
 
     return LazyScreenSection(
       delay: LazyLoadPerf.profilePremium,
       repaintIsolate: false,
       child: ProfilePremiumCard(
-        membership: membership,
-        daysRemaining: daysRemaining,
+        membership: info.hasPaidTier ? info.tierLabel : null,
+        daysRemaining: info.daysRemaining,
         onViewPrivileges: () => context.push('/vip-gold'),
         onManageMembership: () => context.push('/premium-membership'),
       ),

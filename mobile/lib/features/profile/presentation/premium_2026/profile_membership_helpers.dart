@@ -56,3 +56,17 @@ ProfileMembershipInfo profileMembershipFromWallet(
     daysRemaining: wallet?.membershipDaysRemaining,
   );
 }
+
+/// Katalog / API için wire kimliği (`basic`, `gold`, …).
+String membershipWireId(String? rawMembership) {
+  final info = resolveProfileMembership(rawMembership: rawMembership);
+  if (!info.hasPaidTier) return 'basic';
+  final wire = rawMembership?.toLowerCase().trim() ?? '';
+  return switch (wire) {
+    'svip' || 'super_vip' => 'svip',
+    'diamond' => 'diamond',
+    'gold' => 'gold',
+    'premium' => 'premium',
+    _ => wire.isNotEmpty ? wire : 'basic',
+  };
+}

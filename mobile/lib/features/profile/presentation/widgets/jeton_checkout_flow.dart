@@ -22,6 +22,7 @@ import '../../../admin/presentation/providers/admin_providers.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../../notifications/presentation/providers/notifications_list_notifier.dart';
 import '../providers/payment_requests_notifier.dart';
+import '../providers/profile_hub_providers.dart';
 import '../providers/profile_providers.dart';
 
 /// Jeton satın alma — mockup: ödeme yöntemi → WhatsApp / Papara / Havale.
@@ -461,6 +462,9 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
     ref.invalidate(adminPaymentNotificationsProvider);
     ref.invalidate(notificationsListProvider);
     ref.invalidate(notificationsListNotifierProvider);
+    if (isMembership) {
+      await refreshMembershipAfterPurchase(ref);
+    }
   }
 
   Future<void> _showWaitDialog() async {

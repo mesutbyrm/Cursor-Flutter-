@@ -43,6 +43,18 @@ void main() {
     });
   });
 
+  group('membershipWireId', () {
+    test('free basic döner', () {
+      expect(membershipWireId('free'), 'basic');
+      expect(membershipWireId(null), 'basic');
+    });
+
+    test('ücretli tier korunur', () {
+      expect(membershipWireId('gold'), 'gold');
+      expect(membershipWireId('SVIP'), 'svip');
+    });
+  });
+
   group('MembershipUiState', () {
     test('free aktif ücretli sayılmaz', () {
       const ui = MembershipUiState(

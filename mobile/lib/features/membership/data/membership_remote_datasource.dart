@@ -6,6 +6,7 @@ import '../../../core/util/json_util.dart';
 import '../../wallet/domain/wallet_balances.dart';
 import '../domain/membership_package_entity.dart';
 import 'membership_catalog_fallback.dart';
+import '../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 
 class MembershipRemoteDataSource {
   MembershipRemoteDataSource(this._dio);
@@ -48,8 +49,11 @@ class MembershipRemoteDataSource {
     // Plans yanıtında mevcut üyelik/gün bilgisi yok; cüzdandan tamamla ki
     // "aktif üyelik" kartı ve uzatma doğru görünsün.
     final currentFromApi = catalog.currentMembership.toLowerCase();
-    final resolvedCurrent = (currentFromApi.isEmpty || currentFromApi == 'basic')
-        ? (wallet.membership ?? 'basic')
+    final walletTier = membershipWireId(wallet.membership);
+    final resolvedCurrent = (currentFromApi.isEmpty ||
+            currentFromApi == 'basic' ||
+            currentFromApi == 'free')
+        ? walletTier
         : catalog.currentMembership;
     return catalog.copyWith(
       currentMembership: resolvedCurrent,
@@ -60,12 +64,13 @@ class MembershipRemoteDataSource {
   }
 
   MembershipCatalogEntity _fallbackCatalog(WalletBalances wallet) {
+    final wire = membershipWireId(wallet.membership);
     return MembershipCatalogEntity(
       packages: fallbackMembershipPackages(
-        currentMembership: wallet.membership ?? 'basic',
+        currentMembership: wire,
         catalogDaysRemaining: wallet.membershipDaysRemaining,
       ),
-      currentMembership: wallet.membership ?? 'basic',
+      currentMembership: wire,
       jetonBalance: wallet.jeton,
       cfcBalance: wallet.cfc,
       daysRemaining: wallet.membershipDaysRemaining,
