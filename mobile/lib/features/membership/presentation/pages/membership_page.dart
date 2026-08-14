@@ -17,6 +17,7 @@ import '../../../profile/presentation/providers/payment_requests_notifier.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/jeton_checkout_flow.dart';
 import '../../../profile/presentation/widgets/pending_payment_banner.dart';
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../domain/membership_model.dart';
 import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../controllers/membership_controller.dart';
@@ -509,6 +510,12 @@ class _ActiveBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final info = resolveProfileMembership(
+      rawMembership: tier,
+      daysRemaining: days,
+    );
+    final label = info.tierLabel;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -532,7 +539,7 @@ class _ActiveBanner extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '${tier.toUpperCase()} üyeliğiniz aktif · $days gün kaldı',
+                  '$label üyeliğiniz aktif · $days gün kaldı',
                   style: const TextStyle(
                     color: MembershipCatalogData.gold,
                     fontWeight: FontWeight.w800,

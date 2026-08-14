@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.198+233 (2026-08-14) — Profil üyelik faz 8
+
+- **Üyelik rozetleri:** Hub'da dokunarak equip; seçili rozet işareti
+- **Rozetleri Yönet:** Kozmetik sayfasına rozet sekmesi eklendi
+- **resolvedMembershipBadgeProvider:** Kullanıcının seçtiği rozet öncelikli
+- **Üyelik sayfası:** SVIP etiketi (`tierLabel`, DIAMOND yerine)
+- **Temizlik:** Kullanılmayan `ProfilePremiumBanner` kaldırıldı
+
 ## 1.0.197+232 (2026-08-14) — Profil üyelik faz 7
 
 - **Süresi dolmuş üyelik:** `effectiveTier`, hub banner yenileme, rozet kilidi

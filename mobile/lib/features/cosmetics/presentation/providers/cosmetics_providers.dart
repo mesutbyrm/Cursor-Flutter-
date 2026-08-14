@@ -186,6 +186,17 @@ final resolvedMembershipBadgeProvider = Provider<CosmeticItem?>((ref) {
   if (tier == VipTier.basic) return null;
   final catalog = ref.watch(membershipBadgesCatalogProvider).valueOrNull;
   if (catalog == null || catalog.isEmpty) return null;
+
+  final equippedId =
+      ref.watch(cosmeticLoadoutProvider).valueOrNull?.idFor(CosmeticSlot.badge);
+  if (equippedId != null) {
+    for (final badge in catalog) {
+      if (badge.id == equippedId && badge.isUnlockedFor(tier: tier)) {
+        return badge;
+      }
+    }
+  }
+
   CosmeticItem? best;
   for (final badge in catalog) {
     if (tier.index < badge.requiredTier.index) continue;
@@ -206,6 +217,13 @@ List<CosmeticItem> mergedCatalogForSlot(
 ) {
   if (slot == CosmeticSlot.profileFrame) {
     final remote = ref.watch(profileFramesCatalogProvider).valueOrNull;
+    final local = CosmeticCatalogDefaults.forSlot(slot);
+    if (remote == null || remote.isEmpty) return local;
+    final ids = remote.map((e) => e.id).toSet();
+    return [...remote, ...local.where((e) => !ids.contains(e.id))];
+  }
+  if (slot == CosmeticSlot.badge) {
+    final remote = ref.watch(membershipBadgesCatalogProvider).valueOrNull;
     final local = CosmeticCatalogDefaults.forSlot(slot);
     if (remote == null || remote.isEmpty) return local;
     final ids = remote.map((e) => e.id).toSet();

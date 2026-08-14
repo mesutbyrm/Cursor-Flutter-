@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/images/canlifal_network_image.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../cosmetics/domain/cosmetic_item.dart';
+import '../../../cosmetics/domain/cosmetic_slot.dart';
 import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
@@ -19,6 +20,8 @@ class ProfileHubMembershipBadgesSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(membershipBadgesCatalogProvider);
     final tier = ref.watch(vipTierProvider);
+    final equippedId =
+        ref.watch(cosmeticLoadoutProvider).valueOrNull?.idFor(CosmeticSlot.badge);
 
     return async.when(
       loading: () => const PremiumSkeleton(
@@ -48,14 +51,14 @@ class ProfileHubMembershipBadgesSection extends ConsumerWidget {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => context.push('/premium-membership'),
+                    onPressed: () => context.push('/profile/cosmetics'),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: const Text(
-                      'Planları Gör',
+                      'Rozetleri Yönet',
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 11,
@@ -73,13 +76,20 @@ class ProfileHubMembershipBadgesSection extends ConsumerWidget {
                   separatorBuilder: (_, _) => const SizedBox(width: 10),
                   itemBuilder: (context, i) {
                     final badge = badges[i];
-                    final unlocked =
-                        badge.isUnlockedFor(tier: tier);
+                    final unlocked = badge.isUnlockedFor(tier: tier);
+                    final selected = equippedId == badge.id;
                     return _MembershipBadgeTile(
                       badge: badge,
                       unlocked: unlocked,
+                      selected: selected,
                       requiredTier: badge.requiredTier,
-                      onTap: () => context.push('/premium-membership'),
+                      onTap: () => _onBadgeTap(
+                        context,
+                        ref,
+                        badge: badge,
+                        unlocked: unlocked,
+                        selected: selected,
+                      ),
                     );
                   },
                 ),
@@ -90,24 +100,57 @@ class ProfileHubMembershipBadgesSection extends ConsumerWidget {
       },
     );
   }
+
+  Future<void> _onBadgeTap(
+    BuildContext context,
+    WidgetRef ref, {
+    required CosmeticItem badge,
+    required bool unlocked,
+    required bool selected,
+  }) async {
+    if (!unlocked) {
+      context.push('/premium-membership');
+      return;
+    }
+    if (selected) return;
+    await ref
+        .read(cosmeticLoadoutProvider.notifier)
+        .equip(CosmeticSlot.badge, badge.id);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${badge.name} rozeti seçildi'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 }
 
 class _MembershipBadgeTile extends StatelessWidget {
   const _MembershipBadgeTile({
     required this.badge,
     required this.unlocked,
+    required this.selected,
     required this.requiredTier,
     required this.onTap,
   });
 
   final CosmeticItem badge;
   final bool unlocked;
+  final bool selected;
   final VipTier requiredTier;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final url = badge.previewUrl ?? badge.assetUrl;
+    final borderColor = selected
+        ? ProfilePremiumTheme.neonPink
+        : unlocked
+            ? ProfilePremiumTheme.neonPurple
+            : Colors.white.withValues(alpha: 0.15);
+
     return GestureDetector(
       onTap: onTap,
       child: Opacity(
@@ -124,16 +167,13 @@ class _MembershipBadgeTile extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: unlocked
-                          ? ProfilePremiumTheme.neonPurple
-                          : Colors.white.withValues(alpha: 0.15),
-                      width: unlocked ? 2 : 1,
+                      color: borderColor,
+                      width: selected ? 3 : unlocked ? 2 : 1,
                     ),
                     boxShadow: unlocked
                         ? [
                             BoxShadow(
-                              color: ProfilePremiumTheme.neonPurple
-                                  .withValues(alpha: 0.35),
+                              color: borderColor.withValues(alpha: 0.35),
                               blurRadius: 12,
                             ),
                           ]
@@ -149,7 +189,25 @@ class _MembershipBadgeTile extends StatelessWidget {
                               : Colors.white54,
                         ),
                 ),
-                if (!unlocked)
+                if (selected)
+                  Positioned(
+                    right: -2,
+                    bottom: -2,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: ProfilePremiumTheme.neonPink,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white70),
+                      ),
+                      child: const Icon(
+                        Icons.check_rounded,
+                        size: 10,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                else if (!unlocked)
                   Positioned(
                     right: -2,
                     bottom: -2,
@@ -182,7 +240,9 @@ class _MembershipBadgeTile extends StatelessWidget {
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: unlocked ? 0.9 : 0.5),
                   fontSize: 9,
-                  fontWeight: unlocked ? FontWeight.w800 : FontWeight.w600,
+                  fontWeight: selected || unlocked
+                      ? FontWeight.w800
+                      : FontWeight.w600,
                 ),
               ),
             ),

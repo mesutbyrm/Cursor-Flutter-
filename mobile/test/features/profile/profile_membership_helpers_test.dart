@@ -30,6 +30,17 @@ void main() {
       expect(info.isVip, isFalse);
     });
 
+    test('svip etiketi korunur', () {
+      expect(
+        resolveProfileMembership(rawMembership: 'svip').tierLabel,
+        'SVIP',
+      );
+      expect(
+        resolveProfileMembership(rawMembership: 'super_vip').tierLabel,
+        'SVIP',
+      );
+    });
+
     test('hasPaidMembershipRaw kısayolu', () {
       expect(hasPaidMembershipRaw('free'), isFalse);
       expect(hasPaidMembershipRaw('diamond'), isTrue);

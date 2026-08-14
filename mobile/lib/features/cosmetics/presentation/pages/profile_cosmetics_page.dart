@@ -37,6 +37,7 @@ class _ProfileCosmeticsPageState extends ConsumerState<ProfileCosmeticsPage>
     CosmeticSlot.entranceAnimation,
     CosmeticSlot.chatBubble,
     CosmeticSlot.microphoneFrame,
+    CosmeticSlot.badge,
   ];
 
   @override
