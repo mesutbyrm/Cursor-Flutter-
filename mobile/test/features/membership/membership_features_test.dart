@@ -74,4 +74,33 @@ void main() {
       expect(subtitle, contains('sona erdi'));
     });
   });
+
+  group('formatMembershipPlanDuration', () {
+    test('kalan / toplam gün', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 12,
+      );
+      const tier = MembershipTierModel(
+        id: MembershipTierId.gold,
+        title: 'Gold',
+        subtitle: 'Test',
+        monthlyTokens: 1500,
+        monthlyPriceTry: 1000,
+        accent: Color(0xFFFFD54F),
+        badgeIcon: Icons.star,
+        glow: Color(0xFFFFC107),
+        durationDays: 45,
+      );
+      expect(
+        formatMembershipPlanDuration(
+          info: info,
+          catalogTier: tier,
+          daysRemaining: 12,
+        ),
+        '12 / 45 gün',
+      );
+    });
+  });
 }

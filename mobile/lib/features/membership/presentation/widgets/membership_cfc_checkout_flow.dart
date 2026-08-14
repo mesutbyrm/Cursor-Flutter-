@@ -9,6 +9,7 @@ import '../../../profile/data/jeton_payment_request.dart';
 import '../../../profile/domain/entities/payment_method_entity.dart';
 import '../../../profile/presentation/providers/payment_requests_notifier.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../../domain/membership_model.dart';
 
 /// CFC bakiyesi yeterliyken tek dokunuşla üyelik talebi (kanal seçimi yok).
@@ -32,6 +33,7 @@ Future<bool> submitMembershipCfcInstant(
         );
     ref.refreshWalletCache(force: true);
     ref.invalidate(paymentRequestsNotifierProvider);
+    await refreshMembershipAfterPurchase(ref);
     onDone();
     if (!context.mounted) return true;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -151,6 +153,7 @@ Future<void> _submitMembershipCfc(
         );
     ref.refreshWalletCache(force: true);
     ref.invalidate(paymentRequestsNotifierProvider);
+    await refreshMembershipAfterPurchase(ref);
     onDone();
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(

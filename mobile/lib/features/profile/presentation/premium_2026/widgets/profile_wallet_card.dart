@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
 import '../../widgets/payment_methods_summary_line.dart';
@@ -37,6 +38,13 @@ class ProfileWalletCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final info = resolveProfileMembership(
       rawMembership: state.wallet?.membership ?? state.membership,
+      daysRemaining: state.membershipDays,
+    );
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(info, ui.tiers);
+    final subscriptionLabel = formatMembershipPlanDuration(
+      info: info,
+      catalogTier: catalogTier,
       daysRemaining: state.membershipDays,
     );
     final hasPremium = info.hasPaidTier;
@@ -106,12 +114,9 @@ class ProfileWalletCard extends ConsumerWidget {
                         label: 'Abonelik',
                         value: info.isExpired
                             ? 'Süresi doldu'
-                            : state.membershipDays != null &&
-                                    state.membershipDays! > 0
-                                ? '${state.membershipDays} gün'
-                                : hasPremium
-                                    ? 'Aktif'
-                                    : '—',
+                            : hasPremium
+                                ? subscriptionLabel
+                                : '—',
                       ),
                     ),
                   ],

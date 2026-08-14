@@ -42,7 +42,7 @@ void main() {
 
       expect(find.text('Fal indirimi'), findsOneWidget);
       expect(find.text('%10'), findsOneWidget);
-      expect(find.text('Jeton Alımında İndirim'), findsOneWidget);
+      expect(find.text('Jeton Alımında İndirim'), findsNothing);
     });
   });
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -114,6 +115,10 @@ class MembershipPage extends ConsumerWidget {
                               _ActiveBanner(
                                 label: ui.currentMembershipLabel,
                                 days: ui.daysRemaining,
+                                durationDays: catalogTierForMembership(
+                                  ui.membershipInfo,
+                                  ui.tiers,
+                                )?.durationDays,
                                 onExtend: () => _purchaseSelected(context, ref),
                               ),
                               const SizedBox(height: 16),
@@ -264,9 +269,7 @@ class MembershipPage extends ConsumerWidget {
             : tier.monthlyPriceTry * 2);
     final priceCfc = CurrencyUsageInfo.cfcForTl(tier.monthlyPriceTry);
     void onPurchaseDone() {
-      ref.invalidate(membershipCatalogProvider);
-      ref.refreshWalletCache(force: true);
-      ref.invalidate(paymentRequestsNotifierProvider);
+      unawaited(refreshMembershipAfterPurchase(ref));
     }
 
     Future<bool> tryInstantPurchase({String? paymentMethod}) async {
@@ -607,11 +610,21 @@ class _ActiveBanner extends StatelessWidget {
     required this.label,
     required this.days,
     required this.onExtend,
+    this.durationDays,
   });
 
   final String label;
   final int days;
+  final int? durationDays;
   final VoidCallback onExtend;
+
+  String get _daysLabel {
+    if (days <= 0) return 'aktif';
+    if (durationDays != null && durationDays! > 0 && durationDays != 30) {
+      return '$days / $durationDays gün kaldı';
+    }
+    return '$days gün kaldı';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -638,7 +651,7 @@ class _ActiveBanner extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '$label üyeliğiniz aktif · $days gün kaldı',
+                  '$label üyeliğiniz aktif · $_daysLabel',
                   style: const TextStyle(
                     color: MembershipCatalogData.gold,
                     fontWeight: FontWeight.w800,

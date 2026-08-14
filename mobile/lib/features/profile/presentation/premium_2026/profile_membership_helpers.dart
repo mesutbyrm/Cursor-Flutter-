@@ -101,6 +101,27 @@ MembershipTierModel? catalogTierForMembership(
 }
 
 /// Profil hub / banner alt başlığı — kalan gün + katalog süre/fal indirimi.
+String formatMembershipPlanDuration({
+  required ProfileMembershipInfo info,
+  MembershipTierModel? catalogTier,
+  int? daysRemaining,
+}) {
+  if (info.isExpired) return 'Yenile';
+  final days = daysRemaining ?? info.daysRemaining;
+  if (days != null && days > 0) {
+    if (catalogTier != null &&
+        catalogTier.durationDays > 0 &&
+        catalogTier.durationDays != 30) {
+      return '$days / ${catalogTier.durationDays} gün';
+    }
+    return '$days gün';
+  }
+  if (catalogTier != null && catalogTier.durationDays > 0) {
+    return catalogTier.durationLabel;
+  }
+  return '—';
+}
+
 String buildMembershipCatalogHintSubtitle({
   required ProfileMembershipInfo info,
   MembershipTierModel? catalogTier,

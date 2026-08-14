@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../../core/widgets/dual_balance_chips.dart';
 
 /// CFC + Jeton + kısa yönlendirme — CFC yükle / Premium üyelik.
-class WalletBalanceHeader extends StatelessWidget {
+class WalletBalanceHeader extends ConsumerWidget {
   const WalletBalanceHeader({
     super.key,
     required this.jeton,
@@ -24,9 +26,16 @@ class WalletBalanceHeader extends StatelessWidget {
   final bool showQuickLinks;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final info = resolveProfileMembership(
       rawMembership: membership,
+      daysRemaining: daysRemaining,
+    );
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(info, ui.tiers);
+    final planDuration = formatMembershipPlanDuration(
+      info: info,
+      catalogTier: catalogTier,
       daysRemaining: daysRemaining,
     );
     final showMembershipBanner = info.hasActiveSubscription &&
@@ -87,7 +96,7 @@ class WalletBalanceHeader extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        '${info.tierLabel} üyesiniz · $daysRemaining gün kaldı',
+                        '${info.tierLabel} üyesiniz · $planDuration',
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 12,

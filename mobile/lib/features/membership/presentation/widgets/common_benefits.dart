@@ -61,6 +61,22 @@ class MembershipCommonBenefits extends StatelessWidget {
                 ],
               );
             }
+            if (useApi) {
+              return Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (var i = 0; i < itemCount; i++)
+                    SizedBox(
+                      width: (constraints.maxWidth - 10) / 2,
+                      child: _ApiHighlightTile(
+                        highlight: highlights[i],
+                        index: i,
+                      ),
+                    ),
+                ],
+              );
+            }
             return Column(
               children: [
                 Row(

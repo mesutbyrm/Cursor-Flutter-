@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.207+243 (2026-08-14) — Profil üyelik faz 17
+
+- **CFC senkron:** `refreshMembershipAfterPurchase` — CFC üyelik talebi / anında ödeme sonrası
+- **Özellik tablosu:** API tier birleşiminde yinelenen "Jeton Alımında İndirim" satırı kaldırıldı
+- **Avantaj kartları:** `common_benefits` dinamik grid — API `features[]` sayısına uyum
+- **Checkout sheet:** `PaymentMethodsSummaryLine` güvenli ödeme alt bilgisi
+- **Cüzdan:** `profile_wallet_card`, `wallet_center_page`, `wallet_balance_header` katalog ipuçları
+- **Üyelik sayfası:** Aktif banner kalan / toplam gün (`durationDays`)
+- **Test:** `common_benefits_test`, `formatMembershipPlanDuration`
+
 ## 1.0.206+242 (2026-08-14) — Profil üyelik faz 16
 
 - **API features[]:** Katalog `features` parse; üyelik sayfasında dinamik avantaj kartları

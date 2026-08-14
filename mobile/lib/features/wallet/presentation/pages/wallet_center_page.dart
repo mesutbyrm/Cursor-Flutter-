@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/providers/payment_requests_notifier.dart';
@@ -31,10 +32,19 @@ class WalletCenterPage extends ConsumerWidget {
       rawMembership: balances.membership,
       daysRemaining: balances.membershipDaysRemaining,
     );
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(membershipInfo, ui.tiers);
     final premiumSubtitle = membershipInfo.hasActiveSubscription
-        ? '${membershipInfo.tierLabel} · ${balances.membershipDaysRemaining ?? membershipInfo.daysRemaining ?? 0} gün'
+        ? '${membershipInfo.tierLabel} · ${formatMembershipPlanDuration(
+            info: membershipInfo,
+            catalogTier: catalogTier,
+            daysRemaining: balances.membershipDaysRemaining,
+          )}'
         : membershipInfo.isExpired
-            ? '${membershipInfo.tierLabel} süresi doldu · yenile'
+            ? buildMembershipCatalogHintSubtitle(
+                info: membershipInfo,
+                catalogTier: catalogTier,
+              )
             : 'Basic · Premium · Gold · Diamond · SVIP';
 
     return Scaffold(

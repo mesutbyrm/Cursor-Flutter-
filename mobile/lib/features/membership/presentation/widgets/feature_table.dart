@@ -129,6 +129,7 @@ class MembershipFeatureTable extends StatelessWidget {
     } else {
       rows.add(falRow);
     }
+    rows.removeWhere((r) => r.label == 'Jeton Alımında İndirim');
     return rows;
   }
 

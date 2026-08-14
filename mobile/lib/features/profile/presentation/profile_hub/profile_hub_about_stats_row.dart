@@ -169,19 +169,11 @@ class _StatisticsCard extends ConsumerWidget {
     final membership = ref.watch(profileMembershipInfoProvider);
     final ui = ref.watch(membershipControllerProvider);
     final catalogTier = catalogTierForMembership(membership, ui.tiers);
-    final planDurationValue = membership.isExpired
-        ? 'Yenile'
-        : membership.hasActiveSubscription &&
-                membership.daysRemaining != null &&
-                membership.daysRemaining! > 0
-            ? catalogTier != null &&
-                    catalogTier.durationDays > 0 &&
-                    catalogTier.durationDays != 30
-                ? '${membership.daysRemaining} / ${catalogTier.durationDays} gün'
-                : '${membership.daysRemaining} gün'
-            : catalogTier != null && catalogTier.durationDays > 0
-                ? catalogTier.durationLabel
-                : '—';
+    final planDurationValue = formatMembershipPlanDuration(
+      info: membership,
+      catalogTier: catalogTier,
+      daysRemaining: membership.daysRemaining,
+    );
     final rows = <({IconData icon, String label, String value})>[
       (
         icon: Icons.workspace_premium_outlined,
