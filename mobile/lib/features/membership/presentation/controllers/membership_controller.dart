@@ -7,8 +7,10 @@ import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../data/membership_remote_datasource.dart';
+import '../../domain/membership_catalog_merge.dart';
 import '../../domain/membership_model.dart';
 import '../../domain/membership_package_entity.dart';
+import '../../../profile/data/jeton_packages_catalog.dart';
 
 final membershipRemoteProvider = Provider<MembershipRemoteDataSource>((ref) {
   return MembershipRemoteDataSource(ref.watch(dioProvider));
@@ -38,6 +40,7 @@ class MembershipUiState {
     this.currentMembership = 'basic',
     this.daysRemaining = 0,
     this.apiPackages = const [],
+    this.jetonTlRate = kDefaultJetonTlRate,
   });
 
   final MembershipTierId selectedTier;
@@ -48,43 +51,30 @@ class MembershipUiState {
   final String currentMembership;
   final int daysRemaining;
   final List<MembershipPackageEntity> apiPackages;
+  final double jetonTlRate;
+
+  MembershipPackageEntity? apiPackageFor(String wireId) =>
+      findMembershipApiPackage(apiPackages, wireId);
 
   List<MembershipTierModel> get tiers {
     return [
       for (final t in MembershipCatalogData.tiers)
-        MembershipTierModel(
-          id: t.id,
-          title: t.title,
-          subtitle: t.subtitle,
-          monthlyTokens: t.monthlyTokens,
-          monthlyPriceTry: t.monthlyPriceTry,
-          accent: t.accent,
-          badgeIcon: t.badgeIcon,
-          glow: t.glow,
-          popular: t.popular,
-          planId: _planIdFor(t.wireId),
+        mergeMembershipTier(
+          t,
+          apiPackageFor(t.wireId),
+          jetonTlRate: jetonTlRate,
         ),
     ];
   }
 
-  String? _planIdFor(String wireId) {
-    final key = wireId.toLowerCase();
-    for (final p in apiPackages) {
-      final pid = p.id.toLowerCase();
-      if (pid == key) return p.planId;
-      if (key == 'svip' && (pid == 'super_vip' || pid == 'svip')) {
-        return p.planId;
-      }
-    }
-    return null;
-  }
+  List<MembershipTokenPackageModel> get tokenPackages =>
+      buildTokenPackagesFromTiers(tiers);
 
   MembershipTierModel get selectedTierModel =>
-      MembershipCatalogData.tierById(selectedTier);
+      tiers.firstWhere((t) => t.id == selectedTier);
 
   MembershipTokenPackageModel get selectedTokenModel =>
-      MembershipCatalogData.tokenPackages
-          .firstWhere((p) => p.tierId == selectedTokenPackage);
+      tokenPackages.firstWhere((p) => p.tierId == selectedTokenPackage);
 
   String get formattedDiamondBalance {
     final fmt = NumberFormat.decimalPattern('tr_TR');
@@ -113,6 +103,7 @@ class MembershipUiState {
     String? currentMembership,
     int? daysRemaining,
     List<MembershipPackageEntity>? apiPackages,
+    double? jetonTlRate,
   }) {
     return MembershipUiState(
       selectedTier: selectedTier ?? this.selectedTier,
@@ -123,6 +114,7 @@ class MembershipUiState {
       currentMembership: currentMembership ?? this.currentMembership,
       daysRemaining: daysRemaining ?? this.daysRemaining,
       apiPackages: apiPackages ?? this.apiPackages,
+      jetonTlRate: jetonTlRate ?? this.jetonTlRate,
     );
   }
 }
@@ -151,6 +143,8 @@ class MembershipController extends Notifier<MembershipUiState> {
           currentMembership: cat.currentMembership,
           daysRemaining: cat.daysRemaining ?? cat.activePackage?.daysRemaining ?? 0,
           apiPackages: cat.packages,
+          jetonTlRate: ref.read(walletBalancesProvider).valueOrNull?.jetonTlRate ??
+              kDefaultJetonTlRate,
           selectedTier: selected == MembershipTierId.basic
               ? MembershipTierId.gold
               : selected,

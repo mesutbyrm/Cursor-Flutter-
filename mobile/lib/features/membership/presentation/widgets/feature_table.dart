@@ -9,9 +9,11 @@ class MembershipFeatureTable extends StatelessWidget {
   const MembershipFeatureTable({
     super.key,
     required this.selectedTier,
+    this.tiers,
   });
 
   final MembershipTierId selectedTier;
+  final List<MembershipTierModel>? tiers;
 
   static const _headers = ['Basic', 'Gold', 'Premium', 'Diamond', 'SVIP'];
 
@@ -63,7 +65,7 @@ class MembershipFeatureTable extends StatelessWidget {
                         colWidth: colW,
                         selectedCol: _selectedCol,
                       ),
-                      ...MembershipCatalogData.featureRows
+                      ..._effectiveFeatureRows()
                           .asMap()
                           .entries
                           .map(
@@ -87,6 +89,25 @@ class MembershipFeatureTable extends StatelessWidget {
             .slideY(begin: 0.06, end: 0, duration: 420.ms);
       },
     );
+  }
+
+  List<MembershipFeatureRow> _effectiveFeatureRows() {
+    final source = tiers;
+    if (source == null || source.isEmpty) {
+      return MembershipCatalogData.featureRows;
+    }
+    final rows = List<MembershipFeatureRow>.from(
+      MembershipCatalogData.featureRows,
+    );
+    if (rows.isEmpty) return rows;
+    rows[0] = MembershipFeatureRow(
+      label: rows[0].label,
+      values: [
+        for (final t in source)
+          MembershipFeatureText('${t.monthlyTokens}'),
+      ],
+    );
+    return rows;
   }
 }
 

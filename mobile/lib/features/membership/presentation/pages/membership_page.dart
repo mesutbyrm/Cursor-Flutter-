@@ -7,9 +7,9 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/config/payment_defaults.dart';
+import '../../../../core/content/currency_usage_info.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
-import '../../../profile/data/jeton_packages_catalog.dart';
 import '../../../profile/domain/entities/jeton_package_entity.dart';
 import '../../../profile/presentation/providers/payment_requests_notifier.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -21,6 +21,8 @@ import '../controllers/membership_controller.dart';
 import '../widgets/common_benefits.dart';
 import '../widgets/feature_table.dart';
 import '../widgets/membership_card.dart';
+import '../widgets/membership_checkout_sheet.dart';
+import '../widgets/membership_cfc_checkout_flow.dart';
 import '../widgets/support_footer.dart';
 import '../widgets/token_package_card.dart';
 
@@ -159,6 +161,7 @@ class MembershipPage extends ConsumerWidget {
                             const SizedBox(height: 12),
                             MembershipFeatureTable(
                               selectedTier: ui.selectedTier,
+                              tiers: ui.tiers,
                             ),
                             const SizedBox(height: 22),
                             _UpgradeBanner(
@@ -187,13 +190,11 @@ class MembershipPage extends ConsumerWidget {
                               height: 220,
                               child: ListView.separated(
                                 scrollDirection: Axis.horizontal,
-                                itemCount:
-                                    MembershipCatalogData.tokenPackages.length,
+                                itemCount: ui.tokenPackages.length,
                                 separatorBuilder: (_, _) =>
                                     const SizedBox(width: 12),
                                 itemBuilder: (context, i) {
-                                  final pkg =
-                                      MembershipCatalogData.tokenPackages[i];
+                                  final pkg = ui.tokenPackages[i];
                                   return TokenPackageCard(
                                     package: pkg,
                                     selected:
@@ -265,11 +266,22 @@ class MembershipPage extends ConsumerWidget {
   ) async {
     final ui = ref.read(membershipControllerProvider);
     final tier = ui.selectedTierModel;
+    final apiPkg = ui.apiPackageFor(tier.wireId);
     final wallet = ref.read(walletBalancesProvider).valueOrNull;
-    final rate = wallet?.jetonTlRate ?? kDefaultJetonTlRate;
-    final priceJeton = rate > 0
-        ? (tier.monthlyPriceTry / rate).round()
-        : tier.monthlyPriceTry * 2;
+    final rate = wallet?.jetonTlRate ?? ui.jetonTlRate;
+    final priceJeton = apiPkg?.resolvedPriceJeton(
+          fallbackFromTry: tier.monthlyPriceTry,
+          jetonTlRate: rate,
+        ) ??
+        (rate > 0
+            ? (tier.monthlyPriceTry / rate).round()
+            : tier.monthlyPriceTry * 2);
+    final priceCfc = CurrencyUsageInfo.cfcForTl(tier.monthlyPriceTry);
+    void onPurchaseDone() {
+      ref.invalidate(membershipCatalogProvider);
+      ref.refreshWalletCache(force: true);
+      ref.invalidate(paymentRequestsNotifierProvider);
+    }
 
     if (wallet != null && priceJeton > 0 && wallet.jeton >= priceJeton) {
       try {
@@ -299,6 +311,25 @@ class MembershipPage extends ConsumerWidget {
 
     if (!context.mounted) return;
 
+    final choice = await showMembershipCheckoutSheet(
+      context,
+      tier: tier,
+      priceJeton: priceJeton,
+      priceCfc: priceCfc,
+      cfcBalance: wallet?.cfc ?? ui.cfcBalance,
+    );
+    if (!context.mounted || choice == null) return;
+
+    if (choice == MembershipCheckoutChoice.cfcPayment) {
+      await openMembershipCfcCheckoutFlow(
+        context,
+        ref,
+        tier: tier,
+        onDone: onPurchaseDone,
+      );
+      return;
+    }
+
     final jetonPkg = JetonPackageEntity(
       id: 'membership_${tier.wireId}',
       title: '${tier.title} Üyelik · 30 gün',
@@ -314,11 +345,7 @@ class MembershipPage extends ConsumerWidget {
       priceText: '₺${tier.monthlyPriceTry} (${tier.monthlyTokens} jeton/ay)',
       paymentNotes:
           'Üyelik · ${tier.title} · 30 gün · ${tier.monthlyTokens} jeton',
-      onDone: () {
-        ref.invalidate(membershipCatalogProvider);
-        ref.refreshWalletCache(force: true);
-        ref.invalidate(paymentRequestsNotifierProvider);
-      },
+      onDone: onPurchaseDone,
     );
   }
 }

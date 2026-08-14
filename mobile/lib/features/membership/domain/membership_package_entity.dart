@@ -11,6 +11,7 @@ class MembershipPackageEntity {
     required this.falDiscountPercent,
     this.isActive = false,
     this.daysRemaining,
+    this.priceTry,
   });
 
   factory MembershipPackageEntity.fromJson(Map<String, dynamic> json) {
@@ -41,6 +42,9 @@ class MembershipPackageEntity {
           : json['days_remaining'] != null
               ? asInt(json['days_remaining'])
               : null,
+      priceTry: asInt(
+        pick(json, ['priceTry', 'price_try', 'priceTl', 'price_tl', 'price']),
+      ),
     );
   }
 
@@ -53,6 +57,25 @@ class MembershipPackageEntity {
   final int falDiscountPercent;
   final bool isActive;
   final int? daysRemaining;
+  final int? priceTry;
+
+  /// TL fiyat — API `priceTry` veya jeton × kur.
+  int resolvedPriceTry(double jetonTlRate) {
+    if (priceTry != null && priceTry! > 0) return priceTry!;
+    if (priceJeton > 0 && jetonTlRate > 0) {
+      return (priceJeton * jetonTlRate).round();
+    }
+    return 0;
+  }
+
+  /// Satın alma için jeton — API öncelikli.
+  int resolvedPriceJeton({required int fallbackFromTry, double jetonTlRate = 0.5}) {
+    if (priceJeton > 0) return priceJeton;
+    if (fallbackFromTry > 0 && jetonTlRate > 0) {
+      return (fallbackFromTry / jetonTlRate).round();
+    }
+    return 0;
+  }
 
   bool get isGold => id == 'gold';
   bool get isDiamond => id == 'diamond';

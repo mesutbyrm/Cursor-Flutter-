@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.202+238 (2026-08-14) — Profil üyelik faz 12
+
+- **API katalog birleşimi:** Tier kartları ve jeton paketleri sunucu fiyat/jeton ile güncellenir
+- **Özellik tablosu:** Aylık jeton satırı API birleşik tier'lardan okunur
+- **Üyelik checkout:** WhatsApp/Papara veya CFC ödeme seçimi (bottom sheet)
+- **CFC üyelik:** `buildMembershipCfcPaymentRequest` + dinamik ödeme kanalları
+- **Test:** `membership_catalog_merge_test.dart`
+
 ## 1.0.201+237 (2026-08-14) — Profil üyelik faz 11
 
 - **SVIP katalog:** Üyelik planları, özellik tablosu ve fallback paketler

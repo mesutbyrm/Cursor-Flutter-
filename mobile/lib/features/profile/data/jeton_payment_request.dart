@@ -119,3 +119,41 @@ Map<String, dynamic> buildMembershipPaymentRequest({
     'source': 'mobile_membership_checkout',
   };
 }
+
+/// Üyelik — CFC ödeme talebi (`POST /api/payments/requests`).
+Map<String, dynamic> buildMembershipCfcPaymentRequest({
+  required String tierId,
+  required String tierTitle,
+  required int cfcAmount,
+  required double priceTry,
+  required String method,
+  String? notes,
+  String? senderLabel,
+  String? receiptReference,
+}) {
+  final receipt = receiptReference?.trim();
+  final baseNotes = notes ?? 'Üyelik · $tierTitle · CFC · $method';
+  return {
+    'requestType': 'cfc',
+    'type': 'cfc',
+    'method': method,
+    'packageId': 'membership_$tierId',
+    'packageTitle': '$tierTitle Üyelik · 30 gün',
+    'tierId': tierId,
+    'membershipTier': tierId,
+    'amount': cfcAmount,
+    'priceTry': priceTry,
+    if (senderLabel != null && senderLabel.trim().isNotEmpty)
+      'senderInfo': senderLabel.trim(),
+    if (receipt != null && receipt.isNotEmpty) ...{
+      'receiptReference': receipt,
+      'receiptUrl': receipt,
+    },
+    'notes': receipt != null && receipt.isNotEmpty
+        ? '$baseNotes\nDekont: $receipt'
+        : baseNotes,
+    'notifyAdmins': true,
+    'notifyStaff': true,
+    'source': 'mobile_membership_cfc_checkout',
+  };
+}
