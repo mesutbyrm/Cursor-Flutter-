@@ -39,11 +39,13 @@ class WalletCenterPage extends ConsumerWidget {
             info: membershipInfo,
             catalogTier: catalogTier,
             daysRemaining: balances.membershipDaysRemaining,
+            expiresAt: balances.membershipExpiresAt,
           )}'
         : membershipInfo.isExpired
             ? buildMembershipCatalogHintSubtitle(
                 info: membershipInfo,
                 catalogTier: catalogTier,
+                expiresAt: balances.membershipExpiresAt,
               )
             : 'Basic · Premium · Gold · Diamond · SVIP';
 
@@ -68,6 +70,7 @@ class WalletCenterPage extends ConsumerWidget {
                   cfc: balances.cfc,
                   membership: balances.membership,
                   daysRemaining: balances.membershipDaysRemaining,
+                  membershipExpiresAt: balances.membershipExpiresAt,
                 ),
                 const SizedBox(height: 20),
                 WalletEarningsSection(balances: balances),

@@ -6,68 +6,30 @@ import '../../../membership/presentation/controllers/membership_controller.dart'
 import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_theme.dart';
 
-/// VIP / üyelik banner'ı — ücretsiz kullanıcıya plan teşviki, aktif üyeye özet.
+/// Ücretsiz kullanıcıya premium plan teşviki (profil hub — yalnızca free dal).
 class ProfileHubVipBanner extends ConsumerWidget {
   const ProfileHubVipBanner({
     super.key,
     this.membership,
-    this.daysRemaining,
-    this.expiresAt,
     this.onViewPrivileges,
-    this.onManageMembership,
   });
 
   final String? membership;
-  final int? daysRemaining;
-  final String? expiresAt;
   final VoidCallback? onViewPrivileges;
-  final VoidCallback? onManageMembership;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final info = resolveProfileMembership(
-      rawMembership: membership,
-      daysRemaining: daysRemaining,
-    );
-    final paid = info.hasPaidTier;
-    final expired = info.isExpired;
+    final info = resolveProfileMembership(rawMembership: membership);
     final ui = ref.watch(membershipControllerProvider);
     final catalogTier = catalogTierForMembership(info, ui.tiers);
-
-    final title = expired
-        ? 'Üyelik süresi doldu'
-        : paid
-            ? '${info.tierLabel} Ayrıcalıkları'
-            : 'Premium Üyelik';
-
     final subtitle = buildMembershipCatalogHintSubtitle(
       info: info,
       catalogTier: catalogTier,
-      expiresAt: expiresAt,
     );
 
-    final primaryCta = expired
-        ? 'Yenile'
-        : paid
-            ? 'Ayrıcalıkları Gör'
-            : 'Planları Gör';
-    final secondaryCta = expired || paid ? 'Yönet' : null;
-
-    void openPrivileges() {
+    void openPlans() {
       if (onViewPrivileges != null) {
         onViewPrivileges!();
-        return;
-      }
-      if (expired || !info.isVip) {
-        context.push('/premium-membership');
-        return;
-      }
-      context.push('/vip-gold');
-    }
-
-    void openManage() {
-      if (onManageMembership != null) {
-        onManageMembership!();
         return;
       }
       context.push('/premium-membership');
@@ -76,21 +38,11 @@ class ProfileHubVipBanner extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusMd),
-        gradient: LinearGradient(
-          colors: expired
-              ? [
-                  const Color(0xFF4A3050),
-                  const Color(0xFF1A0A30),
-                ]
-              : paid
-                  ? [
-                      ProfilePremiumTheme.neonPurple.withValues(alpha: 0.85),
-                      const Color(0xFF4A148C),
-                    ]
-                  : [
-                      const Color(0xFF3D2060),
-                      const Color(0xFF1A0A30),
-                    ],
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF3D2060),
+            Color(0xFF1A0A30),
+          ],
         ),
         boxShadow: [
           BoxShadow(
@@ -104,15 +56,15 @@ class ProfileHubVipBanner extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            Text(expired ? '⏳' : paid ? '👑' : '✨', style: const TextStyle(fontSize: 28)),
+            const Text('✨', style: TextStyle(fontSize: 28)),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
+                  const Text(
+                    'Premium Üyelik',
+                    style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
@@ -132,24 +84,11 @@ class ProfileHubVipBanner extends ConsumerWidget {
                 ],
               ),
             ),
-            if (secondaryCta != null) ...[
-              TextButton(
-                onPressed: openManage,
-                child: Text(
-                  secondaryCta,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-            ],
             TextButton(
-              onPressed: openPrivileges,
-              child: Text(
-                '$primaryCta >',
-                style: const TextStyle(
+              onPressed: openPlans,
+              child: const Text(
+                'Planları Gör >',
+                style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
                   fontSize: 11,

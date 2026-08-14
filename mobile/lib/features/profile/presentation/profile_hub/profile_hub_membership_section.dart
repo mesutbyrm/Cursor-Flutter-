@@ -20,8 +20,6 @@ class ProfileHubMembershipSection extends ConsumerWidget {
     }
     return ProfileHubVipBanner(
       membership: state.wallet?.membership,
-      daysRemaining: state.membershipDays,
-      expiresAt: state.wallet?.membershipExpiresAt,
     );
   }
 }

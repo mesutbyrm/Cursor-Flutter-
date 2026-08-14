@@ -10,6 +10,7 @@ import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_screen_state.dart';
 import '../premium_2026/profile_theme.dart';
 import '../providers/profile_hub_providers.dart';
+import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_glass.dart';
 
 /// Jeton, elmas, beğeni, seri + seviye/XP kartı.
@@ -158,6 +159,8 @@ class _MembershipSummaryRow extends ConsumerWidget {
     final subtitle = buildMembershipCatalogHintSubtitle(
       info: info,
       catalogTier: catalogTier,
+      expiresAt:
+          ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt,
     );
 
     return Material(

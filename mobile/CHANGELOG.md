@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.210+246 (2026-08-14) — Profil üyelik faz 20
+
+- **expiresAt sweep:** lazy premium, cüzdan kartı, hub istatistik, currency card, wallet header
+- **VIP banner:** yalnızca ücretsiz kullanıcı CTA (ölü paid/expired dallar kaldırıldı)
+- **Checkout:** `membership_page` açık `checkoutMethods()` normalizasyonu
+- **Wallet header:** aktif üyelik banner — `expiresAt` ile gün bilgisi olmasa da göster
+- **Test:** hub widget routing, merge features[], showRecommended
+
 ## 1.0.209+245 (2026-08-14) — Profil üyelik faz 19
 
 - **Ödeme özeti:** `PaymentMethodsSummaryLine` → `checkoutMethods()` tek kaynak

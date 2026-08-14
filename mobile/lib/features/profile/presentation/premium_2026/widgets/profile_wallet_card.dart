@@ -46,6 +46,7 @@ class ProfileWalletCard extends ConsumerWidget {
       info: info,
       catalogTier: catalogTier,
       daysRemaining: state.membershipDays,
+      expiresAt: state.wallet?.membershipExpiresAt,
     );
     final hasPremium = info.hasPaidTier;
 

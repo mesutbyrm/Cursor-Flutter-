@@ -91,6 +91,65 @@ void main() {
       expect(merged.falDiscountPercent, 15);
       expect(merged.durationLabel, '45 gün');
     });
+
+    test('API features[] tier featureHighlights birleşir', () {
+      const base = MembershipTierModel(
+        id: MembershipTierId.gold,
+        title: 'Gold',
+        subtitle: 'Test',
+        monthlyTokens: 1500,
+        monthlyPriceTry: 1000,
+        accent: Color(0xFFFFC107),
+        badgeIcon: Icons.star,
+        glow: Color(0xFFFFC107),
+      );
+      const api = MembershipPackageEntity(
+        id: 'gold',
+        planId: 'plan-gold',
+        title: 'Gold',
+        durationDays: 30,
+        priceJeton: 2000,
+        bonusJeton: 1500,
+        falDiscountPercent: 0,
+        features: [
+          MembershipFeatureHighlightEntity(
+            id: 'vip_rooms',
+            title: 'VIP Odalar',
+          ),
+        ],
+      );
+      final merged = mergeMembershipTier(base, api);
+      expect(merged.featureHighlights.length, 1);
+      expect(merged.featureHighlights.first.title, 'VIP Odalar');
+    });
+
+    test('API features boşsa base featureHighlights korunur', () {
+      const base = MembershipTierModel(
+        id: MembershipTierId.gold,
+        title: 'Gold',
+        subtitle: 'Test',
+        monthlyTokens: 1500,
+        monthlyPriceTry: 1000,
+        accent: Color(0xFFFFC107),
+        badgeIcon: Icons.star,
+        glow: Color(0xFFFFC107),
+        featureHighlights: [
+          MembershipFeatureHighlightEntity(id: 'badge', title: 'Rozet'),
+        ],
+      );
+      const api = MembershipPackageEntity(
+        id: 'gold',
+        planId: 'plan-gold',
+        title: 'Gold',
+        durationDays: 30,
+        priceJeton: 2000,
+        bonusJeton: 1500,
+        falDiscountPercent: 0,
+      );
+      final merged = mergeMembershipTier(base, api);
+      expect(merged.featureHighlights.length, 1);
+      expect(merged.featureHighlights.first.id, 'badge');
+    });
   });
 
   group('recommendedTierFromPackages', () {

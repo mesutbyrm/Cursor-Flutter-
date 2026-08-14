@@ -321,6 +321,7 @@ class MembershipPage extends ConsumerWidget {
     } catch (_) {
       paymentMethods = PaymentMethodEntity.defaults;
     }
+    paymentMethods = PaymentMethodEntity.checkoutMethods(paymentMethods);
     final externalLabel = PaymentMethodsSummaryLine.externalCheckoutLabelFrom(
       paymentMethods,
     );

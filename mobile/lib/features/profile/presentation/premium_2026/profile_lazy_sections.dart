@@ -92,9 +92,12 @@ class ProfileLazyPremium extends ConsumerWidget {
     final info = ref.watch(profileMembershipInfoProvider);
     final ui = ref.watch(membershipControllerProvider);
     final catalogTier = catalogTierForMembership(info, ui.tiers);
+    final expiresAt =
+        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
     final catalogSubtitle = buildMembershipCatalogHintSubtitle(
       info: info,
       catalogTier: catalogTier,
+      expiresAt: expiresAt,
     );
 
     return LazyScreenSection(

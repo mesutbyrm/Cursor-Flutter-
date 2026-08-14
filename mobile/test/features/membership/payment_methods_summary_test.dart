@@ -45,5 +45,58 @@ void main() {
       ]);
       expect(labels, contains('WhatsApp'));
     });
+
+    testWidgets('showRecommended önerilen kanal ipucu', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            paymentMethodsProvider.overrideWith(
+              (ref) async => const [
+                PaymentMethodEntity(
+                  id: 'whatsapp',
+                  label: 'WhatsApp',
+                  recommended: true,
+                ),
+              ],
+            ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: PaymentMethodsSummaryLine(prefix: 'Ödeme'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('önerilen:'), findsOneWidget);
+    });
+
+    testWidgets('showRecommended false ipucu göstermez', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            paymentMethodsProvider.overrideWith(
+              (ref) async => const [
+                PaymentMethodEntity(
+                  id: 'whatsapp',
+                  label: 'WhatsApp',
+                  recommended: true,
+                ),
+              ],
+            ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: PaymentMethodsSummaryLine(
+                prefix: 'Ödeme',
+                showRecommended: false,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('önerilen:'), findsNothing);
+    });
   });
 }

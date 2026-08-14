@@ -16,6 +16,7 @@ class WalletBalanceHeader extends ConsumerWidget {
     required this.cfc,
     this.membership,
     this.daysRemaining,
+    this.membershipExpiresAt,
     this.showQuickLinks = true,
   });
 
@@ -23,6 +24,7 @@ class WalletBalanceHeader extends ConsumerWidget {
   final int cfc;
   final String? membership;
   final int? daysRemaining;
+  final String? membershipExpiresAt;
   final bool showQuickLinks;
 
   @override
@@ -37,10 +39,11 @@ class WalletBalanceHeader extends ConsumerWidget {
       info: info,
       catalogTier: catalogTier,
       daysRemaining: daysRemaining,
+      expiresAt: membershipExpiresAt,
     );
     final showMembershipBanner = info.hasActiveSubscription &&
-        daysRemaining != null &&
-        daysRemaining! > 0;
+        ((daysRemaining != null && daysRemaining! > 0) ||
+            (membershipExpiresAt != null && membershipExpiresAt!.isNotEmpty));
     final showExpiredBanner = info.isExpired;
 
     return Column(
