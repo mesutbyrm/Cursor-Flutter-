@@ -10,6 +10,7 @@ import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../providers/profile_providers.dart';
 import '../../../membership/presentation/controllers/membership_controller.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../providers/profile_hub_providers.dart';
 import 'profile_screen_builder.dart';
 import 'profile_screen_state.dart';
