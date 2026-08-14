@@ -10,12 +10,14 @@ class ProfilePremiumCard extends StatelessWidget {
     super.key,
     this.membership,
     this.daysRemaining,
+    this.catalogSubtitle,
     this.onViewPrivileges,
     this.onManageMembership,
   });
 
   final String? membership;
   final int? daysRemaining;
+  final String? catalogSubtitle;
   final VoidCallback? onViewPrivileges;
   final VoidCallback? onManageMembership;
 
@@ -73,11 +75,12 @@ class ProfilePremiumCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      active && daysRemaining != null && daysRemaining! > 0
-                          ? '$daysRemaining gün kaldı · özel rozetler ve ayrıcalıklar'
-                          : expired
-                              ? 'Planı yenileyerek ayrıcalıkları geri açın'
-                              : 'Özel rozetler, VIP odalar ve ekstra jeton fırsatları',
+                      catalogSubtitle ??
+                          (active && daysRemaining != null && daysRemaining! > 0
+                              ? '$daysRemaining gün kaldı · özel rozetler ve ayrıcalıklar'
+                              : expired
+                                  ? 'Planı yenileyerek ayrıcalıkları geri açın'
+                                  : 'Özel rozetler, VIP odalar ve ekstra jeton fırsatları'),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(

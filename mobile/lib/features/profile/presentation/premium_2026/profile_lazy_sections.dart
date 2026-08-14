@@ -9,6 +9,7 @@ import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../providers/profile_providers.dart';
+import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../providers/profile_hub_providers.dart';
 import 'profile_screen_builder.dart';
 import 'profile_screen_state.dart';
@@ -88,13 +89,20 @@ class ProfileLazyPremium extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final info = ref.watch(profileMembershipInfoProvider);
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(info, ui.tiers);
+    final catalogSubtitle = buildMembershipCatalogHintSubtitle(
+      info: info,
+      catalogTier: catalogTier,
+    );
 
     return LazyScreenSection(
       delay: LazyLoadPerf.profilePremium,
       repaintIsolate: false,
       child: ProfilePremiumCard(
-        membership: info.hasPaidTier ? info.tierLabel : null,
+        membership: info.raw,
         daysRemaining: info.daysRemaining,
+        catalogSubtitle: catalogSubtitle,
         onManageMembership: () => context.push('/premium-membership'),
       ),
     );

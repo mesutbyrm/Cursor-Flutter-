@@ -25,6 +25,7 @@ import '../../../notifications/presentation/providers/notifications_list_notifie
 import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_hub_providers.dart';
 import '../providers/profile_providers.dart';
+import 'payment_methods_summary_line.dart';
 
 /// Jeton satın alma — mockup: ödeme yöntemi → WhatsApp / Papara / Havale.
 void openJetonCheckoutFlow(
@@ -758,11 +759,11 @@ class _MethodCard extends StatelessWidget {
   }
 }
 
-class _TrustFooter extends StatelessWidget {
+class _TrustFooter extends ConsumerWidget {
   const _TrustFooter();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -774,6 +775,12 @@ class _TrustFooter extends StatelessWidget {
           Text(
             'Tüm işlemleriniz güvence altında',
             style: TextStyle(fontSize: 12, color: const Color(0xFF25D366).withValues(alpha: 0.7)),
+          ),
+          const SizedBox(height: 8),
+          const PaymentMethodsSummaryLine(
+            prefix: 'Ödeme',
+            fontSize: 11,
+            textColor: Color(0xFF25D366),
           ),
         ],
       ),

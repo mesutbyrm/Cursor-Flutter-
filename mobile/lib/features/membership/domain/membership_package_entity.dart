@@ -1,5 +1,40 @@
 import '../../../core/util/json_util.dart';
 
+/// API `features[]` — üyelik sayfası avantaj kartları.
+class MembershipFeatureHighlightEntity {
+  const MembershipFeatureHighlightEntity({
+    required this.id,
+    required this.title,
+    this.subtitle,
+  });
+
+  factory MembershipFeatureHighlightEntity.fromJson(Map<String, dynamic> json) {
+    final id = (pick(json, ['id', 'key', 'slug']) ?? '').toString().trim();
+    final title = (pick(json, ['title', 'name', 'label']) ?? id).toString().trim();
+    final subtitle = pick(json, ['subtitle', 'description', 'detail'])?.toString().trim();
+    return MembershipFeatureHighlightEntity(
+      id: id.isEmpty ? title.toLowerCase() : id,
+      title: title.isEmpty ? 'Avantaj' : title,
+      subtitle: subtitle != null && subtitle.isNotEmpty ? subtitle : null,
+    );
+  }
+
+  final String id;
+  final String title;
+  final String? subtitle;
+}
+
+List<MembershipFeatureHighlightEntity> parseMembershipFeatureHighlights(
+  dynamic raw,
+) {
+  if (raw is! List) return const [];
+  return raw
+      .whereType<Map>()
+      .map((e) => MembershipFeatureHighlightEntity.fromJson(asJsonMap(e)))
+      .where((f) => f.title.isNotEmpty)
+      .toList(growable: false);
+}
+
 class MembershipPackageEntity {
   const MembershipPackageEntity({
     required this.id,
@@ -95,6 +130,7 @@ class MembershipCatalogEntity {
     required this.jetonBalance,
     required this.cfcBalance,
     this.daysRemaining,
+    this.features = const [],
   });
 
   factory MembershipCatalogEntity.fromJson(Map<String, dynamic> json) {
@@ -113,6 +149,7 @@ class MembershipCatalogEntity {
       daysRemaining: json['daysRemaining'] != null
           ? asInt(json['daysRemaining'])
           : null,
+      features: parseMembershipFeatureHighlights(json['features']),
     );
   }
 
@@ -121,6 +158,7 @@ class MembershipCatalogEntity {
   final int jetonBalance;
   final int cfcBalance;
   final int? daysRemaining;
+  final List<MembershipFeatureHighlightEntity> features;
 
   MembershipPackageEntity? get activePackage {
     for (final p in packages) {
@@ -135,6 +173,7 @@ class MembershipCatalogEntity {
     int? jetonBalance,
     int? cfcBalance,
     int? daysRemaining,
+    List<MembershipFeatureHighlightEntity>? features,
   }) {
     return MembershipCatalogEntity(
       packages: packages ?? this.packages,
@@ -142,6 +181,7 @@ class MembershipCatalogEntity {
       jetonBalance: jetonBalance ?? this.jetonBalance,
       cfcBalance: cfcBalance ?? this.cfcBalance,
       daysRemaining: daysRemaining ?? this.daysRemaining,
+      features: features ?? this.features,
     );
   }
 }

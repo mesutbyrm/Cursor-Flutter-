@@ -1,3 +1,4 @@
+import '../../../membership/domain/membership_model.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 
@@ -85,4 +86,52 @@ String membershipWireId(String? rawMembership) {
     'premium' => 'premium',
     _ => wire.isNotEmpty ? wire : 'basic',
   };
+}
+
+/// Katalog tier listesinden kullanıcının planına karşılık gelen birleşik tier.
+MembershipTierModel? catalogTierForMembership(
+  ProfileMembershipInfo info,
+  List<MembershipTierModel> tiers,
+) {
+  final wire = membershipWireId(info.raw);
+  for (final t in tiers) {
+    if (t.wireId == wire) return t;
+  }
+  return null;
+}
+
+/// Profil hub / banner alt başlığı — kalan gün + katalog süre/fal indirimi.
+String buildMembershipCatalogHintSubtitle({
+  required ProfileMembershipInfo info,
+  MembershipTierModel? catalogTier,
+}) {
+  final parts = <String>[];
+  final expired = info.isExpired;
+  final active = info.hasActiveSubscription;
+  final days = info.daysRemaining;
+
+  if (expired) {
+    parts.add('${info.tierLabel} planınız sona erdi · yenileyin');
+  } else if (active) {
+    if (days != null && days > 0) {
+      parts.add('$days gün kaldı');
+    } else {
+      parts.add('Aktif üyelik');
+    }
+  } else if (info.hasPaidTier) {
+    parts.add('Rozetler, öncelikli destek ve VIP odalar');
+  } else {
+    parts.add('Gold, Diamond ve SVIP planlarını keşfedin');
+  }
+
+  if (catalogTier != null) {
+    if (catalogTier.durationDays > 0 && catalogTier.durationDays != 30) {
+      parts.add('${catalogTier.durationLabel} plan');
+    }
+    if (catalogTier.falDiscountPercent > 0) {
+      parts.add('%${catalogTier.falDiscountPercent} fal indirimi');
+    }
+  }
+
+  return parts.join(' · ');
 }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
+import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_screen_state.dart';
@@ -143,22 +144,21 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
   }
 }
 
-class _MembershipSummaryRow extends StatelessWidget {
+class _MembershipSummaryRow extends ConsumerWidget {
   const _MembershipSummaryRow({required this.info});
 
   final ProfileMembershipInfo info;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final paid = info.hasPaidTier;
     final expired = info.isExpired;
-    final active = info.hasActiveSubscription;
-    final days = info.daysRemaining;
-    final subtitle = expired
-        ? 'Süresi doldu · yenile'
-        : active
-            ? (days != null && days > 0 ? '$days gün kaldı' : 'Aktif üyelik')
-            : 'Gold, Diamond ve SVIP planları';
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(info, ui.tiers);
+    final subtitle = buildMembershipCatalogHintSubtitle(
+      info: info,
+      catalogTier: catalogTier,
+    );
 
     return Material(
       color: Colors.white.withValues(alpha: 0.06),

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
+import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_theme.dart';
 
 /// VIP / üyelik banner'ı — ücretsiz kullanıcıya plan teşviki, aktif üyeye özet.
-class ProfileHubVipBanner extends StatelessWidget {
+class ProfileHubVipBanner extends ConsumerWidget {
   const ProfileHubVipBanner({
     super.key,
     this.membership,
@@ -23,13 +24,15 @@ class ProfileHubVipBanner extends StatelessWidget {
   final VoidCallback? onManageMembership;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final info = resolveProfileMembership(
       rawMembership: membership,
       daysRemaining: daysRemaining,
     );
     final paid = info.hasPaidTier;
     final expired = info.isExpired;
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(info, ui.tiers);
 
     final title = expired
         ? 'Üyelik süresi doldu'
@@ -37,21 +40,10 @@ class ProfileHubVipBanner extends StatelessWidget {
             ? '${info.tierLabel} Ayrıcalıkları'
             : 'Premium Üyelik';
 
-    final String subtitle;
-    if (expired) {
-      subtitle = '${info.tierLabel} planınız sona erdi · yenileyin';
-    } else if (paid && daysRemaining != null && daysRemaining! > 0) {
-      subtitle = 'Aktif üyelik · $daysRemaining gün kaldı';
-    } else if (paid && expiresAt != null && expiresAt!.isNotEmpty) {
-      final dt = DateTime.tryParse(expiresAt!);
-      subtitle = dt != null
-          ? 'Bitiş: ${DateFormat('d MMM yyyy', 'tr').format(dt.toLocal())}'
-          : 'Size özel ayrıcalıkların tadını çıkarın';
-    } else if (paid) {
-      subtitle = 'Rozetler, öncelikli destek ve VIP odalar';
-    } else {
-      subtitle = 'Gold, Diamond ve SVIP planlarını keşfedin';
-    }
+    final subtitle = buildMembershipCatalogHintSubtitle(
+      info: info,
+      catalogTier: catalogTier,
+    );
 
     final primaryCta = expired
         ? 'Yenile'
@@ -90,14 +82,14 @@ class ProfileHubVipBanner extends StatelessWidget {
                   const Color(0xFF1A0A30),
                 ]
               : paid
-              ? [
-                  ProfilePremiumTheme.neonPurple.withValues(alpha: 0.85),
-                  const Color(0xFF4A148C),
-                ]
-              : [
-                  const Color(0xFF3D2060),
-                  const Color(0xFF1A0A30),
-                ],
+                  ? [
+                      ProfilePremiumTheme.neonPurple.withValues(alpha: 0.85),
+                      const Color(0xFF4A148C),
+                    ]
+                  : [
+                      const Color(0xFF3D2060),
+                      const Color(0xFF1A0A30),
+                    ],
         ),
         boxShadow: [
           BoxShadow(

@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.206+242 (2026-08-14) — Profil üyelik faz 16
+
+- **API features[]:** Katalog `features` parse; üyelik sayfasında dinamik avantaj kartları
+- **Jeton mağazası:** `paymentMethodsProvider` ile dinamik ödeme kanalları + özet satırı
+- **Profil hub:** VIP banner, cüzdan özeti ve premium kart katalog ipuçları (süre, fal indirimi)
+- **İstatistikler:** "Plan süresi" kalan / toplam gün (`durationDays`)
+- **Tier kartı:** Fal indirimi rozeti; checkout yenilemede `paymentMethodsProvider` invalidation
+- **Jeton checkout:** Güvenli ödeme altında canlı kanal özeti
+
 ## 1.0.205+241 (2026-08-14) — Profil üyelik faz 15
 
 - **Özellik tablosu:** Ayrı "Fal indirimi" satırı; jeton indirimi satırı korunur

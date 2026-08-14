@@ -210,6 +210,30 @@ class MembershipCard extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  if (tier.falDiscountPercent > 0) ...[
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        color: MembershipCatalogData.purple.withValues(alpha: 0.25),
+                        border: Border.all(
+                          color: MembershipCatalogData.purple.withValues(alpha: 0.45),
+                        ),
+                      ),
+                      child: Text(
+                        '%${tier.falDiscountPercent} fal',
+                        style: const TextStyle(
+                          color: Color(0xFFC4B5FD),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

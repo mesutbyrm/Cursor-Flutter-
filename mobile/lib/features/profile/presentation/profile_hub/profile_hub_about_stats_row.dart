@@ -7,6 +7,8 @@ import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
+import '../../../membership/presentation/controllers/membership_controller.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../providers/profile_hub_providers.dart';
 import '../widgets/premium/profile_glass.dart';
 import '../premium_2026/profile_theme.dart';
@@ -165,6 +167,21 @@ class _StatisticsCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final membership = ref.watch(profileMembershipInfoProvider);
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(membership, ui.tiers);
+    final planDurationValue = membership.isExpired
+        ? 'Yenile'
+        : membership.hasActiveSubscription &&
+                membership.daysRemaining != null &&
+                membership.daysRemaining! > 0
+            ? catalogTier != null &&
+                    catalogTier.durationDays > 0 &&
+                    catalogTier.durationDays != 30
+                ? '${membership.daysRemaining} / ${catalogTier.durationDays} gün'
+                : '${membership.daysRemaining} gün'
+            : catalogTier != null && catalogTier.durationDays > 0
+                ? catalogTier.durationLabel
+                : '—';
     final rows = <({IconData icon, String label, String value})>[
       (
         icon: Icons.workspace_premium_outlined,
@@ -178,11 +195,7 @@ class _StatisticsCard extends ConsumerWidget {
       (
         icon: Icons.timer_outlined,
         label: 'Plan süresi',
-        value: membership.isExpired
-            ? 'Yenile'
-            : membership.daysRemaining != null && membership.daysRemaining! > 0
-                ? '${membership.daysRemaining} gün'
-                : '—',
+        value: planDurationValue,
       ),
       (
         icon: Icons.auto_awesome_rounded,

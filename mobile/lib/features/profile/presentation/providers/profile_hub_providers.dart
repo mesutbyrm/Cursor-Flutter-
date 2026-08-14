@@ -82,6 +82,7 @@ Future<void> refreshMembershipAfterPurchase(WidgetRef ref) async {
   ref.invalidate(membershipControllerProvider);
   ref.invalidate(walletBalancesProvider);
   ref.invalidate(paymentRequestsNotifierProvider);
+  ref.invalidate(paymentMethodsProvider);
   await Future.wait([
     _ignore(ref.read(walletBalancesProvider.notifier).refresh(force: true)),
     _ignore(ref.read(membershipCatalogProvider.future)),

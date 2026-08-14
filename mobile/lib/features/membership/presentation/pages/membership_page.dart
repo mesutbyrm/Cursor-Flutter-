@@ -225,7 +225,10 @@ class MembershipPage extends ConsumerWidget {
                             const SizedBox(height: 10),
                             const MembershipPaymentMethodsSummary(),
                             const SizedBox(height: 28),
-                            const MembershipCommonBenefits(),
+                            MembershipCommonBenefits(
+                              highlights: catalogAsync.valueOrNull?.features ??
+                                  const [],
+                            ),
                             const SizedBox(height: 28),
                             const MembershipSupportFooter(),
                             const SizedBox(height: 24),
