@@ -7,6 +7,7 @@ import '../../../../../core/theme/app_palette.dart';
 import '../../../../../core/widgets/theme_mode_selector.dart';
 import '../../../../admin_web/presentation/providers/admin_web_access_provider.dart';
 import '../../widgets/premium/profile_glass.dart';
+import 'profile_membership_manage_tile.dart';
 
 /// Ayarlar — gruplu liste; tema, hesap, keşfet, destek.
 class ProfileSettingsSection extends StatelessWidget {
@@ -48,10 +49,15 @@ class ProfileSettingsSection extends StatelessWidget {
                 onTap: () => context.push('/profile/cosmetics'),
               ),
               Divider(height: 1, indent: 52, color: palette.divider),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: ProfileMembershipManageTile(),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
               _SettingsRow(
-                icon: Icons.workspace_premium_outlined,
-                label: 'Üyelik Yönetimi',
-                onTap: () => context.push('/premium-membership'),
+                icon: Icons.diamond_outlined,
+                label: 'VIP Gold Ayrıcalıkları',
+                onTap: () => context.push('/vip-gold'),
               ),
               Divider(height: 1, indent: 52, color: palette.divider),
               _SettingsRow(

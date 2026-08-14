@@ -7,6 +7,8 @@ import '../../../home/presentation/providers/home_providers.dart';
 import '../premium_2026/profile_theme.dart';
 import '../widgets/premium/profile_glass.dart';
 
+const _kMembershipServiceSlug = '__membership__';
+
 /// Hizmetlerim — API'den dinamik fal türleri.
 class ProfileHubServicesRow extends ConsumerWidget {
   const ProfileHubServicesRow({super.key});
@@ -26,7 +28,14 @@ class ProfileHubServicesRow extends ConsumerWidget {
         if (cards.isEmpty) return _fallbackServices(context, ref);
         final history = historyAsync.valueOrNull ?? const [];
 
-        final services = cards.take(8).map((c) {
+        final services = [
+          const _ServiceItem(
+            title: 'Üyelik Merkezi',
+            icon: '👑',
+            slug: _kMembershipServiceSlug,
+            count: 0,
+          ),
+          ...cards.take(7).map((c) {
           final slug = c.navigationSlug;
           final count = history
               .where((h) => (h.slug ?? h.type).contains(slug))
@@ -34,10 +43,11 @@ class ProfileHubServicesRow extends ConsumerWidget {
           return _ServiceItem(
             title: c.title,
             icon: c.icon,
-            slug: slug,
+            slug: c.navigationSlug,
             count: count,
           );
-        }).toList();
+        }),
+        ];
 
         return _ServicesScroller(services: services);
       },
@@ -53,7 +63,14 @@ class ProfileHubServicesRow extends ConsumerWidget {
       _ServiceItem(title: 'Aura', icon: '🌈', slug: 'aura', count: 0),
     ];
     final history = ref.watch(fortuneHistoryProvider).valueOrNull ?? const [];
-    final withCounts = defaults.map((d) {
+    final withCounts = [
+      const _ServiceItem(
+        title: 'Üyelik Merkezi',
+        icon: '👑',
+        slug: _kMembershipServiceSlug,
+        count: 0,
+      ),
+      ...defaults.map((d) {
       final count = history
           .where((h) => (h.slug ?? h.type).contains(d.slug))
           .length;
@@ -63,7 +80,8 @@ class ProfileHubServicesRow extends ConsumerWidget {
         slug: d.slug,
         count: count,
       );
-    }).toList();
+    }),
+    ];
     return _ServicesScroller(services: withCounts);
   }
 }
@@ -134,6 +152,10 @@ class _ServiceCard extends StatelessWidget {
         borderRadius: ProfilePremiumTheme.radiusSm,
         child: InkWell(
           onTap: () {
+            if (item.slug == _kMembershipServiceSlug) {
+              context.push('/premium-membership');
+              return;
+            }
             if (item.slug == 'kahve' || item.title.contains('Geçmiş')) {
               context.push('/fortune/ready');
             } else {

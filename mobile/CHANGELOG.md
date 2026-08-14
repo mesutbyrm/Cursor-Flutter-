@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.195+230 (2026-08-14) — Profil üyelik faz 5
+
+- **ProfileHubMembershipSection:** Ücretsiz → VIP banner; ücretli → lazy `ProfilePremiumCard`
+- **Ayarlar:** `ProfileMembershipManageTile` + VIP Gold satırı
+- **Hizmetlerim:** Sabit "Üyelik Merkezi" kartı → `/premium-membership`
+- **Test:** `profile_hub_membership_section_test.dart`
+
 ## 1.0.194+229 (2026-08-14) — Profil üyelik faz 4
 
 - **Profil düzenle:** Üyelik yönetim kartı (plan, kalan gün, plan sayfası)

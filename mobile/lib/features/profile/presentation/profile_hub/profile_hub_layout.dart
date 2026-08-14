@@ -4,6 +4,7 @@ import '../premium_2026/profile_lazy_sections.dart';
 import '../premium_2026/profile_screen_state.dart';
 import 'profile_hub_about_stats_row.dart';
 import 'profile_hub_badges_section.dart';
+import 'profile_hub_membership_section.dart';
 import 'profile_hub_membership_badges_section.dart';
 import 'profile_hub_membership_shortcuts.dart';
 import 'profile_hub_currency_card.dart';
@@ -12,7 +13,6 @@ import 'profile_hub_quick_menu.dart';
 import 'profile_hub_services_row.dart';
 import 'profile_hub_share_card.dart';
 import 'profile_hub_top_gifts_section.dart';
-import 'profile_hub_vip_banner.dart';
 import '../../../shorts/presentation/widgets/shorts_profile_content.dart';
 
 /// Referans profil hub düzeni.
@@ -50,11 +50,7 @@ class ProfileHubLayout extends StatelessWidget {
         const SizedBox(height: 14),
         ProfileHubCurrencyCard(state: state),
         const SizedBox(height: 14),
-        ProfileHubVipBanner(
-          membership: state.wallet?.membership,
-          daysRemaining: state.membershipDays,
-          expiresAt: state.wallet?.membershipExpiresAt,
-        ),
+        ProfileHubMembershipSection(state: state),
         const SizedBox(height: 16),
         const ProfileHubQuickMenu(),
         const SizedBox(height: 16),
