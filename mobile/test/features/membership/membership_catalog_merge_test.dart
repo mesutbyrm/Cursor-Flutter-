@@ -36,6 +36,54 @@ void main() {
       expect(merged.monthlyPriceTry, 4000);
       expect(merged.resolvedPlanId, 'plan-svip-1');
     });
+
+    test('API popular ve aktif plan birleşir', () {
+      const base = MembershipTierModel(
+        id: MembershipTierId.gold,
+        title: 'Gold',
+        subtitle: 'Test',
+        monthlyTokens: 1500,
+        monthlyPriceTry: 1000,
+        accent: Color(0xFFFFC107),
+        badgeIcon: Icons.star,
+        glow: Color(0xFFFFC107),
+      );
+      const api = MembershipPackageEntity(
+        id: 'gold',
+        planId: 'plan-gold',
+        title: 'Gold',
+        durationDays: 30,
+        priceJeton: 2000,
+        bonusJeton: 1500,
+        falDiscountPercent: 0,
+        popular: true,
+        isActive: true,
+      );
+      final merged = mergeMembershipTier(base, api);
+      expect(merged.popular, isTrue);
+      expect(merged.isActivePlan, isTrue);
+    });
+  });
+
+  group('recommendedTierFromPackages', () {
+    test('popular paket tier döner', () {
+      const packages = [
+        MembershipPackageEntity(
+          id: 'premium',
+          planId: 'p1',
+          title: 'Premium',
+          durationDays: 30,
+          priceJeton: 3000,
+          bonusJeton: 3500,
+          falDiscountPercent: 0,
+          popular: true,
+        ),
+      ];
+      expect(
+        recommendedTierFromPackages(packages),
+        MembershipTierId.premium,
+      );
+    });
   });
 
   group('MembershipPackageEntity pricing', () {

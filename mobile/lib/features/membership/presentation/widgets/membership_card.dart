@@ -76,7 +76,32 @@ class MembershipCard extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (tier.popular)
+                  if (tier.isActivePlan)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF34D399),
+                            Color(0xFF059669),
+                          ],
+                        ),
+                      ),
+                      child: const Text(
+                        'Aktif',
+                        style: TextStyle(
+                          color: Color(0xFF052E16),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    )
+                  else if (tier.popular)
                     Container(
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.symmetric(

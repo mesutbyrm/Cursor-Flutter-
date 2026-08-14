@@ -6,11 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/config/payment_defaults.dart';
 import '../../../../core/content/currency_usage_info.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../profile/domain/entities/jeton_package_entity.dart';
+import '../../../profile/domain/entities/payment_method_entity.dart';
 import '../../../profile/presentation/providers/payment_requests_notifier.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/jeton_checkout_flow.dart';
@@ -23,6 +23,7 @@ import '../widgets/feature_table.dart';
 import '../widgets/membership_card.dart';
 import '../widgets/membership_checkout_sheet.dart';
 import '../widgets/membership_cfc_checkout_flow.dart';
+import '../widgets/membership_payment_methods_summary.dart';
 import '../widgets/support_footer.dart';
 import '../widgets/token_package_card.dart';
 
@@ -40,10 +41,6 @@ class MembershipPage extends ConsumerWidget {
             ?.where((r) => r.isMembershipCheckout && r.isPending)
             .toList() ??
         const [];
-    final paymentCfg = ref.watch(paymentConfigProvider).valueOrNull;
-    final cfg = paymentCfg != null
-        ? PaymentDefaults.merge(paymentCfg)
-        : PaymentDefaults.config;
 
     return Scaffold(
       backgroundColor: MembershipCatalogData.bg,
@@ -231,16 +228,7 @@ class MembershipPage extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 10),
-                            Text(
-                              'Ödeme: WhatsApp ${cfg.whatsappNumber} · '
-                              'Papara ${cfg.paparaAddress}',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.white.withValues(alpha: 0.45),
-                                height: 1.35,
-                              ),
-                            ),
+                            const MembershipPaymentMethodsSummary(),
                             const SizedBox(height: 28),
                             const MembershipCommonBenefits(),
                             const SizedBox(height: 28),
@@ -283,10 +271,11 @@ class MembershipPage extends ConsumerWidget {
       ref.invalidate(paymentRequestsNotifierProvider);
     }
 
-    if (wallet != null && priceJeton > 0 && wallet.jeton >= priceJeton) {
+    Future<bool> tryInstantPurchase({String? paymentMethod}) async {
       try {
         await ref.read(membershipRemoteProvider).purchaseMembership(
               tier.resolvedPlanId,
+              paymentMethod: paymentMethod,
             );
         await ref.read(membershipControllerProvider.notifier).refresh();
         await refreshMembershipAfterPurchase(ref);
@@ -295,32 +284,71 @@ class MembershipPage extends ConsumerWidget {
             SnackBar(content: Text('${tier.title} üyeliği aktif')),
           );
         }
-        return;
+        return true;
       } on ApiException catch (e) {
-        if (!context.mounted) return;
+        if (!context.mounted) return false;
         final insufficient = e.message.contains('Yetersiz jeton') ||
+            e.message.contains('Yetersiz CFC') ||
             e.message.toLowerCase().contains('insufficient');
         if (!insufficient) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(e.message)),
           );
-          return;
+          return true;
         }
-      } catch (_) {}
+        return false;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    if (wallet != null && priceJeton > 0 && wallet.jeton >= priceJeton) {
+      if (await tryInstantPurchase()) return;
+    }
+
+    final cfcBal = wallet?.cfc ?? ui.cfcBalance;
+    if (cfcBal >= priceCfc && priceCfc > 0) {
+      if (await tryInstantPurchase(paymentMethod: 'cfc')) return;
     }
 
     if (!context.mounted) return;
+
+    List<PaymentMethodEntity> paymentMethods;
+    try {
+      paymentMethods = await ref.read(paymentMethodsProvider.future);
+    } catch (_) {
+      paymentMethods = PaymentMethodEntity.defaults;
+    }
+    final externalLabel = paymentMethods
+        .where(
+          (m) => m.enabled && PaymentMethodEntity.isKnownCheckoutMethod(m.id),
+        )
+        .map((m) => m.label)
+        .join(' / ');
+    final methodsLabel =
+        externalLabel.isNotEmpty ? externalLabel : 'WhatsApp / Papara / Havale';
 
     final choice = await showMembershipCheckoutSheet(
       context,
       tier: tier,
       priceJeton: priceJeton,
       priceCfc: priceCfc,
-      cfcBalance: wallet?.cfc ?? ui.cfcBalance,
+      cfcBalance: cfcBal,
+      externalMethodsLabel: methodsLabel,
     );
     if (!context.mounted || choice == null) return;
 
     if (choice == MembershipCheckoutChoice.cfcPayment) {
+      if (cfcBal >= priceCfc) {
+        final ok = await submitMembershipCfcInstant(
+          context,
+          ref,
+          tier: tier,
+          priceCfc: priceCfc,
+          onDone: onPurchaseDone,
+        );
+        if (ok) return;
+      }
       await openMembershipCfcCheckoutFlow(
         context,
         ref,

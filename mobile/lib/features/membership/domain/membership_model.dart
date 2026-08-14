@@ -14,6 +14,7 @@ class MembershipTierModel {
     required this.badgeIcon,
     required this.glow,
     this.popular = false,
+    this.isActivePlan = false,
     this.planId,
   });
 
@@ -26,6 +27,7 @@ class MembershipTierModel {
   final IconData badgeIcon;
   final Color glow;
   final bool popular;
+  final bool isActivePlan;
 
   /// Backend plan kimliği (API varsa); yoksa [id.name].
   final String? planId;

@@ -41,5 +41,13 @@ void main() {
       );
       expect(pkg.isSvip, isTrue);
     });
+
+    test('popular recommended alias', () {
+      final pkg = MembershipPackageEntity.fromJson({
+        'id': 'gold',
+        'recommended': true,
+      });
+      expect(pkg.popular, isTrue);
+    });
   });
 }

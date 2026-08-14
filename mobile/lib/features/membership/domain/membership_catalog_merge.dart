@@ -35,9 +35,29 @@ MembershipTierModel mergeMembershipTier(
     accent: base.accent,
     badgeIcon: base.badgeIcon,
     glow: base.glow,
-    popular: base.popular,
+    popular: api.popular || base.popular,
+    isActivePlan: api.isActive,
     planId: api.planId.isNotEmpty ? api.planId : base.planId,
   );
+}
+
+/// API paket listesinden önerilen tier kimliğini döner.
+MembershipTierId? recommendedTierFromPackages(
+  List<MembershipPackageEntity> packages,
+) {
+  for (final p in packages) {
+    if (!p.popular) continue;
+    final id = p.id.toLowerCase();
+    return switch (id) {
+      'gold' => MembershipTierId.gold,
+      'premium' => MembershipTierId.premium,
+      'diamond' => MembershipTierId.diamond,
+      'svip' || 'super_vip' => MembershipTierId.svip,
+      'basic' || 'free' => MembershipTierId.basic,
+      _ => null,
+    };
+  }
+  return null;
 }
 
 List<MembershipTokenPackageModel> buildTokenPackagesFromTiers(

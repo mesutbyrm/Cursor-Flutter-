@@ -10,6 +10,7 @@ class MembershipPackageEntity {
     required this.bonusJeton,
     required this.falDiscountPercent,
     this.isActive = false,
+    this.popular = false,
     this.daysRemaining,
     this.priceTry,
   });
@@ -37,6 +38,10 @@ class MembershipPackageEntity {
             json['fal_discount_percent'],
       ),
       isActive: json['isActive'] == true || json['is_active'] == true,
+      popular: json['popular'] == true ||
+          json['recommended'] == true ||
+          json['isDefault'] == true ||
+          json['is_default'] == true,
       daysRemaining: json['daysRemaining'] != null
           ? asInt(json['daysRemaining'])
           : json['days_remaining'] != null
@@ -56,6 +61,7 @@ class MembershipPackageEntity {
   final int bonusJeton;
   final int falDiscountPercent;
   final bool isActive;
+  final bool popular;
   final int? daysRemaining;
   final int? priceTry;
 

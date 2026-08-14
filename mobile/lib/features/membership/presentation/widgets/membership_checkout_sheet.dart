@@ -12,6 +12,7 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
   required int priceJeton,
   required int priceCfc,
   required int cfcBalance,
+  String externalMethodsLabel = 'WhatsApp / Papara / Havale',
 }) {
   final hasCfc = cfcBalance >= priceCfc && priceCfc > 0;
   return showModalBottomSheet<MembershipCheckoutChoice>(
@@ -59,7 +60,7 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
               _OptionTile(
                 icon: Icons.credit_card_rounded,
                 color: MembershipCatalogData.gold,
-                title: 'WhatsApp / Papara / Havale',
+                title: externalMethodsLabel,
                 subtitle: 'Jeton yükleme talebi ile üyelik ($priceJeton jeton)',
                 onTap: () =>
                     Navigator.pop(ctx, MembershipCheckoutChoice.externalPayment),

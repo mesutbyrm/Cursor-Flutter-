@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.203+239 (2026-08-14) — Profil üyelik faz 13
+
+- **Tier kartları:** API `popular` / `isActive` — Popüler ve Aktif rozetleri
+- **Önerilen plan:** API `recommended` paketi varsayılan seçim
+- **Tek dokunuş CFC:** Bakiye yeterliyken `paymentMethod: cfc` veya anında `cfc_balance` talebi
+- **Ödeme özeti:** Üyelik sayfasında `paymentMethodsProvider` canlı kanal listesi
+- **Checkout sheet:** Dinamik ödeme kanalı etiketleri
+
 ## 1.0.202+238 (2026-08-14) — Profil üyelik faz 12
 
 - **API katalog birleşimi:** Tier kartları ve jeton paketleri sunucu fiyat/jeton ile güncellenir

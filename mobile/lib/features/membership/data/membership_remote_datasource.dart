@@ -28,15 +28,22 @@ class MembershipRemoteDataSource {
     return _fallbackCatalog(wallet);
   }
 
-  /// `POST /api/memberships/purchase` — kılavuz §9 `{planId}`.
-  Future<void> purchaseMembership(String planId) async {
+  /// `POST /api/memberships/purchase` — kılavuz §9 `{planId}`; isteğe bağlı `paymentMethod`.
+  Future<void> purchaseMembership(
+    String planId, {
+    String? paymentMethod,
+  }) async {
     final id = planId.trim();
     if (id.isEmpty) {
       throw const ApiException('Plan kimliği boş');
     }
+    final method = paymentMethod?.trim();
     await _dio.safePost<Map<String, dynamic>>(
       ApiEndpoints.membershipPurchase,
-      data: {'planId': id},
+      data: {
+        'planId': id,
+        if (method != null && method.isNotEmpty) 'paymentMethod': method,
+      },
     );
   }
 

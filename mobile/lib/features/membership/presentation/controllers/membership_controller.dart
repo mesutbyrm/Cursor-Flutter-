@@ -136,6 +136,10 @@ class MembershipController extends Notifier<MembershipUiState> {
           'basic' || 'free' || '' => MembershipTierId.basic,
           _ => MembershipTierId.gold,
         };
+        final recommended = recommendedTierFromPackages(cat.packages);
+        final initialTier = selected == MembershipTierId.basic
+            ? (recommended ?? MembershipTierId.gold)
+            : selected;
         state = state.copyWith(
           diamondBalance: cat.jetonBalance,
           jetonBalance: cat.jetonBalance,
@@ -145,12 +149,8 @@ class MembershipController extends Notifier<MembershipUiState> {
           apiPackages: cat.packages,
           jetonTlRate: ref.read(walletBalancesProvider).valueOrNull?.jetonTlRate ??
               kDefaultJetonTlRate,
-          selectedTier: selected == MembershipTierId.basic
-              ? MembershipTierId.gold
-              : selected,
-          selectedTokenPackage: selected == MembershipTierId.basic
-              ? MembershipTierId.gold
-              : selected,
+          selectedTier: initialTier,
+          selectedTokenPackage: initialTier,
         );
       },
       fireImmediately: true,
