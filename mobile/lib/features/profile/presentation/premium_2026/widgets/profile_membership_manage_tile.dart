@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../membership/presentation/controllers/membership_controller.dart';
+import '../../../../membership/presentation/controllers/membership_controller.dart';
 import '../profile_membership_helpers.dart';
 import '../../providers/profile_hub_providers.dart';
 import '../../providers/profile_providers.dart';
