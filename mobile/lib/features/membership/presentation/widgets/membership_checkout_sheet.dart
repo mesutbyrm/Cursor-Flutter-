@@ -13,8 +13,7 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
   required int priceJeton,
   required int priceCfc,
   required int cfcBalance,
-  String externalMethodsLabel = PaymentMethodsSummaryLine.fallbackLabels()
-      .replaceAll(' · ', ' / '),
+  String externalMethodsLabel = PaymentMethodsSummaryLine.externalCheckoutFallback,
 }) {
   final hasCfc = cfcBalance >= priceCfc && priceCfc > 0;
   return showModalBottomSheet<MembershipCheckoutChoice>(

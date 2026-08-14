@@ -314,9 +314,9 @@ class MembershipPage extends ConsumerWidget {
     } catch (_) {
       paymentMethods = PaymentMethodEntity.defaults;
     }
-    final methodsLabel = PaymentMethodsSummaryLine.labelsFrom(paymentMethods);
-    final externalLabel =
-        methodsLabel.isNotEmpty ? methodsLabel.replaceAll(' · ', ' / ') : 'WhatsApp / Papara / Havale';
+    final externalLabel = PaymentMethodsSummaryLine.externalCheckoutLabelFrom(
+      paymentMethods,
+    );
 
     final choice = await showMembershipCheckoutSheet(
       context,
@@ -324,7 +324,7 @@ class MembershipPage extends ConsumerWidget {
       priceJeton: priceJeton,
       priceCfc: priceCfc,
       cfcBalance: cfcBal,
-      externalMethodsLabel: methodsLabel,
+      externalMethodsLabel: externalLabel,
     );
     if (!context.mounted || choice == null) return;
 

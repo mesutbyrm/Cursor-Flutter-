@@ -25,6 +25,14 @@ class PaymentMethodsSummaryLine extends ConsumerWidget {
     return PaymentMethodEntity.defaults.map((m) => m.label).join(' · ');
   }
 
+  static const externalCheckoutFallback = 'WhatsApp / Papara / Havale / IBAN';
+
+  static String externalCheckoutLabelFrom(List<PaymentMethodEntity> methods) {
+    final labels = labelsFrom(methods);
+    if (labels.isEmpty) return externalCheckoutFallback;
+    return labels.replaceAll(' · ', ' / ');
+  }
+
   static String labelsFrom(List<PaymentMethodEntity> methods) {
     final enabled = methods
         .where(
