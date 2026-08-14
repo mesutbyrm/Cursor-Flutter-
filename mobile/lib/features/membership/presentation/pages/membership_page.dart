@@ -17,7 +17,6 @@ import '../../../profile/presentation/providers/payment_requests_notifier.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/jeton_checkout_flow.dart';
 import '../../../profile/presentation/widgets/pending_payment_banner.dart';
-import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../domain/membership_model.dart';
 import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../controllers/membership_controller.dart';
@@ -113,9 +112,15 @@ class MembershipPage extends ConsumerWidget {
                               ),
                               const SizedBox(height: 16),
                             ],
-                            if (ui.hasActivePaidMembership) ...[
+                            if (ui.isMembershipExpired) ...[
+                              _ExpiredMembershipBanner(
+                                label: ui.currentMembershipLabel,
+                                onRenew: () => _purchaseSelected(context, ref),
+                              ),
+                              const SizedBox(height: 16),
+                            ] else if (ui.hasActivePaidMembership) ...[
                               _ActiveBanner(
-                                tier: ui.currentMembership,
+                                label: ui.currentMembershipLabel,
                                 days: ui.daysRemaining,
                                 onExtend: () => _purchaseSelected(context, ref),
                               ),
@@ -497,25 +502,73 @@ class _MembershipAppBar extends StatelessWidget {
   }
 }
 
+class _ExpiredMembershipBanner extends StatelessWidget {
+  const _ExpiredMembershipBanner({
+    required this.label,
+    required this.onRenew,
+  });
+
+  final String label;
+  final VoidCallback onRenew;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onRenew,
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.25),
+            ),
+            color: const Color(0xFF3D2060).withValues(alpha: 0.65),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.timer_off_rounded,
+                color: Colors.white.withValues(alpha: 0.85),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '$label süresi doldu · planı yenile',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.white54,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ActiveBanner extends StatelessWidget {
   const _ActiveBanner({
-    required this.tier,
+    required this.label,
     required this.days,
     required this.onExtend,
   });
 
-  final String tier;
+  final String label;
   final int days;
   final VoidCallback onExtend;
 
   @override
   Widget build(BuildContext context) {
-    final info = resolveProfileMembership(
-      rawMembership: tier,
-      daysRemaining: days,
-    );
-    final label = info.tierLabel;
-
     return Material(
       color: Colors.transparent,
       child: InkWell(

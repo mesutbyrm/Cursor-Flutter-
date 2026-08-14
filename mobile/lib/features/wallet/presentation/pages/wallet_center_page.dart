@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../widgets/wallet_balance_header.dart';
 import '../widgets/wallet_earnings_section.dart';
@@ -23,6 +24,15 @@ class WalletCenterPage extends ConsumerWidget {
     final cached = wallet.valueOrNull;
     final balances = cached ??
         WalletBalances(jeton: authUser?.coinBalance ?? 0);
+    final membershipInfo = resolveProfileMembership(
+      rawMembership: balances.membership,
+      daysRemaining: balances.membershipDaysRemaining,
+    );
+    final premiumSubtitle = membershipInfo.hasActiveSubscription
+        ? '${membershipInfo.tierLabel} · ${balances.membershipDaysRemaining ?? membershipInfo.daysRemaining ?? 0} gün'
+        : membershipInfo.isExpired
+            ? '${membershipInfo.tierLabel} süresi doldu · yenile'
+            : 'Basic · Premium · Gold · Diamond · SVIP';
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -59,7 +69,7 @@ class WalletCenterPage extends ConsumerWidget {
                 _HubCard(
                   icon: Icons.workspace_premium_rounded,
                   title: 'Premium Üyelik',
-                  subtitle: 'Basic · Premium · Gold · Diamond',
+                  subtitle: premiumSubtitle,
                   color: const Color(0xFFFFD54F),
                   onTap: () => context.push('/premium-membership'),
                 ),

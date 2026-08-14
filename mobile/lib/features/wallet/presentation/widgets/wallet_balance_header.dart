@@ -32,6 +32,7 @@ class WalletBalanceHeader extends StatelessWidget {
     final showMembershipBanner = info.hasActiveSubscription &&
         daysRemaining != null &&
         daysRemaining! > 0;
+    final showExpiredBanner = info.isExpired;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -86,7 +87,7 @@ class WalletBalanceHeader extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        '${info.tierLabel.toUpperCase()} ÜYESİNİZ — $daysRemaining gün kaldı',
+                        '${info.tierLabel} üyesiniz · $daysRemaining gün kaldı',
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 12,
@@ -94,6 +95,46 @@ class WalletBalanceHeader extends StatelessWidget {
                       ),
                     ),
                     const Icon(Icons.chevron_right_rounded, size: 18),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+        if (showExpiredBanner) ...[
+          const SizedBox(height: 12),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => context.push('/premium-membership'),
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  color: const Color(0xFF4A3050).withValues(alpha: 0.55),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.timer_off_rounded,
+                        color: Colors.white70, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '${info.tierLabel} süresi doldu · planı yenile',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded,
+                        color: Colors.white54, size: 18),
                   ],
                 ),
               ),

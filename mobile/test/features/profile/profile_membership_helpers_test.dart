@@ -94,6 +94,18 @@ void main() {
         daysRemaining: 10,
       );
       expect(ui.hasActivePaidMembership, isTrue);
+      expect(ui.currentMembershipLabel, 'Gold');
+      expect(ui.isMembershipExpired, isFalse);
+    });
+
+    test('svip süresi dolmuş etiket ve bayrak', () {
+      const ui = MembershipUiState(
+        currentMembership: 'svip',
+        daysRemaining: 0,
+      );
+      expect(ui.currentMembershipLabel, 'SVIP');
+      expect(ui.isMembershipExpired, isTrue);
+      expect(ui.hasActivePaidMembership, isFalse);
     });
   });
 

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.199+234 (2026-08-14) — Profil üyelik faz 9
+
+- **Cüzdan:** Süresi dolmuş üyelik yenileme banner'ı; aktif etiket SVIP uyumlu
+- **Cüzdan merkezi:** Premium kart özeti (aktif / süresi dolmuş / ücretsiz)
+- **Üyelik sayfası:** Süresi dolmuş banner; `currentMembershipLabel` getter
+- **Destek footer:** Canlı `paymentConfig` (WhatsApp / Papara)
+
 ## 1.0.198+233 (2026-08-14) — Profil üyelik faz 8
 
 - **Üyelik rozetleri:** Hub'da dokunarak equip; seçili rozet işareti

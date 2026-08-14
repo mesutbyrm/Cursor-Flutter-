@@ -87,11 +87,17 @@ class MembershipUiState {
   }
 
   bool get hasActivePaidMembership {
-    return resolveProfileMembership(
-      rawMembership: currentMembership,
-      daysRemaining: daysRemaining,
-    ).hasActiveSubscription;
+    return membershipInfo.hasActiveSubscription;
   }
+
+  ProfileMembershipInfo get membershipInfo => resolveProfileMembership(
+        rawMembership: currentMembership,
+        daysRemaining: daysRemaining,
+      );
+
+  String get currentMembershipLabel => membershipInfo.tierLabel;
+
+  bool get isMembershipExpired => membershipInfo.isExpired;
 
   MembershipUiState copyWith({
     MembershipTierId? selectedTier,
