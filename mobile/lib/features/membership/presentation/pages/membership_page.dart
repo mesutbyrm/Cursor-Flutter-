@@ -227,8 +227,8 @@ class MembershipPage extends ConsumerWidget {
                             ),
                             const SizedBox(height: 10),
                             Text(
-                              'Ödeme: WhatsApp ${cfg.whatsapp} · '
-                              'Papara ${cfg.papara}',
+                              'Ödeme: WhatsApp ${cfg.whatsappNumber} · '
+                              'Papara ${cfg.paparaAddress}',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 11,
