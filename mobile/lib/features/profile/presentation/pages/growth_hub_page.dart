@@ -294,10 +294,10 @@ class _MembershipStatusCard extends ConsumerWidget {
     final c = context.colors;
     final paid = info.hasPaidTier;
     final expired = info.isExpired;
-    final active = info.hasActiveSubscription;
-    final days = info.daysRemaining;
     final ui = ref.watch(membershipControllerProvider);
     final catalogTier = catalogTierForMembership(info, ui.tiers);
+    final expiresAt =
+        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
 
     final title = expired
         ? '${info.tierLabel} · süresi doldu'
@@ -305,20 +305,11 @@ class _MembershipStatusCard extends ConsumerWidget {
             ? '${info.tierLabel} üyeliği'
             : 'Üyelik planları';
 
-    final String subtitle;
-    if (active) {
-      final plan = formatMembershipPlanDuration(
-        info: info,
-        catalogTier: catalogTier,
-        daysRemaining: days,
-      );
-      subtitle = '$plan · görev bonusları aktif';
-    } else {
-      subtitle = buildMembershipCatalogHintSubtitle(
-        info: info,
-        catalogTier: catalogTier,
-      );
-    }
+    final subtitle = buildGrowthHubMembershipSubtitle(
+      info: info,
+      catalogTier: catalogTier,
+      expiresAt: expiresAt,
+    );
 
     final accent = expired
         ? AppThemeColors.accentPink

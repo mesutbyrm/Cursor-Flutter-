@@ -31,12 +31,19 @@ void main() {
       expect(find.textContaining('Papara'), findsOneWidget);
     });
 
-    test('labelsFrom bilinen kanalları filtreler', () {
+    test('labelsFrom checkoutMethods kullanır', () {
       final labels = PaymentMethodsSummaryLine.labelsFrom(const [
         PaymentMethodEntity(id: 'whatsapp', label: 'WhatsApp'),
         PaymentMethodEntity(id: 'crypto', label: 'Kripto'),
       ]);
       expect(labels, 'WhatsApp');
+    });
+
+    test('labelsFrom boş listede varsayılanlar', () {
+      final labels = PaymentMethodsSummaryLine.labelsFrom(const [
+        PaymentMethodEntity(id: 'crypto', label: 'Kripto', enabled: true),
+      ]);
+      expect(labels, contains('WhatsApp'));
     });
   });
 }

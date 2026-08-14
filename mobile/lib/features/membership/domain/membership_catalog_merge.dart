@@ -42,6 +42,8 @@ MembershipTierModel mergeMembershipTier(
         ? api.falDiscountPercent
         : base.falDiscountPercent,
     planId: api.planId.isNotEmpty ? api.planId : base.planId,
+    featureHighlights:
+        api.features.isNotEmpty ? api.features : base.featureHighlights,
   );
 }
 

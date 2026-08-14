@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import '../../../membership/domain/membership_model.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../wallet/domain/wallet_balances.dart';
@@ -101,10 +103,20 @@ MembershipTierModel? catalogTierForMembership(
 }
 
 /// Profil hub / banner alt başlığı — kalan gün + katalog süre/fal indirimi.
+/// ISO bitiş tarihini kısa TR etiket (ör. 15.08.2026).
+String? formatMembershipExpiryLabel(String? expiresAtIso) {
+  final raw = expiresAtIso?.trim();
+  if (raw == null || raw.isEmpty) return null;
+  final exp = DateTime.tryParse(raw);
+  if (exp == null) return null;
+  return DateFormat('dd.MM.yyyy').format(exp.toLocal());
+}
+
 String formatMembershipPlanDuration({
   required ProfileMembershipInfo info,
   MembershipTierModel? catalogTier,
   int? daysRemaining,
+  String? expiresAt,
 }) {
   if (info.isExpired) return 'Yenile';
   final days = daysRemaining ?? info.daysRemaining;
@@ -116,6 +128,8 @@ String formatMembershipPlanDuration({
     }
     return '$days gün';
   }
+  final expiry = formatMembershipExpiryLabel(expiresAt);
+  if (expiry != null) return 'Bitiş: $expiry';
   if (catalogTier != null && catalogTier.durationDays > 0) {
     return catalogTier.durationLabel;
   }
@@ -125,6 +139,7 @@ String formatMembershipPlanDuration({
 String buildMembershipCatalogHintSubtitle({
   required ProfileMembershipInfo info,
   MembershipTierModel? catalogTier,
+  String? expiresAt,
 }) {
   final parts = <String>[];
   final expired = info.isExpired;
@@ -137,7 +152,8 @@ String buildMembershipCatalogHintSubtitle({
     if (days != null && days > 0) {
       parts.add('$days gün kaldı');
     } else {
-      parts.add('Aktif üyelik');
+      final expiry = formatMembershipExpiryLabel(expiresAt);
+      parts.add(expiry != null ? 'Bitiş: $expiry' : 'Aktif üyelik');
     }
   } else if (info.hasPaidTier) {
     parts.add('Rozetler, öncelikli destek ve VIP odalar');
@@ -155,4 +171,26 @@ String buildMembershipCatalogHintSubtitle({
   }
 
   return parts.join(' · ');
+}
+
+/// Görevler merkezi üyelik kartı alt başlığı.
+String buildGrowthHubMembershipSubtitle({
+  required ProfileMembershipInfo info,
+  MembershipTierModel? catalogTier,
+  String? expiresAt,
+}) {
+  if (info.hasActiveSubscription) {
+    final plan = formatMembershipPlanDuration(
+      info: info,
+      catalogTier: catalogTier,
+      daysRemaining: info.daysRemaining,
+      expiresAt: expiresAt,
+    );
+    return '$plan · görev bonusları aktif';
+  }
+  return buildMembershipCatalogHintSubtitle(
+    info: info,
+    catalogTier: catalogTier,
+    expiresAt: expiresAt,
+  );
 }

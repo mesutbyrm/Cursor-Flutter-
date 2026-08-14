@@ -48,6 +48,7 @@ class MembershipPackageEntity {
     this.popular = false,
     this.daysRemaining,
     this.priceTry,
+    this.features = const [],
   });
 
   factory MembershipPackageEntity.fromJson(Map<String, dynamic> json) {
@@ -85,6 +86,7 @@ class MembershipPackageEntity {
       priceTry: asInt(
         pick(json, ['priceTry', 'price_try', 'priceTl', 'price_tl', 'price']),
       ),
+      features: parseMembershipFeatureHighlights(json['features']),
     );
   }
 
@@ -99,6 +101,7 @@ class MembershipPackageEntity {
   final bool popular;
   final int? daysRemaining;
   final int? priceTry;
+  final List<MembershipFeatureHighlightEntity> features;
 
   /// TL fiyat — API `priceTry` veya jeton × kur.
   int resolvedPriceTry(double jetonTlRate) {

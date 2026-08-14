@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../domain/membership_model.dart';
+import '../../domain/membership_package_entity.dart';
 
 class MembershipFeatureTable extends StatelessWidget {
   const MembershipFeatureTable({
@@ -130,7 +131,46 @@ class MembershipFeatureTable extends StatelessWidget {
       rows.add(falRow);
     }
     rows.removeWhere((r) => r.label == 'Jeton Alımında İndirim');
-    return rows;
+    return _appendApiFeatureRows(rows, source);
+  }
+
+  static List<MembershipFeatureRow> _appendApiFeatureRows(
+    List<MembershipFeatureRow> rows,
+    List<MembershipTierModel> tiers,
+  ) {
+    final existingLabels = rows.map((r) => r.label.toLowerCase()).toSet();
+    final featureOrder = <String>[];
+    final featureTitles = <String, String>{};
+
+    for (final tier in tiers) {
+      for (final feature in tier.featureHighlights) {
+        if (featureTitles.containsKey(feature.id)) continue;
+        final title = feature.title.trim();
+        if (title.isEmpty) continue;
+        if (existingLabels.contains(title.toLowerCase())) continue;
+        featureTitles[feature.id] = title;
+        featureOrder.add(feature.id);
+      }
+    }
+
+    if (featureOrder.isEmpty) return rows;
+
+    final result = List<MembershipFeatureRow>.from(rows);
+    for (final id in featureOrder) {
+      final label = featureTitles[id]!;
+      result.add(
+        MembershipFeatureRow(
+          label: label,
+          values: [
+            for (final tier in tiers)
+              MembershipFeatureBool(
+                tier.featureHighlights.any((f) => f.id == id),
+              ),
+          ],
+        ),
+      );
+    }
+    return result;
   }
 
   static String _tokenRowLabel(List<MembershipTierModel> tiers) {

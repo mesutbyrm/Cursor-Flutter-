@@ -102,5 +102,46 @@ void main() {
         '12 / 45 gün',
       );
     });
+
+    test('gün yoksa ISO bitiş tarihi', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+      );
+      expect(
+        formatMembershipPlanDuration(
+          info: info,
+          expiresAt: '2030-06-15T12:00:00.000Z',
+        ),
+        'Bitiş: 15.06.2030',
+      );
+    });
+  });
+
+  group('buildMembershipCatalogHintSubtitle expiresAt', () {
+    test('aktif üyelik gün yok — bitiş tarihi', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+      );
+      final subtitle = buildMembershipCatalogHintSubtitle(
+        info: info,
+        expiresAt: '2030-01-20T00:00:00.000Z',
+      );
+      expect(subtitle, contains('Bitiş: 20.01.2030'));
+    });
+  });
+
+  group('buildGrowthHubMembershipSubtitle', () {
+    test('aktif üyelik görev bonusu', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 5,
+      );
+      final subtitle = buildGrowthHubMembershipSubtitle(info: info);
+      expect(subtitle, contains('5 gün'));
+      expect(subtitle, contains('görev bonusları aktif'));
+    });
   });
 }

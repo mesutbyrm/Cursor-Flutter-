@@ -34,13 +34,9 @@ class PaymentMethodsSummaryLine extends ConsumerWidget {
   }
 
   static String labelsFrom(List<PaymentMethodEntity> methods) {
-    final enabled = methods
-        .where(
-          (m) => m.enabled && PaymentMethodEntity.isKnownCheckoutMethod(m.id),
-        )
-        .toList();
-    final list = enabled.isNotEmpty ? enabled : PaymentMethodEntity.defaults;
-    return list.map((m) => m.label).join(' · ');
+    return PaymentMethodEntity.checkoutMethods(methods)
+        .map((m) => m.label)
+        .join(' · ');
   }
 
   @override
@@ -61,13 +57,7 @@ class PaymentMethodsSummaryLine extends ConsumerWidget {
         style: style,
       ),
       data: (methods) {
-        final enabled = methods
-            .where(
-              (m) =>
-                  m.enabled && PaymentMethodEntity.isKnownCheckoutMethod(m.id),
-            )
-            .toList();
-        final list = enabled.isNotEmpty ? enabled : PaymentMethodEntity.defaults;
+        final list = PaymentMethodEntity.checkoutMethods(methods);
         final labels = list.map((m) => m.label).join(' · ');
         final recommended = showRecommended
             ? list.where((m) => m.recommended).toList()

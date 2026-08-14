@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.209+245 (2026-08-14) — Profil üyelik faz 19
+
+- **Ödeme özeti:** `PaymentMethodsSummaryLine` → `checkoutMethods()` tek kaynak
+- **Bitiş tarihi:** `expiresAt` ISO — banner, görevler, ayarlar karo ipuçları
+- **Görevler merkezi:** `buildGrowthHubMembershipSubtitle` ortak helper
+- **Ayarlar karo:** `ProfileMembershipManageTile` katalog ipuçları
+- **Özellik tablosu:** Paket bazlı API `features[]` dinamik satırlar
+- **Test:** checkout sheet, growth hub subtitle, feature table API satırları
+
 ## 1.0.208+244 (2026-08-14) — Profil üyelik faz 18
 
 - **Profil hub:** Süresi dolmuş ücretli kullanıcıya premium kart (yenile CTA)

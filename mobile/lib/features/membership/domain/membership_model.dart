@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'membership_package_entity.dart';
+
 /// Üyelik kademesi — UI kartları ve tablo için tek kaynak.
 enum MembershipTierId { basic, gold, premium, diamond, svip }
 
@@ -18,6 +20,7 @@ class MembershipTierModel {
     this.durationDays = 30,
     this.falDiscountPercent = 0,
     this.planId,
+    this.featureHighlights = const [],
   });
 
   final MembershipTierId id;
@@ -35,6 +38,9 @@ class MembershipTierModel {
 
   /// Backend plan kimliği (API varsa); yoksa [id.name].
   final String? planId;
+
+  /// Paket bazlı API `features[]` — özellik tablosu için.
+  final List<MembershipFeatureHighlightEntity> featureHighlights;
 
   String get wireId => id.name;
 

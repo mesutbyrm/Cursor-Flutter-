@@ -43,6 +43,7 @@ class ProfileHubVipBanner extends ConsumerWidget {
     final subtitle = buildMembershipCatalogHintSubtitle(
       info: info,
       catalogTier: catalogTier,
+      expiresAt: expiresAt,
     );
 
     final primaryCta = expired

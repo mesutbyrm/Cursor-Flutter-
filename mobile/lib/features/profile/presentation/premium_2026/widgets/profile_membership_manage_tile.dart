@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../profile_membership_helpers.dart';
 import '../../providers/profile_hub_providers.dart';
+import '../../providers/profile_providers.dart';
 
 /// Üyelik planı özeti — profil düzenleme ve ayarlar için.
 class ProfileMembershipManageTile extends ConsumerWidget {
@@ -13,9 +15,11 @@ class ProfileMembershipManageTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final info = ref.watch(profileMembershipInfoProvider);
     final paid = info.hasPaidTier;
-    final active = info.hasActiveSubscription;
     final expired = info.isExpired;
-    final days = info.daysRemaining;
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(info, ui.tiers);
+    final expiresAt =
+        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
 
     return Material(
       color: Colors.transparent,
@@ -48,13 +52,11 @@ class ProfileMembershipManageTile extends ConsumerWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      expired
-                          ? 'Planı yenile · ayrıcalıkları geri aç'
-                          : active
-                              ? (days != null && days > 0
-                                  ? '$days gün kaldı · planı yönet'
-                                  : 'Aktif plan · yönet')
-                              : 'Gold, Diamond ve SVIP avantajları',
+                      buildMembershipCatalogHintSubtitle(
+                        info: info,
+                        catalogTier: catalogTier,
+                        expiresAt: expiresAt,
+                      ),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 12,
