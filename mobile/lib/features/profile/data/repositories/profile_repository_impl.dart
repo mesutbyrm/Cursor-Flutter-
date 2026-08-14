@@ -29,6 +29,17 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
+  Future<ProfileExtendedEntity> getUserExtended(String id) async {
+    if (ProfileRemoteDataSource.looksLikeUsernameKey(id)) {
+      try {
+        final user = await _canlifal.lookupByUsername(id);
+        return _remote.userExtended(user.id);
+      } catch (_) {}
+    }
+    return _remote.userExtended(id);
+  }
+
+  @override
   Future<void> follow(String id) => _remote.follow(id);
 
   @override
