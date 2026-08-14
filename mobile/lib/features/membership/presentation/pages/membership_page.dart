@@ -14,7 +14,7 @@ import '../../../profile/domain/entities/payment_method_entity.dart';
 import '../../../profile/presentation/providers/payment_requests_notifier.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/jeton_checkout_flow.dart';
-import '../../../profile/presentation/widgets/pending_payment_banner.dart';
+import '../../../profile/presentation/widgets/payment_methods_summary_line.dart';
 import '../../domain/membership_model.dart';
 import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../controllers/membership_controller.dart';
@@ -23,6 +23,7 @@ import '../widgets/feature_table.dart';
 import '../widgets/membership_card.dart';
 import '../widgets/membership_checkout_sheet.dart';
 import '../widgets/membership_cfc_checkout_flow.dart';
+import '../widgets/membership_pending_payment_banner.dart';
 import '../widgets/membership_payment_methods_summary.dart';
 import '../widgets/support_footer.dart';
 import '../widgets/token_package_card.dart';
@@ -37,10 +38,6 @@ class MembershipPage extends ConsumerWidget {
     final catalogAsync = ref.watch(membershipCatalogProvider);
     final padding = ResponsiveLayout.pagePadding(context);
     final pendingRequests = ref.watch(paymentRequestsNotifierProvider);
-    final pendingMembership = pendingRequests.valueOrNull
-            ?.where((r) => r.isMembershipCheckout && r.isPending)
-            .toList() ??
-        const [];
 
     return Scaffold(
       backgroundColor: MembershipCatalogData.bg,
@@ -101,13 +98,11 @@ class MembershipPage extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            if (pendingMembership.isNotEmpty) ...[
-                              PendingPaymentBanner(
-                                request: pendingMembership.first,
-                                kind: PendingPaymentKind.jeton,
-                                totalPending: pendingMembership.length,
-                              ),
-                              const SizedBox(height: 16),
+                            if (pendingRequests.valueOrNull
+                                    ?.any((r) =>
+                                        r.isMembershipCheckout && r.isPending) ==
+                                true) ...[
+                              const MembershipPendingPaymentBanner(),
                             ],
                             if (ui.isMembershipExpired) ...[
                               _ExpiredMembershipBanner(
@@ -319,14 +314,9 @@ class MembershipPage extends ConsumerWidget {
     } catch (_) {
       paymentMethods = PaymentMethodEntity.defaults;
     }
-    final externalLabel = paymentMethods
-        .where(
-          (m) => m.enabled && PaymentMethodEntity.isKnownCheckoutMethod(m.id),
-        )
-        .map((m) => m.label)
-        .join(' / ');
-    final methodsLabel =
-        externalLabel.isNotEmpty ? externalLabel : 'WhatsApp / Papara / Havale';
+    final methodsLabel = PaymentMethodsSummaryLine.labelsFrom(paymentMethods);
+    final externalLabel =
+        methodsLabel.isNotEmpty ? methodsLabel.replaceAll(' · ', ' / ') : 'WhatsApp / Papara / Havale';
 
     final choice = await showMembershipCheckoutSheet(
       context,
@@ -360,7 +350,7 @@ class MembershipPage extends ConsumerWidget {
 
     final jetonPkg = JetonPackageEntity(
       id: 'membership_${tier.wireId}',
-      title: '${tier.title} Üyelik · 30 gün',
+      title: '${tier.title} Üyelik · ${tier.durationLabel}',
       coins: priceJeton,
       priceTry: tier.monthlyPriceTry.toDouble(),
       badge: ui.hasActivePaidMembership ? 'Uzat' : null,
@@ -370,9 +360,10 @@ class MembershipPage extends ConsumerWidget {
       context,
       ref,
       package: jetonPkg,
-      priceText: '₺${tier.monthlyPriceTry} (${tier.monthlyTokens} jeton/ay)',
+      priceText:
+          '₺${tier.monthlyPriceTry} (${tier.monthlyTokens} jeton · ${tier.durationLabel})',
       paymentNotes:
-          'Üyelik · ${tier.title} · 30 gün · ${tier.monthlyTokens} jeton',
+          'Üyelik · ${tier.title} · ${tier.durationLabel} · ${tier.monthlyTokens} jeton',
       onDone: onPurchaseDone,
     );
   }

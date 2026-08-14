@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
+import '../../../profile/presentation/widgets/payment_methods_summary_line.dart';
 import '../../domain/membership_model.dart';
 
 enum MembershipCheckoutChoice { externalPayment, cfcPayment }
@@ -12,7 +13,8 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
   required int priceJeton,
   required int priceCfc,
   required int cfcBalance,
-  String externalMethodsLabel = 'WhatsApp / Papara / Havale',
+  String externalMethodsLabel = PaymentMethodsSummaryLine.fallbackLabels()
+      .replaceAll(' · ', ' / '),
 }) {
   final hasCfc = cfcBalance >= priceCfc && priceCfc > 0;
   return showModalBottomSheet<MembershipCheckoutChoice>(
@@ -50,7 +52,7 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
               ),
               const SizedBox(height: 6),
               Text(
-                '₺${tier.monthlyPriceTry} · ${tier.monthlyTokens} jeton/ay',
+                '₺${tier.monthlyPriceTry} · ${tier.monthlyTokens} jeton · ${tier.durationLabel}',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.6),
                   fontWeight: FontWeight.w600,

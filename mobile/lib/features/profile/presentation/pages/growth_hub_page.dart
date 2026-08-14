@@ -17,6 +17,8 @@ import '../../data/datasources/achievements_remote_datasource.dart';
 import '../../domain/entities/daily_task_entity.dart';
 import '../../domain/entities/growth_progress_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
+import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
+import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../../membership/presentation/controllers/membership_controller.dart';
@@ -123,6 +125,8 @@ class GrowthHubPage extends ConsumerWidget {
                     isVip: serverLevel?.isVip ?? membershipInfo.isVip,
                   ),
                   const SizedBox(height: 14),
+                  const MembershipPendingPaymentBanner(padding: EdgeInsets.zero),
+                  const SizedBox(height: 14),
                   _MembershipStatusCard(info: membershipInfo),
                   const SizedBox(height: 20),
                   const ProfileSectionTitle(title: 'Bugünün görevleri'),
@@ -208,6 +212,7 @@ class GrowthHubPage extends ConsumerWidget {
     ref.invalidate(membershipBadgesCatalogProvider);
     ref.invalidate(membershipCatalogProvider);
     ref.invalidate(membershipControllerProvider);
+    ref.invalidate(paymentRequestsNotifierProvider);
     await Future.wait([
       _ignore(ref.read(authControllerProvider.notifier).refreshMe()),
       _ignore(ref.read(profileStatsProvider.future)),

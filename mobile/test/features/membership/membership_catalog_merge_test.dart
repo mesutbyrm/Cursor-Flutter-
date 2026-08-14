@@ -62,6 +62,34 @@ void main() {
       final merged = mergeMembershipTier(base, api);
       expect(merged.popular, isTrue);
       expect(merged.isActivePlan, isTrue);
+      expect(merged.durationDays, 30);
+      expect(merged.falDiscountPercent, 0);
+    });
+
+    test('API duration ve fal indirimi birleşir', () {
+      const base = MembershipTierModel(
+        id: MembershipTierId.premium,
+        title: 'Premium',
+        subtitle: 'Test',
+        monthlyTokens: 3500,
+        monthlyPriceTry: 1500,
+        accent: Color(0xFFA78BFA),
+        badgeIcon: Icons.star,
+        glow: Color(0xFF8B5CF6),
+      );
+      const api = MembershipPackageEntity(
+        id: 'premium',
+        planId: 'plan-premium',
+        title: 'Premium',
+        durationDays: 45,
+        priceJeton: 3000,
+        bonusJeton: 3500,
+        falDiscountPercent: 15,
+      );
+      final merged = mergeMembershipTier(base, api);
+      expect(merged.durationDays, 45);
+      expect(merged.falDiscountPercent, 15);
+      expect(merged.durationLabel, '45 gün');
     });
   });
 
@@ -111,11 +139,13 @@ void main() {
         cfcAmount: 14000,
         priceTry: 3500,
         method: 'whatsapp',
+        durationDays: 45,
       );
       expect(body['requestType'], 'cfc');
       expect(body['packageId'], 'membership_svip');
       expect(body['membershipTier'], 'svip');
       expect(body['amount'], 14000);
+      expect(body['packageTitle'], 'SVIP Üyelik · 45 gün');
     });
   });
 

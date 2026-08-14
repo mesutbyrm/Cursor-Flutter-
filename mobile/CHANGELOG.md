@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.204+240 (2026-08-14) — Profil üyelik faz 14
+
+- **Bekleyen üyelik talebi:** Cüzdan, görevler merkezi ve profil hub banner
+- **Canlı ödeme özeti:** `PaymentMethodsSummaryLine` — cüzdan CFC kartı + üyelik sayfası
+- **API süre:** `durationDays` tier birleşimi; checkout metinleri ve CFC talebi
+- **Özellik tablosu:** API tier başlıkları + fal indirimi (`falDiscountPercent`) satırı
+- **Yenileme:** `paymentRequestsNotifierProvider` hub refresh akışlarına eklendi
+
 ## 1.0.203+239 (2026-08-14) — Profil üyelik faz 13
 
 - **Tier kartları:** API `popular` / `isActive` — Popüler ve Aktif rozetleri

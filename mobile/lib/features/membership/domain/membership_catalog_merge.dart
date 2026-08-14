@@ -37,6 +37,10 @@ MembershipTierModel mergeMembershipTier(
     glow: base.glow,
     popular: api.popular || base.popular,
     isActivePlan: api.isActive,
+    durationDays: api.durationDays > 0 ? api.durationDays : base.durationDays,
+    falDiscountPercent: api.falDiscountPercent > 0
+        ? api.falDiscountPercent
+        : base.falDiscountPercent,
     planId: api.planId.isNotEmpty ? api.planId : base.planId,
   );
 }

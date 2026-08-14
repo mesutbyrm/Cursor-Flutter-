@@ -15,6 +15,8 @@ class MembershipTierModel {
     required this.glow,
     this.popular = false,
     this.isActivePlan = false,
+    this.durationDays = 30,
+    this.falDiscountPercent = 0,
     this.planId,
   });
 
@@ -28,6 +30,8 @@ class MembershipTierModel {
   final Color glow;
   final bool popular;
   final bool isActivePlan;
+  final int durationDays;
+  final int falDiscountPercent;
 
   /// Backend plan kimliği (API varsa); yoksa [id.name].
   final String? planId;
@@ -36,6 +40,8 @@ class MembershipTierModel {
 
   String get resolvedPlanId =>
       (planId != null && planId!.trim().isNotEmpty) ? planId! : wireId;
+
+  String get durationLabel => '$durationDays gün';
 }
 
 /// Özellik tablosu hücresi.
