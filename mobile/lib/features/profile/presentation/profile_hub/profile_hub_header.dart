@@ -36,7 +36,11 @@ class ProfileHubHeader extends ConsumerWidget {
     final extAsync = ref.watch(profileExtendedProvider);
     final ext = extAsync.valueOrNull ?? const ProfileExtendedEntity();
     final level = state.level;
-    final vipLabel = _vipLabel(state, ext);
+    final vipLabel = _vipLabel(
+      ref.watch(profileMembershipInfoProvider),
+      state,
+      ext,
+    );
 
     final topInset = MediaQuery.paddingOf(context).top;
     return Column(
@@ -201,12 +205,21 @@ class ProfileHubHeader extends ConsumerWidget {
     );
   }
 
-  String? _vipLabel(ProfileScreenState state, ProfileExtendedEntity ext) {
-    final info = resolveProfileMembership(
-      rawMembership: state.wallet?.membership ?? state.membership,
-      daysRemaining: state.membershipDays,
-    );
-    if (info.hasPaidTier) return '💎 ${info.tierLabel}';
+  String? _vipLabel(
+    ProfileMembershipInfo info,
+    ProfileScreenState state,
+    ProfileExtendedEntity ext,
+  ) {
+    if (info.isExpired) return '⏳ ${info.tierLabel} · doldu';
+    if (info.hasActiveSubscription) {
+      final expiry =
+          formatMembershipExpiryLabel(state.wallet?.membershipExpiresAt);
+      if ((info.daysRemaining == null || info.daysRemaining! <= 0) &&
+          expiry != null) {
+        return '💎 ${info.tierLabel} · $expiry';
+      }
+      if (info.hasPaidTier) return '💎 ${info.tierLabel}';
+    }
     final v = ext.vipLevel?.trim();
     if (v != null && v.isNotEmpty) {
       final extInfo = resolveProfileMembership(rawMembership: v);

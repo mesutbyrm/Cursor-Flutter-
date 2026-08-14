@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.211+247 (2026-08-14) — Profil üyelik faz 21
+
+- **Üyelik sayfası:** Aktif/süresi dolmuş banner `expiresAt` ISO bitiş tarihi
+- **Controller:** `membershipExpiresAt` + cüzdan senkronu
+- **Hub header:** VIP pill süresi dolmuş / bitiş tarihi etiketi
+- **Premium kart:** `expiresAt` fallback `buildMembershipCatalogHintSubtitle`
+- **Özellik tablosu:** API `features[].subtitle` metin hücresi
+- **Ödeme özeti:** `MembershipPaymentMethodsSummary` `showRecommended: false`
+- **Test:** manage tile, feature subtitle, banner expiry
+
 ## 1.0.210+246 (2026-08-14) — Profil üyelik faz 20
 
 - **expiresAt sweep:** lazy premium, cüzdan kartı, hub istatistik, currency card, wallet header

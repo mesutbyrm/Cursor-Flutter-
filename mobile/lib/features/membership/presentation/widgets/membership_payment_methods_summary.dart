@@ -12,6 +12,7 @@ class MembershipPaymentMethodsSummary extends ConsumerWidget {
     return const PaymentMethodsSummaryLine(
       prefix: 'Ödeme',
       textAlign: TextAlign.center,
+      showRecommended: false,
     );
   }
 }

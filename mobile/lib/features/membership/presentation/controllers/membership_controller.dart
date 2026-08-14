@@ -39,6 +39,7 @@ class MembershipUiState {
     this.cfcBalance = 0,
     this.currentMembership = 'basic',
     this.daysRemaining = 0,
+    this.membershipExpiresAt,
     this.apiPackages = const [],
     this.jetonTlRate = kDefaultJetonTlRate,
   });
@@ -50,6 +51,7 @@ class MembershipUiState {
   final int cfcBalance;
   final String currentMembership;
   final int daysRemaining;
+  final String? membershipExpiresAt;
   final List<MembershipPackageEntity> apiPackages;
   final double jetonTlRate;
 
@@ -102,6 +104,7 @@ class MembershipUiState {
     int? cfcBalance,
     String? currentMembership,
     int? daysRemaining,
+    String? membershipExpiresAt,
     List<MembershipPackageEntity>? apiPackages,
     double? jetonTlRate,
   }) {
@@ -113,6 +116,7 @@ class MembershipUiState {
       cfcBalance: cfcBalance ?? this.cfcBalance,
       currentMembership: currentMembership ?? this.currentMembership,
       daysRemaining: daysRemaining ?? this.daysRemaining,
+      membershipExpiresAt: membershipExpiresAt ?? this.membershipExpiresAt,
       apiPackages: apiPackages ?? this.apiPackages,
       jetonTlRate: jetonTlRate ?? this.jetonTlRate,
     );
@@ -122,6 +126,16 @@ class MembershipUiState {
 class MembershipController extends Notifier<MembershipUiState> {
   @override
   MembershipUiState build() {
+    ref.listen<AsyncValue<WalletBalances>>(walletBalancesProvider, (_, next) {
+      final wallet = next.valueOrNull;
+      if (wallet == null) return;
+      state = state.copyWith(
+        membershipExpiresAt: wallet.membershipExpiresAt,
+        daysRemaining:
+            wallet.membershipDaysRemaining ?? state.daysRemaining,
+        currentMembership: wallet.membership ?? state.currentMembership,
+      );
+    });
     ref.listen<AsyncValue<MembershipCatalogEntity>>(
       membershipCatalogProvider,
       (_, next) {
@@ -146,6 +160,11 @@ class MembershipController extends Notifier<MembershipUiState> {
           cfcBalance: cat.cfcBalance,
           currentMembership: cat.currentMembership,
           daysRemaining: cat.daysRemaining ?? cat.activePackage?.daysRemaining ?? 0,
+          membershipExpiresAt: ref
+                  .read(walletBalancesProvider)
+                  .valueOrNull
+                  ?.membershipExpiresAt ??
+              state.membershipExpiresAt,
           apiPackages: cat.packages,
           jetonTlRate: ref.read(walletBalancesProvider).valueOrNull?.jetonTlRate ??
               kDefaultJetonTlRate,

@@ -109,6 +109,7 @@ class MembershipPage extends ConsumerWidget {
                             if (ui.isMembershipExpired) ...[
                               _ExpiredMembershipBanner(
                                 label: ui.currentMembershipLabel,
+                                expiresAt: ui.membershipExpiresAt,
                                 onRenew: () => _purchaseSelected(context, ref),
                               ),
                               const SizedBox(height: 16),
@@ -116,6 +117,7 @@ class MembershipPage extends ConsumerWidget {
                               _ActiveBanner(
                                 label: ui.currentMembershipLabel,
                                 days: ui.daysRemaining,
+                                expiresAt: ui.membershipExpiresAt,
                                 durationDays: catalogTierForMembership(
                                   ui.membershipInfo,
                                   ui.tiers,
@@ -557,13 +559,17 @@ class _ExpiredMembershipBanner extends StatelessWidget {
   const _ExpiredMembershipBanner({
     required this.label,
     required this.onRenew,
+    this.expiresAt,
   });
 
   final String label;
+  final String? expiresAt;
   final VoidCallback onRenew;
 
   @override
   Widget build(BuildContext context) {
+    final expiry = formatMembershipExpiryLabel(expiresAt);
+    final detail = expiry != null ? ' · bitiş $expiry' : '';
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -587,7 +593,7 @@ class _ExpiredMembershipBanner extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '$label süresi doldu · planı yenile',
+                  '$label süresi doldu$detail · planı yenile',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.92),
                     fontWeight: FontWeight.w800,
@@ -613,19 +619,25 @@ class _ActiveBanner extends StatelessWidget {
     required this.days,
     required this.onExtend,
     this.durationDays,
+    this.expiresAt,
   });
 
   final String label;
   final int days;
   final int? durationDays;
+  final String? expiresAt;
   final VoidCallback onExtend;
 
   String get _daysLabel {
-    if (days <= 0) return 'aktif';
-    if (durationDays != null && durationDays! > 0 && durationDays != 30) {
-      return '$days / $durationDays gün kaldı';
+    if (days > 0) {
+      if (durationDays != null && durationDays! > 0 && durationDays != 30) {
+        return '$days / $durationDays gün kaldı';
+      }
+      return '$days gün kaldı';
     }
-    return '$days gün kaldı';
+    final expiry = formatMembershipExpiryLabel(expiresAt);
+    if (expiry != null) return 'Bitiş: $expiry';
+    return 'aktif';
   }
 
   @override

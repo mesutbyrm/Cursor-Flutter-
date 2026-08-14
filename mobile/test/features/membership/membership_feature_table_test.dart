@@ -88,5 +88,50 @@ void main() {
 
       expect(find.text('VIP Odalar'), findsOneWidget);
     });
+
+    testWidgets('paket features subtitle metin hücresi', (tester) async {
+      final tiers = [
+        for (final t in MembershipCatalogData.tiers)
+          MembershipTierModel(
+            id: t.id,
+            title: t.title,
+            subtitle: t.subtitle,
+            monthlyTokens: t.monthlyTokens,
+            monthlyPriceTry: t.monthlyPriceTry,
+            accent: t.accent,
+            badgeIcon: t.badgeIcon,
+            glow: t.glow,
+            featureHighlights: t.id == MembershipTierId.gold
+                ? const [
+                    MembershipFeatureHighlightEntity(
+                      id: 'vip_lounge',
+                      title: 'VIP Lounge',
+                      subtitle: '7/24',
+                    ),
+                  ]
+                : const [],
+          ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: SizedBox(
+                width: 500,
+                child: MembershipFeatureTable(
+                  selectedTier: MembershipTierId.gold,
+                  tiers: tiers,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('VIP Lounge'), findsOneWidget);
+      expect(find.text('7/24'), findsOneWidget);
+    });
   });
 }

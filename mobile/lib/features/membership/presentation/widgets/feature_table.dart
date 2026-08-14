@@ -163,14 +163,27 @@ class MembershipFeatureTable extends StatelessWidget {
           label: label,
           values: [
             for (final tier in tiers)
-              MembershipFeatureBool(
-                tier.featureHighlights.any((f) => f.id == id),
-              ),
+              _featureCellForTier(tier, id),
           ],
         ),
       );
     }
     return result;
+  }
+
+  static MembershipFeatureValue _featureCellForTier(
+    MembershipTierModel tier,
+    String featureId,
+  ) {
+    for (final feature in tier.featureHighlights) {
+      if (feature.id != featureId) continue;
+      final subtitle = feature.subtitle?.trim();
+      if (subtitle != null && subtitle.isNotEmpty) {
+        return MembershipFeatureText(subtitle);
+      }
+      return const MembershipFeatureBool(true);
+    }
+    return const MembershipFeatureBool(false);
   }
 
   static String _tokenRowLabel(List<MembershipTierModel> tiers) {

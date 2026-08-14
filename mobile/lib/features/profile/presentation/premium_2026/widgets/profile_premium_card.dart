@@ -11,6 +11,7 @@ class ProfilePremiumCard extends StatelessWidget {
     this.membership,
     this.daysRemaining,
     this.catalogSubtitle,
+    this.expiresAt,
     this.onViewPrivileges,
     this.onManageMembership,
   });
@@ -18,6 +19,7 @@ class ProfilePremiumCard extends StatelessWidget {
   final String? membership;
   final int? daysRemaining;
   final String? catalogSubtitle;
+  final String? expiresAt;
   final VoidCallback? onViewPrivileges;
   final VoidCallback? onManageMembership;
 
@@ -76,11 +78,10 @@ class ProfilePremiumCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       catalogSubtitle ??
-                          (active && daysRemaining != null && daysRemaining! > 0
-                              ? '$daysRemaining gün kaldı · özel rozetler ve ayrıcalıklar'
-                              : expired
-                                  ? 'Planı yenileyerek ayrıcalıkları geri açın'
-                                  : 'Özel rozetler, VIP odalar ve ekstra jeton fırsatları'),
+                          buildMembershipCatalogHintSubtitle(
+                            info: info,
+                            expiresAt: expiresAt,
+                          ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(

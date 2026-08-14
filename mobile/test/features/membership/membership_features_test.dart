@@ -144,4 +144,25 @@ void main() {
       expect(subtitle, contains('görev bonusları aktif'));
     });
   });
+
+  group('membership banner expiry labels', () {
+    test('aktif banner gün yoksa bitiş tarihi', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+      );
+      final label = formatMembershipPlanDuration(
+        info: info,
+        expiresAt: '2030-03-20T00:00:00.000Z',
+      );
+      expect(label, 'Bitiş: 20.03.2030');
+    });
+
+    test('süresi dolmuş banner bitiş etiketi', () {
+      expect(
+        formatMembershipExpiryLabel('2020-05-10T00:00:00.000Z'),
+        '10.05.2020',
+      );
+    });
+  });
 }
