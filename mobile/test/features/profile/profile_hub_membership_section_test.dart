@@ -107,7 +107,7 @@ void main() {
 
       expect(find.byType(ProfileHubVipBanner), findsNothing);
       expect(find.byType(ProfilePremiumCard), findsOneWidget);
-      expect(find.text('Gold süresi doldu'), findsOneWidget);
+      expect(find.text('Gold · süresi doldu'), findsOneWidget);
     });
   });
 }

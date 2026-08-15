@@ -785,6 +785,7 @@ class _TrustFooter extends ConsumerWidget {
             prefix: 'Ödeme',
             fontSize: 11,
             textColor: Color(0xFF25D366),
+            showRecommended: false,
           ),
         ],
       ),

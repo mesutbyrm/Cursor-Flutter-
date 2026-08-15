@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.213+249 (2026-08-15) — Profil üyelik faz 23
+
+- **Süresi dolmuş etiketler:** `buildMembershipExpiredPlanLabel` / `buildMembershipExpiredBannerText` ortak helper
+- **Katalog ipucu:** süresi dolmuş alt başlıkta `expiresAt` bitiş tarihi
+- **Hub istatistik:** üyelik planı satırı tier + bitiş tarihi
+- **Görevler / currency / premium kart / ayarlar:** süresi dolmuş başlık helper hizalaması
+- **Jeton checkout:** `PaymentMethodsSummaryLine` `showRecommended: false`
+- **Test:** expired plan label, banner text, catalog hint tarih
+
 ## 1.0.212+248 (2026-08-15) — Profil üyelik faz 22
 
 - **Ortak avantajlar:** `mergeMembershipCommonHighlights` — katalog + seçili tier `features[]` (id dedupe)

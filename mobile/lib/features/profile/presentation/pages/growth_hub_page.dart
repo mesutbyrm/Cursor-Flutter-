@@ -300,7 +300,7 @@ class _MembershipStatusCard extends ConsumerWidget {
         ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
 
     final title = expired
-        ? '${info.tierLabel} · süresi doldu'
+        ? buildMembershipExpiredPlanLabel(info: info, expiresAt: expiresAt)
         : paid
             ? '${info.tierLabel} üyeliği'
             : 'Üyelik planları';

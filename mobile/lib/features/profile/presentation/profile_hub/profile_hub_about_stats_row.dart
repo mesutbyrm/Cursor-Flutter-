@@ -170,19 +170,23 @@ class _StatisticsCard extends ConsumerWidget {
     final membership = ref.watch(profileMembershipInfoProvider);
     final ui = ref.watch(membershipControllerProvider);
     final catalogTier = catalogTierForMembership(membership, ui.tiers);
+    final expiresAt =
+        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
     final planDurationValue = formatMembershipPlanDuration(
       info: membership,
       catalogTier: catalogTier,
       daysRemaining: membership.daysRemaining,
-      expiresAt:
-          ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt,
+      expiresAt: expiresAt,
     );
     final rows = <({IconData icon, String label, String value})>[
       (
         icon: Icons.workspace_premium_outlined,
         label: 'Üyelik Planı',
         value: membership.isExpired
-            ? 'Süresi doldu'
+            ? buildMembershipExpiredPlanLabel(
+                info: membership,
+                expiresAt: expiresAt,
+              )
             : membership.hasPaidTier
                 ? membership.tierLabel
                 : 'Standart',

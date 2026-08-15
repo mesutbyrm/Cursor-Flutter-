@@ -493,6 +493,7 @@ class _JetonPremiumPurchaseViewState
               prefix: 'Kanallar',
               textAlign: TextAlign.start,
               fontSize: 10,
+              showRecommended: false,
             ),
             if (_method == JetonPayMethod.papara) ...[
               const SizedBox(height: 14),

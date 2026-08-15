@@ -73,6 +73,65 @@ void main() {
       final subtitle = buildMembershipCatalogHintSubtitle(info: info);
       expect(subtitle, contains('sona erdi'));
     });
+
+    test('süresi dolmuş üyelik bitiş tarihi', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      final subtitle = buildMembershipCatalogHintSubtitle(
+        info: info,
+        expiresAt: '2020-05-10T00:00:00.000Z',
+      );
+      expect(subtitle, contains('10.05.2020'));
+      expect(subtitle, contains('sona erdi'));
+    });
+  });
+
+  group('buildMembershipExpiredPlanLabel', () {
+    test('bitiş tarihi ile', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipExpiredPlanLabel(
+          info: info,
+          expiresAt: '2020-05-10T00:00:00.000Z',
+        ),
+        'Gold · 10.05.2020',
+      );
+    });
+
+    test('tarih yoksa süresi doldu', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipExpiredPlanLabel(info: info),
+        'Gold · süresi doldu',
+      );
+    });
+  });
+
+  group('buildMembershipExpiredBannerText', () {
+    test('bitiş tarihi ile banner', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      final text = buildMembershipExpiredBannerText(
+        info: info,
+        expiresAt: '2020-05-10T00:00:00.000Z',
+      );
+      expect(text, contains('Gold'));
+      expect(text, contains('10.05.2020'));
+    });
   });
 
   group('formatMembershipPlanDuration', () {

@@ -147,7 +147,12 @@ String buildMembershipCatalogHintSubtitle({
   final days = info.daysRemaining;
 
   if (expired) {
-    parts.add('${info.tierLabel} planınız sona erdi · yenileyin');
+    final expiry = formatMembershipExpiryLabel(expiresAt);
+    if (expiry != null) {
+      parts.add('${info.tierLabel} planınız $expiry tarihinde sona erdi');
+    } else {
+      parts.add('${info.tierLabel} planınız sona erdi · yenileyin');
+    }
   } else if (active) {
     if (days != null && days > 0) {
       parts.add('$days gün kaldı');
@@ -193,4 +198,26 @@ String buildGrowthHubMembershipSubtitle({
     catalogTier: catalogTier,
     expiresAt: expiresAt,
   );
+}
+
+/// Süresi dolmuş plan başlığı — kart / istatistik satırı (ör. Gold · 15.08.2026).
+String buildMembershipExpiredPlanLabel({
+  required ProfileMembershipInfo info,
+  String? expiresAt,
+}) {
+  final expiry = formatMembershipExpiryLabel(expiresAt);
+  if (expiry != null) return '${info.tierLabel} · $expiry';
+  return '${info.tierLabel} · süresi doldu';
+}
+
+/// Cüzdan / banner süresi dolmuş metni.
+String buildMembershipExpiredBannerText({
+  required ProfileMembershipInfo info,
+  String? expiresAt,
+}) {
+  final expiry = formatMembershipExpiryLabel(expiresAt);
+  if (expiry != null) {
+    return '${info.tierLabel} planınız sona erdi · $expiry';
+  }
+  return '${info.tierLabel} planınız sona erdi · yenileyin';
 }

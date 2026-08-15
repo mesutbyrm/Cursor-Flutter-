@@ -68,7 +68,10 @@ class ProfilePremiumCard extends StatelessWidget {
                       active
                           ? '${info.tierLabel} Üyelik'
                           : expired
-                              ? '${info.tierLabel} süresi doldu'
+                              ? buildMembershipExpiredPlanLabel(
+                                  info: info,
+                                  expiresAt: expiresAt,
+                                )
                               : 'Premium Üyelik',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

@@ -156,11 +156,12 @@ class _MembershipSummaryRow extends ConsumerWidget {
     final expired = info.isExpired;
     final ui = ref.watch(membershipControllerProvider);
     final catalogTier = catalogTierForMembership(info, ui.tiers);
+    final expiresAt =
+        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
     final subtitle = buildMembershipCatalogHintSubtitle(
       info: info,
       catalogTier: catalogTier,
-      expiresAt:
-          ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt,
+      expiresAt: expiresAt,
     );
 
     return Material(
@@ -187,7 +188,10 @@ class _MembershipSummaryRow extends ConsumerWidget {
                   children: [
                     Text(
                       expired
-                          ? '${info.tierLabel} · süresi doldu'
+                          ? buildMembershipExpiredPlanLabel(
+                              info: info,
+                              expiresAt: expiresAt,
+                            )
                           : paid
                               ? '${info.tierLabel} Üyelik'
                               : 'Üyelik Planları',

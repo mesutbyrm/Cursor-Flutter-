@@ -41,7 +41,10 @@ class ProfileMembershipManageTile extends ConsumerWidget {
                   children: [
                     Text(
                       expired
-                          ? '${info.tierLabel} · süresi doldu'
+                          ? buildMembershipExpiredPlanLabel(
+                              info: info,
+                              expiresAt: expiresAt,
+                            )
                           : paid
                               ? '${info.tierLabel} Üyelik'
                               : 'Üyelik Planları',
