@@ -134,6 +134,82 @@ void main() {
     });
   });
 
+  group('buildMembershipPageExpiredBannerText', () {
+    test('planı yenile eki', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      final text = buildMembershipPageExpiredBannerText(info: info);
+      expect(text, contains('planı yenile'));
+      expect(text, contains('sona erdi'));
+    });
+  });
+
+  group('buildFreeUserMembershipTeaserSubtitle', () {
+    test('popular API paket tier ipucu', () {
+      const tiers = [
+        MembershipTierModel(
+          id: MembershipTierId.gold,
+          title: 'Gold',
+          subtitle: 'Test',
+          monthlyTokens: 1500,
+          monthlyPriceTry: 1000,
+          accent: Color(0xFFFFD54F),
+          badgeIcon: Icons.star,
+          glow: Color(0xFFFFC107),
+          durationDays: 45,
+          falDiscountPercent: 15,
+        ),
+      ];
+      const packages = [
+        MembershipPackageEntity(
+          id: 'gold',
+          planId: 'plan-gold',
+          title: 'Gold',
+          durationDays: 45,
+          priceJeton: 2000,
+          bonusJeton: 1500,
+          falDiscountPercent: 15,
+          popular: true,
+        ),
+      ];
+      final subtitle = buildFreeUserMembershipTeaserSubtitle(
+        tiers: tiers,
+        packages: packages,
+      );
+      expect(subtitle, contains('Gold öne çıkan'));
+      expect(subtitle, contains('45 gün'));
+      expect(subtitle, contains('%15 fal indirimi'));
+    });
+  });
+
+  group('buildVipGoldShortcutSubtitle', () {
+    test('aktif VIP', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 5,
+      );
+      expect(
+        buildVipGoldShortcutSubtitle(info),
+        'Gold · VIP odalar aktif',
+      );
+    });
+
+    test('ücretsiz kullanıcı', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildVipGoldShortcutSubtitle(info),
+        'Gold ve üzeri planlarda',
+      );
+    });
+  });
+
   group('formatMembershipPlanDuration', () {
     test('kalan / toplam gün', () {
       const info = ProfileMembershipInfo(

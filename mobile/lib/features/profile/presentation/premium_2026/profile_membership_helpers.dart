@@ -1,6 +1,8 @@
 import 'package:intl/intl.dart';
 
+import '../../../membership/domain/membership_catalog_merge.dart';
 import '../../../membership/domain/membership_model.dart';
+import '../../../membership/domain/membership_package_entity.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 
@@ -220,4 +222,59 @@ String buildMembershipExpiredBannerText({
     return '${info.tierLabel} planınız sona erdi · $expiry';
   }
   return '${info.tierLabel} planınız sona erdi · yenileyin';
+}
+
+/// Ücretsiz kullanıcı teaser — API popular tier + katalog ipuçları.
+String buildFreeUserMembershipTeaserSubtitle({
+  required List<MembershipTierModel> tiers,
+  List<MembershipPackageEntity> packages = const [],
+}) {
+  final parts = <String>[];
+  final recommendedId = recommendedTierFromPackages(packages);
+  MembershipTierModel? featured;
+  if (recommendedId != null) {
+    for (final tier in tiers) {
+      if (tier.id == recommendedId) {
+        featured = tier;
+        break;
+      }
+    }
+  }
+  featured ??= () {
+    for (final tier in tiers) {
+      if (tier.popular) return tier;
+    }
+    return null;
+  }();
+  if (featured != null) {
+    parts.add('${featured.title} öne çıkan');
+    if (featured.durationDays > 0 && featured.durationDays != 30) {
+      parts.add('${featured.durationLabel} plan');
+    }
+    if (featured.falDiscountPercent > 0) {
+      parts.add('%${featured.falDiscountPercent} fal indirimi');
+    }
+  } else {
+    parts.add('Gold, Diamond ve SVIP planlarını keşfedin');
+  }
+  return parts.join(' · ');
+}
+
+/// Profil hub VIP Gold kısayol alt başlığı.
+String buildVipGoldShortcutSubtitle(ProfileMembershipInfo info) {
+  if (info.isVip && info.hasActiveSubscription) {
+    return '${info.tierLabel} · VIP odalar aktif';
+  }
+  if (info.isVip && info.isExpired) {
+    return 'VIP erişimi için planı yenileyin';
+  }
+  return 'Gold ve üzeri planlarda';
+}
+
+/// Üyelik sayfası süresi dolmuş banner metni.
+String buildMembershipPageExpiredBannerText({
+  required ProfileMembershipInfo info,
+  String? expiresAt,
+}) {
+  return '${buildMembershipExpiredBannerText(info: info, expiresAt: expiresAt)} · planı yenile';
 }

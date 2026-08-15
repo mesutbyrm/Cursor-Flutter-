@@ -19,12 +19,10 @@ class ProfileHubVipBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final info = resolveProfileMembership(rawMembership: membership);
     final ui = ref.watch(membershipControllerProvider);
-    final catalogTier = catalogTierForMembership(info, ui.tiers);
-    final subtitle = buildMembershipCatalogHintSubtitle(
-      info: info,
-      catalogTier: catalogTier,
+    final subtitle = buildFreeUserMembershipTeaserSubtitle(
+      tiers: ui.tiers,
+      packages: ui.apiPackages,
     );
 
     void openPlans() {

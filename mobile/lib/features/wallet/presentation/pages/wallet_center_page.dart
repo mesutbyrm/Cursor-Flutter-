@@ -34,6 +34,14 @@ class WalletCenterPage extends ConsumerWidget {
     );
     final ui = ref.watch(membershipControllerProvider);
     final catalogTier = catalogTierForMembership(membershipInfo, ui.tiers);
+    final premiumTitle = membershipInfo.isExpired
+        ? buildMembershipExpiredPlanLabel(
+            info: membershipInfo,
+            expiresAt: balances.membershipExpiresAt,
+          )
+        : membershipInfo.hasActiveSubscription
+            ? '${membershipInfo.tierLabel} Üyelik'
+            : 'Premium Üyelik';
     final premiumSubtitle = membershipInfo.hasActiveSubscription
         ? '${membershipInfo.tierLabel} · ${formatMembershipPlanDuration(
             info: membershipInfo,
@@ -85,7 +93,7 @@ class WalletCenterPage extends ConsumerWidget {
                 const SizedBox(height: 12),
                 _HubCard(
                   icon: Icons.workspace_premium_rounded,
-                  title: 'Premium Üyelik',
+                  title: premiumTitle,
                   subtitle: premiumSubtitle,
                   color: const Color(0xFFFFD54F),
                   onTap: () => context.push('/premium-membership'),

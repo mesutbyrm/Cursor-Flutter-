@@ -109,7 +109,7 @@ class MembershipPage extends ConsumerWidget {
                             ],
                             if (ui.isMembershipExpired) ...[
                               _ExpiredMembershipBanner(
-                                label: ui.currentMembershipLabel,
+                                info: ui.membershipInfo,
                                 expiresAt: ui.membershipExpiresAt,
                                 onRenew: () => _purchaseSelected(context, ref),
                               ),
@@ -563,19 +563,21 @@ class _MembershipAppBar extends StatelessWidget {
 
 class _ExpiredMembershipBanner extends StatelessWidget {
   const _ExpiredMembershipBanner({
-    required this.label,
+    required this.info,
     required this.onRenew,
     this.expiresAt,
   });
 
-  final String label;
+  final ProfileMembershipInfo info;
   final String? expiresAt;
   final VoidCallback onRenew;
 
   @override
   Widget build(BuildContext context) {
-    final expiry = formatMembershipExpiryLabel(expiresAt);
-    final detail = expiry != null ? ' · bitiş $expiry' : '';
+    final text = buildMembershipPageExpiredBannerText(
+      info: info,
+      expiresAt: expiresAt,
+    );
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -599,7 +601,7 @@ class _ExpiredMembershipBanner extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '$label süresi doldu$detail · planı yenile',
+                  text,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.92),
                     fontWeight: FontWeight.w800,

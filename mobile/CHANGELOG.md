@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.214+250 (2026-08-15) — Profil üyelik faz 24
+
+- **Ücretsiz teaser:** `buildFreeUserMembershipTeaserSubtitle` — API popular tier + süre/fal ipucu
+- **VIP banner:** profil hub ücretsiz CTA dinamik öne çıkan plan alt başlığı
+- **VIP Gold kısayol:** `buildVipGoldShortcutSubtitle` chip alt başlığı
+- **Üyelik sayfası:** süresi dolmuş banner ortak `buildMembershipPageExpiredBannerText`
+- **Cüzdan merkezi:** süresi dolmuş premium kart başlığı `buildMembershipExpiredPlanLabel`
+- **Test:** teaser, VIP shortcut, membership page banner metni
+
 ## 1.0.213+249 (2026-08-15) — Profil üyelik faz 23
 
 - **Süresi dolmuş etiketler:** `buildMembershipExpiredPlanLabel` / `buildMembershipExpiredBannerText` ortak helper

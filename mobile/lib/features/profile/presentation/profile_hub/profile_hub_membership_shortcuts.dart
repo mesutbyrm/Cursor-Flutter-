@@ -25,6 +25,7 @@ class ProfileHubMembershipShortcuts extends ConsumerWidget {
       catalogTier: catalogTier,
       expiresAt: expiresAt,
     );
+    final vipHint = buildVipGoldShortcutSubtitle(info);
 
     return Row(
       children: [
@@ -42,6 +43,7 @@ class ProfileHubMembershipShortcuts extends ConsumerWidget {
           child: _ShortcutChip(
             icon: Icons.diamond_outlined,
             label: 'VIP Gold',
+            subtitle: vipHint,
             highlight: info.isVip,
             onTap: () => context.push('/vip-gold'),
           ),

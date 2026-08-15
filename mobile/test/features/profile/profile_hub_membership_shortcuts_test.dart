@@ -73,6 +73,7 @@ void main() {
 
       expect(find.text('Planı Yönet'), findsOneWidget);
       expect(find.textContaining('8 gün kaldı'), findsOneWidget);
+      expect(find.textContaining('VIP odalar aktif'), findsOneWidget);
     });
   });
 }
