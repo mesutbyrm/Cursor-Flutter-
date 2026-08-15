@@ -525,3 +525,87 @@ String? buildMembershipStatusPillLabel({
   }
   return null;
 }
+
+/// Cüzdan header aktif üyelik banner metni.
+String buildMembershipWalletActiveBannerText({
+  required ProfileMembershipInfo info,
+  MembershipTierModel? catalogTier,
+  int? daysRemaining,
+  String? expiresAt,
+}) {
+  final plan = formatMembershipPlanDuration(
+    info: info,
+    catalogTier: catalogTier,
+    daysRemaining: daysRemaining ?? info.daysRemaining,
+    expiresAt: expiresAt,
+  );
+  return '${info.tierLabel} üyesiniz · $plan';
+}
+
+/// Cüzdan header aktif üyelik banner gösterilsin mi?
+bool shouldShowMembershipWalletActiveBanner({
+  required ProfileMembershipInfo info,
+  int? daysRemaining,
+  String? expiresAt,
+}) {
+  return info.hasActiveSubscription &&
+      ((daysRemaining != null && daysRemaining! > 0) ||
+          (expiresAt != null && expiresAt.trim().isNotEmpty));
+}
+
+/// Hizmetler şeridi üyelik kartı kısa ipucu.
+String buildMembershipHubServiceCardHint({
+  required ProfileMembershipInfo info,
+  required List<MembershipTierModel> tiers,
+  List<MembershipPackageEntity> packages = const [],
+  MembershipTierModel? catalogTier,
+  String? expiresAt,
+}) {
+  if (info.isExpired) return 'Yenile';
+  if (info.hasActiveSubscription) {
+    if (catalogTier != null && catalogTier.falDiscountPercent > 0) {
+      return '%${catalogTier.falDiscountPercent} fal';
+    }
+    return info.tierLabel;
+  }
+  final teaser = buildFreeUserMembershipTeaserSubtitle(
+    tiers: tiers,
+    packages: packages,
+  );
+  final first = teaser.split(' · ').first;
+  return first.length > 20 ? 'Planlar' : first;
+}
+
+/// Hızlı menü üyelik kısayol etiketi.
+String buildMembershipQuickMenuLabel({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isExpired) return 'Yenile';
+  if (info.hasPaidTier) return info.tierLabel;
+  return 'Üyelik';
+}
+
+/// Üyelik sayfası checkout footer ipucu (seçili plan).
+String buildMembershipCheckoutFooterHint({
+  required ProfileMembershipInfo info,
+  required MembershipTierModel selectedTier,
+  String? expiresAt,
+}) {
+  final wire = membershipWireId(info.raw);
+  if (info.hasActiveSubscription && wire == selectedTier.wireId) {
+    return 'Aktif planınız · ${selectedTier.durationLabel}';
+  }
+  if (info.isExpired && wire == selectedTier.wireId) {
+    return 'Süresi doldu · ${buildMembershipExpiredPlanLabel(
+      info: info,
+      expiresAt: expiresAt,
+    )}';
+  }
+  final parts = <String>[
+    selectedTier.title,
+    selectedTier.durationLabel,
+    if (selectedTier.falDiscountPercent > 0)
+      '%${selectedTier.falDiscountPercent} fal indirimi',
+  ];
+  return parts.join(' · ');
+}

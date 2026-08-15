@@ -4,8 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../fortune/presentation/providers/fortune_api_providers.dart';
 import '../../../home/presentation/providers/home_providers.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_theme.dart';
-import '../widgets/premium/profile_glass.dart';
+import '../providers/profile_hub_providers.dart';
+import '../providers/profile_providers.dart';
+import '../../../membership/presentation/controllers/membership_controller.dart';
 
 const _kMembershipServiceSlug = '__membership__';
 
@@ -17,6 +20,18 @@ class ProfileHubServicesRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cardsAsync = ref.watch(homeFortuneCardsProvider);
     final historyAsync = ref.watch(fortuneHistoryProvider);
+    final membershipInfo = ref.watch(profileMembershipInfoProvider);
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(membershipInfo, ui.tiers);
+    final expiresAt =
+        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
+    final membershipHint = buildMembershipHubServiceCardHint(
+      info: membershipInfo,
+      tiers: ui.tiers,
+      packages: ui.apiPackages,
+      catalogTier: catalogTier,
+      expiresAt: expiresAt,
+    );
 
     return cardsAsync.when(
       loading: () => const SizedBox(
@@ -29,11 +44,12 @@ class ProfileHubServicesRow extends ConsumerWidget {
         final history = historyAsync.valueOrNull ?? const [];
 
         final services = [
-          const _ServiceItem(
+          _ServiceItem(
             title: 'Üyelik Merkezi',
             icon: '👑',
             slug: _kMembershipServiceSlug,
             count: 0,
+            hint: membershipHint,
           ),
           ...cards.take(7).map((c) {
           final slug = c.navigationSlug;
@@ -55,6 +71,18 @@ class ProfileHubServicesRow extends ConsumerWidget {
   }
 
   Widget _fallbackServices(BuildContext context, WidgetRef ref) {
+    final membershipInfo = ref.watch(profileMembershipInfoProvider);
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(membershipInfo, ui.tiers);
+    final expiresAt =
+        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
+    final membershipHint = buildMembershipHubServiceCardHint(
+      info: membershipInfo,
+      tiers: ui.tiers,
+      packages: ui.apiPackages,
+      catalogTier: catalogTier,
+      expiresAt: expiresAt,
+    );
     const defaults = [
       _ServiceItem(title: 'Fal Geçmişim', icon: '☕', slug: 'kahve', count: 0),
       _ServiceItem(title: 'Tarot', icon: '🃏', slug: 'tarot', count: 0),
@@ -64,11 +92,12 @@ class ProfileHubServicesRow extends ConsumerWidget {
     ];
     final history = ref.watch(fortuneHistoryProvider).valueOrNull ?? const [];
     final withCounts = [
-      const _ServiceItem(
+      _ServiceItem(
         title: 'Üyelik Merkezi',
         icon: '👑',
         slug: _kMembershipServiceSlug,
         count: 0,
+        hint: membershipHint,
       ),
       ...defaults.map((d) {
       final count = history
@@ -92,12 +121,14 @@ class _ServiceItem {
     required this.icon,
     required this.slug,
     required this.count,
+    this.hint,
   });
 
   final String title;
   final String icon;
   final String slug;
   final int count;
+  final String? hint;
 }
 
 class _ServicesScroller extends StatelessWidget {
@@ -178,6 +209,19 @@ class _ServiceCard extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
               ),
+              if (item.hint != null && item.hint!.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  item.hint!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: ProfilePremiumTheme.neonPurple.withValues(alpha: 0.9),
+                    fontSize: 8,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
               if (item.count > 0) ...[
                 const SizedBox(height: 2),
                 Text(

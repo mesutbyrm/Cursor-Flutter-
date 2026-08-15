@@ -27,6 +27,7 @@ import '../widgets/membership_card.dart';
 import '../widgets/membership_checkout_sheet.dart';
 import '../widgets/membership_cfc_checkout_flow.dart';
 import '../widgets/membership_pending_payment_banner.dart';
+import '../widgets/membership_checkout_footer_hint.dart';
 import '../widgets/membership_payment_methods_summary.dart';
 import '../widgets/support_footer.dart';
 import '../widgets/token_package_card.dart';
@@ -246,6 +247,7 @@ class MembershipPage extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 28),
+                            const MembershipCheckoutFooterHint(),
                             const MembershipSupportFooter(),
                             const SizedBox(height: 24),
                           ],

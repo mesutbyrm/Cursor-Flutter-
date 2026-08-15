@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.220+256 (2026-08-15) — Profil üyelik faz 30
+
+- **Cüzdan header:** `buildMembershipWalletActiveBannerText` + `shouldShowMembershipWalletActiveBanner`
+- **Hizmetler şeridi:** `buildMembershipHubServiceCardHint` — üyelik kartı alt ipucu
+- **Hızlı menü:** `buildMembershipQuickMenuLabel` — dinamik Üyelik/Gold/Yenile
+- **Checkout footer:** `buildMembershipCheckoutFooterHint` + `MembershipCheckoutFooterHint`
+- **Test:** wallet banner, service hint, quick menu, checkout footer
+
 ## 1.0.219+255 (2026-08-15) — Profil üyelik faz 29
 
 - **Ayarlar tile:** `buildMembershipSettingsManageSubtitle` — manage tile cüzdan hizası

@@ -35,15 +35,17 @@ class WalletBalanceHeader extends ConsumerWidget {
     );
     final ui = ref.watch(membershipControllerProvider);
     final catalogTier = catalogTierForMembership(info, ui.tiers);
-    final planDuration = formatMembershipPlanDuration(
+    final showMembershipBanner = shouldShowMembershipWalletActiveBanner(
+      info: info,
+      daysRemaining: daysRemaining,
+      expiresAt: membershipExpiresAt,
+    );
+    final activeBannerText = buildMembershipWalletActiveBannerText(
       info: info,
       catalogTier: catalogTier,
       daysRemaining: daysRemaining,
       expiresAt: membershipExpiresAt,
     );
-    final showMembershipBanner = info.hasActiveSubscription &&
-        ((daysRemaining != null && daysRemaining! > 0) ||
-            (membershipExpiresAt != null && membershipExpiresAt!.isNotEmpty));
     final showExpiredBanner = info.isExpired;
 
     return Column(
@@ -99,7 +101,7 @@ class WalletBalanceHeader extends ConsumerWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        '${info.tierLabel} üyesiniz · $planDuration',
+                        activeBannerText,
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 12,

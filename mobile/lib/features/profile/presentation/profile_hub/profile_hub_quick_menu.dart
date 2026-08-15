@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../premium_2026/profile_theme.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/widgets/profile_action_tile.dart';
 import '../providers/profile_hub_providers.dart';
 
@@ -14,6 +15,8 @@ class ProfileHubQuickMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final unread = ref.watch(notificationsUnreadCountProvider);
     final visitors = ref.watch(profileVisitorBadgeProvider);
+    final membershipInfo = ref.watch(profileMembershipInfoProvider);
+    final membershipLabel = buildMembershipQuickMenuLabel(info: membershipInfo);
 
     final items = <({IconData icon, String label, VoidCallback onTap, int? badge})>[
       (
@@ -24,7 +27,7 @@ class ProfileHubQuickMenu extends ConsumerWidget {
       ),
       (
         icon: Icons.workspace_premium_rounded,
-        label: 'Üyelik',
+        label: membershipLabel,
         onTap: () => context.push('/premium-membership'),
         badge: null,
       ),

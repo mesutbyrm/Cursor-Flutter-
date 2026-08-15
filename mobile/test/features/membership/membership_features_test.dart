@@ -716,4 +716,119 @@ void main() {
       expect(buildMembershipStatusPillLabel(info: info), isNull);
     });
   });
+
+  group('buildMembershipWalletActiveBannerText', () {
+    test('aktif gold banner', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 10,
+      );
+      final text = buildMembershipWalletActiveBannerText(
+        info: info,
+        daysRemaining: 10,
+      );
+      expect(text, contains('Gold üyesiniz'));
+      expect(text, contains('10'));
+    });
+  });
+
+  group('shouldShowMembershipWalletActiveBanner', () {
+    test('aktif gün varsa true', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 3,
+      );
+      expect(
+        shouldShowMembershipWalletActiveBanner(info: info, daysRemaining: 3),
+        isTrue,
+      );
+    });
+  });
+
+  group('buildMembershipHubServiceCardHint', () {
+    test('ücretsiz teaser kısaltma', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipHubServiceCardHint(info: info, tiers: const []),
+        'Planlar',
+      );
+    });
+
+    test('süresi dolmuş yenile', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipHubServiceCardHint(info: info, tiers: const []),
+        'Yenile',
+      );
+    });
+  });
+
+  group('buildMembershipQuickMenuLabel', () {
+    test('aktif gold tier etiketi', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 5,
+      );
+      expect(buildMembershipQuickMenuLabel(info: info), 'Gold');
+    });
+
+    test('süresi dolmuş yenile', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(buildMembershipQuickMenuLabel(info: info), 'Yenile');
+    });
+  });
+
+  group('buildMembershipCheckoutFooterHint', () {
+    const goldTier = MembershipTierModel(
+      id: MembershipTierId.gold,
+      title: 'Gold',
+      subtitle: 'Test',
+      monthlyTokens: 1500,
+      monthlyPriceTry: 1000,
+      accent: Color(0xFFFFD54F),
+      badgeIcon: Icons.star,
+      glow: Color(0xFFFFC107),
+      falDiscountPercent: 10,
+    );
+
+    test('seçili plan özeti', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      final hint = buildMembershipCheckoutFooterHint(
+        info: info,
+        selectedTier: goldTier,
+      );
+      expect(hint, contains('Gold'));
+      expect(hint, contains('%10 fal'));
+    });
+
+    test('aktif eşleşen plan', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 8,
+      );
+      final hint = buildMembershipCheckoutFooterHint(
+        info: info,
+        selectedTier: goldTier,
+      );
+      expect(hint, contains('Aktif planınız'));
+    });
+  });
 }
