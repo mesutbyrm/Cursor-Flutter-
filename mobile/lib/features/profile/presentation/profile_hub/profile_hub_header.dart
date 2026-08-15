@@ -36,10 +36,12 @@ class ProfileHubHeader extends ConsumerWidget {
     final extAsync = ref.watch(profileExtendedProvider);
     final ext = extAsync.valueOrNull ?? const ProfileExtendedEntity();
     final level = state.level;
-    final vipLabel = _vipLabel(
-      ref.watch(profileMembershipInfoProvider),
-      state,
-      ext,
+    final vipLabel = buildMembershipHubVipPillLabel(
+      info: ref.watch(profileMembershipInfoProvider),
+      membershipExpiresAt: state.wallet?.membershipExpiresAt,
+      extVipLevel: ext.vipLevel,
+      fallbackStateIsVip: state.isVip,
+      levelVipTier: state.level.vipTier,
     );
 
     final topInset = MediaQuery.paddingOf(context).top;
@@ -203,41 +205,6 @@ class ProfileHubHeader extends ConsumerWidget {
           ),
       ],
     );
-  }
-
-  String? _vipLabel(
-    ProfileMembershipInfo info,
-    ProfileScreenState state,
-    ProfileExtendedEntity ext,
-  ) {
-    if (info.isExpired) {
-      final expiry =
-          formatMembershipExpiryLabel(state.wallet?.membershipExpiresAt);
-      return expiry != null
-          ? '⏳ ${info.tierLabel} · $expiry'
-          : '⏳ ${info.tierLabel} · doldu';
-    }
-    if (info.hasActiveSubscription) {
-      final expiry =
-          formatMembershipExpiryLabel(state.wallet?.membershipExpiresAt);
-      if ((info.daysRemaining == null || info.daysRemaining! <= 0) &&
-          expiry != null) {
-        return '💎 ${info.tierLabel} · $expiry';
-      }
-      if (info.hasPaidTier) return '💎 ${info.tierLabel}';
-    }
-    final v = ext.vipLevel?.trim();
-    if (v != null && v.isNotEmpty) {
-      final extInfo = resolveProfileMembership(rawMembership: v);
-      if (extInfo.hasPaidTier) return '💎 ${extInfo.tierLabel}';
-    }
-    if (state.isVip) return '💎 VIP';
-    final levelTier = state.level.vipTier?.trim();
-    if (levelTier != null && levelTier.isNotEmpty) {
-      final levelInfo = resolveProfileMembership(rawMembership: levelTier);
-      if (levelInfo.hasPaidTier) return '💎 ${levelInfo.tierLabel}';
-    }
-    return null;
   }
 }
 

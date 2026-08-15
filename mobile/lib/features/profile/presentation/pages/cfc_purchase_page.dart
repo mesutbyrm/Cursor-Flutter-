@@ -14,6 +14,8 @@ import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
+import '../../../membership/presentation/widgets/membership_store_teaser_banner.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../widgets/cfc_balance_header.dart';
 import '../widgets/cfc_native_checkout.dart';
 import '../widgets/pending_payment_banner.dart';
@@ -121,6 +123,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                 const SizedBox(height: 16),
                 const CurrencyUsageCard.cfc(),
                 const MembershipPendingPaymentBanner(),
+                const MembershipStoreTeaserBanner(store: MembershipStoreKind.cfc),
                 if (pendingCfc.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   PendingPaymentBanner(

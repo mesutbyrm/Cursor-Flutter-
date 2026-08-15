@@ -38,23 +38,14 @@ class WalletCenterPage extends ConsumerWidget {
       info: membershipInfo,
       expiresAt: balances.membershipExpiresAt,
     );
-    final premiumSubtitle = membershipInfo.hasActiveSubscription
-        ? '${membershipInfo.tierLabel} · ${formatMembershipPlanDuration(
-            info: membershipInfo,
-            catalogTier: catalogTier,
-            daysRemaining: balances.membershipDaysRemaining,
-            expiresAt: balances.membershipExpiresAt,
-          )}'
-        : membershipInfo.isExpired
-            ? buildMembershipCatalogHintSubtitle(
-                info: membershipInfo,
-                catalogTier: catalogTier,
-                expiresAt: balances.membershipExpiresAt,
-              )
-            : buildFreeUserMembershipTeaserSubtitle(
-                tiers: ui.tiers,
-                packages: ui.apiPackages,
-              );
+    final premiumSubtitle = buildMembershipWalletHubSubtitle(
+      info: membershipInfo,
+      tiers: ui.tiers,
+      packages: ui.apiPackages,
+      catalogTier: catalogTier,
+      daysRemaining: balances.membershipDaysRemaining,
+      expiresAt: balances.membershipExpiresAt,
+    );
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.218+254 (2026-08-15) — Profil üyelik faz 28
+
+- **VIP pill:** `buildMembershipHubVipPillLabel` — profil hub başlık ortak helper
+- **Hub alt başlık:** `buildMembershipWalletHubSubtitle` — cüzdan merkezi + currency card hizası
+- **Mağaza teaser:** `buildMembershipStoreTeaserSubtitle` + `MembershipStoreTeaserBanner` (jeton/CFC)
+- **Test:** VIP pill, wallet hub subtitle, store teaser helper + widget
+
 ## 1.0.217+253 (2026-08-15) — Profil üyelik faz 27
 
 - **Tier kart rozeti:** `resolveMembershipTierCardBadge` — Aktif / Popüler / Süresi doldu

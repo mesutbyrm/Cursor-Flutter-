@@ -519,4 +519,125 @@ void main() {
       );
     });
   });
+
+  group('buildMembershipHubVipPillLabel', () {
+    test('aktif gold — tier etiketi', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 10,
+      );
+      expect(
+        buildMembershipHubVipPillLabel(info: info),
+        '💎 Gold',
+      );
+    });
+
+    test('süresi dolmuş — saat emojisi', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipHubVipPillLabel(
+          info: info,
+          membershipExpiresAt: '2020-01-15T00:00:00.000Z',
+        ),
+        '⏳ Gold · 15.01.2020',
+      );
+    });
+
+    test('ücretsiz — null', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(buildMembershipHubVipPillLabel(info: info), isNull);
+    });
+  });
+
+  group('buildMembershipWalletHubSubtitle', () {
+    test('aktif üyelik plan süresi', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 12,
+      );
+      const tier = MembershipTierModel(
+        id: MembershipTierId.gold,
+        title: 'Gold',
+        subtitle: 'Test',
+        monthlyTokens: 1500,
+        monthlyPriceTry: 1000,
+        accent: Color(0xFFFFD54F),
+        badgeIcon: Icons.star,
+        glow: Color(0xFFFFC107),
+        durationDays: 45,
+      );
+      final subtitle = buildMembershipWalletHubSubtitle(
+        info: info,
+        tiers: const [tier],
+        catalogTier: tier,
+        daysRemaining: 12,
+      );
+      expect(subtitle, contains('Gold'));
+      expect(subtitle, contains('12'));
+    });
+
+    test('ücretsiz teaser', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      final subtitle = buildMembershipWalletHubSubtitle(
+        info: info,
+        tiers: const [],
+      );
+      expect(subtitle, contains('Gold, Diamond'));
+    });
+  });
+
+  group('buildMembershipStoreTeaserSubtitle', () {
+    test('jeton mağaza ücretsiz', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      final subtitle = buildMembershipStoreTeaserSubtitle(
+        info: info,
+        store: MembershipStoreKind.jeton,
+        tiers: const [],
+      );
+      expect(subtitle, contains('jeton yüklerken'));
+    });
+
+    test('cfc mağaza aktif üyelik', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 5,
+      );
+      const tier = MembershipTierModel(
+        id: MembershipTierId.gold,
+        title: 'Gold',
+        subtitle: 'Test',
+        monthlyTokens: 1500,
+        monthlyPriceTry: 1000,
+        accent: Color(0xFFFFD54F),
+        badgeIcon: Icons.star,
+        glow: Color(0xFFFFC107),
+        falDiscountPercent: 15,
+      );
+      final subtitle = buildMembershipStoreTeaserSubtitle(
+        info: info,
+        store: MembershipStoreKind.cfc,
+        tiers: const [tier],
+        catalogTier: tier,
+      );
+      expect(subtitle, contains('Gold üyeliği aktif'));
+      expect(subtitle, contains('%15 fal'));
+      expect(subtitle, contains('CFC'));
+    });
+  });
 }

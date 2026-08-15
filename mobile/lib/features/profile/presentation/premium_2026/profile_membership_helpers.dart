@@ -365,3 +365,103 @@ MembershipTierCardBadge resolveMembershipTierCardBadge({
   }
   return MembershipTierCardBadge.none;
 }
+
+/// Profil hub başlık VIP pill etiketi (null = gösterme).
+String? buildMembershipHubVipPillLabel({
+  required ProfileMembershipInfo info,
+  String? membershipExpiresAt,
+  String? extVipLevel,
+  bool fallbackStateIsVip = false,
+  String? levelVipTier,
+}) {
+  if (info.isExpired) {
+    final expiry = formatMembershipExpiryLabel(membershipExpiresAt);
+    return expiry != null
+        ? '⏳ ${info.tierLabel} · $expiry'
+        : '⏳ ${info.tierLabel} · doldu';
+  }
+  if (info.hasActiveSubscription) {
+    final expiry = formatMembershipExpiryLabel(membershipExpiresAt);
+    if ((info.daysRemaining == null || info.daysRemaining! <= 0) &&
+        expiry != null) {
+      return '💎 ${info.tierLabel} · $expiry';
+    }
+    if (info.hasPaidTier) return '💎 ${info.tierLabel}';
+  }
+  final v = extVipLevel?.trim();
+  if (v != null && v.isNotEmpty) {
+    final extInfo = resolveProfileMembership(rawMembership: v);
+    if (extInfo.hasPaidTier) return '💎 ${extInfo.tierLabel}';
+  }
+  if (fallbackStateIsVip) return '💎 VIP';
+  final levelTier = levelVipTier?.trim();
+  if (levelTier != null && levelTier.isNotEmpty) {
+    final levelInfo = resolveProfileMembership(rawMembership: levelTier);
+    if (levelInfo.hasPaidTier) return '💎 ${levelInfo.tierLabel}';
+  }
+  return null;
+}
+
+/// Cüzdan merkezi / hub currency kart üyelik alt başlığı.
+String buildMembershipWalletHubSubtitle({
+  required ProfileMembershipInfo info,
+  required List<MembershipTierModel> tiers,
+  List<MembershipPackageEntity> packages = const [],
+  MembershipTierModel? catalogTier,
+  int? daysRemaining,
+  String? expiresAt,
+}) {
+  if (info.hasActiveSubscription) {
+    return '${info.tierLabel} · ${formatMembershipPlanDuration(
+      info: info,
+      catalogTier: catalogTier,
+      daysRemaining: daysRemaining ?? info.daysRemaining,
+      expiresAt: expiresAt,
+    )}';
+  }
+  if (info.isExpired) {
+    return buildMembershipCatalogHintSubtitle(
+      info: info,
+      catalogTier: catalogTier,
+      expiresAt: expiresAt,
+    );
+  }
+  return buildFreeUserMembershipTeaserSubtitle(
+    tiers: tiers,
+    packages: packages,
+  );
+}
+
+/// Jeton / CFC mağaza üyelik teaser alt başlığı.
+enum MembershipStoreKind { jeton, cfc }
+
+String buildMembershipStoreTeaserSubtitle({
+  required ProfileMembershipInfo info,
+  required MembershipStoreKind store,
+  required List<MembershipTierModel> tiers,
+  List<MembershipPackageEntity> packages = const [],
+  MembershipTierModel? catalogTier,
+  String? expiresAt,
+}) {
+  final storeLabel = store == MembershipStoreKind.jeton ? 'jeton' : 'CFC';
+  if (info.isExpired) {
+    final expiry = formatMembershipExpiryLabel(expiresAt);
+    if (expiry != null) {
+      return '${info.tierLabel} planı $expiry tarihinde sona erdi · $storeLabel yüklemeye devam edebilirsiniz';
+    }
+    return '${info.tierLabel} planınız sona erdi · yenileyin veya $storeLabel yükleyin';
+  }
+  if (info.hasActiveSubscription) {
+    final parts = <String>['${info.tierLabel} üyeliği aktif'];
+    if (catalogTier != null && catalogTier.falDiscountPercent > 0) {
+      parts.add('%${catalogTier.falDiscountPercent} fal indirimi');
+    }
+    parts.add('$storeLabel bakiyeniz plan avantajlarıyla kullanılır');
+    return parts.join(' · ');
+  }
+  final teaser = buildFreeUserMembershipTeaserSubtitle(
+    tiers: tiers,
+    packages: packages,
+  );
+  return '$teaser · $storeLabel yüklerken üyelik planlarını inceleyin';
+}

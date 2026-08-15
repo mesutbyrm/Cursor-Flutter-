@@ -161,9 +161,12 @@ class _MembershipSummaryRow extends ConsumerWidget {
       info: info,
       expiresAt: expiresAt,
     );
-    final subtitle = buildMembershipCatalogHintSubtitle(
+    final subtitle = buildMembershipWalletHubSubtitle(
       info: info,
+      tiers: ui.tiers,
+      packages: ui.apiPackages,
       catalogTier: catalogTier,
+      daysRemaining: info.daysRemaining,
       expiresAt: expiresAt,
     );
 
