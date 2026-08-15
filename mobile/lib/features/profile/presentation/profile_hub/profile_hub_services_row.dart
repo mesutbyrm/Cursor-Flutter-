@@ -8,6 +8,7 @@ import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_theme.dart';
 import '../providers/profile_hub_providers.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/premium/profile_glass.dart';
 import '../../../membership/presentation/controllers/membership_controller.dart';
 
 const _kMembershipServiceSlug = '__membership__';
