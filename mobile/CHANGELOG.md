@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.216+252 (2026-08-15) — Profil üyelik faz 26
+
+- **Hub başlık:** `buildMembershipHubSectionTitle` — ayarlar karo + currency card
+- **Görevler merkezi:** `buildGrowthHubMembershipTitle` başlık helper
+- **Hub CTA:** `buildMembershipHubActionLabel` — Yenile / Yönet / Planlar
+- **Test:** hub section title, growth hub title, action label
+
 ## 1.0.215+251 (2026-08-15) — Profil üyelik faz 25
 
 - **Kart başlığı:** `buildMembershipPremiumCardTitle` — premium kart + cüzdan merkezi

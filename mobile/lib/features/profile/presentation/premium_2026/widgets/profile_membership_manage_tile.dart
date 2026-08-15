@@ -14,8 +14,6 @@ class ProfileMembershipManageTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final info = ref.watch(profileMembershipInfoProvider);
-    final paid = info.hasPaidTier;
-    final expired = info.isExpired;
     final ui = ref.watch(membershipControllerProvider);
     final catalogTier = catalogTierForMembership(info, ui.tiers);
     final expiresAt =
@@ -32,7 +30,7 @@ class ProfileMembershipManageTile extends ConsumerWidget {
             children: [
               Icon(
                 Icons.workspace_premium_outlined,
-                color: paid ? Colors.amber : Colors.white54,
+                color: info.hasPaidTier ? Colors.amber : Colors.white54,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -40,14 +38,10 @@ class ProfileMembershipManageTile extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      expired
-                          ? buildMembershipExpiredPlanLabel(
-                              info: info,
-                              expiresAt: expiresAt,
-                            )
-                          : paid
-                              ? '${info.tierLabel} Üyelik'
-                              : 'Üyelik Planları',
+                      buildMembershipHubSectionTitle(
+                        info: info,
+                        expiresAt: expiresAt,
+                      ),
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 15,

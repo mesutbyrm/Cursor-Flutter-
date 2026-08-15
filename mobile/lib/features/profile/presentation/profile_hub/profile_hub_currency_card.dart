@@ -153,11 +153,14 @@ class _MembershipSummaryRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final paid = info.hasPaidTier;
-    final expired = info.isExpired;
     final ui = ref.watch(membershipControllerProvider);
     final catalogTier = catalogTierForMembership(info, ui.tiers);
     final expiresAt =
         ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
+    final title = buildMembershipHubSectionTitle(
+      info: info,
+      expiresAt: expiresAt,
+    );
     final subtitle = buildMembershipCatalogHintSubtitle(
       info: info,
       catalogTier: catalogTier,
@@ -187,14 +190,7 @@ class _MembershipSummaryRow extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      expired
-                          ? buildMembershipExpiredPlanLabel(
-                              info: info,
-                              expiresAt: expiresAt,
-                            )
-                          : paid
-                              ? '${info.tierLabel} Üyelik'
-                              : 'Üyelik Planları',
+                      title,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
@@ -213,7 +209,10 @@ class _MembershipSummaryRow extends ConsumerWidget {
                 ),
               ),
               Text(
-                expired ? 'Yenile' : paid ? 'Yönet' : 'Yükselt',
+                buildMembershipHubActionLabel(
+                  info: info,
+                  freeLabel: 'Yükselt',
+                ),
                 style: TextStyle(
                   color: ProfilePremiumTheme.neonPurple.withValues(alpha: 0.95),
                   fontWeight: FontWeight.w800,

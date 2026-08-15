@@ -211,6 +211,66 @@ void main() {
     });
   });
 
+  group('buildMembershipHubSectionTitle', () {
+    test('ücretsiz planlar', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(buildMembershipHubSectionTitle(info: info), 'Üyelik Planları');
+    });
+
+    test('aktif gold', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 3,
+      );
+      expect(buildMembershipHubSectionTitle(info: info), 'Gold Üyelik');
+    });
+  });
+
+  group('buildGrowthHubMembershipTitle', () {
+    test('ücretsiz küçük harf', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(buildGrowthHubMembershipTitle(info: info), 'Üyelik planları');
+    });
+
+    test('aktif gold üyeliği', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 3,
+      );
+      expect(buildGrowthHubMembershipTitle(info: info), 'Gold üyeliği');
+    });
+  });
+
+  group('buildMembershipHubActionLabel', () {
+    test('süresi dolmuş yenile', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(buildMembershipHubActionLabel(info: info), 'Yenile');
+    });
+
+    test('ücretsiz özel etiket', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipHubActionLabel(info: info, freeLabel: 'Yükselt'),
+        'Yükselt',
+      );
+    });
+  });
+
   group('buildMembershipWalletSubscriptionStatLabel', () {
     test('ücretsiz tire', () {
       const info = ProfileMembershipInfo(

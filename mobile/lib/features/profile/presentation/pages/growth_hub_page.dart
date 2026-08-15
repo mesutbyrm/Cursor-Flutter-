@@ -299,11 +299,10 @@ class _MembershipStatusCard extends ConsumerWidget {
     final expiresAt =
         ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
 
-    final title = expired
-        ? buildMembershipExpiredPlanLabel(info: info, expiresAt: expiresAt)
-        : paid
-            ? '${info.tierLabel} üyeliği'
-            : 'Üyelik planları';
+    final title = buildGrowthHubMembershipTitle(
+      info: info,
+      expiresAt: expiresAt,
+    );
 
     final subtitle = buildGrowthHubMembershipSubtitle(
       info: info,
@@ -365,7 +364,7 @@ class _MembershipStatusCard extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            expired ? 'Yenile' : paid ? 'Yönet' : 'Planlar',
+            buildMembershipHubActionLabel(info: info),
             style: TextStyle(
               color: accent,
               fontWeight: FontWeight.w900,

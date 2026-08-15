@@ -309,3 +309,37 @@ String buildMembershipWalletSubscriptionStatLabel({
     expiresAt: expiresAt,
   );
 }
+
+/// Profil hub / ayarlar üyelik bölüm başlığı (ör. Gold Üyelik).
+String buildMembershipHubSectionTitle({
+  required ProfileMembershipInfo info,
+  String? expiresAt,
+}) {
+  if (info.isExpired) {
+    return buildMembershipExpiredPlanLabel(info: info, expiresAt: expiresAt);
+  }
+  if (info.hasPaidTier) return '${info.tierLabel} Üyelik';
+  return 'Üyelik Planları';
+}
+
+/// Görevler merkezi üyelik kartı başlığı.
+String buildGrowthHubMembershipTitle({
+  required ProfileMembershipInfo info,
+  String? expiresAt,
+}) {
+  if (info.isExpired) {
+    return buildMembershipExpiredPlanLabel(info: info, expiresAt: expiresAt);
+  }
+  if (info.hasPaidTier) return '${info.tierLabel} üyeliği';
+  return 'Üyelik planları';
+}
+
+/// Hub üyelik kartı sağ CTA etiketi.
+String buildMembershipHubActionLabel({
+  required ProfileMembershipInfo info,
+  String freeLabel = 'Planlar',
+}) {
+  if (info.isExpired) return 'Yenile';
+  if (info.hasPaidTier) return 'Yönet';
+  return freeLabel;
+}
