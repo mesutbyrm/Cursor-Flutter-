@@ -79,3 +79,20 @@ List<MembershipTokenPackageModel> buildTokenPackagesFromTiers(
       ),
   ];
 }
+
+/// Üyelik sayfası avantaj kartları — katalog + seçili tier (id dedupe).
+List<MembershipFeatureHighlightEntity> mergeMembershipCommonHighlights({
+  List<MembershipFeatureHighlightEntity> catalogFeatures = const [],
+  List<MembershipFeatureHighlightEntity> tierFeatures = const [],
+}) {
+  final seen = <String>{};
+  final merged = <MembershipFeatureHighlightEntity>[];
+  for (final feature in [...catalogFeatures, ...tierFeatures]) {
+    final key = feature.id.trim().isNotEmpty
+        ? feature.id.trim()
+        : feature.title.trim().toLowerCase();
+    if (key.isEmpty || !seen.add(key)) continue;
+    merged.add(feature);
+  }
+  return merged;
+}

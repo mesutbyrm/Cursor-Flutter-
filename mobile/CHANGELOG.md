@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.212+248 (2026-08-15) — Profil üyelik faz 22
+
+- **Ortak avantajlar:** `mergeMembershipCommonHighlights` — katalog + seçili tier `features[]` (id dedupe)
+- **Ödeme özeti:** checkout sheet ve support footer `showRecommended: false`
+- **Premium kart:** `catalogTier` fallback `buildMembershipCatalogHintSubtitle`
+- **Hub kısayollar:** Planlar / Planı Yönet chip katalog ipucu alt başlığı
+- **Cüzdan header:** süresi dolmuş banner bitiş tarihi (`expiresAt`)
+- **Hub header:** süresi dolmuş VIP pill bitiş tarihi
+- **Test:** merge highlights, checkout önerilen yok, hub shortcuts ipucu
+
 ## 1.0.211+247 (2026-08-14) — Profil üyelik faz 21
 
 - **Üyelik sayfası:** Aktif/süresi dolmuş banner `expiresAt` ISO bitiş tarihi

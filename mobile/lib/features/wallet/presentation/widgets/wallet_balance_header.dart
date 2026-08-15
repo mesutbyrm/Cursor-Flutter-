@@ -137,7 +137,7 @@ class WalletBalanceHeader extends ConsumerWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        '${info.tierLabel} süresi doldu · planı yenile',
+                        _expiredBannerText(info, membershipExpiresAt),
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 12,
@@ -189,6 +189,14 @@ class WalletBalanceHeader extends ConsumerWidget {
       ],
     );
   }
+}
+
+String _expiredBannerText(ProfileMembershipInfo info, String? expiresAt) {
+  final expiry = formatMembershipExpiryLabel(expiresAt);
+  if (expiry != null) {
+    return '${info.tierLabel} planınız sona erdi · $expiry';
+  }
+  return '${info.tierLabel} planınız sona erdi · yenileyin';
 }
 
 class _BalanceLine extends StatelessWidget {

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../profile_membership_helpers.dart';
 import '../profile_theme.dart';
+import '../../../../membership/domain/membership_model.dart';
 
 /// Premium üyelik — gradient glow kart.
 class ProfilePremiumCard extends StatelessWidget {
@@ -11,6 +12,7 @@ class ProfilePremiumCard extends StatelessWidget {
     this.membership,
     this.daysRemaining,
     this.catalogSubtitle,
+    this.catalogTier,
     this.expiresAt,
     this.onViewPrivileges,
     this.onManageMembership,
@@ -19,6 +21,7 @@ class ProfilePremiumCard extends StatelessWidget {
   final String? membership;
   final int? daysRemaining;
   final String? catalogSubtitle;
+  final MembershipTierModel? catalogTier;
   final String? expiresAt;
   final VoidCallback? onViewPrivileges;
   final VoidCallback? onManageMembership;
@@ -80,6 +83,7 @@ class ProfilePremiumCard extends StatelessWidget {
                       catalogSubtitle ??
                           buildMembershipCatalogHintSubtitle(
                             info: info,
+                            catalogTier: catalogTier,
                             expiresAt: expiresAt,
                           ),
                       maxLines: 2,

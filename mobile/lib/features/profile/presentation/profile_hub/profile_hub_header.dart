@@ -210,7 +210,13 @@ class ProfileHubHeader extends ConsumerWidget {
     ProfileScreenState state,
     ProfileExtendedEntity ext,
   ) {
-    if (info.isExpired) return '⏳ ${info.tierLabel} · doldu';
+    if (info.isExpired) {
+      final expiry =
+          formatMembershipExpiryLabel(state.wallet?.membershipExpiresAt);
+      return expiry != null
+          ? '⏳ ${info.tierLabel} · $expiry'
+          : '⏳ ${info.tierLabel} · doldu';
+    }
     if (info.hasActiveSubscription) {
       final expiry =
           formatMembershipExpiryLabel(state.wallet?.membershipExpiresAt);

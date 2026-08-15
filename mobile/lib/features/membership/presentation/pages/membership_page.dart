@@ -16,6 +16,7 @@ import '../../../profile/presentation/providers/payment_requests_notifier.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/jeton_checkout_flow.dart';
 import '../../../profile/presentation/widgets/payment_methods_summary_line.dart';
+import '../../domain/membership_catalog_merge.dart';
 import '../../domain/membership_model.dart';
 import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
@@ -234,8 +235,13 @@ class MembershipPage extends ConsumerWidget {
                             const MembershipPaymentMethodsSummary(),
                             const SizedBox(height: 28),
                             MembershipCommonBenefits(
-                              highlights: catalogAsync.valueOrNull?.features ??
-                                  const [],
+                              highlights: mergeMembershipCommonHighlights(
+                                catalogFeatures:
+                                    catalogAsync.valueOrNull?.features ??
+                                        const [],
+                                tierFeatures:
+                                    ui.selectedTierModel.featureHighlights,
+                              ),
                             ),
                             const SizedBox(height: 28),
                             const MembershipSupportFooter(),

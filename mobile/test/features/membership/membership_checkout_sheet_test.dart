@@ -28,7 +28,11 @@ void main() {
           overrides: [
             paymentMethodsProvider.overrideWith(
               (ref) async => const [
-                PaymentMethodEntity(id: 'whatsapp', label: 'WhatsApp'),
+                PaymentMethodEntity(
+                  id: 'whatsapp',
+                  label: 'WhatsApp',
+                  recommended: true,
+                ),
                 PaymentMethodEntity(id: 'papara', label: 'Papara'),
               ],
             ),
@@ -67,6 +71,7 @@ void main() {
       expect(find.textContaining('WhatsApp'), findsWidgets);
       expect(find.text('CFC ile öde'), findsOneWidget);
       expect(find.textContaining('Bakiye yetersiz'), findsOneWidget);
+      expect(find.textContaining('önerilen:'), findsNothing);
     });
   });
 }

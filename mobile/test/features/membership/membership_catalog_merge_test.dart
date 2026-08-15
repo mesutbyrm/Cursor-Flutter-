@@ -152,6 +152,49 @@ void main() {
     });
   });
 
+  group('mergeMembershipCommonHighlights', () {
+    test('katalog ve tier birleşir — id dedupe', () {
+      const catalog = [
+        MembershipFeatureHighlightEntity(id: 'badge', title: 'Rozet'),
+      ];
+      const tier = [
+        MembershipFeatureHighlightEntity(id: 'badge', title: 'Rozet API'),
+        MembershipFeatureHighlightEntity(id: 'vip', title: 'VIP Odalar'),
+      ];
+      final merged = mergeMembershipCommonHighlights(
+        catalogFeatures: catalog,
+        tierFeatures: tier,
+      );
+      expect(merged.length, 2);
+      expect(merged.first.title, 'Rozet');
+      expect(merged.last.title, 'VIP Odalar');
+    });
+
+    test('boş id title ile dedupe', () {
+      const catalog = [
+        MembershipFeatureHighlightEntity(
+          id: '',
+          title: 'Öncelikli Destek',
+        ),
+      ];
+      const tier = [
+        MembershipFeatureHighlightEntity(
+          id: '',
+          title: 'Öncelikli Destek',
+        ),
+        MembershipFeatureHighlightEntity(
+          id: 'vip_lounge',
+          title: 'VIP Lounge',
+        ),
+      ];
+      final merged = mergeMembershipCommonHighlights(
+        catalogFeatures: catalog,
+        tierFeatures: tier,
+      );
+      expect(merged.length, 2);
+    });
+  });
+
   group('recommendedTierFromPackages', () {
     test('popular paket tier döner', () {
       const packages = [

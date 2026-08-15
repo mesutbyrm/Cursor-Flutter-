@@ -107,6 +107,7 @@ class ProfileLazyPremium extends ConsumerWidget {
         membership: info.raw,
         daysRemaining: info.daysRemaining,
         catalogSubtitle: catalogSubtitle,
+        catalogTier: catalogTier,
         expiresAt: expiresAt,
         onManageMembership: () => context.push('/premium-membership'),
       ),

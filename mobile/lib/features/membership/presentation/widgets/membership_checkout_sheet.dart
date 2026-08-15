@@ -93,6 +93,7 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
                     prefix: 'Ödeme',
                     textAlign: TextAlign.start,
                     fontSize: 11,
+                    showRecommended: false,
                   ),
                 ],
               ),

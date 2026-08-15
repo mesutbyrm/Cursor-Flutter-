@@ -39,6 +39,7 @@ class MembershipSupportFooter extends ConsumerWidget {
         const PaymentMethodsSummaryLine(
           prefix: 'Ödeme',
           textAlign: TextAlign.center,
+          showRecommended: false,
         ),
         const SizedBox(height: 8),
         Material(

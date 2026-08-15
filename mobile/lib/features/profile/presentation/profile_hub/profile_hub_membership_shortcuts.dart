@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../membership/presentation/controllers/membership_controller.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_theme.dart';
 import '../providers/profile_hub_providers.dart';
+import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_glass.dart';
 
 /// Üyelik kısayolları — planlar, VIP gold, kozmetik.
@@ -13,6 +16,15 @@ class ProfileHubMembershipShortcuts extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final info = ref.watch(profileMembershipInfoProvider);
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(info, ui.tiers);
+    final expiresAt =
+        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
+    final planHint = buildMembershipCatalogHintSubtitle(
+      info: info,
+      catalogTier: catalogTier,
+      expiresAt: expiresAt,
+    );
 
     return Row(
       children: [
@@ -20,6 +32,7 @@ class ProfileHubMembershipShortcuts extends ConsumerWidget {
           child: _ShortcutChip(
             icon: Icons.workspace_premium_outlined,
             label: info.hasPaidTier ? 'Planı Yönet' : 'Planlar',
+            subtitle: planHint,
             highlight: info.hasPaidTier,
             onTap: () => context.push('/premium-membership'),
           ),
@@ -51,11 +64,13 @@ class _ShortcutChip extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.subtitle,
     this.highlight = false,
   });
 
   final IconData icon;
   final String label;
+  final String? subtitle;
   final VoidCallback onTap;
   final bool highlight;
 
@@ -92,6 +107,21 @@ class _ShortcutChip extends StatelessWidget {
                 fontWeight: FontWeight.w800,
               ),
             ),
+            if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                subtitle!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: highlight ? 0.7 : 0.5),
+                  fontSize: 8,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                ),
+              ),
+            ],
           ],
         ),
       ),
