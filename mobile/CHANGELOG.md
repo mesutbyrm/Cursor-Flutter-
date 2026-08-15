@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.215+251 (2026-08-15) — Profil üyelik faz 25
+
+- **Kart başlığı:** `buildMembershipPremiumCardTitle` — premium kart + cüzdan merkezi
+- **Cüzdan kartı:** `buildMembershipWalletSubscriptionStatLabel` abonelik satırı
+- **Cüzdan merkezi:** ücretsiz kullanıcı `buildFreeUserMembershipTeaserSubtitle`
+- **Üyelik sayfası:** aktif banner `formatMembershipPlanDuration` ortak helper
+- **Test:** premium title, wallet stat, VIP banner teaser widget
+
 ## 1.0.214+250 (2026-08-15) — Profil üyelik faz 24
 
 - **Ücretsiz teaser:** `buildFreeUserMembershipTeaserSubtitle` — API popular tier + süre/fal ipucu

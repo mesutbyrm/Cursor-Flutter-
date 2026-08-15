@@ -278,3 +278,34 @@ String buildMembershipPageExpiredBannerText({
 }) {
   return '${buildMembershipExpiredBannerText(info: info, expiresAt: expiresAt)} · planı yenile';
 }
+
+/// Premium kart / cüzdan hub başlığı.
+String buildMembershipPremiumCardTitle({
+  required ProfileMembershipInfo info,
+  String? expiresAt,
+}) {
+  if (info.isExpired) {
+    return buildMembershipExpiredPlanLabel(info: info, expiresAt: expiresAt);
+  }
+  if (info.hasPaidTier) return '${info.tierLabel} Üyelik';
+  return 'Premium Üyelik';
+}
+
+/// Profil cüzdan kartı abonelik satırı.
+String buildMembershipWalletSubscriptionStatLabel({
+  required ProfileMembershipInfo info,
+  MembershipTierModel? catalogTier,
+  int? daysRemaining,
+  String? expiresAt,
+}) {
+  if (!info.hasPaidTier) return '—';
+  if (info.isExpired) {
+    return buildMembershipExpiredPlanLabel(info: info, expiresAt: expiresAt);
+  }
+  return formatMembershipPlanDuration(
+    info: info,
+    catalogTier: catalogTier,
+    daysRemaining: daysRemaining,
+    expiresAt: expiresAt,
+  );
+}

@@ -185,6 +185,57 @@ void main() {
     });
   });
 
+  group('buildMembershipPremiumCardTitle', () {
+    test('aktif ücretli', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 5,
+      );
+      expect(buildMembershipPremiumCardTitle(info: info), 'Gold Üyelik');
+    });
+
+    test('süresi dolmuş', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipPremiumCardTitle(
+          info: info,
+          expiresAt: '2020-05-10T00:00:00.000Z',
+        ),
+        'Gold · 10.05.2020',
+      );
+    });
+  });
+
+  group('buildMembershipWalletSubscriptionStatLabel', () {
+    test('ücretsiz tire', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(buildMembershipWalletSubscriptionStatLabel(info: info), '—');
+    });
+
+    test('süresi dolmuş tier ve tarih', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipWalletSubscriptionStatLabel(
+          info: info,
+          expiresAt: '2020-05-10T00:00:00.000Z',
+        ),
+        'Gold · 10.05.2020',
+      );
+    });
+  });
+
   group('buildVipGoldShortcutSubtitle', () {
     test('aktif VIP', () {
       const info = ProfileMembershipInfo(

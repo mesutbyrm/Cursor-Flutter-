@@ -116,13 +116,13 @@ class MembershipPage extends ConsumerWidget {
                               const SizedBox(height: 16),
                             ] else if (ui.hasActivePaidMembership) ...[
                               _ActiveBanner(
-                                label: ui.currentMembershipLabel,
-                                days: ui.daysRemaining,
-                                expiresAt: ui.membershipExpiresAt,
-                                durationDays: catalogTierForMembership(
+                                info: ui.membershipInfo,
+                                catalogTier: catalogTierForMembership(
                                   ui.membershipInfo,
                                   ui.tiers,
-                                )?.durationDays,
+                                ),
+                                days: ui.daysRemaining,
+                                expiresAt: ui.membershipExpiresAt,
                                 onExtend: () => _purchaseSelected(context, ref),
                               ),
                               const SizedBox(height: 16),
@@ -623,30 +623,25 @@ class _ExpiredMembershipBanner extends StatelessWidget {
 
 class _ActiveBanner extends StatelessWidget {
   const _ActiveBanner({
-    required this.label,
+    required this.info,
     required this.days,
     required this.onExtend,
-    this.durationDays,
+    this.catalogTier,
     this.expiresAt,
   });
 
-  final String label;
+  final ProfileMembershipInfo info;
   final int days;
-  final int? durationDays;
+  final MembershipTierModel? catalogTier;
   final String? expiresAt;
   final VoidCallback onExtend;
 
-  String get _daysLabel {
-    if (days > 0) {
-      if (durationDays != null && durationDays! > 0 && durationDays != 30) {
-        return '$days / $durationDays gün kaldı';
-      }
-      return '$days gün kaldı';
-    }
-    final expiry = formatMembershipExpiryLabel(expiresAt);
-    if (expiry != null) return 'Bitiş: $expiry';
-    return 'aktif';
-  }
+  String get _daysLabel => formatMembershipPlanDuration(
+        info: info,
+        catalogTier: catalogTier,
+        daysRemaining: days,
+        expiresAt: expiresAt,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -673,7 +668,7 @@ class _ActiveBanner extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '$label üyeliğiniz aktif · $_daysLabel',
+                  '${info.tierLabel} üyeliğiniz aktif · $_daysLabel',
                   style: const TextStyle(
                     color: MembershipCatalogData.gold,
                     fontWeight: FontWeight.w800,

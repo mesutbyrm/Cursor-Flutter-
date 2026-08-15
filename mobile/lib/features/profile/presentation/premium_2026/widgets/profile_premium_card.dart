@@ -65,14 +65,10 @@ class ProfilePremiumCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      active
-                          ? '${info.tierLabel} Üyelik'
-                          : expired
-                              ? buildMembershipExpiredPlanLabel(
-                                  info: info,
-                                  expiresAt: expiresAt,
-                                )
-                              : 'Premium Üyelik',
+                      buildMembershipPremiumCardTitle(
+                        info: info,
+                        expiresAt: expiresAt,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(

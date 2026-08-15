@@ -42,7 +42,7 @@ class ProfileWalletCard extends ConsumerWidget {
     );
     final ui = ref.watch(membershipControllerProvider);
     final catalogTier = catalogTierForMembership(info, ui.tiers);
-    final subscriptionLabel = formatMembershipPlanDuration(
+    final subscriptionLabel = buildMembershipWalletSubscriptionStatLabel(
       info: info,
       catalogTier: catalogTier,
       daysRemaining: state.membershipDays,
@@ -113,11 +113,7 @@ class ProfileWalletCard extends ConsumerWidget {
                     Expanded(
                       child: _MiniStat(
                         label: 'Abonelik',
-                        value: info.isExpired
-                            ? 'Süresi doldu'
-                            : hasPremium
-                                ? subscriptionLabel
-                                : '—',
+                        value: subscriptionLabel,
                       ),
                     ),
                   ],

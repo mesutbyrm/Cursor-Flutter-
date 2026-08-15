@@ -34,14 +34,10 @@ class WalletCenterPage extends ConsumerWidget {
     );
     final ui = ref.watch(membershipControllerProvider);
     final catalogTier = catalogTierForMembership(membershipInfo, ui.tiers);
-    final premiumTitle = membershipInfo.isExpired
-        ? buildMembershipExpiredPlanLabel(
-            info: membershipInfo,
-            expiresAt: balances.membershipExpiresAt,
-          )
-        : membershipInfo.hasActiveSubscription
-            ? '${membershipInfo.tierLabel} Üyelik'
-            : 'Premium Üyelik';
+    final premiumTitle = buildMembershipPremiumCardTitle(
+      info: membershipInfo,
+      expiresAt: balances.membershipExpiresAt,
+    );
     final premiumSubtitle = membershipInfo.hasActiveSubscription
         ? '${membershipInfo.tierLabel} · ${formatMembershipPlanDuration(
             info: membershipInfo,
@@ -55,7 +51,10 @@ class WalletCenterPage extends ConsumerWidget {
                 catalogTier: catalogTier,
                 expiresAt: balances.membershipExpiresAt,
               )
-            : 'Basic · Premium · Gold · Diamond · SVIP';
+            : buildFreeUserMembershipTeaserSubtitle(
+                tiers: ui.tiers,
+                packages: ui.apiPackages,
+              );
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
