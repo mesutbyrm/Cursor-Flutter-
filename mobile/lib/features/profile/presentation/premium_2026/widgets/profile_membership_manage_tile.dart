@@ -49,9 +49,12 @@ class ProfileMembershipManageTile extends ConsumerWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      buildMembershipCatalogHintSubtitle(
+                      buildMembershipSettingsManageSubtitle(
                         info: info,
+                        tiers: ui.tiers,
+                        packages: ui.apiPackages,
                         catalogTier: catalogTier,
+                        daysRemaining: info.daysRemaining,
                         expiresAt: expiresAt,
                       ),
                       style: TextStyle(

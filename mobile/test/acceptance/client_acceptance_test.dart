@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:canlifal_social/core/storage/theme_preferences.dart';
 import 'package:canlifal_social/core/theme/app_theme.dart';
+import 'package:canlifal_social/features/profile/presentation/premium_2026/profile_membership_helpers.dart';
+import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import 'package:canlifal_social/features/voice_hub/domain/voice_music_sync.dart';
 
 /// İstemci tarafı acceptance testleri — 18, 19, 20.
@@ -64,6 +66,38 @@ void main() {
         );
         expect(find.text('tema'), findsOneWidget);
       }
+    });
+  });
+
+  group('20b — Profil üyelik helper sözleşmesi', () {
+    test('aktif plan wallet hub alt başlığı', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 7,
+      );
+      final subtitle = buildMembershipSettingsManageSubtitle(
+        info: info,
+        tiers: const [],
+        daysRemaining: 7,
+      );
+      expect(subtitle, contains('Gold'));
+      expect(subtitle, contains('7'));
+    });
+
+    test('süresi dolmuş status pill', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipStatusPillLabel(
+          info: info,
+          expiresAt: '2020-06-01T00:00:00.000Z',
+        ),
+        'Gold · 01.06.2020',
+      );
     });
   });
 

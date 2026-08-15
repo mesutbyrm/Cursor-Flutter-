@@ -465,3 +465,63 @@ String buildMembershipStoreTeaserSubtitle({
   );
   return '$teaser · $storeLabel yüklerken üyelik planlarını inceleyin';
 }
+
+/// Ayarlar manage tile alt başlığı — cüzdan merkezi ile aynı.
+String buildMembershipSettingsManageSubtitle({
+  required ProfileMembershipInfo info,
+  required List<MembershipTierModel> tiers,
+  List<MembershipPackageEntity> packages = const [],
+  MembershipTierModel? catalogTier,
+  int? daysRemaining,
+  String? expiresAt,
+}) {
+  return buildMembershipWalletHubSubtitle(
+    info: info,
+    tiers: tiers,
+    packages: packages,
+    catalogTier: catalogTier,
+    daysRemaining: daysRemaining,
+    expiresAt: expiresAt,
+  );
+}
+
+/// Hub istatistikler — üyelik planı satır değeri.
+String buildMembershipAboutStatsPlanValue({
+  required ProfileMembershipInfo info,
+  String? expiresAt,
+}) {
+  if (info.isExpired) {
+    return buildMembershipExpiredPlanLabel(info: info, expiresAt: expiresAt);
+  }
+  if (info.hasPaidTier) return info.tierLabel;
+  return 'Standart';
+}
+
+/// Hub istatistikler — plan süresi satır değeri.
+String buildMembershipAboutStatsPlanDurationValue({
+  required ProfileMembershipInfo info,
+  MembershipTierModel? catalogTier,
+  int? daysRemaining,
+  String? expiresAt,
+}) {
+  return formatMembershipPlanDuration(
+    info: info,
+    catalogTier: catalogTier,
+    daysRemaining: daysRemaining ?? info.daysRemaining,
+    expiresAt: expiresAt,
+  );
+}
+
+/// Hub istatistikler / growth hub — süresi dolmuş pill etiketi.
+String? buildMembershipStatusPillLabel({
+  required ProfileMembershipInfo info,
+  String? expiresAt,
+}) {
+  if (info.isExpired) {
+    return buildMembershipExpiredPlanLabel(info: info, expiresAt: expiresAt);
+  }
+  if (info.hasActiveSubscription && info.hasPaidTier) {
+    return info.tierLabel;
+  }
+  return null;
+}

@@ -8,6 +8,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../../membership/presentation/controllers/membership_controller.dart';
+import '../../../membership/presentation/widgets/membership_status_pill.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../providers/profile_hub_providers.dart';
 import '../providers/profile_providers.dart';
@@ -172,24 +173,24 @@ class _StatisticsCard extends ConsumerWidget {
     final catalogTier = catalogTierForMembership(membership, ui.tiers);
     final expiresAt =
         ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
-    final planDurationValue = formatMembershipPlanDuration(
+    final planDurationValue = buildMembershipAboutStatsPlanDurationValue(
       info: membership,
       catalogTier: catalogTier,
       daysRemaining: membership.daysRemaining,
+      expiresAt: expiresAt,
+    );
+    final statusPill = buildMembershipStatusPillLabel(
+      info: membership,
       expiresAt: expiresAt,
     );
     final rows = <({IconData icon, String label, String value})>[
       (
         icon: Icons.workspace_premium_outlined,
         label: 'Üyelik Planı',
-        value: membership.isExpired
-            ? buildMembershipExpiredPlanLabel(
-                info: membership,
-                expiresAt: expiresAt,
-              )
-            : membership.hasPaidTier
-                ? membership.tierLabel
-                : 'Standart',
+        value: buildMembershipAboutStatsPlanValue(
+          info: membership,
+          expiresAt: expiresAt,
+        ),
       ),
       (
         icon: Icons.timer_outlined,
@@ -248,6 +249,13 @@ class _StatisticsCard extends ConsumerWidget {
                   ),
                 ),
               ),
+              if (statusPill != null) ...[
+                MembershipStatusPill(
+                  label: statusPill,
+                  expired: membership.isExpired,
+                ),
+                const SizedBox(width: 8),
+              ],
               TextButton(
                 onPressed: () => context.push('/profile/growth'),
                 child: const Text('Tümü >'),

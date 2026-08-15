@@ -18,6 +18,7 @@ import '../../domain/entities/daily_task_entity.dart';
 import '../../domain/entities/growth_progress_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
+import '../../../membership/presentation/widgets/membership_status_pill.dart';
 import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
@@ -309,6 +310,10 @@ class _MembershipStatusCard extends ConsumerWidget {
       catalogTier: catalogTier,
       expiresAt: expiresAt,
     );
+    final statusPill = buildMembershipStatusPillLabel(
+      info: info,
+      expiresAt: expiresAt,
+    );
 
     final accent = expired
         ? AppThemeColors.accentPink
@@ -342,13 +347,25 @@ class _MembershipStatusCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: c.onSurface,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 14,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          color: c.onSurface,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    if (statusPill != null) ...[
+                      MembershipStatusPill(
+                        label: statusPill,
+                        expired: expired,
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 3),
                 Text(

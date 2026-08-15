@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.219+255 (2026-08-15) — Profil üyelik faz 29
+
+- **Ayarlar tile:** `buildMembershipSettingsManageSubtitle` — manage tile cüzdan hizası
+- **Hub istatistikler:** `buildMembershipAboutStatsPlanValue` + süresi dolmuş `MembershipStatusPill`
+- **Growth hub:** üyelik kartı status pill (aktif / süresi doldu)
+- **Acceptance:** client `20b` üyelik helper sözleşme testleri
+- **Test:** about stats pill widget, settings subtitle, status pill helper
+
 ## 1.0.218+254 (2026-08-15) — Profil üyelik faz 28
 
 - **VIP pill:** `buildMembershipHubVipPillLabel` — profil hub başlık ortak helper

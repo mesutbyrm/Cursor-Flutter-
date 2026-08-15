@@ -640,4 +640,80 @@ void main() {
       expect(subtitle, contains('CFC'));
     });
   });
+
+  group('buildMembershipSettingsManageSubtitle', () {
+    test('aktif üyelik wallet hub ile aynı', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 5,
+      );
+      final subtitle = buildMembershipSettingsManageSubtitle(
+        info: info,
+        tiers: const [],
+        daysRemaining: 5,
+      );
+      expect(subtitle, contains('Gold'));
+      expect(subtitle, contains('5'));
+    });
+  });
+
+  group('buildMembershipAboutStatsPlanValue', () {
+    test('süresi dolmuş expired label', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipAboutStatsPlanValue(
+          info: info,
+          expiresAt: '2020-03-10T00:00:00.000Z',
+        ),
+        'Gold · 10.03.2020',
+      );
+    });
+
+    test('ücretsiz standart', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(buildMembershipAboutStatsPlanValue(info: info), 'Standart');
+    });
+  });
+
+  group('buildMembershipStatusPillLabel', () {
+    test('süresi dolmuş pill', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipStatusPillLabel(
+          info: info,
+          expiresAt: '2020-01-01T00:00:00.000Z',
+        ),
+        'Gold · 01.01.2020',
+      );
+    });
+
+    test('aktif gold tier', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 3,
+      );
+      expect(buildMembershipStatusPillLabel(info: info), 'Gold');
+    });
+
+    test('ücretsiz null', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(buildMembershipStatusPillLabel(info: info), isNull);
+    });
+  });
 }

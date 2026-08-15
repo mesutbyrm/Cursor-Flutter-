@@ -43,7 +43,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Gold Üyelik'), findsOneWidget);
-      expect(find.textContaining('8 gün kaldı'), findsOneWidget);
+      expect(find.textContaining('Gold ·'), findsOneWidget);
+      expect(find.textContaining('8'), findsOneWidget);
     });
 
     testWidgets('süresi dolmuş plan yenile CTA', (tester) async {
