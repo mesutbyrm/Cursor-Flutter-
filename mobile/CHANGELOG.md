@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.217+253 (2026-08-15) — Profil üyelik faz 27
+
+- **Tier kart rozeti:** `resolveMembershipTierCardBadge` — Aktif / Popüler / Süresi doldu
+- **Katalog senkron:** `applyMembershipTierBadges` — aktif wire id + API popular tier
+- **Üyelik kartı:** `MembershipCard` üst rozet pill + membershipInfo/apiPackages
+- **Test:** badge helper, catalog merge, membership card widget
+
 ## 1.0.216+252 (2026-08-15) — Profil üyelik faz 26
 
 - **Hub başlık:** `buildMembershipHubSectionTitle` — ayarlar karo + currency card

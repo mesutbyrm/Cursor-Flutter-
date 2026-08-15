@@ -343,3 +343,25 @@ String buildMembershipHubActionLabel({
   if (info.hasPaidTier) return 'Yönet';
   return freeLabel;
 }
+
+/// Üyelik tier kartı üst rozeti.
+enum MembershipTierCardBadge { none, active, popular, expired }
+
+MembershipTierCardBadge resolveMembershipTierCardBadge({
+  required MembershipTierModel tier,
+  required ProfileMembershipInfo info,
+  List<MembershipPackageEntity> packages = const [],
+}) {
+  final wire = membershipWireId(info.raw);
+  if (info.hasPaidTier && tier.wireId == wire) {
+    if (info.hasActiveSubscription) return MembershipTierCardBadge.active;
+    if (info.isExpired) return MembershipTierCardBadge.expired;
+  }
+  if (tier.isActivePlan) return MembershipTierCardBadge.active;
+  if (tier.popular) return MembershipTierCardBadge.popular;
+  final recommended = recommendedTierFromPackages(packages);
+  if (recommended == tier.id && !info.hasActiveSubscription) {
+    return MembershipTierCardBadge.popular;
+  }
+  return MembershipTierCardBadge.none;
+}

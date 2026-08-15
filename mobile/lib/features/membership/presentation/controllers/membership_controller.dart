@@ -59,7 +59,7 @@ class MembershipUiState {
       findMembershipApiPackage(apiPackages, wireId);
 
   List<MembershipTierModel> get tiers {
-    return [
+    final merged = [
       for (final t in MembershipCatalogData.tiers)
         mergeMembershipTier(
           t,
@@ -67,6 +67,14 @@ class MembershipUiState {
           jetonTlRate: jetonTlRate,
         ),
     ];
+    final activeWire = membershipInfo.hasActiveSubscription
+        ? membershipWireId(currentMembership)
+        : null;
+    return applyMembershipTierBadges(
+      tiers: merged,
+      activeWireId: activeWire,
+      packages: apiPackages,
+    );
   }
 
   List<MembershipTokenPackageModel> get tokenPackages =>

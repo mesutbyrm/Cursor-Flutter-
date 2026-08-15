@@ -411,4 +411,112 @@ void main() {
       );
     });
   });
+
+  group('resolveMembershipTierCardBadge', () {
+    const goldTier = MembershipTierModel(
+      id: MembershipTierId.gold,
+      title: 'Gold',
+      subtitle: 'Test',
+      monthlyTokens: 1500,
+      monthlyPriceTry: 1000,
+      accent: Color(0xFFFFD54F),
+      badgeIcon: Icons.star,
+      glow: Color(0xFFFFC107),
+    );
+
+    const premiumTier = MembershipTierModel(
+      id: MembershipTierId.premium,
+      title: 'Premium',
+      subtitle: 'Test',
+      monthlyTokens: 3500,
+      monthlyPriceTry: 1500,
+      accent: Color(0xFFA78BFA),
+      badgeIcon: Icons.star,
+      glow: Color(0xFF8B5CF6),
+    );
+
+    test('aktif üyelik eşleşen tier — Aktif', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 10,
+      );
+      expect(
+        resolveMembershipTierCardBadge(tier: goldTier, info: info),
+        MembershipTierCardBadge.active,
+      );
+    });
+
+    test('süresi dolmuş eşleşen tier — Süresi doldu', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        resolveMembershipTierCardBadge(tier: goldTier, info: info),
+        MembershipTierCardBadge.expired,
+      );
+    });
+
+    test('tier.popular — Popüler', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      const popularTier = MembershipTierModel(
+        id: MembershipTierId.premium,
+        title: 'Premium',
+        subtitle: 'Test',
+        monthlyTokens: 3500,
+        monthlyPriceTry: 1500,
+        accent: Color(0xFFA78BFA),
+        badgeIcon: Icons.star,
+        glow: Color(0xFF8B5CF6),
+        popular: true,
+      );
+      expect(
+        resolveMembershipTierCardBadge(tier: popularTier, info: info),
+        MembershipTierCardBadge.popular,
+      );
+    });
+
+    test('API recommended paket — Popüler', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      const packages = [
+        MembershipPackageEntity(
+          id: 'premium',
+          planId: 'p1',
+          title: 'Premium',
+          durationDays: 30,
+          priceJeton: 3000,
+          bonusJeton: 3500,
+          falDiscountPercent: 0,
+          popular: true,
+        ),
+      ];
+      expect(
+        resolveMembershipTierCardBadge(
+          tier: premiumTier,
+          info: info,
+          packages: packages,
+        ),
+        MembershipTierCardBadge.popular,
+      );
+    });
+
+    test('ücretsiz kullanıcı — rozet yok', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        resolveMembershipTierCardBadge(tier: goldTier, info: info),
+        MembershipTierCardBadge.none,
+      );
+    });
+  });
 }

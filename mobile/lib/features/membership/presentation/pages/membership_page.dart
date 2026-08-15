@@ -138,6 +138,8 @@ class MembershipPage extends ConsumerWidget {
                                   final tier = ui.tiers[i];
                                   return MembershipCard(
                                     tier: tier,
+                                    membershipInfo: ui.membershipInfo,
+                                    apiPackages: ui.apiPackages,
                                     selected: ui.selectedTier == tier.id,
                                     animationIndex: i,
                                     onTap: () => ref

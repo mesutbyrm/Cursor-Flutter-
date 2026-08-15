@@ -195,6 +195,82 @@ void main() {
     });
   });
 
+  group('applyMembershipTierBadges', () {
+    test('aktif wire id tier işaretlenir', () {
+      const tiers = [
+        MembershipTierModel(
+          id: MembershipTierId.gold,
+          title: 'Gold',
+          subtitle: 'Test',
+          monthlyTokens: 1500,
+          monthlyPriceTry: 1000,
+          accent: Color(0xFFFFD54F),
+          badgeIcon: Icons.star,
+          glow: Color(0xFFFFC107),
+        ),
+        MembershipTierModel(
+          id: MembershipTierId.premium,
+          title: 'Premium',
+          subtitle: 'Test',
+          monthlyTokens: 3500,
+          monthlyPriceTry: 1500,
+          accent: Color(0xFFA78BFA),
+          badgeIcon: Icons.star,
+          glow: Color(0xFF8B5CF6),
+        ),
+      ];
+      final badged = applyMembershipTierBadges(
+        tiers: tiers,
+        activeWireId: 'gold',
+      );
+      expect(badged.first.isActivePlan, isTrue);
+      expect(badged.last.isActivePlan, isFalse);
+    });
+
+    test('API popular yoksa recommended tier popüler', () {
+      const tiers = [
+        MembershipTierModel(
+          id: MembershipTierId.gold,
+          title: 'Gold',
+          subtitle: 'Test',
+          monthlyTokens: 1500,
+          monthlyPriceTry: 1000,
+          accent: Color(0xFFFFD54F),
+          badgeIcon: Icons.star,
+          glow: Color(0xFFFFC107),
+        ),
+        MembershipTierModel(
+          id: MembershipTierId.premium,
+          title: 'Premium',
+          subtitle: 'Test',
+          monthlyTokens: 3500,
+          monthlyPriceTry: 1500,
+          accent: Color(0xFFA78BFA),
+          badgeIcon: Icons.star,
+          glow: Color(0xFF8B5CF6),
+        ),
+      ];
+      const packages = [
+        MembershipPackageEntity(
+          id: 'premium',
+          planId: 'plan-premium',
+          title: 'Premium',
+          durationDays: 30,
+          priceJeton: 3000,
+          bonusJeton: 3500,
+          falDiscountPercent: 0,
+          popular: true,
+        ),
+      ];
+      final badged = applyMembershipTierBadges(
+        tiers: tiers,
+        packages: packages,
+      );
+      expect(badged[1].popular, isTrue);
+      expect(badged[0].popular, isFalse);
+    });
+  });
+
   group('recommendedTierFromPackages', () {
     test('popular paket tier döner', () {
       const packages = [

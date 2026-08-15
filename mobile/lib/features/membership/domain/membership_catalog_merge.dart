@@ -66,6 +66,39 @@ MembershipTierId? recommendedTierFromPackages(
   return null;
 }
 
+/// Cüzdan / API popular senkronu — aktif plan ve önerilen tier rozetleri.
+List<MembershipTierModel> applyMembershipTierBadges({
+  required List<MembershipTierModel> tiers,
+  String? activeWireId,
+  List<MembershipPackageEntity> packages = const [],
+}) {
+  final hasApiPopular = tiers.any((t) => t.popular);
+  final recommended =
+      hasApiPopular ? null : recommendedTierFromPackages(packages);
+
+  return [
+    for (final tier in tiers)
+      MembershipTierModel(
+        id: tier.id,
+        title: tier.title,
+        subtitle: tier.subtitle,
+        monthlyTokens: tier.monthlyTokens,
+        monthlyPriceTry: tier.monthlyPriceTry,
+        accent: tier.accent,
+        badgeIcon: tier.badgeIcon,
+        glow: tier.glow,
+        popular: tier.popular ||
+            (recommended == tier.id && activeWireId != tier.wireId),
+        isActivePlan:
+            activeWireId != null && tier.wireId == activeWireId,
+        durationDays: tier.durationDays,
+        falDiscountPercent: tier.falDiscountPercent,
+        planId: tier.planId,
+        featureHighlights: tier.featureHighlights,
+      ),
+  ];
+}
+
 List<MembershipTokenPackageModel> buildTokenPackagesFromTiers(
   List<MembershipTierModel> tiers,
 ) {
