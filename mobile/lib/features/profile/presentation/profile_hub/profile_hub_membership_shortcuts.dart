@@ -20,9 +20,12 @@ class ProfileHubMembershipShortcuts extends ConsumerWidget {
     final catalogTier = catalogTierForMembership(info, ui.tiers);
     final expiresAt =
         ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
-    final planHint = buildMembershipCatalogHintSubtitle(
+    final planHint = buildMembershipWalletHubSubtitle(
       info: info,
+      tiers: ui.tiers,
+      packages: ui.apiPackages,
       catalogTier: catalogTier,
+      daysRemaining: info.daysRemaining,
       expiresAt: expiresAt,
     );
     final vipHint = buildVipGoldShortcutSubtitle(info);

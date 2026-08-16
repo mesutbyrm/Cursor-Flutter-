@@ -12,6 +12,7 @@ import '../widgets/premium/profile_glass.dart';
 import '../../../membership/presentation/controllers/membership_controller.dart';
 
 const _kMembershipServiceSlug = '__membership__';
+const _kVipGoldServiceSlug = '__vip_gold__';
 
 /// Hizmetlerim — API'den dinamik fal türleri.
 class ProfileHubServicesRow extends ConsumerWidget {
@@ -33,6 +34,9 @@ class ProfileHubServicesRow extends ConsumerWidget {
       catalogTier: catalogTier,
       expiresAt: expiresAt,
     );
+    final vipGoldHint = buildMembershipHubVipGoldServiceCardHint(
+      info: membershipInfo,
+    );
 
     return cardsAsync.when(
       loading: () => const SizedBox(
@@ -52,7 +56,14 @@ class ProfileHubServicesRow extends ConsumerWidget {
             count: 0,
             hint: membershipHint,
           ),
-          ...cards.take(7).map((c) {
+          _ServiceItem(
+            title: 'VIP Gold',
+            icon: '💎',
+            slug: _kVipGoldServiceSlug,
+            count: 0,
+            hint: vipGoldHint,
+          ),
+          ...cards.take(6).map((c) {
           final slug = c.navigationSlug;
           final count = history
               .where((h) => (h.slug ?? h.type).contains(slug))
@@ -84,6 +95,9 @@ class ProfileHubServicesRow extends ConsumerWidget {
       catalogTier: catalogTier,
       expiresAt: expiresAt,
     );
+    final vipGoldHint = buildMembershipHubVipGoldServiceCardHint(
+      info: membershipInfo,
+    );
     const defaults = [
       _ServiceItem(title: 'Fal Geçmişim', icon: '☕', slug: 'kahve', count: 0),
       _ServiceItem(title: 'Tarot', icon: '🃏', slug: 'tarot', count: 0),
@@ -99,6 +113,13 @@ class ProfileHubServicesRow extends ConsumerWidget {
         slug: _kMembershipServiceSlug,
         count: 0,
         hint: membershipHint,
+      ),
+      _ServiceItem(
+        title: 'VIP Gold',
+        icon: '💎',
+        slug: _kVipGoldServiceSlug,
+        count: 0,
+        hint: vipGoldHint,
       ),
       ...defaults.map((d) {
       final count = history
@@ -186,6 +207,10 @@ class _ServiceCard extends StatelessWidget {
           onTap: () {
             if (item.slug == _kMembershipServiceSlug) {
               context.push('/premium-membership');
+              return;
+            }
+            if (item.slug == _kVipGoldServiceSlug) {
+              context.push('/vip-gold');
               return;
             }
             if (item.slug == 'kahve' || item.title.contains('Geçmiş')) {

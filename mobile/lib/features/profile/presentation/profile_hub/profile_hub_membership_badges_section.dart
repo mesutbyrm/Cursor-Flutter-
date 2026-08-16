@@ -9,7 +9,9 @@ import '../../../cosmetics/domain/cosmetic_slot.dart';
 import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_theme.dart';
+import '../providers/profile_hub_providers.dart';
 import '../widgets/premium/profile_glass.dart';
 
 /// Üyelik rozetleri — `GET /api/membership-badges` yatay şerit.
@@ -20,6 +22,7 @@ class ProfileHubMembershipBadgesSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(membershipBadgesCatalogProvider);
     final tier = ref.watch(vipTierProvider);
+    final membershipInfo = ref.watch(profileMembershipInfoProvider);
     final equippedId =
         ref.watch(cosmeticLoadoutProvider).valueOrNull?.idFor(CosmeticSlot.badge);
 
@@ -32,6 +35,13 @@ class ProfileHubMembershipBadgesSection extends ConsumerWidget {
       error: (_, _) => const SizedBox.shrink(),
       data: (badges) {
         if (badges.isEmpty) return const SizedBox.shrink();
+        final unlocked =
+            badges.where((b) => b.isUnlockedFor(tier: tier)).length;
+        final sectionSubtitle = buildMembershipBadgesSectionSubtitle(
+          info: membershipInfo,
+          unlockedCount: unlocked,
+          totalCount: badges.length,
+        );
         return ProfileGlass(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           borderRadius: ProfilePremiumTheme.radiusMd,
@@ -67,6 +77,18 @@ class ProfileHubMembershipBadgesSection extends ConsumerWidget {
                   ),
                 ],
               ),
+              if (sectionSubtitle.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  sectionSubtitle,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.55),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    height: 1.25,
+                  ),
+                ),
+              ],
               const SizedBox(height: 10),
               SizedBox(
                 height: 80,

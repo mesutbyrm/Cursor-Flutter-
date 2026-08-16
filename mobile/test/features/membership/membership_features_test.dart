@@ -831,4 +831,102 @@ void main() {
       expect(hint, contains('Aktif planınız'));
     });
   });
+
+  group('buildMembershipBadgesSectionSubtitle', () {
+    test('aktif gold rozet oranı', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 5,
+      );
+      expect(
+        buildMembershipBadgesSectionSubtitle(
+          info: info,
+          unlockedCount: 3,
+          totalCount: 8,
+        ),
+        '3/8 rozet açık · Gold',
+      );
+    });
+
+    test('süresi dolmuş yenile', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipBadgesSectionSubtitle(
+          info: info,
+          unlockedCount: 1,
+          totalCount: 5,
+        ),
+        contains('planı yenileyin'),
+      );
+    });
+  });
+
+  group('buildMembershipHubVipGoldServiceCardHint', () {
+    test('aktif vip', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 3,
+      );
+      expect(
+        buildMembershipHubVipGoldServiceCardHint(info: info),
+        'Aktif',
+      );
+    });
+
+    test('ücretsiz odalar', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipHubVipGoldServiceCardHint(info: info),
+        'Odalar',
+      );
+    });
+  });
+
+  group('buildMembershipWalletEarningsTeaser', () {
+    test('ücretsiz teaser', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipWalletEarningsTeaser(info: info),
+        contains('fal indirimi'),
+      );
+    });
+
+    test('aktif indirimli plan', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 4,
+      );
+      const tier = MembershipTierModel(
+        id: MembershipTierId.gold,
+        title: 'Gold',
+        subtitle: 'Test',
+        monthlyTokens: 1500,
+        monthlyPriceTry: 1000,
+        accent: Color(0xFFFFD54F),
+        badgeIcon: Icons.star,
+        glow: Color(0xFFFFC107),
+        falDiscountPercent: 12,
+      );
+      expect(
+        buildMembershipWalletEarningsTeaser(
+          info: info,
+          catalogTier: tier,
+        ),
+        contains('%12 fal'),
+      );
+    });
+  });
 }

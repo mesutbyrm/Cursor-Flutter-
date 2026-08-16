@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.221+257 (2026-08-16) — Profil üyelik faz 31
+
+- **Rozet bölümü:** `buildMembershipBadgesSectionSubtitle` — açık/kilitli rozet oranı
+- **Hizmetler şeridi:** `buildMembershipHubVipGoldServiceCardHint` — VIP Gold kart ipucu
+- **Cüzdan kazanç:** `buildMembershipWalletEarningsTeaser` — üyelik teaser satırı
+- **Kısayollar:** plan chip `buildMembershipWalletHubSubtitle` ile cüzdan hizası
+- **Acceptance:** client `20c` üyelik helper sözleşme testleri
+- **Test:** rozet bölümü, cüzdan kazanç teaser widget testleri
+
 ## 1.0.220+256 (2026-08-15) — Profil üyelik faz 30
 
 - **Cüzdan header:** `buildMembershipWalletActiveBannerText` + `shouldShowMembershipWalletActiveBanner`

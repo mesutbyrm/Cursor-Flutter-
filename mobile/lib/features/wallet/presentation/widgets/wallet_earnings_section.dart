@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../membership/presentation/controllers/membership_controller.dart';
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../domain/wallet_balances.dart';
 import '../providers/wallet_extended_providers.dart';
 
@@ -12,6 +15,18 @@ class WalletEarningsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final membershipInfo = resolveProfileMembership(
+      rawMembership: balances.membership,
+      daysRemaining: balances.membershipDaysRemaining,
+    );
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(membershipInfo, ui.tiers);
+    final membershipTeaser = buildMembershipWalletEarningsTeaser(
+      info: membershipInfo,
+      catalogTier: catalogTier,
+      daysRemaining: balances.membershipDaysRemaining,
+      expiresAt: balances.membershipExpiresAt,
+    );
     final rates = ref.watch(platformCommissionRatesProvider).valueOrNull;
     final minWithdraw = rates?.minWithdrawalTl ??
         (balances.withdrawalLimit > 0 ? balances.withdrawalLimit.toDouble() : null);
@@ -30,6 +45,14 @@ class WalletEarningsSection extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 10),
+        if (membershipTeaser.isNotEmpty) ...[
+          _MembershipEarningsTeaser(
+            text: membershipTeaser,
+            highlight: membershipInfo.hasActiveSubscription,
+            onTap: () => context.push('/premium-membership'),
+          ),
+          const SizedBox(height: 10),
+        ],
         _StatGrid(
           items: [
             _StatItem(
@@ -88,6 +111,65 @@ class WalletEarningsSection extends ConsumerWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _MembershipEarningsTeaser extends StatelessWidget {
+  const _MembershipEarningsTeaser({
+    required this.text,
+    required this.onTap,
+    this.highlight = false,
+  });
+
+  final String text;
+  final VoidCallback onTap;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: highlight ? 0.08 : 0.06),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Icon(
+                highlight
+                    ? Icons.workspace_premium_rounded
+                    : Icons.card_membership_outlined,
+                size: 20,
+                color: highlight
+                    ? const Color(0xFFFFD54F)
+                    : context.colors.onSurfaceMuted,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: context.colors.onSurface.withValues(
+                      alpha: highlight ? 0.92 : 0.78,
+                    ),
+                    height: 1.3,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: context.colors.onSurfaceMuted,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

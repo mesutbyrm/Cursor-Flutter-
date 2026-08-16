@@ -609,3 +609,59 @@ String buildMembershipCheckoutFooterHint({
   ];
   return parts.join(' · ');
 }
+
+/// Üyelik rozetleri bölümü alt başlığı.
+String buildMembershipBadgesSectionSubtitle({
+  required ProfileMembershipInfo info,
+  required int unlockedCount,
+  required int totalCount,
+}) {
+  if (totalCount <= 0) return '';
+  final ratio = '$unlockedCount/$totalCount rozet açık';
+  if (info.isExpired) {
+    return '$ratio · planı yenileyin';
+  }
+  if (info.hasActiveSubscription && info.hasPaidTier) {
+    return '$ratio · ${info.tierLabel}';
+  }
+  return '$ratio · plan yükseltin';
+}
+
+/// Hizmetler şeridi VIP Gold kartı kısa ipucu.
+String buildMembershipHubVipGoldServiceCardHint({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isExpired) return 'Yenile';
+  if (info.isVip && info.hasActiveSubscription) return 'Aktif';
+  return 'Odalar';
+}
+
+/// Cüzdan kazanç özeti üyelik teaser metni.
+String buildMembershipWalletEarningsTeaser({
+  required ProfileMembershipInfo info,
+  MembershipTierModel? catalogTier,
+  int? daysRemaining,
+  String? expiresAt,
+}) {
+  if (info.isExpired) {
+    final expiry = formatMembershipExpiryLabel(expiresAt);
+    if (expiry != null) {
+      return '${info.tierLabel} $expiry tarihinde sona erdi · kazanç çekimine devam edebilirsiniz';
+    }
+    return '${info.tierLabel} planı sona erdi · üyeliği yenileyin';
+  }
+  if (info.hasActiveSubscription) {
+    final discount = catalogTier?.falDiscountPercent ?? 0;
+    if (discount > 0) {
+      return '${info.tierLabel} · %$discount fal indirimi · kazançlarınız etkilenmez';
+    }
+    final plan = formatMembershipPlanDuration(
+      info: info,
+      catalogTier: catalogTier,
+      daysRemaining: daysRemaining ?? info.daysRemaining,
+      expiresAt: expiresAt,
+    );
+    return '${info.tierLabel} üyeliği aktif · $plan';
+  }
+  return 'Üyelik planlarıyla fal indirimi ve ek avantajlar';
+}

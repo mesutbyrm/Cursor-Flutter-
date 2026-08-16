@@ -37,7 +37,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Planlar'), findsOneWidget);
-      expect(find.textContaining('keşfedin'), findsOneWidget);
+      expect(find.textContaining('öne çıkan'), findsOneWidget);
     });
 
     testWidgets('aktif ücretli kullanıcı plan ipucu', (tester) async {
@@ -72,7 +72,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Planı Yönet'), findsOneWidget);
-      expect(find.textContaining('8 gün kaldı'), findsOneWidget);
+      expect(find.textContaining('8 gün'), findsOneWidget);
       expect(find.textContaining('VIP odalar aktif'), findsOneWidget);
     });
   });

@@ -101,6 +101,46 @@ void main() {
     });
   });
 
+  group('20c — Profil üyelik faz 31 helper sözleşmesi', () {
+    test('rozet bölümü alt başlığı', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 6,
+      );
+      final subtitle = buildMembershipBadgesSectionSubtitle(
+        info: info,
+        unlockedCount: 2,
+        totalCount: 6,
+      );
+      expect(subtitle, contains('2/6'));
+      expect(subtitle, contains('Gold'));
+    });
+
+    test('VIP Gold hizmet kartı ipucu', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipHubVipGoldServiceCardHint(info: info),
+        'Yenile',
+      );
+    });
+
+    test('cüzdan kazanç teaser ücretsiz', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipWalletEarningsTeaser(info: info),
+        contains('Üyelik planları'),
+      );
+    });
+  });
+
   group('20 — Uygulama performans testi', () {
     setUp(AppTheme.clearCacheForTest);
 
