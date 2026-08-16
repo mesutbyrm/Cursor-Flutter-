@@ -1111,4 +1111,99 @@ void main() {
       );
     });
   });
+
+  group('buildMembershipPremiumCardManageActionLabel', () {
+    test('aktif gold yönet', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 4,
+      );
+      expect(
+        buildMembershipPremiumCardManageActionLabel(info: info),
+        'Yönet',
+      );
+    });
+
+    test('süresi dolmuş yönet', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipPremiumCardManageActionLabel(info: info),
+        'Yönet',
+      );
+    });
+  });
+
+  group('buildMembershipAboutStatsSectionSubtitle', () {
+    test('ücretsiz yükselt', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipAboutStatsSectionSubtitle(info: info),
+        'Üyelik planını yükseltin',
+      );
+    });
+
+    test('aktif gold plan süresi', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 7,
+      );
+      final subtitle = buildMembershipAboutStatsSectionSubtitle(
+        info: info,
+        daysRemaining: 7,
+      );
+      expect(subtitle, contains('Gold'));
+      expect(subtitle, contains('7'));
+    });
+  });
+
+  group('buildMembershipWithdrawalPageSubtitle', () {
+    test('ücretsiz varsayılan', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipWithdrawalPageSubtitle(info: info),
+        contains('Banka havalesi'),
+      );
+    });
+  });
+
+  group('buildMembershipWalletStoreHubCardSubtitle', () {
+    test('aktif indirimli jeton', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 3,
+      );
+      const tier = MembershipTierModel(
+        id: MembershipTierId.gold,
+        title: 'Gold',
+        subtitle: 'Test',
+        monthlyTokens: 1500,
+        monthlyPriceTry: 1000,
+        accent: Color(0xFFFFD54F),
+        badgeIcon: Icons.star,
+        glow: Color(0xFFFFC107),
+        falDiscountPercent: 15,
+      );
+      expect(
+        buildMembershipWalletStoreHubCardSubtitle(
+          info: info,
+          store: MembershipStoreKind.jeton,
+          catalogTier: tier,
+        ),
+        contains('%15 fal'),
+      );
+    });
+  });
 }

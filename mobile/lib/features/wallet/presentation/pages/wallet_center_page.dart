@@ -48,6 +48,16 @@ class WalletCenterPage extends ConsumerWidget {
     );
     final pageSubtitle =
         buildMembershipWalletCenterPageSubtitle(info: membershipInfo);
+    final jetonHubSubtitle = buildMembershipWalletStoreHubCardSubtitle(
+      info: membershipInfo,
+      store: MembershipStoreKind.jeton,
+      catalogTier: catalogTier,
+    );
+    final cfcHubSubtitle = buildMembershipWalletStoreHubCardSubtitle(
+      info: membershipInfo,
+      store: MembershipStoreKind.cfc,
+      catalogTier: catalogTier,
+    );
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -78,7 +88,9 @@ class WalletCenterPage extends ConsumerWidget {
                 _HubCard(
                   icon: Icons.account_balance_wallet_rounded,
                   title: 'Para Çek',
-                  subtitle: 'Banka havalesi ile çekim talebi',
+                  subtitle: buildMembershipWithdrawalPageSubtitle(
+                    info: membershipInfo,
+                  ),
                   color: const Color(0xFF81C784),
                   onTap: () => context.push('/withdraw'),
                 ),
@@ -94,11 +106,24 @@ class WalletCenterPage extends ConsumerWidget {
                 _HubCard(
                   icon: Icons.diamond_rounded,
                   title: 'CFC Yükle',
-                  subtitleWidget: PaymentMethodsSummaryLine(
-                    prefix: '',
-                    fontSize: 12,
-                    textAlign: TextAlign.start,
-                    showRecommended: false,
+                  subtitleWidget: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        cfcHubSubtitle,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: context.colors.onSurfaceMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const PaymentMethodsSummaryLine(
+                        prefix: '',
+                        fontSize: 12,
+                        textAlign: TextAlign.start,
+                        showRecommended: false,
+                      ),
+                    ],
                   ),
                   color: AppThemeColors.diamondBlue,
                   onTap: () => context.push('/cfc-store'),
@@ -107,7 +132,7 @@ class WalletCenterPage extends ConsumerWidget {
                 _HubCard(
                   icon: Icons.monetization_on_rounded,
                   title: 'Jeton Mağazası',
-                  subtitle: 'Paketler ve jeton bakiyesi',
+                  subtitle: jetonHubSubtitle,
                   color: AppThemeColors.coinGold,
                   onTap: () => context.push('/jeton-store'),
                 ),

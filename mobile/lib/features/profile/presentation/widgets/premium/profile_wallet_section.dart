@@ -1,10 +1,13 @@
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/widgets/dual_balance_chips.dart';
+import '../../premium_2026/profile_membership_helpers.dart';
+import '../../providers/profile_hub_providers.dart';
 import 'profile_glass.dart';
 
-class ProfileWalletSection extends StatelessWidget {
+class ProfileWalletSection extends ConsumerWidget {
   const ProfileWalletSection({
     super.key,
     required this.jeton,
@@ -27,7 +30,11 @@ class ProfileWalletSection extends StatelessWidget {
   final VoidCallback? onSubscriptions;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final info = ref.watch(profileMembershipInfoProvider);
+    final subscriptionsLabel =
+        buildMembershipWalletSubscriptionsTileLabel(info: info);
+
     final actions = [
       (
         icon: Icons.add_card_rounded,
@@ -61,7 +68,7 @@ class ProfileWalletSection extends StatelessWidget {
       ),
       (
         icon: Icons.workspace_premium_rounded,
-        label: 'Abonelikler',
+        label: subscriptionsLabel,
         onTap: onSubscriptions,
         accent: AppThemeColors.coinGold,
       ),

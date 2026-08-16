@@ -183,6 +183,12 @@ class _StatisticsCard extends ConsumerWidget {
       info: membership,
       expiresAt: expiresAt,
     );
+    final sectionSubtitle = buildMembershipAboutStatsSectionSubtitle(
+      info: membership,
+      catalogTier: catalogTier,
+      daysRemaining: membership.daysRemaining,
+      expiresAt: expiresAt,
+    );
     final rows = <({IconData icon, String label, String value})>[
       (
         icon: Icons.workspace_premium_outlined,
@@ -262,6 +268,19 @@ class _StatisticsCard extends ConsumerWidget {
               ),
             ],
           ),
+          if (sectionSubtitle.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              sectionSubtitle,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 1.25,
+              ),
+            ),
+          ],
+          const SizedBox(height: 6),
           if (loading)
             const PremiumSkeleton(height: 120, width: double.infinity)
           else

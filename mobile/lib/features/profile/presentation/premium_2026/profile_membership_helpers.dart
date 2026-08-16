@@ -767,3 +767,63 @@ String buildMembershipWalletCenterPageSubtitle({
   }
   return 'Jeton · CFC · Premium üyelik';
 }
+
+/// Premium kart ikincil yönet CTA etiketi.
+String buildMembershipPremiumCardManageActionLabel({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isExpired) return 'Yönet';
+  return buildMembershipHubActionLabel(info: info, freeLabel: 'Yönet');
+}
+
+/// Hub istatistikler bölümü alt başlığı.
+String buildMembershipAboutStatsSectionSubtitle({
+  required ProfileMembershipInfo info,
+  MembershipTierModel? catalogTier,
+  int? daysRemaining,
+  String? expiresAt,
+}) {
+  if (info.isExpired) {
+    return '${buildMembershipExpiredPlanLabel(info: info, expiresAt: expiresAt)} · yenileyin';
+  }
+  if (info.hasActiveSubscription) {
+    return '${info.tierLabel} · ${formatMembershipPlanDuration(
+      info: info,
+      catalogTier: catalogTier,
+      daysRemaining: daysRemaining ?? info.daysRemaining,
+      expiresAt: expiresAt,
+    )}';
+  }
+  return 'Üyelik planını yükseltin';
+}
+
+/// Para çekme sayfası alt başlığı.
+String buildMembershipWithdrawalPageSubtitle({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isExpired) return 'Banka havalesi · üyeliği yenileyin';
+  if (info.hasActiveSubscription) {
+    return 'Banka havalesi · ${info.tierLabel} üyelik aktif';
+  }
+  return 'Banka havalesi ile çekim talebi';
+}
+
+/// Cüzdan merkezi jeton/CFC hub kart alt başlığı.
+String buildMembershipWalletStoreHubCardSubtitle({
+  required ProfileMembershipInfo info,
+  required MembershipStoreKind store,
+  MembershipTierModel? catalogTier,
+}) {
+  final storeLabel = store == MembershipStoreKind.jeton ? 'jeton' : 'CFC';
+  if (info.isExpired) return 'Paketler · planı yenileyin';
+  if (info.hasActiveSubscription) {
+    final discount = catalogTier?.falDiscountPercent ?? 0;
+    if (discount > 0) {
+      return 'Paketler · %$discount fal avantajı';
+    }
+    return 'Paketler · ${info.tierLabel} üyelik';
+  }
+  return store == MembershipStoreKind.jeton
+      ? 'Paketler ve $storeLabel bakiyesi'
+      : 'Paketler ve $storeLabel bakiyesi';
+}

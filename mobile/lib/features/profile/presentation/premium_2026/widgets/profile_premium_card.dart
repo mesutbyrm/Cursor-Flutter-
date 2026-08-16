@@ -136,9 +136,9 @@ class ProfilePremiumCard extends StatelessWidget {
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text(
-                        'Yönet',
-                        style: TextStyle(
+                      child: Text(
+                        buildMembershipPremiumCardManageActionLabel(info: info),
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
                           fontSize: 11,

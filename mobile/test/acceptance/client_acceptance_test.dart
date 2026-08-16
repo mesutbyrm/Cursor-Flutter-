@@ -212,6 +212,46 @@ void main() {
     });
   });
 
+  group('20f — Profil üyelik faz 34 helper sözleşmesi', () {
+    test('istatistikler alt başlığı ücretsiz', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipAboutStatsSectionSubtitle(info: info),
+        contains('yükseltin'),
+      );
+    });
+
+    test('para çekme aktif üyelik', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 5,
+      );
+      expect(
+        buildMembershipWithdrawalPageSubtitle(info: info),
+        contains('Gold üyelik aktif'),
+      );
+    });
+
+    test('cüzdan store hub süresi dolmuş', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipWalletStoreHubCardSubtitle(
+          info: info,
+          store: MembershipStoreKind.cfc,
+        ),
+        contains('planı yenileyin'),
+      );
+    });
+  });
+
   group('20 — Uygulama performans testi', () {
     setUp(AppTheme.clearCacheForTest);
 

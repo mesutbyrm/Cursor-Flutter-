@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.224+260 (2026-08-16) — Profil üyelik faz 34
+
+- **Premium kart:** `buildMembershipPremiumCardManageActionLabel` — ikincil yönet CTA
+- **İstatistikler:** `buildMembershipAboutStatsSectionSubtitle` — plan özeti alt başlık
+- **Para çekme:** `buildMembershipWithdrawalPageSubtitle` — dinamik sayfa alt başlığı
+- **Cüzdan merkezi:** `buildMembershipWalletStoreHubCardSubtitle` — jeton/CFC hub kartları
+- **Cüzdan bölümü:** `ProfileWalletSection` abonelik karo helper hizası
+- **Acceptance:** client `20f` üyelik helper sözleşme testleri
+- **Test:** about stats subtitle, withdrawal subtitle, wallet store hub
+
 ## 1.0.223+259 (2026-08-16) — Profil üyelik faz 33
 
 - **Cüzdan kartı:** `buildMembershipWalletPremiumStatLabel` + `buildMembershipWalletSubscriptionsTileLabel`

@@ -59,6 +59,40 @@ void main() {
       expect(find.byType(MembershipStatusPill), findsOneWidget);
       expect(find.text('Gold · 10.05.2020'), findsWidgets);
     });
+
+    testWidgets('ücretsiz kullanıcı istatistik alt başlığı', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            walletBalancesProvider.overrideWith(
+              () => _FixedWalletNotifier(WalletBalances.empty),
+            ),
+            profileMembershipInfoProvider.overrideWith(
+              (ref) => const ProfileMembershipInfo(
+                raw: 'basic',
+                tier: VipTier.basic,
+              ),
+            ),
+            membershipControllerProvider.overrideWith(_StubMembershipController.new),
+            profileExtendedProvider.overrideWith(
+              (ref) async => const ProfileExtendedEntity(),
+            ),
+            profileUserStatisticsProvider.overrideWith(
+              (ref) async => const ProfileUserStatisticsEntity(),
+            ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: ProfileHubAboutStatsRow(user: user, stats: stats),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.textContaining('yükseltin'), findsOneWidget);
+    });
   });
 }
 

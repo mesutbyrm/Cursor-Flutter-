@@ -7,8 +7,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
-import '../../../profile/presentation/providers/profile_providers.dart';
-import '../../domain/withdrawal_request.dart';
+import '../../../membership/presentation/controllers/membership_controller.dart';
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
+import '../../domain/wallet_balances.dart';
 import '../providers/wallet_extended_providers.dart';
 
 /// Para çekme — `POST /api/withdrawals`.
@@ -81,6 +82,12 @@ class _WithdrawalPageState extends ConsumerState<WithdrawalPage> {
   Widget build(BuildContext context) {
     final history = ref.watch(withdrawalHistoryProvider);
     final wallet = ref.watch(walletBalancesProvider).valueOrNull;
+    final membershipInfo = resolveProfileMembership(
+      rawMembership: wallet?.membership,
+      daysRemaining: wallet?.membershipDaysRemaining,
+    );
+    final pageSubtitle =
+        buildMembershipWithdrawalPageSubtitle(info: membershipInfo);
     final rates = ref.watch(platformCommissionRatesProvider).valueOrNull;
     final minWithdraw = rates?.minWithdrawalTl ??
         (wallet?.withdrawalLimit != null && wallet!.withdrawalLimit > 0
@@ -92,7 +99,7 @@ class _WithdrawalPageState extends ConsumerState<WithdrawalPage> {
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Para Çek',
-          subtitle: 'Banka havalesi ile çekim talebi',
+          subtitle: pageSubtitle,
           onRefresh: () async {
             ref.invalidate(withdrawalHistoryProvider);
             ref.invalidate(platformCommissionRatesProvider);
