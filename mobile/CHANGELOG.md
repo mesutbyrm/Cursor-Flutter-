@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.228+264 (2026-08-16) — Profil üyelik faz 38
+
+- **İstatistikler:** `buildMembershipAboutStatsPlanRowLabel` + `buildMembershipAboutStatsPlanDurationRowLabel`
+- **Rozet bölümü:** `buildMembershipBadgesSectionTitle` + `buildMembershipBadgesSectionManageActionLabel`
+- **Jeton mağazası:** `buildMembershipJetonStoreExtendBannerText` — uzatma banner metni
+- **Ödeme talebi:** `buildMembershipPaymentRequestDefaultNotes` + `buildMembershipCfcPaymentRequestDefaultNotes`
+- **Görevler merkezi:** `buildMembershipGrowthHubLevelVipPillLabel` — seviye VIP pill
+- **Aktif üyelik kartı:** `buildMembershipActiveMembershipCardTitle/Subtitle`
+- **Acceptance:** client `20j` üyelik helper sözleşme testleri
+- **Test:** istatistik satırları, jeton banner, ödeme notları, VIP pill
+
 ## 1.0.227+263 (2026-08-16) — Profil üyelik faz 37
 
 - **Cüzdan kartı:** `buildMembershipWalletPremiumStatRowLabel` + `buildMembershipWalletSubscriptionStatRowLabel`

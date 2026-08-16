@@ -1,4 +1,5 @@
 import '../domain/entities/jeton_package_entity.dart';
+import '../presentation/premium_2026/profile_membership_helpers.dart';
 
 /// Özel TL/jeton tutarıyla jeton talebi — site `POST /api/payments/requests`.
 Map<String, dynamic> buildCustomJetonPaymentRequest({
@@ -93,7 +94,11 @@ Map<String, dynamic> buildMembershipPaymentRequest({
   final tierId = package.id.startsWith('membership_')
       ? package.id.substring('membership_'.length)
       : package.id;
-  final baseNotes = notes ?? 'Gold üyelik · $method';
+  final baseNotes = notes ??
+      buildMembershipPaymentRequestDefaultNotes(
+        method: method,
+        tierId: tierId,
+      );
   return {
     'requestType': 'jeton',
     'type': 'jeton',
@@ -134,7 +139,11 @@ Map<String, dynamic> buildMembershipCfcPaymentRequest({
 }) {
   final receipt = receiptReference?.trim();
   final durationLabel = durationDays > 0 ? '$durationDays gün' : '30 gün';
-  final baseNotes = notes ?? 'Üyelik · $tierTitle · CFC · $method';
+  final baseNotes = notes ??
+      buildMembershipCfcPaymentRequestDefaultNotes(
+        tierTitle: tierTitle,
+        method: method,
+      );
   return {
     'requestType': 'cfc',
     'type': 'cfc',

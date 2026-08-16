@@ -1075,3 +1075,73 @@ String buildMembershipStoreTeaserBannerActionLabel({
     freeLabel: 'Planları Gör',
   )} >';
 }
+
+/// İstatistikler üyelik planı satır etiketi.
+String buildMembershipAboutStatsPlanRowLabel() => 'Üyelik Planı';
+
+/// İstatistikler plan süresi satır etiketi.
+String buildMembershipAboutStatsPlanDurationRowLabel() => 'Plan süresi';
+
+/// Rozet bölümü başlığı.
+String buildMembershipBadgesSectionTitle() => 'Üyelik Rozetleri';
+
+/// Rozet bölümü yönet aksiyon etiketi.
+String buildMembershipBadgesSectionManageActionLabel() => 'Rozetleri Yönet';
+
+/// Jeton mağazası uzatma banner metni.
+String buildMembershipJetonStoreExtendBannerText({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isExpired) return '${info.tierLabel} planı sona erdi · yenileyin';
+  if (info.hasActiveSubscription) {
+    return '${info.tierLabel} üyesiniz, uzatın';
+  }
+  return 'Gold üyesiniz, uzatın';
+}
+
+/// Üyelik jeton ödeme talebi varsayılan notu.
+String buildMembershipPaymentRequestDefaultNotes({
+  required String method,
+  required String tierId,
+}) {
+  final tierLabel = resolveProfileMembership(rawMembership: tierId).tierLabel;
+  return '$tierLabel üyelik · $method';
+}
+
+/// Üyelik CFC ödeme talebi varsayılan notu.
+String buildMembershipCfcPaymentRequestDefaultNotes({
+  required String tierTitle,
+  required String method,
+}) {
+  return 'Üyelik · $tierTitle · CFC · $method';
+}
+
+/// Görevler merkezi seviye VIP pill etiketi.
+String buildMembershipGrowthHubLevelVipPillLabel({
+  required ProfileMembershipInfo info,
+  String? serverVipTier,
+}) {
+  final external = serverVipTier?.trim();
+  if (external != null && external.isNotEmpty) {
+    return 'VIP · $external';
+  }
+  if (info.isExpired && info.hasPaidTier) return 'VIP · Yenile';
+  if (info.hasActiveSubscription && info.hasPaidTier) {
+    return 'VIP · ${info.tierLabel}';
+  }
+  return 'VIP';
+}
+
+/// Aktif üyelik kartı başlığı.
+String buildMembershipActiveMembershipCardTitle({
+  required String tierLabel,
+}) {
+  return 'Zaten ${tierLabel.toUpperCase()} üyesiniz';
+}
+
+/// Aktif üyelik kartı alt metni.
+String buildMembershipActiveMembershipCardSubtitle({
+  required int daysRemaining,
+}) {
+  return '$daysRemaining gününüz kaldı — uzatmak için dokunun';
+}

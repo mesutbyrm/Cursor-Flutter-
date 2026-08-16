@@ -173,8 +173,13 @@ class _BalanceChip extends StatelessWidget {
 }
 
 class JetonGoldMemberBanner extends StatelessWidget {
-  const JetonGoldMemberBanner({super.key, required this.onTap});
+  const JetonGoldMemberBanner({
+    super.key,
+    required this.text,
+    required this.onTap,
+  });
 
+  final String text;
   final VoidCallback onTap;
 
   @override
@@ -203,7 +208,7 @@ class JetonGoldMemberBanner extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Gold üyesiniz, uzatın',
+                  text,
                   style: TextStyle(
                     color: AppThemeColors.coinGold,
                     fontWeight: FontWeight.w800,

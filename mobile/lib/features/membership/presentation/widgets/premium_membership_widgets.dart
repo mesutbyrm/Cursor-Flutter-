@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
+import '../premium_2026/profile_membership_helpers.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../profile/presentation/widgets/jeton_store_widgets.dart';
 import '../../domain/membership_package_entity.dart';
@@ -210,7 +211,9 @@ class PremiumActiveMembershipCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Zaten ${tierLabel.toUpperCase()} üyesiniz',
+                      buildMembershipActiveMembershipCardTitle(
+                        tierLabel: tierLabel,
+                      ),
                       style: TextStyle(
                         color: AppThemeColors.coinGold,
                         fontWeight: FontWeight.w900,
@@ -219,7 +222,9 @@ class PremiumActiveMembershipCard extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      '$daysRemaining gününüz kaldı — uzatmak için dokunun',
+                      buildMembershipActiveMembershipCardSubtitle(
+                        daysRemaining: daysRemaining,
+                      ),
                       style: TextStyle(
                         color: context.colors.onSurfaceVariant.withValues(alpha: 0.95),
                         fontSize: 12,

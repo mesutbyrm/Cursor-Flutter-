@@ -372,6 +372,26 @@ void main() {
     });
   });
 
+  group('20j — Profil üyelik faz 38 helper sözleşmesi', () {
+    test('rozet bölümü başlık', () {
+      expect(buildMembershipBadgesSectionTitle(), 'Üyelik Rozetleri');
+    });
+
+    test('istatistik plan satır etiketi', () {
+      expect(buildMembershipAboutStatsPlanRowLabel(), 'Üyelik Planı');
+    });
+
+    test('CFC ödeme varsayılan not', () {
+      expect(
+        buildMembershipCfcPaymentRequestDefaultNotes(
+          tierTitle: 'Diamond',
+          method: 'whatsapp',
+        ),
+        contains('Diamond'),
+      );
+    });
+  });
+
   group('20 — Uygulama performans testi', () {
     setUp(AppTheme.clearCacheForTest);
 

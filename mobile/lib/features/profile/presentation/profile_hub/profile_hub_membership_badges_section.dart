@@ -52,7 +52,7 @@ class ProfileHubMembershipBadgesSection extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Üyelik Rozetleri',
+                      buildMembershipBadgesSectionTitle(),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.92),
                         fontWeight: FontWeight.w900,
@@ -67,8 +67,8 @@ class ProfileHubMembershipBadgesSection extends ConsumerWidget {
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    child: const Text(
-                      'Rozetleri Yönet',
+                    child: Text(
+                      buildMembershipBadgesSectionManageActionLabel(),
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 11,

@@ -192,7 +192,7 @@ class _StatisticsCard extends ConsumerWidget {
     final rows = <({IconData icon, String label, String value})>[
       (
         icon: Icons.workspace_premium_outlined,
-        label: 'Üyelik Planı',
+        label: buildMembershipAboutStatsPlanRowLabel(),
         value: buildMembershipAboutStatsPlanValue(
           info: membership,
           expiresAt: expiresAt,
@@ -200,7 +200,7 @@ class _StatisticsCard extends ConsumerWidget {
       ),
       (
         icon: Icons.timer_outlined,
-        label: 'Plan süresi',
+        label: buildMembershipAboutStatsPlanDurationRowLabel(),
         value: planDurationValue,
       ),
       (

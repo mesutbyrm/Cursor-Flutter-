@@ -123,6 +123,7 @@ class GrowthHubPage extends ConsumerWidget {
                     progress: progress,
                     level: displayLevel,
                     xp: displayXp,
+                    membershipInfo: membershipInfo,
                     vipTier: serverLevel?.vipTier,
                     isVip: serverLevel?.isVip ?? membershipInfo.isVip,
                   ),
@@ -400,6 +401,7 @@ class _LevelHero extends StatelessWidget {
   const _LevelHero({
     required this.displayName,
     required this.progress,
+    required this.membershipInfo,
     this.level,
     this.xp,
     this.vipTier,
@@ -408,6 +410,7 @@ class _LevelHero extends StatelessWidget {
 
   final String displayName;
   final GrowthProgressEntity progress;
+  final ProfileMembershipInfo membershipInfo;
   final int? level;
   final int? xp;
   final String? vipTier;
@@ -415,6 +418,11 @@ class _LevelHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final vipPillLabel = buildMembershipGrowthHubLevelVipPillLabel(
+      info: membershipInfo,
+      serverVipTier: vipTier,
+    );
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -493,7 +501,7 @@ class _LevelHero extends StatelessWidget {
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          vipTier?.isNotEmpty == true ? 'VIP · $vipTier' : 'VIP',
+                          vipPillLabel,
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,

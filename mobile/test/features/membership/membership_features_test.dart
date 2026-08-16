@@ -1529,4 +1529,71 @@ void main() {
       );
     });
   });
+
+  group('buildMembershipAboutStatsPlanRowLabel', () {
+    test('sabit etiket', () {
+      expect(buildMembershipAboutStatsPlanRowLabel(), 'Üyelik Planı');
+    });
+  });
+
+  group('buildMembershipJetonStoreExtendBannerText', () {
+    test('aktif gold uzat', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 5,
+      );
+      expect(
+        buildMembershipJetonStoreExtendBannerText(info: info),
+        'Gold üyesiniz, uzatın',
+      );
+    });
+
+    test('süresi dolmuş yenile', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipJetonStoreExtendBannerText(info: info),
+        contains('yenileyin'),
+      );
+    });
+  });
+
+  group('buildMembershipPaymentRequestDefaultNotes', () {
+    test('svip tier notu', () {
+      expect(
+        buildMembershipPaymentRequestDefaultNotes(
+          method: 'whatsapp',
+          tierId: 'svip',
+        ),
+        'SVIP üyelik · whatsapp',
+      );
+    });
+  });
+
+  group('buildMembershipGrowthHubLevelVipPillLabel', () {
+    test('aktif gold VIP pill', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 4,
+      );
+      expect(
+        buildMembershipGrowthHubLevelVipPillLabel(info: info),
+        'VIP · Gold',
+      );
+    });
+  });
+
+  group('buildMembershipActiveMembershipCardTitle', () {
+    test('gold başlık', () {
+      expect(
+        buildMembershipActiveMembershipCardTitle(tierLabel: 'Gold'),
+        'Zaten GOLD üyesiniz',
+      );
+    });
+  });
 }
