@@ -392,6 +392,36 @@ void main() {
     });
   });
 
+  group('20k — Profil üyelik faz 39 helper sözleşmesi', () {
+    test('paket kartı uzat etiketi', () {
+      expect(buildMembershipPackageCardExtendActionLabel(), 'Uzat');
+    });
+
+    test('paket kartı aktif alt metin', () {
+      expect(
+        buildMembershipPackageCardActiveSubtitle(
+          tierTitle: 'Premium',
+          daysRemaining: 7,
+        ),
+        contains('7 gün'),
+      );
+    });
+
+    test('kozmetik satır etiketi', () {
+      expect(
+        buildMembershipSettingsCosmeticsRowLabel(),
+        'Premium Profil',
+      );
+    });
+
+    test('cüzdan merkezi jeton mağazası başlığı', () {
+      expect(
+        buildMembershipWalletCenterJetonStoreTitle(),
+        'Jeton Mağazası',
+      );
+    });
+  });
+
   group('20 — Uygulama performans testi', () {
     setUp(AppTheme.clearCacheForTest);
 

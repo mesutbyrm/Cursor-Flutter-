@@ -87,7 +87,7 @@ class WalletCenterPage extends ConsumerWidget {
                 const SizedBox(height: 16),
                 _HubCard(
                   icon: Icons.account_balance_wallet_rounded,
-                  title: 'Para Çek',
+                  title: buildMembershipWalletCenterWithdrawalTitle(),
                   subtitle: buildMembershipWithdrawalPageSubtitle(
                     info: membershipInfo,
                   ),
@@ -105,7 +105,7 @@ class WalletCenterPage extends ConsumerWidget {
                 const SizedBox(height: 12),
                 _HubCard(
                   icon: Icons.diamond_rounded,
-                  title: 'CFC Yükle',
+                  title: buildMembershipWalletCenterCfcStoreTitle(),
                   subtitleWidget: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -131,7 +131,7 @@ class WalletCenterPage extends ConsumerWidget {
                 const SizedBox(height: 12),
                 _HubCard(
                   icon: Icons.monetization_on_rounded,
-                  title: 'Jeton Mağazası',
+                  title: buildMembershipWalletCenterJetonStoreTitle(),
                   subtitle: jetonHubSubtitle,
                   color: AppThemeColors.coinGold,
                   onTap: () => context.push('/jeton-store'),

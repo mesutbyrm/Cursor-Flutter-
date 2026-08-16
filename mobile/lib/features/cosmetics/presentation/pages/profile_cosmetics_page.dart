@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../domain/cosmetic_effect_kind.dart';
@@ -64,7 +65,7 @@ class _ProfileCosmeticsPageState extends ConsumerState<ProfileCosmeticsPage>
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
-          title: 'Premium Profil',
+          title: buildMembershipSettingsCosmeticsRowLabel(),
           body: canCustomize
               ? Column(
                   children: [

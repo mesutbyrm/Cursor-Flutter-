@@ -312,7 +312,9 @@ class PremiumTierCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent = accentFor(package.id);
     final active = package.isActive && (package.daysRemaining ?? 0) > 0;
-    final btnLabel = active ? 'Uzat' : 'Satın Al';
+    final btnLabel = active
+        ? buildMembershipPackageCardExtendActionLabel()
+        : buildMembershipPackageCardBuyActionLabel();
     final btnFg = package.id == 'gold' ? Colors.black87 : Colors.white;
 
     return LayoutBuilder(
@@ -333,7 +335,10 @@ class PremiumTierCard extends StatelessWidget {
             if (active) ...[
               SizedBox(height: 4),
               Text(
-                '${package.title} üyesiniz, ${package.daysRemaining ?? 0} gün kaldı, uzatın',
+                buildMembershipPackageCardActiveSubtitle(
+                  tierTitle: package.title,
+                  daysRemaining: package.daysRemaining ?? 0,
+                ),
                 style: TextStyle(
                   fontSize: 11,
                   color: accent.withValues(alpha: 0.95),
@@ -352,7 +357,7 @@ class PremiumTierCard extends StatelessWidget {
                 ),
                 _TagPill(
                   icon: Icons.diamond_rounded,
-                  label: 'VIP',
+                  label: buildMembershipPackageVipTagLabel(),
                   color: accent,
                 ),
               ],

@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.229+265 (2026-08-16) — Profil üyelik faz 39
+
+- **Premium tier kartı:** `buildMembershipPackageCardBuyActionLabel` + `buildMembershipPackageCardExtendActionLabel` + `buildMembershipPackageCardActiveSubtitle` + `buildMembershipPackageVipTagLabel`
+- **Ayarlar / kozmetik:** `buildMembershipSettingsCosmeticsRowLabel` — Premium Profil satırı
+- **Profil başlığı:** `buildMembershipProfileHeaderVipBadgeLabel` — tier-aware VIP rozeti
+- **Cüzdan merkezi:** `buildMembershipWalletCenterWithdrawalTitle` + `buildMembershipWalletCenterCfcStoreTitle` + `buildMembershipWalletCenterJetonStoreTitle`
+- **Acceptance:** client `20k` üyelik helper sözleşme testleri
+- **Test:** paket kartı CTA, kozmetik satır, cüzdan hub başlıkları, VIP rozet
+
 ## 1.0.228+264 (2026-08-16) — Profil üyelik faz 38
 
 - **İstatistikler:** `buildMembershipAboutStatsPlanRowLabel` + `buildMembershipAboutStatsPlanDurationRowLabel`

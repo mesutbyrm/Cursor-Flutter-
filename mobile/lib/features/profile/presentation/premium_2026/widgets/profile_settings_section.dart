@@ -47,7 +47,7 @@ class ProfileSettingsSection extends StatelessWidget {
               Divider(height: 1, indent: 52, color: palette.divider),
               _SettingsRow(
                 icon: Icons.auto_awesome_rounded,
-                label: 'Premium Profil',
+                label: buildMembershipSettingsCosmeticsRowLabel(),
                 onTap: () => context.push('/profile/cosmetics'),
               ),
               Divider(height: 1, indent: 52, color: palette.divider),

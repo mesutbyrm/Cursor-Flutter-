@@ -10,6 +10,7 @@ import '../../../../core/widgets/theme_mode_selector.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../fortune/presentation/widgets/fortune_auto_share_setting_tile.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../widgets/premium/profile_glass.dart';
 
 /// Merkezi ayarlar — hesap, güvenlik, gizlilik, bildirimler.
@@ -36,7 +37,7 @@ class SettingsPage extends ConsumerWidget {
                   children: [
                     _SettingsTile(
                       icon: Icons.palette_outlined,
-                      label: 'Premium Profil',
+                      label: buildMembershipSettingsCosmeticsRowLabel(),
                       onTap: () => context.push('/profile/cosmetics'),
                     ),
                     const _Divider(),

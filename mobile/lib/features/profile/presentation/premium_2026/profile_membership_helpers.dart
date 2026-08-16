@@ -1145,3 +1145,42 @@ String buildMembershipActiveMembershipCardSubtitle({
 }) {
   return '$daysRemaining gününüz kaldı — uzatmak için dokunun';
 }
+
+/// Premium tier kartı satın al CTA etiketi.
+String buildMembershipPackageCardBuyActionLabel() => 'Satın Al';
+
+/// Premium tier kartı uzat CTA etiketi.
+String buildMembershipPackageCardExtendActionLabel() => 'Uzat';
+
+/// Premium tier kartı aktif paket alt metni.
+String buildMembershipPackageCardActiveSubtitle({
+  required String tierTitle,
+  required int daysRemaining,
+}) {
+  return '$tierTitle üyesiniz, $daysRemaining gün kaldı, uzatın';
+}
+
+/// Premium tier kartı VIP etiket pill metni.
+String buildMembershipPackageVipTagLabel() => 'VIP';
+
+/// Ayarlar / kozmetik satır etiketi.
+String buildMembershipSettingsCosmeticsRowLabel() => 'Premium Profil';
+
+/// Profil başlığı VIP rozet etiketi.
+String buildMembershipProfileHeaderVipBadgeLabel({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.hasActiveSubscription && info.hasPaidTier) {
+    return info.tierLabel;
+  }
+  return 'VIP';
+}
+
+/// Cüzdan merkezi para çek kart başlığı.
+String buildMembershipWalletCenterWithdrawalTitle() => 'Para Çek';
+
+/// Cüzdan merkezi CFC mağaza kart başlığı.
+String buildMembershipWalletCenterCfcStoreTitle() => 'CFC Yükle';
+
+/// Cüzdan merkezi jeton mağaza kart başlığı.
+String buildMembershipWalletCenterJetonStoreTitle() => 'Jeton Mağazası';

@@ -1596,4 +1596,83 @@ void main() {
       );
     });
   });
+
+  group('buildMembershipPackageCardBuyActionLabel', () {
+    test('satın al etiketi', () {
+      expect(buildMembershipPackageCardBuyActionLabel(), 'Satın Al');
+    });
+  });
+
+  group('buildMembershipPackageCardExtendActionLabel', () {
+    test('uzat etiketi', () {
+      expect(buildMembershipPackageCardExtendActionLabel(), 'Uzat');
+    });
+  });
+
+  group('buildMembershipPackageCardActiveSubtitle', () {
+    test('aktif paket alt metni', () {
+      expect(
+        buildMembershipPackageCardActiveSubtitle(
+          tierTitle: 'Gold',
+          daysRemaining: 12,
+        ),
+        'Gold üyesiniz, 12 gün kaldı, uzatın',
+      );
+    });
+  });
+
+  group('buildMembershipPackageVipTagLabel', () {
+    test('VIP etiket', () {
+      expect(buildMembershipPackageVipTagLabel(), 'VIP');
+    });
+  });
+
+  group('buildMembershipSettingsCosmeticsRowLabel', () {
+    test('kozmetik satır etiketi', () {
+      expect(buildMembershipSettingsCosmeticsRowLabel(), 'Premium Profil');
+    });
+  });
+
+  group('buildMembershipProfileHeaderVipBadgeLabel', () {
+    test('aktif gold tier etiketi', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 5,
+      );
+      expect(
+        buildMembershipProfileHeaderVipBadgeLabel(info: info),
+        'Gold',
+      );
+    });
+
+    test('varsayılan VIP etiketi', () {
+      const info = ProfileMembershipInfo(
+        raw: null,
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipProfileHeaderVipBadgeLabel(info: info),
+        'VIP',
+      );
+    });
+  });
+
+  group('buildMembershipWalletCenterWithdrawalTitle', () {
+    test('para çek başlığı', () {
+      expect(buildMembershipWalletCenterWithdrawalTitle(), 'Para Çek');
+    });
+  });
+
+  group('buildMembershipWalletCenterCfcStoreTitle', () {
+    test('CFC yükle başlığı', () {
+      expect(buildMembershipWalletCenterCfcStoreTitle(), 'CFC Yükle');
+    });
+  });
+
+  group('buildMembershipWalletCenterJetonStoreTitle', () {
+    test('jeton mağazası başlığı', () {
+      expect(buildMembershipWalletCenterJetonStoreTitle(), 'Jeton Mağazası');
+    });
+  });
 }
