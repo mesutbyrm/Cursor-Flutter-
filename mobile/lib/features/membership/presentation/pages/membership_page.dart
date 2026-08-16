@@ -179,7 +179,7 @@ class MembershipPage extends ConsumerWidget {
                             ),
                             const SizedBox(height: 22),
                             Text(
-                              'Jeton Paketleri',
+                              buildMembershipPageTokenPackagesSectionTitle(),
                               style: GoogleFonts.plusJakartaSans(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
@@ -235,7 +235,9 @@ class MembershipPage extends ConsumerWidget {
                                 ),
                               ),
                               child: Text(
-                                '${ui.selectedTierModel.title} Üyeliği · ${ui.selectedTierModel.durationLabel} · ₺${ui.selectedTierModel.monthlyPriceTry}',
+                                buildMembershipPagePurchaseButtonLabel(
+                                  tier: ui.selectedTierModel,
+                                ),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w900,
                                   fontSize: 15,
@@ -246,6 +248,7 @@ class MembershipPage extends ConsumerWidget {
                             const MembershipPaymentMethodsSummary(),
                             const SizedBox(height: 28),
                             MembershipCommonBenefits(
+                              membershipInfo: ui.membershipInfo,
                               highlights: mergeMembershipCommonHighlights(
                                 catalogFeatures:
                                     catalogAsync.valueOrNull?.features ??
@@ -378,10 +381,10 @@ class MembershipPage extends ConsumerWidget {
 
     final jetonPkg = JetonPackageEntity(
       id: 'membership_${tier.wireId}',
-      title: '${tier.title} Üyelik · ${tier.durationLabel}',
+      title: buildMembershipCheckoutPackageTitle(tier: tier),
       coins: priceJeton,
       priceTry: tier.monthlyPriceTry.toDouble(),
-      badge: ui.hasActivePaidMembership ? 'Uzat' : null,
+      badge: buildMembershipCheckoutPackageBadge(info: ui.membershipInfo),
     );
 
     openJetonCheckoutFlow(
@@ -390,8 +393,7 @@ class MembershipPage extends ConsumerWidget {
       package: jetonPkg,
       priceText:
           '₺${tier.monthlyPriceTry} (${tier.monthlyTokens} jeton · ${tier.durationLabel})',
-      paymentNotes:
-          'Üyelik · ${tier.title} · ${tier.durationLabel} · ${tier.monthlyTokens} jeton',
+      paymentNotes: buildMembershipCheckoutPaymentNotes(tier: tier),
       onDone: onPurchaseDone,
     );
   }

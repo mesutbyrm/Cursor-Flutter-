@@ -152,7 +152,6 @@ class _MembershipSummaryRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final paid = info.hasPaidTier;
     final ui = ref.watch(membershipControllerProvider);
     final catalogTier = catalogTierForMembership(info, ui.tiers);
     final expiresAt =
@@ -170,6 +169,19 @@ class _MembershipSummaryRow extends ConsumerWidget {
       expiresAt: expiresAt,
     );
 
+    final leadingAccent = resolveMembershipHubSummaryRowLeadingAccent(info: info);
+    final leadingColor = switch (leadingAccent) {
+      MembershipHubSummaryRowLeadingAccent.paid => ProfilePremiumTheme.neonPurple,
+      MembershipHubSummaryRowLeadingAccent.expired => Colors.orangeAccent,
+      MembershipHubSummaryRowLeadingAccent.standard => Colors.white54,
+    };
+    final leadingIcon = switch (leadingAccent) {
+      MembershipHubSummaryRowLeadingAccent.paid =>
+        Icons.workspace_premium_rounded,
+      MembershipHubSummaryRowLeadingAccent.expired => Icons.history_rounded,
+      MembershipHubSummaryRowLeadingAccent.standard => Icons.lock_open_rounded,
+    };
+
     return Material(
       color: Colors.white.withValues(alpha: 0.06),
       borderRadius: BorderRadius.circular(12),
@@ -181,10 +193,8 @@ class _MembershipSummaryRow extends ConsumerWidget {
           child: Row(
             children: [
               Icon(
-                paid ? Icons.workspace_premium_rounded : Icons.lock_open_rounded,
-                color: paid
-                    ? ProfilePremiumTheme.neonPurple
-                    : Colors.white54,
+                leadingIcon,
+                color: leadingColor,
                 size: 18,
               ),
               const SizedBox(width: 10),

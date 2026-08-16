@@ -39,6 +39,7 @@ class MembershipStoreTeaserBanner extends ConsumerWidget {
       catalogTier: catalogTier,
       expiresAt: expiresAt,
     );
+    final actionLabel = buildMembershipStoreTeaserBannerActionLabel(info: info);
 
     return Padding(
       padding: padding,
@@ -86,6 +87,15 @@ class MembershipStoreTeaserBanner extends ConsumerWidget {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  actionLabel,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.55),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
                   ),
                 ),
                 Icon(

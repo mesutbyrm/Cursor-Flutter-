@@ -62,7 +62,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Gold'), findsOneWidget);
+      expect(find.text('Gold'), findsNWidgets(2));
       expect(find.text('Yenile'), findsOneWidget);
     });
   });

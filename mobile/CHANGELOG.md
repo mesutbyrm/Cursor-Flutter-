@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.227+263 (2026-08-16) — Profil üyelik faz 37
+
+- **Cüzdan kartı:** `buildMembershipWalletPremiumStatRowLabel` + `buildMembershipWalletSubscriptionStatRowLabel`
+- **Checkout:** `buildMembershipCheckoutPackageTitle/PaymentNotes/Badge` + `buildMembershipPagePurchaseButtonLabel`
+- **Ortak avantajlar:** `buildMembershipCommonBenefitsSectionTitle` — tier-aware başlık
+- **Para birimi kartı:** `resolveMembershipHubSummaryRowLeadingAccent` — ikon vurgusu
+- **Mağaza teaser:** `buildMembershipStoreTeaserBannerActionLabel` — CTA etiketi
+- **Üyelik sayfası:** `buildMembershipPageTokenPackagesSectionTitle` — jeton bölüm başlığı
+- **Acceptance:** client `20i` üyelik helper sözleşme testleri
+- **Test:** cüzdan satır etiketleri, checkout notları, common benefits başlık
+
 ## 1.0.226+262 (2026-08-16) — Profil üyelik faz 36
 
 - **Hizmetler şeridi:** `buildMembershipHubMembershipServiceCardTitle` + `buildMembershipHubVipGoldServiceCardTitle`

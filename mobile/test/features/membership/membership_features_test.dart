@@ -1440,4 +1440,93 @@ void main() {
       );
     });
   });
+
+  group('buildMembershipWalletPremiumStatRowLabel', () {
+    test('ücretsiz premium satır', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipWalletPremiumStatRowLabel(info: info),
+        'Premium',
+      );
+    });
+
+    test('aktif gold satır', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 4,
+      );
+      expect(
+        buildMembershipWalletPremiumStatRowLabel(info: info),
+        'Gold',
+      );
+    });
+  });
+
+  group('buildMembershipCheckoutPaymentNotes', () {
+    test('gold tier notları', () {
+      const tier = MembershipTierModel(
+        id: MembershipTierId.gold,
+        title: 'Gold',
+        subtitle: 'Test',
+        monthlyTokens: 1500,
+        monthlyPriceTry: 1000,
+        accent: Color(0xFFFFD54F),
+        badgeIcon: Icons.star,
+        glow: Color(0xFFFFC107),
+      );
+      expect(
+        buildMembershipCheckoutPaymentNotes(tier: tier),
+        contains('1500 jeton'),
+      );
+    });
+  });
+
+  group('buildMembershipCommonBenefitsSectionTitle', () {
+    test('API aktif gold avantajları', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 3,
+      );
+      expect(
+        buildMembershipCommonBenefitsSectionTitle(
+          info: info,
+          useApiHighlights: true,
+        ),
+        'Gold Avantajları',
+      );
+    });
+
+    test('statik ortak avantajlar', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipCommonBenefitsSectionTitle(
+          info: info,
+          useApiHighlights: false,
+        ),
+        contains('Ortak'),
+      );
+    });
+  });
+
+  group('resolveMembershipHubSummaryRowLeadingAccent', () {
+    test('süresi dolmuş expired', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        resolveMembershipHubSummaryRowLeadingAccent(info: info),
+        MembershipHubSummaryRowLeadingAccent.expired,
+      );
+    });
+  });
 }

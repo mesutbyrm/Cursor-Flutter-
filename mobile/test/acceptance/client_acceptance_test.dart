@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:canlifal_social/core/storage/theme_preferences.dart';
 import 'package:canlifal_social/core/theme/app_theme.dart';
+import 'package:canlifal_social/features/membership/domain/membership_model.dart';
 import 'package:canlifal_social/features/profile/presentation/premium_2026/profile_membership_helpers.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import 'package:canlifal_social/features/voice_hub/domain/voice_music_sync.dart';
@@ -325,6 +326,48 @@ void main() {
       expect(
         buildMembershipPageAppBarSubtitle(info: info),
         contains('sona erdi'),
+      );
+    });
+  });
+
+  group('20i — Profil üyelik faz 37 helper sözleşmesi', () {
+    test('cüzdan kart premium satır ücretsiz', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipWalletPremiumStatRowLabel(info: info),
+        'Premium',
+      );
+    });
+
+    test('checkout paket başlığı gold', () {
+      expect(
+        buildMembershipCheckoutPackageTitle(
+          tier: const MembershipTierModel(
+            id: MembershipTierId.gold,
+            title: 'Gold',
+            subtitle: 'Test',
+            monthlyTokens: 1500,
+            monthlyPriceTry: 1000,
+            accent: Color(0xFFFFD54F),
+            badgeIcon: Icons.star,
+            glow: Color(0xFFFFC107),
+          ),
+        ),
+        contains('Gold Üyelik'),
+      );
+    });
+
+    test('mağaza teaser CTA ücretsiz', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipStoreTeaserBannerActionLabel(info: info),
+        contains('Planları Gör'),
       );
     });
   });

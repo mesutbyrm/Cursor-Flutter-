@@ -49,6 +49,10 @@ class ProfileWalletCard extends ConsumerWidget {
       expiresAt: state.wallet?.membershipExpiresAt,
     );
     final premiumStatLabel = buildMembershipWalletPremiumStatLabel(info: info);
+    final premiumStatRowLabel =
+        buildMembershipWalletPremiumStatRowLabel(info: info);
+    final subscriptionStatRowLabel =
+        buildMembershipWalletSubscriptionStatRowLabel(info: info);
     final subscriptionsTileLabel =
         buildMembershipWalletSubscriptionsTileLabel(info: info);
 
@@ -108,13 +112,13 @@ class ProfileWalletCard extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: _MiniStat(
-                        label: 'Premium',
+                        label: premiumStatRowLabel,
                         value: premiumStatLabel,
                       ),
                     ),
                     Expanded(
                       child: _MiniStat(
-                        label: 'Abonelik',
+                        label: subscriptionStatRowLabel,
                         value: subscriptionLabel,
                       ),
                     ),

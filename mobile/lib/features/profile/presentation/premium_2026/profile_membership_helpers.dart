@@ -990,3 +990,88 @@ String buildMembershipPageTokenPackagesSubtitle({
   }
   return 'Üyelik paketleri · jeton alımında indirim yok';
 }
+
+/// Cüzdan kartı premium mini stat satır etiketi.
+String buildMembershipWalletPremiumStatRowLabel({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.hasPaidTier) return info.tierLabel;
+  return 'Premium';
+}
+
+/// Cüzdan kartı abonelik mini stat satır etiketi.
+String buildMembershipWalletSubscriptionStatRowLabel({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isExpired) return 'Plan';
+  if (info.hasPaidTier) return 'Abonelik';
+  return 'Plan';
+}
+
+/// Üyelik sayfası jeton paketleri bölüm başlığı.
+String buildMembershipPageTokenPackagesSectionTitle() => 'Jeton Paketleri';
+
+/// Üyelik checkout jeton paket başlığı.
+String buildMembershipCheckoutPackageTitle({
+  required MembershipTierModel tier,
+}) {
+  return '${tier.title} Üyelik · ${tier.durationLabel}';
+}
+
+/// Üyelik checkout ödeme notu.
+String buildMembershipCheckoutPaymentNotes({
+  required MembershipTierModel tier,
+}) {
+  return 'Üyelik · ${tier.title} · ${tier.durationLabel} · ${tier.monthlyTokens} jeton';
+}
+
+/// Üyelik checkout paket rozeti (uzatma).
+String? buildMembershipCheckoutPackageBadge({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.hasActiveSubscription) return 'Uzat';
+  return null;
+}
+
+/// Üyelik sayfası satın al CTA etiketi.
+String buildMembershipPagePurchaseButtonLabel({
+  required MembershipTierModel tier,
+}) {
+  return '${tier.title} Üyeliği · ${tier.durationLabel} · ₺${tier.monthlyPriceTry}';
+}
+
+/// Ortak avantajlar bölüm başlığı.
+String buildMembershipCommonBenefitsSectionTitle({
+  required ProfileMembershipInfo info,
+  required bool useApiHighlights,
+}) {
+  if (useApiHighlights) {
+    if (info.hasActiveSubscription) {
+      return '${info.tierLabel} Avantajları';
+    }
+    return 'Üyelik Avantajları';
+  }
+  return 'Tüm Üyelerde Ortak Avantajlar';
+}
+
+/// Hub para birimi kartı üyelik satırı ikon vurgusu.
+enum MembershipHubSummaryRowLeadingAccent { standard, paid, expired }
+
+MembershipHubSummaryRowLeadingAccent
+    resolveMembershipHubSummaryRowLeadingAccent({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isExpired) return MembershipHubSummaryRowLeadingAccent.expired;
+  if (info.hasPaidTier) return MembershipHubSummaryRowLeadingAccent.paid;
+  return MembershipHubSummaryRowLeadingAccent.standard;
+}
+
+/// Mağaza teaser banner CTA etiketi.
+String buildMembershipStoreTeaserBannerActionLabel({
+  required ProfileMembershipInfo info,
+}) {
+  return '${buildMembershipHubActionLabel(
+    info: info,
+    freeLabel: 'Planları Gör',
+  )} >';
+}

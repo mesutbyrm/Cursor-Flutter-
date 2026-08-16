@@ -5,20 +5,30 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../domain/membership_model.dart';
 import '../../domain/membership_package_entity.dart';
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
+import '../../../vip_gold/domain/vip_tier.dart';
 
 class MembershipCommonBenefits extends StatelessWidget {
   const MembershipCommonBenefits({
     super.key,
+    this.membershipInfo = const ProfileMembershipInfo(
+      raw: 'basic',
+      tier: VipTier.basic,
+    ),
     this.highlights = const [],
   });
 
   /// API `features[]` — doluysa statik katalog yerine gösterilir.
+  final ProfileMembershipInfo membershipInfo;
   final List<MembershipFeatureHighlightEntity> highlights;
 
   @override
   Widget build(BuildContext context) {
     final useApi = highlights.isNotEmpty;
-    final title = useApi ? 'Üyelik Avantajları' : 'Tüm Üyelerde Ortak Avantajlar';
+    final title = buildMembershipCommonBenefitsSectionTitle(
+      info: membershipInfo,
+      useApiHighlights: useApi,
+    );
     final itemCount =
         useApi ? highlights.length : MembershipCatalogData.commonBenefits.length;
 
