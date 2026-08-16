@@ -72,7 +72,7 @@ class ProfileWalletCard extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: _BalanceBlock(
-                        label: 'Jeton',
+                        label: buildMembershipCurrencyJetonLabel(),
                         value: profileFormatCount(state.jeton),
                         icon: Icons.monetization_on_rounded,
                         color: AppThemeColors.coinGold,
@@ -81,7 +81,7 @@ class ProfileWalletCard extends ConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _BalanceBlock(
-                        label: 'CFC',
+                        label: buildMembershipCurrencyCfcLabel(),
                         value: profileFormatCount(state.cfc),
                         icon: Icons.diamond_rounded,
                         color: AppThemeColors.diamondBlue,
@@ -138,13 +138,13 @@ class ProfileWalletCard extends ConsumerWidget {
               final tiles = <Widget>[
                 ProfileActionTile(
                   icon: Icons.add_card_rounded,
-                  label: 'Jeton Yükle',
+                  label: buildMembershipWalletJetonTopUpActionLabel(),
                   onTap: onTopUp,
                   gradient: [const Color(0xFF4A3818), const Color(0xFF1A1408)],
                 ),
                 ProfileActionTile(
                   icon: Icons.diamond_outlined,
-                  label: 'CFC Yükle',
+                  label: buildMembershipWalletCenterCfcStoreTitle(),
                   onTap: onCfcTopUp,
                   gradient: [const Color(0xFF183050), const Color(0xFF081018)],
                 ),

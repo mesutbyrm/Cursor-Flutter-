@@ -38,13 +38,13 @@ class ProfileWalletSection extends ConsumerWidget {
     final actions = [
       (
         icon: Icons.add_card_rounded,
-        label: 'Jeton Yükle',
+        label: buildMembershipWalletJetonTopUpActionLabel(),
         onTap: onTopUp,
         accent: AppThemeColors.coinGold,
       ),
       (
         icon: Icons.diamond_rounded,
-        label: 'CFC Yükle',
+        label: buildMembershipWalletCenterCfcStoreTitle(),
         onTap: onCfcTopUp,
         accent: AppThemeColors.diamondBlue,
       ),

@@ -96,7 +96,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                       child: _CurrencyCell(
                         icon: Icons.monetization_on_rounded,
                         color: const Color(0xFFFFD54F),
-                        label: 'Jeton',
+                        label: buildMembershipCurrencyJetonLabel(),
                         value: profileFormatCount(state.jeton),
                         showPlus: true,
                         onPlus: () => openJetonStore(context, ref: ref),
@@ -107,7 +107,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                       child: _CurrencyCell(
                         icon: Icons.diamond_rounded,
                         color: const Color(0xFF64B5F6),
-                        label: 'Elmas',
+                        label: buildMembershipHubCurrencyElmasLabel(),
                         value: profileFormatCount(state.cfc),
                         showPlus: true,
                         onPlus: () => openCfcStore(context, ref: ref),

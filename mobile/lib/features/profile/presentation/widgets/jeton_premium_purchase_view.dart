@@ -544,7 +544,7 @@ class _JetonPremiumPurchaseViewState
               _DetailCard(
                 children: [
                   Text(
-                    'WhatsApp ile ödeme yaptıktan sonra «Satın Al» ile talebi iletin.',
+                    buildMembershipJetonPurchaseWhatsappHintText(),
                     style: TextStyle(
                       color: context.colors.onSurfaceMuted,
                       height: 1.4,
@@ -570,7 +570,9 @@ class _JetonPremiumPurchaseViewState
                     )
                   : const Icon(Icons.shopping_bag_rounded),
               label: Text(
-                _submitting ? 'Gönderiliyor…' : 'Satın Al',
+                _submitting
+                    ? 'Gönderiliyor…'
+                    : buildMembershipJetonStoreBuyActionLabel(),
                 style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
               ),
               style: FilledButton.styleFrom(

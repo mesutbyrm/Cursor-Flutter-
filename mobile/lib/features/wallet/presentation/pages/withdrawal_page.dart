@@ -100,7 +100,7 @@ class _WithdrawalPageState extends ConsumerState<WithdrawalPage> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
-          title: 'Para Çek',
+          title: buildMembershipWalletCenterWithdrawalTitle(),
           subtitle: pageSubtitle,
           onRefresh: () async {
             ref.invalidate(withdrawalHistoryProvider);

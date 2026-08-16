@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../data/jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 
 /// Mor yıldızlı arka plan.
 class JetonStoreBackdrop extends StatelessWidget {
@@ -520,7 +521,7 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
                 ),
                 child: Center(
                   child: Text(
-                    'Satın Al',
+                    buildMembershipJetonStoreBuyActionLabel(),
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 16,

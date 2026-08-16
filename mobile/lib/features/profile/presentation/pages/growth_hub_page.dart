@@ -822,7 +822,7 @@ class _RoadmapHintCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Sıradaki büyüme adımları',
+            buildMembershipGrowthHubRoadmapSectionTitle(),
             style: TextStyle(
               color: c.onSurface,
               fontSize: 16,
@@ -831,7 +831,7 @@ class _RoadmapHintCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'VIP avantajları, oda sıralamaları, hediye serileri ve PK turnuvaları roadmap fazlarına alındı. Bu merkez, kullanıcıya ilerleme hissini bugün vermek için ilk katmandır.',
+            buildMembershipGrowthHubRoadmapHintText(),
             style: TextStyle(
               color: c.onSurfaceVariant,
               height: 1.35,

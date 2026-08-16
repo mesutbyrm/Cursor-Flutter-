@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.230+266 (2026-08-16) — Profil üyelik faz 40
+
+- **Para birimi etiketleri:** `buildMembershipCurrencyJetonLabel` + `buildMembershipCurrencyCfcLabel` + `buildMembershipHubCurrencyElmasLabel`
+- **Cüzdan aksiyonları:** `buildMembershipWalletJetonTopUpActionLabel` + bakiye başlık helper'ları
+- **Jeton mağazası:** `buildMembershipJetonStoreBuyActionLabel` + satın alma sayfası başlık/alt başlık + WhatsApp ipucu
+- **Hub:** `buildMembershipHubServicesSectionTitle` — Hizmetlerim bölüm başlığı
+- **İstatistikler:** `buildMembershipAboutStatsPlatformJoinRowLabel` — platform katılım tarihi
+- **Görevler merkezi:** `buildMembershipGrowthHubRoadmapSectionTitle` + `buildMembershipGrowthHubRoadmapHintText`
+- **Sayfalar:** para çekme, CFC yükle, jeton satın al başlıkları merkezileştirildi
+- **Acceptance:** client `20l` üyelik helper sözleşme testleri
+
 ## 1.0.229+265 (2026-08-16) — Profil üyelik faz 39
 
 - **Premium tier kartı:** `buildMembershipPackageCardBuyActionLabel` + `buildMembershipPackageCardExtendActionLabel` + `buildMembershipPackageCardActiveSubtitle` + `buildMembershipPackageVipTagLabel`

@@ -175,10 +175,10 @@ class _ServicesScroller extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(bottom: 10),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
           child: Text(
-            'Hizmetlerim',
+            buildMembershipHubServicesSectionTitle(),
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w900,

@@ -422,6 +422,29 @@ void main() {
     });
   });
 
+  group('20l — Profil üyelik faz 40 helper sözleşmesi', () {
+    test('hizmetler bölüm başlığı', () {
+      expect(buildMembershipHubServicesSectionTitle(), 'Hizmetlerim');
+    });
+
+    test('jeton yükle aksiyon etiketi', () {
+      expect(buildMembershipWalletJetonTopUpActionLabel(), 'Jeton Yükle');
+    });
+
+    test('jeton satın alma sayfası başlığı', () {
+      expect(buildMembershipJetonPurchasePageTitle(), 'Jeton Satın Al');
+    });
+
+    test('platform katılım satır etiketi', () {
+      expect(
+        buildMembershipAboutStatsPlatformJoinRowLabel(
+          formattedDate: '1 Ocak 2026',
+        ),
+        contains('Üyelik:'),
+      );
+    });
+  });
+
   group('20 — Uygulama performans testi', () {
     setUp(AppTheme.clearCacheForTest);
 

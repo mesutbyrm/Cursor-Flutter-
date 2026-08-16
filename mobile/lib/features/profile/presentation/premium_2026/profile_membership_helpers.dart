@@ -1184,3 +1184,57 @@ String buildMembershipWalletCenterCfcStoreTitle() => 'CFC Yükle';
 
 /// Cüzdan merkezi jeton mağaza kart başlığı.
 String buildMembershipWalletCenterJetonStoreTitle() => 'Jeton Mağazası';
+
+/// Cüzdan jeton bakiye etiketi.
+String buildMembershipCurrencyJetonLabel() => 'Jeton';
+
+/// Cüzdan CFC bakiye etiketi.
+String buildMembershipCurrencyCfcLabel() => 'CFC';
+
+/// Profil hub para birimi kartı elmas (CFC) etiketi.
+String buildMembershipHubCurrencyElmasLabel() => 'Elmas';
+
+/// Profil cüzdan jeton yükle aksiyon etiketi.
+String buildMembershipWalletJetonTopUpActionLabel() => 'Jeton Yükle';
+
+/// Cüzdan başlığı jeton bakiye satır etiketi.
+String buildMembershipWalletJetonBalanceHeaderLabel() => 'Jeton Bakiyeniz';
+
+/// Cüzdan başlığı CFC bakiye satır etiketi.
+String buildMembershipWalletCfcBalanceHeaderLabel() => 'CFC Bakiyeniz';
+
+/// Jeton mağazası satın al CTA etiketi.
+String buildMembershipJetonStoreBuyActionLabel() =>
+    buildMembershipPackageCardBuyActionLabel();
+
+/// Hizmetler şeridi bölüm başlığı.
+String buildMembershipHubServicesSectionTitle() => 'Hizmetlerim';
+
+/// İstatistikler platform katılım satır etiketi.
+String buildMembershipAboutStatsPlatformJoinRowLabel({
+  required String formattedDate,
+}) {
+  return 'Üyelik: $formattedDate';
+}
+
+/// Görevler merkezi roadmap bölüm başlığı.
+String buildMembershipGrowthHubRoadmapSectionTitle() =>
+    'Sıradaki büyüme adımları';
+
+/// Görevler merkezi roadmap ipucu metni.
+String buildMembershipGrowthHubRoadmapHintText() {
+  return 'VIP avantajları, oda sıralamaları, hediye serileri ve PK turnuvaları roadmap fazlarına alındı. Bu merkez, kullanıcıya ilerleme hissini bugün vermek için ilk katmandır.';
+}
+
+/// Jeton satın alma sayfası başlığı.
+String buildMembershipJetonPurchasePageTitle() => 'Jeton Satın Al';
+
+/// Jeton satın alma sayfası alt başlığı.
+String buildMembershipJetonPurchasePageSubtitle() {
+  return 'İstediğiniz tutarı girin — jeton otomatik hesaplanır';
+}
+
+/// Jeton satın alma WhatsApp ödeme ipucu.
+String buildMembershipJetonPurchaseWhatsappHintText() {
+  return 'WhatsApp ile ödeme yaptıktan sonra «${buildMembershipJetonStoreBuyActionLabel()}» ile talebi iletin.';
+}

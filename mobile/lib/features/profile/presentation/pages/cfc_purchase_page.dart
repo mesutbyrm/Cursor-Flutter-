@@ -11,6 +11,7 @@ import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
@@ -77,7 +78,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
-          title: 'CFC Yükle',
+          title: buildMembershipWalletCenterCfcStoreTitle(),
           subtitle: 'CFC (CanlıFal Coin) · ${CurrencyUsageInfo.cfcPriceHint}',
           onRefresh: _refresh,
           body: config.when(

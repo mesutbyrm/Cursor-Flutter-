@@ -1675,4 +1675,63 @@ void main() {
       expect(buildMembershipWalletCenterJetonStoreTitle(), 'Jeton Mağazası');
     });
   });
+
+  group('buildMembershipCurrencyJetonLabel', () {
+    test('jeton etiketi', () {
+      expect(buildMembershipCurrencyJetonLabel(), 'Jeton');
+    });
+  });
+
+  group('buildMembershipWalletJetonTopUpActionLabel', () {
+    test('jeton yükle etiketi', () {
+      expect(buildMembershipWalletJetonTopUpActionLabel(), 'Jeton Yükle');
+    });
+  });
+
+  group('buildMembershipHubServicesSectionTitle', () {
+    test('hizmetler bölüm başlığı', () {
+      expect(buildMembershipHubServicesSectionTitle(), 'Hizmetlerim');
+    });
+  });
+
+  group('buildMembershipAboutStatsPlatformJoinRowLabel', () {
+    test('platform katılım satırı', () {
+      expect(
+        buildMembershipAboutStatsPlatformJoinRowLabel(
+          formattedDate: '16 Ağustos 2026',
+        ),
+        'Üyelik: 16 Ağustos 2026',
+      );
+    });
+  });
+
+  group('buildMembershipGrowthHubRoadmapSectionTitle', () {
+    test('roadmap başlığı', () {
+      expect(
+        buildMembershipGrowthHubRoadmapSectionTitle(),
+        'Sıradaki büyüme adımları',
+      );
+    });
+  });
+
+  group('buildMembershipJetonPurchasePageTitle', () {
+    test('jeton satın al başlığı', () {
+      expect(buildMembershipJetonPurchasePageTitle(), 'Jeton Satın Al');
+    });
+  });
+
+  group('buildMembershipJetonStoreBuyActionLabel', () {
+    test('jeton mağazası satın al', () {
+      expect(buildMembershipJetonStoreBuyActionLabel(), 'Satın Al');
+    });
+  });
+
+  group('buildMembershipWalletJetonBalanceHeaderLabel', () {
+    test('jeton bakiye başlığı', () {
+      expect(
+        buildMembershipWalletJetonBalanceHeaderLabel(),
+        'Jeton Bakiyeniz',
+      );
+    });
+  });
 }

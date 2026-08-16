@@ -126,7 +126,10 @@ class _AboutCard extends StatelessWidget {
             if (ext.joinedAt != null)
               _InfoRow(
                 Icons.calendar_month_rounded,
-                'Üyelik: ${DateFormat('d MMMM yyyy', 'tr').format(ext.joinedAt!.toLocal())}',
+                buildMembershipAboutStatsPlatformJoinRowLabel(
+                  formattedDate: DateFormat('d MMMM yyyy', 'tr')
+                      .format(ext.joinedAt!.toLocal()),
+                ),
               ),
           ],
         ],
