@@ -41,7 +41,9 @@ class SocialActiveRooms extends ConsumerWidget {
       );
     }
 
-    final display = chips.isEmpty ? _demoChips() : chips;
+    if (chips.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Padding(
       padding: EdgeInsets.only(
@@ -89,11 +91,11 @@ class SocialActiveRooms extends ConsumerWidget {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: display.length,
+              itemCount: chips.length,
               separatorBuilder: (_, _) => SizedBox(width: 16),
               itemBuilder: (ctx, i) => _ActiveRoomChip(
-                chip: display[i],
-                onTap: () => _openChip(context, ref, display[i]),
+                chip: chips[i],
+                onTap: () => _openChip(context, ref, chips[i]),
               ),
             ),
           ),
@@ -151,44 +153,6 @@ class SocialActiveRooms extends ConsumerWidget {
     return out;
   }
 
-  static List<_ActiveRoomChipData> _demoChips() => [
-        _ActiveRoomChipData(
-          id: 'demo-1',
-          kind: _ActiveRoomKind.demo,
-          name: 'Medyum Elif',
-          viewers: 1200,
-          ringColor: AppThemeColors.accentPurple,
-        ),
-        _ActiveRoomChipData(
-          id: 'demo-2',
-          kind: _ActiveRoomKind.demo,
-          name: 'Tarot Rüya',
-          viewers: 856,
-          ringColor: AppThemeColors.liveRed,
-        ),
-        _ActiveRoomChipData(
-          id: 'demo-3',
-          kind: _ActiveRoomKind.demo,
-          name: 'Astro Ayşe',
-          viewers: 642,
-          ringColor: AppThemeColors.diamondBlue,
-        ),
-        _ActiveRoomChipData(
-          id: 'demo-4',
-          kind: _ActiveRoomKind.demo,
-          name: 'Kahve Usta',
-          viewers: 410,
-          ringColor: AppThemeColors.coinGold,
-        ),
-        _ActiveRoomChipData(
-          id: 'demo-5',
-          kind: _ActiveRoomKind.demo,
-          name: 'Rüya Yorum',
-          viewers: 288,
-          ringColor: const Color(0xFFFF8C42),
-        ),
-      ];
-
   static const _ringPalette = [
     AppThemeColors.accentPurple,
     AppThemeColors.liveRed,
@@ -222,13 +186,11 @@ class SocialActiveRooms extends ConsumerWidget {
         } else {
           context.push('/voice-rooms');
         }
-      case _ActiveRoomKind.demo:
-        context.go('/live');
     }
   }
 }
 
-enum _ActiveRoomKind { live, voice, demo }
+enum _ActiveRoomKind { live, voice }
 
 class _ActiveRoomChipData {
   const _ActiveRoomChipData({

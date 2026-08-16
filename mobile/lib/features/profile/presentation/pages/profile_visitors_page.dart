@@ -58,24 +58,20 @@ class ProfileVisitEntity {
 final profileVisitorsProvider =
     FutureProvider.autoDispose<List<ProfileVisitEntity>>((ref) async {
   final dio = ref.watch(dioProvider);
-  try {
-    final res = await dio.safeGet<dynamic>(ApiEndpoints.meProfileVisitors);
-    final data = res.data;
-    List<dynamic> list;
-    if (data is Map) {
-      list = (data['data'] as List?) ?? (data['visitors'] as List?) ?? [];
-    } else if (data is List) {
-      list = data;
-    } else {
-      list = const [];
-    }
-    return list
-        .whereType<Map<String, dynamic>>()
-        .map(ProfileVisitEntity.fromJson)
-        .toList();
-  } catch (_) {
-    return const [];
+  final res = await dio.safeGet<dynamic>(ApiEndpoints.meProfileVisitors);
+  final data = res.data;
+  List<dynamic> list;
+  if (data is Map) {
+    list = (data['data'] as List?) ?? (data['visitors'] as List?) ?? [];
+  } else if (data is List) {
+    list = data;
+  } else {
+    list = const [];
   }
+  return list
+      .whereType<Map<String, dynamic>>()
+      .map(ProfileVisitEntity.fromJson)
+      .toList();
 });
 
 class ProfileVisitorsPage extends ConsumerWidget {

@@ -10,10 +10,10 @@ import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../search/domain/entities/search_user_entity.dart';
-import '../../../../search/presentation/providers/search_providers.dart';
 import '../../../domain/entities/create_social_post_input.dart';
 import '../../providers/social_composer_providers.dart';
 import '../../providers/social_create_post_provider.dart';
+import '../social_mention_picker_sheet.dart';
 
 /// Sosyal akış üstü — aynı sayfada paylaşım (metin, foto, video, duygu, #, @).
 class SocialFeedComposer extends ConsumerStatefulWidget {
@@ -120,7 +120,7 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => const _MentionPickerSheet(),
+      builder: (ctx) => const SocialMentionPickerSheet(),
     );
     if (picked != null) {
       _insertText('@${picked.username} ');
@@ -485,97 +485,6 @@ class _ComposerAction extends StatelessWidget {
                 fontSize: 12,
                 color: context.colors.onSurfaceVariant,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MentionPickerSheet extends ConsumerStatefulWidget {
-  const _MentionPickerSheet();
-
-  @override
-  ConsumerState<_MentionPickerSheet> createState() =>
-      _MentionPickerSheetState();
-}
-
-class _MentionPickerSheetState extends ConsumerState<_MentionPickerSheet> {
-  final _query = TextEditingController();
-  var _loading = false;
-  List<SearchUserEntity> _results = const [];
-
-  @override
-  void dispose() {
-    _query.dispose();
-    super.dispose();
-  }
-
-  Future<void> _search(String q) async {
-    if (q.trim().length < 2) {
-      setState(() => _results = const []);
-      return;
-    }
-    setState(() => _loading = true);
-    try {
-      final list =
-          await ref.read(searchRemoteProvider).searchUsers(q.trim());
-      if (mounted) setState(() => _results = list);
-    } catch (_) {
-      if (mounted) setState(() => _results = const []);
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bottom = MediaQuery.viewInsetsOf(context).bottom;
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottom),
-      child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * 0.55,
-        child: Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                'Kişi etiketle',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextField(
-                controller: _query,
-                decoration: InputDecoration(
-                  hintText: 'Kullanıcı adı ara…',
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  filled: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                onChanged: _search,
-              ),
-            ),
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
-                      itemCount: _results.length,
-                      itemBuilder: (context, i) {
-                        final u = _results[i];
-                        return ListTile(
-                          leading: UserAvatar(url: u.image, radius: 18),
-                          title: Text(u.name),
-                          subtitle: Text('@${u.username}'),
-                          onTap: () => Navigator.pop(context, u),
-                        );
-                      },
-                    ),
             ),
           ],
         ),

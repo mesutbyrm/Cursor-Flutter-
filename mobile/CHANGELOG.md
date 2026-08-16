@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.231+267 (2026-08-16) — Sosyal bölüm eksikleri
+
+- **Aktif odalar:** Sahte demo oda şeridi kaldırıldı; canlı/sesli oda yoksa şerit gizlenir
+- **Gönderi oluşturma:** Tam ekran sayfada video seçimi, kullanıcı etiketleme, hashtag ve GPS konum ekleme
+- **Etiketleme:** `SocialMentionPickerSheet` paylaşımlı bileşen — composer + create sayfası
+- **Profil ziyaretçileri:** API hataları artık sessizce boş listeye düşmez; kullanıcıya hata gösterilir
+- **Test:** `social_feed_layout_test`
+
 ## 1.0.230+266 (2026-08-16) — Profil üyelik faz 40
 
 - **Para birimi etiketleri:** `buildMembershipCurrencyJetonLabel` + `buildMembershipCurrencyCfcLabel` + `buildMembershipHubCurrencyElmasLabel`
