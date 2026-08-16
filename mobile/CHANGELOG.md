@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.222+258 (2026-08-16) — Profil üyelik faz 32
+
+- **Premium kart:** `buildMembershipPremiumCardSubtitle` + `buildMembershipPremiumCardPrimaryActionLabel` — cüzdan hizası
+- **VIP banner:** `buildMembershipVipBannerTitle` + `buildMembershipVipBannerActionLabel` — hub başlık/CTA helper
+- **Cüzdan header:** `buildMembershipWalletQuickLinkLabel` — dinamik Üyelik/Gold/Yenile
+- **Lazy premium:** `ProfileLazyPremium` wallet hub alt başlığı
+- **Acceptance:** client `20d` üyelik helper sözleşme testleri
+- **Test:** VIP banner, premium kart CTA, wallet quick link
+
 ## 1.0.221+257 (2026-08-16) — Profil üyelik faz 31
 
 - **Rozet bölümü:** `buildMembershipBadgesSectionSubtitle` — açık/kilitli rozet oranı

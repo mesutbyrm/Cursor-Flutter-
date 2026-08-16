@@ -665,3 +665,58 @@ String buildMembershipWalletEarningsTeaser({
   }
   return 'Üyelik planlarıyla fal indirimi ve ek avantajlar';
 }
+
+/// Premium kart alt başlığı — cüzdan merkezi ile aynı.
+String buildMembershipPremiumCardSubtitle({
+  required ProfileMembershipInfo info,
+  required List<MembershipTierModel> tiers,
+  List<MembershipPackageEntity> packages = const [],
+  MembershipTierModel? catalogTier,
+  int? daysRemaining,
+  String? expiresAt,
+}) {
+  return buildMembershipWalletHubSubtitle(
+    info: info,
+    tiers: tiers,
+    packages: packages,
+    catalogTier: catalogTier,
+    daysRemaining: daysRemaining,
+    expiresAt: expiresAt,
+  );
+}
+
+/// Premium kart birincil CTA etiketi.
+String buildMembershipPremiumCardPrimaryActionLabel({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.hasActiveSubscription) return 'Ayrıcalıklar';
+  if (info.isExpired) return 'Yenile';
+  return 'Planları Gör';
+}
+
+/// Ücretsiz kullanıcı VIP banner başlığı.
+String buildMembershipVipBannerTitle({
+  required ProfileMembershipInfo info,
+  String? expiresAt,
+}) {
+  return buildMembershipHubSectionTitle(info: info, expiresAt: expiresAt);
+}
+
+/// Ücretsiz kullanıcı VIP banner CTA etiketi.
+String buildMembershipVipBannerActionLabel({
+  required ProfileMembershipInfo info,
+}) {
+  return '${buildMembershipHubActionLabel(
+    info: info,
+    freeLabel: 'Planları Gör',
+  )} >';
+}
+
+/// Cüzdan header üyelik hızlı link etiketi.
+String buildMembershipWalletQuickLinkLabel({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isExpired) return 'Yenile';
+  if (info.hasPaidTier) return info.tierLabel;
+  return 'Üyelik';
+}

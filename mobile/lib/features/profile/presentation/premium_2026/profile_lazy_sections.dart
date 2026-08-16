@@ -94,9 +94,12 @@ class ProfileLazyPremium extends ConsumerWidget {
     final catalogTier = catalogTierForMembership(info, ui.tiers);
     final expiresAt =
         ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
-    final catalogSubtitle = buildMembershipCatalogHintSubtitle(
+    final catalogSubtitle = buildMembershipPremiumCardSubtitle(
       info: info,
+      tiers: ui.tiers,
+      packages: ui.apiPackages,
       catalogTier: catalogTier,
+      daysRemaining: info.daysRemaining,
       expiresAt: expiresAt,
     );
 

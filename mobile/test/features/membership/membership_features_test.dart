@@ -929,4 +929,90 @@ void main() {
       );
     });
   });
+
+  group('buildMembershipPremiumCardSubtitle', () {
+    test('aktif gold wallet hub ile aynı', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 6,
+      );
+      final subtitle = buildMembershipPremiumCardSubtitle(
+        info: info,
+        tiers: const [],
+        daysRemaining: 6,
+      );
+      expect(subtitle, contains('Gold'));
+      expect(subtitle, contains('6'));
+    });
+  });
+
+  group('buildMembershipPremiumCardPrimaryActionLabel', () {
+    test('aktif ayrıcalıklar', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 3,
+      );
+      expect(
+        buildMembershipPremiumCardPrimaryActionLabel(info: info),
+        'Ayrıcalıklar',
+      );
+    });
+
+    test('süresi dolmuş yenile', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipPremiumCardPrimaryActionLabel(info: info),
+        'Yenile',
+      );
+    });
+  });
+
+  group('buildMembershipVipBannerTitle', () {
+    test('ücretsiz üyelik planları', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(buildMembershipVipBannerTitle(info: info), 'Üyelik Planları');
+    });
+  });
+
+  group('buildMembershipVipBannerActionLabel', () {
+    test('ücretsiz planları gör', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipVipBannerActionLabel(info: info),
+        'Planları Gör >',
+      );
+    });
+  });
+
+  group('buildMembershipWalletQuickLinkLabel', () {
+    test('aktif gold tier', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 4,
+      );
+      expect(buildMembershipWalletQuickLinkLabel(info: info), 'Gold');
+    });
+
+    test('süresi dolmuş yenile', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(buildMembershipWalletQuickLinkLabel(info: info), 'Yenile');
+    });
+  });
 }

@@ -141,6 +141,43 @@ void main() {
     });
   });
 
+  group('20d — Profil üyelik faz 32 helper sözleşmesi', () {
+    test('premium kart alt başlığı aktif plan', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 9,
+      );
+      final subtitle = buildMembershipPremiumCardSubtitle(
+        info: info,
+        tiers: const [],
+        daysRemaining: 9,
+      );
+      expect(subtitle, contains('Gold'));
+      expect(subtitle, contains('9'));
+    });
+
+    test('premium kart CTA süresi dolmuş', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipPremiumCardPrimaryActionLabel(info: info),
+        'Yenile',
+      );
+    });
+
+    test('cüzdan quick link ücretsiz', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(buildMembershipWalletQuickLinkLabel(info: info), 'Üyelik');
+    });
+  });
+
   group('20 — Uygulama performans testi', () {
     setUp(AppTheme.clearCacheForTest);
 
