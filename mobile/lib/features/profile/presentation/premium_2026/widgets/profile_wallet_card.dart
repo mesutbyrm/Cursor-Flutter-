@@ -48,7 +48,9 @@ class ProfileWalletCard extends ConsumerWidget {
       daysRemaining: state.membershipDays,
       expiresAt: state.wallet?.membershipExpiresAt,
     );
-    final hasPremium = info.hasPaidTier;
+    final premiumStatLabel = buildMembershipWalletPremiumStatLabel(info: info);
+    final subscriptionsTileLabel =
+        buildMembershipWalletSubscriptionsTileLabel(info: info);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -107,7 +109,7 @@ class ProfileWalletCard extends ConsumerWidget {
                     Expanded(
                       child: _MiniStat(
                         label: 'Premium',
-                        value: hasPremium ? info.tierLabel : 'Standart',
+                        value: premiumStatLabel,
                       ),
                     ),
                     Expanded(
@@ -162,7 +164,7 @@ class ProfileWalletCard extends ConsumerWidget {
                 ),
                 ProfileActionTile(
                   icon: Icons.workspace_premium_rounded,
-                  label: 'Abonelikler',
+                  label: subscriptionsTileLabel,
                   onTap: onSubscriptions,
                   gradient: [const Color(0xFF3A3010), const Color(0xFF181008)],
                 ),

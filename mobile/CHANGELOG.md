@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.223+259 (2026-08-16) — Profil üyelik faz 33
+
+- **Cüzdan kartı:** `buildMembershipWalletPremiumStatLabel` + `buildMembershipWalletSubscriptionsTileLabel`
+- **Kısayollar:** `buildMembershipShortcutsPlanChipLabel` — plan chip ana etiket
+- **Mağaza teaser:** `buildMembershipStoreTeaserBannerTitle` — hub başlık hizası
+- **Cüzdan merkezi:** `buildMembershipWalletCenterPageSubtitle` — dinamik sayfa alt başlığı
+- **Acceptance:** client `20e` üyelik helper sözleşme testleri
+- **Test:** cüzdan kartı, mağaza teaser banner, wallet center subtitle
+
 ## 1.0.222+258 (2026-08-16) — Profil üyelik faz 32
 
 - **Premium kart:** `buildMembershipPremiumCardSubtitle` + `buildMembershipPremiumCardPrimaryActionLabel` — cüzdan hizası

@@ -720,3 +720,50 @@ String buildMembershipWalletQuickLinkLabel({
   if (info.hasPaidTier) return info.tierLabel;
   return 'Üyelik';
 }
+
+/// Profil cüzdan kartı premium mini stat etiketi.
+String buildMembershipWalletPremiumStatLabel({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.hasPaidTier) return info.tierLabel;
+  return 'Standart';
+}
+
+/// Profil cüzdan kartı abonelik aksiyon karo etiketi.
+String buildMembershipWalletSubscriptionsTileLabel({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isExpired) return 'Yenile';
+  if (info.hasPaidTier) return 'Abonelikler';
+  return 'Planlar';
+}
+
+/// Hub üyelik kısayol plan chip ana etiketi.
+String buildMembershipShortcutsPlanChipLabel({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.hasPaidTier) return 'Planı Yönet';
+  return 'Planlar';
+}
+
+/// Jeton/CFC mağaza teaser banner başlığı.
+String buildMembershipStoreTeaserBannerTitle({
+  required ProfileMembershipInfo info,
+  String? expiresAt,
+}) {
+  if (info.isExpired) {
+    return buildMembershipExpiredPlanLabel(info: info, expiresAt: expiresAt);
+  }
+  return buildMembershipHubSectionTitle(info: info, expiresAt: expiresAt);
+}
+
+/// Cüzdan merkezi sayfa alt başlığı.
+String buildMembershipWalletCenterPageSubtitle({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isExpired) return 'Jeton · CFC · Planı yenile';
+  if (info.hasActiveSubscription) {
+    return 'Jeton · CFC · ${info.tierLabel} üyelik';
+  }
+  return 'Jeton · CFC · Premium üyelik';
+}

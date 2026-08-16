@@ -40,7 +40,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.text('Premium Üyelik'), findsOneWidget);
+      expect(find.text('Üyelik Planları'), findsOneWidget);
       expect(find.textContaining('jeton yüklerken'), findsOneWidget);
     });
 

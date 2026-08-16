@@ -35,7 +35,7 @@ class ProfileHubMembershipShortcuts extends ConsumerWidget {
         Expanded(
           child: _ShortcutChip(
             icon: Icons.workspace_premium_outlined,
-            label: info.hasPaidTier ? 'Planı Yönet' : 'Planlar',
+            label: buildMembershipShortcutsPlanChipLabel(info: info),
             subtitle: planHint,
             highlight: info.hasPaidTier,
             onTap: () => context.push('/premium-membership'),

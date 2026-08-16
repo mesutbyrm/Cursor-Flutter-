@@ -27,6 +27,10 @@ class MembershipStoreTeaserBanner extends ConsumerWidget {
     final catalogTier = catalogTierForMembership(info, ui.tiers);
     final expiresAt =
         ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
+    final bannerTitle = buildMembershipStoreTeaserBannerTitle(
+      info: info,
+      expiresAt: expiresAt,
+    );
     final subtitle = buildMembershipStoreTeaserSubtitle(
       info: info,
       store: store,
@@ -63,12 +67,7 @@ class MembershipStoreTeaserBanner extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        info.isExpired
-                            ? buildMembershipExpiredPlanLabel(
-                                info: info,
-                                expiresAt: expiresAt,
-                              )
-                            : 'Premium Üyelik',
+                        bannerTitle,
                         style: const TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 13,

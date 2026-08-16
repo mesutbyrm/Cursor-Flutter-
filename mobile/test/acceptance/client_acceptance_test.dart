@@ -178,6 +178,40 @@ void main() {
     });
   });
 
+  group('20e — Profil üyelik faz 33 helper sözleşmesi', () {
+    test('cüzdan kart premium stat', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 2,
+      );
+      expect(buildMembershipWalletPremiumStatLabel(info: info), 'Gold');
+    });
+
+    test('mağaza teaser banner başlığı ücretsiz', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipStoreTeaserBannerTitle(info: info),
+        'Üyelik Planları',
+      );
+    });
+
+    test('cüzdan merkezi süresi dolmuş alt başlık', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipWalletCenterPageSubtitle(info: info),
+        contains('Planı yenile'),
+      );
+    });
+  });
+
   group('20 — Uygulama performans testi', () {
     setUp(AppTheme.clearCacheForTest);
 

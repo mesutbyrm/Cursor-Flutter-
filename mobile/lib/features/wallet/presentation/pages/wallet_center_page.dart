@@ -46,13 +46,15 @@ class WalletCenterPage extends ConsumerWidget {
       daysRemaining: balances.membershipDaysRemaining,
       expiresAt: balances.membershipExpiresAt,
     );
+    final pageSubtitle =
+        buildMembershipWalletCenterPageSubtitle(info: membershipInfo);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Cüzdanım',
-          subtitle: 'Jeton · CFC · Premium üyelik',
+          subtitle: pageSubtitle,
           onRefresh: () =>
               ref.read(walletBalancesProvider.notifier).refresh(force: true),
           body: wallet.isLoading && cached == null

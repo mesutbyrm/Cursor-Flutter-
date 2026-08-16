@@ -1015,4 +1015,100 @@ void main() {
       expect(buildMembershipWalletQuickLinkLabel(info: info), 'Yenile');
     });
   });
+
+  group('buildMembershipWalletPremiumStatLabel', () {
+    test('aktif gold tier', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 3,
+      );
+      expect(buildMembershipWalletPremiumStatLabel(info: info), 'Gold');
+    });
+
+    test('ücretsiz standart', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(buildMembershipWalletPremiumStatLabel(info: info), 'Standart');
+    });
+  });
+
+  group('buildMembershipWalletSubscriptionsTileLabel', () {
+    test('süresi dolmuş yenile', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipWalletSubscriptionsTileLabel(info: info),
+        'Yenile',
+      );
+    });
+
+    test('ücretsiz planlar', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipWalletSubscriptionsTileLabel(info: info),
+        'Planlar',
+      );
+    });
+  });
+
+  group('buildMembershipShortcutsPlanChipLabel', () {
+    test('aktif gold planı yönet', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 5,
+      );
+      expect(
+        buildMembershipShortcutsPlanChipLabel(info: info),
+        'Planı Yönet',
+      );
+    });
+  });
+
+  group('buildMembershipStoreTeaserBannerTitle', () {
+    test('ücretsiz üyelik planları', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipStoreTeaserBannerTitle(info: info),
+        'Üyelik Planları',
+      );
+    });
+  });
+
+  group('buildMembershipWalletCenterPageSubtitle', () {
+    test('aktif gold üyelik', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 4,
+      );
+      expect(
+        buildMembershipWalletCenterPageSubtitle(info: info),
+        'Jeton · CFC · Gold üyelik',
+      );
+    });
+
+    test('ücretsiz premium', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipWalletCenterPageSubtitle(info: info),
+        contains('Premium üyelik'),
+      );
+    });
+  });
 }
