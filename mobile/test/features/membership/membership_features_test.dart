@@ -1206,4 +1206,146 @@ void main() {
       );
     });
   });
+
+  group('buildMembershipShortcutsVipChipLabel', () {
+    test('ücretsiz VIP Gold', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipShortcutsVipChipLabel(info: info),
+        'VIP Gold',
+      );
+    });
+
+    test('süresi dolmuş VIP yenile', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipShortcutsVipChipLabel(info: info),
+        'VIP Yenile',
+      );
+    });
+  });
+
+  group('buildMembershipPageActiveBannerText', () {
+    test('aktif gold plan süresi', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 6,
+      );
+      final text = buildMembershipPageActiveBannerText(
+        info: info,
+        daysRemaining: 6,
+      );
+      expect(text, contains('Gold üyeliğiniz aktif'));
+      expect(text, contains('6'));
+    });
+  });
+
+  group('resolveMembershipManageTileLeadingAccent', () {
+    test('ücretsiz standart', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        resolveMembershipManageTileLeadingAccent(info: info),
+        MembershipManageTileLeadingAccent.standard,
+      );
+    });
+
+    test('aktif gold ücretli', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 3,
+      );
+      expect(
+        resolveMembershipManageTileLeadingAccent(info: info),
+        MembershipManageTileLeadingAccent.paid,
+      );
+    });
+
+    test('süresi dolmuş expired', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        resolveMembershipManageTileLeadingAccent(info: info),
+        MembershipManageTileLeadingAccent.expired,
+      );
+    });
+  });
+
+  group('buildMembershipWalletSectionBalanceHint', () {
+    test('ücretsiz varsayılan', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipWalletSectionBalanceHint(info: info),
+        contains('canlı yayın'),
+      );
+    });
+
+    test('aktif gold avantajları', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 4,
+      );
+      expect(
+        buildMembershipWalletSectionBalanceHint(info: info),
+        contains('Gold avantajları'),
+      );
+    });
+  });
+
+  group('buildMembershipPageUpgradeBannerTitle', () {
+    test('ücretsiz üyeliğini yükselt', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipPageUpgradeBannerTitle(info: info),
+        contains('Üyeliğini'),
+      );
+    });
+
+    test('aktif planını yükselt', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 5,
+      );
+      expect(
+        buildMembershipPageUpgradeBannerTitle(info: info),
+        contains('Planını'),
+      );
+    });
+  });
+
+  group('buildMembershipPageUpgradeBannerSubtitle', () {
+    test('süresi dolmuş yenile', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipPageUpgradeBannerSubtitle(info: info),
+        contains('yenileyin'),
+      );
+    });
+  });
 }

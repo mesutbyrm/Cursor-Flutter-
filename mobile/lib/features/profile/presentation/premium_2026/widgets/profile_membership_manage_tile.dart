@@ -19,6 +19,13 @@ class ProfileMembershipManageTile extends ConsumerWidget {
     final expiresAt =
         ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
 
+    final leadingAccent = resolveMembershipManageTileLeadingAccent(info: info);
+    final leadingColor = switch (leadingAccent) {
+      MembershipManageTileLeadingAccent.paid => Colors.amber,
+      MembershipManageTileLeadingAccent.expired => Colors.orangeAccent,
+      MembershipManageTileLeadingAccent.standard => Colors.white54,
+    };
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -30,7 +37,7 @@ class ProfileMembershipManageTile extends ConsumerWidget {
             children: [
               Icon(
                 Icons.workspace_premium_outlined,
-                color: info.hasPaidTier ? Colors.amber : Colors.white54,
+                color: leadingColor,
               ),
               const SizedBox(width: 12),
               Expanded(

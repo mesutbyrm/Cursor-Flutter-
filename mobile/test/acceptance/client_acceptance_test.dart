@@ -252,6 +252,46 @@ void main() {
     });
   });
 
+  group('20g — Profil üyelik faz 35 helper sözleşmesi', () {
+    test('VIP kısayol chip ücretsiz', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipShortcutsVipChipLabel(info: info),
+        'VIP Gold',
+      );
+    });
+
+    test('aktif banner gold', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 3,
+      );
+      expect(
+        buildMembershipPageActiveBannerText(
+          info: info,
+          daysRemaining: 3,
+        ),
+        contains('aktif'),
+      );
+    });
+
+    test('cüzdan bölümü süresi dolmuş', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipWalletSectionBalanceHint(info: info),
+        contains('yenileyin'),
+      );
+    });
+  });
+
   group('20 — Uygulama performans testi', () {
     setUp(AppTheme.clearCacheForTest);
 

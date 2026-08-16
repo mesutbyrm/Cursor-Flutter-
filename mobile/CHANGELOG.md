@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.225+261 (2026-08-16) — Profil üyelik faz 35
+
+- **VIP kısayol:** `buildMembershipShortcutsVipChipLabel` — chip ana etiket (VIP Gold / VIP Yenile)
+- **Üyelik sayfası:** `buildMembershipPageActiveBannerText` — aktif plan banner metni
+- **Yönet tile:** `resolveMembershipManageTileLeadingAccent` — ikon vurgu rengi (standart / ücretli / süresi doldu)
+- **Cüzdan bölümü:** `buildMembershipWalletSectionBalanceHint` — dinamik bakiye açıklaması
+- **Yükseltme banner:** `buildMembershipPageUpgradeBannerTitle/Subtitle/ActionLabel` — üyelik sayfası CTA
+- **Acceptance:** client `20g` üyelik helper sözleşme testleri
+- **Test:** VIP chip, aktif banner, manage tile accent, wallet balance hint
+
 ## 1.0.224+260 (2026-08-16) — Profil üyelik faz 34
 
 - **Premium kart:** `buildMembershipPremiumCardManageActionLabel` — ikincil yönet CTA

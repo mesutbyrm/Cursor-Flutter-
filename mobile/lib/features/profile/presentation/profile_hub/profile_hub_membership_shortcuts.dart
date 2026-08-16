@@ -45,7 +45,7 @@ class ProfileHubMembershipShortcuts extends ConsumerWidget {
         Expanded(
           child: _ShortcutChip(
             icon: Icons.diamond_outlined,
-            label: 'VIP Gold',
+            label: buildMembershipShortcutsVipChipLabel(info: info),
             subtitle: vipHint,
             highlight: info.isVip,
             onTap: () => context.push('/vip-gold'),

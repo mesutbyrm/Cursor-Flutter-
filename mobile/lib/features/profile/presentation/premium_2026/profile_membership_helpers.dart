@@ -827,3 +827,82 @@ String buildMembershipWalletStoreHubCardSubtitle({
       ? 'Paketler ve $storeLabel bakiyesi'
       : 'Paketler ve $storeLabel bakiyesi';
 }
+
+/// Hub VIP Gold kısayol chip ana etiketi.
+String buildMembershipShortcutsVipChipLabel({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isExpired && info.hasPaidTier) return 'VIP Yenile';
+  return 'VIP Gold';
+}
+
+/// Üyelik sayfası aktif plan banner metni.
+String buildMembershipPageActiveBannerText({
+  required ProfileMembershipInfo info,
+  MembershipTierModel? catalogTier,
+  int? daysRemaining,
+  String? expiresAt,
+}) {
+  final duration = formatMembershipPlanDuration(
+    info: info,
+    catalogTier: catalogTier,
+    daysRemaining: daysRemaining ?? info.daysRemaining,
+    expiresAt: expiresAt,
+  );
+  return '${info.tierLabel} üyeliğiniz aktif · $duration';
+}
+
+/// Ayarlar / yönet tile sol ikon vurgusu.
+enum MembershipManageTileLeadingAccent { standard, paid, expired }
+
+MembershipManageTileLeadingAccent resolveMembershipManageTileLeadingAccent({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isExpired) return MembershipManageTileLeadingAccent.expired;
+  if (info.hasPaidTier) return MembershipManageTileLeadingAccent.paid;
+  return MembershipManageTileLeadingAccent.standard;
+}
+
+/// Profil cüzdan bölümü bakiye açıklaması.
+String buildMembershipWalletSectionBalanceHint({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isExpired) {
+    return 'Jeton · CFC bakiyeleri · planı yenileyin';
+  }
+  if (info.hasActiveSubscription) {
+    return 'Jeton: yayın ve hediye · CFC: oyun ve fal · ${info.tierLabel} avantajları';
+  }
+  return 'Jeton: canlı yayın, sohbet ve hediye · CFC: oyun ve fal';
+}
+
+/// Üyelik sayfası yükseltme banner başlığı.
+String buildMembershipPageUpgradeBannerTitle({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.hasActiveSubscription) {
+    return 'Planını Yükselt, Avantajları Katla!';
+  }
+  return 'Üyeliğini Yükselt, Avantajları Katla!';
+}
+
+/// Üyelik sayfası yükseltme banner alt metni.
+String buildMembershipPageUpgradeBannerSubtitle({
+  required ProfileMembershipInfo info,
+  MembershipTierModel? catalogTier,
+}) {
+  if (info.isExpired) {
+    return 'Planı yenileyin; jeton, fal indirimi ve VIP ayrıcalıkları geri gelsin.';
+  }
+  if (info.hasActiveSubscription) {
+    final discount = catalogTier?.falDiscountPercent ?? 0;
+    if (discount > 0) {
+      return 'Üst planlarda ek jeton, %$discount+ fal indirimi ve VIP odalar.';
+    }
+    return 'Daha üst planlarda ek jeton, fal indirimi ve VIP ayrıcalıkları.';
+  }
+  return 'Daha fazla jeton, daha fazla ayrıcalık ve özel içerikler seni bekliyor.';
+}
+
+/// Üyelik sayfası yükseltme banner CTA etiketi.
+String buildMembershipPageUpgradeBannerActionLabel() => 'Jeton\nSatın Al';

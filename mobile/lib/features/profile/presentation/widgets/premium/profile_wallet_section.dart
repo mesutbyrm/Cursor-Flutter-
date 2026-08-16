@@ -93,7 +93,7 @@ class ProfileWalletSection extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Jeton: canlı yayın, sohbet ve hediye · CFC: oyun ve fal',
+                buildMembershipWalletSectionBalanceHint(info: info),
                 style: ProfileTypography.cardSubtitle(context),
               ),
             ],

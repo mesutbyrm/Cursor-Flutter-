@@ -169,6 +169,11 @@ class MembershipPage extends ConsumerWidget {
                             ),
                             const SizedBox(height: 22),
                             _UpgradeBanner(
+                              info: ui.membershipInfo,
+                              catalogTier: catalogTierForMembership(
+                                ui.membershipInfo,
+                                ui.tiers,
+                              ),
                               onBuyTokens: () => context.push('/jeton-store'),
                             ),
                             const SizedBox(height: 22),
@@ -640,15 +645,15 @@ class _ActiveBanner extends StatelessWidget {
   final String? expiresAt;
   final VoidCallback onExtend;
 
-  String get _daysLabel => formatMembershipPlanDuration(
-        info: info,
-        catalogTier: catalogTier,
-        daysRemaining: days,
-        expiresAt: expiresAt,
-      );
-
   @override
   Widget build(BuildContext context) {
+    final bannerText = buildMembershipPageActiveBannerText(
+      info: info,
+      catalogTier: catalogTier,
+      daysRemaining: days,
+      expiresAt: expiresAt,
+    );
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -672,7 +677,7 @@ class _ActiveBanner extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '${info.tierLabel} üyeliğiniz aktif · $_daysLabel',
+                  bannerText,
                   style: const TextStyle(
                     color: MembershipCatalogData.gold,
                     fontWeight: FontWeight.w800,
@@ -693,12 +698,25 @@ class _ActiveBanner extends StatelessWidget {
 }
 
 class _UpgradeBanner extends StatelessWidget {
-  const _UpgradeBanner({required this.onBuyTokens});
+  const _UpgradeBanner({
+    required this.info,
+    required this.onBuyTokens,
+    this.catalogTier,
+  });
 
+  final ProfileMembershipInfo info;
+  final MembershipTierModel? catalogTier;
   final VoidCallback onBuyTokens;
 
   @override
   Widget build(BuildContext context) {
+    final title = buildMembershipPageUpgradeBannerTitle(info: info);
+    final subtitle = buildMembershipPageUpgradeBannerSubtitle(
+      info: info,
+      catalogTier: catalogTier,
+    );
+    final actionLabel = buildMembershipPageUpgradeBannerActionLabel();
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -756,7 +774,7 @@ class _UpgradeBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Üyeliğini Yükselt, Avantajları Katla!',
+                      title,
                       style: GoogleFonts.plusJakartaSans(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
@@ -766,7 +784,7 @@ class _UpgradeBanner extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Daha fazla jeton, daha fazla ayrıcalık ve özel içerikler seni bekliyor.',
+                      subtitle,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.68),
                         fontSize: 11.5,
@@ -797,10 +815,10 @@ class _UpgradeBanner extends StatelessWidget {
                         ],
                       ),
                     ),
-                    child: const Text(
-                      'Jeton\nSatın Al',
+                    child: Text(
+                      actionLabel,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
                         fontSize: 11,
