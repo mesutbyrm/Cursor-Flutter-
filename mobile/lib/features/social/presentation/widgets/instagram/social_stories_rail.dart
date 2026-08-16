@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/domain/entities/user_entity.dart';
@@ -34,7 +35,7 @@ class SocialStoriesRail extends ConsumerWidget {
           ),
         ),
         error: (e, _) => _StoriesError(
-          message: e.toString(),
+          message: ApiException.userMessage(e),
           onRetry: () => ref.invalidate(socialStoryRingsProvider),
         ),
         data: (rings) => _StoriesList(me: me, rings: rings),

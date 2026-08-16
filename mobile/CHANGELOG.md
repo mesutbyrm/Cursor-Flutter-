@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.232+268 (2026-08-16) — Sosyal bölüm faz 2
+
+- **Akış düzeni:** Aktif oda yokken boş oda şeridi slotları kaldırıldı (`includeRoomStrips`)
+- **Paylaşım girişi:** App bar + ve boş akış CTA tam ekran gönderi oluşturucuya yönlendirir
+- **Gönderi detayı:** `SharePlus` ile paylaşım (deprecated `Share.share` kaldırıldı)
+- **Hikâyeler:** Hata mesajları `ApiException.userMessage` ile okunabilir
+- **Test:** `socialActiveRoomsAvailable` + layout `includeRoomStrips` testleri
+
 ## 1.0.231+267 (2026-08-16) — Sosyal bölüm eksikleri
 
 - **Aktif odalar:** Sahte demo oda şeridi kaldırıldı; canlı/sesli oda yoksa şerit gizlenir

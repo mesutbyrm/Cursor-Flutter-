@@ -8,11 +8,12 @@ import '../../../../core/widgets/discover_refresh.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../live/presentation/providers/live_providers.dart';
 import '../providers/social_providers.dart';
+import '../utils/open_social_create_post.dart';
 import '../utils/social_feed_layout.dart';
 import '../widgets/instagram/social_active_rooms.dart';
 import '../widgets/instagram/social_instagram_post_card.dart';
-import '../providers/social_composer_providers.dart';
 
 /// Sosyal akış — yalnızca feed provider'ını izler; app bar/composer etkilenmez.
 class SocialFeedScrollView extends ConsumerWidget {
@@ -30,6 +31,12 @@ class SocialFeedScrollView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final social = ref.watch(socialNotifierProvider);
+    final live = ref.watch(liveStreamsProvider);
+    final rooms = ref.watch(voiceRoomsProvider);
+    final showRoomStrips = socialActiveRoomsAvailable(
+      streams: live.valueOrNull,
+      rooms: rooms.valueOrNull,
+    );
 
     return DiscoverRefresh.wrap(
       onRefresh: onRefresh,
@@ -63,15 +70,16 @@ class SocialFeedScrollView extends ConsumerWidget {
                         ? 'Henüz paylaşım yok.\nİlk gönderini paylaş veya canlifal.com oturumunu kontrol et.'
                         : 'Henüz paylaşım yok.\nİlk gönderini şimdi paylaş.',
                     actionLabel: 'Paylaşım oluştur',
-                    action: () => ref
-                        .read(socialComposerExpandedProvider.notifier)
-                        .state = true,
+                    action: () => openSocialCreatePost(context, ref),
                   ),
                 );
               }
               final notifier = ref.read(socialNotifierProvider.notifier);
               final loadingMore = notifier.isLoadingMore;
-              final feedCount = SocialFeedLayout.itemCount(posts.length);
+              final feedCount = SocialFeedLayout.itemCount(
+                posts.length,
+                includeRoomStrips: showRoomStrips,
+              );
               return SliverList.builder(
                 itemCount: feedCount + (loadingMore ? 1 : 0),
                 itemBuilder: (context, i) {
@@ -87,7 +95,11 @@ class SocialFeedScrollView extends ConsumerWidget {
                       ),
                     );
                   }
-                  final postIdx = SocialFeedLayout.postIndexAt(i, posts.length);
+                  final postIdx = SocialFeedLayout.postIndexAt(
+                    i,
+                    posts.length,
+                    includeRoomStrips: showRoomStrips,
+                  );
                   if (postIdx != null) {
                     return ScrollPerf.item(
                       SocialInstagramPostCard(

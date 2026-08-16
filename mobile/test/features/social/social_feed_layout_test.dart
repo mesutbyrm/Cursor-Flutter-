@@ -10,8 +10,23 @@ void main() {
       expect(SocialFeedLayout.itemCount(4), 6);
     });
 
+    test('itemCount without room strips returns post count only', () {
+      expect(SocialFeedLayout.itemCount(4, includeRoomStrips: false), 4);
+    });
+
     test('postIndexAt returns null for room strip slots', () {
       expect(SocialFeedLayout.postIndexAt(2, 4), isNull);
+    });
+
+    test('postIndexAt without room strips maps directly', () {
+      expect(SocialFeedLayout.postIndexAt(2, 4, includeRoomStrips: false), 2);
+    });
+  });
+
+  group('socialActiveRoomsAvailable', () {
+    test('false when no live streams or voice rooms', () {
+      expect(socialActiveRoomsAvailable(streams: const [], rooms: const []),
+          isFalse);
     });
   });
 }

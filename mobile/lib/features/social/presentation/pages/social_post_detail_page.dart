@@ -34,7 +34,9 @@ class SocialPostDetailPage extends ConsumerWidget {
             tooltip: 'Paylaş',
             onPressed: () {
               final link = 'https://canlifal.com/sosyal?post=$postId';
-              Share.share(link, subject: 'Canlifal gönderisi');
+              SharePlus.instance.share(
+                ShareParams(text: link, subject: 'Canlifal gönderisi'),
+              );
             },
           ),
           IconButton(
