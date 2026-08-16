@@ -85,6 +85,7 @@ class MembershipPage extends ConsumerWidget {
                           0,
                         ),
                         child: _MembershipAppBar(
+                          info: ui.membershipInfo,
                           diamondLabel: ui.formattedDiamondBalance,
                           onBack: () => context.pop(),
                           onAddDiamonds: () => context.push('/jeton-store'),
@@ -155,7 +156,7 @@ class MembershipPage extends ConsumerWidget {
                             ),
                             const SizedBox(height: 22),
                             Text(
-                              'Tüm Üyelik Özellikleri',
+                              buildMembershipPageFeaturesSectionTitle(),
                               style: GoogleFonts.plusJakartaSans(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
@@ -187,7 +188,9 @@ class MembershipPage extends ConsumerWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Üyelik paketleri · jeton alımında indirim yok',
+                              buildMembershipPageTokenPackagesSubtitle(
+                                info: ui.membershipInfo,
+                              ),
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.5),
                                 fontWeight: FontWeight.w600,
@@ -464,17 +467,22 @@ class _GlowOrb extends StatelessWidget {
 
 class _MembershipAppBar extends StatelessWidget {
   const _MembershipAppBar({
+    required this.info,
     required this.diamondLabel,
     required this.onBack,
     required this.onAddDiamonds,
   });
 
+  final ProfileMembershipInfo info;
   final String diamondLabel;
   final VoidCallback onBack;
   final VoidCallback onAddDiamonds;
 
   @override
   Widget build(BuildContext context) {
+    final title = buildMembershipPageAppBarTitle(info: info);
+    final subtitle = buildMembershipPageAppBarSubtitle(info: info);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -491,7 +499,7 @@ class _MembershipAppBar extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                'Üyelikler 👑',
+                title,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   color: Colors.white,
@@ -501,7 +509,7 @@ class _MembershipAppBar extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Daha fazla ayrıcalık, daha fazla eğlence!',
+                subtitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.58),

@@ -292,6 +292,43 @@ void main() {
     });
   });
 
+  group('20h — Profil üyelik faz 36 helper sözleşmesi', () {
+    test('hizmet kartı ücretsiz başlık', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipHubMembershipServiceCardTitle(info: info),
+        'Üyelik Merkezi',
+      );
+    });
+
+    test('profil düzenleme gold başlık', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 5,
+      );
+      expect(
+        buildMembershipProfileEditSectionTitle(info: info),
+        'Gold Üyelik',
+      );
+    });
+
+    test('üyelik sayfası süresi dolmuş alt başlık', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipPageAppBarSubtitle(info: info),
+        contains('sona erdi'),
+      );
+    });
+  });
+
   group('20 — Uygulama performans testi', () {
     setUp(AppTheme.clearCacheForTest);
 

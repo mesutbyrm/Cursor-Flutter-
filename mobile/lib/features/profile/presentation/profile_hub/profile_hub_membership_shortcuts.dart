@@ -55,7 +55,7 @@ class ProfileHubMembershipShortcuts extends ConsumerWidget {
         Expanded(
           child: _ShortcutChip(
             icon: Icons.auto_awesome_outlined,
-            label: 'Kozmetik',
+            label: buildMembershipShortcutsCosmeticsChipLabel(),
             onTap: () => context.push('/profile/cosmetics'),
           ),
         ),

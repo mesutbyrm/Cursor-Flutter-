@@ -1348,4 +1348,96 @@ void main() {
       );
     });
   });
+
+  group('buildMembershipHubMembershipServiceCardTitle', () {
+    test('ücretsiz üyelik merkezi', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipHubMembershipServiceCardTitle(info: info),
+        'Üyelik Merkezi',
+      );
+    });
+
+    test('aktif gold merkezi', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 5,
+      );
+      expect(
+        buildMembershipHubMembershipServiceCardTitle(info: info),
+        'Gold Merkezi',
+      );
+    });
+  });
+
+  group('buildMembershipSettingsVipGoldRowLabel', () {
+    test('aktif gold ayrıcalıkları', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 4,
+      );
+      expect(
+        buildMembershipSettingsVipGoldRowLabel(info: info),
+        'Gold Ayrıcalıkları',
+      );
+    });
+  });
+
+  group('buildMembershipPageAppBarTitle', () {
+    test('ücretsiz üyelikler', () {
+      const info = ProfileMembershipInfo(
+        raw: 'basic',
+        tier: VipTier.basic,
+      );
+      expect(
+        buildMembershipPageAppBarTitle(info: info),
+        'Üyelikler 👑',
+      );
+    });
+
+    test('aktif gold başlık', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 3,
+      );
+      expect(
+        buildMembershipPageAppBarTitle(info: info),
+        'Gold 👑',
+      );
+    });
+  });
+
+  group('buildMembershipPageTokenPackagesSubtitle', () {
+    test('aktif gold jeton alt başlık', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 2,
+      );
+      expect(
+        buildMembershipPageTokenPackagesSubtitle(info: info),
+        contains('Gold aktif'),
+      );
+    });
+  });
+
+  group('buildMembershipGrowthHubVipButtonLabel', () {
+    test('süresi dolmuş VIP yenile', () {
+      const info = ProfileMembershipInfo(
+        raw: 'gold',
+        tier: VipTier.gold,
+        daysRemaining: 0,
+      );
+      expect(
+        buildMembershipGrowthHubVipButtonLabel(info: info),
+        'VIP Yenile',
+      );
+    });
+  });
 }

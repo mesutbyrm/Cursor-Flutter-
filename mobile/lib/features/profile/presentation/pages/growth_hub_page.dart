@@ -189,6 +189,7 @@ class GrowthHubPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 20),
                   _RoadmapHintCard(
+                    info: membershipInfo,
                     onVip: () => context.push('/vip-gold'),
                     onPremium: () => context.push('/premium-membership'),
                     onInvite: () => context.push('/invite-friends'),
@@ -788,12 +789,14 @@ class _BadgeCard extends StatelessWidget {
 
 class _RoadmapHintCard extends StatelessWidget {
   const _RoadmapHintCard({
+    required this.info,
     required this.onVip,
     required this.onPremium,
     required this.onInvite,
     required this.onAdReward,
   });
 
+  final ProfileMembershipInfo info;
   final VoidCallback onVip;
   final VoidCallback onPremium;
   final VoidCallback onInvite;
@@ -802,6 +805,9 @@ class _RoadmapHintCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final plansLabel = buildMembershipGrowthHubPlansButtonLabel(info: info);
+    final vipLabel = buildMembershipGrowthHubVipButtonLabel(info: info);
+
     return ProfileGlass(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -830,7 +836,7 @@ class _RoadmapHintCard extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: onPremium,
                   icon: const Icon(Icons.card_membership_rounded),
-                  label: const Text('Planlar'),
+                  label: Text(plansLabel),
                 ),
               ),
               const SizedBox(width: 10),
@@ -838,7 +844,7 @@ class _RoadmapHintCard extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: onVip,
                   icon: const Icon(Icons.workspace_premium_rounded),
-                  label: const Text('VIP'),
+                  label: Text(vipLabel),
                 ),
               ),
             ],

@@ -27,6 +27,12 @@ class ProfileHubServicesRow extends ConsumerWidget {
     final catalogTier = catalogTierForMembership(membershipInfo, ui.tiers);
     final expiresAt =
         ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
+    final membershipTitle = buildMembershipHubMembershipServiceCardTitle(
+      info: membershipInfo,
+    );
+    final vipGoldTitle = buildMembershipHubVipGoldServiceCardTitle(
+      info: membershipInfo,
+    );
     final membershipHint = buildMembershipHubServiceCardHint(
       info: membershipInfo,
       tiers: ui.tiers,
@@ -50,14 +56,14 @@ class ProfileHubServicesRow extends ConsumerWidget {
 
         final services = [
           _ServiceItem(
-            title: 'Üyelik Merkezi',
+            title: membershipTitle,
             icon: '👑',
             slug: _kMembershipServiceSlug,
             count: 0,
             hint: membershipHint,
           ),
           _ServiceItem(
-            title: 'VIP Gold',
+            title: vipGoldTitle,
             icon: '💎',
             slug: _kVipGoldServiceSlug,
             count: 0,
@@ -88,6 +94,12 @@ class ProfileHubServicesRow extends ConsumerWidget {
     final catalogTier = catalogTierForMembership(membershipInfo, ui.tiers);
     final expiresAt =
         ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
+    final membershipTitle = buildMembershipHubMembershipServiceCardTitle(
+      info: membershipInfo,
+    );
+    final vipGoldTitle = buildMembershipHubVipGoldServiceCardTitle(
+      info: membershipInfo,
+    );
     final membershipHint = buildMembershipHubServiceCardHint(
       info: membershipInfo,
       tiers: ui.tiers,
@@ -108,14 +120,14 @@ class ProfileHubServicesRow extends ConsumerWidget {
     final history = ref.watch(fortuneHistoryProvider).valueOrNull ?? const [];
     final withCounts = [
       _ServiceItem(
-        title: 'Üyelik Merkezi',
+        title: membershipTitle,
         icon: '👑',
         slug: _kMembershipServiceSlug,
         count: 0,
         hint: membershipHint,
       ),
       _ServiceItem(
-        title: 'VIP Gold',
+        title: vipGoldTitle,
         icon: '💎',
         slug: _kVipGoldServiceSlug,
         count: 0,

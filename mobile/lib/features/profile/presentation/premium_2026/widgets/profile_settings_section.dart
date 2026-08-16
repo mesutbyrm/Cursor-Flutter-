@@ -7,6 +7,8 @@ import '../../../../../core/theme/app_palette.dart';
 import '../../../../../core/widgets/theme_mode_selector.dart';
 import '../../../../admin_web/presentation/providers/admin_web_access_provider.dart';
 import '../../widgets/premium/profile_glass.dart';
+import '../profile_membership_helpers.dart';
+import '../../providers/profile_hub_providers.dart';
 import 'profile_membership_manage_tile.dart';
 
 /// Ayarlar — gruplu liste; tema, hesap, keşfet, destek.
@@ -54,11 +56,7 @@ class ProfileSettingsSection extends StatelessWidget {
                 child: ProfileMembershipManageTile(),
               ),
               Divider(height: 1, indent: 52, color: palette.divider),
-              _SettingsRow(
-                icon: Icons.diamond_outlined,
-                label: 'VIP Gold Ayrıcalıkları',
-                onTap: () => context.push('/vip-gold'),
-              ),
+              const _VipGoldSettingsRow(),
               Divider(height: 1, indent: 52, color: palette.divider),
               _SettingsRow(
                 icon: Icons.shield_outlined,
@@ -276,6 +274,21 @@ class _SettingsRow extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Yalnızca Admin / Süper Admin — tam ekran WebView yönetim paneli.
+class _VipGoldSettingsRow extends ConsumerWidget {
+  const _VipGoldSettingsRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final info = ref.watch(profileMembershipInfoProvider);
+    return _SettingsRow(
+      icon: Icons.diamond_outlined,
+      label: buildMembershipSettingsVipGoldRowLabel(info: info),
+      onTap: () => context.push('/vip-gold'),
     );
   }
 }

@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.226+262 (2026-08-16) — Profil üyelik faz 36
+
+- **Hizmetler şeridi:** `buildMembershipHubMembershipServiceCardTitle` + `buildMembershipHubVipGoldServiceCardTitle`
+- **Profil düzenleme:** `buildMembershipProfileEditSectionTitle` — dinamik bölüm başlığı
+- **Ayarlar:** `buildMembershipSettingsVipGoldRowLabel` — VIP Gold satır etiketi
+- **Kısayollar:** `buildMembershipShortcutsCosmeticsChipLabel` — kozmetik chip
+- **Görevler merkezi:** `buildMembershipGrowthHubPlansButtonLabel` + `buildMembershipGrowthHubVipButtonLabel`
+- **Üyelik sayfası:** `buildMembershipPageAppBarTitle/Subtitle`, `buildMembershipPageFeaturesSectionTitle`, `buildMembershipPageTokenPackagesSubtitle`
+- **Acceptance:** client `20h` üyelik helper sözleşme testleri
+- **Test:** hizmet kartı, ayarlar VIP, app bar, growth hub butonları
+
 ## 1.0.225+261 (2026-08-16) — Profil üyelik faz 35
 
 - **VIP kısayol:** `buildMembershipShortcutsVipChipLabel` — chip ana etiket (VIP Gold / VIP Yenile)

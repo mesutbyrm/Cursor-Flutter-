@@ -906,3 +906,87 @@ String buildMembershipPageUpgradeBannerSubtitle({
 
 /// Üyelik sayfası yükseltme banner CTA etiketi.
 String buildMembershipPageUpgradeBannerActionLabel() => 'Jeton\nSatın Al';
+
+/// Hizmetler şeridi üyelik merkezi kart başlığı.
+String buildMembershipHubMembershipServiceCardTitle({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isExpired) return 'Planı Yenile';
+  if (info.hasPaidTier) return '${info.tierLabel} Merkezi';
+  return 'Üyelik Merkezi';
+}
+
+/// Hizmetler şeridi VIP Gold kart başlığı.
+String buildMembershipHubVipGoldServiceCardTitle({
+  required ProfileMembershipInfo info,
+}) =>
+    buildMembershipShortcutsVipChipLabel(info: info);
+
+/// Profil düzenleme üyelik bölüm başlığı.
+String buildMembershipProfileEditSectionTitle({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.hasPaidTier) return '${info.tierLabel} Üyelik';
+  return 'Üyelik';
+}
+
+/// Ayarlar VIP Gold satır etiketi.
+String buildMembershipSettingsVipGoldRowLabel({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isVip && info.hasActiveSubscription) {
+    return '${info.tierLabel} Ayrıcalıkları';
+  }
+  if (info.isExpired && info.hasPaidTier) return 'VIP Gold Yenile';
+  return 'VIP Gold Ayrıcalıkları';
+}
+
+/// Hub kozmetik kısayol chip etiketi.
+String buildMembershipShortcutsCosmeticsChipLabel() => 'Kozmetik';
+
+/// Görevler merkezi planlar buton etiketi.
+String buildMembershipGrowthHubPlansButtonLabel({
+  required ProfileMembershipInfo info,
+}) =>
+    buildMembershipHubActionLabel(info: info, freeLabel: 'Planlar');
+
+/// Görevler merkezi VIP buton etiketi.
+String buildMembershipGrowthHubVipButtonLabel({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isVip && info.hasActiveSubscription) return info.tierLabel;
+  if (info.isExpired && info.hasPaidTier) return 'VIP Yenile';
+  return 'VIP';
+}
+
+/// Üyelik sayfası app bar başlığı.
+String buildMembershipPageAppBarTitle({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.hasPaidTier) return '${info.tierLabel} 👑';
+  return 'Üyelikler 👑';
+}
+
+/// Üyelik sayfası app bar alt başlığı.
+String buildMembershipPageAppBarSubtitle({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.isExpired) return 'Planınız sona erdi · yenileyin';
+  if (info.hasActiveSubscription) {
+    return '${info.tierLabel} avantajlarınız aktif';
+  }
+  return 'Daha fazla ayrıcalık, daha fazla eğlence!';
+}
+
+/// Üyelik sayfası özellikler bölüm başlığı.
+String buildMembershipPageFeaturesSectionTitle() => 'Tüm Üyelik Özellikleri';
+
+/// Üyelik sayfası jeton paketleri alt başlığı.
+String buildMembershipPageTokenPackagesSubtitle({
+  required ProfileMembershipInfo info,
+}) {
+  if (info.hasActiveSubscription) {
+    return 'Üyelik paketleri · jeton alımında indirim yok · ${info.tierLabel} aktif';
+  }
+  return 'Üyelik paketleri · jeton alımında indirim yok';
+}
