@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_theme.dart';
+import '../providers/profile_hub_providers.dart';
+import '../providers/profile_providers.dart';
 
 /// Ücretsiz kullanıcıya premium plan teşviki (profil hub — yalnızca free dal).
 class ProfileHubVipBanner extends ConsumerWidget {
@@ -19,11 +21,23 @@ class ProfileHubVipBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final info = ref.watch(profileMembershipInfoProvider);
     final ui = ref.watch(membershipControllerProvider);
-    final subtitle = buildFreeUserMembershipTeaserSubtitle(
+    final catalogTier = catalogTierForMembership(info, ui.tiers);
+    final expiresAt =
+        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
+    final title = buildMembershipVipBannerTitle(
+      info: info,
+      expiresAt: expiresAt,
+    );
+    final subtitle = buildMembershipPremiumCardSubtitle(
+      info: info,
       tiers: ui.tiers,
       packages: ui.apiPackages,
+      catalogTier: catalogTier,
+      expiresAt: expiresAt,
     );
+    final actionLabel = buildMembershipVipBannerActionLabel(info: info);
 
     void openPlans() {
       if (onViewPrivileges != null) {
@@ -60,9 +74,9 @@ class ProfileHubVipBanner extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Premium Üyelik',
-                    style: TextStyle(
+                  Text(
+                    title,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
@@ -84,9 +98,9 @@ class ProfileHubVipBanner extends ConsumerWidget {
             ),
             TextButton(
               onPressed: openPlans,
-              child: const Text(
-                'Planları Gör >',
-                style: TextStyle(
+              child: Text(
+                actionLabel,
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
                   fontSize: 11,

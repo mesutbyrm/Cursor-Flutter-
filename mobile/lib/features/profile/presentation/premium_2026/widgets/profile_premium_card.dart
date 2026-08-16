@@ -80,8 +80,9 @@ class ProfilePremiumCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       catalogSubtitle ??
-                          buildMembershipCatalogHintSubtitle(
+                          buildMembershipPremiumCardSubtitle(
                             info: info,
+                            tiers: const [],
                             catalogTier: catalogTier,
                             expiresAt: expiresAt,
                           ),
@@ -118,11 +119,7 @@ class ProfilePremiumCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      active
-                          ? 'Ayrıcalıklar'
-                          : expired
-                              ? 'Yenile'
-                              : 'Planları Gör',
+                      buildMembershipPremiumCardPrimaryActionLabel(info: info),
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 12,

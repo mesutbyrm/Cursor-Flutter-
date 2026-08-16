@@ -33,6 +33,9 @@ void main() {
               ),
             ),
             membershipControllerProvider.overrideWith(_StubMembershipController.new),
+            walletBalancesProvider.overrideWith(
+              () => _FixedWalletNotifier(WalletBalances.empty),
+            ),
           ],
           child: MaterialApp(
             home: Scaffold(
@@ -44,7 +47,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(ProfileHubVipBanner), findsOneWidget);
-      expect(find.text('Premium Üyelik'), findsOneWidget);
+      expect(find.text('Üyelik Planları'), findsOneWidget);
       expect(find.byType(ProfilePremiumCard), findsNothing);
     });
 

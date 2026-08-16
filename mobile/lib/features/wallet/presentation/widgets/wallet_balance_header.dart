@@ -183,7 +183,7 @@ class WalletBalanceHeader extends ConsumerWidget {
               Expanded(
                 child: _QuickLink(
                   icon: Icons.workspace_premium_rounded,
-                  label: 'Üyelik',
+                  label: buildMembershipWalletQuickLinkLabel(info: info),
                   color: const Color(0xFFFFD54F),
                   onTap: () => context.push('/premium-membership'),
                 ),
