@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-08-17 09:26 UTC
+Oluşturulma: 2026-08-17 09:50 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -24,7 +24,7 @@ Base: `main`
 
 | Dal | Neden |
 |-----|-------|
-| cursor/social-section-fixes-5-0710 | merged into main |
+| cursor/social-section-fixes-6-0710 | merged into main |
 
 ## Kalan açık PR'lar
 
