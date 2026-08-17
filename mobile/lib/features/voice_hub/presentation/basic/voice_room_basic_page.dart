@@ -96,7 +96,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   final _messageCtrl = TextEditingController();
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
-  int? _lastSelfSeatIndex;
   String get _liveRoomKey {
     final pinned = _pinnedLiveRoomKey?.trim();
     if (pinned != null && pinned.isNotEmpty) return pinned;
