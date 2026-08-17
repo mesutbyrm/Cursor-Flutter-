@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/performance/voice_room_entry_perf.dart';
@@ -50,9 +49,7 @@ import '../../../cosmetics/presentation/widgets/cosmetic_entrance_overlay.dart';
 import '../../../vip_gold/presentation/providers/user_room_profile_provider.dart';
 import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'voice_room_basic_moderation_section.dart';
-import '../sheets/voice_room_menu_sheet.dart';
 import 'voice_room_basic_premium_section.dart';
-import 'voice_room_basic_mode.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
 import '../sheets/music_mode_picker_sheet.dart';
 import '../utils/voice_music_access.dart';
@@ -68,6 +65,8 @@ import '../widgets/premium_2026/voice_online_gift_box.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../widgets/voice_room/voice_room_center_music_panel.dart';
 import '../widgets/voice_room/voice_room_music_background_layer.dart';
+import '../widgets/voice_room/voice_room_music_queue_mini_card.dart';
+import '../widgets/voice_room/voice_room_side_action_rail.dart';
 import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../../gifts/presentation/widgets/first_gifter_badge.dart';
 import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
@@ -443,6 +442,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
   Future<void> _confirmLeave() async {
     if (_leaving) return;
+    final ok = await VoiceRoomLeaveFlow.confirmLeave(context);
+    if (!ok || !mounted) return;
     await _leaveRoom();
   }
 
@@ -577,6 +578,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     );
     final speakPending = ui.requestSpeakPending;
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
+    final showMusicRequestFab = live.dj.musicEnabled;
     final sessionKey =
         room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
@@ -747,8 +749,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       isHost: isOwner,
       child: PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) unawaited(_confirmLeave());
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        await _confirmLeave();
       },
       child: Scaffold(
         resizeToAvoidBottomInset: true,
@@ -896,14 +899,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     selfUserId: user?.id,
                     onEmoji: () =>
                         showVoiceRoomBasicEmojiPicker(context, _messageCtrl),
-                    onSettings: () => _openManagementPanel(
-                      room,
-                      live,
-                      perms,
-                      isOwner,
-                    ),
-                    onMusic: () => _openMusicRequest(room),
-                    musicEnabled: VoiceRoomBasicMode.musicEnabled,
                   ),
                   VoiceLiveActionBar2026(
                     micOn: !_isMicMuted,
@@ -945,6 +940,31 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   bottomInset: 88,
                   muted: ui.effectiveMusicMuted,
                   hidden: true,
+                ),
+              ),
+            VoiceRoomSideActionRail(
+              onSettings: () => _openManagementPanel(
+                room,
+                live,
+                perms,
+                isOwner,
+              ),
+              onMusic: showMusicRequestFab
+                  ? () => _openMusicRequest(room)
+                  : null,
+              showMusic: showMusicRequestFab,
+            ),
+            if (showMusicRequestFab)
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 118, right: 4),
+                  child: VoiceRoomMusicQueueMiniCard(
+                    dj: live.dj,
+                    liveKey: _liveRoomKey,
+                    canControlMusic: canControlMusic,
+                    canStopMusic: canCloseMusic,
+                  ),
                 ),
               ),
             if (_showVipEntrance && user != null)

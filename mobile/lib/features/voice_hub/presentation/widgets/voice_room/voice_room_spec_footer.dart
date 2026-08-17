@@ -24,6 +24,7 @@ class VoiceRoomSpecFooter extends StatelessWidget {
     required this.onSettings,
     required this.onGift,
     required this.onInvite,
+    this.showSettings = true,
     this.presence = const [],
     this.selfUserId,
     this.events = const [],
@@ -49,6 +50,7 @@ class VoiceRoomSpecFooter extends StatelessWidget {
   final VoidCallback onSettings;
   final VoidCallback onGift;
   final VoidCallback onInvite;
+  final bool showSettings;
   final List<ChatRoomPresence> presence;
   final String? selfUserId;
   final List<VoiceRoomRealtimeEvent> events;
@@ -182,6 +184,7 @@ class VoiceRoomSpecFooter extends StatelessWidget {
               headphonesOn: headphonesOn,
               onToggleAudioOutput: onToggleAudioOutput,
               onSettings: onSettings,
+              showSettings: showSettings,
               micOn: micOn,
               micEnabled: micEnabled,
               onMicToggle: onMicToggle,

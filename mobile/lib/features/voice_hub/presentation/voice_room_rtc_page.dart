@@ -94,7 +94,7 @@ import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_center_music_panel.dart';
 import 'widgets/voice_room/voice_room_music_queue_mini_card.dart';
-import 'widgets/voice_room/voice_room_music_request_fab.dart';
+import 'widgets/voice_room/voice_room_side_action_rail.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import 'sheets/voice_youtube_song_sheet.dart';
@@ -636,6 +636,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   Future<void> _confirmLeave() async {
     if (_leaving) return;
+    final ok = await VoiceRoomLeaveFlow.confirmLeave(context);
+    if (!ok || !mounted) return;
     await _leaveRoom();
   }
 
@@ -1528,13 +1530,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           onGallery: perms.canChangeBackground
                               ? () => _pickBackground(context, room)
                               : null,
-                          onSettings: () => _openManagementPanel(
-                            context,
-                            room: room,
-                            live: live,
-                            perms: perms,
-                            isOwner: isOwner,
-                          ),
+                          onSettings: null,
                           onRoomPanel: () => showVoiceSpeakerListSheet(
                             context,
                             presence: live.presence,
@@ -1826,13 +1822,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       onMicToggle: _toggleMic,
                       micOn: !_isMicMuted,
                       micEnabled: _audioReady,
-                      onSettings: () => _openManagementPanel(
-                        context,
-                        room: room,
-                        live: ref.read(voiceRoomLiveProvider(_liveRoomKey)),
-                        perms: perms,
-                        isOwner: isOwner,
-                      ),
+                      onSettings: () {},
+                      showSettings: false,
                       onGift: () => _openGiftShop(
                         context,
                         room: room,
@@ -1846,7 +1837,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
                       onChanged: _onChatChanged,
                       joinNotificationsEnabled: joinNotificationsEnabled,
-                      showMusicRequest: showMusicRequestFab,
+                      showMusicRequest: false,
                       showSpeakRequest: user != null && !canSpeak,
                       speakRequestPending: speakPending,
                       onSpeakRequest: () => unawaited(
@@ -1870,33 +1861,29 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 configuredSeatCount: live.roomSeatCount ?? room.seatCount,
               ),
             ),
+            VoiceRoomSideActionRail(
+              onSettings: () => _openManagementPanel(
+                context,
+                room: room,
+                live: live,
+                perms: perms,
+                isOwner: isOwner,
+              ),
+              onMusic: showMusicRequestFab
+                  ? () => showVoiceYoutubeSongSheet(context, ref, room: room)
+                  : null,
+              showMusic: showMusicRequestFab,
+            ),
             if (!keyboardOpen && showMusicRequestFab)
               Align(
                 alignment: Alignment.bottomRight,
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 118),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      VoiceRoomMusicQueueMiniCard(
-                        dj: live.dj,
-                        liveKey: _liveRoomKey,
-                        canControlMusic: canControlMusic,
-                        canStopMusic: canCloseMusic,
-                      ),
-                      const SizedBox(height: 8),
-                      VoiceRoomMusicRequestFab(
-                        enabled: showMusicRequestFab,
-                        active: canRequestMusic,
-                        audioCost: audioRequestCost,
-                        onPressed: () => showVoiceYoutubeSongSheet(
-                          context,
-                          ref,
-                          room: room,
-                        ),
-                      ),
-                    ],
+                  padding: const EdgeInsets.only(bottom: 118, right: 4),
+                  child: VoiceRoomMusicQueueMiniCard(
+                    dj: live.dj,
+                    liveKey: _liveRoomKey,
+                    canControlMusic: canControlMusic,
+                    canStopMusic: canCloseMusic,
                   ),
                 ),
               ),

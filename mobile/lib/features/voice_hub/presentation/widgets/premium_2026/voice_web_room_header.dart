@@ -175,10 +175,6 @@ class VoiceWebRoomHeader extends ConsumerWidget {
                 onTap: onGallery,
               ),
               _GlassIconBtn(
-                icon: Icons.settings_rounded,
-                onTap: onSettings,
-              ),
-              _GlassIconBtn(
                 icon: Icons.meeting_room_outlined,
                 onTap: onRoomPanel,
               ),

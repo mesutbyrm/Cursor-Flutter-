@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.248+284 (2026-08-17) — Sesli oda UI + çıkış + müzik
+
+- **Sağ ray:** Ayarlar ve müzik amblemleri mesaj çubuğundan kaldırıldı; web gibi sağ kenarda biraz aşağıda
+- **Müzik:** `!istek` komutu veya sağdaki müzik amblemi ile şarkı isteği; kuyruk mini kartı sağ altta
+- **Çıkış:** Geri / çıkış tuşu ve sistem geri — onay diyalogu + backend leave önce, sonra navigasyon
+- **Backend uyumu:** Müzik görünürlüğü `live.dj.musicEnabled` ile; presence/koltuk leave timeout güvenli
+
 ## 1.0.247+283 (2026-08-17) — Sosyal fal kartları + sesli oda şeridi
 
 - **Fal gönderileri:** Tam fal metni (`detail`) gösterilir; 250 karakterden sonra «daha fazla»

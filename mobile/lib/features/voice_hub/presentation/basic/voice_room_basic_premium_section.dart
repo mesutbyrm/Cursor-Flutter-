@@ -341,32 +341,6 @@ class _VoiceRoomBasicMessageBarState extends State<VoiceRoomBasicMessageBar> {
               ),
             ),
           ),
-          if (widget.onSettings != null || widget.onMusic != null)
-            Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (widget.onSettings != null)
-                    _MessageBarActionButton(
-                      tooltip: 'Ayarlar',
-                      onPressed: widget.onSettings!,
-                      icon: Icons.settings_rounded,
-                      color: VoiceRoomTokens.neonBlue.withValues(alpha: 0.95),
-                    ),
-                  if (widget.onSettings != null && widget.onMusic != null)
-                    const SizedBox(height: 6),
-                  if (widget.onMusic != null && widget.musicEnabled)
-                    _MessageBarActionButton(
-                      tooltip: 'Müzik iste',
-                      onPressed: widget.onMusic!,
-                      icon: Icons.library_music_rounded,
-                      color: VoiceRoomTokens.gold.withValues(alpha: 0.95),
-                    ),
-                ],
-              ),
-            ),
           const SizedBox(width: 8),
           IconButton(
             visualDensity: VisualDensity.compact,

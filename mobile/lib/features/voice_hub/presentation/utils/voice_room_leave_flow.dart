@@ -43,19 +43,26 @@ abstract final class VoiceRoomLeaveFlow {
   }
 
   static void navigateAwayFromRoom({BuildContext? context}) {
-    final nav = rootNavigatorKey.currentContext ?? context;
-    if (nav == null || !nav.mounted) return;
-    final router = GoRouter.of(nav);
-    final location = router.state.matchedLocation;
-    if (location.startsWith('/voice-room')) {
-      router.go('/voice-rooms');
-      return;
-    }
-    if (nav.canPop()) {
-      nav.pop();
-      return;
-    }
-    router.go('/voice-rooms');
+    try {
+      final nav = rootNavigatorKey.currentContext ?? context;
+      if (nav != null && nav.mounted) {
+        final router = GoRouter.of(nav);
+        final location = router.state.matchedLocation;
+        if (location.startsWith('/voice-room')) {
+          router.go('/voice-rooms');
+          return;
+        }
+        if (nav.canPop()) {
+          nav.pop();
+          return;
+        }
+        router.go('/voice-rooms');
+        return;
+      }
+    } catch (_) {}
+    try {
+      rootNavigatorKey.currentContext?.go('/voice-rooms');
+    } catch (_) {}
   }
 
   /// Onay diyalogu olmadan doğrudan odadan çık.
@@ -86,59 +93,79 @@ abstract final class VoiceRoomLeaveFlow {
     Future<void> Function()? prepareLeave,
   }) async {
     final key = liveKey.trim();
-    if (key.isEmpty) return;
+    var navigated = false;
 
-    await prepareLeave?.call();
-
-    final live = ref.read(voiceRoomLiveProvider(key));
-    final user = ref.read(authControllerProvider).valueOrNull;
-    SessionGiftSummary? leaveSummary;
-    if (user != null) {
-      leaveSummary = SessionGiftSummaryBuilder.forVoiceRoom(
-        ref: ref,
-        roomTitle: room.displayTitle,
-        ownerUserId: live.ownerId ?? room.ownerId,
-        ownerDisplayName: room.ownerName,
-        myUserId: user.id,
-        myDisplayName: user.display,
-      );
-    }
-
-    // Backend presence/koltuk önce — provider dispose olsa bile API tamamlansın.
     try {
-      await ref
-          .read(chatRoomRemoteProvider)
-          .leavePresence(key)
-          .timeout(const Duration(seconds: 4));
-    } catch (_) {}
-    final userId = user?.id;
-    if (userId != null && userId.isNotEmpty) {
       try {
-        await ref
-            .read(chatRoomRemoteProvider)
-            .clearSeat(roomKey: key, userId: userId)
-            .timeout(const Duration(seconds: 3));
+        await prepareLeave?.call();
       } catch (_) {}
-    }
 
-    final notifier = ref.read(voiceRoomLiveProvider(key).notifier);
-    navigateAwayFromRoom();
+      SessionGiftSummary? leaveSummary;
+      final user = ref.read(authControllerProvider).valueOrNull;
+      if (key.isNotEmpty && user != null) {
+        final live = ref.read(voiceRoomLiveProvider(key));
+        leaveSummary = SessionGiftSummaryBuilder.forVoiceRoom(
+          ref: ref,
+          roomTitle: room.displayTitle,
+          ownerUserId: live.ownerId ?? room.ownerId,
+          ownerDisplayName: room.ownerName,
+          myUserId: user.id,
+          myDisplayName: user.display,
+        );
+      }
 
-    unawaited(
-      notifier
-          .leaveRoomSession(
-            source: source,
-            awaitBackend: false,
-            force: true,
-          )
-          .timeout(const Duration(seconds: 12))
-          .catchError((_) {}),
-    );
+      if (key.isNotEmpty) {
+        try {
+          await ref
+              .read(chatRoomRemoteProvider)
+              .leavePresence(key)
+              .timeout(const Duration(seconds: 4));
+        } catch (_) {}
+        final userId = user?.id;
+        if (userId != null && userId.isNotEmpty) {
+          try {
+            await ref
+                .read(chatRoomRemoteProvider)
+                .clearSeat(roomKey: key, userId: userId)
+                .timeout(const Duration(seconds: 3));
+          } catch (_) {}
+        }
 
-    if (leaveSummary != null && leaveSummary.hasData) {
-      final rootCtx = rootNavigatorKey.currentContext;
-      if (rootCtx != null && rootCtx.mounted) {
-        await showSessionGiftSummarySheet(rootCtx, summary: leaveSummary);
+        try {
+          await ref
+              .read(voiceRoomLiveProvider(key).notifier)
+              .leaveRoomSession(
+                source: source,
+                awaitBackend: true,
+                force: true,
+              )
+              .timeout(const Duration(seconds: 6));
+        } catch (_) {}
+      }
+
+      navigateAwayFromRoom(context: context);
+      navigated = true;
+
+      if (leaveSummary != null && leaveSummary.hasData) {
+        unawaited(
+          Future<void>.delayed(const Duration(milliseconds: 350), () async {
+            final rootCtx = rootNavigatorKey.currentContext;
+            if (rootCtx != null && rootCtx.mounted) {
+              await showSessionGiftSummarySheet(
+                rootCtx,
+                summary: leaveSummary!,
+              );
+            }
+          }),
+        );
+      }
+    } catch (_) {
+      if (!navigated) {
+        navigateAwayFromRoom(context: context);
+      }
+    } finally {
+      if (!navigated) {
+        navigateAwayFromRoom(context: context);
       }
     }
   }
