@@ -131,9 +131,8 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         }
       }
 
-      // SSE bağlıyken aktif odanın PK'si zaten push ile gelir; yalnızca diğer
-      // sahip olunan odaları seyrek poll et.
-      if (inRoomSse && _pollTick % 2 != 0) return;
+      // SSE bağlıyken yalnızca global davet listesi yedeklenir; oda poll atlanır.
+      if (inRoomSse) return;
 
       final rooms = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
       for (final room in rooms) {

@@ -104,18 +104,20 @@ abstract final class VoiceRoomLeaveFlow {
       );
     }
 
-    try {
-      await ref
+    // Ekranı beklemeden kapat; temizlik arka planda (backend leave + TRTC).
+    navigateAwayFromRoom();
+
+    unawaited(
+      ref
           .read(voiceRoomLiveProvider(key).notifier)
           .leaveRoomSession(
             source: source,
-            awaitBackend: true,
+            awaitBackend: false,
             force: true,
           )
-          .timeout(const Duration(seconds: 8));
-    } catch (_) {}
-
-    navigateAwayFromRoom();
+          .timeout(const Duration(seconds: 12))
+          .catchError((_) {}),
+    );
 
     if (leaveSummary != null && leaveSummary.hasData) {
       final rootCtx = rootNavigatorKey.currentContext;

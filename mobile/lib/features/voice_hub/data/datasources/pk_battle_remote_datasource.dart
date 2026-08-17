@@ -238,6 +238,8 @@ class PkBattleRemoteDataSource {
 
     final guideBody = {
       if (guest.isNotEmpty) 'guestUserId': guest,
+      if (guest.isNotEmpty) 'targetUserId': guest,
+      if (guest.isNotEmpty) 'opponentUserId': guest,
       'durationSec': duration,
       if (oppRoom.isNotEmpty) 'targetRoomId': oppRoom,
     };
@@ -251,7 +253,9 @@ class PkBattleRemoteDataSource {
       'duration': duration,
       'durationSec': duration,
       if (guest.isNotEmpty) 'guestUserId': guest,
+      if (guest.isNotEmpty) 'targetUserId': guest,
       if (guest.isNotEmpty) 'opponentId': guest,
+      if (guest.isNotEmpty) 'opponentUserId': guest,
     };
 
     final bodies = <Map<String, dynamic>>[];

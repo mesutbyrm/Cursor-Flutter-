@@ -15,6 +15,7 @@ import '../../../live/data/datasources/live_field/live_field_api_remote_datasour
 import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
+import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/entities/voice_gift_revenue.dart';
 
 /// Sesli oda hediyeleri — katalog canlı yayınla aynı, gönderim oda uç noktasına.
@@ -175,6 +176,16 @@ class ChatRoomGiftsRemoteDataSource {
         );
     final txId = transactionId ??
         pick(unwrapped, ['id', 'giftEventId', 'transactionId'])?.toString();
+    final pkRaw = unwrapped['pkBattle'] ??
+        unwrapped['pk'] ??
+        unwrapped['battle'] ??
+        body['pkBattle'] ??
+        body['pk'];
+    PkBattleRemote? pkBattle;
+    if (pkRaw is Map) {
+      final parsed = PkBattleRemote.fromJson(Map<String, dynamic>.from(pkRaw));
+      if (parsed.effectiveId.isNotEmpty) pkBattle = parsed;
+    }
     return VoiceGiftSendResult(
       revenue: revenue ??
           VoiceGiftRevenueBreakdown.fromJson(
@@ -186,6 +197,7 @@ class ChatRoomGiftsRemoteDataSource {
       spentAmount: spent == 0 ? null : spent,
       giftEvent: event,
       transactionId: txId,
+      pkBattle: pkBattle,
     );
   }
 

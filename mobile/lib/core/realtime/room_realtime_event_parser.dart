@@ -10,7 +10,19 @@ abstract final class RoomRealtimeEventParser {
     return n == 'pk_invite' ||
         n == 'pkinvite' ||
         n == 'pk_request' ||
-        n == 'pkrequest';
+        n == 'pkrequest' ||
+        n == 'pk_requested' ||
+        n == 'pkrequested';
+  }
+
+  static bool isPkScoreEvent(String? raw) {
+    final n = raw?.toLowerCase().trim() ?? '';
+    return n == 'pk_score' ||
+        n == 'pkscore' ||
+        n == 'pk_score_updated' ||
+        n == 'pkscoreupdated' ||
+        n == 'pk_battle_updated' ||
+        n == 'pkbattleupdated';
   }
 
   static bool isGiftEvent(String? raw) {

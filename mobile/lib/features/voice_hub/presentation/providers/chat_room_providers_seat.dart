@@ -282,6 +282,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
         );
         state = state.copyWith(seatSlots: nextSlots, presence: nextPresence);
       }
+      unawaited(_refreshSeatsFromBackend());
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

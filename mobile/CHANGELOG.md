@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.244+280 (2026-08-17) — Sesli oda senkronu (çıkış, PK hediye, koltuk, mik)
+
+- **Çıkış:** Heartbeat durur → backend presence/koltuk leave önce → TRTC `exitRoom` → ekran beklemeden kapanır
+- **Oda değişimi:** Eski odada presence anında düşer; arka planda temizlik
+- **PK hediye:** POST yanıtındaki `pkBattle` + hediye event anında uygulanır (30 sn poll beklemez)
+- **SSE:** `PK_SCORE_UPDATED`, `PK_ACCEPTED/REJECTED`, `gift_ranking_updated` room_event desteği
+- **PK davet:** `targetUserId` + hedef oda kimliği gönderilir; SSE varken gereksiz poll kapatılır
+- **Koltuk:** SSE reconnect sonrası `GET /seats`; koltuk ataması sonrası backend yenileme
+- **Mikrofon:** Koltuğa oturunca otomatik unmute kaldırıldı; varsayılan kapalı
+
 ## 1.0.243+279 (2026-08-17) — Anasayfa, sesli oda çıkışı, bot yayın
 
 - **Anasayfa:** `/games-hub` ve alt rotaları, `/games-room/:id`, `/blog-hub`, `/dreams-hub` eklendi; oyun/blog/rüya/futbol kısayolları düzeltildi

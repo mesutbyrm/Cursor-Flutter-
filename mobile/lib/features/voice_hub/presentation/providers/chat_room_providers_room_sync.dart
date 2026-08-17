@@ -92,6 +92,24 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     }
   }
 
+  bool _tryApplyPkRoomEvent(Map<String, dynamic> payload) {
+    final nested =
+        payload['battle'] ?? payload['pk'] ?? payload['pkBattle'] ?? payload['data'];
+    Map<String, dynamic>? raw;
+    if (nested is Map) {
+      raw = Map<String, dynamic>.from(nested);
+    } else if (payload['battleId'] != null ||
+        payload['inviteId'] != null ||
+        payload['id'] != null) {
+      raw = payload;
+    }
+    if (raw == null) return false;
+    final battle = PkBattleRemote.fromJson(raw);
+    if (battle.effectiveId.isEmpty) return false;
+    ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
+    return true;
+  }
+
   void _handleRoomEvent(Map<String, dynamic> payload) {
     _markSseActivity();
     final event = (payload['event'] ?? payload['type'] ?? '')
@@ -117,6 +135,27 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         return;
       case 'seat_update':
         _scheduleSeatsRefreshFromBackend();
+        return;
+      case 'pk_score_updated':
+      case 'pkscoreupdated':
+      case 'pk_started':
+      case 'pkstarted':
+      case 'pk_accepted':
+      case 'pkaccepted':
+      case 'pk_rejected':
+      case 'pkrejected':
+      case 'pk_ended':
+      case 'pkended':
+      case 'pk_requested':
+      case 'pkrequest':
+      case 'pk_invite':
+      case 'pkinvite':
+        if (_tryApplyPkRoomEvent(payload)) return;
+        return;
+      case 'gift_sent':
+      case 'giftsent':
+      case 'gift_ranking_updated':
+      case 'giftrankingupdated':
         return;
       case 'owner_changed':
         _applyRoomEventOwnerChanged(payload);

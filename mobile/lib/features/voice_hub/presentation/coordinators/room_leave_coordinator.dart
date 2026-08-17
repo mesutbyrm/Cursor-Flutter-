@@ -2,8 +2,8 @@ import 'dart:async';
 
 /// Idempotent oda çıkışı — aynı anda iki leave isteği engellenir.
 ///
-/// Sıra: heartbeat/SSE/poll durdur → müzik/ses/video kes → TRTC çık →
-/// backend leave → state temizle.
+/// Sıra: heartbeat/SSE/poll durdur → optimistic presence düş → backend leave →
+/// TRTC exitRoom → state temizle.
 class RoomLeaveCoordinator {
   RoomLeaveCoordinator();
 

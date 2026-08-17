@@ -128,6 +128,18 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
     case 'pkinvite':
     case 'pk_request':
     case 'pkrequest':
+    case 'pk_ended':
+    case 'pkended':
+    case 'pk_accepted':
+    case 'pkaccepted':
+    case 'pk_rejected':
+    case 'pkrejected':
+    case 'pk_started':
+    case 'pkstarted':
+    case 'pk_score_updated':
+    case 'pkscoreupdated':
+    case 'gift_ranking_updated':
+    case 'giftrankingupdated':
       return ChatRoomSseEventType.pk;
     case 'room_event':
     case 'roomevent':

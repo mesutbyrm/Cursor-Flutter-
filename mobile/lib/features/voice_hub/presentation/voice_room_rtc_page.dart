@@ -120,7 +120,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _audioReady = false;
   String? _audioError;
   String? _loginError;
-  var _isMicMuted = false;
+  var _isMicMuted = true;
   var _micAutoMutedByMusic = false;
   var _leaving = false;
   var _leaveSessionStarted = false;
@@ -131,7 +131,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
   var _giftRealtimeStarted = false;
-  int? _lastSelfSeatIndex;
   /// Riverpod oturum anahtarı — metadata değişince provider dispose olmasın.
   String? _pinnedLiveRoomKey;
 
@@ -1347,24 +1346,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           if (!canSpeak && !_isMicMuted) {
             _audio?.setMicEnabled(false);
             if (mounted) setState(() => _isMicMuted = true);
-          } else {
-            ChatRoomPresence? selfPresence;
-            for (final p in next.presence) {
-              if (p.id == user.id) {
-                selfPresence = p;
-                break;
-              }
-            }
-            final seat = selfPresence?.seatIndex;
-            if (canSpeak &&
-                seat != null &&
-                seat >= 0 &&
-                seat != _lastSelfSeatIndex &&
-                _isMicMuted) {
-              _audio?.setMicEnabled(true);
-              if (mounted) setState(() => _isMicMuted = false);
-            }
-            _lastSelfSeatIndex = seat;
+          } else if (canSpeak) {
+            // Mikrofon varsayılan kapalı — kullanıcı butona basmadan açılmaz.
           }
         }
       }

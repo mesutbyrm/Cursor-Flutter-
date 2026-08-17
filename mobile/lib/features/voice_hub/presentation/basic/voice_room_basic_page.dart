@@ -735,16 +735,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             room: room,
             presence: next.presence,
           );
-          final seat = selfPresence?.seatIndex;
-          if (canSpeak &&
-              seat != null &&
-              seat != _lastSelfSeatIndex &&
-              _audioReady &&
-              _isMicMuted) {
-            _audio?.setMicEnabled(true);
-            if (mounted) setState(() => _isMicMuted = false);
-          }
-          _lastSelfSeatIndex = seat;
           if (!canSpeak && !_isMicMuted) {
             _audio?.setMicEnabled(false);
             if (mounted) setState(() => _isMicMuted = true);

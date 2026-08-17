@@ -28,6 +28,7 @@ import 'voice_gift_providers.dart';
 import 'voice_room_audio_providers.dart';
 import 'pk_battle_provider.dart';
 import 'pk_battle_remote_provider.dart';
+import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../data/youtube_music_search_cache.dart';
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
@@ -822,32 +823,35 @@ class VoiceRoomLiveController
         () async {
           _postVoiceSessionEndSummary(endedLabel: 'Odadan ayrıldınız');
           _cancelSessionTimers();
-        },
-        () async {
-          ref.read(roomMusicServiceProvider).bindRoom(null);
-          try {
-            await ref
-                .read(roomMusicServiceProvider)
-                .stop()
-                .timeout(const Duration(milliseconds: 400));
-          } catch (_) {}
-          try {
-            await ref
-                .read(voiceRoomAudioCoordinatorProvider)
-                .leave()
-                .timeout(const Duration(milliseconds: 800));
-          } catch (_) {}
-          unawaited(_leaveVoiceSession());
+          _removeSelfFromPresenceOptimistic();
+          state = state.copyWith(selfInRoom: false, loading: false);
         },
         () async {
           final backendLeave = _leavePresenceWithSeatClear()
-              .timeout(const Duration(seconds: 5))
+              .timeout(const Duration(seconds: 4))
               .catchError((_) {});
           if (awaitBackend) {
             await backendLeave;
           } else {
             unawaited(backendLeave);
           }
+        },
+        () async {
+          ref.read(roomMusicServiceProvider).bindRoom(null);
+          ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
+          try {
+            await ref
+                .read(roomMusicServiceProvider)
+                .stop()
+                .timeout(const Duration(milliseconds: 300));
+          } catch (_) {}
+          try {
+            await ref
+                .read(voiceRoomAudioCoordinatorProvider)
+                .leave()
+                .timeout(const Duration(milliseconds: 600));
+          } catch (_) {}
+          unawaited(_leaveVoiceSession());
         },
         () async {
           clearVoiceRoomLiveSession(ref, roomKey);

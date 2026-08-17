@@ -48,6 +48,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             if (!state.selfInRoom || !_sse._presenceJoined) {
               unawaited(_sse._joinPresence());
             }
+            unawaited(_sse._refreshSeatsFromBackend());
             ref.read(voiceRoomDiagnosticProvider.notifier).setSse(true);
             if (!VoiceRoomBasicMode.enabled ||
                 VoiceRoomBasicMode.premiumEnabled) {

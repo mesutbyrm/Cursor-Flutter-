@@ -25,12 +25,18 @@ Future<void> teardownVoiceRoomBeforeSwitch(
   ref.read(pkBattleRemoteProvider.notifier).clear();
   ref.read(voiceRoomGiftRealtimeProvider).stop();
   ref.read(voiceRecentGiftsProvider.notifier).clear();
+  ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
   try {
-    await ref.read(voiceRoomAudioCoordinatorProvider).leave();
+    await ref
+        .read(voiceRoomAudioCoordinatorProvider)
+        .leave()
+        .timeout(const Duration(milliseconds: 600));
   } catch (_) {}
-  await ref
-      .read(voiceRoomLiveProvider(liveKey).notifier)
-      .leaveRoomSession(source: source, awaitBackend: true);
+  unawaited(
+    ref
+        .read(voiceRoomLiveProvider(liveKey).notifier)
+        .leaveRoomSession(source: source, awaitBackend: false, force: true),
+  );
 }
 
 /// Önceki oda (varsa) tamamen kapatılır, ardından yeni oda kaydedilir.

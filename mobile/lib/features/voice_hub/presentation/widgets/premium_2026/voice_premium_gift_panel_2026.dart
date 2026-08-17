@@ -29,6 +29,7 @@ import '../../providers/chat_room_providers.dart';
 import '../../providers/pk_battle_remote_provider.dart';
 import '../../providers/staff_entrance_marquee_provider.dart';
 import '../../providers/voice_gift_providers.dart';
+import '../../utils/voice_gift_pk_sync.dart';
 import '../voice_room_gift_sheet.dart';
 
 /// TikTok Live — blur panel, 8 premium hediye, combo, sıralama.
@@ -331,6 +332,11 @@ class _VoicePremiumGiftPanel2026State
         eventId: result.transactionId ??
             result.giftEvent?.id ??
             'api_send_${DateTime.now().millisecondsSinceEpoch}',
+      );
+      applyVoiceGiftSendSideEffects(
+        ref: ref,
+        roomKey: roomKey,
+        result: result,
       );
       if (result.newBalance != null) {
         ref.invalidate(walletBalancesProvider);
