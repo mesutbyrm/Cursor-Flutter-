@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.249+285 (2026-08-17) — Sesli oda çıkış + UI cilası
+
+- **Çıkış diyalogu:** Root navigator üzerinden gösterilir; geri/çıkış daha güvenilir
+- **Sağ ray:** Konum biraz daha aşağı (`topInset` 136); klavye açıkken kuyruk kartı gizlenir
+- **Mesaj çubuğu:** `!istek` ipucu; kullanılmayan ayar/müzik parametreleri temizlendi
+- **Test:** `voice_room_leave_flow_test` — oda rotası çıkış eşlemesi
+
 ## 1.0.248+284 (2026-08-17) — Sesli oda UI + çıkış + müzik
 
 - **Sağ ray:** Ayarlar ve müzik amblemleri mesaj çubuğundan kaldırıldı; web gibi sağ kenarda biraz aşağıda

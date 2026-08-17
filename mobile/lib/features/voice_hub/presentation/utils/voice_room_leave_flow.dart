@@ -15,8 +15,11 @@ import '../providers/chat_room_providers.dart';
 /// Sesli oda çıkış — onay diyalogu ve hediye özeti (Basic + RTC ortak).
 abstract final class VoiceRoomLeaveFlow {
   static Future<bool> confirmLeave(BuildContext context) async {
+    final dialogContext = rootNavigatorKey.currentContext ?? context;
+    if (!dialogContext.mounted) return false;
     final leave = await showDialog<bool>(
-      context: context,
+      context: dialogContext,
+      barrierDismissible: true,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1A0F2E),
         title: const Text(
@@ -42,13 +45,18 @@ abstract final class VoiceRoomLeaveFlow {
     return leave == true;
   }
 
+  static bool shouldLeaveVoiceRoomRoute(String location) {
+    if (location == '/voice-rooms') return false;
+    return location.startsWith('/voice-room/') || location == '/voice-room';
+  }
+
   static void navigateAwayFromRoom({BuildContext? context}) {
     try {
       final nav = rootNavigatorKey.currentContext ?? context;
       if (nav != null && nav.mounted) {
         final router = GoRouter.of(nav);
         final location = router.state.matchedLocation;
-        if (location.startsWith('/voice-room')) {
+        if (shouldLeaveVoiceRoomRoute(location)) {
           router.go('/voice-rooms');
           return;
         }

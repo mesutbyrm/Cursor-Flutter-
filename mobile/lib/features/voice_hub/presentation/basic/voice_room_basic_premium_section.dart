@@ -268,7 +268,7 @@ class VoiceRoomBasicChatFeed extends ConsumerWidget {
   }
 }
 
-/// Sabit mesaj çubuğu — klavye üstünde; sağda ayarlar / müzik / gönder.
+/// Sabit mesaj çubuğu — klavye üstünde; gönder + emoji.
 class VoiceRoomBasicMessageBar extends StatefulWidget {
   const VoiceRoomBasicMessageBar({
     super.key,
@@ -278,9 +278,6 @@ class VoiceRoomBasicMessageBar extends StatefulWidget {
     this.onChanged,
     this.presence = const [],
     this.selfUserId,
-    this.onSettings,
-    this.onMusic,
-    this.musicEnabled = true,
   });
 
   final TextEditingController controller;
@@ -289,9 +286,6 @@ class VoiceRoomBasicMessageBar extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final List<ChatRoomPresence> presence;
   final String? selfUserId;
-  final VoidCallback? onSettings;
-  final VoidCallback? onMusic;
-  final bool musicEnabled;
 
   @override
   State<VoiceRoomBasicMessageBar> createState() => _VoiceRoomBasicMessageBarState();
@@ -327,11 +321,11 @@ class _VoiceRoomBasicMessageBarState extends State<VoiceRoomBasicMessageBar> {
               excludeUserId: widget.selfUserId,
               onChanged: widget.onChanged,
               onSubmitted: (_) => widget.onSend(),
-              hintText: 'Mesaj yaz…',
+              hintText: 'Mesaj yaz… (!istek)',
               minLines: 1,
               maxLines: 3,
               decoration: InputDecoration(
-                hintText: 'Mesaj yaz…',
+                hintText: 'Mesaj yaz… (!istek)',
                 isDense: true,
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -350,37 +344,6 @@ class _VoiceRoomBasicMessageBarState extends State<VoiceRoomBasicMessageBar> {
             icon: const Icon(Icons.send_rounded, size: 26),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _MessageBarActionButton extends StatelessWidget {
-  const _MessageBarActionButton({
-    required this.tooltip,
-    required this.onPressed,
-    required this.icon,
-    required this.color,
-  });
-
-  final String tooltip;
-  final VoidCallback onPressed;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: color.withValues(alpha: 0.14),
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: SizedBox(
-          width: 44,
-          height: 44,
-          child: Icon(icon, size: 26, color: color),
-        ),
       ),
     );
   }

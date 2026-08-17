@@ -432,7 +432,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         },
       );
     } finally {
-      _leaving = false;
+      if (mounted) _leaving = false;
     }
   }
 
@@ -579,6 +579,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final speakPending = ui.requestSpeakPending;
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
     final showMusicRequestFab = live.dj.musicEnabled;
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     final sessionKey =
         room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
@@ -954,7 +955,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   : null,
               showMusic: showMusicRequestFab,
             ),
-            if (showMusicRequestFab)
+            if (!keyboardOpen && showMusicRequestFab)
               Align(
                 alignment: Alignment.bottomRight,
                 child: Padding(

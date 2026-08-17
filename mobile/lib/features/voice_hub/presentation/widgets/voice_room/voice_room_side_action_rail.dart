@@ -9,7 +9,7 @@ class VoiceRoomSideActionRail extends StatelessWidget {
     this.onSettings,
     this.onMusic,
     this.showMusic = true,
-    this.topInset = 104,
+    this.topInset = 136,
   });
 
   final VoidCallback? onSettings;
