@@ -155,20 +155,26 @@ final homeVoiceRoomsProvider =
 });
 
 /// Ana sayfa sesli odalar — yalnızca içinde kullanıcı olanlar, SSE ile güncel sayı.
-final homeVoiceRoomPresenceSyncProvider = Provider<void>((ref) {
-  ref.listen(homeVoiceRoomsProvider, (prev, next) {
-    final rooms = next.valueOrNull;
-    if (rooms != null) {
-      ref.read(voiceRoomsPresenceProvider.notifier).mergeTrackRooms(rooms);
-    }
-  }, fireImmediately: true);
-});
-
 final homeLiveVoiceRoomsProvider = Provider<AsyncValue<List<VoiceRoomEntity>>>(
   (ref) {
-    ref.watch(homeVoiceRoomPresenceSyncProvider);
     final roomsAsync = ref.watch(homeVoiceRoomsProvider);
     final presence = ref.watch(voiceRoomsPresenceProvider);
+
+    ref.listen<AsyncValue<List<VoiceRoomEntity>>>(
+      homeVoiceRoomsProvider,
+      (prev, next) {
+        final rooms = next.valueOrNull;
+        if (rooms == null) return;
+        final track = rooms
+            .where((r) => !r.isVipGoldRoom && r.displayOnline > 0)
+            .toList();
+        if (track.isNotEmpty) {
+          ref.read(voiceRoomsPresenceProvider.notifier).mergeTrackRooms(track);
+        }
+      },
+      fireImmediately: true,
+    );
+
     return roomsAsync.when(
       loading: () => const AsyncValue.loading(),
       error: (e, st) => AsyncValue.error(e, st),
@@ -176,12 +182,11 @@ final homeLiveVoiceRoomsProvider = Provider<AsyncValue<List<VoiceRoomEntity>>>(
         final live = rooms.where((r) => !r.isVipGoldRoom).map((r) {
           final sseCount = presence.countFor(r);
           final apiCount = r.displayOnline;
-          final count = sseCount > 0 ? sseCount : apiCount;
-          if (count <= 0) return r;
+          final count = sseCount > apiCount ? sseCount : apiCount;
           return r.copyWith(onlineCount: count, userCount: count);
-        }).toList();
+        }).where((r) => r.displayOnline > 0).toList();
         final sorted = sortVoiceRoomsByPopularity(live).take(12).toList();
-        return AsyncValue.data(sorted.isNotEmpty ? sorted : rooms.take(12).toList());
+        return AsyncValue.data(sorted);
       },
     );
   },

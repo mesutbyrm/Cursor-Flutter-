@@ -16,6 +16,7 @@ import {
 import {
   assignSeat,
   getChatRoom,
+  getDjState,
   joinPresence,
   leavePresence,
   listChatRooms,
@@ -76,6 +77,7 @@ function voiceRoomPayload(roomId: string) {
   if (!room) return null;
   const canonical = resolveRoomId(roomId);
   const users = listPresence(canonical);
+  const dj = getDjState(canonical, null);
   return {
     id: canonical,
     roomId: canonical,
@@ -86,9 +88,16 @@ function voiceRoomPayload(roomId: string) {
     hostId: room.ownerId,
     hostName: room.owner?.displayName,
     hostImage: room.owner?.image,
-    status: "live",
+    status: users.length > 0 ? "live" : "idle",
     viewerCount: users.length,
+    onlineCount: users.length,
+    userCount: users.length,
     backgroundImage: room.backgroundImage,
+    activeDjId: dj.activeDjId ?? room.activeDjId ?? null,
+    musicPlaying: room.musicPlaying ?? dj.playing,
+    isPkLive: room.isPkLive === true,
+    pkActive: room.pkActive === true,
+    isLive: users.length > 0,
   };
 }
 

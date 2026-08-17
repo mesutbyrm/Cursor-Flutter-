@@ -28,6 +28,7 @@ import {
   type VoiceStaffRank,
 } from "./voiceStaffRank";
 import type { RoomType } from "@prisma/client";
+import { pkCache, pkRoomCacheKey } from "./pkCache";
 import {
   presenceHeartbeat,
   presenceJoinRoom,
@@ -86,6 +87,9 @@ export type ChatRoomRow = {
   roomType?: RoomType;
   maxUsers?: number;
   isVip?: boolean;
+  musicPlaying?: boolean;
+  isPkLive?: boolean;
+  pkActive?: boolean;
 };
 
 const SITE_BACKGROUNDS = Array.from(
@@ -242,11 +246,36 @@ export function listChatRooms(): ChatRoomRow[] {
       .slice(-12)
       .map((u) => ({ image: u.image }))
       .reverse();
+    const canonical = resolveRoomId(r.id);
+    const dj = normalizeDjState(
+      djByRoom.get(canonical) ?? {
+        activeDjId: r.activeDjId ?? null,
+        musicUrl: null,
+        playing: false,
+        currentVideoId: null,
+        trackStartedAt: null,
+        positionMs: 0,
+      },
+    );
+    const queue = listMusicQueue(canonical);
+    const musicPlaying = Boolean(
+      dj.playing && (dj.musicUrl || dj.currentVideoId || queue.length > 0),
+    );
+    const pkCached = pkCache.get(pkRoomCacheKey(canonical));
+    const pkStatus = pkCached?.payload?.status;
+    const isPkLive =
+      pkStatus === "active" ||
+      pkStatus === "pending" ||
+      pkCached?.payload?.status === "ACTIVE";
     return {
       ...r,
       onlineCount: users.length,
       userCount: users.length,
       recentUsers: recent,
+      activeDjId: dj.activeDjId ?? r.activeDjId ?? null,
+      musicPlaying,
+      isPkLive,
+      pkActive: isPkLive,
     };
   });
 }

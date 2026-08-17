@@ -7,7 +7,6 @@ import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/performance/app_perf_metrics.dart';
 import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
 import '../../../social/presentation/providers/social_providers.dart';
-import '../../../feed/presentation/providers/platform_stats_providers.dart';
 import 'home_providers.dart';
 
 /// Ana sayfa üst bölüm API'lerini kademeli başlatır — ilk kare hızlı açılır.
@@ -22,8 +21,6 @@ Future<void> prefetchHomeCriticalSections(Ref ref) async {
   await Future.wait([
     _measureFuture(ref, 'home.banners', homeBannersProvider),
     _measureFuture(ref, 'home.ticker', homeTickerProvider),
-    _measureFuture(ref, 'home.homepage_buttons', homeHomepageButtonsProvider),
-    _measureFuture(ref, 'home.trend_videos', homeTrendVideosProvider),
     _measureFuture(ref, 'home.live_streams', homeLiveStreamsProvider),
   ]);
 
@@ -41,22 +38,9 @@ Future<void> prefetchHomeCriticalSections(Ref ref) async {
         _measureFuture(ref, 'home.fortune_cards', homeFortuneCardsProvider),
         _measureFuture(ref, 'home.story_rings', socialStoryRingsProvider),
         _measureFuture(ref, 'home.games', homeGamesProvider),
-        _measureFuture(ref, 'home.daily_rewards', homeDailyRewardsProvider),
-        _measureFuture(ref, 'home.fan_clubs', homeFanClubsProvider),
-        _measureFuture(ref, 'home.celebrities', homeCelebritiesProvider),
-        _measureFuture(ref, 'home.trend_topics', homeTrendTopicsProvider),
-        _measureFuture(ref, 'home.blog_recent', homeBlogRecentProvider),
-        _measureFuture(ref, 'home.gift_leaderboard', homeGiftLeaderboardProvider),
-        _measureFuture(ref, 'home.football', homeFootballMatchesProvider),
-        _measureFuture(ref, 'home.pk_leaderboard', homePkLeaderboardProvider),
         _measureFuture(ref, 'home.online_fal', homeOnlineFalProvider),
-        _measureFuture(ref, 'home.agency_leaderboard', homeAgencyLeaderboardProvider),
-        _measureFuture(ref, 'home.broadcast_images', homeBroadcastImagesProvider),
-        _measureFuture(ref, 'home.user_likers', homeUserLikersProvider),
-        _measureFuture(ref, 'home.active_ads', homeActiveAdsProvider),
         _measureFuture(ref, 'home.fortune_request_types', homeFortuneRequestTypesProvider),
         _measureFuture(ref, 'home.popups', homePopupsProvider),
-        _measureFuture(ref, 'home.platform_stats', platformStatsProvider),
         _measureFuture(ref, 'home.displayed_psychics', homeDisplayedPsychicsProvider),
       ]);
     }),

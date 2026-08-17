@@ -74,6 +74,8 @@ class LiveFieldRoomSummary {
     this.viewerCount = 0,
     this.likeCount = 0,
     this.isLive = false,
+    this.isPkLive = false,
+    this.musicPlaying = false,
   });
 
   final String id;
@@ -88,6 +90,8 @@ class LiveFieldRoomSummary {
   final int viewerCount;
   final int likeCount;
   final bool isLive;
+  final bool isPkLive;
+  final bool musicPlaying;
 
   bool get isVoice => roomType.toLowerCase() == 'voice';
   bool get isStream => roomType.toLowerCase() == 'stream';
@@ -103,9 +107,18 @@ class LiveFieldRoomSummary {
       hostImage: json['hostImage']?.toString(),
       thumbnailUrl: json['thumbnailUrl']?.toString(),
       backgroundImage: json['backgroundImage']?.toString(),
-      viewerCount: (json['viewerCount'] as num?)?.toInt() ?? 0,
+      viewerCount: (json['viewerCount'] as num?)?.toInt() ??
+          (json['onlineCount'] as num?)?.toInt() ??
+          (json['userCount'] as num?)?.toInt() ??
+          0,
       likeCount: (json['likeCount'] as num?)?.toInt() ?? 0,
       isLive: json['isLive'] == true || json['status']?.toString() == 'live',
+      isPkLive: json['isPkLive'] == true ||
+          json['pkActive'] == true ||
+          json['inPk'] == true,
+      musicPlaying: json['musicPlaying'] == true ||
+          json['isMusicPlaying'] == true ||
+          json['djPlaying'] == true,
     );
   }
 }

@@ -1,40 +1,26 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
-import 'approved/discover_section.dart';
-import 'approved/fan_club_section.dart';
-import 'approved/home_celebrities_section.dart';
 import 'approved/fortune_section.dart';
-import 'approved/gold_section.dart';
 import 'approved/home_header.dart';
 import 'approved/home_horoscope_section.dart';
 import 'approved/home_quick_actions.dart';
 import 'approved/live_broadcast_section.dart';
 import 'approved/more_fortunes_button.dart';
 import 'approved/stories_section.dart';
-import 'approved/trending_video_section.dart';
 import 'approved/voice_room_section.dart';
 import 'home_banner_carousel.dart';
-import 'home_blog_recent_section.dart';
 import 'home_deferred_section.dart';
-import 'home_football_section.dart';
 import 'home_fortune_request_types_section.dart';
 import 'home_games_section.dart';
-import 'home_growth_teasers_section.dart';
-import 'home_leaderboards_section.dart';
-import 'home_platform_stats_section.dart';
-import 'home_social_strip_section.dart';
-import 'home_advisors_row.dart';
-import 'home_homepage_buttons_row.dart';
 import 'home_online_fal_section.dart';
-import 'home_broadcast_images_section.dart';
 import 'home_promo_popup_banner.dart';
 import 'home_ticker_strip.dart';
-import 'home_trending_topics_section.dart';
 import 'home_viewport_section.dart';
+import 'home_advisors_row.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 
-/// Ana sayfa bölümleri — küçük widget'lar, RepaintBoundary ile izole repaint.
+/// Ana sayfa bölümleri — sadeleştirilmiş akış, RepaintBoundary ile izole repaint.
 ///
 /// Tam envanter: `docs/HOME_PAGE_SECTIONS.md`
 abstract final class HomePageSections {
@@ -51,37 +37,13 @@ abstract final class HomePageSections {
         ),
       ),
       const SliverToBoxAdapter(
-        child: RepaintBoundary(child: HomePlatformStatsSection()),
-      ),
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeBannerDelay,
-          child: HomeSocialStripSection(),
-        ),
-      ),
-      const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeBannerDelay,
           child: HomeBannerCarousel(),
         ),
       ),
       const SliverToBoxAdapter(
-        child: RepaintBoundary(child: HomeHomepageButtonsRow()),
-      ),
-      const SliverToBoxAdapter(
         child: RepaintBoundary(child: HomeQuickActions()),
-      ),
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeTrendingSectionDelay,
-          child: TrendingVideoSection(),
-        ),
-      ),
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeTrendingSectionDelay,
-          child: HomeTrendingTopicsSection(),
-        ),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
@@ -93,15 +55,6 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homeLiveSectionDelay,
           child: LiveBroadcastSection(),
-        ),
-      ),
-      SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeLiveSectionDelay,
-          child: HomeViewportSection(
-            estimatedHeight: 140,
-            child: HomeBroadcastImagesSection(),
-          ),
         ),
       ),
       const SliverToBoxAdapter(
@@ -160,82 +113,10 @@ abstract final class HomePageSections {
       ),
       SliverToBoxAdapter(
         child: HomeDeferredSection(
-          delay: StartupPerf.homeGameSectionDelay,
-          child: HomeViewportSection(
-            estimatedHeight: 140,
-            child: HomeLeaderboardsSection(),
-          ),
-        ),
-      ),
-      SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeGameSectionDelay,
-          child: HomeViewportSection(
-            estimatedHeight: 140,
-            child: HomeGrowthTeasersSection(),
-          ),
-        ),
-      ),
-      SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeCelebritiesSectionDelay,
-          child: HomeViewportSection(
-            estimatedHeight: 180,
-            child: HomeCelebritiesSection(),
-          ),
-        ),
-      ),
-      SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeFanClubSectionDelay,
-          child: HomeViewportSection(
-            estimatedHeight: 180,
-            child: FanClubSection(),
-          ),
-        ),
-      ),
-      SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeFanClubSectionDelay,
-          child: HomeViewportSection(
-            estimatedHeight: 140,
-            child: HomeFootballSection(),
-          ),
-        ),
-      ),
-      SliverToBoxAdapter(
-        child: HomeDeferredSection(
           delay: StartupPerf.homeHoroscopeSectionDelay,
           child: HomeViewportSection(
             estimatedHeight: 160,
             child: HomeHoroscopeSection(),
-          ),
-        ),
-      ),
-      SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeDiscoverSectionDelay,
-          child: HomeViewportSection(
-            estimatedHeight: 180,
-            child: HomeBlogRecentSection(),
-          ),
-        ),
-      ),
-      SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeDiscoverSectionDelay,
-          child: HomeViewportSection(
-            estimatedHeight: 200,
-            child: DiscoverSection(),
-          ),
-        ),
-      ),
-      SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeGoldSectionDelay,
-          child: HomeViewportSection(
-            estimatedHeight: 180,
-            child: GoldSection(),
           ),
         ),
       ),

@@ -25,6 +25,8 @@ class VoiceRoomEntity extends Equatable {
     this.hasPassword,
     this.seatCount,
     this.maxUsers,
+    this.isPkLive = false,
+    this.isMusicPlaying = false,
   });
 
   final String id;
@@ -52,8 +54,16 @@ class VoiceRoomEntity extends Equatable {
   /// Backend `seatCount` — koltuk haritası boyutu.
   final int? seatCount;
   final int? maxUsers;
+  final bool isPkLive;
+  final bool isMusicPlaying;
 
   int get displayOnline => onlineCount > 0 ? onlineCount : userCount;
+
+  bool get hasMusicActivity =>
+      isMusicPlaying ||
+      activeDjId != null ||
+      djUserIds.isNotEmpty ||
+      (category?.toLowerCase() == 'music');
 
   /// REST / Socket — yalnızca Prisma `id` (cuid); slug kullanılmaz.
   String get apiRoomKey => id.trim();
@@ -92,6 +102,8 @@ class VoiceRoomEntity extends Equatable {
         hasPassword: hasPassword,
         seatCount: seatCount,
         maxUsers: maxUsers,
+        isPkLive: isPkLive,
+        isMusicPlaying: isMusicPlaying,
       );
 
   VoiceRoomEntity copyWith({
@@ -105,6 +117,8 @@ class VoiceRoomEntity extends Equatable {
     String? nameTr,
     String? descTr,
     String? rulesTr,
+    bool? isPkLive,
+    bool? isMusicPlaying,
   }) {
     return VoiceRoomEntity(
       id: id,
@@ -129,6 +143,8 @@ class VoiceRoomEntity extends Equatable {
       hasPassword: hasPassword ?? this.hasPassword,
       seatCount: seatCount ?? this.seatCount,
       maxUsers: maxUsers ?? this.maxUsers,
+      isPkLive: isPkLive ?? this.isPkLive,
+      isMusicPlaying: isMusicPlaying ?? this.isMusicPlaying,
     );
   }
 
@@ -156,5 +172,7 @@ class VoiceRoomEntity extends Equatable {
         hasPassword,
         seatCount,
         maxUsers,
+        isPkLive,
+        isMusicPlaying,
       ];
 }

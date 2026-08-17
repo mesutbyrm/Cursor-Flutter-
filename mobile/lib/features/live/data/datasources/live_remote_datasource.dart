@@ -990,6 +990,21 @@ class LiveRemoteDataSource {
         hasPassRaw == 'true' ||
         hasPassRaw == '1' ||
         (pick(json, ['password'])?.toString().trim().isNotEmpty == true);
+    final isPkLive = _boolFlag(json, [
+      'isPkLive',
+      'pkActive',
+      'pkLive',
+      'inPk',
+      'isPk',
+    ]);
+    final isMusicPlaying = _boolFlag(json, [
+      'musicPlaying',
+      'isMusicPlaying',
+      'djPlaying',
+      'isPlaying',
+    ]) ||
+        pick(json, ['activeDjId']) != null ||
+        djIds.isNotEmpty;
     return VoiceRoomEntity(
       id: rawId,
       slug: slug,
@@ -1024,6 +1039,8 @@ class LiveRemoteDataSource {
       hasPassword: hasPassword || isLocked ? true : null,
       seatCount: asInt(pick(json, ['seatCount', 'maxSeats', 'seats_count'])),
       maxUsers: asInt(pick(json, ['maxUsers', 'max_users', 'userLimit'])),
+      isPkLive: isPkLive,
+      isMusicPlaying: isMusicPlaying,
     );
   }
 
@@ -1057,6 +1074,8 @@ class LiveRemoteDataSource {
       ownerId: room.hostId,
       recentUserAvatars: avatars,
       roomType: 'voice',
+      isPkLive: room.isPkLive,
+      isMusicPlaying: room.musicPlaying,
     );
   }
 }

@@ -72,6 +72,8 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard>
     final roomType = widget.room.roomType?.trim().toLowerCase() ?? '';
     final level = _roomLevel(online);
     final popularity = _popularityLabel(online);
+    final showMusic = widget.room.hasMusicActivity;
+    final showPk = widget.room.isPkLive;
 
     return RepaintBoundary(
       child: GestureDetector(
@@ -130,23 +132,54 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard>
                       children: [
                         _GlowingOnlinePill(count: online),
                         const Spacer(),
-                        RotationTransition(
-                          turns: _spinCtrl,
-                          child: Container(
-                            padding: const EdgeInsets.all(5),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.4),
-                              shape: BoxShape.circle,
+                        if (showPk)
+                          Container(
+                            margin: const EdgeInsets.only(right: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 4,
                             ),
-                            child: const Icon(
-                              Icons.music_note_rounded,
-                              size: 14,
-                              color: Color(0xFFFFD54F),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFF5252), Color(0xFFD50000)],
+                              ),
+                              borderRadius: BorderRadius.circular(999),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFFF5252)
+                                      .withValues(alpha: 0.45),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              'PK',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.4,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        _MicPulse(controller: _micCtrl),
+                        if (showMusic)
+                          RotationTransition(
+                            turns: _spinCtrl,
+                            child: Container(
+                              padding: const EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.4),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.music_note_rounded,
+                                size: 14,
+                                color: Color(0xFFFFD54F),
+                              ),
+                            ),
+                          ),
+                        if (showMusic) const SizedBox(width: 6),
+                        if (online > 0) _MicPulse(controller: _micCtrl),
                       ],
                     ),
                   ),
@@ -158,6 +191,16 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard>
                       spacing: 4,
                       runSpacing: 4,
                       children: [
+                        if (showPk)
+                          const _RoomBadge(
+                            label: 'PK Canlı',
+                            colors: [Color(0xFFFF5252), Color(0xFFB71C1C)],
+                          ),
+                        if (showMusic)
+                          const _RoomBadge(
+                            label: 'Müzik',
+                            colors: [Color(0xFFFFD54F), Color(0xFFFF8F00)],
+                          ),
                         if (isVip) const _RoomBadge(label: 'VIP', colors: [Color(0xFFFFE082), Color(0xFFFF8F00)]),
                         if (roomType.contains('gold')) const _RoomBadge(label: 'Gold', colors: [Color(0xFFFFF176), Color(0xFFFFB300)]),
                         if (roomType.contains('admin')) const _RoomBadge(label: 'Admin', colors: [Color(0xFFEF5350), Color(0xFFB71C1C)]),

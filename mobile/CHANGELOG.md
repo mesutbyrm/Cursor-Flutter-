@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.246+282 (2026-08-17) — Anasayfa sadeleştirme + dolu sesli odalar
+
+- **Anasayfa:** Gereksiz bölümler kaldırıldı (istatistik, sosyal şerit, trend, liderlik, ünlüler, fan kulübü, futbol, blog, keşfet, Gold vb.)
+- **Sesli odalar:** Boş odalar ana sayfada gösterilmez; dolu odalarda online kişi sayısı görünür
+- **Backend uyumu:** `musicPlaying`, `isPkLive` / `pkActive` alanları API ve LiveField keşfinden okunur
+- **Kart:** PK ve müzik rozetleri yalnızca backend durumuna göre gösterilir
+- **Prefetch:** Kaldırılan bölümler için gereksiz API çağrıları bootstrap'tan çıkarıldı
+
 ## 1.0.245+281 (2026-08-17) — Referans / ajans komisyon sistemi (tek seviye)
 
 - **Backend (`api/`):** `ReferralCommissionService`, Prisma migration, immutable `ReferralCommissionLedger`, admin ayarları
