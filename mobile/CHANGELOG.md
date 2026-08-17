@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.242+278 (2026-08-17) — Çocuk güvenliği politikası düzeltmesi
+
+- **Yasal:** Çocuk Güvenliği Politikası artık `GET /api/legal/child-safety` üzerinden yüklenir (`site-pages/cocuk-guvenligi` 404 idi)
+- **WebView:** Koyu temada yasal sayfa metni okunabilir renklerle gösterilir
+- **Test:** `legal_document_test`
+
 ## 1.0.241+277 (2026-08-17) — Sosyal bölüm faz 11
 
 - **Detay önbelleği:** `resolveSocialPostForDetail` — akıştaki gönderi anında gösterilir, API ile birleştirilir

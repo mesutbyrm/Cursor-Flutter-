@@ -32,6 +32,8 @@ abstract final class ApiEndpoints {
   static const mobileConfig = '/api/mobile/config';
   static const mobileHome = '/api/mobile/home';
   static String sitePage(String slug) => '/api/site-pages/$slug';
+  /// Çocuk güvenliği — site-pages slug'ı yok; ayrı legal uç (canlifal.com).
+  static const legalChildSafety = '/api/legal/child-safety';
   static const mobileFortuneMenu = '/api/mobile/fortune-menu';
   static String mobileUserProfile(String userId) =>
       '/api/mobile/user-profile/$userId';

@@ -62,15 +62,21 @@ class _SiteContentPageState extends ConsumerState<SiteContentPage> {
 
   void _ensureWebView(String html) {
     if (_controller != null) return;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? '#e8e4f0' : '#1a1a1a';
+    final bgColor = isDark ? '#120a24' : '#ffffff';
+    final headingColor = isDark ? '#f5f0ff' : '#111111';
+    final linkColor = isDark ? '#c4b5fd' : '#7c3aed';
     final wrapped = '''
 <!DOCTYPE html>
 <html><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  body { font-family: sans-serif; padding: 16px; line-height: 1.55; color: #1a1a1a; }
-  h1,h2,h3 { color: #111; }
-  a { color: #7c3aed; }
+  body { font-family: sans-serif; padding: 16px; line-height: 1.55; color: $textColor; background: $bgColor; }
+  h1,h2,h3 { color: $headingColor; }
+  a { color: $linkColor; }
+  p, li { color: $textColor; }
 </style>
 </head><body>$html</body></html>
 ''';
