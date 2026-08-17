@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../app/router/app_router.dart';
 import '../../../../core/widgets/lazy_list_views.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
@@ -157,7 +158,6 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
     final hit = _selected;
     if (hit == null || _submitting) return;
 
-    // Ses/video seçim ekranı (web ile aynı akış)
     final liveKey = widget.room.liveKey;
     final liveDj = ref.read(voiceRoomLiveProvider(liveKey)).dj;
     final audioCost = liveDj.musicRequestCost;
@@ -173,43 +173,48 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
     if (!mounted || withVideo == null) return;
 
     setState(() => _submitting = true);
-    String? err;
-    try {
-      err = await ref
-          .read(voiceRoomLiveProvider(liveKey).notifier)
-          .requestMusic(
-            title: hit.title,
-            youtubeUrl: hit.url,
-            thumbUrl: hit.thumbUrl,
-            videoId: hit.videoId,
-            giftTo: _giftCtrl.text.trim().isEmpty ? null : _giftCtrl.text.trim(),
-            note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
-            withVideo: withVideo,
-          );
-    } catch (e) {
-      err = ApiException.userMessage(e);
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
-    if (!mounted) return;
-    if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-      return;
-    }
+
+    final notifier = ref.read(voiceRoomLiveProvider(liveKey).notifier);
     final cost = withVideo ? videoCost : audioCost;
-    final messenger = ScaffoldMessenger.of(context);
-    if (mounted) ref.refreshWalletCache(force: true);
-    if (mounted) Navigator.pop(context);
-    messenger.showSnackBar(
-      SnackBar(content: Text('Şarkı sıraya eklendi · $cost jeton')),
+    final songTitle = hit.title;
+    final giftTo = _giftCtrl.text.trim();
+    final note = _noteCtrl.text.trim();
+
+    // Sheet kapanmadan provider güncellemesi tüm odayı yeniden çizer → ANR riski.
+    if (mounted) Navigator.of(context).pop();
+
+    try {
+      final err = await notifier.requestMusic(
+        title: hit.title,
+        youtubeUrl: hit.url,
+        thumbUrl: hit.thumbUrl,
+        videoId: hit.videoId,
+        giftTo: giftTo.isEmpty ? null : giftTo,
+        note: note.isEmpty ? null : note,
+        withVideo: withVideo,
+      );
+      _showMusicResultSnack(
+        err ?? '«$songTitle» sıraya eklendi · $cost jeton',
+        isError: err != null,
+      );
+    } catch (e) {
+      _showMusicResultSnack(ApiException.userMessage(e), isError: true);
+    }
+  }
+
+  void _showMusicResultSnack(String message, {bool isError = false}) {
+    final ctx = rootNavigatorKey.currentContext;
+    if (ctx == null) return;
+    ScaffoldMessenger.of(ctx).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? AppThemeColors.liveRed : null,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // autoDispose provider'ı canlı tut — sheet açık kaldığı sürece dispose olmasın.
-    ref.watch(voiceRoomLiveProvider(widget.room.liveKey));
-
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
     final coins = ref.watch(coinBalanceProvider) ?? 0;
     final balanceLabel = NumberFormat.decimalPattern('tr').format(coins);
@@ -528,20 +533,31 @@ class _SelectedSongField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      readOnly: true,
-      controller: TextEditingController(text: title),
-      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-      decoration: InputDecoration(
-        prefixIcon: const Icon(Icons.music_note_rounded, color: AppThemeColors.accentPink),
-        filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.06),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: const Color(0xFF7B2FF7).withValues(alpha: 0.5),
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF7B2FF7).withValues(alpha: 0.5),
         ),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.music_note_rounded, color: AppThemeColors.accentPink),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }

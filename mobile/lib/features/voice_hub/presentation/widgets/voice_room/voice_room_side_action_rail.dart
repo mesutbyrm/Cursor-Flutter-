@@ -2,20 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../../theme/voice_room_tokens.dart';
 
-/// Web parity — sağ kenar ayarlar + müzik kısayolları (mesaj çubuğundan ayrı).
+/// Web parity — sağ kenar orta hizada ayarlar + müzik kısayolları.
 class VoiceRoomSideActionRail extends StatelessWidget {
   const VoiceRoomSideActionRail({
     super.key,
     this.onSettings,
     this.onMusic,
     this.showMusic = true,
-    this.topInset = 136,
+    /// Dikey hizalama: -1 üst, 0 orta, 1 alt. Web gibi hafif aşağıda.
+    this.verticalAlignment = 0.12,
   });
 
   final VoidCallback? onSettings;
   final VoidCallback? onMusic;
   final bool showMusic;
-  final double topInset;
+  final double verticalAlignment;
 
   @override
   Widget build(BuildContext context) {
@@ -23,31 +24,33 @@ class VoiceRoomSideActionRail extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final top = MediaQuery.paddingOf(context).top + topInset;
-
     return Positioned(
-      top: top,
+      top: 0,
       right: 8,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (onSettings != null)
-            _SideActionButton(
-              icon: Icons.settings_rounded,
-              label: 'Ayarlar',
-              color: VoiceRoomTokens.neonBlue,
-              onTap: onSettings!,
-            ),
-          if (onSettings != null && showMusic && onMusic != null)
-            const SizedBox(height: 12),
-          if (showMusic && onMusic != null)
-            _SideActionButton(
-              icon: Icons.library_music_rounded,
-              label: 'Müzik',
-              color: VoiceRoomTokens.gold,
-              onTap: onMusic!,
-            ),
-        ],
+      bottom: 0,
+      child: Align(
+        alignment: Alignment(1, verticalAlignment.clamp(-1.0, 1.0)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (onSettings != null)
+              _SideActionButton(
+                icon: Icons.settings_rounded,
+                label: 'Ayarlar',
+                color: VoiceRoomTokens.neonBlue,
+                onTap: onSettings!,
+              ),
+            if (onSettings != null && showMusic && onMusic != null)
+              const SizedBox(height: 12),
+            if (showMusic && onMusic != null)
+              _SideActionButton(
+                icon: Icons.library_music_rounded,
+                label: 'Müzik',
+                color: VoiceRoomTokens.gold,
+                onTap: onMusic!,
+              ),
+          ],
+        ),
       ),
     );
   }

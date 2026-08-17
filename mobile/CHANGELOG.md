@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.250+286 (2026-08-17) — Müzik isteği ANR + sağ ray konumu
+
+- **ANR düzeltmesi:** Müzik sheet kapanmadan oda provider'ı izlenmiyor; istek gönderilmeden önce sheet kapanır
+- **Performans:** Seçili şarkı alanında her build'de yeni TextEditingController oluşturma kaldırıldı
+- **Sağ ray:** Ayarlar/müzik amblemleri ekranın sağ ortasına (hafif aşağı) taşındı
+- **Test:** `voice_room_side_action_rail_test`
+
 ## 1.0.249+285 (2026-08-17) — Sesli oda çıkış + UI cilası
 
 - **Çıkış diyalogu:** Root navigator üzerinden gösterilir; geri/çıkış daha güvenilir
