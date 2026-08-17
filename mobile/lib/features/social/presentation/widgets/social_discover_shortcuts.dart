@@ -3,33 +3,35 @@ import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
+import '../utils/social_discover_shortcut_labels.dart';
+
 /// Sosyal sekme keşif kısayolları — ünlüler, fan kulüp, canlı ve sesli odalar.
 class SocialDiscoverShortcuts extends StatelessWidget {
   const SocialDiscoverShortcuts({super.key});
 
-  static const _items = [
+  static final _items = [
     _ShortcutItem(
       icon: Icons.star_rounded,
-      label: 'Ünlüler',
-      route: '/celebrities-hub',
+      label: socialDiscoverShortcutLabels[0],
+      route: socialDiscoverShortcutRoutes[0],
       color: AppThemeColors.coinGold,
     ),
     _ShortcutItem(
       icon: Icons.favorite_rounded,
-      label: 'Fan Club',
-      route: '/fan-club-hub',
+      label: socialDiscoverShortcutLabels[1],
+      route: socialDiscoverShortcutRoutes[1],
       color: AppThemeColors.accentPink,
     ),
     _ShortcutItem(
       icon: Icons.live_tv_rounded,
-      label: 'Canlı',
-      route: '/live',
+      label: socialDiscoverShortcutLabels[2],
+      route: socialDiscoverShortcutRoutes[2],
       color: AppThemeColors.liveRed,
     ),
     _ShortcutItem(
       icon: Icons.mic_rounded,
-      label: 'Sesli',
-      route: '/voice-rooms',
+      label: socialDiscoverShortcutLabels[3],
+      route: socialDiscoverShortcutRoutes[3],
       color: AppThemeColors.accentPurple,
     ),
   ];

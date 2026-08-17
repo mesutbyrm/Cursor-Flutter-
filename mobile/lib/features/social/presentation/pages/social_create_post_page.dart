@@ -14,6 +14,7 @@ import '../../domain/entities/create_social_post_input.dart';
 import '../providers/social_create_post_provider.dart';
 import '../utils/social_post_location_helper.dart';
 import '../widgets/social_mention_picker_sheet.dart';
+import '../widgets/social_local_video_preview.dart';
 
 /// Instagram tarzı yeni gönderi — görsel/video önizleme + açıklama + Paylaş.
 class SocialCreatePostPage extends ConsumerStatefulWidget {
@@ -365,12 +366,7 @@ class _MediaPreview extends StatelessWidget {
     if (videoPath != null) {
       return _MediaFrame(
         onClear: onClear,
-        child: const ColoredBox(
-          color: Color(0xFF1A0F3D),
-          child: Center(
-            child: Icon(Icons.videocam_rounded, size: 56, color: Colors.white54),
-          ),
-        ),
+        child: SocialLocalVideoPreview(videoPath: videoPath!),
       );
     }
 

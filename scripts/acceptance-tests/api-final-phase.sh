@@ -27,6 +27,7 @@ run_phase() {
 run_phase "Release Gate" "$SCRIPT_DIR/api-release-gate.sh"
 run_phase "Gift Phase" "$SCRIPT_DIR/api-gift-phase.sh"
 run_phase "Music Phase" "$SCRIPT_DIR/api-music-phase.sh"
+run_phase "Social Phase" "$SCRIPT_DIR/api-social-phase.sh"
 
 echo ""
 echo "========== Flutter unit tests =========="

@@ -14,6 +14,7 @@ import '../../../domain/entities/create_social_post_input.dart';
 import '../../providers/social_composer_providers.dart';
 import '../../providers/social_create_post_provider.dart';
 import '../social_mention_picker_sheet.dart';
+import '../social_local_video_preview.dart';
 import '../../utils/social_post_location_helper.dart';
 
 /// Sosyal akış üstü — aynı sayfada paylaşım (metin, foto, video, duygu, #, @).
@@ -342,21 +343,7 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
                 child: _MediaPreview(
-                  child: const Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      ColoredBox(
-                        color: Color(0xFF1A0F3D),
-                        child: Center(
-                          child: Icon(
-                            Icons.videocam_rounded,
-                            size: 48,
-                            color: Colors.white54,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: SocialLocalVideoPreview(videoPath: _videoPath!),
                   onClear: () => setState(() => _videoPath = null),
                 ),
               ),

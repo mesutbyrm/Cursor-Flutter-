@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.234+270 (2026-08-17) — Sosyal bölüm faz 4
+
+- **Video önizleme:** `SocialLocalVideoPreview` — yerel video için thumbnail + play overlay (composer + create)
+- **Keşif kısayolları:** Etiket/rota sabitleri `social_discover_shortcut_labels.dart` ile merkezileştirildi
+- **CI:** `api-social-phase.sh` final acceptance aşamasına eklendi (`api-final-phase.sh`)
+- **Test:** `social_discover_shortcut_labels_test` + client acceptance `20n`
+
 ## 1.0.233+269 (2026-08-17) — Sosyal bölüm faz 3
 
 - **Keşif kısayolları:** Ünlüler, Fan Club, Canlı ve Sesli odalar chip satırı (`SocialDiscoverShortcuts`)
