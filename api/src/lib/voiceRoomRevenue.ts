@@ -1,5 +1,6 @@
 import type { RoomType, VoiceRoomSettings } from "@prisma/client";
 import { prisma } from "./prisma";
+import { processVoiceRoomGiftReferral } from "./referralGiftHooks";
 
 export type GiftSplitResult = {
   total: number;
@@ -166,6 +167,15 @@ export async function applyGiftPayout(input: ApplyGiftPayoutInput) {
       },
     });
   });
+
+  void processVoiceRoomGiftReferral({
+    giftEventId: input.giftEventId,
+    grossAmount: input.totalCost,
+    receiverId: input.receiverId,
+    receiverNet: split.receiverNet,
+    ownerId: input.ownerId,
+    ownerNet: split.ownerNet,
+  }).catch((err) => console.error("[referral-voice-gift]", err));
 
   return split;
 }

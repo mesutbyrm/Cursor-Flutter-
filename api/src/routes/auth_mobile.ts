@@ -18,6 +18,7 @@ import {
 import { jsonError } from "../lib/jsonError";
 import { mobileAuthBody, mobileUserPayload } from "../lib/authMobile";
 import { requireAuth } from "../middleware/requireAuth";
+import { linkReferralOnRegister } from "../lib/referralCommissionService";
 import { onAuthLogin } from "../lib/authRedisHooks";
 
 const mobileRegisterSchema = z.object({
@@ -182,6 +183,8 @@ authMobileRouter.post("/mobile-register", async (req, res) => {
     },
   });
 
+  await linkReferralOnRegister(user.id, data.referralCode);
+
   const tokens = await issueTokens(user.id, deviceFromRequest(req));
   await assignVerificationCode(user.id);
   return res.status(201).json(mobileAuthBody(user, tokens));
@@ -243,6 +246,7 @@ authMobileRouter.post("/mobile-google", async (req, res) => {
         coins: 500,
       },
     });
+    await linkReferralOnRegister(user.id, parsed.data.referralCode);
   } else if (!user.googleId) {
     user = await prisma.user.update({
       where: { id: user.id },
@@ -292,6 +296,7 @@ authMobileRouter.post("/mobile-tiktok", async (req, res) => {
           coins: 500,
         },
       });
+      await linkReferralOnRegister(user.id, parsed.data.referralCode);
     } else {
       user = await prisma.user.update({
         where: { id: user.id },
