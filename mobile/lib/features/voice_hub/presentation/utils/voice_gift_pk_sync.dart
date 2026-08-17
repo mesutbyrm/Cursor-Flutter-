@@ -36,7 +36,7 @@ void applyVoiceGiftSendSideEffects({
     if (pk != null) 'pkBattle': _pkToMap(pk),
   };
 
-  dispatchGiftSsePayloadRef(
+  dispatchGiftSsePayload(
     ref: ref,
     sessionKey: roomKey,
     payload: payload,
