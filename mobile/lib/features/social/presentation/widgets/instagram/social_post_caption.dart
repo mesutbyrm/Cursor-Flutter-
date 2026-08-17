@@ -13,10 +13,12 @@ class SocialPostCaption extends StatefulWidget {
     super.key,
     required this.post,
     this.inlineBodyOnly = false,
+    this.bodyText,
   });
 
   final PostEntity post;
   final bool inlineBodyOnly;
+  final String? bodyText;
 
   @override
   State<SocialPostCaption> createState() => _SocialPostCaptionState();
@@ -29,7 +31,7 @@ class _SocialPostCaptionState extends State<SocialPostCaption> {
 
   @override
   Widget build(BuildContext context) {
-    final text = post.caption?.trim() ?? '';
+    final text = (widget.bodyText ?? post.caption)?.trim() ?? '';
     if (text.isEmpty) return const SizedBox.shrink();
 
     final hasOverflow = text.length > socialCaptionPreviewChars;

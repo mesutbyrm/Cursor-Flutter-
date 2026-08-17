@@ -228,7 +228,11 @@ class SocialRemoteDataSource {
   }
 
   Future<PostDto> _shareFortuneViaCanonicalPost(ShareFortuneInput input) async {
-    final caption = input.summary.trim();
+    final summary = input.summary.trim();
+    final detail = input.detail?.trim() ?? '';
+    final caption = detail.isNotEmpty && detail.length > summary.length
+        ? detail
+        : (detail.isNotEmpty ? '$summary\n\n$detail' : summary);
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.socialPosts,
       data: {
@@ -238,6 +242,7 @@ class SocialRemoteDataSource {
         'postType': 'fortune',
         'type': 'fortune',
         'fortuneType': input.fortuneType ?? input.fortuneSlug,
+        if (detail.isNotEmpty) 'detail': detail,
         if (input.fortuneId != null && input.fortuneId!.isNotEmpty)
           'fortuneId': input.fortuneId,
       },

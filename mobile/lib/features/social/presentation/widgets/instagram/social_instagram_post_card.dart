@@ -77,10 +77,12 @@ class _SocialInstagramPostCardState
 
   PostEntity get post => widget.post;
 
-  bool get _isFortunePost =>
-      post.postType == 'fortune' ||
-      post.isAutoShare ||
-      (post.fortuneType != null && post.fortuneType!.isNotEmpty);
+  bool get _isFortunePost => post.isFortunePost;
+
+  String? get _bodyText {
+    if (_isFortunePost) return post.displayFortuneBody;
+    return post.caption?.trim();
+  }
 
   bool get _hasMedia =>
       post.mediaUrl != null && post.mediaUrl!.trim().isNotEmpty;
@@ -129,9 +131,13 @@ class _SocialInstagramPostCardState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if ((post.caption?.trim().isNotEmpty ?? false) && _hasMedia)
-                      SocialPostCaption(post: post, inlineBodyOnly: true),
-                    if (!_hasMedia && (post.caption?.trim().isNotEmpty ?? false))
+                    if ((_bodyText?.isNotEmpty ?? false) && _hasMedia)
+                      SocialPostCaption(
+                        post: post,
+                        inlineBodyOnly: true,
+                        bodyText: _bodyText,
+                      ),
+                    if (!_hasMedia && (_bodyText?.isNotEmpty ?? false))
                       GestureDetector(
                         onTap: () => _openPostDetail(context),
                         child: Padding(
@@ -152,16 +158,13 @@ class _SocialInstagramPostCardState
                             child: Padding(
                               padding: const EdgeInsets.all(16),
                               child: SocialPostTextPreview(
-                                text: post.caption!.trim(),
+                                text: _bodyText!,
                               ),
                             ),
                           ),
                         ),
                       ),
-                    if (post.isAutoShare ||
-                        post.fortuneCount > 0 ||
-                        post.viewsCount > 0 ||
-                        post.viewCount > 0)
+                    if (_isFortunePost)
                       Padding(
                         padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
                         child: Wrap(
@@ -171,12 +174,10 @@ class _SocialInstagramPostCardState
                             if (post.isAutoShare) const _AutoShareBadge(),
                             if (post.fortuneCount > 0)
                               _CoViewersBadge(count: post.fortuneCount),
-                            if (post.viewsCount > 0 || post.viewCount > 0)
-                              _FortuneViewsBadge(
-                                count: post.viewsCount > 0
-                                    ? post.viewsCount
-                                    : post.viewCount,
-                              ),
+                            if (post.displayViewCount > 0)
+                              _FortuneViewsBadge(count: post.displayViewCount),
+                            if (post.shareCount > 0)
+                              _ShareCountBadge(count: post.shareCount),
                           ],
                         ),
                       ),
@@ -216,7 +217,7 @@ class _SocialInstagramPostCardState
                     SizedBox(width: 16),
                     _ActionWithCount(
                       icon: Icons.visibility_outlined,
-                      count: post.viewsCount > 0 ? post.viewsCount : post.viewCount,
+                      count: post.displayViewCount,
                       hideZeroCount: false,
                       onTap: () => _openPostDetail(context),
                     ),
@@ -360,10 +361,13 @@ class _SocialInstagramPostCardState
   Future<void> _sharePost(BuildContext context) async {
     final text = buildSocialPostShareText(
       postId: post.id,
-      caption: post.caption,
+      caption: _bodyText ?? post.caption,
       siteOrigin: Env.siteOrigin,
     );
     await SharePlus.instance.share(ShareParams(text: text));
+    if (post.id.isNotEmpty) {
+      ref.read(socialNotifierProvider.notifier).bumpShareCount(post.id);
+    }
   }
 }
 
@@ -625,6 +629,34 @@ class _FortuneViewsBadge extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: const Color(0xFF7DD3FC).withValues(alpha: 0.95),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShareCountBadge extends StatelessWidget {
+  const _ShareCountBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppThemeColors.accentPurple.withValues(alpha: 0.65),
+          width: 1.2,
+        ),
+      ),
+      child: Text(
+        '$count kişi paylaştı',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
         ),
       ),
     );

@@ -23,6 +23,7 @@ class PostEntity extends Equatable {
     this.fortuneId,
     this.visibility,
     this.fortuneSlug,
+    this.fortuneDetail,
   });
 
   final String id;
@@ -47,8 +48,25 @@ class PostEntity extends Equatable {
   final String? fortuneId;
   final String? visibility;
   final String? fortuneSlug;
+  /// Tam fal metni — API `detail` / `fortuneDetail` (özet `caption` yerine).
+  final String? fortuneDetail;
 
-  /// Fal / tarot içeriklerini hikâye şeridinde göstermemek için.
+  bool get isFortunePost =>
+      postType == 'fortune' ||
+      isAutoShare ||
+      (fortuneType != null && fortuneType!.isNotEmpty) ||
+      (fortuneId != null && fortuneId!.isNotEmpty);
+
+  /// Akış kartında gösterilecek fal gövdesi — tam metin öncelikli.
+  String? get displayFortuneBody {
+    final detail = fortuneDetail?.trim();
+    if (detail != null && detail.isNotEmpty) return detail;
+    final cap = caption?.trim();
+    if (cap != null && cap.isNotEmpty) return cap;
+    return null;
+  }
+
+  int get displayViewCount => viewsCount > 0 ? viewsCount : viewCount;
   bool get isFortuneContent {
     final t = caption?.toLowerCase() ?? '';
     return t.contains('fal') ||
@@ -77,6 +95,7 @@ class PostEntity extends Equatable {
     String? fortuneId,
     String? visibility,
     String? fortuneSlug,
+    String? fortuneDetail,
   }) {
     final nextLiked = isLiked ?? likedByMe;
     return PostEntity(
@@ -99,6 +118,7 @@ class PostEntity extends Equatable {
       fortuneId: fortuneId ?? this.fortuneId,
       visibility: visibility ?? this.visibility,
       fortuneSlug: fortuneSlug ?? this.fortuneSlug,
+      fortuneDetail: fortuneDetail ?? this.fortuneDetail,
     );
   }
 
@@ -123,5 +143,6 @@ class PostEntity extends Equatable {
         fortuneId,
         visibility,
         fortuneSlug,
+        fortuneDetail,
       ];
 }

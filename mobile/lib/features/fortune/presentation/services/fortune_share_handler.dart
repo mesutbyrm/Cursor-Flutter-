@@ -45,7 +45,7 @@ class FortuneShareHandler {
     if (summary.isEmpty) return false;
 
     try {
-      final post = await _ref.read(socialRepositoryProvider).shareFortuneAuto(
+      final rawPost = await _ref.read(socialRepositoryProvider).shareFortuneAuto(
             ShareFortuneInput(
               fortuneSlug: result.type.slug,
               fortuneType: result.type.title,
@@ -57,6 +57,12 @@ class FortuneShareHandler {
               visibility: mode.apiVisibility,
             ),
           );
+      final detail = result.detail.trim();
+      final post = rawPost.fortuneDetail?.trim().isNotEmpty == true
+          ? rawPost
+          : rawPost.copyWith(
+              fortuneDetail: detail.isNotEmpty ? detail : rawPost.fortuneDetail,
+            );
       _ref.read(socialNotifierProvider.notifier).prependPost(post);
       final aid = post.author.id;
       if (aid.isNotEmpty) {

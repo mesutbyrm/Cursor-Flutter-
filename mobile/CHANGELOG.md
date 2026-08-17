@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.247+283 (2026-08-17) — Sosyal fal kartları + sesli oda şeridi
+
+- **Fal gönderileri:** Tam fal metni (`detail`) gösterilir; 250 karakterden sonra «daha fazla»
+- **Rozetler:** Otomatik paylaşım, birlikte baktıran sayısı, görüntülenme ve paylaşım sayısı
+- **Sesli oda şeridi:** Dolu odalar parlar (glow + PK/müzik); boş odalar sönük «Boş» etiketi
+- **Çıkış:** Backend presence/koltuk leave navigasyondan önce — odadan çıkış düzeltmesi
+
 ## 1.0.246+282 (2026-08-17) — Anasayfa sadeleştirme + dolu sesli odalar
 
 - **Anasayfa:** Gereksiz bölümler kaldırıldı (istatistik, sosyal şerit, trend, liderlik, ünlüler, fan kulübü, futbol, blog, keşfet, Gold vb.)

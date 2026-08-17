@@ -104,12 +104,28 @@ abstract final class VoiceRoomLeaveFlow {
       );
     }
 
-    // Ekranı beklemeden kapat; temizlik arka planda (backend leave + TRTC).
+    // Backend presence/koltuk önce — provider dispose olsa bile API tamamlansın.
+    try {
+      await ref
+          .read(chatRoomRemoteProvider)
+          .leavePresence(key)
+          .timeout(const Duration(seconds: 4));
+    } catch (_) {}
+    final userId = user?.id;
+    if (userId != null && userId.isNotEmpty) {
+      try {
+        await ref
+            .read(chatRoomRemoteProvider)
+            .clearSeat(roomKey: key, userId: userId)
+            .timeout(const Duration(seconds: 3));
+      } catch (_) {}
+    }
+
+    final notifier = ref.read(voiceRoomLiveProvider(key).notifier);
     navigateAwayFromRoom();
 
     unawaited(
-      ref
-          .read(voiceRoomLiveProvider(key).notifier)
+      notifier
           .leaveRoomSession(
             source: source,
             awaitBackend: false,

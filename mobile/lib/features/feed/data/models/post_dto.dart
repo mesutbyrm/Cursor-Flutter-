@@ -170,7 +170,39 @@ abstract class PostDto with _$PostDto {
       visibility: pick(json, ['visibility', 'privacy', 'audience'])?.toString(),
       fortuneSlug: pick(json, ['fortuneSlug', 'fortune_slug', 'slug'])
           ?.toString(),
+      fortuneDetail: _parseFortuneDetail(json),
     );
+  }
+
+  static String? _parseFortuneDetail(Map<String, dynamic> json) {
+    final direct = pick(json, [
+      'detail',
+      'fortuneDetail',
+      'fortune_detail',
+      'readingText',
+      'reading_text',
+      'fullText',
+      'full_text',
+      'fortuneText',
+      'fortune_text',
+      'reading',
+      'body',
+    ]);
+    if (direct is String && direct.trim().isNotEmpty) return direct.trim();
+    final fortuneRaw = pick(json, ['fortune', 'reading', 'userFortune']);
+    if (fortuneRaw is Map) {
+      final fm = asJsonMap(fortuneRaw);
+      final nested = pick(fm, [
+        'detail',
+        'text',
+        'content',
+        'result',
+        'reading',
+        'summary',
+      ]);
+      if (nested is String && nested.trim().isNotEmpty) return nested.trim();
+    }
+    return null;
   }
 
   static DateTime? _parseDate(dynamic v) {
