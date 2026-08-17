@@ -9,6 +9,7 @@ import 'package:canlifal_social/features/profile/presentation/premium_2026/profi
 import 'package:canlifal_social/features/social/presentation/utils/social_post_location_helper.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_discover_shortcut_labels.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_feed_refresh.dart';
+import 'package:canlifal_social/features/social/presentation/utils/social_caption_link_parser.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import 'package:canlifal_social/features/voice_hub/domain/voice_music_sync.dart';
 
@@ -490,6 +491,23 @@ void main() {
         buildSocialActiveRoomsEmbeddedTitle(hasLive: true, hasVoice: false),
         'Canlı yayınlar',
       );
+    });
+  });
+
+  group('20p — Sosyal bölüm faz 6 helper sözleşmesi', () {
+    test('paylaşım metni bağlantı içerir', () {
+      final text = buildSocialPostShareText(
+        postId: 'abc',
+        caption: 'Merhaba',
+      );
+      expect(text, contains('Merhaba'));
+      expect(text, contains('post=abc'));
+    });
+
+    test('hashtag token ayrıştırma', () {
+      final tokens = parseSocialCaptionTokens('#canlifal');
+      expect(tokens.single.kind, SocialCaptionTokenKind.hashtag);
+      expect(tokens.single.value, 'canlifal');
     });
   });
 

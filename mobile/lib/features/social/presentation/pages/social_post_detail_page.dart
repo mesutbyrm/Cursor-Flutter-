@@ -5,6 +5,8 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../core/config/env.dart';
+import '../utils/social_caption_link_parser.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../providers/social_providers.dart';
 import '../widgets/instagram/social_instagram_post_card.dart';
@@ -33,9 +35,13 @@ class SocialPostDetailPage extends ConsumerWidget {
             icon: const Icon(Icons.share_outlined),
             tooltip: 'Paylaş',
             onPressed: () {
-              final link = 'https://canlifal.com/sosyal?post=$postId';
+              final text = buildSocialPostShareText(
+                postId: postId,
+                caption: postAsync.valueOrNull?.caption,
+                siteOrigin: Env.siteOrigin,
+              );
               SharePlus.instance.share(
-                ShareParams(text: link, subject: 'Canlifal gönderisi'),
+                ShareParams(text: text, subject: 'Canlifal gönderisi'),
               );
             },
           ),

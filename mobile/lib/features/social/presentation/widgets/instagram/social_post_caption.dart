@@ -3,6 +3,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 import '../../../../feed/domain/entities/post_entity.dart';
+import '../social_linked_caption_text.dart';
 
 const socialCaptionPreviewChars = 250;
 
@@ -42,29 +43,35 @@ class _SocialPostCaptionState extends State<SocialPostCaption> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           widget.inlineBodyOnly
-              ? Text(
-                  preview,
+              ? SocialLinkedCaptionText(
+                  text: preview,
                   style: TextStyle(
                     fontSize: 15,
                     height: 1.45,
                     color: context.colors.onSurface,
                   ),
                 )
-              : RichText(
-                  text: TextSpan(
-                    style: TextStyle(
-                      fontSize: 14,
-                      height: 1.4,
-                      color: context.colors.onSurface,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: '${post.author.display} ',
-                        style: TextStyle(fontWeight: FontWeight.w800),
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      post.author.display,
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.4,
+                        fontWeight: FontWeight.w800,
+                        color: context.colors.onSurface,
                       ),
-                      TextSpan(text: preview),
-                    ],
-                  ),
+                    ),
+                    SocialLinkedCaptionText(
+                      text: preview,
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.4,
+                        color: context.colors.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
           if (hasOverflow && !_expanded) ...[
             SizedBox(height: 4),
@@ -124,8 +131,8 @@ class _SocialPostTextPreviewState extends State<SocialPostTextPreview> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          preview,
+        SocialLinkedCaptionText(
+          text: preview,
           style: TextStyle(
             fontSize: 15,
             height: 1.45,

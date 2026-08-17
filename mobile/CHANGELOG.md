@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.236+272 (2026-08-17) — Sosyal bölüm faz 6
+
+- **Bağlantılı metin:** Gönderi açıklamalarında `#hashtag` → shorts keşif, `@kullanıcı` → arama
+- **Paylaşım metni:** `buildSocialPostShareText` — kart + detay sayfası ortak
+- **Arama rotası:** `/search?q=` ile `GlobalSearchPage` başlangıç sorgusu
+- **Test:** `social_caption_link_parser_test` + client acceptance `20p`
+
 ## 1.0.235+271 (2026-08-17) — Sosyal bölüm faz 5
 
 - **Pull-to-refresh:** `refreshSocialFeedSection` — akış + hikâyeler + canlı/sesli odalar birlikte yenilenir

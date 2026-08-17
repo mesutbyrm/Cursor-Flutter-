@@ -15,6 +15,7 @@ import '../../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../feed/domain/entities/post_entity.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/network/api_exception.dart';
+import '../../utils/social_caption_link_parser.dart';
 import '../../providers/social_providers.dart';
 import 'social_post_caption.dart';
 import 'social_post_comments_sheet.dart';
@@ -351,12 +352,11 @@ class _SocialInstagramPostCardState
   }
 
   Future<void> _sharePost(BuildContext context) async {
-    final base = Env.siteOrigin.replaceAll(RegExp(r'/+$'), '');
-    final link = '$base/sosyal?post=${post.id}';
-    final caption = post.caption?.trim();
-    final text = caption != null && caption.isNotEmpty
-        ? '$caption\n\n$link'
-        : 'Canlifal paylaşımı\n$link';
+    final text = buildSocialPostShareText(
+      postId: post.id,
+      caption: post.caption,
+      siteOrigin: Env.siteOrigin,
+    );
     await SharePlus.instance.share(ShareParams(text: text));
   }
 }
