@@ -45,11 +45,36 @@ abstract final class VoiceRoomLeaveFlow {
   static void navigateAwayFromRoom({BuildContext? context}) {
     final nav = rootNavigatorKey.currentContext ?? context;
     if (nav == null || !nav.mounted) return;
+    final router = GoRouter.of(nav);
+    final location = router.state.matchedLocation;
+    if (location.startsWith('/voice-room')) {
+      router.go('/voice-rooms');
+      return;
+    }
     if (nav.canPop()) {
       nav.pop();
-    } else {
-      nav.go('/voice-rooms');
+      return;
     }
+    router.go('/voice-rooms');
+  }
+
+  /// Onay diyalogu olmadan doğrudan odadan çık.
+  static Future<void> leaveDirect({
+    required BuildContext context,
+    required WidgetRef ref,
+    required String liveKey,
+    required VoiceRoomEntity room,
+    required String source,
+    Future<void> Function()? prepareLeave,
+  }) {
+    return leaveWithSummary(
+      context: context,
+      ref: ref,
+      liveKey: liveKey,
+      room: room,
+      source: source,
+      prepareLeave: prepareLeave,
+    );
   }
 
   static Future<void> leaveWithSummary({

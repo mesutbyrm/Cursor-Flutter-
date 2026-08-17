@@ -444,8 +444,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
   Future<void> _confirmLeave() async {
     if (_leaving) return;
-    if (!await VoiceRoomLeaveFlow.confirmLeave(context)) return;
-    if (mounted) await _leaveRoom();
+    await _leaveRoom();
   }
 
   void _openManagementPanel(

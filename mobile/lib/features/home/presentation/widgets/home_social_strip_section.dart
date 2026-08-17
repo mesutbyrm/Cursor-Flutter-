@@ -167,7 +167,10 @@ class _LoginsRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
       itemCount: logins.length,
       separatorBuilder: (_, _) => const SizedBox(width: 12),
-      itemBuilder: (_, i) => _LoginChip(login: logins[i]),
+      itemBuilder: (_, i) => _LoginChip(
+        login: logins[i],
+        onTap: () => context.push('/user/${logins[i].user.id}'),
+      ),
     );
   }
 }
@@ -184,101 +187,55 @@ class _LikersRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
       itemCount: items.length,
       separatorBuilder: (_, _) => const SizedBox(width: 12),
-      itemBuilder: (_, i) => _LikerChip(liker: items[i]),
-    );
-  }
-}
-
-class _LoginChip extends StatelessWidget {
-  const _LoginChip({required this.login});
-
-  final RecentLoginEntity login;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 80,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  HomeApprovedDesign.purple.withValues(alpha: 0.9),
-                  HomeApprovedDesign.pink.withValues(alpha: 0.8),
-                ],
-              ),
-            ),
-            child: UserAvatar(url: login.user.avatarUrl, radius: 26),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            login.user.display,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: HomeApprovedDesign.textPrimary,
-            ),
-          ),
-          Text(
-            login.timeLabel,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 9,
-              color: HomeApprovedDesign.textMuted,
-            ),
-          ),
-        ],
+      itemBuilder: (_, i) => _LikerChip(
+        liker: items[i],
+        onTap: () => context.push('/user/${items[i].id}'),
       ),
     );
   }
 }
 
-class _LikerChip extends StatelessWidget {
-  const _LikerChip({required this.liker});
+class _LoginChip extends StatelessWidget {
+  const _LoginChip({required this.login, required this.onTap});
 
-  final HomeUserLikerEntity liker;
+  final RecentLoginEntity login;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 80,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  HomeApprovedDesign.pink.withValues(alpha: 0.9),
-                  HomeApprovedDesign.liveRed.withValues(alpha: 0.85),
-                ],
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 80,
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    HomeApprovedDesign.purple.withValues(alpha: 0.9),
+                    HomeApprovedDesign.pink.withValues(alpha: 0.8),
+                  ],
+                ),
+              ),
+              child: UserAvatar(url: login.user.avatarUrl, radius: 26),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              login.user.display,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: HomeApprovedDesign.textPrimary,
               ),
             ),
-            child: UserAvatar(url: liker.avatarUrl, radius: 26),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            liker.displayName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: HomeApprovedDesign.textPrimary,
-            ),
-          ),
-          if (liker.timeLabel?.trim().isNotEmpty == true)
             Text(
-              liker.timeLabel!,
+              login.timeLabel,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
@@ -286,7 +243,64 @@ class _LikerChip extends StatelessWidget {
                 color: HomeApprovedDesign.textMuted,
               ),
             ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LikerChip extends StatelessWidget {
+  const _LikerChip({required this.liker, required this.onTap});
+
+  final HomeUserLikerEntity liker;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 80,
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    HomeApprovedDesign.pink.withValues(alpha: 0.9),
+                    HomeApprovedDesign.liveRed.withValues(alpha: 0.85),
+                  ],
+                ),
+              ),
+              child: UserAvatar(url: liker.avatarUrl, radius: 26),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              liker.displayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: HomeApprovedDesign.textPrimary,
+              ),
+            ),
+            if (liker.timeLabel?.trim().isNotEmpty == true)
+              Text(
+                liker.timeLabel!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 9,
+                  color: HomeApprovedDesign.textMuted,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
+import '../../../../core/auth/bot_account_provider.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/live_event_log.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
@@ -164,6 +165,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Timer? _lazyExtrasTimer;
   Timer? _coBroadcastPoll;
   Timer? _hostHeartbeat;
+  Timer? _botAutoCloseTimer;
   final Set<String> _seenGuestJoinIds = {};
   final Set<String> _seenCoBroadcastInviteIds = {};
   final Set<String> _seenPkInviteIds = {};
@@ -329,6 +331,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     } else {
       _startHostHeartbeat();
     }
+    _startBotAutoCloseIfNeeded();
     final quality = ref.read(liveStreamQualityProvider);
     unawaited(_trtc.setStreamQuality(quality));
     _applyActiveAudio();
@@ -517,6 +520,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _trtc.setCameraEnabled(false);
   }
 
+  void _startBotAutoCloseIfNeeded() {
+    if (!widget.session.isHost || _leaving) return;
+    if (!ref.read(isBotAccountProvider)) return;
+    _botAutoCloseTimer?.cancel();
+    _botAutoCloseTimer = Timer(const Duration(minutes: 5), () {
+      if (!mounted || _leaving) return;
+      unawaited(_exitBroadcast(context, skipHostConfirm: true));
+    });
+  }
+
   void _cancelLivePageTimers() {
     _lazyGiftsTimer?.cancel();
     _lazyGiftsTimer = null;
@@ -530,6 +543,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _coBroadcastPoll = null;
     _hostHeartbeat?.cancel();
     _hostHeartbeat = null;
+    _botAutoCloseTimer?.cancel();
+    _botAutoCloseTimer = null;
     _stopLiveSignalPoll();
   }
 

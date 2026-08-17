@@ -90,104 +90,118 @@ class _AdvisorCard extends StatelessWidget {
 
     return SizedBox(
       width: 108,
-      child: Column(
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.push('/canli-falcilar/${advisor.id}'),
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [HomePalette.primary, HomePalette.secondary],
-                  ),
-                ),
-                child: advisor.avatarUrl != null && advisor.avatarUrl!.isNotEmpty
-                    ? CircleAvatar(
-                        radius: 38,
-                        backgroundImage:
-                            canlifalImageProvider(advisor.avatarUrl!),
-                      )
-                    : UserAvatar(radius: 38),
-              ),
-              Positioned(
-                left: 4,
-                top: 4,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF3DFF6E),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'ONLINE',
-                    style: TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF0F0B1D),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.65),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      viewerLabel,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [HomePalette.primary, HomePalette.secondary],
                       ),
                     ),
+                    child: advisor.avatarUrl != null &&
+                            advisor.avatarUrl!.isNotEmpty
+                        ? CircleAvatar(
+                            radius: 38,
+                            backgroundImage:
+                                canlifalImageProvider(advisor.avatarUrl!),
+                          )
+                        : UserAvatar(radius: 38),
+                  ),
+                  Positioned(
+                    left: 4,
+                    top: 4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3DFF6E),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'ONLINE',
+                        style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF0F0B1D),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          viewerLabel,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                advisor.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                  color: context.colors.onSurface,
+                ),
+              ),
+              Text(
+                advisor.category ?? 'Fal uzmanı',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: context.colors.onSurfaceMuted,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Material(
+                color: HomePalette.primary,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => context.push('/canli-falcilar/${advisor.id}'),
+                  child: const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Icon(Icons.call_rounded, size: 16, color: Colors.white),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            advisor.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
-              color: context.colors.onSurface,
-            ),
-          ),
-          Text(
-            advisor.category ?? 'Fal uzmanı',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 10,
-              color: context.colors.onSurfaceMuted,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Material(
-            color: HomePalette.primary,
-            shape: const CircleBorder(),
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: () => context.push('/messages'),
-              child: const Padding(
-                padding: EdgeInsets.all(8),
-                child: Icon(Icons.call_rounded, size: 16, color: Colors.white),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
