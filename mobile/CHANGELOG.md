@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.241+277 (2026-08-17) — Sosyal bölüm faz 11
+
+- **Detay önbelleği:** `resolveSocialPostForDetail` — akıştaki gönderi anında gösterilir, API ile birleştirilir
+- **Metin gönderisi:** Yalnızca metin kartına dokununca detay sayfası açılır
+- **Sayfalama hatası:** `SocialFeedLoadMoreErrorBanner` + «Tekrar dene»
+- **Test:** `social_post_resolver_test` + client acceptance `20u`
+
 ## 1.0.240+276 (2026-08-17) — Sosyal bölüm faz 10
 
 - **Yorum senkronu:** `notifySocialPostCommentAdded` — akış + gönderi detayı sayacı birlikte güncellenir

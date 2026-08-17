@@ -132,25 +132,28 @@ class _SocialInstagramPostCardState
                     if ((post.caption?.trim().isNotEmpty ?? false) && _hasMedia)
                       SocialPostCaption(post: post, inlineBodyOnly: true),
                     if (!_hasMedia && (post.caption?.trim().isNotEmpty ?? false))
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(14),
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFF2A1548), Color(0xFF14102A)],
+                      GestureDetector(
+                        onTap: () => _openPostDetail(context),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [Color(0xFF2A1548), Color(0xFF14102A)],
+                              ),
+                              border: Border.all(
+                                color: AppThemeColors.accentPurple
+                                    .withValues(alpha: 0.35),
+                              ),
                             ),
-                            border: Border.all(
-                              color: AppThemeColors.accentPurple
-                                  .withValues(alpha: 0.35),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: SocialPostTextPreview(
-                              text: post.caption!.trim(),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: SocialPostTextPreview(
+                                text: post.caption!.trim(),
+                              ),
                             ),
                           ),
                         ),

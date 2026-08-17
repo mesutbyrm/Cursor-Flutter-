@@ -9,6 +9,7 @@ import 'package:canlifal_social/features/profile/presentation/premium_2026/profi
 import 'package:canlifal_social/features/social/presentation/utils/social_post_location_helper.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_discover_shortcut_labels.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_feed_end_label.dart';
+import 'package:canlifal_social/features/social/presentation/utils/social_post_resolver.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_feed_refresh.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_caption_link_parser.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_post_detail_route.dart';
@@ -538,6 +539,12 @@ void main() {
   group('20t — Sosyal bölüm faz 10 senkron ve akış sonu', () {
     test('akış sonu etiketi', () {
       expect(socialFeedEndReachedLabel, 'Tüm paylaşımları gördün');
+    });
+  });
+
+  group('20u — Sosyal bölüm faz 11 detay önbelleği', () {
+    test('akış önbelleğinden gönderi bulma', () {
+      expect(findSocialFeedPost(const [], 'a'), isNull);
     });
   });
 

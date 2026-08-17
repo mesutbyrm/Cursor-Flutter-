@@ -30,10 +30,12 @@ class SocialNotifier extends AsyncNotifier<List<PostEntity>> {
   int _page = 1;
   bool _end = false;
   bool _loadingMore = false;
+  String? _loadMoreError;
   final Set<String> _viewedPostIds = {};
 
   bool get hasMore => !_end;
   bool get isLoadingMore => _loadingMore;
+  String? get loadMoreError => _loadMoreError;
 
   @override
   Future<List<PostEntity>> build() async {
@@ -47,6 +49,7 @@ class SocialNotifier extends AsyncNotifier<List<PostEntity>> {
 
   Future<void> refresh() async {
     final previous = state;
+    _loadMoreError = null;
     state = const AsyncValue<List<PostEntity>>.loading().copyWithPrevious(previous);
     state = await AsyncValue.guard(() async {
       _page = 1;
@@ -64,6 +67,7 @@ class SocialNotifier extends AsyncNotifier<List<PostEntity>> {
     final cur = state.valueOrNull;
     if (cur == null || _end || _loadingMore) return;
     _loadingMore = true;
+    _loadMoreError = null;
     state = AsyncValue.data(List<PostEntity>.from(cur));
     final nextPage = _page + 1;
     try {
@@ -77,11 +81,14 @@ class SocialNotifier extends AsyncNotifier<List<PostEntity>> {
       _end = !bundle.hasMore;
       state = AsyncValue.data([...cur, ...bundle.posts]);
     } catch (_) {
-      // Sayfalama hatası mevcut feed'i silmesin.
+      _loadMoreError = 'Daha fazla gönderi yüklenemedi';
+      state = AsyncValue.data(List<PostEntity>.from(cur));
     } finally {
       _loadingMore = false;
     }
   }
+
+  Future<void> retryLoadMore() => loadMore();
 
   void toggleLike(String postId) {
     state.whenData((list) {
