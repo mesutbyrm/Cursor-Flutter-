@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.237+273 (2026-08-17) — Sosyal bölüm faz 7
+
+- **Yorumlar:** `#hashtag` / `@mention` bağlantılı metin; yazar avatar/isim → profil
+- **Yorum listesi:** Pull-to-refresh ile yenileme
+- **Paylaşım girişi:** App bar `+` sonrası akış üste kayar (`onPublished`)
+- **Profil rotası:** `buildSocialUserProfileRoute` merkezi helper
+- **Test:** `social_user_profile_route_test` + client acceptance `20q`
+
 ## 1.0.236+272 (2026-08-17) — Sosyal bölüm faz 6
 
 - **Bağlantılı metin:** Gönderi açıklamalarında `#hashtag` → shorts keşif, `@kullanıcı` → arama

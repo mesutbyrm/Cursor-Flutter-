@@ -77,7 +77,9 @@ class _SocialPageState extends ConsumerState<SocialPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const RepaintBoundary(child: SocialInstagramAppBar()),
+            RepaintBoundary(
+              child: SocialInstagramAppBar(onPostPublished: _scrollFeedToTop),
+            ),
             const RepaintBoundary(child: SocialStoriesRail()),
             const RepaintBoundary(child: SocialDiscoverShortcuts()),
             RepaintBoundary(

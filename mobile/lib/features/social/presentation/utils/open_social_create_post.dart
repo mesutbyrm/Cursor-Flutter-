@@ -10,6 +10,7 @@ Future<void> openSocialCreatePost(
   BuildContext context,
   WidgetRef ref, {
   String? initialCaption,
+  VoidCallback? onPublished,
 }) async {
   final authed = ref.read(authControllerProvider).valueOrNull;
   if (authed == null) {
@@ -24,5 +25,6 @@ Future<void> openSocialCreatePost(
   final created = await context.push<bool>('/social/create', extra: initialCaption);
   if (created == true) {
     await ref.read(socialNotifierProvider.notifier).refresh();
+    onPublished?.call();
   }
 }

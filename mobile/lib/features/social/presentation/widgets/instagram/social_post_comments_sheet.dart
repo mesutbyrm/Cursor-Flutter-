@@ -8,6 +8,8 @@ import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../providers/social_providers.dart';
+import '../../utils/social_user_profile_route.dart';
+import '../social_linked_caption_text.dart';
 
 /// Gönderi yorumları — GET/POST `/api/social/posts/:id/comments`.
 class SocialPostCommentsSheet extends ConsumerStatefulWidget {
@@ -197,36 +199,59 @@ class _SocialPostCommentsSheetState
             ),
           );
         }
-        return ListView.separated(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: items.length,
-          separatorBuilder: (_, _) => const Divider(height: 20),
-          itemBuilder: (context, i) {
-            final c = items[i];
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                UserAvatar(url: c.author.avatarUrl, radius: 18),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        c.author.display,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(c.text),
-                    ],
+        return RefreshIndicator(
+          onRefresh: _reload,
+          child: ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: items.length,
+            separatorBuilder: (_, _) => const Divider(height: 20),
+            itemBuilder: (context, i) {
+              final c = items[i];
+              void openAuthor() {
+                final id = c.author.id.trim();
+                if (id.isEmpty) return;
+                context.push(buildSocialUserProfileRoute(id));
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: openAuthor,
+                    child: UserAvatar(url: c.author.avatarUrl, radius: 18),
                   ),
-                ),
-              ],
-            );
-          },
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        GestureDetector(
+                          onTap: openAuthor,
+                          child: Text(
+                            c.author.display,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        SocialLinkedCaptionText(
+                          text: c.text,
+                          style: TextStyle(
+                            fontSize: 14,
+                            height: 1.35,
+                            color: context.colors.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         );
       },
     );

@@ -16,6 +16,7 @@ import '../../../../feed/domain/entities/post_entity.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../utils/social_caption_link_parser.dart';
+import '../../utils/social_user_profile_route.dart';
 import '../../providers/social_providers.dart';
 import 'social_post_caption.dart';
 import 'social_post_comments_sheet.dart';
@@ -84,7 +85,7 @@ class _SocialInstagramPostCardState
       post.mediaUrl != null && post.mediaUrl!.trim().isNotEmpty;
 
   void _openAuthorTimeline(BuildContext context) {
-    context.push('/user/${post.author.id}', extra: post.id);
+    context.push(buildSocialUserProfileRoute(post.author.id), extra: post.id);
   }
 
   @override

@@ -10,7 +10,10 @@ import '../../utils/open_social_create_post.dart';
 
 /// CanlıFal Sosyal üst çubuk — paylaşım + mesajlar + bildirimler.
 class SocialInstagramAppBar extends ConsumerWidget {
-  const SocialInstagramAppBar({super.key});
+  const SocialInstagramAppBar({super.key, this.onPostPublished});
+
+  /// Tam ekran paylaşım başarılı olunca (ör. akışı üste kaydır).
+  final VoidCallback? onPostPublished;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -54,7 +57,11 @@ class SocialInstagramAppBar extends ConsumerWidget {
           PremiumIconButton(
             icon: Icons.add_box_outlined,
             size: 40,
-            onTap: () => openSocialCreatePost(context, ref),
+            onTap: () => openSocialCreatePost(
+              context,
+              ref,
+              onPublished: onPostPublished,
+            ),
           ),
           const SizedBox(width: 4),
           const MessagesNotificationsActions(spacing: 4),
