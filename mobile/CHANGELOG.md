@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.243+279 (2026-08-17) — Anasayfa, sesli oda çıkışı, bot yayın
+
+- **Anasayfa:** `/games-hub` ve alt rotaları, `/games-room/:id`, `/blog-hub`, `/dreams-hub` eklendi; oyun/blog/rüya/futbol kısayolları düzeltildi
+- **Anasayfa UX:** Hikâye girişi, sosyal şerit ve falcı kartları tıklanabilir; boş oyun rotası oyun merkezine yönlendirir
+- **Sesli oda:** «Çık» doğrudan odadan çıkar; navigasyon her zaman `/voice-rooms` listesine döner
+- **Bot yayın:** Bot hesaplar canlı yayını 5 dakika sonra otomatik kapatır
+- **Rota:** Yinelenen `/gifts/leaderboard` tanımı kaldırıldı
+
 ## 1.0.242+278 (2026-08-17) — Çocuk güvenliği politikası düzeltmesi
 
 - **Yasal:** Çocuk Güvenliği Politikası artık `GET /api/legal/child-safety` üzerinden yüklenir (`site-pages/cocuk-guvenligi` 404 idi)

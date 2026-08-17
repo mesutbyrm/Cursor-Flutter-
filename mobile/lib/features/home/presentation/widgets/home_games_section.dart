@@ -95,9 +95,11 @@ class HomeGamesSection extends ConsumerWidget {
                   return _GameCard(
                     tile: tile,
                     onTap: () {
-                      final route = tile.route;
+                      final route = tile.route?.trim();
                       if (route != null && route.isNotEmpty) {
                         openNativeSitePath(context, route);
+                      } else {
+                        context.push('/games-hub');
                       }
                     },
                   );

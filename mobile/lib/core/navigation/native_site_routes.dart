@@ -65,7 +65,16 @@ void openNativeSitePath(BuildContext context, String path) {
     context.push('/celebrities-hub');
     return;
   }
-  if (p.startsWith('/blog')) {
+  if (p == '/futbol' || p.startsWith('/football')) {
+    context.push('/search?q=futbol');
+    return;
+  }
+  if (p.startsWith('/games-hub') || p == '/games') {
+    context.push(p.startsWith('/') ? p : '/$p');
+    return;
+  }
+  if (p == '/blog-hub' || p.startsWith('/blog')) {
+    context.push('/blog-hub');
     return;
   }
   if (p.startsWith('/ruya-sozlugu') ||
@@ -73,7 +82,9 @@ void openNativeSitePath(BuildContext context, String path) {
       p.startsWith('/ruya-takvimi') ||
       p.startsWith('/ruya-istatistikleri') ||
       p.startsWith('/ruya-yarismasi') ||
-      p == '/dreams-hub') {
+      p == '/dreams-hub' ||
+      p.startsWith('/dreams')) {
+    context.push('/dreams-hub');
     return;
   }
   if (p.startsWith('/ruya') || p.contains('ruya-yorumu')) {

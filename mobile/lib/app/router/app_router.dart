@@ -38,7 +38,6 @@ import '../../features/live/domain/entities/live_broadcast_prep_args.dart';
 import '../../features/live/presentation/pages/live_broadcast_prep_page.dart';
 import '../../features/live/presentation/pages/live_broadcast_schedule_page.dart';
 import '../../features/live/presentation/pages/live_broadcast_type_page.dart';
-import '../../features/gifts/presentation/pages/gift_leaderboard_hub_page.dart';
 import '../../features/live/domain/entities/live_swipe_feed_args.dart';
 import '../../features/live/presentation/pages/live_broadcast_room_page.dart';
 import '../../features/live/presentation/pages/live_page.dart';
@@ -58,6 +57,12 @@ import '../../features/live/presentation/pages/pk_moderation_page.dart';
 import '../../features/live/presentation/pages/pk_room_history_page.dart';
 import '../../features/gifts/presentation/pages/gift_hub_page.dart';
 import '../../features/gifts/presentation/pages/gift_leaderboard_center_page.dart';
+import '../../features/games/presentation/pages/games_hub_page.dart';
+import '../../features/games/presentation/pages/game_room_router_page.dart';
+import '../../features/games/presentation/game_center/pages/game_center_page.dart';
+import '../../features/games/presentation/game_center/pages/game_center_leaderboard_page.dart';
+import '../../features/games/presentation/game_center/pages/game_play_pages.dart';
+import '../../features/games/presentation/okey101/okey101_lobby_page.dart';
 import '../../features/shorts/presentation/pages/shorts_feed_page.dart';
 import '../../features/shorts/presentation/pages/shorts_explore_page.dart';
 import '../../features/shorts/presentation/pages/short_hashtag_page.dart';
@@ -630,13 +635,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ProfileGiftsPage(),
       ),
       GoRoute(
-        path: '/gifts/leaderboard',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const GiftLeaderboardHubPage(),
-        ),
-      ),
-      GoRoute(
         path: '/profile/growth',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
@@ -939,6 +937,73 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           child: const NativeFeatureHubPage(
             kind: NativeFeatureHubKind.adRewards,
           ),
+        ),
+      ),
+      GoRoute(
+        path: '/games-hub',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const GamesHubPage(),
+        ),
+        routes: [
+          GoRoute(
+            path: 'lobby',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const GameCenterPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'leaderboard',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const GameCenterLeaderboardPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'wheel',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const WheelOfFortunePage(),
+            ),
+          ),
+          GoRoute(
+            path: 'okey101',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const Okey101LobbyPage(),
+            ),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/games-room/:id',
+        pageBuilder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          final title = state.uri.queryParameters['title'];
+          final gameHint = state.uri.queryParameters['game'];
+          return AppPageTransitions.fadeSlide(
+            key: state.pageKey,
+            child: GameRoomRouterPage(
+              roomId: id,
+              title: title,
+              gameHint: gameHint,
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/blog-hub',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const NativeFeatureHubPage(kind: NativeFeatureHubKind.blog),
+        ),
+      ),
+      GoRoute(
+        path: '/dreams-hub',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const NativeFeatureHubPage(kind: NativeFeatureHubKind.dreams),
         ),
       ),
       GoRoute(

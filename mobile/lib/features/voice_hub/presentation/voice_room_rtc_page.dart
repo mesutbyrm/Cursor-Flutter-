@@ -637,8 +637,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   Future<void> _confirmLeave() async {
     if (_leaving) return;
-    if (!await VoiceRoomLeaveFlow.confirmLeave(context)) return;
-    if (mounted) await _leaveRoom();
+    await _leaveRoom();
   }
 
   Future<void> _leave() async {
