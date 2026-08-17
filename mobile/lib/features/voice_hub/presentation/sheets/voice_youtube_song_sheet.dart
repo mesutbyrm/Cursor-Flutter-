@@ -177,29 +177,26 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
     final notifier = ref.read(voiceRoomLiveProvider(liveKey).notifier);
     final cost = withVideo ? videoCost : audioCost;
     final songTitle = hit.title;
-    final giftTo = _giftCtrl.text.trim();
-    final note = _noteCtrl.text.trim();
 
     // Sheet kapanmadan provider güncellemesi tüm odayı yeniden çizer → ANR riski.
     if (mounted) Navigator.of(context).pop();
 
-    try {
-      final err = await notifier.requestMusic(
-        title: hit.title,
-        youtubeUrl: hit.url,
-        thumbUrl: hit.thumbUrl,
-        videoId: hit.videoId,
-        giftTo: giftTo.isEmpty ? null : giftTo,
-        note: note.isEmpty ? null : note,
-        withVideo: withVideo,
-      );
-      _showMusicResultSnack(
-        err ?? '«$songTitle» sıraya eklendi · $cost jeton',
-        isError: err != null,
-      );
-    } catch (e) {
-      _showMusicResultSnack(ApiException.userMessage(e), isError: true);
-    }
+    unawaited(
+      Future<void>.microtask(() async {
+        try {
+          final err = await notifier.submitSelectedSong(
+            hit,
+            withVideo: withVideo,
+          );
+          _showMusicResultSnack(
+            err ?? '«$songTitle» sıraya eklendi · $cost jeton',
+            isError: err != null,
+          );
+        } catch (e) {
+          _showMusicResultSnack(ApiException.userMessage(e), isError: true);
+        }
+      }),
+    );
   }
 
   void _showMusicResultSnack(String message, {bool isError = false}) {

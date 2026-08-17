@@ -19,12 +19,14 @@ class DiscoverPremiumRoomCard extends StatefulWidget {
     required this.onTap,
     this.width = 168,
     this.compact = false,
+    this.enableMotion = true,
   });
 
   final VoiceRoomEntity room;
   final VoidCallback onTap;
   final double width;
   final bool compact;
+  final bool enableMotion;
 
   @override
   State<DiscoverPremiumRoomCard> createState() =>
@@ -44,15 +46,20 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard>
     _waveCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
-    )..repeat();
+    );
     _spinCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
-    )..repeat();
+    );
     _micCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
+    );
+    if (widget.enableMotion) {
+      _waveCtrl.repeat();
+      _spinCtrl.repeat();
+      _micCtrl.repeat(reverse: true);
+    }
   }
 
   @override
@@ -74,9 +81,12 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard>
     final popularity = _popularityLabel(online);
     final showMusic = widget.room.hasMusicActivity;
     final showPk = widget.room.isPkLive;
+    final occupied = online > 0;
 
     return RepaintBoundary(
-      child: GestureDetector(
+      child: Opacity(
+        opacity: occupied ? 1 : 0.58,
+        child: GestureDetector(
         onTapDown: (_) => setState(() => _pressed = true),
         onTapUp: (_) => setState(() => _pressed = false),
         onTapCancel: () => setState(() => _pressed = false),
@@ -272,6 +282,7 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard>
             ),
           ),
         ),
+      ),
       ),
     );
   }

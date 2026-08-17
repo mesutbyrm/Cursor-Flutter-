@@ -1970,7 +1970,7 @@ class VoiceRoomLiveController
       _lastDjPlaybackSignature = '';
       state = state.copyWith(dj: dj, sending: false);
       if (shouldPlay && !isQueuedOnly) {
-        await _playDjInBackground(dj);
+        unawaited(_playDjInBackground(dj));
       }
       unawaited(_syncMusicFromServerIfNeeded(force: true));
       _showMusicRequestFlashLine('✅ «${hit.title}» kuyruğa eklendi');

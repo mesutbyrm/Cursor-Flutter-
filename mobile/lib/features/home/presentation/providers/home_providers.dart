@@ -149,12 +149,10 @@ final homeLiveStreamsProvider =
 final homeVoiceRoomsProvider =
     FutureProvider<List<VoiceRoomEntity>>((ref) async {
   _keepHomeCacheAlive(ref);
-  final cached = ref.watch(voiceRoomsListNotifierProvider).valueOrNull;
-  if (cached != null) return cached;
-  return ref.read(voiceRoomsListNotifierProvider.future);
+  return ref.watch(voiceRoomsListNotifierProvider.future);
 });
 
-/// Ana sayfa sesli odalar — yalnızca içinde kullanıcı olanlar, SSE ile güncel sayı.
+/// Ana sayfa sesli odalar — tüm odalar (dolu önce), SSE ile güncel sayı.
 final homeLiveVoiceRoomsProvider = Provider<AsyncValue<List<VoiceRoomEntity>>>(
   (ref) {
     final roomsAsync = ref.watch(homeVoiceRoomsProvider);
@@ -164,10 +162,8 @@ final homeLiveVoiceRoomsProvider = Provider<AsyncValue<List<VoiceRoomEntity>>>(
       homeVoiceRoomsProvider,
       (prev, next) {
         final rooms = next.valueOrNull;
-        if (rooms == null) return;
-        final track = rooms
-            .where((r) => !r.isVipGoldRoom && r.displayOnline > 0)
-            .toList();
+        if (rooms == null || rooms.isEmpty) return;
+        final track = rooms.where((r) => !r.isVipGoldRoom).toList();
         if (track.isNotEmpty) {
           ref.read(voiceRoomsPresenceProvider.notifier).mergeTrackRooms(track);
         }
@@ -184,7 +180,7 @@ final homeLiveVoiceRoomsProvider = Provider<AsyncValue<List<VoiceRoomEntity>>>(
           final apiCount = r.displayOnline;
           final count = sseCount > apiCount ? sseCount : apiCount;
           return r.copyWith(onlineCount: count, userCount: count);
-        }).where((r) => r.displayOnline > 0).toList();
+        }).toList();
         final sorted = sortVoiceRoomsByPopularity(live).take(12).toList();
         return AsyncValue.data(sorted);
       },

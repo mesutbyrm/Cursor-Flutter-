@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.251+287 (2026-08-17) — Ana sayfa odalar + müzik ANR + çalma
+
+- **Ana sayfa:** Tüm sesli sohbet odaları listelenir (dolu önce); boş odalar sönük kart
+- **Performans:** Ana sayfa oda kartlarında animasyon kapatıldı (açılış hızı)
+- **Müzik ANR:** İstek `submitSelectedSong` + microtask; player kurulumu UI’ı bloklamaz
+- **Müzik çalma:** `submitSelectedSong` içinde `_playDjInBackground` artık arka planda
+
 ## 1.0.250+286 (2026-08-17) — Müzik isteği ANR + sağ ray konumu
 
 - **ANR düzeltmesi:** Müzik sheet kapanmadan oda provider'ı izlenmiyor; istek gönderilmeden önce sheet kapanır

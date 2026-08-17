@@ -78,7 +78,7 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
     }
     final items = rooms.valueOrNull ?? const <VoiceRoomEntity>[];
     if (items.isEmpty) {
-      return const SizedBox.shrink();
+      return _sectionShell(context, ref, empty: true);
     }
     final sorted = items;
     _prefetchCovers(sorted);
@@ -101,6 +101,7 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
             return DiscoverPremiumRoomCard(
               room: room,
               width: VoiceRoomSection._cardW,
+              enableMotion: false,
               onTap: () => openVoiceRoomWithVipGate(context, ref, room),
             );
           },
