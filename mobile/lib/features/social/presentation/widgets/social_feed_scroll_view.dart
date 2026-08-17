@@ -14,6 +14,7 @@ import '../utils/open_social_create_post.dart';
 import '../utils/social_feed_layout.dart';
 import '../widgets/instagram/social_active_rooms.dart';
 import '../widgets/instagram/social_instagram_post_card.dart';
+import '../widgets/social_feed_end_banner.dart';
 
 /// Sosyal akış — yalnızca feed provider'ını izler; app bar/composer etkilenmez.
 class SocialFeedScrollView extends ConsumerWidget {
@@ -82,24 +83,29 @@ class SocialFeedScrollView extends ConsumerWidget {
               }
               final notifier = ref.read(socialNotifierProvider.notifier);
               final loadingMore = notifier.isLoadingMore;
+              final atEnd = !notifier.hasMore && !loadingMore;
               final feedCount = SocialFeedLayout.itemCount(
                 posts.length,
                 includeRoomStrips: showRoomStrips,
               );
+              final trailingSlots = (loadingMore ? 1 : 0) + (atEnd ? 1 : 0);
               return SliverList.builder(
-                itemCount: feedCount + (loadingMore ? 1 : 0),
+                itemCount: feedCount + trailingSlots,
                 itemBuilder: (context, i) {
                   if (i >= feedCount) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
-                      child: Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                    if (loadingMore && i == feedCount) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    }
+                    return const SocialFeedEndBanner();
                   }
                   final postIdx = SocialFeedLayout.postIndexAt(
                     i,

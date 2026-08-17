@@ -49,6 +49,12 @@ class SocialInstagramAppBar extends ConsumerWidget {
           ),
           const Spacer(),
           PremiumIconButton(
+            icon: Icons.search_rounded,
+            size: 40,
+            onTap: () => context.push('/search'),
+          ),
+          const SizedBox(width: 4),
+          PremiumIconButton(
             icon: Icons.play_circle_outline,
             size: 40,
             onTap: () => context.push('/shorts'),

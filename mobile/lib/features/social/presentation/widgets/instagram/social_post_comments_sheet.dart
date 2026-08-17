@@ -9,6 +9,7 @@ import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../search/domain/entities/search_user_entity.dart';
 import '../../providers/social_providers.dart';
+import '../../utils/social_feed_sync.dart';
 import '../../utils/social_user_profile_route.dart';
 import '../social_mention_picker_sheet.dart';
 import '../social_linked_caption_text.dart';
@@ -92,7 +93,11 @@ class _SocialPostCommentsSheetState
     setState(() => _sending = true);
     try {
       await ref.read(socialRepositoryProvider).addComment(widget.postId, text);
-      ref.read(socialNotifierProvider.notifier).bumpCommentCount(widget.postId);
+      syncSocialPostCommentAdded(
+        feed: ref.read(socialNotifierProvider.notifier),
+        invalidateDetail: (id) => ref.invalidate(postDetailProvider(id)),
+        postId: widget.postId,
+      );
       _controller.clear();
       await _reload();
       if (mounted) {

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.240+276 (2026-08-17) — Sosyal bölüm faz 10
+
+- **Yorum senkronu:** `notifySocialPostCommentAdded` — akış + gönderi detayı sayacı birlikte güncellenir
+- **Akış sonu:** Sayfalama bittiğinde `SocialFeedEndBanner` («Tüm paylaşımları gördün»)
+- **App bar:** Arama kısayolu (`/search`)
+- **Test:** `social_feed_sync_test`, `social_feed_end_label_test` + client acceptance `20t`
+
 ## 1.0.239+275 (2026-08-17) — Sosyal bölüm faz 9
 
 - **Paylaşım sonrası:** `prependPost` — tam akış yenilemesi yerine optimistik ekleme (composer + create)
