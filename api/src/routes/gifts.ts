@@ -19,6 +19,7 @@ import {
 } from "../socket/giftHub";
 import { giftQueueEnqueue } from "../lib/redis/giftQueue";
 import { rateLimitMiddleware } from "../lib/redis/rateLimit";
+import { processLiveGiftReferral } from "../lib/referralGiftHooks";
 
 const platformSchema = z.enum(["mobile", "web", "all"]).optional();
 
@@ -265,6 +266,12 @@ export async function sendStreamGift(
     }
     emitPkStreamSignal(pkResult.battle, userId ?? "system");
   }
+
+  void processLiveGiftReferral({
+    giftEventId: event.id,
+    grossAmount: totalCost,
+    receiverId,
+  }).catch((err) => console.error("[referral-live-gift]", err));
 
   return res.status(200).json({
     ...payload,

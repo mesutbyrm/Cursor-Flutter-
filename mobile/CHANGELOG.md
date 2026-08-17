@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.245+281 (2026-08-17) — Referans / ajans komisyon sistemi (tek seviye)
+
+- **Backend (`api/`):** `ReferralCommissionService`, Prisma migration, immutable `ReferralCommissionLedger`, admin ayarları
+- **Komisyon:** Yalnızca kesinleşmiş ekonomik işlemlerden; kayıt/jeton alımı komisyon üretmez; hak sahibinden kesilmez
+- **Entegrasyon:** Canlı yayın hediyesi, sesli oda hediyesi (oda sahibi/koltuk hakedişi); idempotency + limit + fraud hold
+- **API:** `/api/referral/me`, `/stats`, `/users`, `/earnings`, `/ledger`, `/invite-link`, `/settings`, admin uçları
+- **Flutter:** Arkadaşını davet et (WhatsApp/Telegram paylaşım), Referanslarım, Kazançlarım — tüm tutarlar backend'den
+- **Test:** `referralCommissionService.test.ts` (formül + invariant), `referral_entities_test.dart`
+
 ## 1.0.244+280 (2026-08-17) — Sesli oda senkronu (çıkış, PK hediye, koltuk, mik)
 
 - **Çıkış:** Heartbeat durur → backend presence/koltuk leave önce → TRTC `exitRoom` → ekran beklemeden kapanır

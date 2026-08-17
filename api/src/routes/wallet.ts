@@ -11,6 +11,7 @@ import {
 import { staffAccessPayload } from "../lib/staffAccess";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireStaff, isStaffRole } from "../middleware/requireStaff";
+import { getReferralStatsForUser } from "../lib/referralCommissionService";
 
 export const walletRouter = Router();
 
@@ -152,21 +153,20 @@ function requestPayload(row: {
   };
 }
 
-/** GET /api/referral — davet bilgisi */
+/** GET /api/referral — geriye dönük (referral router ile aynı) */
 walletRouter.get("/referral", requireAuth, async (req, res) => {
-  const user = await prisma.user.findUnique({ where: { id: req.userId! } });
-  if (!user) return jsonError(res, 404, "Kullanıcı bulunamadı");
-  const code = user.id.slice(-8).toUpperCase();
-  const origin = (process.env.PUBLIC_SITE_URL ?? "https://canlifal.com").replace(
-    /\/$/,
-    "",
-  );
+  const stats = await getReferralStatsForUser(req.userId!);
   return res.status(200).json({
-    referralCode: code,
-    referralLink: `${origin}/davet?ref=${code}`,
-    referralUrl: `${origin}/davet?ref=${code}`,
-    referralCreditsEarned: 0,
-    inviteCount: 0,
+    referralCode: stats.referralCode,
+    referralLink: stats.shareUrl,
+    referralUrl: stats.shareUrl,
+    shareUrl: stats.shareUrl,
+    headline: stats.headline,
+    rewardHint: stats.rewardHint,
+    inviteCount: stats.invitedCount,
+    invitedCount: stats.invitedCount,
+    referralCreditsEarned: stats.totalEarnings,
+    totalEarnings: stats.totalEarnings,
   });
 });
 

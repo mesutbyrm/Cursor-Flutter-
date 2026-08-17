@@ -13,7 +13,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed:gifts": "tsx prisma/seed-gifts.ts",
-    "test": "tsx --test src/lib/**/*.test.ts"
+    "test": "tsx --test src/lib/*.test.ts src/lib/**/*.test.ts"
   },
   "engines": {
     "node": ">=20"

@@ -75,7 +75,9 @@ import '../../features/messages/presentation/pages/dm_voice_call_page.dart';
 import '../../features/moderation/domain/entities/report_target.dart';
 import '../../features/moderation/presentation/pages/report_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
-import '../../features/profile/presentation/pages/invite_friends_page.dart';
+import '../../features/referral/presentation/pages/referral_earnings_page.dart';
+import '../../features/referral/presentation/pages/referral_invite_page.dart';
+import '../../features/referral/presentation/pages/referral_users_page.dart';
 import '../../features/membership/presentation/pages/premium_membership_page.dart';
 import '../../features/profile/presentation/pages/cfc_purchase_page.dart';
 import '../../features/profile/presentation/pages/jeton_purchase_page.dart';
@@ -590,7 +592,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/invite-friends',
-        builder: (context, state) => const InviteFriendsPage(),
+        builder: (context, state) => const ReferralInvitePage(),
+      ),
+      GoRoute(
+        path: '/referral/users',
+        builder: (context, state) => const ReferralUsersPage(),
+      ),
+      GoRoute(
+        path: '/referral/earnings',
+        builder: (context, state) => const ReferralEarningsPage(),
       ),
       GoRoute(
         path: '/profile/qr',

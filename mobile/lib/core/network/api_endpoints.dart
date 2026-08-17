@@ -640,6 +640,14 @@ abstract final class ApiEndpoints {
 
   /// Arkadaş daveti — bağlantı veya kod (oturum gerekir).
   static const referral = '/api/referral';
+  static const referralMe = '/api/referral/me';
+  static const referralStats = '/api/referral/stats';
+  static const referralUsers = '/api/referral/users';
+  static const referralEarnings = '/api/referral/earnings';
+  static const referralLedger = '/api/referral/ledger';
+  static const referralInviteLink = '/api/referral/invite-link';
+  static const referralSettings = '/api/referral/settings';
+  static const referralValidate = '/api/referral/validate';
 
   /// Diğer ortamlar için genel canlı listesi.
   static const liveStreams = '/api/live';
