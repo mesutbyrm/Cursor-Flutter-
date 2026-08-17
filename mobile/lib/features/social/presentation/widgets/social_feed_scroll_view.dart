@@ -22,11 +22,13 @@ class SocialFeedScrollView extends ConsumerWidget {
     required this.controller,
     required this.onRefresh,
     required this.bottomPadding,
+    this.onPostPublished,
   });
 
   final ScrollController controller;
   final Future<void> Function() onRefresh;
   final double bottomPadding;
+  final VoidCallback? onPostPublished;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -70,7 +72,11 @@ class SocialFeedScrollView extends ConsumerWidget {
                         ? 'Henüz paylaşım yok.\nİlk gönderini paylaş veya canlifal.com oturumunu kontrol et.'
                         : 'Henüz paylaşım yok.\nİlk gönderini şimdi paylaş.',
                     actionLabel: 'Paylaşım oluştur',
-                    action: () => openSocialCreatePost(context, ref),
+                    action: () => openSocialCreatePost(
+                      context,
+                      ref,
+                      onPublished: onPostPublished,
+                    ),
                   ),
                 );
               }

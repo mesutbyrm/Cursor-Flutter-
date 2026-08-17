@@ -10,6 +10,7 @@ import 'package:canlifal_social/features/social/presentation/utils/social_post_l
 import 'package:canlifal_social/features/social/presentation/utils/social_discover_shortcut_labels.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_feed_refresh.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_caption_link_parser.dart';
+import 'package:canlifal_social/features/social/presentation/utils/social_post_detail_route.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_user_profile_route.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import 'package:canlifal_social/features/voice_hub/domain/voice_music_sync.dart';
@@ -515,6 +516,12 @@ void main() {
   group('20q — Sosyal bölüm faz 7 helper sözleşmesi', () {
     test('kullanıcı profil rotası', () {
       expect(buildSocialUserProfileRoute('abc'), '/user/abc');
+    });
+  });
+
+  group('20r — Sosyal bölüm faz 8 helper sözleşmesi', () {
+    test('gönderi detay rotası', () {
+      expect(buildSocialPostDetailRoute('abc'), '/social/post/abc');
     });
   });
 

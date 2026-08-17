@@ -7,8 +7,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../search/domain/entities/search_user_entity.dart';
 import '../../providers/social_providers.dart';
 import '../../utils/social_user_profile_route.dart';
+import '../social_mention_picker_sheet.dart';
 import '../social_linked_caption_text.dart';
 
 /// Gönderi yorumları — GET/POST `/api/social/posts/:id/comments`.
@@ -109,6 +111,34 @@ class _SocialPostCommentsSheetState
     }
   }
 
+  void _insertMention(String username) {
+    final text = _controller.text;
+    final sel = _controller.selection;
+    final start = sel.isValid ? sel.start : text.length;
+    final end = sel.isValid ? sel.end : text.length;
+    final snippet = '@$username ';
+    final next = text.replaceRange(start, end, snippet);
+    _controller.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: start + snippet.length),
+    );
+  }
+
+  Future<void> _pickMention() async {
+    final picked = await showModalBottomSheet<SearchUserEntity>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF120A24),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => const SocialMentionPickerSheet(),
+    );
+    if (picked != null && mounted) {
+      _insertMention(picked.username);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final maxH = MediaQuery.sizeOf(context).height * 0.72;
@@ -163,7 +193,12 @@ class _SocialPostCommentsSheetState
                       onSubmitted: (_) => _send(),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    tooltip: 'Etiketle',
+                    onPressed: _sending ? null : _pickMention,
+                    icon: const Icon(Icons.alternate_email_rounded),
+                  ),
                   IconButton.filled(
                     onPressed: _sending ? null : _send,
                     icon: _sending

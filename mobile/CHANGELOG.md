@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.238+274 (2026-08-17) — Sosyal bölüm faz 8
+
+- **Gönderi detayı:** `buildSocialPostDetailRoute` — medya dokunuşu ve kart aksiyonları ortak rota
+- **Silme:** Akıştan optimistik kaldırma (`removePost`) — tam yenileme yerine
+- **Boş akış:** Gönderi oluşturma sonrası üste kaydırma (`onPostPublished`)
+- **Hikâyeler:** Profil rotası `buildSocialUserProfileRoute` ile hizalandı
+- **Yorumlar:** `@` etiketleme düğmesi — `SocialMentionPickerSheet`
+- **Test:** `social_post_detail_route_test` + client acceptance `20r`
+
 ## 1.0.237+273 (2026-08-17) — Sosyal bölüm faz 7
 
 - **Yorumlar:** `#hashtag` / `@mention` bağlantılı metin; yazar avatar/isim → profil

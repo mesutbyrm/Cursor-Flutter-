@@ -162,6 +162,14 @@ class SocialNotifier extends AsyncNotifier<List<PostEntity>> {
     if (cur.any((p) => p.id == post.id)) return;
     state = AsyncValue.data([post, ...cur]);
   }
+
+  /// Gönderiyi akıştan kaldır (silme sonrası tam yenileme yerine).
+  void removePost(String postId) {
+    if (postId.isEmpty) return;
+    final cur = state.valueOrNull;
+    if (cur == null) return;
+    state = AsyncValue.data(cur.where((p) => p.id != postId).toList());
+  }
 }
 
 final socialNotifierProvider =

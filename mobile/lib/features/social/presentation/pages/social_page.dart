@@ -90,6 +90,7 @@ class _SocialPageState extends ConsumerState<SocialPage>
                 controller: _scroll,
                 onRefresh: _refresh,
                 bottomPadding: bottom,
+                onPostPublished: _scrollFeedToTop,
               ),
             ),
           ],

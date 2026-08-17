@@ -12,6 +12,7 @@ import '../../../../auth/domain/entities/user_entity.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../domain/entities/social_story_ring_entity.dart';
 import '../../utils/story_navigation.dart';
+import '../../utils/social_user_profile_route.dart';
 import '../../providers/social_providers.dart';
 import '../../widgets/story_create_sheet.dart';
 
@@ -181,7 +182,7 @@ class _StoryRingChip extends StatelessWidget {
             ring.stories.isNotEmpty) {
           openStoryViewer(context, ring);
         } else {
-          context.push('/user/${ring.user.id}');
+          context.push(buildSocialUserProfileRoute(ring.user.id));
         }
       },
       child: _RingAvatar(

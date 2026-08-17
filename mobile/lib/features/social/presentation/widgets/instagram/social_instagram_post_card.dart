@@ -16,6 +16,7 @@ import '../../../../feed/domain/entities/post_entity.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../utils/social_caption_link_parser.dart';
+import '../../utils/social_post_detail_route.dart';
 import '../../utils/social_user_profile_route.dart';
 import '../../providers/social_providers.dart';
 import 'social_post_caption.dart';
@@ -180,6 +181,7 @@ class _SocialInstagramPostCardState
                       _PostMediaBlock(
                         post: post,
                         onFortuneTap: () => _openFortune(context),
+                        onTap: () => _openPostDetail(context),
                       ),
                   ],
                 ),
@@ -277,7 +279,7 @@ class _SocialInstagramPostCardState
 
     try {
       await ref.read(socialRepositoryProvider).deletePost(post.id);
-      await ref.read(socialNotifierProvider.notifier).refresh();
+      ref.read(socialNotifierProvider.notifier).removePost(post.id);
       widget.onDeleted?.call();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -341,7 +343,7 @@ class _SocialInstagramPostCardState
 
   void _openPostDetail(BuildContext context) {
     if (post.id.isEmpty) return;
-    context.push('/social/post/${Uri.encodeComponent(post.id)}');
+    context.push(buildSocialPostDetailRoute(post.id));
   }
 
   void _openComments(BuildContext context) {
@@ -630,10 +632,12 @@ class _PostMediaBlock extends StatelessWidget {
   const _PostMediaBlock({
     required this.post,
     required this.onFortuneTap,
+    this.onTap,
   });
 
   final PostEntity post;
   final VoidCallback onFortuneTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -645,20 +649,24 @@ class _PostMediaBlock extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(top: 4),
-      child: isVideo
-          ? SocialPostVideoPlayer(
-              videoUrl: mediaUrl,
-              videoId: post.id,
-            )
-          : AspectRatio(
-              aspectRatio: 4 / 5,
-              child: CanlifalNetworkImage(
-                url: mediaUrl,
-                fit: BoxFit.cover,
-                placeholder: const _MysticMediaPlaceholder(),
-                errorWidget: const _MysticMediaPlaceholder(),
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: isVideo
+            ? SocialPostVideoPlayer(
+                videoUrl: mediaUrl,
+                videoId: post.id,
+              )
+            : AspectRatio(
+                aspectRatio: 4 / 5,
+                child: CanlifalNetworkImage(
+                  url: mediaUrl,
+                  fit: BoxFit.cover,
+                  placeholder: const _MysticMediaPlaceholder(),
+                  errorWidget: const _MysticMediaPlaceholder(),
+                ),
               ),
-            ),
+      ),
     );
   }
 }
