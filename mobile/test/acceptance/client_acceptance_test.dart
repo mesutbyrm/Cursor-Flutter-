@@ -525,6 +525,15 @@ void main() {
     });
   });
 
+  group('20s — Sosyal bölüm faz 9 publish akışı', () {
+    test('aktif oda gömülü başlık — canlı', () {
+      expect(
+        buildSocialActiveRoomsEmbeddedTitle(hasLive: true, hasVoice: false),
+        'Canlı yayınlar',
+      );
+    });
+  });
+
   group('20 — Uygulama performans testi', () {
     setUp(AppTheme.clearCacheForTest);
 

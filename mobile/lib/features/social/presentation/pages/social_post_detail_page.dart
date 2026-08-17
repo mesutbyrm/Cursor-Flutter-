@@ -7,6 +7,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/config/env.dart';
 import '../utils/social_caption_link_parser.dart';
+import '../utils/social_feed_refresh.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../providers/social_providers.dart';
 import '../widgets/instagram/social_instagram_post_card.dart';
@@ -86,28 +87,32 @@ class SocialPostDetailPage extends ConsumerWidget {
               ),
             );
           }
-          return ListView(
-            children: [
-              SocialInstagramPostCard(
-                post: post,
-                openProfileOnTap: true,
-                onDeleted: () {
-                  ref.invalidate(postDetailProvider(postId));
-                  if (context.mounted) context.pop();
-                },
-              ),
-              const SizedBox(height: 8),
-              ListTile(
-                leading: const Icon(Icons.mode_comment_outlined),
-                title: const Text('Yorumları gör'),
-                subtitle: Text('${post.commentsCount} yorum'),
-                onTap: () => SocialPostCommentsSheet.show(
-                  context,
-                  postId: postId,
-                  initialCount: post.commentsCount,
+          return RefreshIndicator(
+            onRefresh: () => refreshSocialPostDetail(ref, postId),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SocialInstagramPostCard(
+                  post: post,
+                  openProfileOnTap: true,
+                  onDeleted: () {
+                    ref.invalidate(postDetailProvider(postId));
+                    if (context.mounted) context.pop();
+                  },
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                ListTile(
+                  leading: const Icon(Icons.mode_comment_outlined),
+                  title: const Text('Yorumları gör'),
+                  subtitle: Text('${post.commentsCount} yorum'),
+                  onTap: () => SocialPostCommentsSheet.show(
+                    context,
+                    postId: postId,
+                    initialCount: post.commentsCount,
+                  ),
+                ),
+              ],
+            ),
           );
         },
       ),

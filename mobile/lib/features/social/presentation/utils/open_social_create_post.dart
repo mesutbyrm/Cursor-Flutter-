@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../providers/social_providers.dart';
 
 /// Instagram tarzı tam ekran paylaşım oluşturucu.
 Future<void> openSocialCreatePost(
@@ -24,7 +23,6 @@ Future<void> openSocialCreatePost(
   }
   final created = await context.push<bool>('/social/create', extra: initialCaption);
   if (created == true) {
-    await ref.read(socialNotifierProvider.notifier).refresh();
     onPublished?.call();
   }
 }

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.239+275 (2026-08-17) — Sosyal bölüm faz 9
+
+- **Paylaşım sonrası:** `prependPost` — tam akış yenilemesi yerine optimistik ekleme (composer + create)
+- **Çift yenileme düzeltmesi:** `openSocialCreatePost` artık gereksiz `refresh()` çağırmıyor
+- **Gönderi detayı:** Pull-to-refresh (`refreshSocialPostDetail`)
+- **Test:** `social_notifier_feed_ops_test` + client acceptance `20s`
+
 ## 1.0.238+274 (2026-08-17) — Sosyal bölüm faz 8
 
 - **Gönderi detayı:** `buildSocialPostDetailRoute` — medya dokunuşu ve kart aksiyonları ortak rota

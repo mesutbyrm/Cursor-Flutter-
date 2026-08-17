@@ -24,7 +24,7 @@ class SocialCreatePostNotifier extends AsyncNotifier<void> {
       final post =
           await ref.read(socialRepositoryProvider).createPost(input);
       state = const AsyncValue.data(null);
-      await ref.read(socialNotifierProvider.notifier).refresh();
+      ref.read(socialNotifierProvider.notifier).prependPost(post);
       return post;
     } catch (e, st) {
       state = AsyncValue.error(e, st);

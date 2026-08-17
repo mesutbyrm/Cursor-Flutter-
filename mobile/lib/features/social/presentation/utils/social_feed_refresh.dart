@@ -11,6 +11,14 @@ Future<void> refreshSocialFeedSection(WidgetRef ref) async {
   await ref.read(socialNotifierProvider.notifier).refresh();
 }
 
+/// Tek gönderi detayı pull-to-refresh.
+Future<void> refreshSocialPostDetail(WidgetRef ref, String postId) async {
+  final id = postId.trim();
+  if (id.isEmpty) return;
+  ref.invalidate(postDetailProvider(id));
+  await ref.read(postDetailProvider(id).future);
+}
+
 /// Akışta gömülü aktif oda şeridi başlığı.
 String buildSocialActiveRoomsEmbeddedTitle({
   required bool hasLive,
