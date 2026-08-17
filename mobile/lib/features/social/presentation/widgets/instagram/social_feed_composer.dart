@@ -14,6 +14,7 @@ import '../../../domain/entities/create_social_post_input.dart';
 import '../../providers/social_composer_providers.dart';
 import '../../providers/social_create_post_provider.dart';
 import '../social_mention_picker_sheet.dart';
+import '../../utils/social_post_location_helper.dart';
 
 /// Sosyal akış üstü — aynı sayfada paylaşım (metin, foto, video, duygu, #, @).
 class SocialFeedComposer extends ConsumerStatefulWidget {
@@ -33,6 +34,8 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
   String? _imagePath;
   String? _videoPath;
   String? _moodEmoji;
+  String? _locationLabel;
+  var _locationLoading = false;
 
   static const _moods = ['😊', '😍', '🔥', '✨', '😢', '🎉', '💜', '🙏'];
 
@@ -127,6 +130,29 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
     }
   }
 
+  Future<void> _addLocation() async {
+    if (_locationLoading) return;
+    setState(() => _locationLoading = true);
+    try {
+      final result = await pickSocialPostLocationLabel();
+      if (!mounted) return;
+      if (!result.ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.errorMessage ?? 'Konum alınamadı')),
+        );
+        return;
+      }
+      final label = result.label!;
+      setState(() => _locationLabel = label);
+      if (!_caption.text.contains('📍')) {
+        _insertText('${formatSocialPostLocationSnippet(label)} ');
+      }
+      _expand();
+    } finally {
+      if (mounted) setState(() => _locationLoading = false);
+    }
+  }
+
   Future<void> _submit() async {
     final me = ref.read(authControllerProvider).valueOrNull;
     if (me == null) {
@@ -157,6 +183,7 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
         _imagePath = null;
         _videoPath = null;
         _moodEmoji = null;
+        _locationLabel = null;
         _expanded = false;
       });
       _focus.unfocus();
@@ -291,6 +318,18 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                   ),
                 ),
               ),
+            if (_locationLabel != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Chip(
+                    avatar: const Icon(Icons.location_on_rounded, size: 16),
+                    label: Text(_locationLabel!),
+                    onDeleted: () => setState(() => _locationLabel = null),
+                  ),
+                ),
+              ),
             if (_imagePath != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
@@ -355,6 +394,18 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                     onPressed: _pickMention,
                     icon: const Icon(Icons.alternate_email_rounded, size: 22),
                     color: AppThemeColors.accentCyan,
+                  ),
+                  IconButton(
+                    tooltip: 'Konum',
+                    onPressed: _locationLoading ? null : _addLocation,
+                    icon: _locationLoading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.location_on_outlined, size: 22),
+                    color: AppThemeColors.onlineGreen,
                   ),
                   const Spacer(),
                   FilledButton(

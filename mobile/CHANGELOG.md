@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.233+269 (2026-08-17) — Sosyal bölüm faz 3
+
+- **Keşif kısayolları:** Ünlüler, Fan Club, Canlı ve Sesli odalar chip satırı (`SocialDiscoverShortcuts`)
+- **Konum paylaşımı:** Ortak `pickSocialPostLocationLabel` helper — tam ekran create + inline composer
+- **Gönderi oluşturma:** Başarılı paylaşımdan sonra akış `socialNotifierProvider.refresh()` ile yenilenir
+- **Test:** `social_post_location_helper_test` + client acceptance `20m`
+- **API:** `scripts/acceptance-tests/api-social-phase.sh` — gönderi listesi / yorum / beğeni doğrulaması
+
 ## 1.0.232+268 (2026-08-16) — Sosyal bölüm faz 2
 
 - **Akış düzeni:** Aktif oda yokken boş oda şeridi slotları kaldırıldı (`includeRoomStrips`)

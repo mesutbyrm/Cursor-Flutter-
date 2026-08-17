@@ -4,16 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../search/domain/entities/search_user_entity.dart';
-import '../../../shorts/presentation/utils/reverse_geocode_helper.dart';
 import '../../domain/entities/create_social_post_input.dart';
 import '../providers/social_create_post_provider.dart';
+import '../utils/social_post_location_helper.dart';
 import '../widgets/social_mention_picker_sheet.dart';
 
 /// Instagram tarzı yeni gönderi — görsel/video önizleme + açıklama + Paylaş.
@@ -130,38 +129,19 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
     if (_locationLoading) return;
     setState(() => _locationLoading = true);
     try {
-      final service = await Geolocator.isLocationServiceEnabled();
-      if (!service) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Konum servisi kapalı')),
-        );
-        return;
-      }
-      var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
-      }
-      if (perm == LocationPermission.denied ||
-          perm == LocationPermission.deniedForever) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Konum izni gerekli')),
-        );
-        return;
-      }
-      final pos = await Geolocator.getCurrentPosition();
-      final label = await reverseGeocodeLabel(pos.latitude, pos.longitude);
+      final result = await pickSocialPostLocationLabel();
       if (!mounted) return;
+      if (!result.ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.errorMessage ?? 'Konum alınamadı')),
+        );
+        return;
+      }
+      final label = result.label!;
       setState(() => _locationLabel = label);
       if (!_caption.text.contains('📍')) {
-        _insertText('📍 $label ');
+        _insertText('${formatSocialPostLocationSnippet(label)} ');
       }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Konum alınamadı: $e')),
-      );
     } finally {
       if (mounted) setState(() => _locationLoading = false);
     }

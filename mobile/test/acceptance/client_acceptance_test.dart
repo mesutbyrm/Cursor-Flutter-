@@ -6,6 +6,7 @@ import 'package:canlifal_social/core/storage/theme_preferences.dart';
 import 'package:canlifal_social/core/theme/app_theme.dart';
 import 'package:canlifal_social/features/membership/domain/membership_model.dart';
 import 'package:canlifal_social/features/profile/presentation/premium_2026/profile_membership_helpers.dart';
+import 'package:canlifal_social/features/social/presentation/utils/social_post_location_helper.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import 'package:canlifal_social/features/voice_hub/domain/voice_music_sync.dart';
 
@@ -442,6 +443,22 @@ void main() {
         ),
         contains('Üyelik:'),
       );
+    });
+  });
+
+  group('20m — Sosyal bölüm faz 3 helper sözleşmesi', () {
+    test('konum snippet pin emoji', () {
+      expect(
+        formatSocialPostLocationSnippet('İstanbul'),
+        '📍 İstanbul',
+      );
+    });
+
+    test('konum sonucu ok bayrağı', () {
+      const ok = SocialPostLocationResult(label: 'Ankara');
+      const fail = SocialPostLocationResult(errorMessage: 'izin yok');
+      expect(ok.ok, isTrue);
+      expect(fail.ok, isFalse);
     });
   });
 
