@@ -8,6 +8,7 @@ import 'package:canlifal_social/features/membership/domain/membership_model.dart
 import 'package:canlifal_social/features/profile/presentation/premium_2026/profile_membership_helpers.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_post_location_helper.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_discover_shortcut_labels.dart';
+import 'package:canlifal_social/features/social/presentation/utils/social_feed_refresh.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import 'package:canlifal_social/features/voice_hub/domain/voice_music_sync.dart';
 
@@ -473,6 +474,22 @@ void main() {
     test('keşif kısayolu rotaları', () {
       expect(socialDiscoverShortcutRoutes, contains('/live'));
       expect(socialDiscoverShortcutRoutes, contains('/fan-club-hub'));
+    });
+  });
+
+  group('20o — Sosyal bölüm faz 5 helper sözleşmesi', () {
+    test('gömülü oda şeridi başlığı canlı + sesli', () {
+      expect(
+        buildSocialActiveRoomsEmbeddedTitle(hasLive: true, hasVoice: true),
+        'Canlı yayın ve sesli odalar',
+      );
+    });
+
+    test('gömülü oda şeridi başlığı yalnızca canlı', () {
+      expect(
+        buildSocialActiveRoomsEmbeddedTitle(hasLive: true, hasVoice: false),
+        'Canlı yayınlar',
+      );
     });
   });
 

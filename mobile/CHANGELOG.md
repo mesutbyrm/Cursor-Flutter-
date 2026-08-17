@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.235+271 (2026-08-17) — Sosyal bölüm faz 5
+
+- **Pull-to-refresh:** `refreshSocialFeedSection` — akış + hikâyeler + canlı/sesli odalar birlikte yenilenir
+- **Paylaşım sonrası:** Inline composer başarıda akış üste kayar (`onPostPublished`)
+- **Aktif odalar:** Gömülü şerit başlığı canlı/sesli durumuna göre dinamik
+- **CI:** `api-social-phase.sh` stage3 acceptance'a eklendi
+- **Test:** `social_feed_refresh_test` + `socialActiveRoomsAvailable` pozitif senaryolar + client `20o`
+
 ## 1.0.234+270 (2026-08-17) — Sosyal bölüm faz 4
 
 - **Video önizleme:** `SocialLocalVideoPreview` — yerel video için thumbnail + play overlay (composer + create)

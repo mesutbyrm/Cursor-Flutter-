@@ -14,6 +14,7 @@ import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
 import '../../../../live/presentation/utils/open_live_stream.dart';
 import '../../../../voice_hub/presentation/utils/navigate_to_voice_room.dart';
+import '../../utils/social_feed_refresh.dart';
 
 /// «Aktif Odalar» — canlı yayın ve ses odaları yatay şeridi.
 class SocialActiveRooms extends ConsumerWidget {
@@ -28,6 +29,12 @@ class SocialActiveRooms extends ConsumerWidget {
     final rooms = ref.watch(voiceRoomsProvider);
 
     final chips = _buildChips(live.valueOrNull, rooms.valueOrNull);
+    final hasLive = chips.any((c) => c.kind == _ActiveRoomKind.live);
+    final hasVoice = chips.any((c) => c.kind == _ActiveRoomKind.voice);
+    final embeddedTitle = buildSocialActiveRoomsEmbeddedTitle(
+      hasLive: hasLive,
+      hasVoice: hasVoice,
+    );
     if (chips.isEmpty && live.isLoading) {
       return SizedBox(
         height: 140,
@@ -71,7 +78,7 @@ class SocialActiveRooms extends ConsumerWidget {
                   ),
                   SizedBox(width: 8),
                   Text(
-                    'Sesli sohbet odaları',
+                    embeddedTitle,
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 14,

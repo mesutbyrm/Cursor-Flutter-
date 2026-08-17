@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/social_providers.dart';
+import '../utils/social_feed_refresh.dart';
 import '../widgets/instagram/social_stories_rail.dart';
 import '../widgets/instagram/social_instagram_app_bar.dart';
 import '../widgets/instagram/social_feed_composer.dart';
@@ -41,7 +42,7 @@ class _SocialPageState extends ConsumerState<SocialPage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      unawaited(ref.read(socialNotifierProvider.notifier).refresh());
+      unawaited(refreshSocialFeedSection(ref));
     }
   }
 
@@ -53,8 +54,17 @@ class _SocialPageState extends ConsumerState<SocialPage>
     }
   }
 
-  Future<void> _refresh() async {
-    await ref.read(socialNotifierProvider.notifier).refresh();
+  Future<void> _refresh() => refreshSocialFeedSection(ref);
+
+  void _scrollFeedToTop() {
+    if (!_scroll.hasClients) return;
+    unawaited(
+      _scroll.animateTo(
+        0,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOut,
+      ),
+    );
   }
 
   @override
@@ -70,7 +80,9 @@ class _SocialPageState extends ConsumerState<SocialPage>
             const RepaintBoundary(child: SocialInstagramAppBar()),
             const RepaintBoundary(child: SocialStoriesRail()),
             const RepaintBoundary(child: SocialDiscoverShortcuts()),
-            const RepaintBoundary(child: SocialFeedComposer()),
+            RepaintBoundary(
+              child: SocialFeedComposer(onPostPublished: _scrollFeedToTop),
+            ),
             Expanded(
               child: SocialFeedScrollView(
                 controller: _scroll,

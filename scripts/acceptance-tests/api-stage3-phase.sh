@@ -276,6 +276,16 @@ stage_music() {
   record "MUSIC" "Playback audio" SKIP "fiziksel cihaz + jeton gerekli"
 }
 
+# --- SOCIAL ---
+stage_social() {
+  echo "--- SOCIAL ---"
+  if bash "$SCRIPT_DIR/api-social-phase.sh" >/tmp/stage3-social.log 2>&1; then
+    record "SOCIAL" "Posts + comments + like" PASS "api-social-phase OK"
+  else
+    record "SOCIAL" "Posts + comments + like" FAIL "api-social-phase başarısız"
+  fi
+}
+
 # --- LIVE ---
 stage_live() {
   echo "--- LIVE ---"
@@ -363,6 +373,7 @@ stage_sse
 stage_chat
 stage_gift
 stage_music
+stage_social
 stage_live
 stage_pk
 stage_live_falci

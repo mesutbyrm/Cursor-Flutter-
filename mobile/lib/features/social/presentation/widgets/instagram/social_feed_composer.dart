@@ -19,7 +19,10 @@ import '../../utils/social_post_location_helper.dart';
 
 /// Sosyal akış üstü — aynı sayfada paylaşım (metin, foto, video, duygu, #, @).
 class SocialFeedComposer extends ConsumerStatefulWidget {
-  const SocialFeedComposer({super.key});
+  const SocialFeedComposer({super.key, this.onPostPublished});
+
+  /// Başarılı inline paylaşımdan sonra (ör. akışı üste kaydır).
+  final VoidCallback? onPostPublished;
 
   @override
   ConsumerState<SocialFeedComposer> createState() => _SocialFeedComposerState();
@@ -188,6 +191,7 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
         _expanded = false;
       });
       _focus.unfocus();
+      widget.onPostPublished?.call();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Paylaşım yayınlandı')),
       );

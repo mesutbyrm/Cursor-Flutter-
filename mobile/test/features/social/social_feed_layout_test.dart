@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:canlifal_social/features/live/domain/entities/live_stream_entity.dart';
+import 'package:canlifal_social/features/live/domain/entities/voice_room_entity.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_feed_layout.dart';
 
 void main() {
@@ -27,6 +29,34 @@ void main() {
     test('false when no live streams or voice rooms', () {
       expect(socialActiveRoomsAvailable(streams: const [], rooms: const []),
           isFalse);
+    });
+
+    test('true when live stream is active', () {
+      expect(
+        socialActiveRoomsAvailable(
+          streams: [
+            LiveStreamEntity(
+              id: 's1',
+              title: 'Test',
+              isLive: true,
+            ),
+          ],
+          rooms: const [],
+        ),
+        isTrue,
+      );
+    });
+
+    test('true when voice rooms exist', () {
+      expect(
+        socialActiveRoomsAvailable(
+          streams: const [],
+          rooms: const [
+            VoiceRoomEntity(id: 'r1', slug: 'oda', nameTr: 'Oda'),
+          ],
+        ),
+        isTrue,
+      );
     });
   });
 }
