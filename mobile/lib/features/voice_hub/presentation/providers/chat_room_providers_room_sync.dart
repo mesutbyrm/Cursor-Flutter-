@@ -435,16 +435,13 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     }
     if (seatByUser.isEmpty) return presence;
 
-    final selfId = ref.read(authControllerProvider).valueOrNull?.id;
     var changed = false;
     final next = <ChatRoomPresence>[];
     for (final p in presence) {
       final fromSlot = seatByUser[p.id];
       if (fromSlot == null) {
-        // Kendi koltuğunu geçici boş yanıtta koru (yetki/internet dışı düşme yok).
-        if (selfId != null &&
-            p.id == selfId &&
-            p.seatIndex != null &&
+        // Geçici boş koltuk yanıtında mevcut koltuk korunur (kendi + diğerleri).
+        if (p.seatIndex != null &&
             slots.any((s) => (s.userId?.trim().isNotEmpty ?? false))) {
           next.add(p);
           continue;

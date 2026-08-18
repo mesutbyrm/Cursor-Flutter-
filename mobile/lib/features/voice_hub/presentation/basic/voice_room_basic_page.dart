@@ -354,6 +354,44 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     }
   }
 
+  Future<void> _maybeAutoOpenMic() async {
+    if (_audio == null || !_audioReady || !_isMicMuted) return;
+    if (!ref.read(voiceRoomUiProvider).autoOpenMic) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+    final room = _effectiveRoom();
+    ChatRoomPresence? selfPresence;
+    for (final p in live.presence) {
+      if (p.id == user?.id) {
+        selfPresence = p;
+        break;
+      }
+    }
+    final perms = VoiceRoomPermissions.forUser(
+      user: user,
+      room: room,
+      selfPresence: selfPresence,
+      server: live.serverPermissions,
+      staffSiteAdmin: ref.read(staffAccessProvider).isFounder,
+      walletRole: ref.read(staffAccessProvider).siteRole ??
+          ref.read(walletBalancesProvider).valueOrNull?.role,
+    );
+    if (!VoiceRoomSpeakAccess.canSpeak(
+      user: user,
+      perms: perms,
+      room: room,
+      presence: live.presence,
+    )) {
+      return;
+    }
+    final micOk = await VoiceTrtcEngine.requestMicrophonePermission();
+    if (!micOk || !mounted) return;
+    try {
+      await _audio!.setMicEnabled(true);
+      if (mounted) setState(() => _isMicMuted = false);
+    } catch (_) {}
+  }
+
   void _onChatChanged(String text) {
     ref
         .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
@@ -740,8 +778,16 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           if (!canSpeak && !_isMicMuted) {
             _audio?.setMicEnabled(false);
             if (mounted) setState(() => _isMicMuted = true);
+          } else if (canSpeak) {
+            unawaited(_maybeAutoOpenMic());
           }
         }
+      }
+    });
+
+    ref.listen(voiceRoomUiProvider, (prev, next) {
+      if (prev?.autoOpenMic != next.autoOpenMic && next.autoOpenMic) {
+        unawaited(_maybeAutoOpenMic());
       }
     });
 

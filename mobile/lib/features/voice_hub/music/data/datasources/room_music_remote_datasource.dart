@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../../core/network/api_endpoints.dart';
 import '../../../../../core/network/api_exception.dart';
@@ -139,6 +140,18 @@ class RoomMusicRemoteDataSource {
     return _parseQueueResponse(res.data);
   }
 
+  @visibleForTesting
+  ({
+    MusicQueueItem? item,
+    List<MusicQueueItem> queue,
+    int? queuePosition,
+    String? streamUrl,
+    bool playing,
+    int? newBalance,
+  })
+  parseQueueResponseForTest(Map<String, dynamic> data) =>
+      _parseQueueResponse(data);
+
   ({
     MusicQueueItem? item,
     List<MusicQueueItem> queue,
@@ -169,11 +182,28 @@ class RoomMusicRemoteDataSource {
       item: item,
       queue: queue,
       queuePosition: _parseOptionalInt(map['queuePosition']),
-      streamUrl: pick(map, ['musicUrl', 'streamUrl', 'audioUrl', 'url'])?.toString(),
-      playing: map['playing'] == true,
+      streamUrl: _extractStreamUrl(map),
+      playing: map['playing'] == true || map['isPlaying'] == true,
       newBalance: _parseOptionalInt(map['newBalance']) ??
           _parseOptionalInt(map['coinBalance']),
     );
+  }
+
+  String? _extractStreamUrl(Map<String, dynamic> map) {
+    final direct = pick(map, ['musicUrl', 'streamUrl', 'audioUrl', 'url'])
+        ?.toString()
+        .trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+    for (final key in const ['nowPlaying', 'item', 'currentSong', 'song']) {
+      final node = map[key];
+      if (node is! Map) continue;
+      final nested = pick(
+        Map<String, dynamic>.from(node),
+        ['musicUrl', 'streamUrl', 'audioUrl', 'url'],
+      )?.toString().trim();
+      if (nested != null && nested.isNotEmpty) return nested;
+    }
+    return null;
   }
 
   int? _parseOptionalInt(dynamic raw) {

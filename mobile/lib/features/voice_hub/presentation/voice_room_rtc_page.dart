@@ -386,6 +386,29 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
   }
 
+  Future<void> _maybeAutoOpenMic() async {
+    if (_audio == null || !_audioReady || !_isMicMuted) return;
+    if (!ref.read(voiceRoomUiProvider).autoOpenMic) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+    final room = _effectiveRoom();
+    final perms = _perms(user, live.presence, server: live.serverPermissions);
+    if (!VoiceRoomSpeakAccess.canSpeak(
+      user: user,
+      perms: perms,
+      room: room,
+      presence: live.presence,
+    )) {
+      return;
+    }
+    final micOk = await VoiceTrtcEngine.requestMicrophonePermission();
+    if (!micOk || !mounted) return;
+    try {
+      await _audio!.setMicEnabled(true);
+      if (mounted) setState(() => _isMicMuted = false);
+    } catch (_) {}
+  }
+
   void _onChatChanged(String text) {
     ref
         .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
@@ -888,6 +911,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       if (!context.mounted) return;
       if (err != null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      } else {
+        unawaited(_maybeAutoOpenMic());
       }
       return;
     }
@@ -1349,13 +1374,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             _audio?.setMicEnabled(false);
             if (mounted) setState(() => _isMicMuted = true);
           } else if (canSpeak) {
-            // Mikrofon varsayılan kapalı — kullanıcı butona basmadan açılmaz.
+            unawaited(_maybeAutoOpenMic());
           }
         }
       }
     });
 
     ref.listen(voiceRoomUiProvider, (prev, next) {
+      if (prev?.autoOpenMic != next.autoOpenMic && next.autoOpenMic) {
+        unawaited(_maybeAutoOpenMic());
+      }
       if (prev?.backgroundMusicEnabled != next.backgroundMusicEnabled) {
         unawaited(
           ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).refresh(includeDj: true),

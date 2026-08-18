@@ -1914,9 +1914,6 @@ class VoiceRoomLiveController
           return 'Yetersiz jeton. Gerekli: $cost';
         }
       }
-      if (withVideo) {
-        ref.read(voiceRoomMusicSessionProvider.notifier).onMusicStartedFromServer();
-      }
       final result = await ref.read(enqueueSongUseCaseProvider)(
             roomId: _roomKey,
             alternateRoomId: _musicAlternateKey,
@@ -1938,21 +1935,12 @@ class VoiceRoomLiveController
         queue = queue
             .map((e) => e.id == nowPlaying!.id ? nowPlaying : e)
             .toList();
-      } else {
-        nowPlaying = nowPlaying?.asAudioRequest();
+      } else if (nowPlaying != null) {
+        nowPlaying = nowPlaying.asAudioRequest();
         queue = queue.map((e) => e.asAudioRequest()).toList();
       }
       final queuePosition = result.queuePosition ?? 0;
-      final songActive = _roomKey.isNotEmpty
-          ? ref.read(roomSongBlocProvider(_roomKey)).state.hasTrack
-          : false;
-      final playerActive =
-          ref.read(roomMusicServiceProvider).player.playback.value.playing;
-      final videoActive = _roomKey.isNotEmpty &&
-          ref.read(roomVideoControllerProvider(_roomKey)).hasActiveVideo;
-      final currentlyPlaying = (state.dj.playing && playerActive) ||
-          songActive ||
-          videoActive;
+      final currentlyPlaying = _isLocalMusicOutputActive();
       final isQueuedOnly = currentlyPlaying;
       final shouldPlay = !currentlyPlaying &&
           (result.playing || queuePosition <= 1);
@@ -1967,12 +1955,12 @@ class VoiceRoomLiveController
       if (!isQueuedOnly) {
         dj = _djWithQueuePlaybackFallback(dj);
       }
-      _lastDjPlaybackSignature = '';
-      state = state.copyWith(dj: dj, sending: false);
-      if (shouldPlay && !isQueuedOnly) {
-        unawaited(_playDjInBackground(dj));
-      }
-      unawaited(_syncMusicFromServerIfNeeded(force: true));
+      state = state.copyWith(sending: false);
+      _applyMusicRequestUi(
+        dj: dj,
+        shouldPlay: shouldPlay && !isQueuedOnly,
+        withVideo: withVideo,
+      );
       _showMusicRequestFlashLine('✅ «${hit.title}» kuyruğa eklendi');
       return null;
     } catch (e) {
@@ -2893,8 +2881,13 @@ class VoiceRoomLiveController
         clearMusicUrl:
             result.musicUrl == null && nowPlaying?.id != state.dj.nowPlaying?.id,
       );
-      state = state.copyWith(dj: dj, clearError: true);
-      _syncRoomVideo(dj);
+      dj = _djWithQueuePlaybackFallback(dj);
+      state = state.copyWith(clearError: true);
+      _applyMusicRequestUi(
+        dj: dj,
+        shouldPlay: shouldPlay,
+        withVideo: nowPlaying?.isVideoRequest == true,
+      );
       pulseMusicRequestFlash('«$q» isteği gönderildi');
       return null;
     } catch (e) {
@@ -3103,8 +3096,11 @@ class VoiceRoomLiveController
         );
       }
       dj = _djWithQueuePlaybackFallback(dj);
-      _commitDjUi(dj);
-      unawaited(_playDjInBackground(dj));
+      _applyMusicRequestUi(
+        dj: dj,
+        shouldPlay: shouldPlay,
+        withVideo: withVideo,
+      );
       if (!shouldPlay) {
         unawaited(_syncMusicFromServerIfNeeded());
       }

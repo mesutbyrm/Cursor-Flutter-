@@ -8,6 +8,89 @@ part of 'chat_room_providers.dart';
 /// `part` olduğundan aynı kütüphanededir: private alan/metotlara erişir ve
 /// davranış birebir korunur (yalnızca fiziksel konum değişti).
 extension VoiceRoomMusicControls on VoiceRoomLiveController {
+  bool _isLocalMusicOutputActive() {
+    if (_roomKey.isEmpty) return false;
+    final playerActive =
+        ref.read(roomMusicServiceProvider).player.playback.value.playing;
+    final videoActive =
+        ref.read(roomVideoControllerProvider(_roomKey)).hasActiveVideo;
+    return playerActive || videoActive;
+  }
+
+  Future<String?> _resolvePlaybackStreamUrl({
+    required String videoId,
+    String? serverUrl,
+  }) async {
+    final fields = SongPlaybackFields.parseQuiet({
+      'musicUrl': serverUrl,
+      'videoId': videoId,
+    });
+    final direct = fields.resolvedAudioStreamUrl;
+    if (direct != null && direct.isNotEmpty) return direct;
+    final vid = videoId.trim();
+    if (vid.isEmpty || _roomKey.isEmpty) return null;
+    try {
+      return await ref
+          .read(resolveStreamUseCaseProvider)(
+            roomId: _roomKey,
+            videoId: vid,
+          )
+          .timeout(const Duration(seconds: 12));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _applyMusicRequestUi({
+    required ChatRoomDjState dj,
+    required bool shouldPlay,
+    bool withVideo = false,
+  }) {
+    ref.read(voiceRoomMusicSessionProvider.notifier).onMusicStartedFromServer();
+    ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
+    ref.read(voiceRoomUiProvider.notifier).ensureMusicAudible();
+    _lastDjPlaybackSignature = '';
+    _commitDjUi(dj);
+    if (!shouldPlay) return;
+    if (withVideo || dj.nowPlaying?.isVideoRequest == true) {
+      _syncRoomVideo(dj);
+    }
+    unawaited(_startDjPlaybackNonBlocking(dj, preferVideo: withVideo));
+  }
+
+  Future<void> _startDjPlaybackNonBlocking(
+    ChatRoomDjState dj, {
+    bool preferVideo = false,
+  }) async {
+    await Future<void>.delayed(Duration.zero);
+    if (!_sessionActive || _roomKey.isEmpty) return;
+
+    var playable = dj;
+    if (preferVideo || playable.nowPlaying?.isVideoRequest == true) {
+      _syncRoomVideo(playable);
+    }
+
+    final vid = playable.nowPlaying?.resolvedVideoId ?? '';
+    final needsResolve = SongPlaybackFields.parseQuiet({
+      'musicUrl': playable.musicUrl,
+      'videoId': vid,
+    }).resolvedAudioStreamUrl ==
+        null;
+    if (needsResolve && vid.isNotEmpty) {
+      final resolved = await _resolvePlaybackStreamUrl(
+        videoId: vid,
+        serverUrl: playable.musicUrl,
+      );
+      if (resolved != null && resolved.isNotEmpty) {
+        playable = playable.copyWith(musicUrl: resolved, playing: true);
+        _commitDjUi(playable);
+      }
+    }
+
+    if (!_sessionActive) return;
+    unawaited(_playDjInBackground(playable));
+  }
+
   /// Hoparlör aç/kapa — müzik çıkışını anında kes veya (kullanıcı isterse) sürdür.
   Future<void> applyAudioOutputGate({required bool speakerOn}) async {
     if (!speakerOn) {

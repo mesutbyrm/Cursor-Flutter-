@@ -105,6 +105,15 @@ class VoiceRoomUiNotifier extends Notifier<VoiceRoomUiState> {
 
   void toggleAutoOpenMic() =>
       state = state.copyWith(autoOpenMic: !state.autoOpenMic);
+
+  /// Şarkı isteği / sunucu çalma — hoparlör ve müzik çıkışını aç.
+  void ensureMusicAudible() {
+    if (state.headphonesOn && state.backgroundMusicEnabled) return;
+    state = state.copyWith(
+      headphonesOn: true,
+      backgroundMusicEnabled: true,
+    );
+  }
 }
 
 final voiceRoomUiProvider =
