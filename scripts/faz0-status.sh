@@ -78,5 +78,5 @@ else
 fi
 echo ""
 echo "══ AGENT DURUMU ══"
-echo "Otomatik kod/test işi TAMAM. Jeton eklenene kadar agent bekliyor."
-echo "Kullanıcı: docs/M5_M7_JETON_BLOCKER.md (1. adım: ≥50 jeton)"
+echo "FAZ0 kod/test ✅ | A6–A8 ✅ | FAZ1–2 hazırlık devam"
+echo "Manuel bloker: jeton ≥10 + M5 cihaz → docs/M5_M7_JETON_BLOCKER.md"

@@ -82,6 +82,15 @@
 
 ---
 
+## FAZ 2 — Profile (hazırlık)
+
+| # | İş | Durum |
+|---|-----|--------|
+| F2.1 | UserRepository parity tablosu | `[x]` | `docs/FAZ2_PROFILE_PARITY.md` |
+| F2.2 | Skeleton + API birleştirme | `[ ]` | FAZ 1 sonrası |
+
+---
+
 ## FAZ 2–13 (bloke)
 
 FAZ 0 **PASS** (M5) olmadan resmi faz geçişi yok. Sıra: `docs/PHASE_PLAN.md`.
@@ -116,6 +125,7 @@ FAZ 0 **PASS** (M5) olmadan resmi faz geçişi yok. Sıra: `docs/PHASE_PLAN.md`.
 - `defaults.sh`: boş `ACCEPTANCE_*` env → varsayılan hesap (GitHub Actions "")
 - `LATEST_APK_BUILD.md` senkron: 1.0.266+302 (run 32196400775)
 - A6–A8 audit kapanış; FAZ1 error envelope + ApiException testleri
+- FAZ2 profile parity özeti (`FAZ2_PROFILE_PARITY.md`)
 - **Bloker:** Jeton ≥10 (credits yeterli değil) → M7/M5 → A9
 
 ---
