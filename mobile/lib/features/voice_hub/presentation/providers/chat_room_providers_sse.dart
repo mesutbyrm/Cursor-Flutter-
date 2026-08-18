@@ -60,6 +60,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             );
           },
           onDjUpdate: (payload) {
+            if (_sse._skipRemoteMusicSync) return;
             if (payload.isNotEmpty) {
               if (VoiceRoomBasicMode.musicEnabled) {
                 _sse._applyRoomVideoPayload(payload);
@@ -70,12 +71,14 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             }
           },
           onSong: (payload) {
+            if (_sse._skipRemoteMusicSync) return;
             if (VoiceRoomBasicMode.musicEnabled) {
               _sse._applyRoomVideoPayload(payload);
             }
             unawaited(_sse._applyDjRealtimePayload(payload));
           },
           onSongQueue: (payload) {
+            if (_sse._skipRemoteMusicSync) return;
             final ev = RoomSongBloc.eventFromSse(payload);
             if (ev != null) {
               ref.read(roomSongBlocProvider(roomKey)).add(ev);

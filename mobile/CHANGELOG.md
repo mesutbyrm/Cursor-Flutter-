@@ -1,5 +1,20 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.256+292 (2026-08-18) — Müzik ANR kök düzeltme (grace + IFrame ses)
+
+- **Kök neden:** API beklerken SSE/refresh çift oynatma; `youtube_explode` ana thread'i kilitliyordu
+- **Erken grace (12 sn):** `!istek` / müzik isteği başında SSE ve sunucu sync atlanır
+- **Oynatma:** Doğrudan `musicUrl` → `just_audio`; yoksa gizli YouTube IFrame ses (explode yok)
+- **Video isteği:** Yalnızca IFrame video; çift ses yolu kaldırıldı
+
+## 1.0.255+291 (2026-08-18) — Müzik isteği ANR koordinatörü
+
+- **ANR kök neden:** Eşzamanlı `_playDjInBackground` çağrıları sıraya alındı; son istek birleştirilir
+- **SSE grace:** Yerel `!istek` sonrası 5 sn SSE oynatma/sync atlanır (çift tetikleme yok)
+- **Çift oynatma:** `applyAudioOutputGate` + istek yolu aynı anda çalmıyor
+- **Sunucu stream:** `musicUrl` hazırsa gereksiz YouTube resolve atlanır
+- **RoomSongJoinSync:** 350ms debounce ile spam azaltıldı
+
 ## 1.0.254+290 (2026-08-18) — !istek ANR + müzik çalma düzeltmesi
 
 - **!istek donma (ANR):** Çift `refresh`/`_syncMusicFromServer` fırtınası engellendi; istek non-blocking

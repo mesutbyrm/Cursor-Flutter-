@@ -62,33 +62,13 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
     await Future<void>.delayed(Duration.zero);
     if (!_sessionActive || _roomKey.isEmpty) return;
 
-    var playable = dj;
-    final isVideo = preferVideo || playable.nowPlaying?.isVideoRequest == true;
+    final isVideo = preferVideo || dj.nowPlaying?.isVideoRequest == true;
     if (isVideo) {
-      _syncRoomVideo(playable);
-    }
-
-    if (!isVideo) {
-      final vid = playable.nowPlaying?.resolvedVideoId ?? '';
-      final fields = SongPlaybackFields.parseQuiet({
-        'musicUrl': playable.musicUrl,
-        'videoId': vid,
-      });
-      final hasDirectStream = fields.resolvedAudioStreamUrl != null;
-      if (!hasDirectStream && vid.isNotEmpty) {
-        final resolved = await _resolvePlaybackStreamUrl(
-          videoId: vid,
-          serverUrl: playable.musicUrl,
-        );
-        if (resolved != null && resolved.isNotEmpty) {
-          playable = playable.copyWith(musicUrl: resolved, playing: true);
-          _commitDjUi(playable);
-        }
-      }
+      _syncRoomVideo(dj);
     }
 
     if (!_sessionActive) return;
-    return _playDjInBackground(playable);
+    unawaited(_playDjInBackground(dj));
   }
 
   /// Hoparlör aç/kapa — müzik çıkışını anında kes veya (kullanıcı isterse) sürdür.

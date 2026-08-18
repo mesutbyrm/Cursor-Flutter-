@@ -1632,7 +1632,9 @@ class VoiceRoomLiveController
         selfInRoom: state.selfInRoom || presence.isNotEmpty,
       );
       if (playDjInBackground) {
-        unawaited(_playDjInBackground(dj));
+        if (!_skipRemoteMusicSync) {
+          unawaited(_playDjInBackground(dj));
+        }
       }
       unawaited(_tryAutoPrivilegedSeat());
     } catch (e) {
@@ -1818,13 +1820,16 @@ class VoiceRoomLiveController
 
   void _markLocalMusicRequestGrace() {
     _localMusicRequestGraceUntil =
-        DateTime.now().add(const Duration(seconds: 5));
+        DateTime.now().add(const Duration(seconds: 12));
   }
 
   bool _inLocalMusicRequestGrace() {
     final until = _localMusicRequestGraceUntil;
     return until != null && DateTime.now().isBefore(until);
   }
+
+  /// Yerel istek sırasında SSE/refresh müzik yükünü atla (API beklerken ANR önleme).
+  bool get _skipRemoteMusicSync => _inLocalMusicRequestGrace();
 
   void _commitDjUi(ChatRoomDjState dj) {
     final wasMusicActive =
@@ -1928,6 +1933,7 @@ class VoiceRoomLiveController
     bool withVideo = false,
     bool skipPayment = false,
   }) async {
+    _markLocalMusicRequestGrace();
     state = state.copyWith(sending: true, clearPendingMusicSearch: true);
     try {
       final videoId = hit.videoId.trim();
@@ -2293,6 +2299,7 @@ class VoiceRoomLiveController
       VoiceRoomDebugLog.log('music.istek.search', {'song': song ?? '', 'room': _roomKey});
       ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
       if (song != null && song.isNotEmpty) {
+        _markLocalMusicRequestGrace();
         unawaited(
           Future<void>.microtask(() async {
             final err = await requestMusicByQuery(song);
@@ -2886,6 +2893,7 @@ class VoiceRoomLiveController
   Future<String?> requestMusicByQuery(String query) async {
     final q = query.trim();
     if (q.length < 2) return 'Şarkı adı çok kısa.';
+    _markLocalMusicRequestGrace();
     try {
       final jeton = VoiceMusicAccess.jetonFromBalances(
         ref.read(walletBalancesProvider).valueOrNull,
@@ -3014,6 +3022,7 @@ class VoiceRoomLiveController
     bool djMusicControl = false,
     bool withVideo = false,
   }) async {
+    _markLocalMusicRequestGrace();
     try {
       var resolvedUrl = youtubeUrl.trim();
       var resolvedThumb = thumbUrl;

@@ -166,7 +166,7 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
     if (blocEv != null && key.isNotEmpty) {
       ref.read(roomSongBlocProvider(key)).add(blocEv);
     }
-    if (_live._inLocalMusicRequestGrace()) {
+    if (_live._skipRemoteMusicSync) {
       return;
     }
     final sync = RoomPlaybackSync.fromPayload(map);
@@ -261,20 +261,32 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
         fields.resolvedAudioStreamUrl ?? sync?.streamUrl ?? effectiveDj.musicUrl;
 
     if (shouldPlay) {
-      await VoiceRoomMusicAudioSession.activateForPlayback();
+      unawaited(VoiceRoomMusicAudioSession.activateForPlayback());
       _syncRoomSongBloc();
 
       if (isVideoRequest && key.isNotEmpty) {
         _live._syncRoomVideo(effectiveDj, sync: sync);
-        await _syncTrtcMusicPublish(
+        unawaited(_syncTrtcMusicPublish(
           playing: true,
           videoId: videoId,
           sync: sync,
           dj: effectiveDj,
-        );
+        ));
         _live._lastDjPlaybackSignature = sig;
-        // Video modunda ses yolunu arka planda dene; UI bloklanmasın.
-        unawaited(_startAudioPlaybackForDj(
+        return effectiveDj;
+      }
+
+      final hasDirectStream = audioUrl != null &&
+          audioUrl.isNotEmpty &&
+          SongPlaybackFields.parseQuiet({'musicUrl': audioUrl})
+                  .resolvedAudioStreamUrl !=
+              null;
+
+      if (hasDirectStream) {
+        if (key.isNotEmpty) {
+          ref.read(roomVideoControllerProvider(key).notifier).clear();
+        }
+        final started = await _startAudioPlaybackForDj(
           key: key,
           effectiveDj: effectiveDj,
           sync: sync,
@@ -283,7 +295,30 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
           startPosition: startPosition,
           payload: payload,
           audioUrl: audioUrl,
+        );
+        unawaited(_syncTrtcMusicPublish(
+          playing: started,
+          videoId: videoId,
+          sync: sync,
+          dj: effectiveDj,
         ));
+        _live._lastDjPlaybackSignature = sig;
+        return effectiveDj;
+      }
+
+      // YouTube watch / eksik stream — gizli IFrame ses (youtube_explode yok, ANR önleme).
+      if (videoId != null && videoId.isNotEmpty && key.isNotEmpty) {
+        await music.stop();
+        ref
+            .read(roomVideoControllerProvider(key).notifier)
+            .applyAudioDjState(effectiveDj, sync: sync);
+        unawaited(_syncTrtcMusicPublish(
+          playing: true,
+          videoId: videoId,
+          sync: sync,
+          dj: effectiveDj,
+        ));
+        _live._lastDjPlaybackSignature = sig;
         return effectiveDj;
       }
 
@@ -345,44 +380,33 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
       parsedVideoId: videoId,
     );
 
-    Future<bool> runPlayback() async {
-      if (audioUrl != null && audioUrl.isNotEmpty) {
-        return music.syncDj(
-          roomId: key,
-          musicUrl: audioUrl,
-          resolveSeed: effectiveDj.playbackResolveSeed,
-          fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
-          nowPlaying: effectiveDj.nowPlaying,
-          playing: true,
-          muted: muted,
-          serverStreamUrl: audioUrl,
-          startPosition: startPosition,
-        );
-      }
-      return music.playVoiceRoomAudio(
-        roomId: key,
-        payload: payload,
-        nowPlaying: effectiveDj.nowPlaying,
-        playing: true,
-        muted: muted,
-        startPosition: startPosition,
-      );
+    final directUrl = audioUrl != null && audioUrl.isNotEmpty
+        ? SongPlaybackFields.parseQuiet({'musicUrl': audioUrl})
+            .resolvedAudioStreamUrl
+        : null;
+
+    if (directUrl != null) {
+      try {
+        final started = await music
+            .syncDj(
+              roomId: key,
+              musicUrl: directUrl,
+              resolveSeed: effectiveDj.playbackResolveSeed,
+              fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
+              nowPlaying: effectiveDj.nowPlaying,
+              playing: true,
+              muted: muted,
+              serverStreamUrl: directUrl,
+              startPosition: startPosition,
+            )
+            .timeout(const Duration(seconds: 8), onTimeout: () => false);
+        if (started) {
+          VoiceRoomMusicPipelineLog.songEvent(event: 'player_ready');
+          return true;
+        }
+      } catch (_) {}
     }
 
-    var started = false;
-    try {
-      started = await runPlayback().timeout(
-        const Duration(seconds: 12),
-        onTimeout: () => false,
-      );
-    } catch (_) {
-      started = false;
-    }
-
-    if (started) {
-      VoiceRoomMusicPipelineLog.songEvent(event: 'player_ready');
-      return true;
-    }
     if (videoId != null && videoId.isNotEmpty && key.isNotEmpty) {
       await music.stop();
       ref
@@ -390,14 +414,15 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
           .applyAudioDjState(effectiveDj, sync: sync);
       VoiceRoomMusicPipelineLog.songEvent(
         event: 'player_ready',
-        detail: 'youtube_audio_only_fallback',
+        detail: 'youtube_iframe_audio',
         parsedVideoId: videoId,
       );
       return true;
     }
+
     VoiceRoomMusicPipelineLog.songEvent(
       event: 'player_error',
-      detail: 'just_audio sync returned false',
+      detail: 'no_direct_stream_or_video_id',
       parsedMusicUrl: audioUrl,
     );
     return false;
@@ -405,7 +430,7 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
 
   Future<void> _syncMusicFromServer({bool optimisticUi = true}) async {
     final key = _live._roomKey;
-    if (key.isEmpty) return;
+    if (key.isEmpty || _live._skipRemoteMusicSync) return;
     try {
       VoiceRoomDebugLog.log('music.sync.start', {'room': key});
       final pair = await Future.wait([
@@ -454,7 +479,7 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
 
   Future<void> _syncMusicFromServerIfNeeded({bool force = false}) async {
     final key = _live._roomKey;
-    if (_live._inLocalMusicRequestGrace()) return;
+    if (_live._skipRemoteMusicSync) return;
     if (!force) {
       final songActive =
           key.isNotEmpty && ref.read(roomSongBlocProvider(key)).state.hasTrack;
