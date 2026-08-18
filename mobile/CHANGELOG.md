@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.262+298 (2026-08-18) — MCP read_source + B3/B4 dokümanları
+
+- **MCP v1.2.0:** `read_source`, `search_source`, `list_services` (OpenAPI path excerpt destekli)
+- **FAZ 0:** `GIFT_REALTIME_SSE_VS_SOCKET.md`, `PK_STATE_MACHINE_FLUTTER.md`
+
 ## 1.0.261+297 (2026-08-18) — DJ üretim YouTube skip + B2 parity doc
 
 - **DJ player:** Üretimde YouTube watch/stream URL'leri için ağır çözümleme atlanır (IFrame yolu)

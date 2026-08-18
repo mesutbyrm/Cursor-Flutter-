@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-18 17:45 UTC  
+**Son güncelleme:** 2026-08-18 20:20 UTC  
 **Kural:** Bu dosya her agent oturumunda güncellenir. Tamamlanan maddeler `[x]`, devam eden `[~]`, bekleyen `[ ]`.
 
 ---
@@ -14,7 +14,8 @@
 | APK `1.0.258+294` | `[x]` | Release APK başarılı (run 32163086275) |
 | APK `1.0.259+295` | `[x]` | Release APK başarılı (run 32163545874) |
 | APK `1.0.260+296` | `[x]` | Release APK (run 32164943755) |
-| APK `1.0.261+297` | `[ ]` | CI bekliyor |
+| APK `1.0.261+297` | `[x]` | Release APK (run 32167217259) |
+| APK `1.0.262+298` | `[ ]` | CI bekliyor |
 | FAZ 1+ | `[ ]` | FAZ 0 PASS olmadan başlamaz |
 
 ---
@@ -42,7 +43,7 @@
 | A2 | `BACKEND_FLUTTER_PARITY_AUDIT.md` B1.12 ile güncelle | `[x]` |
 | A3 | MCP stub → `endpoints_index` + Prisma | `[x]` |
 | A4 | `SSE_EVENTS_FLUTTER_PARSED.md` (koddan türetilmiş) | `[x]` |
-| A5 | Tam backend MCP `index.mjs` (SDK, `read_source`) | `[ ]` |
+| A5 | Tam backend MCP `index.mjs` (SDK, `read_source`) | `[x]` | v1.2.0: read_source, search_source, list_services |
 | A6 | `nextjs_space/app/api/**/route.ts` kaynak ağacı | `[ ]` |
 | A7 | Resmi SSE şema dokümanı (backend örnek payload) | `[ ]` |
 | A8 | Test hesapları (TEST_USER, TEST_ROOM_OWNER, …) | `[ ]` |
@@ -56,8 +57,8 @@
 |---|------|--------|-----|
 | B1 | 12× WRONG_HOST `gifts/insights/*`, `gifts/missions*` | `[x]` | Ağu 2026: ana host 200 — sorun giderilmiş |
 | B2 | 68× MISSING_BACKEND_ENDPOINT | `[x]` | `docs/MISSING_ENDPOINTS_FLUTTER_ACTIVE.md` |
-| B3 | Gift realtime: SSE vs Socket.IO canonical | `[ ]` | Backend onayı |
-| B4 | PK state machine dokümanı | `[ ]` | FAZ 7 öncesi |
+| B3 | Gift realtime: SSE vs Socket.IO canonical | `[x]` | `docs/GIFT_REALTIME_SSE_VS_SOCKET.md` (Flutter ref.) |
+| B4 | PK state machine dokümanı | `[x]` | `docs/PK_STATE_MACHINE_FLUTTER.md` |
 
 ---
 
@@ -76,7 +77,8 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - `1.0.259+295`: youtube_explode üretimde kapalı, REMAINING_WORK + SSE parsed doc
 - `1.0.260+296`: stream resolve ANR, MUSIC_API_PRODUCTION_PROBE.md
 - `1.0.261+297`: DJ player üretim YouTube skip, mock song-request testi, MISSING_ENDPOINTS_FLUTTER_ACTIVE.md
-- **Sırada:** M5 cihaz (testler sonrası), backend MCP (A5)
+- `1.0.262+298`: MCP read_source/search_source, GIFT_REALTIME + PK_STATE_MACHINE docs
+- **Sırada:** M5 cihaz (kullanıcı), A6 backend kaynak ağacı, A7 SSE örnekleri
 
 ---
 

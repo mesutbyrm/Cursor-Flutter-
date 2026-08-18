@@ -117,6 +117,43 @@ const tools = [
       },
       required: ["file"]
     }
+  },
+  {
+    name: "read_source",
+    description:
+      "Read a repository source file (mobile/lib, docs, backend-docs, mcp-server) or OpenAPI path excerpt (openapi:/api/...).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Relative path or openapi:/api/foo/bar" },
+        start_line: { type: "number" },
+        end_line: { type: "number" }
+      },
+      required: ["path"]
+    }
+  },
+  {
+    name: "search_source",
+    description: "Search text in allowed repo directories (mobile/lib, docs, backend-docs).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string" },
+        glob: { type: "string", description: "Optional filename glob, e.g. *.dart" },
+        limit: { type: "number" }
+      },
+      required: ["query"]
+    }
+  },
+  {
+    name: "list_services",
+    description: "List Flutter feature modules under mobile/lib/features/.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        search: { type: "string" }
+      }
+    }
   }
 ];
 
@@ -181,6 +218,115 @@ function prismaModelBlock(name) {
 
 function textContent(text) {
   return { content: [{ type: "text", text }] };
+}
+
+const SOURCE_ROOTS = [
+  path.join(ROOT, "mobile", "lib"),
+  path.join(ROOT, "docs"),
+  path.join(ROOT, "backend-docs"),
+  path.join(ROOT, "mcp-server")
+];
+
+function resolveSourcePath(userPath) {
+  const raw = String(userPath ?? "").trim().replace(/^\/+/, "");
+  if (!raw) throw new Error("path is required");
+  if (raw.startsWith("openapi:")) {
+    return { kind: "openapi", apiPath: raw.slice("openapi:".length) };
+  }
+  const candidate = path.resolve(ROOT, raw);
+  const allowed = SOURCE_ROOTS.some(
+    (root) => candidate === root || candidate.startsWith(root + path.sep)
+  );
+  if (!allowed) {
+    throw new Error(
+      `Path not allowed: ${raw}. Use mobile/lib/, docs/, backend-docs/, or mcp-server/.`
+    );
+  }
+  if (!fs.existsSync(candidate)) throw new Error(`File not found: ${raw}`);
+  if (!fs.statSync(candidate).isFile()) throw new Error(`Not a file: ${raw}`);
+  return { kind: "file", full: candidate, display: raw };
+}
+
+function sliceLines(text, startLine, endLine) {
+  const lines = text.split("\n");
+  const start = Math.max(1, Number(startLine ?? 1));
+  const end = Math.min(lines.length, Number(endLine ?? lines.length));
+  if (start > end) return "";
+  return lines.slice(start - 1, end).join("\n");
+}
+
+function readOpenApiPath(apiPath) {
+  const spec = JSON.parse(readBackendDoc("openapi.json"));
+  const normalized = apiPath.startsWith("/") ? apiPath : `/${apiPath}`;
+  const paths = spec.paths ?? {};
+  const exact = paths[normalized];
+  if (exact) return JSON.stringify({ path: normalized, ...exact }, null, 2);
+  const matches = Object.keys(paths).filter((p) => p.includes(normalized.replace(/^\//, "")));
+  if (matches.length === 0) {
+    return `OpenAPI path not found: ${normalized}`;
+  }
+  const out = {};
+  for (const p of matches.slice(0, 8)) out[p] = paths[p];
+  return JSON.stringify(out, null, 2);
+}
+
+function walkFiles(dir, globSuffix, out, depth = 0) {
+  if (depth > 8 || out.length > 5000) return;
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const ent of entries) {
+    if (ent.name.startsWith(".")) continue;
+    const full = path.join(dir, ent.name);
+    if (ent.isDirectory()) {
+      if (ent.name === "node_modules" || ent.name === "build") continue;
+      walkFiles(full, globSuffix, out, depth + 1);
+    } else if (!globSuffix || ent.name.endsWith(globSuffix.replace(/^\*\./, "."))) {
+      out.push(full);
+    }
+  }
+}
+
+function searchSource(query, glob, limit) {
+  const q = String(query ?? "").toLowerCase();
+  const max = Number(limit ?? 40);
+  const globSuffix = glob ? String(glob) : null;
+  const files = [];
+  for (const root of SOURCE_ROOTS) walkFiles(root, globSuffix, files);
+  const hits = [];
+  for (const file of files) {
+    if (hits.length >= max) break;
+    let text;
+    try {
+      text = fs.readFileSync(file, "utf8");
+    } catch {
+      continue;
+    }
+    const lines = text.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      if (!lines[i].toLowerCase().includes(q)) continue;
+      const rel = path.relative(ROOT, file);
+      hits.push(`${rel}:${i + 1}: ${lines[i].trim()}`);
+      if (hits.length >= max) break;
+    }
+  }
+  return hits.join("\n") || "No matches.";
+}
+
+function listFeatureServices(search) {
+  const features = path.join(ROOT, "mobile", "lib", "features");
+  if (!fs.existsSync(features)) return "No features directory.";
+  const needle = String(search ?? "").toLowerCase();
+  const names = fs
+    .readdirSync(features, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => d.name)
+    .filter((n) => !needle || n.toLowerCase().includes(needle))
+    .sort();
+  return names.map((n) => `mobile/lib/features/${n}`).join("\n") || "No modules matched.";
 }
 
 function callTool(name, args = {}) {
@@ -269,6 +415,20 @@ function callTool(name, args = {}) {
   if (name === "read_backend_doc") {
     return textContent(readBackendDoc(String(args.file)));
   }
+  if (name === "read_source") {
+    const resolved = resolveSourcePath(args.path);
+    if (resolved.kind === "openapi") {
+      return textContent(readOpenApiPath(resolved.apiPath));
+    }
+    const text = fs.readFileSync(resolved.full, "utf8");
+    return textContent(sliceLines(text, args.start_line, args.end_line));
+  }
+  if (name === "search_source") {
+    return textContent(searchSource(args.query, args.glob, args.limit));
+  }
+  if (name === "list_services") {
+    return textContent(listFeatureServices(args.search));
+  }
   throw new Error(`Unknown tool: ${name}`);
 }
 
@@ -291,7 +451,7 @@ function handle(message) {
       return response(id, {
         protocolVersion: "2024-11-05",
         capabilities: { tools: {}, resources: {} },
-        serverInfo: { name: "canlifal-backend", version: "1.1.0" }
+        serverInfo: { name: "canlifal-backend", version: "1.2.0" }
       });
     }
     if (method === "tools/list") {
@@ -344,13 +504,31 @@ function send(payload) {
 if (process.argv.includes("--selftest")) {
   const index = endpointIndex();
   const models = prismaModels();
+  const sampleRead = callTool("read_source", {
+    path: "mobile/lib/core/config/env.dart",
+    end_line: 5
+  });
+  const sampleSearch = callTool("search_source", {
+    query: "skipMusicRequestByQueryEndpoint",
+    glob: "*.dart",
+    limit: 3
+  });
+  const sampleServices = callTool("list_services", { search: "voice" });
+  const sampleOpenApi = callTool("read_source", {
+    path: "openapi:/api/chat/rooms/{roomId}/pk"
+  });
   console.log(
     JSON.stringify({
       status: "OK",
       endpointIndex: index.length,
       prismaModels: models.length,
       tools: tools.length,
-      backendDocs: fs.existsSync(BACKEND_DOCS)
+      backendDocs: fs.existsSync(BACKEND_DOCS),
+      readSourceLines: sampleRead.content[0].text.split("\n").length,
+      searchHits: sampleSearch.content[0].text.split("\n").length,
+      services: sampleServices.content[0].text.split("\n").length,
+      openapiSample: sampleOpenApi.content[0].text.includes("post") ||
+        sampleOpenApi.content[0].text.includes("POST")
     })
   );
   process.exit(0);
