@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.261+297 (2026-08-18) — DJ üretim YouTube skip + B2 parity doc
+
+- **DJ player:** Üretimde YouTube watch/stream URL'leri için ağır çözümleme atlanır (IFrame yolu)
+- **Test:** Mock Dio ile `requestMusicByQuery` → `song-request` yolu doğrulandı
+- **FAZ 0:** `docs/MISSING_ENDPOINTS_FLUTTER_ACTIVE.md` (68 MISSING × Flutter × probe)
+
 ## 1.0.260+296 (2026-08-18) — Stream resolve ANR + müzik probe doc
 
 - **Stream resolve:** Üretimde Piped/Invidious/explode paralel çözümleme kapalı; IFrame yolu

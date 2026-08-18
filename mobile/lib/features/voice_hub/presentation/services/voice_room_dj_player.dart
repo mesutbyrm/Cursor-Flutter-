@@ -382,6 +382,12 @@ class VoiceRoomDjPlayer {
 
   Future<String?> _resolveSource(String musicUrl) async {
     final trimmed = musicUrl.trim();
+    // Üretim: YouTube IFrame oynatır; ağır stream çözümleme ANR riski.
+    if (YoutubeStreamResolver.disableHeavyStreamResolve &&
+        (YoutubeStreamResolver.needsResolveBeforePlay(trimmed) ||
+            YoutubeStreamResolver.isYoutubePageUrl(trimmed))) {
+      return null;
+    }
     if (ChatRoomDjState.isEphemeralStreamUrl(trimmed)) {
       final watch = ChatRoomDjState.youtubePlaybackSeed(trimmed);
       if (watch != null) return _resolver.resolvePlayableUrl(watch);
