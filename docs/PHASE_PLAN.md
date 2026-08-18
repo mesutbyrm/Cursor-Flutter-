@@ -10,8 +10,8 @@
 
 | Faz | Ad | Durum | Bloker |
 |-----|-----|-------|--------|
-| **0** | Backend + Flutter Audit | 🔄 **DEVAM** | Tam MCP index.mjs; P0 müzik cihaz testi |
-| 1 | Core + Auth + API Architecture | ⏸ Bekliyor | FAZ 0 PASS |
+| **0** | Backend + Flutter Audit | 🔄 **DEVAM** | M5 cihaz + jeton (A6–A8 ✅) |
+| 1 | Core + Auth + API Architecture | 🔄 **HAZIRLIK** | FAZ1 error envelope + testler |
 | 2 | Profile | ⏸ | FAZ 1 |
 | 3 | Social | ⏸ | FAZ 2 |
 | 4 | Fal + Tarot | ⏸ | FAZ 3 |
@@ -46,7 +46,8 @@
 - [x] MCP `read_source` + backend-docs (`mcp-server` v1.2.0)
 - [x] SSE event şemaları (Flutter parser + test fixture + M7 probe + API music phase 6/6)
 - [x] Oda anahtarı çözümleme (`VOICE_ROOM_KEY_RESOLUTION.md`, M10–M12)
-- [ ] P0 müzik !istek Android'de PASS
+- [x] A6–A8 audit (route index, SSE örnekleri, test hesapları)
+- [ ] P0 müzik !istek Android'de PASS (M5 — jeton + cihaz)
 
 **FAZ 0 sonucu:** **INCOMPLETE** — Android müzik E2E (M5) bekleniyor. Özet: `docs/FAZ0_STATUS.md`
 

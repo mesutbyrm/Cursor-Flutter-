@@ -192,7 +192,8 @@ bootstrap_user_token() {
     fi
   fi
 
-  if [[ -n "$try_pass" && ( -n "$try_email" || -n "$try_user" ) &&
+  if acceptance_any_user_secrets_configured &&
+     [[ -n "$try_pass" && ( -n "$try_email" || -n "$try_user" ) &&
         ( "$try_email" != "$DEFAULT_ACCEPTANCE_USER_EMAIL" ||
           "$try_pass" != "$DEFAULT_ACCEPTANCE_USER_PASSWORD" ||
           ( -n "$try_user" && "$try_user" != "$DEFAULT_ACCEPTANCE_USER_USERNAME" ) ) ]]; then
@@ -989,6 +990,10 @@ acceptance_user_secrets_configured() {
 
 acceptance_username_secrets_configured() {
   [[ -n "${ACCEPTANCE_USER_USERNAME:-}" && -n "${ACCEPTANCE_USER_PASSWORD:-}" ]]
+}
+
+acceptance_any_user_secrets_configured() {
+  acceptance_user_secrets_configured || acceptance_username_secrets_configured
 }
 
 acceptance_admin_secrets_configured() {

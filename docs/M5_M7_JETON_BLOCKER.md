@@ -16,6 +16,8 @@
 
 Üretimde `skipPayment` **yok sayılır** — her istek **10 jeton** gerektirir.
 
+> **Not:** Test hesabında `credits=50` olabilir; müzik isteği **jeton** kullanır (`jetonBalance`), kredi değil.
+
 ---
 
 ## Çözüm A — Admin panel (hızlı)

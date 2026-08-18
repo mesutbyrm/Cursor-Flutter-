@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-18 23:09 UTC — **OTOMATİK TAMAM**, jeton bekleniyor  
+**Son güncelleme:** 2026-08-18 23:48 UTC — FAZ0 audit kapanış + FAZ1 hazırlık  
 **Kural:** Bu dosya her agent oturumunda güncellenir. Tamamlanan maddeler `[x]`, devam eden `[~]`, bekleyen `[ ]`.
 
 ---
@@ -9,7 +9,8 @@
 
 | Alan | Durum | Not |
 |------|--------|-----|
-| FAZ 0 Audit | `[~]` DEVAM | Route index + SSE örnekleri + test hesapları eklendi |
+| FAZ 0 Audit | `[~]` | A6–A8 tamamlandı; A9 M5 bekliyor |
+| FAZ 1 hazırlık | `[~]` | `FAZ1_API_ERROR_ENVELOPE.md`, ApiException testleri |
 | P0 !istek / müzik ANR | `[x]` kod | **M5 cihaz** + jeton (kullanıcı) |
 | APK `1.0.258+294` | `[x]` | Release APK başarılı (run 32163086275) |
 | APK `1.0.259+295` | `[x]` | Release APK başarılı (run 32163545874) |
@@ -52,9 +53,9 @@
 | A3 | MCP stub → `endpoints_index` + Prisma | `[x]` |
 | A4 | `SSE_EVENTS_FLUTTER_PARSED.md` (koddan türetilmiş) | `[x]` |
 | A5 | Tam backend MCP `index.mjs` (SDK, `read_source`) | `[x]` | v1.2.0: read_source, search_source, list_services |
-| A6 | `nextjs_space/app/api/**/route.ts` kaynak ağacı | `[~]` | `docs/BACKEND_API_ROUTE_INDEX.md` (690 uç yedeği) |
-| A7 | Resmi SSE şema dokümanı (backend örnek payload) | `[~]` | `SSE_PAYLOAD_EXAMPLES` + M7 + `API_MUSIC_PHASE_REPORT` (6/6 PASS) |
-| A8 | Test hesapları (TEST_USER, TEST_ROOM_OWNER, …) | `[~]` | `TEST_ACCOUNTS.md` + `VOICE_ROOM_KEY_RESOLUTION.md` |
+| A6 | `nextjs_space/app/api/**/route.ts` kaynak ağacı | `[x]` | `BACKEND_API_ROUTE_INDEX.md` (690 uç, regenerate script) |
+| A7 | Resmi SSE şema dokümanı (backend örnek payload) | `[x]` | `SSE_PAYLOAD_EXAMPLES_FLUTTER.md` + M7 üretim `connected`/`dj` |
+| A8 | Test hesapları (TEST_USER, TEST_ROOM_OWNER, …) | `[x]` | `TEST_ACCOUNTS.md` canlı id + credits≠jeton notu |
 | A9 | Android E2E müzik PASS → FAZ 0 kapat | `[ ]` | `docs/FAZ0_CLOSURE_CHECKLIST.md` |
 
 ---
@@ -70,9 +71,20 @@
 
 ---
 
-## FAZ 1–13 (bloke)
+## FAZ 1 — Core + Auth (hazırlık)
 
-FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
+| # | İş | Durum |
+|---|-----|--------|
+| F1.1 | Error envelope referansı | `[x]` | `docs/FAZ1_API_ERROR_ENVELOPE.md` |
+| F1.2 | ApiException birim testleri | `[x]` | `api_exception_test.dart` |
+| F1.3 | FAZ 1 durum özeti | `[x]` | `docs/FAZ1_STATUS.md` |
+| F1.4 | God-file refactor | `[ ]` | `chat_room_providers.dart` — FAZ 0 sonrası |
+
+---
+
+## FAZ 2–13 (bloke)
+
+FAZ 0 **PASS** (M5) olmadan resmi faz geçişi yok. Sıra: `docs/PHASE_PLAN.md`.
 
 ---
 
@@ -103,7 +115,8 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - CI `faz0-verify`: USER secret yok sayılır + giriş hatası WARN (CI kırılmaz)
 - `defaults.sh`: boş `ACCEPTANCE_*` env → varsayılan hesap (GitHub Actions "")
 - `LATEST_APK_BUILD.md` senkron: 1.0.266+302 (run 32196400775)
-- **Sırada:** Jeton ekle veya admin secret düzelt → `m7-on-jeton.sh` → M5 cihaz
+- A6–A8 audit kapanış; FAZ1 error envelope + ApiException testleri
+- **Bloker:** Jeton ≥10 (credits yeterli değil) → M7/M5 → A9
 
 ---
 
