@@ -38,10 +38,10 @@ class VoiceRoomsBody extends ConsumerStatefulWidget {
 
 class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     with AutomaticKeepAliveClientMixin {
-  Timer? _presenceTimer;
   Timer? _liveStreamsTimer;
   var _liveStreamsReady = false;
   var _prefetchedRoomImages = false;
+  var _presenceSynced = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -49,13 +49,19 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
   @override
   void initState() {
     super.initState();
-    _presenceTimer = Timer(LazyLoadPerf.voiceRoomPresence, () {
-      if (mounted) {
-        ref.read(voiceRoomsPresenceProvider);
-      }
-    });
     _liveStreamsTimer = Timer(LazyLoadPerf.voiceRoomLiveStreams, () {
       if (mounted) setState(() => _liveStreamsReady = true);
+    });
+  }
+
+  void _syncPresenceOnce(List<VoiceRoomEntity> rooms) {
+    if (_presenceSynced || rooms.isEmpty) return;
+    _presenceSynced = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(voiceRoomsPresenceProvider.notifier).mergeTrackRooms(
+            rooms.take(VoiceRoomsPresenceNotifier.maxTrackedRooms).toList(),
+          );
     });
   }
 
@@ -77,7 +83,6 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
 
   @override
   void dispose() {
-    _presenceTimer?.cancel();
     _liveStreamsTimer?.cancel();
     super.dispose();
   }
@@ -119,6 +124,7 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
 
         final ordered = _orderedRooms(list, ref.watch(myVoiceRoomProvider));
         final live = liveStreams.valueOrNull ?? const [];
+        _syncPresenceOnce(ordered);
         _prefetchDiscoverImages(ordered);
 
         return PremiumImmersiveBackground(

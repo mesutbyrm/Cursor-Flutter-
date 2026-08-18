@@ -46,6 +46,8 @@ class _GlobalSiteMarqueeListenerState
   Future<void> _refresh() async {
     if (!mounted) return;
     try {
+      final cached = ref.read(homeTickerProvider).valueOrNull;
+      if (cached != null && cached.isNotEmpty) return;
       ref.invalidate(homeTickerProvider);
       await ref.read(homeTickerProvider.future);
     } catch (_) {}
