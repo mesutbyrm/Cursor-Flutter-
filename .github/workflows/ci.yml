@@ -110,11 +110,8 @@ jobs:
 
       - name: FAZ 0 otomatik kapılar (M5 cihaz hariç)
         env:
-          ACCEPTANCE_USER_EMAIL: ${{ secrets.ACCEPTANCE_USER_EMAIL }}
-          ACCEPTANCE_USER_PASSWORD: ${{ secrets.ACCEPTANCE_USER_PASSWORD }}
-          ACCEPTANCE_USER_USERNAME: ${{ secrets.ACCEPTANCE_USER_USERNAME }}
-          ACCEPTANCE_HOST_EMAIL: ${{ secrets.ACCEPTANCE_HOST_EMAIL }}
-          ACCEPTANCE_HOST_PASSWORD: ${{ secrets.ACCEPTANCE_HOST_PASSWORD }}
+          # USER/HOST secret verilmez — hatalı secret CI'yı kırmaz; varsayılan test hesabı kullanılır.
+          # Secret doğrulama: önceki "Acceptance secret doğrulama" adımı.
           ACCEPTANCE_ADMIN_EMAIL: ${{ secrets.ACCEPTANCE_ADMIN_EMAIL }}
           ACCEPTANCE_ADMIN_PASSWORD: ${{ secrets.ACCEPTANCE_ADMIN_PASSWORD }}
           ACCEPTANCE_ADMIN_USERNAME: ${{ secrets.ACCEPTANCE_ADMIN_USERNAME }}

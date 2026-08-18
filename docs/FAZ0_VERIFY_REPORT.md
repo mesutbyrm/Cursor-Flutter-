@@ -1,6 +1,6 @@
 # FAZ 0 — Otomatik doğrulama raporu
 
-**Tarih:** 2026-08-18 22:52 UTC  
+**Tarih:** 2026-08-18 23:13 UTC  
 **APK:** `1.0.266+302`  
 **Sonuç:** **AUTOMATED_PASS (M5 cihaz bekliyor)**
 
@@ -23,6 +23,7 @@
 |-------|----------|
 | **M5** | Android cihaz — `docs/M5_DEVICE_TEST_CHECKLIST.md` |
 | **M7** | song-request HTTP 200 (jeton ≥10) |
+| **Jeton** | `docs/M5_M7_JETON_BLOCKER.md` |
 | **A9** | M5 PASS → FAZ 0 kapat |
 
 ## Komutlar

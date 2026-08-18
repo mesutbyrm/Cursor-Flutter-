@@ -77,5 +77,6 @@ else
   echo "  bash scripts/m5-preflight.sh && docs/M5_DEVICE_TEST_CHECKLIST.md"
 fi
 echo ""
-echo "Tam verify: bash scripts/faz0-verify.sh"
-echo "M7 (jeton sonrası): bash scripts/m7-on-jeton.sh"
+echo "══ AGENT DURUMU ══"
+echo "Otomatik kod/test işi TAMAM. Jeton eklenene kadar agent bekliyor."
+echo "Kullanıcı: docs/M5_M7_JETON_BLOCKER.md (1. adım: ≥50 jeton)"

@@ -204,12 +204,19 @@ bootstrap_user_token() {
     HOST_PASSWORD="$DEFAULT_ACCEPTANCE_HOST_PASSWORD"
     VIEWER_EMAIL="$DEFAULT_ACCEPTANCE_USER_EMAIL"
     VIEWER_PASSWORD="$DEFAULT_ACCEPTANCE_USER_PASSWORD"
-    resp=$(mobile_login_identifier email "$USER_EMAIL" "$USER_PASSWORD")
-    tok=$(extract_token "$resp")
-    if [[ -n "$tok" ]]; then
-      USER_TOKEN="$tok"
-      return 0
-    fi
+    local attempt
+    for attempt in 1 2 3; do
+      resp=$(mobile_login_identifier email "$USER_EMAIL" "$USER_PASSWORD")
+      tok=$(extract_token "$resp")
+      if [[ -n "$tok" ]]; then
+        USER_TOKEN="$tok"
+        return 0
+      fi
+      if [[ "$attempt" -lt 3 ]]; then
+        jeton_topup_debug "default login attempt $attempt failed — retry"
+        sleep 2
+      fi
+    done
     tok=$(register_acceptance_user \
       "$DEFAULT_ACCEPTANCE_USER_EMAIL" \
       "$DEFAULT_ACCEPTANCE_USER_USERNAME" \

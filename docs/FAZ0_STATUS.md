@@ -1,7 +1,8 @@
 # FAZ 0 — Durum özeti (2026-08-18)
 
-**Sonuç:** **INCOMPLETE** — P0 müzik cihaz testi (M5) bekleniyor  
-**APK:** `1.0.266+302` (`apk-latest`)
+**Sonuç:** **INCOMPLETE** — Otomatik iş tamam; **jeton + M5 cihaz** (kullanıcı) bekleniyor  
+**APK:** `1.0.266+302` (`apk-latest`)  
+**Tek engel:** Test hesabı jeton=0 — `docs/M5_M7_JETON_BLOCKER.md`
 
 ---
 
@@ -16,6 +17,7 @@
 | SSE oda anahtarı | M10–M12 — `1.0.264–266`, `VOICE_ROOM_KEY_RESOLUTION.md` |
 | SSE üretim payload | M7 kısmi — `dj`, `connected` (`M7_MUSIC_SSE_CAPTURE.md`) |
 | API müzik fazı | 6/6 PASS — `API_MUSIC_PHASE_REPORT.md`, `run-music-acceptance.sh` |
+| Otomatik betikler | `faz0-status`, `faz0-verify`, `m7-on-jeton`, `validate-acceptance-secrets` |
 | Unit testler | 93× `test/features/voice_hub/` |
 
 ---
@@ -36,13 +38,9 @@
 ## Doğrulama komutları
 
 ```bash
-# Hızlı durum (test çalıştırmaz)
 bash scripts/faz0-status.sh
-
-# Tüm otomatik FAZ 0 kapıları (M5 hariç)
-bash scripts/faz0-verify.sh
-
-# M5 cihaz testi öncesi (API + jeton + unit)
+bash scripts/validate-acceptance-secrets.sh
+bash scripts/m7-on-jeton.sh              # jeton ≥10 sonrası
 bash scripts/m5-preflight.sh
 
 # API müzik fazı (secret olmadan varsayılan test hesabı)

@@ -59,6 +59,8 @@ CI'da `faz0-verify` / `m5-preflight` admin secret varsa `POST /api/admin/credits
 
 **CI tanısı (2026-08-18):** GitHub'da `ACCEPTANCE_ADMIN_*` secret'ları **var** ama **giriş başarısız** (email ve username denendi). `ACCEPTANCE_USER_*` secret'ları da hatalı — varsayılan test hesabına düşülüyor.
 
+**CI düzeltmesi:** `faz0-verify` adımı artık yalnızca `ACCEPTANCE_ADMIN_*` alır; USER/HOST secret'ları verilmez (hatalı secret CI'yı kırmaz). Secret doğrulama ayrı adımda (`validate-acceptance-secrets.sh`, `continue-on-error`).
+
 **CI notu:** Secret'lar var ama top-up başarısızsa:
 
 1. `ACCEPTANCE_USER_*` şifresi hatalı olabilir (CI log: *Secret kimlik bilgileri başarısız*)
