@@ -101,6 +101,8 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - CI debug logları açıldı; faz0-verify jeton sonrası M7 otomatik dener
 - `validate-acceptance-secrets.sh` — secret giriş doğrulama
 - CI `faz0-verify`: USER secret yok sayılır + giriş hatası WARN (CI kırılmaz)
+- `defaults.sh`: boş `ACCEPTANCE_*` env → varsayılan hesap (GitHub Actions "")
+- `LATEST_APK_BUILD.md` senkron: 1.0.266+302 (run 32196400775)
 - **Sırada:** Jeton ekle veya admin secret düzelt → `m7-on-jeton.sh` → M5 cihaz
 
 ---
