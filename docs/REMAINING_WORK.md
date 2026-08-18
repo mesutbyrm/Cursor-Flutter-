@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-18 16:58 UTC  
+**Son güncelleme:** 2026-08-18 17:05 UTC  
 **Kural:** Bu dosya her agent oturumunda güncellenir. Tamamlanan maddeler `[x]`, devam eden `[~]`, bekleyen `[ ]`.
 
 ---
@@ -11,7 +11,8 @@
 |------|--------|-----|
 | FAZ 0 Audit | `[~]` DEVAM | OpenAPI/Prisma/B1.12 ✅; SSE şema kısmen; tam MCP eksik |
 | P0 !istek / müzik ANR | `[~]` | Kod düzeltmeleri push edildi; **Android cihaz onayı bekliyor** |
-| APK `1.0.258+294` | `[~]` | CI geçti; release APK derleniyor (run ~32163086275) |
+| APK `1.0.258+294` | `[x]` | Release APK başarılı (run 32163086275) |
+| APK `1.0.259+295` | `[~]` | CI geçti; release APK derleniyor (run ~32163545874) |
 | FAZ 1+ | `[ ]` | FAZ 0 PASS olmadan başlamaz |
 
 ---
@@ -70,7 +71,8 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - `1.0.257+293`: backend-docs, 404 yedeği, proxy düzeltmesi
 - `1.0.258+294`: doğrudan song-request, MCP backend-docs
 - `1.0.259+295`: youtube_explode üretimde kapalı, REMAINING_WORK + SSE parsed doc
-- **Sırada:** APK `1.0.259` bekle, Android cihaz testi (M5)
+- APK `1.0.258` release ✅; `1.0.259` derleniyor
+- **Sırada:** Android cihaz testi (M5), backend MCP tam paket (A5)
 
 ---
 
