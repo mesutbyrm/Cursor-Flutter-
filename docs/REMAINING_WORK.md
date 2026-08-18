@@ -108,6 +108,7 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 bash scripts/faz0-status.sh
 bash scripts/faz0-verify.sh
 bash scripts/m7-on-jeton.sh
+bash scripts/debug-jeton-topup.sh
 bash scripts/run-music-acceptance.sh
 bash scripts/m5-preflight.sh
 bash scripts/print-build-status.sh
