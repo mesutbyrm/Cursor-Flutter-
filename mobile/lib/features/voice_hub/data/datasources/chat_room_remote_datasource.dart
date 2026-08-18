@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
@@ -27,6 +29,19 @@ import '../../domain/entities/voice_room_state_snapshot.dart';
 class ChatRoomRemoteDataSource {
   ChatRoomRemoteDataSource(this._dio, {YoutubeMusicSearchCache? searchCache})
       : _searchCache = searchCache ?? YoutubeMusicSearchCache();
+
+  /// Üretim probe (Ağu 2026): `POST …/music-request-by-query` canlifal.com'da 404.
+  /// Yerel Express mirror (`127.0.0.1` / `localhost`) bu ucu sunar.
+  @visibleForTesting
+  static bool get skipMusicRequestByQueryEndpoint {
+    final base = Env.apiBaseUrl.trim().toLowerCase();
+    if (base.contains('127.0.0.1') ||
+        base.contains('localhost') ||
+        base.contains('.local')) {
+      return false;
+    }
+    return base.contains('canlifal.com');
+  }
 
   final Dio _dio;
   final YoutubeMusicSearchCache _searchCache;
@@ -2123,6 +2138,16 @@ class ChatRoomRemoteDataSource {
     required String query,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      if (skipMusicRequestByQueryEndpoint) {
+        VoiceRoomDebugLog.log('music.request_by_query.skip_prod', {
+          'room': key,
+          'query': query.trim(),
+        });
+        return _requestMusicByQueryViaSongRequest(
+          roomKey: key,
+          query: query.trim(),
+        );
+      }
       try {
         final res = await _dio.safePost<dynamic>(
           ApiEndpoints.chatRoomMusicRequestByQuery(key),

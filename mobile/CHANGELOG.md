@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.258+294 (2026-08-18) — !istek doğrudan song-request + MCP backend-docs
+
+- **!istek:** Üretimde ölü `music-request-by-query` atlanır; doğrudan sunucu arama + `song-request`
+- **MCP:** `mcp-server` artık `backend-docs/endpoints_index.json` ve `schema.prisma` okur (`list_models`, `search_schema`)
+
 ## 1.0.257+293 (2026-08-18) — !istek üretim yedeği + backend-docs
 
 - **Kök neden:** Üretimde `POST …/music-request-by-query` **404** — `!istek` hiç çalışmıyordu

@@ -43,7 +43,7 @@
 - [x] Parity haritası oluşturuldu
 - [x] OpenAPI + Prisma + endpoints_index (`backend-docs/`) sağlandı
 - [x] B1.12 parity raporu entegre edildi
-- [ ] Backend MCP tam paket (`index.mjs` SDK'lı)
+- [x] MCP stub `backend-docs` okuyor (tam SDK `index.mjs` hâlâ eksik)
 - [ ] SSE event şemaları
 - [ ] P0 müzik !istek Android'de PASS
 
