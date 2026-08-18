@@ -55,7 +55,7 @@
 | A6 | `nextjs_space/app/api/**/route.ts` kaynak ağacı | `[~]` | `docs/BACKEND_API_ROUTE_INDEX.md` (690 uç yedeği) |
 | A7 | Resmi SSE şema dokümanı (backend örnek payload) | `[~]` | `SSE_PAYLOAD_EXAMPLES` + M7 + `API_MUSIC_PHASE_REPORT` (6/6 PASS) |
 | A8 | Test hesapları (TEST_USER, TEST_ROOM_OWNER, …) | `[~]` | `TEST_ACCOUNTS.md` + `VOICE_ROOM_KEY_RESOLUTION.md` |
-| A9 | Android E2E müzik PASS → FAZ 0 kapat | `[ ]` |
+| A9 | Android E2E müzik PASS → FAZ 0 kapat | `[ ]` | `docs/FAZ0_CLOSURE_CHECKLIST.md` |
 
 ---
 
@@ -95,6 +95,7 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - `FAZ0_STATUS.md`, `run-music-acceptance.sh`, `m5-preflight.sh`, `M7_SONG_REQUEST_200_TEMPLATE.md`
 - `faz0-verify.sh` + probe SSE heredoc düzeltmesi
 - CI `faz0-music` job + `M5_M7_JETON_BLOCKER.md`
+- `faz0-status.sh` + `FAZ0_CLOSURE_CHECKLIST.md`
 - **Sırada:** Jeton ekle → M5 cihaz, M7 song-request 200
 
 ---
@@ -102,6 +103,7 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 ## Hızlı komutlar
 
 ```bash
+bash scripts/faz0-status.sh
 bash scripts/faz0-verify.sh
 bash scripts/run-music-acceptance.sh
 bash scripts/m5-preflight.sh

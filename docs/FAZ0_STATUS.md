@@ -36,6 +36,9 @@
 ## Doğrulama komutları
 
 ```bash
+# Hızlı durum (test çalıştırmaz)
+bash scripts/faz0-status.sh
+
 # Tüm otomatik FAZ 0 kapıları (M5 hariç)
 bash scripts/faz0-verify.sh
 

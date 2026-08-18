@@ -14,6 +14,8 @@ bash scripts/m5-preflight.sh
 
 Geçerse: API müzik 6/6, jeton ≥10, voice_hub testleri OK.
 
+Jeton yoksa: `docs/M5_M7_JETON_BLOCKER.md` · Durum: `bash scripts/faz0-status.sh`
+
 ---
 
 ## Hazırlık
@@ -69,6 +71,6 @@ Geçerse: API müzik 6/6, jeton ≥10, voice_hub testleri OK.
 | Video isteği | | |
 | Oda çıkışı | | |
 
-**M5 PASS** → `docs/REMAINING_WORK.md` A9 + FAZ 0 kapatılabilir.
+**M5 PASS** → `docs/FAZ0_CLOSURE_CHECKLIST.md` · `docs/REMAINING_WORK.md` A9
 
 Otomatik API probe (M7 yedeği): `MUSIC_PROBE_ROOM=cmoohrbr bash scripts/probe-music-room.sh`
