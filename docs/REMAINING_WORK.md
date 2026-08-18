@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-18 20:20 UTC  
+**Son güncelleme:** 2026-08-18 20:30 UTC  
 **Kural:** Bu dosya her agent oturumunda güncellenir. Tamamlanan maddeler `[x]`, devam eden `[~]`, bekleyen `[ ]`.
 
 ---
@@ -9,13 +9,13 @@
 
 | Alan | Durum | Not |
 |------|--------|-----|
-| FAZ 0 Audit | `[~]` DEVAM | OpenAPI/Prisma/B1.12 ✅; SSE şema kısmen; tam MCP eksik |
+| FAZ 0 Audit | `[~]` DEVAM | Route index + SSE örnekleri + test hesapları eklendi |
 | P0 !istek / müzik ANR | `[~]` | Kod + testler tamam; **M5 cihaz testi testler bitince** |
 | APK `1.0.258+294` | `[x]` | Release APK başarılı (run 32163086275) |
 | APK `1.0.259+295` | `[x]` | Release APK başarılı (run 32163545874) |
 | APK `1.0.260+296` | `[x]` | Release APK (run 32164943755) |
 | APK `1.0.261+297` | `[x]` | Release APK (run 32167217259) |
-| APK `1.0.262+298` | `[ ]` | CI bekliyor |
+| APK `1.0.262+298` | `[~]` | APK derleniyor (run 32181631541) |
 | FAZ 1+ | `[ ]` | FAZ 0 PASS olmadan başlamaz |
 
 ---
@@ -30,7 +30,7 @@
 | M4 | Üretimde `youtube_explode` arama yedeğini kapat (ANR) | `[x]` | `1.0.259+295` |
 | M8 | Stream resolve: explode/Piped üretimde kapalı | `[x]` | `1.0.260+296` |
 | M5 | Oda `cmoohrbr` gerçek cihaz: `!istek` + müzik paneli | `[ ]` | **Tüm otomatik testler bitince** (kullanıcı) |
-| M6 | Backend: `music-request-by-query` üretime ekle VEYA resmi “song-request only” dokümanı | `[ ]` | Backend |
+| M6 | Backend: `music-request-by-query` üretime ekle VEYA resmi “song-request only” dokümanı | `[x]` | `docs/MUSIC_SONG_REQUEST_CONTRACT.md` (Flutter resmi) |
 | M7 | Gerçek `song-request` + SSE `dj_update` response dump (oda cmoohrbr) | `[ ]` | Backend |
 
 ---
@@ -44,9 +44,9 @@
 | A3 | MCP stub → `endpoints_index` + Prisma | `[x]` |
 | A4 | `SSE_EVENTS_FLUTTER_PARSED.md` (koddan türetilmiş) | `[x]` |
 | A5 | Tam backend MCP `index.mjs` (SDK, `read_source`) | `[x]` | v1.2.0: read_source, search_source, list_services |
-| A6 | `nextjs_space/app/api/**/route.ts` kaynak ağacı | `[ ]` |
-| A7 | Resmi SSE şema dokümanı (backend örnek payload) | `[ ]` |
-| A8 | Test hesapları (TEST_USER, TEST_ROOM_OWNER, …) | `[ ]` |
+| A6 | `nextjs_space/app/api/**/route.ts` kaynak ağacı | `[~]` | `docs/BACKEND_API_ROUTE_INDEX.md` (690 uç yedeği) |
+| A7 | Resmi SSE şema dokümanı (backend örnek payload) | `[~]` | `SSE_PAYLOAD_EXAMPLES_FLUTTER.md` (test fixture) |
+| A8 | Test hesapları (TEST_USER, TEST_ROOM_OWNER, …) | `[~]` | `docs/TEST_ACCOUNTS.md` |
 | A9 | Android E2E müzik PASS → FAZ 0 kapat | `[ ]` |
 
 ---
@@ -78,7 +78,8 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - `1.0.260+296`: stream resolve ANR, MUSIC_API_PRODUCTION_PROBE.md
 - `1.0.261+297`: DJ player üretim YouTube skip, mock song-request testi, MISSING_ENDPOINTS_FLUTTER_ACTIVE.md
 - `1.0.262+298`: MCP read_source/search_source, GIFT_REALTIME + PK_STATE_MACHINE docs
-- **Sırada:** M5 cihaz (kullanıcı), A6 backend kaynak ağacı, A7 SSE örnekleri
+- FAZ 0: BACKEND_API_ROUTE_INDEX, SSE_PAYLOAD_EXAMPLES, TEST_ACCOUNTS, MUSIC_SONG_REQUEST_CONTRACT
+- **Sırada:** M5 cihaz, M7 SSE dump (backend), A6 route.ts kaynağı
 
 ---
 

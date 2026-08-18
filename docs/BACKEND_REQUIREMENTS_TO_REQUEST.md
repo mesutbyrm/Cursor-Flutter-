@@ -7,50 +7,17 @@
 
 ## Eksik #1 — Tam MCP sunucu paketi
 
+**Durum:** ✅ **FLUTTER REPO'DA TAMAMLANDI** — 2026-08-18 (`mcp-server/index.mjs` v1.2.0)
+
 **Alan:** Tüm sistemler (geliştirici araçları)
 
 **Gerekli dosya:**
-- `fortune_telling_platform/mcp-server/index.mjs` (tam sürüm, `@modelcontextprotocol/sdk` ile)
-- `fortune_telling_platform/mcp-server/package.json` (yüklediğiniz sürüm)
-- `fortune_telling_platform/mcp-server/package-lock.json` veya `npm install` sonrası `node_modules`
+- `mcp-server/index.mjs` — `read_source`, `search_source`, `list_services`, Prisma, endpoints_index
+- `mcp-server/package.json` v1.2.0
 
-**Gerekli endpoint:** Yok (araç sunucusu)
+**Not:** Üretim backend reposundaki tam `read_source` → `nextjs_space/` hâlâ A6'da eksik; Flutter MCP `mobile/lib` + `backend-docs` okur.
 
-**Neden gerekiyor:**
-Flutter reposundaki `mcp-server/index.mjs` yalnızca `docs/API_ENDPOINT_MATRIX.md` okuyan **stub**. Yüklediğiniz README'deki `read_source`, `list_models`, `get_model`, `search_schema` araçları **implement edilmemiş**.
-
-**Flutter'da etkisi:**
-Agent'lar canlı `route.ts` ve Prisma şemasına bakamaz; parity audit eksik kalır; endpoint tahmini riski artar.
-
-**Öncelik:** P0
-
-**Backend'den istenen:**
-```
-mcp-server/
-├── index.mjs          ← EKSİK (sadece README + package.json geldi)
-├── package.json       ← GELDİ
-├── package-lock.json
-└── (npm install)
-```
-
-**Kurulum (sizin makinenizde):**
-```bash
-cd fortune_telling_platform/mcp-server
-npm install
-node index.mjs --selftest   # "status": "OK" beklenir
-```
-
-`.cursor/mcp.json`:
-```json
-{
-  "mcpServers": {
-    "canlifal-backend": {
-      "command": "node",
-      "args": ["/MUTLAK/YOL/fortune_telling_platform/mcp-server/index.mjs"]
-    }
-  }
-}
-```
+**Öncelik:** ~~P0~~ Kapatıldı (Flutter repo kapsamı)
 
 ---
 
@@ -104,6 +71,8 @@ Yanlış alan adı (`userId` vs `user_id`, `gcid` vs `sub`) kullanımı.
 
 ## Eksik #4 — Backend kaynak ağacı (read-only)
 
+**Durum:** ⚠️ **KISMEN** — 2026-08-18 (`docs/BACKEND_API_ROUTE_INDEX.md` — endpoints_index'ten; 690 uç)
+
 **Alan:** Tüm API
 
 **Gerekli dosya:**
@@ -127,7 +96,9 @@ Backend repo read-only erişimi VEYA `nextjs_space/` + `lib/` zip export.
 
 ## Eksik #5 — SSE event şema dokümanı
 
-**Durum:** ⚠️ **KISMEN** — 2026-08-18 (`docs/SSE_EVENTS_FLUTTER_PARSED.md` Flutter parser referansı)
+**Durum:** ⚠️ **KISMEN** — 2026-08-18
+- `docs/SSE_EVENTS_FLUTTER_PARSED.md` (parser referansı)
+- `docs/SSE_PAYLOAD_EXAMPLES_FLUTTER.md` (unit test fixture'ları)
 
 **Alan:** Voice / Live / Gifts / Notifications / Fortune / PK
 
@@ -156,6 +127,11 @@ Her SSE endpoint için en az 1 örnek payload (gerçek log veya fixture).
 
 ## Eksik #6 — Müzik API tam sözleşmesi
 
+**Durum:** ⚠️ **KISMEN** — 2026-08-18
+- `docs/MUSIC_API_PRODUCTION_PROBE.md` (HTTP probe)
+- `docs/MUSIC_SONG_REQUEST_CONTRACT.md` (Flutter resmi üretim yolu — M6 Seçenek B)
+- M7: gerçek SSE dump hâlâ eksik
+
 **Alan:** Voice / Music
 
 **Gerekli dosya:**
@@ -180,6 +156,8 @@ P0 ANR/çalmama bug'ı — `musicUrl` formatı (stream URL vs YouTube watch), `p
 **Referans (Flutter probe):** `docs/MUSIC_API_PRODUCTION_PROBE.md` — `music-request-by-query` üretimde **404**; Flutter `song-request` kullanıyor.
 
 **Backend'den istenen:**
+1. M7: oda `cmoohrbr` gerçek `song-request` + SSE dump
+2. VEYA `music-request-by-query` üretime deploy
 
 ---
 
@@ -203,6 +181,8 @@ TRTC join fail, ses açılmama, oda geçişi sorunları.
 
 ## Eksik #8 — PK state machine
 
+**Durum:** ⚠️ **KISMEN** — 2026-08-18 (`docs/PK_STATE_MACHINE_FLUTTER.md` Flutter referansı)
+
 **Alan:** Voice PK / Live PK
 
 **Gerekli dosya:**
@@ -220,6 +200,8 @@ Dual backend routing (main vs games API) karmaşık; canonical path backend onay
 
 ## Eksik #9 — Gift realtime canonical yol
 
+**Durum:** ⚠️ **KISMEN** — 2026-08-18 (`docs/GIFT_REALTIME_SSE_VS_SOCKET.md` — Flutter SSE birincil)
+
 **Alan:** Gifts
 
 **Gerekli bilgi:**
@@ -233,6 +215,8 @@ Flutter'da hem SSE (`gift_sse_dispatch.dart`) hem Socket.IO (`live_gift_realtime
 ---
 
 ## Eksik #10 — Test hesapları ve roller
+
+**Durum:** ⚠️ **KISMEN** — 2026-08-18 (`docs/TEST_ACCOUNTS.md` — GitHub Secrets + Stage5)
 
 **Alan:** QA / Acceptance
 
