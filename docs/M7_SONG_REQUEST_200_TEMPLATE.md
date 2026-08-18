@@ -9,10 +9,9 @@
 ## Yakalama komutu (jeton ≥ 10 sonrası)
 
 ```bash
-# Admin jeton sonrası
-MUSIC_PROBE_ROOM=cmoohrbr bash scripts/probe-music-room.sh
-# veya
-bash scripts/m5-preflight.sh   # jeton top-up dener (ACCEPTANCE_ADMIN_* gerekli)
+bash scripts/validate-acceptance-secrets.sh  # secret giriş testi
+bash scripts/set-acceptance-secrets.sh       # USER/HOST secret sıfırla (gh admin)
+bash scripts/m7-on-jeton.sh                  # jeton sonrası M7
 ```
 
 ---

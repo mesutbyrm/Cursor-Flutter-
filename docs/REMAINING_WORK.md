@@ -99,6 +99,7 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - `m7-on-jeton.sh` — jeton sonrası M7 otomatik probe
 - `lib.sh` admin login fallback (email→username) + OpenAPI credits body
 - CI debug logları açıldı; faz0-verify jeton sonrası M7 otomatik dener
+- `validate-acceptance-secrets.sh` — secret giriş doğrulama
 - **Sırada:** Jeton ekle veya admin secret düzelt → `m7-on-jeton.sh` → M5 cihaz
 
 ---
@@ -106,6 +107,7 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 ## Hızlı komutlar
 
 ```bash
+bash scripts/validate-acceptance-secrets.sh
 bash scripts/faz0-status.sh
 bash scripts/faz0-verify.sh
 bash scripts/m7-on-jeton.sh
