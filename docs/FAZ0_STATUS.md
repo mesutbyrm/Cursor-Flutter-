@@ -36,6 +36,9 @@
 ## Doğrulama komutları
 
 ```bash
+# Tüm otomatik FAZ 0 kapıları (M5 hariç)
+bash scripts/faz0-verify.sh
+
 # M5 cihaz testi öncesi (API + jeton + unit)
 bash scripts/m5-preflight.sh
 

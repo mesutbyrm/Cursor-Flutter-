@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-18 22:25 UTC  
+**Son güncelleme:** 2026-08-18 22:50 UTC  
 **Kural:** Bu dosya her agent oturumunda güncellenir. Tamamlanan maddeler `[x]`, devam eden `[~]`, bekleyen `[ ]`.
 
 ---
@@ -93,6 +93,7 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - `1.0.266+302`: SSE geç katalog listener, VOICE_ROOM_KEY_RESOLUTION doc
 - API müzik fazı: `api-music-phase.sh` varsayılan hesap + önek çözümleme (6/6 PASS)
 - `FAZ0_STATUS.md`, `run-music-acceptance.sh`, `m5-preflight.sh`, `M7_SONG_REQUEST_200_TEMPLATE.md`
+- `faz0-verify.sh` + probe SSE heredoc düzeltmesi
 - **Sırada:** M5 cihaz (`m5-preflight.sh` → checklist), M7 song-request 200 (jeton)
 
 ---
@@ -100,7 +101,9 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 ## Hızlı komutlar
 
 ```bash
+bash scripts/faz0-verify.sh
 bash scripts/run-music-acceptance.sh
+bash scripts/m5-preflight.sh
 bash scripts/print-build-status.sh
 bash scripts/wait-apk-build.sh 900
 cd mobile && flutter test test/features/voice_hub/

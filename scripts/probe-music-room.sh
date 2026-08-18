@@ -102,6 +102,11 @@ ys_body=$(curl_json "$BASE/api/chat/youtube-stream?videoId=$video_id" \
   -H "Authorization: Bearer $TOKEN")
 
 utc=$(date -u +"%Y-%m-%d %H:%M UTC")
+sse_block=$(head -120 "$sse_tmp")
+sr_json=$(printf '%s' "$sr_body" | python3 -m json.tool 2>/dev/null || printf '%s' "$sr_body")
+ys_json=$(printf '%s' "$ys_body" | python3 -m json.tool 2>/dev/null || printf '%s' "$ys_body")
+search_json=$(printf '%s' "$search_body" | python3 -m json.tool 2>/dev/null | head -50 || printf '%s' "$search_body" | head -50)
+
 cat >"$OUT" <<EOF
 # M7 — Müzik probe yakalama (üretim)
 
@@ -119,7 +124,7 @@ cat >"$OUT" <<EOF
 ## POST song-request (slug \`$ROOM_SLUG\`) → HTTP $sr_code
 
 \`\`\`json
-$(printf '%s' "$sr_body" | python3 -m json.tool 2>/dev/null || echo "$sr_body")
+$sr_json
 \`\`\`
 
 ---
@@ -127,7 +132,7 @@ $(printf '%s' "$sr_body" | python3 -m json.tool 2>/dev/null || echo "$sr_body")
 ## GET youtube-stream?videoId=$video_id
 
 \`\`\`json
-$(printf '%s' "$ys_body" | python3 -m json.tool 2>/dev/null || echo "$ys_body")
+$ys_json
 \`\`\`
 
 ---
@@ -135,7 +140,7 @@ $(printf '%s' "$ys_body" | python3 -m json.tool 2>/dev/null || echo "$ys_body")
 ## SSE stream \`$ROOM_ID\` (ilk 24KB)
 
 \`\`\`
-$(sed 's/\`/\\`/g' "$sse_tmp" | head -120)
+$sse_block
 \`\`\`
 
 ---
@@ -143,7 +148,7 @@ $(sed 's/\`/\\`/g' "$sse_tmp" | head -120)
 ## Arama (youtube/search)
 
 \`\`\`json
-$(printf '%s' "$search_body" | python3 -m json.tool 2>/dev/null | head -50)
+$search_json
 \`\`\`
 EOF
 

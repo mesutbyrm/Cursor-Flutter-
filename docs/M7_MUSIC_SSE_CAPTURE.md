@@ -1,6 +1,6 @@
 # M7 — Müzik probe yakalama (üretim)
 
-**Tarih:** 2026-08-18 22:27 UTC  
+**Tarih:** 2026-08-18 22:50 UTC  
 **Oda slug:** `cmoohrbr`  
 **Oda id (SSE):** `cmoohrbrx00a4nt08zlkdjyil`  
 **Hesap:** `cursor.test.1786235468@mailinator.com` — jeton=0  
@@ -42,12 +42,11 @@
 ## SSE stream `cmoohrbrx00a4nt08zlkdjyil` (ilk 24KB)
 
 ```
-\`data: {"type":"connected","roomId":"cmoohrbrx00a4nt08zlkdjyil"}
-\`
-\`data: {"type":"dj","event":"QUEUE_UPDATED","playing":false,"nowPlaying":null,"musicUrl":null,"embedUrl":null,"musicQueue":[],"queue":[],"queueLength":0}
-\`
-\`data: {"type":"presence","users":[]}
-\`
+data: {"type":"connected","roomId":"cmoohrbrx00a4nt08zlkdjyil"}
+
+data: {"type":"dj","event":"QUEUE_UPDATED","playing":false,"nowPlaying":null,"musicUrl":null,"embedUrl":null,"musicQueue":[],"queue":[],"queueLength":0}
+
+data: {"type":"presence","users":[]}
 ```
 
 ---
