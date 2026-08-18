@@ -1386,7 +1386,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       }
       if (prev?.backgroundMusicEnabled != next.backgroundMusicEnabled) {
         unawaited(
-          ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).refresh(includeDj: true),
+          ref
+              .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+              .applyAudioOutputGate(
+                speakerOn: next.headphonesOn && next.backgroundMusicEnabled,
+              ),
         );
       }
       if (prev?.headphonesOn != next.headphonesOn && _audioReady) {

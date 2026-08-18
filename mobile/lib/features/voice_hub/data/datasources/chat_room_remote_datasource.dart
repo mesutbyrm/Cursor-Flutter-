@@ -2090,6 +2090,23 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  String? _extractMusicStreamUrl(Map<String, dynamic> map) {
+    final direct = pick(map, ['musicUrl', 'streamUrl', 'audioUrl', 'url'])
+        ?.toString()
+        .trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+    for (final key in const ['nowPlaying', 'item', 'currentSong', 'song']) {
+      final node = map[key];
+      if (node is! Map) continue;
+      final nested = pick(
+        Map<String, dynamic>.from(node),
+        ['musicUrl', 'streamUrl', 'audioUrl', 'url'],
+      )?.toString().trim();
+      if (nested != null && nested.isNotEmpty) return nested;
+    }
+    return null;
+  }
+
   Future<
     ({
       MusicQueueItem? item,
@@ -2112,7 +2129,13 @@ class ChatRoomRemoteDataSource {
       );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       MusicQueueItem? item;
-      final itemRaw = pick(map, ['item', 'request', 'song', 'track']);
+      final itemRaw = pick(map, [
+        'item',
+        'request',
+        'song',
+        'track',
+        'nowPlaying',
+      ]);
       if (itemRaw is Map) {
         item = MusicQueueItem.fromJson(Map<String, dynamic>.from(itemRaw));
       }
@@ -2129,8 +2152,7 @@ class ChatRoomRemoteDataSource {
         pick(map, ['newBalance', 'coinBalance', 'balance']),
       );
       final position = asInt(pick(map, ['queuePosition', 'position', 'rank']));
-      final musicUrlRaw = pick(map, ['musicUrl', 'streamUrl', 'audioUrl'])
-          ?.toString();
+      final musicUrlRaw = _extractMusicStreamUrl(map);
       final playing = map['playing'] == true || map['isPlaying'] == true;
       return (
         item: item,

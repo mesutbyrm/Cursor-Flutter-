@@ -46,9 +46,11 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
     required bool shouldPlay,
     bool withVideo = false,
   }) {
+    _markLocalMusicRequestGrace();
     ref.read(voiceRoomMusicSessionProvider.notifier).onMusicStartedFromServer();
     ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
     ref.read(voiceRoomUiProvider.notifier).ensureMusicAudible();
+    unawaited(applyAudioOutputGate(speakerOn: true));
     _lastDjPlaybackSignature = '';
     _commitDjUi(dj);
     if (!shouldPlay) return;

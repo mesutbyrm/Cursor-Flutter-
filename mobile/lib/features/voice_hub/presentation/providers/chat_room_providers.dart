@@ -387,6 +387,8 @@ class VoiceRoomLiveController
   final _pollPaused = false;
   var _pollTick = 0;
   String? _lastDjPlaybackSignature;
+  /// Yerel müzik isteği sonrası SSE/kuyruk sync'i kısa süre atla (ANR önleme).
+  DateTime? _localMusicRequestGraceUntil;
   /// Sohbet temizlendiğinde işaretlenen zaman — sonraki poll'de sunucunun
   /// tekrar döndürdüğü eski mesajlar bu işaretten eski ise gösterilmez
   /// ("temizle sonrası yazılar geri geliyor" sorunu).
@@ -1807,6 +1809,16 @@ class VoiceRoomLiveController
     return merged;
   }
 
+  void _markLocalMusicRequestGrace() {
+    _localMusicRequestGraceUntil =
+        DateTime.now().add(const Duration(seconds: 5));
+  }
+
+  bool _inLocalMusicRequestGrace() {
+    final until = _localMusicRequestGraceUntil;
+    return until != null && DateTime.now().isBefore(until);
+  }
+
   void _commitDjUi(ChatRoomDjState dj) {
     final wasMusicActive =
         state.dj.playing || state.dj.nowPlaying != null;
@@ -2037,6 +2049,7 @@ class VoiceRoomLiveController
 
   void _onMusicRelatedChatMessage(ChatRoomMessage msg) {
     _maybeShowMusicRequestFlash(msg);
+    if (_inLocalMusicRequestGrace()) return;
     final free = VoiceMusicSync.parseSongRequestFree(msg.content);
     if (free != null) {
       unawaited(_handleSongRequestFree(free, requester: msg.user));
@@ -2250,13 +2263,21 @@ class VoiceRoomLiveController
       VoiceRoomDebugLog.log('music.istek.search', {'song': song ?? '', 'room': _roomKey});
       ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
       if (song != null && song.isNotEmpty) {
-        unawaited(_postChatLineOnly(trimmed));
-        final err = await requestMusicByQuery(song);
-        if (err != null) {
-          state = state.copyWith(error: err);
-        } else {
-          state = state.copyWith(clearError: true, clearMusicRequestFlash: true);
-        }
+        _markLocalMusicRequestGrace();
+        unawaited(
+          Future<void>.microtask(() async {
+            final err = await requestMusicByQuery(song);
+            if (!_sessionActive) return;
+            if (err != null) {
+              state = state.copyWith(error: err);
+            } else {
+              state = state.copyWith(
+                clearError: true,
+                clearMusicRequestFlash: true,
+              );
+            }
+          }),
+        );
         return;
       }
       state = state.copyWith(
@@ -2836,6 +2857,7 @@ class VoiceRoomLiveController
   Future<String?> requestMusicByQuery(String query) async {
     final q = query.trim();
     if (q.length < 2) return 'Şarkı adı çok kısa.';
+    _markLocalMusicRequestGrace();
     try {
       final jeton = VoiceMusicAccess.jetonFromBalances(
         ref.read(walletBalancesProvider).valueOrNull,

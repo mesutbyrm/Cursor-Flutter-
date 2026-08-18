@@ -445,6 +445,7 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
 
   Future<void> _syncMusicFromServerIfNeeded({bool force = false}) async {
     final key = _live._roomKey;
+    if (_live._inLocalMusicRequestGrace()) return;
     if (!force) {
       final songActive =
           key.isNotEmpty && ref.read(roomSongBlocProvider(key)).state.hasTrack;

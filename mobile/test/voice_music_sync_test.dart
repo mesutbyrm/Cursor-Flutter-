@@ -53,5 +53,12 @@ void main() {
         isTrue,
       );
     });
+
+    test('does not treat raw !istek command as queue sync', () {
+      expect(
+        VoiceMusicSync.isQueueUpdateMessage('!istek Tarkan - Kış Güneşi'),
+        isFalse,
+      );
+    });
   });
 }
