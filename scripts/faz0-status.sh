@@ -78,3 +78,4 @@ else
 fi
 echo ""
 echo "Tam verify: bash scripts/faz0-verify.sh"
+echo "M7 (jeton sonrası): bash scripts/m7-on-jeton.sh"

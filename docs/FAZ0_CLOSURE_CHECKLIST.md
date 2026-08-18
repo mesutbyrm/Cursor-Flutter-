@@ -28,7 +28,7 @@ Rehber: `docs/M5_M7_JETON_BLOCKER.md`
 
 ### 2. M7 — song-request HTTP 200
 
-- [ ] `MUSIC_PROBE_ROOM=cmoohrbr bash scripts/probe-music-room.sh`
+- [ ] `bash scripts/m7-on-jeton.sh` (jeton ≥10 sonrası otomatik probe)
 - [ ] `M7_MUSIC_SSE_CAPTURE.md` içinde HTTP **200** JSON
 - [ ] `REMAINING_WORK.md` M7 → `[x]`
 
@@ -53,6 +53,7 @@ Rehber: `docs/M5_M7_JETON_BLOCKER.md`
 ```bash
 bash scripts/faz0-status.sh       # durum (hızlı)
 bash scripts/faz0-verify.sh     # tam otomatik kapılar
+bash scripts/m7-on-jeton.sh       # jeton sonrası M7 probe
 bash scripts/m5-preflight.sh      # M5 öncesi
 bash scripts/run-music-acceptance.sh
 ```

@@ -96,7 +96,8 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - `faz0-verify.sh` + probe SSE heredoc düzeltmesi
 - CI `faz0-music` job + `M5_M7_JETON_BLOCKER.md`
 - `faz0-status.sh` + `FAZ0_CLOSURE_CHECKLIST.md`
-- **Sırada:** Jeton ekle → M5 cihaz, M7 song-request 200
+- `m7-on-jeton.sh` — jeton sonrası M7 otomatik probe
+- **Sırada:** Jeton ekle → `m7-on-jeton.sh` → M5 cihaz
 
 ---
 
@@ -105,6 +106,7 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 ```bash
 bash scripts/faz0-status.sh
 bash scripts/faz0-verify.sh
+bash scripts/m7-on-jeton.sh
 bash scripts/run-music-acceptance.sh
 bash scripts/m5-preflight.sh
 bash scripts/print-build-status.sh

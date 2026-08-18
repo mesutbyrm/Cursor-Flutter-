@@ -23,21 +23,14 @@
 1. [canlifal.com](https://canlifal.com) admin paneline girin
 2. Kullanıcı: `cursor.test.1786235468@mailinator.com` (veya `cursorusr1786235468`)
 3. **≥50 jeton** ekleyin (M5 + M7 + yedek)
-4. Doğrula:
+4. Doğrula ve M7 probe:
 
 ```bash
-bash scripts/m5-preflight.sh
-# Beklenen: ✅ Jeton yeterli
+bash scripts/m5-preflight.sh   # jeton + API + unit
+bash scripts/m7-on-jeton.sh    # song-request HTTP 200
 ```
 
-5. M7 probe (200 yanıt):
-
-```bash
-MUSIC_PROBE_ROOM=cmoohrbr bash scripts/probe-music-room.sh
-# docs/M7_MUSIC_SSE_CAPTURE.md → HTTP 200 bloğu
-```
-
-6. Cihaz: `docs/M5_DEVICE_TEST_CHECKLIST.md`
+5. Cihaz: `docs/M5_DEVICE_TEST_CHECKLIST.md`
 
 ---
 
