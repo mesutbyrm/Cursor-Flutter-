@@ -19,7 +19,7 @@
 | APK `1.0.263+299` | `[x]` | Release APK başarılı |
 | APK `1.0.264+300` | `[x]` | Release APK başarılı (run 32184630561) |
 | APK `1.0.265+301` | `[x]` | Release APK başarılı |
-| APK `1.0.266+302` | `[ ]` | CI bekliyor |
+| APK `1.0.266+302` | `[x]` | Release APK başarılı (run 32191120566) |
 | FAZ 1+ | `[ ]` | FAZ 0 PASS olmadan başlamaz |
 
 ---
