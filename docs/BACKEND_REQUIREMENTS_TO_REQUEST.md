@@ -177,8 +177,9 @@ P0 ANR/çalmama bug'ı — `musicUrl` formatı (stream URL vs YouTube watch), `p
 
 **Öncelik:** P0
 
+**Referans (Flutter probe):** `docs/MUSIC_API_PRODUCTION_PROBE.md` — `music-request-by-query` üretimde **404**; Flutter `song-request` kullanıyor.
+
 **Backend'den istenen:**
-Oda `cmoohrbr` için gerçek bir `!istek` request/response + ardından gelen SSE event dump'ı.
 
 ---
 

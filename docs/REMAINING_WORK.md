@@ -12,7 +12,8 @@
 | FAZ 0 Audit | `[~]` DEVAM | OpenAPI/Prisma/B1.12 ✅; SSE şema kısmen; tam MCP eksik |
 | P0 !istek / müzik ANR | `[~]` | Kod düzeltmeleri push edildi; **Android cihaz onayı bekliyor** |
 | APK `1.0.258+294` | `[x]` | Release APK başarılı (run 32163086275) |
-| APK `1.0.259+295` | `[~]` | CI geçti; release APK derleniyor (run ~32163545874) |
+| APK `1.0.259+295` | `[~]` | Release APK uzun sürüyor (run 32163545874) |
+| APK `1.0.260+296` | `[ ]` | CI bekliyor |
 | FAZ 1+ | `[ ]` | FAZ 0 PASS olmadan başlamaz |
 
 ---
