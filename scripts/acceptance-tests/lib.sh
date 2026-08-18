@@ -349,16 +349,32 @@ login_as_teller() {
 }
 
 login_as_admin() {
-  local resp
-  if [[ -n "${ACCEPTANCE_ADMIN_EMAIL:-}" ]]; then
+  local resp tok
+  ADMIN_TOKEN=""
+  if [[ -n "${ACCEPTANCE_ADMIN_EMAIL:-}" && -n "${ACCEPTANCE_ADMIN_PASSWORD:-}" ]]; then
     resp=$(mobile_login_identifier email "$ACCEPTANCE_ADMIN_EMAIL" "$ACCEPTANCE_ADMIN_PASSWORD")
-  elif [[ -n "${ACCEPTANCE_ADMIN_USERNAME:-}" ]]; then
-    resp=$(mobile_login_identifier username "$ACCEPTANCE_ADMIN_USERNAME" "$ACCEPTANCE_ADMIN_PASSWORD")
-  else
-    return 1
+    tok=$(extract_token "$resp")
+    if [[ -n "$tok" ]]; then
+      ADMIN_TOKEN="$tok"
+      return 0
+    fi
+    jeton_topup_debug "admin login email failed for ${ACCEPTANCE_ADMIN_EMAIL}"
   fi
-  ADMIN_TOKEN=$(extract_token "$resp")
-  [[ -n "${ADMIN_TOKEN:-}" ]]
+  if [[ -n "${ACCEPTANCE_ADMIN_USERNAME:-}" && -n "${ACCEPTANCE_ADMIN_PASSWORD:-}" ]]; then
+    resp=$(mobile_login_identifier username "$ACCEPTANCE_ADMIN_USERNAME" "$ACCEPTANCE_ADMIN_PASSWORD")
+    tok=$(extract_token "$resp")
+    if [[ -n "$tok" ]]; then
+      ADMIN_TOKEN="$tok"
+      return 0
+    fi
+    jeton_topup_debug "admin login username failed for ${ACCEPTANCE_ADMIN_USERNAME}"
+  fi
+  return 1
+}
+
+jeton_topup_debug() {
+  [[ -n "${JETON_TOPUP_DEBUG:-}${ACCEPTANCE_DEBUG:-}" ]] || return 0
+  echo "[jeton-topup] $*" >&2
 }
 
 # Test kullanıcısına jeton ekle — yalnızca ACCEPTANCE_ADMIN_* ile; production gerçek kullanıcıya dokunmaz.
@@ -392,14 +408,17 @@ for k in ('jetonBalance','coins','jeton'):
     return 0
   fi
   amount="$need"
-  for body in \
-    "$(USER_ID="$user_id" AMOUNT="$amount" REASON="$reason" python3 -c 'import json,os; print(json.dumps({"userId":os.environ["USER_ID"],"type":"jeton","amount":int(os.environ["AMOUNT"]),"action":"add","reason":os.environ["REASON"]}))')" \
-    "$(USER_ID="$user_id" AMOUNT="$amount" REASON="$reason" python3 -c 'import json,os; print(json.dumps({"userId":os.environ["USER_ID"],"creditType":"jeton","amount":int(os.environ["AMOUNT"]),"operation":"add","note":os.environ["REASON"]}))')"
-  do
+  local bodies=()
+  bodies+=("$(USER_ID="$user_id" AMOUNT="$amount" REASON="$reason" python3 -c 'import json,os; print(json.dumps({"userId":os.environ["USER_ID"],"type":"jeton","amount":int(os.environ["AMOUNT"]),"action":"add","reason":os.environ["REASON"]}))')")
+  bodies+=("$(USER_ID="$user_id" AMOUNT="$amount" REASON="$reason" python3 -c 'import json,os; print(json.dumps({"userId":os.environ["USER_ID"],"creditType":"jeton","amount":int(os.environ["AMOUNT"]),"operation":"add","note":os.environ["REASON"]}))')")
+  bodies+=("$(USER_ID="$user_id" AMOUNT="$amount" python3 -c 'import json,os; print(json.dumps({"userId":os.environ["USER_ID"],"amount":os.environ["AMOUNT"],"currency":"jeton"}))')")
+  bodies+=("$(USER_ID="$user_id" AMOUNT="$amount" python3 -c 'import json,os; print(json.dumps({"userId":os.environ["USER_ID"],"amount":int(os.environ["AMOUNT"]),"currency":"JETON"}))')")
+  for body in "${bodies[@]}"; do
     code=$(http_code -X POST "$BASE/api/admin/credits" \
       -H "Authorization: Bearer $ADMIN_TOKEN" \
       -H "Content-Type: application/json" \
       -d "$body")
+    jeton_topup_debug "POST /api/admin/credits → HTTP $code body=$(printf '%s' "$body" | head -c 120)"
     if [[ "$code" == "200" || "$code" == "201" ]]; then
       sleep 1
       printf '%s' "$target_balance"
@@ -409,6 +428,23 @@ for k in ('jetonBalance','coins','jeton'):
       -H "Authorization: Bearer $ADMIN_TOKEN" \
       -H "Content-Type: application/json" \
       -d "$body")
+    jeton_topup_debug "PATCH /api/admin/users/credits → HTTP $code"
+    if [[ "$code" == "200" || "$code" == "201" ]]; then
+      sleep 1
+      printf '%s' "$target_balance"
+      return 0
+    fi
+  done
+  # Son çare: kullanıcı PATCH (jetonBalance / coins)
+  for patch_body in \
+    "$(USER_ID="$user_id" TARGET="$target_balance" python3 -c 'import json,os; print(json.dumps({"jetonBalance":int(os.environ["TARGET"])}))')" \
+    "$(USER_ID="$user_id" TARGET="$target_balance" python3 -c 'import json,os; print(json.dumps({"coins":int(os.environ["TARGET"])}))')"
+  do
+    code=$(http_code -X PATCH "$BASE/api/admin/users/$user_id" \
+      -H "Authorization: Bearer $ADMIN_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "$patch_body")
+    jeton_topup_debug "PATCH /api/admin/users/$user_id → HTTP $code"
     if [[ "$code" == "200" || "$code" == "201" ]]; then
       sleep 1
       printf '%s' "$target_balance"

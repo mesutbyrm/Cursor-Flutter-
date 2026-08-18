@@ -55,6 +55,8 @@ Admin secret'ları **manuel** eklenmelidir (`set-acceptance-secrets.sh` admin bi
 
 CI'da `faz0-verify` / `m5-preflight` admin secret varsa `POST /api/admin/credits` ile otomatik top-up dener.
 
+**CI notu:** Secret'lar var ama top-up başarısızsa admin şifresi veya hesap rolü güncellenmeli. Tanı: `JETON_TOPUP_DEBUG=1 bash scripts/debug-jeton-topup.sh` (secret gerekli).
+
 ---
 
 ## Doğrulama komutları

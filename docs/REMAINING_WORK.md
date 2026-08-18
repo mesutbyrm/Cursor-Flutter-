@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-18 22:55 UTC  
+**Son güncelleme:** 2026-08-18 23:00 UTC  
 **Kural:** Bu dosya her agent oturumunda güncellenir. Tamamlanan maddeler `[x]`, devam eden `[~]`, bekleyen `[ ]`.
 
 ---
@@ -97,7 +97,8 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - CI `faz0-music` job + `M5_M7_JETON_BLOCKER.md`
 - `faz0-status.sh` + `FAZ0_CLOSURE_CHECKLIST.md`
 - `m7-on-jeton.sh` — jeton sonrası M7 otomatik probe
-- **Sırada:** Jeton ekle → `m7-on-jeton.sh` → M5 cihaz
+- `lib.sh` admin login fallback (email→username) + OpenAPI credits body
+- **Sırada:** Jeton ekle veya admin secret düzelt → `m7-on-jeton.sh` → M5 cihaz
 
 ---
 

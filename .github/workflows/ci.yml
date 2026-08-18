@@ -103,6 +103,7 @@ jobs:
           ACCEPTANCE_ADMIN_EMAIL: ${{ secrets.ACCEPTANCE_ADMIN_EMAIL }}
           ACCEPTANCE_ADMIN_PASSWORD: ${{ secrets.ACCEPTANCE_ADMIN_PASSWORD }}
           ACCEPTANCE_ADMIN_USERNAME: ${{ secrets.ACCEPTANCE_ADMIN_USERNAME }}
+          JETON_TOPUP_DEBUG: '1'
         run: |
           set -eux
           chmod +x scripts/faz0-verify.sh
