@@ -127,6 +127,8 @@ Backend repo read-only erişimi VEYA `nextjs_space/` + `lib/` zip export.
 
 ## Eksik #5 — SSE event şema dokümanı
 
+**Durum:** ⚠️ **KISMEN** — 2026-08-18 (`docs/SSE_EVENTS_FLUTTER_PARSED.md` Flutter parser referansı)
+
 **Alan:** Voice / Live / Gifts / Notifications / Fortune / PK
 
 **Gerekli dosya:**

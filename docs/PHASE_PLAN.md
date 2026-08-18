@@ -44,7 +44,8 @@
 - [x] OpenAPI + Prisma + endpoints_index (`backend-docs/`) sağlandı
 - [x] B1.12 parity raporu entegre edildi
 - [x] MCP stub `backend-docs` okuyor (tam SDK `index.mjs` hâlâ eksik)
-- [ ] SSE event şemaları
+- [x] SSE event şemaları (Flutter parser referansı — `SSE_EVENTS_FLUTTER_PARSED.md`)
+- [ ] Resmi backend SSE örnek payload'ları
 - [ ] P0 müzik !istek Android'de PASS
 
 **FAZ 0 sonucu:** **INCOMPLETE** (tam MCP + SSE şeması + Android müzik E2E bekleniyor)

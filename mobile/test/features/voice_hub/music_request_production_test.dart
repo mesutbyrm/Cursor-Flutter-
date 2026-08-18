@@ -6,5 +6,9 @@ void main() {
     test('skipMusicRequestByQueryEndpoint true for default canlifal.com', () {
       expect(ChatRoomRemoteDataSource.skipMusicRequestByQueryEndpoint, isTrue);
     });
+
+    test('disableClientYoutubeSearch true on production host', () {
+      expect(ChatRoomRemoteDataSource.disableClientYoutubeSearch, isTrue);
+    });
   });
 }

@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.259+295 (2026-08-18) — ANR: youtube_explode üretimde kapalı
+
+- **Müzik arama:** `canlifal.com` üzerinde istemci `youtube_explode` yedeği devre dışı (ANR önleme)
+- **FAZ 0:** `docs/REMAINING_WORK.md` canlı takip listesi; `docs/SSE_EVENTS_FLUTTER_PARSED.md`
+
 ## 1.0.258+294 (2026-08-18) — !istek doğrudan song-request + MCP backend-docs
 
 - **!istek:** Üretimde ölü `music-request-by-query` atlanır; doğrudan sunucu arama + `song-request`

@@ -43,6 +43,10 @@ class ChatRoomRemoteDataSource {
     return base.contains('canlifal.com');
   }
 
+  /// Üretimde istemci `youtube_explode` araması ANR riski — yalnızca yerel API'de.
+  @visibleForTesting
+  static bool get disableClientYoutubeSearch => skipMusicRequestByQueryEndpoint;
+
   final Dio _dio;
   final YoutubeMusicSearchCache _searchCache;
 
@@ -1608,6 +1612,13 @@ class ChatRoomRemoteDataSource {
         'ms': DateTime.now().difference(started).inMilliseconds,
       });
       return catalogHits;
+    }
+
+    if (disableClientYoutubeSearch) {
+      VoiceRoomDebugLog.log('music.search.skip_client_explode', {'q': q});
+      throw const ApiException(
+        'Şarkı bulunamadı. Sunucu araması sonuç vermedi; farklı anahtar kelime deneyin.',
+      );
     }
 
     final clientHits = await _searchYoutubeWithClient(q);
