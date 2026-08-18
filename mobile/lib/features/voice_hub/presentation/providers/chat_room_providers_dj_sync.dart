@@ -7,7 +7,11 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
   void _syncRoomSongBloc() {
     final key = _live._roomKey;
     if (key.isEmpty) return;
-    ref.read(roomSongBlocProvider(key)).add(RoomSongJoinSync(key));
+    _live._roomSongBlocSyncTimer?.cancel();
+    _live._roomSongBlocSyncTimer = Timer(const Duration(milliseconds: 350), () {
+      if (_live._roomKey.isEmpty) return;
+      ref.read(roomSongBlocProvider(key)).add(RoomSongJoinSync(key));
+    });
   }
 
   Future<void> _handleMusicStoppedFromSse() async {
@@ -161,6 +165,9 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
     final blocEv = RoomSongBloc.eventFromSse(map);
     if (blocEv != null && key.isNotEmpty) {
       ref.read(roomSongBlocProvider(key)).add(blocEv);
+    }
+    if (_live._inLocalMusicRequestGrace()) {
+      return;
     }
     final sync = RoomPlaybackSync.fromPayload(map);
     final ui = ref.read(voiceRoomUiProvider);
@@ -428,7 +435,9 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
       );
       if (optimisticUi) {
         _live._commitDjUi(dj);
-        unawaited(_live._playDjInBackground(dj));
+        if (!_live._inLocalMusicRequestGrace()) {
+          unawaited(_live._playDjInBackground(dj));
+        }
       } else {
         dj = await _applyDjPlayback(dj);
         state = state.copyWith(dj: dj, clearError: true);

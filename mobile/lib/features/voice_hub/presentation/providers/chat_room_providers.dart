@@ -389,6 +389,12 @@ class VoiceRoomLiveController
   String? _lastDjPlaybackSignature;
   /// Yerel müzik isteği sonrası SSE/kuyruk sync'i kısa süre atla (ANR önleme).
   DateTime? _localMusicRequestGraceUntil;
+  /// DJ oynatma — eşzamanlı çağrıları sıraya al, son isteği birleştir (ANR önleme).
+  Future<void> _djPlaybackChain = Future.value();
+  ChatRoomDjState? _pendingDjPlayback;
+  RoomPlaybackSync? _pendingDjPlaybackSync;
+  bool _djPlaybackDrainScheduled = false;
+  Timer? _roomSongBlocSyncTimer;
   /// Sohbet temizlendiğinde işaretlenen zaman — sonraki poll'de sunucunun
   /// tekrar döndürdüğü eski mesajlar bu işaretten eski ise gösterilmez
   /// ("temizle sonrası yazılar geri geliyor" sorunu).
@@ -780,6 +786,7 @@ class VoiceRoomLiveController
     _kickWarningTimer?.cancel();
     _seatRefreshDebounce?.cancel();
     _sseRoomRefreshDebounce?.cancel();
+    _roomSongBlocSyncTimer?.cancel();
   }
 
   /// Odadan çıkış — TRTC/ses kesilir, ardından backend leave, sonra SSE/state.
@@ -1882,9 +1889,32 @@ class VoiceRoomLiveController
   Future<void> _playDjInBackground(
     ChatRoomDjState dj, {
     RoomPlaybackSync? sync,
-  }) async {
-    final applied = await _applyDjPlayback(dj, sync: sync);
-    state = state.copyWith(dj: applied);
+  }) {
+    _pendingDjPlayback = dj;
+    _pendingDjPlaybackSync = sync;
+    if (_djPlaybackDrainScheduled) return _djPlaybackChain;
+    _djPlaybackDrainScheduled = true;
+    _djPlaybackChain = _djPlaybackChain.then((_) => _drainDjPlaybackQueue());
+    return _djPlaybackChain;
+  }
+
+  Future<void> _drainDjPlaybackQueue() async {
+    try {
+      while (_pendingDjPlayback != null) {
+        final dj = _pendingDjPlayback!;
+        final sync = _pendingDjPlaybackSync;
+        _pendingDjPlayback = null;
+        _pendingDjPlaybackSync = null;
+        if (!_sessionActive) break;
+        try {
+          final applied = await _applyDjPlayback(dj, sync: sync);
+          if (!_sessionActive) break;
+          state = state.copyWith(dj: applied);
+        } catch (_) {}
+      }
+    } finally {
+      _djPlaybackDrainScheduled = false;
+    }
   }
 
   void clearPendingMusicSearch() {
@@ -2263,7 +2293,6 @@ class VoiceRoomLiveController
       VoiceRoomDebugLog.log('music.istek.search', {'song': song ?? '', 'room': _roomKey});
       ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
       if (song != null && song.isNotEmpty) {
-        _markLocalMusicRequestGrace();
         unawaited(
           Future<void>.microtask(() async {
             final err = await requestMusicByQuery(song);
@@ -2857,7 +2886,6 @@ class VoiceRoomLiveController
   Future<String?> requestMusicByQuery(String query) async {
     final q = query.trim();
     if (q.length < 2) return 'Şarkı adı çok kısa.';
-    _markLocalMusicRequestGrace();
     try {
       final jeton = VoiceMusicAccess.jetonFromBalances(
         ref.read(walletBalancesProvider).valueOrNull,

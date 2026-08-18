@@ -50,13 +50,8 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
     ref.read(voiceRoomMusicSessionProvider.notifier).onMusicStartedFromServer();
     ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
     ref.read(voiceRoomUiProvider.notifier).ensureMusicAudible();
-    unawaited(applyAudioOutputGate(speakerOn: true));
-    _lastDjPlaybackSignature = '';
     _commitDjUi(dj);
     if (!shouldPlay) return;
-    if (withVideo || dj.nowPlaying?.isVideoRequest == true) {
-      _syncRoomVideo(dj);
-    }
     unawaited(_startDjPlaybackNonBlocking(dj, preferVideo: withVideo));
   }
 
@@ -68,29 +63,32 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
     if (!_sessionActive || _roomKey.isEmpty) return;
 
     var playable = dj;
-    if (preferVideo || playable.nowPlaying?.isVideoRequest == true) {
+    final isVideo = preferVideo || playable.nowPlaying?.isVideoRequest == true;
+    if (isVideo) {
       _syncRoomVideo(playable);
     }
 
-    final vid = playable.nowPlaying?.resolvedVideoId ?? '';
-    final needsResolve = SongPlaybackFields.parseQuiet({
-      'musicUrl': playable.musicUrl,
-      'videoId': vid,
-    }).resolvedAudioStreamUrl ==
-        null;
-    if (needsResolve && vid.isNotEmpty) {
-      final resolved = await _resolvePlaybackStreamUrl(
-        videoId: vid,
-        serverUrl: playable.musicUrl,
-      );
-      if (resolved != null && resolved.isNotEmpty) {
-        playable = playable.copyWith(musicUrl: resolved, playing: true);
-        _commitDjUi(playable);
+    if (!isVideo) {
+      final vid = playable.nowPlaying?.resolvedVideoId ?? '';
+      final fields = SongPlaybackFields.parseQuiet({
+        'musicUrl': playable.musicUrl,
+        'videoId': vid,
+      });
+      final hasDirectStream = fields.resolvedAudioStreamUrl != null;
+      if (!hasDirectStream && vid.isNotEmpty) {
+        final resolved = await _resolvePlaybackStreamUrl(
+          videoId: vid,
+          serverUrl: playable.musicUrl,
+        );
+        if (resolved != null && resolved.isNotEmpty) {
+          playable = playable.copyWith(musicUrl: resolved, playing: true);
+          _commitDjUi(playable);
+        }
       }
     }
 
     if (!_sessionActive) return;
-    unawaited(_playDjInBackground(playable));
+    return _playDjInBackground(playable);
   }
 
   /// Hoparlör aç/kapa — müzik çıkışını anında kes veya (kullanıcı isterse) sürdür.
