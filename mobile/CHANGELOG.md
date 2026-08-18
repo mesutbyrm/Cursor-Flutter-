@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.253+289 (2026-08-18) — Ana sayfa 5sn donma (presence SSE)
+
+- **Kök neden:** T+3sn `VoiceRoomsPresenceScope` 12 oda SSE'sini aynı anda açıyordu; ana thread kilitleniyordu
+- **Presence:** Otomatik `voiceRoomsProvider` dinleme kaldırıldı; yalnızca ekran `mergeTrackRooms` çağırınca SSE
+- **SSE:** Oda bağlantıları 180ms aralıkla kademeli (ANR önleme); ana sayfada en fazla 6 oda
+- **Kabuk:** Global presence scope kaldırıldı — açılışta ağır SSE yükü yok
+- **Hikâyeler:** Ortadaki spinner yerine iskelet halkalar (UI donmuş görünümü azaltır)
+- **Ticker:** Bootstrap sonrası gereksiz ticker yenilemesi atlanır
+
 ## 1.0.252+288 (2026-08-18) — Ana sayfa donma (ANR) düzeltmesi
 
 - **Kök neden:** `homeLiveVoiceRoomsProvider` presence + `ref.listen` döngüsü ana thread'i kilitliyordu

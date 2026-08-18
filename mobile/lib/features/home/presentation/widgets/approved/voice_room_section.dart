@@ -35,7 +35,7 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(voiceRoomsPresenceProvider.notifier).mergeTrackRooms(
-            rooms.take(VoiceRoomsPresenceNotifier.maxTrackedRooms).toList(),
+            rooms.take(VoiceRoomsPresenceNotifier.homeTrackedRooms).toList(),
           );
     });
   }

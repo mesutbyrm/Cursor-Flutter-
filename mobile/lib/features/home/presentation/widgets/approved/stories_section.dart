@@ -26,11 +26,33 @@ class StoriesSection extends ConsumerWidget {
     return ringsAsync.when(
       loading: () => SizedBox(
         height: HomeApprovedDesign.storySize + 36,
-        child: const Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
+        child: LazyHorizontalListView(
+          padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+          itemCount: 5,
+          itemBuilder: (_, __) => Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Column(
+              children: [
+                Container(
+                  width: HomeApprovedDesign.storySize + 4,
+                  height: HomeApprovedDesign.storySize + 4,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: HomeApprovedDesign.surface.withValues(alpha: 0.55),
+                    border: Border.all(color: HomeApprovedDesign.border),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  width: 48,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: HomeApprovedDesign.surface.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

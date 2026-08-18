@@ -18,14 +18,32 @@ import '../../../../voice_hub/presentation/utils/navigate_to_voice_room.dart';
 import '../../utils/social_feed_refresh.dart';
 
 /// «Aktif Odalar» — canlı yayın ve ses odaları yatay şeridi.
-class SocialActiveRooms extends ConsumerWidget {
+class SocialActiveRooms extends ConsumerStatefulWidget {
   const SocialActiveRooms({super.key, this.embeddedInFeed = false});
 
   /// Akışta her 2 gönderi arasında gösterilir.
   final bool embeddedInFeed;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SocialActiveRooms> createState() => _SocialActiveRoomsState();
+}
+
+class _SocialActiveRoomsState extends ConsumerState<SocialActiveRooms> {
+  var _presenceSynced = false;
+
+  void _syncPresenceOnce(List<VoiceRoomEntity> rooms) {
+    if (_presenceSynced || rooms.isEmpty) return;
+    _presenceSynced = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(voiceRoomsPresenceProvider.notifier).mergeTrackRooms(
+            rooms.take(VoiceRoomsPresenceNotifier.maxTrackedRooms).toList(),
+          );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final live = ref.watch(liveStreamsProvider);
     final rooms = ref.watch(voiceRoomsProvider);
     final presence = ref.watch(voiceRoomsPresenceProvider);
@@ -35,6 +53,10 @@ class SocialActiveRooms extends ConsumerWidget {
       rooms.valueOrNull,
       presence,
     );
+    final roomList = rooms.valueOrNull;
+    if (roomList != null && roomList.isNotEmpty) {
+      _syncPresenceOnce(roomList);
+    }
     final hasLive = chips.any((c) => c.kind == _ActiveRoomKind.live);
     final hasVoice = chips.any((c) => c.kind == _ActiveRoomKind.voice);
     final embeddedTitle = buildSocialActiveRoomsEmbeddedTitle(
@@ -60,13 +82,13 @@ class SocialActiveRooms extends ConsumerWidget {
 
     return Padding(
       padding: EdgeInsets.only(
-        top: embeddedInFeed ? 4 : 8,
-        bottom: embeddedInFeed ? 8 : 12,
+        top: widget.embeddedInFeed ? 4 : 8,
+        bottom: widget.embeddedInFeed ? 8 : 12,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!embeddedInFeed)
+          if (!widget.embeddedInFeed)
             DiscoverSectionHeader(
               title: 'Aktif Odalar',
               actionLabel: 'Tümünü Gör',
@@ -98,7 +120,7 @@ class SocialActiveRooms extends ConsumerWidget {
                 ],
               ),
             ),
-          if (!embeddedInFeed) SizedBox(height: 10),
+          if (!widget.embeddedInFeed) SizedBox(height: 10),
           SizedBox(
             height: 118,
             child: ListView.separated(

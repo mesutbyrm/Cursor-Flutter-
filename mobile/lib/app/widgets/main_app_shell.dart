@@ -23,7 +23,6 @@ import '../../features/gifts/presentation/global/global_gift_overlay.dart';
 import '../../features/voice_hub/presentation/widgets/staff_entrance_marquee_host.dart';
 import '../../features/voice_hub/presentation/widgets/global_site_marquee_listener.dart';
 import '../router/app_router.dart';
-import '../../core/bootstrap/voice_rooms_presence_scope.dart';
 import '../../core/network/sse/connectivity_sse_reconnect_provider.dart';
 import '../../core/sse_client_provider.dart';
 import '../../core/widgets/offline_status_banner.dart';
@@ -49,7 +48,6 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
   GoRouter? _router;
   String _location = '/feed';
   var _listenerAttached = false;
-  var _realtimeReady = false;
   Timer? _realtimeTimer;
   SseClientLifecycleBinding? _sseLifecycle;
 
@@ -66,7 +64,6 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
     });
     _realtimeTimer = Timer(StartupPerf.shellRealtimeDelay, () {
       if (!mounted) return;
-      setState(() => _realtimeReady = true);
       unawaited(ref.read(approvedPsychicProvider.notifier).refresh());
       unawaited(ref.read(approvedAgencyProvider.notifier).refresh());
     });
@@ -143,10 +140,6 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
       body = VoicePkInviteListener(child: body);
       body = VideoCallIncomingHost(child: body);
       body = AppBottomNavHost(location: location, child: body);
-    }
-
-    if (!isAuthRoute && _realtimeReady) {
-      body = VoiceRoomsPresenceScope(child: body);
     }
 
     return OfflineStatusBanner(
