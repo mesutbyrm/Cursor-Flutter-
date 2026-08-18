@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.263+299 (2026-08-18) — DJ player: youtube-stream API üretimde atla
+
+- **ANR:** `youtube-stream` API URL'leri üretimde `resolvePlayableUrl` çağırmaz (IFrame yolu)
+- **Test:** `voice_room_dj_player_resolve_test.dart`
+- **M7:** `scripts/probe-music-room.sh` + `docs/M7_MUSIC_SSE_CAPTURE.md` (üretim probe)
+
 ## 1.0.262+298 (2026-08-18) — MCP read_source + B3/B4 dokümanları
 
 - **MCP v1.2.0:** `read_source`, `search_source`, `list_services` (OpenAPI path excerpt destekli)
