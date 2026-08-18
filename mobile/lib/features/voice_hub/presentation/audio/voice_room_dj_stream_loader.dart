@@ -4,8 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../../../../core/config/env.dart';
-
 /// googlevideo akışları Referer gerektirir.
 /// Önce HTTP stream (web gibi); başarısız olursa yerel önbelleğe indirilir.
 class VoiceRoomDjStreamLoader {
@@ -49,16 +47,11 @@ class VoiceRoomDjStreamLoader {
     return clientPlaybackUrl(trimmed);
   }
 
-  /// Üretim proxy — googlevideo için Referer sunucuda eklenir.
-  static String? proxyPlaybackUrl(String streamUrl) {
-    final trimmed = streamUrl.trim();
-    if (!needsLocalDownload(trimmed)) return null;
-    final base = Env.siteOrigin;
-    return '$base/api/chat/youtube-audio?url=${Uri.encodeComponent(trimmed)}';
-  }
+  /// Üretim `/api/chat/youtube-audio` yalnızca `videoId` kabul eder; `?url=` 400 döner.
+  /// googlevideo CDN proxy bu yüzden kullanılmıyor — IFrame veya doğrudan CDN.
+  static String? proxyPlaybackUrl(String streamUrl) => null;
 
-  /// Backend ile aynı: Android googlevideo → `/api/chat/youtube-audio` proxy (Referer sunucuda).
-  /// Sıra: proxy → doğrudan CDN → yerel önbellek.
+  /// Android googlevideo: doğrudan CDN → yerel önbellek (kırık proxy atlanır).
   Future<List<String>> buildPlaybackTargets(String streamUrl) async {
     final trimmed = streamUrl.trim();
     if (trimmed.isEmpty) return const [];
@@ -83,7 +76,6 @@ class VoiceRoomDjStreamLoader {
     final isYtCdn = needsLocalDownload(trimmed);
 
     if (!kIsWeb && Platform.isAndroid && isYtCdn) {
-      add(proxyPlaybackUrl(trimmed));
       add(trimmed);
       add(await downloadFallback(trimmed));
       return targets;
@@ -93,14 +85,11 @@ class VoiceRoomDjStreamLoader {
     return targets;
   }
 
-  /// Android istemci giriş URL'si — googlevideo backend proxy'sine yönlendirilir.
+  /// Android istemci giriş URL'si — googlevideo doğrudan (üretim proxy uyumsuz).
   static String clientPlaybackUrl(String streamUrl) {
     final trimmed = streamUrl.trim();
     if (trimmed.isEmpty) return trimmed;
     if (isBackendAudioProxy(trimmed)) return trimmed;
-    if (!kIsWeb && Platform.isAndroid && needsLocalDownload(trimmed)) {
-      return proxyPlaybackUrl(trimmed) ?? trimmed;
-    }
     return trimmed;
   }
 

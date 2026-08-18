@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.257+293 (2026-08-18) — !istek üretim yedeği + backend-docs
+
+- **Kök neden:** Üretimde `POST …/music-request-by-query` **404** — `!istek` hiç çalışmıyordu
+- **Yedek:** 404'te sunucu YouTube arama + `song-request` (youtube_explode istemci yedeği yok)
+- **Oynatma:** Kırık `youtube-audio?url=` proxy kaldırıldı; googlevideo doğrudan CDN / IFrame
+- **FAZ 0:** `backend-docs/` (OpenAPI, endpoints_index, Prisma, B1.12 parity raporu)
+
 ## 1.0.256+292 (2026-08-18) — Müzik ANR kök düzeltme (grace + IFrame ses)
 
 - **Kök neden:** API beklerken SSE/refresh çift oynatma; `youtube_explode` ana thread'i kilitliyordu

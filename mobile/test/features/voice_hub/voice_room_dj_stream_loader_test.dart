@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:canlifal_social/features/voice_hub/presentation/audio/voice_room_dj_stream_loader.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,37 +7,23 @@ void main() {
     const cdn =
         'https://rr3---sn-abc.googlevideo.com/videoplayback?expire=1';
 
-    test('clientPlaybackUrl rewrites googlevideo on Android only', () {
+    test('clientPlaybackUrl keeps googlevideo URL on Android', () {
       final proxied = VoiceRoomDjStreamLoader.clientPlaybackUrl(cdn);
-      if (Platform.isAndroid) {
-        expect(proxied, contains('/api/chat/youtube-audio'));
-        expect(proxied, contains('url='));
-      } else {
-        expect(proxied, cdn);
-      }
+      expect(proxied, cdn);
     });
 
-    test('buildPlaybackTargets prefers backend proxy on Android', () async {
+    test('buildPlaybackTargets prefers direct CDN on Android', () async {
       final loader = VoiceRoomDjStreamLoader(Dio());
       final targets = await loader.buildPlaybackTargets(cdn);
       expect(targets, isNotEmpty);
-      if (Platform.isAndroid) {
-        expect(targets.first, contains('/api/chat/youtube-audio'));
-        expect(targets, contains(cdn));
-      } else {
-        expect(targets.first, cdn);
-      }
+      expect(targets.first, cdn);
     });
 
-    test('preparePlaybackSource rewrites googlevideo on Android', () async {
+    test('preparePlaybackSource keeps googlevideo on Android', () async {
       final loader = VoiceRoomDjStreamLoader(Dio());
       final prepared = await loader.preparePlaybackSource(cdn);
       expect(prepared, isNotNull);
-      if (Platform.isAndroid) {
-        expect(prepared, contains('/api/chat/youtube-audio'));
-      } else {
-        expect(prepared, cdn);
-      }
+      expect(prepared, cdn);
     });
   });
 }

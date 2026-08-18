@@ -4,8 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-import '../../../../core/config/env.dart';
-
 /// YouTube watch URL → doğrudan ses akışı (site API → Piped → Invidious).
 /// googlevideo URL'leri mobilde API proxy veya stream loader ile oynatılır.
 class YoutubeStreamResolver {
@@ -56,22 +54,8 @@ class YoutubeStreamResolver {
         u.endsWith('.opus');
   }
 
-  /// googlevideo → Android'de backend `/api/chat/youtube-audio` proxy.
-  static String wrapForMobilePlayback(String url) {
-    final trimmed = url.trim();
-    if (trimmed.isEmpty || !trimmed.startsWith('http')) return trimmed;
-    final lower = trimmed.toLowerCase();
-    if (lower.contains('/api/chat/youtube-audio')) return trimmed;
-    if (!lower.contains('googlevideo.com') &&
-        !lower.contains('youtube.com/api/')) {
-      return trimmed;
-    }
-    if (!kIsWeb && Platform.isAndroid) {
-      final base = Env.siteOrigin;
-      return '$base/api/chat/youtube-audio?url=${Uri.encodeComponent(trimmed)}';
-    }
-    return trimmed;
-  }
+  /// googlevideo — üretimde `?url=` proxy desteklenmiyor; doğrudan CDN kullan.
+  static String wrapForMobilePlayback(String url) => url.trim();
 
   static bool isYoutubePageUrl(String url) {
     final u = url.trim().toLowerCase();

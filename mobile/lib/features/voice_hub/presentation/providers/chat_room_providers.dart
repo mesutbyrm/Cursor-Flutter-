@@ -3060,7 +3060,6 @@ class VoiceRoomLiveController
           return 'Şarkı isteği için en az $requiredCost jetona sahip olmalısınız.';
         }
       }
-      unawaited(ref.read(youtubeStreamResolverProvider).prefetch(resolvedUrl));
       VoiceRoomDebugLog.log('music.request', {
         'title': title,
         'priority': priority,
@@ -3093,11 +3092,6 @@ class VoiceRoomLiveController
         'queuePos': result.queuePosition,
         'hasUrl': result.musicUrl != null,
       });
-      if (result.musicUrl != null && result.musicUrl!.isNotEmpty) {
-        unawaited(
-          ref.read(youtubeStreamResolverProvider).prefetch(result.musicUrl!),
-        );
-      }
       VoiceRoomMusicPipelineLog.istekSubmitted(
         song: title,
         roomId: _roomKey,

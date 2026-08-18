@@ -10,16 +10,15 @@
 
 Backend MCP'nin çalışması ve Flutter parity doğrulaması için **canlı backend kaynak dosyaları** Flutter reposunda yok.
 
-| # | Eksik | Neden kritik |
-|---|-------|--------------|
-| 1 | Tam `mcp-server/index.mjs` (SDK'lı) | Repodaki stub yalnızca matrix okur |
-| 2 | `openapi.json` | Endpoint request/response şeması |
-| 3 | `endpoints_index.json` | Auth, method, tag metadata |
-| 4 | `prisma/schema.prisma` (üretim) | Model alan adları |
-| 5 | `nextjs_space/app/api/**/route.ts` | Gerçek handler kaynağı |
-| 6 | `backend-docs/*.md` | MCP resource URI'leri |
-| 7 | SSE event şema dokümanı | Event adı/body uydurma riski |
-| 8 | Müzik API response örnekleri | `musicUrl`, `queue`, `playing` alanları |
+| # | Eksik | Durum |
+|---|-------|-------|
+| 1 | Tam `mcp-server/index.mjs` (SDK'lı) | ❌ Eksik |
+| 2 | `openapi.json` + `endpoints_index.json` | ✅ `backend-docs/` |
+| 3 | `prisma/schema.prisma` | ✅ `backend-docs/schema.prisma` |
+| 4 | `nextjs_space/app/api/**/route.ts` | ❌ Eksik |
+| 5 | B1.12 + MCP registry (`backend-docs/*.md`) | ✅ Sağlandı |
+| 6 | SSE event şema dokümanı | ❌ Eksik |
+| 7 | Müzik API response örnekleri (gerçek oda dump) | ❌ Eksik |
 
 ---
 

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -55,14 +53,9 @@ void main() {
       expect(YoutubeStreamResolver.isDirectAudioStreamUrl(cdn), isTrue);
     });
 
-    test('wrapForMobilePlayback uses backend proxy on Android', () {
+    test('wrapForMobilePlayback keeps googlevideo URL unchanged', () {
       const cdn = 'https://x.googlevideo.com/videoplayback?id=1';
-      final wrapped = YoutubeStreamResolver.wrapForMobilePlayback(cdn);
-      if (Platform.isAndroid) {
-        expect(wrapped, contains('/api/chat/youtube-audio'));
-      } else {
-        expect(wrapped, cdn);
-      }
+      expect(YoutubeStreamResolver.wrapForMobilePlayback(cdn), cdn);
     });
 
     test('detects youtube-stream API URL as needing resolve', () {

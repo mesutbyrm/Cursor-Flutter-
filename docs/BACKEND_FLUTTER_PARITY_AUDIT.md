@@ -1,7 +1,25 @@
 # FAZ 0 — Backend ↔ Flutter Parity Audit
 
-**Tarih:** 2026-08-18  
-**Kaynak önceliği:** (1) Backend canlı kod *(erişim yok)* → (2) OpenAPI/index *(repoda yok)* → (3) `FLUTTER_ENTegrasyon_KILAVUZU.md` → (4) `API_ENDPOINT_MATRIX.md` → (5) Flutter kodu
+**Tarih:** 2026-08-18 (güncelleme: B1.12 + canlı probe)  
+**Kaynak önceliği:** (1) `backend-docs/` (OpenAPI, endpoints_index, B1.12) → (2) Canlı HTTP probe → (3) `FLUTTER_ENTegrasyon_KILAVUZU.md` → (4) Flutter kodu
+
+---
+
+## 0. B1.12 özet (11 Ağustos 2026 — `backend-docs/B1_12_API_MCP_FLUTTER_PARITY.md`)
+
+| Ölçüm | Değer |
+|--------|-----:|
+| ANA backend method-endpoint | **704** |
+| Flutter benzersiz endpoint | **296** |
+| ✅ MATCH (ANA) | **194** |
+| ✅ MATCH (İKİNCİ games API) | **16** |
+| ⚠️ WRONG_HOST | **12** (`/api/gifts/insights/*`, `/api/gifts/missions*`) |
+| ⚠️ MISSING_BACKEND_ENDPOINT | **68** |
+| ➖ LEGACY_UNUSED | **6** |
+
+**En kritik WRONG_HOST:** Router `api_backend_router.dart` yalnızca `gifts/battles` ve `gifts/goals` için İKİNCİ API'ye yönlendiriyor; insights/missions ANA'da 404.
+
+**Müzik (B1.12):** `/api/chat/music/popular`, `/api/chat/youtube-audio` listede eksik. **Canlı probe (18 Ağu 2026):** `youtube-audio?videoId=` **var**; `?url=` **400**; `music-request-by-query` **404**.
 
 ---
 
@@ -9,14 +27,12 @@
 
 | Kaynak | Sayı |
 |--------|-----:|
-| Backend handler (doküman) | 690 |
-| Backend benzersiz path (doküman) | 438 |
-| Matrix satırı | 873 |
+| Backend handler (`backend-docs/openapi.json`) | ~690 |
+| Backend benzersiz path (`endpoints_index.json`) | ~438 |
+| Matrix satırı (`API_ENDPOINT_MATRIX.md`) | 873 |
 | Flutter `api_endpoints.dart` sabit | ~471 |
-| Matrix ↔ Flutter bağlı (önceki audit) | 256 |
-| Flutter-only path (önceki audit) | 180 |
-
-> **Not:** Güncel sayılar backend MCP veya OpenAPI olmadan tam doğrulanamaz. Aşağıdaki tablolar mevcut doküman + kod taramasına dayanır.
+| B1.12 Flutter çağrıları | 296 |
+| B1.12 doğru eşleşme | 210 |
 
 ---
 
@@ -42,7 +58,7 @@
 | SSE | `GET .../stream` | `chat_room_sse_service.dart` | ✅ |
 | Koltuk | `POST .../seats` | `chat_room_providers_seat.dart` | ✅ |
 | Voice session | `POST .../voice` | `joinVoiceSession` | ✅ |
-| Müzik istek | `POST .../music-request-by-query` | `requestMusicByQuery` | ✅ API / ⚠️ ANR P0 |
+| Müzik istek | `POST .../song-request` (üretim) | `requestMusic` / fallback | ✅ / ⚠️ `music-request-by-query` **404** üretimde |
 | Şarkı kuyruğu | `POST .../song-request` | `enqueueSongUseCase` | ✅ |
 | Stream resolve | `GET /api/chat/youtube-stream` | `resolveStreamUseCase` | ✅ |
 | TRTC token | `/api/trtc/token` | `trtc_remote_datasource.dart` | ✅ |
@@ -109,17 +125,17 @@ Backend'den **event adı + JSON şema** dosyası olmadan tam parity iddia edilem
 
 ---
 
-## 4. MCP parity (kritik bulgu)
+## 4. MCP parity
 
-| Özellik | Backend MCP (yüklediğiniz README) | Flutter repo MCP (`mcp-server/index.mjs`) |
-|---------|-----------------------------------|-------------------------------------------|
-| `list_endpoints` | OpenAPI + `endpoints_index.json` | Yalnızca `API_ENDPOINT_MATRIX.md` |
+| Özellik | Backend MCP (hedef) | Flutter repo MCP (`mcp-server/index.mjs`) |
+|---------|---------------------|-------------------------------------------|
+| `list_endpoints` | `backend-docs/endpoints_index.json` | ✅ Dosya repoda; MCP stub henüz okumuyor |
 | `get_endpoint` | route.ts kaynak kodu | Matrix satırı |
-| `list_models` / `get_model` | `prisma/schema.prisma` | ❌ Yok |
-| `read_source` / `search_source` | `nextjs_space/`, `lib/` | ❌ Yok |
-| Resources | `openapi://`, `schema://prisma` | Audit MD dosyaları |
+| `list_models` / `get_model` | `backend-docs/schema.prisma` | ❌ Stub yok |
+| `read_source` | `nextjs_space/` | ❌ Yok |
+| OpenAPI resource | `backend-docs/openapi.json` | ❌ Stub yok |
 
-**Sonuç:** Flutter reposundaki MCP, backend MCP'nin **%30 stub** versiyonu. Tam parity için backend MCP paketi + kaynak dosyalar gerekli.
+**Sonuç:** `backend-docs/` **SAĞLANDI** (18 Ağu 2026). Tam MCP `index.mjs` hâlâ eksik.
 
 ---
 
@@ -130,7 +146,7 @@ Backend'den **event adı + JSON şema** dosyası olmadan tam parity iddia edilem
 | 1 | Games API | `api_backend_router.dart` → ayrı origin | PK/games path'leri | P1 — dokümante |
 | 2 | Legacy auth path | Sabitlerde eski path | Kullanılmamalı | P2 |
 | 3 | Socket.IO gifts | Live gift realtime | SSE mi? | P1 — backend onayı |
-| 4 | Müzik ANR | `!istek` donma | Çalışmalı | **P0** |
+| 4 | Müzik ANR / !istek | `music-request-by-query` 404 → `song-request` yedeği eklendi; proxy düzeltildi | **P0** — Android E2E bekliyor |
 | 5 | `api/` mirror | Express JWT API | Üretim değil | Bilgi |
 
 ---
@@ -148,13 +164,14 @@ Backend'den **event adı + JSON şema** dosyası olmadan tam parity iddia edilem
 | Fortune | PASS | ⚠️ | PASS | PASS | ⚠️ |
 | Shorts | ⚠️ | N/A | N/A | ⚠️ | ⚠️ |
 
-**Genel FAZ 0 parity:** **INCOMPLETE** — backend kaynak/OpenAPI/SSE şemaları eksik; Voice müzik P0 açık.
+**Genel FAZ 0 parity:** **INCOMPLETE** — tam MCP + route.ts kaynağı + SSE şeması eksik; Voice müzik fix kodlandı, cihaz doğrulaması bekliyor.
 
 ---
 
 ## 7. FAZ 0 çıktısı
 
-- Kod değiştirilmedi ✅
 - Parity haritası oluşturuldu ✅
-- Eksik backend dosyaları `BACKEND_REQUIREMENTS_TO_REQUEST.md`'de listelendi ✅
-- FAZ 1'e geçiş: **Backend eksikleri tamamlanana ve P0 müzik ANR doğrulanana kadar beklenmeli**
+- `backend-docs/` entegre edildi ✅ (18 Ağu 2026)
+- B1.12 raporu repoda ✅
+- `music-request-by-query` üretim 404 tespit edildi; Flutter yedeği eklendi ✅
+- FAZ 1'e geçiş: **Tam MCP + P0 müzik Android PASS**

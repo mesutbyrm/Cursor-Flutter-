@@ -56,6 +56,8 @@ node index.mjs --selftest   # "status": "OK" beklenir
 
 ## Eksik #2 — OpenAPI + Endpoint Index
 
+**Durum:** ✅ **SAĞLANDI** — 2026-08-18 (`backend-docs/openapi.json`, `backend-docs/endpoints_index.json`)
+
 **Alan:** Tüm API
 
 **Gerekli dosya:**
@@ -78,6 +80,8 @@ DTO/model uyumsuzluğu, sessiz parse hataları, 400/422 hataları.
 ---
 
 ## Eksik #3 — Prisma şeması (üretim)
+
+**Durum:** ✅ **SAĞLANDI** — 2026-08-18 (`backend-docs/schema.prisma`)
 
 **Alan:** Tüm modeller
 
@@ -249,6 +253,8 @@ Test ortamı credentials (production değil) veya `mobile-register` ile oluştur
 ---
 
 ## Eksik #11 — `backend-docs/` klasörü
+
+**Durum:** ✅ **SAĞLANDI** — 2026-08-18 (OpenAPI, endpoints_index, schema, B1.12, MCP registry)
 
 **Alan:** MCP resources
 

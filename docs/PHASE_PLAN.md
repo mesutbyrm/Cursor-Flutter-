@@ -10,7 +10,7 @@
 
 | Faz | Ad | Durum | Bloker |
 |-----|-----|-------|--------|
-| **0** | Backend + Flutter Audit | 🔄 **DEVAM** | Backend MCP/OpenAPI eksik |
+| **0** | Backend + Flutter Audit | 🔄 **DEVAM** | Tam MCP index.mjs; P0 müzik cihaz testi |
 | 1 | Core + Auth + API Architecture | ⏸ Bekliyor | FAZ 0 PASS |
 | 2 | Profile | ⏸ | FAZ 1 |
 | 3 | Social | ⏸ | FAZ 2 |
@@ -41,11 +41,13 @@
 **Kabul kriterleri:**
 - [x] Flutter yapısı belgelendi
 - [x] Parity haritası oluşturuldu
-- [ ] Backend MCP tam paket sağlandı
-- [ ] OpenAPI + Prisma + SSE şemaları sağlandı
-- [ ] P0 müzik ANR Android'de PASS
+- [x] OpenAPI + Prisma + endpoints_index (`backend-docs/`) sağlandı
+- [x] B1.12 parity raporu entegre edildi
+- [ ] Backend MCP tam paket (`index.mjs` SDK'lı)
+- [ ] SSE event şemaları
+- [ ] P0 müzik !istek Android'de PASS
 
-**FAZ 0 sonucu:** **INCOMPLETE** (backend dosyaları bekleniyor)
+**FAZ 0 sonucu:** **INCOMPLETE** (tam MCP + SSE şeması + Android müzik E2E bekleniyor)
 
 ---
 

@@ -12,6 +12,9 @@
     "start": "node index.mjs",
     "selftest": "node index.mjs --selftest"
   },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
   "engines": {
     "node": ">=18"
   }

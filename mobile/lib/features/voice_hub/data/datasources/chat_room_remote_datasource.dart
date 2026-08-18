@@ -2123,46 +2123,120 @@ class ChatRoomRemoteDataSource {
     required String query,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final res = await _dio.safePost<dynamic>(
-        ApiEndpoints.chatRoomMusicRequestByQuery(key),
-        data: <String, dynamic>{'query': query.trim()},
-      );
-      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
-      MusicQueueItem? item;
-      final itemRaw = pick(map, [
-        'item',
-        'request',
-        'song',
-        'track',
-        'nowPlaying',
-      ]);
-      if (itemRaw is Map) {
-        item = MusicQueueItem.fromJson(Map<String, dynamic>.from(itemRaw));
+      try {
+        final res = await _dio.safePost<dynamic>(
+          ApiEndpoints.chatRoomMusicRequestByQuery(key),
+          data: <String, dynamic>{'query': query.trim()},
+        );
+        final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+        return _parseMusicRequestByQueryMap(map);
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        VoiceRoomDebugLog.log('music.request_by_query.fallback', {
+          'room': key,
+          'query': query.trim(),
+          'status': e.statusCode,
+        });
+        return _requestMusicByQueryViaSongRequest(
+          roomKey: key,
+          query: query.trim(),
+        );
       }
-      final queueRaw = pick(map, ['queue', 'musicQueue', 'items']);
-      final queue = <MusicQueueItem>[];
-      if (queueRaw is List) {
-        for (final e in queueRaw) {
-          if (e is Map) {
-            queue.add(MusicQueueItem.fromJson(Map<String, dynamic>.from(e)));
-          }
+    });
+  }
+
+  ({
+    MusicQueueItem? item,
+    List<MusicQueueItem> queue,
+    int? newBalance,
+    int? queuePosition,
+    String? musicUrl,
+    bool playing,
+  })
+  _parseMusicRequestByQueryMap(Map<String, dynamic> map) {
+    MusicQueueItem? item;
+    final itemRaw = pick(map, [
+      'item',
+      'request',
+      'song',
+      'track',
+      'nowPlaying',
+    ]);
+    if (itemRaw is Map) {
+      item = MusicQueueItem.fromJson(Map<String, dynamic>.from(itemRaw));
+    }
+    final queueRaw = pick(map, ['queue', 'musicQueue', 'items']);
+    final queue = <MusicQueueItem>[];
+    if (queueRaw is List) {
+      for (final e in queueRaw) {
+        if (e is Map) {
+          queue.add(MusicQueueItem.fromJson(Map<String, dynamic>.from(e)));
         }
       }
-      final balance = asInt(
-        pick(map, ['newBalance', 'coinBalance', 'balance']),
-      );
-      final position = asInt(pick(map, ['queuePosition', 'position', 'rank']));
-      final musicUrlRaw = _extractMusicStreamUrl(map);
-      final playing = map['playing'] == true || map['isPlaying'] == true;
-      return (
-        item: item,
-        queue: queue,
-        newBalance: balance == 0 ? null : balance,
-        queuePosition: position == 0 ? null : position,
-        musicUrl: musicUrlRaw,
-        playing: playing,
-      );
-    });
+    }
+    final balance = asInt(
+      pick(map, ['newBalance', 'coinBalance', 'balance']),
+    );
+    final position = asInt(pick(map, ['queuePosition', 'position', 'rank']));
+    final musicUrlRaw = _extractMusicStreamUrl(map);
+    final playing = map['playing'] == true || map['isPlaying'] == true;
+    return (
+      item: item,
+      queue: queue,
+      newBalance: balance == 0 ? null : balance,
+      queuePosition: position == 0 ? null : position,
+      musicUrl: musicUrlRaw,
+      playing: playing,
+    );
+  }
+
+  /// Üretimde `music-request-by-query` yoksa (404): sunucu arama + `song-request`.
+  Future<
+    ({
+      MusicQueueItem? item,
+      List<MusicQueueItem> queue,
+      int? newBalance,
+      int? queuePosition,
+      String? musicUrl,
+      bool playing,
+    })
+  >
+  _requestMusicByQueryViaSongRequest({
+    required String roomKey,
+    required String query,
+  }) async {
+    var hits = const <YoutubeSearchHit>[];
+    try {
+      hits = await _searchMusicViaBackend(query);
+    } catch (_) {
+      hits = const [];
+    }
+    if (hits.isEmpty) {
+      try {
+        final res = await _dio
+            .get<dynamic>(
+              ApiEndpoints.musicSearch,
+              queryParameters: {'q': query, 'limit': 5},
+            )
+            .timeout(const Duration(seconds: 15));
+        hits = _parseYoutubeHits(res.data);
+      } catch (_) {
+        hits = const [];
+      }
+    }
+    if (hits.isEmpty) {
+      throw const ApiException('Şarkı bulunamadı. Farklı bir arama deneyin.');
+    }
+    final hit = hits.first;
+    return requestMusic(
+      roomKey: roomKey,
+      title: hit.title,
+      youtubeUrl: hit.url,
+      videoId: hit.videoId,
+      thumbUrl: hit.thumbUrl,
+      duration: hit.duration,
+      priority: true,
+    );
   }
 
   /// Yetkili rol (owner/admin/mod/dj) — önce `seats`, sonra `join-seat`.
