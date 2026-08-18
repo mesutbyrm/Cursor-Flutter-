@@ -10,6 +10,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../sheets/music_mode_picker_sheet.dart';
@@ -481,9 +482,11 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
         borderColor: selected ? AppThemeColors.accentPink : null,
         onTap: () {
           setState(() => _selected = hit);
-          unawaited(
-            ref.read(youtubeStreamResolverProvider).prefetch(hit.url),
-          );
+          if (!ChatRoomRemoteDataSource.disableClientYoutubeSearch) {
+            unawaited(
+              ref.read(youtubeStreamResolverProvider).prefetch(hit.url),
+            );
+          }
         },
         padding: const EdgeInsets.all(8),
         child: Row(

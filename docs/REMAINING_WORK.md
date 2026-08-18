@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-18 17:05 UTC  
+**Son güncelleme:** 2026-08-18 17:15 UTC  
 **Kural:** Bu dosya her agent oturumunda güncellenir. Tamamlanan maddeler `[x]`, devam eden `[~]`, bekleyen `[ ]`.
 
 ---
@@ -25,6 +25,7 @@
 | M2 | Kırık `youtube-audio?url=` proxy kaldır | `[x]` | `1.0.257+293` |
 | M3 | SSE grace + oynatma koordinatörü | `[x]` | `1.0.255–256` |
 | M4 | Üretimde `youtube_explode` arama yedeğini kapat (ANR) | `[x]` | `1.0.259+295` |
+| M8 | Stream resolve: explode/Piped üretimde kapalı | `[x]` | `1.0.260+296` |
 | M5 | Oda `cmoohrbr` gerçek cihaz: `!istek` + müzik paneli | `[ ]` | Kullanıcı / QA |
 | M6 | Backend: `music-request-by-query` üretime ekle VEYA resmi “song-request only” dokümanı | `[ ]` | Backend |
 | M7 | Gerçek `song-request` + SSE `dj_update` response dump (oda cmoohrbr) | `[ ]` | Backend |
@@ -51,7 +52,7 @@
 
 | # | Konu | Durum | Not |
 |---|------|--------|-----|
-| B1 | 12× WRONG_HOST `gifts/insights/*`, `gifts/missions*` | `[?]` | Ağu 2026 probe: ana host da 200 — backend taşınmış olabilir |
+| B1 | 12× WRONG_HOST `gifts/insights/*`, `gifts/missions*` | `[x]` | Ağu 2026: ana host 200 — sorun giderilmiş |
 | B2 | 68× MISSING_BACKEND_ENDPOINT | `[ ]` | `backend-docs/B1_12_…` listesi |
 | B3 | Gift realtime: SSE vs Socket.IO canonical | `[ ]` | Backend onayı |
 | B4 | PK state machine dokümanı | `[ ]` | FAZ 7 öncesi |
@@ -71,8 +72,9 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - `1.0.257+293`: backend-docs, 404 yedeği, proxy düzeltmesi
 - `1.0.258+294`: doğrudan song-request, MCP backend-docs
 - `1.0.259+295`: youtube_explode üretimde kapalı, REMAINING_WORK + SSE parsed doc
-- APK `1.0.258` release ✅; `1.0.259` derleniyor
-- **Sırada:** Android cihaz testi (M5), backend MCP tam paket (A5)
+- `1.0.260+296`: stream resolve ANR, MUSIC_API_PRODUCTION_PROBE.md
+- APK `1.0.259` derleniyor; `1.0.260` push sonrası yeni build
+- **Sırada:** Android cihaz testi (M5), backend MCP (A5)
 
 ---
 

@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
+import '../../../../core/config/env.dart';
+
 /// YouTube watch URL → doğrudan ses akışı (site API → Piped → Invidious).
 /// googlevideo URL'leri mobilde API proxy veya stream loader ile oynatılır.
 class YoutubeStreamResolver {
@@ -27,6 +29,18 @@ class YoutubeStreamResolver {
     'https://invidious.privacyredirect.com',
     'https://invidious.fdn.fr',
   ];
+
+  /// Üretim `canlifal.com`: ağır istemci çözümleme (explode/Piped) kapalı — IFrame oynatıcı.
+  @visibleForTesting
+  static bool get disableHeavyStreamResolve {
+    final base = Env.apiBaseUrl.trim().toLowerCase();
+    if (base.contains('127.0.0.1') ||
+        base.contains('localhost') ||
+        base.contains('.local')) {
+      return false;
+    }
+    return base.contains('canlifal.com');
+  }
 
   final Map<String, _StreamCacheEntry> _cache = {};
 
@@ -173,6 +187,13 @@ class YoutubeStreamResolver {
     }
 
     final watchUrl = 'https://www.youtube.com/watch?v=$trimmed';
+
+    if (disableHeavyStreamResolve) {
+      final viaApi = await _resolveViaSiteApi(watchUrl);
+      if (viaApi != null) return wrapForMobilePlayback(viaApi);
+      return null;
+    }
+
     final results = await Future.wait<String?>([
       _resolveViaSiteApi(watchUrl),
       _resolveViaPipedParallel(trimmed),

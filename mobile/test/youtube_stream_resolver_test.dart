@@ -91,5 +91,8 @@ void main() {
       expect(video.withVideo, isTrue);
       expect(video.requestType, 'video');
     });
+    test('disableHeavyStreamResolve true on default production host', () {
+      expect(YoutubeStreamResolver.disableHeavyStreamResolve, isTrue);
+    });
   });
 }

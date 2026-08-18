@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.260+296 (2026-08-18) — Stream resolve ANR + müzik probe doc
+
+- **Stream resolve:** Üretimde Piped/Invidious/explode paralel çözümleme kapalı; IFrame yolu
+- **Müzik hub:** Üretimde seçim prefetch (explode) yok
+- **FAZ 0:** `docs/MUSIC_API_PRODUCTION_PROBE.md` (backend M6–M7 referansı)
+
 ## 1.0.259+295 (2026-08-18) — ANR: youtube_explode üretimde kapalı
 
 - **Müzik arama:** `canlifal.com` üzerinde istemci `youtube_explode` yedeği devre dışı (ANR önleme)
