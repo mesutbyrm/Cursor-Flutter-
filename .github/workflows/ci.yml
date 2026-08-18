@@ -93,6 +93,21 @@ jobs:
           flutter-version: '3.44.8'
           cache: true
 
+      - name: Acceptance secret doğrulama
+        continue-on-error: true
+        env:
+          ACCEPTANCE_USER_EMAIL: ${{ secrets.ACCEPTANCE_USER_EMAIL }}
+          ACCEPTANCE_USER_PASSWORD: ${{ secrets.ACCEPTANCE_USER_PASSWORD }}
+          ACCEPTANCE_USER_USERNAME: ${{ secrets.ACCEPTANCE_USER_USERNAME }}
+          ACCEPTANCE_HOST_EMAIL: ${{ secrets.ACCEPTANCE_HOST_EMAIL }}
+          ACCEPTANCE_HOST_PASSWORD: ${{ secrets.ACCEPTANCE_HOST_PASSWORD }}
+          ACCEPTANCE_ADMIN_EMAIL: ${{ secrets.ACCEPTANCE_ADMIN_EMAIL }}
+          ACCEPTANCE_ADMIN_PASSWORD: ${{ secrets.ACCEPTANCE_ADMIN_PASSWORD }}
+          ACCEPTANCE_ADMIN_USERNAME: ${{ secrets.ACCEPTANCE_ADMIN_USERNAME }}
+        run: |
+          chmod +x scripts/validate-acceptance-secrets.sh
+          bash scripts/validate-acceptance-secrets.sh
+
       - name: FAZ 0 otomatik kapılar (M5 cihaz hariç)
         env:
           ACCEPTANCE_USER_EMAIL: ${{ secrets.ACCEPTANCE_USER_EMAIL }}
