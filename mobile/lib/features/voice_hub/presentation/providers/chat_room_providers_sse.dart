@@ -5,7 +5,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
   VoiceRoomLiveController get _sse => this as VoiceRoomLiveController;
 
   void _startSse() {
-    final roomKey = _sse._roomKey;
+    final roomKey = _sse._canonicalRoomKey;
     if (roomKey.isEmpty) return;
     if (_sse._sseStarted) {
       VoiceRoomDebugLog.log('sse.subscribe.skip', {'roomId': roomKey});

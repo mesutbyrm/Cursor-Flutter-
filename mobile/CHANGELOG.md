@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.264+300 (2026-08-18) — SSE kısmi cuid→tam id çözümleme (müzik senkron)
+
+- **Kök neden:** SSE `…/rooms/{id}/stream` kısmi cuid (`cmoohrbr`) ile **Room not found**; tam Prisma id gerekli (`cmoohrbrx00a4nt08zlkdjyil`)
+- **Düzeltme:** `VoiceRoomKeyResolver` — önek eşleşmesi + oda listesinden canonical id; SSE aboneliği tam cuid ile
+- **Test:** `voice_room_key_resolver_test.dart` (5 senaryo)
+- **M7:** `probe-music-room.sh` önek çözümleme + SSE cuid yakalama
+
 ## 1.0.263+299 (2026-08-18) — DJ player: youtube-stream API üretimde atla
 
 - **ANR:** `youtube-stream` API URL'leri üretimde `resolvePlayableUrl` çağırmaz (IFrame yolu)

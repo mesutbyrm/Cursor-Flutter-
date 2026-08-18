@@ -1,15 +1,17 @@
 # M7 — Müzik probe yakalama (üretim)
 
-**Tarih:** 2026-08-18 20:39 UTC  
-**Oda:** `cmoohrbr`  
-**Hesap:** `cursor.test.1786235468@mailinator.com` (acceptance test)  
+**Tarih:** 2026-08-18 20:49 UTC  
+**Oda slug:** `cmoohrbr`  
+**Oda id (SSE):** `cmoohrbrx00a4nt08zlkdjyil`  
+**Hesap:** `cursor.test.1786235468@mailinator.com` — jeton=0  
 **Üretim:** `https://canlifal.com`
 
-> Otomatik üretildi: `bash scripts/probe-music-room.sh`
+> Otomatik: `MUSIC_PROBE_ROOM=cmoohrbr bash scripts/probe-music-room.sh`  
+> **Not:** SSE yalnızca tam cuid ile çalışır; slug ile `Room not found`. Flutter `1.0.264+` düzeltmesi.
 
 ---
 
-## POST song-request → HTTP 400
+## POST song-request (slug `cmoohrbr`) → HTTP 400
 
 ```json
 {
@@ -19,28 +21,33 @@
 
 ---
 
-## GET youtube-stream?videoId=dQw4w9WgXcQ
+## GET youtube-stream?videoId=cpp69ghR1IM
 
 ```json
 {
     "success": true,
-    "videoId": "dQw4w9WgXcQ",
-    "embedUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&start=0&enablejsapi=1&playsinline=1",
-    "streamUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&start=0&enablejsapi=1&playsinline=1",
-    "youtubeUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)",
-    "thumbnail": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
-    "author": "Rick Astley",
+    "videoId": "cpp69ghR1IM",
+    "embedUrl": "https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=0&enablejsapi=1&playsinline=1",
+    "streamUrl": "https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=0&enablejsapi=1&playsinline=1",
+    "youtubeUrl": "https://www.youtube.com/watch?v=cpp69ghR1IM",
+    "title": "TARKAN - \u015e\u0131mar\u0131k (Official Music Video)",
+    "thumbnail": "https://i.ytimg.com/vi/cpp69ghR1IM/hqdefault.jpg",
+    "author": "Tarkan",
     "mode": "embed"
 }
 ```
 
 ---
 
-## SSE stream (ilk 16KB)
+## SSE stream `cmoohrbrx00a4nt08zlkdjyil` (ilk 24KB)
 
 ```
-\`Room not found
+\`data: {"type":"connected","roomId":"cmoohrbrx00a4nt08zlkdjyil"}
+\`
+\`data: {"type":"dj","event":"QUEUE_UPDATED","playing":true,"nowPlaying":{"videoId":"cpp69ghR1IM","title":"TARKAN - Şımarık (Official Music Video)","startedAt":"2026-08-18T14:23:46.802Z","startedAtMs":1787063026802,"elapsedSeconds":23146,"duration":"3:12","embedUrl":"https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=23146&enablejsapi=1&playsinline=1"},"musicUrl":"https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=23146&enablejsapi=1&playsinline=1","embedUrl":"https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=23146&enablejsapi=1&playsinline=1","musicQueue":[],"queue":[],"queueLength":0}
+\`
+\`data: {"type":"presence","users":[]}
+\`
 ```
 
 ---
@@ -88,4 +95,14 @@
             "thumbnail": "https://i.ytimg.com/vi/OG4ggvY_8p0/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgBzgWAAtAFigIMCAAQARhyIFkoOTAP&rs=AOn4CLDZ5W2IHvOd4XA9sMjSsheWz46IUQ",
             "duration": "3:56",
             "channel": "M\u00fczik A\u015f\u0131\u011f\u0131",
+            "views": 559148
+        },
+        {
+            "id": "M0-joG_2SZY",
+            "title": "\u2102\u22c6Tarkan | \u015e\u0131mar\u0131k \"Official Music Video\" Full HD",
+            "thumbnail": "https://i.ytimg.com/vi/M0-joG_2SZY/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAvD7ytb3m6NOzHLxmHEXI7Ibjy5Q",
+            "duration": "4:00",
+            "channel": "\u2102\u22c6Tarkanland",
+            "views": 406990
+        },
 ```

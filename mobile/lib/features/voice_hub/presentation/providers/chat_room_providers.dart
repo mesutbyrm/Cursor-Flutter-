@@ -50,6 +50,7 @@ import '../audio/voice_room_music_audio_session.dart';
 import '../utils/voice_room_permissions.dart';
 import '../utils/kick_strike_ui.dart';
 import '../utils/voice_sse_dj_payload.dart';
+import '../utils/voice_room_key_resolver.dart';
 import '../utils/voice_music_access.dart';
 import '../utils/voice_room_duyuru_access.dart';
 import '../utils/voice_room_mention.dart';
@@ -469,6 +470,12 @@ class VoiceRoomLiveController
     }
     final rooms = ref.read(voiceRoomsProvider).valueOrNull;
     if (rooms != null) {
+      final resolved = VoiceRoomKeyResolver.resolveFromKnownRooms(key, rooms);
+      if (resolved != null) {
+        for (final r in rooms) {
+          if (r.id == resolved) return r;
+        }
+      }
       for (final r in rooms) {
         if (r.apiRoomKey == key || r.id == key) return r;
         final slug = r.slug.trim();
@@ -484,6 +491,13 @@ class VoiceRoomLiveController
     if (slug.isEmpty || slug == _roomKey) return null;
     return slug;
   }
+
+  /// SSE stream yalnızca tam cuid kabul eder — slug route'tan çözülür.
+  String get _canonicalRoomKey => VoiceRoomKeyResolver.canonicalApiKey(
+        routeKey: _roomKey,
+        meta: _roomMeta,
+        knownRooms: ref.read(voiceRoomsProvider).valueOrNull,
+      );
 
   String? _djChatLabel(String userId) {
     for (final p in state.presence) {

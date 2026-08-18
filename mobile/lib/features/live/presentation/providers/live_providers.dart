@@ -9,6 +9,7 @@ import '../../domain/repositories/live_repository.dart';
 import '../../data/datasources/live_remote_datasource.dart';
 import '../../data/datasources/live_stream_extras_datasource.dart';
 import '../../data/repositories/live_repository_impl.dart';
+import '../../../voice_hub/presentation/utils/voice_room_key_resolver.dart';
 import 'discover_live_streams.dart';
 import 'discover_voice_rooms.dart';
 
@@ -34,6 +35,12 @@ final voiceRoomByIdProvider =
   if (cached != null) {
     String norm(String s) =>
         s.trim().toLowerCase().replaceAll(RegExp(r'-+$'), '');
+    final resolved = VoiceRoomKeyResolver.resolveFromKnownRooms(id, cached);
+    if (resolved != null) {
+      for (final r in cached) {
+        if (r.id == resolved) return r;
+      }
+    }
     for (final r in cached) {
       if (r.id == id ||
           r.slug == id ||

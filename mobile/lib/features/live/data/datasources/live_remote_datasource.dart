@@ -13,6 +13,7 @@ import '../../domain/entities/live_stream_chat_message.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/entities/voice_room_entity.dart';
 import '../../domain/entities/voice_rooms_page.dart';
+import '../../../voice_hub/presentation/utils/voice_room_key_resolver.dart';
 
 class LiveRemoteDataSource {
   LiveRemoteDataSource(this._dio);
@@ -486,6 +487,11 @@ class LiveRemoteDataSource {
           r.slug.toLowerCase() == lower ||
           norm(r.slug) == norm(id) ||
           norm(r.id) == norm(id)) {
+        return r;
+      }
+      if (needle.length >= VoiceRoomKeyResolver.minPrefixLength &&
+          r.id.length >= VoiceRoomKeyResolver.minPrefixLength &&
+          r.id.toLowerCase().startsWith(lower)) {
         return r;
       }
     }
