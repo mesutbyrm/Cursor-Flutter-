@@ -8,6 +8,7 @@ import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_room_card.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
+import '../../../../voice_hub/presentation/providers/voice_rooms_presence_provider.dart';
 import '../../../../voice_hub/presentation/utils/open_voice_chat_room_flow.dart';
 import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
@@ -26,6 +27,18 @@ class VoiceRoomSection extends ConsumerStatefulWidget {
 
 class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
   var _prefetched = false;
+  var _presenceSynced = false;
+
+  void _syncPresenceOnce(List<VoiceRoomEntity> rooms) {
+    if (_presenceSynced || rooms.isEmpty) return;
+    _presenceSynced = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(voiceRoomsPresenceProvider.notifier).mergeTrackRooms(
+            rooms.take(VoiceRoomsPresenceNotifier.maxTrackedRooms).toList(),
+          );
+    });
+  }
 
   void _prefetchCovers(List<VoiceRoomEntity> rooms) {
     if (_prefetched || !mounted) return;
@@ -80,6 +93,7 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
     if (items.isEmpty) {
       return _sectionShell(context, ref, empty: true);
     }
+    _syncPresenceOnce(items);
     final sorted = items;
     _prefetchCovers(sorted);
 

@@ -44,7 +44,6 @@ import '../../../platform/data/models/platform_popup.dart';
 import '../../../platform/data/models/fortune_request_type.dart';
 import '../../../voice_hub/domain/voice_official_join.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
-import '../../../voice_hub/presentation/providers/voice_rooms_presence_provider.dart';
 import '../../../vip_gold/domain/voice_room_access.dart';
 
 void _keepHomeCacheAlive(Ref ref) => ref.keepAlive();
@@ -149,38 +148,20 @@ final homeLiveStreamsProvider =
 final homeVoiceRoomsProvider =
     FutureProvider<List<VoiceRoomEntity>>((ref) async {
   _keepHomeCacheAlive(ref);
-  return ref.watch(voiceRoomsListNotifierProvider.future);
+  // Notifier her güncellendiğinde future'ı yeniden tetikleme — ana sayfa donmasını önler.
+  return ref.read(voiceRoomsListNotifierProvider.future);
 });
 
-/// Ana sayfa sesli odalar — tüm odalar (dolu önce), SSE ile güncel sayı.
+/// Ana sayfa sesli odalar — API listesi (dolu önce). SSE sayımı widget'ta tek sefer senkronize edilir.
 final homeLiveVoiceRoomsProvider = Provider<AsyncValue<List<VoiceRoomEntity>>>(
   (ref) {
     final roomsAsync = ref.watch(homeVoiceRoomsProvider);
-    final presence = ref.watch(voiceRoomsPresenceProvider);
-
-    ref.listen<AsyncValue<List<VoiceRoomEntity>>>(
-      homeVoiceRoomsProvider,
-      (prev, next) {
-        final rooms = next.valueOrNull;
-        if (rooms == null || rooms.isEmpty) return;
-        final track = rooms.where((r) => !r.isVipGoldRoom).toList();
-        if (track.isNotEmpty) {
-          ref.read(voiceRoomsPresenceProvider.notifier).mergeTrackRooms(track);
-        }
-      },
-      fireImmediately: true,
-    );
 
     return roomsAsync.when(
       loading: () => const AsyncValue.loading(),
       error: (e, st) => AsyncValue.error(e, st),
       data: (rooms) {
-        final live = rooms.where((r) => !r.isVipGoldRoom).map((r) {
-          final sseCount = presence.countFor(r);
-          final apiCount = r.displayOnline;
-          final count = sseCount > apiCount ? sseCount : apiCount;
-          return r.copyWith(onlineCount: count, userCount: count);
-        }).toList();
+        final live = rooms.where((r) => !r.isVipGoldRoom).toList();
         final sorted = sortVoiceRoomsByPopularity(live).take(12).toList();
         return AsyncValue.data(sorted);
       },

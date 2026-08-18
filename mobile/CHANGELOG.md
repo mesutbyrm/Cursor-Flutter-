@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.252+288 (2026-08-18) — Ana sayfa donma (ANR) düzeltmesi
+
+- **Kök neden:** `homeLiveVoiceRoomsProvider` presence + `ref.listen` döngüsü ana thread'i kilitliyordu
+- **Çözüm:** Oda listesi API'den bir kez; SSE izleme yalnızca bölüm mount'ta tek sefer
+- **homeVoiceRoomsProvider:** `ref.read` ile future yeniden tetiklenmesi durduruldu
+
 ## 1.0.251+287 (2026-08-17) — Ana sayfa odalar + müzik ANR + çalma
 
 - **Ana sayfa:** Tüm sesli sohbet odaları listelenir (dolu önce); boş odalar sönük kart
