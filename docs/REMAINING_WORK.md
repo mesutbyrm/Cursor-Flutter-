@@ -15,7 +15,7 @@
 | APK `1.0.259+295` | `[x]` | Release APK başarılı (run 32163545874) |
 | APK `1.0.260+296` | `[x]` | Release APK (run 32164943755) |
 | APK `1.0.261+297` | `[x]` | Release APK (run 32167217259) |
-| APK `1.0.262+298` | `[~]` | APK derleniyor (run 32181631541) |
+| APK `1.0.262+298` | `[x]` | Release APK (run 32181631541) |
 | FAZ 1+ | `[ ]` | FAZ 0 PASS olmadan başlamaz |
 
 ---
