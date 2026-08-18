@@ -14,7 +14,9 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
     } catch (_) {}
   }
 
-  /// Oda listesi geldikten sonra canonical id değiştiyse SSE'yi yeniden bağla.
+  /// Oda listesi geldikten sonra canonical id değişiyorsa SSE'yi yeniden bağla.
+  void syncSseRoomKeyFromCatalog() => _maybeUpgradeSseRoomKey();
+
   void _maybeUpgradeSseRoomKey() {
     final canonical = _sse._canonicalRoomKey.trim();
     if (canonical.isEmpty) return;

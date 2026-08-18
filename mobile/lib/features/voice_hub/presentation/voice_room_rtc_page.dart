@@ -1420,6 +1420,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       if (!hadKey && !_audioReady && !_leaving) {
         unawaited(_joinAudioBackground());
       }
+      if (_liveRoomKey.isNotEmpty) {
+        ref
+            .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+            .syncSseRoomKeyFromCatalog();
+      }
     });
 
     return GiftEventListener(

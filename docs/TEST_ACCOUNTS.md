@@ -45,12 +45,17 @@ Kaynak: `docs/STAGE5_REAL_E2E_ACCEPTANCE_REPORT.md`
 
 | Alan | Değer |
 |------|--------|
-| Oda | `cmoohrbr` |
+| Route anahtarı | `cmoohrbr` (kısmi cuid öneği) |
+| Tam oda id (SSE) | `cmoohrbrx00a4nt08zlkdjyil` |
+| Slug (API listesi) | `canlfal-` |
 | Komut | `!istek Sanatçı - Şarkı` |
-| APK | `apk-latest` release |
-| Hesap | `ACCEPTANCE_USER_*` veya oda sahibi hesabı (`TEST_ROOM_OWNER` — backend tanımlı değil) |
+| APK | `1.0.265+301` veya üzeri (`apk-latest`) |
+| Hesap | `ACCEPTANCE_USER_*` — **≥10 jeton** gerekli |
+| Oda sahibi (üretim) | `admin` (`cmokscu2y0000pnko11nctqw5`) |
 
-**Eksik:** Backend'in resmi `TEST_ROOM_OWNER` credential'ı yok; oda sahibi hesabı manuel veya admin panelden atanmalı.
+Detay: `docs/VOICE_ROOM_KEY_RESOLUTION.md`
+
+**Eksik:** `ACCEPTANCE_ADMIN_*` secret yoksa test jetonu otomatik eklenemez; admin panelden `cursor.test.*` hesabına jeton verin veya `bash scripts/set-acceptance-secrets.sh` ile CI secret'larını ayarlayın.
 
 ---
 

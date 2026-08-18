@@ -4,7 +4,20 @@
 **Uyarı:** Bunlar **resmi backend dump değil**; Flutter unit testlerinde kullanılan ve parser'ların geçtiği örneklerdir. Backend doğrulaması gelene kadar A7 yedeği.
 
 **Stream:** `GET /api/chat/rooms/{roomId}/stream`  
-**İlgili:** `docs/SSE_EVENTS_FLUTTER_PARSED.md`, `mobile/test/room_song_bloc_test.dart`
+**İlgili:** `docs/SSE_EVENTS_FLUTTER_PARSED.md`, `docs/M7_MUSIC_SSE_CAPTURE.md`, `mobile/test/room_song_bloc_test.dart`
+
+---
+
+## `connected` (üretim)
+
+```json
+{
+  "type": "connected",
+  "roomId": "cmoohrbrx00a4nt08zlkdjyil"
+}
+```
+
+Kaynak: M7 probe, tam cuid ile SSE.
 
 ---
 

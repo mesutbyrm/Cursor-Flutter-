@@ -1,13 +1,13 @@
 # M7 — Müzik probe yakalama (üretim)
 
-**Tarih:** 2026-08-18 20:49 UTC  
+**Tarih:** 2026-08-18 22:03 UTC  
 **Oda slug:** `cmoohrbr`  
 **Oda id (SSE):** `cmoohrbrx00a4nt08zlkdjyil`  
 **Hesap:** `cursor.test.1786235468@mailinator.com` — jeton=0  
 **Üretim:** `https://canlifal.com`
 
 > Otomatik: `MUSIC_PROBE_ROOM=cmoohrbr bash scripts/probe-music-room.sh`  
-> **Not:** SSE yalnızca tam cuid ile çalışır; slug ile `Room not found`. Flutter `1.0.264+` düzeltmesi.
+> **M7 song-request:** HTTP 400 — test hesabında jeton yok (10 gerekli). Tam akış için `ACCEPTANCE_ADMIN_*` ile jeton top-up veya admin panel.
 
 ---
 
@@ -44,7 +44,7 @@
 ```
 \`data: {"type":"connected","roomId":"cmoohrbrx00a4nt08zlkdjyil"}
 \`
-\`data: {"type":"dj","event":"QUEUE_UPDATED","playing":true,"nowPlaying":{"videoId":"cpp69ghR1IM","title":"TARKAN - Şımarık (Official Music Video)","startedAt":"2026-08-18T14:23:46.802Z","startedAtMs":1787063026802,"elapsedSeconds":23146,"duration":"3:12","embedUrl":"https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=23146&enablejsapi=1&playsinline=1"},"musicUrl":"https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=23146&enablejsapi=1&playsinline=1","embedUrl":"https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=23146&enablejsapi=1&playsinline=1","musicQueue":[],"queue":[],"queueLength":0}
+\`data: {"type":"dj","event":"QUEUE_UPDATED","playing":false,"nowPlaying":null,"musicUrl":null,"embedUrl":null,"musicQueue":[],"queue":[],"queueLength":0}
 \`
 \`data: {"type":"presence","users":[]}
 \`

@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.266+302 (2026-08-18) — SSE geç katalog + basic oda sync
+
+- **SSE:** Oda listesi geç gelince `syncSseRoomKeyFromCatalog` (RTC listener)
+- **Basic oda:** `_effectiveRoom` kısmi cuid önek eşleşmesi
+- **FAZ 0:** `VOICE_ROOM_KEY_RESOLUTION.md`, TEST_ACCOUNTS oda tablosu, SSE `connected` örneği
+
 ## 1.0.265+301 (2026-08-18) — SSE oda listesi bekleme + key upgrade
 
 - **Kenar durum:** Oda listesi yüklenmeden SSE kısmi `cmoohrbr` ile başlayabiliyordu

@@ -28,6 +28,7 @@ import '../audio/voice_trtc_engine.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_audio_providers.dart';
+import '../utils/voice_room_key_resolver.dart';
 import '../providers/voice_session_phase_provider.dart';
 import '../../domain/voice/voice_session_phase.dart';
 import '../providers/voice_room_ui_provider.dart';
@@ -107,6 +108,12 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final w = widget.room;
     final rooms = ref.read(voiceRoomsProvider).valueOrNull;
     if (rooms == null) return w;
+    final resolved = VoiceRoomKeyResolver.resolveFromKnownRooms(w.liveKey, rooms);
+    if (resolved != null) {
+      for (final r in rooms) {
+        if (r.id == resolved) return r;
+      }
+    }
     for (final r in rooms) {
       if (r.id == w.id || r.apiRoomKey == w.apiRoomKey) return r;
     }
