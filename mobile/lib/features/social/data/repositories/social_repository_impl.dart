@@ -35,6 +35,18 @@ class SocialRepositoryImpl implements SocialRepository {
     String userId, {
     int page = 1,
   }) async {
+    try {
+      final r = await _remote.fetchUserPosts(
+        userId: userId,
+        page: page,
+        currentUserId: currentUserId,
+      );
+      if (r.posts.isNotEmpty || page > 1) {
+        return SocialFeedPage(posts: r.posts, hasMore: r.hasMore);
+      }
+    } catch (_) {
+      // Yedek: authorId query (eski sunucu)
+    }
     final r = await _remote.fetch(
       page: page,
       authorId: userId,

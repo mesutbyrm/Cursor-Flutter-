@@ -1,7 +1,7 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-18 23:48 UTC — FAZ0 audit kapanış + FAZ1 hazırlık  
-**Kural:** Bu dosya her agent oturumunda güncellenir. Tamamlanan maddeler `[x]`, devam eden `[~]`, bekleyen `[ ]`.
+**Son güncelleme:** 2026-08-18 23:58 UTC — **Tüm fazlar HAZIRLIK**; FAZ0 M5/jeton manuel  
+**Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (12 PASS)
 
 ---
 
@@ -9,139 +9,70 @@
 
 | Alan | Durum | Not |
 |------|--------|-----|
-| FAZ 0 Audit | `[~]` | A6–A8 tamamlandı; A9 M5 bekliyor |
-| FAZ 1 hazırlık | `[~]` | `FAZ1_API_ERROR_ENVELOPE.md`, ApiException testleri |
-| P0 !istek / müzik ANR | `[x]` kod | **M5 cihaz** + jeton (kullanıcı) |
-| APK `1.0.258+294` | `[x]` | Release APK başarılı (run 32163086275) |
-| APK `1.0.259+295` | `[x]` | Release APK başarılı (run 32163545874) |
-| APK `1.0.260+296` | `[x]` | Release APK (run 32164943755) |
-| APK `1.0.261+297` | `[x]` | Release APK (run 32167217259) |
-| APK `1.0.262+298` | `[x]` | Release APK (run 32181631541) |
-| APK `1.0.263+299` | `[x]` | Release APK başarılı |
-| APK `1.0.264+300` | `[x]` | Release APK başarılı (run 32184630561) |
-| APK `1.0.265+301` | `[x]` | Release APK başarılı |
-| APK `1.0.266+302` | `[x]` | Release APK başarılı (run 32191120566) |
-| FAZ 1+ | `[ ]` | FAZ 0 PASS olmadan başlamaz |
+| FAZ 0 | `[~]` | A1–A8 ✅; A9 M5/jeton |
+| FAZ 1–11 | `[~]` HAZIRLIK | Otomatik testler PASS; parity doc |
+| FAZ 12–13 | `[ ]` | Cihaz E2E + signing |
+| APK `1.0.267+303` | `[ ]` | push sonrası CI |
+| P0 müzik kod | `[x]` | M5/M7 manuel |
 
 ---
 
-## P0 — Müzik / !istek (sesli oda)
+## Tek manuel bloker (tüm fazlar)
 
-| # | İş | Durum | Sahip |
-|---|-----|--------|-------|
-| M1 | Üretimde `music-request-by-query` atla → `song-request` | `[x]` | `1.0.258+294` |
-| M2 | Kırık `youtube-audio?url=` proxy kaldır | `[x]` | `1.0.257+293` |
-| M3 | SSE grace + oynatma koordinatörü | `[x]` | `1.0.255–256` |
-| M4 | Üretimde `youtube_explode` arama yedeğini kapat (ANR) | `[x]` | `1.0.259+295` |
-| M8 | Stream resolve: explode/Piped üretimde kapalı | `[x]` | `1.0.260+296` |
-| M9 | DJ player youtube-stream API üretim skip | `[x]` | `1.0.263+299` |
-| M10 | SSE kısmi cuid→tam id çözümleme (oda listesi öneği) | `[x]` | `1.0.264+300` |
-| M11 | SSE giriş: oda kataloğu bekle + key upgrade reconnect | `[x]` | `1.0.265+301` |
-| M12 | SSE geç katalog listener + basic `_effectiveRoom` önek | `[x]` | `1.0.266+302` |
-| M5 | Oda `cmoohrbr` gerçek cihaz: `!istek` + müzik paneli | `[ ]` | **Tüm otomatik testler bitince** (kullanıcı) |
-| M6 | Backend: `music-request-by-query` üretime ekle VEYA resmi “song-request only” dokümanı | `[x]` | `docs/MUSIC_SONG_REQUEST_CONTRACT.md` (Flutter resmi) |
-| M7 | Gerçek `song-request` + SSE `dj_update` response dump (oda cmoohrbr) | `[~]` | SSE ✅; song-request 400 jeton — `docs/M5_M7_JETON_BLOCKER.md` |
-
----
-
-## FAZ 0 — Audit / parity
-
-| # | İş | Durum |
+| # | İş | Çözüm |
 |---|-----|--------|
-| A1 | `backend-docs/` (OpenAPI, index, Prisma, B1.12) | `[x]` |
-| A2 | `BACKEND_FLUTTER_PARITY_AUDIT.md` B1.12 ile güncelle | `[x]` |
-| A3 | MCP stub → `endpoints_index` + Prisma | `[x]` |
-| A4 | `SSE_EVENTS_FLUTTER_PARSED.md` (koddan türetilmiş) | `[x]` |
-| A5 | Tam backend MCP `index.mjs` (SDK, `read_source`) | `[x]` | v1.2.0: read_source, search_source, list_services |
-| A6 | `nextjs_space/app/api/**/route.ts` kaynak ağacı | `[x]` | `BACKEND_API_ROUTE_INDEX.md` (690 uç, regenerate script) |
-| A7 | Resmi SSE şema dokümanı (backend örnek payload) | `[x]` | `SSE_PAYLOAD_EXAMPLES_FLUTTER.md` + M7 üretim `connected`/`dj` |
-| A8 | Test hesapları (TEST_USER, TEST_ROOM_OWNER, …) | `[x]` | `TEST_ACCOUNTS.md` canlı id + credits≠jeton notu |
-| A9 | Android E2E müzik PASS → FAZ 0 kapat | `[ ]` | `docs/FAZ0_CLOSURE_CHECKLIST.md` |
+| B1 | Jeton ≥10 | Admin panel → `cursor.test.1786235468@mailinator.com` |
+| B2 | M7 HTTP 200 | `bash scripts/m7-on-jeton.sh` |
+| B3 | M5 cihaz | `docs/M5_DEVICE_TEST_CHECKLIST.md` |
+| B4 | FAZ12 E2E | 25 senaryo Android |
 
 ---
 
-## B1.12 — Bilinen parity (henüz kodlanmadı)
+## Faz otomatik testleri (2026-08-18)
 
-| # | Konu | Durum | Not |
-|---|------|--------|-----|
-| B1 | 12× WRONG_HOST `gifts/insights/*`, `gifts/missions*` | `[x]` | Ağu 2026: ana host 200 — sorun giderilmiş |
-| B2 | 68× MISSING_BACKEND_ENDPOINT | `[x]` | `docs/MISSING_ENDPOINTS_FLUTTER_ACTIVE.md` |
-| B3 | Gift realtime: SSE vs Socket.IO canonical | `[x]` | `docs/GIFT_REALTIME_SSE_VS_SOCKET.md` (Flutter ref.) |
-| B4 | PK state machine dokümanı | `[x]` | `docs/PK_STATE_MACHINE_FLUTTER.md` |
+| Faz | Sonuç |
+|-----|--------|
+| FAZ1 core/network | PASS |
+| FAZ2 profile | PASS |
+| FAZ3 social | PASS |
+| FAZ4 fortune | PASS |
+| FAZ5 live | PASS |
+| FAZ6 voice_hub (93) | PASS |
+| FAZ7 gifts | PASS |
+| FAZ8 shorts | SKIP (test yok) |
+| FAZ9 notifications | PASS |
+| FAZ0 MCP | PASS |
 
----
-
-## FAZ 1 — Core + Auth (hazırlık)
-
-| # | İş | Durum |
-|---|-----|--------|
-| F1.1 | Error envelope referansı | `[x]` | `docs/FAZ1_API_ERROR_ENVELOPE.md` |
-| F1.2 | ApiException birim testleri | `[x]` | `api_exception_test.dart` |
-| F1.3 | FAZ 1 durum özeti | `[x]` | `docs/FAZ1_STATUS.md` |
-| F1.4 | God-file refactor | `[ ]` | `chat_room_providers.dart` — FAZ 0 sonrası |
+`bash scripts/run-phase-tests.sh`
 
 ---
 
-## FAZ 2 — Profile (hazırlık)
+## P0 — Müzik (FAZ 6 bloker)
 
-| # | İş | Durum |
-|---|-----|--------|
-| F2.1 | UserRepository parity tablosu | `[x]` | `docs/FAZ2_PROFILE_PARITY.md` |
-| F2.2 | Skeleton + API birleştirme | `[ ]` | FAZ 1 sonrası |
+M1–M12 `[x]` | M5 `[ ]` | M7 `[~]` jeton
 
 ---
 
-## FAZ 2–13 (bloke)
+## FAZ 0 audit
 
-FAZ 0 **PASS** (M5) olmadan resmi faz geçişi yok. Sıra: `docs/PHASE_PLAN.md`.
-
----
-
-## Oturum günlüğü
-
-### 2026-08-18
-
-- `1.0.257+293`: backend-docs, 404 yedeği, proxy düzeltmesi
-- `1.0.258+294`: doğrudan song-request, MCP backend-docs
-- `1.0.259+295`: youtube_explode üretimde kapalı, REMAINING_WORK + SSE parsed doc
-- `1.0.260+296`: stream resolve ANR, MUSIC_API_PRODUCTION_PROBE.md
-- `1.0.261+297`: DJ player üretim YouTube skip, mock song-request testi, MISSING_ENDPOINTS_FLUTTER_ACTIVE.md
-- `1.0.262+298`: MCP read_source/search_source, GIFT_REALTIME + PK_STATE_MACHINE docs
-- FAZ 0: BACKEND_API_ROUTE_INDEX, SSE_PAYLOAD_EXAMPLES, TEST_ACCOUNTS, MUSIC_SONG_REQUEST_CONTRACT
-- `1.0.263+299`: DJ youtube-stream skip, M7 probe, M5 checklist
-- `1.0.264+300`: SSE kısmi cuid→tam id (`VoiceRoomKeyResolver` önek), M7 probe önek çözümleme
-- `1.0.265+301`: SSE katalog bekleme + canonical key upgrade reconnect
-- `1.0.266+302`: SSE geç katalog listener, VOICE_ROOM_KEY_RESOLUTION doc
-- API müzik fazı: `api-music-phase.sh` varsayılan hesap + önek çözümleme (6/6 PASS)
-- `FAZ0_STATUS.md`, `run-music-acceptance.sh`, `m5-preflight.sh`, `M7_SONG_REQUEST_200_TEMPLATE.md`
-- `faz0-verify.sh` + probe SSE heredoc düzeltmesi
-- CI `faz0-music` job + `M5_M7_JETON_BLOCKER.md`
-- `faz0-status.sh` + `FAZ0_CLOSURE_CHECKLIST.md`
-- `m7-on-jeton.sh` — jeton sonrası M7 otomatik probe
-- `lib.sh` admin login fallback (email→username) + OpenAPI credits body
-- CI debug logları açıldı; faz0-verify jeton sonrası M7 otomatik dener
-- `validate-acceptance-secrets.sh` — secret giriş doğrulama
-- CI `faz0-verify`: USER secret yok sayılır + giriş hatası WARN (CI kırılmaz)
-- `defaults.sh`: boş `ACCEPTANCE_*` env → varsayılan hesap (GitHub Actions "")
-- `LATEST_APK_BUILD.md` senkron: 1.0.266+302 (run 32196400775)
-- A6–A8 audit kapanış; FAZ1 error envelope + ApiException testleri
-- FAZ2 profile parity özeti (`FAZ2_PROFILE_PARITY.md`)
-- **Bloker:** Jeton ≥10 (credits yeterli değil) → M7/M5 → A9
+A1–A8 `[x]` | A9 `[ ]` M5 PASS
 
 ---
 
-## Hızlı komutlar
+## FAZ 1–13 dosyaları
 
-```bash
-bash scripts/validate-acceptance-secrets.sh
-bash scripts/faz0-status.sh
-bash scripts/faz0-verify.sh
-bash scripts/m7-on-jeton.sh
-bash scripts/debug-jeton-topup.sh
-bash scripts/run-music-acceptance.sh
-bash scripts/m5-preflight.sh
-bash scripts/print-build-status.sh
-bash scripts/wait-apk-build.sh 900
-cd mobile && flutter test test/features/voice_hub/
-cd mcp-server && node index.mjs --selftest
-```
+| Faz | Doc |
+|-----|-----|
+| 1 | `FAZ1_STATUS.md`, `FAZ1_API_ERROR_ENVELOPE.md` |
+| 2 | `FAZ2_PROFILE_PARITY.md` |
+| 3 | `FAZ3_SOCIAL_PARITY.md` |
+| 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
+
+---
+
+## Oturum günlüğü (2026-08-18 devam)
+
+- `PHASE_MASTER_TRACKER.md` + `run-phase-tests.sh` + `phase-progress.sh`
+- FAZ3–13 parity/status belgeleri
+- Social `getUserPosts` kılavuz ucu (`1.0.267+303`)
+- Faz testleri: 12 PASS, 0 FAIL

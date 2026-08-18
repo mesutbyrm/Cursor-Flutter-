@@ -137,6 +137,12 @@ jobs:
           chmod +x scripts/debug-jeton-topup.sh
           bash scripts/debug-jeton-topup.sh
 
+      - name: Faz unit testleri (FAZ1–9)
+        continue-on-error: true
+        run: |
+          chmod +x scripts/run-phase-tests.sh
+          bash scripts/run-phase-tests.sh
+
       - name: FAZ0 raporu (artifact)
         if: always()
         uses: actions/upload-artifact@v4

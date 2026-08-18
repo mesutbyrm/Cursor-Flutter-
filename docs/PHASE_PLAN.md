@@ -10,20 +10,20 @@
 
 | Faz | Ad | Durum | Bloker |
 |-----|-----|-------|--------|
-| **0** | Backend + Flutter Audit | 🔄 **DEVAM** | M5 cihaz + jeton (A6–A8 ✅) |
-| 1 | Core + Auth + API Architecture | 🔄 **HAZIRLIK** | FAZ1 error envelope + testler |
-| 2 | Profile | ⏸ | FAZ 1 |
-| 3 | Social | ⏸ | FAZ 2 |
-| 4 | Fal + Tarot | ⏸ | FAZ 3 |
-| 5 | Live Stream | ⏸ | FAZ 4 |
-| 6 | Voice Chat Rooms | ⏸ | FAZ 5 |
-| 7 | Gifts + Jeton + PK | ⏸ | FAZ 6 |
-| 8 | Trending / Shorts | ⏸ | FAZ 7 |
-| 9 | Messages + Notifications | ⏸ | FAZ 8 |
-| 10 | Global Performance | ⏸ | FAZ 9 |
-| 11 | Security + Error Handling | ⏸ | FAZ 10 |
-| 12 | Full E2E QA | ⏸ | FAZ 11 |
-| 13 | Release Build | ⏸ | FAZ 12 |
+| **0** | Backend + Flutter Audit | 🔄 **INCOMPLETE** | M5 cihaz + jeton |
+| 1 | Core + Auth + API Architecture | 🔄 **HAZIRLIK** | God-file refactor |
+| 2 | Profile | 🔄 **HAZIRLIK** | Skeleton UI |
+| 3 | Social | 🔄 **HAZIRLIK** | getUserPosts ✅ |
+| 4 | Fal + Tarot | 🔄 **HAZIRLIK** | SSE body parity |
+| 5 | Live Stream | 🔄 **HAZIRLIK** | Comments endpoint |
+| 6 | Voice Chat Rooms | 🔄 **HAZIRLIK** | M5 PASS |
+| 7 | Gifts + Jeton + PK | 🔄 **HAZIRLIK** | gifts/send |
+| 8 | Trending / Shorts | 🔄 **HAZIRLIK** | Unit test |
+| 9 | Messages + Notifications | 🔄 **HAZIRLIK** | SSE/request |
+| 10 | Global Performance | 🔄 **HAZIRLIK** | Cihaz profil |
+| 11 | Security + Error Handling | 🔄 **HAZIRLIK** | — |
+| 12 | Full E2E QA | ⏸ | FAZ 11 + cihaz |
+| 13 | Release Build | 🔄 **HAZIRLIK** | CI aktif |
 
 ---
 
@@ -196,4 +196,6 @@ Büyük tek commit yasak.
 3. **Siz:** Android'de `1.0.256+292` ile müzik `!istek` test edin
 4. P0 PASS olunca FAZ 0 kapatılır → FAZ 1 başlar
 
-**FAZ 1'e geçiş:** ❌ Henüz uygun değil
+**FAZ 1'e geçiş:** 🔄 Hazırlık devam (otomatik testler PASS); resmi PASS = FAZ0 M5
+
+**Master takip:** `docs/PHASE_MASTER_TRACKER.md` — `bash scripts/phase-progress.sh`

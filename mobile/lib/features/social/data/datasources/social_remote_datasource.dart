@@ -40,7 +40,26 @@ class SocialRemoteDataSource {
         if (authorId != null && authorId.isNotEmpty) 'authorId': authorId,
       },
     );
-    final body = res.data;
+    return _parsePostsPage(res.data, currentUserId: currentUserId);
+  }
+
+  /// GET `/api/users/{userId}/posts` — kılavuz §9.10 `getUserPosts`.
+  Future<({List<PostEntity> posts, bool hasMore})> fetchUserPosts({
+    required String userId,
+    int page = 1,
+    String? currentUserId,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.userPosts(userId),
+      query: {'page': page, 'limit': 20},
+    );
+    return _parsePostsPage(res.data, currentUserId: currentUserId);
+  }
+
+  ({List<PostEntity> posts, bool hasMore}) _parsePostsPage(
+    dynamic body, {
+    String? currentUserId,
+  }) {
     if (body is List) {
       final posts = asJsonList(body)
           .map((j) => PostDto.entityFromApiMap(j, currentUserId: currentUserId))
@@ -56,18 +75,13 @@ class SocialRemoteDataSource {
     if (rawPosts is! List && m['posts'] is List) {
       rawPosts = m['posts'];
     }
-    if (rawPosts is! List && body is List) {
-      rawPosts = body;
-    }
     if (rawPosts is! List) {
       return (posts: const <PostEntity>[], hasMore: false);
     }
-
     final posts = asJsonList(rawPosts)
         .map((j) => PostDto.entityFromApiMap(j, currentUserId: currentUserId))
         .where((p) => p.id.isNotEmpty)
         .toList();
-
     var hasMore = false;
     final pag = m['pagination'];
     if (pag is Map) {
@@ -85,7 +99,6 @@ class SocialRemoteDataSource {
         hasMore = true;
       }
     }
-
     return (posts: posts, hasMore: hasMore);
   }
 

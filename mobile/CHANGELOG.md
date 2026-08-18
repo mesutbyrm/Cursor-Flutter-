@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.267+303 (2026-08-18) — Faz master + social getUserPosts
+
+- **Social:** `GET /api/users/{userId}/posts` kılavuz §9.10 (`fetchUserPosts`)
+- **Faz:** `PHASE_MASTER_TRACKER.md`, FAZ3–13 parity/status, `run-phase-tests.sh`
+- **Test:** 12 faz paketi PASS (182+ unit test)
+
 ## 1.0.266+302 (2026-08-18) — SSE geç katalog + basic oda sync
 
 - **SSE:** Oda listesi geç gelince `syncSseRoomKeyFromCatalog` (RTC listener)
