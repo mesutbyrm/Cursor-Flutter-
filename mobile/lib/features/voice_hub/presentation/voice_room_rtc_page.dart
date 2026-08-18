@@ -22,6 +22,7 @@ import '../../live/domain/entities/live_gift_event.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/presentation/providers/live_providers.dart';
 import '../data/services/voice_room_debug_log.dart';
+import 'utils/voice_room_key_resolver.dart';
 import '../domain/entities/voice_room_realtime_event.dart';
 import '../domain/voice_official_join.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
@@ -177,6 +178,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   VoiceRoomEntity _roomSynced(List<VoiceRoomEntity>? rooms) {
     final w = widget.room;
     if (rooms == null) return w;
+    final resolved = VoiceRoomKeyResolver.resolveFromKnownRooms(w.liveKey, rooms);
+    if (resolved != null) {
+      for (final r in rooms) {
+        if (r.id == resolved) return r;
+      }
+    }
     for (final r in rooms) {
       if (r.id == w.id ||
           r.slug == w.slug ||

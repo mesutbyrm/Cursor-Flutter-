@@ -1,7 +1,7 @@
 # M5 — Cihaz test kontrol listesi (!istek / müzik)
 
 **Tarih:** 2026-08-18  
-**APK:** `1.0.262+298` veya üzeri (`apk-latest`)  
+**APK:** `1.0.265+301` veya üzeri (`apk-latest`)  
 **Oda:** `cmoohrbr`
 
 ---

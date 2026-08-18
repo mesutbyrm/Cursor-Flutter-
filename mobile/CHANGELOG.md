@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.265+301 (2026-08-18) — SSE oda listesi bekleme + key upgrade
+
+- **Kenar durum:** Oda listesi yüklenmeden SSE kısmi `cmoohrbr` ile başlayabiliyordu
+- **Düzeltme:** Girişte oda kataloğu beklenir; canonical id değişince SSE yeniden bağlanır
+- **Release:** `releaseVoiceRoom` artık gerçek SSE anahtarını (`_sseAttachedRoomKey`) kullanır
+- **RTC:** `_roomSynced` kısmi cuid önek eşleşmesi
+
 ## 1.0.264+300 (2026-08-18) — SSE kısmi cuid→tam id çözümleme (müzik senkron)
 
 - **Kök neden:** SSE `…/rooms/{id}/stream` kısmi cuid (`cmoohrbr`) ile **Room not found**; tam Prisma id gerekli (`cmoohrbrx00a4nt08zlkdjyil`)

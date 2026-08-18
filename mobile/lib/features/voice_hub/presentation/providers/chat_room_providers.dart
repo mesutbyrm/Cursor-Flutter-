@@ -412,6 +412,7 @@ class VoiceRoomLiveController
   var _voiceJoined = false;
   var _typingActive = false;
   var _sseStarted = false;
+  String? _sseAttachedRoomKey;
   var _sessionActive = false;
   var _entryBegun = false;
   var _leaveInFlight = false;
@@ -492,7 +493,15 @@ class VoiceRoomLiveController
     return slug;
   }
 
-  /// SSE stream yalnızca tam cuid kabul eder — slug route'tan çözülür.
+  /// SSE aboneliğinin bağlı olduğu oda anahtarı (release için).
+  String get _sseReleaseKey {
+    final attached = _sseAttachedRoomKey?.trim();
+    if (attached != null && attached.isNotEmpty) return attached;
+    final canonical = _canonicalRoomKey.trim();
+    if (canonical.isNotEmpty) return canonical;
+    return _roomKey;
+  }
+  /// SSE stream yalnızca tam cuid kabul eder — slug/kısmi route'tan çözülür.
   String get _canonicalRoomKey => VoiceRoomKeyResolver.canonicalApiKey(
         routeKey: _roomKey,
         meta: _roomMeta,
@@ -593,7 +602,7 @@ class VoiceRoomLiveController
         unawaited(_leaveVoiceSession());
         unawaited(_leavePresenceWithSeatClear());
         unawaited(_stopTyping());
-        ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
+        ref.read(sseConnectionHubProvider).releaseVoiceRoom(_sseReleaseKey);
         ref.read(voiceRoomGiftRealtimeProvider).stop();
         ref.read(pkBattleRemoteProvider.notifier).clear();
         unawaited(() async {
@@ -881,6 +890,7 @@ class VoiceRoomLiveController
           _removeSelfFromPresenceOptimistic();
           _knownPresenceIds.clear();
           _sseStarted = false;
+          _sseAttachedRoomKey = null;
           _presenceJoined = false;
           _voiceJoined = false;
           state = state.copyWith(
@@ -896,7 +906,7 @@ class VoiceRoomLiveController
           );
         },
         () async {
-          ref.read(sseConnectionHubProvider).releaseVoiceRoom(roomKey);
+          ref.read(sseConnectionHubProvider).releaseVoiceRoom(_sseReleaseKey);
           ref.read(voiceRoomGiftRealtimeProvider).stop();
           ref.read(voiceRoomGiftRealtimeProvider).setSseActive(false);
           ref.read(voiceRoomGiftRealtimeProvider).resetDedupeState();

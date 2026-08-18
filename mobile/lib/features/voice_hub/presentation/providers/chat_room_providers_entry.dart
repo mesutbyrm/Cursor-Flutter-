@@ -11,6 +11,7 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     _entryBegun = true;
     _autoSeatAttempted = false;
     _sseStarted = false;
+    _sseAttachedRoomKey = null;
     _sessionActive = true;
     registerVoiceRoomLiveSession(ref, _roomKey);
     VoiceEventLog.joinStart(roomId: _roomKey);
@@ -35,10 +36,12 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     try {
       await _joinPresence();
       unawaited(_tryAutoPrivilegedSeat());
+      await _ensureRoomsCatalogForCanonicalKey();
       _startSse();
       _schedulePoll(sseConnected: false, musicActive: false);
 
       await _loadBackendSnapshot();
+      _maybeUpgradeSseRoomKey();
       await Future.wait<void>([
         _loadInitialMessages(),
         _preloadPkStatus(),

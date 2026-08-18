@@ -4,6 +4,41 @@ part of 'chat_room_providers.dart';
 mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String> {
   VoiceRoomLiveController get _sse => this as VoiceRoomLiveController;
 
+  /// Kısmi route (`cmoohrbr`) için oda listesi yüklenmeden SSE başlamasın.
+  Future<void> _ensureRoomsCatalogForCanonicalKey() async {
+    if (_sse._canonicalRoomKey.length >= 18) return;
+    try {
+      await ref
+          .read(voiceRoomsProvider.future)
+          .timeout(const Duration(seconds: 10));
+    } catch (_) {}
+  }
+
+  /// Oda listesi geldikten sonra canonical id değiştiyse SSE'yi yeniden bağla.
+  void _maybeUpgradeSseRoomKey() {
+    final canonical = _sse._canonicalRoomKey.trim();
+    if (canonical.isEmpty) return;
+    final attached = _sse._sseAttachedRoomKey?.trim();
+    if (!_sse._sseStarted) {
+      if (canonical.length >= 18 && canonical != _sse._roomKey) {
+        _startSse();
+      }
+      return;
+    }
+    if (attached == null || attached.isEmpty || attached == canonical) return;
+    if (canonical.length <= attached.length) return;
+
+    VoiceRoomDebugLog.log('sse.room_key_upgrade', {
+      'from': attached,
+      'to': canonical,
+    });
+    ref.read(sseConnectionHubProvider).releaseVoiceRoom(attached);
+    _sse._sseStarted = false;
+    _sse._sseAttachedRoomKey = null;
+    state = state.copyWith(sseConnected: false);
+    _startSse();
+  }
+
   void _startSse() {
     final roomKey = _sse._canonicalRoomKey;
     if (roomKey.isEmpty) return;
@@ -12,6 +47,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
       return;
     }
     _sse._sseStarted = true;
+    _sse._sseAttachedRoomKey = roomKey;
     final storage = ref.read(tokenStorageProvider);
     final hub = ref.read(sseConnectionHubProvider);
     hub.attachVoiceRoom(roomKey);

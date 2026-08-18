@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-18 21:00 UTC  
+**Son güncelleme:** 2026-08-18 21:30 UTC  
 **Kural:** Bu dosya her agent oturumunda güncellenir. Tamamlanan maddeler `[x]`, devam eden `[~]`, bekleyen `[ ]`.
 
 ---
@@ -17,7 +17,8 @@
 | APK `1.0.261+297` | `[x]` | Release APK (run 32167217259) |
 | APK `1.0.262+298` | `[x]` | Release APK (run 32181631541) |
 | APK `1.0.263+299` | `[x]` | Release APK başarılı |
-| APK `1.0.264+300` | `[ ]` | CI bekliyor |
+| APK `1.0.264+300` | `[x]` | Release APK başarılı (run 32184630561) |
+| APK `1.0.265+301` | `[ ]` | CI bekliyor |
 | FAZ 1+ | `[ ]` | FAZ 0 PASS olmadan başlamaz |
 
 ---
@@ -33,6 +34,7 @@
 | M8 | Stream resolve: explode/Piped üretimde kapalı | `[x]` | `1.0.260+296` |
 | M9 | DJ player youtube-stream API üretim skip | `[x]` | `1.0.263+299` |
 | M10 | SSE kısmi cuid→tam id çözümleme (oda listesi öneği) | `[x]` | `1.0.264+300` |
+| M11 | SSE giriş: oda kataloğu bekle + key upgrade reconnect | `[x]` | `1.0.265+301` |
 | M5 | Oda `cmoohrbr` gerçek cihaz: `!istek` + müzik paneli | `[ ]` | **Tüm otomatik testler bitince** (kullanıcı) |
 | M6 | Backend: `music-request-by-query` üretime ekle VEYA resmi “song-request only” dokümanı | `[x]` | `docs/MUSIC_SONG_REQUEST_CONTRACT.md` (Flutter resmi) |
 | M7 | Gerçek `song-request` + SSE `dj_update` response dump (oda cmoohrbr) | `[~]` | `M7_MUSIC_SSE_CAPTURE.md` (jeton/oda kısıtı) |
@@ -85,6 +87,7 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - FAZ 0: BACKEND_API_ROUTE_INDEX, SSE_PAYLOAD_EXAMPLES, TEST_ACCOUNTS, MUSIC_SONG_REQUEST_CONTRACT
 - `1.0.263+299`: DJ youtube-stream skip, M7 probe, M5 checklist
 - `1.0.264+300`: SSE kısmi cuid→tam id (`VoiceRoomKeyResolver` önek), M7 probe önek çözümleme
+- `1.0.265+301`: SSE katalog bekleme + canonical key upgrade reconnect
 - **Sırada:** M5 cihaz, M7 tam dump (jeton + oda erişimi)
 
 ---

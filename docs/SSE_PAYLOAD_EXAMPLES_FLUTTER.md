@@ -40,6 +40,32 @@ Ses-only (`musicUrl`):
 
 ## `dj` / `dj_update`
 
+Üretim örneği (`cmoohrbr` → `cmoohrbrx00a4nt08zlkdjyil`, `docs/M7_MUSIC_SSE_CAPTURE.md`):
+
+```json
+{
+  "type": "dj",
+  "event": "QUEUE_UPDATED",
+  "playing": true,
+  "nowPlaying": {
+    "videoId": "cpp69ghR1IM",
+    "title": "TARKAN - Şımarık (Official Music Video)",
+    "startedAt": "2026-08-18T14:23:46.802Z",
+    "startedAtMs": 1787063026802,
+    "elapsedSeconds": 23146,
+    "duration": "3:12",
+    "embedUrl": "https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=23146&enablejsapi=1&playsinline=1"
+  },
+  "musicUrl": "https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=23146&enablejsapi=1&playsinline=1",
+  "embedUrl": "https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=23146&enablejsapi=1&playsinline=1",
+  "musicQueue": [],
+  "queue": [],
+  "queueLength": 0
+}
+```
+
+Test fixture:
+
 ```json
 {
   "type": "dj",
