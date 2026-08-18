@@ -12,7 +12,12 @@ on:
       - 'scripts/dart-analyze-gate.sh'
       - 'scripts/run-release-gate.sh'
       - 'scripts/acceptance-preflight.sh'
+      - 'scripts/faz0-verify.sh'
+      - 'scripts/m5-preflight.sh'
+      - 'scripts/run-music-acceptance.sh'
+      - 'scripts/probe-music-room.sh'
       - 'scripts/acceptance-tests/**'
+      - 'mcp-server/**'
       - '.github/workflows/ci.yml'
       - '.github/workflows/build-apk.yml'
   pull_request:
@@ -23,7 +28,12 @@ on:
       - 'scripts/dart-analyze-gate.sh'
       - 'scripts/run-release-gate.sh'
       - 'scripts/acceptance-preflight.sh'
+      - 'scripts/faz0-verify.sh'
+      - 'scripts/m5-preflight.sh'
+      - 'scripts/run-music-acceptance.sh'
+      - 'scripts/probe-music-room.sh'
       - 'scripts/acceptance-tests/**'
+      - 'mcp-server/**'
       - '.github/workflows/ci.yml'
       - '.github/workflows/build-apk.yml'
   workflow_dispatch:
@@ -65,3 +75,43 @@ jobs:
           set -eux
           chmod +x scripts/dart-analyze-gate.sh
           bash scripts/dart-analyze-gate.sh
+
+  faz0-music:
+    name: FAZ 0 music verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.44.8'
+          cache: true
+
+      - name: FAZ 0 otomatik kapılar (M5 cihaz hariç)
+        env:
+          ACCEPTANCE_USER_EMAIL: ${{ secrets.ACCEPTANCE_USER_EMAIL }}
+          ACCEPTANCE_USER_PASSWORD: ${{ secrets.ACCEPTANCE_USER_PASSWORD }}
+          ACCEPTANCE_USER_USERNAME: ${{ secrets.ACCEPTANCE_USER_USERNAME }}
+          ACCEPTANCE_HOST_EMAIL: ${{ secrets.ACCEPTANCE_HOST_EMAIL }}
+          ACCEPTANCE_HOST_PASSWORD: ${{ secrets.ACCEPTANCE_HOST_PASSWORD }}
+          ACCEPTANCE_ADMIN_EMAIL: ${{ secrets.ACCEPTANCE_ADMIN_EMAIL }}
+          ACCEPTANCE_ADMIN_PASSWORD: ${{ secrets.ACCEPTANCE_ADMIN_PASSWORD }}
+          ACCEPTANCE_ADMIN_USERNAME: ${{ secrets.ACCEPTANCE_ADMIN_USERNAME }}
+        run: |
+          set -eux
+          chmod +x scripts/faz0-verify.sh
+          bash scripts/faz0-verify.sh
+
+      - name: FAZ0 raporu (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: faz0-verify-report
+          path: docs/FAZ0_VERIFY_REPORT.md
+          retention-days: 14

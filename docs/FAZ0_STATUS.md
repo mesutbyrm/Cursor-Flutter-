@@ -25,7 +25,7 @@
 | Madde | Durum | Bloker |
 |-------|--------|--------|
 | **M5** cihaz E2E | `[ ]` | Kullanıcı — `M5_DEVICE_TEST_CHECKLIST.md` |
-| **M7** song-request 200 | `[~]` | Test jetonu 0; `ACCEPTANCE_ADMIN_*` yok |
+| **M7** song-request 200 | `[~]` | Test jetonu 0 — `M5_M7_JETON_BLOCKER.md` |
 | **A6** route.ts ağacı | `[~]` | `BACKEND_API_ROUTE_INDEX.md` yedeği |
 | **A7** resmi SSE şema | `[~]` | Üretim `dj`/`connected`; backend doc yok |
 | **A8** test hesapları | `[~]` | `TEST_ACCOUNTS.md`; admin secret eksik |

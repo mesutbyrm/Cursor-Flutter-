@@ -55,7 +55,7 @@ Kaynak: `docs/STAGE5_REAL_E2E_ACCEPTANCE_REPORT.md`
 
 Detay: `docs/VOICE_ROOM_KEY_RESOLUTION.md`
 
-**Eksik:** `ACCEPTANCE_ADMIN_*` secret yoksa test jetonu otomatik eklenemez; admin panelden `cursor.test.*` hesabına jeton verin veya `bash scripts/set-acceptance-secrets.sh` ile CI secret'larını ayarlayın.
+**Eksik:** `ACCEPTANCE_ADMIN_*` secret yoksa test jetonu otomatik eklenemez — `docs/M5_M7_JETON_BLOCKER.md`
 
 ---
 

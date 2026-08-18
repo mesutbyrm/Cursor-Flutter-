@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-18 22:50 UTC  
+**Son güncelleme:** 2026-08-18 22:55 UTC  
 **Kural:** Bu dosya her agent oturumunda güncellenir. Tamamlanan maddeler `[x]`, devam eden `[~]`, bekleyen `[ ]`.
 
 ---
@@ -39,7 +39,7 @@
 | M12 | SSE geç katalog listener + basic `_effectiveRoom` önek | `[x]` | `1.0.266+302` |
 | M5 | Oda `cmoohrbr` gerçek cihaz: `!istek` + müzik paneli | `[ ]` | **Tüm otomatik testler bitince** (kullanıcı) |
 | M6 | Backend: `music-request-by-query` üretime ekle VEYA resmi “song-request only” dokümanı | `[x]` | `docs/MUSIC_SONG_REQUEST_CONTRACT.md` (Flutter resmi) |
-| M7 | Gerçek `song-request` + SSE `dj_update` response dump (oda cmoohrbr) | `[~]` | SSE ✅; song-request 400 jeton (acceptance PASS); 200 yanıt jeton bekliyor |
+| M7 | Gerçek `song-request` + SSE `dj_update` response dump (oda cmoohrbr) | `[~]` | SSE ✅; song-request 400 jeton — `docs/M5_M7_JETON_BLOCKER.md` |
 
 ---
 
@@ -94,7 +94,8 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - API müzik fazı: `api-music-phase.sh` varsayılan hesap + önek çözümleme (6/6 PASS)
 - `FAZ0_STATUS.md`, `run-music-acceptance.sh`, `m5-preflight.sh`, `M7_SONG_REQUEST_200_TEMPLATE.md`
 - `faz0-verify.sh` + probe SSE heredoc düzeltmesi
-- **Sırada:** M5 cihaz (`m5-preflight.sh` → checklist), M7 song-request 200 (jeton)
+- CI `faz0-music` job + `M5_M7_JETON_BLOCKER.md`
+- **Sırada:** Jeton ekle → M5 cihaz, M7 song-request 200
 
 ---
 
