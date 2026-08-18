@@ -5,7 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
-import '../../utils/voice_room_seat_capacity.dart';
+import '../utils/voice_room_seat_capacity.dart';
 
 /// Web sesli oda koltuk düzeni (dinamik koltuk + merkez sahne).
 class VoiceRoomSeatGrid extends StatelessWidget {

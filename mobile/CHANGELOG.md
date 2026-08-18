@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.254+290 (2026-08-18) — !istek ANR + müzik çalma düzeltmesi
+
+- **!istek donma (ANR):** Çift `refresh`/`_syncMusicFromServer` fırtınası engellendi; istek non-blocking
+- **Müzik çalma:** `userDismissedPlayer`, nested `musicUrl`, SSE `ensureMusicAudible` hizalandı
+- **Koltuk:** Geçici boş API yanıtında `seatIndex` korunur
+- **Mikrofon:** `autoOpenMic` ayarı koltuk/konuşma yetkisinde otomatik açar
+- **CI:** Acceptance test hesabı silinmişse `mobile-register` ile otomatik yeniden oluşturulur
+
 ## 1.0.253+289 (2026-08-18) — Ana sayfa 5sn donma (presence SSE)
 
 - **Kök neden:** T+3sn `VoiceRoomsPresenceScope` 12 oda SSE'sini aynı anda açıyordu; ana thread kilitleniyordu

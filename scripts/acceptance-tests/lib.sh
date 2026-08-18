@@ -96,6 +96,28 @@ print(raw[:120])
 " 2>/dev/null || echo "bilinmeyen hata"
 }
 
+register_acceptance_user() {
+  local email="$1" username="$2" password="$3" name="$4"
+  local body resp
+  body="$(
+    REGISTER_EMAIL="$email" REGISTER_USER="$username" REGISTER_PASS="$password" REGISTER_NAME="$name" python3 - <<'PY'
+import json, os
+print(json.dumps({
+    "email": os.environ["REGISTER_EMAIL"],
+    "password": os.environ["REGISTER_PASS"],
+    "name": os.environ["REGISTER_NAME"],
+    "username": os.environ["REGISTER_USER"],
+    "birthDate": "1990-01-01",
+    "birthTime": "12:00",
+}))
+PY
+  )"
+  resp=$(curl -sS -X POST "$BASE/api/auth/mobile-register" \
+    -H "Content-Type: application/json" \
+    -d "$body")
+  extract_token "$resp"
+}
+
 extract_token() {
   local resp="$1"
   local tok
@@ -188,6 +210,16 @@ bootstrap_user_token() {
       USER_TOKEN="$tok"
       return 0
     fi
+    tok=$(register_acceptance_user \
+      "$DEFAULT_ACCEPTANCE_USER_EMAIL" \
+      "$DEFAULT_ACCEPTANCE_USER_USERNAME" \
+      "$DEFAULT_ACCEPTANCE_USER_PASSWORD" \
+      "Cursor Test")
+    if [[ -n "$tok" ]]; then
+      USER_TOKEN="$tok"
+      echo "ℹ️  Dokümante test hesabı yeniden oluşturuldu (mobile-register)" >&2
+      return 0
+    fi
   fi
   return 1
 }
@@ -208,6 +240,17 @@ bootstrap_host_token() {
   if [[ -n "$tok" ]]; then
     HOST_TOKEN="$tok"
     return 0
+  fi
+  if [[ "$HOST_EMAIL" == "$DEFAULT_ACCEPTANCE_HOST_EMAIL" ]]; then
+    tok=$(register_acceptance_user \
+      "$DEFAULT_ACCEPTANCE_HOST_EMAIL" \
+      "cursorhost1786235468" \
+      "$DEFAULT_ACCEPTANCE_HOST_PASSWORD" \
+      "Cursor Host")
+    if [[ -n "$tok" ]]; then
+      HOST_TOKEN="$tok"
+      return 0
+    fi
   fi
   if [[ -n "${USER_USERNAME:-}" ]]; then
     resp=$(mobile_login_identifier username "$USER_USERNAME" "$HOST_PASSWORD")

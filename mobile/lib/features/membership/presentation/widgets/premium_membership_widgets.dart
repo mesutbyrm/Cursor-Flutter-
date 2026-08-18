@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../premium_2026/profile_membership_helpers.dart';
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../profile/presentation/widgets/jeton_store_widgets.dart';
 import '../../domain/membership_package_entity.dart';
