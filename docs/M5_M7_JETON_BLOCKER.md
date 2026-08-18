@@ -41,7 +41,9 @@ Repo **Settings → Secrets and variables → Actions** altına ekleyin:
 | Secret | Açıklama |
 |--------|----------|
 | `ACCEPTANCE_ADMIN_EMAIL` | Admin e-posta |
-| `ACCEPTANCE_ADMIN_PASSWORD` | Admin şifre |
+| `ACCEPTANCE_ADMIN_PASSWORD` | Admin şifre — **geçerli admin hesabı olmalı** |
+
+> CI log (Ağu 2026): `admin login email failed` + `admin login username failed` → secret'ları güncelleyin veya manuel jeton ekleyin.
 
 İsteğe bağlı: `ACCEPTANCE_ADMIN_USERNAME` (e-posta yerine kullanıcı adı ile giriş).
 
@@ -54,6 +56,8 @@ bash scripts/set-acceptance-secrets.sh   # USER + HOST (admin hariç)
 Admin secret'ları **manuel** eklenmelidir (`set-acceptance-secrets.sh` admin bilgisini bilmez).
 
 CI'da `faz0-verify` / `m5-preflight` admin secret varsa `POST /api/admin/credits` ile otomatik top-up dener.
+
+**CI tanısı (2026-08-18):** GitHub'da `ACCEPTANCE_ADMIN_*` secret'ları **var** ama **giriş başarısız** (email ve username denendi). `ACCEPTANCE_USER_*` secret'ları da hatalı — varsayılan test hesabına düşülüyor.
 
 **CI notu:** Secret'lar var ama top-up başarısızsa:
 

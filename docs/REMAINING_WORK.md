@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-18 23:00 UTC  
+**Son güncelleme:** 2026-08-18 23:05 UTC — CI: ADMIN secret giriş başarısız  
 **Kural:** Bu dosya her agent oturumunda güncellenir. Tamamlanan maddeler `[x]`, devam eden `[~]`, bekleyen `[ ]`.
 
 ---
@@ -98,6 +98,7 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - `faz0-status.sh` + `FAZ0_CLOSURE_CHECKLIST.md`
 - `m7-on-jeton.sh` — jeton sonrası M7 otomatik probe
 - `lib.sh` admin login fallback (email→username) + OpenAPI credits body
+- CI debug logları açıldı; faz0-verify jeton sonrası M7 otomatik dener
 - **Sırada:** Jeton ekle veya admin secret düzelt → `m7-on-jeton.sh` → M5 cihaz
 
 ---
