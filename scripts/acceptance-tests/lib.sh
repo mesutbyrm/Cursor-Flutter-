@@ -486,7 +486,14 @@ ensure_test_jeton_minimum() {
     return 2
   fi
   need=$((min_balance - current))
-  if top_up_test_jeton "$user_id" "$min_balance" "stage6-$label" >/dev/null 2>&1; then
+  if [[ -n "${JETON_TOPUP_DEBUG:-}${ACCEPTANCE_DEBUG:-}" ]]; then
+    if top_up_test_jeton "$user_id" "$min_balance" "stage6-$label"; then
+      sleep 1
+      current=$(user_jeton_balance_from_me "$token")
+      printf '%s' "$current"
+      return 0
+    fi
+  elif top_up_test_jeton "$user_id" "$min_balance" "stage6-$label" >/dev/null 2>&1; then
     sleep 1
     current=$(user_jeton_balance_from_me "$token")
     printf '%s' "$current"

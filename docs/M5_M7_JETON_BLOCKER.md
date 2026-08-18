@@ -55,7 +55,13 @@ Admin secret'ları **manuel** eklenmelidir (`set-acceptance-secrets.sh` admin bi
 
 CI'da `faz0-verify` / `m5-preflight` admin secret varsa `POST /api/admin/credits` ile otomatik top-up dener.
 
-**CI notu:** Secret'lar var ama top-up başarısızsa admin şifresi veya hesap rolü güncellenmeli. Tanı: `JETON_TOPUP_DEBUG=1 bash scripts/debug-jeton-topup.sh` (secret gerekli).
+**CI notu:** Secret'lar var ama top-up başarısızsa:
+
+1. `ACCEPTANCE_USER_*` şifresi hatalı olabilir (CI log: *Secret kimlik bilgileri başarısız*)
+2. `ACCEPTANCE_ADMIN_*` hesabı admin rolünde olmayabilir veya şifre yanlış
+3. Tanı: CI `faz0-music` job → *Jeton top-up tanı* adımı veya `JETON_TOPUP_DEBUG=1 bash scripts/debug-jeton-topup.sh`
+
+**Hızlı çözüm:** Admin panelden manuel jeton → `bash scripts/m7-on-jeton.sh`
 
 ---
 

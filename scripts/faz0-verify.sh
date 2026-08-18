@@ -81,13 +81,24 @@ import json,sys
 d=json.load(sys.stdin)
 print(d.get('id') or d.get('user',{}).get('id') or '')
 " 2>/dev/null || echo "")
-    if ensure_test_jeton_minimum "$USER_TOKEN" "$USER_ID" "$USER_EMAIL" 50 faz0-verify 2>/dev/null; then
+    if ensure_test_jeton_minimum "$USER_TOKEN" "$USER_ID" "$USER_EMAIL" 50 faz0-verify; then
       JETON=$(user_jeton_balance_from_me "$USER_TOKEN")
       record PASS "Jeton top-up" "admin → jeton=$JETON"
       echo "✅ Admin top-up jeton=$JETON"
+      # M7 otomatik (jeton hazır)
+      if bash "$ROOT/scripts/m7-on-jeton.sh" >/tmp/faz0-m7.log 2>&1; then
+        record PASS "M7 song-request 200" "m7-on-jeton.sh"
+        echo "✅ M7 probe HTTP 200"
+      else
+        record WARN "M7" "m7-on-jeton başarısız — /tmp/faz0-m7.log"
+        echo "⚠️  M7 probe tamamlanamadı"
+      fi
     else
       record WARN "Jeton" "top-up başarısız (jeton=$JETON)"
       echo "⚠️  Jeton top-up başarısız"
+      if acceptance_admin_secrets_configured; then
+        echo "   Tanı: bash scripts/debug-jeton-topup.sh"
+      fi
     fi
   else
     record WARN "Jeton" "$USER_EMAIL jeton=$JETON — M5/M7 için ≥10 gerekli"
