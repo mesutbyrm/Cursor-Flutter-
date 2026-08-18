@@ -2,21 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Tarih | 2026-08-09 10:51:57 UTC |
-| Run | local-1786272710 |
+| Tarih | 2026-08-18 22:23:53 UTC |
+| Run | local-1787091825 |
 | API | https://canlifal.com |
-| Geçti | 4 |
+| Geçti | 6 |
 | Başarısız | 0 |
-| Atlandı | 1 |
+| Atlandı | 0 |
 
 ## Sonuçlar
 
 | # | Test | Durum | Detay |
 |---|------|-------|-------|
 | SEARCH | Music search | ✅ PASS | 12 sonuç, videoId+title |
-| AUTH | Login | ✅ PASS | token alındı |
-| QUEUE | Queue costs | ✅ PASS | kuyruk OK (fiyat song-request yanıtından) |
-| SONGREQ | Song request | ⏭️ SKIP | hesapta yeterli jeton — E2E mümkün |
-| SSE_DJ | SSE dj stream | ✅ PASS | stream açık |
+| AUTH | Login | ✅ PASS | token alındı (cursor.test.1786235468@mailinator.com) |
+| QUEUE | Queue costs | ✅ PASS | kuyruk OK, audio=10 jeton |
+| ROOMKEY | Room key resolve | ✅ PASS | cmoohrbr → cmoohrbrx00a4nt08zlkdjyil |
+| SONGREQ | Song request | ✅ PASS | HTTP 400 (Yetersiz jeton. 10 jeton gerekiyor.) |
+| SSE_DJ | SSE dj stream | ✅ PASS | stream açık (room=cmoohrbrx00a4nt08zlkdjyil) |
 
-**API testleri atlandı veya kısmen geçti** (1 atlandı) — istemci testleri bekleniyor.
+**API acceptance testleri geçti** — istemci testleri bekleniyor.

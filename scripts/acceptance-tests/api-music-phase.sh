@@ -8,10 +8,34 @@ source "$SCRIPT_DIR/lib.sh"
 
 require_cmd curl python3
 
-USER_EMAIL="${ACCEPTANCE_USER_EMAIL:-}"
-USER_PASSWORD="${ACCEPTANCE_USER_PASSWORD:-}"
+apply_acceptance_credential_defaults
+
+USER_EMAIL="${USER_EMAIL:-${ACCEPTANCE_USER_EMAIL:-}}"
+USER_PASSWORD="${USER_PASSWORD:-${ACCEPTANCE_USER_PASSWORD:-}}"
 USER_TOKEN=""
 ROOM_ID=""
+MUSIC_PROBE_ROOM="${MUSIC_PROBE_ROOM:-cmoohrbr}"
+
+resolve_room_id_from_list() {
+  local slug="$1" body="$2"
+  printf '%s' "$body" | ROOM_SLUG="$slug" python3 -c "
+import json,sys,os
+slug=os.environ.get('ROOM_SLUG','').strip().lower()
+d=json.load(sys.stdin)
+rooms=d if isinstance(d,list) else d.get('rooms') or d.get('data') or []
+if not isinstance(rooms,list): rooms=[]
+for r in rooms:
+    if not isinstance(r,dict): continue
+    rid=str(r.get('id') or r.get('roomId') or '').strip()
+    rslug=str(r.get('slug') or '').strip().lower()
+    if rid.lower()==slug or rslug==slug:
+        print(rid); break
+    if len(slug) >= 6 and rid.lower().startswith(slug):
+        print(rid); break
+else:
+    print(slug)
+" 2>/dev/null || echo "$slug"
+}
 
 echo "=== API Music Phase (Aşama 7) ==="
 echo "Base: $BASE"
@@ -19,17 +43,11 @@ echo ""
 
 gate_search() {
   echo "--- MUSIC SEARCH ---"
-  if ! acceptance_user_secrets_configured; then
-    record "SEARCH" "Music search" SKIP "ACCEPTANCE_USER_* yok"
+  if ! bootstrap_user_token; then
+    record "SEARCH" "Music search" SKIP "giriş başarısız"
     return
   fi
-  local resp token
-  resp=$(mobile_login_identifier email "$USER_EMAIL" "$USER_PASSWORD")
-  token=$(extract_token "$resp")
-  if [[ -z "$token" ]]; then
-    record "SEARCH" "Music search" FAIL "token yok"
-    return
-  fi
+  local token="$USER_TOKEN"
   local code body count
   code=$(http_code -H "Authorization: Bearer $token" "$BASE/api/music/search?q=Tarkan%20Dudu&limit=5")
   body=$(curl_json "$BASE/api/music/search?q=Tarkan%20Dudu&limit=5" -H "Authorization: Bearer $token")
@@ -60,25 +78,18 @@ print('yes' if ok else 'no')
 
 gate_auth_queue() {
   echo "--- AUTH + QUEUE COSTS ---"
-  if ! acceptance_user_secrets_configured; then
-    record "AUTH" "Login" SKIP "ACCEPTANCE_USER_* yok"
-    record "QUEUE" "Queue costs" SKIP "token yok"
-    return
-  fi
-  local resp
-  resp=$(mobile_login_identifier email "$USER_EMAIL" "$USER_PASSWORD")
-  USER_TOKEN=$(extract_token "$resp")
-  if [[ -z "$USER_TOKEN" ]]; then
+  if ! bootstrap_user_token; then
     record "AUTH" "Login" FAIL "token yok"
     record "QUEUE" "Queue costs" SKIP "token yok"
     return
   fi
-  record "AUTH" "Login" PASS "token alındı"
+  USER_TOKEN="${USER_TOKEN}"
+  record "AUTH" "Login" PASS "token alındı ($USER_EMAIL)"
 
   local body
-  body=$(curl_json "$BASE/api/chat/rooms?limit=5&withCounts=true" \
+  body=$(curl_json "$BASE/api/chat/rooms?limit=50&withCounts=true" \
     -H "Authorization: Bearer $USER_TOKEN")
-  ROOM_ID=$(pick_first_room_id "$body")
+  ROOM_ID=$(resolve_room_id_from_list "$MUSIC_PROBE_ROOM" "$body")
   if [[ -z "$ROOM_ID" ]]; then
     record "QUEUE" "Queue costs" SKIP "oda yok"
     return
@@ -130,19 +141,19 @@ gate_song_request_insufficient() {
   skip_unless_user_token "SONGREQ" "Song request" || return 0
   if [[ -z "$ROOM_ID" ]]; then
     local body
-    body=$(curl_json "$BASE/api/chat/rooms?limit=5" -H "Authorization: Bearer $USER_TOKEN")
-    ROOM_ID=$(pick_first_room_id "$body")
+    body=$(curl_json "$BASE/api/chat/rooms?limit=50" -H "Authorization: Bearer $USER_TOKEN")
+    ROOM_ID=$(resolve_room_id_from_list "$MUSIC_PROBE_ROOM" "$body")
   fi
   if [[ -z "$ROOM_ID" ]]; then
     record "SONGREQ" "Song request" SKIP "oda yok"
     return
   fi
   local code body err
-  body=$(curl -sS -X POST "$BASE/api/chat/rooms/$ROOM_ID/song-request" \
+  body=$(curl -sS -X POST "$BASE/api/chat/rooms/$MUSIC_PROBE_ROOM/song-request" \
     -H "Authorization: Bearer $USER_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"videoId":"dQw4w9WgXcQ","title":"Test Song","requestType":"audio","videoMode":"audio"}')
-  code=$(http_code -X POST "$BASE/api/chat/rooms/$ROOM_ID/song-request" \
+  code=$(http_code -X POST "$BASE/api/chat/rooms/$MUSIC_PROBE_ROOM/song-request" \
     -H "Authorization: Bearer $USER_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"videoId":"dQw4w9WgXcQ","title":"Test Song","requestType":"audio","videoMode":"audio"}')
@@ -161,8 +172,8 @@ gate_sse_dj() {
   skip_unless_user_token "SSE_DJ" "SSE dj stream" || return 0
   if [[ -z "$ROOM_ID" ]]; then
     local body
-    body=$(curl_json "$BASE/api/chat/rooms?limit=5" -H "Authorization: Bearer $USER_TOKEN")
-    ROOM_ID=$(pick_first_room_id "$body")
+    body=$(curl_json "$BASE/api/chat/rooms?limit=50" -H "Authorization: Bearer $USER_TOKEN")
+    ROOM_ID=$(resolve_room_id_from_list "$MUSIC_PROBE_ROOM" "$body")
   fi
   if [[ -z "$ROOM_ID" ]]; then
     record "SSE_DJ" "SSE dj stream" SKIP "oda yok"
@@ -174,16 +185,35 @@ gate_sse_dj() {
     -H "Authorization: Bearer $USER_TOKEN" \
     -H "Accept: text/event-stream" \
     "$BASE/api/chat/rooms/$ROOM_ID/stream" 2>/dev/null | head -c 4096 >"$tmp" || true
-  if grep -qE '^(data:|event:|:)' "$tmp"; then
-    record "SSE_DJ" "SSE dj stream" PASS "stream açık"
+  if grep -qE '^(data:|event:|:)' "$tmp" && ! grep -qi 'room not found' "$tmp"; then
+    record "SSE_DJ" "SSE dj stream" PASS "stream açık (room=$ROOM_ID)"
+  elif grep -qi 'room not found' "$tmp"; then
+    record "SSE_DJ" "SSE dj stream" FAIL "Room not found (kısmi id? çözüm: tam cuid)"
   else
     record "SSE_DJ" "SSE dj stream" FAIL "veri yok"
   fi
   rm -f "$tmp"
 }
 
+gate_room_key_resolve() {
+  echo "--- ROOM KEY RESOLVE ---"
+  skip_unless_user_token "ROOMKEY" "Room key resolve" || return 0
+  local body resolved
+  body=$(curl_json "$BASE/api/chat/rooms?limit=50" -H "Authorization: Bearer $USER_TOKEN")
+  resolved=$(resolve_room_id_from_list "$MUSIC_PROBE_ROOM" "$body")
+  if [[ "$resolved" != "$MUSIC_PROBE_ROOM" && ${#resolved} -ge 18 ]]; then
+    record "ROOMKEY" "Room key resolve" PASS "$MUSIC_PROBE_ROOM → $resolved"
+    ROOM_ID="$resolved"
+  elif [[ "$resolved" == "$MUSIC_PROBE_ROOM" ]]; then
+    record "ROOMKEY" "Room key resolve" FAIL "önek çözülemedi"
+  else
+    record "ROOMKEY" "Room key resolve" SKIP "oda listesinde yok"
+  fi
+}
+
 gate_search
 gate_auth_queue
+gate_room_key_resolve
 gate_song_request_insufficient
 gate_sse_dj
 

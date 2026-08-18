@@ -1,13 +1,13 @@
 # M7 — Müzik probe yakalama (üretim)
 
-**Tarih:** 2026-08-18 22:03 UTC  
+**Tarih:** 2026-08-18 22:24 UTC  
 **Oda slug:** `cmoohrbr`  
 **Oda id (SSE):** `cmoohrbrx00a4nt08zlkdjyil`  
 **Hesap:** `cursor.test.1786235468@mailinator.com` — jeton=0  
 **Üretim:** `https://canlifal.com`
 
 > Otomatik: `MUSIC_PROBE_ROOM=cmoohrbr bash scripts/probe-music-room.sh`  
-> **M7 song-request:** HTTP 400 — test hesabında jeton yok (10 gerekli). Tam akış için `ACCEPTANCE_ADMIN_*` ile jeton top-up veya admin panel.
+> **Not:** SSE yalnızca tam cuid ile çalışır; slug ile `Room not found`. Flutter `1.0.264+` düzeltmesi.
 
 ---
 

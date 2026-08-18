@@ -44,10 +44,11 @@
 - [x] OpenAPI + Prisma + endpoints_index (`backend-docs/`) sağlandı
 - [x] B1.12 parity raporu entegre edildi
 - [x] MCP `read_source` + backend-docs (`mcp-server` v1.2.0)
-- [x] SSE event şemaları (Flutter parser + test fixture + M7 probe)
+- [x] SSE event şemaları (Flutter parser + test fixture + M7 probe + API music phase 6/6)
+- [x] Oda anahtarı çözümleme (`VOICE_ROOM_KEY_RESOLUTION.md`, M10–M12)
 - [ ] P0 müzik !istek Android'de PASS
 
-**FAZ 0 sonucu:** **INCOMPLETE** (tam MCP + SSE şeması + Android müzik E2E bekleniyor)
+**FAZ 0 sonucu:** **INCOMPLETE** — Android müzik E2E (M5) bekleniyor. Özet: `docs/FAZ0_STATUS.md`
 
 ---
 

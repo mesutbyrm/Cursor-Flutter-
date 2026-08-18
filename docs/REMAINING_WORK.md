@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-18 22:10 UTC  
+**Son güncelleme:** 2026-08-18 22:25 UTC  
 **Kural:** Bu dosya her agent oturumunda güncellenir. Tamamlanan maddeler `[x]`, devam eden `[~]`, bekleyen `[ ]`.
 
 ---
@@ -39,7 +39,7 @@
 | M12 | SSE geç katalog listener + basic `_effectiveRoom` önek | `[x]` | `1.0.266+302` |
 | M5 | Oda `cmoohrbr` gerçek cihaz: `!istek` + müzik paneli | `[ ]` | **Tüm otomatik testler bitince** (kullanıcı) |
 | M6 | Backend: `music-request-by-query` üretime ekle VEYA resmi “song-request only” dokümanı | `[x]` | `docs/MUSIC_SONG_REQUEST_CONTRACT.md` (Flutter resmi) |
-| M7 | Gerçek `song-request` + SSE `dj_update` response dump (oda cmoohrbr) | `[~]` | `M7_MUSIC_SSE_CAPTURE.md` (jeton/oda kısıtı) |
+| M7 | Gerçek `song-request` + SSE `dj_update` response dump (oda cmoohrbr) | `[~]` | SSE ✅; song-request 400 jeton (acceptance PASS); 200 yanıt jeton bekliyor |
 
 ---
 
@@ -53,7 +53,7 @@
 | A4 | `SSE_EVENTS_FLUTTER_PARSED.md` (koddan türetilmiş) | `[x]` |
 | A5 | Tam backend MCP `index.mjs` (SDK, `read_source`) | `[x]` | v1.2.0: read_source, search_source, list_services |
 | A6 | `nextjs_space/app/api/**/route.ts` kaynak ağacı | `[~]` | `docs/BACKEND_API_ROUTE_INDEX.md` (690 uç yedeği) |
-| A7 | Resmi SSE şema dokümanı (backend örnek payload) | `[~]` | `SSE_PAYLOAD_EXAMPLES` + M7 üretim `dj`/`connected` |
+| A7 | Resmi SSE şema dokümanı (backend örnek payload) | `[~]` | `SSE_PAYLOAD_EXAMPLES` + M7 + `API_MUSIC_PHASE_REPORT` (6/6 PASS) |
 | A8 | Test hesapları (TEST_USER, TEST_ROOM_OWNER, …) | `[~]` | `TEST_ACCOUNTS.md` + `VOICE_ROOM_KEY_RESOLUTION.md` |
 | A9 | Android E2E müzik PASS → FAZ 0 kapat | `[ ]` |
 
@@ -91,13 +91,16 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - `1.0.264+300`: SSE kısmi cuid→tam id (`VoiceRoomKeyResolver` önek), M7 probe önek çözümleme
 - `1.0.265+301`: SSE katalog bekleme + canonical key upgrade reconnect
 - `1.0.266+302`: SSE geç katalog listener, VOICE_ROOM_KEY_RESOLUTION doc
-- **Sırada:** M5 cihaz, M7 song-request (jeton + `ACCEPTANCE_ADMIN_*`)
+- API müzik fazı: `api-music-phase.sh` varsayılan hesap + önek çözümleme (6/6 PASS)
+- `FAZ0_STATUS.md`, `run-music-acceptance.sh`
+- **Sırada:** M5 cihaz, M7 song-request 200 (jeton)
 
 ---
 
 ## Hızlı komutlar
 
 ```bash
+bash scripts/run-music-acceptance.sh
 bash scripts/print-build-status.sh
 bash scripts/wait-apk-build.sh 900
 cd mobile && flutter test test/features/voice_hub/
