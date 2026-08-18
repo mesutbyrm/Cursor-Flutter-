@@ -15,6 +15,7 @@
 | !istek / ANR kod | M1–M4, M8–M9 — `1.0.257–263` |
 | SSE oda anahtarı | M10–M12 — `1.0.264–266`, `VOICE_ROOM_KEY_RESOLUTION.md` |
 | SSE üretim payload | M7 kısmi — `dj`, `connected` (`M7_MUSIC_SSE_CAPTURE.md`) |
+| API müzik fazı | 6/6 PASS — `API_MUSIC_PHASE_REPORT.md`, `run-music-acceptance.sh` |
 | Unit testler | 93× `test/features/voice_hub/` |
 
 ---
@@ -35,6 +36,9 @@
 ## Doğrulama komutları
 
 ```bash
+# M5 cihaz testi öncesi (API + jeton + unit)
+bash scripts/m5-preflight.sh
+
 # API müzik fazı (secret olmadan varsayılan test hesabı)
 MUSIC_PROBE_ROOM=cmoohrbr bash scripts/acceptance-tests/api-music-phase.sh
 

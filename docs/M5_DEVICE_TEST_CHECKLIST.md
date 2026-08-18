@@ -1,8 +1,18 @@
 # M5 — Cihaz test kontrol listesi (!istek / müzik)
 
 **Tarih:** 2026-08-18  
-**APK:** `1.0.265+301` veya üzeri (`apk-latest`)  
-**Oda:** `cmoohrbr`
+**APK:** `1.0.266+302` veya üzeri (`apk-latest`)  
+**Oda:** `cmoohrbr` (kısmi id; SSE: `cmoohrbrx00a4nt08zlkdjyil`)
+
+---
+
+## Otomatik ön kontrol (önerilir)
+
+```bash
+bash scripts/m5-preflight.sh
+```
+
+Geçerse: API müzik 6/6, jeton ≥10, voice_hub testleri OK.
 
 ---
 

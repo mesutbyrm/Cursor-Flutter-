@@ -92,8 +92,8 @@ FAZ 0 **PASS** olmadan başlanmaz. Sıra: `docs/PHASE_PLAN.md`.
 - `1.0.265+301`: SSE katalog bekleme + canonical key upgrade reconnect
 - `1.0.266+302`: SSE geç katalog listener, VOICE_ROOM_KEY_RESOLUTION doc
 - API müzik fazı: `api-music-phase.sh` varsayılan hesap + önek çözümleme (6/6 PASS)
-- `FAZ0_STATUS.md`, `run-music-acceptance.sh`
-- **Sırada:** M5 cihaz, M7 song-request 200 (jeton)
+- `FAZ0_STATUS.md`, `run-music-acceptance.sh`, `m5-preflight.sh`, `M7_SONG_REQUEST_200_TEMPLATE.md`
+- **Sırada:** M5 cihaz (`m5-preflight.sh` → checklist), M7 song-request 200 (jeton)
 
 ---
 

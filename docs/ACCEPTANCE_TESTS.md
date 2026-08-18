@@ -86,3 +86,15 @@ Genişletilmiş kontrol listesi için `scripts/run-acceptance-tests.sh` kullanı
 - Secret varken ve API testi başarısızsa APK **engellenir**
 - Canlı yayın testi geçici stream oluşturur ve işlem sonunda siler
 - Jeton testi gerçek ödeme yapmaz; `POST /api/payment/requests` + admin listesi doğrulanır
+
+## Müzik / !istek (M5–M7, release gate dışı)
+
+Sesli oda müzik API doğrulaması (üretim, cihaz gerekmez):
+
+```bash
+bash scripts/run-music-acceptance.sh    # api-music-phase 6/6 + M7 probe
+bash scripts/m5-preflight.sh            # + jeton kontrolü + voice_hub testleri
+```
+
+Raporlar: `docs/API_MUSIC_PHASE_REPORT.md`, `docs/M7_MUSIC_SSE_CAPTURE.md`  
+Cihaz testi: `docs/M5_DEVICE_TEST_CHECKLIST.md`
