@@ -21,4 +21,16 @@ void main() {
     expect(battle!.effectiveId, 'inv-rest-1');
     expect(battle.isPending, isTrue);
   });
+
+  test('parseBattleForTest handles invited status', () {
+    final battle = ds.parseBattleForTest({
+      'inviteId': 'inv-invited',
+      'status': 'invited',
+      'voiceRoomId': 'room-host',
+      'opponentVoiceRoomId': 'room-guest',
+    });
+    expect(battle, isNotNull);
+    expect(battle!.isPending, isTrue);
+    expect(battle.effectiveId, 'inv-invited');
+  });
 }

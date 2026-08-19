@@ -35,6 +35,21 @@ void main() {
     expect(router.routeInformationProvider.value.uri.path, '/feed');
   });
 
+  test('navigateToPath maps /home and /index to feed', () {
+    final router = GoRouter(
+      initialLocation: '/notifications',
+      routes: [
+        GoRoute(path: '/notifications', builder: (_, __) => const SizedBox.shrink()),
+        GoRoute(path: '/feed', builder: (_, __) => const SizedBox.shrink()),
+      ],
+    );
+    PushNavigationHandler.install(router);
+    PushNavigationHandler.navigateToPath('/home');
+    expect(router.routeInformationProvider.value.uri.path, '/feed');
+    PushNavigationHandler.navigateToPath('/index');
+    expect(router.routeInformationProvider.value.uri.path, '/feed');
+  });
+
   test('pk push tap with root path routes to voice room', () {
     final router = GoRouter(
       initialLocation: '/feed',

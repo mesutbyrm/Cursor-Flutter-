@@ -38,7 +38,7 @@ fi
 
 echo ""
 echo "── Admin panel adımları ──"
-echo "1. https://canlifal.com admin → Kullanıcılar"
+echo "1. https://canlifal.com/admin → Kullanıcılar"
 echo "2. $DEFAULT_ACCEPTANCE_USER_EMAIL ara"
 echo "3. Jeton ekle: ≥50 (M5+M7+yedek)"
 echo ""

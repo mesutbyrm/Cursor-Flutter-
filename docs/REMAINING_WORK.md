@@ -72,6 +72,12 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 
 ---
 
+## Oturum günlüğü (2026-08-19 devam 23)
+
+- Push `/home` ve `/index` → `/feed` testleri (4 PASS)
+- PK REST davet parse: `invited` durumu testi
+- `admin-jeton-cheatsheet.sh` admin URL düzeltmesi
+
 ## Oturum günlüğü (2026-08-19 devam 22)
 
 - PK parse testi: `pkBattleId` + ayrı `inviteId` → effectiveId
