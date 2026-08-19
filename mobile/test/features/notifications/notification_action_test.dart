@@ -157,4 +157,74 @@ void main() {
 
     expect(lastLocation, '/canli-falcilar');
   });
+
+  testWidgets('pk invite with root targetPath routes to voice room', (tester) async {
+    late String? lastLocation;
+    final router = GoRouter(
+      initialLocation: '/feed',
+      routes: [
+        GoRoute(
+          path: '/feed',
+          builder: (_, _) => const SizedBox.shrink(),
+        ),
+        GoRoute(
+          path: '/voice-room/:id',
+          builder: (_, state) {
+            lastLocation = '/voice-room/${state.pathParameters['id']}';
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+
+    navigateFromNotification(
+      router,
+      const AppNotificationEntity(
+        id: 'pk1',
+        title: 'PK Daveti',
+        type: 'pk_invite',
+        targetPath: '/',
+        targetId: 'room-abc',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(lastLocation, '/voice-room/room-abc');
+  });
+
+  testWidgets('root targetPath without type falls back to feed', (tester) async {
+    late String? lastLocation;
+    final router = GoRouter(
+      initialLocation: '/notifications',
+      routes: [
+        GoRoute(
+          path: '/notifications',
+          builder: (_, _) => const SizedBox.shrink(),
+        ),
+        GoRoute(
+          path: '/feed',
+          builder: (_, _) {
+            lastLocation = '/feed';
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+
+    navigateFromNotification(
+      router,
+      const AppNotificationEntity(
+        id: 'x',
+        title: 'Bildirim',
+        targetPath: '/',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(lastLocation, '/feed');
+  });
 }

@@ -58,7 +58,12 @@ class PushNavigationHandler {
   static void navigateToPath(String path) {
     final router = _router;
     if (router == null || path.isEmpty) return;
-    final normalized = path.startsWith('/') ? path : '/$path';
+    final trimmed = path.trim();
+    if (trimmed == '/' || trimmed == '/index' || trimmed == '/home') {
+      router.go('/feed');
+      return;
+    }
+    final normalized = trimmed.startsWith('/') ? trimmed : '/$trimmed';
     try {
       router.go(normalized);
     } catch (e, st) {

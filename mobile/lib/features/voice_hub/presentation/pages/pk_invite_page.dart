@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/pk_event_log.dart';
@@ -81,10 +80,18 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
   Future<void> _invite(VoiceRoomEntity opponent) async {
     if (_inviting) return;
     _inviting = true;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
+    // Ağ + stale PK temizliği UI thread'i kilitlemesin.
+    await Future<void>.delayed(Duration.zero);
+    if (!mounted) {
+      _inviting = false;
+      return;
+    }
     PkEventLog.requestStart(roomId: _roomKey, targetId: opponent.id);
     try {
       final remote = ref.read(pkBattleRemoteProvider.notifier);
@@ -132,14 +139,16 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
       }
       PkEventLog.requestSuccess(battleId: battle.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      Navigator.of(context).pop();
+      messenger.showSnackBar(
         const SnackBar(
           content: Text(
             'PK daveti gönderildi. Rakip kabul edince PK başlayacak.',
           ),
         ),
       );
-      context.pop();
+      return;
     } catch (e) {
       PkEventLog.error('request', e);
       if (mounted) {

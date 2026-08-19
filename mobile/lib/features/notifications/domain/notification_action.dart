@@ -10,6 +10,14 @@ void navigateFromNotification(
 }) {
   final path = n.targetPath?.trim();
   if (path != null && path.isNotEmpty) {
+    if (path == '/' || path == '/index' || path == '/home') {
+      final fallback = _routeFromTypeAndText(
+        n,
+        staffCanManagePayments: staffCanManagePayments,
+      );
+      _pushInAppPath(router, fallback ?? '/feed');
+      return;
+    }
     if (path.startsWith('http://') || path.startsWith('https://')) {
       final uri = Uri.parse(path);
       final shortsId = _shortVideoIdFromUri(uri);
@@ -69,7 +77,11 @@ String? _shortVideoIdFromUri(Uri uri) {
 }
 
 void _pushInAppPath(GoRouter router, String path) {
-  final p = path.startsWith('/') ? path : '/$path';
+  var p = path.startsWith('/') ? path : '/$path';
+  if (p == '/' || p == '/index' || p == '/home') {
+    router.go('/feed');
+    return;
+  }
   const tabRoots = {'/feed', '/live', '/social', '/messages', '/profile'};
   if (tabRoots.contains(p) || p == '/canli-falcilar' || p == '/voice-rooms') {
     router.go(p);
@@ -131,6 +143,21 @@ String? _routeFromTypeAndText(
     case 'gift_sent':
     case 'gift_received':
     case 'live':
+      return '/live';
+    case 'pk':
+    case 'pk_battle':
+    case 'pk_invite':
+    case 'pk_request':
+    case 'pkbattle':
+      if (n.targetPath != null && n.targetPath!.contains('voice-room')) {
+        return n.targetPath!;
+      }
+      if (n.targetPath != null && n.targetPath!.contains('/live')) {
+        return n.targetPath!;
+      }
+      if (n.targetId != null && n.targetId!.isNotEmpty) {
+        return '/voice-room/${n.targetId}';
+      }
       return '/live';
     case 'fortune_session_invite':
     case 'fortune_session_request':
@@ -221,6 +248,15 @@ String? _routeFromTypeAndText(
       text.contains('fal') ||
       text.contains('falcı')) {
     return '/canli-falcilar';
+  }
+  if (text.contains('pk') || text.contains('düello')) {
+    if (n.targetPath != null && n.targetPath!.contains('voice-room')) {
+      return n.targetPath!;
+    }
+    if (n.targetId != null && n.targetId!.isNotEmpty) {
+      return '/voice-room/${n.targetId}';
+    }
+    return '/live';
   }
   if (text.contains('hediye')) {
     return '/live';

@@ -4,6 +4,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/domain/pk/pk_session_phase.dart';
+import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../live/presentation/providers/pk_session_phase_provider.dart';
 import '../../data/datasources/pk_battle_remote_datasource.dart';
@@ -96,6 +97,9 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     if (battle != null) {
       PkEventLog.requestSuccess(battleId: battle.id);
       _apply(battle, 'pk:invite');
+      if (battle.isPending) {
+        ref.read(livePkInviteSignalProvider.notifier).bump();
+      }
     }
     return battle;
   }
@@ -211,6 +215,9 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   /// Oda SSE üzerinden gelen PK güncellemesi.
   void ingestSseBattle(PkBattleRemote battle) {
     _apply(battle, 'sse:pk');
+    if (battle.isPending) {
+      ref.read(livePkInviteSignalProvider.notifier).bump();
+    }
   }
 
   void _apply(PkBattleRemote battle, String event) {

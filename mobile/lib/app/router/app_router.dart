@@ -170,6 +170,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final path = state.uri.path;
       final loc = state.matchedLocation;
+      if (path == '/' || path == '/index' || path == '/home') {
+        return '/feed';
+      }
       final auth = ref.read(authControllerProvider);
 
       if (auth.isLoading) return null;

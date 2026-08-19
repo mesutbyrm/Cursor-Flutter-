@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/sse/sse_hub_provider.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_gift_providers.dart';
@@ -16,27 +17,61 @@ Future<void> teardownVoiceRoomBeforeSwitch(
   required String liveKey,
   String source = 'room_switch',
 }) async {
-  if (liveKey.trim().isEmpty) return;
   final key = liveKey.trim();
+  if (key.isEmpty) return;
+
   final active = ref.read(voiceRoomActiveLiveKeyProvider);
   if (active == key) {
     ref.read(voiceRoomActiveLiveKeyProvider.notifier).state = null;
   }
+
   ref.read(pkBattleRemoteProvider.notifier).clear();
   ref.read(voiceRoomGiftRealtimeProvider).stop();
   ref.read(voiceRecentGiftsProvider.notifier).clear();
   ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
+
+  final userId = ref.read(authControllerProvider).valueOrNull?.id;
+  final remote = ref.read(chatRoomRemoteProvider);
+
+  try {
+    await remote
+        .leavePresence(key)
+        .timeout(const Duration(seconds: 4));
+  } catch (_) {}
+
+  if (userId != null && userId.isNotEmpty) {
+    try {
+      await remote
+          .clearSeat(roomKey: key, userId: userId)
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {}
+  }
+
   try {
     await ref
         .read(voiceRoomAudioCoordinatorProvider)
         .leave()
         .timeout(const Duration(milliseconds: 600));
   } catch (_) {}
-  unawaited(
-    ref
-        .read(voiceRoomLiveProvider(liveKey).notifier)
-        .leaveRoomSession(source: source, awaitBackend: false, force: true),
-  );
+
+  try {
+    await ref
+        .read(voiceRoomLiveProvider(key).notifier)
+        .leaveRoomSession(
+          source: source,
+          awaitBackend: true,
+          force: true,
+        )
+        .timeout(const Duration(seconds: 6));
+  } catch (_) {
+    unawaited(
+      ref.read(voiceRoomLiveProvider(key).notifier).leaveRoomSession(
+            source: '$source:retry',
+            awaitBackend: false,
+            force: true,
+          ),
+    );
+  }
 }
 
 /// Önceki oda (varsa) tamamen kapatılır, ardından yeni oda kaydedilir.

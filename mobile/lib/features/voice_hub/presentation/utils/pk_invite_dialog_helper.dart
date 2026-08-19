@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:async';
 
 import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../../core/network/pk_event_log.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../app/router/app_router.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
@@ -22,22 +23,21 @@ VoiceRoomEntity? resolvePkInviteTargetRoom(
   String userId,
 ) {
   if (userId.isEmpty || !battle.isPending) return null;
+  final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+  VoiceRoomEntity? activeRoom;
+  if (activeKey.isNotEmpty) {
+    activeRoom = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
+    if (activeRoom != null &&
+        isPkInviteTarget(battle, activeRoom, userId: userId)) {
+      return activeRoom;
+    }
+  }
+
   final rooms = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
 
   final owned = rooms
       .where((r) => (r.ownerId?.trim() ?? '') == userId)
       .toList(growable: false);
-
-  final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
-  VoiceRoomEntity? activeRoom;
-  if (activeKey.isNotEmpty) {
-    for (final r in rooms) {
-      if (r.apiRoomKey == activeKey || r.id == activeKey || r.slug == activeKey) {
-        activeRoom = r;
-        break;
-      }
-    }
-  }
 
   final candidates = <VoiceRoomEntity>[
     if (activeRoom != null) activeRoom,
@@ -135,35 +135,45 @@ Future<void> showPkInviteDialog(
 
   if (!context.mounted) return;
 
-  try {
-    if (accept == null) {
-      PkEventLog.reject(inviteId: inviteId);
-      await remote.reject(inviteId, roomId: key, alternateRoomId: alt);
-      remote.clear();
-      return;
-    }
-    if (accept) {
-      PkEventLog.acceptStart(inviteId: inviteId);
-      await remote.accept(inviteId, roomId: key, alternateRoomId: alt);
-      if (!context.mounted) return;
-      VoiceRoomEntryPerf.prewarmOnRoomTap(ref, room);
-      context.push('/voice-room/$key/pk', extra: room);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PK başladı')),
-      );
-    } else {
-      PkEventLog.reject(inviteId: inviteId);
-      await remote.reject(inviteId, roomId: key, alternateRoomId: alt);
-      remote.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PK daveti reddedildi')),
-      );
-    }
-  } catch (e) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
-    }
-  }
+  unawaited(
+    Future<void>.microtask(() async {
+      try {
+        if (accept == null) {
+          PkEventLog.reject(inviteId: inviteId);
+          await remote.reject(inviteId, roomId: key, alternateRoomId: alt);
+          remote.clear();
+          return;
+        }
+        if (accept) {
+          PkEventLog.acceptStart(inviteId: inviteId);
+          await remote.accept(inviteId, roomId: key, alternateRoomId: alt);
+          final nav = rootNavigatorKey.currentContext;
+          if (nav != null && nav.mounted) {
+            VoiceRoomEntryPerf.prewarmOnRoomTap(ref, room);
+            GoRouter.of(nav).push('/voice-room/$key/pk', extra: room);
+            ScaffoldMessenger.of(nav).showSnackBar(
+              const SnackBar(content: Text('PK başladı')),
+            );
+          }
+        } else {
+          PkEventLog.reject(inviteId: inviteId);
+          await remote.reject(inviteId, roomId: key, alternateRoomId: alt);
+          remote.clear();
+          final nav = rootNavigatorKey.currentContext;
+          if (nav != null && nav.mounted) {
+            ScaffoldMessenger.of(nav).showSnackBar(
+              const SnackBar(content: Text('PK daveti reddedildi')),
+            );
+          }
+        }
+      } catch (e) {
+        final nav = rootNavigatorKey.currentContext;
+        if (nav != null && nav.mounted) {
+          ScaffoldMessenger.of(nav).showSnackBar(
+            SnackBar(content: Text('$e')),
+          );
+        }
+      }
+    }),
+  );
 }

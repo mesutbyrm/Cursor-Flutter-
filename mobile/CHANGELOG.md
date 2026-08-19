@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.285+321 (2026-08-19) — PK daveti + oda geçişi düzeltmeleri
+
+- **PK bildirimi:** `targetPath: /` artık `GoException` vermez → `/feed` veya PK/oda rotası
+- **PK daveti:** Sesli oda + canlı yayın isteği UI donmasını azaltır; kabul/red microtask'e alındı
+- **PK alıcı:** Davet poll sıklaştı; SSE + bildirim sinyali `VoicePkInviteListener`'ı uyandırır
+- **Oda değişimi:** Eski odada presence/koltuk backend leave beklenir (oturma hatası)
+
 ## 1.0.284+320 (2026-08-19) — Sesli oda müzik isteği donma düzeltmesi
 
 - **ANR önleme:** `!istek` arama sheet'i + mod seçici sonrası istek microtask'e ertelendi (RTC + Basic)
