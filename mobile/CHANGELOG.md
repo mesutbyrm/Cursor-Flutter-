@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.280+316 (2026-08-19) — Oda state error UX
+
+- **RTC + Basic:** `voiceRoomLive` state `error` → `showJetonAwareError` (jeton + diğer)
+- **Doc:** FAZ0_CLOSURE + M5 checklist `1.0.279+315`
+
 ## 1.0.279+315 (2026-08-19) — Jeton UX tam kapsam (sesli oda)
 
 - **`showJetonAwareError`:** RTC moderasyon, DJ sheet, müzik kuyruğu, konuşma kuyruğu, araçlar

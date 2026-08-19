@@ -1,7 +1,7 @@
 # M5 — Cihaz test kontrol listesi (!istek / müzik)
 
 **Tarih:** 2026-08-19  
-**APK:** `1.0.275+311` veya üzeri (`apk-latest`)  
+**APK:** `1.0.279+315` veya üzeri (`apk-latest`)  
 **Hazırlık:** `bash scripts/m5-device-prep.sh`
 
 ---

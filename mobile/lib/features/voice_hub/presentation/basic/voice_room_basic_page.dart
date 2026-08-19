@@ -728,16 +728,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
       if (next.error != null && next.error != prev?.error && mounted) {
         final err = next.error!;
-        if (err.contains('jeton')) {
-          unawaited(
-            showInsufficientJetonDialog(
-              context,
-              message: err,
-              ref: ref,
-            ),
-          );
-          ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearError();
-        }
+        showJetonAwareError(context, err, ref: ref);
+        ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearError();
       }
 
       if (next.openCommandsPanel && !(prev?.openCommandsPanel ?? false)) {

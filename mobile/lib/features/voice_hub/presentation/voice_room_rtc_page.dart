@@ -1198,20 +1198,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
       if (prev?.error != next.error && next.error != null && mounted) {
         final err = next.error!;
-        if (err.contains('jeton')) {
-          unawaited(
-            showInsufficientJetonDialog(
-              context,
-              message: err,
-              ref: ref,
-            ),
-          );
-          ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearError();
-          return;
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(err)),
-        );
+        showJetonAwareError(context, err, ref: ref);
+        ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearError();
+        return;
       }
       if (next.openCommandsPanel && !(prev?.openCommandsPanel ?? false)) {
         ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearOpenCommandsPanel();
