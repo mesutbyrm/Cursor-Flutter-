@@ -72,6 +72,11 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 
 ---
 
+## Oturum günlüğü (2026-08-19 devam 20)
+
+- Push navigation testleri: `/` → `/feed`, PK push → voice-room (3 PASS)
+- Jeton=0 bloker devam; otomatik kapılar geçer durumda
+
 ## Oturum günlüğü (2026-08-19 devam 19)
 
 - PK bildirim yönlendirme testleri: canlı yayın path + targetId yok → `/live` (8 PASS)
