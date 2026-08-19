@@ -20,10 +20,10 @@
 | 7 | Gifts + Jeton + PK | ✅ **AUTOMATED_PASS** | — |
 | 8 | Trending / Shorts | ✅ **AUTOMATED_PASS** | — |
 | 9 | Messages + Notifications | ✅ **AUTOMATED_PASS** | — |
-| 10 | Global Performance | 🔄 **HAZIRLIK** | Cihaz profil |
+| 10 | Global Performance | ✅ **AUTOMATED_PASS** | Cihaz profil (opsiyonel) |
 | 11 | Security + Error Handling | ✅ **AUTOMATED_PASS** | — |
 | 12 | Full E2E QA | 🔄 otomatik ✅ | 25 cihaz senaryo |
-| 13 | Release Build | 🔄 CI aktif | Signing |
+| 13 | Release Build | 🔄 CI aktif | Signing (opsiyonel) |
 
 ---
 

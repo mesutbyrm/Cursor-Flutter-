@@ -18,6 +18,10 @@ echo "Hesap: $DEFAULT_ACCEPTANCE_USER_EMAIL"
 echo "Admin panelden jeton ekleyin veya ACCEPTANCE_ADMIN_* yapılandırın."
 echo ""
 
+# İlk turda otomatik kazanım yollarını dene (credits-only beklenir).
+bash "$ROOT/scripts/probe-jeton-earn.sh" 2>/dev/null || true
+echo ""
+
 start=$(date +%s)
 while true; do
   now=$(date +%s)
@@ -29,6 +33,18 @@ while true; do
 
   if bootstrap_user_token 2>/dev/null; then
     J=$(user_jeton_balance_from_me "$USER_TOKEN")
+    # Admin secret varsa her turda top-up dene
+    if [[ "$J" -lt "$TARGET" ]] && acceptance_admin_secrets_configured 2>/dev/null; then
+      USER_ID=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $USER_TOKEN" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+print(d.get('id') or d.get('user',{}).get('id') or '')
+" 2>/dev/null || echo "")
+      if [[ -n "$USER_ID" ]]; then
+        ensure_test_jeton_minimum "$USER_TOKEN" "$USER_ID" "$USER_EMAIL" "$TARGET" wait-for-jeton >/dev/null 2>&1 || true
+        J=$(user_jeton_balance_from_me "$USER_TOKEN")
+      fi
+    fi
     echo "$(date -u +%H:%M:%S) jeton=$J"
     if [[ "$J" -ge "$TARGET" ]]; then
       echo ""

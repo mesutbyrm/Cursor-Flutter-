@@ -20,7 +20,9 @@
 
 > **Günlük görevler (`POST /api/daily-missions`):** yalnızca **credits** verir (jeton değil). Otomatik deneme Ağu 2026: tüm görevler `completed` + `earnedJeton` alanı dolu olsa bile `jetonBalance` 0 kalır; `credits` artar.
 >
-> **Diğer otomatik yollar (Ağu 2026):** `POST /api/daily-login` → zaten alındı; `POST /api/games/daily-spin` → credits (+2); `POST /api/user/watch-ad` → credits. **Jeton kazanımı yok** — yalnızca admin top-up.
+> **Diğer otomatik yollar (Ağu 2026):** `POST /api/daily-login` → zaten alındı; `POST /api/games/daily-spin` → credits; `POST /api/games/daily-reward` → credits (+5); `POST /api/jeton` `{"action":"daily_login"}` → zaten alındı; `POST /api/user/watch-ad` → credits. **Jeton kazanımı yok** — yalnızca admin top-up.
+>
+> Tanı: `bash scripts/probe-jeton-earn.sh`
 
 ---
 
