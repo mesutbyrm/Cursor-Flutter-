@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/network_perf.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
@@ -324,9 +325,7 @@ class _GameTile extends ConsumerWidget {
       }
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
+      showJetonAwareError(context, ApiException.userMessage(e), ref: ref);
     }
   }
 
@@ -347,9 +346,7 @@ class _GameTile extends ConsumerWidget {
       }
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
+      showJetonAwareError(context, ApiException.userMessage(e), ref: ref);
     }
   }
 }

@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.282+318 (2026-08-19) — Canlı yayın + oyun + fal jeton UX
+
+- **Canlı hediye:** yetersiz jeton → `showJetonAwareError`
+- **Oyun lobisi:** oda oluştur / eşleş → jeton-aware hata
+- **Fal:** grant tüketimi + API bakiye hatası → jeton diyaloğu; purchase sheet’e Görevler
+
 ## 1.0.281+317 (2026-08-19) — Hediye jeton UX
 
 - **Hediye gönderimi:** yetersiz jeton → `showJetonAwareError` (panel + sheet + premium 2026)

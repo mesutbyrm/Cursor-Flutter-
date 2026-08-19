@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-19 15:33 UTC — `1.0.281+317`  
+**Son güncelleme:** 2026-08-19 15:35 UTC — `1.0.282+318`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (15 PASS)
 
 ---
@@ -13,7 +13,7 @@
 | FAZ 1–11 | `[x]` otomatik | 15 PASS — `PHASE_TEST_REPORT.md` |
 | FAZ 12 | `[~]` | Otomatik kapılar ✅; cihaz 25 senaryo |
 | FAZ 13 | `[~]` | CI APK ✅ |
-| APK `1.0.281+317` | `[x]` | apk-latest (CI) |
+| APK `1.0.282+318` | `[x]` | apk-latest (CI) |
 | P0 müzik kod | `[x]` | M5/M7 manuel |
 
 ---
@@ -70,6 +70,10 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-08-19 devam 10)
+
+- **1.0.282+318:** Canlı hediye + oyun lobisi + fal jeton UX
 
 ## Oturum günlüğü (2026-08-19 devam 9)
 

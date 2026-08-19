@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -152,12 +153,10 @@ Future<void> showLiveGiftPicker(
                                   }
                                 } catch (e) {
                                   if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          ApiException.userMessage(e),
-                                        ),
-                                      ),
+                                    showJetonAwareError(
+                                      context,
+                                      ApiException.userMessage(e),
+                                      ref: ref,
                                     );
                                   }
                                 }

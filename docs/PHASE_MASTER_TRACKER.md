@@ -1,6 +1,6 @@
 # Faz master takip — Canlifal Flutter
 
-**Son güncelleme:** 2026-08-19  
+**Son güncelleme:** 2026-08-19 15:35 UTC — APK `1.0.281+317`  
 **Faz testleri:** 15 PASS, 0 FAIL (`docs/PHASE_TEST_REPORT.md`)
 
 ---

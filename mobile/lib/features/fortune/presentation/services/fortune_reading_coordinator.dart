@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -84,8 +85,10 @@ class FortuneReadingCoordinator {
               );
         } catch (e) {
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(ApiException.userMessage(e))),
+            showJetonAwareError(
+              context,
+              ApiException.userMessage(e),
+              ref: ref,
             );
           }
           return null;
@@ -256,7 +259,15 @@ class FortuneReadingCoordinator {
           (e is ApiException && e.statusCode == 402);
       if (needsPurchase) {
         if (context.mounted) {
-          await _showPurchasePrompt(context, msg);
+          if (isInsufficientJetonMessage(msg)) {
+            await showInsufficientJetonDialog(
+              context,
+              message: msg,
+              ref: ref,
+            );
+          } else {
+            await _showPurchasePrompt(context, msg);
+          }
         }
         return null;
       }
@@ -528,6 +539,15 @@ class FortuneReadingCoordinator {
                 },
                 icon: const Icon(Icons.toll_rounded),
                 label: const Text('Jeton yükle'),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  context.push('/profile/growth');
+                },
+                icon: const Icon(Icons.task_alt_rounded),
+                label: const Text('Görevler'),
               ),
               const SizedBox(height: 8),
               OutlinedButton.icon(
