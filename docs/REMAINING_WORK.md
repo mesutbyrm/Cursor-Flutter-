@@ -72,6 +72,12 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 
 ---
 
+## Oturum günlüğü (2026-08-19 devam 22)
+
+- PK parse testi: `pkBattleId` + ayrı `inviteId` → effectiveId
+- `wait-for-jeton.sh` admin panel URL hatırlatması
+- Faz testleri yenilendi (15 PASS)
+
 ## Oturum günlüğü (2026-08-19 devam 21)
 
 - PK bildirim metin yedeklemesi testleri (PK/düello → voice-room veya /live) — 10 PASS

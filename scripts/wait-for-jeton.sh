@@ -15,7 +15,8 @@ apply_acceptance_credential_defaults
 
 echo "=== wait-for-jeton (hedef≥$TARGET, timeout=${TIMEOUT}s) ==="
 echo "Hesap: $DEFAULT_ACCEPTANCE_USER_EMAIL"
-echo "Admin panelden jeton ekleyin veya ACCEPTANCE_ADMIN_* yapılandırın."
+echo "Admin: https://canlifal.com/admin → Kullanıcılar → jeton ≥$TARGET"
+echo "Alternatif: ACCEPTANCE_ADMIN_EMAIL + ACCEPTANCE_ADMIN_PASSWORD (CI secret)"
 echo ""
 
 # İlk turda otomatik kazanım yollarını dene (credits-only beklenir).

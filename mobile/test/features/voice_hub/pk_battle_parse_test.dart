@@ -103,5 +103,17 @@ void main() {
       expect(battle?.id, 'top-1');
       expect(battle?.isPending, isTrue);
     });
+
+    test('pkBattleId is used when id missing', () {
+      final battle = ds.parseBattleForTest({
+        'pkBattleId': 'pk-battle-42',
+        'inviteId': 'inv-42',
+        'status': 'pending',
+        'voiceRoomId': 'room-a',
+      });
+      expect(battle, isNotNull);
+      expect(battle!.id, 'pk-battle-42');
+      expect(battle.effectiveId, 'inv-42');
+    });
   });
 }
