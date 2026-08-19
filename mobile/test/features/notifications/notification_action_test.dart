@@ -227,4 +227,74 @@ void main() {
 
     expect(lastLocation, '/feed');
   });
+
+  testWidgets('pk_battle with live targetPath routes to live room', (tester) async {
+    late String? lastLocation;
+    final router = GoRouter(
+      initialLocation: '/feed',
+      routes: [
+        GoRoute(
+          path: '/feed',
+          builder: (_, _) => const SizedBox.shrink(),
+        ),
+        GoRoute(
+          path: '/live/:id',
+          builder: (_, state) {
+            lastLocation = '/live/${state.pathParameters['id']}';
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+
+    navigateFromNotification(
+      router,
+      const AppNotificationEntity(
+        id: 'pk-live',
+        title: 'Canlı PK',
+        type: 'pk_battle',
+        targetPath: '/live/stream-xyz',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(lastLocation, '/live/stream-xyz');
+  });
+
+  testWidgets('pk type without targetId falls back to live hub', (tester) async {
+    late String? lastLocation;
+    final router = GoRouter(
+      initialLocation: '/feed',
+      routes: [
+        GoRoute(
+          path: '/feed',
+          builder: (_, _) => const SizedBox.shrink(),
+        ),
+        GoRoute(
+          path: '/live',
+          builder: (_, _) {
+            lastLocation = '/live';
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+
+    navigateFromNotification(
+      router,
+      const AppNotificationEntity(
+        id: 'pk2',
+        title: 'PK Daveti',
+        type: 'pk_request',
+        targetPath: '/',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(lastLocation, '/live');
+  });
 }

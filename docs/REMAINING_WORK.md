@@ -72,6 +72,11 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 
 ---
 
+## Oturum günlüğü (2026-08-19 devam 19)
+
+- PK bildirim yönlendirme testleri: canlı yayın path + targetId yok → `/live` (8 PASS)
+- Jeton hâlâ 0 — M5/M7/A9 manuel bloker
+
 ## Oturum günlüğü (2026-08-19 devam 18)
 
 - Canlı PK davet listesi hata: `ApiException.userMessage` (live_pk_invite_page)
