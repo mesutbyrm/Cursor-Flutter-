@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
+
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../providers/pk_battle_remote_provider.dart';
 
@@ -18,7 +20,7 @@ class PkHistoryPage extends ConsumerWidget {
       appBar: AppBar(title: const Text('PK Geçmişi')),
       body: history.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => Center(child: Text(ApiException.userMessage(e))),
         data: (items) {
           if (items.isEmpty) {
             return const Center(child: Text('Henüz PK geçmişi yok'));

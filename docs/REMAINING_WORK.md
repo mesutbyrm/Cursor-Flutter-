@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-19 20:46 UTC — `1.0.285+321`  
+**Son güncelleme:** 2026-08-19 20:48 UTC — `1.0.285+321`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (15 PASS)
 
 ---
@@ -71,6 +71,11 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-08-19 devam 17)
+
+- Oda keşif provider + PK geçmişi: `ApiException.userMessage` (ham exception yok)
+- FAZ1 userMessage kapsamı voice_hub discover/history genişletildi
 
 ## Oturum günlüğü (2026-08-19 devam 16)
 

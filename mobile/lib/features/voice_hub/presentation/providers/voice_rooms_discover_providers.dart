@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../gifts/data/leaderboard_remote_datasource.dart';
 import '../../../live/presentation/providers/live_providers.dart';
@@ -162,7 +163,7 @@ class VoiceRoomsDiscoverNotifier extends StateNotifier<VoiceRoomsDiscoverViewSta
       if (_disposed) return;
       state = state.copyWith(
         isBootstrapping: false,
-        error: e.toString(),
+        error: ApiException.userMessage(e),
       );
     }
   }
@@ -207,7 +208,7 @@ class VoiceRoomsDiscoverNotifier extends StateNotifier<VoiceRoomsDiscoverViewSta
             state.roomsApiHasMore,
       );
     } catch (e) {
-      state = state.copyWith(error: e.toString());
+      state = state.copyWith(error: ApiException.userMessage(e));
     }
   }
 
@@ -285,7 +286,7 @@ class VoiceRoomsDiscoverNotifier extends StateNotifier<VoiceRoomsDiscoverViewSta
       );
     } catch (e) {
       if (_disposed) return;
-      state = state.copyWith(isLoadingMore: false, error: e.toString());
+      state = state.copyWith(isLoadingMore: false, error: ApiException.userMessage(e));
     }
   }
 
