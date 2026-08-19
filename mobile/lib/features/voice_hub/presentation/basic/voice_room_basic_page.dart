@@ -54,6 +54,7 @@ import 'voice_room_basic_premium_section.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
 import '../sheets/music_mode_picker_sheet.dart';
 import '../utils/voice_music_access.dart';
+import '../utils/voice_music_submit.dart';
 import '../sheets/voice_youtube_song_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
 import '../../music/presentation/providers/room_music_providers.dart';
@@ -708,19 +709,24 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
               );
               if (!mounted || withVideo == null) return;
               final messenger = ScaffoldMessenger.of(context);
-              final err = await ctrl.submitSelectedSong(
-                hit,
-                withVideo: withVideo,
-                skipPayment: skipPayment,
+              final songTitle = hit.title;
+              deferVoiceMusicSubmit(
+                submit: () => ctrl.submitSelectedSong(
+                  hit,
+                  withVideo: withVideo,
+                  skipPayment: skipPayment,
+                ),
+                onComplete: (err) {
+                  if (!mounted) return;
+                  if (err != null) {
+                    showJetonAwareError(context, err, ref: ref);
+                  } else {
+                    messenger.showSnackBar(
+                      SnackBar(content: Text('«$songTitle» çalmaya başladı')),
+                    );
+                  }
+                },
               );
-              if (!mounted) return;
-              if (err != null) {
-                showJetonAwareError(context, err, ref: ref);
-              } else {
-                messenger.showSnackBar(
-                  SnackBar(content: Text('«${hit.title}» çalmaya başladı')),
-                );
-              }
             },
           ),
         );

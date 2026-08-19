@@ -66,6 +66,7 @@ import 'sheets/voice_room_management_panel.dart';
 import 'sheets/voice_room_moderation_sheet.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'utils/voice_music_access.dart';
+import 'utils/voice_music_submit.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
 import 'utils/voice_room_error_display.dart';
@@ -1241,19 +1242,24 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               );
               if (!mounted || withVideo == null) return;
               final messenger = ScaffoldMessenger.of(context);
-              final err = await ctrl.submitSelectedSong(
-                hit,
-                withVideo: withVideo,
-                skipPayment: skipPayment,
+              final songTitle = hit.title;
+              deferVoiceMusicSubmit(
+                submit: () => ctrl.submitSelectedSong(
+                  hit,
+                  withVideo: withVideo,
+                  skipPayment: skipPayment,
+                ),
+                onComplete: (err) {
+                  if (!mounted) return;
+                  if (err != null) {
+                    showJetonAwareError(context, err, ref: ref);
+                  } else {
+                    messenger.showSnackBar(
+                      SnackBar(content: Text('«$songTitle» çalmaya başladı')),
+                    );
+                  }
+                },
               );
-              if (!mounted) return;
-              if (err != null) {
-                showJetonAwareError(context, err, ref: ref);
-              } else {
-                messenger.showSnackBar(
-                  SnackBar(content: Text('«${hit.title}» çalmaya başladı')),
-                );
-              }
             },
           ).whenComplete(() => _musicSearchOpen = false),
         );

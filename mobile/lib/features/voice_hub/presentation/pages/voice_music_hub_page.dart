@@ -19,6 +19,7 @@ import '../sheets/voice_room_music_settings_sheet.dart';
 import '../providers/chat_room_providers.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_music_access.dart';
+import '../utils/voice_music_submit.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 
@@ -253,31 +254,37 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
       return;
     }
     final isDjFree = widget.perms.canManageDj || djState.canPlayMusic;
-    final queueHint = await ref
-        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
-        .requestMusic(
-          title: hit.title,
-          youtubeUrl: hit.url,
-          thumbUrl: hit.thumbUrl,
-          videoId: hit.videoId,
-          giftTo: _giftMode ? _giftCtrl.text.trim() : null,
-          priority: !isDjFree,
-          withVideo: withVideo,
-        );
-    if (!mounted) return;
-    setState(() => _submitting = false);
-    if (queueHint != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(queueHint)),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Şarkı kuyruğa eklendi')),
-      );
-    }
-    await _reloadQueue();
-    if (mounted) setState(() => _tabIndex = 1);
-    _tabs.animateTo(1);
+    final messenger = ScaffoldMessenger.of(context);
+    final songTitle = hit.title;
+    deferVoiceMusicSubmit(
+      submit: () => ref
+          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
+          .requestMusic(
+            title: songTitle,
+            youtubeUrl: hit.url,
+            thumbUrl: hit.thumbUrl,
+            videoId: hit.videoId,
+            giftTo: _giftMode ? _giftCtrl.text.trim() : null,
+            priority: !isDjFree,
+            withVideo: withVideo,
+          ),
+      onComplete: (queueHint) {
+        if (!mounted) return;
+        setState(() => _submitting = false);
+        if (queueHint != null) {
+          messenger.showSnackBar(SnackBar(content: Text(queueHint)));
+        } else {
+          messenger.showSnackBar(
+            const SnackBar(content: Text('Şarkı kuyruğa eklendi')),
+          );
+        }
+        unawaited(_reloadQueue().then((_) {
+          if (!mounted) return;
+          setState(() => _tabIndex = 1);
+          _tabs.animateTo(1);
+        }));
+      },
+    );
   }
 
   Future<void> _openHostSettings() async {

@@ -46,13 +46,21 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
     required bool shouldPlay,
     bool withVideo = false,
   }) {
-    _markLocalMusicRequestGrace();
-    ref.read(voiceRoomMusicSessionProvider.notifier).onMusicStartedFromServer();
-    ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
-    ref.read(voiceRoomUiProvider.notifier).ensureMusicAudible();
-    _commitDjUi(dj);
-    if (!shouldPlay) return;
-    unawaited(_startDjPlaybackNonBlocking(dj, preferVideo: withVideo));
+    // Provider güncellemesi sheet/pop animasyonu sırasında gelirse oda ANR yapar.
+    unawaited(
+      Future<void>.microtask(() {
+        if (!_sessionActive || _roomKey.isEmpty) return;
+        _markLocalMusicRequestGrace();
+        ref
+            .read(voiceRoomMusicSessionProvider.notifier)
+            .onMusicStartedFromServer();
+        ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
+        ref.read(voiceRoomUiProvider.notifier).ensureMusicAudible();
+        _commitDjUi(dj);
+        if (!shouldPlay) return;
+        unawaited(_startDjPlaybackNonBlocking(dj, preferVideo: withVideo));
+      }),
+    );
   }
 
   Future<void> _startDjPlaybackNonBlocking(

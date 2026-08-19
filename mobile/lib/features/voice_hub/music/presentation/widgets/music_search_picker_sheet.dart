@@ -298,10 +298,16 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
                     _selectedTitle = hit.title;
                     _submitting = true;
                   });
+                  final onSelected = widget.onSelected;
                   if (!widget.stayOpenOnSelect && context.mounted) {
                     Navigator.pop(context);
                   }
-                  widget.onSelected?.call(hit);
+                  if (onSelected != null) {
+                    final selected = hit;
+                    unawaited(
+                      Future<void>.microtask(() => onSelected(selected)),
+                    );
+                  }
                   if (widget.stayOpenOnSelect && mounted) {
                     setState(() => _submitting = false);
                   }

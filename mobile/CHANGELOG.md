@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.284+320 (2026-08-19) — Sesli oda müzik isteği donma düzeltmesi
+
+- **ANR önleme:** `!istek` arama sheet'i + mod seçici sonrası istek microtask'e ertelendi (RTC + Basic)
+- **Provider:** `_applyMusicRequestUi` DJ state güncellemesi sheet kapanışından sonra çalışır
+- **Arama sheet:** `onSelected` callback pop animasyonundan sonra tetiklenir
+- **Müzik hub:** `requestMusic` aynı erteleme desenine alındı
+
 ## 1.0.283+319 (2026-08-19) — Canlı hediye panel hata UX
 
 - **LiveGiftPanel + PremiumGiftPanel:** yetersiz jeton artık sessizce yutulmuyor → `showJetonAwareError`
