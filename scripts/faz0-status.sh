@@ -27,8 +27,14 @@ echo ""
 # Jeton
 USER_J=0
 HOST_J=0
+USER_ID=""
 if bootstrap_user_token 2>/dev/null; then
   USER_J=$(user_jeton_balance_from_me "$USER_TOKEN")
+  USER_ID=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $USER_TOKEN" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+print(d.get('id') or d.get('user',{}).get('id') or '')
+" 2>/dev/null || echo "")
 fi
 if bootstrap_host_token 2>/dev/null; then
   HOST_J=$(user_jeton_balance_from_me "$HOST_TOKEN")
@@ -36,6 +42,7 @@ fi
 
 echo "── Hesaplar ──"
 echo "  USER: $USER_EMAIL — jeton=$USER_J"
+[[ -n "$USER_ID" ]] && echo "  USER ID: $USER_ID"
 echo "  HOST: $HOST_EMAIL — jeton=$HOST_J"
 if acceptance_admin_secrets_configured; then
   echo "  ADMIN secret: yapılandırılmış (top-up mümkün)"
@@ -60,6 +67,8 @@ echo "── Blokerler ──"
 if [[ "$USER_J" -lt 10 && "$HOST_J" -lt 10 ]]; then
   echo "  ⛔ Jeton: USER ve HOST < 10 — M5/M7 bekliyor"
   echo "     Admin: https://canlifal.com/admin → $USER_EMAIL"
+  [[ -n "$USER_ID" ]] && echo "     User ID: $USER_ID"
+  echo "     Sonra: bash scripts/after-admin-jeton.sh"
   BLOCKERS=$((BLOCKERS + 1))
 fi
 echo "  ⏸  M5: Android cihaz testi (kullanıcı)"

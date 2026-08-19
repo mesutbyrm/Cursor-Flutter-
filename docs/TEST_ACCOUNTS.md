@@ -1,8 +1,8 @@
 # Test hesapları — Flutter QA / acceptance
 
 **Tarih:** 2026-08-19  
-**APK:** `1.0.275+311` (`apk-latest`)  
-**Jeton:** `bash scripts/admin-jeton-cheatsheet.sh` · **M5:** `bash scripts/m5-device-prep.sh`
+**APK:** `1.0.287+323` (`apk-latest`)  
+**Jeton:** `bash scripts/admin-jeton-cheatsheet.sh` · **Jeton sonrası:** `bash scripts/after-admin-jeton.sh` · **M5:** `docs/M5_DEVICE_TEST_CHECKLIST.md`
 
 ---
 
@@ -50,7 +50,7 @@ Kaynak: `docs/STAGE5_REAL_E2E_ACCEPTANCE_REPORT.md`
 | Tam oda id (SSE) | `cmoohrbrx00a4nt08zlkdjyil` |
 | Slug (API listesi) | `canlfal-` |
 | Komut | `!istek Sanatçı - Şarkı` |
-| APK | `1.0.275+311` veya üzeri (`apk-latest`) |
+| APK | `1.0.287+323` veya üzeri (`apk-latest`) |
 | Hesap | `ACCEPTANCE_USER_*` — **≥10 jeton** gerekli (credits≠jeton; test hesabı credits≈140+, jeton=0) |
 | Oda sahibi (üretim) | `admin` (`cmokscu2y0000pnko11nctqw5`) |
 
