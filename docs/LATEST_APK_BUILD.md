@@ -2,23 +2,17 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.287+323` |
-| Tarih (UTC) | 2026-08-19 22:08 |
-| Commit | [`79264431`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/79264431) |
-| İş akışı | [Run 32306125408](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32306125408) |
+| Sürüm | `1.0.288+324` |
+| Tarih (UTC) | 2026-08-19 23:01 |
+| Commit | [`0e78e04d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/0e78e04d4ed3e1ed52331e837c30c6392544a6d4) |
+| İş akışı | [Run 32309382619](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32309382619) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.287+323 (2026-08-19) — PK davet kabulü oda teardown
+## 1.0.288+324 (2026-08-19) — Favoriler oda geçişi teardown
 
-- **PK kabul:** Davet popup kabulü sonrası `prepareVoiceRoomSwitch` (farklı odadayken koltuk/presence)
-
-## 1.0.286+322 (2026-08-19) — Push/bildirim oda geçişi presence
-
-- **Push/PK bildirimi:** `/voice-room/*` öncesi `prepareVoiceRoomSwitch`
-- **Bildirim listesi:** async teardown
-- **Derin bağlantı:** `VoiceRoomGatedEntry` yükleme bekler
+- **Favoriler:** Oda favorisi açılırken entity yüklenemese bile `prepareVoiceRoomSwitch` önce çalışır (eski odada presence kalması)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
