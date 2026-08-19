@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/util/json_util.dart';
 import '../../domain/entities/daily_task_entity.dart';
 
 class DailyTasksRemoteDataSource {
@@ -33,15 +34,36 @@ class DailyTasksRemoteDataSource {
       ApiEndpoints.userDailyTasks,
       ApiEndpoints.dailyMissions,
     ]) {
-      try {
-        await _dio.safePost<dynamic>(
-          path,
-          data: {'taskId': taskId, 'action': 'claim', 'id': taskId},
-        );
-        return true;
-      } catch (_) {}
+      for (final body in [
+        {'taskType': taskId},
+        {'taskId': taskId, 'action': 'claim', 'id': taskId},
+      ]) {
+        try {
+          await _dio.safePost<dynamic>(path, data: body);
+          return true;
+        } catch (_) {}
+      }
     }
     return false;
+  }
+
+  /// Üretim: `POST /api/jeton` body `{ "action": "daily_login" }`
+  Future<int?> claimJetonDailyLoginBonus() async {
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.jetonCatalog,
+        data: const {'action': 'daily_login'},
+      );
+      final body = res.data;
+      if (body is Map) {
+        final m = Map<String, dynamic>.from(body);
+        final bal = m['jetonBalance'] ?? m['newBalance'] ?? m['balance'];
+        if (bal != null) return asInt(bal);
+      }
+      return 0;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<bool> claimDailyLogin() async {

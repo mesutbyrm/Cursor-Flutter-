@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.269+305 (2026-08-19) — Günlük görev API eşlemesi + jeton bonus
+
+- **Daily missions:** `type` → görev id; `reward`/`earnedJeton` → jeton ödülü (Growth Hub artık üretim API görevlerini gösterir)
+- **Claim:** `POST /api/daily-missions` body `taskType` (kılavuz uyumu)
+- **Jeton:** Growth Hub yenilemede `POST /api/jeton` `daily_login` bonus denemesi
+- **Test:** `daily_task_entity_test.dart`
+
 ## 1.0.268+304 (2026-08-19) — FAZ8/9 testler + FAZ11/12 otomatik kapılar
 
 - **Shorts:** count format, content filter, copyright guard testleri (FAZ8)

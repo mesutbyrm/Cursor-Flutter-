@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -213,6 +215,12 @@ class GrowthHubPage extends ConsumerWidget {
     ref.invalidate(userAchievementsProvider);
     ref.invalidate(userDailyTasksProvider);
     ref.invalidate(userLevelProvider);
+    // Günlük jeton bonusu (zaten alındıysa sessizce atlanır)
+    unawaited(
+      ref.read(dailyTasksRemoteProvider).claimJetonDailyLoginBonus().then((_) {
+        ref.refreshWalletCache(force: true);
+      }),
+    );
     ref.invalidate(membershipBadgesCatalogProvider);
     ref.invalidate(membershipCatalogProvider);
     ref.invalidate(membershipControllerProvider);

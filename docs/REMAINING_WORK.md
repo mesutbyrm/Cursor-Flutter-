@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-19 11:30 UTC — FAZ1–11 otomatik PASS (15 test) | FAZ12 otomatik 4/4  
+**Son güncelleme:** 2026-08-19 12:05 UTC — `1.0.269+305` günlük görev API fix  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (12 PASS)
 
 ---
@@ -70,6 +70,11 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-08-19 devam 2)
+
+- **1.0.269+305:** Daily missions `type`/`reward`/`earnedJeton` parse; `taskType` claim; Growth Hub jeton daily_login
+- `daily_task_entity_test.dart` (FAZ2)
 
 ## Oturum günlüğü (2026-08-19 devam)
 

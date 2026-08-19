@@ -28,7 +28,7 @@ class DailyTaskEntity {
       if (pTarget != null) target = asInt(pTarget);
     }
     return DailyTaskEntity(
-      id: pick(json, ['id', 'taskId', 'slug', 'key'])?.toString() ?? '',
+      id: pick(json, ['id', 'taskId', 'slug', 'key', 'type'])?.toString() ?? '',
       title: pick(json, ['title', 'name', 'label'])?.toString() ?? 'Görev',
       description: pick(json, ['description', 'detail'])?.toString(),
       current: current,
@@ -36,9 +36,18 @@ class DailyTaskEntity {
       completed: json['completed'] == true ||
           json['done'] == true ||
           json['isCompleted'] == true ||
+          json['autoComplete'] == true ||
           (target > 0 && current >= target),
-      claimed: json['claimed'] == true || json['rewardClaimed'] == true,
-      rewardJeton: asInt(pick(json, ['rewardJeton', 'jetonReward', 'coins'])),
+      claimed: json['claimed'] == true ||
+          json['rewardClaimed'] == true ||
+          json['alreadyClaimed'] == true,
+      rewardJeton: asInt(pick(json, [
+        'rewardJeton',
+        'jetonReward',
+        'earnedJeton',
+        'reward',
+        'coins',
+      ])),
       rewardXp: asInt(pick(json, ['rewardXp', 'xpReward', 'xp'])),
       route: pick(json, ['route', 'deepLink', 'path'])?.toString(),
       icon: pick(json, ['icon', 'emoji'])?.toString(),
