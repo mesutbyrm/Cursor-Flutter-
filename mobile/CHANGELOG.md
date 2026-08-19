@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.283+319 (2026-08-19) — Canlı hediye panel hata UX
+
+- **LiveGiftPanel + PremiumGiftPanel:** yetersiz jeton artık sessizce yutulmuyor → `showJetonAwareError`
+- **Doc:** FAZ0_CLOSURE `1.0.282+318`
+
 ## 1.0.282+318 (2026-08-19) — Canlı yayın + oyun + fal jeton UX
 
 - **Canlı hediye:** yetersiz jeton → `showJetonAwareError`

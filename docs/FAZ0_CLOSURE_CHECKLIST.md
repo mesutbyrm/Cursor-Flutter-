@@ -1,7 +1,7 @@
 # FAZ 0 — Kapanış kontrol listesi
 
 **Durum:** INCOMPLETE — M5 cihaz + jeton bekliyor  
-**APK:** `1.0.279+315` (`apk-latest`)  
+**APK:** `1.0.282+318` (`apk-latest`)  
 **Otomatik:** `bash scripts/faz0-next.sh` (önerilen) · `bash scripts/faz0-verify.sh` (tam)
 
 ---

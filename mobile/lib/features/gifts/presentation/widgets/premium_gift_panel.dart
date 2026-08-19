@@ -9,6 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/navigation/wallet_navigation.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../live/presentation/gifts/live_gift_controller.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -185,7 +187,14 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
         quantity: _qty,
       );
       ref.refreshWalletCache(force: true);
-    } catch (_) {}
+    } catch (e) {
+      if (!mounted) return;
+      showJetonAwareError(
+        context,
+        ApiException.userMessage(e),
+        ref: ref,
+      );
+    }
   }
 }
 
