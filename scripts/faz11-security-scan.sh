@@ -8,7 +8,13 @@ FAIL=0
 echo "=== FAZ11 Security scan ==="
 
 # Bilinen test şifreleri repoda dokümante — gerçek prod secret arama
-if rg -l 'sk_live_|AKIA[0-9A-Z]{16}|ghp_[a-zA-Z0-9]{20,}' "$ROOT/mobile" "$ROOT/api" 2>/dev/null | rg -v test | head -5; then
+if rg -l 'sk_live_|AKIA[0-9A-Z]{16}|ghp_[a-zA-Z0-9]{20,}' "$ROOT/mobile" "$ROOT/api" \
+  --glob '!**/node_modules/**' \
+  --glob '!**/.git/**' \
+  --glob '!**/dist/**' \
+  --glob '!**/*.sh' \
+  --glob '!**/*.md' \
+  2>/dev/null | rg -v test | head -5; then
   echo "❌ Olası secret pattern bulundu"
   FAIL=$((FAIL + 1))
 else

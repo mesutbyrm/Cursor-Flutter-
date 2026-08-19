@@ -1,7 +1,7 @@
 # FAZ 0 — Kapanış kontrol listesi
 
 **Durum:** INCOMPLETE — M5 cihaz + jeton bekliyor  
-**APK:** `1.0.283+319` (`apk-latest`)  
+**APK:** `1.0.285+321` (`apk-latest`)  
 **Otomatik:** `bash scripts/faz0-next.sh` (önerilen) · `bash scripts/faz0-verify.sh` (tam)
 
 ---
@@ -34,7 +34,7 @@ Rehber: `docs/M5_M7_JETON_BLOCKER.md`
 
 ### 3. M5 — Android cihaz E2E
 
-- [ ] APK `1.0.283+319` yüklü
+- [ ] APK `1.0.285+321` yüklü
 - [ ] Oda `cmoohrbr` — `!istek Tarkan - Şımarık` ANR yok, müzik gelir
 - [ ] `docs/M5_DEVICE_TEST_CHECKLIST.md`
 

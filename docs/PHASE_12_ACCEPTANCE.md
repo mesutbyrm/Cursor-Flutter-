@@ -26,11 +26,14 @@
 | 4 | Fal SSE akışı | 4 |
 | 5 | Canlı yayın giriş/çıkış | 5 |
 | 6 | Sesli oda + `!istek` müzik | 6 |
-| 7 | Hediye gönder | 7 |
-| 8 | Shorts feed | 8 |
-| 9 | DM mesaj | 9 |
-| 10 | Bildirim listesi | 9 |
-| 11–25 | `docs/ACCEPTANCE_TESTS.md` genişletilmiş |
+| 6b | Sesli oda PK daveti + bildirim | 6 |
+| 6c | Oda değişiminde presence temiz | 6 |
+| 7 | Canlı yayın PK daveti | 5–6 |
+| 8 | Hediye gönder | 7 |
+| 9 | Shorts feed | 8 |
+| 10 | DM mesaj | 9 |
+| 11 | Bildirim listesi | 9 |
+| 12–25 | `docs/ACCEPTANCE_TESTS.md` genişletilmiş | — |
 
 **FAZ0 bloker:** Senaryo 6 için jeton ≥10 gerekli.
 

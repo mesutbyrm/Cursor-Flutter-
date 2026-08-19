@@ -1,6 +1,6 @@
 # M7 — Müzik probe yakalama (üretim)
 
-**Tarih:** 2026-08-19 15:10 UTC  
+**Tarih:** 2026-08-19 20:17 UTC  
 **Oda slug:** `cmoohrbr`  
 **Oda id (SSE):** `cmoohrbrx00a4nt08zlkdjyil`  
 **Hesap:** `cursor.test.1786235468@mailinator.com` — jeton=0  
@@ -62,7 +62,7 @@ data: {"type":"presence","users":[]}
             "thumbnail": "https://i.ytimg.com/vi/cpp69ghR1IM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAFL20hyg2MZSmMLkic82LMnae-Lg",
             "duration": "3:12",
             "channel": "Tarkan",
-            "views": 102978677
+            "views": 103001898
         },
         {
             "id": "pu9co0YRKHg",
@@ -70,15 +70,7 @@ data: {"type":"presence","users":[]}
             "thumbnail": "https://i.ytimg.com/vi/pu9co0YRKHg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDEavpd5f0hzpOfThiOFcHocOYnUQ",
             "duration": "3:13",
             "channel": "Tarkan",
-            "views": 17927945
-        },
-        {
-            "id": "c9r1Vfb51X8",
-            "title": "Tarkan - \u015e\u0131mar\u0131k (Kiss Kiss) (HQ / HD)",
-            "thumbnail": "https://i.ytimg.com/vi/c9r1Vfb51X8/hqdefault.jpg?sqp=-oaymwE2COADEI4CSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgBzgWAAuADigIMCAAQARh_IFAoIDAP&rs=AOn4CLD0qIgxN_NPCqUYekSJ5PpIFK1Y3A",
-            "duration": "3:11",
-            "channel": "TiredOfYou",
-            "views": 3559497
+            "views": 17930815
         },
         {
             "id": "SSMoILdzGDg",
@@ -86,7 +78,15 @@ data: {"type":"presence","users":[]}
             "thumbnail": "https://i.ytimg.com/vi/SSMoILdzGDg/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDTldu0uezSMjvlVItdp6sie7z0Fw",
             "duration": "3:11",
             "channel": "seven7lyrics",
-            "views": 8743922
+            "views": 8749550
+        },
+        {
+            "id": "c9r1Vfb51X8",
+            "title": "Tarkan - \u015e\u0131mar\u0131k (Kiss Kiss) (HQ / HD)",
+            "thumbnail": "https://i.ytimg.com/vi/c9r1Vfb51X8/hqdefault.jpg?sqp=-oaymwE2COADEI4CSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgBzgWAAuADigIMCAAQARh_IFAoIDAP&rs=AOn4CLD0qIgxN_NPCqUYekSJ5PpIFK1Y3A",
+            "duration": "3:11",
+            "channel": "TiredOfYou",
+            "views": 3561736
         },
         {
             "id": "M0-joG_2SZY",
@@ -94,14 +94,14 @@ data: {"type":"presence","users":[]}
             "thumbnail": "https://i.ytimg.com/vi/M0-joG_2SZY/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAvD7ytb3m6NOzHLxmHEXI7Ibjy5Q",
             "duration": "4:00",
             "channel": "\u2102\u22c6Tarkanland",
-            "views": 407235
+            "views": 407316
         },
         {
-            "id": "vlwUoivK1Kk",
-            "title": "Tarkan - Simarik (14.05.2019)",
-            "thumbnail": "https://i.ytimg.com/vi/vlwUoivK1Kk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBf6crzFLWoTUcAtBirLK-Ijc8xTg",
-            "duration": "3:57",
-            "channel": "Ottoman Kedi",
-            "views": 260662
+            "id": "ARCxyt9GS5o",
+            "title": "TARKAN : THE WORLD MUSIC AWARDS IN MONACO 1999",
+            "thumbnail": "https://i.ytimg.com/vi/ARCxyt9GS5o/hqdefault.jpg?sqp=-oaymwE2COADEI4CSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gSAAuADigIMCAAQARhyIEIoNjAP&rs=AOn4CLCQyOzBDTLZB1PY2PjZXzOwci-wRA",
+            "duration": "3:29",
+            "channel": "F6FGrumman",
+            "views": 18065847
         },
 ```

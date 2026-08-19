@@ -1,7 +1,7 @@
 # FAZ 0 — Durum özeti
 
 **Sonuç:** **INCOMPLETE** — Otomatik iş tamam; **jeton + M5 cihaz** bekleniyor  
-**APK:** `1.0.283+319` (`apk-latest`)  
+**APK:** `1.0.285+321` (`apk-latest`)  
 **Sürüm:** `mobile/pubspec.yaml`  
 **Tek engel:** Test hesabı jeton=0 — `docs/M5_M7_JETON_BLOCKER.md`
 
@@ -20,6 +20,8 @@
 | Faz testleri | 15 PASS — `run-phase-tests.sh` |
 | FAZ12 otomatik | 4/4 — `faz12-automated-gates.sh` |
 | Jeton UX | `showInsufficientJetonDialog` + `showJetonAwareError` — oda/müzik/hediye/fal/oyun/üyelik/canlı panel (`1.0.277–283`) |
+| Müzik ANR | `deferVoiceMusicSubmit` + microtask DJ UI (`1.0.284+320`) |
+| PK davet | Bildirim `/` fix, presence leave, donma azaltma (`1.0.285+321`) |
 | Günlük görevler | Growth Hub API eşlemesi — `1.0.269–271` |
 | Otomatik betikler | `faz0-verify`, `probe-jeton-earn`, `admin-jeton-cheatsheet`, `wait-for-jeton`, `m5-device-prep` |
 | Unit testler | 93× voice_hub + profile daily_task + wallet_navigation |

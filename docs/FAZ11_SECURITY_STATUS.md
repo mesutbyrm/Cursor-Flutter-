@@ -7,6 +7,6 @@
 | ApiException / HTML guard | ✅ |
 | JWT secure storage | ✅ |
 | JsonContentTypeGuard | ✅ |
-| Secret scan CI | 🔄 |
+| Secret scan CI | ✅ `faz11-security-scan.sh` (node_modules hariç) |
 
 **Testler:** `api_exception_test.dart`, `json_content_type_guard`

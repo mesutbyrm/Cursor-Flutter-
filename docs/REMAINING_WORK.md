@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-19 15:44 UTC — `1.0.283+319`  
+**Son güncelleme:** 2026-08-19 20:15 UTC — `1.0.285+321`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (15 PASS)
 
 ---
@@ -13,8 +13,9 @@
 | FAZ 1–11 | `[x]` otomatik | 15 PASS — `PHASE_TEST_REPORT.md` |
 | FAZ 12 | `[~]` | Otomatik kapılar ✅; cihaz 25 senaryo |
 | FAZ 13 | `[~]` | CI APK ✅ |
-| APK `1.0.283+319` | `[x]` | apk-latest (CI) |
+| APK `1.0.285+321` | `[x]` | apk-latest (CI) |
 | P0 müzik kod | `[x]` | M5/M7 manuel |
+| P0 PK kod | `[x]` | M5/M7 manuel (bildirim + davet) |
 
 ---
 
@@ -70,6 +71,11 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-08-19 devam 12)
+
+- **1.0.285+321:** PK bildirimi `/` fix, PK davet donması, oda geçişi presence leave
+- **1.0.284+320:** Sesli oda müzik isteği ANR (`deferVoiceMusicSubmit`)
 
 ## Oturum günlüğü (2026-08-19 devam 11)
 

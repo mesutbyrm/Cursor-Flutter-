@@ -1,7 +1,7 @@
 # M5 — Cihaz test kontrol listesi (!istek / müzik)
 
 **Tarih:** 2026-08-19  
-**APK:** `1.0.279+315` veya üzeri (`apk-latest`)  
+**APK:** `1.0.285+321` veya üzeri (`apk-latest`)  
 **Hazırlık:** `bash scripts/m5-device-prep.sh`
 
 ---
@@ -60,7 +60,27 @@ Jeton yoksa: `docs/M5_M7_JETON_BLOCKER.md` · Durum: `bash scripts/faz0-status.s
 
 1. Müzik çalarken odadan çık
 2. Başka odaya gir
-3. **Beklenen:** Önceki oda müziği durur; yeni oda temiz
+3. **Beklenen:** Önceki oda müziği durur; yeni oda temiz; eski odada koltukta görünmezsin
+
+---
+
+## Test 5 — Sesli oda PK daveti
+
+1. İki farklı sesli odada (A ve B) iki hesap veya iki cihaz
+2. Oda A'dan PK daveti gönder → Oda B'yi seç
+3. **Beklenen:**
+   - [ ] Gönderen ekran donmuyor
+   - [ ] Karşı tarafta PK popup veya bildirim gelir
+   - [ ] Kabul sonrası PK başlar
+4. **Bildirim testi:** PK bildirimine tıkla → `GoException` yok, oda veya ana sayfa açılır
+
+---
+
+## Test 6 — Canlı yayın PK daveti
+
+1. İki canlı yayıncı
+2. PK daveti gönder / kabul et
+3. **Beklenen:** Donma yok; karşı taraf daveti görür
 
 ---
 
@@ -72,6 +92,8 @@ Jeton yoksa: `docs/M5_M7_JETON_BLOCKER.md` · Durum: `bash scripts/faz0-status.s
 | Müzik paneli | | |
 | Video isteği | | |
 | Oda çıkışı | | |
+| Sesli PK | | |
+| Canlı PK | | |
 
 **M5 PASS** → `docs/FAZ0_CLOSURE_CHECKLIST.md` · `docs/REMAINING_WORK.md` A9
 

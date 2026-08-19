@@ -64,7 +64,9 @@ echo ""
 
 echo "── Tamamlanan (kod) ──"
 echo "  ✅ M1–M12 (!istek/ANR/SSE) — 1.0.266+302"
-echo "  ✅ Günlük görev + jeton UX — 1.0.269–275"
+echo "  ✅ Müzik isteği ANR — 1.0.284+320"
+echo "  ✅ PK davet/bildirim/oda geçişi — 1.0.285+321"
+echo "  ✅ Günlük görev + jeton UX — 1.0.269–283"
 echo "  ✅ API müzik 6/6 + 93 voice_hub + 15 faz test"
 echo ""
 
