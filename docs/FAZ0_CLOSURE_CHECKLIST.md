@@ -1,7 +1,7 @@
 # FAZ 0 — Kapanış kontrol listesi
 
 **Durum:** INCOMPLETE — M5 cihaz + jeton bekliyor  
-**APK:** `1.0.282+318` (`apk-latest`)  
+**APK:** `1.0.283+319` (`apk-latest`)  
 **Otomatik:** `bash scripts/faz0-next.sh` (önerilen) · `bash scripts/faz0-verify.sh` (tam)
 
 ---
@@ -12,7 +12,7 @@
 - [x] API müzik fazı 6/6 — `API_MUSIC_PHASE_REPORT.md`
 - [x] voice_hub 93 unit + 15 faz test
 - [x] MCP selftest v1.2.0
-- [x] Jeton UX — `showInsufficientJetonDialog` + `showJetonAwareError` (oda + müzik + oyun + üyelik, `1.0.278–279`)
+- [x] Jeton UX — `showInsufficientJetonDialog` + `showJetonAwareError` (oda + müzik + hediye + fal + oyun + üyelik + canlı panel, `1.0.277–283`)
 - [x] Günlük görevler — Growth Hub API eşlemesi (`1.0.269–273`)
 - [x] CI `faz0-music` + FAZ12 otomatik 4/4
 
@@ -34,7 +34,7 @@ Rehber: `docs/M5_M7_JETON_BLOCKER.md`
 
 ### 3. M5 — Android cihaz E2E
 
-- [ ] APK `1.0.279+315` yüklü
+- [ ] APK `1.0.283+319` yüklü
 - [ ] Oda `cmoohrbr` — `!istek Tarkan - Şımarık` ANR yok, müzik gelir
 - [ ] `docs/M5_DEVICE_TEST_CHECKLIST.md`
 
