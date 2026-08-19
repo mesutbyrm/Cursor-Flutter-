@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/content/currency_usage_info.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
@@ -320,6 +321,14 @@ class MembershipPage extends ConsumerWidget {
             SnackBar(content: Text(e.message)),
           );
           return true;
+        }
+        if (e.message.contains('Yetersiz jeton') ||
+            e.message.toLowerCase().contains('insufficient_jeton')) {
+          await showInsufficientJetonDialog(
+            context,
+            message: e.message,
+            ref: ref,
+          );
         }
         return false;
       } catch (_) {

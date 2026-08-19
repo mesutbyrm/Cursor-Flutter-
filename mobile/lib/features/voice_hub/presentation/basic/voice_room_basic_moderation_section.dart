@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -232,7 +233,7 @@ Future<void> onVoiceRoomBasicSeatTap({
         .assignSeat(seatIndex: internalSeatIndex);
     if (!context.mounted) return;
     if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      showJetonAwareError(context, err, ref: ref);
     }
     return;
   }
@@ -316,8 +317,7 @@ Future<void> showVoiceRoomBasicAssignSeatSheet({
                   Navigator.pop(ctx);
                   final err = await ctrl.kickFromSeat(seatIndex: seatIndex);
                   if (context.mounted && err != null) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text(err)));
+                    showJetonAwareError(context, err, ref: ref);
                   }
                 },
               ),
@@ -332,8 +332,7 @@ Future<void> showVoiceRoomBasicAssignSeatSheet({
                     ? await ctrl.unlockSeat(seatIndex: seatIndex)
                     : await ctrl.lockSeat(seatIndex: seatIndex);
                 if (context.mounted && err != null) {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(SnackBar(content: Text(err)));
+                  showJetonAwareError(context, err, ref: ref);
                 }
               },
             ),
@@ -346,8 +345,7 @@ Future<void> showVoiceRoomBasicAssignSeatSheet({
                 Navigator.pop(ctx);
                 final err = await ctrl.assignSeat(seatIndex: seatIndex);
                 if (context.mounted && err != null) {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(SnackBar(content: Text(err)));
+                  showJetonAwareError(context, err, ref: ref);
                 }
               },
             ),
@@ -359,8 +357,7 @@ Future<void> showVoiceRoomBasicAssignSeatSheet({
                 Navigator.pop(ctx);
                 final err = await ctrl.addRoomDj(self.id);
                 if (context.mounted && err != null) {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(SnackBar(content: Text(err)));
+                  showJetonAwareError(context, err, ref: ref);
                 }
               },
             ),
@@ -414,8 +411,7 @@ Future<void> showVoiceRoomBasicAssignSeatSheet({
                   userId: p.id,
                 );
                 if (context.mounted && err != null) {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(SnackBar(content: Text(err)));
+                  showJetonAwareError(context, err, ref: ref);
                 }
               },
             ),
@@ -449,7 +445,7 @@ Future<void> requestVoiceRoomBasicSpeak({
       : await liveCtrl.requestSpeak();
   if (!context.mounted) return;
   if (err != null) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+    showJetonAwareError(context, err, ref: ref);
     return;
   }
   showVoiceRequestSpeakSheet(

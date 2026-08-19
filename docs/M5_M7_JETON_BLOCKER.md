@@ -1,8 +1,8 @@
 # M5 / M7 — Jeton engeli ve çözüm
 
 **Durum:** Otomatik kapılar geçti; **M5 cihaz** ve **M7 song-request 200** jeton bekliyor.  
-**APK:** `1.0.268+304` (`apk-latest`)  
-**Test hesabı:** `cursor.test.1786235468@mailinator.com` — **jeton=0** (credits=107)
+**APK:** `1.0.278+314` (`apk-latest`)  
+**Test hesabı:** `cursor.test.1786235468@mailinator.com` — **jeton=0** (credits≈152)
 
 ---
 

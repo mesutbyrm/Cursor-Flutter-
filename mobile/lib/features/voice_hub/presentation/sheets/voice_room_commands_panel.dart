@@ -393,7 +393,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
         .addBannedWord(w);
     if (!mounted) return;
     if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      showJetonAwareError(context, err, ref: ref);
       return;
     }
     _wordCtrl.clear();
@@ -406,7 +406,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
         .removeBannedWord(w);
     if (!mounted) return;
     if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      showJetonAwareError(context, err, ref: ref);
       return;
     }
     await _loadWords();

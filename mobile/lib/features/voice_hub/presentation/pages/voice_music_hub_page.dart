@@ -553,7 +553,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
                         .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
                         .skipMusic();
                     if (err != null && mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                      showJetonAwareError(context, err, ref: ref);
                     }
                     await _reloadQueue();
                   },
@@ -566,7 +566,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
                         .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
                         .clearMusicQueue();
                     if (err != null && mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                      showJetonAwareError(context, err, ref: ref);
                     }
                     await _reloadQueue();
                   },

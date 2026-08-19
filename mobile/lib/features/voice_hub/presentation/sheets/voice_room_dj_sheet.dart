@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -103,7 +104,7 @@ class _DjDialogState extends ConsumerState<_DjDialog> {
     if (mounted) setState(() => _busy = false);
     if (!mounted) return;
     if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      showJetonAwareError(context, err, ref: ref);
     }
   }
 
@@ -116,7 +117,7 @@ class _DjDialogState extends ConsumerState<_DjDialog> {
     if (mounted) setState(() => _busy = false);
     if (!mounted) return;
     if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      showJetonAwareError(context, err, ref: ref);
     }
   }
 

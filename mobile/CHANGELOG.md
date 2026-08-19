@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.279+315 (2026-08-19) — Jeton UX tam kapsam (sesli oda)
+
+- **`showJetonAwareError`:** RTC moderasyon, DJ sheet, müzik kuyruğu, konuşma kuyruğu, araçlar
+- **Üyelik:** anlık jeton satın alma yetersiz bakiye → `showInsufficientJetonDialog`
+- **Doc:** `M5_M7_JETON_BLOCKER.md` sürüm güncellemesi
+
 ## 1.0.278+314 (2026-08-19) — Jeton hata yardımcısı
 
 - **`showJetonAwareError`:** jeton mesajlarında SnackBar yerine `showInsufficientJetonDialog`

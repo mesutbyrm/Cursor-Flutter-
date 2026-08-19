@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
@@ -112,7 +113,7 @@ class _SpeakQueueSheetState extends ConsumerState<_SpeakQueueSheet>
     final ctrl = ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
     final err = await ctrl.assignSeat(seatIndex: seat, userId: user.id);
     if (mounted && err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      showJetonAwareError(context, err, ref: ref);
     }
   }
 
@@ -121,7 +122,7 @@ class _SpeakQueueSheetState extends ConsumerState<_SpeakQueueSheet>
     final err = await ctrl.approveSpeakRequest(userId);
     if (mounted) {
       if (err != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        showJetonAwareError(context, err, ref: ref);
       } else {
         setState(() => _pendingIds.remove(userId));
       }
@@ -132,7 +133,7 @@ class _SpeakQueueSheetState extends ConsumerState<_SpeakQueueSheet>
     final ctrl = ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
     final err = await ctrl.addRoomDj(userId);
     if (mounted && err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      showJetonAwareError(context, err, ref: ref);
     }
   }
 

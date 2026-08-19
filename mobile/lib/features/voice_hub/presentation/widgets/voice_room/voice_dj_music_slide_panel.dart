@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
@@ -52,7 +53,7 @@ class _VoiceDjMusicSlidePanelState extends ConsumerState<VoiceDjMusicSlidePanel>
     final err = await action();
     if (mounted) setState(() => _busy = false);
     if (!mounted || err == null) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+    showJetonAwareError(context, err, ref: ref);
   }
 
   @override

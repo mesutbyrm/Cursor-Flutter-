@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../../../presentation/providers/chat_room_providers.dart';
@@ -78,7 +79,7 @@ class _RoomMusicQueueSheetState extends ConsumerState<_RoomMusicQueueSheet> {
     final err = await action();
     if (mounted) setState(() => _busy = false);
     if (!mounted || err == null) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+    showJetonAwareError(context, err, ref: ref);
   }
 
   ChatRoomDjState get _liveDj =>

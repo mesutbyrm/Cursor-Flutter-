@@ -275,7 +275,7 @@ class _BannedWordsSectionState extends ConsumerState<_BannedWordsSection> {
         .addBannedWord(w);
     if (!mounted) return;
     if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      showJetonAwareError(context, err, ref: ref);
       return;
     }
     _wordCtrl.clear();
@@ -288,7 +288,7 @@ class _BannedWordsSectionState extends ConsumerState<_BannedWordsSection> {
         .removeBannedWord(word);
     if (!mounted) return;
     if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      showJetonAwareError(context, err, ref: ref);
       return;
     }
     await _load();

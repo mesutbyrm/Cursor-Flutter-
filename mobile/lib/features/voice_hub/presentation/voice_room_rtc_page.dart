@@ -917,7 +917,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           .assignSeat(seatIndex: internalSeatIndex);
       if (!context.mounted) return;
       if (err != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        showJetonAwareError(context, err, ref: ref);
       } else {
         unawaited(_maybeAutoOpenMic());
       }
@@ -995,8 +995,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     Navigator.pop(ctx);
                     final err = await ctrl.kickFromSeat(seatIndex: seatIndex);
                     if (context.mounted && err != null) {
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text(err)));
+                      showJetonAwareError(context, err, ref: ref);
                     }
                   },
                 ),
@@ -1013,8 +1012,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       ? await ctrl.unlockSeat(seatIndex: seatIndex)
                       : await ctrl.lockSeat(seatIndex: seatIndex);
                   if (context.mounted && err != null) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text(err)));
+                    showJetonAwareError(context, err, ref: ref);
                   }
                 },
               ),
@@ -1027,8 +1025,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   Navigator.pop(ctx);
                   final err = await ctrl.assignSeat(seatIndex: seatIndex);
                   if (context.mounted && err != null) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text(err)));
+                    showJetonAwareError(context, err, ref: ref);
                   }
                 },
               ),
@@ -1040,8 +1037,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   Navigator.pop(ctx);
                   final err = await ctrl.addRoomDj(self.id);
                   if (context.mounted && err != null) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text(err)));
+                    showJetonAwareError(context, err, ref: ref);
                   }
                 },
               ),
@@ -1078,8 +1074,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     userId: p.id,
                   );
                   if (context.mounted && err != null) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text(err)));
+                    showJetonAwareError(context, err, ref: ref);
                   }
                 },
               ),
