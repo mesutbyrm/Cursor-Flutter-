@@ -1204,24 +1204,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       if (prev?.error != next.error && next.error != null && mounted) {
         final err = next.error!;
         if (err.contains('jeton')) {
-          showDialog<void>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Yetersiz jeton'),
-              content: Text(err),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Kapat'),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    openJetonStore(context, ref: ref);
-                  },
-                  child: const Text('Jeton Yükle'),
-                ),
-              ],
+          unawaited(
+            showInsufficientJetonDialog(
+              context,
+              message: err,
+              ref: ref,
             ),
           );
           ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearError();

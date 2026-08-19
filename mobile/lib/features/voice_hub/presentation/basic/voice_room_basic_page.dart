@@ -729,8 +729,12 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       if (next.error != null && next.error != prev?.error && mounted) {
         final err = next.error!;
         if (err.contains('jeton')) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(err)),
+          unawaited(
+            showInsufficientJetonDialog(
+              context,
+              message: err,
+              ref: ref,
+            ),
           );
           ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearError();
         }

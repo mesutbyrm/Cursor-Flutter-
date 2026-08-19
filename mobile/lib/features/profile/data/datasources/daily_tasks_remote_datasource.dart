@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/daily_task_entity.dart';
@@ -41,6 +42,9 @@ class DailyTasksRemoteDataSource {
         try {
           await _dio.safePost<dynamic>(path, data: body);
           return true;
+        } on ApiException catch (e) {
+          final msg = e.message.toLowerCase();
+          if (msg.contains('zaten') || msg.contains('already')) return true;
         } catch (_) {}
       }
     }

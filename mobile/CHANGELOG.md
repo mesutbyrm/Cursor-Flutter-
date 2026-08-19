@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.271+307 (2026-08-19) — Yetersiz jeton UX (sesli oda)
+
+- **Dialog:** `showInsufficientJetonDialog` — Jeton Yükle + Görevler (`/profile/growth`)
+- **Basic/RTC oda:** !istek jeton hatasında paylaşılan diyalog
+- **Claim:** daily-missions `alreadyClaimed` → başarı sayılır
+
 ## 1.0.270+306 (2026-08-19) — Growth Hub görev ilerlemesi + claim
 
 - **Tamamlanan görevler:** ilerleme çubuğu 1/1 (üretim API `completed` alanı)

@@ -21,6 +21,47 @@ void openPremiumMembership(BuildContext context, {WidgetRef? ref}) {
   _pushWalletRoute(context, '/premium-membership', ref: ref);
 }
 
+void openGrowthHub(BuildContext context) {
+  final router = GoRouter.maybeOf(context);
+  if (router == null) return;
+  router.push('/profile/growth');
+}
+
+/// Sesli oda / müzik / hediye — yetersiz jeton diyaloğu.
+Future<void> showInsufficientJetonDialog(
+  BuildContext context, {
+  required String message,
+  WidgetRef? ref,
+}) {
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Yetersiz jeton'),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Kapat'),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.pop(ctx);
+            openGrowthHub(context);
+          },
+          child: const Text('Görevler'),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.pop(ctx);
+            openJetonStore(context, ref: ref);
+          },
+          child: const Text('Jeton Yükle'),
+        ),
+      ],
+    ),
+  );
+}
+
 void _pushWalletRoute(
   BuildContext context,
   String location, {

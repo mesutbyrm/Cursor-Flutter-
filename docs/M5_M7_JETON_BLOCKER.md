@@ -28,6 +28,10 @@
 
 ## Çözüm A — Admin panel (hızlı)
 
+```bash
+bash scripts/admin-jeton-cheatsheet.sh   # user id + adımlar
+```
+
 1. [canlifal.com](https://canlifal.com) admin paneline girin
 2. Kullanıcı: `cursor.test.1786235468@mailinator.com` (veya `cursorusr1786235468`)
 3. **≥50 jeton** ekleyin (M5 + M7 + yedek)
