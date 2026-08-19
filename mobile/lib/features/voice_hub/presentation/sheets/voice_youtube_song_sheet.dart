@@ -203,7 +203,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
   void _showMusicResultSnack(String message, {bool isError = false}) {
     final ctx = rootNavigatorKey.currentContext;
     if (ctx == null) return;
-    if (isError && message.toLowerCase().contains('jeton')) {
+    if (isError && isInsufficientJetonMessage(message)) {
       unawaited(showInsufficientJetonDialog(ctx, message: message));
       return;
     }

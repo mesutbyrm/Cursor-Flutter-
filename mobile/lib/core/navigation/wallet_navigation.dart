@@ -27,6 +27,30 @@ void openGrowthHub(BuildContext context) {
   router.push('/profile/growth');
 }
 
+/// Jeton yetersizliği mesajı mı (SnackBar yerine diyalog göster).
+bool isInsufficientJetonMessage(String message) {
+  final lower = message.toLowerCase();
+  return lower.contains('yetersiz jeton') ||
+      lower.contains('insufficient_jeton') ||
+      lower.contains('insufficient jeton') ||
+      lower.contains('jeton gerekli');
+}
+
+/// Komut/oda/oyun hata mesajı — jeton ise diyalog, değilse SnackBar.
+void showJetonAwareError(
+  BuildContext context,
+  String message, {
+  WidgetRef? ref,
+}) {
+  if (isInsufficientJetonMessage(message)) {
+    showInsufficientJetonDialog(context, message: message, ref: ref);
+    return;
+  }
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(message)),
+  );
+}
+
 /// Sesli oda / müzik / hediye — yetersiz jeton diyaloğu.
 Future<void> showInsufficientJetonDialog(
   BuildContext context, {

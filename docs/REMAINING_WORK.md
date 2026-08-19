@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-19 14:50 UTC — `1.0.277+313`  
+**Son güncelleme:** 2026-08-19 15:10 UTC — `1.0.278+314`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (15 PASS)
 
 ---

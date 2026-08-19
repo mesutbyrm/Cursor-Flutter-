@@ -1264,7 +1264,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               );
               if (!mounted) return;
               if (err != null) {
-                messenger.showSnackBar(SnackBar(content: Text(err)));
+                showJetonAwareError(context, err, ref: ref);
               } else {
                 messenger.showSnackBar(
                   SnackBar(content: Text('«${hit.title}» çalmaya başladı')),

@@ -173,7 +173,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
       final err = await notifier.postModeratorAnnouncement(message);
       if (!mounted) return;
       if (err != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        showJetonAwareError(context, err, ref: ref);
         return;
       }
       Navigator.pop(context);
@@ -183,7 +183,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
       final err = await notifier.clearChatAsModerator();
       if (!mounted) return;
       if (err != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        showJetonAwareError(context, err, ref: ref);
         return;
       }
       Navigator.pop(context);

@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.278+314 (2026-08-19) — Jeton hata yardımcısı
+
+- **`showJetonAwareError`:** jeton mesajlarında SnackBar yerine `showInsufficientJetonDialog`
+- **Kapsam:** !duyuru komutu, RTC/basic şarkı isteği, Kader Çarkı + Şanslı Zar
+
 ## 1.0.277+313 (2026-08-19) — Falcı profil jeton UX
 
 - **Falcı profil:** randevu + bahşiş yetersiz jeton → `showInsufficientJetonDialog` (Görevler + Jeton Yükle)
