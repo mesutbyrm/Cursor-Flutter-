@@ -38,9 +38,10 @@ bash scripts/admin-jeton-cheatsheet.sh   # user id + adımlar
 4. Doğrula ve M7 probe:
 
 ```bash
-bash scripts/wait-for-jeton.sh 10 3600   # jeton eklenince otomatik M7+M5-preflight
-bash scripts/m5-preflight.sh             # jeton + API + unit
-bash scripts/m7-on-jeton.sh              # song-request HTTP 200
+bash scripts/after-admin-jeton.sh          # jeton ekledikten hemen sonra (önerilen)
+bash scripts/wait-for-jeton.sh 10 3600     # otomatik bekleme + M7 + m5-preflight
+bash scripts/m5-preflight.sh               # jeton + API + unit
+bash scripts/m7-on-jeton.sh                # yalnızca song-request HTTP 200
 bash scripts/m5-ready.sh                   # FAZ12 kapıları + m5-preflight
 ```
 
