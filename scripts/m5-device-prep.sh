@@ -13,6 +13,7 @@ echo "APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-la
 echo "Hesap: cursor.test.1786235468@mailinator.com"
 echo "Oda: cmoohrbr (SSE: cmoohrbrx00a4nt08zlkdjyil)"
 echo "Komut: !istek Tarkan - Şımarık"
+echo "PK testleri: Test 5 (sesli oda PK) + Test 6 (canlı PK) — checklist içinde"
 echo ""
 echo "Checklist: docs/M5_DEVICE_TEST_CHECKLIST.md"
 echo ""
