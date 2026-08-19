@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-19 12:05 UTC — `1.0.269+305` günlük görev API fix  
+**Son güncelleme:** 2026-08-19 12:22 UTC — `1.0.270+306` Growth Hub görev UX  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (12 PASS)
 
 ---
@@ -13,7 +13,7 @@
 | FAZ 1–11 | `[x]` otomatik | 15 PASS — `PHASE_TEST_REPORT.md` |
 | FAZ 12 | `[~]` | Otomatik kapılar ✅; cihaz 25 senaryo |
 | FAZ 13 | `[~]` | CI APK ✅ |
-| APK `1.0.268+304` | `[x]` | apk-latest aktif |
+| APK `1.0.270+306` | `[x]` | apk-latest (CI) |
 | P0 müzik kod | `[x]` | M5/M7 manuel |
 
 ---
@@ -70,6 +70,10 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-08-19 devam 3)
+
+- **1.0.270+306:** Growth Hub tamamlanan görev ilerlemesi, mission rotaları, claim tap
 
 ## Oturum günlüğü (2026-08-19 devam 2)
 

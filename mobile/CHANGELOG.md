@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.270+306 (2026-08-19) — Growth Hub görev ilerlemesi + claim
+
+- **Tamamlanan görevler:** ilerleme çubuğu 1/1 (üretim API `completed` alanı)
+- **Rota:** `type` → `/fortune`, `/live`, `/invite-friends` vb.
+- **Claim:** tamamlanmış göreve dokununca `POST /api/daily-missions` `taskType`
+
 ## 1.0.269+305 (2026-08-19) — Günlük görev API eşlemesi + jeton bonus
 
 - **Daily missions:** `type` → görev id; `reward`/`earnedJeton` → jeton ödülü (Growth Hub artık üretim API görevlerini gösterir)

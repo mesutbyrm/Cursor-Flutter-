@@ -24,20 +24,31 @@ void main() {
       expect(task.icon, '👋');
     });
 
-    test('open_fortune mission uses type as id', () {
+    test('completed mission sets progress to target/target', () {
       const json = {
-        'type': 'open_fortune',
-        'title': 'Fal Baktır',
-        'reward': 10,
-        'completed': false,
-        'earnedJeton': 10,
+        'type': 'watch_stream',
+        'title': 'Canlı Yayın İzle',
+        'reward': 5,
+        'completed': true,
+        'earnedJeton': 5,
       };
 
       final task = DailyTaskEntity.fromJson(json);
 
-      expect(task.id, 'open_fortune');
-      expect(task.rewardJeton, 10);
-      expect(task.completed, isFalse);
+      expect(task.completed, isTrue);
+      expect(task.current, 1);
+      expect(task.target, 1);
+    });
+
+    test('resolvedRoute maps production mission types', () {
+      expect(
+        const DailyTaskEntity(id: 'open_fortune', title: 'Fal').resolvedRoute,
+        '/fortune',
+      );
+      expect(
+        const DailyTaskEntity(id: 'share', title: 'Paylaş').resolvedRoute,
+        '/invite-friends',
+      );
     });
   });
 }

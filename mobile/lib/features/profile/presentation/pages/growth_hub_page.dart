@@ -71,22 +71,7 @@ class GrowthHubPage extends ConsumerWidget {
         : progress.xp;
     final serverTasks = serverTasksAsync.valueOrNull ?? const <DailyTaskEntity>[];
     final taskCards = serverTasks.isNotEmpty
-        ? serverTasks
-            .map(
-              (t) => GrowthTaskEntity(
-                id: t.id,
-                title: t.title,
-                description: t.description ?? '',
-                current: t.current,
-                target: t.target,
-                rewardLabel: t.rewardJeton > 0
-                    ? '+${t.rewardJeton} Jeton'
-                    : (t.rewardXp > 0 ? '+${t.rewardXp} XP' : '+XP'),
-                route: t.route ?? '/feed',
-                icon: t.icon ?? '✅',
-              ),
-            )
-            .toList()
+        ? serverTasks.map(_growthTaskFromDaily).toList()
         : progress.tasks;
     final loading = auth.isLoading ||
         statsAsync.isLoading ||
@@ -146,7 +131,15 @@ class GrowthHubPage extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _TaskCard(
                     task: taskCards[index],
-                    onTap: () => _openTask(context, taskCards[index].route),
+                    dailyTask: serverTasks.isNotEmpty
+                        ? serverTasks[index]
+                        : null,
+                    onTap: () => _onTaskTap(
+                      context,
+                      ref,
+                      taskCards[index],
+                      serverTasks.isNotEmpty ? serverTasks[index] : null,
+                    ),
                   ),
                 ),
               ),
@@ -205,6 +198,43 @@ class GrowthHubPage extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  static GrowthTaskEntity _growthTaskFromDaily(DailyTaskEntity t) {
+    return GrowthTaskEntity(
+      id: t.id,
+      title: t.title,
+      description: t.description ?? '',
+      current: t.current,
+      target: t.target,
+      rewardLabel: t.rewardJeton > 0
+          ? '+${t.rewardJeton} Jeton'
+          : (t.rewardXp > 0 ? '+${t.rewardXp} XP' : '+XP'),
+      route: t.resolvedRoute,
+      icon: t.icon ?? '✅',
+    );
+  }
+
+  static Future<void> _onTaskTap(
+    BuildContext context,
+    WidgetRef ref,
+    GrowthTaskEntity task,
+    DailyTaskEntity? daily,
+  ) async {
+    if (daily != null && daily.completed && !daily.claimed) {
+      final ok = await ref.read(dailyTasksRemoteProvider).claimTask(daily.id);
+      if (ok) {
+        ref.invalidate(userDailyTasksProvider);
+        ref.refreshWalletCache(force: true);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${task.rewardLabel} ödülü alındı')),
+          );
+        }
+        return;
+      }
+    }
+    _openTask(context, task.route);
   }
 
   static Future<void> _refresh(WidgetRef ref) async {
@@ -619,9 +649,11 @@ class _TaskCard extends StatelessWidget {
   const _TaskCard({
     required this.task,
     required this.onTap,
+    this.dailyTask,
   });
 
   final GrowthTaskEntity task;
+  final DailyTaskEntity? dailyTask;
   final VoidCallback onTap;
 
   @override

@@ -24,7 +24,7 @@
 | getReferralInfo | `/api/referral` | ✅ | invite_friends_page |
 | getAchievements | `/api/user/achievements` | ✅ | |
 | getUserTheme | `/api/user/theme` | ✅ | |
-| dailyLogin / dailyMissions | `/api/daily-login`, `/daily-missions` | 🔄 | kısmen — daily-tasks uçları |
+| dailyLogin / dailyMissions | `/api/daily-login`, `/daily-missions` | ✅ | Growth Hub + `daily_task_entity_test` |
 | getPresence | POST `/api/presence` | ✅ | global presence |
 | watchAd | `/api/user/watch-ad` | ✅ | |
 
