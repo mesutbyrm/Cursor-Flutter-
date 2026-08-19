@@ -208,7 +208,7 @@ class GrowthHubPage extends ConsumerWidget {
       current: t.current,
       target: t.target,
       rewardLabel: t.rewardJeton > 0
-          ? '+${t.rewardJeton} Jeton'
+          ? '+${t.rewardJeton} ödül'
           : (t.rewardXp > 0 ? '+${t.rewardXp} XP' : '+XP'),
       route: t.resolvedRoute,
       icon: t.icon ?? '✅',

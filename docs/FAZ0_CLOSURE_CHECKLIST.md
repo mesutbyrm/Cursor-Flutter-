@@ -1,19 +1,20 @@
 # FAZ 0 — Kapanış kontrol listesi
 
-**Durum:** INCOMPLETE — M5 cihaz bekliyor  
-**APK:** `1.0.266+302`  
-**Otomatik:** `bash scripts/faz0-status.sh` (hızlı) · `bash scripts/faz0-verify.sh` (tam)
+**Durum:** INCOMPLETE — M5 cihaz + jeton bekliyor  
+**APK:** `1.0.273+309` (`apk-latest`)  
+**Otomatik:** `bash scripts/faz0-next.sh` (önerilen) · `bash scripts/faz0-verify.sh` (tam)
 
 ---
 
 ## Otomatik kapılar (tamamlandı)
 
-- [x] M1–M12 — !istek / ANR / SSE oda anahtarı (`1.0.257–266`)
+- [x] M1–M12 — !istek / ANR / SSE oda anahtarı (`1.0.266+302`)
 - [x] API müzik fazı 6/6 — `API_MUSIC_PHASE_REPORT.md`
-- [x] voice_hub 93 unit test
+- [x] voice_hub 93 unit + 15 faz test
 - [x] MCP selftest v1.2.0
-- [x] SSE üretim `connected` + `dj` — `M7_MUSIC_SSE_CAPTURE.md`
-- [x] CI `faz0-music` job
+- [x] Jeton UX — `showInsufficientJetonDialog` (oda + müzik paneli)
+- [x] Günlük görevler — Growth Hub API eşlemesi (`1.0.269–273`)
+- [x] CI `faz0-music` + FAZ12 otomatik 4/4
 
 ---
 
@@ -21,39 +22,33 @@
 
 ### 1. Jeton (M5 + M7 önkoşul)
 
-- [ ] Test hesabına ≥10 jeton (`cursor.test.*` veya `cursor.host.*`)
-- [ ] `bash scripts/m5-preflight.sh` → ✅
+- [ ] Test hesabına ≥50 jeton — `bash scripts/admin-jeton-cheatsheet.sh`
+- [ ] `bash scripts/wait-for-jeton.sh` veya jeton ≥10 sonrası `m5-preflight` ✅
 
 Rehber: `docs/M5_M7_JETON_BLOCKER.md`
 
 ### 2. M7 — song-request HTTP 200
 
-- [ ] `bash scripts/m7-on-jeton.sh` (jeton ≥10 sonrası otomatik probe)
+- [ ] `bash scripts/m7-on-jeton.sh` (jeton ≥10)
 - [ ] `M7_MUSIC_SSE_CAPTURE.md` içinde HTTP **200** JSON
-- [ ] `REMAINING_WORK.md` M7 → `[x]`
 
 ### 3. M5 — Android cihaz E2E
 
-- [ ] APK `1.0.266+302` yüklü
+- [ ] APK `1.0.273+309` yüklü
 - [ ] Oda `cmoohrbr` — `!istek Tarkan - Şımarık` ANR yok, müzik gelir
-- [ ] Müzik paneli testi PASS
-- [ ] Sonuç tablosu dolduruldu — `M5_DEVICE_TEST_CHECKLIST.md`
+- [ ] `docs/M5_DEVICE_TEST_CHECKLIST.md`
 
 ### 4. A9 — FAZ 0 kapat
 
-- [ ] M5 PASS
-- [ ] `REMAINING_WORK.md` A9 → `[x]`
-- [ ] `PHASE_PLAN.md` FAZ 0 → PASS
-- [ ] **FAZ 1** başlayabilir
+- [ ] M5 PASS → FAZ 1
 
 ---
 
 ## Hızlı komutlar
 
 ```bash
-bash scripts/faz0-status.sh       # durum (hızlı)
-bash scripts/faz0-verify.sh     # tam otomatik kapılar
-bash scripts/m7-on-jeton.sh       # jeton sonrası M7 probe
-bash scripts/m5-preflight.sh      # M5 öncesi
-bash scripts/run-music-acceptance.sh
+bash scripts/faz0-next.sh          # durum + cheatsheet + probe (+ M7 jeton varsa)
+bash scripts/faz0-verify.sh
+bash scripts/wait-for-jeton.sh 10 3600
+bash scripts/m5-ready.sh
 ```

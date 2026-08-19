@@ -142,6 +142,7 @@ $(printf '%b' "$LOG")
 ## Komutlar
 
 \`\`\`bash
+bash scripts/faz0-next.sh
 bash scripts/faz0-verify.sh
 bash scripts/m5-preflight.sh
 bash scripts/run-music-acceptance.sh

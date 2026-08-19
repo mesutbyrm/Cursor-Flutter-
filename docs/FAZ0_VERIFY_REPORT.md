@@ -1,7 +1,7 @@
 # FAZ 0 — Otomatik doğrulama raporu
 
-**Tarih:** 2026-08-19 13:05 UTC  
-**APK:** `1.0.272+308`  
+**Tarih:** 2026-08-19 14:35 UTC  
+**APK:** `1.0.274+310`  
 **Sonuç:** **AUTOMATED_PASS (M5 cihaz bekliyor)**
 
 | Geçti | Uyarı | Başarısız |
@@ -29,6 +29,7 @@
 ## Komutlar
 
 ```bash
+bash scripts/faz0-next.sh
 bash scripts/faz0-verify.sh
 bash scripts/m5-preflight.sh
 bash scripts/run-music-acceptance.sh

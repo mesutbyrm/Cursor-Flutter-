@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
@@ -171,14 +173,11 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
 
   if (cost > 0 && balance < cost) {
     _dismissLoadingDialog(context);
-    _showSnackBar(
-      context,
-      SnackBar(
-        content: Text('Yetersiz jeton ($cost gerekli, $balance mevcut).'),
-        action: SnackBarAction(
-          label: 'Jeton yükle',
-          onPressed: () => openJetonStore(context, ref: ref),
-        ),
+    unawaited(
+      showInsufficientJetonDialog(
+        context,
+        message: 'Yetersiz jeton ($cost gerekli, $balance mevcut).',
+        ref: ref,
       ),
     );
     return;
@@ -632,16 +631,7 @@ Future<void> _createAndEnter(
     }
     if (msg.toLowerCase().contains('yetersiz') ||
         msg.toLowerCase().contains('jeton')) {
-      _showSnackBar(
-        context,
-        SnackBar(
-          content: Text(msg),
-          action: SnackBarAction(
-            label: 'Jeton yükle',
-            onPressed: () => openJetonStore(context, ref: ref),
-          ),
-        ),
-      );
+      unawaited(showInsufficientJetonDialog(context, message: msg, ref: ref));
       return;
     }
     _showSnackBar(context, SnackBar(content: Text(msg)));

@@ -70,9 +70,8 @@ echo ""
 
 if [[ "$BLOCKERS" -gt 0 ]]; then
   echo "── Sonraki adım ──"
-  echo "  1. bash scripts/admin-jeton-cheatsheet.sh"
-  echo "  2. bash scripts/wait-for-jeton.sh 10 3600"
-  echo "  3. docs/M5_DEVICE_TEST_CHECKLIST.md"
+  echo "  bash scripts/faz0-next.sh"
+  echo "  docs/M5_DEVICE_TEST_CHECKLIST.md (jeton sonrası)"
 else
   echo "── Sonraki adım ──"
   echo "  bash scripts/m5-preflight.sh && docs/M5_DEVICE_TEST_CHECKLIST.md"

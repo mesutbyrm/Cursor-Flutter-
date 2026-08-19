@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.274+310 (2026-08-19) — Oda açma jeton UX + FAZ0 checklist
+
+- **Oda açma:** yetersiz jeton → `showInsufficientJetonDialog`
+- **Growth Hub:** görev ödülü etiketi `+N ödül` (üretim credits/jeton ayrımı)
+- **Doc:** `FAZ0_CLOSURE_CHECKLIST.md` güncel (`faz0-next.sh`)
+
 ## 1.0.273+309 (2026-08-19) — Görev claimed + faz0-next
 
 - **Daily missions:** tamamlanan görev `claimed=true` (gereksiz claim tap önlenir)

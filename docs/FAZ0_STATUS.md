@@ -1,7 +1,7 @@
 # FAZ 0 — Durum özeti
 
 **Sonuç:** **INCOMPLETE** — Otomatik iş tamam; **jeton + M5 cihaz** bekleniyor  
-**APK:** `1.0.271+307` (`apk-latest`)  
+**APK:** `1.0.273+309` (`apk-latest`)  
 **Sürüm:** `mobile/pubspec.yaml`  
 **Tek engel:** Test hesabı jeton=0 — `docs/M5_M7_JETON_BLOCKER.md`
 
