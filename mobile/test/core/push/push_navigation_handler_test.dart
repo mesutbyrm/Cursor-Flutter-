@@ -21,4 +21,38 @@ void main() {
     PushNavigationHandler.install(router);
     expect(router.routeInformationProvider.value.uri.path, '/messages');
   });
+
+  test('navigateToPath maps root to feed', () {
+    final router = GoRouter(
+      initialLocation: '/notifications',
+      routes: [
+        GoRoute(path: '/notifications', builder: (_, __) => const SizedBox.shrink()),
+        GoRoute(path: '/feed', builder: (_, __) => const SizedBox.shrink()),
+      ],
+    );
+    PushNavigationHandler.install(router);
+    PushNavigationHandler.navigateToPath('/');
+    expect(router.routeInformationProvider.value.uri.path, '/feed');
+  });
+
+  test('pk push tap with root path routes to voice room', () {
+    final router = GoRouter(
+      initialLocation: '/feed',
+      routes: [
+        GoRoute(path: '/feed', builder: (_, __) => const SizedBox.shrink()),
+        GoRoute(
+          path: '/voice-room/:id',
+          builder: (_, __) => const SizedBox.shrink(),
+        ),
+      ],
+    );
+    PushNavigationHandler.install(router);
+    PushNavigationHandler.handleNotificationTap({
+      'type': 'pk_invite',
+      'targetPath': '/',
+      'targetId': 'room-xyz',
+      'title': 'PK Daveti',
+    });
+    expect(router.routeInformationProvider.value.uri.path, '/voice-room/room-xyz');
+  });
 }
