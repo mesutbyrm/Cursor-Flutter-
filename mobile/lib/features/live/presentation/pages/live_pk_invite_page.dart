@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/network/api_exception.dart';
@@ -61,10 +60,17 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
     }
     if (_inviting) return;
     _inviting = true;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
+    await Future<void>.delayed(Duration.zero);
+    if (!mounted) {
+      _inviting = false;
+      return;
+    }
     PkEventLog.requestStart(
       streamId: streamId,
       targetId: opponent.id,
@@ -83,14 +89,15 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
         if (legacy != null) {
           PkEventLog.requestSuccess(battleId: legacy.id);
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
+          final messenger = ScaffoldMessenger.of(context);
+          Navigator.of(context).pop();
+          messenger.showSnackBar(
             SnackBar(
               content: Text(
                 '${opponent.streamerName ?? opponent.title} kullanıcısına PK daveti gönderildi',
               ),
             ),
           );
-          context.pop();
           return;
         }
       } catch (e) {

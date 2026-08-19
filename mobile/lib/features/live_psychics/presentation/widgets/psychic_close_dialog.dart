@@ -48,5 +48,5 @@ void psychicExitToHome(BuildContext context) {
   while (router.canPop()) {
     router.pop();
   }
-  router.go('/');
+  router.go('/feed');
 }

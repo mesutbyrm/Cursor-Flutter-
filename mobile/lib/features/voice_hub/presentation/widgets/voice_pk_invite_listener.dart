@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -33,7 +34,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted || _showing) return;
       _pollTick++;
       unawaited(_pollPendingInvites());
@@ -157,6 +158,9 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   Widget build(BuildContext context) {
     ref.listen<PkBattleRemote?>(pkBattleRemoteProvider, (_, next) {
       _onBattleUpdate(next);
+    });
+    ref.listen<int>(livePkInviteSignalProvider, (_, __) {
+      unawaited(_pollPendingInvites());
     });
     return widget.child;
   }
