@@ -297,4 +297,75 @@ void main() {
 
     expect(lastLocation, '/live');
   });
+
+  testWidgets('pk text fallback without type uses targetId for voice room', (tester) async {
+    late String? lastLocation;
+    final router = GoRouter(
+      initialLocation: '/feed',
+      routes: [
+        GoRoute(
+          path: '/feed',
+          builder: (_, _) => const SizedBox.shrink(),
+        ),
+        GoRoute(
+          path: '/voice-room/:id',
+          builder: (_, state) {
+            lastLocation = '/voice-room/${state.pathParameters['id']}';
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+
+    navigateFromNotification(
+      router,
+      const AppNotificationEntity(
+        id: 'pk-text',
+        title: 'PK isteği',
+        body: 'Bir oda size PK gönderdi',
+        targetPath: '/',
+        targetId: 'cmoohrbr',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(lastLocation, '/voice-room/cmoohrbr');
+  });
+
+  testWidgets('düello text without targetId routes to live hub', (tester) async {
+    late String? lastLocation;
+    final router = GoRouter(
+      initialLocation: '/feed',
+      routes: [
+        GoRoute(
+          path: '/feed',
+          builder: (_, _) => const SizedBox.shrink(),
+        ),
+        GoRoute(
+          path: '/live',
+          builder: (_, _) {
+            lastLocation = '/live';
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+
+    navigateFromNotification(
+      router,
+      const AppNotificationEntity(
+        id: 'duello',
+        title: 'Düello daveti',
+        body: 'Canlı yayında PK başladı',
+        targetPath: '/',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(lastLocation, '/live');
+  });
 }
