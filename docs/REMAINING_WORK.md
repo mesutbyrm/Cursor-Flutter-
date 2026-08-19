@@ -72,6 +72,10 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 
 ---
 
+## Oturum günlüğü (2026-08-19 devam 18)
+
+- Canlı PK davet listesi hata: `ApiException.userMessage` (live_pk_invite_page)
+
 ## Oturum günlüğü (2026-08-19 devam 17)
 
 - Oda keşif provider + PK geçmişi: `ApiException.userMessage` (ham exception yok)

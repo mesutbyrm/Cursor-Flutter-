@@ -152,7 +152,7 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
             return ListView(
               children: [
                 const SizedBox(height: 120),
-                Center(child: Text('$e')),
+                Center(child: Text(ApiException.userMessage(e))),
                 const SizedBox(height: 12),
                 Center(
                   child: FilledButton(
