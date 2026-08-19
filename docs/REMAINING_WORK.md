@@ -1,7 +1,7 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-19 21:09 UTC — `1.0.285+321`  
-**Agent:** Kod otomasyonu tamam — tek bloker jeton + M5 cihaz (`bash scripts/faz0-handoff.sh`)  
+**Son güncelleme:** 2026-08-19 21:25 UTC — `1.0.286+322`  
+**Agent:** Push/bildirim oda teardown `main`'e merge — jeton + M5 cihaz bekliyor  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (15 PASS)
 
 ---
@@ -14,7 +14,7 @@
 | FAZ 1–11 | `[x]` otomatik | 15 PASS — `PHASE_TEST_REPORT.md` |
 | FAZ 12 | `[~]` | Otomatik kapılar ✅; cihaz 25 senaryo |
 | FAZ 13 | `[~]` | CI APK ✅ |
-| APK `1.0.285+321` | `[x]` | apk-latest (CI) |
+| APK `1.0.286+322` | `[x]` | apk-latest (CI merge sonrası) |
 | P0 müzik kod | `[x]` | M5/M7 manuel |
 | P0 PK kod | `[x]` | M5/M7 manuel (bildirim + davet) |
 
