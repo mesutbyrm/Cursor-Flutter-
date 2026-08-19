@@ -1,6 +1,6 @@
 # FAZ 10 — Global performance
 
-**Durum:** HAZIRLIK
+**Durum:** AUTOMATED_PASS — perf modülleri + `faz10-performance-check.sh`
 
 | Alan | Mevcut |
 |------|--------|

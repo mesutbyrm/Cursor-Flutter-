@@ -26,6 +26,7 @@ echo "╔═══════════════════════�
 echo "║  FAZ 12 Otomatik kapılar — $UTC"
 echo "╚══════════════════════════════════════════════════════════╝"
 
+run_gate "FAZ10 performance" bash "$ROOT/scripts/faz10-performance-check.sh"
 run_gate "FAZ0 verify" bash "$ROOT/scripts/faz0-verify.sh"
 run_gate "Faz unit testleri" bash "$ROOT/scripts/run-phase-tests.sh"
 run_gate "FAZ11 security" bash "$ROOT/scripts/faz11-security-scan.sh"

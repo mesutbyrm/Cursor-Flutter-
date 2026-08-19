@@ -1,6 +1,6 @@
 # FAZ 11 — Security + error handling
 
-**Durum:** HAZIRLIK
+**Durum:** AUTOMATED_PASS — `faz11-security-scan.sh`
 
 | Alan | Durum |
 |------|--------|

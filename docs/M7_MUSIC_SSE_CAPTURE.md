@@ -1,6 +1,6 @@
 # M7 — Müzik probe yakalama (üretim)
 
-**Tarih:** 2026-08-18 23:45 UTC  
+**Tarih:** 2026-08-19 02:07 UTC  
 **Oda slug:** `cmoohrbr`  
 **Oda id (SSE):** `cmoohrbrx00a4nt08zlkdjyil`  
 **Hesap:** `cursor.test.1786235468@mailinator.com` — jeton=0  
@@ -59,49 +59,49 @@ data: {"type":"presence","users":[]}
         {
             "id": "cpp69ghR1IM",
             "title": "TARKAN - \u015e\u0131mar\u0131k (Official Music Video)",
-            "thumbnail": "https://i.ytimg.com/vi/cpp69ghR1IM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAFL20hyg2MZSmMLkic82LMnae-Lg",
+            "thumbnail": "https://i.ytimg.com/vi/cpp69ghR1IM/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLDHxtyAnuJe6RjduONUO1bCujQoZQ",
             "duration": "3:12",
             "channel": "Tarkan",
-            "views": 102939922
+            "views": 102953174
         },
         {
             "id": "pu9co0YRKHg",
             "title": "Simarik",
-            "thumbnail": "https://i.ytimg.com/vi/pu9co0YRKHg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDEavpd5f0hzpOfThiOFcHocOYnUQ",
+            "thumbnail": "https://i.ytimg.com/vi/pu9co0YRKHg/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLAX452ZqlKA0VFpZIPIu1zkmmouCA",
             "duration": "3:13",
             "channel": "Tarkan",
-            "views": 17922799
+            "views": 17924582
         },
         {
             "id": "c9r1Vfb51X8",
             "title": "Tarkan - \u015e\u0131mar\u0131k (Kiss Kiss) (HQ / HD)",
-            "thumbnail": "https://i.ytimg.com/vi/c9r1Vfb51X8/hqdefault.jpg?sqp=-oaymwE2COADEI4CSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgBzgWAAuADigIMCAAQARh_IFAoIDAP&rs=AOn4CLD0qIgxN_NPCqUYekSJ5PpIFK1Y3A",
+            "thumbnail": "https://i.ytimg.com/vi/c9r1Vfb51X8/hqdefault.jpg?sqp=-oaymwE6COADEI4CSFXyq4qpAywIARUAAIhCGAFwAcABBvABAfgBzgWAAuADigIMCAAQARh_IFAoIDAPuALzGA==&rs=AOn4CLBdgK7XIENHz9fOlnw7_EDJTndPuw",
             "duration": "3:11",
             "channel": "TiredOfYou",
-            "views": 3555473
+            "views": 3557154
         },
         {
             "id": "SSMoILdzGDg",
             "title": "TARKAN - \u015eIMARIK (MUAH) - lyrics/s\u00f6zleri",
-            "thumbnail": "https://i.ytimg.com/vi/SSMoILdzGDg/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDTldu0uezSMjvlVItdp6sie7z0Fw",
+            "thumbnail": "https://i.ytimg.com/vi/SSMoILdzGDg/hqdefault.jpg?sqp=-oaymwEgCOADEI4CSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLDu5p6p0ax9XufP_SiNhmL4mnyxaA",
             "duration": "3:11",
             "channel": "seven7lyrics",
-            "views": 8734267
-        },
-        {
-            "id": "OG4ggvY_8p0",
-            "title": "Tarkan - \u015e\u0131mar\u0131k (Audio)",
-            "thumbnail": "https://i.ytimg.com/vi/OG4ggvY_8p0/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgBzgWAAtAFigIMCAAQARhyIFkoOTAP&rs=AOn4CLDZ5W2IHvOd4XA9sMjSsheWz46IUQ",
-            "duration": "3:56",
-            "channel": "M\u00fczik A\u015f\u0131\u011f\u0131",
-            "views": 559148
+            "views": 8736605
         },
         {
             "id": "M0-joG_2SZY",
             "title": "\u2102\u22c6Tarkan | \u015e\u0131mar\u0131k \"Official Music Video\" Full HD",
-            "thumbnail": "https://i.ytimg.com/vi/M0-joG_2SZY/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAvD7ytb3m6NOzHLxmHEXI7Ibjy5Q",
+            "thumbnail": "https://i.ytimg.com/vi/M0-joG_2SZY/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLCpHvXAxEvwG2AaoQJW3bnhjn1VOw",
             "duration": "4:00",
             "channel": "\u2102\u22c6Tarkanland",
-            "views": 406990
+            "views": 407137
+        },
+        {
+            "id": "ARCxyt9GS5o",
+            "title": "TARKAN : THE WORLD MUSIC AWARDS IN MONACO 1999",
+            "thumbnail": "https://i.ytimg.com/vi/ARCxyt9GS5o/hqdefault.jpg?sqp=-oaymwE6COADEI4CSFXyq4qpAywIARUAAIhCGAFwAcABBvABAfgB_gSAAuADigIMCAAQARhyIEIoNjAPuALzGA==&rs=AOn4CLDW5Rj0VgVJmH_W4Txl55Q9WBWBGw",
+            "duration": "3:29",
+            "channel": "F6FGrumman",
+            "views": 18063561
         },
 ```

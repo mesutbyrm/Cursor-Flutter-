@@ -1,6 +1,6 @@
 # FAZ 9 — Messages + notifications
 
-**Durum:** HAZIRLIK
+**Durum:** AUTOMATED_PASS — cache codec test
 
 | Alan | Durum |
 |------|--------|
@@ -10,4 +10,4 @@
 | Notifications list/read | ✅ |
 | Notifications SSE | ✅ |
 
-**Testler:** codec + routing only
+**Testler:** `messages_cache_codec_test.dart`, notifications routing

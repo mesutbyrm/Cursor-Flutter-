@@ -19,9 +19,9 @@
 | **7** | Gifts | ✅ **AUTOMATED_PASS** | gifts/send | ✅ otomatik |
 | **8** | Shorts | ✅ **AUTOMATED_PASS** | Pagination prod | ✅ otomatik |
 | **9** | Messages | ✅ **AUTOMATED_PASS** | SSE/request UI | ✅ otomatik |
-| **10** | Performance | ✅ perf modülleri | Cihaz profil | 🔄 HAZIRLIK |
+| **10** | Performance | ✅ **AUTOMATED_PASS** | Cihaz profil (opsiyonel) | ✅ otomatik |
 | **11** | Security | ✅ **AUTOMATED_PASS** | — | ✅ otomatik |
-| **12** | E2E QA | ✅ otomatik kapılar | 25 senaryo cihaz | 🔄 INCOMPLETE |
+| **12** | E2E QA | ✅ otomatik kapılar PASS | 25 senaryo cihaz | 🔄 INCOMPLETE |
 | **13** | Release | ✅ CI APK | Signing | 🔄 HAZIRLIK |
 
 ---
