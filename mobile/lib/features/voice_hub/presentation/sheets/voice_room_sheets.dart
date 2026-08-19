@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -659,7 +660,7 @@ Future<void> showVoiceUserManagementSheet(
                             } catch (e) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(e.toString())),
+                                  SnackBar(content: Text(ApiException.userMessage(e))),
                                 );
                               }
                             }
@@ -775,7 +776,7 @@ Future<void> showVoiceUserModerationSheet(
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.toString())),
+                        SnackBar(content: Text(ApiException.userMessage(e))),
                       );
                     }
                   }
@@ -804,7 +805,7 @@ Future<void> showVoiceUserModerationSheet(
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.toString())),
+                        SnackBar(content: Text(ApiException.userMessage(e))),
                       );
                     }
                   }
@@ -833,7 +834,7 @@ Future<void> showVoiceUserModerationSheet(
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.toString())),
+                        SnackBar(content: Text(ApiException.userMessage(e))),
                       );
                     }
                   }

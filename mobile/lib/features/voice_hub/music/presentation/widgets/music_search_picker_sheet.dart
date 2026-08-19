@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import 'package:canlifal_social/core/network/api_exception.dart';
 
 import '../../../domain/entities/music_queue_item.dart';
 import '../providers/room_music_providers.dart';
@@ -113,7 +114,7 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
       if (!mounted || gen != _searchGen) return;
       setState(() {
         _searching = false;
-        _error = e.toString();
+        _error = ApiException.userMessage(e);
       });
     }
   }

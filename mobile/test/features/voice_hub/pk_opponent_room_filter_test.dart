@@ -180,6 +180,46 @@ void main() {
     );
   });
 
+  test('pkChallengerRoomLabelFromRooms prefers room name', () {
+    const battle = PkBattleRemote(
+      id: 'pk7',
+      battleType: 'voice_room',
+      status: 'pending',
+      challengerScore: 0,
+      opponentScore: 0,
+      secondsLeft: 300,
+      durationSeconds: 180,
+      targetScore: 1000,
+      voiceRoomId: 'room-a',
+    );
+    expect(
+      pkChallengerRoomLabelFromRooms(battle, [self, eligible]),
+      'Oda A',
+    );
+  });
+
+  test('pkChallengerRoomLabelFromRooms falls back to challenger display name', () {
+    const battle = PkBattleRemote(
+      id: 'pk8',
+      battleType: 'voice_room',
+      status: 'pending',
+      challengerScore: 0,
+      opponentScore: 0,
+      secondsLeft: 300,
+      durationSeconds: 180,
+      targetScore: 1000,
+      voiceRoomId: 'unknown-room',
+      challenger: PkParticipantRemote(
+        userId: 'u1',
+        displayName: 'Meydan Okuyan',
+      ),
+    );
+    expect(
+      pkChallengerRoomLabelFromRooms(battle, [eligible]),
+      'Meydan Okuyan',
+    );
+  });
+
   test('isPkBattleLive only true for active battles', () {
     const pending = PkBattleRemote(
       id: 'pk1',

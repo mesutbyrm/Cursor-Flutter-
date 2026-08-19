@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-19 20:43 UTC — `1.0.285+321`  
+**Son güncelleme:** 2026-08-19 20:46 UTC — `1.0.285+321`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (15 PASS)
 
 ---
@@ -71,6 +71,12 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-08-19 devam 16)
+
+- Müzik arama sheet + oda moderasyon (kick/ban/mute): `ApiException.userMessage`
+- `pkChallengerRoomLabelFromRooms` saf fonksiyon + 2 test (9 PASS toplam)
+- `faz0-status.sh` apk-latest release adı gösterir
 
 ## Oturum günlüğü (2026-08-19 devam 15)
 

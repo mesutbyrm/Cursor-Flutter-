@@ -144,6 +144,25 @@ VoiceRoomEntity? pickPkInviteTargetRoom({
   return null;
 }
 
+/// PK davet diyaloğu — meydan okuyan oda etiketi.
+String pkChallengerRoomLabelFromRooms(
+  PkBattleRemote battle,
+  List<VoiceRoomEntity> rooms,
+) {
+  final roomId = battle.voiceRoomId?.trim() ?? '';
+  if (roomId.isNotEmpty) {
+    for (final r in rooms) {
+      if (r.apiRoomKey == roomId || r.id == roomId || r.slug == roomId) {
+        final name = r.nameTr.trim();
+        return name.isNotEmpty ? name : r.slug;
+      }
+    }
+  }
+  final challenger = battle.challenger?.displayName?.trim();
+  if (challenger != null && challenger.isNotEmpty) return challenger;
+  return 'Bir oda';
+}
+
 bool pkBattleBelongsToRoom(PkBattleRemote battle, VoiceRoomEntity room) {
   final keys = {room.apiRoomKey, room.id, room.slug}
       .where((k) => k.trim().isNotEmpty)

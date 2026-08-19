@@ -16,6 +16,10 @@ echo "║  FAZ 0 Durum — $UTC"
 echo "╚══════════════════════════════════════════════════════════╝"
 echo ""
 echo "APK: $VERSION"
+RELEASE_NAME=$(gh release view apk-latest --repo "${GITHUB_REPOSITORY:-mesutbyrm/Cursor-Flutter-}" --json name -q .name 2>/dev/null || echo "")
+if [[ -n "$RELEASE_NAME" ]]; then
+  echo "apk-latest: $RELEASE_NAME"
+fi
 echo "İndir: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk"
 echo "Oda: cmoohrbr → cmoohrbrx00a4nt08zlkdjyil (SSE)"
 echo ""

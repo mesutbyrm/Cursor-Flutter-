@@ -38,19 +38,8 @@ VoiceRoomEntity? resolvePkInviteTargetRoom(
 }
 
 String pkChallengerRoomLabel(WidgetRef ref, PkBattleRemote battle) {
-  final rooms = ref.read(voiceRoomsProvider).valueOrNull;
-  final roomId = battle.voiceRoomId?.trim() ?? '';
-  if (rooms != null && roomId.isNotEmpty) {
-    for (final r in rooms) {
-      if (r.apiRoomKey == roomId || r.id == roomId || r.slug == roomId) {
-        final name = r.nameTr.trim();
-        return name.isNotEmpty ? name : r.slug;
-      }
-    }
-  }
-  final challenger = battle.challenger?.displayName?.trim();
-  if (challenger != null && challenger.isNotEmpty) return challenger;
-  return 'Bir oda';
+  final rooms = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
+  return pkChallengerRoomLabelFromRooms(battle, rooms);
 }
 
 /// Hedef odada popup: «X odası size PK isteği attı».
