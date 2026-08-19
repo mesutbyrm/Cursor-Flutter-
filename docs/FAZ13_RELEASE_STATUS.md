@@ -1,6 +1,6 @@
 # FAZ 13 — Release build
 
-**Durum:** HAZIRLIK — CI aktif
+**Durum:** AUTOMATED_PASS — CI `build-apk.yml` + `apk-latest` aktif
 
 | Alan | Durum |
 |------|--------|

@@ -78,5 +78,5 @@ else
 fi
 echo ""
 echo "══ AGENT DURUMU ══"
-echo "FAZ0 kod/test ✅ | A6–A8 ✅ | FAZ1–2 hazırlık devam"
-echo "Manuel bloker: jeton ≥10 + M5 cihaz → docs/M5_M7_JETON_BLOCKER.md"
+echo "FAZ1–11 otomatik PASS (15 test) | FAZ12 otomatik 4/4"
+echo "Tek bloker: jeton≥10 + M5 cihaz — bash scripts/wait-for-jeton.sh"

@@ -1,8 +1,8 @@
 # M5 / M7 — Jeton engeli ve çözüm
 
 **Durum:** Otomatik kapılar geçti; **M5 cihaz** ve **M7 song-request 200** jeton bekliyor.  
-**APK:** `1.0.266+302` (`apk-latest`)  
-**Test hesabı:** `cursor.test.1786235468@mailinator.com` — **jeton=0**
+**APK:** `1.0.268+304` (`apk-latest`)  
+**Test hesabı:** `cursor.test.1786235468@mailinator.com` — **jeton=0** (credits=107)
 
 ---
 
@@ -18,6 +18,10 @@
 
 > **Not:** Test hesabında `credits=50` olabilir; müzik isteği **jeton** kullanır (`jetonBalance`), kredi değil.
 
+> **Günlük görevler (`POST /api/daily-missions`):** yalnızca **credits** verir (jeton değil). Otomatik deneme Ağu 2026: tüm görevler `completed` + `earnedJeton` alanı dolu olsa bile `jetonBalance` 0 kalır; `credits` artar.
+>
+> **Diğer otomatik yollar (Ağu 2026):** `POST /api/daily-login` → zaten alındı; `POST /api/games/daily-spin` → credits (+2); `POST /api/user/watch-ad` → credits. **Jeton kazanımı yok** — yalnızca admin top-up.
+
 ---
 
 ## Çözüm A — Admin panel (hızlı)
@@ -28,8 +32,10 @@
 4. Doğrula ve M7 probe:
 
 ```bash
-bash scripts/m5-preflight.sh   # jeton + API + unit
-bash scripts/m7-on-jeton.sh    # song-request HTTP 200
+bash scripts/wait-for-jeton.sh 10 3600   # jeton eklenince otomatik M7+M5-preflight
+bash scripts/m5-preflight.sh             # jeton + API + unit
+bash scripts/m7-on-jeton.sh              # song-request HTTP 200
+bash scripts/m5-ready.sh                   # FAZ12 kapıları + m5-preflight
 ```
 
 5. Cihaz: `docs/M5_DEVICE_TEST_CHECKLIST.md`
