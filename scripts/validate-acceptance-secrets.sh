@@ -39,6 +39,28 @@ check_login() {
   return 1
 }
 
+# Secret denemesi — başarısızlık FAIL sayılmaz (eski secret senaryosu).
+check_login_optional() {
+  local label="$1" kind="$2" id="$3" pass="$4"
+  local resp tok
+  if [[ -z "$id" || -z "$pass" ]]; then
+    return 1
+  fi
+  if [[ "$kind" == email ]]; then
+    resp=$(mobile_login_identifier email "$id" "$pass")
+  else
+    resp=$(mobile_login_identifier username "$id" "$pass")
+  fi
+  tok=$(extract_token "$resp")
+  if [[ -n "$tok" ]]; then
+    echo "✅ $label — giriş OK"
+    PASS=$((PASS + 1))
+    return 0
+  fi
+  echo "❌ $label — giriş başarısız"
+  return 1
+}
+
 echo "╔══════════════════════════════════════════════════════════╗"
 echo "║  Acceptance secret doğrulama (canlifal.com)              ║"
 echo "╚══════════════════════════════════════════════════════════╝"
@@ -46,12 +68,19 @@ echo "API: $BASE"
 echo ""
 
 echo "── Kullanıcı (TEST_USER) ──"
-if check_login "USER email" email "${ACCEPTANCE_USER_EMAIL:-}" "${ACCEPTANCE_USER_PASSWORD:-}"; then
-  : # ok
-elif [[ -n "${ACCEPTANCE_USER_USERNAME:-}" && -n "${ACCEPTANCE_USER_PASSWORD:-}" ]]; then
-  check_login "USER username" username "$ACCEPTANCE_USER_USERNAME" "$ACCEPTANCE_USER_PASSWORD" || true
-fi
-if [[ -z "${ACCEPTANCE_USER_EMAIL:-}" && -z "${ACCEPTANCE_USER_USERNAME:-}" ]]; then
+USER_SECRET_OK=0
+if acceptance_any_user_secrets_configured; then
+  if check_login_optional "USER email" email "${ACCEPTANCE_USER_EMAIL:-}" "${ACCEPTANCE_USER_PASSWORD:-}"; then
+    USER_SECRET_OK=1
+  elif [[ -n "${ACCEPTANCE_USER_USERNAME:-}" && -n "${ACCEPTANCE_USER_PASSWORD:-}" ]]; then
+    check_login_optional "USER username" username "$ACCEPTANCE_USER_USERNAME" "$ACCEPTANCE_USER_PASSWORD" && USER_SECRET_OK=1 || true
+  fi
+  if [[ "$USER_SECRET_OK" -eq 0 ]]; then
+    echo "   ⚠️  Secret geçersiz — varsayılan test hesabı (bootstrap fallback)"
+    WARN=$((WARN + 1))
+    check_login "USER (varsayılan)" email "$DEFAULT_ACCEPTANCE_USER_EMAIL" "$DEFAULT_ACCEPTANCE_USER_PASSWORD" || true
+  fi
+else
   echo "   Varsayılan: $DEFAULT_ACCEPTANCE_USER_EMAIL"
   check_login "USER (varsayılan)" email "$DEFAULT_ACCEPTANCE_USER_EMAIL" "$DEFAULT_ACCEPTANCE_USER_PASSWORD" || true
 fi

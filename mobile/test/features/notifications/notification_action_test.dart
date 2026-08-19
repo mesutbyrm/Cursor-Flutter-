@@ -368,4 +368,42 @@ void main() {
 
     expect(lastLocation, '/live');
   });
+
+  testWidgets('async voice room navigation awaits prepareVoiceRoomSwitch', (tester) async {
+    final prepared = <String>[];
+    late String? lastLocation;
+    final router = GoRouter(
+      initialLocation: '/feed',
+      routes: [
+        GoRoute(path: '/feed', builder: (_, _) => const SizedBox.shrink()),
+        GoRoute(
+          path: '/voice-room/:id',
+          builder: (_, state) {
+            lastLocation = '/voice-room/${state.pathParameters['id']}';
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+
+    await navigateFromNotificationAsync(
+      router,
+      const AppNotificationEntity(
+        id: 'pk-async',
+        title: 'PK Daveti',
+        type: 'pk_invite',
+        targetPath: '/',
+        targetId: 'room-xyz',
+      ),
+      prepareVoiceRoomSwitch: (key, {source = 'notification'}) async {
+        prepared.add('$source:$key');
+      },
+    );
+    await tester.pumpAndSettle();
+
+    expect(prepared, ['notification:room-xyz']);
+    expect(lastLocation, '/voice-room/room-xyz');
+  });
 }

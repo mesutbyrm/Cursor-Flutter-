@@ -17,7 +17,7 @@ echo "╔═══════════════════════�
 echo "║  Kullanıcı devir teslimi — manuel adımlar                ║"
 echo "╚══════════════════════════════════════════════════════════╝"
 echo ""
-echo "Kod otomasyonu tamamlandı (müzik ANR, PK, bildirim/push, hata UX)."
+echo "Kod otomasyonu tamamlandı (müzik ANR, PK, push/bildirim teardown, hata UX)."
 echo "Kalan iş yalnızca jeton + Android cihaz doğrulaması."
 echo ""
 bash "$ROOT/scripts/admin-jeton-cheatsheet.sh" | tail -12
