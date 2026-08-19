@@ -1,7 +1,7 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-19 21:25 UTC — `1.0.286+322`  
-**Agent:** Push/bildirim oda teardown `main`'e merge — jeton + M5 cihaz bekliyor  
+**Son güncelleme:** 2026-08-19 22:10 UTC — `1.0.287+323`  
+**Agent:** PK davet kabul teardown + apk-latest güncel — jeton + M5 cihaz bekliyor  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (15 PASS)
 
 ---
