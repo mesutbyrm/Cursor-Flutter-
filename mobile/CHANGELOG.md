@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.288+324 (2026-08-19) — Favoriler oda geçişi teardown
+
+- **Favoriler:** Oda favorisi açılırken entity yüklenemese bile `prepareVoiceRoomSwitch` önce çalışır (eski odada presence kalması)
+
 ## 1.0.287+323 (2026-08-19) — PK davet kabulü oda teardown
 
 - **PK kabul:** Davet popup'ından kabul sonrası hedef odaya gitmeden önce `prepareVoiceRoomSwitch` (farklı odadayken koltuk/presence kalması)

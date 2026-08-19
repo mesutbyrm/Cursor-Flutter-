@@ -19,3 +19,17 @@ Future<void> navigateToVoiceRoom(
   if (!context.mounted) return;
   context.go('/voice-room/$key', extra: room);
 }
+
+/// Entity yüklenemediğinde ID ile geçiş — teardown önce, oda sayfası sonra yükler.
+Future<void> navigateToVoiceRoomById(
+  BuildContext context,
+  WidgetRef ref, {
+  required String roomId,
+  String source = 'navigate',
+}) async {
+  final key = roomId.trim();
+  if (key.isEmpty) return;
+  await prepareVoiceRoomSwitch(ref, nextLiveKey: key, source: source);
+  if (!context.mounted) return;
+  context.push('/voice-room/$key');
+}

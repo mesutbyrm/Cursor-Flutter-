@@ -13,6 +13,7 @@ import '../../../fortune/presentation/providers/fortune_api_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
+import '../../../voice_hub/presentation/utils/navigate_to_voice_room.dart';
 import '../../domain/entities/user_favorite_entity.dart';
 import '../providers/favorites_providers.dart';
 
@@ -345,7 +346,12 @@ class _SavedFavoritesTab extends ConsumerWidget {
             if (loaded != null) {
               await openVoiceRoomWithVipGate(context, ref, loaded);
             } else {
-              context.push('/voice-room/${f.targetId}');
+              await navigateToVoiceRoomById(
+                context,
+                ref,
+                roomId: f.targetId,
+                source: 'favorites',
+              );
             }
           }());
         }
