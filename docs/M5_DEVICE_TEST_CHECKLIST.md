@@ -1,7 +1,7 @@
 # M5 — Cihaz test kontrol listesi (!istek / müzik)
 
 **Tarih:** 2026-08-19  
-**APK:** `1.0.285+321` veya üzeri (`apk-latest`)  
+**APK:** `1.0.287+323` veya üzeri (`apk-latest`)  
 **Hazırlık:** `bash scripts/faz0-handoff.sh` veya `bash scripts/m5-device-prep.sh`
 
 ---
@@ -71,8 +71,8 @@ Jeton yoksa: `docs/M5_M7_JETON_BLOCKER.md` · Durum: `bash scripts/faz0-status.s
 3. **Beklenen:**
    - [ ] Gönderen ekran donmuyor
    - [ ] Karşı tarafta PK popup veya bildirim gelir
-   - [ ] Kabul sonrası PK başlar
-4. **Bildirim testi:** PK bildirimine tıkla → `GoException` yok, oda veya ana sayfa açılır
+   - [ ] Kabul sonrası PK başlar; kabul eden eski odada koltukta kalmaz
+4. **Bildirim testi:** PK bildirimine tıkla → `GoException` yok, oda açılır; önceki odada presence temiz
 
 ---
 

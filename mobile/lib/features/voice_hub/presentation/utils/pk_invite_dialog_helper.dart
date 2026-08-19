@@ -13,6 +13,7 @@ import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_room_session_registry.dart';
+import 'voice_room_session_utils.dart';
 
 /// Aynı PK daveti için çift popup önlenir (listener + oda banner).
 final pkSeenInviteIdsProvider = StateProvider<Set<String>>((ref) => {});
@@ -103,6 +104,11 @@ Future<void> showPkInviteDialog(
         if (accept) {
           PkEventLog.acceptStart(inviteId: inviteId);
           await remote.accept(inviteId, roomId: key, alternateRoomId: alt);
+          await prepareVoiceRoomSwitch(
+            ref,
+            nextLiveKey: key,
+            source: 'pk_invite_accept',
+          );
           final nav = rootNavigatorKey.currentContext;
           if (nav != null && nav.mounted) {
             VoiceRoomEntryPerf.prewarmOnRoomTap(ref, room);

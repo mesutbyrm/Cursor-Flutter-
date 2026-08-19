@@ -2,13 +2,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.285+321` |
-| Tarih (UTC) | 2026-08-19 20:33 |
-| Commit | [`72b36b9eb7f4c8d2ef3b6615cf6c2e8338aa5a61`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/72b36b9eb7f4c8d2ef3b6615cf6c2e8338aa5a61) |
-| İş akışı | [Run 32298394670](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32298394670) |
+| Sürüm | `1.0.286+322` |
+| Tarih (UTC) | 2026-08-19 21:46 |
+| Commit | [`3c411a78d39d87c3d347becfb5b1858c22a78034`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/3c411a78d39d87c3d347becfb5b1858c22a78034) |
+| İş akışı | [Run 32303849715](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32303849715) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
+
+## 1.0.286+322 (2026-08-19) — Push/bildirim oda geçişi presence
+
+- **Push/PK bildirimi:** `/voice-room/*` yönlendirmeden önce `prepareVoiceRoomSwitch`
+- **Bildirim listesi:** async teardown (`navigateFromNotificationAsync`)
+- **Derin bağlantı:** `VoiceRoomGatedEntry` teardown bitene kadar yükleme
 
 ## 1.0.285+321 (2026-08-19) — PK daveti + oda geçişi düzeltmeleri
 

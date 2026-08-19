@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.287+323 (2026-08-19) — PK davet kabulü oda teardown
+
+- **PK kabul:** Davet popup'ından kabul sonrası hedef odaya gitmeden önce `prepareVoiceRoomSwitch` (farklı odadayken koltuk/presence kalması)
+
 ## 1.0.286+322 (2026-08-19) — Push/bildirim oda geçişi presence
 
 - **Push/PK bildirimi:** `/voice-room/*` yönlendirmeden önce `prepareVoiceRoomSwitch` — eski odada koltuk/presence kalması azaltıldı
