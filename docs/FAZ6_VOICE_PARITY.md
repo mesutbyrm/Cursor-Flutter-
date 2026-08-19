@@ -1,6 +1,6 @@
 # FAZ 6 — Voice chat parity
 
-**Durum:** HAZIRLIK — P0 kod ✅; M5 manuel bekliyor (`1.0.285+321`)
+**Durum:** HAZIRLIK — P0 kod ✅; M5 manuel bekliyor (`1.0.287+323`)
 
 | Kılavuz §9.3 | Durum |
 |--------------|--------|

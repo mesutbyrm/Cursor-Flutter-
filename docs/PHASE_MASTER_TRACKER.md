@@ -1,6 +1,6 @@
 # Faz master takip — Canlifal Flutter
 
-**Son güncelleme:** 2026-08-19 20:15 UTC — APK `1.0.285+321`  
+**Son güncelleme:** 2026-08-19 22:16 UTC — APK `1.0.287+323`  
 **Faz testleri:** 15 PASS, 0 FAIL (`docs/PHASE_TEST_REPORT.md`)
 
 ---
@@ -9,7 +9,7 @@
 
 | Faz | Ad | Otomatik | Manuel bloker | Durum |
 |-----|-----|----------|---------------|--------|
-| **0** | Audit | ✅ A1–A8, M1–M12, jeton UX | M5 cihaz, M7 jeton | 🔄 INCOMPLETE |
+| **0** | Audit | ✅ A1–A8, M1–M12, push/PK teardown | M5 cihaz, M7 jeton | 🔄 INCOMPLETE |
 | **1** | Core + Auth | ✅ **AUTOMATED_PASS** | God-file refactor | ✅ otomatik |
 | **2** | Profile | ✅ **AUTOMATED_PASS** | Skeleton UI | ✅ otomatik |
 | **3** | Social | ✅ **AUTOMATED_PASS** | Story repo | ✅ otomatik |

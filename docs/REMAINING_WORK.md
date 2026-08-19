@@ -14,7 +14,7 @@
 | FAZ 1–11 | `[x]` otomatik | 15 PASS — `PHASE_TEST_REPORT.md` |
 | FAZ 12 | `[~]` | Otomatik kapılar ✅; cihaz 25 senaryo |
 | FAZ 13 | `[~]` | CI APK ✅ |
-| APK `1.0.286+322` | `[x]` | apk-latest (CI merge sonrası) |
+| APK `1.0.287+323` | `[x]` | apk-latest (CI) |
 | P0 müzik kod | `[x]` | M5/M7 manuel |
 | P0 PK kod | `[x]` | M5/M7 manuel (bildirim + davet) |
 
