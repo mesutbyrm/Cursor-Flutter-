@@ -2,19 +2,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.266+302` |
-| Tarih (UTC) | 2026-08-18 23:26 |
-| Commit | [`f0dee8d864a631236e0ab0b8a761debb21a089bb`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/f0dee8d864a631236e0ab0b8a761debb21a089bb) |
-| İş akışı | [Run 32196400775](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32196400775) |
+| Sürüm | `1.0.285+321` |
+| Tarih (UTC) | 2026-08-19 20:33 |
+| Commit | [`72b36b9eb7f4c8d2ef3b6615cf6c2e8338aa5a61`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/72b36b9eb7f4c8d2ef3b6615cf6c2e8338aa5a61) |
+| İş akışı | [Run 32298394670](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32298394670) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.266+302 (2026-08-18) — SSE geç katalog + basic oda sync
+## 1.0.285+321 (2026-08-19) — PK daveti + oda geçişi düzeltmeleri
 
-- **SSE:** Oda listesi geç gelince `syncSseRoomKeyFromCatalog` (RTC listener)
-- **Basic oda:** `_effectiveRoom` kısmi cuid önek eşleşmesi
-- **FAZ 0:** `VOICE_ROOM_KEY_RESOLUTION.md`, TEST_ACCOUNTS oda tablosu, SSE `connected` örneği
+- **PK bildirimi:** `targetPath: /` artık `GoException` vermez → `/feed` veya PK/oda rotası
+- **PK daveti:** Sesli oda + canlı yayın isteği UI donmasını azaltır; kabul/red microtask'e alındı
+- **PK alıcı:** Davet poll sıklaştı; SSE + bildirim sinyali `VoicePkInviteListener`'ı uyandırır
+- **Oda değişimi:** Eski odada presence/koltuk backend leave beklenir (oturma hatası)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._

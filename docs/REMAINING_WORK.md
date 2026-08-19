@@ -72,6 +72,12 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 
 ---
 
+## Oturum günlüğü (2026-08-19 devam 15)
+
+- `pickPkInviteTargetRoom` saf fonksiyon + aktif oda önceliği testleri (7 PASS)
+- PK dialog hata: `ApiException.userMessage` (ham exception yok)
+- `LATEST_APK_BUILD.md` 1.0.285+321 ile senkron; `print-build-status` apk-latest adı
+
 ## Oturum günlüğü (2026-08-19 devam 14)
 
 - PK `opponentVoiceRoomId` eşleşmesi için birim test eklendi (`pk_opponent_room_filter_test.dart`)

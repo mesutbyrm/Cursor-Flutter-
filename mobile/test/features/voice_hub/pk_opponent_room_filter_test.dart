@@ -126,6 +126,60 @@ void main() {
     );
   });
 
+  test('pickPkInviteTargetRoom prefers active room over other owned rooms', () {
+    const roomC = VoiceRoomEntity(
+      id: 'room-c',
+      slug: 'room-c',
+      nameTr: 'Oda C',
+      ownerId: 'owner-b',
+      onlineCount: 1,
+    );
+    const battle = PkBattleRemote(
+      id: 'pk5',
+      battleType: 'voice_room',
+      status: 'pending',
+      challengerScore: 0,
+      opponentScore: 0,
+      secondsLeft: 300,
+      durationSeconds: 180,
+      targetScore: 1000,
+      voiceRoomId: 'room-a',
+      opponentVoiceRoomId: 'room-b',
+    );
+    final rooms = [self, eligible, roomC];
+    final picked = pickPkInviteTargetRoom(
+      battle: battle,
+      userId: 'owner-b',
+      rooms: rooms,
+      activeRoom: eligible,
+    );
+    expect(picked?.id, 'room-b');
+  });
+
+  test('pickPkInviteTargetRoom returns null when not pending', () {
+    const battle = PkBattleRemote(
+      id: 'pk6',
+      battleType: 'voice_room',
+      status: 'active',
+      challengerScore: 0,
+      opponentScore: 0,
+      secondsLeft: 300,
+      durationSeconds: 180,
+      targetScore: 1000,
+      voiceRoomId: 'room-a',
+      opponentVoiceRoomId: 'room-b',
+    );
+    expect(
+      pickPkInviteTargetRoom(
+        battle: battle,
+        userId: 'owner-b',
+        rooms: [eligible],
+        activeRoom: eligible,
+      ),
+      isNull,
+    );
+  });
+
   test('isPkBattleLive only true for active battles', () {
     const pending = PkBattleRemote(
       id: 'pk1',

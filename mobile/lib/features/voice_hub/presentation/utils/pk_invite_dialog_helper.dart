@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../../app/router/app_router.dart';
@@ -22,52 +23,18 @@ VoiceRoomEntity? resolvePkInviteTargetRoom(
   PkBattleRemote battle,
   String userId,
 ) {
-  if (userId.isEmpty || !battle.isPending) return null;
   final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
   VoiceRoomEntity? activeRoom;
   if (activeKey.isNotEmpty) {
     activeRoom = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
-    if (activeRoom != null &&
-        isPkInviteTarget(battle, activeRoom, userId: userId)) {
-      return activeRoom;
-    }
   }
-
   final rooms = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
-
-  final owned = rooms
-      .where((r) => (r.ownerId?.trim() ?? '') == userId)
-      .toList(growable: false);
-
-  final candidates = <VoiceRoomEntity>[
-    if (activeRoom != null) activeRoom,
-    ...owned,
-  ];
-
-  final oppRoomId = battle.opponentVoiceRoomId?.trim() ?? '';
-  if (oppRoomId.isNotEmpty) {
-    for (final r in rooms) {
-      if (r.apiRoomKey == oppRoomId ||
-          r.id == oppRoomId ||
-          r.slug == oppRoomId) {
-        candidates.add(r);
-      }
-    }
-  }
-
-  final seen = <String>{};
-  for (final room in candidates) {
-    final k = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-    if (k.isEmpty || !seen.add(k)) continue;
-    if (isPkInviteTarget(battle, room, userId: userId)) return room;
-  }
-
-  for (final room in rooms) {
-    final k = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-    if (k.isEmpty || !seen.add(k)) continue;
-    if (isPkInviteTarget(battle, room, userId: userId)) return room;
-  }
-  return null;
+  return pickPkInviteTargetRoom(
+    battle: battle,
+    userId: userId,
+    rooms: rooms,
+    activeRoom: activeRoom,
+  );
 }
 
 String pkChallengerRoomLabel(WidgetRef ref, PkBattleRemote battle) {
@@ -170,7 +137,7 @@ Future<void> showPkInviteDialog(
         final nav = rootNavigatorKey.currentContext;
         if (nav != null && nav.mounted) {
           ScaffoldMessenger.of(nav).showSnackBar(
-            SnackBar(content: Text('$e')),
+            SnackBar(content: Text(ApiException.userMessage(e))),
           );
         }
       }

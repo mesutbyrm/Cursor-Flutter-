@@ -95,6 +95,55 @@ bool isPkBattleLive(PkBattleRemote? battle) =>
     battle != null && battle.isActive && !battle.isEnded;
 
 /// PK kaydı bu sesli odaya ait mi (skor şeridi / SSE senkronu için).
+/// Gelen PK daveti hangi odaya gösterilecek — aktif oda öncelikli.
+VoiceRoomEntity? pickPkInviteTargetRoom({
+  required PkBattleRemote battle,
+  required String userId,
+  required List<VoiceRoomEntity> rooms,
+  VoiceRoomEntity? activeRoom,
+}) {
+  if (userId.isEmpty || !battle.isPending) return null;
+
+  if (activeRoom != null &&
+      isPkInviteTarget(battle, activeRoom, userId: userId)) {
+    return activeRoom;
+  }
+
+  final owned = rooms
+      .where((r) => (r.ownerId?.trim() ?? '') == userId)
+      .toList(growable: false);
+
+  final candidates = <VoiceRoomEntity>[
+    if (activeRoom != null) activeRoom,
+    ...owned,
+  ];
+
+  final oppRoomId = battle.opponentVoiceRoomId?.trim() ?? '';
+  if (oppRoomId.isNotEmpty) {
+    for (final r in rooms) {
+      if (r.apiRoomKey == oppRoomId ||
+          r.id == oppRoomId ||
+          r.slug == oppRoomId) {
+        candidates.add(r);
+      }
+    }
+  }
+
+  final seen = <String>{};
+  for (final room in candidates) {
+    final k = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    if (k.isEmpty || !seen.add(k)) continue;
+    if (isPkInviteTarget(battle, room, userId: userId)) return room;
+  }
+
+  for (final room in rooms) {
+    final k = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    if (k.isEmpty || !seen.add(k)) continue;
+    if (isPkInviteTarget(battle, room, userId: userId)) return room;
+  }
+  return null;
+}
+
 bool pkBattleBelongsToRoom(PkBattleRemote battle, VoiceRoomEntity room) {
   final keys = {room.apiRoomKey, room.id, room.slug}
       .where((k) => k.trim().isNotEmpty)
