@@ -80,4 +80,4 @@ fi
 echo ""
 echo "══ AGENT DURUMU ══"
 echo "FAZ1–11 otomatik PASS (15 test) | FAZ12 otomatik 4/4"
-echo "Tek bloker: jeton≥10 + M5 cihaz — bash scripts/wait-for-jeton.sh"
+echo "Tek bloker: jeton≥10 + M5 cihaz — bash scripts/faz0-next.sh"

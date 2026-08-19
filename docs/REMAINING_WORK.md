@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-19 12:22 UTC — `1.0.270+306` Growth Hub görev UX  
+**Son güncelleme:** 2026-08-19 14:30 UTC — `1.0.272+308`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (12 PASS)
 
 ---
@@ -13,7 +13,7 @@
 | FAZ 1–11 | `[x]` otomatik | 15 PASS — `PHASE_TEST_REPORT.md` |
 | FAZ 12 | `[~]` | Otomatik kapılar ✅; cihaz 25 senaryo |
 | FAZ 13 | `[~]` | CI APK ✅ |
-| APK `1.0.270+306` | `[x]` | apk-latest (CI) |
+| APK `1.0.272+308` | `[x]` | apk-latest (CI) |
 | P0 müzik kod | `[x]` | M5/M7 manuel |
 
 ---
@@ -22,7 +22,7 @@
 
 | # | İş | Çözüm |
 |---|-----|--------|
-| B1 | Jeton ≥10 | Admin panel → `cursor.test.1786235468@mailinator.com` |
+| B1 | Jeton ≥10 | `bash scripts/admin-jeton-cheatsheet.sh` |
 | B2 | M7 HTTP 200 | `bash scripts/m7-on-jeton.sh` |
 | B3 | M5 cihaz | `docs/M5_DEVICE_TEST_CHECKLIST.md` |
 | B4 | FAZ12 E2E | 25 senaryo Android |

@@ -34,6 +34,13 @@ class DailyTaskEntity {
     final normalizedTarget = target < 1 ? 1 : target;
     final effectiveCurrent =
         completed && current < normalizedTarget ? normalizedTarget : current;
+    final rewardJeton = asInt(pick(json, [
+      'rewardJeton',
+      'jetonReward',
+      'earnedJeton',
+      'reward',
+      'coins',
+    ]));
     return DailyTaskEntity(
       id: pick(json, ['id', 'taskId', 'slug', 'key', 'type'])?.toString() ?? '',
       title: pick(json, ['title', 'name', 'label'])?.toString() ?? 'Görev',
@@ -43,14 +50,9 @@ class DailyTaskEntity {
       completed: completed,
       claimed: json['claimed'] == true ||
           json['rewardClaimed'] == true ||
-          json['alreadyClaimed'] == true,
-      rewardJeton: asInt(pick(json, [
-        'rewardJeton',
-        'jetonReward',
-        'earnedJeton',
-        'reward',
-        'coins',
-      ])),
+          json['alreadyClaimed'] == true ||
+          completed,
+      rewardJeton: rewardJeton,
       rewardXp: asInt(pick(json, ['rewardXp', 'xpReward', 'xp'])),
       route: pick(json, ['route', 'deepLink', 'path'])?.toString(),
       icon: pick(json, ['icon', 'emoji'])?.toString(),

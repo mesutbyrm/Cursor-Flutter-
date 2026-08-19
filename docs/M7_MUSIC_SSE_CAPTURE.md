@@ -1,6 +1,6 @@
 # M7 — Müzik probe yakalama (üretim)
 
-**Tarih:** 2026-08-19 11:43 UTC  
+**Tarih:** 2026-08-19 13:05 UTC  
 **Oda slug:** `cmoohrbr`  
 **Oda id (SSE):** `cmoohrbrx00a4nt08zlkdjyil`  
 **Hesap:** `cursor.test.1786235468@mailinator.com` — jeton=0  

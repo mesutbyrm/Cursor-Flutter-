@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.273+309 (2026-08-19) — Görev claimed + faz0-next
+
+- **Daily missions:** tamamlanan görev `claimed=true` (gereksiz claim tap önlenir)
+- **Script:** `faz0-next.sh` — status + cheatsheet + probe (+ jeton varsa M7)
+
 ## 1.0.272+308 (2026-08-19) — Müzik paneli jeton diyaloğu
 
 - **VoiceMusicHubPage** + **YouTube şarkı sheet:** yetersiz jeton → `showInsufficientJetonDialog`

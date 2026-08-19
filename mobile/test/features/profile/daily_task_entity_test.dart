@@ -50,5 +50,20 @@ void main() {
         '/invite-friends',
       );
     });
+
+    test('completed mission is treated as claimed', () {
+      const json = {
+        'type': 'login',
+        'title': 'Günlük Giriş',
+        'reward': 5,
+        'completed': true,
+        'earnedJeton': 5,
+      };
+
+      final task = DailyTaskEntity.fromJson(json);
+
+      expect(task.completed, isTrue);
+      expect(task.claimed, isTrue);
+    });
   });
 }
