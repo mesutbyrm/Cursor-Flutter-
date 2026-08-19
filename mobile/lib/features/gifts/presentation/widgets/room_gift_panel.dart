@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../live/domain/entities/live_gift_catalog.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
@@ -109,9 +110,7 @@ class RoomGiftPanel extends ConsumerWidget {
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiException.userMessage(e))),
-      );
+      showJetonAwareError(context, ApiException.userMessage(e), ref: ref);
     }
   }
 }

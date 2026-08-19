@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/config/env.dart';
+import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../gifts/domain/gift_revenue_display.dart';
@@ -371,9 +372,7 @@ class _VoicePremiumGiftPanel2026State
         final msg = e is TimeoutException
             ? 'Hediye gönderimi zaman aşımına uğradı. Tekrar deneyin.'
             : ApiException.userMessage(e);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
+        showJetonAwareError(context, msg, ref: ref);
       }
     } finally {
       if (mounted) setState(() => _sending = false);

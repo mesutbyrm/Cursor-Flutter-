@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.281+317 (2026-08-19) — Hediye jeton UX
+
+- **Hediye gönderimi:** yetersiz jeton → `showJetonAwareError` (panel + sheet + premium 2026)
+- **Doc:** `FAZ0_STATUS.md` güncel (`1.0.280+316`)
+
 ## 1.0.280+316 (2026-08-19) — Oda state error UX
 
 - **RTC + Basic:** `voiceRoomLive` state `error` → `showJetonAwareError` (jeton + diğer)
