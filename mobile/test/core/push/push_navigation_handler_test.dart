@@ -50,7 +50,8 @@ void main() {
     expect(router.routeInformationProvider.value.uri.path, '/feed');
   });
 
-  test('pk push tap with root path routes to voice room', () {
+  test('pk push tap with root path routes to voice room', () async {
+    final prepared = <String>[];
     final router = GoRouter(
       initialLocation: '/feed',
       routes: [
@@ -61,13 +62,19 @@ void main() {
         ),
       ],
     );
-    PushNavigationHandler.install(router);
-    PushNavigationHandler.handleNotificationTap({
+    PushNavigationHandler.install(
+      router,
+      onPrepareVoiceRoomSwitch: (key, {source = 'push'}) async {
+        prepared.add('$source:$key');
+      },
+    );
+    await PushNavigationHandler.handleNotificationTap({
       'type': 'pk_invite',
       'targetPath': '/',
       'targetId': 'room-xyz',
       'title': 'PK Daveti',
     });
     expect(router.routeInformationProvider.value.uri.path, '/voice-room/room-xyz');
+    expect(prepared, ['notification:room-xyz']);
   });
 }

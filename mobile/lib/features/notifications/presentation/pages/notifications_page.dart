@@ -11,6 +11,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
+import '../../../voice_hub/presentation/utils/voice_room_session_utils.dart';
 import '../../domain/notification_action.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -73,11 +74,14 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     }
   }
 
-  void _onNotificationTap(
+  Future<void> _onNotificationTap(
     AppNotificationEntity n,
     GoRouter router,
     bool staffCanManage,
-  ) {
+  ) async {
+    Future<void> prepareSwitch(String key, {String source = 'notification'}) =>
+        prepareVoiceRoomSwitch(ref, nextLiveKey: key, source: source);
+
     final invite = psychicInviteFromNotification(n);
     if (invite != null) {
       final uid = ref.read(authControllerProvider).valueOrNull?.id;
@@ -92,17 +96,19 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
         ref.read(psychicIncomingQueueProvider.notifier).enqueue(invite);
         PsychicInviteCoordinator.requestPresent(sessionId: invite.sessionId);
       } else {
-        navigateFromNotification(
+        await navigateFromNotificationAsync(
           router,
           n,
           staffCanManagePayments: staffCanManage,
+          prepareVoiceRoomSwitch: prepareSwitch,
         );
       }
     } else {
-      navigateFromNotification(
+      await navigateFromNotificationAsync(
         router,
         n,
         staffCanManagePayments: staffCanManage,
+        prepareVoiceRoomSwitch: prepareSwitch,
       );
     }
 

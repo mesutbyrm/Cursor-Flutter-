@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/live_psychics/presentation/providers/psychic_push_payload.dart';
 import '../../features/notifications/domain/entities/app_notification_entity.dart';
 import '../../features/notifications/domain/notification_action.dart';
+import '../../features/voice_hub/presentation/utils/voice_room_nav_paths.dart';
 
 /// OneSignal `additionalData` → uygulama içi sayfa.
 class PushNavigationHandler {
@@ -11,6 +14,7 @@ class PushNavigationHandler {
 
   static GoRouter? _router;
   static bool Function()? staffCanManagePayments;
+  static VoiceRoomSwitchPreparer? prepareVoiceRoomSwitch;
   static void Function()? onPushReceived;
   static void Function(Map<String, dynamic> data)? onFortuneInvite;
   static void Function(PsychicSessionUpdatePayload update)? onSessionUpdate;
@@ -26,8 +30,10 @@ class PushNavigationHandler {
     void Function(PsychicSessionUpdatePayload update)? onSessionUpdateData,
     void Function(PsychicSessionUpdatePayload cancelled)? onSessionCancelledData,
     void Function(PsychicSessionEndedPayload ended)? onSessionEndedData,
+    VoiceRoomSwitchPreparer? onPrepareVoiceRoomSwitch,
   }) {
     _router = router;
+    prepareVoiceRoomSwitch = onPrepareVoiceRoomSwitch;
     onPushReceived = onReceived;
     onFortuneInvite = onFortuneInviteData;
     onSessionUpdate = onSessionUpdateData;
@@ -51,11 +57,11 @@ class PushNavigationHandler {
     final copy = List<Map<String, dynamic>>.from(_bufferedTapPayloads);
     _bufferedTapPayloads.clear();
     for (final data in copy) {
-      handleNotificationTap(data);
+      unawaited(handleNotificationTap(data));
     }
   }
 
-  static void navigateToPath(String path) {
+  static Future<void> navigateToPath(String path) async {
     final router = _router;
     if (router == null || path.isEmpty) return;
     final trimmed = path.trim();
@@ -64,6 +70,10 @@ class PushNavigationHandler {
       return;
     }
     final normalized = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+    final voiceKey = voiceRoomLiveKeyFromPath(normalized);
+    if (voiceKey != null && prepareVoiceRoomSwitch != null) {
+      await prepareVoiceRoomSwitch!(voiceKey, source: 'push');
+    }
     try {
       router.go(normalized);
     } catch (e, st) {
@@ -117,7 +127,7 @@ class PushNavigationHandler {
   }
 
   /// Bildirime tıklanınca — ağır liste yenilemesi yapmadan hedef sayfaya git.
-  static void handleNotificationTap(Map<String, dynamic>? data) {
+  static Future<void> handleNotificationTap(Map<String, dynamic>? data) async {
     if (data == null || data.isEmpty) return;
     if (handleFortuneInviteData(data, notifyReceived: false)) return;
 
@@ -126,7 +136,7 @@ class PushNavigationHandler {
       _bufferedTapPayloads.add(Map<String, dynamic>.from(data));
       return;
     }
-    _navigateFromData(router, data);
+    await _navigateFromData(router, data);
   }
 
   /// Geriye dönük — tıklama yolu.
@@ -134,7 +144,10 @@ class PushNavigationHandler {
     handleNotificationTap(data);
   }
 
-  static void _navigateFromData(GoRouter router, Map<String, dynamic> data) {
+  static Future<void> _navigateFromData(
+    GoRouter router,
+    Map<String, dynamic> data,
+  ) async {
     final type = [
       data['type'],
       data['event'],
@@ -171,10 +184,11 @@ class PushNavigationHandler {
     );
 
     try {
-      navigateFromNotification(
+      await navigateFromNotificationAsync(
         router,
         entity,
         staffCanManagePayments: staffCanManagePayments?.call() ?? false,
+        prepareVoiceRoomSwitch: prepareVoiceRoomSwitch,
       );
     } catch (e, st) {
       debugPrint('Push navigation failed: $e\n$st');

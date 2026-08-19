@@ -25,6 +25,7 @@ import '../../features/messages/presentation/providers/conversations_list_notifi
 import '../../features/messages/presentation/providers/messages_providers.dart';
 import '../../features/notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
+import '../../features/voice_hub/presentation/utils/voice_room_session_utils.dart';
 import '../onesignal/onesignal_bootstrap.dart';
 import 'push_notification_service.dart';
 import 'push_navigation_handler.dart';
@@ -131,6 +132,12 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
           );
           ref.refreshWalletCache(force: true);
         },
+        onPrepareVoiceRoomSwitch: (nextLiveKey, {source = 'push'}) =>
+            prepareVoiceRoomSwitch(
+              ref,
+              nextLiveKey: nextLiveKey,
+              source: source,
+            ),
       );
       PushNavigationHandler.staffCanManagePayments = () =>
           ref.read(staffAccessProvider).canManagePayments;

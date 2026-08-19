@@ -60,7 +60,7 @@ class _VoiceRoomGatedEntryState extends ConsumerState<VoiceRoomGatedEntry> {
         ),
       );
     }
-    if (!_ready && widget.room.isPasswordLockedRoom) {
+    if (!_ready) {
       return const Scaffold(
         backgroundColor: Color(0xFF0B0B12),
         body: Center(

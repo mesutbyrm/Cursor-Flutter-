@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.286+322 (2026-08-19) — Push/bildirim oda geçişi presence
+
+- **Push/PK bildirimi:** `/voice-room/*` yönlendirmeden önce `prepareVoiceRoomSwitch` — eski odada koltuk/presence kalması azaltıldı
+- **Bildirim listesi:** Aynı teardown async akışı (`navigateFromNotificationAsync`)
+- **Derin bağlantı:** `VoiceRoomGatedEntry` teardown bitene kadar yükleme gösterir (şifresiz odalar dahil)
+
 ## 1.0.285+321 (2026-08-19) — PK daveti + oda geçişi düzeltmeleri
 
 - **PK bildirimi:** `targetPath: /` artık `GoException` vermez → `/feed` veya PK/oda rotası
