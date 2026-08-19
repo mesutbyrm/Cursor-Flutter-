@@ -50,7 +50,7 @@ Kaynak: `docs/STAGE5_REAL_E2E_ACCEPTANCE_REPORT.md`
 | Tam oda id (SSE) | `cmoohrbrx00a4nt08zlkdjyil` |
 | Slug (API listesi) | `canlfal-` |
 | Komut | `!istek Sanatçı - Şarkı` |
-| APK | `1.0.274+310` veya üzeri (`apk-latest`) |
+| APK | `1.0.275+311` veya üzeri (`apk-latest`) |
 | Hesap | `ACCEPTANCE_USER_*` — **≥10 jeton** gerekli (credits≠jeton; test hesabı credits≈140+, jeton=0) |
 | Oda sahibi (üretim) | `admin` (`cmokscu2y0000pnko11nctqw5`) |
 

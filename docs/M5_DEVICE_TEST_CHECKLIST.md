@@ -1,14 +1,16 @@
 # M5 — Cihaz test kontrol listesi (!istek / müzik)
 
-**Tarih:** 2026-08-18  
-**APK:** `1.0.270+306` veya üzeri (`apk-latest`)  
-**Oda:** `cmoohrbr` (kısmi id; SSE: `cmoohrbrx00a4nt08zlkdjyil`)
+**Tarih:** 2026-08-19  
+**APK:** `1.0.275+311` veya üzeri (`apk-latest`)  
+**Hazırlık:** `bash scripts/m5-device-prep.sh`
 
 ---
 
 ## Otomatik ön kontrol (önerilir)
 
 ```bash
+bash scripts/m5-device-prep.sh
+# veya
 bash scripts/m5-preflight.sh
 ```
 

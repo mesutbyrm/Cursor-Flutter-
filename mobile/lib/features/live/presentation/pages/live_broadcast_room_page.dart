@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/auth/bot_account_provider.dart';
+import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/live_event_log.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
@@ -813,8 +814,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final opt = options.length > 1 ? options[1] : options.first;
     final balance = ref.read(coinBalanceProvider) ?? user.coinBalance;
     if (balance < opt.totalJeton) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Yetersiz jeton. Gerekli: ${opt.totalJeton}')),
+      unawaited(
+        showInsufficientJetonDialog(
+          context,
+          message: 'Yetersiz jeton. Gerekli: ${opt.totalJeton}',
+          ref: ref,
+        ),
       );
       return;
     }

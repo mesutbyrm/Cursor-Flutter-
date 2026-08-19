@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.276+312 (2026-08-19) — Canlı yayın jeton UX + M5 checklist
+
+- **Live broadcast:** falcı rezervasyonu yetersiz jeton → `showInsufficientJetonDialog`
+- **Doc:** M5 checklist + REMAINING_WORK `1.0.275+311`; `m5-device-prep` ön kontrol
+
 ## 1.0.275+311 (2026-08-19) — Komut paneli Görevler + m5-device-prep
 
 - **Komut paneli:** Jeton kartında «Görevler» → `/profile/growth`

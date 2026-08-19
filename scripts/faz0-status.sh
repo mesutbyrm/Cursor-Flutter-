@@ -64,14 +64,14 @@ echo ""
 
 echo "── Tamamlanan (kod) ──"
 echo "  ✅ M1–M12 (!istek/ANR/SSE) — 1.0.266+302"
-echo "  ✅ Günlük görev + jeton UX — 1.0.269–274"
+echo "  ✅ Günlük görev + jeton UX — 1.0.269–275"
 echo "  ✅ API müzik 6/6 + 93 voice_hub + 15 faz test"
 echo ""
 
 if [[ "$BLOCKERS" -gt 0 ]]; then
   echo "── Sonraki adım ──"
   echo "  bash scripts/faz0-next.sh"
-  echo "  docs/M5_DEVICE_TEST_CHECKLIST.md (jeton sonrası)"
+  echo "  bash scripts/m5-device-prep.sh  # jeton sonrası cihaz"
 else
   echo "── Sonraki adım ──"
   echo "  bash scripts/m5-preflight.sh && docs/M5_DEVICE_TEST_CHECKLIST.md"
