@@ -59,6 +59,7 @@ BLOCKERS=0
 echo "── Blokerler ──"
 if [[ "$USER_J" -lt 10 && "$HOST_J" -lt 10 ]]; then
   echo "  ⛔ Jeton: USER ve HOST < 10 — M5/M7 bekliyor"
+  echo "     Admin: https://canlifal.com/admin → $USER_EMAIL"
   BLOCKERS=$((BLOCKERS + 1))
 fi
 echo "  ⏸  M5: Android cihaz testi (kullanıcı)"
@@ -71,13 +72,16 @@ echo "  ✅ M1–M12 (!istek/ANR/SSE) — 1.0.266+302"
 echo "  ✅ Müzik isteği ANR — 1.0.284+320"
 echo "  ✅ PK davet/bildirim/oda geçişi — 1.0.285+321"
 echo "  ✅ Günlük görev + jeton UX — 1.0.269–283"
-echo "  ✅ API müzik 6/6 + 93 voice_hub + 15 faz test"
+echo "  ✅ PK bildirim/push yönlendirme testleri"
+echo "  ✅ API müzik 6/6 + voice_hub + 15 faz test"
+echo ""
+echo "  📋 Kod otomasyonu tamam — agent beklemesi: jeton + M5 cihaz"
 echo ""
 
 if [[ "$BLOCKERS" -gt 0 ]]; then
   echo "── Sonraki adım ──"
-  echo "  bash scripts/faz0-next.sh"
-  echo "  bash scripts/m5-device-prep.sh  # jeton sonrası cihaz"
+  echo "  bash scripts/faz0-handoff.sh"
+  echo "  bash scripts/wait-for-jeton.sh 10 3600  # jeton sonrası otomatik M7"
 else
   echo "── Sonraki adım ──"
   echo "  bash scripts/m5-preflight.sh && docs/M5_DEVICE_TEST_CHECKLIST.md"

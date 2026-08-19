@@ -2,7 +2,7 @@
 
 **Tarih:** 2026-08-19  
 **APK:** `1.0.285+321` veya üzeri (`apk-latest`)  
-**Hazırlık:** `bash scripts/m5-device-prep.sh`
+**Hazırlık:** `bash scripts/faz0-handoff.sh` veya `bash scripts/m5-device-prep.sh`
 
 ---
 

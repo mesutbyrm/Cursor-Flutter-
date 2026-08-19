@@ -1,6 +1,7 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-19 20:48 UTC — `1.0.285+321`  
+**Son güncelleme:** 2026-08-19 21:09 UTC — `1.0.285+321`  
+**Agent:** Kod otomasyonu tamam — tek bloker jeton + M5 cihaz (`bash scripts/faz0-handoff.sh`)  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (15 PASS)
 
 ---
@@ -71,6 +72,12 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-08-19 devam 24)
+
+- `faz0-handoff.sh` — agent→kullanıcı devir teslim betiği (jeton + M5 checklist)
+- `faz0-status.sh` admin URL + kod otomasyonu tamam mesajı
+- FAZ12 otomatik 4/4 doğrulandı
 
 ## Oturum günlüğü (2026-08-19 devam 23)
 

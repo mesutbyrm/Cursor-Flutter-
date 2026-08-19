@@ -39,4 +39,5 @@ bash "$ROOT/scripts/probe-jeton-earn.sh" || true
 echo ""
 echo "Jeton < 10 — admin panel veya ACCEPTANCE_ADMIN_* gerekli."
 echo "Jeton eklenince: bash scripts/wait-for-jeton.sh 10 3600"
+echo "Özet: bash scripts/faz0-handoff.sh"
 exit 1
