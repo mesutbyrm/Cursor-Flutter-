@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.272+308 (2026-08-19) — Müzik paneli jeton diyaloğu
+
+- **VoiceMusicHubPage** + **YouTube şarkı sheet:** yetersiz jeton → `showInsufficientJetonDialog`
+- **FAZ0_STATUS** + `faz0-status.sh` güncel (admin-jeton-cheatsheet)
+
 ## 1.0.271+307 (2026-08-19) — Yetersiz jeton UX (sesli oda)
 
 - **Dialog:** `showInsufficientJetonDialog` — Jeton Yükle + Görevler (`/profile/growth`)

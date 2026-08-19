@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/widgets/lazy_list_views.dart';
 import '../../../../core/network/api_exception.dart';
@@ -202,6 +203,10 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
   void _showMusicResultSnack(String message, {bool isError = false}) {
     final ctx = rootNavigatorKey.currentContext;
     if (ctx == null) return;
+    if (isError && message.toLowerCase().contains('jeton')) {
+      unawaited(showInsufficientJetonDialog(ctx, message: message));
+      return;
+    }
     ScaffoldMessenger.of(ctx).showSnackBar(
       SnackBar(
         content: Text(message),

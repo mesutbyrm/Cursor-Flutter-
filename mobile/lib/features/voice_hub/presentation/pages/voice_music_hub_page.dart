@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/widgets/lazy_list_views.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
@@ -227,11 +228,15 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
       perms: widget.perms,
       jetonBalance: jeton,
     )) {
-      setState(() => _error = 'Bu şarkıyı istemek için en az $_cost jeton gerekli.');
+      const msg = 'Bu şarkıyı istemek için yeterli jeton gerekli.';
+      setState(() => _error = msg);
+      unawaited(showInsufficientJetonDialog(context, message: msg, ref: ref));
       return;
     }
     if (jeton < _cost && !widget.perms.canManageDj && !djState.canPlayMusic) {
-      setState(() => _error = 'Bu şarkıyı istemek için en az $_cost jeton gerekli.');
+      final msg = 'Bu şarkıyı istemek için en az $_cost jeton gerekli.';
+      setState(() => _error = msg);
+      unawaited(showInsufficientJetonDialog(context, message: msg, ref: ref));
       return;
     }
 

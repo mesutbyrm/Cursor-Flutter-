@@ -1,7 +1,8 @@
-# FAZ 0 — Durum özeti (2026-08-18)
+# FAZ 0 — Durum özeti
 
-**Sonuç:** **INCOMPLETE** — Otomatik iş tamam; **jeton + M5 cihaz** (kullanıcı) bekleniyor  
-**APK:** `1.0.266+302` (`apk-latest`)  
+**Sonuç:** **INCOMPLETE** — Otomatik iş tamam; **jeton + M5 cihaz** bekleniyor  
+**APK:** `1.0.271+307` (`apk-latest`)  
+**Sürüm:** `mobile/pubspec.yaml`  
 **Tek engel:** Test hesabı jeton=0 — `docs/M5_M7_JETON_BLOCKER.md`
 
 ---
@@ -12,55 +13,45 @@
 |------|--------|
 | Backend envanter | `backend-docs/`, `BACKEND_API_ROUTE_INDEX.md` |
 | Flutter parity | `BACKEND_FLUTTER_PARITY_AUDIT.md`, B1–B4 |
-| MCP | `mcp-server` v1.2.0 (`read_source`, `search_source`) |
-| !istek / ANR kod | M1–M4, M8–M9 — `1.0.257–263` |
-| SSE oda anahtarı | M10–M12 — `1.0.264–266`, `VOICE_ROOM_KEY_RESOLUTION.md` |
-| SSE üretim payload | M7 kısmi — `dj`, `connected` (`M7_MUSIC_SSE_CAPTURE.md`) |
-| API müzik fazı | 6/6 PASS — `API_MUSIC_PHASE_REPORT.md`, `run-music-acceptance.sh` |
-| Otomatik betikler | `faz0-status`, `faz0-verify`, `m7-on-jeton`, `validate-acceptance-secrets` |
-| Unit testler | 93× `test/features/voice_hub/` |
+| MCP | `mcp-server` v1.2.0 |
+| !istek / ANR kod | M1–M12 — `1.0.266+302` |
+| SSE oda anahtarı | `VOICE_ROOM_KEY_RESOLUTION.md` |
+| API müzik fazı | 6/6 PASS — `run-music-acceptance.sh` |
+| Faz testleri | 15 PASS — `run-phase-tests.sh` |
+| FAZ12 otomatik | 4/4 — `faz12-automated-gates.sh` |
+| Jeton UX | `showInsufficientJetonDialog` — basic/RTC/müzik paneli |
+| Günlük görevler | Growth Hub API eşlemesi — `1.0.269–271` |
+| Otomatik betikler | `faz0-verify`, `probe-jeton-earn`, `admin-jeton-cheatsheet`, `wait-for-jeton` |
+| Unit testler | 93× voice_hub + profile daily_task |
 
 ---
 
-## Kısmi / bekleyen
+## Bekleyen (manuel)
 
 | Madde | Durum | Bloker |
 |-------|--------|--------|
-| **M5** cihaz E2E | `[ ]` | Kullanıcı — `M5_DEVICE_TEST_CHECKLIST.md` |
-| **M7** song-request 200 | `[~]` | Test jetonu 0 — `M5_M7_JETON_BLOCKER.md` |
-| **A6** route.ts ağacı | `[~]` | `BACKEND_API_ROUTE_INDEX.md` yedeği |
-| **A7** resmi SSE şema | `[~]` | Üretim `dj`/`connected`; backend doc yok |
-| **A8** test hesapları | `[~]` | `TEST_ACCOUNTS.md`; admin secret eksik |
+| **M5** cihaz E2E | `[ ]` | Android — `M5_DEVICE_TEST_CHECKLIST.md` |
+| **M7** song-request 200 | `[~]` | jeton ≥10 |
 | **A9** FAZ 0 kapat | `[ ]` | M5 PASS |
 
 ---
 
-## Doğrulama komutları
+## Hızlı komutlar
 
 ```bash
 bash scripts/faz0-status.sh
-bash scripts/validate-acceptance-secrets.sh
-bash scripts/m7-on-jeton.sh              # jeton ≥10 sonrası
-bash scripts/m5-preflight.sh
-
-# API müzik fazı (secret olmadan varsayılan test hesabı)
-MUSIC_PROBE_ROOM=cmoohrbr bash scripts/acceptance-tests/api-music-phase.sh
-
-# M7 probe + SSE dump
-MUSIC_PROBE_ROOM=cmoohrbr bash scripts/probe-music-room.sh
-
-# Flutter unit
-cd mobile && flutter test test/features/voice_hub/
-
-# MCP
-cd mcp-server && node index.mjs --selftest
+bash scripts/admin-jeton-cheatsheet.sh   # user id + admin adımları
+bash scripts/faz0-verify.sh
+bash scripts/wait-for-jeton.sh 10 3600
 ```
 
 ---
 
-## FAZ 0 → FAZ 1 geçiş kriteri
+## Jeton top-up
 
-1. Android cihazda `cmoohrbr` + `!istek Tarkan - Şımarık` — ANR yok, müzik gelir
-2. (Opsiyonel) M7 song-request 200 yanıt dump'ı — jeton + admin
+```bash
+bash scripts/admin-jeton-cheatsheet.sh
+```
 
-**FAZ 1** başlamaz: `docs/PHASE_PLAN.md`
+Admin panel → `cursor.test.1786235468@mailinator.com` → **≥50 jeton**  
+User ID: `cmsyoxjh80066mo08fo7nv5o6`
