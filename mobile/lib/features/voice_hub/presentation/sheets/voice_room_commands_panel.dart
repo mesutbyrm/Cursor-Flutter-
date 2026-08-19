@@ -503,6 +503,14 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
                       openJetonStore(ctx, ref: ref);
                     });
                   },
+                  onGrowthHub: () {
+                    final ctx = context;
+                    Navigator.pop(ctx);
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!ctx.mounted) return;
+                      openGrowthHub(ctx);
+                    });
+                  },
                 ),
                 if (canModerate) ...[
                   const SizedBox(height: 20),
@@ -748,10 +756,15 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _JetonCard extends StatelessWidget {
-  const _JetonCard({required this.balance, required this.onTopUp});
+  const _JetonCard({
+    required this.balance,
+    required this.onTopUp,
+    this.onGrowthHub,
+  });
 
   final String balance;
   final VoidCallback onTopUp;
+  final VoidCallback? onGrowthHub;
 
   @override
   Widget build(BuildContext context) {
@@ -805,6 +818,19 @@ class _JetonCard extends StatelessWidget {
               ),
             ),
           ),
+          if (onGrowthHub != null) ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: onGrowthHub,
+              icon: const Icon(Icons.task_alt_rounded),
+              label: const Text('Görevler'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white,
+                side: BorderSide(color: VoiceRoomTokens.gold.withValues(alpha: 0.5)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -1,7 +1,7 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-19 14:30 UTC — `1.0.272+308`  
-**Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (12 PASS)
+**Son güncelleme:** 2026-08-19 14:38 UTC — `1.0.274+310`  
+**Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (15 PASS)
 
 ---
 
@@ -13,7 +13,7 @@
 | FAZ 1–11 | `[x]` otomatik | 15 PASS — `PHASE_TEST_REPORT.md` |
 | FAZ 12 | `[~]` | Otomatik kapılar ✅; cihaz 25 senaryo |
 | FAZ 13 | `[~]` | CI APK ✅ |
-| APK `1.0.272+308` | `[x]` | apk-latest (CI) |
+| APK `1.0.274+310` | `[x]` | apk-latest (CI) |
 | P0 müzik kod | `[x]` | M5/M7 manuel |
 
 ---
@@ -24,7 +24,7 @@
 |---|-----|--------|
 | B1 | Jeton ≥10 | `bash scripts/admin-jeton-cheatsheet.sh` |
 | B2 | M7 HTTP 200 | `bash scripts/m7-on-jeton.sh` |
-| B3 | M5 cihaz | `docs/M5_DEVICE_TEST_CHECKLIST.md` |
+| B3 | M5 cihaz | `bash scripts/m5-device-prep.sh` |
 | B4 | FAZ12 E2E | 25 senaryo Android |
 
 ---
@@ -70,6 +70,11 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-08-19 devam 4)
+
+- **1.0.275+311:** Komut paneli Görevler butonu + `m5-device-prep.sh`
+- **1.0.274+310:** Oda açma jeton diyaloğu + FAZ0 checklist
 
 ## Oturum günlüğü (2026-08-19 devam 3)
 

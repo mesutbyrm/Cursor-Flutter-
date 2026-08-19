@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.275+311 (2026-08-19) — Komut paneli Görevler + m5-device-prep
+
+- **Komut paneli:** Jeton kartında «Görevler» → `/profile/growth`
+- **Script:** `m5-device-prep.sh` — APK + hesap + m5-ready özeti
+
 ## 1.0.274+310 (2026-08-19) — Oda açma jeton UX + FAZ0 checklist
 
 - **Oda açma:** yetersiz jeton → `showInsufficientJetonDialog`
