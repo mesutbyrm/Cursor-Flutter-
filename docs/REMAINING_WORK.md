@@ -72,6 +72,11 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 
 ---
 
+## Oturum günlüğü (2026-08-19 devam 21)
+
+- PK bildirim metin yedeklemesi testleri (PK/düello → voice-room veya /live) — 10 PASS
+- faz0-verify yenilendi: AUTOMATED_PASS; jeton=0
+
 ## Oturum günlüğü (2026-08-19 devam 20)
 
 - Push navigation testleri: `/` → `/feed`, PK push → voice-room (3 PASS)
