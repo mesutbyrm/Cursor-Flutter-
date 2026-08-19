@@ -103,6 +103,29 @@ void main() {
     );
   });
 
+  test('isPkInviteTarget matches opponentVoiceRoomId', () {
+    const battle = PkBattleRemote(
+      id: 'pk4',
+      battleType: 'voice_room',
+      status: 'pending',
+      challengerScore: 0,
+      opponentScore: 0,
+      secondsLeft: 300,
+      durationSeconds: 180,
+      targetScore: 1000,
+      voiceRoomId: 'room-a',
+      opponentVoiceRoomId: 'room-b',
+    );
+    expect(
+      isPkInviteTarget(battle, eligible, userId: 'owner-b'),
+      isTrue,
+    );
+    expect(
+      isPkInviteTarget(battle, self, userId: 'owner-a'),
+      isFalse,
+    );
+  });
+
   test('isPkBattleLive only true for active battles', () {
     const pending = PkBattleRemote(
       id: 'pk1',

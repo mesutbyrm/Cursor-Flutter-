@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-19 20:26 UTC — `1.0.285+321`  
+**Son güncelleme:** 2026-08-19 20:43 UTC — `1.0.285+321`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (15 PASS)
 
 ---
@@ -71,6 +71,12 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-08-19 devam 14)
+
+- PK `opponentVoiceRoomId` eşleşmesi için birim test eklendi (`pk_opponent_room_filter_test.dart`)
+- faz0-verify yenilendi: AUTOMATED_PASS; jeton=0 bloker devam
+- APK CI: run 32298394670 başarılı; 32299026600 devam ediyor
 
 ## Oturum günlüğü (2026-08-19 devam 13)
 
