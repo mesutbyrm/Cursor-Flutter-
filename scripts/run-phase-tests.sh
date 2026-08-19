@@ -16,7 +16,7 @@ declare -A PHASE_DIRS=(
   ["FAZ6"]="test/features/voice_hub"
   ["FAZ7"]="test/features/gifts"
   ["FAZ8"]="test/features/shorts"
-  ["FAZ9"]="test/features/messages test/features/notifications"
+  ["FAZ9"]="test/features/messages test/features/notifications test/messages_cache_codec_test.dart"
 )
 
 PASS=0

@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-18 23:58 UTC — **Tüm fazlar HAZIRLIK**; FAZ0 M5/jeton manuel  
+**Son güncelleme:** 2026-08-19 02:05 UTC — FAZ1–11 otomatik PASS (15 test paketi)  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (12 PASS)
 
 ---
@@ -10,9 +10,10 @@
 | Alan | Durum | Not |
 |------|--------|-----|
 | FAZ 0 | `[~]` | A1–A8 ✅; A9 M5/jeton |
-| FAZ 1–11 | `[~]` HAZIRLIK | Otomatik testler PASS; parity doc |
-| FAZ 12–13 | `[ ]` | Cihaz E2E + signing |
-| APK `1.0.267+303` | `[ ]` | push sonrası CI |
+| FAZ 1–11 | `[x]` otomatik | 15 PASS — `PHASE_TEST_REPORT.md` |
+| FAZ 12 | `[~]` | Otomatik kapılar ✅; cihaz 25 senaryo |
+| FAZ 13 | `[~]` | CI APK ✅ |
+| APK `1.0.268+304` | `[ ]` | push sonrası CI |
 | P0 müzik kod | `[x]` | M5/M7 manuel |
 
 ---
@@ -39,8 +40,8 @@
 | FAZ5 live | PASS |
 | FAZ6 voice_hub (93) | PASS |
 | FAZ7 gifts | PASS |
-| FAZ8 shorts | SKIP (test yok) |
-| FAZ9 notifications | PASS |
+| FAZ8 shorts | PASS (3 test dosyası) |
+| FAZ9 messages | PASS |
 | FAZ0 MCP | PASS |
 
 `bash scripts/run-phase-tests.sh`

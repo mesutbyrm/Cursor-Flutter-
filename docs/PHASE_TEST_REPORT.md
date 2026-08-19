@@ -1,10 +1,10 @@
 # Faz test raporu
 
-**Tarih:** 2026-08-18 23:53 UTC
+**Tarih:** 2026-08-19 02:02 UTC
 
 | Geçti | Başarısız | Atlandı |
 |-------|-----------|---------|
-| 12 | 0 | 1 |
+| 15 | 0 | 0 |
 
 ## Detay
 
@@ -20,6 +20,8 @@
 | FAZ5 | `test/features/live` | PASS |
 | FAZ6 | `test/features/voice_hub` | PASS |
 | FAZ7 | `test/features/gifts` | PASS |
-| FAZ8 | — | SKIP (no tests) |
+| FAZ8 | `test/features/shorts` | PASS |
+| FAZ9 | `test/features/messages` | PASS |
 | FAZ9 | `test/features/notifications` | PASS |
+| FAZ9 | `test/messages_cache_codec_test.dart` | PASS |
 | FAZ0 | mcp-server selftest | PASS |

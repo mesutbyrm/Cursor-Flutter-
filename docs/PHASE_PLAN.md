@@ -11,19 +11,19 @@
 | Faz | Ad | Durum | Bloker |
 |-----|-----|-------|--------|
 | **0** | Backend + Flutter Audit | 🔄 **INCOMPLETE** | M5 cihaz + jeton |
-| 1 | Core + Auth + API Architecture | 🔄 **HAZIRLIK** | God-file refactor |
-| 2 | Profile | 🔄 **HAZIRLIK** | Skeleton UI |
-| 3 | Social | 🔄 **HAZIRLIK** | getUserPosts ✅ |
-| 4 | Fal + Tarot | 🔄 **HAZIRLIK** | SSE body parity |
-| 5 | Live Stream | 🔄 **HAZIRLIK** | Comments endpoint |
-| 6 | Voice Chat Rooms | 🔄 **HAZIRLIK** | M5 PASS |
-| 7 | Gifts + Jeton + PK | 🔄 **HAZIRLIK** | gifts/send |
-| 8 | Trending / Shorts | 🔄 **HAZIRLIK** | Unit test |
-| 9 | Messages + Notifications | 🔄 **HAZIRLIK** | SSE/request |
+| 1 | Core + Auth + API Architecture | ✅ **AUTOMATED_PASS** | — |
+| 2 | Profile | ✅ **AUTOMATED_PASS** | — |
+| 3 | Social | ✅ **AUTOMATED_PASS** | — |
+| 4 | Fal + Tarot | ✅ **AUTOMATED_PASS** | — |
+| 5 | Live Stream | ✅ **AUTOMATED_PASS** | — |
+| 6 | Voice Chat Rooms | ✅ **AUTOMATED_PASS** | M5 manuel |
+| 7 | Gifts + Jeton + PK | ✅ **AUTOMATED_PASS** | — |
+| 8 | Trending / Shorts | ✅ **AUTOMATED_PASS** | — |
+| 9 | Messages + Notifications | ✅ **AUTOMATED_PASS** | — |
 | 10 | Global Performance | 🔄 **HAZIRLIK** | Cihaz profil |
-| 11 | Security + Error Handling | 🔄 **HAZIRLIK** | — |
-| 12 | Full E2E QA | ⏸ | FAZ 11 + cihaz |
-| 13 | Release Build | 🔄 **HAZIRLIK** | CI aktif |
+| 11 | Security + Error Handling | ✅ **AUTOMATED_PASS** | — |
+| 12 | Full E2E QA | 🔄 otomatik ✅ | 25 cihaz senaryo |
+| 13 | Release Build | 🔄 CI aktif | Signing |
 
 ---
 

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.268+304 (2026-08-19) — FAZ8/9 testler + FAZ11/12 otomatik kapılar
+
+- **Shorts:** count format, content filter, copyright guard testleri (FAZ8)
+- **Messages:** cache codec test (FAZ9)
+- **Scripts:** `faz11-security-scan.sh`, `faz12-automated-gates.sh`
+- **Doc:** `PHASE_12_ACCEPTANCE.md`
+
 ## 1.0.267+303 (2026-08-18) — Faz master + social getUserPosts
 
 - **Social:** `GET /api/users/{userId}/posts` kılavuz §9.10 (`fetchUserPosts`)

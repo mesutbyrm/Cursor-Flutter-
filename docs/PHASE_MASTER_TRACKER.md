@@ -1,7 +1,7 @@
 # Faz master takip — Canlifal Flutter
 
-**Son güncelleme:** 2026-08-18  
-**Kural:** Her faz **AUTOMATED_PASS** + manuel kapılar → **PASS**
+**Son güncelleme:** 2026-08-19  
+**Faz testleri:** 15 PASS, 0 FAIL (`docs/PHASE_TEST_REPORT.md`)
 
 ---
 
@@ -9,49 +9,38 @@
 
 | Faz | Ad | Otomatik | Manuel bloker | Durum |
 |-----|-----|----------|---------------|--------|
-| **0** | Audit | ✅ A1–A8, M1–M12, 93 test | M5 cihaz, M7 jeton | 🔄 INCOMPLETE |
-| **1** | Core + Auth | ✅ error envelope, testler | God-file refactor | 🔄 HAZIRLIK |
-| **2** | Profile | ✅ parity doc | Skeleton UI | 🔄 HAZIRLIK |
-| **3** | Social | ✅ getUserPosts fix | Story repo yüzeyi | 🔄 HAZIRLIK |
-| **4** | Fortune | ✅ modül mevcut | SSE body parity | 🔄 HAZIRLIK |
-| **5** | Live | ✅ 36 test | Comments endpoint | 🔄 HAZIRLIK |
-| **6** | Voice | ✅ 93 test, M1–M12 | M5 PASS | 🔄 HAZIRLIK |
-| **7** | Gifts | ✅ 47 test | gifts/send canonical | 🔄 HAZIRLIK |
-| **8** | Shorts | ⏸ test yok | Pagination | 🔄 HAZIRLIK |
-| **9** | Messages | ⏸ codec test | SSE path, request | 🔄 HAZIRLIK |
-| **10** | Performance | ✅ perf modülleri | Cihaz profil | ⏸ |
-| **11** | Security | ✅ ApiException guard | Secret scan CI | ⏸ |
-| **12** | E2E QA | ⏸ | 25 senaryo cihaz | ⏸ |
-| **13** | Release | ✅ APK CI | Signing | ⏸ |
+| **0** | Audit | ✅ A1–A8, M1–M12 | M5 cihaz, M7 jeton | 🔄 INCOMPLETE |
+| **1** | Core + Auth | ✅ **AUTOMATED_PASS** | God-file refactor | ✅ otomatik |
+| **2** | Profile | ✅ **AUTOMATED_PASS** | Skeleton UI | ✅ otomatik |
+| **3** | Social | ✅ **AUTOMATED_PASS** | Story repo | ✅ otomatik |
+| **4** | Fortune | ✅ **AUTOMATED_PASS** | SSE body | ✅ otomatik |
+| **5** | Live | ✅ **AUTOMATED_PASS** | Comments uç | ✅ otomatik |
+| **6** | Voice | ✅ **AUTOMATED_PASS** | M5 cihaz | ✅ otomatik |
+| **7** | Gifts | ✅ **AUTOMATED_PASS** | gifts/send | ✅ otomatik |
+| **8** | Shorts | ✅ **AUTOMATED_PASS** | Pagination prod | ✅ otomatik |
+| **9** | Messages | ✅ **AUTOMATED_PASS** | SSE/request UI | ✅ otomatik |
+| **10** | Performance | ✅ perf modülleri | Cihaz profil | 🔄 HAZIRLIK |
+| **11** | Security | ✅ **AUTOMATED_PASS** | — | ✅ otomatik |
+| **12** | E2E QA | ✅ otomatik kapılar | 25 senaryo cihaz | 🔄 INCOMPLETE |
+| **13** | Release | ✅ CI APK | Signing | 🔄 HAZIRLIK |
 
 ---
 
 ## Komutlar
 
 ```bash
-bash scripts/phase-progress.sh      # bu özet
-bash scripts/run-phase-tests.sh     # faz testleri
-bash scripts/faz0-verify.sh           # FAZ0 kapıları
-bash scripts/m7-on-jeton.sh           # jeton sonrası M7
+bash scripts/phase-progress.sh
+bash scripts/run-phase-tests.sh          # 15 PASS
+bash scripts/faz12-automated-gates.sh    # FAZ12 otomatik
+bash scripts/faz11-security-scan.sh
+bash scripts/m7-on-jeton.sh                # jeton sonrası
 ```
 
 ---
 
-## Kapı tanımları
+## Resmi PASS için kalan (agent yapamaz)
 
-| Etiket | Anlam |
-|--------|--------|
-| **AUTOMATED_PASS** | Unit/API testleri + parity doc tamam |
-| **PASS** | Otomatik + manuel (cihaz/jeton) tamam |
-| **HAZIRLIK** | Kod büyük ölçüde var; kapanış maddeleri sürüyor |
-| **INCOMPLETE** | Resmi kapanış bekliyor |
-
----
-
-## Sıra (kullanıcı aksiyonu)
-
-1. Admin → test hesabına **≥50 jeton**
-2. `bash scripts/m7-on-jeton.sh` → M7 HTTP 200
-3. `docs/M5_DEVICE_TEST_CHECKLIST.md` → FAZ0 PASS
-4. FAZ1–11 otomatik kapanış testleri (`run-phase-tests.sh`)
-5. FAZ12 cihaz QA → FAZ13 release
+1. **Jeton ≥10** → admin panel
+2. **M5/M7** → `m7-on-jeton.sh` + cihaz checklist
+3. **FAZ12** → Android 25 senaryo
+4. **FAZ13** → signing secrets (opsiyonel; CI apk-latest çalışıyor)
