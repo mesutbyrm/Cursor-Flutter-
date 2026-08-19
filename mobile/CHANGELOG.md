@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.277+313 (2026-08-19) — Falcı profil jeton UX
+
+- **Falcı profil:** randevu + bahşiş yetersiz jeton → `showInsufficientJetonDialog` (Görevler + Jeton Yükle)
+- **Fal sheet:** yetersiz jeton alt sayfasına «Görevler» butonu eklendi
+
 ## 1.0.276+312 (2026-08-19) — Canlı yayın jeton UX + M5 checklist
 
 - **Live broadcast:** falcı rezervasyonu yetersiz jeton → `showInsufficientJetonDialog`

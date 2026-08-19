@@ -161,6 +161,15 @@ Future<FortuneAccessChoice?> showInsufficientJetonSheet({
               icon: const Icon(Icons.shopping_bag_outlined),
               label: const Text('Jeton Satın Al'),
             ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                context.push('/profile/growth');
+              },
+              icon: const Icon(Icons.task_alt_rounded),
+              label: const Text('Görevler'),
+            ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => Navigator.pop(ctx, FortuneAccessChoice.cancel),
