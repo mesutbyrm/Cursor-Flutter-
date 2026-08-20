@@ -139,6 +139,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
           onMessage: (msg) {
             if (msg.kind == ChatMessageKind.systemJoin) {
               _sse._pushBasicChatEvent(msg);
+              _sse._handleSystemJoinEntrance(msg);
               return;
             }
             if (VoiceRoomBasicMode.enabled && !VoiceRoomBasicMode.premiumEnabled) {

@@ -15,6 +15,7 @@ import '../providers/voice_room_ui_provider.dart';
 import '../sheets/voice_room_moderation_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
 import '../utils/voice_room_permissions.dart';
+import '../utils/voice_room_user_actions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium_2026/voice_web_owner_stage.dart';
 import '../widgets/premium_2026/voice_pk_invite_banner.dart';
@@ -138,19 +139,25 @@ void openVoiceRoomBasicUser(
       );
   final isOwner = permissions.isRoomOwner || permissions.isSiteAdmin;
 
-  if (permissions.canModerate || isOwner) {
-    if (auth != null && user.id == auth.id) {
-      showVoiceUserProfileSheet(context, user: user);
-      return;
-    }
+  void openGift() => openVoiceRoomBasicGiftShop(
+        context,
+        ref,
+        room: room,
+        presence: liveState.presence,
+        receiver: user,
+      );
+
+  if (VoiceRoomUserActions.shouldOpenSelfProfile(
+    perms: permissions,
+    selfId: auth?.id,
+    target: user,
+  )) {
+    showVoiceUserProfileSheet(context, user: user, onGift: openGift);
+    return;
+  }
+
+  if (VoiceRoomUserActions.canOpenModerationSheet(permissions)) {
     final djIds = liveState.dj.djUsers.map((u) => u.id).toSet();
-    void openGift() => openVoiceRoomBasicGiftShop(
-          context,
-          ref,
-          room: room,
-          presence: liveState.presence,
-          receiver: user,
-        );
     showVoiceRoomModerationSheet(
       context: context,
       ref: ref,
@@ -165,13 +172,6 @@ void openVoiceRoomBasicUser(
     return;
   }
 
-  void openGift() => openVoiceRoomBasicGiftShop(
-        context,
-        ref,
-        room: room,
-        presence: liveState.presence,
-        receiver: user,
-      );
   showVoiceUserProfileSheet(
     context,
     user: user,
@@ -227,15 +227,12 @@ Future<void> onVoiceRoomBasicSeatTap({
     );
     return;
   }
-  if (perms.canTakeSeat) {
-    final err = await ref
-        .read(voiceRoomLiveProvider(liveKey).notifier)
-        .assignSeat(seatIndex: internalSeatIndex);
-    if (!context.mounted) return;
-    if (err != null) {
-      showJetonAwareError(context, err, ref: ref);
-    }
-    return;
+  final err = await ref
+      .read(voiceRoomLiveProvider(liveKey).notifier)
+      .assignSeat(seatIndex: internalSeatIndex);
+  if (!context.mounted) return;
+  if (err != null) {
+    showJetonAwareError(context, err, ref: ref);
   }
 }
 

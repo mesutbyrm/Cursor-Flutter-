@@ -22,6 +22,7 @@ import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
+import '../utils/voice_room_user_actions.dart';
 import '../utils/voice_room_category_catalog.dart';
 import '../utils/voice_room_seat_capacity.dart';
 import '../widgets/premium/voice_glass.dart';
@@ -693,16 +694,7 @@ class _VoiceRoomManagementPanelState
   }
 
   void _openUserModeration(ChatRoomPresence u) {
-    final canMod = perms.canModerate ||
-        isOwner ||
-        perms.canMuteUsers ||
-        perms.canKickUsers ||
-        perms.canBanUsers ||
-        perms.canGiveVoice ||
-        perms.canGiveOp ||
-        perms.canGiveSop ||
-        perms.canAssignSeats;
-    if (!canMod) {
+    if (!VoiceRoomUserActions.canOpenModerationSheet(perms)) {
       widget.onUserTap?.call(u);
       return;
     }

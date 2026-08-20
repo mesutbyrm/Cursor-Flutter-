@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.290+326 (2026-08-20) — Sesli oda P1 eşleştirme
+
+- **Moderasyon popup:** `canManageUsers` (mute/kick/voice vb.) olanlar chat/koltuk/katılımcı listesinden moderasyon sayfasını açar
+- **Koltuk:** Boş koltuğa her dinleyici tıklayarak oturabilir (web parity)
+- **Giriş bildirimi:** SSE `SYSTEM_JOIN` / `SYSTEM_VIP_JOIN` mesajları koltuk altı şeridini tetikler
+
 ## 1.0.289+325 (2026-08-20) — Koltuk ↔ ses P0 düzeltmeleri
 
 - **canSpeak:** Admin/oda sahibi/moderatör hariç yalnızca backend `seatIndex≥1` ile konuşma; `canGiveVoice` koltuksuz izin vermez

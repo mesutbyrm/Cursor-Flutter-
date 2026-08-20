@@ -610,6 +610,29 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     });
   }
 
+  /// SSE `messages` — `[SYSTEM_JOIN]` / `[SYSTEM_VIP_JOIN:…]` giriş şeridi.
+  void _handleSystemJoinEntrance(ChatRoomMessage msg) {
+    final content = msg.content.trim();
+    if (content.isEmpty) return;
+    if (VoiceStaffChatStyle.isStaffEntry(content: content, user: msg.user)) {
+      final name = msg.user?.displayName.trim().isNotEmpty == true
+          ? msg.user!.displayName.trim()
+          : content;
+      _showStaffEnterBanner(name, user: msg.user);
+      return;
+    }
+    if (!VoiceOfficialJoin.isEntranceWorthy(
+      content: content,
+      membership: msg.user?.membership,
+      chatRole: msg.user?.chatRole,
+    )) {
+      return;
+    }
+    if (_markEntranceOnce(content)) {
+      _showEnterBanner(content);
+    }
+  }
+
   ChatRoomPresence? _resolvePresence(String target) {
     final raw = target.trim().replaceFirst(RegExp(r'^@'), '').toLowerCase();
     if (raw.isEmpty) return null;
