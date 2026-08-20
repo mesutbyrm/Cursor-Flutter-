@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.303+339 (2026-08-20) — Canlı Falcılar widget testleri
+
+- **Bekleme:** `psychic_waiting_screen_test` — state label + bekleme metni
+- **Randevu sheet:** süre/jeton/tür seçimi + staff ücretsiz banner
+- **Gelen çağrı:** kabul/red `respondSession` widget testleri
+- **Video state:** timer label, low-time ve SSE failed bayrakları
+
 ## 1.0.302+338 (2026-08-20) — Canlı Falcılar test kapsamı
 
 - **Oda SSE parser:** `psychic_room_sse_parser.dart` ayrıştırıldı (timer, extend, end, tip, mesaj)

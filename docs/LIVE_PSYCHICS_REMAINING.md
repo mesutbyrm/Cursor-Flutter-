@@ -32,12 +32,7 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 | Oda SSE parser | `psychic_room_sse_parser.dart` + unit test |
 | Push rol testleri | `psychic_flow_push_test` — danışan vs falcı yönlendirme |
 | Datasource testleri | Mock Dio — createSession, cancel, roomAction, respond, status |
-
----
-
-## Kalan — kod (öncelik sırasıyla)
-
-_Kod maddeleri tamamlandı; kalan yalnızca test ve manuel E2E._
+| Widget testleri | waiting, booking sheet, incoming dialog, video state |
 
 ---
 
@@ -45,10 +40,9 @@ _Kod maddeleri tamamlandı; kalan yalnızca test ve manuel E2E._
 
 | Tür | Eksik |
 |-----|--------|
-| **Widget** | waiting, booking sheet, incoming dialog, video session |
 | **CI** | `scripts/acceptance-tests/` — API smoke var; Flutter E2E yok |
 
-Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incoming_sse_parser_test`, `psychic_room_sse_parser_test`, `psychic_flow_push_test`, `live_psychics_remote_datasource_test`, `psychic_client_session_guard_test`, `session_room_sse_event_test`, invite coordinator, phase guard, profile resolver.
+Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incoming_sse_parser_test`, `psychic_room_sse_parser_test`, `psychic_flow_push_test`, `live_psychics_remote_datasource_test`, `psychic_client_session_guard_test`, `psychic_waiting_screen_test`, `psychic_booking_sheet_test`, `psychic_incoming_call_dialog_test`, `psychic_video_state_test`, `session_room_sse_event_test`, invite coordinator, phase guard, profile resolver.
 
 ---
 
@@ -85,5 +79,6 @@ Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incom
 | 1.0.300+336 | createSession/extendSession sade, çift seans engeli, legacy cleanup |
 | 1.0.301+337 | Incoming SSE parser ayrıştırma + test, audit dokümanları |
 | 1.0.302+338 | Oda SSE parser, push rol testleri, datasource mock Dio testleri |
+| 1.0.303+339 | Widget testleri — waiting, booking, incoming dialog, video state |
 
 _Bu dosya agent oturumlarında güncellenir; tamamlandıkça maddeler silinir veya «Tamamlandı» bölümüne taşınır._

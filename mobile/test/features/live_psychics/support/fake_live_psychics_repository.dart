@@ -19,6 +19,27 @@ class FakeLivePsychicsRepository implements LivePsychicsRepository {
   PsychicSessionStatusResult? statusResult;
   PsychicRoomEntity? roomResult;
   PsychicEntity? psychicResult;
+  PsychicRespondResult respondResult = const PsychicRespondResult(success: true);
+  String? lastRespondAction;
+  String? lastRespondSessionId;
+
+  @override
+  Future<PsychicRespondResult> respondSession(
+    String sessionId, {
+    required String action,
+  }) async {
+    lastRespondSessionId = sessionId;
+    lastRespondAction = action;
+    return PsychicRespondResult(
+      success: respondResult.success,
+      sessionId: sessionId,
+      roomId: respondResult.roomId,
+      httpStatus: respondResult.httpStatus,
+      endpoint: respondResult.endpoint,
+      responseBody: respondResult.responseBody,
+      errorMessage: respondResult.errorMessage,
+    );
+  }
 
   @override
   Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId) async =>
@@ -112,13 +133,6 @@ class FakeLivePsychicsRepository implements LivePsychicsRepository {
   Future<List<PsychicRequestEntity>> fetchIncomingRequests({
     String? currentUserId,
     String? tellerProfileId,
-  }) =>
-      throw UnimplementedError();
-
-  @override
-  Future<PsychicRespondResult> respondSession(
-    String sessionId, {
-    required String action,
   }) =>
       throw UnimplementedError();
 
