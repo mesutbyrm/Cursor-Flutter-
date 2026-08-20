@@ -15,6 +15,7 @@ class FakeLivePsychicsRepository implements LivePsychicsRepository {
     this.roomResult,
     this.psychicResult,
     PsychicRespondResult? respondResult,
+    this.submitReviewResult = true,
   }) {
     if (respondResult != null) this.respondResult = respondResult;
   }
@@ -23,8 +24,13 @@ class FakeLivePsychicsRepository implements LivePsychicsRepository {
   PsychicRoomEntity? roomResult;
   PsychicEntity? psychicResult;
   PsychicRespondResult respondResult = const PsychicRespondResult(success: true);
+  bool submitReviewResult;
   String? lastRespondAction;
   String? lastRespondSessionId;
+  String? lastReviewSessionId;
+  String? lastReviewTellerId;
+  int? lastReviewRating;
+  String? lastReviewComment;
 
   @override
   Future<PsychicRespondResult> respondSession(
@@ -107,8 +113,13 @@ class FakeLivePsychicsRepository implements LivePsychicsRepository {
     required String tellerId,
     required int rating,
     String? comment,
-  }) =>
-      throw UnimplementedError();
+  }) async {
+    lastReviewSessionId = sessionId;
+    lastReviewTellerId = tellerId;
+    lastReviewRating = rating;
+    lastReviewComment = comment;
+    return submitReviewResult;
+  }
 
   @override
   Future<List<PsychicEntity>> fetchFavoritePsychics() => throw UnimplementedError();

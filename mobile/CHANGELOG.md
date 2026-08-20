@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.308+344 (2026-08-20) — Canlı Falcılar store ve sheet testleri
+
+- **Session store:** `psychic_session_store_test` — save/load/clear, bozuk JSON, overwrite
+- **Süre ekle sheet:** `psychic_extend_sheet_test` — jeton, staff muafiyeti, iptal
+- **Değerlendirme sheet:** `psychic_review_sheet_test` — gönder / şimdi değil
+- **Fake repo:** `submitReview` izleme alanları eklendi
+
 ## 1.0.307+343 (2026-08-20) — Canlı Falcılar restore ve push bridge test
 
 - **Session restore:** `psychic_session_restore_test` — diskten bekleme oturumu yükleme
