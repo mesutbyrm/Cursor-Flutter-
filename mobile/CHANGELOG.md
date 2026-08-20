@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.322+358 (2026-08-20) — Fal & Tarot V2 premium UI
+
+- **Kart:** Paylaşılan `FortunePremiumCard` — fal görseli, gradient overlay, jeton rozeti
+- **API:** `GET /api/mobile/home` fortuneCards → `GET /api/fortune-request-types` → katalog yedek
+- **Slug:** `FortuneDisplayResolver` + `FortuneCatalog` — doğru `/fortune/{slug}` navigasyonu
+- **Sayfalar:** Ana sayfa, `/fortune` hub grid, `/fortune/types` aynı design system
+- **Durum:** Skeleton, error/retry, kompakt empty state
+
 ## 1.0.320+356 (2026-08-20) — Ana Sayfa V1 Premium UI
 
 - **Tasarım:** Koyu premium tema, cam kartlar, tutarlı tipografi ve accent kullanımı

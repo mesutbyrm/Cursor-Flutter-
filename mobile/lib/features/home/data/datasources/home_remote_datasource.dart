@@ -735,6 +735,7 @@ class HomeRemoteDataSource {
         _str(m, const ['image', 'imageUrl', 'thumbnail']),
       ),
       routePath: href.isNotEmpty ? href : null,
+      jetonCost: asInt(pick(m, ['jetonCost', 'cost', 'price', 'jetonPrice'])),
     );
   }
 
