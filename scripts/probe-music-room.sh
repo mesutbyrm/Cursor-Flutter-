@@ -82,12 +82,12 @@ print(items[0].get('title') or 'Probe')
 " 2>/dev/null || echo "Probe")
 [[ -z "$video_id" ]] && video_id="cpp69ghR1IM"
 
-sr_payload=$(python3 -c "import json; print(json.dumps({'videoId':'$video_id','title':'''$title''','youtubeUrl':'https://www.youtube.com/watch?v=$video_id','priority':True}))")
-sr_body=$(curl -sS -X POST "$BASE/api/chat/rooms/$ROOM_SLUG/song-request" \
+sr_payload=$(python3 -c "import json; print(json.dumps({'videoId':'$video_id','title':'''$title''','youtubeUrl':'https://www.youtube.com/watch?v=$video_id','requestType':'audio','videoMode':'audio','priority':True}))")
+sr_body=$(curl -sS -X POST "$BASE/api/chat/rooms/$ROOM_ID/song-request" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "$sr_payload")
-sr_code=$(http_code -X POST "$BASE/api/chat/rooms/$ROOM_SLUG/song-request" \
+sr_code=$(http_code -X POST "$BASE/api/chat/rooms/$ROOM_ID/song-request" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "$sr_payload")
@@ -121,7 +121,7 @@ cat >"$OUT" <<EOF
 
 ---
 
-## POST song-request (slug \`$ROOM_SLUG\`) → HTTP $sr_code
+## POST song-request (id \`$ROOM_ID\`, slug \`$ROOM_SLUG\`) → HTTP $sr_code
 
 \`\`\`json
 $sr_json

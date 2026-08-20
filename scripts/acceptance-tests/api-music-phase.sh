@@ -163,11 +163,11 @@ gate_song_request_insufficient() {
     return
   fi
   local code body err
-  body=$(curl -sS -X POST "$BASE/api/chat/rooms/$MUSIC_PROBE_ROOM/song-request" \
+  body=$(curl -sS -X POST "$BASE/api/chat/rooms/$ROOM_ID/song-request" \
     -H "Authorization: Bearer $USER_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"videoId":"dQw4w9WgXcQ","title":"Test Song","requestType":"audio","videoMode":"audio"}')
-  code=$(http_code -X POST "$BASE/api/chat/rooms/$MUSIC_PROBE_ROOM/song-request" \
+  code=$(http_code -X POST "$BASE/api/chat/rooms/$ROOM_ID/song-request" \
     -H "Authorization: Bearer $USER_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"videoId":"dQw4w9WgXcQ","title":"Test Song","requestType":"audio","videoMode":"audio"}')

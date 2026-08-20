@@ -1,7 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-20 11:05 UTC — `1.0.291+327`  
-**Agent:** API voice seat main'de; faz0-verify AUTOMATED_PASS (jeton WARN)  
+**Son güncelleme:** 2026-08-20 11:33 UTC — jeton=9920, M7 HTTP 200, m5-preflight ✅  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (15 PASS)
 
 ---
@@ -75,6 +74,11 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-08-20 devam 4)
+
+- Jeton=10000 yüklendi; M7 slug→500 düzeltmesi (`probe-music-room.sh` tam cuid + audio body)
+- M7 song-request **HTTP 200**; m5-preflight **geçti**; jeton=9920
 
 ## Oturum günlüğü (2026-08-20 devam 3)
 

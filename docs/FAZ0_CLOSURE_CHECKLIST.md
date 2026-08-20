@@ -1,6 +1,6 @@
 # FAZ 0 — Kapanış kontrol listesi
 
-**Durum:** INCOMPLETE — M5 cihaz + jeton bekliyor  
+**Durum:** Jeton + M7 + preflight ✅ — yalnızca M5 cihaz bekliyor  
 **APK:** `1.0.291+327` (`apk-latest`)  
 **Otomatik:** `bash scripts/faz0-sequential.sh` (sıralı ilerleme) · `bash scripts/faz0-verify.sh` (özet)
 
@@ -26,15 +26,13 @@
 
 ### 1. Jeton (M5 + M7 önkoşul)
 
-- [ ] Test hesabına ≥50 jeton — `bash scripts/admin-jeton-cheatsheet.sh`
-- [ ] `bash scripts/wait-for-jeton.sh` veya jeton ≥10 sonrası `m5-preflight` ✅
-
-Rehber: `docs/M5_M7_JETON_BLOCKER.md`
+- [x] Test hesabına ≥50 jeton — jeton=9920 (2026-08-20)
+- [x] `m5-preflight` ✅
 
 ### 2. M7 — song-request HTTP 200
 
-- [ ] `bash scripts/m7-on-jeton.sh` (jeton ≥10)
-- [ ] `M7_MUSIC_SSE_CAPTURE.md` içinde HTTP **200** JSON
+- [x] `bash scripts/m7-on-jeton.sh` — HTTP **200** (`cmoohrbrx00a4nt08zlkdjyil`)
+- [x] `M7_MUSIC_SSE_CAPTURE.md` içinde HTTP **200** JSON
 
 ### 3. M5 — Android cihaz E2E
 
