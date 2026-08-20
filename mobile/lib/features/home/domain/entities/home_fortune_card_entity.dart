@@ -9,6 +9,7 @@ class HomeFortuneCardEntity {
     required this.icon,
     this.imageUrl,
     this.routePath,
+    this.jetonCost,
     this.accent = const Color(0xFFB832FF),
   });
 
@@ -18,6 +19,7 @@ class HomeFortuneCardEntity {
   final String icon;
   final String? imageUrl;
   final String? routePath;
+  final int? jetonCost;
   final Color accent;
 
   String get navigationSlug {
