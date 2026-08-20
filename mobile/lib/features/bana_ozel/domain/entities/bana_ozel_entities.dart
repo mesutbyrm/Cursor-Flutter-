@@ -1,3 +1,4 @@
+import '../../../../core/images/canlifal_image_urls.dart';
 import '../../../../core/util/json_util.dart';
 
 /// `GET /api/bana-ozel` katalog satırı.
@@ -10,21 +11,47 @@ class BanaOzelItemEntity {
     required this.jetonCost,
     required this.category,
     this.descTr,
+    this.imageUrl,
+    this.horoscopeSign,
     this.sortOrder = 0,
     this.isActive = true,
   });
 
   factory BanaOzelItemEntity.fromJson(Map<String, dynamic> json) {
+    final iconRaw =
+        pick(json, ['icon', 'emoji'])?.toString().trim() ?? '✨';
+    final imageRaw = pick(json, [
+      'imageUrl',
+      'image',
+      'cover',
+      'thumbnail',
+      'coverUrl',
+    ])?.toString()
+        .trim();
+    String? imageUrl;
+    if (imageRaw != null && imageRaw.isNotEmpty) {
+      if (imageRaw.startsWith('http') || imageRaw.startsWith('/')) {
+        imageUrl = CanlifalImageUrls.resolve(imageRaw);
+      }
+    }
     return BanaOzelItemEntity(
       id: pick(json, ['id', '_id'])?.toString() ?? '',
       slug: pick(json, ['slug', 'key'])?.toString() ?? '',
       nameTr: pick(json, ['nameTr', 'name', 'title', 'label'])?.toString() ??
           'İçerik',
       descTr: pick(json, ['descTr', 'description', 'desc'])?.toString(),
-      icon: pick(json, ['icon', 'emoji'])?.toString() ?? '✨',
-      jetonCost: asInt(pick(json, ['jetonCost', 'cost', 'price'])),
+      icon: iconRaw,
+      jetonCost: asInt(pick(json, ['jetonCost', 'cost', 'price', 'jetonPrice'])),
       category:
           pick(json, ['category', 'type'])?.toString() ?? 'fortune',
+      imageUrl: imageUrl,
+      horoscopeSign: pick(json, [
+        'horoscopeSign',
+        'zodiacSign',
+        'sign',
+        'burc',
+        'zodiac',
+      ])?.toString(),
       sortOrder: asInt(pick(json, ['sortOrder', 'order'])),
       isActive: json['isActive'] != false && json['isVisible'] != false,
     );
@@ -37,6 +64,8 @@ class BanaOzelItemEntity {
   final String icon;
   final int jetonCost;
   final String category;
+  final String? imageUrl;
+  final String? horoscopeSign;
   final int sortOrder;
   final bool isActive;
 
