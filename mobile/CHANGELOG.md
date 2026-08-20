@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.319+355 (2026-08-20) — Bana Özel hub chip layout
+
+- **UI:** Fal hub önizleme chip’i taşma düzeltmesi (Expanded metin alanı)
+
 ## 1.0.318+354 (2026-08-20) — Bana Özel hub test layout
 
 - **Test:** `bana_ozel_hub_section_test` geniş surface (overflow düzeltmesi)
