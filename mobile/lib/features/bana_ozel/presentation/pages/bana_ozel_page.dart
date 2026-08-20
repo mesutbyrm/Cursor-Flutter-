@@ -135,6 +135,13 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authControllerProvider, (prev, next) {
+      if (prev?.valueOrNull?.id != next.valueOrNull?.id &&
+          _pendingSlug != null &&
+          mounted) {
+        setState(() => _pendingSlugAttempted = false);
+      }
+    });
     final catalog = ref.watch(banaOzelCatalogProvider);
     const gold = Color(0xFFFFD54F);
 
