@@ -26,6 +26,16 @@ import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/voice_room_seat_slot.dart';
 import '../../domain/entities/voice_room_state_snapshot.dart';
 
+class ChatRoomPresencePage {
+  const ChatRoomPresencePage({
+    required this.users,
+    this.onlineCount,
+  });
+
+  final List<ChatRoomPresence> users;
+  final int? onlineCount;
+}
+
 class ChatRoomRemoteDataSource {
   ChatRoomRemoteDataSource(this._dio, {YoutubeMusicSearchCache? searchCache})
       : _searchCache = searchCache ?? YoutubeMusicSearchCache();
@@ -375,7 +385,7 @@ class ChatRoomRemoteDataSource {
     }
   }
 
-  Future<List<ChatRoomPresence>> fetchPresence(
+  Future<ChatRoomPresencePage> fetchPresencePage(
     String roomKey, {
     String? alternateKey,
   }) async {
@@ -384,8 +394,8 @@ class ChatRoomRemoteDataSource {
         roomId: roomKey,
         roomType: 'voice',
       );
-      if (page.users.isNotEmpty) {
-        return page.users
+      if (page.users.isNotEmpty || page.totalCount > 0) {
+        final users = page.users
             .map(
               (u) => ChatRoomPresence(
                 id: u.userId,
@@ -398,6 +408,10 @@ class ChatRoomRemoteDataSource {
             )
             .where((p) => p.id.isNotEmpty)
             .toList();
+        return ChatRoomPresencePage(
+          users: users,
+          onlineCount: page.totalCount > 0 ? page.totalCount : users.length,
+        );
       }
     } on ApiException catch (e) {
       if (e.statusCode != 404 && e.statusCode != 405) rethrow;
@@ -405,8 +419,40 @@ class ChatRoomRemoteDataSource {
 
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final res = await _dio.safeGet<dynamic>(presencePath(key));
-      return _presenceList(res.data);
+      final users = _presenceList(res.data);
+      return ChatRoomPresencePage(
+        users: users,
+        onlineCount:
+            _extractOnlineCountFromResponse(res.data) ?? users.length,
+      );
     });
+  }
+
+  int? _extractOnlineCountFromResponse(dynamic data) {
+    if (data is! Map) return null;
+    final map = Map<String, dynamic>.from(data);
+    for (final key in const [
+      'onlineCount',
+      'onlineUsers',
+      'totalCount',
+      'count',
+    ]) {
+      final v = map[key];
+      if (v is num && v >= 0) return v.toInt();
+    }
+    final nested = map['data'];
+    if (nested is Map) {
+      return _extractOnlineCountFromResponse(nested);
+    }
+    return null;
+  }
+
+  Future<List<ChatRoomPresence>> fetchPresence(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    final page = await fetchPresencePage(roomKey, alternateKey: alternateKey);
+    return page.users;
   }
 
   /// Tek kaynaklı oda durumu — `GET /api/chat/rooms/{roomId}/state`.

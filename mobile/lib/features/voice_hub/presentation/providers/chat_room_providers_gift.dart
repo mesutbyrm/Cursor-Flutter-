@@ -17,6 +17,9 @@ extension VoiceRoomGiftControls on VoiceRoomLiveController {
           source: 'voice_announce',
         );
     ref.read(voiceRecentGiftsProvider.notifier).record(ev);
+    try {
+      ref.read(voiceSeatGiftFlashProvider(_roomKey).notifier).enqueue(ev);
+    } catch (_) {}
     appendGiftChatMessage(ev);
   }
 

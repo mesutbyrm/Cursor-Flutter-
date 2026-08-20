@@ -4,6 +4,7 @@ import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../../domain/gift_engine_sse_router.dart';
 import '../../domain/gift_payload_util.dart';
+import '../../../voice_hub/presentation/providers/voice_seat_gift_flash_provider.dart';
 import '../../../voice_hub/presentation/providers/voice_gift_providers.dart';
 import 'gift_session_controller.dart';
 import 'gift_sync_log.dart';
@@ -42,6 +43,7 @@ void dispatchGiftSsePayload({
       GiftSyncLog.broadcast(sessionKey, 'sse', ev.id);
       if (voiceRealtime) {
         ref.read(voiceRoomGiftRealtimeProvider).publishRemote(ev);
+        ref.read(voiceSeatGiftFlashProvider(sessionKey).notifier).enqueue(ev);
       } else {
         ref.read(liveGiftRealtimeProvider).publishRemote(ev);
       }
@@ -82,6 +84,7 @@ void dispatchGiftSsePayloadRef({
       GiftSyncLog.broadcast(sessionKey, 'sse', ev.id);
       if (voiceRealtime) {
         ref.read(voiceRoomGiftRealtimeProvider).publishRemote(ev);
+        ref.read(voiceSeatGiftFlashProvider(sessionKey).notifier).enqueue(ev);
       } else {
         ref.read(liveGiftRealtimeProvider).publishRemote(ev);
       }
