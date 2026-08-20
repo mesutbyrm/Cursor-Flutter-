@@ -129,6 +129,33 @@ class _SpeakQueueSheetState extends ConsumerState<_SpeakQueueSheet>
     }
   }
 
+  Future<void> _reject(String userId) async {
+    final ctrl = ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
+    final err = await ctrl.rejectSpeakRequest(userId);
+    if (mounted) {
+      if (err != null) {
+        showJetonAwareError(context, err, ref: ref);
+      } else {
+        setState(() => _pendingIds.remove(userId));
+      }
+    }
+  }
+
+  Future<void> _block(String userId) async {
+    final ctrl = ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
+    final err = await ctrl.blockSpeakRequest(userId);
+    if (mounted) {
+      if (err != null) {
+        showJetonAwareError(context, err, ref: ref);
+      } else {
+        setState(() => _pendingIds.remove(userId));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kullanıcı engellendi')),
+        );
+      }
+    }
+  }
+
   Future<void> _makeDj(String userId) async {
     final ctrl = ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
     final err = await ctrl.addRoomDj(userId);
@@ -211,6 +238,8 @@ class _SpeakQueueSheetState extends ConsumerState<_SpeakQueueSheet>
                                   user: p,
                                   approveLabel: 'Onayla',
                                   onApprove: () => _approve(p.id),
+                                  onReject: () => _reject(p.id),
+                                  onBlock: () => _block(p.id),
                                   onDj: widget.perms.canManageDj
                                       ? () => _makeDj(p.id)
                                       : null,
@@ -257,12 +286,16 @@ class _ListenerTile extends StatelessWidget {
     required this.user,
     required this.approveLabel,
     required this.onApprove,
+    this.onReject,
+    this.onBlock,
     this.onDj,
   });
 
   final ChatRoomPresence user;
   final String approveLabel;
   final VoidCallback onApprove;
+  final VoidCallback? onReject;
+  final VoidCallback? onBlock;
   final VoidCallback? onDj;
 
   @override
@@ -289,6 +322,17 @@ class _ListenerTile extends StatelessWidget {
               tooltip: 'DJ yap',
               icon: const Icon(Icons.headphones_rounded, size: 20),
               onPressed: onDj,
+            ),
+          if (onBlock != null)
+            IconButton(
+              tooltip: 'Engelle',
+              icon: const Icon(Icons.block_rounded, size: 20, color: Colors.redAccent),
+              onPressed: onBlock,
+            ),
+          if (onReject != null)
+            TextButton(
+              onPressed: onReject,
+              child: const Text('Reddet'),
             ),
           FilledButton.tonal(
             onPressed: onApprove,

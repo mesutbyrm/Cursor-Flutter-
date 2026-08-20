@@ -156,6 +156,27 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       case 'gift_ranking_updated':
       case 'giftrankingupdated':
         return;
+      case 'voice_request':
+      case 'hand_raised':
+      case 'handraised':
+        _applyRoomEventVoiceRequest(payload);
+        return;
+      case 'voice_request_cancelled':
+      case 'voice_request_canceled':
+        _applyRoomEventVoiceRequestCancelled(payload);
+        return;
+      case 'voice_request_accepted':
+        _applyRoomEventVoiceRequestAccepted(payload);
+        return;
+      case 'voice_request_rejected':
+        _applyRoomEventVoiceRequestRejected(payload);
+        return;
+      case 'voice_request_blocked':
+        _applyRoomEventVoiceRequestBlocked(payload);
+        return;
+      case 'voice_request_unblocked':
+        _applyRoomEventVoiceRequestUnblocked(payload);
+        return;
       case 'owner_changed':
         _applyRoomEventOwnerChanged(payload);
         return;
@@ -476,5 +497,119 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       );
     }
     return changed ? next : presence;
+  }
+
+  void _applyRoomEventVoiceRequest(Map<String, dynamic> payload) {
+    final incoming = VoiceSpeakRequestIncoming.fromPayload(_roomKey, payload);
+    if (incoming.requestId.isEmpty || incoming.userId.isEmpty) return;
+    ref.read(voiceSpeakRequestQueueProvider.notifier).enqueue(incoming);
+  }
+
+  void _applyRoomEventVoiceRequestCancelled(Map<String, dynamic> payload) {
+    final requestId = payload['requestId']?.toString() ?? '';
+    final userId = payload['userId']?.toString() ?? '';
+    if (requestId.isNotEmpty) {
+      ref
+          .read(voiceSpeakRequestQueueProvider.notifier)
+          .removeForRequest(_roomKey, requestId);
+    } else if (userId.isNotEmpty) {
+      ref
+          .read(voiceSpeakRequestQueueProvider.notifier)
+          .removeForUser(_roomKey, userId);
+    }
+  }
+
+  void _applyRoomEventVoiceRequestAccepted(Map<String, dynamic> payload) {
+    final userId = payload['userId']?.toString() ?? '';
+    final requestId = payload['requestId']?.toString() ?? '';
+    if (requestId.isNotEmpty) {
+      ref
+          .read(voiceSpeakRequestQueueProvider.notifier)
+          .removeForRequest(_roomKey, requestId);
+    } else if (userId.isNotEmpty) {
+      ref
+          .read(voiceSpeakRequestQueueProvider.notifier)
+          .removeForUser(_roomKey, userId);
+    }
+    final selfId = ref.read(authControllerProvider).valueOrNull?.id ?? '';
+    if (selfId.isNotEmpty && selfId == userId) {
+      ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
+      unawaited(_tryAutoPrivilegedSeat());
+    }
+  }
+
+  void _applyRoomEventVoiceRequestRejected(Map<String, dynamic> payload) {
+    final userId = payload['userId']?.toString() ?? '';
+    final requestId = payload['requestId']?.toString() ?? '';
+    if (requestId.isNotEmpty) {
+      ref
+          .read(voiceSpeakRequestQueueProvider.notifier)
+          .removeForRequest(_roomKey, requestId);
+    } else if (userId.isNotEmpty) {
+      ref
+          .read(voiceSpeakRequestQueueProvider.notifier)
+          .removeForUser(_roomKey, userId);
+    }
+    final selfId = ref.read(authControllerProvider).valueOrNull?.id ?? '';
+    if (selfId.isNotEmpty && selfId == userId) {
+      ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
+      final by = payload['handledByName']?.toString();
+      final msg = payload['message']?.toString() ?? payload['reason']?.toString();
+      final text = msg?.trim().isNotEmpty == true
+          ? msg!.trim()
+          : by?.trim().isNotEmpty == true
+              ? '$by konuşma isteğinizi reddetti'
+              : 'Konuşma isteğiniz reddedildi';
+      ref.read(voiceSpeakRequestUserNoticeProvider.notifier).state =
+          VoiceSpeakRequestUserNotice(message: text);
+    }
+  }
+
+  void _applyRoomEventVoiceRequestBlocked(Map<String, dynamic> payload) {
+    final userId = payload['userId']?.toString() ?? '';
+    final requestId = payload['requestId']?.toString() ?? '';
+    if (requestId.isNotEmpty) {
+      ref
+          .read(voiceSpeakRequestQueueProvider.notifier)
+          .removeForRequest(_roomKey, requestId);
+    } else if (userId.isNotEmpty) {
+      ref
+          .read(voiceSpeakRequestQueueProvider.notifier)
+          .removeForUser(_roomKey, userId);
+    }
+    final selfId = ref.read(authControllerProvider).valueOrNull?.id ?? '';
+    if (selfId.isNotEmpty && selfId == userId) {
+      final reason = payload['reason']?.toString();
+      ref.read(voiceRoomUiProvider.notifier).setSpeakRequestBlocked(
+            blocked: true,
+            reason: reason,
+          );
+      final by = payload['handledByName']?.toString();
+      final text = reason?.trim().isNotEmpty == true
+          ? reason!.trim()
+          : by?.trim().isNotEmpty == true
+              ? '$by sizi bu odada engelledi'
+              : 'Bu odada konuşma isteği göndermeniz engellendi';
+      ref.read(voiceSpeakRequestUserNoticeProvider.notifier).state =
+          VoiceSpeakRequestUserNotice(message: text, blocked: true);
+    }
+  }
+
+  void _applyRoomEventVoiceRequestUnblocked(Map<String, dynamic> payload) {
+    final userId = payload['userId']?.toString() ?? '';
+    final selfId = ref.read(authControllerProvider).valueOrNull?.id ?? '';
+    if (selfId.isNotEmpty && selfId == userId) {
+      ref.read(voiceRoomUiProvider.notifier).setSpeakRequestBlocked(
+            blocked: false,
+          );
+      ref.read(voiceSpeakRequestUserNoticeProvider.notifier).state =
+          const VoiceSpeakRequestUserNotice(
+        message: 'Konuşma engeliniz kaldırıldı',
+      );
+    } else if (userId.isNotEmpty) {
+      ref
+          .read(voiceSpeakRequestQueueProvider.notifier)
+          .removeForUser(_roomKey, userId);
+    }
   }
 }

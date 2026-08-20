@@ -437,6 +437,18 @@ abstract final class ApiEndpoints {
   ) =>
       '/api/chat/rooms/$roomId/speak-requests/$targetUserId/approve';
 
+  static String chatRoomSpeakRequestReject(
+    String roomId,
+    String targetUserId,
+  ) =>
+      '/api/chat/rooms/$roomId/speak-requests/$targetUserId/reject';
+
+  static String chatRoomSpeakRequestBlock(
+    String roomId,
+    String targetUserId,
+  ) =>
+      '/api/chat/rooms/$roomId/speak-requests/$targetUserId/block';
+
   static String chatRoomMusicSettings(String roomId) =>
       '/api/chat/rooms/$roomId/music-settings';
 

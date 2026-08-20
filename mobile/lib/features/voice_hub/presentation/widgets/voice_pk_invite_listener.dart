@@ -34,7 +34,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       if (!mounted || _showing) return;
       _pollTick++;
       unawaited(_pollPendingInvites());

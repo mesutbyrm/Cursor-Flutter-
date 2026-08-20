@@ -23,6 +23,7 @@ import '../../domain/entities/moderation_result.dart';
 import '../../domain/entities/voice_room_ban_entry.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
 import '../../domain/entities/chat_room_my_permissions.dart';
+import '../../domain/entities/speak_request_status.dart';
 import '../../domain/entities/voice_room_seat_slot.dart';
 import '../../domain/entities/voice_room_state_snapshot.dart';
 
@@ -1235,6 +1236,52 @@ class ChatRoomRemoteDataSource {
         ApiEndpoints.chatRoomSpeakRequestApprove(key, targetUserId),
       );
     });
+  }
+
+  Future<void> rejectSpeakRequest(
+    String roomKey,
+    String targetUserId, {
+    String? alternateKey,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.chatRoomSpeakRequestReject(key, targetUserId),
+      );
+    });
+  }
+
+  Future<void> blockSpeakRequest(
+    String roomKey,
+    String targetUserId, {
+    String? alternateKey,
+    String? reason,
+    int? durationMinutes,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final body = <String, dynamic>{};
+      if (reason != null && reason.trim().isNotEmpty) {
+        body['reason'] = reason.trim();
+      }
+      if (durationMinutes != null && durationMinutes > 0) {
+        body['durationMinutes'] = durationMinutes;
+      }
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.chatRoomSpeakRequestBlock(key, targetUserId),
+        data: body.isEmpty ? null : body,
+      );
+    });
+  }
+
+  Future<SpeakRequestStatus> fetchMySpeakRequestStatus(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    SpeakRequestStatus status = SpeakRequestStatus.empty;
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safeGet<dynamic>(speakRequestPath(key));
+      status = SpeakRequestStatus.fromJson(res.data);
+    });
+    return status;
   }
 
   static String banPath(String roomId, String userId) =>

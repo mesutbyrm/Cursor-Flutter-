@@ -14,6 +14,8 @@ class VoiceRoomUiState {
   const VoiceRoomUiState({
     this.headphonesOn = true,
     this.requestSpeakPending = false,
+    this.speakRequestBlocked = false,
+    this.speakBlockReason,
     this.effect = VoiceEffectPreset.normal,
     this.effectVolume = 0.8,
     this.listenerMessagesEnabled = true,
@@ -25,6 +27,8 @@ class VoiceRoomUiState {
 
   final bool headphonesOn;
   final bool requestSpeakPending;
+  final bool speakRequestBlocked;
+  final String? speakBlockReason;
   final VoiceEffectPreset effect;
   final double effectVolume;
   final bool listenerMessagesEnabled;
@@ -43,6 +47,9 @@ class VoiceRoomUiState {
   VoiceRoomUiState copyWith({
     bool? headphonesOn,
     bool? requestSpeakPending,
+    bool? speakRequestBlocked,
+    String? speakBlockReason,
+    bool clearSpeakBlockReason = false,
     VoiceEffectPreset? effect,
     double? effectVolume,
     bool? listenerMessagesEnabled,
@@ -54,6 +61,10 @@ class VoiceRoomUiState {
     return VoiceRoomUiState(
       headphonesOn: headphonesOn ?? this.headphonesOn,
       requestSpeakPending: requestSpeakPending ?? this.requestSpeakPending,
+      speakRequestBlocked: speakRequestBlocked ?? this.speakRequestBlocked,
+      speakBlockReason: clearSpeakBlockReason
+          ? null
+          : (speakBlockReason ?? this.speakBlockReason),
       effect: effect ?? this.effect,
       effectVolume: effectVolume ?? this.effectVolume,
       listenerMessagesEnabled:
@@ -86,6 +97,17 @@ class VoiceRoomUiNotifier extends Notifier<VoiceRoomUiState> {
 
   void setRequestSpeakPending(bool pending) =>
       state = state.copyWith(requestSpeakPending: pending);
+
+  void setSpeakRequestBlocked({
+    required bool blocked,
+    String? reason,
+  }) =>
+      state = state.copyWith(
+        speakRequestBlocked: blocked,
+        speakBlockReason: reason,
+        clearSpeakBlockReason: reason == null && !blocked,
+        requestSpeakPending: blocked ? false : state.requestSpeakPending,
+      );
 
   void toggleListenerMessages() => state = state.copyWith(
         listenerMessagesEnabled: !state.listenerMessagesEnabled,

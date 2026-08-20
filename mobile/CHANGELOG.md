@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.294+330 (2026-08-20) — Konuşma isteği backend parity
+
+- **API:** `POST speak-requests/{userId}/reject` ve `.../block`; `GET speak-request` engel + pending durumu
+- **SSE:** `voice_request`, `voice_request_accepted/rejected/blocked/cancelled/unblocked` işlenir
+- **Host popup:** EVET / HAYIR / ENGELLE (`VoiceSpeakRequestListener`)
+- **Kullanıcı:** Red/engel snackbar; engelde el kaldır gizlenir
+- **Kuyruk sheet:** Reddet ve Engelle butonları
+- **PK poll:** Davet yedek poll 10 sn (Stage 16)
+
 ## 1.0.293+329 (2026-08-20) — CI derleme düzeltmesi
 
 - **voice_seat_gift_flash_stack:** `LiveGiftCatalog` import yolu düzeltildi (`../../../../live/...`) — CodeQL/FAZ0 build FAIL giderildi

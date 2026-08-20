@@ -182,6 +182,19 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       await ref.read(chatRoomRemoteProvider).requestSpeak(_roomKey);
       ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(true);
       return null;
+    } on DioException catch (e) {
+      final body = e.response?.data;
+      if (body is Map && body['blocked'] == true) {
+        final reason = body['reason']?.toString();
+        ref.read(voiceRoomUiProvider.notifier).setSpeakRequestBlocked(
+              blocked: true,
+              reason: reason,
+            );
+        return reason?.trim().isNotEmpty == true
+            ? reason!.trim()
+            : 'Bu odada konuşma isteği göndermeniz engellendi.';
+      }
+      return ApiException.userMessage(e);
     } catch (e) {
       final msg = ApiException.userMessage(e);
       if (msg.contains('404')) {
@@ -220,11 +233,24 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       }
     }
     try {
-      final ids = await fetchSpeakRequests();
+      final status = await ref
+          .read(chatRoomRemoteProvider)
+          .fetchMySpeakRequestStatus(_roomKey, alternateKey: _musicAlternateKey);
+      ref.read(voiceRoomUiProvider.notifier).setSpeakRequestBlocked(
+            blocked: status.blocked,
+            reason: status.blockReason,
+          );
       ref
           .read(voiceRoomUiProvider.notifier)
-          .setRequestSpeakPending(ids.contains(user.id));
-    } catch (_) {}
+          .setRequestSpeakPending(status.pending && !status.blocked);
+    } catch (_) {
+      try {
+        final ids = await fetchSpeakRequests();
+        ref
+            .read(voiceRoomUiProvider.notifier)
+            .setRequestSpeakPending(ids.contains(user.id));
+      } catch (_) {}
+    }
   }
 
   Future<String?> approveSpeakRequest(String userId) async {
@@ -232,6 +258,45 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       await ref
           .read(chatRoomRemoteProvider)
           .approveSpeakRequest(_roomKey, userId);
+      ref
+          .read(voiceSpeakRequestQueueProvider.notifier)
+          .removeForUser(_roomKey, userId);
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> rejectSpeakRequest(String userId) async {
+    try {
+      await ref
+          .read(chatRoomRemoteProvider)
+          .rejectSpeakRequest(_roomKey, userId);
+      ref
+          .read(voiceSpeakRequestQueueProvider.notifier)
+          .removeForUser(_roomKey, userId);
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> blockSpeakRequest(
+    String userId, {
+    String? reason,
+    int? durationMinutes,
+  }) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).blockSpeakRequest(
+            _roomKey,
+            userId,
+            alternateKey: _musicAlternateKey,
+            reason: reason,
+            durationMinutes: durationMinutes,
+          );
+      ref
+          .read(voiceSpeakRequestQueueProvider.notifier)
+          .removeForUser(_roomKey, userId);
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

@@ -1111,6 +1111,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final speakPending = ref.watch(
       voiceRoomUiProvider.select((s) => s.requestSpeakPending),
     );
+    final speakBlocked = ref.watch(
+      voiceRoomUiProvider.select((s) => s.speakRequestBlocked),
+    );
     final canRequestMusic = VoiceMusicAccess.canRequestSongs(
       dj: live.dj,
       perms: perms,
@@ -1848,7 +1851,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       onChanged: _onChatChanged,
                       joinNotificationsEnabled: joinNotificationsEnabled,
                       showMusicRequest: false,
-                      showSpeakRequest: user != null && !canSpeak,
+                      showSpeakRequest: user != null && !canSpeak && !speakBlocked,
                       speakRequestPending: speakPending,
                       onSpeakRequest: () => unawaited(
                         requestVoiceRoomBasicSpeak(

@@ -623,6 +623,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       presence: live.presence,
     );
     final speakPending = ui.requestSpeakPending;
+    final speakBlocked = ui.speakRequestBlocked;
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
     final showMusicRequestFab = live.dj.musicEnabled;
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
@@ -971,7 +972,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     headphonesOn: ui.headphonesOn,
                     onToggleAudioOutput: _toggleSpeaker,
                     onInvite: () => unawaited(_shareRoom(room)),
-                    showSpeakRequest: user != null && !canSpeak,
+                    showSpeakRequest: user != null && !canSpeak && !speakBlocked,
                     speakRequestPending: speakPending,
                     onSpeakRequest: () => unawaited(
                       requestVoiceRoomBasicSpeak(

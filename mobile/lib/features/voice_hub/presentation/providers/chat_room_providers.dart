@@ -73,6 +73,7 @@ import '../../domain/entities/voice_room_ban_entry.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
 import '../../domain/entities/voice_room_state_snapshot.dart';
 import '../../domain/entities/voice_room_seat_slot.dart';
+import '../../domain/entities/speak_request_status.dart';
 import '../../../trtc/domain/entities/trtc_credentials.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -100,6 +101,7 @@ import 'voice_seat_gift_flash_provider.dart';
 import 'voice_seat_gift_totals_provider.dart';
 import 'voice_room_diagnostic_provider.dart';
 import 'voice_room_ui_provider.dart';
+import 'voice_speak_request_signal_provider.dart';
 part 'chat_room_providers_music.dart';
 part 'chat_room_providers_playback.dart';
 part 'chat_room_providers_moderation.dart';
@@ -913,6 +915,7 @@ class VoiceRoomLiveController
           ref.read(pkBattleRemoteProvider.notifier).clear();
           ref.read(voiceRoomDiagnosticProvider.notifier).resetForRoom(roomKey);
           ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
+          ref.read(voiceRoomUiProvider.notifier).setSpeakRequestBlocked(blocked: false);
           unawaited(_stopTyping());
         },
         () async {
