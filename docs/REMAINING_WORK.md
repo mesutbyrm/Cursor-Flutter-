@@ -1,7 +1,7 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-19 22:10 UTC — `1.0.287+323`  
-**Agent:** PK davet kabul teardown + apk-latest güncel — jeton + M5 cihaz bekliyor  
+**Son güncelleme:** 2026-08-20 10:17 UTC — `1.0.291+327`  
+**Agent:** Sesli oda P0–P2 tamam — jeton + M5 cihaz bekliyor  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (15 PASS)
 
 ---
@@ -14,7 +14,8 @@
 | FAZ 1–11 | `[x]` otomatik | 15 PASS — `PHASE_TEST_REPORT.md` |
 | FAZ 12 | `[~]` | Otomatik kapılar ✅; cihaz 25 senaryo |
 | FAZ 13 | `[~]` | CI APK ✅ |
-| APK `1.0.287+323` | `[x]` | apk-latest (CI) |
+| APK `1.0.291+327` | `[x]` | apk-latest (CI bekleniyor) |
+| Sesli oda P0–P2 | `[x]` | koltuk-ses, mod popup, giriş şeridi |
 | P0 müzik kod | `[x]` | M5/M7 manuel |
 | P0 PK kod | `[x]` | M5/M7 manuel (bildirim + davet) |
 
@@ -72,6 +73,14 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-08-20)
+
+- Sesli oda P0: `canSpeak` seatIndex, koltuk kaybı mic, USER_MUTED, auto-seat — `1.0.289+325`
+- Sesli oda P1: `canManageUsers` mod popup, dinleyici self-seat, SSE giriş banner — `1.0.290+326`
+- Sesli oda P2: `VoiceRoomUserActions.openUserSheet`, VIP `formatTierEntranceLine` — `1.0.291+327`
+- M5 checklist: Test 7–10 (koltuk-ses, mod popup, self-seat, giriş şeridi)
+- Faz testleri 15/15 PASS
 
 ## Oturum günlüğü (2026-08-19 devam 24)
 

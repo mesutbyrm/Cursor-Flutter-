@@ -1,7 +1,7 @@
 # M5 — Cihaz test kontrol listesi (!istek / müzik)
 
-**Tarih:** 2026-08-19  
-**APK:** `1.0.287+323` veya üzeri (`apk-latest`)  
+**Tarih:** 2026-08-20  
+**APK:** `1.0.291+327` veya üzeri (`apk-latest`)  
 **Hazırlık:** `bash scripts/faz0-handoff.sh` veya `bash scripts/m5-device-prep.sh`
 
 ---
@@ -84,6 +84,52 @@ Jeton yoksa: `docs/M5_M7_JETON_BLOCKER.md` · Durum: `bash scripts/faz0-status.s
 
 ---
 
+## Test 7 — Koltuk ↔ ses (P0)
+
+**Hesaplar:** Normal dinleyici + `+V` yetkili (admin değil) + moderatör
+
+1. Normal dinleyici boş koltuğa tıkla → otur
+2. Mikrofonu aç → konuşabilmeli
+3. Koltuktan in (veya moderatör indirsin)
+4. **Beklenen:**
+   - [ ] `+V` yetkili koltuksuz **yayıncı değil** (dinleyici modu, ses gitmez)
+   - [ ] Normal dinleyici koltuksuz mikrofon açamaz
+   - [ ] Moderatör / oda sahibi koltuksuz da konuşabilir
+
+---
+
+## Test 8 — Moderasyon popup (P1)
+
+**Hesap:** `canMuteUsers` veya `canGiveVoice` olan, tam moderatör olmayan yetkili
+
+1. Chat mesajındaki kullanıcıya tıkla
+2. Koltuktaki kullanıcıya tıkla
+3. Katılımcı listesinden kullanıcıya tıkla
+4. **Beklenen:**
+   - [ ] Üç yerden de **moderasyon paneli** açılır (profil değil)
+   - [ ] Kendi profiline tıklayınca profil sheet (tam mod hariç)
+
+---
+
+## Test 9 — Dinleyici self-seat (P1)
+
+1. Jetonlu normal dinleyici hesabıyla odaya gir
+2. Boş (kilitli olmayan) koltuğa tıkla
+3. **Beklenen:**
+   - [ ] Koltuğa oturur (`seatIndex` güncellenir)
+   - [ ] Mikrofon açılabilir
+
+---
+
+## Test 10 — Giriş bildirimi (P1/P2)
+
+1. Gold / Diamond / yetkili hesapla odaya gir (veya başka cihazdan izle)
+2. **Beklenen:**
+   - [ ] Koltuk altında giriş şeridi: rol etiketi + emoji (ör. `💎 Diamond Üye …`)
+   - [ ] VIP giriş SSE ile de tetiklenir
+
+---
+
 ## Sonuç
 
 | Test | PASS / FAIL | Not |
@@ -94,6 +140,10 @@ Jeton yoksa: `docs/M5_M7_JETON_BLOCKER.md` · Durum: `bash scripts/faz0-status.s
 | Oda çıkışı | | |
 | Sesli PK | | |
 | Canlı PK | | |
+| Koltuk ↔ ses | | |
+| Moderasyon popup | | |
+| Self-seat | | |
+| Giriş bildirimi | | |
 
 **M5 PASS** → `docs/FAZ0_CLOSURE_CHECKLIST.md` · `docs/REMAINING_WORK.md` A9
 
