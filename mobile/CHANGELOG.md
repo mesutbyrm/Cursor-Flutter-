@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.318+354 (2026-08-20) — Bana Özel hub test layout
+
+- **Test:** `bana_ozel_hub_section_test` geniş surface (overflow düzeltmesi)
+
 ## 1.0.317+353 (2026-08-20) — Bana Özel katalog iyileştirmeleri
 
 - **isActive:** pasif içerikler katalogdan filtrelenir

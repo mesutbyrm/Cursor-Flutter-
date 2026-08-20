@@ -9,6 +9,10 @@ import 'package:canlifal_social/features/bana_ozel/presentation/widgets/bana_oze
 void main() {
   group('BanaOzelHubSection', () {
     testWidgets('renders hub band when catalog has items', (tester) async {
+      tester.view.physicalSize = const Size(800, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
