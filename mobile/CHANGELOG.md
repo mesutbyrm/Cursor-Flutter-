@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.306+342 (2026-08-20) — Canlı Falcılar dialog test layout
+
+- **Test:** incoming dialog için büyük surface (overflow önleme)
+
 ## 1.0.305+341 (2026-08-20) — Canlı Falcılar incoming dialog test düzeltmesi
 
 - **Test:** Text.rich için `textContaining`, dialog fade pump süreleri

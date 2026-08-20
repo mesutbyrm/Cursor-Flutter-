@@ -7,6 +7,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/fake_live_psychics_repository.dart';
 
+Future<void> _pumpLargeSurface(WidgetTester tester, Widget widget) async {
+  await tester.binding.setSurfaceSize(const Size(480, 960));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+  await tester.pumpWidget(widget);
+}
+
 void main() {
   group('showPsychicIncomingCallDialog', () {
     testWidgets('reject calls respondSession and closes dialog', (tester) async {
@@ -18,7 +24,8 @@ void main() {
       );
       PsychicIncomingDialogClose? close;
 
-      await tester.pumpWidget(
+      await _pumpLargeSurface(
+        tester,
         ProviderScope(
           overrides: [
             livePsychicsRepositoryProvider.overrideWithValue(repo),
@@ -73,7 +80,8 @@ void main() {
       );
       PsychicIncomingDialogClose? close;
 
-      await tester.pumpWidget(
+      await _pumpLargeSurface(
+        tester,
         ProviderScope(
           overrides: [
             livePsychicsRepositoryProvider.overrideWithValue(repo),
