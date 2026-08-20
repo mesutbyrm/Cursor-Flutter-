@@ -80,5 +80,6 @@ Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incom
 | 1.0.301+337 | Incoming SSE parser ayrıştırma + test, audit dokümanları |
 | 1.0.302+338 | Oda SSE parser, push rol testleri, datasource mock Dio testleri |
 | 1.0.303+339 | Widget testleri — waiting, booking, incoming dialog, video state |
+| 1.0.306+342 | Widget test CI düzeltmeleri (import, layout, pump) |
 
 _Bu dosya agent oturumlarında güncellenir; tamamlandıkça maddeler silinir veya «Tamamlandı» bölümüne taşınır._
