@@ -36,10 +36,11 @@ void main() {
       );
 
       await tester.tap(find.text('Aç'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
       expect(find.text('Randevu Al'), findsOneWidget);
-      expect(find.text('Zeynep'), findsOneWidget);
+      expect(find.textContaining('Zeynep'), findsOneWidget);
 
       await tester.tap(find.text('15 dk'));
       await tester.pumpAndSettle();

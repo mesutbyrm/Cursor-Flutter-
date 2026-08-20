@@ -2,6 +2,7 @@ import 'package:canlifal_social/app/router/app_router.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_status.dart';
+import 'package:canlifal_social/features/live_psychics/domain/repositories/live_psychics_repository.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/screens/psychic_waiting_screen.dart';
 import 'package:flutter/material.dart';

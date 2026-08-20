@@ -14,7 +14,10 @@ class FakeLivePsychicsRepository implements LivePsychicsRepository {
     this.statusResult,
     this.roomResult,
     this.psychicResult,
-  });
+    PsychicRespondResult? respondResult,
+  }) {
+    if (respondResult != null) this.respondResult = respondResult;
+  }
 
   PsychicSessionStatusResult? statusResult;
   PsychicRoomEntity? roomResult;

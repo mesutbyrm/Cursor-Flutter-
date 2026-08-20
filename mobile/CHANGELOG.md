@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.304+340 (2026-08-20) — Canlı Falcılar widget test CI düzeltmesi
+
+- **Test:** `PsychicSessionStatusResult` import, fake repo `respondResult` ctor, booking sheet pump
+
 ## 1.0.303+339 (2026-08-20) — Canlı Falcılar widget testleri
 
 - **Bekleme:** `psychic_waiting_screen_test` — state label + bekleme metni
