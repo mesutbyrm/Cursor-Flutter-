@@ -6,6 +6,7 @@ import '../../../domain/entities/chat_room_presence.dart';
 import '../../../domain/entities/voice_room_seat_slot.dart';
 import '../../utils/voice_room_seat_layout.dart';
 import '../../utils/voice_room_seat_capacity.dart';
+import '../../utils/voice_room_speak_access.dart';
 import 'voice_mic_seat.dart';
 
 /// canlifal.com: sol Kurucu (koltuk 1) + sağda 2×5 (koltuk 2–11).
@@ -196,6 +197,11 @@ Set<String> voiceWebOnStageIds({
 }) {
   final seats = VoiceRoomSeatLayout(room: room, presence: presence).build();
   return seats.values.map((p) => p.id).toSet();
+}
+
+/// Koltuk atama / speak-queue — yalnızca backend koltuğu.
+Set<String> voiceBackendSeatedIds(List<ChatRoomPresence> presence) {
+  return VoiceRoomSpeakAccess.backendSeatedUserIds(presence);
 }
 
 List<ChatRoomPresence> voiceWebAudienceOffStage({

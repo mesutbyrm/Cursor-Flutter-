@@ -67,6 +67,34 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     );
   }
 
+  /// Presence `join` body — yetkili kullanıcı için boş koltuk tahmini.
+  int? peekJoinSeatIndexForPrivilegedUser() {
+    if (_roomKey.isEmpty) return null;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return null;
+
+    ChatRoomPresence? self;
+    for (final p in state.presence) {
+      if (p.id == user.id) {
+        self = p;
+        break;
+      }
+    }
+    final existing = self?.seatIndex;
+    if (existing != null && existing >= 1) return existing;
+
+    final priority = _privilegedRolePriority(
+      user,
+      state.serverPermissions,
+      self,
+    );
+    if (priority == null) return null;
+    return _pickAutoSeatIndex(
+      myPriority: priority,
+      presence: state.presence,
+    );
+  }
+
   Future<void> _tryAutoPrivilegedSeat() async {
     if (_roomKey.isEmpty || !state.selfInRoom) return;
     final user = ref.read(authControllerProvider).valueOrNull;

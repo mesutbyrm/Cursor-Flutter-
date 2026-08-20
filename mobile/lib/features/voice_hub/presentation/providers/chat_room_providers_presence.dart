@@ -385,10 +385,12 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       final pendingPass = ref
           .read(pendingRoomPasswordProvider.notifier)
           .peek(_roomKey);
+      final joinSeat = peekJoinSeatIndexForPrivilegedUser();
       final joined = await ref.read(chatRoomRemoteProvider).joinPresence(
             _roomKey,
             nickname: nick,
             password: pendingPass,
+            seatIndex: joinSeat,
           );
       ref.read(pendingRoomPasswordProvider.notifier).clear(_roomKey);
       final merged = _mergeSelf(joined);
@@ -620,5 +622,31 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       if (keys.any((key) => key == raw || key.contains(raw))) return user;
     }
     return null;
+  }
+
+  void _setPresenceMuted(String userId, bool muted) {
+    if (userId.isEmpty) return;
+    var changed = false;
+    final updated = state.presence.map((p) {
+      if (p.id != userId) return p;
+      if (p.isMuted == muted) return p;
+      changed = true;
+      return ChatRoomPresence(
+        id: p.id,
+        name: p.name,
+        nickname: p.nickname,
+        image: p.image,
+        chatRole: p.chatRole,
+        roleSymbol: p.roleSymbol,
+        membership: p.membership,
+        seatIndex: p.seatIndex,
+        isSpeaking: muted ? false : p.isSpeaking,
+        isMuted: muted,
+        micOn: muted ? false : p.micOn,
+      );
+    }).toList(growable: false);
+    if (changed) {
+      state = state.copyWith(presence: updated);
+    }
   }
 }

@@ -954,7 +954,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   }) async {
     final self = ref.read(authControllerProvider).valueOrNull;
     final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
-    final onStage = voiceWebOnStageIds(room: room, presence: live.presence);
+    final onStage = voiceBackendSeatedIds(live.presence);
     VoiceRoomSeatSlot? seatSlot;
     for (final s in live.seatSlots) {
       if (s.index == seatIndex) {

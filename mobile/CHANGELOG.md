@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.289+325 (2026-08-20) — Koltuk ↔ ses P0 düzeltmeleri
+
+- **canSpeak:** Admin/oda sahibi/moderatör hariç yalnızca backend `seatIndex≥1` ile konuşma; `canGiveVoice` koltuksuz izin vermez
+- **Koltuk kaybı / susturma:** Mic kapanınca `voice` session leave; `USER_MUTED` presence günceller
+- **Giriş:** Yetkili kullanıcı presence join'de `seatIndex` gönderir
+
 ## 1.0.288+324 (2026-08-19) — Favoriler oda geçişi teardown
 
 - **Favoriler:** Oda favorisi açılırken entity yüklenemese bile `prepareVoiceRoomSwitch` önce çalışır (eski odada presence kalması)

@@ -1070,20 +1070,34 @@ class VoiceRoomLiveController
           payload['message']?.toString().trim() ?? 'Oda susturması kaldırıldı',
         );
         return;
-      case 'USER_MUTED':
+      case 'USER_MUTED': {
+        final targetId = payload['userId']?.toString() ??
+            payload['targetUserId']?.toString() ??
+            '';
+        if (targetId.isNotEmpty) {
+          _setPresenceMuted(targetId, true);
+        }
         _notifyRealtimeIfBasic(
           VoiceRoomRealtimeKind.mute,
           payload['message']?.toString().trim() ??
               '${payload['userName'] ?? 'Kullanıcı'} susturuldu',
         );
         return;
-      case 'USER_UNMUTED':
+      }
+      case 'USER_UNMUTED': {
+        final targetId = payload['userId']?.toString() ??
+            payload['targetUserId']?.toString() ??
+            '';
+        if (targetId.isNotEmpty) {
+          _setPresenceMuted(targetId, false);
+        }
         _notifyRealtimeIfBasic(
           VoiceRoomRealtimeKind.unmute,
           payload['message']?.toString().trim() ??
               '${payload['userName'] ?? 'Kullanıcı'} susturması kaldırıldı',
         );
         return;
+      }
       case 'USER_KICKED':
         _notifyRealtimeIfBasic(
           VoiceRoomRealtimeKind.moderation,

@@ -273,7 +273,7 @@ Future<void> showVoiceRoomBasicAssignSeatSheet({
 }) async {
   final self = ref.read(authControllerProvider).valueOrNull;
   final ctrl = ref.read(voiceRoomLiveProvider(liveKey).notifier);
-  final onStage = voiceWebOnStageIds(room: room, presence: live.presence);
+  final onStage = voiceBackendSeatedIds(live.presence);
   VoiceRoomSeatSlot? seatSlot;
   for (final s in live.seatSlots) {
     if (s.index == seatIndex) {

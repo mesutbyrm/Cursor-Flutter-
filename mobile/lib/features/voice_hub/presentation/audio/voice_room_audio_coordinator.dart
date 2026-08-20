@@ -225,7 +225,14 @@ class VoiceRoomAudioCoordinator {
       if (_trtc.inChannel) {
         await _trtc.setMicEnabled(false);
       }
+      final ds = _remote;
+      if (ds != null) {
+        try {
+          await ds.leaveVoiceSession(channel);
+        } catch (_) {}
+      }
       _desiredMicOn = false;
+      return;
     } catch (e, st) {
       VoiceRoomDebugLog.log('audio.trtc.mic_toggle.fail', {
         'enabled': enabled,
