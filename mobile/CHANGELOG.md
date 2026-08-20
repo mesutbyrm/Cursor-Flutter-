@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.293+329 (2026-08-20) — CI derleme düzeltmesi
+
+- **voice_seat_gift_flash_stack:** `LiveGiftCatalog` import yolu düzeltildi (`../../../../live/...`) — CodeQL/FAZ0 build FAIL giderildi
+
 ## 1.0.292+328 (2026-08-20) — Sesli oda tam senkronizasyon (P3)
 
 - **Kişi sayısı:** `hubOnlineCount` sunucu kaynağı; yerel presence ile `max()` kaldırıldı; `GET /api/live/online-users` `totalCount` + `GET /state` `onlineCount`
