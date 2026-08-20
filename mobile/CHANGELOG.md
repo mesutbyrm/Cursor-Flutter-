@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.315+351 (2026-08-20) — Bana Özel slug derin bağlantı
+
+- **Derin bağlantı:** `/fortune/bana-ozel?slug=` — vitrin chip’inden doğrudan açma akışı
+- **Auth:** giriş/çıkış sonrası katalog yenileme (jeton + görevler)
+- **Navigasyon:** `openBanaOzelCatalog` helper; `/oyunlar` → `/games-hub`
+- **Test:** catalog notifier applyOpenResult + slug lookup
+
 ## 1.0.314+350 (2026-08-20) — Bana Özel görev navigasyonu + homepage butonları
 
 - **todayTasks:** tıklanabilir chip’ler (growth hub, sosyal paylaşım)

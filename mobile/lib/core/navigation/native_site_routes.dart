@@ -77,7 +77,11 @@ void openNativeSitePath(BuildContext context, String path) {
     context.push('/search?q=futbol');
     return;
   }
-  if (p.startsWith('/games-hub') || p == '/games') {
+  if (p == '/oyunlar' || p == '/games') {
+    context.push('/games-hub');
+    return;
+  }
+  if (p.startsWith('/games-hub')) {
     context.push(p.startsWith('/') ? p : '/$p');
     return;
   }

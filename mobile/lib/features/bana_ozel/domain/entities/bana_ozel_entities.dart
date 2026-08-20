@@ -151,6 +151,15 @@ class BanaOzelCatalogEntity {
     return items.where((e) => e.category == category).toList();
   }
 
+  BanaOzelItemEntity? itemBySlug(String slug) {
+    final key = slug.trim();
+    if (key.isEmpty) return null;
+    for (final item in items) {
+      if (item.slug == key) return item;
+    }
+    return null;
+  }
+
   List<String> get categories =>
       items.map((e) => e.category).toSet().toList()..sort();
 }

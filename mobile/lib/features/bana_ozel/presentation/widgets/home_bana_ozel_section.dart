@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../home/presentation/theme/home_approved_design.dart';
 import '../../../home/presentation/widgets/approved/home_section_title.dart';
 import '../../domain/entities/bana_ozel_entities.dart';
+import '../navigation/bana_ozel_navigation.dart';
 import '../providers/bana_ozel_providers.dart';
 
 /// Ana sayfa — Bana Özel yatay vitrin (`GET /api/bana-ozel`).
@@ -26,7 +26,7 @@ class HomeBanaOzelSection extends ConsumerWidget {
               emoji: '✨',
               title: 'Bana Özel',
               actionLabel: 'Tümü >',
-              onAction: () => context.push('/fortune/bana-ozel'),
+              onAction: () => openBanaOzelCatalog(context),
             ),
             SizedBox(
               height: 118,
@@ -63,7 +63,7 @@ class _Card extends StatelessWidget {
       color: HomeApprovedDesign.surface,
       borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
       child: InkWell(
-        onTap: () => context.push('/fortune/bana-ozel'),
+        onTap: () => openBanaOzelCatalog(context, slug: item.slug),
         borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
         child: Container(
           width: 132,

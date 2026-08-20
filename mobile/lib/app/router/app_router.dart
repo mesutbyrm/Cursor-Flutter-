@@ -412,7 +412,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     pageBuilder: (context, state) =>
                         AppPageTransitions.fadeSlide(
                           key: state.pageKey,
-                          child: const BanaOzelPage(),
+                          child: BanaOzelPage(
+                            initialSlug: state.uri.queryParameters['slug'],
+                          ),
                         ),
                     routes: [
                       GoRoute(

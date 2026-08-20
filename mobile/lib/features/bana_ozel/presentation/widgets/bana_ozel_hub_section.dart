@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../fortune/presentation/widgets/premium_2026/premium_section_header.dart';
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_tokens.dart';
 import '../../domain/entities/bana_ozel_entities.dart';
+import '../navigation/bana_ozel_navigation.dart';
 import '../providers/bana_ozel_providers.dart';
 
 /// Fal & Tarot hub — Bana Özel vitrin bandı.
@@ -35,7 +35,7 @@ class BanaOzelHubSection extends ConsumerWidget {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => context.push('/fortune/bana-ozel'),
+                    onPressed: () => openBanaOzelCatalog(context),
                     child: const Text('Tümü'),
                   ),
                 ],
@@ -45,7 +45,7 @@ class BanaOzelHubSection extends ConsumerWidget {
                 color: Colors.white.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(18),
                 child: InkWell(
-                  onTap: () => context.push('/fortune/bana-ozel'),
+                  onTap: () => openBanaOzelCatalog(context),
                   borderRadius: BorderRadius.circular(18),
                   child: Padding(
                     padding: const EdgeInsets.all(14),
@@ -106,7 +106,10 @@ class BanaOzelHubSection extends ConsumerWidget {
                   separatorBuilder: (_, _) => const SizedBox(width: 8),
                   itemBuilder: (_, i) => _PreviewChip(
                     item: preview[i],
-                    onTap: () => context.push('/fortune/bana-ozel'),
+                    onTap: () => openBanaOzelCatalog(
+                      context,
+                      slug: preview[i].slug,
+                    ),
                   ),
                 ),
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/datasources/bana_ozel_remote_datasource.dart';
 import '../../data/repositories/bana_ozel_repository_impl.dart';
 import '../../domain/entities/bana_ozel_entities.dart';
@@ -22,6 +23,13 @@ final banaOzelCatalogProvider =
 class BanaOzelCatalogNotifier extends AsyncNotifier<BanaOzelCatalogEntity> {
   @override
   Future<BanaOzelCatalogEntity> build() async {
+    ref.listen(authControllerProvider, (prev, next) {
+      final prevId = prev?.valueOrNull?.id;
+      final nextId = next.valueOrNull?.id;
+      if (prevId != nextId) {
+        refresh();
+      }
+    });
     return ref.read(banaOzelRepositoryProvider).fetchCatalog();
   }
 

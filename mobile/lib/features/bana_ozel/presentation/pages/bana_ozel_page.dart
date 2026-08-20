@@ -12,7 +12,10 @@ import '../providers/bana_ozel_providers.dart';
 
 /// Bana Özel kataloğu — `GET /api/bana-ozel` + `POST /api/bana-ozel/open`.
 class BanaOzelPage extends ConsumerStatefulWidget {
-  const BanaOzelPage({super.key});
+  const BanaOzelPage({super.key, this.initialSlug});
+
+  /// Önizleme kartından gelen derin bağlantı (`?slug=`).
+  final String? initialSlug;
 
   @override
   ConsumerState<BanaOzelPage> createState() => _BanaOzelPageState();
@@ -21,6 +24,17 @@ class BanaOzelPage extends ConsumerStatefulWidget {
 class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
   String _category = 'all';
   String? _openingSlug;
+  String? _pendingSlug;
+  bool _pendingSlugAttempted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final slug = widget.initialSlug?.trim();
+    if (slug != null && slug.isNotEmpty) {
+      _pendingSlug = slug;
+    }
+  }
 
   Future<void> _openItem(BanaOzelItemEntity item, int balance) async {
     final user = ref.read(authControllerProvider).valueOrNull;
@@ -29,6 +43,7 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('İçerik açmak için giriş yapın')),
       );
+      setState(() => _pendingSlugAttempted = false);
       context.push('/auth/login');
       return;
     }
@@ -67,7 +82,12 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true || !mounted) {
+      if (confirmed != true) {
+        setState(() => _pendingSlugAttempted = false);
+      }
+      return;
+    }
 
     setState(() => _openingSlug = item.slug);
     try {
@@ -80,17 +100,37 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('İçerik oluşturulamadı')),
         );
+        setState(() => _pendingSlugAttempted = false);
         return;
       }
+      setState(() {
+        _pendingSlug = null;
+        _pendingSlugAttempted = false;
+      });
       await context.push('/fortune/bana-ozel/result', extra: result);
     } catch (e) {
       if (!mounted) return;
+      setState(() => _pendingSlugAttempted = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(ApiException.userMessage(e))),
       );
     } finally {
       if (mounted) setState(() => _openingSlug = null);
     }
+  }
+
+  void _tryOpenPendingSlug(BanaOzelCatalogEntity data) {
+    final slug = _pendingSlug;
+    if (slug == null || _openingSlug != null || _pendingSlugAttempted || !mounted) {
+      return;
+    }
+    final item = data.itemBySlug(slug);
+    if (item == null) {
+      setState(() => _pendingSlug = null);
+      return;
+    }
+    setState(() => _pendingSlugAttempted = true);
+    _openItem(item, data.jetonBalance);
   }
 
   @override
@@ -157,6 +197,9 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                       child: Center(child: Text('Henüz içerik yok')),
                     );
                   }
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _tryOpenPendingSlug(data);
+                  });
                   final filtered = data.itemsForCategory(
                     _category == 'all' ? null : _category,
                   );
