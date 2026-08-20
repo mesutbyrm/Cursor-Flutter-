@@ -53,7 +53,7 @@ Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incom
 
 ## Kalan — manuel / E2E (cihaz)
 
-APK: `1.0.307+343` — iki cihaz veya iki hesap (danışan + falcı) gerekir. CI: [Run 32406393138](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32406393138).
+APK: `1.0.309+345` — iki cihaz veya iki hesap (danışan + falcı) gerekir. CI: [Run 32409418489](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32409418489).
 
 1. **Danışan happy path** — Liste → profil → randevu (10 dk) → bekleme → falcı kabul → reklam → TRTC görüşme → chat → uzat → bitir → yıldız/yorum  
 2. **Falcı happy path** — Dashboard çevrimiçi → gelen diyalog/SSE → kabul → timer başlat → süre ekle → bitir → bahşiş bildirimi  
@@ -88,6 +88,7 @@ APK: `1.0.307+343` — iki cihaz veya iki hesap (danışan + falcı) gerekir. CI
 | 1.0.302+338 | Oda SSE parser, push rol testleri, datasource mock Dio testleri |
 | 1.0.303+339 | Widget testleri — waiting, booking, incoming dialog, video state |
 | 1.0.306+342 | Widget test CI düzeltmeleri (import, layout, pump) |
+| 1.0.309+345 | Extend sheet test layout CI düzeltmesi |
 | 1.0.308+344 | Session store, extend/review sheet testleri |
 | 1.0.307+343 | Session restore + push action bridge testleri, manuel E2E checklist |
 
