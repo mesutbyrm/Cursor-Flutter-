@@ -50,7 +50,7 @@ Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incom
 
 ## Kalan — manuel / E2E (cihaz)
 
-APK: `1.0.306+342` — iki cihaz veya iki hesap (danışan + falcı) gerekir.
+APK: `1.0.307+343` — iki cihaz veya iki hesap (danışan + falcı) gerekir. CI: [Run 32406393138](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32406393138).
 
 1. **Danışan happy path** — Liste → profil → randevu (10 dk) → bekleme → falcı kabul → reklam → TRTC görüşme → chat → uzat → bitir → yıldız/yorum  
 2. **Falcı happy path** — Dashboard çevrimiçi → gelen diyalog/SSE → kabul → timer başlat → süre ekle → bitir → bahşiş bildirimi  
