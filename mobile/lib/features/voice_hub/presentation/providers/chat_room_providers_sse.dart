@@ -175,7 +175,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             ref
                 .read(voiceRoomDiagnosticProvider.notifier)
                 .setPresence(joined: true, count: merged.length);
-            _sse._patchHubPresenceCount(merged.length);
+            unawaited(_sse._refreshHubOnlineCountFromServer());
             if (!wasSse) _sse._schedulePoll();
           },
           onUserJoin: _sse._handleSseUserJoin,
@@ -195,6 +195,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
               return;
             }
             ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
+            ref.read(livePkInviteSignalProvider.notifier).bump();
             VoiceRoomDebugLog.log('sse.pk', {
               'roomId': roomKey,
               'battleId': battle.id,

@@ -13,6 +13,7 @@ import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/widgets/vip_badge.dart';
 import '../../theme/voice_room_tokens.dart';
 import 'voice_seat_avatar_frame.dart';
+import 'voice_seat_gift_flash_stack.dart';
 
 /// Tek mikrofon koltuğu — boş, kilitli veya dolu (Faz 12 cam yuvarlak tasarım).
 class VoiceMicSeat extends ConsumerWidget {
@@ -26,6 +27,7 @@ class VoiceMicSeat extends ConsumerWidget {
     this.isHost = false,
     this.locked = false,
     this.room,
+    this.roomKey,
     this.djUserIds = const [],
     this.onTap,
     this.onLongPress,
@@ -44,6 +46,7 @@ class VoiceMicSeat extends ConsumerWidget {
   final bool isHost;
   final bool locked;
   final VoiceRoomEntity? room;
+  final String? roomKey;
   final List<String> djUserIds;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
@@ -216,6 +219,12 @@ class VoiceMicSeat extends ConsumerWidget {
           ),
           receiverName: user!.displayName,
         ),
+        if ((roomKey ?? room?.apiRoomKey ?? room?.id ?? '').trim().isNotEmpty)
+          VoiceSeatGiftFlashStack(
+            roomKey: (roomKey ?? room?.apiRoomKey ?? room?.id ?? '').trim(),
+            userId: user!.id,
+            displayName: user!.displayName,
+          ),
       ],
     );
   }

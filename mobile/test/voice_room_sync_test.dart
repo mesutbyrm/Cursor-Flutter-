@@ -13,6 +13,19 @@ void main() {
       onlineCount: 42,
     );
 
+    test('uses hubOnlineCount as sole source of truth', () {
+      const state = VoiceRoomLiveState(
+        loading: false,
+        hubOnlineCount: 2,
+        presence: [
+          ChatRoomPresence(id: 'a', name: 'A'),
+          ChatRoomPresence(id: 'b', name: 'B'),
+          ChatRoomPresence(id: 'c', name: 'C'),
+        ],
+      );
+      expect(state.onlineCountFor(room), 2);
+    });
+
     test('prefers backend hub count over room card count', () {
       const state = VoiceRoomLiveState(
         loading: false,
@@ -22,17 +35,9 @@ void main() {
       expect(state.onlineCountFor(room), 99);
     });
 
-    test('uses presence length when larger than hub count', () {
-      final state = VoiceRoomLiveState(
-        loading: false,
-        hubOnlineCount: 2,
-        presence: [
-          const ChatRoomPresence(id: 'a', name: 'A'),
-          const ChatRoomPresence(id: 'b', name: 'B'),
-          const ChatRoomPresence(id: 'c', name: 'C'),
-        ],
-      );
-      expect(state.onlineCountFor(room), 3);
+    test('falls back to room card when hub unset before sync', () {
+      const state = VoiceRoomLiveState(loading: false);
+      expect(state.onlineCountFor(room), 42);
     });
   });
 

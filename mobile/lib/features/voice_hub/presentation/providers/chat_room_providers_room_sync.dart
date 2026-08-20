@@ -81,8 +81,6 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     );
     if (snapshot.onlineCount != null) {
       _patchHubPresenceCount(snapshot.onlineCount!);
-    } else if (participants.isNotEmpty) {
-      _patchHubPresenceCount(participants.length);
     }
     if (snapshot.trtc != null) {
       ref.read(voiceRoomDiagnosticProvider.notifier).setTrtc(
@@ -107,6 +105,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     final battle = PkBattleRemote.fromJson(raw);
     if (battle.effectiveId.isEmpty) return false;
     ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
+    ref.read(livePkInviteSignalProvider.notifier).bump();
     return true;
   }
 
@@ -185,7 +184,10 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     final next = [...state.presence, user];
     _knownPresenceIds.add(userId);
     state = state.copyWith(presence: next, sseConnected: true);
-    _patchHubPresenceCount(next.length);
+    _patchHubOnlineCountFromPayload(payload);
+    if (_extractOnlineCountFromPayload(payload) == null) {
+      unawaited(_refreshHubOnlineCountFromServer());
+    }
     _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.join, '$name odaya katıldı');
   }
 
@@ -197,7 +199,10 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     if (remaining.length == state.presence.length) return;
     _knownPresenceIds.remove(userId);
     state = state.copyWith(presence: remaining);
-    _patchHubPresenceCount(remaining.length);
+    _patchHubOnlineCountFromPayload(payload);
+    if (_extractOnlineCountFromPayload(payload) == null) {
+      unawaited(_refreshHubOnlineCountFromServer());
+    }
     _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.leave, '$name çıkış yaptı');
     _clearSeatForUser(userId);
   }

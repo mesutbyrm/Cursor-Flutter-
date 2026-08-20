@@ -104,14 +104,16 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
 
   Future<void> _preloadPresenceMembers() async {
     try {
-      final members = await ref
+      final page = await ref
           .read(chatRoomRemoteProvider)
-          .fetchPresence(_roomKey, alternateKey: _musicAlternateKey);
-      if (members.isEmpty) return;
+          .fetchPresencePage(_roomKey, alternateKey: _musicAlternateKey);
+      if (page.users.isEmpty) return;
       state = state.copyWith(
-        presence: _mergePresenceStable(members, source: 'preload'),
+        presence: _mergePresenceStable(page.users, source: 'preload'),
       );
-      _patchHubPresenceCount(members.length);
+      if (page.onlineCount != null && page.onlineCount! >= 0) {
+        _patchHubPresenceCount(page.onlineCount!);
+      }
     } catch (_) {}
   }
 

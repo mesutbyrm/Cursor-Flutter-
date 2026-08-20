@@ -31,6 +31,7 @@ import 'pk_battle_remote_provider.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../data/youtube_music_search_cache.dart';
+import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../../music/domain/entities/room_playback_sync.dart';
 import '../../music/domain/song_playback_fields.dart';
@@ -93,9 +94,9 @@ import '../../../gifts/domain/session_summary_message.dart';
 import '../../../gifts/domain/gift_payload_util.dart';
 import '../../../gifts/presentation/sync/gift_sse_dispatch.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
-import 'voice_gift_providers.dart';
 import 'voice_gift_leaderboard_provider.dart';
 import 'voice_recent_gifts_provider.dart';
+import 'voice_seat_gift_flash_provider.dart';
 import 'voice_seat_gift_totals_provider.dart';
 import 'voice_room_diagnostic_provider.dart';
 import 'voice_room_ui_provider.dart';
@@ -249,15 +250,13 @@ class VoiceRoomLiveState {
 
   bool get isAnyoneTyping => typingUsers.isNotEmpty;
 
+  /// Sunucu `onlineCount` — yerel presence listesi ile karıştırılmaz.
   int onlineCountFor(VoiceRoomEntity room) {
-    final local = presence.length;
-    final backend = hubOnlineCount ??
-        (room.displayOnline > 0 ? room.displayOnline : null);
-    if (backend != null && backend > local) return backend;
-    if (local > 0) return local;
-    if (selfInRoom) return backend ?? 1;
-    if (backendSyncReady) return backend ?? 0;
-    return backend ?? 0;
+    if (hubOnlineCount != null) return hubOnlineCount!;
+    if (backendSyncReady) return 0;
+    if (room.displayOnline > 0) return room.displayOnline;
+    if (room.onlineCount > 0) return room.onlineCount;
+    return 0;
   }
 
   VoiceRoomLiveState copyWith({
@@ -903,6 +902,7 @@ class VoiceRoomLiveController
             selfInRoom: false,
             sseConnected: false,
             loading: false,
+            clearHubOnlineCount: true,
           );
         },
         () async {
@@ -1266,6 +1266,7 @@ class VoiceRoomLiveController
     ref
         .read(voiceRoomDiagnosticProvider.notifier)
         .setPresence(joined: true, count: merged.length);
+    unawaited(_refreshHubOnlineCountFromServer());
   }
 
   void _handleSseUserLeave(Map<String, dynamic> payload) {
@@ -1293,7 +1294,10 @@ class VoiceRoomLiveController
     _knownPresenceIds.remove(userId);
     _lastKnownPresenceNames.remove(userId);
     state = state.copyWith(presence: remaining);
-    _patchHubPresenceCount(remaining.length);
+    _patchHubOnlineCountFromPayload(payload);
+    if (_extractOnlineCountFromPayload(payload) == null) {
+      unawaited(_refreshHubOnlineCountFromServer());
+    }
     ref
         .read(voiceRoomDiagnosticProvider.notifier)
         .setPresence(joined: true, count: remaining.length);
@@ -1518,9 +1522,9 @@ class VoiceRoomLiveController
                 roomMuted: state.roomMuted,
               );
             }),
-          remote.fetchPresence(_roomKey).catchError((Object e) {
+          remote.fetchPresencePage(_roomKey).catchError((Object e) {
             refreshError ??= e;
-            return state.presence;
+            return ChatRoomPresencePage(users: state.presence);
           }),
         ]);
         final msgResult = results[0]! as ({
@@ -1550,9 +1554,13 @@ class VoiceRoomLiveController
         myNickname = msgResult.myNickname ?? myNickname;
         if (msgResult.roomMuted != null) roomMuted = msgResult.roomMuted!;
         presence = _mergePresenceStable(
-          results[1]! as List<ChatRoomPresence>,
+          (results[1]! as ChatRoomPresencePage).users,
           source: 'refresh',
         );
+        final onlineCount = (results[1]! as ChatRoomPresencePage).onlineCount;
+        if (onlineCount != null && onlineCount >= 0) {
+          _patchHubPresenceCount(onlineCount);
+        }
       } else if (state.sseConnected) {
         try {
           final perms = await remote.fetchMyPermissions(

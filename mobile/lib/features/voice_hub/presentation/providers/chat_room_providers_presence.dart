@@ -11,6 +11,38 @@ part of 'chat_room_providers.dart';
 /// okuma/yazma erişir ve davranış birebir korunur. Public applyPresenceSnapshot
 /// bilerek ana sınıfta bırakıldı.
 extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
+  int? _extractOnlineCountFromPayload(Map<String, dynamic> payload) {
+    for (final key in const [
+      'onlineCount',
+      'onlineUsers',
+      'totalCount',
+      'count',
+      'participantCount',
+    ]) {
+      final v = payload[key];
+      if (v is num && v >= 0) return v.toInt();
+      if (v is String) {
+        final n = int.tryParse(v);
+        if (n != null && n >= 0) return n;
+      }
+    }
+    final nested = payload['room'];
+    if (nested is Map) {
+      return _extractOnlineCountFromPayload(Map<String, dynamic>.from(nested));
+    }
+    return null;
+  }
+
+  void _patchHubOnlineCountFromPayload(
+    Map<String, dynamic> payload, {
+    int? fallback,
+  }) {
+    final count = _extractOnlineCountFromPayload(payload) ?? fallback;
+    if (count != null && count >= 0) {
+      _patchHubPresenceCount(count);
+    }
+  }
+
   bool _markEntranceOnce(String raw) {
     final key = VoiceOfficialJoin.entranceDedupeKey(raw, roomName: _roomMeta.nameTr);
     if (_shownEntranceKeys.contains(key)) return false;
@@ -271,6 +303,19 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     }
   }
 
+  Future<void> _refreshHubOnlineCountFromServer() async {
+    if (_roomKey.isEmpty) return;
+    try {
+      final snapshot = await ref.read(chatRoomRemoteProvider).fetchRoomState(
+            _roomKey,
+            alternateKey: _musicAlternateKey,
+          );
+      if (snapshot.onlineCount != null) {
+        _patchHubPresenceCount(snapshot.onlineCount!);
+      }
+    } catch (_) {}
+  }
+
   Future<void> _broadcastStaffEntryIfNeeded() async {
     if (_roomKey.isEmpty) return;
     final user = ref.read(authControllerProvider).valueOrNull;
@@ -412,8 +457,8 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       ref
           .read(voiceRoomDiagnosticProvider.notifier)
           .setPresence(joined: true, count: merged.length);
-      _patchHubPresenceCount(merged.length);
       _startPresenceHeartbeat();
+      unawaited(_refreshHubOnlineCountFromServer());
       unawaited(_tryAutoPrivilegedSeat());
       unawaited(_broadcastStaffEntryIfNeeded());
       unawaited(refreshServerPermissions());
@@ -511,7 +556,6 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     if (remaining.length == state.presence.length) return;
     state = state.copyWith(presence: remaining, selfInRoom: false);
     _knownPresenceIds.remove(userId);
-    _patchHubPresenceCount(remaining.length);
   }
 
   Future<void> _leavePresenceWithSeatClear() async {
