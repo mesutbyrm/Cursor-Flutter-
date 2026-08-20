@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.316+352 (2026-08-20) — Bana Özel bakiye helper test düzeltmesi
+
+- **Jeton:** `resolveJetonBalanceAfterOpen` pure helper + birim test (CI release gate)
+
 ## 1.0.315+351 (2026-08-20) — Bana Özel slug derin bağlantı
 
 - **Derin bağlantı:** `/fortune/bana-ozel?slug=` — vitrin chip’inden doğrudan açma akışı

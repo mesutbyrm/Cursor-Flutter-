@@ -164,6 +164,15 @@ class BanaOzelCatalogEntity {
       items.map((e) => e.category).toSet().toList()..sort();
 }
 
+/// Open sonrası jeton bakiyesi — `POST /api/bana-ozel/open` yanıtı + mevcut bakiye.
+int resolveJetonBalanceAfterOpen({
+  required int currentBalance,
+  required BanaOzelOpenResultEntity result,
+}) {
+  if (result.jetonBalance > 0) return result.jetonBalance;
+  return (currentBalance - result.jetonSpent).clamp(0, 1 << 30);
+}
+
 List<String> _parseStringList(dynamic raw) {
   if (raw is! List) return const [];
   return raw
