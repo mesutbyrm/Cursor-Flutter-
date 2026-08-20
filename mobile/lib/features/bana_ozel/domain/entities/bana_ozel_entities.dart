@@ -11,6 +11,7 @@ class BanaOzelItemEntity {
     required this.category,
     this.descTr,
     this.sortOrder = 0,
+    this.isActive = true,
   });
 
   factory BanaOzelItemEntity.fromJson(Map<String, dynamic> json) {
@@ -25,6 +26,7 @@ class BanaOzelItemEntity {
       category:
           pick(json, ['category', 'type'])?.toString() ?? 'fortune',
       sortOrder: asInt(pick(json, ['sortOrder', 'order'])),
+      isActive: json['isActive'] != false && json['isVisible'] != false,
     );
   }
 
@@ -36,8 +38,10 @@ class BanaOzelItemEntity {
   final int jetonCost;
   final String category;
   final int sortOrder;
+  final bool isActive;
 
-  bool get isValid => slug.trim().isNotEmpty && nameTr.trim().isNotEmpty;
+  bool get isValid =>
+      slug.trim().isNotEmpty && nameTr.trim().isNotEmpty && isActive;
 
   String get categoryLabel => switch (category) {
         'tarot' => 'Tarot',

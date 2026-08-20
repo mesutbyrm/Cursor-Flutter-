@@ -143,7 +143,6 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
       }
     });
     final catalog = ref.watch(banaOzelCatalogProvider);
-    const gold = Color(0xFFFFD54F);
 
     return Scaffold(
       backgroundColor: UltraFortuneTokens.deepNight,
@@ -230,16 +229,10 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                                       height: 1.4,
                                     ),
                                   ),
-                                  if (data.streak.currentStreak > 0) ...[
+                                  if (data.streak.currentStreak > 0 ||
+                                      data.streak.totalFortunes > 0) ...[
                                     const SizedBox(height: 8),
-                                    Text(
-                                      '🔥 ${data.streak.currentStreak} günlük seri',
-                                      style: TextStyle(
-                                        color: gold.withValues(alpha: 0.9),
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 12,
-                                      ),
-                                    ),
+                                    _StreakSummary(streak: data.streak),
                                   ],
                                   if (data.todayTasks.isNotEmpty) ...[
                                     const SizedBox(height: 10),
@@ -330,6 +323,35 @@ class _JetonBadge extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StreakSummary extends StatelessWidget {
+  const _StreakSummary({required this.streak});
+
+  final BanaOzelStreakEntity streak;
+
+  @override
+  Widget build(BuildContext context) {
+    const gold = Color(0xFFFFD54F);
+    final parts = <String>[];
+    if (streak.currentStreak > 0) {
+      parts.add('🔥 ${streak.currentStreak} günlük seri');
+    }
+    if (streak.totalFortunes > 0) {
+      parts.add('${streak.totalFortunes} fal');
+    }
+    if (streak.longestStreak > streak.currentStreak) {
+      parts.add('en uzun ${streak.longestStreak} gün');
+    }
+    return Text(
+      parts.join(' · '),
+      style: TextStyle(
+        color: gold.withValues(alpha: 0.9),
+        fontWeight: FontWeight.w800,
+        fontSize: 12,
       ),
     );
   }
@@ -461,6 +483,18 @@ class _ItemCard extends StatelessWidget {
                   fontSize: 13,
                 ),
               ),
+              if (item.descTr != null && item.descTr!.trim().isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  item.descTr!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.white.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
               const SizedBox(height: 4),
               Text(
                 item.categoryLabel,

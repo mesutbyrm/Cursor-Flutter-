@@ -38,6 +38,34 @@ void main() {
       expect(catalog.parsedTodayTasks.first.labelTr, 'Günlük giriş bonusu');
     });
 
+    test('skips inactive catalog items', () {
+      const sample = {
+        'items': [
+          {
+            'id': '1',
+            'slug': 'active',
+            'nameTr': 'Aktif',
+            'icon': '✨',
+            'jetonCost': 1,
+            'category': 'fortune',
+            'isActive': true,
+          },
+          {
+            'id': '2',
+            'slug': 'passive',
+            'nameTr': 'Pasif',
+            'icon': '✨',
+            'jetonCost': 1,
+            'category': 'fortune',
+            'isActive': false,
+          },
+        ],
+      };
+      final catalog = BanaOzelCatalogEntity.fromJson(sample);
+      expect(catalog.items, hasLength(1));
+      expect(catalog.items.first.slug, 'active');
+    });
+
     test('filters items by category', () {
       const sample = {
         'items': [

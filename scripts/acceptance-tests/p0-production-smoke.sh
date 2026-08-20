@@ -360,6 +360,39 @@ print(it.get('videoId') or it.get('id') or '', it.get('title') or 'Test')
   fi
 }
 
+p0_bana_ozel_smoke() {
+  echo "--- P0 BANA ÖZEL ---"
+  local code body count jeton auth_code
+  code=$(http_code "$BASE/api/bana-ozel")
+  body=$(curl_json "$BASE/api/bana-ozel")
+  count=$(printf '%s' "$body" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+items=d.get('items') or []
+print(len(items) if isinstance(items,list) else 0)
+" 2>/dev/null || echo "0")
+  if [[ "$code" == "200" && "$count" -ge 1 ]]; then
+    record_p0 "Bana Özel catalog GET" PASS "items=$count"
+    p0_row "Bana Özel" "PASS (API)" "open flow cihaz" "telefon" "catalog OK"
+  else
+    record_p0 "Bana Özel catalog GET" FAIL "HTTP $code items=$count"
+    p0_row "Bana Özel" "FAIL" "catalog" "-" "pending"
+  fi
+  if [[ -n "${VIEWER_TOKEN:-}" ]]; then
+    auth_code=$(http_code -H "Authorization: Bearer $VIEWER_TOKEN" "$BASE/api/bana-ozel")
+    jeton=$(curl_json -H "Authorization: Bearer $VIEWER_TOKEN" "$BASE/api/bana-ozel" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+print(d.get('jetonBalance', d.get('balance', '?')))
+" 2>/dev/null || echo "?")
+    if [[ "$auth_code" == "200" ]]; then
+      record_p0 "Bana Özel auth catalog" PASS "jetonBalance=$jeton"
+    else
+      record_p0 "Bana Özel auth catalog" FAIL "HTTP $auth_code"
+    fi
+  fi
+}
+
 p0_auto_fortune_smoke() {
   echo "--- P0 AUTO FORTUNE SHARE ---"
   local code body post_id caption feed_ok
@@ -492,6 +525,7 @@ maybe_topup_test_jeton "$VIEWER_ID" "viewer" "$MIN_VIEWER_JETON" || true
 maybe_topup_test_jeton "$HOST_ID" "host" "$MIN_HOST_JETON" || true
 
 p0_auth_smoke
+p0_bana_ozel_smoke
 p0_voice_smoke
 p0_live_smoke
 p0_gift_smoke

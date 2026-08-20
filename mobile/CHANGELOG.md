@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.317+353 (2026-08-20) — Bana Özel katalog iyileştirmeleri
+
+- **isActive:** pasif içerikler katalogdan filtrelenir
+- **UI:** streak özeti (seri + toplam fal), kartlarda `descTr` alt satırı
+- **Test:** Fal hub widget testi, inactive item entity testi
+- **P0 smoke:** `GET /api/bana-ozel` üretim doğrulaması
+
 ## 1.0.316+352 (2026-08-20) — Bana Özel bakiye helper test düzeltmesi
 
 - **Jeton:** `resolveJetonBalanceAfterOpen` pure helper + birim test (CI release gate)
