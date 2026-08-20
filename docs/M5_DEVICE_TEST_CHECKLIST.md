@@ -14,7 +14,7 @@ bash scripts/m5-device-prep.sh
 bash scripts/m5-preflight.sh
 ```
 
-Geçerse: API müzik 6/6, jeton ≥10, voice_hub testleri OK.
+Geçerse: API müzik 6/6, API voice seat (presence/koltuk/voice), jeton ≥10, voice_hub testleri OK.
 
 Jeton yoksa: `docs/M5_M7_JETON_BLOCKER.md` · Durum: `bash scripts/faz0-status.sh`
 

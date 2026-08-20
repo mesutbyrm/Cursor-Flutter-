@@ -22,7 +22,7 @@ echo ""
 
 FAIL=0
 
-echo "── 1/3 API müzik kabul testleri ──"
+echo "── 1/4 API müzik kabul testleri ──"
 if bash "$ROOT/scripts/run-music-acceptance.sh"; then
   echo "✅ API müzik: OK"
 else
@@ -31,7 +31,16 @@ else
 fi
 echo ""
 
-echo "── 2/3 Jeton bakiyesi ──"
+echo "── 2/4 API sesli oda koltuk/presence ──"
+if bash "$ROOT/scripts/run-voice-seat-acceptance.sh"; then
+  echo "✅ API voice seat: OK"
+else
+  echo "❌ API voice seat: BAŞARISIZ"
+  FAIL=1
+fi
+echo ""
+
+echo "── 3/4 Jeton bakiyesi ──"
 if bootstrap_user_token; then
   JETON=$(user_jeton_balance_from_me "$USER_TOKEN")
   echo "Hesap: $USER_EMAIL — jeton=$JETON"
@@ -63,7 +72,7 @@ else
 fi
 echo ""
 
-echo "── 3/3 Flutter voice_hub testleri ──"
+echo "── 4/4 Flutter voice_hub testleri ──"
 if command -v flutter >/dev/null 2>&1; then
   if (cd "$ROOT/mobile" && flutter test test/features/voice_hub/ --reporter compact); then
     echo "✅ voice_hub testleri: OK"

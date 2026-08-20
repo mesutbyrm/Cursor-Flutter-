@@ -32,7 +32,7 @@ echo "╚═══════════════════════�
 echo "Sürüm: $VERSION | $UTC"
 echo ""
 
-echo "── 1/4 API müzik kabul ──"
+echo "── 1/5 API müzik kabul ──"
 if bash "$ROOT/scripts/run-music-acceptance.sh" >/tmp/faz0-music.log 2>&1; then
   record PASS "API müzik (6/6 + M7 probe)" "run-music-acceptance.sh"
   echo "✅ API müzik"
@@ -42,7 +42,17 @@ else
 fi
 echo ""
 
-echo "── 2/4 voice_hub unit testleri ──"
+echo "── 2/5 API sesli oda koltuk/presence ──"
+if bash "$ROOT/scripts/run-voice-seat-acceptance.sh" >/tmp/faz0-voice-seat.log 2>&1; then
+  record PASS "API voice seat" "run-voice-seat-acceptance.sh"
+  echo "✅ API voice seat"
+else
+  record FAIL "API voice seat" "log: /tmp/faz0-voice-seat.log"
+  echo "❌ API voice seat — /tmp/faz0-voice-seat.log"
+fi
+echo ""
+
+echo "── 3/5 voice_hub unit testleri ──"
 if command -v flutter >/dev/null 2>&1; then
   if (cd "$ROOT/mobile" && flutter test test/features/voice_hub/ --reporter compact) >/tmp/faz0-voice.log 2>&1; then
     count=$(grep -oE '[0-9]+ \+ [0-9]+: All tests passed' /tmp/faz0-voice.log | tail -1 || echo "93 tests")
@@ -58,7 +68,7 @@ else
 fi
 echo ""
 
-echo "── 3/4 MCP selftest ──"
+echo "── 4/5 MCP selftest ──"
 if (cd "$ROOT/mcp-server" && node index.mjs --selftest) >/tmp/faz0-mcp.log 2>&1; then
   record PASS "MCP selftest" "v1.2.0 read_source"
   echo "✅ MCP"
@@ -68,7 +78,7 @@ else
 fi
 echo ""
 
-echo "── 4/4 Jeton (M5/M7 bloker) ──"
+echo "── 5/5 Jeton (M5/M7 bloker) ──"
 apply_acceptance_credential_defaults
 if bootstrap_user_token; then
   JETON=$(user_jeton_balance_from_me "$USER_TOKEN")
@@ -146,6 +156,7 @@ bash scripts/faz0-next.sh
 bash scripts/faz0-verify.sh
 bash scripts/m5-preflight.sh
 bash scripts/run-music-acceptance.sh
+bash scripts/run-voice-seat-acceptance.sh
 \`\`\`
 EOF
 
