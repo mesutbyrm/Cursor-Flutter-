@@ -32,6 +32,9 @@ import '../../features/admin/presentation/pages/admin_sub_pages.dart';
 import '../../features/admin_web/presentation/pages/admin_web_panel_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
+import '../../features/bana_ozel/domain/entities/bana_ozel_entities.dart';
+import '../../features/bana_ozel/presentation/pages/bana_ozel_page.dart';
+import '../../features/bana_ozel/presentation/pages/bana_ozel_result_page.dart';
 import '../../features/gifts/presentation/pages/gift_send_page.dart';
 import '../../features/live/domain/entities/live_broadcast_session.dart';
 import '../../features/live/domain/entities/live_broadcast_prep_args.dart';
@@ -403,6 +406,30 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                           key: state.pageKey,
                           child: const FortuneReadyReadingsPage(),
                         ),
+                  ),
+                  GoRoute(
+                    path: 'bana-ozel',
+                    pageBuilder: (context, state) =>
+                        AppPageTransitions.fadeSlide(
+                          key: state.pageKey,
+                          child: const BanaOzelPage(),
+                        ),
+                    routes: [
+                      GoRoute(
+                        path: 'result',
+                        pageBuilder: (context, state) {
+                          final result =
+                              state.extra as BanaOzelOpenResultEntity?;
+                          final child = result == null
+                              ? const BanaOzelPage()
+                              : BanaOzelResultPage(result: result);
+                          return AppPageTransitions.fadeSlide(
+                            key: state.pageKey,
+                            child: child,
+                          );
+                        },
+                      ),
+                    ],
                   ),
                   GoRoute(
                     path: 'history/:id',

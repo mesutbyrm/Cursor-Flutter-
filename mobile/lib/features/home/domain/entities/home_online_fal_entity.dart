@@ -8,12 +8,14 @@ class HomeOnlineFalEntity {
     this.subtitle,
     this.imageUrl,
     this.route,
+    this.keyName,
   });
 
   factory HomeOnlineFalEntity.fromJson(Map<String, dynamic> json) {
     final title = pick(json, ['title', 'name', 'label'])?.toString() ?? '';
     final route =
         pick(json, ['route', 'link', 'href', 'url', 'path'])?.toString();
+    final key = pick(json, ['key', 'sectionKey'])?.toString();
     return HomeOnlineFalEntity(
       id: pick(json, ['id', '_id', 'slug'])?.toString() ??
           (title.isNotEmpty ? title : 'section').hashCode.toString(),
@@ -21,6 +23,7 @@ class HomeOnlineFalEntity {
       subtitle: pick(json, ['subtitle', 'description', 'summary'])?.toString(),
       imageUrl: pick(json, ['imageUrl', 'image', 'cover', 'icon'])?.toString(),
       route: route,
+      keyName: key,
     );
   }
 
@@ -29,6 +32,11 @@ class HomeOnlineFalEntity {
   final String? subtitle;
   final String? imageUrl;
   final String? route;
+  final String? keyName;
 
   bool get isValid => title.trim().isNotEmpty;
+  bool get isBanaOzel =>
+      keyName == 'bana_ozel' ||
+      title.toLowerCase().contains('bana özel') ||
+      title.toLowerCase().contains('bana ozel');
 }

@@ -126,6 +126,10 @@ class _SectionCard extends StatelessWidget {
   }
 
   void _open(BuildContext context) {
+    if (section.isBanaOzel) {
+      context.push('/fortune/bana-ozel');
+      return;
+    }
     final route = section.route?.trim();
     if (route != null && route.isNotEmpty) {
       openNativeSitePath(context, route);

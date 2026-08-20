@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.311+347 (2026-08-20) — Bana Özel (Fal & Tarot + ana sayfa)
+
+- **API:** `GET /api/bana-ozel`, `POST /api/bana-ozel/open` — jeton katalog + içerik açma
+- **Sayfa:** `/fortune/bana-ozel` katalog, kategori filtre, sonuç ekranı
+- **Ana sayfa:** `HomeBanaOzelSection` yatay vitrin
+- **Fal hub:** `BanaOzelHubSection` bandı + önizleme chip’leri
+- **Navigasyon:** `/bana-ozel` web yolu, online-fal `bana_ozel` bölümü, homepage butonu
+
 ## 1.0.310+346 (2026-08-20) — Canlı Falcılar close/tip test + lint
 
 - **Test:** `psychic_close_dialog_test` — onay / vazgeç

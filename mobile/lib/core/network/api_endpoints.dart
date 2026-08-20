@@ -264,6 +264,8 @@ abstract final class ApiEndpoints {
       '/api/translations?lang=${Uri.encodeComponent(lang)}';
   static const broadcastImages = '/api/broadcast-images';
   static const onlineFal = '/api/online-fal';
+  static const banaOzel = '/api/bana-ozel';
+  static const banaOzelOpen = '/api/bana-ozel/open';
   static const fanClubs = '/api/fan-clubs';
   static const fanClubsPopular = '/api/fan-clubs/popular';
   static String fanClubJoin(String id) => '/api/fan-clubs/$id/join';

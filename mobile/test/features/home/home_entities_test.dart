@@ -50,6 +50,14 @@ void main() {
       expect(section.title, 'Canlı Tarot');
       expect(section.route, '/fortune/tarot');
     });
+
+    test('detects bana ozel section key', () {
+      final section = HomeOnlineFalEntity.fromJson({
+        'key': 'bana_ozel',
+        'title': 'Bana Özel',
+      });
+      expect(section.isBanaOzel, isTrue);
+    });
   });
 
   group('HomeUserLikerEntity', () {

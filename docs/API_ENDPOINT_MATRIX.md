@@ -271,8 +271,8 @@ Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized 
 | `/api/auth/verify-device` | GET | session | `authVerifyDevice` | `authVerifyDevice` | `-` | OpenAPI/docs | NO | PARTIAL |
 | `/api/auth/{nextauth}` | GET | public | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
 | `/api/auth/{nextauth}` | POST | public | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
-| `/api/bana-ozel` | GET | dual | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
-| `/api/bana-ozel/open` | POST | dual | `-` | `-` | `slug` | OpenAPI/docs | NO | MISSING |
+| `/api/bana-ozel` | GET | dual | `-` | `-` | `-` | OpenAPI/docs | YES | `bana_ozel` repository + hub/home |
+| `/api/bana-ozel/open` | POST | dual | `-` | `-` | `slug` | OpenAPI/docs | YES | `BanaOzelPage` open flow |
 | `/api/blog` | GET | public | `blog` | `blog` | `-` | OpenAPI/docs | NO | CONNECTED |
 | `/api/blog/categories` | GET | public | `blogCategories` | `blogCategories` | `-` | OpenAPI/docs | NO | CONNECTED |
 | `/api/blog/comments` | DELETE | dual | `blogComments` | `blogComments` | `-` | OpenAPI/docs | NO | CONNECTED |

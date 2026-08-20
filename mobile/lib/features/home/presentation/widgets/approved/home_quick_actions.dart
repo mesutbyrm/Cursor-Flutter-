@@ -119,6 +119,10 @@ class _ApiActionChip extends StatelessWidget {
       colors: colors,
       onTap: () {
         final link = button.linkUrl?.trim();
+        if (link != null && link.contains('bana-ozel')) {
+          context.push('/fortune/bana-ozel');
+          return;
+        }
         if (link != null && link.isNotEmpty) {
           openNativeSitePath(context, link);
         }

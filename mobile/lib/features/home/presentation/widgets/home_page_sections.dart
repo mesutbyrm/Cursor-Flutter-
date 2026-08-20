@@ -18,6 +18,7 @@ import 'home_promo_popup_banner.dart';
 import 'home_ticker_strip.dart';
 import 'home_viewport_section.dart';
 import 'home_advisors_row.dart';
+import '../../../bana_ozel/presentation/widgets/home_bana_ozel_section.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 
 /// Ana sayfa bölümleri — sadeleştirilmiş akış, RepaintBoundary ile izole repaint.
@@ -79,6 +80,12 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homeFortuneSectionDelay,
           child: FortuneSection(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeFortuneSectionDelay,
+          child: HomeBanaOzelSection(),
         ),
       ),
       const SliverToBoxAdapter(
