@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
-import '../../../../core/navigation/native_site_routes.dart';
 import '../../domain/entities/home_page_button_entity.dart';
+import '../navigation/home_page_button_navigation.dart';
 import '../providers/home_providers.dart';
 import '../theme/home_approved_design.dart';
 
@@ -54,12 +54,7 @@ class _ButtonChip extends StatelessWidget {
       color: HomeApprovedDesign.surface,
       borderRadius: BorderRadius.circular(HomeApprovedDesign.pillRadius),
       child: InkWell(
-        onTap: () {
-          final link = button.linkUrl?.trim();
-          if (link != null && link.isNotEmpty) {
-            openNativeSitePath(context, link);
-          }
-        },
+        onTap: () => navigateHomePageButton(context, button),
         borderRadius: BorderRadius.circular(HomeApprovedDesign.pillRadius),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

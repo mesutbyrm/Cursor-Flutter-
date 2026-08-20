@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/navigation/native_site_routes.dart';
 import '../../../domain/entities/home_page_button_entity.dart';
+import '../../navigation/home_page_button_navigation.dart';
 import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
 
@@ -117,16 +118,7 @@ class _ApiActionChip extends StatelessWidget {
       icon: _iconForLink(button.linkUrl),
       label: button.label,
       colors: colors,
-      onTap: () {
-        final link = button.linkUrl?.trim();
-        if (link != null && link.contains('bana-ozel')) {
-          context.push('/fortune/bana-ozel');
-          return;
-        }
-        if (link != null && link.isNotEmpty) {
-          openNativeSitePath(context, link);
-        }
-      },
+      onTap: () => navigateHomePageButton(context, button),
     );
   }
 

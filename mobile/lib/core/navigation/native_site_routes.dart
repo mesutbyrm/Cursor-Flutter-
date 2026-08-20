@@ -28,6 +28,10 @@ void openNativeSitePath(BuildContext context, String path) {
     context.push(p == '/falci-panel' ? '/falci-panel' : '/falci-ol');
     return;
   }
+  if (p == '/yayinci-ol' || p == '/yayinci-panel') {
+    context.push('/falci-ol');
+    return;
+  }
   if (p == '/bana-ozel' || p.startsWith('/bana-ozel/')) {
     context.push('/fortune/bana-ozel');
     return;

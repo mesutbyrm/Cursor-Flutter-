@@ -7,6 +7,7 @@ class HomePageButtonEntity extends Equatable {
     required this.label,
     this.iconUrl,
     this.linkUrl,
+    this.specialBehavior,
     this.sortOrder = 0,
     this.isActive = true,
   });
@@ -15,9 +16,11 @@ class HomePageButtonEntity extends Equatable {
   final String label;
   final String? iconUrl;
   final String? linkUrl;
+  final String? specialBehavior;
   final int sortOrder;
   final bool isActive;
 
   @override
-  List<Object?> get props => [id, label, iconUrl, linkUrl, sortOrder, isActive];
+  List<Object?> get props =>
+      [id, label, iconUrl, linkUrl, specialBehavior, sortOrder, isActive];
 }

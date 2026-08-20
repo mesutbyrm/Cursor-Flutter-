@@ -98,6 +98,14 @@ enum BanaOzelTodayTask {
         BanaOzelTodayTask.share => 'Falını paylaş',
         BanaOzelTodayTask.unknown => 'Günlük görev',
       };
+
+  /// Mobil yönlendirme — web görev merkezi parity.
+  String? get routePath => switch (this) {
+        BanaOzelTodayTask.login || BanaOzelTodayTask.watchAd =>
+          '/profile/growth',
+        BanaOzelTodayTask.share => '/social/create',
+        _ => null,
+      };
 }
 
 /// `GET /api/bana-ozel` yanıtı.

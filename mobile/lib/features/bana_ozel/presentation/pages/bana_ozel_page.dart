@@ -309,13 +309,21 @@ class _TodayTasksStrip extends StatelessWidget {
           runSpacing: 6,
           children: [
             for (final task in tasks)
-              Chip(
+              ActionChip(
                 visualDensity: VisualDensity.compact,
                 label: Text(
                   task.labelTr,
                   style: const TextStyle(fontSize: 11),
                 ),
-                avatar: const Icon(Icons.check_circle_outline, size: 16),
+                avatar: Icon(
+                  task.routePath != null
+                      ? Icons.arrow_outward_rounded
+                      : Icons.check_circle_outline,
+                  size: 16,
+                ),
+                onPressed: task.routePath == null
+                    ? null
+                    : () => context.push(task.routePath!),
               ),
           ],
         ),

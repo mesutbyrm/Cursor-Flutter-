@@ -262,6 +262,8 @@ HomePageButtonEntity _mapHomepageButton(Map<String, dynamic> m) {
       _str(m, ['iconUrl', 'icon', 'imageUrl', 'image']),
     ),
     linkUrl: _str(m, ['linkUrl', 'href', 'route', 'path', 'url']),
+    specialBehavior:
+        _str(m, ['specialBehavior', 'special_behavior', 'behavior']),
     sortOrder: _int(m['sortOrder'] ?? m['order']) ?? 0,
     isActive: m['isActive'] != false && m['isVisible'] != false,
   );

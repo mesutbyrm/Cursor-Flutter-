@@ -70,6 +70,12 @@ void main() {
       expect(BanaOzelTodayTask.parse('login').labelTr, 'Günlük giriş bonusu');
       expect(BanaOzelTodayTask.parse('watch_ad').labelTr, 'Reklam izle');
     });
+
+    test('maps task keys to native routes', () {
+      expect(BanaOzelTodayTask.parse('login').routePath, '/profile/growth');
+      expect(BanaOzelTodayTask.parse('share_fortune').routePath,
+          '/social/create');
+    });
   });
 
   group('BanaOzelOpenResultEntity', () {

@@ -541,6 +541,8 @@ class HomeRemoteDataSource {
         _str(m, ['iconUrl', 'icon', 'imageUrl', 'image']),
       ),
       linkUrl: _str(m, ['linkUrl', 'href', 'route', 'path', 'url']),
+      specialBehavior:
+          _str(m, ['specialBehavior', 'special_behavior', 'behavior']),
       sortOrder: asInt(pick(m, ['sortOrder', 'order', 'position'])) ?? 0,
       isActive: m['isActive'] != false && m['isVisible'] != false,
     );

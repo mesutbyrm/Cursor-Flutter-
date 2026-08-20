@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.314+350 (2026-08-20) — Bana Özel görev navigasyonu + homepage butonları
+
+- **todayTasks:** tıklanabilir chip’ler (growth hub, sosyal paylaşım)
+- **homepage-buttons:** `specialBehavior` parse (`bana-ozel`, `teller`) + merkezi navigasyon
+- **Site yolu:** `/yayinci-ol` → `/falci-ol` native eşlemesi
+- **Test:** homepage button route resolver + görev route testleri
+
 ## 1.0.313+349 (2026-08-20) — Bana Özel test düzeltmeleri
 
 - **todayTasks:** string list parse düzeltmesi (`asJsonList` yerine doğrudan liste)
