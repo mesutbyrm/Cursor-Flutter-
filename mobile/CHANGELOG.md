@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.307+343 (2026-08-20) — Canlı Falcılar restore ve push bridge test
+
+- **Session restore:** `psychic_session_restore_test` — diskten bekleme oturumu yükleme
+- **Push bridge:** `psychic_push_action_bridge_test` — kabul/red aksiyon eşlemesi
+- **Temizlik:** `psychic_flow.dart` kullanılmayan import kaldırıldı
+- **Doküman:** `LIVE_PSYCHICS_REMAINING.md` manuel E2E adımları genişletildi
+
 ## 1.0.306+342 (2026-08-20) — Canlı Falcılar dialog test layout
 
 - **Test:** incoming dialog için büyük surface (overflow önleme)

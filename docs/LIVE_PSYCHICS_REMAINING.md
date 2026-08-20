@@ -33,6 +33,8 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 | Push rol testleri | `psychic_flow_push_test` — danışan vs falcı yönlendirme |
 | Datasource testleri | Mock Dio — createSession, cancel, roomAction, respond, status |
 | Widget testleri | waiting, booking sheet, incoming dialog, video state |
+| Session restore | `PsychicSessionRestoreGate` diskten yükleme + widget test |
+| Push action bridge | OneSignal kabul/red aksiyon eşlemesi unit test |
 
 ---
 
@@ -40,22 +42,24 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 
 | Tür | Eksik |
 |-----|--------|
-| **CI** | `scripts/acceptance-tests/` — API smoke var; Flutter E2E yok |
+| **CI** | Flutter cihaz E2E yok (API smoke: `scripts/acceptance-tests/api-release-gate.sh` Gate 3) |
 
-Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incoming_sse_parser_test`, `psychic_room_sse_parser_test`, `psychic_flow_push_test`, `live_psychics_remote_datasource_test`, `psychic_client_session_guard_test`, `psychic_waiting_screen_test`, `psychic_booking_sheet_test`, `psychic_incoming_call_dialog_test`, `psychic_video_state_test`, `session_room_sse_event_test`, invite coordinator, phase guard, profile resolver.
+Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incoming_sse_parser_test`, `psychic_room_sse_parser_test`, `psychic_flow_push_test`, `live_psychics_remote_datasource_test`, `psychic_client_session_guard_test`, `psychic_waiting_screen_test`, `psychic_booking_sheet_test`, `psychic_incoming_call_dialog_test`, `psychic_video_state_test`, `psychic_session_restore_test`, `psychic_push_action_bridge_test`, `session_room_sse_event_test`, invite coordinator, phase guard, profile resolver.
 
 ---
 
 ## Kalan — manuel / E2E (cihaz)
 
-1. **Danışan happy path** — book → wait → accept → ad → TRTC → chat → extend → end → review  
-2. **Falcı happy path** — online → SSE/dialog → accept → start_timer → teller_add_time → end → bahşiş  
-3. **Red / iptal / timeout** — jeton iade mesajı + cüzdan  
-4. **Push** — background accept/reject; falcı bildirim **Kabul** → session route  
-5. **SSE kopma** — oda + incoming reconnect; poll yedek yeterliliği  
-6. **TRTC** — arka plan / ön plan, roomId değişimi  
-7. **Staff** — jeton düşülmeden seans + extend  
-8. **Deep link** — `/canli-falcilar/.../session` restore  
+APK: `1.0.306+342` — iki cihaz veya iki hesap (danışan + falcı) gerekir.
+
+1. **Danışan happy path** — Liste → profil → randevu (10 dk) → bekleme → falcı kabul → reklam → TRTC görüşme → chat → uzat → bitir → yıldız/yorum  
+2. **Falcı happy path** — Dashboard çevrimiçi → gelen diyalog/SSE → kabul → timer başlat → süre ekle → bitir → bahşiş bildirimi  
+3. **Red / iptal / timeout** — Falcı red / danışan iptal / 180 sn timeout → jeton iade snackbar + cüzdan  
+4. **Push** — Uygulama arka planda: bildirim **Kabul** → falcı session ekranı; danışan push → ad-transition  
+5. **SSE kopma** — Uçak modu 30 sn → oda banner «Yenile» → mesaj/timer senkronu  
+6. **TRTC** — Arka plan/ön plan; oda yeniden bağlanma  
+7. **Staff** — Staff hesabı ile randevu: jeton düşülmeden seans + uzatma  
+8. **Deep link / restore** — Görüşme sırasında uygulamayı öldür → `/canli-falcilar/{id}/session` → oturum diskten devam  
 
 ---
 
@@ -81,5 +85,6 @@ Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incom
 | 1.0.302+338 | Oda SSE parser, push rol testleri, datasource mock Dio testleri |
 | 1.0.303+339 | Widget testleri — waiting, booking, incoming dialog, video state |
 | 1.0.306+342 | Widget test CI düzeltmeleri (import, layout, pump) |
+| 1.0.307+343 | Session restore + push action bridge testleri, manuel E2E checklist |
 
 _Bu dosya agent oturumlarında güncellenir; tamamlandıkça maddeler silinir veya «Tamamlandı» bölümüne taşınır._

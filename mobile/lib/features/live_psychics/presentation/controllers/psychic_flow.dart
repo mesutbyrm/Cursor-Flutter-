@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/bootstrap/auth_route_paths.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/psychic_event_log.dart';
-import '../../domain/entities/psychic_session_status.dart';
 import '../../domain/psychic_client_session_guard.dart';
 import '../../data/services/psychic_session_store.dart';
 import '../../domain/entities/psychic_entity.dart';
