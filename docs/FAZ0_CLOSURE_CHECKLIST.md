@@ -2,7 +2,7 @@
 
 **Durum:** INCOMPLETE — M5 cihaz + jeton bekliyor  
 **APK:** `1.0.291+327` (`apk-latest`)  
-**Otomatik:** `bash scripts/faz0-next.sh` (önerilen) · `bash scripts/faz0-verify.sh` (tam)
+**Otomatik:** `bash scripts/faz0-sequential.sh` (sıralı ilerleme) · `bash scripts/faz0-verify.sh` (özet)
 
 ---
 
@@ -10,6 +10,7 @@
 
 - [x] M1–M12 — !istek / ANR / SSE oda anahtarı (`1.0.266+302`)
 - [x] API müzik fazı 6/6 — `API_MUSIC_PHASE_REPORT.md`
+- [x] API voice seat — presence/koltuk/SSE — `API_VOICE_SEAT_PHASE_REPORT.md`
 - [x] voice_hub unit + 15 faz test
 - [x] MCP selftest v1.2.0
 - [x] Jeton UX — `showInsufficientJetonDialog` + `showJetonAwareError`
@@ -50,7 +51,8 @@ Rehber: `docs/M5_M7_JETON_BLOCKER.md`
 ## Hızlı komutlar
 
 ```bash
-bash scripts/faz0-next.sh          # durum + cheatsheet + probe (+ M7 jeton varsa)
+bash scripts/faz0-sequential.sh     # sıralı eksikler (önerilen)
+bash scripts/faz0-next.sh
 bash scripts/faz0-verify.sh
 bash scripts/wait-for-jeton.sh 10 3600
 bash scripts/m5-ready.sh

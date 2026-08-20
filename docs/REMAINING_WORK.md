@@ -30,6 +30,8 @@
 | B3 | M5 cihaz | `bash scripts/m5-device-prep.sh` |
 | B4 | FAZ12 E2E | 25 senaryo Android |
 
+**Sıralı ilerleme:** `bash scripts/faz0-sequential.sh` → `docs/FAZ0_SEQUENTIAL_PROGRESS.md`
+
 ---
 
 ## Faz otomatik testleri (2026-08-18)
@@ -73,6 +75,11 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-08-20 devam 3)
+
+- `faz0-sequential.sh` — 7 otomatik kapı PASS; jeton+M5 bloke
+- `FAZ0_SEQUENTIAL_PROGRESS.md` canlı rapor
 
 ## Oturum günlüğü (2026-08-20 devam 2)
 
