@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.305+341 (2026-08-20) — Canlı Falcılar incoming dialog test düzeltmesi
+
+- **Test:** Text.rich için `textContaining`, dialog fade pump süreleri
+
 ## 1.0.304+340 (2026-08-20) — Canlı Falcılar widget test CI düzeltmesi
 
 - **Test:** `PsychicSessionStatusResult` import, fake repo `respondResult` ctor, booking sheet pump

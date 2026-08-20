@@ -47,12 +47,16 @@ void main() {
       );
 
       await tester.tap(find.text('Göster'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.text('Mehmet'), findsOneWidget);
+      expect(find.text('Canlı Fal İsteği'), findsOneWidget);
+      expect(find.textContaining('Mehmet'), findsOneWidget);
       expect(find.text('Kabul Et'), findsOneWidget);
 
       await tester.tap(find.text('Reddet'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
       await tester.pumpAndSettle();
 
       expect(repo.lastRespondAction, 'reject');
@@ -98,8 +102,11 @@ void main() {
       );
 
       await tester.tap(find.text('Göster'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
       await tester.tap(find.text('Kabul Et'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
       await tester.pumpAndSettle();
 
       expect(repo.lastRespondAction, 'accept');
