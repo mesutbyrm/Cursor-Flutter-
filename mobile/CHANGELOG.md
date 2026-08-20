@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.297+333 (2026-08-20) — Canlı Falcılar oturum geçmişi + temizlik
+
+- **Danışan geçmişi:** Giriş yapmış kullanıcılar listede «Son Oturumlarım» panelini görür
+- **Paylaşılan widget:** Falcı paneli ve liste aynı `PsychicRecentSessionsPanel` bileşenini kullanır
+- **Temizlik:** Kullanılmayan `held` diyalog aksiyonu; ölü API sabitleri (`incoming`, `respond`, `liveFalPending`)
+
 ## 1.0.296+332 (2026-08-20) — Canlı Falcılar panel ve liste
 
 - **Misafir liste:** Canlı Falcılar listesi giriş yapmadan gezilebilir; favoriler için giriş gerekir

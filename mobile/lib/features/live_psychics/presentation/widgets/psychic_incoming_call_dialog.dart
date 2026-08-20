@@ -13,7 +13,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/providers/ps
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_fortune_types.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
-enum PsychicIncomingDialogAction { dismissed, rejected, accepted, held }
+enum PsychicIncomingDialogAction { dismissed, rejected, accepted }
 
 class PsychicIncomingDialogClose {
   const PsychicIncomingDialogClose({

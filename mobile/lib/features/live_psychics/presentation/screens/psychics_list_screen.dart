@@ -13,6 +13,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/psychic_entity.dart';
 import '../controllers/psychics_list_controller.dart';
 import '../widgets/psychic_fortune_types.dart';
+import '../widgets/psychic_recent_sessions_panel.dart';
 
 /// Çevrimiçi falcı listesi — pull to refresh + infinite scroll.
 class PsychicsListScreen extends ConsumerWidget {
@@ -23,6 +24,9 @@ class PsychicsListScreen extends ConsumerWidget {
     final listAsync = ref.watch(psychicsListControllerProvider);
     final approved = ref.watch(
       approvedPsychicProvider.select((a) => (a.isApprovedTeller, a.profile)),
+    );
+    final authed = ref.watch(
+      authControllerProvider.select((a) => a.valueOrNull != null),
     );
 
     return Scaffold(
@@ -95,6 +99,13 @@ class PsychicsListScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 48),
                       const Center(child: Text('Bu filtreye uygun falcı yok.')),
+                      if (authed) ...[
+                        const SizedBox(height: 24),
+                        const PsychicRecentSessionsPanel(
+                          title: 'Son Oturumlarım',
+                          mode: PsychicRecentSessionsMode.client,
+                        ),
+                      ],
                     ],
                   ),
                 );
@@ -112,7 +123,10 @@ class PsychicsListScreen extends ConsumerWidget {
                   child: ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                    itemCount: state.items.length + (state.isLoadingMore ? 1 : 0) + 1,
+                    itemCount: state.items.length +
+                        (state.isLoadingMore ? 1 : 0) +
+                        1 +
+                        (authed ? 1 : 0),
                     separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (_, i) {
                       if (i == 0) {
@@ -123,10 +137,20 @@ class PsychicsListScreen extends ConsumerWidget {
                       }
                       final itemIndex = i - 1;
                       if (itemIndex >= state.items.length) {
-                        return const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
+                        if (state.isLoadingMore &&
+                            itemIndex == state.items.length) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+                        if (authed) {
+                          return const PsychicRecentSessionsPanel(
+                            title: 'Son Oturumlarım',
+                            mode: PsychicRecentSessionsMode.client,
+                          );
+                        }
+                        return const SizedBox.shrink();
                       }
                       return PsychicListTile(psychic: state.items[itemIndex]);
                     },

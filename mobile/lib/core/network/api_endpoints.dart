@@ -130,10 +130,6 @@ abstract final class ApiEndpoints {
   /// Üretim: falcı gelen istekler + danışan oturum durumu (web ile aynı).
   static const fortuneTellerSessions = '/api/fortune-tellers/sessions';
 
-  /// Yerel API aynası (üretimde 405).
-  static const fortuneTellerIncomingSessions =
-      '/api/fortune-tellers/sessions/incoming';
-
   /// Falcı — bekleyen canlı fal istekleri SSE (Bearer zorunlu).
   static const fortuneTellerSessionsStream =
       '/api/fortune-tellers/sessions/stream';
@@ -143,9 +139,6 @@ abstract final class ApiEndpoints {
 
   static String fortuneTellerSessionPatch(String sessionId) =>
       '/api/fortune-tellers/sessions/$sessionId';
-
-  static String fortuneTellerSessionRespond(String sessionId) =>
-      '/api/fortune-tellers/session/$sessionId/respond';
 
   /// Üretim: `GET /api/fortune-tellers/session?sessionId=`
   static String fortuneTellerSessionQuery(String sessionId) =>
@@ -203,9 +196,6 @@ abstract final class ApiEndpoints {
   static const userActiveSessions = '/api/user/active-sessions';
 
   static String tellerChat(String sessionId) => '/api/teller-chat/$sessionId';
-
-  /// Canlı fal istekleri — üretim web ile aynı (`/api/live-fal/*`).
-  static const liveFalPending = '/api/live-fal/pending';
 
   static String liveFalRequestAccept(String requestId) =>
       '/api/live-fal/request/$requestId/accept';
