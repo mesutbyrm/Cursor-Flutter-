@@ -1,7 +1,7 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-20 11:00 UTC — `1.0.291+327`  
-**Agent:** API voice seat probe + m5-preflight; jeton + M5 cihaz bekliyor  
+**Son güncelleme:** 2026-08-20 11:05 UTC — `1.0.291+327`  
+**Agent:** API voice seat main'de; faz0-verify AUTOMATED_PASS (jeton WARN)  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (15 PASS)
 
 ---
@@ -73,6 +73,12 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-08-20 devam 2)
+
+- `cursor/voice-seat-api-probe-0710` → `main` merge
+- `faz0-verify.sh`: AUTOMATED_PASS — PASS=4 WARN=1 (jeton) FAIL=0
+- `faz0-handoff.sh`: jetonsuz API komutları eklendi
 
 ## Oturum günlüğü (2026-08-20 devam)
 

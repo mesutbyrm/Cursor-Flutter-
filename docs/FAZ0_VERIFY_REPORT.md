@@ -1,18 +1,19 @@
 # FAZ 0 — Otomatik doğrulama raporu
 
-**Tarih:** 2026-08-20 10:44 UTC  
+**Tarih:** 2026-08-20 11:05 UTC  
 **APK:** `1.0.291+327`  
 **Sonuç:** **AUTOMATED_PASS (M5 cihaz bekliyor)**
 
 | Geçti | Uyarı | Başarısız |
 |-------|-------|-----------|
-| 3 | 1 | 0 |
+| 4 | 1 | 0 |
 
 ## Kapılar
 
 | Kapı | Durum | Detay |
 |------|--------|-------|
 | API müzik (6/6 + M7 probe) | PASS | run-music-acceptance.sh |
+| API voice seat | PASS | run-voice-seat-acceptance.sh |
 | voice_hub unit | PASS | 93 tests |
 | MCP selftest | PASS | v1.2.0 read_source |
 | Jeton | WARN | cursor.test.1786235468@mailinator.com jeton=0 — M5/M7 için ≥10 gerekli |
@@ -33,4 +34,5 @@ bash scripts/faz0-next.sh
 bash scripts/faz0-verify.sh
 bash scripts/m5-preflight.sh
 bash scripts/run-music-acceptance.sh
+bash scripts/run-voice-seat-acceptance.sh
 ```

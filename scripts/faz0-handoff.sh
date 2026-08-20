@@ -17,8 +17,12 @@ echo "╔═══════════════════════�
 echo "║  Kullanıcı devir teslimi — manuel adımlar                ║"
 echo "╚══════════════════════════════════════════════════════════╝"
 echo ""
-echo "Kod otomasyonu tamamlandı (müzik ANR, PK, push teardown, sesli oda P0–P2)."
+echo "Kod otomasyonu tamamlandı (müzik ANR, PK, push teardown, sesli oda P0–P2, API voice seat probe)."
 echo "Kalan iş yalnızca jeton + Android cihaz doğrulaması."
+echo ""
+echo "── Jeton olmadan API doğrulama ──"
+echo "  bash scripts/run-voice-seat-acceptance.sh   # presence/koltuk/SSE"
+echo "  bash scripts/run-music-acceptance.sh        # müzik (song-request jeton ister)"
 echo ""
 bash "$ROOT/scripts/admin-jeton-cheatsheet.sh" | tail -12
 echo ""

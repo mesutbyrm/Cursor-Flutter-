@@ -1,6 +1,6 @@
 # Faz master takip — Canlifal Flutter
 
-**Son güncelleme:** 2026-08-20 10:17 UTC — APK `1.0.291+327`  
+**Son güncelleme:** 2026-08-20 11:05 UTC — APK `1.0.291+327` + API voice seat probe  
 **Faz testleri:** 15 PASS, 0 FAIL (`docs/PHASE_TEST_REPORT.md`)
 
 ---
@@ -35,7 +35,8 @@ bash scripts/faz12-automated-gates.sh    # FAZ12 otomatik
 bash scripts/faz11-security-scan.sh
 bash scripts/m7-on-jeton.sh
 bash scripts/probe-jeton-earn.sh          # jeton kazanım tanısı
-bash scripts/m5-device-prep.sh           # M5 cihaz hazırlık özeti
+bash scripts/run-voice-seat-acceptance.sh  # presence/koltuk/SSE (jeton yok)
+bash scripts/m5-preflight.sh               # müzik + voice seat + jeton + unit
 bash scripts/faz0-next.sh                # durum + cheatsheet + probe (+ M7 jeton varsa)
 bash scripts/wait-for-jeton.sh 10 3600   # jeton eklenince otomatik M7+M5-preflight
 bash scripts/m5-ready.sh                # jeton sonrası
