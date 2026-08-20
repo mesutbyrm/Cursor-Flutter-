@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.313+349 (2026-08-20) — Bana Özel test düzeltmeleri
+
+- **todayTasks:** string list parse düzeltmesi (`asJsonList` yerine doğrudan liste)
+- **Test:** ana sayfa vitrin başlığı `textContaining` ile eşleştirme
+
 ## 1.0.312+348 (2026-08-20) — Bana Özel görevler + testler
 
 - **todayTasks:** API görev listesi parse + katalog sayfasında chip şeridi

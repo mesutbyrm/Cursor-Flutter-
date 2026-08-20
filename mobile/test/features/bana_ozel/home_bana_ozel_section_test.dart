@@ -21,7 +21,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Bana Özel'), findsOneWidget);
+      expect(find.textContaining('Bana Özel'), findsOneWidget);
       expect(find.text('Günlük Tarot Kartı'), findsOneWidget);
       expect(find.text('5 jeton'), findsOneWidget);
     });

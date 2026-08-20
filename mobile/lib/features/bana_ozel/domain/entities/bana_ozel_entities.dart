@@ -119,10 +119,7 @@ class BanaOzelCatalogEntity {
 
     final streakRaw = pick(json, ['streak', 'fortuneStreak']);
     final rawTasks = json['todayTasks'] ?? json['tasks'];
-    final tasks = asJsonList(rawTasks)
-        .map((e) => e?.toString() ?? '')
-        .where((e) => e.trim().isNotEmpty)
-        .toList();
+    final tasks = _parseStringList(rawTasks);
     return BanaOzelCatalogEntity(
       items: items,
       jetonBalance: asInt(pick(json, ['jetonBalance', 'balance', 'coins'])),
@@ -148,6 +145,14 @@ class BanaOzelCatalogEntity {
 
   List<String> get categories =>
       items.map((e) => e.category).toSet().toList()..sort();
+}
+
+List<String> _parseStringList(dynamic raw) {
+  if (raw is! List) return const [];
+  return raw
+      .map((e) => e?.toString() ?? '')
+      .where((e) => e.trim().isNotEmpty)
+      .toList();
 }
 
 /// `POST /api/bana-ozel/open` yanıtı.
