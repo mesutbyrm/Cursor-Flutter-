@@ -62,8 +62,6 @@ bool isPsychicInviteEventType(String type) {
       t.contains('request_created') ||
       (t.contains('psychic') && t.contains('request')) ||
       (t.contains('fortune') && t.contains('request')) ||
-      t.contains('fortune') ||
-      t.contains('falc') ||
       t.contains('live_fortune') ||
       t.contains('live_session') ||
       t.contains('live_fal');

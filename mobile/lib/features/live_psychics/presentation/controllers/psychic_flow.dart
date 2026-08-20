@@ -213,32 +213,42 @@ abstract final class PsychicFlow {
   }) async {
     final status = await repo.fetchSessionStatus(sessionId);
     if (status == null || status.status.isTerminal) return;
-    if (!status.status.isActive) return;
+    if (!status.status.isActive || !status.isClient) return;
+
     PsychicEntity? psychic;
     final tid = tellerId?.trim() ?? status.tellerProfileId ?? '';
     if (tid.isNotEmpty) psychic = await repo.fetchPsychic(tid);
-    psychic ??= PsychicEntity(id: tid.isNotEmpty ? tid : 'teller', name: 'Falcı', isOnline: true);
+    psychic ??= PsychicEntity(
+      id: tid.isNotEmpty ? tid : 'teller',
+      name: 'Falcı',
+      isOnline: true,
+    );
+    final room = await repo.fetchRoom(sessionId);
     final session = PsychicSessionEntity(
       sessionId: sessionId,
       psychic: psychic,
       durationMinutes: status.durationMinutes ?? 10,
       totalJeton: status.totalJeton ?? 0,
-      tellerUserId: status.tellerUserId,
-      isClient: status.isClient,
-      trtcRoomIdOverride: status.trtcRoomId,
+      tellerUserId: status.tellerUserId ?? room?.tellerUserId,
+      clientId: room?.clientId,
+      isClient: true,
+      trtcRoomIdOverride: status.trtcRoomId ?? room?.roomId,
     );
     await PsychicSessionStore.save(session);
+
     final path = router.routerDelegate.currentConfiguration.uri.path;
-    if (path.contains('/canli-falcilar') &&
-        (path.contains('/session') ||
-            path.contains('/waiting') ||
-            path.contains('/ad-transition'))) {
+    final adRoute = '/canli-falcilar/${psychic.id}/ad-transition';
+
+    if (path.contains('/session') && path.contains('/canli-falcilar')) {
+      return;
+    }
+    if (path.contains('/ad-transition')) {
       return;
     }
     if (path.contains('/waiting')) {
-      router.pushReplacement('/canli-falcilar/${psychic.id}/session', extra: session);
-    } else {
-      router.push('/canli-falcilar/${psychic.id}/session', extra: session);
+      router.pushReplacement(adRoute, extra: session);
+      return;
     }
+    router.push(adRoute, extra: session);
   }
 }

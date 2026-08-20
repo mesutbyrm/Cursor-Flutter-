@@ -258,7 +258,7 @@ class PsychicWaitingScreen extends ConsumerWidget {
     ref.listen<PsychicSessionEntity?>(psychicWaitingNavProvider, (prev, next) {
       if (next == null) return;
       context.pushReplacement(
-        '/canli-falcilar/${next.psychic.id}/session',
+        '/canli-falcilar/${next.psychic.id}/ad-transition',
         extra: next,
       );
       ref.read(psychicWaitingNavProvider.notifier).state = null;

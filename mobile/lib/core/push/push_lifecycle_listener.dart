@@ -104,6 +104,9 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
             return;
           }
           if (update.isRejected) {
+            ref
+                .read(psychicSessionCancelSignalProvider.notifier)
+                .signal(update.sessionId);
             ref.read(psychicBookingFeedbackProvider.notifier).state =
                 'Randevu reddedildi — jetonlar iade edildi';
             ref.refreshWalletCache(force: true);

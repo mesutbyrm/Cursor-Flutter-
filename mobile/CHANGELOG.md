@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.295+331 (2026-08-20) — Canlı Falcılar akış tamamlama
+
+- **Kabul sonrası:** Bekleme → `ad-transition` (izin + reklam) → görüşme
+- **Push kabul:** `session_update` accept bekleme ekranından reklam geçişine yönlendirir (dead-code düzeltmesi)
+- **Push red:** Bekleme ekranı anında kapanır (`psychicSessionCancelSignal`)
+- **Davet push:** Geniş `fortune`/`falc` eşleşmesi kaldırıldı — yanlış bildirim popup'ı önlenir
+
 ## 1.0.294+330 (2026-08-20) — Canlı Falcılar backend uyumu
 
 - **Seans iptali:** Bekleme ekranında `PATCH /api/fortune-tellers/sessions/{id}` `{action: cancel}` (oda `end` yerine)
