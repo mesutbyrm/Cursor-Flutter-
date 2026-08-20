@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.292+328 (2026-08-20) — Sesli oda tam senkronizasyon (P3)
+
+- **Kişi sayısı:** `hubOnlineCount` sunucu kaynağı; yerel presence ile `max()` kaldırıldı; `GET /api/live/online-users` `totalCount` + `GET /state` `onlineCount`
+- **Hediye flaşı:** Koltuk altı max 3 hediye, her biri bağımsız 3 sn (`voiceSeatGiftFlashProvider`)
+- **PK:** SSE `pk_*` olaylarında `livePkInviteSignalProvider.bump()` — davet popup yedek poll
+- **Çıkış:** Odadan ayrılınca `hubOnlineCount` ve hediye flaşı temizlenir
+
 ## 1.0.291+327 (2026-08-20) — Sesli oda P2 eşleştirme
 
 - **Kullanıcı sheet:** `VoiceRoomUserActions.openUserSheet` — RTC ve basic modda tek giriş noktası

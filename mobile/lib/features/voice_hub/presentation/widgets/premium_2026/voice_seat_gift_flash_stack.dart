@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
-import '../../../live/domain/entities/live_gift_catalog.dart';
+import '../../../../live/domain/entities/live_gift_catalog.dart';
 import '../../providers/voice_seat_gift_flash_provider.dart';
 
 /// Sesli oda koltuk altı hediye flaşı — en fazla 3, her biri 3 sn.
