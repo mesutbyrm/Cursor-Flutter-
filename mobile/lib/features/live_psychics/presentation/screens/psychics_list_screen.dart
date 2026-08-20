@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/live_badge.dart';
 import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
 import '../../../../core/widgets/user_avatar.dart';

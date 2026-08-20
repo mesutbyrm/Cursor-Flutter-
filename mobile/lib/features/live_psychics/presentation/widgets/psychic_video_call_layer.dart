@@ -66,16 +66,16 @@ class PsychicVideoCallLayer extends StatelessWidget {
     return ValueListenableBuilder<String?>(
       valueListenable: ctrl.trtc.remoteAnchorUserIdNotifier,
       builder: (context, remoteUserId, _) {
-        final hasRemote =
-            remoteUserId != null && remoteUserId.trim().isNotEmpty;
+        final uid = remoteUserId?.trim();
+        final hasRemote = uid != null && uid.isNotEmpty;
         return Stack(
           fit: StackFit.expand,
           children: [
             if (hasRemote)
               TrtcRemoteVideoView(
-                key: ValueKey('remote-$remoteUserId'),
+                key: ValueKey('remote-$uid'),
                 manager: ctrl.trtc,
-                userId: remoteUserId!,
+                userId: uid,
               )
             else
               const LiveRoomVideoBackground(),

@@ -38,6 +38,8 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 | Session store | `psychic_session_store_test` — save/load/clear, bozuk JSON |
 | Extend sheet | `psychic_extend_sheet_test` — jeton, staff, iptal |
 | Review sheet | `psychic_review_sheet_test` — gönder / şimdi değil |
+| Close dialog | `psychic_close_dialog_test` — onay / vazgeç |
+| Tip sheet | `psychic_tip_sheet_test` — bahşiş seçimi / iptal |
 
 ---
 
@@ -47,7 +49,7 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 |-----|--------|
 | **CI** | Flutter cihaz E2E yok (API smoke: `scripts/acceptance-tests/api-release-gate.sh` Gate 3) |
 
-Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incoming_sse_parser_test`, `psychic_room_sse_parser_test`, `psychic_flow_push_test`, `live_psychics_remote_datasource_test`, `psychic_client_session_guard_test`, `psychic_waiting_screen_test`, `psychic_booking_sheet_test`, `psychic_incoming_call_dialog_test`, `psychic_video_state_test`, `psychic_session_restore_test`, `psychic_push_action_bridge_test`, `psychic_session_store_test`, `psychic_extend_sheet_test`, `psychic_review_sheet_test`, `session_room_sse_event_test`, invite coordinator, phase guard, profile resolver.
+Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incoming_sse_parser_test`, `psychic_room_sse_parser_test`, `psychic_flow_push_test`, `live_psychics_remote_datasource_test`, `psychic_client_session_guard_test`, `psychic_waiting_screen_test`, `psychic_booking_sheet_test`, `psychic_incoming_call_dialog_test`, `psychic_video_state_test`, `psychic_session_restore_test`, `psychic_push_action_bridge_test`, `psychic_session_store_test`, `psychic_extend_sheet_test`, `psychic_review_sheet_test`, `psychic_close_dialog_test`, `psychic_tip_sheet_test`, `session_room_sse_event_test`, invite coordinator, phase guard, profile resolver.
 
 ---
 
@@ -88,6 +90,7 @@ APK: `1.0.309+345` — iki cihaz veya iki hesap (danışan + falcı) gerekir. CI
 | 1.0.302+338 | Oda SSE parser, push rol testleri, datasource mock Dio testleri |
 | 1.0.303+339 | Widget testleri — waiting, booking, incoming dialog, video state |
 | 1.0.306+342 | Widget test CI düzeltmeleri (import, layout, pump) |
+| 1.0.310+346 | Close/tip sheet testleri, video layer lint |
 | 1.0.309+345 | Extend sheet test layout CI düzeltmesi |
 | 1.0.308+344 | Session store, extend/review sheet testleri |
 | 1.0.307+343 | Session restore + push action bridge testleri, manuel E2E checklist |

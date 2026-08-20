@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.310+346 (2026-08-20) — Canlı Falcılar close/tip test + lint
+
+- **Test:** `psychic_close_dialog_test` — onay / vazgeç
+- **Test:** `psychic_tip_sheet_test` — bahşiş seçimi ve iptal
+- **Lint:** `psychic_video_call_layer` gereksiz `!` kaldırıldı; liste ekranı kullanılmayan import
+
 ## 1.0.309+345 (2026-08-20) — Canlı Falcılar extend sheet test layout
 
 - **Test:** `psychic_extend_sheet_test` büyük surface (1100px) — CI overflow düzeltmesi
