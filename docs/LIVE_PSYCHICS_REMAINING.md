@@ -23,29 +23,24 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 | Oda SSE give-up | Max 20 reconnect, `onFailed`, HTTP poll yedek |
 | SSE failed UI | Görüşme banner + `retryRoomSse` |
 | Bekleme temizlik | Gereksiz room SSE disconnect kaldırıldı |
+| createSession sade | Kullanılmayan repo parametreleri kaldırıldı |
+| extendSession sade | `totalJeton` imzadan çıkarıldı |
+| Çift seans engeli | Tüm aktif/bekleyen danışan seansları |
+| Legacy endpoints | `tellerChat`, `liveFalRequest*` kaldırıldı |
 
 ---
 
 ## Kalan — kod (öncelik sırasıyla)
 
-### P1 — Davranış / UX
-
-_P1 maddeleri `1.0.299+335` ile tamamlandı._
-
 ### P2 — API / model
 
-| # | Konu | Dosya | Açıklama |
-|---|------|-------|----------|
-| 5 | **createSession parametreleri** | `live_psychics_repository.dart`, `psychic_flow.dart` | `staffExempt`, `clientName`, `tellerUserId` body’ye yazılmıyor — kaldır veya staff muafiyetini backend ile doğrula |
-| 6 | **extendSession imzası** | repository | `totalJeton` zorunlu ama API yalnızca `{action, minutes}` — imza sadeleştir |
-| 7 | **Çift seans** | `psychic_flow.dart` | Aynı falcıya eşzamanlı ikinci randevu — `_findBlockingSession` genişlet |
+_P2 maddeleri `1.0.300+336` ile tamamlandı._
 
 ### P3 — Temizlik
 
 | # | Konu | Dosya |
 |---|------|-------|
-| 8 | Legacy sabitler | `api_endpoints.dart` — `tellerChat`, `liveFalRequestAccept/Reject` (live modülü) |
-| 9 | Eski dokümanlar | `docs/API_ENDPOINT_MATRIX.md`, `FLUTTER_AUDIT.md` — `fortuneTellerSessionStatus` artık yok |
+| 1 | Eski dokümanlar | `docs/API_ENDPOINT_MATRIX.md`, `FLUTTER_AUDIT.md` — güncel endpoint listesi |
 
 ---
 
@@ -94,5 +89,6 @@ Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `session_room_
 | 1.0.297+333 | Danışan oturum geçmişi, paylaşılan widget, dead code |
 | 1.0.298+334 | Status path, respondSession, teller push, SSE pending_sessions |
 | 1.0.299+335 | 120 sn uyarı, time_extended, oda SSE give-up + banner |
+| 1.0.300+336 | createSession/extendSession sade, çift seans engeli, legacy cleanup |
 
 _Bu dosya agent oturumlarında güncellenir; tamamlandıkça maddeler silinir veya «Tamamlandı» bölümüne taşınır._

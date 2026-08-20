@@ -934,7 +934,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     final ok = await ref.read(livePsychicsRepositoryProvider).extendSession(
           sessionId: session.sessionId,
           minutes: choice.minutes,
-          totalJeton: choice.jeton,
         );
     if (ok) {
       invalidateWalletCacheFromRef(ref);

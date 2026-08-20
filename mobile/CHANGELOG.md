@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.300+336 (2026-08-20) — Canlı Falcılar P2 API sadeleştirme
+
+- **createSession:** Kullanılmayan `tellerUserId`, `staffExempt`, `clientName` parametreleri kaldırıldı
+- **extendSession:** `totalJeton` imzadan çıkarıldı (API yalnızca `{action, minutes}`)
+- **Çift seans engeli:** Herhangi bir aktif/bekleyen danışan seansı yeni randevuyu bloklar
+- **Legacy endpoints:** `tellerChat`, `liveFalRequestAccept/Reject` kaldırıldı
+- **Test:** `PsychicClientSessionGuard` unit testleri
+
 ## 1.0.299+335 (2026-08-20) — Canlı Falcılar görüşme UX
 
 - **120 sn uyarı:** Danışana «Süre azalıyor» snackbar + «Uzat» aksiyonu; timer kırmızı

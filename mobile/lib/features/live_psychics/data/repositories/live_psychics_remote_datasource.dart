@@ -473,11 +473,8 @@ class LivePsychicsRemoteDataSource {
 
   Future<PsychicSessionCreateResult?> createSession({
     required String tellerId,
-    String? tellerUserId,
     required int durationMinutes,
     required String fortuneType,
-    bool staffExempt = false,
-    String? clientName,
   }) async {
     final id = tellerId.trim();
     if (id.isEmpty) return null;
@@ -906,7 +903,6 @@ class LivePsychicsRemoteDataSource {
   Future<bool> extendSession({
     required String sessionId,
     required int minutes,
-    required int totalJeton,
   }) async {
     final result = await roomAction(
       sessionId,

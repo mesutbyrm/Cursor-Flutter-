@@ -2,10 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/auth_route_paths.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/psychic_event_log.dart';
 import '../../domain/entities/psychic_session_status.dart';
+import '../../domain/psychic_client_session_guard.dart';
 import '../../data/services/psychic_session_store.dart';
 import '../../domain/entities/psychic_entity.dart';
 import '../../domain/entities/psychic_session_entity.dart';
@@ -33,21 +33,53 @@ abstract final class PsychicFlow {
   }) async {
     final repo = ref.read(livePsychicsRepositoryProvider);
 
-    final existing = await _findBlockingSession(repo: repo, psychicId: psychic.id);
+    final existing = await _findBlockingSession(repo: repo);
     if (existing != null) {
-      ref.read(psychicBookingFeedbackProvider.notifier).state =
-          'Bu falcı ile zaten bekleyen veya aktif bir seansınız var.';
+      final stored = await PsychicSessionStore.load();
+      final existingTellerId =
+          existing.tellerProfileId?.trim() ?? stored?.psychic.id ?? '';
+      final sameTeller = existingTellerId == psychic.id;
+      ref.read(psychicBookingFeedbackProvider.notifier).state = sameTeller
+          ? 'Bu falcı ile zaten bekleyen veya aktif bir seansınız var.'
+          : 'Başka bir canlı fal seansınız devam ediyor. Önce onu tamamlayın.';
+
+      final tellerPsychic = sameTeller
+          ? psychic
+          : (existingTellerId.isNotEmpty
+                  ? await repo.fetchPsychic(existingTellerId)
+                  : null) ??
+              stored?.psychic ??
+              psychic;
+
       if (existing.status.isActive) {
-        final session = await _sessionFromStatus(repo, existing, psychic);
+        final session =
+            await _sessionFromStatus(repo, existing, tellerPsychic);
         if (session != null) {
-          router.push('/canli-falcilar/${psychic.id}/session', extra: session);
+          router.push(
+            '/canli-falcilar/${tellerPsychic.id}/session',
+            extra: session,
+          );
           return session;
         }
       } else if (existing.status.isWaiting) {
-        final stored = await PsychicSessionStore.load();
-        if (stored != null && stored.psychic.id == psychic.id) {
-          router.push('/canli-falcilar/${psychic.id}/waiting', extra: stored);
-          return stored;
+        if (stored != null && stored.sessionId == existing.sessionId) {
+          final waitingSession = stored.psychic.id == tellerPsychic.id
+              ? stored
+              : stored.copyWith(psychic: tellerPsychic);
+          router.push(
+            '/canli-falcilar/${tellerPsychic.id}/waiting',
+            extra: waitingSession,
+          );
+          return waitingSession;
+        }
+        final session = await _sessionFromStatus(repo, existing, tellerPsychic);
+        if (session != null) {
+          await PsychicSessionStore.save(session);
+          router.push(
+            '/canli-falcilar/${tellerPsychic.id}/waiting',
+            extra: session,
+          );
+          return session;
         }
       }
       return null;
@@ -55,16 +87,12 @@ abstract final class PsychicFlow {
 
     final type = fortuneType ??
         (psychic.specialties.isNotEmpty ? psychic.specialties.first : 'general');
-    final clientName = ref.read(authControllerProvider).valueOrNull?.displayName;
     PsychicSessionCreateResult? created;
     try {
       created = await repo.createSession(
         tellerId: psychic.id,
-        tellerUserId: psychic.userId ?? psychic.trtcUserId,
         durationMinutes: durationMinutes,
         fortuneType: type,
-        staffExempt: staffExempt,
-        clientName: clientName,
       );
     } catch (e) {
       ref.read(psychicBookingFeedbackProvider.notifier).state =
@@ -102,24 +130,18 @@ abstract final class PsychicFlow {
 
   static Future<PsychicSessionStatusResult?> _findBlockingSession({
     required LivePsychicsRepository repo,
-    required String psychicId,
   }) async {
+    final active = await repo.fetchActiveSessions();
+    final fromActive = PsychicClientSessionGuard.firstBlockingFromActive(active);
+    if (fromActive != null) return fromActive;
+
     final stored = await PsychicSessionStore.load();
-    if (stored != null &&
-        stored.isClient &&
-        stored.psychic.id == psychicId) {
+    if (stored != null && stored.isClient) {
       final status = await repo.fetchSessionStatus(stored.sessionId);
       if (status != null &&
-          (status.status.isWaiting || status.status.isActive)) {
+          PsychicClientSessionGuard.blocksNewBooking(status.status)) {
         return status;
       }
-    }
-    final active = await repo.fetchActiveSessions();
-    for (final s in active) {
-      if (!s.isClient) continue;
-      if (!s.status.isWaiting && !s.status.isActive) continue;
-      final tellerId = s.tellerProfileId?.trim() ?? '';
-      if (tellerId == psychicId) return s;
     }
     return null;
   }

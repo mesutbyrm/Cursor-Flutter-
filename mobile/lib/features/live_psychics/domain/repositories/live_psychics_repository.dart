@@ -114,11 +114,8 @@ abstract class LivePsychicsRepository {
 
   Future<PsychicSessionCreateResult?> createSession({
     required String tellerId,
-    String? tellerUserId,
     required int durationMinutes,
     required String fortuneType,
-    bool staffExempt = false,
-    String? clientName,
   });
 
   Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId);
@@ -164,7 +161,6 @@ abstract class LivePsychicsRepository {
   Future<bool> extendSession({
     required String sessionId,
     required int minutes,
-    required int totalJeton,
   });
 
   Future<bool> tellerAddTime({

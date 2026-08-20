@@ -192,14 +192,6 @@ abstract final class ApiEndpoints {
   /// Aktif seanslar — kullanıcı uygulama açılışında (üretim prompt §8).
   static const userActiveSessions = '/api/user/active-sessions';
 
-  static String tellerChat(String sessionId) => '/api/teller-chat/$sessionId';
-
-  static String liveFalRequestAccept(String requestId) =>
-      '/api/live-fal/request/$requestId/accept';
-
-  static String liveFalRequestReject(String requestId) =>
-      '/api/live-fal/request/$requestId/reject';
-
   /// Oyunlar ve etkinlikler.
   static const homeGames = '/api/games';
   static const gameRooms = '/api/games/rooms';

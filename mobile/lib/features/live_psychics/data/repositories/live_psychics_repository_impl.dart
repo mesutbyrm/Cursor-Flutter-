@@ -106,19 +106,13 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
   @override
   Future<PsychicSessionCreateResult?> createSession({
     required String tellerId,
-    String? tellerUserId,
     required int durationMinutes,
     required String fortuneType,
-    bool staffExempt = false,
-    String? clientName,
   }) =>
       _remote.createSession(
         tellerId: tellerId,
-        tellerUserId: tellerUserId,
         durationMinutes: durationMinutes,
         fortuneType: fortuneType,
-        staffExempt: staffExempt,
-        clientName: clientName,
       );
 
   @override
@@ -209,12 +203,10 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
   Future<bool> extendSession({
     required String sessionId,
     required int minutes,
-    required int totalJeton,
   }) =>
       _remote.extendSession(
         sessionId: sessionId,
         minutes: minutes,
-        totalJeton: totalJeton,
       );
 
   @override
