@@ -1,6 +1,6 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-20 11:33 UTC — jeton=9920, M7 HTTP 200, m5-preflight ✅  
+**Son güncelleme:** 2026-08-20 11:42 UTC — env setup tamam, jeton≈9580, tüm otomatik kapılar PASS  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (15 PASS)
 
 ---
@@ -74,6 +74,11 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-08-20 devam 6)
+
+- Env setup: `ACCEPTANCE_ADMIN_*` kullanıcı tarafından atlandı; mevcut jeton≈9580 yeterli
+- `faz0-verify` PASS=5; `m5-device-prep` + API smoke PASS=6
 
 ## Oturum günlüğü (2026-08-20 devam 5)
 

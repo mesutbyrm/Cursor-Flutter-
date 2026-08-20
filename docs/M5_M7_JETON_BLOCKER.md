@@ -1,8 +1,6 @@
 # M5 / M7 — Jeton engeli ve çözüm
 
-**Durum:** Jeton yüklendi (9920); M7 HTTP 200 ✅; M5 cihaz bekliyor.  
-**APK:** `1.0.291+327` (`apk-latest`)  
-**Test hesabı:** `cursor.test.1786235468@mailinator.com` — **jeton=9920**
+**Durum:** Jeton yüklü (≈9600); M7 + API smoke ✅ — `ACCEPTANCE_ADMIN_*` atlandı (jeton zaten var). M5 cihaz bekliyor.
 
 ---
 
