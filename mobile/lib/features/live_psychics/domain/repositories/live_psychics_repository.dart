@@ -132,6 +132,10 @@ abstract class LivePsychicsRepository {
     required String action,
   });
 
+  /// Bekleyen seans iptali — `PATCH /api/fortune-tellers/sessions/{id}` `{action: cancel}`.
+  Future<bool> cancelSession(String sessionId);
+
+  /// Aktif seans sonlandırma — `PATCH /api/room/{id}` `{action: end}`.
   Future<bool> endSession(String sessionId);
   Future<void> clearRoomSignals(String sessionId);
   Future<List<Map<String, dynamic>>> fetchRoomSignals(String sessionId);

@@ -425,6 +425,24 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                         label: 'Kamera',
                         onTap: ctrl.toggleCamera,
                       ),
+                      if (!session.isClient && !state.timerStarted)
+                        _ControlBtn(
+                          icon: Icons.play_arrow_rounded,
+                          label: 'Başlat',
+                          onTap: () async {
+                            final ok = await ctrl.startTimer();
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  ok
+                                      ? 'Seans süresi başlatıldı'
+                                      : 'Süre başlatılamadı',
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       if (!session.isClient)
                         _ControlBtn(
                           icon: Icons.schedule_rounded,

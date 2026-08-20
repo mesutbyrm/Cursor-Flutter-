@@ -84,16 +84,7 @@ class LivePsychicsRemoteDataSource {
         }
       } catch (_) {}
     }
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.socialFortuneTellers);
-      final items = PsychicModel.itemsFromBody(res.data);
-      return items
-          .map(PsychicModel.psychicFromJson)
-          .where((p) => p.id.isNotEmpty)
-          .toList(growable: false);
-    } catch (_) {
-      return const [];
-    }
+    return const [];
   }
 
   /// `userId` (auth) ile eşleşen falcı — liste sayfalama; **authUser.id ile GET by id yapılmaz**.
@@ -212,9 +203,6 @@ class LivePsychicsRemoteDataSource {
       );
       return _parseApplyResponse(res.data);
     } on ApiException catch (e) {
-      if (e.statusCode == 404 || e.statusCode == 405) {
-        return _applyAsTellerFallback(payload);
-      }
       if (_looksLikeAlreadyTellerError(e)) {
         final existing = await fetchMyProfile();
         if (existing != null && existing.isUsable) return existing;
@@ -255,26 +243,6 @@ class LivePsychicsRemoteDataSource {
       }
     } catch (_) {}
     return null;
-  }
-
-  Future<PsychicEntity?> _applyAsTellerFallback(
-    Map<String, dynamic> payload,
-  ) async {
-    try {
-      final res = await _dio.safePost<dynamic>(
-        ApiEndpoints.socialFortuneTellers,
-        data: payload,
-        options: Options(
-          receiveTimeout: const Duration(seconds: 25),
-          sendTimeout: const Duration(seconds: 20),
-        ),
-      );
-      return _parseApplyResponse(res.data);
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(ApiException.userMessage(e));
-    }
   }
 
   PsychicEntity? _parseApplyResponse(dynamic body) {
@@ -395,7 +363,12 @@ class LivePsychicsRemoteDataSource {
                 giftCount: asInt(m['giftCount'] ?? m['count']),
                 senderImage:
                     m['senderImage']?.toString() ?? m['image']?.toString(),
-                totalJeton: asInt(m['totalJeton'] ?? m['jeton'] ?? m['amount']),
+                totalJeton: asInt(
+                  m['totalJeton'] ??
+                      m['jeton'] ??
+                      m['amount'] ??
+                      m['totalAmount'],
+                ),
               ))
           .where((g) => g.senderId.isNotEmpty)
           .toList(growable: false);
@@ -410,19 +383,15 @@ class LivePsychicsRemoteDataSource {
     required int rating,
     String? comment,
   }) async {
-    final payload = {
-      'sessionId': sessionId.trim(),
-      'tellerId': tellerId.trim(),
+    final sid = sessionId.trim();
+    if (sid.isEmpty) return false;
+    final payload = <String, dynamic>{
       'rating': rating.clamp(1, 5),
       if (comment != null && comment.trim().isNotEmpty) 'comment': comment.trim(),
     };
     try {
-      await _dio.safePost<dynamic>(ApiEndpoints.tellerReviews, data: payload);
-      return true;
-    } catch (_) {}
-    try {
       await _dio.safePost<dynamic>(
-        ApiEndpoints.fortuneTellerReviews(tellerId.trim()),
+        ApiEndpoints.liveFortuneRoomReview(sid),
         data: payload,
       );
       return true;
@@ -510,34 +479,45 @@ class LivePsychicsRemoteDataSource {
   }) async {
     final id = tellerId.trim();
     if (id.isEmpty) return null;
-    final tellerUid = tellerUserId?.trim() ?? '';
-    final body = <String, dynamic>{
-      'tellerId': id,
-      if (tellerUid.isNotEmpty) 'tellerUserId': tellerUid,
-      if (tellerUid.isNotEmpty) 'anchorUserId': tellerUid,
-      'fortuneType':
-          fortuneType.trim().isNotEmpty ? fortuneType.trim() : 'general',
-      'maxMinutes': durationMinutes,
-      if (staffExempt) 'staffExempt': true,
-      if (clientName != null && clientName.trim().isNotEmpty)
-        'clientName': clientName.trim(),
-    };
-    // Kılavuz: POST /api/fortune-tellers/{tellerId}/session — yedek: /session
+    final type =
+        fortuneType.trim().isNotEmpty ? fortuneType.trim() : 'general';
     Object? lastErr;
-    for (final path in [
-      ApiEndpoints.fortuneTellerSessionFor(id),
-      ApiEndpoints.fortuneTellerSession,
-    ]) {
-      try {
-        final res = await _dio.safePost<dynamic>(path, data: body);
-        return PsychicModel.sessionCreateFromJson(res.data);
-      } on ApiException catch (e) {
-        lastErr = e;
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-      } catch (e) {
-        lastErr = e;
-      }
+
+    // Kılavuz §9.6: POST /api/fortune-tellers/{tellerId}/session
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.fortuneTellerSessionFor(id),
+        data: {
+          'fortuneType': type,
+          'maxMinutes': durationMinutes,
+        },
+      );
+      return PsychicModel.sessionCreateFromJson(res.data);
+    } on ApiException catch (e) {
+      lastErr = e;
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    } catch (e) {
+      lastErr = e;
     }
+
+    // Prompt yedek: POST /api/fortune-tellers/session — `duration` alanı
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.fortuneTellerSession,
+        data: {
+          'tellerId': id,
+          'fortuneType': type,
+          'duration': durationMinutes,
+        },
+      );
+      return PsychicModel.sessionCreateFromJson(res.data);
+    } on ApiException catch (e) {
+      lastErr = e;
+      rethrow;
+    } catch (e) {
+      lastErr = e;
+    }
+
     if (lastErr is ApiException) throw lastErr;
     throw ApiException(
       ApiException.userMessage(lastErr ?? 'Seans oluşturulamadı'),
@@ -597,26 +577,22 @@ class LivePsychicsRemoteDataSource {
   }) async {
     final merged = <PsychicRequestEntity>[];
     final seen = <String>{};
-    // Üretim kılavuz §9: GET /api/fortune-tellers/sessions (incoming yalnızca yerel ayna).
-    for (final path in [
-      ApiEndpoints.fortuneTellerSessionsWithStatus('pending'),
-      ApiEndpoints.fortuneTellerSessions,
-    ]) {
-      try {
-        final res = await _dio.safeGet<dynamic>(path);
-        final items = PsychicModel.itemsFromBody(
-          res.data,
-          keys: const ['sessions', 'pending', 'requests', 'items', 'data'],
-        );
-        for (final raw in items) {
-          final req = PsychicModel.requestFromJson(raw);
-          if (req.sessionId.isEmpty || !req.isPending) continue;
-          if (seen.add(req.sessionId)) merged.add(req);
-        }
-      } on ApiException catch (e) {
-        if (e.statusCode == 404 || e.statusCode == 405) continue;
-      } catch (_) {}
-    }
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.fortuneTellerSessionsWithStatus('pending'),
+      );
+      final items = PsychicModel.itemsFromBody(
+        res.data,
+        keys: const ['sessions', 'pending', 'requests', 'items', 'data'],
+      );
+      for (final raw in items) {
+        final req = PsychicModel.requestFromJson(raw);
+        if (req.sessionId.isEmpty || !req.isPending) continue;
+        if (seen.add(req.sessionId)) merged.add(req);
+      }
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    } catch (_) {}
     final uid = currentUserId?.trim() ?? '';
     final profileId = tellerProfileId?.trim() ?? '';
     return merged.where((r) {
@@ -687,34 +663,6 @@ class LivePsychicsRemoteDataSource {
     }
 
     if (body == null) {
-      final legacyPath = ApiEndpoints.fortuneTellerSessionRespond(key);
-      try {
-        final res = await _dio.safePost<dynamic>(
-          legacyPath,
-          data: {'action': act},
-        );
-        httpStatus = res.statusCode;
-        endpointUsed = legacyPath;
-        responseBody = _psychicRespondBodySnippet(res.data);
-        debugPrint(
-          '[PsychicRespond] POST $legacyPath action=$act '
-          'status=$httpStatus body=$responseBody',
-        );
-        if (res.data is Map) body = asJsonMap(res.data);
-      } catch (e, st) {
-        debugPrint(
-          '[PsychicRespond] POST $legacyPath action=$act exception: $e\n$st',
-        );
-        if (e is ApiException) {
-          httpStatus = e.statusCode;
-          errorMessage = e.message;
-        } else {
-          errorMessage = e.toString();
-        }
-      }
-    }
-
-    if (body == null) {
       return PsychicRespondResult(
         success: false,
         sessionId: key,
@@ -753,13 +701,10 @@ class LivePsychicsRemoteDataSource {
     }
   }
 
-  Future<bool> endSession(String sessionId) async {
+  /// Bekleyen seans iptali — üretim: `PATCH /api/fortune-tellers/sessions/{id}`.
+  Future<bool> cancelSession(String sessionId) async {
     final key = sessionId.trim();
     if (key.isEmpty) return false;
-    for (final action in const ['cancel', 'end', 'leave']) {
-      final result = await roomAction(key, action);
-      if (result != null) return true;
-    }
     try {
       await _dio.safePatch<dynamic>(
         ApiEndpoints.fortuneTellerSessionPatch(key),
@@ -769,6 +714,14 @@ class LivePsychicsRemoteDataSource {
     } catch (_) {
       return false;
     }
+  }
+
+  /// Aktif seans sonlandırma — üretim: `PATCH /api/room/{id}` `{action: end}`.
+  Future<bool> endSession(String sessionId) async {
+    final key = sessionId.trim();
+    if (key.isEmpty) return false;
+    final result = await roomAction(key, 'end');
+    return result != null;
   }
 
   /// GET `/api/room/signal?sessionId=` — bahşiş vb. yedek kanal (SSE kaçarsa).
@@ -924,11 +877,7 @@ class LivePsychicsRemoteDataSource {
     try {
       await _dio.safePost<dynamic>(
         ApiEndpoints.liveFortuneRoomMessages(key),
-        data: {
-          // Kılavuz §9.7: content; üretimde message yedek.
-          'content': message,
-          'message': message,
-        },
+        data: {'content': message},
       );
       return true;
     } catch (_) {
@@ -980,9 +929,9 @@ class LivePsychicsRemoteDataSource {
       }
     }
 
+    // Profil bahşişi (seans dışı) — üretim: POST /api/teller/gifts
     final tid = tellerId?.trim() ?? '';
     if (tid.isEmpty) return false;
-
     try {
       final body = <String, dynamic>{
         'tellerId': tid,

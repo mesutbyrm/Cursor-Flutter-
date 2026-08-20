@@ -146,6 +146,10 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
       _remote.respondSession(sessionId, action: action);
 
   @override
+  Future<bool> cancelSession(String sessionId) =>
+      _remote.cancelSession(sessionId);
+
+  @override
   Future<bool> endSession(String sessionId) => _remote.endSession(sessionId);
 
   @override

@@ -169,6 +169,9 @@ abstract final class ApiEndpoints {
   static String liveFortuneRoomTip(String sessionId) =>
       '${liveFortuneRoom(sessionId)}/tip';
 
+  static String liveFortuneRoomReview(String sessionId) =>
+      '${liveFortuneRoom(sessionId)}/review';
+
   static const liveFortuneRoomSignal = '/api/room/signal';
 
   static String liveFortuneRoomSignalQuery(String sessionId) =>

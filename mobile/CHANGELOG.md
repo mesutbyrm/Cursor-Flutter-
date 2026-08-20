@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.294+330 (2026-08-20) — Canlı Falcılar backend uyumu
+
+- **Seans iptali:** Bekleme ekranında `PATCH /api/fortune-tellers/sessions/{id}` `{action: cancel}` (oda `end` yerine)
+- **Seans oluşturma:** `/{tellerId}/session` → `{fortuneType, maxMinutes}`; yedek `/session` → `{tellerId, duration}`
+- **Değerlendirme:** `POST /api/room/{sessionId}/review` (yanlış teller/reviews uçları kaldırıldı)
+- **Gelen talepler:** Yalnızca `?status=pending`; `hold` aksiyonu ve otomatik çevrimiçi kaldırıldı
+- **Bekleme:** 3 sn session poll; oda SSE beklemede kapalı
+- **Görüşme:** Falcı manuel «Başlat» ile timer; SSE bağlıyken chat/oda poll durur
+- **Liste:** `/api/social/fortune-tellers` yedeği kaldırıldı
+
 ## 1.0.293+329 (2026-08-20) — CI derleme düzeltmesi
 
 - **voice_seat_gift_flash_stack:** `LiveGiftCatalog` import yolu düzeltildi (`../../../../live/...`) — CodeQL/FAZ0 build FAIL giderildi

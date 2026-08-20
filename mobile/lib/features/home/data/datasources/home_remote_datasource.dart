@@ -111,7 +111,6 @@ class HomeRemoteDataSource {
     for (final path in [
       ApiEndpoints.homeAdvisorsOnline,
       ApiEndpoints.fortuneTellers,
-      ApiEndpoints.socialFortuneTellers,
     ]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);

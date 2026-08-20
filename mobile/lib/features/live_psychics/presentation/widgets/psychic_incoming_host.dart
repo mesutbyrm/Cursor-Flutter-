@@ -179,7 +179,6 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     final wasTeller = _isFortuneTeller;
     _isFortuneTeller = true;
     _tellerProfileId = profile.id;
-    await ref.read(livePsychicsRepositoryProvider).setOnline(online: true);
     if (!wasTeller) {
       await _connectSse();
     }
@@ -485,7 +484,6 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
         _isFortuneTeller = true;
         _tellerProfileId = profile.id;
         if (!wasTeller || prev?.profile?.id != profile.id) {
-          unawaited(ref.read(livePsychicsRepositoryProvider).setOnline(online: true));
           unawaited(_connectSse());
           unawaited(_pollApi());
         }

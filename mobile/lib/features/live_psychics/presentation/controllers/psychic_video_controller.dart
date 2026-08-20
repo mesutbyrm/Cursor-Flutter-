@@ -242,13 +242,19 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     });
     await PsychicSessionStore.save(session);
     _startTimers();
-    await _syncRoomInfo(startTimerIfTeller: true);
+    await _syncRoomInfo();
     await _joinRtc();
     await _connectRoomSse();
     _startChatPoll();
-    if (!session.isClient && !state.timerStarted) {
-      unawaited(_ensureTimerStarted());
+  }
+
+  /// Falcı manuel olarak süreyi başlatır (kılavuz §11.1).
+  Future<bool> startTimer() async {
+    if (_disposed || state.leaving || state.timerStarted || session.isClient) {
+      return false;
     }
+    await _ensureTimerStarted();
+    return state.timerStarted;
   }
 
   Future<void> _ensureTimerStarted() async {
@@ -299,7 +305,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   void _scheduleRoomPoll() {
     _roomPoll?.cancel();
-    if (_disposed) return;
+    if (_disposed || state.sseConnected) return;
     final interval = state.sseConnected
         ? const Duration(seconds: 20)
         : const Duration(seconds: 3);
@@ -385,7 +391,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     );
   }
 
-  Future<void> _syncRoomInfo({bool startTimerIfTeller = false}) async {
+  Future<void> _syncRoomInfo() async {
     if (_disposed || state.leaving) return;
     final repo = ref.read(livePsychicsRepositoryProvider);
     final info = await repo.fetchRoom(session.sessionId);
@@ -413,28 +419,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     final wasTimerStarted = state.timerStarted;
     final maxMinutes =
         info.maxMinutes > 0 ? info.maxMinutes : session.durationMinutes;
-
-    if (startTimerIfTeller && !session.isClient && !info.timerStarted) {
-      final result = await repo.roomAction(session.sessionId, 'start_timer');
-      if (result != null) {
-        final startedAtRaw = result['timerStartedAt']?.toString();
-        final startedAt = startedAtRaw != null
-            ? DateTime.tryParse(startedAtRaw)
-            : DateTime.now();
-        final room = info.copyWith(
-          timerStarted: true,
-          timerStartedAt: startedAt,
-          maxMinutes: maxMinutes,
-        );
-        state = state.copyWith(
-          room: room,
-          timerStarted: true,
-          waitingForTimer: false,
-          remaining: Duration(seconds: room.remainingSeconds),
-        );
-        return;
-      }
-    }
 
     var room = info.copyWith(maxMinutes: maxMinutes);
     var timerStarted = info.timerStarted;
@@ -555,9 +539,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   void _startChatPoll() {
     _chatPoll?.cancel();
-    final interval = state.sseConnected
-        ? const Duration(seconds: 20)
-        : const Duration(seconds: 3);
+    if (_disposed || state.sseConnected) return;
+    const interval = Duration(seconds: 3);
     _chatPoll = Timer.periodic(interval, (_) => unawaited(_pollChat()));
     unawaited(_pollChat());
   }
@@ -585,8 +568,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
             if (_disposed) return;
             if (!state.sseConnected) {
               state = state.copyWith(sseConnected: true);
-              _startChatPoll();
-              _scheduleRoomPoll();
+              _chatPoll?.cancel();
+              _roomPoll?.cancel();
               _scheduleSignalPoll();
             }
           },
@@ -774,9 +757,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       clearRtcError: true,
     );
     _setPhase(PsychicSessionPhase.connected);
-    if (!session.isClient && !state.timerStarted) {
-      unawaited(_ensureTimerStarted());
-    }
     unawaited(_broadcastMediaState());
     } catch (e) {
       PsychicEventLog.error('join', e, sessionId: session.sessionId);
@@ -1066,17 +1046,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     const t = Duration(seconds: 4);
     // Karşı tarafa "session_end" sinyalini önce gönder ki SSE ile haber alsın.
     try {
-      await repo.sendRoomSignal(
-        sessionId: sessionId,
-        type: 'session_end',
-        data: {
-          'endedByRole': isClient ? 'client' : 'teller',
-          if (endedBy != null) 'endedBy': endedBy,
-        },
-        receiverId: isClient ? tellerReceiver : clientReceiver,
-      ).timeout(t);
-    } catch (_) {}
-    try {
       await repo.roomAction(
         sessionId,
         'end',
@@ -1085,9 +1054,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           if (endedBy != null) 'endedBy': endedBy,
         },
       ).timeout(t);
-    } catch (_) {}
-    try {
-      await repo.endSession(sessionId).timeout(t);
     } catch (_) {}
     try {
       await repo.clearRoomSignals(sessionId).timeout(t);

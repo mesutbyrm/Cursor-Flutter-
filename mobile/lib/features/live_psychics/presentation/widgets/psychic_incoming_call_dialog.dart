@@ -152,20 +152,6 @@ class _PsychicIncomingCallDialogState
         return;
       }
 
-      if (action == 'hold' && respond.success) {
-        Navigator.pop(
-          context,
-          PsychicIncomingDialogClose(
-            action: PsychicIncomingDialogAction.held,
-            respond: respond,
-          ),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('İstek bekletildi — daha sonra kabul edebilirsiniz')),
-        );
-        return;
-      }
-
       Navigator.pop(
         context,
         PsychicIncomingDialogClose(
@@ -213,7 +199,6 @@ class _PsychicIncomingCallDialogState
 
     final timeLabel = TimeOfDay.now().format(context);
     final accepting = _busy && _busyAction == 'accept';
-    final holding = _busy && _busyAction == 'hold';
     final rejecting = _busy && _busyAction == 'reject';
 
     return Material(
@@ -397,15 +382,6 @@ class _PsychicIncomingCallDialogState
                   busy: accepting,
                   enabled: !_busy,
                   onTap: () => _respond('accept'),
-                ),
-                const SizedBox(height: 12),
-                _ActionBtn(
-                  label: holding ? 'Bekletiliyor…' : 'Beklet',
-                  icon: Icons.pause_circle_outline_rounded,
-                  gradient: const [Color(0xFFFF9800), Color(0xFFFFB74D)],
-                  busy: holding,
-                  enabled: !_busy,
-                  onTap: () => _respond('hold'),
                 ),
                 const SizedBox(height: 12),
                 _ActionBtn(
