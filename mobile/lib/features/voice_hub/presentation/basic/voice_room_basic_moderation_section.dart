@@ -147,34 +147,15 @@ void openVoiceRoomBasicUser(
         receiver: user,
       );
 
-  if (VoiceRoomUserActions.shouldOpenSelfProfile(
-    perms: permissions,
-    selfId: auth?.id,
-    target: user,
-  )) {
-    showVoiceUserProfileSheet(context, user: user, onGift: openGift);
-    return;
-  }
-
-  if (VoiceRoomUserActions.canOpenModerationSheet(permissions)) {
-    final djIds = liveState.dj.djUsers.map((u) => u.id).toSet();
-    showVoiceRoomModerationSheet(
-      context: context,
-      ref: ref,
-      room: room,
-      targetUser: VoiceRoomModerationTarget.fromPresence(user),
-      isOwnerOrMod: true,
-      perms: permissions,
-      isOwner: isOwner,
-      isTargetDj: djIds.contains(user.id),
-      onGift: openGift,
-    );
-    return;
-  }
-
-  showVoiceUserProfileSheet(
-    context,
+  VoiceRoomUserActions.openUserSheet(
+    context: context,
+    ref: ref,
+    room: room,
+    liveState: liveState,
     user: user,
+    permissions: permissions,
+    isOwner: isOwner,
+    selfId: auth?.id,
     onGift: openGift,
   );
 }

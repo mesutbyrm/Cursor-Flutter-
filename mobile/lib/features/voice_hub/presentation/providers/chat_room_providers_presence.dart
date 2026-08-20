@@ -589,8 +589,20 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       )) {
         continue;
       }
-      if (_markEntranceOnce(m.content)) {
-        _showEnterBanner(m.content);
+      final displayName = m.user?.displayName.trim().isNotEmpty == true
+          ? m.user!.displayName.trim()
+          : m.content.trim();
+      final banner = m.user != null
+          ? VoiceStaffChatStyle.formatTierEntranceLine(
+              displayName: displayName,
+              user: m.user,
+            )
+          : VoiceOfficialJoin.formatEntranceBanner(
+              m.content,
+              roomName: _roomMeta.nameTr,
+            );
+      if (banner.isNotEmpty && _markEntranceOnce(banner)) {
+        _pushEntranceBanner(banner);
       }
     }
   }
@@ -601,8 +613,15 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       roomName: _roomMeta.nameTr,
     );
     if (formatted.isEmpty || !_markEntranceOnce(formatted)) return;
-    // Gold / özel giriş — yalnızca koltuk altı (çift şerit yok).
-    state = state.copyWith(enterBanner: formatted);
+    _pushEntranceBanner(formatted);
+  }
+
+  void _pushEntranceBanner(String banner) {
+    ref.read(staffEntranceMarqueeProvider.notifier).enqueue(
+          banner,
+          roomName: _roomMeta.nameTr,
+        );
+    state = state.copyWith(enterBanner: banner);
     _enterBannerTimer?.cancel();
     _enterBannerTimer = Timer(const Duration(seconds: 5), () {
       if (!_sessionActive) return;
@@ -614,23 +633,35 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   void _handleSystemJoinEntrance(ChatRoomMessage msg) {
     final content = msg.content.trim();
     if (content.isEmpty) return;
-    if (VoiceStaffChatStyle.isStaffEntry(content: content, user: msg.user)) {
-      final name = msg.user?.displayName.trim().isNotEmpty == true
-          ? msg.user!.displayName.trim()
-          : content;
-      _showStaffEnterBanner(name, user: msg.user);
+    final user = msg.user;
+    final displayName = user?.displayName.trim().isNotEmpty == true
+        ? user!.displayName.trim()
+        : content;
+
+    if (VoiceStaffChatStyle.isStaffEntry(content: content, user: user)) {
+      _showStaffEnterBanner(displayName, user: user);
       return;
     }
+
     if (!VoiceOfficialJoin.isEntranceWorthy(
       content: content,
-      membership: msg.user?.membership,
-      chatRole: msg.user?.chatRole,
+      membership: user?.membership,
+      chatRole: user?.chatRole,
     )) {
       return;
     }
-    if (_markEntranceOnce(content)) {
-      _showEnterBanner(content);
-    }
+
+    final banner = user != null
+        ? VoiceStaffChatStyle.formatTierEntranceLine(
+            displayName: displayName,
+            user: user,
+          )
+        : VoiceOfficialJoin.formatEntranceBanner(
+            content,
+            roomName: _roomMeta.nameTr,
+          );
+    if (banner.isEmpty || !_markEntranceOnce(banner)) return;
+    _pushEntranceBanner(banner);
   }
 
   ChatRoomPresence? _resolvePresence(String target) {

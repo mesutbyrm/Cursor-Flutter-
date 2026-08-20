@@ -1,6 +1,8 @@
+import 'package:canlifal_social/features/voice_hub/domain/entities/chat_room_message.dart';
 import 'package:canlifal_social/features/voice_hub/domain/entities/chat_room_presence.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/utils/voice_room_permissions.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/utils/voice_room_user_actions.dart';
+import 'package:canlifal_social/features/voice_hub/presentation/utils/voice_staff_chat_style.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -56,5 +58,20 @@ void main() {
       ),
       isFalse,
     );
+  });
+
+  test('formatTierEntranceLine uses diamond label for membership', () {
+    const user = ChatRoomUserRef(
+      id: 'u3',
+      name: 'Ayşe',
+      membership: 'diamond',
+    );
+    final line = VoiceStaffChatStyle.formatTierEntranceLine(
+      displayName: 'Ayşe',
+      user: user,
+    );
+    expect(line, contains('💎'));
+    expect(line, contains('Diamond'));
+    expect(line, contains('Ayşe'));
   });
 }

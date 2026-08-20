@@ -815,31 +815,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           receiver: user,
         );
 
-    final authId = auth?.id;
-    if (VoiceRoomUserActions.shouldOpenSelfProfile(
-      perms: permissions,
-      selfId: authId,
-      target: user,
-    )) {
-      showVoiceUserProfileSheet(context, user: user, onGift: openGift);
-      return;
-    }
-    if (VoiceRoomUserActions.canOpenModerationSheet(permissions)) {
-      final djIds = liveState.dj.djUsers.map((u) => u.id).toSet();
-      showVoiceRoomModerationSheet(
-        context: context,
-        ref: ref,
-        room: effectiveRoom,
-        targetUser: VoiceRoomModerationTarget.fromPresence(user),
-        isOwnerOrMod: true,
-        perms: permissions,
-        isOwner: owner || permissions.isRoomOwner,
-        isTargetDj: djIds.contains(user.id),
-        onGift: openGift,
-      );
-      return;
-    }
-    showVoiceUserProfileSheet(context, user: user, onGift: openGift);
+    VoiceRoomUserActions.openUserSheet(
+      context: context,
+      ref: ref,
+      room: effectiveRoom,
+      liveState: liveState,
+      user: user,
+      permissions: permissions,
+      isOwner: owner,
+      selfId: auth?.id,
+      onGift: openGift,
+    );
   }
 
   void _openManagementPanel(

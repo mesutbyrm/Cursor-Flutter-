@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.291+327 (2026-08-20) — Sesli oda P2 eşleştirme
+
+- **Kullanıcı sheet:** `VoiceRoomUserActions.openUserSheet` — RTC ve basic modda tek giriş noktası
+- **Giriş şeridi:** VIP/Gold/Diamond girişlerinde `formatTierEntranceLine` (rol etiketi + emoji)
+
 ## 1.0.290+326 (2026-08-20) — Sesli oda P1 eşleştirme
 
 - **Moderasyon popup:** `canManageUsers` (mute/kick/voice vb.) olanlar chat/koltuk/katılımcı listesinden moderasyon sayfasını açar
