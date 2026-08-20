@@ -7,72 +7,119 @@ import '../../../../fortune/presentation/widgets/fortune_type_cover_image.dart';
 import '../../../domain/entities/home_fortune_card_entity.dart';
 import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
-import 'home_section_title.dart';
+import '../../theme/home_premium_design.dart';
+import '../premium_2026/home_horizontal_list.dart';
+import '../premium_2026/home_section_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../../core/ui/premium/premium_skeleton.dart';
 
-/// Web uyumlu — `GET /api/homepage-fortune-cards` + yerel katalog yedek.
+/// Fal & Tarot vitrini — API + katalog (14+ tür), bağımsız yükleme/hata.
 class FortuneSection extends ConsumerWidget {
   const FortuneSection({super.key});
 
-  static const _displaySlugs = [
+  static const _homeSlugs = [
     'tarot',
     'kahve-fali',
-    'katina',
     'el-fali',
+    'ruya-tabiri',
     'yildiz-haritasi',
+    'ask-fali',
+    'katina',
+    'numeroloji',
+    'melek-kartlari',
+    'iskambil',
+    'pendul',
+    'runik',
+    'evet-hayir',
+    'cin-fali',
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final api = ref.watch(homeFortuneCardsProvider);
-    final entries = api.maybeWhen(
-      data: (cards) => cards.isNotEmpty ? _fromApi(cards) : _fromCatalog(),
-      orElse: _fromCatalog,
-    );
 
-    return Column(
-      children: [
-        HomeSectionTitle(
+    return api.when(
+      loading: () => HomeSectionShell(
+        emoji: '🔮',
+        title: 'Fal & Tarot',
+        actionLabel: 'Tümü >',
+        onAction: () => context.go('/fortune'),
+        contentHeight: HomeApprovedDesign.fortuneCardH + 8,
+        loading: HomeHorizontalList(
+          height: HomeApprovedDesign.fortuneCardH,
+          itemCount: 5,
+          itemBuilder: (_, _) => const PremiumSkeleton(
+            width: HomeApprovedDesign.fortuneCardW,
+            height: HomeApprovedDesign.fortuneCardH,
+            borderRadius: BorderRadius.all(
+              Radius.circular(HomeApprovedDesign.cardRadius),
+            ),
+          ),
+        ),
+      ),
+      error: (e, _) => HomeSectionShell(
+        emoji: '🔮',
+        title: 'Fal & Tarot',
+        actionLabel: 'Tümü >',
+        onAction: () => context.go('/fortune'),
+        errorMessage: 'Fal kartları yüklenemedi',
+        onRetry: () => ref.invalidate(homeFortuneCardsProvider),
+      ),
+      data: (cards) {
+        final entries =
+            cards.isNotEmpty ? _fromApi(cards) : _fromCatalog();
+        if (entries.isEmpty) {
+          return HomeSectionShell(
+            emoji: '🔮',
+            title: 'Fal & Tarot',
+            actionLabel: 'Tümü >',
+            onAction: () => context.go('/fortune'),
+            emptyIcon: Icons.auto_awesome_rounded,
+            emptyMessage: 'Fal türleri şu an listelenemiyor',
+          );
+        }
+        return HomeSectionShell(
           emoji: '🔮',
           title: 'Fal & Tarot',
           actionLabel: 'Tümü >',
           onAction: () => context.go('/fortune'),
-        ),
-        SizedBox(
-          height: HomeApprovedDesign.fortuneCardH,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+          child: HomeHorizontalList(
+            height: HomeApprovedDesign.fortuneCardH,
             itemCount: entries.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (context, i) {
               final e = entries[i];
               return _FortuneCard(
                 title: e.title,
+                subtitle: e.subtitle,
                 accent: e.accent,
                 slug: e.slug,
                 imageUrl: e.imageUrl,
-                emoji: e.emoji,
                 onTap: () => context.push('/fortune/${e.slug}'),
               );
             },
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
-  List<({String slug, String emoji, String title, Color accent, String? imageUrl})>
-      _fromApi(List<HomeFortuneCardEntity> cards) {
-    return cards.take(8).map((c) {
+  List<
+      ({
+        String slug,
+        String title,
+        String? subtitle,
+        Color accent,
+        String? imageUrl,
+      })> _fromApi(List<HomeFortuneCardEntity> cards) {
+    return cards.take(14).map((c) {
       final slug = FortuneCatalog.bySlug(c.navigationSlug)?.slug ??
           c.navigationSlug;
       final catalog = FortuneCatalog.bySlug(slug);
       final apiImage = c.imageUrl?.trim();
       return (
         slug: slug,
-        emoji: c.icon.isNotEmpty ? c.icon : (catalog?.emoji ?? '🔮'),
         title: c.title,
+        subtitle: catalog?.description,
         accent: catalog?.accent ?? c.accent,
         imageUrl: apiImage != null && apiImage.isNotEmpty
             ? CanlifalImageUrls.resolve(apiImage)
@@ -81,16 +128,29 @@ class FortuneSection extends ConsumerWidget {
     }).toList();
   }
 
-  List<({String slug, String emoji, String title, Color accent, String? imageUrl})>
-      _fromCatalog() {
-    final out = <({String slug, String emoji, String title, Color accent, String? imageUrl})>[];
-    for (final slug in _displaySlugs) {
+  List<
+      ({
+        String slug,
+        String title,
+        String? subtitle,
+        Color accent,
+        String? imageUrl,
+      })> _fromCatalog() {
+    final out = <
+        ({
+          String slug,
+          String title,
+          String? subtitle,
+          Color accent,
+          String? imageUrl,
+        })>[];
+    for (final slug in _homeSlugs) {
       final type = FortuneCatalog.bySlug(slug);
       if (type != null) {
         out.add((
           slug: type.slug,
-          emoji: type.emoji,
           title: type.title,
+          subtitle: type.description,
           accent: type.accent,
           imageUrl: null,
         ));
@@ -98,7 +158,6 @@ class FortuneSection extends ConsumerWidget {
     }
     return out;
   }
-
 }
 
 class _FortuneCard extends StatelessWidget {
@@ -107,86 +166,94 @@ class _FortuneCard extends StatelessWidget {
     required this.accent,
     required this.slug,
     required this.onTap,
+    this.subtitle,
     this.imageUrl,
-    this.emoji = '🔮',
   });
 
   final String title;
+  final String? subtitle;
   final Color accent;
   final String slug;
   final VoidCallback onTap;
   final String? imageUrl;
-  final String emoji;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: HomeApprovedDesign.fortuneCardW,
-        height: HomeApprovedDesign.fortuneCardH,
-        decoration: BoxDecoration(
-          color: HomeApprovedDesign.surface,
-          borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-          border: Border.all(color: HomeApprovedDesign.border),
-          boxShadow: [
-            BoxShadow(
-              color: accent.withValues(alpha: 0.22),
-              blurRadius: 12,
-              spreadRadius: -2,
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            FortuneTypeCoverImage(
-              slug: slug,
-              accent: accent,
-              imageWidth: 480,
-              networkUrlOverride: imageUrl,
-            ),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.78),
-                  ],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
+        child: Ink(
+          width: HomeApprovedDesign.fortuneCardW + 12,
+          height: HomeApprovedDesign.fortuneCardH,
+          decoration: HomePremiumDesign.glassCard(
+            tint: HomePremiumDesign.surface,
+            radius: HomeApprovedDesign.cardRadius,
+            border: Border.all(color: accent.withValues(alpha: 0.28)),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
+            child: Stack(
+            fit: StackFit.expand,
+            children: [
+              FortuneTypeCoverImage(
+                slug: slug,
+                accent: accent,
+                imageWidth: 480,
+                networkUrlOverride: imageUrl,
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.82),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(emoji, style: const TextStyle(fontSize: 14)),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
                         title,
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
                           height: 1.15,
                         ),
                       ),
-                    ),
-                  ],
+                      if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: Colors.white.withValues(alpha: 0.72),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
+            ],
             ),
-          ],
+          ),
         ),
       ),
     );

@@ -42,10 +42,12 @@ class HomeHeader extends StatelessWidget {
               height: 44,
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: HomeApprovedDesign.searchFill,
+                color: HomeApprovedDesign.searchFill.withValues(alpha: 0.85),
                 borderRadius:
                     BorderRadius.circular(HomeApprovedDesign.searchRadius),
-                border: Border.all(color: HomeApprovedDesign.border),
+                border: Border.all(
+                  color: HomeApprovedDesign.border.withValues(alpha: 0.85),
+                ),
               ),
               child: Row(
                 children: [
@@ -103,9 +105,11 @@ class _DiscoverBadge extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: HomeApprovedDesign.surface,
+          color: HomeApprovedDesign.surface.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(HomeApprovedDesign.pillRadius),
-          border: Border.all(color: HomeApprovedDesign.border),
+          border: Border.all(
+            color: HomeApprovedDesign.border.withValues(alpha: 0.9),
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -256,9 +260,11 @@ class _CoinPill extends StatelessWidget {
         height: 34,
         padding: const EdgeInsets.only(left: 8, right: 4),
         decoration: BoxDecoration(
-          color: HomeApprovedDesign.surface,
+          color: HomeApprovedDesign.surface.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(HomeApprovedDesign.pillRadius),
-          border: Border.all(color: HomeApprovedDesign.border),
+          border: Border.all(
+            color: HomeApprovedDesign.border.withValues(alpha: 0.9),
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

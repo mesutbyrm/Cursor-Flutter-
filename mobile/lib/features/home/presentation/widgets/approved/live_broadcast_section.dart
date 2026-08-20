@@ -9,119 +9,97 @@ import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/presentation/utils/open_live_stream.dart';
 import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
+import '../premium_2026/home_horizontal_list.dart';
+import '../premium_2026/home_section_shell.dart';
 import 'live_stream_preview_media.dart';
-import 'home_section_title.dart';
 
-/// Onaylı mockup — 3:4 dikey canlı yayın kartları.
+/// Canlı yayın vitrini — premium kartlar, bağımsız yükleme/hata/boş durum.
 class LiveBroadcastSection extends ConsumerWidget {
   const LiveBroadcastSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final streams = ref.watch(
-      homeLiveStreamsProvider.select((a) => (a.isLoading, a.hasError, a.valueOrNull, a.error)),
+      homeLiveStreamsProvider.select(
+        (a) => (a.isLoading, a.hasError, a.valueOrNull, a.error),
+      ),
     );
 
     if (streams.$1 && streams.$3 == null) {
-      return Column(
-        children: [
-          HomeSectionTitle(
-            emoji: '🔥',
-            title: 'Canlı Yayındakiler',
-            actionLabel: 'Tümünü Gör >',
-            onAction: () => context.go('/live'),
-          ),
-          SizedBox(
+      return HomeSectionShell(
+        emoji: '🔥',
+        title: 'Canlı Yayındakiler',
+        actionLabel: 'Tümünü Gör >',
+        onAction: () => context.go('/live'),
+        contentHeight: HomeApprovedDesign.liveCardH,
+        loading: HomeHorizontalList(
+          height: HomeApprovedDesign.liveCardH,
+          itemCount: 3,
+          itemBuilder: (_, _) => const PremiumSkeleton(
+            width: HomeApprovedDesign.liveCardW,
             height: HomeApprovedDesign.liveCardH,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-              itemCount: 3,
-              separatorBuilder: (_, _) => const SizedBox(width: 10),
-              itemBuilder: (_, _) => const PremiumSkeleton(
-                width: HomeApprovedDesign.liveCardW,
-                height: HomeApprovedDesign.liveCardH,
-                borderRadius: BorderRadius.all(
-                  Radius.circular(HomeApprovedDesign.cardRadius),
-                ),
-              ),
+            borderRadius: BorderRadius.all(
+              Radius.circular(HomeApprovedDesign.cardRadius),
             ),
           ),
-        ],
+        ),
       );
     }
+
     if (streams.$2) {
-      return _emptyOrError(
-        context,
-        ApiException.userMessage(streams.$4 ?? 'Yüklenemedi'),
+      return HomeSectionShell(
+        emoji: '🔥',
+        title: 'Canlı Yayındakiler',
+        actionLabel: 'Tümünü Gör >',
+        onAction: () => context.go('/live'),
+        errorMessage: ApiException.userMessage(streams.$4 ?? 'Yüklenemedi'),
+        onRetry: () => ref.invalidate(homeLiveStreamsProvider),
       );
     }
+
     final items = streams.$3;
     if (items == null || items.isEmpty) {
-      return _emptyOrError(context, null);
+      return HomeSectionShell(
+        emoji: '🔥',
+        title: 'Canlı Yayındakiler',
+        actionLabel: 'Tümünü Gör >',
+        onAction: () => context.go('/live'),
+        emptyIcon: Icons.videocam_outlined,
+        emptyMessage: 'Şu anda canlı yayın yok',
+      );
     }
+
     final live = items.where((s) => s.isLive).toList();
     final list = live.isNotEmpty ? live : items;
-    if (list.isEmpty) return _emptyOrError(context, null);
-    return _content(context, ref, list.take(12).toList());
-  }
+    if (list.isEmpty) {
+      return HomeSectionShell(
+        emoji: '🔥',
+        title: 'Canlı Yayındakiler',
+        actionLabel: 'Tümünü Gör >',
+        onAction: () => context.go('/live'),
+        emptyIcon: Icons.videocam_outlined,
+        emptyMessage: 'Şu anda canlı yayın yok',
+      );
+    }
 
-  static Widget _content(
-    BuildContext context,
-    WidgetRef ref,
-    List<LiveStreamEntity> streams,
-  ) {
-    return Column(
-      children: [
-        HomeSectionTitle(
-          emoji: '🔥',
-          title: 'Canlı Yayındakiler',
-          actionLabel: 'Tümünü Gör >',
-          onAction: () => context.go('/live'),
+    return HomeSectionShell(
+      emoji: '🔥',
+      title: 'Canlı Yayındakiler',
+      actionLabel: 'Tümünü Gör >',
+      onAction: () => context.go('/live'),
+      child: RepaintBoundary(
+        child: HomeHorizontalList(
+          height: HomeApprovedDesign.liveCardH,
+          itemCount: list.take(12).length,
+          itemBuilder: (context, i) {
+            final stream = list[i];
+            return _LiveCard(
+              stream: stream,
+              onTap: () => openLiveStreamNative(context, ref, stream),
+            );
+          },
         ),
-        RepaintBoundary(
-          child: SizedBox(
-            height: HomeApprovedDesign.liveCardH,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-              itemCount: streams.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 10),
-              itemBuilder: (context, i) => _LiveCard(
-                stream: streams[i],
-                eager: false,
-                onTap: () => openLiveStreamNative(context, ref, streams[i]),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  static Widget _emptyOrError(BuildContext context, String? message) {
-    return Column(
-      children: [
-        HomeSectionTitle(
-          emoji: '🔥',
-          title: 'Canlı Yayındakiler',
-          actionLabel: 'Tümünü Gör >',
-          onAction: () => context.go('/live'),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: HomeApprovedDesign.hPad,
-            vertical: 12,
-          ),
-          child: Text(
-            message ?? 'Şu an canlı yayın yok.',
-            style: TextStyle(
-              fontSize: 13,
-              color: HomeApprovedDesign.textMuted.withValues(alpha: 0.9),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -130,91 +108,93 @@ class _LiveCard extends StatelessWidget {
   const _LiveCard({
     required this.stream,
     required this.onTap,
-    this.eager = false,
   });
 
   final LiveStreamEntity stream;
   final VoidCallback onTap;
-  final bool eager;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: HomeApprovedDesign.liveCardW,
-        height: HomeApprovedDesign.liveCardH,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-          boxShadow: const [HomeApprovedDesign.liveGlow],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              LiveStreamPreviewMedia(stream: stream, eager: eager),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.05),
-                      Colors.black.withValues(alpha: 0.82),
-                    ],
-                    stops: const [0.45, 1.0],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
+        child: Ink(
+          width: HomeApprovedDesign.liveCardW,
+          height: HomeApprovedDesign.liveCardH,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
+            boxShadow: stream.isLive ? const [HomeApprovedDesign.liveGlow] : null,
+            border: Border.all(
+              color: stream.isLive
+                  ? HomeApprovedDesign.purple.withValues(alpha: 0.35)
+                  : HomeApprovedDesign.border,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                LiveStreamPreviewMedia(stream: stream),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.05),
+                        Colors.black.withValues(alpha: 0.82),
+                      ],
+                      stops: const [0.45, 1.0],
+                    ),
                   ),
                 ),
-              ),
-              const Positioned(
-                top: 8,
-                left: 8,
-                child: LiveBadge(compact: true),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: _ViewerPill(count: stream.viewerCount),
-              ),
-              Positioned(
-                left: 10,
-                right: 10,
-                bottom: 10,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            stream.streamerName ?? 'Yayıncı',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      stream.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.white.withValues(alpha: 0.85),
-                      ),
-                    ),
-                  ],
+                if (stream.isLive)
+                  const Positioned(
+                    top: 8,
+                    left: 8,
+                    child: LiveBadge(compact: true),
+                  ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: _ViewerPill(count: stream.viewerCount),
                 ),
-              ),
-            ],
+                Positioned(
+                  left: 10,
+                  right: 10,
+                  bottom: 10,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        stream.streamerName ?? 'Yayıncı',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        stream.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white.withValues(alpha: 0.85),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -238,7 +218,11 @@ class _ViewerPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('👁', style: TextStyle(fontSize: 10)),
+          Icon(
+            Icons.visibility_rounded,
+            size: 11,
+            color: Colors.white.withValues(alpha: 0.9),
+          ),
           const SizedBox(width: 3),
           Text(
             _format(count),

@@ -120,24 +120,26 @@ class _AdvisorCard extends StatelessWidget {
                   Positioned(
                     left: 4,
                     top: 4,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3DFF6E),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'ONLINE',
-                        style: TextStyle(
-                          fontSize: 8,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF0F0B1D),
-                        ),
-                      ),
-                    ),
+                    child: advisor.isOnline
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF3DFF6E),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'ONLINE',
+                              style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF0F0B1D),
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
                   ),
                   Positioned(
                     bottom: 0,

@@ -6,6 +6,7 @@ import '../../../../../core/images/canlifal_image_prefetch.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_room_card.dart';
+import '../../../../live/data/datasources/live_remote_datasource.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import '../../../../voice_hub/presentation/providers/voice_rooms_presence_provider.dart';
@@ -186,7 +187,11 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
                         ? () => showOpenVoiceChatRoomFlow(context, ref)
                         : () => ref.invalidate(homeVoiceRoomsProvider),
                     icon: Icon(empty ? Icons.mic_rounded : Icons.refresh_rounded),
-                    label: Text(empty ? 'Sesli Oda Aç · 100 Jeton' : 'Yenile'),
+                    label: Text(
+                      empty
+                          ? 'Sesli Oda Aç · ${LiveRemoteDataSource.openRoomJetonCost(vip: false)} Jeton'
+                          : 'Yenile',
+                    ),
                     style: FilledButton.styleFrom(
                       backgroundColor: HomeApprovedDesign.purple,
                     ),

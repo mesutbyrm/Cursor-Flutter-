@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.320+356 (2026-08-20) — Ana Sayfa V1 Premium UI
+
+- **Tasarım:** Koyu premium tema, cam kartlar, tutarlı tipografi ve accent kullanımı
+- **Header:** Arama + Keşfet/bildirim/mesaj/jeton gerçek navigasyon
+- **Hızlı aksiyonlar:** Oyunlar / Hediyeler / Yayıncı Ol (API + spec yedek)
+- **Bölümler:** Canlı yayın, sesli oda, falcılar, Fal & Tarot, Bana Özel, fal türleri, oyunlar, burç — bağımsız skeleton/hata/boş durum
+- **Veri:** Hardcoded jeton/online yedekleri kaldırıldı; sesli oda açma maliyeti API sabitinden
+- **Navigasyon:** Fal türü slug eşlemesi (`FortuneCatalog`), Tümü/Merkez/Fal butonları çalışır
+- **Performans:** Yatay listeler `HomeHorizontalList` ile tutarlı padding/lazy scroll
+
 ## 1.0.319+355 (2026-08-20) — Bana Özel hub chip layout
 
 - **UI:** Fal hub önizleme chip’i taşma düzeltmesi (Expanded metin alanı)

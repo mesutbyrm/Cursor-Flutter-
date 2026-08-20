@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../fortune/presentation/data/fortune_catalog.dart';
 import '../../theme/home_approved_design.dart';
 
-/// Onaylı mockup — "+6 Daha Fazla Fal" tam genişlik düğme.
+/// Fal türleri hub'ına giden dinamik CTA.
 class MoreFortunesButton extends StatelessWidget {
   const MoreFortunesButton({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final extraCount = FortuneCatalog.types.length;
+    final label = extraCount > 0
+        ? '✨ Tüm Fal Türleri ($extraCount+)'
+        : '✨ Tüm Fal Türleri';
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         HomeApprovedDesign.hPad,
@@ -29,19 +35,19 @@ class MoreFortunesButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
               border: Border.all(color: HomeApprovedDesign.border),
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  '✨ +6 Daha Fazla Fal',
-                  style: TextStyle(
+                  label,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: HomeApprovedDesign.textPrimary,
                   ),
                 ),
-                SizedBox(width: 6),
-                Icon(
+                const SizedBox(width: 6),
+                const Icon(
                   Icons.chevron_right_rounded,
                   size: 20,
                   color: HomeApprovedDesign.textSecondary,
