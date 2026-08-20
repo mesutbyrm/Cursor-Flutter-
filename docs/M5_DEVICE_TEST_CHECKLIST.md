@@ -9,12 +9,14 @@
 ## Otomatik ön kontrol (önerilir)
 
 ```bash
+bash scripts/m5-api-smoke.sh      # Test 1–4 API karşılığı (cihaz yok)
 bash scripts/m5-device-prep.sh
 # veya
 bash scripts/m5-preflight.sh
 ```
 
-Geçerse: API müzik 6/6, API voice seat (presence/koltuk/voice), jeton ≥10, voice_hub testleri OK.
+Geçerse: API müzik 6/6, API voice seat, jeton ≥10, voice_hub testleri OK.  
+`m5-api-smoke` → `docs/M5_API_SMOKE_REPORT.md` (Test 5–10 hâlâ cihaz).
 
 Jeton yoksa: `docs/M5_M7_JETON_BLOCKER.md` · Durum: `bash scripts/faz0-status.sh`
 

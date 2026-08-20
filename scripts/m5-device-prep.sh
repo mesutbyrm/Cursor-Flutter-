@@ -24,6 +24,13 @@ echo ""
 
 if bash "$ROOT/scripts/m5-ready.sh" 2>/dev/null; then
   echo ""
+  echo "── M5 API smoke (Test 1–4 backend) ──"
+  if bash "$ROOT/scripts/m5-api-smoke.sh"; then
+    echo "✅ M5 API smoke geçti — cihaz Test 5–10 kaldı"
+  else
+    echo "⚠️  M5 API smoke uyarı — docs/M5_API_SMOKE_REPORT.md"
+  fi
+  echo ""
   echo "✅ Otomatik kapılar hazır — cihaz testine geçin"
   exit 0
 fi

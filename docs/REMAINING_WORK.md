@@ -75,6 +75,11 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 
 ---
 
+## Oturum günlüğü (2026-08-20 devam 5)
+
+- `m5-api-smoke.sh` — Test 1–4 API: song-request 200, kuyruk, presence, SSE (PASS=6)
+- M5 cihaz Test 5–10 hâlâ Android'de manuel
+
 ## Oturum günlüğü (2026-08-20 devam 4)
 
 - Jeton=10000 yüklendi; M7 slug→500 düzeltmesi (`probe-music-room.sh` tam cuid + audio body)

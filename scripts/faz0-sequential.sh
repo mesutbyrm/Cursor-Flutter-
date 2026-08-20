@@ -138,6 +138,8 @@ show_remaining
 if [[ "$JETON" -ge 10 ]]; then
   run_step "M7 song-request HTTP 200" bash "$ROOT/scripts/m7-on-jeton.sh" && \
     mark_done "M7 song-request HTTP 200" || mark_blocked "M7 probe başarısız"
+  run_step "M5 API smoke (Test 1–4)" bash "$ROOT/scripts/m5-api-smoke.sh" && \
+    mark_done "M5 API smoke (song-request, presence, SSE)" || mark_blocked "M5 API smoke başarısız"
   run_step "m5-preflight" bash "$ROOT/scripts/m5-preflight.sh" && \
     mark_done "m5-preflight tam geçti" || mark_blocked "m5-preflight başarısız"
 else
