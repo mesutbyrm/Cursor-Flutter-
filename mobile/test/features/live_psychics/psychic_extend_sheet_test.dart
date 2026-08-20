@@ -2,12 +2,19 @@ import 'package:canlifal_social/features/live_psychics/presentation/widgets/psyc
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+Future<void> _pumpTallSurface(WidgetTester tester, Widget widget) async {
+  await tester.binding.setSurfaceSize(const Size(480, 1100));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+  await tester.pumpWidget(widget);
+}
+
 void main() {
   group('showPsychicExtendSheet', () {
     testWidgets('returns selected option when balance is sufficient', (tester) async {
       PsychicExtendOption? result;
 
-      await tester.pumpWidget(
+      await _pumpTallSurface(
+        tester,
         MaterialApp(
           home: Builder(
             builder: (context) => Scaffold(
@@ -43,7 +50,8 @@ void main() {
     testWidgets('staff exempt can select without jeton balance', (tester) async {
       PsychicExtendOption? result;
 
-      await tester.pumpWidget(
+      await _pumpTallSurface(
+        tester,
         MaterialApp(
           home: Builder(
             builder: (context) => Scaffold(
@@ -80,7 +88,8 @@ void main() {
     testWidgets('cancel returns null', (tester) async {
       PsychicExtendOption? result;
 
-      await tester.pumpWidget(
+      await _pumpTallSurface(
+        tester,
         MaterialApp(
           home: Builder(
             builder: (context) => Scaffold(

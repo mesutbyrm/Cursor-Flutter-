@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.309+345 (2026-08-20) — Canlı Falcılar extend sheet test layout
+
+- **Test:** `psychic_extend_sheet_test` büyük surface (1100px) — CI overflow düzeltmesi
+- **Temizlik:** yinelenen `mobile/test/psychic_session_store_test.dart` kaldırıldı
+
 ## 1.0.308+344 (2026-08-20) — Canlı Falcılar store ve sheet testleri
 
 - **Session store:** `psychic_session_store_test` — save/load/clear, bozuk JSON, overwrite
