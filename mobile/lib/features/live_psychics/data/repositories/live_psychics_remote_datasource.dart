@@ -81,6 +81,7 @@ class LivePsychicsRemoteDataSource {
           return items
               .map(PsychicModel.psychicFromJson)
               .where((p) => p.id.isNotEmpty)
+              .where((p) => p.isOnline)
               .toList(growable: false);
         }
       } catch (_) {}
@@ -528,22 +529,20 @@ class LivePsychicsRemoteDataSource {
   Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId) async {
     final key = sessionId.trim();
     if (key.isEmpty) return null;
-    for (final path in [
-      ApiEndpoints.fortuneTellerSessionQuery(key),
-      ApiEndpoints.fortuneTellerSessionStatus(key),
-    ]) {
-      try {
-        final res = await _dio.safeGet<dynamic>(path);
-        final body = res.data;
-        if (body is! Map) continue;
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.fortuneTellerSessionQuery(key),
+      );
+      final body = res.data;
+      if (body is Map) {
         final map = asJsonMap(body);
         final data = map['data'] is Map ? asJsonMap(map['data']) : map;
         final sessionMap =
             data['session'] is Map ? asJsonMap(data['session']) : data;
         final status = PsychicModel.sessionStatusFromJson(data, sessionMap);
         if (status != null) return status;
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
     final room = await fetchRoom(key);
     if (room == null) return null;
     return PsychicSessionStatusResult(
@@ -697,8 +696,7 @@ class LivePsychicsRemoteDataSource {
 
     final roomId = PsychicModel.str(body, ['roomId', 'trtcRoomId', 'room_id']) ??
         PsychicModel.str(asJsonMap(body['session'] ?? {}), ['roomId', 'id']);
-    final success =
-        body['success'] == true || roomId != null || body.isNotEmpty;
+    final success = PsychicModel.respondSessionSuccess(body, action: act);
     debugPrint(
       '[PsychicRespond] parsed success=$success sessionId=$key roomId=$roomId',
     );
@@ -819,14 +817,12 @@ class LivePsychicsRemoteDataSource {
       }
     } catch (_) {}
 
-    for (final path in [
-      ApiEndpoints.fortuneTellerSessionQuery(key),
-      ApiEndpoints.fortuneTellerSessionStatus(key),
-    ]) {
-      try {
-        final res = await _dio.safeGet<dynamic>(path);
-        final body = res.data;
-        if (body is! Map) continue;
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.fortuneTellerSessionQuery(key),
+      );
+      final body = res.data;
+      if (body is Map) {
         final map = asJsonMap(body);
         final data = map['data'] is Map ? asJsonMap(map['data']) : map;
         final sessionMap =
@@ -835,8 +831,8 @@ class LivePsychicsRemoteDataSource {
         final room = PsychicModel.roomFromJson(merged, fallbackId: key);
         if (room.roomId != null && room.roomId!.trim().isNotEmpty) return room;
         if (room.tellerUserId != null || room.clientId != null) return room;
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
     return null;
   }
 

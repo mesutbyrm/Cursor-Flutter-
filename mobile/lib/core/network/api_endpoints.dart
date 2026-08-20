@@ -134,15 +134,12 @@ abstract final class ApiEndpoints {
   static const fortuneTellerSessionsStream =
       '/api/fortune-tellers/sessions/stream';
 
-  static String fortuneTellerSessionStatus(String sessionId) =>
-      '/api/fortune-tellers/session/$sessionId';
-
-  static String fortuneTellerSessionPatch(String sessionId) =>
-      '/api/fortune-tellers/sessions/$sessionId';
-
   /// Üretim: `GET /api/fortune-tellers/session?sessionId=`
   static String fortuneTellerSessionQuery(String sessionId) =>
       '/api/fortune-tellers/session?sessionId=${Uri.encodeComponent(sessionId.trim())}';
+
+  static String fortuneTellerSessionPatch(String sessionId) =>
+      '/api/fortune-tellers/sessions/$sessionId';
 
   /// Falcı bekleyen istekler — `GET ?status=pending`
   static String fortuneTellerSessionsWithStatus(String status) =>

@@ -412,6 +412,30 @@ abstract final class PsychicModel {
     );
   }
 
+  /// PATCH `/api/fortune-tellers/sessions/{id}` yanıtı — `body.isNotEmpty` başarı sayılmaz.
+  static bool respondSessionSuccess(
+    Map<String, dynamic> body, {
+    required String action,
+  }) {
+    if (body['success'] == false) return false;
+    if (body['success'] == true) return true;
+    final roomId = str(body, ['roomId', 'trtcRoomId', 'room_id']) ??
+        str(asJsonMap(body['session'] ?? {}), ['roomId', 'id']);
+    if (roomId != null && roomId.isNotEmpty) return true;
+    final status = str(body, ['status'])?.toLowerCase() ?? '';
+    final act = action.toLowerCase();
+    if (act == 'accept') {
+      return status == 'accepted' || status == 'active';
+    }
+    if (act == 'reject' || act == 'cancel') {
+      return status == 'rejected' ||
+          status == 'cancelled' ||
+          status == 'canceled' ||
+          status == 'declined';
+    }
+    return false;
+  }
+
   static PsychicSessionHistoryEntity sessionHistoryFromJson(dynamic raw) {
     final m = asJsonMap(raw);
     final teller = asJsonMap(m['teller'] ?? m['fortuneTeller']);

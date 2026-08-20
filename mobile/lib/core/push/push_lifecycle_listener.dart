@@ -113,6 +113,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
           }
         },
         onSessionEndedData: (ended) {
+          final isTeller = ref.read(approvedPsychicProvider).isApprovedTeller;
           ref
               .read(psychicSessionCancelSignalProvider.notifier)
               .signal(ended.sessionId);
@@ -130,7 +131,8 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
                     ? ended.totalJeton
                     : null,
             message: ended.message,
-            promptReview: true,
+            promptReview: !isTeller,
+            isTeller: isTeller,
             navigateAfter: true,
           );
           ref.refreshWalletCache(force: true);
@@ -150,14 +152,17 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
         Map<String, dynamic> data,
       ) async {
         final repo = ref.read(livePsychicsRepositoryProvider);
-        await repo.respondSession(sessionId, action: action);
+        final respond = await repo.respondSession(sessionId, action: action);
         if (action == 'accept') {
+          if (!respond.success) return;
           final tellerId = data['tellerId']?.toString() ??
               data['tellerUserId']?.toString();
-          await PsychicFlow.resumeFromPush(
+          await PsychicFlow.openTellerSessionFromPush(
             router: ref.read(goRouterProvider),
             sessionId: sessionId,
             tellerId: tellerId,
+            tellerProfile: ref.read(approvedPsychicProvider).profile,
+            roomId: respond.roomId,
             repo: repo,
           );
         } else {

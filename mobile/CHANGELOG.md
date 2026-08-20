@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.298+334 (2026-08-20) — Canlı Falcılar push ve API sıkılaştırma
+
+- **Status sorgu:** Yalnızca `GET /api/fortune-tellers/session?sessionId=` (yanlış `/session/{id}` kaldırıldı)
+- **respondSession:** `body.isNotEmpty` false-positive düzeltmesi
+- **Push falcı kabul:** `openTellerSessionFromPush` — görüşme ekranına yönlendirme
+- **Push session_ended:** Değerlendirme yalnızca danışana
+- **Incoming SSE:** `pending_sessions` / `connected.pendingSessions`, max 20 reconnect, 401 anında retry
+- **Liste fallback:** `online=true` hata verirse client-side çevrimiçi filtre
+- **Kalan işler:** `docs/LIVE_PSYCHICS_REMAINING.md`
+
 ## 1.0.297+333 (2026-08-20) — Canlı Falcılar oturum geçmişi + temizlik
 
 - **Danışan geçmişi:** Giriş yapmış kullanıcılar listede «Son Oturumlarım» panelini görür

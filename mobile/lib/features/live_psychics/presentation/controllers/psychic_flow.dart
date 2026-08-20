@@ -251,4 +251,49 @@ abstract final class PsychicFlow {
     }
     router.push(adRoute, extra: session);
   }
+
+  /// Falcı push bildiriminden kabul sonrası görüşme ekranına git.
+  static Future<void> openTellerSessionFromPush({
+    required GoRouter router,
+    required LivePsychicsRepository repo,
+    required String sessionId,
+    String? tellerId,
+    PsychicEntity? tellerProfile,
+    String? roomId,
+  }) async {
+    final status = await repo.fetchSessionStatus(sessionId);
+    if (status == null || status.status.isTerminal) return;
+    if (!status.status.isActive) return;
+
+    final tid =
+        tellerId?.trim() ?? status.tellerProfileId ?? tellerProfile?.id ?? '';
+    PsychicEntity? psychic = tellerProfile;
+    if (psychic == null && tid.isNotEmpty) {
+      psychic = await repo.fetchPsychic(tid);
+    }
+    psychic ??= PsychicEntity(
+      id: tid.isNotEmpty ? tid : 'teller',
+      name: 'Falcı',
+      isOnline: true,
+    );
+
+    final room = await repo.fetchRoom(sessionId);
+    final session = PsychicSessionEntity(
+      sessionId: sessionId,
+      psychic: psychic,
+      durationMinutes: status.durationMinutes ?? room?.maxMinutes ?? 10,
+      totalJeton: status.totalJeton ?? 0,
+      tellerUserId: status.tellerUserId ?? psychic.userId ?? psychic.trtcUserId,
+      clientId: room?.clientId,
+      isClient: false,
+      trtcRoomIdOverride: roomId ?? status.trtcRoomId ?? room?.roomId ?? sessionId,
+      fortuneType: 'general',
+    );
+    await PsychicSessionStore.save(session);
+
+    final path = router.routerDelegate.currentConfiguration.uri.path;
+    if (path.contains('/session') && path.contains('/canli-falcilar')) return;
+
+    router.push('/canli-falcilar/${psychic.id}/session', extra: session);
+  }
 }

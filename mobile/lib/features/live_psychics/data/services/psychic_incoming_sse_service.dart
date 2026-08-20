@@ -94,7 +94,11 @@ class PsychicIncomingSseService {
       if (kDebugMode) debugPrint('PsychicIncomingSse: $e');
       if (e.response?.statusCode == 401 && _refreshTokens != null) {
         final ok = await _refreshTokens!();
-        if (!ok) return;
+        if (ok && !_stopped) {
+          await _openStream();
+          return;
+        }
+        return;
       }
       _scheduleReconnect();
     } catch (e) {
@@ -129,6 +133,13 @@ class PsychicIncomingSseService {
     if (payload.isEmpty || payload == '[DONE]') return;
     try {
       final decoded = jsonDecode(payload);
+      if (decoded is List) {
+        final event = (eventName ?? '').toLowerCase();
+        if (event.contains('pending')) {
+          _emitPendingSessions(decoded);
+        }
+        return;
+      }
       if (decoded is! Map) return;
       final map = Map<String, dynamic>.from(decoded);
       if (eventName != null && eventName.isNotEmpty) {
@@ -136,6 +147,19 @@ class PsychicIncomingSseService {
         map.putIfAbsent('type', () => eventName);
       }
       final type = (map['type'] ?? eventName ?? '').toString().toLowerCase();
+      if (type.contains('connected')) {
+        final pending = map['pendingSessions'] ?? map['pending_sessions'];
+        if (pending is List) {
+          _emitPendingSessions(pending);
+        }
+      }
+      if (type == 'pending_sessions' || eventName == 'pending_sessions') {
+        final sessions = map['sessions'] ?? map['pendingSessions'];
+        if (sessions is List) {
+          _emitPendingSessions(sessions);
+        }
+        return;
+      }
       if (type.contains('online') ||
           type.contains('offline') ||
           type.contains('presence') ||
@@ -178,8 +202,27 @@ class PsychicIncomingSseService {
     } catch (_) {}
   }
 
+  void _emitPendingSessions(List<dynamic> sessions) {
+    for (final item in sessions) {
+      if (item is! Map) continue;
+      final req = parsePsychicIncomingPayload(
+            Map<String, dynamic>.from(item),
+          ) ??
+          parsePsychicSsePayload(Map<String, dynamic>.from(item));
+      if (req != null && req.sessionId.isNotEmpty && req.isPending) {
+        _onRequest?.call(req);
+      }
+    }
+  }
+
   void _scheduleReconnect() {
     if (_stopped) return;
+    if (SseReconnectPolicy.shouldGiveUp(_reconnectAttempt)) {
+      if (kDebugMode) {
+        debugPrint('PsychicIncomingSse: max reconnect attempts reached');
+      }
+      return;
+    }
     _reconnectTimer?.cancel();
     _reconnectAttempt++;
     _reconnectTimer = Timer(

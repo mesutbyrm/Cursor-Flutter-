@@ -68,4 +68,39 @@ void main() {
     expect(entity.maxMinutes, 10);
     expect(entity.minutesUsed, 8);
   });
+
+  test('respondSessionSuccess rejects empty body and accepts roomId', () {
+    expect(
+      PsychicModel.respondSessionSuccess({}, action: 'accept'),
+      isFalse,
+    );
+    expect(
+      PsychicModel.respondSessionSuccess(
+        {'roomId': 'room_1'},
+        action: 'accept',
+      ),
+      isTrue,
+    );
+    expect(
+      PsychicModel.respondSessionSuccess(
+        {'success': true},
+        action: 'reject',
+      ),
+      isTrue,
+    );
+    expect(
+      PsychicModel.respondSessionSuccess(
+        {'status': 'rejected'},
+        action: 'reject',
+      ),
+      isTrue,
+    );
+    expect(
+      PsychicModel.respondSessionSuccess(
+        {'success': false, 'message': 'hata'},
+        action: 'accept',
+      ),
+      isFalse,
+    );
+  });
 }
