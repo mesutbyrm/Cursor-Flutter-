@@ -9,6 +9,7 @@ import '../../domain/entities/psychic_award_entity.dart';
 import '../../domain/entities/psychic_entity.dart';
 import '../../domain/entities/psychic_gift_entity.dart';
 import '../../domain/entities/psychic_review_entity.dart';
+import '../../domain/entities/psychic_session_history_entity.dart';
 import '../diagnostics/teller_role_diagnostic.dart';
 import '../providers/live_psychics_providers.dart';
 
@@ -246,6 +247,11 @@ final psychicGiftsProvider =
     return ref.read(livePsychicsRepositoryProvider).fetchGifts(tellerId);
   },
 );
+
+final psychicRecentSessionsProvider =
+    FutureProvider.autoDispose<List<PsychicSessionHistoryEntity>>((ref) async {
+  return ref.read(livePsychicsRepositoryProvider).fetchRecentSessions(limit: 10);
+});
 
 final psychicDetailProvider =
     FutureProvider.autoDispose.family<PsychicEntity?, String>((ref, id) async {

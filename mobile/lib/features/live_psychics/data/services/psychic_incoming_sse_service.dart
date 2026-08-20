@@ -25,7 +25,10 @@ class PsychicIncomingSseService {
   void Function(String sessionId)? _onSessionCancelled;
   void Function()? _onPresenceTick;
   var _stopped = false;
+  var _streamActive = false;
   var _reconnectAttempt = 0;
+
+  bool get isStreamActive => _streamActive && !_stopped;
 
   Future<void> connect({
     required Future<String?> Function() accessToken,
@@ -76,6 +79,7 @@ class PsychicIncomingSseService {
         return;
       }
       _reconnectAttempt = 0;
+      _streamActive = true;
       final buffer = StringBuffer();
       _bytesSub = stream.listen(
         (chunk) {
@@ -187,6 +191,7 @@ class PsychicIncomingSseService {
   }
 
   Future<void> _closeStreamOnly() async {
+    _streamActive = false;
     _reconnectTimer?.cancel();
     _cancel?.cancel('reconnect');
     await _bytesSub?.cancel();

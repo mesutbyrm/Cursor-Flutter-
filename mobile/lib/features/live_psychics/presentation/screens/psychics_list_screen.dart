@@ -81,17 +81,6 @@ class PsychicsListScreen extends ConsumerWidget {
               ),
             ),
             data: (state) {
-              final authed = ref.watch(
-                authControllerProvider.select((a) => a.valueOrNull != null),
-              );
-              if (!authed) {
-                return Center(
-                  child: Text(
-                    'Canlı falcılar için giriş yapın.',
-                    style: TextStyle(color: context.colors.onSurfaceMuted),
-                  ),
-                );
-              }
               if (state.items.isEmpty) {
                 return RefreshIndicator(
                   onRefresh: () =>
@@ -264,6 +253,9 @@ class PsychicsFilterBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(psychicsListControllerProvider.notifier);
+    final authed = ref.watch(
+      authControllerProvider.select((a) => a.valueOrNull != null),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -277,8 +269,17 @@ class PsychicsFilterBar extends ConsumerWidget {
                   label: const Text('Favorilerim'),
                   avatar: const Icon(Icons.favorite_rounded, size: 16),
                   selected: favoritesOnly,
-                  onSelected: (on) =>
-                      notifier.showFavoritesOnly(on),
+                  onSelected: (on) {
+                    if (on && !authed) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Favoriler için giriş yapın'),
+                        ),
+                      );
+                      return;
+                    }
+                    notifier.showFavoritesOnly(on);
+                  },
                 ),
               ),
             ],

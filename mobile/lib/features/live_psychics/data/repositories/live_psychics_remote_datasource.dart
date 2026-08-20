@@ -13,6 +13,7 @@ import '../../domain/entities/psychic_gift_entity.dart';
 import '../../domain/entities/psychic_request_entity.dart';
 import '../../domain/entities/psychic_review_entity.dart';
 import '../../domain/entities/psychic_room_entity.dart';
+import '../../domain/entities/psychic_session_history_entity.dart';
 import '../../domain/repositories/live_psychics_repository.dart';
 import '../models/psychic_model.dart';
 
@@ -552,6 +553,27 @@ class LivePsychicsRemoteDataSource {
       trtcRoomId: room.roomId,
       durationMinutes: room.maxMinutes,
     );
+  }
+
+  Future<List<PsychicSessionHistoryEntity>> fetchRecentSessions({
+    int limit = 20,
+  }) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.fortuneTellerSession,
+        query: {'limit': limit},
+      );
+      final items = PsychicModel.itemsFromBody(
+        res.data,
+        keys: const ['sessions', 'items', 'data', 'results'],
+      );
+      return items
+          .map(PsychicModel.sessionHistoryFromJson)
+          .where((s) => s.sessionId.isNotEmpty)
+          .toList(growable: false);
+    } catch (_) {
+      return const [];
+    }
   }
 
   Future<List<PsychicSessionStatusResult>> fetchActiveSessions() async {

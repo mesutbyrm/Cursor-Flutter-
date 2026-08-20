@@ -4,6 +4,7 @@ import '../entities/psychic_gift_entity.dart';
 import '../entities/psychic_request_entity.dart';
 import '../entities/psychic_review_entity.dart';
 import '../entities/psychic_room_entity.dart';
+import '../entities/psychic_session_history_entity.dart';
 import '../entities/psychic_session_status.dart';
 
 class PsychicSessionCreateResult {
@@ -121,6 +122,7 @@ abstract class LivePsychicsRepository {
   });
 
   Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId);
+  Future<List<PsychicSessionHistoryEntity>> fetchRecentSessions({int limit = 20});
   Future<List<PsychicSessionStatusResult>> fetchActiveSessions();
   Future<List<PsychicRequestEntity>> fetchIncomingRequests({
     String? currentUserId,

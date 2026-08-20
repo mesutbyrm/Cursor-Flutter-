@@ -13,6 +13,8 @@ import 'package:canlifal_social/core/ui/premium_2026/cosmic_galaxy_background.da
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_request_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
+import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_history_entity.dart';
+import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_status.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_live_event_bus.dart';
@@ -107,6 +109,30 @@ class PsychicTellerDashboardController
     state = state.copyWith(requests: next);
   }
 
+  Future<PsychicEntity?> _profileWithServerOnline(PsychicEntity? profile) async {
+    if (profile == null) return null;
+    final onlineMap =
+        await ref.read(livePsychicsRepositoryProvider).fetchOnlineStatus();
+    if (onlineMap == null) return profile;
+    final isOnline = onlineMap['isOnline'] == true ||
+        onlineMap['online'] == true ||
+        onlineMap['status']?.toString().toLowerCase() == 'online';
+    return PsychicEntity(
+      id: profile.id,
+      userId: profile.userId,
+      name: profile.name,
+      bio: profile.bio,
+      avatarUrl: profile.avatarUrl,
+      isOnline: isOnline,
+      rating: profile.rating,
+      reviewCount: profile.reviewCount,
+      pricePerMinute: profile.pricePerMinute,
+      specialties: profile.specialties,
+      category: profile.category,
+      applicationStatus: profile.applicationStatus,
+    );
+  }
+
   Future<void> refresh() async {
     state = state.copyWith(loading: true);
     var approved = ref.read(approvedPsychicProvider);
@@ -114,8 +140,9 @@ class PsychicTellerDashboardController
       await ref.read(approvedPsychicProvider.notifier).refresh();
       approved = ref.read(approvedPsychicProvider);
     }
-    final profile = approved.profile ??
+    var profile = approved.profile ??
         await ref.read(livePsychicsRepositoryProvider).fetchMyProfile();
+    profile = await _profileWithServerOnline(profile);
     state = state.copyWith(profile: profile, loading: false);
     await _pollRequests();
   }
@@ -350,10 +377,11 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                 ref.read(psychicTellerDashboardProvider.notifier).refresh(),
             child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-              itemCount: (kDebugMode ? 8 : 6) + requests.length,
+              itemCount: (kDebugMode ? 9 : 7) + requests.length,
               itemBuilder: (context, index) {
                 final debugSlotCount = kDebugMode ? 2 : 0;
-                final requestsHeaderIndex = 4 + debugSlotCount;
+                const recentSessionsIndex = 4;
+                final requestsHeaderIndex = recentSessionsIndex + 1 + debugSlotCount;
                 final requestsEmptyIndex = requestsHeaderIndex + 1;
                 final requestsStartIndex = requestsEmptyIndex + 1;
                 if (index == 0) {
@@ -394,7 +422,15 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                     ),
                   );
                 }
-                if (kDebugMode && index == 4) {
+                if (index == recentSessionsIndex) {
+                  return const RepaintBoundary(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: _RecentSessionsPanel(),
+                    ),
+                  );
+                }
+                if (kDebugMode && index == recentSessionsIndex + 1) {
                   return const RepaintBoundary(
                     child: Padding(
                       padding: EdgeInsets.only(top: 12),
@@ -402,7 +438,7 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                     ),
                   );
                 }
-                if (kDebugMode && index == 5) {
+                if (kDebugMode && index == recentSessionsIndex + 2) {
                   return const RepaintBoundary(
                     child: PsychicRtcSessionReportCard(),
                   );
@@ -671,6 +707,164 @@ class _TellerStatsPanel extends ConsumerWidget {
         },
       ),
     );
+  }
+}
+
+class _RecentSessionsPanel extends ConsumerWidget {
+  const _RecentSessionsPanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sessionsAsync = ref.watch(psychicRecentSessionsProvider);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.history_rounded, color: Color(0xFFB388FF), size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Son Oturumlar',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          sessionsAsync.when(
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+            error: (_, _) => Text(
+              'Oturum geçmişi yüklenemedi.',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.white.withValues(alpha: 0.65),
+              ),
+            ),
+            data: (sessions) {
+              if (sessions.isEmpty) {
+                return Text(
+                  'Henüz tamamlanmış oturum yok.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.65),
+                  ),
+                );
+              }
+              return Column(
+                children: sessions.take(5).map((session) {
+                  final label = _sessionStatusLabel(session.status);
+                  final color = _sessionStatusColor(session.status);
+                  final counterpart = session.clientName?.trim().isNotEmpty == true
+                      ? session.clientName!
+                      : (session.tellerName?.trim().isNotEmpty == true
+                          ? session.tellerName!
+                          : 'Danışan');
+                  final meta = <String>[
+                    if (session.fortuneType.isNotEmpty) session.fortuneType,
+                    if (session.maxMinutes > 0) '${session.maxMinutes} dk',
+                    if (session.createdAt != null)
+                      _formatSessionDate(session.createdAt!),
+                  ].join(' · ');
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                counterpart,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              if (meta.isNotEmpty)
+                                Text(
+                                  meta,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white.withValues(alpha: 0.65),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              color: color,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatSessionDate(DateTime date) {
+    final local = date.toLocal();
+    return '${local.day.toString().padLeft(2, '0')}.'
+        '${local.month.toString().padLeft(2, '0')}.'
+        '${local.year}';
+  }
+
+  String _sessionStatusLabel(PsychicSessionStatus status) {
+    return switch (status) {
+      PsychicSessionStatus.ended => 'Tamamlandı',
+      PsychicSessionStatus.cancelled => 'İptal',
+      PsychicSessionStatus.rejected => 'Reddedildi',
+      PsychicSessionStatus.expired => 'Süresi doldu',
+      PsychicSessionStatus.active => 'Aktif',
+      PsychicSessionStatus.accepted => 'Kabul',
+      PsychicSessionStatus.pending => 'Bekliyor',
+    };
+  }
+
+  Color _sessionStatusColor(PsychicSessionStatus status) {
+    return switch (status) {
+      PsychicSessionStatus.ended => const Color(0xFF00E676),
+      PsychicSessionStatus.cancelled => const Color(0xFFFFB74D),
+      PsychicSessionStatus.rejected => const Color(0xFFFF5252),
+      PsychicSessionStatus.expired => Colors.white54,
+      PsychicSessionStatus.active => const Color(0xFF40C4FF),
+      PsychicSessionStatus.accepted => const Color(0xFF40C4FF),
+      PsychicSessionStatus.pending => Colors.white54,
+    };
   }
 }
 

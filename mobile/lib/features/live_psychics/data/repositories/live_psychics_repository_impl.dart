@@ -4,6 +4,7 @@ import '../../domain/entities/psychic_gift_entity.dart';
 import '../../domain/entities/psychic_request_entity.dart';
 import '../../domain/entities/psychic_review_entity.dart';
 import '../../domain/entities/psychic_room_entity.dart';
+import '../../domain/entities/psychic_session_history_entity.dart';
 import '../../domain/repositories/live_psychics_repository.dart';
 import '../repositories/live_psychics_remote_datasource.dart';
 
@@ -123,6 +124,12 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
   @override
   Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId) =>
       _remote.fetchSessionStatus(sessionId);
+
+  @override
+  Future<List<PsychicSessionHistoryEntity>> fetchRecentSessions({
+    int limit = 20,
+  }) =>
+      _remote.fetchRecentSessions(limit: limit);
 
   @override
   Future<List<PsychicSessionStatusResult>> fetchActiveSessions() =>

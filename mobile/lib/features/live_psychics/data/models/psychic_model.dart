@@ -3,6 +3,7 @@ import '../../domain/entities/psychic_entity.dart';
 import '../../domain/entities/psychic_request_entity.dart';
 import '../../domain/entities/psychic_room_entity.dart';
 import '../../domain/entities/psychic_review_entity.dart';
+import '../../domain/entities/psychic_session_history_entity.dart';
 import '../../domain/entities/psychic_session_status.dart';
 import '../../domain/repositories/live_psychics_repository.dart';
 
@@ -408,6 +409,34 @@ abstract final class PsychicModel {
       createdAt: createdRaw != null && createdRaw.isNotEmpty
           ? DateTime.tryParse(createdRaw)
           : null,
+    );
+  }
+
+  static PsychicSessionHistoryEntity sessionHistoryFromJson(dynamic raw) {
+    final m = asJsonMap(raw);
+    final teller = asJsonMap(m['teller'] ?? m['fortuneTeller']);
+    final user = asJsonMap(m['user'] ?? m['client']);
+    final createdRaw = pick(m, ['createdAt', 'startedAt'])?.toString();
+    return PsychicSessionHistoryEntity(
+      sessionId: str(m, ['id', 'sessionId']) ?? '',
+      status: PsychicSessionStatus.fromApi(str(m, ['status'])),
+      fortuneType: str(m, ['fortuneType', 'category']) ?? 'general',
+      creditsCharged: asInt(pick(m, ['creditsCharged', 'totalJeton', 'jeton'])),
+      maxMinutes: asInt(pick(m, ['maxMinutes', 'durationMinutes', 'duration'])),
+      minutesUsed: () {
+        final v = asInt(pick(m, ['minutesUsed', 'elapsedMinutes']));
+        return v > 0 ? v : null;
+      }(),
+      createdAt: createdRaw != null && createdRaw.isNotEmpty
+          ? DateTime.tryParse(createdRaw)
+          : null,
+      tellerId: str(teller, ['id', 'tellerId']) ??
+          str(m, ['tellerId', 'fortuneTellerId']),
+      tellerName: str(teller, ['displayName', 'name']) ??
+          str(m, ['tellerName']),
+      tellerAvatarUrl: str(teller, ['avatarUrl', 'avatar', 'image']),
+      clientName: str(user, ['name', 'displayName', 'username']),
+      clientAvatarUrl: str(user, ['avatarUrl', 'avatar', 'image']),
     );
   }
 }

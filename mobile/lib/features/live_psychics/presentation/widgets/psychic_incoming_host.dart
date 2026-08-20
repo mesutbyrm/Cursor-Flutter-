@@ -156,7 +156,12 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
 
   void _startPoll() {
     _poll?.cancel();
-    _poll = Timer.periodic(const Duration(seconds: 4), (_) => _pollApi());
+    if (!_mayRunTellerBackgroundSync()) return;
+    final sseActive = _sseService?.isStreamActive == true;
+    final interval = sseActive
+        ? const Duration(seconds: 30)
+        : const Duration(seconds: 4);
+    _poll = Timer.periodic(interval, (_) => _pollApi());
     unawaited(_pollApi());
   }
 
@@ -210,6 +215,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
             ref.read(psychicSessionCancelSignalProvider.notifier).signal(sessionId);
           },
         );
+    if (mounted) _startPoll();
   }
 
   void _attachLiveEventBus() {

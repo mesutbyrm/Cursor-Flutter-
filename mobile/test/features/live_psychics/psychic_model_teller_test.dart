@@ -49,4 +49,23 @@ void main() {
     expect(entity.applicationStatus, 'approved');
     expect(entity.isUsable, isTrue);
   });
+
+  test('sessionHistoryFromJson parses client and teller', () {
+    final entity = PsychicModel.sessionHistoryFromJson({
+      'id': 'sess_abc',
+      'fortuneType': 'tarot',
+      'status': 'completed',
+      'maxMinutes': 10,
+      'minutesUsed': 8,
+      'createdAt': '2025-06-17T12:00:00Z',
+      'user': {'name': 'Mehmet K.'},
+      'teller': {'displayName': 'Ayşe'},
+    });
+
+    expect(entity.sessionId, 'sess_abc');
+    expect(entity.clientName, 'Mehmet K.');
+    expect(entity.tellerName, 'Ayşe');
+    expect(entity.maxMinutes, 10);
+    expect(entity.minutesUsed, 8);
+  });
 }

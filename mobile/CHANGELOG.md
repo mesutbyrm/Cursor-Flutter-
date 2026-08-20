@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.296+332 (2026-08-20) — Canlı Falcılar panel ve liste
+
+- **Misafir liste:** Canlı Falcılar listesi giriş yapmadan gezilebilir; favoriler için giriş gerekir
+- **Falcı paneli:** Sunucudan çevrimiçi durumu senkronu (`toggle-online`); son oturumlar paneli (`GET /api/fortune-tellers/session`)
+- **SSE poll:** Gelen istek SSE aktifken 30 sn, değilse 4 sn HTTP yedek poll
+- **Değerlendirme:** Yorum alanı düzeltmesi
+
 ## 1.0.295+331 (2026-08-20) — Canlı Falcılar akış tamamlama
 
 - **Kabul sonrası:** Bekleme → `ad-transition` (izin + reklam) → görüşme
