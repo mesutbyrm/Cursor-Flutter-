@@ -16,7 +16,7 @@
 |----------|-------|------|
 | ✔ **Mevcut özellikler** | 🟢 Geniş | 35 feature modülü; voice, live, fortune, gifts, social, auth, shorts, psychics, wallet |
 | ✔ **Eksik özellikler** | 🟡 Orta | SongQueue tam IFrame geçişi kısmi; 5 guide endpoint sabiti yok; Agora temizliği; LiveKit kaldırılmadı |
-| ✔ **Bozuk özellikler** | 🟡 Az | `fortuneTellerIncomingSessions` (prod 405 riski); çift müzik yolu (just_audio + IFrame); `socialPublicStats` deprecated |
+| ✔ **Bozuk özellikler** | 🟡 Az | çift müzik yolu (just_audio + IFrame); `socialPublicStats` deprecated |
 | ✔ **Bağlanmamış API** | 🟡 | `/api/broadcast-images`, `/api/football`, `/api/online-fal`, `/api/translations`, `/api/user/likers` |
 | ✔ **Kullanılmayan widget** | 🟡 | `lib/services/*`, Agora modülü, LiveKit, deprecated feed UI |
 | ✔ **Ölü kod** | 🟡 | 9 dosya `lib/services/`; `voice_agora_engine.dart`; `Env.preferLiveKit` okunmuyor |
@@ -167,7 +167,6 @@
 | `socialPublicStats` | `api_endpoints.dart` | **Yes** — `platform_stats_remote_datasource.dart` |
 | `authLogin/Register/Refresh/Me` | `api_endpoints.dart` | **Yes** — fallback when `Env.useMobileAuth == false` |
 | `messagesConversations` | `api_endpoints.dart` | **Yes** — DM fallback chain |
-| `fortuneTellerIncomingSessions` | `api_endpoints.dart` | **Yes** — `live_psychics_remote_datasource.dart` (prod may 405) |
 | `musicSearch` (deprecated comment) | `api_endpoints.dart` | Check callers |
 
 ### Deprecated Dart APIs
@@ -416,7 +415,6 @@ Standard `domain/repositories/*` + `data/repositories/*_impl.dart` for: auth, fe
 
 | Item | Risk |
 |------|------|
-| `fortuneTellerIncomingSessions` | Documented as 405 on production; still called from psychics datasource |
 | `socialPublicStats` | Deprecated endpoint still used for platform stats |
 | LiveKit / Agora env flags | Misleading — TRTC only in coordinator |
 | Feed module | Deprecated but routes may still reference feed providers |
@@ -448,6 +446,6 @@ Grouped sections: **mobile JWT auth**, **user/me**, **legacy self-hosted auth**,
 
 1. **Split `chat_room_providers.dart`** into domain notifiers (seat, gift, music, presence already partial — finish extraction).
 2. **Remove or gate** `lib/services/`, deprecated Agora module, unwired LiveKit path.
-3. **Migrate** `socialPublicStats` → `publicStats`; audit `fortuneTellerIncomingSessions` on production.
+3. **Migrate** `socialPublicStats` → `publicStats`.
 4. **Fix** gift admin `onError` warnings before next major Flutter SDK bump.
 5. **Document** auth single-path (`AuthService` only) and drop cookie jar from mobile JWT flow when safe.

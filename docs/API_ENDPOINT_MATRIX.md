@@ -576,8 +576,8 @@ Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized 
 | `/api/stories` | GET | dual | `feed` | `feed` | `-` | OpenAPI/docs | NO | CONNECTED |
 | `/api/stories` | POST | dual | `feed` | `feed` | `caption, mediaType, mediaUrl` | OpenAPI/docs | NO | CONNECTED |
 | `/api/teller-chat` | GET | dual | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
-| `/api/teller-chat/{sessionId}` | GET | dual | `tellerChat` | `tellerChat` | `-` | OpenAPI/docs | NO | CONNECTED |
-| `/api/teller-chat/{sessionId}` | POST | dual | `tellerChat` | `tellerChat` | `content, imageUrl, messageType` | OpenAPI/docs | NO | CONNECTED |
+| `/api/teller-chat/{sessionId}` | GET | dual | `-` | `-` | `-` | OpenAPI/docs | NO | REMOVED (1.0.300) |
+| `/api/teller-chat/{sessionId}` | POST | dual | `-` | `-` | `content, imageUrl, messageType` | OpenAPI/docs | NO | REMOVED (1.0.300) |
 | `/api/teller/analytics` | GET | dual | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
 | `/api/teller/level` | GET | dual | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
 | `/api/teller/verification` | GET | dual | `-` | `-` | `-` | OpenAPI/docs | NO | MISSING |
@@ -762,9 +762,9 @@ Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized 
 | `/api/fan-clubs/{param}/posts` | `fanClubPosts` | WRONG |
 | `/api/fortune-access/consume` | `fortuneAccessConsume` | WRONG |
 | `/api/fortune-access/settings` | `fortuneAccessSettings` | WRONG |
-| `/api/fortune-tellers/session/{param}` | `fortuneTellerSessionStatus` | WRONG |
-| `/api/fortune-tellers/session/{param}/respond` | `fortuneTellerSessionRespond` | WRONG |
-| `/api/fortune-tellers/sessions/incoming` | `fortuneTellerIncomingSessions` | WRONG |
+| `/api/fortune-tellers/session/{param}` | `fortuneTellerSessionStatus` | REMOVED (1.0.298 — use `?sessionId=`) |
+| `/api/fortune-tellers/session/{param}/respond` | `fortuneTellerSessionRespond` | REMOVED (1.0.294) |
+| `/api/fortune-tellers/sessions/incoming` | `fortuneTellerIncomingSessions` | REMOVED (1.0.297 — SSE stream) |
 | `/api/fortunes/{param}` | `fortuneReading` | WRONG |
 | `/api/games/auto-match` | `gameAutoMatch` | WRONG |
 | `/api/games/history` | `gameHistory` | WRONG |
@@ -792,8 +792,8 @@ Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized 
 | `/api/leaderboard` | `leaderboard` | WRONG |
 | `/api/live` | `liveStreams` | WRONG |
 | `/api/live-fal/pending` | `liveFalPending` | WRONG |
-| `/api/live-fal/request/{param}/accept` | `liveFalRequestAccept` | WRONG |
-| `/api/live-fal/request/{param}/reject` | `liveFalRequestReject` | WRONG |
+| `/api/live-fal/request/{param}/accept` | `liveFalRequestAccept` | REMOVED (1.0.300) |
+| `/api/live-fal/request/{param}/reject` | `liveFalRequestReject` | REMOVED (1.0.300) |
 | `/api/live/fal-request/create` | `liveFalRequestCreate` | WRONG |
 | `/api/live/fal-request/{param}/complete` | `liveFalRequestComplete` | WRONG |
 | `/api/live/fal-request/{param}/update` | `liveFalRequestUpdate` | WRONG |

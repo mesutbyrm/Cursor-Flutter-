@@ -8,8 +8,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/sse/sse_reconnect_policy.dart';
 import '../../domain/entities/psychic_request_entity.dart';
-import '../../presentation/providers/psychic_live_event_bus.dart';
-import '../../presentation/providers/psychic_push_payload.dart';
+import 'psychic_incoming_sse_parser.dart';
 
 /// Falcı gelen istek SSE — `GET /api/fortune-tellers/sessions/stream`.
 class PsychicIncomingSseService {
@@ -133,86 +132,23 @@ class PsychicIncomingSseService {
     if (payload.isEmpty || payload == '[DONE]') return;
     try {
       final decoded = jsonDecode(payload);
-      if (decoded is List) {
-        final event = (eventName ?? '').toLowerCase();
-        if (event.contains('pending')) {
-          _emitPendingSessions(decoded);
-        }
-        return;
-      }
-      if (decoded is! Map) return;
-      final map = Map<String, dynamic>.from(decoded);
-      if (eventName != null && eventName.isNotEmpty) {
-        map.putIfAbsent('event', () => eventName);
-        map.putIfAbsent('type', () => eventName);
-      }
-      final type = (map['type'] ?? eventName ?? '').toString().toLowerCase();
-      if (type.contains('connected')) {
-        final pending = map['pendingSessions'] ?? map['pending_sessions'];
-        if (pending is List) {
-          _emitPendingSessions(pending);
-        }
-      }
-      if (type == 'pending_sessions' || eventName == 'pending_sessions') {
-        final sessions = map['sessions'] ?? map['pendingSessions'];
-        if (sessions is List) {
-          _emitPendingSessions(sessions);
-        }
-        return;
-      }
-      if (type.contains('online') ||
-          type.contains('offline') ||
-          type.contains('presence') ||
-          type.contains('status')) {
-        _onPresenceTick?.call();
-      }
-      if (type.contains('cancel') ||
-          type == 'rejected' ||
-          type == 'session_cancelled' ||
-          type == 'session_rejected') {
-        final sessionId = (map['sessionId'] ??
-                map['id'] ??
-                (map['session'] is Map
-                    ? (map['session'] as Map)['id']
-                    : null))
-            ?.toString()
-            .trim();
-        if (sessionId != null && sessionId.isNotEmpty) {
-          _onSessionCancelled?.call(sessionId);
-        }
-        return;
-      }
-      if (type.contains('request') ||
-          type.contains('session') ||
-          type.contains('invite') ||
-          map.containsKey('sessionId') ||
-          map.containsKey('request') ||
-          map.containsKey('session')) {
-        final req = parsePsychicIncomingPayload(map) ??
-            parsePsychicSsePayload(map);
-        if (req != null && req.sessionId.isNotEmpty) {
-          if (req.isPending) {
-            _onRequest?.call(req);
-          } else if (!req.isPending &&
-              (type.contains('cancel') || type.contains('reject'))) {
-            _onSessionCancelled?.call(req.sessionId);
-          }
+      final events = parsePsychicIncomingSsePayload(
+        decoded,
+        eventName: eventName,
+      );
+      for (final event in events) {
+        switch (event) {
+          case PsychicIncomingPresenceTick():
+            _onPresenceTick?.call();
+          case PsychicIncomingSessionRequests(:final requests):
+            for (final req in requests) {
+              _onRequest?.call(req);
+            }
+          case PsychicIncomingSessionCancelled(:final sessionId):
+            _onSessionCancelled?.call(sessionId);
         }
       }
     } catch (_) {}
-  }
-
-  void _emitPendingSessions(List<dynamic> sessions) {
-    for (final item in sessions) {
-      if (item is! Map) continue;
-      final req = parsePsychicIncomingPayload(
-            Map<String, dynamic>.from(item),
-          ) ??
-          parsePsychicSsePayload(Map<String, dynamic>.from(item));
-      if (req != null && req.sessionId.isNotEmpty && req.isPending) {
-        _onRequest?.call(req);
-      }
-    }
   }
 
   void _scheduleReconnect() {

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.301+337 (2026-08-20) — Canlı Falcılar SSE parser
+
+- **Incoming SSE:** `psychic_incoming_sse_parser.dart` ayrıştırıldı (test edilebilir)
+- **Test:** `psychic_incoming_sse_parser_test` — connected, pending_sessions, cancel, presence
+- **Temizlik:** `psychic_incoming_sse_service` ölü yardımcı metotlar kaldırıldı
+- **Doküman:** `FLUTTER_AUDIT.md`, `API_ENDPOINT_MATRIX.md` live-psychics REMOVED satırları
+
 ## 1.0.300+336 (2026-08-20) — Canlı Falcılar P2 API sadeleştirme
 
 - **createSession:** Kullanılmayan `tellerUserId`, `staffExempt`, `clientName` parametreleri kaldırıldı

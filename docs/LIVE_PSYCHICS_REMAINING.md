@@ -26,21 +26,17 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 | createSession sade | Kullanılmayan repo parametreleri kaldırıldı |
 | extendSession sade | `totalJeton` imzadan çıkarıldı |
 | Çift seans engeli | Tüm aktif/bekleyen danışan seansları |
-| Legacy endpoints | `tellerChat`, `liveFalRequest*` kaldırıldı |
+| Legacy endpoints | `tellerChat`, `liveFalRequestAccept/Reject` kaldırıldı |
+| Incoming SSE parser | `psychic_incoming_sse_parser.dart` ayrıştırıldı + unit test |
+| Audit dokümanları | `FLUTTER_AUDIT.md`, `API_ENDPOINT_MATRIX.md` güncellendi |
 
 ---
 
 ## Kalan — kod (öncelik sırasıyla)
 
-### P2 — API / model
-
-_P2 maddeleri `1.0.300+336` ile tamamlandı._
-
 ### P3 — Temizlik
 
-| # | Konu | Dosya |
-|---|------|-------|
-| 1 | Eski dokümanlar | `docs/API_ENDPOINT_MATRIX.md`, `FLUTTER_AUDIT.md` — güncel endpoint listesi |
+_P3 maddeleri `1.0.301+337` ile tamamlandı._
 
 ---
 
@@ -50,12 +46,11 @@ _P2 maddeleri `1.0.300+336` ile tamamlandı._
 |-----|--------|
 | **Unit** | `live_psychics_remote_datasource` (mock Dio): createSession dual path, cancel, roomAction |
 | **Unit** | `PsychicFlow.openTellerSessionFromPush` / `resumeFromPush` rol ayrımı |
-| **Unit** | `psychic_incoming_sse_service`: `pending_sessions` list parse |
 | **Unit** | `psychic_room_sse_service`: timer_started, time_extended, session_ended |
 | **Widget** | waiting, booking sheet, incoming dialog, video session |
 | **CI** | `scripts/acceptance-tests/` — API smoke var; Flutter E2E yok |
 
-Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `session_room_sse_event_test`, invite coordinator, phase guard, profile resolver.
+Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incoming_sse_parser_test`, `psychic_client_session_guard_test`, `session_room_sse_event_test`, invite coordinator, phase guard, profile resolver.
 
 ---
 
@@ -90,5 +85,6 @@ Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `session_room_
 | 1.0.298+334 | Status path, respondSession, teller push, SSE pending_sessions |
 | 1.0.299+335 | 120 sn uyarı, time_extended, oda SSE give-up + banner |
 | 1.0.300+336 | createSession/extendSession sade, çift seans engeli, legacy cleanup |
+| 1.0.301+337 | Incoming SSE parser ayrıştırma + test, audit dokümanları |
 
 _Bu dosya agent oturumlarında güncellenir; tamamlandıkça maddeler silinir veya «Tamamlandı» bölümüne taşınır._
