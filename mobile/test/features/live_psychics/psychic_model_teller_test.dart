@@ -103,4 +103,20 @@ void main() {
       isFalse,
     );
   });
+
+  test('roomFromJson parses newMaxMinutes and remainingSeconds', () {
+    final room = PsychicModel.roomFromJson(
+      {
+        'id': 'sess_1',
+        'status': 'active',
+        'timerStarted': true,
+        'newMaxMinutes': 15,
+        'remainingSeconds': 600,
+      },
+      fallbackId: 'sess_1',
+    );
+
+    expect(room.maxMinutes, 15);
+    expect(room.remainingSeconds, 600);
+  });
 }

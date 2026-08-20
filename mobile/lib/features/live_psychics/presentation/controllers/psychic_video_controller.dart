@@ -55,6 +55,8 @@ class PsychicVideoState {
     this.sseConnected = false,
     this.localPreviewKey = 0,
     this.timeUpPending = false,
+    this.lowTimeWarningPending = false,
+    this.sseFailed = false,
     this.remoteCamera = const {},
     this.remoteMicrophone = const {},
   });
@@ -77,6 +79,8 @@ class PsychicVideoState {
   final bool sseConnected;
   final int localPreviewKey;
   final bool timeUpPending;
+  final bool lowTimeWarningPending;
+  final bool sseFailed;
   /// Uzak katılımcı kamera durumu — userId → açık mı (yerel kameradan bağımsız).
   final Map<String, bool> remoteCamera;
   /// Uzak katılımcı mikrofon durumu — userId → açık mı (yerel mikrofondan bağımsız).
@@ -110,6 +114,8 @@ class PsychicVideoState {
     bool? sseConnected,
     int? localPreviewKey,
     bool? timeUpPending,
+    bool? lowTimeWarningPending,
+    bool? sseFailed,
     Map<String, bool>? remoteCamera,
     Map<String, bool>? remoteMicrophone,
   }) {
@@ -136,6 +142,9 @@ class PsychicVideoState {
       sseConnected: sseConnected ?? this.sseConnected,
       localPreviewKey: localPreviewKey ?? this.localPreviewKey,
       timeUpPending: timeUpPending ?? this.timeUpPending,
+      lowTimeWarningPending:
+          lowTimeWarningPending ?? this.lowTimeWarningPending,
+      sseFailed: sseFailed ?? this.sseFailed,
       remoteCamera: remoteCamera ?? this.remoteCamera,
       remoteMicrophone: remoteMicrophone ?? this.remoteMicrophone,
     );
@@ -279,7 +288,17 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         unawaited(_onTimeUp());
         return;
       }
-      state = state.copyWith(remaining: Duration(seconds: secs));
+      var lowTimeWarning = state.lowTimeWarningPending;
+      if (session.isClient &&
+          !lowTimeWarning &&
+          !state.timeUpPending &&
+          secs <= 120) {
+        lowTimeWarning = true;
+      }
+      state = state.copyWith(
+        remaining: Duration(seconds: secs),
+        lowTimeWarningPending: lowTimeWarning,
+      );
     });
 
     _ping?.cancel();
@@ -566,12 +585,19 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           myUserId: user?.id,
           onConnected: () {
             if (_disposed) return;
-            if (!state.sseConnected) {
-              state = state.copyWith(sseConnected: true);
+            if (!state.sseConnected || state.sseFailed) {
+              state = state.copyWith(sseConnected: true, sseFailed: false);
               _chatPoll?.cancel();
               _roomPoll?.cancel();
               _scheduleSignalPoll();
             }
+          },
+          onFailed: () {
+            if (_disposed || state.leaving) return;
+            state = state.copyWith(sseConnected: false, sseFailed: true);
+            _scheduleRoomPoll();
+            _startChatPoll();
+            _scheduleSignalPoll();
           },
           onMessage: _onSseChatMessage,
           onRoomUpdate: _onSseRoomUpdate,
@@ -628,12 +654,20 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     var remaining = state.remaining;
     if (info.timerStarted) {
       remaining = Duration(seconds: info.remainingSeconds);
+    } else if (info.maxMinutes > (state.room?.maxMinutes ?? 0)) {
+      final added = info.maxMinutes - (state.room?.maxMinutes ?? session.durationMinutes);
+      if (added > 0) {
+        remaining = state.remaining + Duration(minutes: added);
+      }
     }
     state = state.copyWith(
       room: info,
       timerStarted: info.timerStarted,
       waitingForTimer: session.isClient && !info.timerStarted,
       remaining: remaining,
+      lowTimeWarningPending: remaining.inSeconds > 120
+          ? false
+          : state.lowTimeWarningPending,
     );
     if (info.roomId != null && info.roomId!.isNotEmpty) {
       final newRoomId = info.roomId!;
@@ -959,6 +993,12 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   void switchCamera() => _trtc.switchCamera();
+
+  Future<void> retryRoomSse() async {
+    if (_disposed || state.leaving) return;
+    state = state.copyWith(sseFailed: false);
+    await ref.read(psychicRoomSseServiceProvider).retryConnection();
+  }
 
   Future<void> leave({
     bool silent = false,

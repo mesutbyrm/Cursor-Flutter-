@@ -32,6 +32,7 @@ class PsychicRoomSseService {
   void Function(PsychicRoomEntity room)? _onRoomUpdate;
   void Function(PsychicSessionStatus status)? _onSessionEnded;
   void Function(int amount, String? fromName)? _onTipReceived;
+  void Function()? _onFailed;
   var _stopped = false;
   var _reconnectAttempt = 0;
 
@@ -45,6 +46,7 @@ class PsychicRoomSseService {
     void Function(PsychicRoomEntity room)? onRoomUpdate,
     void Function(PsychicSessionStatus status)? onSessionEnded,
     void Function(int amount, String? fromName)? onTipReceived,
+    void Function()? onFailed,
   }) async {
     final id = sessionId.trim();
     if (id.isEmpty) return;
@@ -58,6 +60,14 @@ class PsychicRoomSseService {
     _onRoomUpdate = onRoomUpdate;
     _onSessionEnded = onSessionEnded;
     _onTipReceived = onTipReceived;
+    _onFailed = onFailed;
+    await _openStream();
+  }
+
+  /// SSE yeniden bağlanmayı dene (kullanıcı «Yenile» veya give-up sonrası).
+  Future<void> retryConnection() async {
+    if (_stopped) return;
+    _reconnectAttempt = 0;
     await _openStream();
   }
 
@@ -109,7 +119,11 @@ class PsychicRoomSseService {
       if (kDebugMode) debugPrint('PsychicRoomSse: $e');
       if (e.response?.statusCode == 401 && _refreshTokens != null) {
         final ok = await _refreshTokens!();
-        if (!ok) return;
+        if (ok && !_stopped) {
+          await _openStream();
+          return;
+        }
+        return;
       }
       _scheduleReconnect();
     } catch (e) {
@@ -254,6 +268,13 @@ class PsychicRoomSseService {
 
   void _scheduleReconnect() {
     if (_stopped) return;
+    if (SseReconnectPolicy.shouldGiveUp(_reconnectAttempt)) {
+      if (kDebugMode) {
+        debugPrint('PsychicRoomSse: max reconnect attempts reached');
+      }
+      _onFailed?.call();
+      return;
+    }
     _reconnectTimer?.cancel();
     _reconnectAttempt++;
     _reconnectTimer = Timer(

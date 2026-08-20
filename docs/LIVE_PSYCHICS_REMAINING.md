@@ -18,6 +18,11 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 | Push falcı kabul | `openTellerSessionFromPush` (danışan `resumeFromPush` ayrı) |
 | Push session_ended | Değerlendirme yalnızca danışana (`promptReview: !isTeller`) |
 | Incoming SSE | `pending_sessions`, `connected.pendingSessions`, max 20 reconnect, 401 anında retry |
+| 120 sn uyarı | Danışan snackbar + «Uzat»; timer ≤120 sn kırmızı |
+| time_extended | `newMaxMinutes` / `remainingSeconds` SSE + oda JSON |
+| Oda SSE give-up | Max 20 reconnect, `onFailed`, HTTP poll yedek |
+| SSE failed UI | Görüşme banner + `retryRoomSse` |
+| Bekleme temizlik | Gereksiz room SSE disconnect kaldırıldı |
 
 ---
 
@@ -25,12 +30,7 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 
 ### P1 — Davranış / UX
 
-| # | Konu | Dosya | Açıklama |
-|---|------|-------|----------|
-| 1 | **120 sn süre uyarısı** | `psychic_video_controller.dart` | Prompt §11: kalan süre ≤120 sn iken danışana extend CTA / snackbar |
-| 2 | **`time_extended` senkronu** | `psychic_video_controller.dart`, `psychic_room_sse_service.dart` | SSE `newMaxMinutes` / jeton kalan → client timer güncelle |
-| 3 | **Oda SSE give-up** | `psychic_room_sse_service.dart` | Incoming SSE ile aynı: `SseReconnectPolicy.maxAttempts` (20) |
-| 4 | **SSE failed UI** | video / waiting ekranları | 20 deneme sonrası «Bağlantı koptu — yenile» banner |
+_P1 maddeleri `1.0.299+335` ile tamamlandı._
 
 ### P2 — API / model
 
@@ -45,8 +45,7 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 | # | Konu | Dosya |
 |---|------|-------|
 | 8 | Legacy sabitler | `api_endpoints.dart` — `tellerChat`, `liveFalRequestAccept/Reject` (live modülü) |
-| 9 | Waiting disconnect | `psychic_waiting_screen.dart` — gereksiz `psychicRoomSseServiceProvider.disconnect()` |
-| 10 | Eski dokümanlar | `docs/API_ENDPOINT_MATRIX.md`, `FLUTTER_AUDIT.md` — `fortuneTellerSessionStatus` artık yok |
+| 9 | Eski dokümanlar | `docs/API_ENDPOINT_MATRIX.md`, `FLUTTER_AUDIT.md` — `fortuneTellerSessionStatus` artık yok |
 
 ---
 
@@ -94,5 +93,6 @@ Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `session_room_
 | 1.0.296+332 | Misafir liste, falcı panel oturum geçmişi, SSE poll |
 | 1.0.297+333 | Danışan oturum geçmişi, paylaşılan widget, dead code |
 | 1.0.298+334 | Status path, respondSession, teller push, SSE pending_sessions |
+| 1.0.299+335 | 120 sn uyarı, time_extended, oda SSE give-up + banner |
 
 _Bu dosya agent oturumlarında güncellenir; tamamlandıkça maddeler silinir veya «Tamamlandı» bölümüne taşınır._

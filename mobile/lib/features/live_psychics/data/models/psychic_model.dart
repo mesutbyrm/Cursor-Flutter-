@@ -259,16 +259,28 @@ abstract final class PsychicModel {
         ]) ??
         (isTeller ? clientId : tellerUserId);
     final statusRaw = str(data, ['status']) ?? 'active';
-    final elapsed = asInt(pick(data, ['elapsedSeconds', 'elapsed_seconds']));
+    var elapsed = asInt(pick(data, ['elapsedSeconds', 'elapsed_seconds']));
+    final remainingDirect =
+        asInt(pick(data, ['remainingSeconds', 'remaining_seconds']));
+    final maxMin = () {
+      final v = asInt(pick(data, [
+        'maxMinutes',
+        'durationMinutes',
+        'duration',
+        'newMaxMinutes',
+      ]));
+      return v > 0 ? v : 10;
+    }();
+    if (remainingDirect > 0 && maxMin > 0) {
+      elapsed = (maxMin * 60) - remainingDirect;
+      if (elapsed < 0) elapsed = 0;
+    }
     final roomId = str(data, ['roomId', 'trtcRoomId', 'trtc_room_id']) ??
         str(asJsonMap(data['room']), ['roomId', 'trtcRoomId', 'id']);
     return PsychicRoomEntity(
       sessionId: id,
       status: PsychicSessionStatus.fromApi(statusRaw),
-      maxMinutes: () {
-        final v = asInt(pick(data, ['maxMinutes', 'durationMinutes', 'duration']));
-        return v > 0 ? v : 10;
-      }(),
+      maxMinutes: maxMin,
       timerStarted: data['timerStarted'] == true,
       elapsedSeconds: elapsed,
       roomId: roomId,

@@ -64,6 +64,27 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
       if (next.timeUpPending && session.isClient) {
         ctrl.handleClientTimeUp(context);
       }
+      if (next.lowTimeWarningPending &&
+          prev?.lowTimeWarningPending != true &&
+          session.isClient &&
+          context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Süreniz azalıyor — ${next.timerLabel} kaldı',
+            ),
+            duration: const Duration(seconds: 8),
+            action: SnackBarAction(
+              label: 'Uzat',
+              onPressed: () async {
+                final choice = await ctrl.openExtendSheet(context);
+                if (!context.mounted || choice == null) return;
+                await ctrl.extendSession(choice);
+              },
+            ),
+          ),
+        );
+      }
       if (next.leaving && prev?.leaving != true && context.mounted) {
         final peerMsg = ref.read(psychicPeerLeftProvider)?.message;
         if (peerMsg != null) {
@@ -285,7 +306,53 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
               top: MediaQuery.paddingOf(context).top + 8,
               left: 12,
               right: 12,
-              child: ProfileGlass(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (state.sseFailed)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Material(
+                        color: const Color(0xFF5C1A1A),
+                        borderRadius: BorderRadius.circular(12),
+                        child: InkWell(
+                          onTap: () => unawaited(ctrl.retryRoomSse()),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.wifi_off_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Canlı bağlantı koptu — dokunarak yenile',
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(alpha: 0.95),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.refresh_rounded,
+                                  color: Colors.white70,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ProfileGlass(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 borderRadius: 16,
                 child: Row(
@@ -305,8 +372,11 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                             state.timerStarted
                                 ? state.timerLabel
                                 : 'Süre bekleniyor',
-                            style: const TextStyle(
-                              color: Color(0xFFFFD54F),
+                            style: TextStyle(
+                              color: state.timerStarted &&
+                                      state.remaining.inSeconds <= 120
+                                  ? const Color(0xFFFF5252)
+                                  : const Color(0xFFFFD54F),
                               fontWeight: FontWeight.w800,
                               fontSize: 13,
                             ),
@@ -330,6 +400,8 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                     ),
                   ],
                 ),
+              ),
+                ],
               ),
             ),
             Positioned(

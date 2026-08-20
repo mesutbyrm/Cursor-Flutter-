@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.299+335 (2026-08-20) — Canlı Falcılar görüşme UX
+
+- **120 sn uyarı:** Danışana «Süre azalıyor» snackbar + «Uzat» aksiyonu; timer kırmızı
+- **time_extended:** `newMaxMinutes` / `remainingSeconds` SSE senkronu
+- **Oda SSE:** Max 20 reconnect; kopunca banner + yenile; HTTP poll yedek
+- **Bekleme:** Gereksiz room SSE disconnect kaldırıldı
+
 ## 1.0.298+334 (2026-08-20) — Canlı Falcılar push ve API sıkılaştırma
 
 - **Status sorgu:** Yalnızca `GET /api/fortune-tellers/session?sessionId=` (yanlış `/session/{id}` kaldırıldı)

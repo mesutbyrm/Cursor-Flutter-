@@ -149,7 +149,6 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
       clientId: room?.clientId ?? session.clientId,
     );
     await PsychicSessionStore.save(activeSession);
-    await ref.read(psychicRoomSseServiceProvider).disconnect();
     ref.read(psychicWaitingNavProvider.notifier).state = activeSession;
   }
 
@@ -164,7 +163,6 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     state = state.copyWith(phase: PsychicWaitingPhase.rejected, closed: true);
     _poll?.cancel();
     _timeout?.cancel();
-    await ref.read(psychicRoomSseServiceProvider).disconnect();
     await PsychicSessionStore.clear();
     invalidateWalletCacheFromRef(ref);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
@@ -185,7 +183,6 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     unawaited(
       ref.read(livePsychicsRepositoryProvider).cancelSession(session.sessionId),
     );
-    await ref.read(psychicRoomSseServiceProvider).disconnect();
     await PsychicSessionStore.clear();
     invalidateWalletCacheFromRef(ref);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
@@ -219,7 +216,6 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     state = state.copyWith(closed: true);
     _poll?.cancel();
     _timeout?.cancel();
-    await ref.read(psychicRoomSseServiceProvider).disconnect();
     await PsychicSessionStore.clear();
     invalidateWalletCacheFromRef(ref);
     _navigateExit();
@@ -229,7 +225,6 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   void dispose() {
     _poll?.cancel();
     _timeout?.cancel();
-    unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
     super.dispose();
   }
 }
