@@ -68,12 +68,45 @@ class BanaOzelStreakEntity {
   final int totalFortunes;
 }
 
+/// Günlük jeton görev anahtarı — `GET /api/bana-ozel` `todayTasks[]`.
+enum BanaOzelTodayTask {
+  login,
+  watchAd,
+  openContent,
+  share,
+  unknown;
+
+  static BanaOzelTodayTask parse(String raw) {
+    final key = raw.trim().toLowerCase().replaceAll('-', '_');
+    return switch (key) {
+      'login' || 'daily_login' => BanaOzelTodayTask.login,
+      'watch_ad' || 'watchad' || 'ad' => BanaOzelTodayTask.watchAd,
+      'open_content' ||
+      'open_fortune' ||
+      'bana_ozel' ||
+      'open' =>
+        BanaOzelTodayTask.openContent,
+      'share' || 'share_fortune' => BanaOzelTodayTask.share,
+      _ => BanaOzelTodayTask.unknown,
+    };
+  }
+
+  String get labelTr => switch (this) {
+        BanaOzelTodayTask.login => 'Günlük giriş bonusu',
+        BanaOzelTodayTask.watchAd => 'Reklam izle',
+        BanaOzelTodayTask.openContent => 'Bana Özel içerik aç',
+        BanaOzelTodayTask.share => 'Falını paylaş',
+        BanaOzelTodayTask.unknown => 'Günlük görev',
+      };
+}
+
 /// `GET /api/bana-ozel` yanıtı.
 class BanaOzelCatalogEntity {
   const BanaOzelCatalogEntity({
     required this.items,
     this.jetonBalance = 0,
     this.streak = const BanaOzelStreakEntity(),
+    this.todayTasks = const [],
   });
 
   factory BanaOzelCatalogEntity.fromJson(Map<String, dynamic> json) {
@@ -85,18 +118,28 @@ class BanaOzelCatalogEntity {
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
     final streakRaw = pick(json, ['streak', 'fortuneStreak']);
+    final rawTasks = json['todayTasks'] ?? json['tasks'];
+    final tasks = asJsonList(rawTasks)
+        .map((e) => e?.toString() ?? '')
+        .where((e) => e.trim().isNotEmpty)
+        .toList();
     return BanaOzelCatalogEntity(
       items: items,
       jetonBalance: asInt(pick(json, ['jetonBalance', 'balance', 'coins'])),
       streak: streakRaw is Map
           ? BanaOzelStreakEntity.fromJson(Map<String, dynamic>.from(streakRaw))
           : const BanaOzelStreakEntity(),
+      todayTasks: tasks,
     );
   }
 
   final List<BanaOzelItemEntity> items;
   final int jetonBalance;
   final BanaOzelStreakEntity streak;
+  final List<String> todayTasks;
+
+  List<BanaOzelTodayTask> get parsedTodayTasks =>
+      todayTasks.map(BanaOzelTodayTask.parse).toList();
 
   List<BanaOzelItemEntity> itemsForCategory(String? category) {
     if (category == null || category == 'all') return items;
@@ -116,6 +159,7 @@ class BanaOzelOpenResultEntity {
     this.icon = '✨',
     this.jetonSpent = 0,
     this.jetonBalance = 0,
+    this.streak,
   });
 
   factory BanaOzelOpenResultEntity.fromJson(
@@ -126,6 +170,7 @@ class BanaOzelOpenResultEntity {
     final itemMap = nested is Map ? Map<String, dynamic>.from(nested) : json;
     final content = pick(json, ['content', 'text', 'reading', 'message']) ??
         pick(itemMap, ['content', 'text', 'reading', 'message']);
+    final streakRaw = pick(json, ['streak', 'fortuneStreak']);
     return BanaOzelOpenResultEntity(
       content: content?.toString().trim() ?? '',
       itemSlug: pick(itemMap, ['slug', 'itemSlug'])?.toString() ?? item.slug,
@@ -138,6 +183,9 @@ class BanaOzelOpenResultEntity {
       jetonBalance: asInt(
         pick(json, ['jetonBalance', 'newBalance', 'balance']),
       ),
+      streak: streakRaw is Map
+          ? BanaOzelStreakEntity.fromJson(Map<String, dynamic>.from(streakRaw))
+          : null,
     );
   }
 
@@ -147,6 +195,7 @@ class BanaOzelOpenResultEntity {
   final String icon;
   final int jetonSpent;
   final int jetonBalance;
+  final BanaOzelStreakEntity? streak;
 
   bool get hasContent => content.trim().isNotEmpty;
 }

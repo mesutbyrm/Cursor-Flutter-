@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.312+348 (2026-08-20) — Bana Özel görevler + testler
+
+- **todayTasks:** API görev listesi parse + katalog sayfasında chip şeridi
+- **Open sonrası:** streak ve jeton bakiyesi senkronizasyonu iyileştirildi
+- **Test:** remote datasource, ana sayfa vitrin widget, entity genişletmesi
+- **Lint:** sonuç sayfası gereksiz import temizliği
+
 ## 1.0.311+347 (2026-08-20) — Bana Özel (Fal & Tarot + ana sayfa)
 
 - **API:** `GET /api/bana-ozel`, `POST /api/bana-ozel/open` — jeton katalog + içerik açma

@@ -191,6 +191,10 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                                       ),
                                     ),
                                   ],
+                                  if (data.todayTasks.isNotEmpty) ...[
+                                    const SizedBox(height: 10),
+                                    _TodayTasksStrip(tasks: data.parsedTodayTasks),
+                                  ],
                                   const SizedBox(height: 12),
                                   _CategoryChips(
                                     categories: data.categories,
@@ -277,6 +281,45 @@ class _JetonBadge extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _TodayTasksStrip extends StatelessWidget {
+  const _TodayTasksStrip({required this.tasks});
+
+  final List<BanaOzelTodayTask> tasks;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Bugünkü görevler',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: Colors.white.withValues(alpha: 0.7),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final task in tasks)
+              Chip(
+                visualDensity: VisualDensity.compact,
+                label: Text(
+                  task.labelTr,
+                  style: const TextStyle(fontSize: 11),
+                ),
+                avatar: const Icon(Icons.check_circle_outline, size: 16),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

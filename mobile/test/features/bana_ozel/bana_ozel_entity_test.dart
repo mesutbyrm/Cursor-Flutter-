@@ -27,6 +27,49 @@ void main() {
       expect(catalog.jetonBalance, 12);
       expect(catalog.streak.currentStreak, 2);
     });
+
+    test('parses todayTasks list', () {
+      const sample = {
+        'items': [],
+        'todayTasks': ['login', 'watch_ad'],
+      };
+      final catalog = BanaOzelCatalogEntity.fromJson(sample);
+      expect(catalog.todayTasks, ['login', 'watch_ad']);
+      expect(catalog.parsedTodayTasks.first.labelTr, 'Günlük giriş bonusu');
+    });
+
+    test('filters items by category', () {
+      const sample = {
+        'items': [
+          {
+            'id': '1',
+            'slug': 'a',
+            'nameTr': 'A',
+            'icon': '✨',
+            'jetonCost': 1,
+            'category': 'tarot',
+          },
+          {
+            'id': '2',
+            'slug': 'b',
+            'nameTr': 'B',
+            'icon': '♈',
+            'jetonCost': 1,
+            'category': 'astrology',
+          },
+        ],
+      };
+      final catalog = BanaOzelCatalogEntity.fromJson(sample);
+      expect(catalog.itemsForCategory('tarot'), hasLength(1));
+      expect(catalog.itemsForCategory('all'), hasLength(2));
+    });
+  });
+
+  group('BanaOzelTodayTask', () {
+    test('maps known task keys to Turkish labels', () {
+      expect(BanaOzelTodayTask.parse('login').labelTr, 'Günlük giriş bonusu');
+      expect(BanaOzelTodayTask.parse('watch_ad').labelTr, 'Reklam izle');
+    });
   });
 
   group('BanaOzelOpenResultEntity', () {
@@ -50,6 +93,27 @@ void main() {
       expect(result.hasContent, isTrue);
       expect(result.jetonBalance, 10);
       expect(result.itemName, 'Şanslı Sayılar');
+    });
+
+    test('parses optional streak from open response', () {
+      const item = BanaOzelItemEntity(
+        id: '1',
+        slug: 'sansli-sayilar',
+        nameTr: 'Şanslı Sayılar',
+        icon: '🍀',
+        jetonCost: 2,
+        category: 'fortune',
+      );
+      final result = BanaOzelOpenResultEntity.fromJson(
+        {
+          'content': 'ok',
+          'jetonSpent': 2,
+          'jetonBalance': 10,
+          'streak': {'currentStreak': 3, 'longestStreak': 5, 'totalFortunes': 11},
+        },
+        item: item,
+      );
+      expect(result.streak?.currentStreak, 3);
     });
   });
 }

@@ -35,11 +35,15 @@ class BanaOzelCatalogNotifier extends AsyncNotifier<BanaOzelCatalogEntity> {
   void applyOpenResult(BanaOzelOpenResultEntity result) {
     final current = state.valueOrNull;
     if (current == null) return;
+    final balance = result.jetonBalance > 0
+        ? result.jetonBalance
+        : (current.jetonBalance - result.jetonSpent).clamp(0, 1 << 30);
     state = AsyncData(
       BanaOzelCatalogEntity(
         items: current.items,
-        jetonBalance: result.jetonBalance,
-        streak: current.streak,
+        jetonBalance: balance,
+        streak: result.streak ?? current.streak,
+        todayTasks: current.todayTasks,
       ),
     );
   }

@@ -1,24 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../fortune/presentation/widgets/fortune_mystic_background.dart';
 import '../../../fortune/presentation/widgets/fortune_mystic_title_bar.dart';
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_tokens.dart';
 import '../../domain/entities/bana_ozel_entities.dart';
-import '../providers/bana_ozel_providers.dart';
 
 /// Bana Özel sonuç — `POST /api/bana-ozel/open`.
-class BanaOzelResultPage extends ConsumerWidget {
+class BanaOzelResultPage extends StatelessWidget {
   const BanaOzelResultPage({super.key, required this.result});
 
   final BanaOzelOpenResultEntity result;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final serif = GoogleFonts.playfairDisplay;
     const gold = Color(0xFFD4AF37);
 
