@@ -55,6 +55,14 @@ abstract final class PsychicModel {
         '';
     final userId = str(m, ['userId', 'tellerUserId', 'ownerId']) ??
         str(user, ['id', 'userId']);
+    final streamId = str(m, [
+          'liveStreamId',
+          'streamId',
+          'videoStreamId',
+          'currentStreamId',
+          'broadcastStreamId',
+        ]) ??
+        str(user, ['liveStreamId', 'streamId']);
     return PsychicEntity(
       id: profileId.isNotEmpty ? profileId : (userId ?? ''),
       userId: userId,
@@ -85,6 +93,7 @@ abstract final class PsychicModel {
       specialties: specs,
       category: str(m, ['category', 'specialty']) ?? str(user, ['category']),
       applicationStatus: _applicationStatusFrom(m, user),
+      liveStreamId: streamId,
     );
   }
 

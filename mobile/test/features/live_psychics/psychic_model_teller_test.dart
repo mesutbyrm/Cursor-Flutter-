@@ -19,6 +19,22 @@ void main() {
     expect(entity.applicationStatus, 'approved');
     expect(entity.isApproved, isTrue);
     expect(entity.isUsable, isTrue);
+    expect(entity.pricePerMinute, 100);
+    expect(entity.isOnline, isTrue);
+  });
+
+  test('parses optional liveStreamId when API provides it', () {
+    final entity = PsychicModel.psychicFromJson({
+      'id': 'teller_1',
+      'displayName': 'Yayında Falcı',
+      'isOnline': true,
+      'liveStreamId': 'stream_abc',
+      'pricePerMinute': 80,
+    });
+
+    expect(entity.liveStreamId, 'stream_abc');
+    expect(entity.hasLiveBroadcast, isTrue);
+    expect(entity.pricePerMinute, 80);
   });
 
   test('my-profile nested fortuneTeller key', () {

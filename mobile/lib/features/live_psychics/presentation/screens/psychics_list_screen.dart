@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/ui/premium/live_badge.dart';
-import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
-import '../../../../core/widgets/user_avatar.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
+import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
+import '../navigation/psychic_card_navigation.dart';
+import '../widgets/psychic_premium_card.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../domain/entities/psychic_entity.dart';
 import '../controllers/psychics_list_controller.dart';
 import '../widgets/psychic_fortune_types.dart';
 import '../widgets/psychic_recent_sessions_panel.dart';
@@ -64,9 +62,9 @@ class PsychicsListScreen extends ConsumerWidget {
               itemCount: 6,
               separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (_, _) => const PremiumSkeleton(
-                height: 88,
+                height: 96,
                 width: double.infinity,
-                borderRadius: BorderRadius.all(Radius.circular(16)),
+                borderRadius: BorderRadius.all(Radius.circular(20)),
               ),
             ),
             error: (e, _) => Center(
@@ -151,105 +149,28 @@ class PsychicsListScreen extends ConsumerWidget {
                         }
                         return const SizedBox.shrink();
                       }
-                      return PsychicListTile(psychic: state.items[itemIndex]);
+                      final psychic = state.items[itemIndex];
+                      return PsychicPremiumListTile(
+                        name: psychic.name,
+                        avatarUrl: psychic.avatarUrl,
+                        isOnline: psychic.isOnline,
+                        rating: psychic.rating,
+                        reviewCount: psychic.reviewCount,
+                        categoryLabel: psychic.specialtiesLabel,
+                        pricePerMinute: psychic.pricePerMinute,
+                        showLiveBadge:
+                            psychic.hasLiveBroadcast && psychic.isOnline,
+                        onTap: () => openPsychicCardDestination(
+                          context,
+                          ref,
+                          psychic,
+                        ),
+                      );
                     },
                   ),
                 ),
               );
             },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class PsychicListTile extends StatelessWidget {
-  const PsychicListTile({super.key, required this.psychic});
-
-  final PsychicEntity psychic;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.06),
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: () => context.push('/canli-falcilar/${psychic.id}'),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Stack(
-                children: [
-                  psychic.avatarUrl != null && psychic.avatarUrl!.isNotEmpty
-                      ? CircleAvatar(
-                          radius: 28,
-                          backgroundImage:
-                              canlifalImageProvider(psychic.avatarUrl!),
-                        )
-                      : const UserAvatar(radius: 28),
-                  if (psychic.isOnline)
-                    const Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: LiveBadge(compact: true),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      psychic.name,
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-                    ),
-                    Text(
-                      psychic.displayCategory,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.65),
-                      ),
-                    ),
-                    if (psychic.rating > 0)
-                      Text(
-                        '★ ${psychic.rating.toStringAsFixed(1)} · ${psychic.reviewCount} seans',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.5),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    psychic.isOnline ? 'Çevrimiçi' : 'Çevrimdışı',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: psychic.isOnline
-                          ? const Color(0xFF00E676)
-                          : Colors.white54,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (psychic.pricePerMinute > 0)
-                    Text(
-                      '${psychic.pricePerMinute} jeton/dk',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFFFFD54F),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                ],
-              ),
-            ],
           ),
         ),
       ),

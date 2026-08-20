@@ -457,18 +457,46 @@ class HomeRemoteDataSource {
   /// Dış datasource'lar için JSON → entity (canlı falcı modülü).
   OnlineAdvisorEntity _mapAdvisor(dynamic raw) {
     final m = asJsonMap(raw);
+    final user = asJsonMap(m['user'] ?? m['profile']);
     final online = m['isOnline'] == true ||
         m['online'] == true ||
-        m['status'] == 'online';
+        m['status']?.toString().toLowerCase() == 'online';
+    final id = _str(m, ['id', '_id', 'tellerId', 'fortuneTellerId']) ??
+        _str(user, ['tellerId', 'fortuneTellerId']) ??
+        _str(m, ['userId']) ??
+        _str(user, ['id', 'userId']) ??
+        '';
     return OnlineAdvisorEntity(
-      id: _str(m, ['id', '_id', 'userId']) ?? '',
-      name: _str(m, ['name', 'displayName', 'username']) ?? 'Falcı',
+      id: id,
+      name: _str(m, ['name', 'displayName', 'username']) ??
+          _str(user, ['displayName', 'name', 'username']) ??
+          'Falcı',
       category: _advisorCategory(m),
-      avatarUrl: _str(m, ['avatarUrl', 'image', 'avatar', 'photoUrl']),
+      avatarUrl: _str(m, ['avatarUrl', 'image', 'avatar', 'photoUrl']) ??
+          _str(user, ['avatarUrl', 'image', 'avatar']),
       isOnline: online,
-      rating: _dbl(m, ['rating', 'score']),
+      rating: _dbl(m, ['rating', 'score', 'averageRating']) != 0
+          ? _dbl(m, ['rating', 'score', 'averageRating'])
+          : _dbl(user, ['rating', 'score']),
+      reviewCount: asInt(
+        pick(m, ['reviewCount', 'reviews', 'totalReviews']),
+      ),
+      pricePerMinute: asInt(pick(m, [
+        'pricePerMinute',
+        'pricePerSession',
+        'sessionPrice',
+        'price',
+        'minutePrice',
+      ])),
       viewerCount: asInt(pick(m, ['viewerCount', 'viewers', 'audience'])),
-      specialties: _stringList(m['specialties']),
+      specialties: _stringList(m['specialties'] ?? user['specialties']),
+      liveStreamId: _str(m, [
+            'liveStreamId',
+            'streamId',
+            'videoStreamId',
+            'currentStreamId',
+          ]) ??
+          _str(user, ['liveStreamId', 'streamId']),
     );
   }
 

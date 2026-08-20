@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.321+357 (2026-08-20) — Canlı Falcılar V2 premium UI
+
+- **Kart:** Paylaşılan `PsychicPremiumCard` / `PsychicPremiumListTile` — avatar, gerçek online, rating, jeton/dk
+- **API:** `GET /api/fortune-tellers` + `GET /api/advisors/online`; advisor→teller id eşlemesi düzeltildi
+- **Online:** Rozet yalnızca backend `isOnline`; varsayılan `true` kaldırıldı
+- **Navigasyon:** `openPsychicCardDestination` — profil veya API `liveStreamId` ile yayın
+- **Popüler Falcılar:** Aynı design system, Tümünü Gör → `/canli-falcilar`
+
 ## 1.0.320+356 (2026-08-20) — Ana Sayfa V1 Premium UI
 
 - **Tasarım:** Koyu premium tema, cam kartlar, tutarlı tipografi ve accent kullanımı
