@@ -11,7 +11,7 @@ import '../../../../core/network/sse/sse_reconnect_policy.dart';
 import '../../domain/entities/psychic_room_entity.dart';
 import '../../domain/entities/psychic_session_status.dart';
 import '../../domain/session_room_sse_event.dart';
-import '../models/psychic_model.dart';
+import 'psychic_room_sse_parser.dart';
 
 /// Seans oda SSE — `GET /api/room/{sessionId}/stream`.
 class PsychicRoomSseService {
@@ -162,94 +162,25 @@ class PsychicRoomSseService {
       final decoded = jsonDecode(payload);
       if (decoded is! Map) return;
       final map = Map<String, dynamic>.from(decoded);
-      final type =
-          inferSessionRoomSseEventType(map, eventName: eventName) ?? '';
-      if (type == 'connected') {
-        final room = PsychicModel.roomFromJson(map, fallbackId: _sessionId ?? '');
-        _onRoomUpdate?.call(room);
-        return;
-      }
-      if (type == 'ended' ||
-          type == 'session_ended' ||
-          type == 'session_end' ||
-          type == 'expired' ||
-          type == 'session_expired' ||
-          type == 'cancelled' ||
-          type == 'session_cancelled' ||
-          type == 'rejected') {
-        _onSessionEnded?.call(
-          type.contains('cancel') || type == 'rejected'
-              ? PsychicSessionStatus.cancelled
-              : type.contains('expir')
-                  ? PsychicSessionStatus.expired
-                  : PsychicSessionStatus.ended,
-        );
-        return;
-      }
-      if (type == 'tip' ||
-          type == 'tip_received' ||
-          type == 'bahsis' ||
-          type == 'tip_sent' ||
-          type == 'gift' ||
-          type == 'gift_received' ||
-          type == 'gift_sent' ||
-          type == 'hediye' ||
-          type.contains('gift') ||
-          type.contains('hediye') ||
-          (eventName?.toLowerCase().contains('gift') ?? false) ||
-          (eventName?.toLowerCase().contains('tip') ?? false)) {
-        final amount = _parseTipAmount(map);
-        if (amount > 0) {
-          final from = map['senderName']?.toString() ??
-              map['clientName']?.toString() ??
-              map['fromName']?.toString();
-          _onTipReceived?.call(amount, from);
-        }
-        return;
-      }
-      if (type == 'timer_started' || type == 'time_extended') {
-        final room = PsychicModel.roomFromJson(
-          map['room'] is Map
-              ? Map<String, dynamic>.from(map['room'] as Map)
-              : map,
-          fallbackId: _sessionId ?? '',
-        );
-        _onRoomUpdate?.call(room);
-        return;
-      }
-      final msg = PsychicModel.chatFromJson(map, myUserId: _myUserId);
-      if (msg.text.trim().isNotEmpty) {
-        _onMessage?.call(msg);
-        return;
-      }
-      final room = PsychicModel.roomFromJson(
-        map['room'] is Map
-            ? Map<String, dynamic>.from(map['room'] as Map)
-            : map,
-        fallbackId: _sessionId ?? '',
+      final event = parseSessionRoomSsePayload(
+        map,
+        eventName: eventName,
+        sessionId: _sessionId ?? '',
+        myUserId: _myUserId,
       );
-      if (room.status == PsychicSessionStatus.cancelled ||
-          room.status == PsychicSessionStatus.rejected ||
-          room.status == PsychicSessionStatus.ended ||
-          room.status == PsychicSessionStatus.expired) {
-        _onSessionEnded?.call(room.status);
-        return;
+      if (event == null) return;
+      switch (event) {
+        case PsychicRoomSseConnected(:final room):
+        case PsychicRoomSseRoomUpdate(:final room):
+          _onRoomUpdate?.call(room);
+        case PsychicRoomSseSessionEnded(:final status):
+          _onSessionEnded?.call(status);
+        case PsychicRoomSseMessage(:final message):
+          _onMessage?.call(message);
+        case PsychicRoomSseTip(:final amount, :final fromName):
+          _onTipReceived?.call(amount, fromName);
       }
-      _onRoomUpdate?.call(room);
     } catch (_) {}
-  }
-
-  int _parseTipAmount(Map<String, dynamic> map) {
-    final raw = map['amount'] ??
-        map['jeton'] ??
-        map['tipAmount'] ??
-        map['giftValue'] ??
-        map['coins'] ??
-        map['coin'] ??
-        map['price'] ??
-        map['value'];
-    if (raw is num) return raw.toInt();
-    return int.tryParse(raw?.toString() ?? '') ?? 0;
   }
 
   void _startHeartbeatWatchdog() {

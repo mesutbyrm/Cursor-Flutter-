@@ -29,14 +29,15 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 | Legacy endpoints | `tellerChat`, `liveFalRequestAccept/Reject` kaldırıldı |
 | Incoming SSE parser | `psychic_incoming_sse_parser.dart` ayrıştırıldı + unit test |
 | Audit dokümanları | `FLUTTER_AUDIT.md`, `API_ENDPOINT_MATRIX.md` güncellendi |
+| Oda SSE parser | `psychic_room_sse_parser.dart` + unit test |
+| Push rol testleri | `psychic_flow_push_test` — danışan vs falcı yönlendirme |
+| Datasource testleri | Mock Dio — createSession, cancel, roomAction, respond, status |
 
 ---
 
 ## Kalan — kod (öncelik sırasıyla)
 
-### P3 — Temizlik
-
-_P3 maddeleri `1.0.301+337` ile tamamlandı._
+_Kod maddeleri tamamlandı; kalan yalnızca test ve manuel E2E._
 
 ---
 
@@ -44,13 +45,10 @@ _P3 maddeleri `1.0.301+337` ile tamamlandı._
 
 | Tür | Eksik |
 |-----|--------|
-| **Unit** | `live_psychics_remote_datasource` (mock Dio): createSession dual path, cancel, roomAction |
-| **Unit** | `PsychicFlow.openTellerSessionFromPush` / `resumeFromPush` rol ayrımı |
-| **Unit** | `psychic_room_sse_service`: timer_started, time_extended, session_ended |
 | **Widget** | waiting, booking sheet, incoming dialog, video session |
 | **CI** | `scripts/acceptance-tests/` — API smoke var; Flutter E2E yok |
 
-Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incoming_sse_parser_test`, `psychic_client_session_guard_test`, `session_room_sse_event_test`, invite coordinator, phase guard, profile resolver.
+Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incoming_sse_parser_test`, `psychic_room_sse_parser_test`, `psychic_flow_push_test`, `live_psychics_remote_datasource_test`, `psychic_client_session_guard_test`, `session_room_sse_event_test`, invite coordinator, phase guard, profile resolver.
 
 ---
 
@@ -86,5 +84,6 @@ Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incom
 | 1.0.299+335 | 120 sn uyarı, time_extended, oda SSE give-up + banner |
 | 1.0.300+336 | createSession/extendSession sade, çift seans engeli, legacy cleanup |
 | 1.0.301+337 | Incoming SSE parser ayrıştırma + test, audit dokümanları |
+| 1.0.302+338 | Oda SSE parser, push rol testleri, datasource mock Dio testleri |
 
 _Bu dosya agent oturumlarında güncellenir; tamamlandıkça maddeler silinir veya «Tamamlandı» bölümüne taşınır._

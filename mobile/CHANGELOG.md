@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.302+338 (2026-08-20) — Canlı Falcılar test kapsamı
+
+- **Oda SSE parser:** `psychic_room_sse_parser.dart` ayrıştırıldı (timer, extend, end, tip, mesaj)
+- **Test:** `psychic_room_sse_parser_test`, `psychic_flow_push_test`, `live_psychics_remote_datasource_test`
+- **Push akışı:** Danışan `resumeFromPush` vs falcı `openTellerSessionFromPush` rol testleri
+- **Datasource:** createSession dual path, cancel, roomAction, respondSession, status query
+
 ## 1.0.301+337 (2026-08-20) — Canlı Falcılar SSE parser
 
 - **Incoming SSE:** `psychic_incoming_sse_parser.dart` ayrıştırıldı (test edilebilir)
