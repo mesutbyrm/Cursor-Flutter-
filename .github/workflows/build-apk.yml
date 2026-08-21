@@ -269,7 +269,9 @@ jobs:
           ls -lh build/app/outputs/flutter-apk/app-release.apk
           EXPECT_BUILD=$(grep -E '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f2)
           EXPECT_NAME=$(grep -E '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)
-          BADGING=$(aapt dump badging build/app/outputs/flutter-apk/app-release.apk)
+          AAPT=$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" -name aapt -type f 2>/dev/null | sort -V | tail -1)
+          test -n "$AAPT" || { echo "::error::aapt bulunamadı"; exit 127; }
+          BADGING=$("$AAPT" dump badging build/app/outputs/flutter-apk/app-release.apk)
           echo "$BADGING" | grep -F "versionName='${EXPECT_NAME}'"
           echo "$BADGING" | grep -F "versionCode='${EXPECT_BUILD}'"
           echo "Gate 9: release APK oluşturuldu (versionName=${EXPECT_NAME}, versionCode=${EXPECT_BUILD})"
