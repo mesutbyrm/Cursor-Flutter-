@@ -273,7 +273,16 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         source: source,
       );
     }
-    return merged;
+    final deduped = dedupePresencesById(merged);
+    if (deduped.length != merged.length) {
+      VoiceRoomDebugLog.log('presence.dedupe', {
+        'room': _roomKey,
+        'before': merged.length,
+        'after': deduped.length,
+        'source': source,
+      });
+    }
+    return deduped;
   }
 
   void _detectMicChanges(List<ChatRoomPresence> next) {
@@ -603,11 +612,20 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       }
     }
     if (raw is! List) return const [];
-    return raw
-        .whereType<Map>()
-        .map((e) => ChatRoomPresence.fromJson(Map<String, dynamic>.from(e)))
-        .where((u) => u.id.isNotEmpty)
-        .toList();
+    return dedupePresencesById(
+      raw
+          .whereType<Map>()
+          .map((e) {
+            final map = Map<String, dynamic>.from(e);
+            final canonical = canonicalPresenceIdFromJson(map);
+            if (canonical.isNotEmpty && map['id']?.toString() != canonical) {
+              map['id'] = canonical;
+            }
+            return ChatRoomPresence.fromJson(map);
+          })
+          .where((u) => u.id.isNotEmpty)
+          .toList(),
+    );
   }
 
   void _scanEntrancesFromMessages(

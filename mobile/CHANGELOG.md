@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.326+362 (2026-08-21) — Canlı yayın + Sesli oda V2
+
+- **Presence:** `dedupePresencesById` — duplicate participant önleme, server reconciliation
+- **SSE izolasyon:** `roomEventMatchesActiveRoom` — yabancı oda event'leri ignore
+- **Online sayı:** backend `onlineCount` öncelikli patch
+- **PK timer:** tek lifecycle — `ref.onDispose` build'de, init'te duplicate yok
+- **Oda geçişi:** mevcut `prepareVoiceRoomSwitch` korundu (LEAVE A → JOIN B)
+- **Test:** presence canonical, room scope, PK timer
+
 ## 1.0.320+356 (2026-08-20) — Ana Sayfa V1 Premium UI
 
 - **Tasarım:** Koyu premium tema, cam kartlar, tutarlı tipografi ve accent kullanımı

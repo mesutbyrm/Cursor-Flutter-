@@ -17,7 +17,13 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
   List<ChatRoomPresence> _presence = const [];
 
   @override
-  PkBattleState build() => const PkBattleState();
+  PkBattleState build() {
+    ref.onDispose(() {
+      _tick?.cancel();
+      _tick = null;
+    });
+    return const PkBattleState();
+  }
 
   /// PK sayfası açılışında — sunucu onayı gelene kadar aktif sayma.
   void prepareShell({
@@ -67,7 +73,7 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
       phase: PkBattlePhase.active,
       secondsLeft: durationSeconds,
     );
-    ref.onDispose(() => _tick?.cancel());
+    _tick?.cancel();
     _tick = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
   }
 

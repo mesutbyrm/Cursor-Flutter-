@@ -42,6 +42,8 @@ import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../domain/entities/chat_room_message.dart';
+import '../../domain/presence_canonical.dart';
+import '../../domain/room_event_scope.dart';
 import '../../domain/voice_playback_limits.dart';
 import '../../domain/voice_music_sync.dart';
 import '../../domain/utils/voice_banned_word_filter.dart';
@@ -752,6 +754,13 @@ class VoiceRoomLiveController
   }
 
   void _handleSseRoomUpdate(Map<String, dynamic> payload) {
+    if (!roomEventMatchesActiveRoom(
+      payload,
+      _roomKey,
+      alternateRoomId: _musicAlternateKey,
+    )) {
+      return;
+    }
     final users = _presenceFromSsePayload(payload);
     if (users.isNotEmpty) {
       final merged = _mergePresenceStable(users, source: 'sse_room_update');
@@ -764,6 +773,7 @@ class VoiceRoomLiveController
       ref
           .read(voiceRoomDiagnosticProvider.notifier)
           .setPresence(joined: true, count: merged.length);
+      _patchHubOnlineCountFromPayload(payload, fallback: merged.length);
     }
 
     final msg = payload['message']?.toString().trim();
@@ -1246,6 +1256,13 @@ class VoiceRoomLiveController
 
   void _handleSseUserJoin(Map<String, dynamic> payload) {
     _markSseActivity();
+    if (!roomEventMatchesActiveRoom(
+      payload,
+      _roomKey,
+      alternateRoomId: _musicAlternateKey,
+    )) {
+      return;
+    }
     final users = _presenceFromSsePayload(payload);
     if (users.isEmpty) return;
     final byId = {for (final p in state.presence) p.id: p};
@@ -1271,6 +1288,13 @@ class VoiceRoomLiveController
 
   void _handleSseUserLeave(Map<String, dynamic> payload) {
     _markSseActivity();
+    if (!roomEventMatchesActiveRoom(
+      payload,
+      _roomKey,
+      alternateRoomId: _musicAlternateKey,
+    )) {
+      return;
+    }
     final userId = payload['userId']?.toString() ?? payload['id']?.toString();
     if (userId == null || userId.isEmpty) return;
     ChatRoomPresence? departed;
