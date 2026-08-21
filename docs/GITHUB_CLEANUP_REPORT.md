@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-08-20 23:35 UTC
+Oluşturulma: 2026-08-21 01:41 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -9,8 +9,8 @@ Base: `main`
 
 | Metrik | Adet |
 |--------|------|
-| Kapatılan PR | 0 |
-| Silinen remote dal | 1 |
+| Kapatılan PR | 1 |
+| Silinen remote dal | 10 |
 | Kalan açık PR | 2 |
 | Korunan / aktif dal | 0 |
 
@@ -18,13 +18,22 @@ Base: `main`
 
 | PR | Neden |
 |----|-------|
-| — | — |
+| #345 | cursor/* obsolete PR (0 gün, main doğrudan geliştirme) |
 
 ## Silinen dallar (cursor/*)
 
 | Dal | Neden |
 |-----|-------|
-| cursor/home-page-v1-premium-5ac6 | merged into main |
+| cursor/bana-ozel-v2-premium-5ac6 | merged into main |
+| cursor/fal-tarot-v2-backend-5ac6 | merged into main |
+| cursor/final-production-audit-5ac6 | merged into main |
+| cursor/games-v2-premium-5ac6 | merged into main |
+| cursor/gift-pk-music-v2-premium-5ac6 | merged into main |
+| cursor/live-psychics-v2-premium-5ac6 | merged into main |
+| cursor/live-voice-v2-premium-5ac6 | merged into main |
+| cursor/notifications-messages-settings-v2-5ac6 | merged into main |
+| cursor/profile-v2-premium-5ac6 | merged into main |
+| cursor/social-v2-premium-5ac6 | merged into main |
 
 ## Kalan açık PR'lar
 
