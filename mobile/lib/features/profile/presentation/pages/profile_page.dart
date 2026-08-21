@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/performance/profile_load_perf.dart';
 import '../../../../core/performance/scroll_perf.dart';
@@ -92,9 +91,22 @@ class _ProfileScrollBody extends ConsumerWidget {
             hasScrollBody: false,
             child: Padding(
               padding: ResponsiveLayout.pagePadding(context),
-              child: DiscoverEmptyState(
-                icon: Icons.error_outline_rounded,
-                message: ApiException.userMessage(auth.error!),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  DiscoverEmptyState(
+                    icon: Icons.error_outline_rounded,
+                    message: 'Profil bilgileri yüklenemedi',
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () {
+                      ref.invalidate(authControllerProvider);
+                      unawaited(ref.read(authControllerProvider.notifier).refreshMe());
+                    },
+                    child: const Text('Tekrar Dene'),
+                  ),
+                ],
               ),
             ),
           ),

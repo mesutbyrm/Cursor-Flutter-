@@ -400,6 +400,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     ref.read(guestModeProvider.notifier).state = false;
     _sessionEpoch++;
     AuthTokenRefreshCoordinator.instance.reset();
+    clearAuthenticatedUserCache(ref);
     await OneSignalBootstrap.logout();
     await NetworkPerf.parallel([
       ApiHttpCache.clearAll(),

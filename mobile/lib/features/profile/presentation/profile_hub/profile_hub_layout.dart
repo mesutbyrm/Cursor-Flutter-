@@ -5,6 +5,7 @@ import '../premium_2026/profile_lazy_sections.dart';
 import '../premium_2026/profile_screen_state.dart';
 import 'profile_hub_about_stats_row.dart';
 import 'profile_hub_badges_section.dart';
+import 'profile_hub_error_banner.dart';
 import 'profile_hub_membership_section.dart';
 import 'profile_hub_membership_badges_section.dart';
 import 'profile_hub_membership_shortcuts.dart';
@@ -41,7 +42,9 @@ class ProfileHubLayout extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ProfileHubHeader(state: state, onRefresh: onRefresh),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+        const ProfileHubErrorBanner(),
+        const SizedBox(height: 4),
         ShortsProfileStatsRow(
           userId: userId,
           fallbackFollowers: state.followers,

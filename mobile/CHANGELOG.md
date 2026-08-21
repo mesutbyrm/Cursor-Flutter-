@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.325+361 (2026-08-21) — Profil + Cüzdan + Jeton V2
+
+- **Cache:** `clearAuthenticatedUserCache` — logout/hesap değişiminde profil/cüzdan/üyelik cache temizliği
+- **Jeton:** `currentUserCoinBalanceProvider` ve profil cüzdan kartı — `walletBalancesProvider` tek kaynak
+- **UI:** Profil header burç/takım chip'leri (backend verisi), API hata banner + Tekrar Dene
+- **Test:** Profile/wallet parse, session cache, navigation testleri
+
 ## 1.0.320+356 (2026-08-20) — Ana Sayfa V1 Premium UI
 
 - **Tasarım:** Koyu premium tema, cam kartlar, tutarlı tipografi ve accent kullanımı
