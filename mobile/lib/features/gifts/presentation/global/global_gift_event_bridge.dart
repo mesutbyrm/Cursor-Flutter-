@@ -97,10 +97,12 @@ void enqueueGlobalGiftFromLiveEvent(
 }) {
   if (sessionKey != null && sessionKey.isNotEmpty) {
     final active = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+    final aliases = ref.read(voiceRoomActiveKeyAliasesProvider);
     if (active.isNotEmpty &&
         !sessionKeyMatchesActiveRoom(
           sessionKey: sessionKey,
           activeRoomKey: active,
+          roomAliases: aliases,
         )) {
       return;
     }

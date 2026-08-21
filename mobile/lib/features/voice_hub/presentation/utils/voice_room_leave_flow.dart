@@ -125,29 +125,13 @@ abstract final class VoiceRoomLeaveFlow {
       if (key.isNotEmpty) {
         try {
           await ref
-              .read(chatRoomRemoteProvider)
-              .leavePresence(key)
-              .timeout(const Duration(seconds: 4));
-        } catch (_) {}
-        final userId = user?.id;
-        if (userId != null && userId.isNotEmpty) {
-          try {
-            await ref
-                .read(chatRoomRemoteProvider)
-                .clearSeat(roomKey: key, userId: userId)
-                .timeout(const Duration(seconds: 3));
-          } catch (_) {}
-        }
-
-        try {
-          await ref
               .read(voiceRoomLiveProvider(key).notifier)
               .leaveRoomSession(
                 source: source,
                 awaitBackend: true,
                 force: true,
               )
-              .timeout(const Duration(seconds: 6));
+              .timeout(const Duration(seconds: 8));
         } catch (_) {}
       }
 

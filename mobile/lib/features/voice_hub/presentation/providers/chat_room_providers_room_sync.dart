@@ -199,9 +199,10 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     if (remaining.length == state.presence.length) return;
     _knownPresenceIds.remove(userId);
     state = state.copyWith(presence: remaining);
-    _patchHubOnlineCountFromPayload(payload);
-    if (_extractOnlineCountFromPayload(payload) == null) {
-      unawaited(_refreshHubOnlineCountFromServer());
+    _patchHubOnlineCountFromPayload(payload, fallback: remaining.length);
+    if (_extractOnlineCountFromPayload(payload) == null &&
+        state.hubOnlineCount == null) {
+      _patchHubPresenceCount(remaining.length);
     }
     _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.leave, '$name çıkış yaptı');
     _clearSeatForUser(userId);
@@ -445,10 +446,23 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     for (final p in presence) {
       final fromSlot = seatByUser[p.id];
       if (fromSlot == null) {
-        // Geçici boş koltuk yanıtında mevcut koltuk korunur (kendi + diğerleri).
-        if (p.seatIndex != null &&
-            slots.any((s) => (s.userId?.trim().isNotEmpty ?? false))) {
-          next.add(p);
+        if (p.seatIndex != null) {
+          changed = true;
+          next.add(
+            ChatRoomPresence(
+              id: p.id,
+              name: p.name,
+              nickname: p.nickname,
+              image: p.image,
+              chatRole: p.chatRole,
+              roleSymbol: p.roleSymbol,
+              membership: p.membership,
+              seatIndex: null,
+              isSpeaking: false,
+              isMuted: p.isMuted,
+              micOn: false,
+            ),
+          );
           continue;
         }
         next.add(p);

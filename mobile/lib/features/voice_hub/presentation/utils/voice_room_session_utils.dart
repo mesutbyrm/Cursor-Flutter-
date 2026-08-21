@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_gift_providers.dart';
@@ -22,36 +21,13 @@ Future<void> teardownVoiceRoomBeforeSwitch(
   final active = ref.read(voiceRoomActiveLiveKeyProvider);
   if (active == key) {
     ref.read(voiceRoomActiveLiveKeyProvider.notifier).state = null;
+    ref.read(voiceRoomActiveKeyAliasesProvider.notifier).state = const {};
   }
 
   ref.read(pkBattleRemoteProvider.notifier).clear();
   ref.read(voiceRoomGiftRealtimeProvider).stop();
   ref.read(voiceRecentGiftsProvider.notifier).clear();
   ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
-
-  final userId = ref.read(authControllerProvider).valueOrNull?.id;
-  final remote = ref.read(chatRoomRemoteProvider);
-
-  try {
-    await remote
-        .leavePresence(key)
-        .timeout(const Duration(seconds: 4));
-  } catch (_) {}
-
-  if (userId != null && userId.isNotEmpty) {
-    try {
-      await remote
-          .clearSeat(roomKey: key, userId: userId)
-          .timeout(const Duration(seconds: 3));
-    } catch (_) {}
-  }
-
-  try {
-    await ref
-        .read(voiceRoomAudioCoordinatorProvider)
-        .leave()
-        .timeout(const Duration(milliseconds: 600));
-  } catch (_) {}
 
   try {
     await ref
@@ -61,7 +37,7 @@ Future<void> teardownVoiceRoomBeforeSwitch(
           awaitBackend: true,
           force: true,
         )
-        .timeout(const Duration(seconds: 6));
+        .timeout(const Duration(seconds: 8));
   } catch (_) {
     unawaited(
       ref.read(voiceRoomLiveProvider(key).notifier).leaveRoomSession(
@@ -86,4 +62,5 @@ Future<void> prepareVoiceRoomSwitch(
     await teardownVoiceRoomBeforeSwitch(ref, liveKey: active, source: source);
   }
   ref.read(voiceRoomActiveLiveKeyProvider.notifier).state = next;
+  ref.read(voiceRoomActiveKeyAliasesProvider.notifier).state = {next};
 }

@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.335+371 (2026-08-21) — P0 sesli oda senkronizasyon
+
+- **Presence/onlineCount:** Canonical cuid ile join/leave/heartbeat; boş live API yanıtı presence silmez; hub yokken presence.length fallback
+- **Leave:** Tek leaveRoomSession akışı (çift leavePresence kaldırıldı); anında sayım düşürme
+- **Oda izolasyonu:** Aktif oda alias seti (slug/cuid) — gift/SSE olay eşlemesi
+- **Rejoin:** Backend snapshot + permissions sonrası auto-seat; stale 0→N flash giderildi
+- **Yetkili auto-seat:** canModerate/canGiveVoice; role grant seat index ≥1
+- **Seat↔TRTC:** Koltuk düşünce presence.seatIndex temizlenir; TRTC stopLocalAudio
+- **Hediye:** Slug/cuid alias ile anlık event işleme (oda dispose beklemez)
+
 ## 1.0.334+370 (2026-08-21) — Sesli oda ayarları + hediye hedefi
 
 - **Oda yönetimi:** Kilit, koltuk sayısı, max kullanıcı, giriş şifresi — canonical room id + liste önbelleği anında güncellenir

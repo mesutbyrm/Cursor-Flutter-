@@ -28,10 +28,14 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
         return VoiceRoomSeatPriority.tierFounder;
       }
       if (server.canGiveSop) return VoiceRoomSeatPriority.tierSop;
-      if (server.canGiveOp ||
+      if (server.canModerate ||
+          server.canGiveOp ||
           server.canMuteUsers ||
           server.canKickUsers ||
-          server.canManageRoom) {
+          server.canManageRoom ||
+          server.canGiveVoice) {
+        final symTier = VoiceRoomSeatPriority.tierFromRoleSymbol(server.role);
+        if (symTier != null) return symTier;
         return VoiceRoomSeatPriority.tierOp;
       }
       final serverSym = server.role?.trim();
@@ -434,19 +438,27 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
   }
 
   Future<void> _autoSeatAfterRoleGrant(String userId) async {
-    final occupied = <int>{
-      for (final p in state.presence)
-        if (p.seatIndex != null) p.seatIndex!,
-    };
-    int? freeSeat;
-    for (var seat = 0; seat <= 14; seat++) {
-      if (!occupied.contains(seat)) {
-        freeSeat = seat;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null || user.id != userId) return;
+    ChatRoomPresence? self;
+    for (final p in state.presence) {
+      if (p.id == userId) {
+        self = p;
         break;
       }
     }
-    if (freeSeat == null) return;
-    final err = await assignSeat(seatIndex: freeSeat, userId: userId);
+    final priority = _privilegedRolePriority(
+      user,
+      state.serverPermissions,
+      self,
+    );
+    if (priority == null) return;
+    final seatIndex = _pickAutoSeatIndex(
+      myPriority: priority,
+      presence: state.presence,
+    );
+    if (seatIndex == null || seatIndex < 1) return;
+    final err = await assignSeat(seatIndex: seatIndex, userId: userId);
     if (err != null) return;
     try {
       await ref.read(chatRoomRemoteProvider).unmuteUser(

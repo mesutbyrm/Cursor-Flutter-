@@ -394,7 +394,7 @@ class ChatRoomRemoteDataSource {
         roomId: roomKey,
         roomType: 'voice',
       );
-      if (page.users.isNotEmpty || page.totalCount > 0) {
+      if (page.users.isNotEmpty) {
         final users = page.users
             .map(
               (u) => ChatRoomPresence(

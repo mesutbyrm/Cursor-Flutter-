@@ -182,6 +182,7 @@ class VoiceTrtcEngine {
     _micOn = enabled;
     if (!enabled) {
       _publishMic = false;
+      _manager.stopLocalAudioPublish();
     }
   }
 

@@ -460,9 +460,19 @@ class TrtcRoomManager {
       _cloud?.muteLocalAudio(false);
     } else {
       _cloud?.muteLocalAudio(true);
+      _cloud?.stopLocalAudio();
     }
     _micOn = enabled;
-    _trtcLog('mute_unmute', {'micEnabled': enabled});
+    _trtcLog('mute_unmute', {'micEnabled': enabled, 'stoppedPublish': !enabled});
+  }
+
+  /// Koltuk kaybında ses yayınını tamamen durdur.
+  void stopLocalAudioPublish() {
+    if (_cloud == null) return;
+    _cloud!.muteLocalAudio(true);
+    _cloud!.stopLocalAudio();
+    _micOn = false;
+    _trtcLog('local_audio_stopped', const {});
   }
 
   void setCameraEnabled(bool enabled) {

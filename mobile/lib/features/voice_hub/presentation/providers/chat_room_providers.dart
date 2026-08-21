@@ -253,9 +253,10 @@ class VoiceRoomLiveState {
 
   bool get isAnyoneTyping => typingUsers.isNotEmpty;
 
-  /// Sunucu `onlineCount` — yerel presence listesi ile karıştırılmaz.
+  /// Sunucu `onlineCount` — öncelik hub; yoksa presence listesi (0 göstermeyi önler).
   int onlineCountFor(VoiceRoomEntity room) {
     if (hubOnlineCount != null) return hubOnlineCount!;
+    if (presence.isNotEmpty) return presence.length;
     if (backendSyncReady) return 0;
     if (room.displayOnline > 0) return room.displayOnline;
     if (room.onlineCount > 0) return room.onlineCount;
@@ -517,6 +518,24 @@ class VoiceRoomLiveController
     final metaId = _roomMeta.apiRoomKey.trim();
     if (metaId.isNotEmpty) return metaId;
     return _roomKey;
+  }
+
+  /// Presence join/leave/heartbeat — canonical cuid (slug 404 önlenir).
+  String get _presenceApiKey => _settingsRoomKey;
+
+  String? get _presenceAlternateKey {
+    final alt = _settingsAlternateKey ?? _musicAlternateKey;
+    if (alt == null || alt.isEmpty || alt == _presenceApiKey) return null;
+    return alt;
+  }
+
+  Iterable<String> get _roomKeyAliases sync* {
+    yield _roomKey;
+    yield _presenceApiKey;
+    final slug = _roomMeta.slug.trim();
+    if (slug.isNotEmpty) yield slug;
+    final alt = _presenceAlternateKey;
+    if (alt != null && alt.isNotEmpty) yield alt;
   }
 
   String? get _settingsAlternateKey {
@@ -1363,9 +1382,10 @@ class VoiceRoomLiveController
     _knownPresenceIds.remove(userId);
     _lastKnownPresenceNames.remove(userId);
     state = state.copyWith(presence: remaining);
-    _patchHubOnlineCountFromPayload(payload);
-    if (_extractOnlineCountFromPayload(payload) == null) {
-      unawaited(_refreshHubOnlineCountFromServer());
+    _patchHubOnlineCountFromPayload(payload, fallback: remaining.length);
+    if (_extractOnlineCountFromPayload(payload) == null &&
+        state.hubOnlineCount == null) {
+      _patchHubPresenceCount(remaining.length);
     }
     ref
         .read(voiceRoomDiagnosticProvider.notifier)
@@ -1591,7 +1611,10 @@ class VoiceRoomLiveController
                 roomMuted: state.roomMuted,
               );
             }),
-          remote.fetchPresencePage(_roomKey).catchError((Object e) {
+          remote.fetchPresencePage(
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+          ).catchError((Object e) {
             refreshError ??= e;
             return ChatRoomPresencePage(users: state.presence);
           }),

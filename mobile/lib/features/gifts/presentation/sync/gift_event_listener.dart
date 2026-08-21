@@ -94,10 +94,12 @@ class _GiftEventListenerState extends ConsumerState<GiftEventListener> {
 
       if (widget.useVoiceRealtime) {
         final active = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+        final aliases = ref.read(voiceRoomActiveKeyAliasesProvider);
         if (active.isNotEmpty &&
             !sessionKeyMatchesActiveRoom(
               sessionKey: widget.sessionKey,
               activeRoomKey: active,
+              roomAliases: aliases,
             )) {
           return;
         }

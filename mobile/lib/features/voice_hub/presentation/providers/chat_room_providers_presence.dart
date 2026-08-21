@@ -226,6 +226,18 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         );
         return previous;
       }
+      // Boş poll/refresh yanıtı — odadayken hayalet silme / 0 sayım önlenir.
+      if ((source == 'refresh' || source == 'poll' || source == 'preload') &&
+          state.selfInRoom) {
+        VoiceRoomDebugLog.presenceUpdate(
+          roomId: _roomKey,
+          previousCount: previous.length,
+          incomingCount: 0,
+          mergedCount: previous.length,
+          source: '$source.keep_in_room',
+        );
+        return previous;
+      }
       VoiceEventLog.presenceUpdate(roomId: _roomKey, count: withSelf.length);
       return withSelf;
     }
@@ -305,19 +317,21 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     if (count > _peakViewerCount) _peakViewerCount = count;
     if (_roomKey.isEmpty) return;
     state = state.copyWith(hubOnlineCount: count);
-    ref.read(voiceRoomsPresenceProvider.notifier).patchRoomCount(_roomKey, count);
-    final alt = _roomMeta.slug.trim();
-    if (alt.isNotEmpty && alt != _roomKey) {
-      ref.read(voiceRoomsPresenceProvider.notifier).patchRoomCount(alt, count);
+    final patched = <String>{};
+    for (final key in _roomKeyAliases) {
+      final k = key.trim();
+      if (k.isEmpty || patched.contains(k)) continue;
+      patched.add(k);
+      ref.read(voiceRoomsPresenceProvider.notifier).patchRoomCount(k, count);
     }
   }
 
   Future<void> _refreshHubOnlineCountFromServer() async {
-    if (_roomKey.isEmpty) return;
+    if (_presenceApiKey.isEmpty) return;
     try {
       final snapshot = await ref.read(chatRoomRemoteProvider).fetchRoomState(
-            _roomKey,
-            alternateKey: _musicAlternateKey,
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
           );
       if (snapshot.onlineCount != null) {
         _patchHubPresenceCount(snapshot.onlineCount!);
@@ -441,7 +455,8 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
           .peek(_roomKey);
       final joinSeat = peekJoinSeatIndexForPrivilegedUser();
       final joined = await ref.read(chatRoomRemoteProvider).joinPresence(
-            _roomKey,
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
             nickname: nick,
             password: pendingPass,
             seatIndex: joinSeat,
@@ -468,9 +483,8 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
           .setPresence(joined: true, count: merged.length);
       _startPresenceHeartbeat();
       unawaited(_refreshHubOnlineCountFromServer());
-      unawaited(_tryAutoPrivilegedSeat());
-      unawaited(_broadcastStaffEntryIfNeeded());
       unawaited(refreshServerPermissions());
+      unawaited(_broadcastStaffEntryIfNeeded());
   }
 
   void _handlePresenceJoinFailure(Object e) {
@@ -542,7 +556,10 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     _presenceHeartbeat?.cancel();
     _presenceHeartbeat = null;
     try {
-      await ref.read(chatRoomRemoteProvider).leavePresence(_roomKey);
+      await ref.read(chatRoomRemoteProvider).leavePresence(
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+          );
     } catch (_) {}
   }
 
@@ -563,7 +580,18 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     final remaining =
         state.presence.where((p) => p.id != userId).toList(growable: false);
     if (remaining.length == state.presence.length) return;
-    state = state.copyWith(presence: remaining, selfInRoom: false);
+    final hadHub = state.hubOnlineCount != null;
+    final nextCount = hadHub
+        ? (state.hubOnlineCount! - 1).clamp(0, 999999)
+        : remaining.length;
+    state = state.copyWith(
+      presence: remaining,
+      selfInRoom: false,
+      hubOnlineCount: hadHub ? nextCount : null,
+    );
+    if (hadHub) {
+      _patchHubPresenceCount(nextCount);
+    }
     _knownPresenceIds.remove(userId);
   }
 
@@ -592,7 +620,10 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     try {
       VoiceEventLog.heartbeat(roomId: _roomKey);
       VoiceRoomDebugLog.log('api.presence.heartbeat', {'room': _roomKey});
-      await ref.read(chatRoomRemoteProvider).presenceHeartbeat(_roomKey);
+      await ref.read(chatRoomRemoteProvider).presenceHeartbeat(
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+          );
     } catch (e) {
       VoiceRoomDebugLog.log('api.presence.heartbeat.fail', {
         'error': e.toString(),

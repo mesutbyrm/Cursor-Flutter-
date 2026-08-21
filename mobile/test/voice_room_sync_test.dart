@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/room/room_event_scope.dart';
 import 'package:canlifal_social/features/live/domain/entities/voice_room_entity.dart';
 import 'package:canlifal_social/features/voice_hub/domain/entities/chat_room_presence.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/providers/chat_room_providers.dart';
@@ -35,9 +36,45 @@ void main() {
       expect(state.onlineCountFor(room), 99);
     });
 
+    test('falls back to presence length when hub unset after sync', () {
+      const state = VoiceRoomLiveState(
+        loading: false,
+        backendSyncReady: true,
+        presence: [
+          ChatRoomPresence(id: 'a', name: 'A'),
+          ChatRoomPresence(id: 'b', name: 'B'),
+        ],
+      );
+      expect(state.onlineCountFor(room), 2);
+    });
+
     test('falls back to room card when hub unset before sync', () {
       const state = VoiceRoomLiveState(loading: false);
       expect(state.onlineCountFor(room), 42);
+    });
+  });
+
+  group('sessionKeyMatchesActiveRoom', () {
+    test('matches slug and cuid aliases', () {
+      expect(
+        sessionKeyMatchesActiveRoom(
+          sessionKey: 'my-room-slug',
+          activeRoomKey: 'cm123456789012345678',
+          roomAliases: {'my-room-slug', 'cm123456789012345678'},
+        ),
+        isTrue,
+      );
+    });
+
+    test('rejects unrelated room keys', () {
+      expect(
+        sessionKeyMatchesActiveRoom(
+          sessionKey: 'room-a',
+          activeRoomKey: 'room-b',
+          roomAliases: {'room-b'},
+        ),
+        isFalse,
+      );
     });
   });
 

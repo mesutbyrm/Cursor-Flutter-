@@ -13,7 +13,7 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     _sseStarted = false;
     _sseAttachedRoomKey = null;
     _sessionActive = true;
-    registerVoiceRoomLiveSession(ref, _roomKey);
+    registerVoiceRoomLiveSession(ref, _presenceApiKey, aliases: _roomKeyAliases);
     VoiceEventLog.joinStart(roomId: _roomKey);
     ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
           VoiceSessionPhase.joining,
@@ -35,8 +35,8 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
 
     try {
       await _joinPresence();
-      unawaited(_tryAutoPrivilegedSeat());
       await _ensureRoomsCatalogForCanonicalKey();
+      await refreshServerPermissions();
       _startSse();
       _schedulePoll(sseConnected: false, musicActive: false);
 
@@ -106,7 +106,10 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     try {
       final page = await ref
           .read(chatRoomRemoteProvider)
-          .fetchPresencePage(_roomKey, alternateKey: _musicAlternateKey);
+          .fetchPresencePage(
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+          );
       if (page.users.isEmpty) return;
       state = state.copyWith(
         presence: _mergePresenceStable(page.users, source: 'preload'),

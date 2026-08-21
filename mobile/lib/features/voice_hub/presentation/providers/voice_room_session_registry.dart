@@ -12,10 +12,27 @@ import 'voice_seat_gift_totals_provider.dart';
 /// Aktif sesli oda oturumu — oda değişiminde eski bağlantıları kapatmak için.
 final voiceRoomActiveLiveKeyProvider = StateProvider<String?>((ref) => null);
 
-void registerVoiceRoomLiveSession(Ref ref, String liveKey) {
+/// Route slug / cuid / apiRoomKey — gift ve SSE olay eşlemesi için.
+final voiceRoomActiveKeyAliasesProvider = StateProvider<Set<String>>(
+  (ref) => const {},
+);
+
+void registerVoiceRoomLiveSession(
+  Ref ref,
+  String liveKey, {
+  Iterable<String>? aliases,
+}) {
   final key = liveKey.trim();
   if (key.isEmpty) return;
   ref.read(voiceRoomActiveLiveKeyProvider.notifier).state = key;
+  final aliasSet = <String>{key};
+  if (aliases != null) {
+    for (final a in aliases) {
+      final t = a.trim();
+      if (t.isNotEmpty) aliasSet.add(t);
+    }
+  }
+  ref.read(voiceRoomActiveKeyAliasesProvider.notifier).state = aliasSet;
 }
 
 void clearVoiceRoomLiveSession(Ref ref, String liveKey) {
@@ -23,6 +40,7 @@ void clearVoiceRoomLiveSession(Ref ref, String liveKey) {
   final active = ref.read(voiceRoomActiveLiveKeyProvider);
   if (active == key) {
     ref.read(voiceRoomActiveLiveKeyProvider.notifier).state = null;
+    ref.read(voiceRoomActiveKeyAliasesProvider.notifier).state = const {};
   }
   if (key.isEmpty) return;
   try {
