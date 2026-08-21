@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.336+372 (2026-08-21) — Sesli oda tam senkronizasyon II
+
+- **Hediye flaşı:** Koltuk başına max 3 / 3 sn TTL (global havuz yerine receiver-scoped)
+- **Çıkış mesajı:** SSE `user_leave` → chat `[Kullanıcı] odadan çıkış yaptı.`
+- **Konuşma isteği:** Moderatör popup (Evet/Hayır/Engelle) + kuyruk yenileme; canonical presence key
+- **Basic mode:** `systemLeave` SSE mesajları chat'e yansır
+
 ## 1.0.335+371 (2026-08-21) — P0 sesli oda senkronizasyon
 
 - **Presence/onlineCount:** Canonical cuid ile join/leave/heartbeat; boş live API yanıtı presence silmez; hub yokken presence.length fallback

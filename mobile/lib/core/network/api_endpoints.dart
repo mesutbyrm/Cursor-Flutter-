@@ -421,6 +421,13 @@ abstract final class ApiEndpoints {
   ) =>
       '/api/chat/rooms/$roomId/speak-requests/$targetUserId/approve';
 
+  /// Üretim yedek — kuyruktan düşürme (404 ise moderasyon akışına düşülür).
+  static String chatRoomSpeakRequestReject(
+    String roomId,
+    String targetUserId,
+  ) =>
+      '/api/chat/rooms/$roomId/speak-requests/$targetUserId';
+
   static String chatRoomMusicSettings(String roomId) =>
       '/api/chat/rooms/$roomId/music-settings';
 

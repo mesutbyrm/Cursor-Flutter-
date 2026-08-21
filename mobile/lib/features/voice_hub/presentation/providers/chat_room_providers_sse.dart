@@ -142,6 +142,14 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
               _sse._handleSystemJoinEntrance(msg);
               return;
             }
+            if (msg.kind == ChatMessageKind.systemLeave) {
+              _sse._pushBasicChatEvent(msg);
+              final exists = state.messages.any((m) => m.id == msg.id);
+              if (!exists) {
+                state = state.copyWith(messages: [...state.messages, msg]);
+              }
+              return;
+            }
             if (VoiceRoomBasicMode.enabled && !VoiceRoomBasicMode.premiumEnabled) {
               return;
             }

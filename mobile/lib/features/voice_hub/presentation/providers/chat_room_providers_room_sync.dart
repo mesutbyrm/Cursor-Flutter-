@@ -205,6 +205,11 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       _patchHubPresenceCount(remaining.length);
     }
     _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.leave, '$name çıkış yaptı');
+    _appendSyntheticSystemMessage(
+      '$name odadan çıkış yaptı.',
+      kind: ChatMessageKind.systemLeave,
+      user: ChatRoomUserRef(id: userId, name: name),
+    );
     _clearSeatForUser(userId);
   }
 

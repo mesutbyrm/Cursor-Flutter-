@@ -183,7 +183,10 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
 
   Future<String?> requestSpeak() async {
     try {
-      await ref.read(chatRoomRemoteProvider).requestSpeak(_roomKey);
+      await ref.read(chatRoomRemoteProvider).requestSpeak(
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+          );
       ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(true);
       return null;
     } catch (e) {
@@ -197,7 +200,10 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
 
   Future<String?> cancelSpeakRequest() async {
     try {
-      await ref.read(chatRoomRemoteProvider).cancelSpeakRequest(_roomKey);
+      await ref.read(chatRoomRemoteProvider).cancelSpeakRequest(
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+          );
       ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
       return null;
     } catch (e) {
@@ -207,7 +213,10 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
 
   Future<List<String>> fetchSpeakRequests() async {
     try {
-      return await ref.read(chatRoomRemoteProvider).fetchSpeakRequests(_roomKey);
+      return await ref.read(chatRoomRemoteProvider).fetchSpeakRequests(
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+          );
     } catch (_) {
       return [];
     }
@@ -235,7 +244,41 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     try {
       await ref
           .read(chatRoomRemoteProvider)
-          .approveSpeakRequest(_roomKey, userId);
+          .approveSpeakRequest(
+            _presenceApiKey,
+            userId,
+            alternateKey: _presenceAlternateKey,
+          );
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> rejectSpeakRequest(String userId) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).rejectSpeakRequest(
+            _presenceApiKey,
+            userId,
+            alternateKey: _presenceAlternateKey,
+          );
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> blockSpeakRequestUser({
+    required String userId,
+    String? reason,
+  }) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).banUser(
+            roomKey: _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+            userId: userId,
+            reason: reason ?? 'Konuşma isteği engellendi',
+          );
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

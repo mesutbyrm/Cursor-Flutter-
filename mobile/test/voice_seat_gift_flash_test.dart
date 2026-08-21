@@ -47,4 +47,30 @@ void main() {
     );
     expect(ev.jetonAmount, 100);
   });
+
+  test('per-receiver cap keeps up to 3 flashes each', () {
+    final flashes = <VoiceSeatGiftFlash>[];
+    for (var i = 0; i < 5; i++) {
+      const key = 'id:a';
+      var forReceiver = [...flashes.where((f) => f.receiverKey == key)];
+      forReceiver.add(
+        VoiceSeatGiftFlash(
+          id: 'f$i',
+          senderName: 'S',
+          receiverKey: key,
+          giftName: 'G',
+          quantity: 1,
+          jeton: 1,
+          expiresAt: DateTime.now().add(const Duration(seconds: 3)),
+        ),
+      );
+      while (forReceiver.length > VoiceSeatGiftFlashNotifier.maxVisible) {
+        forReceiver.removeAt(0);
+      }
+      flashes
+        ..removeWhere((f) => f.receiverKey == key)
+        ..addAll(forReceiver);
+    }
+    expect(flashes.where((f) => f.receiverKey == 'id:a').length, 3);
+  });
 }
