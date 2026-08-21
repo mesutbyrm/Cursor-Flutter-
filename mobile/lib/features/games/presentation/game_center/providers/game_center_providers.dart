@@ -44,6 +44,7 @@ Future<void> recordGameCenterResult(
 
 Future<void> refreshGameCenter(WidgetRef ref) async {
   ref.invalidate(gameCenterJetonProvider);
+  ref.invalidate(gameCatalogProvider);
   ref.invalidate(gameCenterLiveRoomsProvider);
   ref.invalidate(gameLeaderboardProvider);
   for (final period in LeaderboardPeriod.values) {

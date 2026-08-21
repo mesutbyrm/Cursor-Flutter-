@@ -14,4 +14,6 @@ abstract interface class GameCenterRepository {
   Future<GameRoomItem?> createLiveRoom(String gameId);
 
   Future<GameRoomItem?> joinLiveRoom(String roomId);
+
+  Future<GameRoomItem?> autoMatchLiveRoom(String gameId);
 }

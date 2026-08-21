@@ -136,7 +136,9 @@ class GameRemoteDataSource {
   Future<GameRoomStateSnapshot> sendMove({
     required String roomId,
     required Map<String, dynamic> move,
+    String? gameType,
   }) async {
+    final slug = _normalizeGameType(gameType ?? move['gameType']?.toString());
     final payloads = _movePayloads(move);
     final paths = <String Function()>[
       () => ApiEndpoints.gameRoom(roomId),
@@ -151,9 +153,11 @@ class GameRemoteDataSource {
               ? {
                   ...data,
                   'roomId': roomId,
-                  'gameType': 'okey101',
-                  'gameSlug': 'okey101',
-                  'slug': 'okey101',
+                  if (slug != null && slug.isNotEmpty) ...{
+                    'gameType': slug,
+                    'gameSlug': slug,
+                    'slug': slug,
+                  },
                 }
               : data;
           final res = await _dio.safePost<dynamic>(pathFn(), data: body);
@@ -256,7 +260,12 @@ class GameRemoteDataSource {
   }
 
   String _gameType(GameCatalogItem game) {
-    final id = game.id.toLowerCase();
+    return _normalizeGameType(game.id) ?? game.id.trim().toLowerCase();
+  }
+
+  String? _normalizeGameType(String? value) {
+    final id = value?.toLowerCase().trim() ?? '';
+    if (id.isEmpty) return null;
     if (id.contains('okey101') || id == 'yuzbirokey' || id == 'okey-101') {
       return 'okey101';
     }
@@ -264,7 +273,8 @@ class GameRemoteDataSource {
     if (id == 'tavla') return 'tavla';
     if (id == 'pisti') return 'pisti';
     if (id == 'tombala') return 'tombala';
-    return game.id.trim().toLowerCase();
+    if (id.contains('xox') || id.contains('tic')) return 'xox';
+    return id;
   }
 
   List<Map<String, dynamic>> _legacyCreatePayloads(GameCatalogItem game) {
