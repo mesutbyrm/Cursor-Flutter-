@@ -15,6 +15,7 @@ class PsychicEntity extends Equatable {
     this.specialties = const [],
     this.category,
     this.applicationStatus,
+    this.liveStreamId,
   });
 
   final String id;
@@ -29,6 +30,8 @@ class PsychicEntity extends Equatable {
   final List<String> specialties;
   final String? category;
   final String? applicationStatus;
+  /// Aktif video yayını — yalnızca API döndürürse dolu.
+  final String? liveStreamId;
 
   String get trtcUserId {
     final u = userId?.trim();
@@ -36,11 +39,15 @@ class PsychicEntity extends Equatable {
     return id;
   }
 
-  String get displayCategory {
-    if (category != null && category!.trim().isNotEmpty) return category!.trim();
-    if (specialties.isNotEmpty) return specialties.first;
-    return 'Canlı fal';
+  String get specialtiesLabel {
+    if (specialties.isNotEmpty) {
+      return specialties.take(3).join(' • ');
+    }
+    return displayCategory;
   }
+
+  bool get hasLiveBroadcast =>
+      liveStreamId != null && liveStreamId!.trim().isNotEmpty;
 
   bool get isApproved {
     final status = applicationStatus?.trim().toLowerCase();
@@ -57,7 +64,15 @@ class PsychicEntity extends Equatable {
     return false;
   }
 
-  /// Onaylı veya `my-profile` kaydı olan kullanılabilir falcı.
+  String get displayCategory {
+    if (category != null && category!.trim().isNotEmpty) return category!.trim();
+    if (specialties.isNotEmpty) return specialties.first;
+    return 'Canlı fal';
+  }
+
+  /// Çevrimiçi falcı durum etiketi — yalnızca backend `isOnline` ile.
+  String get availabilityLabel =>
+      isOnline ? 'Müsait' : 'Çevrimdışı';
   bool get isUsable {
     if (id.trim().isEmpty) return false;
     if (isApproved) return true;
@@ -82,5 +97,6 @@ class PsychicEntity extends Equatable {
         specialties,
         category,
         applicationStatus,
+        liveStreamId,
       ];
 }

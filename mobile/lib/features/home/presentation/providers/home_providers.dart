@@ -329,27 +329,11 @@ final homePkLeaderboardProvider =
       );
 });
 
-/// Canlı falcılar — boşsa compound/API danışman listesine düşer.
+/// Canlı falcılar — yalnızca `GET /api/fortune-tellers` (online öncelikli).
 final homeDisplayedPsychicsProvider =
     FutureProvider<List<PsychicEntity>>((ref) async {
   _keepHomeCacheAlive(ref);
-  final psychics = await ref.watch(homeOnlinePsychicsProvider.future);
-  if (psychics.isNotEmpty) return psychics;
-  final advisors = await ref.watch(homeAdvisorsProvider.future);
-  return advisors
-      .map(
-        (a) => PsychicEntity(
-          id: a.id,
-          name: a.name,
-          avatarUrl: a.avatarUrl,
-          isOnline: a.isOnline,
-          rating: a.rating,
-          specialties: a.specialties,
-          category: a.category,
-        ),
-      )
-      .where((p) => p.id.isNotEmpty)
-      .toList();
+  return ref.watch(homeOnlinePsychicsProvider.future);
 });
 
 /// Tüm ana sayfa verilerini yenile (yalnızca ekranda görünen bölümler).
