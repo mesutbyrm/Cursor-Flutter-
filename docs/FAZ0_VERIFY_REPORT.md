@@ -1,7 +1,7 @@
 # FAZ 0 — Otomatik doğrulama raporu
 
-**Tarih:** 2026-08-21 01:51 UTC  
-**APK:** `1.0.332+368`  
+**Tarih:** 2026-08-21 03:11 UTC  
+**APK:** `1.0.333+369`  
 **Sonuç:** **AUTOMATED_PASS (M5 cihaz bekliyor)**
 
 | Geçti | Uyarı | Başarısız |

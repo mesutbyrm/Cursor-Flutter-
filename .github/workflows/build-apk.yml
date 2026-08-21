@@ -252,24 +252,27 @@ jobs:
             DEFINES=$(bash ../scripts/print-firebase-dart-defines.sh || true)
           fi
           flutter pub get
+          # Universal APK — apk-latest versionCode pubspec build number ile birebir (split-per-abi 2*1000+N üretir).
           # shellcheck disable=SC2086
           flutter build apk --release \
-            --split-per-abi \
             --target-platform android-arm,android-arm64,android-x64 \
             --tree-shake-icons \
             --obfuscate \
             --split-debug-info=build/app/outputs/symbols \
             $DEFINES
-          test -s build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
-            build/app/outputs/flutter-apk/app-release.apk
+          test -s build/app/outputs/flutter-apk/app-release.apk
 
       - name: Gate 9 — release build doğrulama
         run: |
           set -eux
           test -s build/app/outputs/flutter-apk/app-release.apk
           ls -lh build/app/outputs/flutter-apk/app-release.apk
-          echo "Gate 9: release APK oluşturuldu"
+          EXPECT_BUILD=$(grep -E '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f2)
+          EXPECT_NAME=$(grep -E '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)
+          BADGING=$(aapt dump badging build/app/outputs/flutter-apk/app-release.apk)
+          echo "$BADGING" | grep -F "versionName='${EXPECT_NAME}'"
+          echo "$BADGING" | grep -F "versionCode='${EXPECT_BUILD}'"
+          echo "Gate 9: release APK oluşturuldu (versionName=${EXPECT_NAME}, versionCode=${EXPECT_BUILD})"
 
       - name: Copy APK
         working-directory: ${{ github.workspace }}
