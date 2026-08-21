@@ -39,9 +39,9 @@ abstract final class GiftPlayableFilter {
   static bool _isPlayable(GiftEntity g, {required String context}) {
     if (g.id.isEmpty || g.name.trim().isEmpty) return false;
     if (!g.isActive || g.isHidden) return false;
-    if (context == 'all') return g.price >= 0;
+    if (context == 'all') return g.price > 0;
     if (context == 'voice_room' && !g.visibleInVoiceRoom) return false;
     if (context == 'live_stream' && !g.visibleInLiveStream) return false;
-    return g.price >= 0;
+    return g.price > 0;
   }
 }

@@ -40,6 +40,17 @@ void main() {
     );
   });
 
+  test('excludes zero-price gifts from send lists', () {
+    final gifts = [
+      const GiftEntity(id: 'free', name: 'Free', price: 0),
+      const GiftEntity(id: 'paid', name: 'Paid', price: 50),
+    ];
+    expect(
+      GiftPlayableFilter.forContext(gifts, context: 'voice_room').single.id,
+      'paid',
+    );
+  });
+
   test('mergeContexts dedupes by id', () {
     final merged = GiftPlayableFilter.mergeContexts(
       [const GiftEntity(id: 'x', name: 'X', price: 5)],

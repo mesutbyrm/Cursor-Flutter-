@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.327+363 (2026-08-21) — Hediye + PK + Müzik V2
+
+- **PK:** Sahte `_baseScore` (8000+hash) kaldırıldı; skor backend/SSE otoriter
+- **PK:** SSE yabancı oda PK olayları global state'e yazılmaz (davet istisnası)
+- **PK:** Hediye taraf eşlemesi hashCode yerine receiver/sender id
+- **Gift:** `remainingBalance` ile anında cüzdan senkronu; oda izolasyonu
+- **Gift:** Sıfır fiyatlı hediyeler gönderim listesinden filtrelendi
+- **Room:** `room_event_scope.dart` — gift/PK/music event izolasyonu
+- **Doc:** `docs/GIFT_PK_MUSIC_V2.md`
+
 ## 1.0.320+356 (2026-08-20) — Ana Sayfa V1 Premium UI
 
 - **Tasarım:** Koyu premium tema, cam kartlar, tutarlı tipografi ve accent kullanımı
