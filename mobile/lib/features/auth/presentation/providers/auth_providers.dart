@@ -11,6 +11,7 @@ import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_http_cache.dart';
 import '../../../../core/offline/api_cache_store.dart';
+import '../../../social/presentation/utils/social_session_cache.dart';
 import '../../../../core/onesignal/onesignal_bootstrap.dart';
 import '../../../../core/network/cookie_jar_provider.dart';
 import '../../../../core/network/dio_provider.dart';
@@ -406,6 +407,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
       ApiCacheStore.clearAll(),
     ]);
     await ref.read(sessionUserCacheProvider).clear();
+    clearSocialSessionCache(ref);
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncValue.data(null);
   }

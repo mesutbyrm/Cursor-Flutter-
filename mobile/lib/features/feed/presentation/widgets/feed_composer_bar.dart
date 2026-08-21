@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
@@ -25,9 +27,10 @@ class _FeedComposerBarState extends ConsumerState<FeedComposerBar> {
 
   void _submit() {
     final t = _controller.text.trim();
-    ref.read(socialNotifierProvider.notifier).addLocalPost(t);
+    if (t.isEmpty) return;
     _controller.clear();
     FocusScope.of(context).unfocus();
+    unawaited(openSocialCreatePost(context, ref, initialCaption: t));
   }
 
   @override

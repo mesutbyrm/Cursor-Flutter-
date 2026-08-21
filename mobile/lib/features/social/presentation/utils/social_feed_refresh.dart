@@ -1,15 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../live/presentation/providers/live_providers.dart';
 import '../providers/social_providers.dart';
 
-/// Sosyal sekme pull-to-refresh — akış, hikâyeler ve aktif odalar.
-Future<void> refreshSocialFeedSection(WidgetRef ref) async {
+/// Sosyal sekme pull-to-refresh — yalnızca akış + hikâyeler (canlı/sesli oda değil).
+Future<void> refreshSocialFeedOnly(WidgetRef ref) async {
   ref.invalidate(socialStoryRingsProvider);
-  ref.invalidate(liveStreamsProvider);
-  ref.invalidate(voiceRoomsProvider);
   await ref.read(socialNotifierProvider.notifier).refresh();
 }
+
+/// Geriye uyumluluk — eski çağrılar yalnızca sosyal bölümü yeniler.
+Future<void> refreshSocialFeedSection(WidgetRef ref) =>
+    refreshSocialFeedOnly(ref);
 
 /// Tek gönderi detayı pull-to-refresh.
 Future<void> refreshSocialPostDetail(WidgetRef ref, String postId) async {

@@ -8,7 +8,7 @@ import '../../features/live/presentation/providers/discover_live_streams.dart';
 import '../../features/live/presentation/providers/discover_voice_rooms.dart';
 import '../../features/live/presentation/providers/live_providers.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart';
-import '../../features/social/presentation/providers/social_providers.dart';
+import '../../features/social/presentation/utils/social_session_cache.dart';
 import '../network/dio_provider.dart';
 import '../network/user_presence_service.dart';
 
@@ -21,7 +21,7 @@ void invalidateAuthenticatedShellData(Ref ref) {
   invalidateDiscoverVoiceRooms(ref);
   invalidateDiscoverLiveStreams(ref);
   ref.invalidate(homeVoiceRoomsProvider);
-  ref.invalidate(socialNotifierProvider);
+  clearSocialSessionCache(ref);
   ref.invalidate(walletBalancesProvider);
   ref.invalidate(profileStatsProvider);
   ref.invalidate(fortuneAccessStateProvider);

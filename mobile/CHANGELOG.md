@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.328+364 (2026-08-21) — Sosyal + Shorts + DM V2
+
+- **Shorts:** Fake GTV sponsor videoları kaldırıldı — yalnızca backend feed
+- **Social:** Pull-to-refresh yalnızca akış + hikâyeler; fake `addLocalPost` devre dışı
+- **Like:** Backend reconcile ile feed provider senkronu
+- **DM:** `messageId` deduplication
+- **Session:** Logout'ta sosyal/DM/shorts cache temizliği
+- **Story:** Backend `durationMs` desteği (görsel süre)
+- **Doc:** `docs/SOCIAL_V2.md`
+
 ## 1.0.320+356 (2026-08-20) — Ana Sayfa V1 Premium UI
 
 - **Tasarım:** Koyu premium tema, cam kartlar, tutarlı tipografi ve accent kullanımı

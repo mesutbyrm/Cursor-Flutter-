@@ -38,7 +38,7 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
   var _mediaError = false;
   var _holdPaused = false;
 
-  static const _imageDuration = Duration(seconds: 5);
+  static const _defaultImageDuration = Duration(seconds: 5);
 
   List<SocialStoryItemEntity> _initialStories() {
     if (widget.ring.stories.isNotEmpty) return List.of(widget.ring.stories);
@@ -155,8 +155,12 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
   }
 
   void _startImageTimer() {
+    final story = _current;
+    final ms = story?.durationMs;
+    final totalMs = (ms != null && ms > 0)
+        ? ms
+        : _defaultImageDuration.inMilliseconds;
     const tick = Duration(milliseconds: 50);
-    final total = _imageDuration.inMilliseconds;
     var elapsed = 0;
     _advanceTimer = Timer.periodic(tick, (t) {
       if (_holdPaused) return;
@@ -165,8 +169,8 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage> {
         t.cancel();
         return;
       }
-      setState(() => _progress = (elapsed / total).clamp(0.0, 1.0));
-      if (elapsed >= total) {
+      setState(() => _progress = (elapsed / totalMs).clamp(0.0, 1.0));
+      if (elapsed >= totalMs) {
         t.cancel();
         _next();
       }

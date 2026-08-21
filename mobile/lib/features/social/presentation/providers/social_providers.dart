@@ -2,9 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/providers/auth_selectors.dart';
-import '../../../profile/presentation/providers/profile_hub_providers.dart';
-import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../../../feed/domain/entities/post_entity.dart';
 import '../../data/datasources/social_remote_datasource.dart';
 import '../../data/repositories/social_repository_impl.dart';
@@ -136,28 +135,28 @@ class SocialNotifier extends AsyncNotifier<List<PostEntity>> {
     bumpCommentCount(postId);
   }
 
-  void addLocalPost(String caption) {
-    final user = ref.read(authControllerProvider).valueOrNull;
-    final author = user ??
-        const UserEntity(
-          id: 'local_user',
-          username: 'kullanici',
-          displayName: 'Sen',
-        );
-    final post = PostEntity(
-      id: 'local_${DateTime.now().microsecondsSinceEpoch}',
-      author: author,
-      caption: caption.trim().isEmpty ? null : caption.trim(),
-      mediaUrl: null,
-      likesCount: 0,
-      commentsCount: 0,
-      viewsCount: 0,
-      isLiked: false,
-      createdAt: DateTime.now(),
-    );
+  void reconcileLike(
+    String postId, {
+    required bool liked,
+    required int likesCount,
+  }) {
     state.whenData((list) {
-      state = AsyncValue.data([post, ...list]);
+      state = AsyncValue.data(
+        list.map((p) {
+          if (p.id != postId) return p;
+          return p.copyWith(
+            isLiked: liked,
+            likedByMe: liked,
+            likesCount: likesCount,
+          );
+        }).toList(),
+      );
     });
+  }
+
+  @Deprecated('Backend POST /api/social/posts kullanın — local fake post yok')
+  void addLocalPost(String caption) {
+    // Üretimde fake local post enjekte edilmez.
   }
 
   void bumpCommentCount(String postId, {int delta = 1}) {

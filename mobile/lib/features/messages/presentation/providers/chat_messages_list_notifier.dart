@@ -6,6 +6,7 @@ import '../../../../core/performance/list_perf.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/message_entities.dart';
 import '../../domain/utils/dm_message_codec.dart';
+import '../../domain/utils/dm_message_dedupe.dart';
 import 'messages_providers.dart';
 
 /// Sohbet: en yeni mesajlar önce gösterilir; yukarı kaydırınca eski mesajlar yüklenir.
@@ -52,11 +53,12 @@ class ChatMessagesListNotifier
     ChatMessagesListState? previous,
   }) async {
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
-    final all = await ref.read(messagesRepositoryProvider).messages(
+    var all = await ref.read(messagesRepositoryProvider).messages(
           conversationId,
           currentUserId: userId,
           forceRefresh: forceRefresh,
         );
+    all = dedupeMessagesById(all);
     var visible = all.length;
     if (previous != null && all.length > previous.all.length) {
       visible = all.length;
