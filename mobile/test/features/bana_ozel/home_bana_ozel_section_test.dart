@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:canlifal_social/features/bana_ozel/domain/entities/bana_ozel_entities.dart';
 import 'package:canlifal_social/features/bana_ozel/presentation/providers/bana_ozel_providers.dart';
+import 'package:canlifal_social/features/bana_ozel/presentation/widgets/bana_ozel_premium_card.dart';
 import 'package:canlifal_social/features/bana_ozel/presentation/widgets/home_bana_ozel_section.dart';
 
 void main() {
@@ -22,11 +23,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Bana Özel'), findsOneWidget);
-      expect(find.text('Günlük Tarot Kartı'), findsOneWidget);
-      expect(find.text('5 jeton'), findsOneWidget);
+      expect(find.textContaining('Günlük Tarot Kartı'), findsOneWidget);
+      expect(find.text('5 Jeton'), findsOneWidget);
     });
 
-    testWidgets('hides when catalog is empty', (tester) async {
+    testWidgets('shows empty state when catalog is empty', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -39,7 +40,32 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Bana Özel'), findsNothing);
+      expect(find.textContaining('Bana Özel'), findsOneWidget);
+      expect(
+        find.text('Size özel yeni içerikler hazırlanıyor.'),
+        findsOneWidget,
+      );
+    });
+  });
+
+  group('BanaOzelPremiumCard', () {
+    testWidgets('hides price badge when jetonCost is zero', (tester) async {
+      const item = BanaOzelItemEntity(
+        id: '1',
+        slug: 'free-item',
+        nameTr: 'Ücretsiz',
+        icon: '✨',
+        jetonCost: 0,
+        category: 'fortune',
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: BanaOzelPremiumCard(item: item, onTap: () {}),
+          ),
+        ),
+      );
+      expect(find.textContaining('Jeton'), findsNothing);
     });
   });
 }

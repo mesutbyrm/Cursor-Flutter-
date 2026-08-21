@@ -15,6 +15,8 @@ void main() {
             'jetonCost': 5,
             'category': 'tarot',
             'sortOrder': 1,
+            'imageUrl': 'https://cdn.example.com/tarot.webp',
+            'horoscopeSign': 'Koç',
           },
         ],
         'jetonBalance': 12,
@@ -24,6 +26,8 @@ void main() {
       final catalog = BanaOzelCatalogEntity.fromJson(sample);
       expect(catalog.items, hasLength(1));
       expect(catalog.items.first.slug, 'gunluk-tarot');
+      expect(catalog.items.first.imageUrl, contains('tarot.webp'));
+      expect(catalog.items.first.horoscopeSign, 'Koç');
       expect(catalog.jetonBalance, 12);
       expect(catalog.streak.currentStreak, 2);
     });

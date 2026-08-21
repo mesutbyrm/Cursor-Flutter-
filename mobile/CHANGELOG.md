@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.323+359 (2026-08-20) — Bana Özel V2 premium UI
+
+- **Kart:** `BanaOzelPremiumCard` — fal görseli, gradient, jeton rozeti, press scale
+- **API:** `GET /api/bana-ozel` — `imageUrl`, `horoscopeSign`, fiyat parse genişletildi
+- **Görsel:** Backend URL → `FortuneTypeCoverImage` tür bazlı fallback
+- **Durum:** Skeleton, error/retry, premium empty state
+- **Navigasyon:** `openBanaOzelCatalog(slug)` korundu
+
 ## 1.0.320+356 (2026-08-20) — Ana Sayfa V1 Premium UI
 
 - **Tasarım:** Koyu premium tema, cam kartlar, tutarlı tipografi ve accent kullanımı

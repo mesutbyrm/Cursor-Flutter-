@@ -57,3 +57,8 @@ class BanaOzelCatalogNotifier extends AsyncNotifier<BanaOzelCatalogEntity> {
     );
   }
 }
+
+/// Bana Özel katalog yenile — yalnızca ilgili provider.
+Future<void> refreshBanaOzelCatalog(WidgetRef ref) async {
+  await ref.read(banaOzelCatalogProvider.notifier).refresh();
+}
