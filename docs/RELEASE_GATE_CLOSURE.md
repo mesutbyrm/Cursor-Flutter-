@@ -15,8 +15,10 @@
 | Release gate 1–8 | ✅ PASS | `docs/RELEASE_GATE_REPORT.md` |
 | FAZ0 otomatik | ✅ PASS | FAIL=0 (jeton WARN — admin secret yok) |
 | Acceptance 20 madde | ✅ PASS | `docs/ACCEPTANCE_TEST_REPORT.md` |
-| CI Build APK | ✅ SUCCESS | [Run 32438198783](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32438198783) |
-| APK indirme URL | ✅ HTTP 302→200 | apk-latest |
+| CI Build APK | ✅ SUCCESS | [Run 32444629887](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32444629887) |
+| APK indirme URL | ✅ HTTP 200 | 252 MB — apk-latest |
+| APK versionName | ✅ 1.0.333 | aapt (CI Gate 9 + yerel indirme) |
+| APK versionCode | ✅ 369 | universal APK (split-per-abi kaldırıldı) |
 
 ## PR entegrasyon doğrulama (main)
 
@@ -43,10 +45,12 @@
 
 ## APK sürüm doğrulama
 
-| Alan | Beklenen | apk-latest (split-per-abi arm64, eski CI) | Düzeltme |
-|------|----------|-------------------------------------------|----------|
-| versionName | 1.0.333 | 1.0.333 ✅ | — |
-| versionCode | 369 | 2369 ❌ | Flutter `abi*1000+build` — CI universal APK'a geçirildi |
+| Alan | Beklenen | apk-latest (Run 32444629887) | Not |
+|------|----------|------------------------------|-----|
+| versionName | 1.0.333 | 1.0.333 ✅ | CI Gate 9 + yerel `aapt dump badging` |
+| versionCode | 369 | 369 ✅ | `--split-per-abi` kaldırıldı (`668c0b24`) |
+
+**İndirme doğrulama (2026-08-21 UTC):** `curl -L` → HTTP 200, 252 227 488 bayt.
 
 ## İki telefon acceptance (manuel)
 
@@ -62,4 +66,8 @@ Cloud ortamında fiziksel cihaz yok. API düzeyinde çalıştırıldı:
 | DM + notification unread | ✅ API 200 + liste fallback | ⏳ Bekliyor |
 | A logout → B cache | ✅ unit + teardown kodu | ⏳ Bekliyor |
 
-**RELEASE READY:** **HAYIR** — fiziksel 2-cihaz checklist tamamlanana kadar production ilan edilmez. Otomatik kapılar PASS.
+**RELEASE READY:** **HAYIR** — fiziksel 2-cihaz checklist tamamlanana kadar production ilan edilmez.
+
+**Otomatik kapılar:** PASS (analyze 0 error, test 988/0 fail, release gate 1–8, CI Gate 9, apk-latest sürüm doğrulandı).
+
+**Manuel blokör:** İki telefon acceptance (voice/koltuk/hediye/PK/müzik/DM/cache izolasyonu) — Cloud Agent ortamında fiziksel cihaz yok; APK indirip gerçek cihazlarda koşulmalı.
