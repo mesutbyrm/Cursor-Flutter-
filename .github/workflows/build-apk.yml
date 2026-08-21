@@ -59,6 +59,7 @@ jobs:
     permissions:
       contents: write
       actions: write
+      statuses: write
     defaults:
       run:
         working-directory: mobile
@@ -631,6 +632,7 @@ jobs:
 
       - name: Commit status — Release APK
         if: always()
+        continue-on-error: true
         uses: actions/github-script@v7
         with:
           script: |
