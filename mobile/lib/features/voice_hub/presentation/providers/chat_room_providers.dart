@@ -1377,6 +1377,19 @@ class VoiceRoomLiveController
       VoiceRoomRealtimeKind.leave,
       '$name çıkış yaptı',
     );
+    _appendSyntheticSystemMessage(
+      '$name odadan çıkış yaptı.',
+      kind: ChatMessageKind.systemLeave,
+      user: departed != null
+          ? ChatRoomUserRef(
+              id: departed.id,
+              name: departed.name,
+              nickname: departed.nickname,
+              image: departed.image,
+              chatRole: departed.chatRole,
+            )
+          : ChatRoomUserRef(id: userId, name: name),
+    );
     final remaining = state.presence.where((p) => p.id != userId).toList();
     if (remaining.length == state.presence.length) return;
     _knownPresenceIds.remove(userId);

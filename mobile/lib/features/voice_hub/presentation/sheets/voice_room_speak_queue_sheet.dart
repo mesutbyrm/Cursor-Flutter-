@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
@@ -56,16 +58,21 @@ class _SpeakQueueSheetState extends ConsumerState<_SpeakQueueSheet>
   late final TabController _tabs;
   List<String> _pendingIds = [];
   bool _loading = false;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _tabs = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadPending());
+    _refreshTimer = Timer.periodic(const Duration(seconds: 6), (_) {
+      if (mounted) unawaited(_loadPending());
+    });
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _tabs.dispose();
     super.dispose();
   }
@@ -137,15 +144,46 @@ class _SpeakQueueSheetState extends ConsumerState<_SpeakQueueSheet>
     }
   }
 
+  Future<void> _reject(String userId) async {
+    final ctrl = ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
+    final err = await ctrl.rejectSpeakRequest(userId);
+    if (mounted) {
+      if (err != null) {
+        showJetonAwareError(context, err, ref: ref);
+      } else {
+        setState(() => _pendingIds.remove(userId));
+      }
+    }
+  }
+
+  Future<void> _block(String userId) async {
+    final ctrl = ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
+    final err = await ctrl.blockSpeakRequestUser(userId: userId);
+    if (mounted) {
+      if (err != null) {
+        showJetonAwareError(context, err, ref: ref);
+      } else {
+        setState(() => _pendingIds.remove(userId));
+      }
+    }
+  }
+
+  List<ChatRoomPresence> _resolvePendingUsers() {
+    final byId = {for (final p in widget.live.presence) p.id: p};
+    return _pendingIds.map((id) {
+      final existing = byId[id];
+      if (existing != null) return existing;
+      return ChatRoomPresence(id: id, name: 'Kullanıcı $id');
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final listeners = widget.live.presence
         .where((p) => !_onStageIds.contains(p.id))
         .toList();
 
-    final pendingUsers = widget.live.presence
-        .where((p) => _pendingIds.contains(p.id))
-        .toList();
+    final pendingUsers = _resolvePendingUsers();
 
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
@@ -211,6 +249,8 @@ class _SpeakQueueSheetState extends ConsumerState<_SpeakQueueSheet>
                                   user: p,
                                   approveLabel: 'Onayla',
                                   onApprove: () => _approve(p.id),
+                                  onReject: () => _reject(p.id),
+                                  onBlock: () => _block(p.id),
                                   onDj: widget.perms.canManageDj
                                       ? () => _makeDj(p.id)
                                       : null,
@@ -257,12 +297,16 @@ class _ListenerTile extends StatelessWidget {
     required this.user,
     required this.approveLabel,
     required this.onApprove,
+    this.onReject,
+    this.onBlock,
     this.onDj,
   });
 
   final ChatRoomPresence user;
   final String approveLabel;
   final VoidCallback onApprove;
+  final VoidCallback? onReject;
+  final VoidCallback? onBlock;
   final VoidCallback? onDj;
 
   @override
@@ -289,6 +333,18 @@ class _ListenerTile extends StatelessWidget {
               tooltip: 'DJ yap',
               icon: const Icon(Icons.headphones_rounded, size: 20),
               onPressed: onDj,
+            ),
+          if (onReject != null)
+            IconButton(
+              tooltip: 'Reddet',
+              icon: const Icon(Icons.close_rounded, size: 20),
+              onPressed: onReject,
+            ),
+          if (onBlock != null)
+            IconButton(
+              tooltip: 'Engelle',
+              icon: const Icon(Icons.block_rounded, size: 20),
+              onPressed: onBlock,
             ),
           FilledButton.tonal(
             onPressed: onApprove,

@@ -1237,6 +1237,28 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  /// Konuşma isteğini reddet — DELETE speak-requests/{userId} (üretim yedek).
+  Future<void> rejectSpeakRequest(
+    String roomKey,
+    String targetUserId, {
+    String? alternateKey,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _dio.safeDelete<dynamic>(
+          ApiEndpoints.chatRoomSpeakRequestReject(key, targetUserId),
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
+      throw const ApiException(
+        'Konuşma isteği reddedilemedi — sunucu uç noktası desteklenmiyor',
+        statusCode: 404,
+      );
+    });
+  }
+
   static String banPath(String roomId, String userId) =>
       ApiEndpoints.chatRoomBan(roomId, userId);
 

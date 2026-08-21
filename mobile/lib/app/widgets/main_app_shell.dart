@@ -14,6 +14,7 @@ import '../../features/profile/presentation/widgets/jeton_payment_status_listene
 import '../../features/shell/presentation/app_bottom_nav_host.dart';
 import '../../features/live/presentation/widgets/live_pk_invite_listener.dart';
 import '../../features/voice_hub/presentation/widgets/voice_pk_invite_listener.dart';
+import '../../features/voice_hub/presentation/widgets/voice_speak_request_listener.dart';
 import '../../features/messages/presentation/widgets/dm_realtime_listener.dart';
 import '../../features/messages/presentation/widgets/dm_voice_call_host.dart';
 import '../../features/video_call/presentation/incoming_video_call_screen.dart';
@@ -138,6 +139,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
       body = PsychicIncomingHost(child: body);
       body = LivePkInviteListener(child: body);
       body = VoicePkInviteListener(child: body);
+      body = VoiceSpeakRequestListener(child: body);
       body = VideoCallIncomingHost(child: body);
       body = AppBottomNavHost(location: location, child: body);
     }

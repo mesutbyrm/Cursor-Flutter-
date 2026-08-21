@@ -88,28 +88,40 @@ class VoiceSeatGiftFlashNotifier
     if (keys.isEmpty) return;
 
     final sender = ev.senderName.trim().isNotEmpty ? ev.senderName.trim() : 'Biri';
-    final flash = VoiceSeatGiftFlash(
-      id: ev.id,
-      senderName: sender,
-      receiverKey: keys.first,
-      receiverId: ev.receiverId,
-      receiverName: ev.receiverName.trim().isNotEmpty ? ev.receiverName.trim() : null,
-      giftName: ev.giftName,
-      quantity: ev.quantity,
-      jeton: ev.jetonAmount,
-      imageUrl: ev.displayImageUrl,
-      expiresAt: DateTime.now().add(ttl),
-    );
+    var next = List<VoiceSeatGiftFlash>.from(state);
 
-    var next = [...state, flash];
-    while (next.length > maxVisible) {
-      final removed = next.removeAt(0);
-      _timers.remove(removed.id)?.cancel();
+    for (final key in keys) {
+      final flash = VoiceSeatGiftFlash(
+        id: '${ev.id}:$key',
+        senderName: sender,
+        receiverKey: key,
+        receiverId: ev.receiverId,
+        receiverName: ev.receiverName.trim().isNotEmpty ? ev.receiverName.trim() : null,
+        giftName: ev.giftName,
+        quantity: ev.quantity,
+        jeton: ev.jetonAmount,
+        imageUrl: ev.displayImageUrl,
+        expiresAt: DateTime.now().add(ttl),
+      );
+
+      final forReceiver = [
+        ...next.where((f) => f.receiverKey == key),
+        flash,
+      ];
+      while (forReceiver.length > maxVisible) {
+        final removed = forReceiver.removeAt(0);
+        _timers.remove(removed.id)?.cancel();
+      }
+      next = [
+        ...next.where((f) => f.receiverKey != key),
+        ...forReceiver,
+      ];
+
+      _timers[flash.id]?.cancel();
+      _timers[flash.id] = Timer(ttl, () => _remove(flash.id));
     }
-    state = next;
 
-    _timers[flash.id]?.cancel();
-    _timers[flash.id] = Timer(ttl, () => _remove(flash.id));
+    state = next;
   }
 
   void _onGift(LiveGiftEvent ev) => enqueue(ev);
