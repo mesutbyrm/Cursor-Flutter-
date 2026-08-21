@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/bootstrap/app_cache_clear.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
@@ -127,6 +128,49 @@ class SettingsPage extends ConsumerWidget {
               const SizedBox(height: 20),
               const _SectionLabel('Görünüm'),
               const ThemeModeSelector(),
+              const SizedBox(height: 20),
+              const _SectionLabel('Depolama'),
+              ProfileGlass(
+                padding: EdgeInsets.zero,
+                child: _SettingsTile(
+                  icon: Icons.cleaning_services_outlined,
+                  label: 'Önbelleği Temizle',
+                  onTap: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Önbelleği temizle'),
+                        content: const Text(
+                          'Görsel ve API önbelleği temizlenir. Oturum bilginiz silinmez.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('İptal'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Temizle'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed != true || !context.mounted) return;
+                    try {
+                      await AppCacheClear.clearNonAuthCaches();
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Önbellek temizlendi')),
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(ApiException.userMessage(e))),
+                      );
+                    }
+                  },
+                ),
+              ),
               if (kDebugMode) ...[
                 const SizedBox(height: 20),
                 const _SectionLabel('Geliştirici'),

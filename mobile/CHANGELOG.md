@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.330+366 (2026-08-21) — Bildirimler + Mesajlar + Ayarlar + Navigasyon V2
+
+- **Bildirimler:** Backend unread count (`GET /api/notifications/unread`), avatar/imageUrl, okunmamış vurgu, tek tek okundu (optimistic + revert), zil tıklamasında otomatik tümünü okuma kaldırıldı
+- **Deep link:** `deepLink`/`referenceId` parse; oturumsuz push → login sonrası hedef route (`PostLoginNavigation`); güvenli `/feed` fallback
+- **Mesajlar:** `DmMessageDedupe` — duplicate messageId ve optimistic reconcile
+- **Logout:** `invalidateUserSessionCaches` — bildirim/mesaj/sosyal provider + yerel DM/bildirim hafızası temizliği
+- **Ayarlar:** Önbellek temizle (görsel + API cache; JWT korunur)
+- **Lifecycle:** Foreground resume → unread bildirim + konuşma yenileme
+- **Rozet:** `UnreadBadgeFormat` (9+ / 999+) tüm üst bar ve DM listesinde
+
 ## 1.0.320+356 (2026-08-20) — Ana Sayfa V1 Premium UI
 
 - **Tasarım:** Koyu premium tema, cam kartlar, tutarlı tipografi ve accent kullanımı

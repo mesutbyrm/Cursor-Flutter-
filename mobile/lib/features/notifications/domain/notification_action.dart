@@ -88,7 +88,9 @@ Future<void> _navigateFromNotificationImpl(
   final route = _routeFromTypeAndText(n, staffCanManagePayments: staffCanManagePayments);
   if (route != null) {
     await pushPath(router, route);
+    return;
   }
+  await pushPath(router, '/feed');
 }
 
 void _pushInAppPathSync(GoRouter router, String path) {
@@ -252,6 +254,9 @@ String? _routeFromTypeAndText(
       return '/social';
     case 'comment':
     case 'like':
+      if (n.targetPath != null && n.targetPath!.trim().isNotEmpty) {
+        return n.targetPath!.startsWith('/') ? n.targetPath! : '/${n.targetPath!}';
+      }
       if (_isShortVideoNotification(type, text, n)) {
         if (n.targetId != null && n.targetId!.isNotEmpty) {
           return '/shorts?videoId=${n.targetId}';

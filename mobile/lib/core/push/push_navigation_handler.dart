@@ -7,12 +7,14 @@ import '../../features/live_psychics/presentation/providers/psychic_push_payload
 import '../../features/notifications/domain/entities/app_notification_entity.dart';
 import '../../features/notifications/domain/notification_action.dart';
 import '../../features/voice_hub/presentation/utils/voice_room_nav_paths.dart';
+import '../navigation/post_login_navigation.dart';
 
 /// OneSignal `additionalData` → uygulama içi sayfa.
 class PushNavigationHandler {
   PushNavigationHandler._();
 
   static GoRouter? _router;
+  static bool Function()? isAuthenticated;
   static bool Function()? staffCanManagePayments;
   static VoiceRoomSwitchPreparer? prepareVoiceRoomSwitch;
   static void Function()? onPushReceived;
@@ -31,8 +33,10 @@ class PushNavigationHandler {
     void Function(PsychicSessionUpdatePayload cancelled)? onSessionCancelledData,
     void Function(PsychicSessionEndedPayload ended)? onSessionEndedData,
     VoiceRoomSwitchPreparer? onPrepareVoiceRoomSwitch,
+    bool Function()? authenticated,
   }) {
     _router = router;
+    isAuthenticated = authenticated;
     prepareVoiceRoomSwitch = onPrepareVoiceRoomSwitch;
     onPushReceived = onReceived;
     onFortuneInvite = onFortuneInviteData;
@@ -164,22 +168,57 @@ class PushNavigationHandler {
       return;
     }
 
+    final targetPath = (data['targetPath'] ??
+            data['actionUrl'] ??
+            data['link'] ??
+            data['href'] ??
+            data['deepLink'] ??
+            data['deeplink'])
+        ?.toString();
+
+    final authed = isAuthenticated?.call() ?? true;
+    if (!authed) {
+      if (targetPath != null && targetPath.trim().isNotEmpty) {
+        PostLoginNavigation.remember(targetPath);
+      } else {
+        final entity = AppNotificationEntity(
+          id: data['id']?.toString() ?? 'push',
+          title: data['title']?.toString() ?? 'Canlifal',
+          body: data['body']?.toString(),
+          type: (data['type'] ?? data['event'] ?? data['notificationType'])
+              ?.toString(),
+          targetPath: targetPath,
+          targetId: (data['targetId'] ??
+                  data['conversationId'] ??
+                  data['chatId'] ??
+                  data['threadId'] ??
+                  data['referenceId'] ??
+                  data['senderId'])
+              ?.toString(),
+        );
+        final route = _routePreviewForPending(entity);
+        if (route != null) PostLoginNavigation.remember(route);
+      }
+      router.go('/auth/login');
+      return;
+    }
+
     final entity = AppNotificationEntity(
       id: data['id']?.toString() ?? 'push',
       title: data['title']?.toString() ?? 'Canlifal',
       body: data['body']?.toString(),
       type: (data['type'] ?? data['event'] ?? data['notificationType'])
           ?.toString(),
-      targetPath: (data['targetPath'] ??
-              data['actionUrl'] ??
-              data['link'] ??
-              data['href'])
-          ?.toString(),
+      targetPath: targetPath,
       targetId: (data['targetId'] ??
               data['conversationId'] ??
               data['chatId'] ??
               data['threadId'] ??
+              data['referenceId'] ??
               data['senderId'])
+          ?.toString(),
+      senderId: data['senderId']?.toString(),
+      imageUrl: (data['imageUrl'] ?? data['avatar'] ?? data['avatarUrl'])
           ?.toString(),
     );
 
@@ -192,6 +231,27 @@ class PushNavigationHandler {
       );
     } catch (e, st) {
       debugPrint('Push navigation failed: $e\n$st');
+      try {
+        router.go('/feed');
+      } catch (_) {}
     }
+  }
+
+  static String? _routePreviewForPending(AppNotificationEntity n) {
+    final path = n.targetPath?.trim();
+    if (path != null && path.isNotEmpty) {
+      if (path.startsWith('http')) {
+        return Uri.tryParse(path)?.path;
+      }
+      return path.startsWith('/') ? path : '/$path';
+    }
+    if (n.targetId != null && n.targetId!.isNotEmpty) {
+      final type = (n.type ?? '').toLowerCase();
+      if (type.contains('message') || type.contains('chat')) {
+        return '/chat/${n.targetId}';
+      }
+      if (type.contains('follow')) return '/user/${n.targetId}';
+    }
+    return null;
   }
 }

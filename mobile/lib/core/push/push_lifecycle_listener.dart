@@ -43,7 +43,8 @@ class PushLifecycleListener extends ConsumerStatefulWidget {
       _PushLifecycleListenerState();
 }
 
-class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
+class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
+    with WidgetsBindingObserver {
   Timer? _pushSyncTimer;
   Timer? _adminPollTimer;
   bool _pushSyncing = false;
@@ -52,6 +53,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     bindPushRegistrarTokenRefresh(() {
       if (!mounted) return;
       ref.read(pushRegistrarProvider).registerIfPossible(allowTokenRetry: true);
@@ -60,6 +62,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
       if (!mounted) return;
       PushNavigationHandler.install(
         ref.read(goRouterProvider),
+        authenticated: () => ref.read(authControllerProvider).valueOrNull != null,
         onReceived: _onPushReceived,
         onFortuneInviteData: (data) {
           final invite = parsePsychicIncomingLoose(data);
@@ -285,9 +288,31 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _adminPollTimer?.cancel();
     _pushSyncTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _onAppResumed();
+    }
+  }
+
+  void _onAppResumed() {
+    if (!mounted) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return;
+    ref.invalidate(notificationsUnreadApiProvider);
+    ref.invalidate(notificationsListProvider);
+    unawaited(
+      ref.read(conversationsListNotifierProvider.notifier).refresh(
+            silent: true,
+            forceRefresh: true,
+          ),
+    );
   }
 
   @override

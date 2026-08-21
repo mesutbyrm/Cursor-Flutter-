@@ -68,6 +68,8 @@ class NotificationsListNotifier extends AsyncNotifier<NotificationsListState> {
                 type: n.type,
                 targetPath: n.targetPath,
                 targetId: n.targetId,
+                imageUrl: n.imageUrl,
+                senderId: n.senderId,
               )
             else
               n,
@@ -92,6 +94,8 @@ class NotificationsListNotifier extends AsyncNotifier<NotificationsListState> {
               type: n.type,
               targetPath: n.targetPath,
               targetId: n.targetId,
+              imageUrl: n.imageUrl,
+              senderId: n.senderId,
             ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,6 +47,10 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     );
     Future<void>.delayed(LazyLoadPerf.notificationsList, () {
       if (mounted) setState(() => _listReady = true);
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.invalidate(notificationsUnreadApiProvider);
     });
     // Sayfaya girince otomatik hepsini okundu YAPMA — kullanıcı hangisine
     // tıklarsa o okundu olur (Instagram davranışı). Toplu okuma için "Tümünü oku".
@@ -113,10 +118,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     }
 
     if (!n.read) {
-      ref.read(notificationsListNotifierProvider.notifier).markOneReadLocally(n.id);
-      unawaited(
-        ref.read(notificationsRepositoryProvider).markRead(n.id).catchError((_) {}),
-      );
+      unawaited(markNotificationRead(ref, n.id));
     }
   }
 
@@ -275,33 +277,22 @@ class _NotificationsListView extends StatelessWidget {
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
               onTap: () => onTap(n),
-              child: ProGlassListTile(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: n.read
+                      ? Colors.transparent
+                      : accent.withValues(alpha: 0.07),
+                ),
+                child: ProGlassListTile(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: n.read
-                            ? null
-                            : LinearGradient(
-                                colors: [
-                                  accent,
-                                  accent.withValues(alpha: 0.65),
-                                ],
-                              ),
-                        color: n.read
-                            ? Colors.white.withValues(alpha: 0.06)
-                            : null,
-                      ),
-                      child: Icon(
-                        icon,
-                        size: 20,
-                        color: n.read
-                            ? context.colors.onSurfaceMuted
-                            : Colors.white,
-                      ),
+                    _NotificationAvatar(
+                      imageUrl: n.imageUrl,
+                      icon: icon,
+                      accent: accent,
+                      read: n.read,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -361,9 +352,87 @@ class _NotificationsListView extends StatelessWidget {
                 ),
               ),
             ),
+            ),
           ),
         );
       },
+    );
+  }
+}
+
+class _NotificationAvatar extends StatelessWidget {
+  const _NotificationAvatar({
+    required this.imageUrl,
+    required this.icon,
+    required this.accent,
+    required this.read,
+  });
+
+  final String? imageUrl;
+  final IconData icon;
+  final Color accent;
+  final bool read;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = imageUrl?.trim();
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: accent.withValues(alpha: read ? 0.35 : 0.65),
+                width: read ? 1 : 1.5,
+              ),
+            ),
+            child: ClipOval(
+              child: url != null && url.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: url,
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                      memCacheWidth: 128,
+                      memCacheHeight: 128,
+                      errorWidget: (_, _, _) => _iconFallback(),
+                      placeholder: (_, _) => _iconFallback(),
+                    )
+                  : _iconFallback(),
+            ),
+          ),
+          if (!read)
+            Positioned(
+              right: -1,
+              bottom: -1,
+              child: Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: accent,
+                  border: Border.all(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    width: 2,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _iconFallback() {
+    return ColoredBox(
+      color: accent.withValues(alpha: 0.15),
+      child: Center(
+        child: Icon(icon, color: accent, size: 22),
+      ),
     );
   }
 }

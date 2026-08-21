@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/user_theme_sync_provider.dart';
 
 import '../../../../core/bootstrap/session_data_refresh.dart';
+import '../../../../core/bootstrap/user_session_cleanup.dart';
 import '../../../../core/bootstrap/app_startup_log.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/config/env.dart';
@@ -22,6 +23,8 @@ import '../../../fortune/data/fortune_birth_profile_store.dart';
 import '../../../fortune/presentation/providers/fortune_birth_profile_provider.dart';
 import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../../app/router/app_router.dart';
+import '../../../../core/navigation/post_login_navigation.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/datasources/native_auth_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
@@ -243,6 +246,18 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     unawaited(OneSignalBootstrap.login(user.id));
     unawaited(TrtcBootstrapService.prewarmAfterAuth());
     unawaited(_seedFortuneBirthFromProfile(user.id));
+
+    final pending = PostLoginNavigation.takePending();
+    if (pending != null) {
+      final router = ref.read(goRouterProvider);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          router.push(pending);
+        } catch (_) {
+          router.go('/feed');
+        }
+      });
+    }
   }
 
   Future<void> _seedFortuneBirthFromProfile(String userId) async {
@@ -400,12 +415,14 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     ref.read(guestModeProvider.notifier).state = false;
     _sessionEpoch++;
     AuthTokenRefreshCoordinator.instance.reset();
+    final userId = state.valueOrNull?.id;
     await OneSignalBootstrap.logout();
     await NetworkPerf.parallel([
       ApiHttpCache.clearAll(),
       ApiCacheStore.clearAll(),
     ]);
     await ref.read(sessionUserCacheProvider).clear();
+    await invalidateUserSessionCaches(ref, userId: userId);
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncValue.data(null);
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/bootstrap/shell_header_badges_provider.dart';
+import '../../../../../core/navigation/unread_badge_format.dart';
 import '../../../../../core/widgets/canlifal_logo.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../messages/presentation/providers/messages_providers.dart';
@@ -146,11 +147,7 @@ class _NotificationBadge extends ConsumerWidget {
     return _IconBadge(
       icon: Icons.notifications_none_rounded,
       badge: unreadNotif,
-      onTap: () async {
-        await markAllNotificationsRead(ref);
-        if (!context.mounted) return;
-        context.push('/notifications');
-      },
+      onTap: () => context.push('/notifications'),
     );
   }
 }
@@ -226,7 +223,7 @@ class _IconBadge extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  badge > 9 ? '9+' : '$badge',
+                  UnreadBadgeFormat.label(badge),
                   style: const TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w800,

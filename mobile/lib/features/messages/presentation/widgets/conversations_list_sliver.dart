@@ -13,6 +13,7 @@ import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/message_entities.dart';
 import '../providers/chat_messages_list_notifier.dart';
+import '../../../../core/navigation/unread_badge_format.dart';
 import '../providers/conversations_list_notifier.dart';
 import '../providers/messages_providers.dart';
 import 'chat_message_actions.dart';
@@ -291,9 +292,7 @@ class ConversationsListSliver extends ConsumerWidget {
                                               BorderRadius.circular(12),
                                         ),
                                         child: Text(
-                                          c.unreadCount > 99
-                                              ? '99+'
-                                              : '${c.unreadCount}',
+                                          UnreadBadgeFormat.label(c.unreadCount),
                                           style: const TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w900,

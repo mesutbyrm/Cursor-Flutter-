@@ -35,4 +35,11 @@ abstract final class HiddenConversationsStore {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key(userId), jsonEncode(set.toList()));
   }
+
+  /// Logout — kullanıcıya özel gizli sohbet listesini temizle.
+  static Future<void> clearForUser(String userId) async {
+    if (userId.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key(userId));
+  }
 }
