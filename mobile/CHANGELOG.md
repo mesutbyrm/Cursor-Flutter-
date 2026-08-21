@@ -2,6 +2,8 @@
 
 ## 1.0.336+372 (2026-08-21) — Sesli oda tam senkronizasyon II
 
+- **CI pipeline:** main push her zaman CI tetikler; commit status + flutter test gate + APK HTTP/metadata doğrulama
+
 - **Hediye flaşı:** Koltuk başına max 3 / 3 sn TTL (global havuz yerine receiver-scoped)
 - **Çıkış mesajı:** SSE `user_leave` → chat `[Kullanıcı] odadan çıkış yaptı.`
 - **Konuşma isteği:** Moderatör popup (Evet/Hayır/Engelle) + kuyruk yenileme; canonical presence key

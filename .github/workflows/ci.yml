@@ -7,26 +7,6 @@ permissions:
 on:
   push:
     branches: [main]
-    paths:
-      - 'mobile/**'
-      - 'api/**'
-      - 'scripts/dart-analyze-gate.sh'
-      - 'scripts/run-release-gate.sh'
-      - 'scripts/acceptance-preflight.sh'
-      - 'scripts/faz0-verify.sh'
-      - 'scripts/faz0-next.sh'
-      - 'scripts/faz0-status.sh'
-      - 'scripts/admin-jeton-cheatsheet.sh'
-      - 'scripts/m5-preflight.sh'
-      - 'scripts/probe-jeton-earn.sh'
-      - 'scripts/wait-for-jeton.sh'
-      - 'scripts/run-music-acceptance.sh'
-      - 'scripts/probe-music-room.sh'
-      - 'scripts/acceptance-tests/**'
-      - 'mcp-server/**'
-      - '.github/workflows/ci.yml'
-      - '.github/workflows/build-apk.yml'
-      - 'scripts/ci-release-gate-summary.sh'
   pull_request:
     branches: [main]
     paths:
