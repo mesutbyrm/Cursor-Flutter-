@@ -65,6 +65,11 @@ class _GameCenterLeaderboardPageState
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (_, _) => const Center(child: Text('Liste yüklenemedi')),
               data: (entries) {
+                if (entries.isEmpty) {
+                  return const Center(
+                    child: Text('Henüz liderlik verisi yok.'),
+                  );
+                }
                 final top3 = entries.take(3).toList();
                 final rest = entries.length > 3
                     ? entries.sublist(3)

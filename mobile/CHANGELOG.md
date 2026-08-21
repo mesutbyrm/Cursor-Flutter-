@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.329+365 (2026-08-21) — Oyun Merkezi + Oyunlar V2
+
+- **Hamle:** `sendMove` artık odanın gerçek `gameType` değerini kullanır (okey101 sabiti kaldırıldı)
+- **State:** Oda izolasyonu, move/event dedup, foreground reconcile
+- **UI:** Premium oyun kartları, XOX tahta (backend board), oda loading skeleton
+- **Veri:** Sahte liderlik tablosu ve local fake Okey odaları kaldırıldı
+- **Eşleşme:** Otomatik eşleş `autoMatch` API'sine bağlandı
+- **Test:** `game_move_dedupe_test`, `game_state_parser_test`
+
 ## 1.0.320+356 (2026-08-20) — Ana Sayfa V1 Premium UI
 
 - **Tasarım:** Koyu premium tema, cam kartlar, tutarlı tipografi ve accent kullanımı

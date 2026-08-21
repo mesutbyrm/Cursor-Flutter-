@@ -627,11 +627,11 @@ class _LiveRoomLauncher extends ConsumerWidget {
             onPressed: () async {
               final room = await ref
                   .read(gameCenterRepositoryProvider)
-                  .createLiveRoom(gameId);
+                  .autoMatchLiveRoom(gameId);
               if (!context.mounted) return;
               if (room != null) {
                 context.push(
-                  '/games-room/${room.id}?title=${Uri.encodeComponent(room.title)}',
+                  '/games-room/${room.id}?title=${Uri.encodeComponent(room.title)}&game=${Uri.encodeComponent(gameId)}',
                 );
               }
             },

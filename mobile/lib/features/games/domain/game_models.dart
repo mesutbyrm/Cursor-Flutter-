@@ -14,6 +14,10 @@ class GameCatalogItem extends Equatable {
     this.route,
     this.icon = Icons.sports_esports_rounded,
     this.jetonCost = 0,
+    this.imageUrl,
+    this.onlinePlayerCount = 0,
+    this.activeRoomCount = 0,
+    this.playable = true,
   });
 
   factory GameCatalogItem.fromJson(Map<String, dynamic> json) {
@@ -25,6 +29,7 @@ class GameCatalogItem extends Equatable {
       'kind',
       'category',
     ])?.toString().toLowerCase();
+    final playableRaw = pick(json, ['playable', 'enabled', 'isActive']);
     return GameCatalogItem(
       id: id.isNotEmpty ? id : title.toLowerCase().replaceAll(' ', '-'),
       title: title,
@@ -36,6 +41,20 @@ class GameCatalogItem extends Equatable {
           : GameKind.multiplayer,
       route: pick(json, ['route', 'path', 'url'])?.toString(),
       jetonCost: asInt(pick(json, ['jetonCost', 'cost', 'entryFee'])),
+      imageUrl: pick(json, [
+        'imageUrl',
+        'image',
+        'thumbnail',
+        'cover',
+        'iconUrl',
+      ])?.toString(),
+      onlinePlayerCount: asInt(
+        pick(json, ['onlinePlayers', 'playerCount', 'activePlayers']),
+      ),
+      activeRoomCount: asInt(
+        pick(json, ['activeRooms', 'roomCount', 'openRooms']),
+      ),
+      playable: playableRaw == null ? true : playableRaw != false,
     );
   }
 
@@ -46,6 +65,10 @@ class GameCatalogItem extends Equatable {
   final String? route;
   final IconData icon;
   final int jetonCost;
+  final String? imageUrl;
+  final int onlinePlayerCount;
+  final int activeRoomCount;
+  final bool playable;
 
   @override
   List<Object?> get props => [
@@ -56,6 +79,10 @@ class GameCatalogItem extends Equatable {
     route,
     icon,
     jetonCost,
+    imageUrl,
+    onlinePlayerCount,
+    activeRoomCount,
+    playable,
   ];
 }
 
