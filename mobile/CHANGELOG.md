@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
-<<<<<<< HEAD
+## 1.0.324+360 (2026-08-21) — Canlı Falcılar V2 premium UI
+
+- **Kart:** Paylaşılan `PsychicPremiumCard` / `PsychicPremiumListTile` — avatar, gerçek online, rating, jeton/dk
+- **API:** `GET /api/fortune-tellers` + `GET /api/advisors/online`; advisor→teller id eşlemesi düzeltildi
+- **Online:** Rozet yalnızca backend `isOnline`; varsayılan `true` kaldırıldı
+- **Navigasyon:** `openPsychicCardDestination` — profil veya API `liveStreamId` ile yayın
+- **Popüler Falcılar:** Aynı design system, Tümünü Gör → `/canli-falcilar`
+
 ## 1.0.323+359 (2026-08-20) — Bana Özel V2 premium UI
 
 - **Kart:** `BanaOzelPremiumCard` — fal görseli, gradient, jeton rozeti, press scale
@@ -8,15 +15,6 @@
 - **Görsel:** Backend URL → `FortuneTypeCoverImage` tür bazlı fallback
 - **Durum:** Skeleton, error/retry, premium empty state
 - **Navigasyon:** `openBanaOzelCatalog(slug)` korundu
-=======
-## 1.0.321+357 (2026-08-20) — Canlı Falcılar V2 premium UI
-
-- **Kart:** Paylaşılan `PsychicPremiumCard` / `PsychicPremiumListTile` — avatar, gerçek online, rating, jeton/dk
-- **API:** `GET /api/fortune-tellers` + `GET /api/advisors/online`; advisor→teller id eşlemesi düzeltildi
-- **Online:** Rozet yalnızca backend `isOnline`; varsayılan `true` kaldırıldı
-- **Navigasyon:** `openPsychicCardDestination` — profil veya API `liveStreamId` ile yayın
-- **Popüler Falcılar:** Aynı design system, Tümünü Gör → `/canli-falcilar`
->>>>>>> origin/cursor/live-psychics-v2-premium-5ac6
 
 ## 1.0.320+356 (2026-08-20) — Ana Sayfa V1 Premium UI
 
