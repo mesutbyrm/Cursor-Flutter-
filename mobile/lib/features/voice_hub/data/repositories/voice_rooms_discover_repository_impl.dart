@@ -91,8 +91,8 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
         if (rooms.isEmpty) {
           return VoiceRoomsDiscoverBundle(
             categories: VoiceRoomsDiscoverMapper.categoriesFromApi(),
-            featured: VoiceRoomsMockData.featured,
-            popular: VoiceRoomsMockData.popularRooms,
+            featured: const [],
+            popular: const [],
             allRooms: const [],
             apiPage: apiPage,
             apiHasMore: apiHasMore,
@@ -135,7 +135,7 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
       },
       decode: (json) {
         final raw = json['items'];
-        if (raw is! List) return VoiceRoomsMockData.trendingTopics;
+        if (raw is! List) return const [];
         final items = raw
             .whereType<Map>()
             .map(
@@ -145,7 +145,7 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
               ),
             )
             .toList();
-        return items.isEmpty ? VoiceRoomsMockData.trendingTopics : items;
+        return items;
       },
     );
   }
@@ -176,7 +176,7 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
       },
       decode: (json) {
         final raw = json['items'];
-        if (raw is! List) return VoiceRoomsMockData.activeSpeakers;
+        if (raw is! List) return const [];
         final items = raw.whereType<Map>().map((m) {
           return ActiveSpeakerItem(
             rank: (m['rank'] as num?)?.toInt() ?? 0,
@@ -185,7 +185,7 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
             avatarColor: Color((m['avatarColor'] as num?)?.toInt() ?? 0),
           );
         }).toList();
-        return items.isEmpty ? VoiceRoomsMockData.activeSpeakers : items;
+        return items;
       },
     );
   }
@@ -296,7 +296,7 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
         iconKey: '${m['iconKey']}',
         gradient: gradient is List
             ? gradient.map((c) => Color((c as num).toInt())).toList()
-            : VoiceRoomsMockData.featured.first.gradient,
+            : const [Color(0xFF7B2FF7), Color(0xFF4A00E0)],
         glowColor: Color((m['glowColor'] as num?)?.toInt() ?? 0),
       );
     }).toList();

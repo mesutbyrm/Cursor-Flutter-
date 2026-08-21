@@ -1,12 +1,12 @@
 # FAZ 0 — Otomatik doğrulama raporu
 
-**Tarih:** 2026-08-20 11:38 UTC  
-**APK:** `1.0.291+327`  
+**Tarih:** 2026-08-21 01:51 UTC  
+**APK:** `1.0.332+368`  
 **Sonuç:** **AUTOMATED_PASS (M5 cihaz bekliyor)**
 
 | Geçti | Uyarı | Başarısız |
 |-------|-------|-----------|
-| 5 | 0 | 0 |
+| 4 | 1 | 0 |
 
 ## Kapılar
 
@@ -16,7 +16,7 @@
 | API voice seat | PASS | run-voice-seat-acceptance.sh |
 | voice_hub unit | PASS | 93 tests |
 | MCP selftest | PASS | v1.2.0 read_source |
-| Jeton bakiyesi | PASS | cursor.test.1786235468@mailinator.com jeton=9630 |
+| Jeton | WARN | cursor.test.1786235468@mailinator.com jeton=0 — M5/M7 için ≥10 gerekli |
 
 ## Manuel bekleyen
 

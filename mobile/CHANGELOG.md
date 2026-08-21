@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.333+369 (2026-08-21) — V2 entegrasyon + release hazırlık
+
+- **Entegrasyon:** Aşama 2–12 PR'ları `main`'e birleştirildi (Home V1 + 10 V2 dal + Final Audit)
+- **Fix:** `bana_ozel_hub_section` chip overflow; `#353` `dm_message_dedupe` import; duplicate `clearLocalReadState`
+- **Mock kaldırma:** Sesli oda discover — boş API yanıtında sahte oda/trend/konuşmacı gösterimi kaldırıldı
+- **Endpoint doğrulama:** `/api/notifications/unread`, `/api/advisors/online`, `/api/banners` prod 404 → liste/mobile-home yedekleri doğrulandı
+- **Test:** `flutter test` 988 geçti, 2 skip; acceptance + FAZ0 otomatik kapılar geçti
+
 ## 1.0.332+368 (2026-08-21) — Final Production Audit (Aşama 12)
 
 - **TRTC P0:** `_activeSession` — çoklu `TrtcRoomManager` aynı cloud instance çakışması engellendi
