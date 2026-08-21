@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/navigation/unread_badge_format.dart';
 
 
 /// Cam yüzeyli ikon butonu — bildirim, ayarlar.
@@ -59,7 +60,7 @@ class PremiumIconButton extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            badgeCount > 99 ? '99+' : '$badgeCount',
+                            UnreadBadgeFormat.label(badgeCount),
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Colors.white,

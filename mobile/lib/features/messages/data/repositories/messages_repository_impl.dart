@@ -62,9 +62,9 @@ class MessagesRepositoryImpl implements MessagesRepository {
           forceRefresh: true,
         );
         final hidden = await DeletedMessagesStore.read(currentUserId ?? '');
-        return dedupeMessagesById(
-          remote.where((m) => !hidden.contains(m.id)).toList(),
-        );
+        final filtered =
+            remote.where((m) => !hidden.contains(m.id)).toList();
+        return DmMessageDedupe.merge(remote: filtered);
       },
       encode: (list) => CacheFirstLoader.encodeList(
         [for (final m in list) encodeMessage(m)],

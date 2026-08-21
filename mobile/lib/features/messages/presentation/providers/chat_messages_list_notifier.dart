@@ -53,12 +53,19 @@ class ChatMessagesListNotifier
     ChatMessagesListState? previous,
   }) async {
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
-    var all = await ref.read(messagesRepositoryProvider).messages(
+    final remote = await ref.read(messagesRepositoryProvider).messages(
           conversationId,
           currentUserId: userId,
           forceRefresh: forceRefresh,
         );
-    all = dedupeMessagesById(all);
+    final optimistic = previous?.all
+            .where((m) => m.id.startsWith('local-'))
+            .toList() ??
+        const <MessageEntity>[];
+    final all = DmMessageDedupe.merge(
+      remote: remote,
+      localOptimistic: optimistic,
+    );
     var visible = all.length;
     if (previous != null && all.length > previous.all.length) {
       visible = all.length;

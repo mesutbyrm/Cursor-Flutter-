@@ -406,4 +406,77 @@ void main() {
     expect(prepared, ['notification:room-xyz']);
     expect(lastLocation, '/voice-room/room-xyz');
   });
+
+  testWidgets('comment uses targetPath from backend', (tester) async {
+    late String? lastLocation;
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => const SizedBox.shrink(),
+        ),
+        GoRoute(
+          path: '/feed/post/:id',
+          builder: (_, state) {
+            lastLocation = '/feed/post/${state.pathParameters['id']}';
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+
+    navigateFromNotification(
+      router,
+      const AppNotificationEntity(
+        id: 'c1',
+        title: 'Yorum',
+        type: 'comment',
+        targetPath: '/feed/post/post-42',
+        targetId: 'user-1',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(lastLocation, '/feed/post/post-42');
+  });
+
+  testWidgets('unknown notification falls back to feed', (tester) async {
+    late String? lastLocation;
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) {
+            lastLocation = '/';
+            return const SizedBox.shrink();
+          },
+        ),
+        GoRoute(
+          path: '/feed',
+          builder: (_, _) {
+            lastLocation = '/feed';
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+
+    navigateFromNotification(
+      router,
+      const AppNotificationEntity(
+        id: 'x',
+        title: 'Bilinmeyen',
+        type: 'unknown_type_xyz',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(lastLocation, '/feed');
+  });
 }

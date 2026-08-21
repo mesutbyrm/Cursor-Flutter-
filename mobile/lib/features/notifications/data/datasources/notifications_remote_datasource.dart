@@ -68,16 +68,49 @@ class NotificationsRemoteDataSource {
         pick(json, ['createdAt', 'created_at', 'timestamp'])?.toString() ?? '',
       ),
       type: pick(json, ['type', 'category'])?.toString(),
-      targetPath: pick(json, ['targetPath', 'actionUrl', 'link', 'href'])
-          ?.toString(),
+      targetPath: pick(json, [
+        'targetPath',
+        'actionUrl',
+        'link',
+        'href',
+        'deepLink',
+        'deeplink',
+      ])?.toString(),
       targetId: pick(json, [
-            'targetId',
-            'entityId',
-            'refId',
-            'sessionId',
-            'session_id',
-          ])?.toString(),
+        'targetId',
+        'entityId',
+        'refId',
+        'referenceId',
+        'sessionId',
+        'session_id',
+        'conversationId',
+      ])?.toString(),
+      imageUrl: pick(json, [
+        'imageUrl',
+        'image',
+        'avatar',
+        'avatarUrl',
+        'iconUrl',
+        'thumbnail',
+      ])?.toString(),
+      senderId: pick(json, [
+        'senderId',
+        'userId',
+        'actorId',
+        'fromUserId',
+      ])?.toString(),
     );
+  }
+
+  Future<int?> fetchUnreadCount() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.notificationsUnread);
+      final map = asJsonMap(res.data);
+      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+      final countRaw = pick(data, ['count', 'unread', 'unreadCount']);
+      if (countRaw != null) return asInt(countRaw);
+    } catch (_) {}
+    return null;
   }
 
   Future<void> markRead(String id) async {
