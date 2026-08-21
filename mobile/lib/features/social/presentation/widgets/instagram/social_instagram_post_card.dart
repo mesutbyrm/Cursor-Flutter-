@@ -331,8 +331,13 @@ class _SocialInstagramPostCardState
       if (!mounted) return;
       setState(() {
         _liked = r.liked;
-        if (r.likesCount > 0) _likeCount = r.likesCount;
+        _likeCount = r.likesCount > 0 ? r.likesCount : _likeCount;
       });
+      ref.read(socialNotifierProvider.notifier).reconcileLike(
+            post.id,
+            liked: r.liked,
+            likesCount: _likeCount,
+          );
     } catch (e) {
       if (!mounted) return;
       setState(() {

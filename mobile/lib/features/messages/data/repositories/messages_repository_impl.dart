@@ -1,5 +1,6 @@
 import '../../domain/entities/message_entities.dart';
 import '../../domain/repositories/messages_repository.dart';
+import '../../domain/utils/dm_message_dedupe.dart';
 import '../datasources/messages_remote_datasource.dart';
 import '../hidden_conversations_store.dart';
 import '../deleted_messages_store.dart';
@@ -61,7 +62,9 @@ class MessagesRepositoryImpl implements MessagesRepository {
           forceRefresh: true,
         );
         final hidden = await DeletedMessagesStore.read(currentUserId ?? '');
-        return remote.where((m) => !hidden.contains(m.id)).toList();
+        return dedupeMessagesById(
+          remote.where((m) => !hidden.contains(m.id)).toList(),
+        );
       },
       encode: (list) => CacheFirstLoader.encodeList(
         [for (final m in list) encodeMessage(m)],

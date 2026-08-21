@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.329+365 (2026-08-21) — Sosyal + Shorts + DM V2
+
+- **Shorts:** Fake GTV sponsor videoları kaldırıldı — yalnızca backend feed
+- **Social:** Pull-to-refresh yalnızca akış + hikâyeler; fake `addLocalPost` devre dışı
+- **Like:** Backend reconcile ile feed provider senkronu
+- **DM:** `messageId` deduplication
+- **Session:** Logout'ta sosyal/DM/shorts cache temizliği
+- **Story:** Backend `durationMs` desteği (görsel süre)
+- **Doc:** `docs/SOCIAL_V2.md`
+
 ## 1.0.328+364 (2026-08-21) — Hediye + PK + Müzik V2
 
 - **PK:** Sahte `_baseScore` (8000+hash) kaldırıldı; skor backend/SSE otoriter

@@ -12,7 +12,7 @@ import '../../features/membership/presentation/controllers/membership_controller
 import '../../features/profile/presentation/providers/payment_requests_notifier.dart';
 import '../../features/profile/presentation/providers/profile_hub_providers.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart';
-import '../../features/social/presentation/providers/social_providers.dart';
+import '../../features/social/presentation/utils/social_session_cache.dart';
 import '../network/dio_provider.dart';
 import '../network/user_presence_service.dart';
 
@@ -25,7 +25,7 @@ void invalidateAuthenticatedShellData(Ref ref) {
   invalidateDiscoverVoiceRooms(ref);
   invalidateDiscoverLiveStreams(ref);
   ref.invalidate(homeVoiceRoomsProvider);
-  ref.invalidate(socialNotifierProvider);
+  clearSocialSessionCache(ref);
   clearAuthenticatedUserCache(ref);
   unawaited(ref.read(userPresenceServiceProvider).heartbeat());
 }

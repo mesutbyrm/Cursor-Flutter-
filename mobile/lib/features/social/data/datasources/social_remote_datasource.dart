@@ -482,6 +482,22 @@ class SocialRemoteDataSource {
       createdAt: DateTime.tryParse(
         pick(json, ['createdAt', 'created_at'])?.toString() ?? '',
       ),
+      durationMs: _storyDurationMs(json),
     );
+  }
+
+  int? _storyDurationMs(Map<String, dynamic> json) {
+    final raw = pick(json, [
+      'durationMs',
+      'duration_ms',
+      'displayDurationMs',
+      'duration',
+    ]);
+    if (raw == null) return null;
+    if (raw is num) {
+      final v = raw.toInt();
+      return v > 1000 ? v : v * 1000;
+    }
+    return int.tryParse(raw.toString());
   }
 }

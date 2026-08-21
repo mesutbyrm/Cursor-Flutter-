@@ -117,29 +117,8 @@ class FeedNotifier extends AsyncNotifier<List<PostEntity>> {
     state = AsyncValue.data([post, ...cur]);
   }
 
-  void addLocalPost(String caption) {
-    final user = ref.read(authControllerProvider).valueOrNull;
-    final author = user ??
-        const UserEntity(
-          id: 'local_user',
-          username: 'kullanici',
-          displayName: 'Sen',
-        );
-    final post = PostEntity(
-      id: 'local_${DateTime.now().microsecondsSinceEpoch}',
-      author: author,
-      caption: caption.trim().isEmpty ? null : caption.trim(),
-      mediaUrl: null,
-      likesCount: 0,
-      commentsCount: 0,
-      viewsCount: 0,
-      isLiked: false,
-      createdAt: DateTime.now(),
-    );
-    state.whenData((list) {
-      state = AsyncValue.data([post, ...list]);
-    });
-  }
+  @Deprecated('Backend POST /api/social/posts kullanın')
+  void addLocalPost(String caption) {}
 }
 
 @Deprecated('Use socialNotifierProvider')
