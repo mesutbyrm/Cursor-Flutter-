@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.337+373 (2026-08-21) — Google giriş düzeltmesi
+
+- **Auth akışı:** Google `idToken` → `AuthService.loginWithGoogle` (JWT parse + oturum kaydı tek yol)
+- **Hata mesajları:** SHA-1 / GOOGLE_SERVICES_JSON_BASE64 / sunucu 401 için net Türkçe rehber
+- **CI:** Release keystore SHA-1 ↔ `google-services.json` doğrulaması; secret uyuşmazsa repo dosyası fallback
+
 ## 1.0.336+372 (2026-08-21) — Sesli oda tam senkronizasyon II
 
 - **Hediye flaşı:** Koltuk başına max 3 / 3 sn TTL (global havuz yerine receiver-scoped)

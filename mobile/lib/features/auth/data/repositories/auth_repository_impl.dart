@@ -168,11 +168,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserEntity> loginWithGoogle() async {
-    final body = await _native.signInWithGoogle();
-    if (body.containsKey('accessToken') || body.containsKey('access_token')) {
-      return _persistAndMap(body);
-    }
-    throw const ApiException('Google giriş yanıtı geçersiz');
+    final idToken = await _native.obtainGoogleIdToken();
+    final response = await _authService.loginWithGoogle(idToken: idToken);
+    return _mapAuthResponse(response);
   }
 
   @override

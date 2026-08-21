@@ -204,6 +204,9 @@ jobs:
           GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
         run: |
           set -eux
+          if [ -f mobile/android/app/google-services.json ]; then
+            cp mobile/android/app/google-services.json mobile/android/app/google-services.repo.json
+          fi
           if [ -n "${GOOGLE_SERVICES_JSON_BASE64:-}" ]; then
             RAW=$(printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | tr -d '\r')
             TRIMMED=$(printf '%s' "$RAW" | tr -d ' \n\t')
@@ -243,6 +246,16 @@ jobs:
             echo "::error::ANDROID_KEYSTORE_BASE64 yok — release build reddedildi (debug imza yasak)."
             exit 1
           fi
+
+      - name: Google Sign-In SHA-1 doğrulama
+        working-directory: ${{ github.workspace }}
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -eux
+          bash scripts/verify-google-signin-ci.sh
 
       - name: flutter build apk --release (Gate 9)
         run: |

@@ -16,7 +16,8 @@ class NativeAuthDataSource {
 
   final Dio _dio;
 
-  Future<Map<String, dynamic>> signInWithGoogle({String? referralCode}) async {
+  /// Native Google hesap seçici → [idToken] (Web OAuth client ile).
+  Future<String> obtainGoogleIdToken() async {
     final GoogleSignIn googleSignIn;
     try {
       googleSignIn = GoogleAuthConfig.createGoogleSignIn();
@@ -43,11 +44,13 @@ class NativeAuthDataSource {
           'Google bağlantı hatası. İnternetinizi kontrol edin.',
         );
       }
-      if (code.contains('sign_in_failed') || code.contains('10')) {
+      if (code.contains('sign_in_failed') ||
+          code.contains('10') ||
+          code.contains('developer_error')) {
         throw ApiException(
           'Google giriş başarısız (SHA-1 / OAuth yapılandırması). '
-          'Firebase Console\'da Android uygulamasına debug ve release SHA-1 '
-          'parmak izlerini ekleyin.\n\n'
+          'Firebase Console\'da Android uygulamasına release SHA-1 '
+          'parmak izini ekleyin; CI secret GOOGLE_SERVICES_JSON_BASE64 güncel olmalı.\n\n'
           'cd mobile/android && ./gradlew signingReport',
         );
       }
@@ -57,6 +60,7 @@ class NativeAuthDataSource {
             : 'Google giriş başarısız (${e.code})',
       );
     } catch (e) {
+      if (e is ApiException) rethrow;
       debugPrint('Google signIn: $e');
       throw ApiException(
         'Google giriş başarısız: ${ApiException.userMessage(e)}',
@@ -75,6 +79,11 @@ class NativeAuthDataSource {
         '${GoogleAuthConfig.setupHint}',
       );
     }
+    return idToken;
+  }
+
+  Future<Map<String, dynamic>> signInWithGoogle({String? referralCode}) async {
+    final idToken = await obtainGoogleIdToken();
 
     if (!Env.useMobileAuth) {
       debugPrint(
@@ -94,6 +103,14 @@ class NativeAuthDataSource {
       return _unwrapAuthResponse(res.data);
     } on ApiException catch (e) {
       debugPrint('mobile-google API: ${e.statusCode} ${e.message}');
+      if (e.statusCode == 401) {
+        throw ApiException(
+          e.message.isNotEmpty
+              ? e.message
+              : 'Geçersiz Google token — sunucu GOOGLE_CLIENT_ID ile mobil Web client uyuşmuyor olabilir.',
+          statusCode: 401,
+        );
+      }
       rethrow;
     }
   }
