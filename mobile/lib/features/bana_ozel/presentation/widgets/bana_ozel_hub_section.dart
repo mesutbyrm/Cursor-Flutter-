@@ -142,30 +142,26 @@ class _PreviewChip extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(item.icon, style: const TextStyle(fontSize: 20)),
-              const SizedBox(height: 6),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      item.nameTr,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 11,
-                      ),
-                    ),
-                    Text(
-                      '${item.jetonCost} jeton',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: UltraFortuneTokens.metallicGold
-                            .withValues(alpha: 0.9),
-                      ),
-                    ),
-                  ],
+              const Spacer(),
+              Text(
+                item.nameTr,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                  height: 1.15,
+                ),
+              ),
+              Text(
+                '${item.jetonCost} jeton',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10,
+                  height: 1.1,
+                  color: UltraFortuneTokens.metallicGold
+                      .withValues(alpha: 0.9),
                 ),
               ),
             ],
