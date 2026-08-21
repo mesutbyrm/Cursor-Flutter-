@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../navigation/fortune_card_navigation.dart';
 import '../../providers/fortune_types_display_provider.dart';
 import '../premium_2026/fortune_premium_card.dart';
 import '../premium_2026/premium_section_header.dart';
@@ -53,7 +53,7 @@ class _UltraFortuneTypesSectionState extends ConsumerState<UltraFortuneTypesSect
                 ),
               ),
               TextButton(
-                onPressed: () => context.push('/fortune/types'),
+                onPressed: () => openFortuneTypesCatalog(context),
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
                   minimumSize: Size.zero,
@@ -127,7 +127,7 @@ class _UltraFortuneTypesSectionState extends ConsumerState<UltraFortuneTypesSect
                           width: constraints.maxWidth,
                           height: constraints.maxHeight,
                           compact: true,
-                          onTap: () => context.push('/fortune/${e.slug}'),
+                          onTap: () => openFortuneTypeDestination(context, e),
                         );
                       },
                     ),

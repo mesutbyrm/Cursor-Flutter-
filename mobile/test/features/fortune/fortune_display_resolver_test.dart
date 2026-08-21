@@ -17,6 +17,33 @@ void main() {
       );
     });
 
+    test('fromHomeCards uses API description only', () {
+      const cards = [
+        HomeFortuneCardEntity(
+          id: '1',
+          title: 'Kahve Falı',
+          slug: 'kahve-fali',
+          icon: '☕',
+          description: 'API açıklama',
+        ),
+      ];
+      final entries = FortuneDisplayResolver.fromHomeCards(cards);
+      expect(entries.first.subtitle, 'API açıklama');
+    });
+
+    test('fromHomeCards null description when API omits it', () {
+      const cards = [
+        HomeFortuneCardEntity(
+          id: '1',
+          title: 'Tarot',
+          slug: 'tarot',
+          icon: '🃏',
+        ),
+      ];
+      final entries = FortuneDisplayResolver.fromHomeCards(cards);
+      expect(entries.first.subtitle, isNull);
+    });
+
     test('fromHomeCards preserves title image and price', () {
       const cards = [
         HomeFortuneCardEntity(

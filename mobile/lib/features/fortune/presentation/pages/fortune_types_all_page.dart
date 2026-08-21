@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_palette.dart';
+import '../navigation/fortune_card_navigation.dart';
 import '../providers/fortune_types_display_provider.dart';
 import '../widgets/fortune_mystic_background.dart';
 import '../widgets/premium_2026/fortune_premium_card.dart';
@@ -61,7 +62,7 @@ class FortuneTypesAllPage extends ConsumerWidget {
           data: (list) {
             if (list.isEmpty) {
               return const Center(
-                child: Text('Henüz fal türü bulunamadı.'),
+                child: Text('Şu anda fal türleri bulunamadı'),
               );
             }
             return GridView.builder(
@@ -84,7 +85,7 @@ class FortuneTypesAllPage extends ConsumerWidget {
                       width: constraints.maxWidth,
                       height: constraints.maxHeight,
                       compact: true,
-                      onTap: () => context.push('/fortune/${e.slug}'),
+                      onTap: () => openFortuneTypeDestination(context, e),
                     );
                   },
                 );

@@ -6,7 +6,7 @@ import '../../../platform/data/models/fortune_request_type.dart';
 import '../../domain/entities/fortune_display_entry.dart';
 import 'fortune_catalog.dart';
 
-/// API + katalog → vitrin kartı eşlemesi (slug önceliği backend).
+/// API + katalog → vitrin kartı eşlemesi (backend sırası korunur).
 abstract final class FortuneDisplayResolver {
   static String resolveRouteSlug(String raw) {
     final trimmed = raw.trim();
@@ -21,10 +21,11 @@ abstract final class FortuneDisplayResolver {
           final slug = resolveRouteSlug(c.navigationSlug);
           final catalog = FortuneCatalog.bySlug(slug);
           final apiImage = c.imageUrl?.trim();
+          final desc = c.description?.trim();
           return FortuneDisplayEntry(
             slug: slug,
             title: c.title.trim(),
-            subtitle: catalog?.description,
+            subtitle: desc != null && desc.isNotEmpty ? desc : null,
             imageUrl: apiImage != null && apiImage.isNotEmpty
                 ? CanlifalImageUrls.resolve(apiImage)
                 : null,
@@ -41,15 +42,14 @@ abstract final class FortuneDisplayResolver {
     List<FortuneRequestType> types,
   ) {
     final active = types.where((t) => t.isActive && t.key.isNotEmpty).toList();
-    final sorted = [...active]
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    return sorted.map((t) {
+    final ordered = _preserveBackendOrder(active);
+    return ordered.map((t) {
       final slug = resolveRouteSlug(t.key);
       final catalog = FortuneCatalog.bySlug(slug);
       return FortuneDisplayEntry(
         slug: slug,
         title: t.label,
-        subtitle: t.description ?? catalog?.description,
+        subtitle: t.description,
         imageUrl: t.imageUrl,
         jetonCost: t.jetonCost,
         accent: catalog?.accent ?? const Color(0xFFB832FF),
@@ -76,9 +76,34 @@ abstract final class FortuneDisplayResolver {
         .toList();
   }
 
+  static List<FortuneRequestType> _preserveBackendOrder(
+    List<FortuneRequestType> types,
+  ) {
+    final hasSort = types.any((t) => t.sortOrder > 0);
+    if (!hasSort) return types;
+    return [...types]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+  }
+
   static String? _emojiFromIcon(String icon) {
     final trimmed = icon.trim();
     if (trimmed.isEmpty || trimmed.startsWith('http')) return null;
     return trimmed;
+  }
+
+  /// Test / parse yardımcısı — tek JSON öğesi.
+  static FortuneDisplayEntry? entryFromRequestTypeJson(
+    Map<String, dynamic> json,
+  ) {
+    final type = FortuneRequestType.fromJson(json);
+    if (!type.isActive || type.key.isEmpty) return null;
+    final entries = fromRequestTypes([type]);
+    return entries.isEmpty ? null : entries.first;
+  }
+
+  static FortuneDisplayEntry? entryFromHomeCardJson(Map<String, dynamic> json) {
+    final card = HomeFortuneCardEntity.fromJson(json);
+    if (card.title.trim().isEmpty) return null;
+    final entries = fromHomeCards([card]);
+    return entries.isEmpty ? null : entries.first;
   }
 }

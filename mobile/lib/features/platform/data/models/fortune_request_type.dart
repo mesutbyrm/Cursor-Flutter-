@@ -1,6 +1,8 @@
 import 'package:canlifal_social/core/images/canlifal_image_urls.dart';
 import 'package:canlifal_social/core/util/json_util.dart';
 
+import '../../../../core/util/fortune_price_parser.dart';
+
 /// `GET /api/fortune-request-types` — fal türü kaydı.
 class FortuneRequestType {
   const FortuneRequestType({
@@ -52,7 +54,7 @@ class FortuneRequestType {
     return FortuneRequestType(
       key: key.isEmpty ? 'general' : key,
       label: label != null && label.isNotEmpty ? label : key,
-      jetonCost: asInt(pick(json, ['jetonCost', 'cost', 'price', 'jetonPrice'])),
+      jetonCost: parseFortuneJetonPrice(json),
       imageUrl: imageUrl,
       description:
           description != null && description.isNotEmpty ? description : null,
