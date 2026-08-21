@@ -27,4 +27,10 @@ abstract final class DeletedMessagesStore {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key(userId), jsonEncode(set.toList()));
   }
+
+  static Future<void> clearForUser(String userId) async {
+    if (userId.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key(userId));
+  }
 }

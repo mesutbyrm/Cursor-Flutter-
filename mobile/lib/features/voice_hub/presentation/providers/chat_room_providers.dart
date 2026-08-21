@@ -956,6 +956,15 @@ class VoiceRoomLiveController
   /// Müzik PiP sonrası aynı odaya dönüş — oturumu yeniden başlat.
   void ensureActiveSession() {
     if (_sessionActive) return;
+    final hub = ref.read(sseConnectionHubProvider);
+    final key = _sseReleaseKey;
+    if (_sseStarted &&
+        _sseAttachedRoomKey != null &&
+        hub.voiceRoomRefCount(key) > 0) {
+      _sessionActive = true;
+      _entryBegun = true;
+      return;
+    }
     _entryBegun = false;
     _sessionActive = false;
     unawaited(_beginRoomSession());
