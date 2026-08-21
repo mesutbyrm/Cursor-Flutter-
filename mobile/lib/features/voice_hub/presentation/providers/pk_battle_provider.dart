@@ -106,14 +106,14 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
       final teamB = presence.skip(half).toList();
       return (
         PkSideState(
-          score: _baseScore(teamA),
+          score: 0,
           giftPower: 0,
-          winStreak: 2,
+          winStreak: 0,
           members: teamA,
           leader: l ?? (teamA.isNotEmpty ? teamA.first : null),
         ),
         PkSideState(
-          score: _baseScore(teamB),
+          score: 0,
           giftPower: 0,
           winStreak: 0,
           members: teamB,
@@ -124,28 +124,20 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
 
     return (
       PkSideState(
-        score: _baseScore(l != null ? [l] : const []),
+        score: 0,
         giftPower: 0,
-        winStreak: 3,
+        winStreak: 0,
         members: l != null ? [l] : const [],
         leader: l,
       ),
       PkSideState(
-        score: _baseScore(r != null ? [r] : const []),
+        score: 0,
         giftPower: 0,
-        winStreak: 1,
+        winStreak: 0,
         members: r != null ? [r] : const [],
         leader: r,
       ),
     );
-  }
-
-  int _baseScore(List<ChatRoomPresence> users) {
-    var s = 0;
-    for (final u in users) {
-      s += 8000 + (u.id.hashCode.abs() % 4000);
-    }
-    return s;
   }
 
   void setMode(PkBattleMode mode) {
@@ -166,6 +158,7 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
 
   void applyGift(LiveGiftEvent event, {required bool toLeft}) {
     if (!state.isActive || state.serverAuthoritative) return;
+    if (!giftSideResolvable(event)) return;
     final power = event.jetonAmount;
     final bump = (power * 0.85).round().clamp(50, 500000);
 
@@ -182,20 +175,43 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
     }
   }
 
-  /// Gönderici hangi tarafta — id veya isim eşlemesi.
+  /// Hediye hangi PK tarafına sayılır — alıcı id ile eşleme (tahmin yok).
   bool giftTargetsLeft(LiveGiftEvent event) {
-    final leftIds = {
-      ...state.left.members.map((e) => e.id),
-      if (state.left.leader != null) state.left.leader!.id,
+    final leftIds = _sideUserIds(state.left);
+    final rightIds = _sideUserIds(state.right);
+    final rid = event.receiverId?.trim();
+    if (rid != null && rid.isNotEmpty) {
+      if (leftIds.contains(rid)) return true;
+      if (rightIds.contains(rid)) return false;
+    }
+    final sid = event.senderId?.trim();
+    if (sid != null && sid.isNotEmpty) {
+      if (leftIds.contains(sid)) return true;
+      if (rightIds.contains(sid)) return false;
+    }
+    return true;
+  }
+
+  bool giftSideResolvable(LiveGiftEvent event) {
+    final leftIds = _sideUserIds(state.left);
+    final rightIds = _sideUserIds(state.right);
+    final rid = event.receiverId?.trim();
+    if (rid != null && rid.isNotEmpty) {
+      return leftIds.contains(rid) || rightIds.contains(rid);
+    }
+    final sid = event.senderId?.trim();
+    if (sid != null && sid.isNotEmpty) {
+      return leftIds.contains(sid) || rightIds.contains(sid);
+    }
+    return false;
+  }
+
+  Set<String> _sideUserIds(PkSideState side) {
+    return {
+      ...side.members.map((e) => e.id.trim()).where((id) => id.isNotEmpty),
+      if (side.leader != null && side.leader!.id.trim().isNotEmpty)
+        side.leader!.id.trim(),
     };
-    final sid = event.senderId;
-    if (sid != null && leftIds.contains(sid)) return true;
-    final rightIds = {
-      ...state.right.members.map((e) => e.id),
-      if (state.right.leader != null) state.right.leader!.id,
-    };
-    if (sid != null && rightIds.contains(sid)) return false;
-    return event.senderName.hashCode.isEven;
   }
 
   void applyRemoteBattle(PkBattleRemote remote) {

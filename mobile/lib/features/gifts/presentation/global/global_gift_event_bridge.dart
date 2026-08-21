@@ -8,6 +8,8 @@ import '../../../notifications/domain/entities/app_notification_entity.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../data/gift_insights_remote_datasource.dart';
 import '../../domain/gift_feed_item.dart';
+import '../../../voice_hub/presentation/providers/voice_room_session_registry.dart';
+import '../../../../core/room/room_event_scope.dart';
 import '../providers/gift_display_settings_provider.dart';
 import 'global_gift_notification.dart';
 import 'global_gift_overlay_notifier.dart';
@@ -88,7 +90,21 @@ void handleNotificationGiftForGlobalOverlay(
 }
 
 /// Oda/yayın hediye SSE'sinden global overlay'e (dev marquee yerine).
-void enqueueGlobalGiftFromLiveEvent(WidgetRef ref, LiveGiftEvent event) {
+void enqueueGlobalGiftFromLiveEvent(
+  WidgetRef ref,
+  LiveGiftEvent event, {
+  String? sessionKey,
+}) {
+  if (sessionKey != null && sessionKey.isNotEmpty) {
+    final active = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+    if (active.isNotEmpty &&
+        !sessionKeyMatchesActiveRoom(
+          sessionKey: sessionKey,
+          activeRoomKey: active,
+        )) {
+      return;
+    }
+  }
   ref
       .read(globalGiftOverlayProvider.notifier)
       .enqueue(GlobalGiftNotification.fromLiveGift(event));

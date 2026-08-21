@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/pk_event_log.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/domain/pk/pk_session_phase.dart';
 import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
@@ -214,10 +215,27 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
 
   /// Oda SSE üzerinden gelen PK güncellemesi.
   void ingestSseBattle(PkBattleRemote battle) {
+    if (!_shouldIngestBattle(battle)) return;
     _apply(battle, 'sse:pk');
     if (battle.isPending) {
       ref.read(livePkInviteSignalProvider.notifier).bump();
     }
+  }
+
+  /// Yabancı oda PK olaylarını global state'e yazma; davet hedefi istisnası.
+  bool _shouldIngestBattle(PkBattleRemote battle) {
+    final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+    if (activeKey.isEmpty) return true;
+
+    final room = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
+    if (room == null) return true;
+    if (pkBattleBelongsToRoom(battle, room)) return true;
+
+    if (!battle.isPending) return false;
+
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return false;
+    return isPkInviteTarget(battle, room, userId: user.id);
   }
 
   void _apply(PkBattleRemote battle, String event) {

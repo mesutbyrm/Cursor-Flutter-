@@ -125,6 +125,16 @@ class WalletBalancesNotifier extends AsyncNotifier<WalletBalances> {
     return next.value ?? _cached ?? WalletBalances.empty;
   }
 
+  /// Hediye SSE/REST yanıtındaki `remainingBalance` — anında UI senkronu.
+  void applyJetonFromServer(int jeton) {
+    if (jeton < 0) return;
+    final base = _cached ?? state.valueOrNull ?? WalletBalances.empty;
+    final next = base.copyWith(jeton: jeton);
+    _cached = next;
+    _lastFetchedAt = DateTime.now();
+    state = AsyncData(next);
+  }
+
   Future<WalletBalances> _load({required bool force}) async {
     if (!force && _cached != null) return _cached!;
     final balances = await LoadingTimeout.run(
