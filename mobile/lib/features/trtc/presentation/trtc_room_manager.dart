@@ -16,6 +16,9 @@ import '../domain/entities/trtc_credentials.dart';
 
 /// Tencent TRTC oda oturumu — canlı yayın ve sesli sohbet.
 class TrtcRoomManager {
+  /// Tek `TRTCCloud.sharedInstance()` — eşzamanlı çoklu manager oturumu engelle.
+  static TrtcRoomManager? _activeSession;
+
   TRTCCloud? _cloud;
   TXDeviceManager? _device;
   TRTCCloudListener? _listener;
@@ -161,6 +164,11 @@ class TrtcRoomManager {
 
     if (_inRoom) {
       await leave();
+    }
+
+    final other = _activeSession;
+    if (other != null && other != this && other._inRoom) {
+      await other.leave();
     }
 
     _previewOnly = false;
@@ -311,6 +319,8 @@ class TrtcRoomManager {
         'Canlı odaya bağlanılamadı (kod: $enterResult). İnterneti kontrol edin.',
       );
     }
+
+    _activeSession = this;
 
     if (audioOnly) {
       _cloud!.startLocalAudio(TRTCAudioQuality.speech);
@@ -511,6 +521,9 @@ class TrtcRoomManager {
     _localUserId = null;
     _micOn = false;
     _cameraOn = false;
+    if (_activeSession == this) {
+      _activeSession = null;
+    }
   }
 
   static const int voiceRoomMusicId = 88001;

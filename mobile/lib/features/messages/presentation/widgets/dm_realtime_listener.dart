@@ -69,13 +69,21 @@ class _DmRealtimeListenerState extends ConsumerState<DmRealtimeListener> {
   }
 
   Future<void> _scanCallSignals(String userId) async {
+    final openId = ref.read(openDmConversationIdProvider);
     final conversations =
         ref.read(conversationsListNotifierProvider).valueOrNull?.all ??
             const [];
     final repo = ref.read(messagesRepositoryProvider);
     final service = ref.read(dmVoiceCallServiceProvider);
 
-    for (final c in conversations.take(12)) {
+    final Iterable targets;
+    if (openId != null && openId.isNotEmpty) {
+      targets = conversations.where((c) => c.id == openId).take(1);
+    } else {
+      targets = conversations.where((c) => c.unreadCount > 0).take(4);
+    }
+
+    for (final c in targets) {
       if (c.id.isEmpty || c.id == userId) continue;
       try {
         final messages = await repo.messages(

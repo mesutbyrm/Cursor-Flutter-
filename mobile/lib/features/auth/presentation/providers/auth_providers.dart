@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/user_theme_sync_provider.dart';
 
+import '../../../../core/bootstrap/user_session_cleanup.dart';
 import '../../../../core/bootstrap/session_data_refresh.dart';
 import '../../../../core/bootstrap/user_session_cleanup.dart';
 import '../../../../core/bootstrap/app_startup_log.dart';
@@ -422,7 +423,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
       ApiCacheStore.clearAll(),
     ]);
     await ref.read(sessionUserCacheProvider).clear();
-    await invalidateUserSessionCaches(ref, userId: userId);
+    await teardownRealtimeOnLogout(ref, userId: userId);
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncValue.data(null);
   }

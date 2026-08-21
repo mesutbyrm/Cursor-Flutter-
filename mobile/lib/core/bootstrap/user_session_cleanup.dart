@@ -10,12 +10,17 @@ import '../../features/notifications/data/repositories/notifications_repository_
 import '../../features/notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
 import '../../features/social/presentation/providers/social_providers.dart';
+import '../network/sse/sse_hub_provider.dart';
 import 'session_data_refresh.dart';
 
-/// Logout veya kullanıcı değişiminde oturuma bağlı provider/cache temizliği.
+/// Logout / kullanıcı değişiminde SSE + oturum provider temizliği.
 Future<void> invalidateUserSessionCaches(Ref ref, {String? userId}) async {
   invalidateAuthenticatedShellData(ref);
 
+  final hub = ref.read(sseConnectionHubProvider);
+  await hub.dispose();
+
+  ref.invalidate(sseConnectionHubProvider);
   ref.invalidate(notificationsListProvider);
   ref.invalidate(notificationsListNotifierProvider);
   ref.invalidate(notificationsUnreadApiProvider);
@@ -33,4 +38,9 @@ Future<void> invalidateUserSessionCaches(Ref ref, {String? userId}) async {
     await HiddenConversationsStore.clearForUser(userId);
     await DeletedMessagesStore.clearForUser(userId);
   }
+}
+
+/// Auth logout — SSE hub + TRTC singleton state temizliği.
+Future<void> teardownRealtimeOnLogout(Ref ref, {String? userId}) async {
+  await invalidateUserSessionCaches(ref, userId: userId);
 }

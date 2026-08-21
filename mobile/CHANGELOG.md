@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.332+368 (2026-08-21) — Final Production Audit (Aşama 12)
+
+- **TRTC P0:** `_activeSession` — çoklu `TrtcRoomManager` aynı cloud instance çakışması engellendi
+- **Logout P1:** `teardownRealtimeOnLogout` — SSE hub dispose + oturum provider invalidation
+- **Voice PiP P1:** `ensureActiveSession` duplicate SSE attach guard
+- **DM P1:** call-signal poll yalnızca açık sohbet veya unread konuşmalar (max 4)
+- **Auth cache:** logout'ta notification read prefs + hidden/deleted DM store temizliği
+- **Docs:** `FINAL_PRODUCTION_AUDIT.md`, `FLUTTER_API_AUDIT.md`, `RELEASE_CHECKLIST.md`
+
 ## 1.0.331+367 (2026-08-21) — Bildirimler + Mesajlar + Ayarlar + Navigasyon V2
 
 - **Bildirimler:** Backend unread count (`GET /api/notifications/unread`), avatar/imageUrl, okunmamış vurgu, tek tek okundu (optimistic + revert), zil tıklamasında otomatik tümünü okuma kaldırıldı

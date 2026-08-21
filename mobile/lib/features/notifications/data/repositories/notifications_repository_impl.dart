@@ -211,6 +211,10 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       await _remote.clearPaymentNotifications();
     } catch (_) {}
   }
+
+  /// Logout — yerel okundu hafızasını temizle (kullanıcılar arası sızıntı önleme).
+  static Future<void> clearLocalReadState() =>
+      _NotificationReadMemory.clearAll();
 }
 
 class _NotificationReadMemory {
