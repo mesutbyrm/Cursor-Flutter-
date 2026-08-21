@@ -13,6 +13,7 @@ import '../premium_2026/profile_screen_state.dart';
 import '../premium_2026/profile_theme.dart';
 import '../providers/profile_hub_providers.dart';
 import 'profile_avatar_sheet.dart';
+import 'profile_meta_helpers.dart';
 import '../../../cosmetics/domain/cosmetic_item.dart';
 import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../../cosmetics/presentation/widgets/cosmetic_avatar_frame.dart';
@@ -122,6 +123,11 @@ class ProfileHubHeader extends ConsumerWidget {
                                   Shadow(color: Colors.black54, blurRadius: 6),
                                 ],
                               ),
+                            ),
+                            _ProfileMetaChips(
+                              zodiac: ext.zodiacSign,
+                              team: ext.favoriteTeam ??
+                                  state.wallet?.favoriteTeam,
                             ),
                           ],
                         ),
@@ -425,6 +431,78 @@ class _MembershipBadgeChip extends StatelessWidget {
                 style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800),
               ),
             ),
+    );
+  }
+}
+
+class _ProfileMetaChips extends StatelessWidget {
+  const _ProfileMetaChips({this.zodiac, this.team});
+
+  final String? zodiac;
+  final String? team;
+
+  @override
+  Widget build(BuildContext context) {
+    final chips = <Widget>[];
+    final z = zodiac?.trim();
+    if (z != null && z.isNotEmpty) {
+      final emoji = profileZodiacEmoji(z);
+      chips.add(_MetaChip(
+        label: emoji != null
+            ? '$emoji ${profileZodiacLabelTr(z)}'
+            : profileZodiacLabelTr(z),
+      ));
+    }
+    final t = team?.trim();
+    if (t != null && t.isNotEmpty) {
+      chips.add(_MetaChip(label: t, icon: Icons.sports_soccer_rounded));
+    }
+    if (chips.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        children: chips,
+      ),
+    );
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({required this.label, this.icon});
+
+  final String label;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: ProfilePremiumTheme.glassBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 11, color: Colors.white70),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.82),
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

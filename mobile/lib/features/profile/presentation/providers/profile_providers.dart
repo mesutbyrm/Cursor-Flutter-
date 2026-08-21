@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
@@ -79,11 +81,30 @@ class WalletBalancesNotifier extends AsyncNotifier<WalletBalances> {
   DateTime? _lastFetchedAt;
   WalletBalances? _cached;
 
+  void _resetLocalCache() {
+    _cached = null;
+    _lastFetchedAt = null;
+  }
+
   @override
   Future<WalletBalances> build() async {
     ref.keepAlive();
+    ref.listen<String?>(
+      authControllerProvider.select((a) => a.valueOrNull?.id),
+      (prev, next) {
+        if (prev != null && prev != next) {
+          _resetLocalCache();
+          state = const AsyncValue.loading();
+          unawaited(refresh(force: true));
+        }
+        if (next == null) {
+          _resetLocalCache();
+          state = const AsyncValue.data(WalletBalances.empty);
+        }
+      },
+    );
     final authJeton = ref.read(authControllerProvider).valueOrNull?.coinBalance;
-    if (authJeton != null) {
+    if (authJeton != null && _cached == null) {
       _cached = WalletBalances(jeton: authJeton);
       _lastFetchedAt = DateTime.now();
     }

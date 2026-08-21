@@ -48,6 +48,18 @@ final profileVisitorBadgeProvider = Provider<int>((ref) {
   return stats?.profileViews ?? 0;
 });
 
+/// Profil verisi yenileme — yalnızca profil/cüzdan provider'ları (ana sayfa dokunulmaz).
+void invalidateProfileData(WidgetRef ref) {
+  ref.invalidate(profileExtendedProvider);
+  ref.invalidate(profileUserStatisticsProvider);
+  ref.invalidate(profileStatsProvider);
+  ref.invalidate(userLevelProvider);
+  ref.invalidate(walletBalancesProvider);
+  unawaited(ref.read(walletBalancesProvider.notifier).refresh(force: true));
+  unawaited(ref.read(profileExtendedProvider.future));
+  unawaited(ref.read(profileStatsProvider.future));
+}
+
 /// Profil hub yenileme — tüm ilgili provider'ları invalidate eder.
 Future<void> refreshProfileHub(WidgetRef ref, {String? userId}) async {
   ref.invalidate(profileExtendedProvider);

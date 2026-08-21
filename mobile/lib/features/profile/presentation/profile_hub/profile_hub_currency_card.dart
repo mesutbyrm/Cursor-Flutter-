@@ -24,13 +24,19 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
     final extAsync = ref.watch(profileExtendedProvider);
     final ext = extAsync.valueOrNull ?? const ProfileExtendedEntity();
     final level = state.level;
+    final walletAsync = ref.watch(walletBalancesProvider);
+    final wallet = walletAsync.valueOrNull ?? state.wallet;
     final xpTarget = level.xpToNext > 0 ? level.xpToNext : 100;
     final xpProgress = (level.xp / xpTarget).clamp(0.0, 1.0);
-    final loading = extAsync.isLoading &&
+    final levelLoading = extAsync.isLoading &&
         extAsync.valueOrNull == null &&
         level.xp <= 0 &&
         level.level <= 1;
+    final walletLoading =
+        walletAsync.isLoading && walletAsync.valueOrNull == null;
     final membershipInfo = ref.watch(profileMembershipInfoProvider);
+    final jeton = wallet?.jeton ?? state.jeton;
+    final cfc = wallet?.cfc ?? state.cfc;
 
     return ProfileGlass(
       padding: const EdgeInsets.all(16),
@@ -67,7 +73,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(99),
                       child: LinearProgressIndicator(
-                        value: loading ? null : xpProgress,
+                        value: levelLoading ? null : xpProgress,
                         minHeight: 6,
                         backgroundColor: Colors.white.withValues(alpha: 0.1),
                         color: ProfilePremiumTheme.neonPurple,
@@ -75,7 +81,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      loading
+                      levelLoading
                           ? '…'
                           : '${profileFormatCount(level.xp)} / ${profileFormatCount(xpTarget)} XP',
                       style: TextStyle(
@@ -97,10 +103,10 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                         icon: Icons.monetization_on_rounded,
                         color: const Color(0xFFFFD54F),
                         label: buildMembershipCurrencyJetonLabel(),
-                        value: profileFormatCount(state.jeton),
+                        value: profileFormatCount(jeton),
                         showPlus: true,
                         onPlus: () => openJetonStore(context, ref: ref),
-                        loading: loading,
+                        loading: walletLoading,
                       ),
                     ),
                     Expanded(
@@ -108,10 +114,10 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                         icon: Icons.diamond_rounded,
                         color: const Color(0xFF64B5F6),
                         label: buildMembershipHubCurrencyElmasLabel(),
-                        value: profileFormatCount(state.cfc),
+                        value: profileFormatCount(cfc),
                         showPlus: true,
                         onPlus: () => openCfcStore(context, ref: ref),
-                        loading: loading,
+                        loading: walletLoading,
                       ),
                     ),
                     Expanded(
@@ -120,7 +126,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                         color: const Color(0xFFFF4D9D),
                         label: 'Beğeni',
                         value: profileFormatCount(state.likes),
-                        loading: loading,
+                        loading: levelLoading,
                       ),
                     ),
                     Expanded(
@@ -129,7 +135,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                         color: ProfilePremiumTheme.neonPurple,
                         label: 'Günlük Seri',
                         value: profileFormatCount(ext.dailyStreak),
-                        loading: loading,
+                        loading: levelLoading,
                       ),
                     ),
                   ],

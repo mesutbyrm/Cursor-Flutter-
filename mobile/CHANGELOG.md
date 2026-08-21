@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.326+362 (2026-08-21) — Profil + Cüzdan + Jeton V2
+
+- **Cache:** `clearAuthenticatedUserCache` — logout/hesap değişiminde profil/cüzdan/üyelik cache temizliği
+- **Jeton:** `currentUserCoinBalanceProvider` ve profil cüzdan kartı — `walletBalancesProvider` tek kaynak
+- **UI:** Profil header burç/takım chip'leri (backend verisi), API hata banner + Tekrar Dene
+- **Test:** Profile/wallet parse, session cache, navigation testleri
+
 ## 1.0.325+361 (2026-08-21) — Fal & Tarot V2 backend parity
 
 - **API:** homepage-fortune-cards → fortune-request-types → FortuneCatalog yedek
