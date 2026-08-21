@@ -17,6 +17,7 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../voice_hub/presentation/providers/voice_room_session_registry.dart';
 import '../../../../core/room/room_event_scope.dart';
 import '../global/global_gift_event_bridge.dart';
+import '../providers/gift_goal_providers.dart';
 import 'gift_session_controller.dart';
 import 'gift_sync_log.dart';
 
@@ -148,6 +149,14 @@ class _GiftEventListenerState extends ConsumerState<GiftEventListener> {
         ref
             .read(voiceRoomLiveProvider(widget.sessionKey).notifier)
             .appendGiftChatMessage(enriched);
+        ref
+            .read(
+              giftGoalProvider((
+                context: 'voice_room',
+                contextId: widget.sessionKey,
+              )).notifier,
+            )
+            .refresh();
       }
       if (widget.useLiveRealtime && widget.liveStreamId != null) {
         ref

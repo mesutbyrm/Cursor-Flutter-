@@ -39,17 +39,28 @@ class _GiftGoalBarState extends ConsumerState<GiftGoalBar> {
     });
 
     final goal = st.goal;
-    if (goal == null) return const SizedBox.shrink();
+    if (goal == null || st.dismissed) return const SizedBox.shrink();
 
-    return _GoalStrip(goal: goal, celebrating: _celebrating);
+    return _GoalStrip(
+      goal: goal,
+      celebrating: _celebrating,
+      onDismiss: goal.isCompleted
+          ? () => ref.read(giftGoalProvider(key).notifier).dismissCompleted()
+          : null,
+    );
   }
 }
 
 class _GoalStrip extends StatelessWidget {
-  const _GoalStrip({required this.goal, required this.celebrating});
+  const _GoalStrip({
+    required this.goal,
+    required this.celebrating,
+    this.onDismiss,
+  });
 
   final GiftGoal goal;
   final bool celebrating;
+  final VoidCallback? onDismiss;
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +112,17 @@ class _GoalStrip extends StatelessWidget {
                   fontSize: 10,
                 ),
               ),
+              if (done && onDismiss != null) ...[
+                const SizedBox(width: 4),
+                InkWell(
+                  onTap: onDismiss,
+                  borderRadius: BorderRadius.circular(8),
+                  child: const Padding(
+                    padding: EdgeInsets.all(2),
+                    child: Icon(Icons.close_rounded, size: 16, color: Colors.white70),
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 6),

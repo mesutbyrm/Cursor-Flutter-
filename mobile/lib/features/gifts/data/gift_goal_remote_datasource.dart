@@ -66,4 +66,24 @@ class GiftGoalRemoteDataSource {
     }
     return null;
   }
+
+  /// Aktif hedefi sonlandır — uç yoksa sessizce yoksayılır.
+  Future<void> closeGoal(String goalId) async {
+    final id = goalId.trim();
+    if (id.isEmpty) return;
+    final paths = [
+      '${ApiEndpoints.giftsGoals}/$id',
+      '${ApiEndpoints.giftsGoals}/$id/close',
+    ];
+    for (final path in paths) {
+      try {
+        await _dio.safePatch<dynamic>(path, data: const {'status': 'ended'});
+        return;
+      } catch (_) {}
+      try {
+        await _dio.safePost<dynamic>(path, data: const {'action': 'close'});
+        return;
+      } catch (_) {}
+    }
+  }
 }

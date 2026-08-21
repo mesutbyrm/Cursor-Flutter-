@@ -4,6 +4,34 @@ import '../../../../core/network/voice_event_log.dart';
 import '../../domain/entities/voice_room_entity.dart';
 import 'live_providers.dart';
 
+/// Yerel oda listesinde tek satırı güncelle (test edilebilir saf fonksiyon).
+List<VoiceRoomEntity> patchVoiceRoomsInList(
+  List<VoiceRoomEntity> current,
+  String roomKey,
+  VoiceRoomEntity Function(VoiceRoomEntity room) transform,
+) {
+  final key = roomKey.trim();
+  if (key.isEmpty) return current;
+  final lower = key.toLowerCase();
+  var changed = false;
+  final next = <VoiceRoomEntity>[];
+  for (final r in current) {
+    final id = r.id.trim().toLowerCase();
+    final slug = r.slug.trim().toLowerCase();
+    final matches = id == lower ||
+        slug == lower ||
+        r.apiRoomKey.trim().toLowerCase() == lower ||
+        (key.length >= 6 && id.startsWith(lower));
+    if (matches) {
+      changed = true;
+      next.add(transform(r));
+    } else {
+      next.add(r);
+    }
+  }
+  return changed ? next : current;
+}
+
 /// Sesli oda listesi — sayfalanmış yükleme (açılışta tüm odalar çekilmez).
 class VoiceRoomsListNotifier extends AsyncNotifier<List<VoiceRoomEntity>> {
   static const _pageSize = 30;
@@ -41,6 +69,17 @@ class VoiceRoomsListNotifier extends AsyncNotifier<List<VoiceRoomEntity>> {
       VoiceEventLog.roomListLoad(page: 1, count: result.rooms.length);
       return result.rooms;
     });
+  }
+
+  /// Yerel liste önbelleğinde tek oda alanlarını güncelle (ayar PATCH sonrası).
+  void patchRoomFields(
+    String roomKey,
+    VoiceRoomEntity Function(VoiceRoomEntity room) transform,
+  ) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    final next = patchVoiceRoomsInList(current, roomKey, transform);
+    if (!identical(next, current)) state = AsyncValue.data(next);
   }
 
   Future<void> loadMore() async {

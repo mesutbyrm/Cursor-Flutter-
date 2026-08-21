@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.334+370 (2026-08-21) — Sesli oda ayarları + hediye hedefi
+
+- **Oda yönetimi:** Kilit, koltuk sayısı, max kullanıcı, giriş şifresi — canonical room id + liste önbelleği anında güncellenir
+- **Yönetim paneli:** `voiceRoomByIdProvider` ile canlı oda durumu (kilit/kapasite)
+- **Hediye hedefi:** Hedefe ulaşınca kapat (X) butonu; hediye SSE sonrası anlık yenileme
+- **PK / müzik / arkaplan:** Ayar paneli senkronizasyonu ile doğru oda anahtarı kullanımı
+
 ## 1.0.333+369 (2026-08-21) — V2 entegrasyon + release hazırlık
 
 - **Entegrasyon:** Aşama 2–12 PR'ları `main`'e birleştirildi (Home V1 + 10 V2 dal + Final Audit)

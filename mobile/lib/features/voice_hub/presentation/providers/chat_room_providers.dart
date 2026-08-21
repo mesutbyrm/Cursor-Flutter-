@@ -18,6 +18,7 @@ import '../../../vip_gold/presentation/providers/pending_room_password_provider.
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../data/services/voice_room_debug_log.dart';
@@ -508,6 +509,41 @@ class VoiceRoomLiveController
         meta: _roomMeta,
         knownRooms: ref.read(voiceRoomsProvider).valueOrNull,
       );
+
+  /// PATCH `/settings` — her zaman Prisma cuid (slug değil).
+  String get _settingsRoomKey {
+    final canonical = _canonicalRoomKey.trim();
+    if (canonical.length >= 18) return canonical;
+    final metaId = _roomMeta.apiRoomKey.trim();
+    if (metaId.isNotEmpty) return metaId;
+    return _roomKey;
+  }
+
+  String? get _settingsAlternateKey {
+    final slug = _roomMeta.slug.trim();
+    final key = _settingsRoomKey;
+    if (slug.isEmpty || slug == key) return null;
+    return slug;
+  }
+
+  void _patchCachedRoom(VoiceRoomEntity Function(VoiceRoomEntity) patch) {
+    ref
+        .read(voiceRoomsListNotifierProvider.notifier)
+        .patchRoomFields(_settingsRoomKey, patch);
+    ref.invalidate(voiceRoomsProvider);
+    ref.invalidate(voiceRoomByIdProvider(_settingsRoomKey));
+    if (_roomKey != _settingsRoomKey) {
+      ref.invalidate(voiceRoomByIdProvider(_roomKey));
+    }
+  }
+
+  void _invalidateRoomCaches() {
+    ref.invalidate(voiceRoomsProvider);
+    ref.invalidate(voiceRoomByIdProvider(_settingsRoomKey));
+    if (_roomKey != _settingsRoomKey) {
+      ref.invalidate(voiceRoomByIdProvider(_roomKey));
+    }
+  }
 
   String? _djChatLabel(String userId) {
     for (final p in state.presence) {
@@ -2811,11 +2847,12 @@ class VoiceRoomLiveController
       await ref
           .read(chatRoomRemoteProvider)
           .setRoomBackground(
-            roomKey: _roomKey.isNotEmpty ? _roomKey : _roomMeta.id,
-            alternateKey: _roomMeta.slug,
+            roomKey: _settingsRoomKey,
+            alternateKey: _settingsAlternateKey,
             backgroundImage: trimmed,
           );
-      ref.invalidate(voiceRoomsProvider);
+      _invalidateRoomCaches();
+      unawaited(ref.read(voiceRoomsListNotifierProvider.notifier).refresh());
       return null;
     } catch (e) {
       state = state.copyWith(
@@ -2833,12 +2870,15 @@ class VoiceRoomLiveController
       return 'Oda şifresi ayarlama yetkiniz yok.';
     }
     try {
+      final removing = password == null || password.isEmpty;
       await ref.read(chatRoomRemoteProvider).updateRoomSettings(
-            roomKey: _roomKey.isNotEmpty ? _roomKey : _roomMeta.id,
-            alternateKey: _roomMeta.slug,
+            roomKey: _settingsRoomKey,
+            alternateKey: _settingsAlternateKey,
             password: password,
-            removePassword: password == null || password.isEmpty,
+            removePassword: removing,
           );
+      _patchCachedRoom((r) => r.copyWith(hasPassword: !removing));
+      unawaited(ref.read(voiceRoomsListNotifierProvider.notifier).refresh());
       return null;
     } catch (e) {
       return ApiException.userMessage(e);
@@ -2861,14 +2901,14 @@ class VoiceRoomLiveController
     }
     try {
       await ref.read(chatRoomRemoteProvider).updateRoomSettings(
-            roomKey: _roomKey.isNotEmpty ? _roomKey : _roomMeta.id,
-            alternateKey: _roomMeta.slug,
+            roomKey: _settingsRoomKey,
+            alternateKey: _settingsAlternateKey,
             name: trimmedName.isNotEmpty ? trimmedName : null,
             description: description != null ? trimmedDesc : null,
             rules: rules,
           );
-      ref.invalidate(voiceRoomsProvider);
-      ref.invalidate(voiceRoomByIdProvider(_roomKey));
+      _invalidateRoomCaches();
+      unawaited(ref.read(voiceRoomsListNotifierProvider.notifier).refresh());
       return null;
     } catch (e) {
       return ApiException.userMessage(e);
@@ -2882,12 +2922,12 @@ class VoiceRoomLiveController
     }
     try {
       await ref.read(chatRoomRemoteProvider).updateRoomSettings(
-            roomKey: _roomKey.isNotEmpty ? _roomKey : _roomMeta.id,
-            alternateKey: _roomMeta.slug,
+            roomKey: _settingsRoomKey,
+            alternateKey: _settingsAlternateKey,
             isLocked: locked,
           );
-      ref.invalidate(voiceRoomsProvider);
-      ref.invalidate(voiceRoomByIdProvider(_roomKey));
+      _patchCachedRoom((r) => r.copyWith(isLocked: locked));
+      unawaited(ref.read(voiceRoomsListNotifierProvider.notifier).refresh());
       return null;
     } catch (e) {
       return ApiException.userMessage(e);
@@ -2907,8 +2947,8 @@ class VoiceRoomLiveController
     }
     try {
       await ref.read(chatRoomRemoteProvider).updateRoomSettings(
-            roomKey: _roomKey.isNotEmpty ? _roomKey : _roomMeta.id,
-            alternateKey: _roomMeta.slug,
+            roomKey: _settingsRoomKey,
+            alternateKey: _settingsAlternateKey,
             seatCount: seatCount,
             maxUsers: maxUsers,
           );
@@ -2916,8 +2956,13 @@ class VoiceRoomLiveController
         roomSeatCount: seatCount ?? state.roomSeatCount,
         roomMaxUsers: maxUsers ?? state.roomMaxUsers,
       );
-      ref.invalidate(voiceRoomsProvider);
-      ref.invalidate(voiceRoomByIdProvider(_roomKey));
+      _patchCachedRoom(
+        (r) => r.copyWith(
+          seatCount: seatCount ?? r.seatCount,
+          maxUsers: maxUsers ?? r.maxUsers,
+        ),
+      );
+      unawaited(ref.read(voiceRoomsListNotifierProvider.notifier).refresh());
       await _refreshSeatsFromBackend();
       return null;
     } catch (e) {
@@ -2934,12 +2979,12 @@ class VoiceRoomLiveController
     if (normalized.isEmpty) return 'Geçerli bir kategori seçin.';
     try {
       await ref.read(chatRoomRemoteProvider).updateRoomSettings(
-            roomKey: _roomKey.isNotEmpty ? _roomKey : _roomMeta.id,
-            alternateKey: _roomMeta.slug,
+            roomKey: _settingsRoomKey,
+            alternateKey: _settingsAlternateKey,
             category: normalized,
           );
-      ref.invalidate(voiceRoomsProvider);
-      ref.invalidate(voiceRoomByIdProvider(_roomKey));
+      _patchCachedRoom((r) => r.copyWith(category: normalized));
+      unawaited(ref.read(voiceRoomsListNotifierProvider.notifier).refresh());
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

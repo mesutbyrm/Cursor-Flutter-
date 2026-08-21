@@ -11,6 +11,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../live/presentation/providers/live_providers.dart';
 import '../../../vip_gold/domain/voice_room_access.dart';
 import '../../../gifts/presentation/providers/gift_battle_providers.dart';
 import '../../../gifts/presentation/providers/gift_goal_providers.dart';
@@ -113,15 +114,26 @@ class _VoiceRoomManagementPanelState
         VoiceMgmtInitial.userSettings => _MgmtView.userSettings,
       };
 
-  VoiceRoomEntity get room => widget.room;
+  String get _liveRoomKey => widget.room.liveKey;
+
+  VoiceRoomEntity get room {
+    final base = widget.room;
+    final live = _live;
+    final synced =
+        ref.watch(voiceRoomByIdProvider(base.liveKey)).valueOrNull ?? base;
+    return synced.copyWith(
+      seatCount: live.roomSeatCount ?? synced.seatCount,
+      maxUsers: live.roomMaxUsers ?? synced.maxUsers,
+    );
+  }
   VoiceRoomPermissions get perms => widget.perms;
   bool get isOwner => widget.isOwner;
 
   VoiceRoomLiveController get _ctrl =>
-      ref.read(voiceRoomLiveProvider(room.liveKey).notifier);
+      ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
 
   VoiceRoomLiveState get _live =>
-      ref.watch(voiceRoomLiveProvider(room.liveKey));
+      ref.watch(voiceRoomLiveProvider(_liveRoomKey));
 
   Future<void> _snack(String text) async {
     if (!mounted) return;
@@ -812,7 +824,16 @@ class _VoiceRoomManagementPanelState
                   : 'Herkes girebilir',
             ),
             value: room.isLocked == true,
-            onChanged: (v) => unawaited(_setRoomLocked(v)),
+            onChanged: (v) async {
+              final err = await _ctrl.setRoomLocked(v);
+              if (!mounted) return;
+              if (err != null) {
+                await _snack(err);
+                setState(() {});
+                return;
+              }
+              await _snack(v ? 'Oda kilitlendi' : 'Oda kilidi kaldırıldı');
+            },
           ),
           ListTile(
             leading: const Icon(Icons.event_seat_rounded),
@@ -1069,14 +1090,6 @@ class _VoiceRoomManagementPanelState
     }
   }
 
-  Future<void> _setRoomLocked(bool locked) async {
-    final err = await _ctrl.setRoomLocked(locked);
-    if (err != null) {
-      await _snack(err);
-      return;
-    }
-    await _snack(locked ? 'Oda kilitlendi' : 'Oda kilidi kaldırıldı');
-  }
 
   Future<void> _pickCategory() async {
     final current = normalizeVoiceRoomCategory(room.category);
