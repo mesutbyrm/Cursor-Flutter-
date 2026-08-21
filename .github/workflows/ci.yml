@@ -2,6 +2,7 @@ name: CI
 
 permissions:
   contents: read
+  statuses: write
 
 on:
   push:
@@ -25,6 +26,7 @@ on:
       - 'mcp-server/**'
       - '.github/workflows/ci.yml'
       - '.github/workflows/build-apk.yml'
+      - 'scripts/ci-release-gate-summary.sh'
   pull_request:
     branches: [main]
     paths:
@@ -46,6 +48,7 @@ on:
       - 'mcp-server/**'
       - '.github/workflows/ci.yml'
       - '.github/workflows/build-apk.yml'
+      - 'scripts/ci-release-gate-summary.sh'
   workflow_dispatch:
 
 # Aynı dalda üst üste koşan işleri iptal et — yalnızca gerçekten başlamış
@@ -85,6 +88,60 @@ jobs:
           set -eux
           chmod +x scripts/dart-analyze-gate.sh
           bash scripts/dart-analyze-gate.sh
+
+      - name: Commit status — Analyze gate
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const ok = '${{ job.status }}' === 'success';
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: ok ? 'success' : 'failure',
+              context: 'Canlifal CI / Analyze',
+              description: ok ? 'dart analyze — 0 errors' : 'Analyze gate FAILED',
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });
+
+  flutter-test:
+    name: Flutter test gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.44.8'
+          cache: true
+
+      - name: Flutter clean / pub get / analyze / test
+        working-directory: mobile
+        run: |
+          set -eux
+          flutter clean
+          flutter pub get
+          bash ../scripts/dart-analyze-gate.sh
+          flutter test --reporter compact
+
+      - name: Commit status — Flutter test gate
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const ok = '${{ job.status }}' === 'success';
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: ok ? 'success' : 'failure',
+              context: 'Canlifal CI / Flutter tests',
+              description: ok ? '994+ tests PASS, 0 analyze errors' : 'Flutter test gate FAILED',
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });
 
   faz0-music:
     name: FAZ 0 music verify
