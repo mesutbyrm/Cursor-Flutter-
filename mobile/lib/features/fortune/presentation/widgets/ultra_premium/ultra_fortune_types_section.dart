@@ -1,51 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/fortune_catalog.dart';
-import '../../../domain/entities/fortune_type_entity.dart';
-import '../premium_2026/cinematic_fortune_grid_card.dart';
+import '../../navigation/fortune_card_navigation.dart';
+import '../../providers/fortune_types_display_provider.dart';
+import '../premium_2026/fortune_premium_card.dart';
 import '../premium_2026/premium_section_header.dart';
 import 'ultra_fortune_tokens.dart';
 
-/// Ultra hub fal türleri — 2 kolon sinematik grid.
-abstract final class UltraFortuneHubCatalog {
-  static const entries = <({String slug, String subtitle, String? displayTitle})>[
-    (slug: 'tarot', subtitle: 'Kartların mesajını keşfet', displayTitle: null),
-    (slug: 'kahve-fali', subtitle: 'Fincandaki işaretleri çöz', displayTitle: null),
-    (slug: 'ask-fali', subtitle: 'Kalbinin sesini dinle', displayTitle: null),
-    (slug: 'yildiz-haritasi', subtitle: 'Gökyüzü rehberin', displayTitle: 'Yıldızname'),
-    (slug: 'melek-kartlari', subtitle: 'Meleklerden rehberlik al', displayTitle: null),
-    (slug: 'numeroloji', subtitle: 'Sayıların enerjisini öğren', displayTitle: null),
-    (slug: 'istihare', subtitle: 'Kalbini dinle, rehberlik al', displayTitle: null),
-    (slug: 'aura-analizi', subtitle: 'Aura ve enerji okuması', displayTitle: 'Aura'),
-    (slug: 'kursundokme', subtitle: 'Geleneksel enerji temizliği', displayTitle: 'Kurşun Dökme'),
-  ];
-
-  static List<({FortuneTypeEntity type, String subtitle, String title})> get items {
-    final out = <({FortuneTypeEntity type, String subtitle, String title})>[];
-    for (final e in entries) {
-      final type = FortuneCatalog.bySlug(e.slug);
-      if (type != null) {
-        out.add((
-          type: type,
-          subtitle: e.subtitle,
-          title: e.displayTitle ?? type.title,
-        ));
-      }
-    }
-    return out;
-  }
-}
-
-/// FAL TÜRLERİ bölümü — stagger giriş animasyonu.
-class UltraFortuneTypesSection extends StatefulWidget {
+/// FAL TÜRLERİ bölümü — gerçek API + V2 premium grid.
+class UltraFortuneTypesSection extends ConsumerStatefulWidget {
   const UltraFortuneTypesSection({super.key});
 
   @override
-  State<UltraFortuneTypesSection> createState() => _UltraFortuneTypesSectionState();
+  ConsumerState<UltraFortuneTypesSection> createState() =>
+      _UltraFortuneTypesSectionState();
 }
 
-class _UltraFortuneTypesSectionState extends State<UltraFortuneTypesSection>
+class _UltraFortuneTypesSectionState extends ConsumerState<UltraFortuneTypesSection>
     with SingleTickerProviderStateMixin {
   late final AnimationController _stagger;
 
@@ -54,7 +25,7 @@ class _UltraFortuneTypesSectionState extends State<UltraFortuneTypesSection>
     super.initState();
     _stagger = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 900),
     )..forward();
   }
 
@@ -66,7 +37,7 @@ class _UltraFortuneTypesSectionState extends State<UltraFortuneTypesSection>
 
   @override
   Widget build(BuildContext context) {
-    final items = UltraFortuneHubCatalog.items;
+    final entries = ref.watch(fortuneTypesDisplayProvider);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
@@ -82,7 +53,7 @@ class _UltraFortuneTypesSectionState extends State<UltraFortuneTypesSection>
                 ),
               ),
               TextButton(
-                onPressed: () => context.push('/fortune/types'),
+                onPressed: () => openFortuneTypesCatalog(context),
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
                   minimumSize: Size.zero,
@@ -100,40 +71,92 @@ class _UltraFortuneTypesSectionState extends State<UltraFortuneTypesSection>
             ],
           ),
           const SizedBox(height: 14),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.92,
+          entries.when(
+            loading: () => _buildGrid(
+              context,
+              itemCount: 6,
+              itemBuilder: (_, _) => const FortunePremiumCardSkeleton(
+                width: double.infinity,
+                height: double.infinity,
+              ),
             ),
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              final item = items[index];
-              final delay = index * 0.08;
-              final anim = CurvedAnimation(
-                parent: _stagger,
-                curve: Interval(delay.clamp(0.0, 0.85), 1.0, curve: Curves.easeOutCubic),
-              );
-              return AnimatedBuilder(
-                animation: anim,
-                builder: (_, child) => Transform.translate(
-                  offset: Offset(0, 24 * (1 - anim.value)),
-                  child: Opacity(opacity: anim.value, child: child),
+            error: (_, __) => Column(
+              children: [
+                const Text('Fal türleri yüklenemedi'),
+                TextButton(
+                  onPressed: () => invalidateFortuneTypesDisplay(ref),
+                  child: const Text('Tekrar Dene'),
                 ),
-                child: CinematicFortuneGridCard(
-                  type: item.type,
-                  title: item.title,
-                  subtitle: item.subtitle,
-                  onTap: () => context.push('/fortune/${item.type.slug}'),
-                ),
+              ],
+            ),
+            data: (list) {
+              if (list.isEmpty) {
+                return const Text('Henüz fal türü bulunamadı.');
+              }
+              final preview = list.take(10).toList();
+              return _buildGrid(
+                context,
+                itemCount: preview.length,
+                itemBuilder: (context, index) {
+                  final e = preview[index];
+                  final delay = index * 0.08;
+                  final anim = CurvedAnimation(
+                    parent: _stagger,
+                    curve: Interval(
+                      delay.clamp(0.0, 0.85),
+                      1.0,
+                      curve: Curves.easeOutCubic,
+                    ),
+                  );
+                  return AnimatedBuilder(
+                    animation: anim,
+                    builder: (_, child) => Transform.translate(
+                      offset: Offset(0, 20 * (1 - anim.value)),
+                      child: Opacity(opacity: anim.value, child: child),
+                    ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return FortunePremiumCard(
+                          slug: e.slug,
+                          title: e.title,
+                          subtitle: e.subtitle,
+                          imageUrl: e.imageUrl,
+                          jetonCost: e.jetonCost,
+                          accent: e.accent,
+                          emoji: e.emoji,
+                          width: constraints.maxWidth,
+                          height: constraints.maxHeight,
+                          compact: true,
+                          onTap: () => openFortuneTypeDestination(context, e),
+                        );
+                      },
+                    ),
+                  );
+                },
               );
             },
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildGrid(
+    BuildContext context, {
+    required int itemCount,
+    required Widget Function(BuildContext, int) itemBuilder,
+  }) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.92,
+      ),
+      itemCount: itemCount,
+      itemBuilder: itemBuilder,
     );
   }
 }

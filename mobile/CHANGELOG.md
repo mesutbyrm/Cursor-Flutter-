@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.325+361 (2026-08-21) — Fal & Tarot V2 backend parity
+
+- **API:** homepage-fortune-cards → fortune-request-types → FortuneCatalog yedek
+- **Fiyat:** `parseFortuneJetonPrice` — jetonCost/priceInTokens/credits; 0 gizlenir
+- **Sıra:** Backend listesi korunur; sortOrder yalnızca backend sağlarsa
+- **Navigasyon:** `openFortuneTypeDestination`, `openFortuneTypesCatalog` → `/fortune/types`
+- **Açıklama:** Yalnızca API description; katalog metni API verisini ezmez
+- **Test:** Parse, navigation, fiyat edge case testleri
+
 ## 1.0.324+360 (2026-08-21) — Canlı Falcılar V2 premium UI
 
 - **Kart:** Paylaşılan `PsychicPremiumCard` / `PsychicPremiumListTile` — avatar, gerçek online, rating, jeton/dk

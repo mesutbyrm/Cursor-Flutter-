@@ -5,6 +5,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../../core/util/fortune_price_parser.dart';
 import '../models/mobile_compound_models.dart';
 import 'mobile_compound_remote_datasource.dart';
 import '../../domain/entities/home_banner_entity.dart';
@@ -763,6 +764,13 @@ class HomeRemoteDataSource {
         _str(m, const ['image', 'imageUrl', 'thumbnail']),
       ),
       routePath: href.isNotEmpty ? href : null,
+      description: _str(m, const [
+        'description',
+        'descTr',
+        'desc',
+        'subtitle',
+      ]),
+      jetonCost: parseFortuneJetonPrice(m),
     );
   }
 
