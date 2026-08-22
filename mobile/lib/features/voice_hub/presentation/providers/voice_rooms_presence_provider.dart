@@ -37,12 +37,12 @@ class VoiceRoomsPresenceState {
 
 class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
   /// Discover ekranında aynı anda görünür/öncelikli odalar izlenir.
-  static const maxTrackedRooms = 12;
+  static const maxTrackedRooms = 6;
 
   /// Ana sayfa şeridi — daha az eşzamanlı SSE (ANR önleme).
-  static const homeTrackedRooms = 6;
+  static const homeTrackedRooms = 4;
 
-  static const _connectStagger = Duration(milliseconds: 180);
+  static const _connectStagger = Duration(milliseconds: 250);
 
   final Map<String, StreamSubscription<ChatRoomSseEvent>> _subs = {};
   var _syncGeneration = 0;

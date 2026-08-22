@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 import '../../../domain/entities/chat_room_message.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../../domain/entities/voice_room_realtime_event.dart';
+import '../../providers/chat_room_providers.dart';
 import '../../theme/voice_room_tokens.dart';
 import 'voice_room_bottom_action_bar.dart';
 import 'voice_room_join_toast_stack.dart';
 import 'voice_room_mention_text_field.dart';
 
 /// Alt bar — mesaj satırı + Faz 6 aksiyon menüsü.
-class VoiceRoomSpecFooter extends StatelessWidget {
+///
+/// [liveRoomKey] verilirse presence / toast verisi provider'dan ayrı ayrı
+/// izlenir; yeni chat mesajı tüm footer'ı yeniden çizmez.
+class VoiceRoomSpecFooter extends ConsumerWidget {
   const VoiceRoomSpecFooter({
     super.key,
     required this.controller,
@@ -25,6 +30,7 @@ class VoiceRoomSpecFooter extends StatelessWidget {
     required this.onGift,
     required this.onInvite,
     this.showSettings = true,
+    this.liveRoomKey,
     this.presence = const [],
     this.selfUserId,
     this.events = const [],
@@ -51,6 +57,7 @@ class VoiceRoomSpecFooter extends StatelessWidget {
   final VoidCallback onGift;
   final VoidCallback onInvite;
   final bool showSettings;
+  final String? liveRoomKey;
   final List<ChatRoomPresence> presence;
   final String? selfUserId;
   final List<VoiceRoomRealtimeEvent> events;
@@ -65,7 +72,10 @@ class VoiceRoomSpecFooter extends StatelessWidget {
   final bool showSpeakRequest;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final key = liveRoomKey?.trim() ?? '';
+    final useLiveSlices = key.isNotEmpty;
+
     return RepaintBoundary(
       child: Container(
         padding: const EdgeInsets.fromLTRB(10, 6, 10, 0),
@@ -95,45 +105,34 @@ class VoiceRoomSpecFooter extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: VoiceRoomMentionTextField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    presence: presence,
-                    excludeUserId: selfUserId,
-                    onChanged: onChanged,
-                    onSubmitted: (_) => onSend(),
-                    hintText: 'Mesajınızı yazın...',
-                    decoration: InputDecoration(
-                      hintText: 'Mesajınızı yazın...',
-                      hintStyle: TextStyle(
-                        color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
-                        fontSize: 13,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white.withValues(alpha: 0.08),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(22),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(22),
-                        borderSide: BorderSide(
-                          color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.35),
+                  child: useLiveSlices
+                      ? Consumer(
+                          builder: (context, ref, _) {
+                            final mentionPresence = ref.watch(
+                              voiceRoomLiveProvider(key).select((s) => s.presence),
+                            );
+                            return VoiceRoomMentionTextField(
+                              controller: controller,
+                              focusNode: focusNode,
+                              presence: mentionPresence,
+                              excludeUserId: selfUserId,
+                              onChanged: onChanged,
+                              onSubmitted: (_) => onSend(),
+                              hintText: 'Mesajınızı yazın...',
+                              decoration: _inputDecoration(context),
+                            );
+                          },
+                        )
+                      : VoiceRoomMentionTextField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          presence: presence,
+                          excludeUserId: selfUserId,
+                          onChanged: onChanged,
+                          onSubmitted: (_) => onSend(),
+                          hintText: 'Mesajınızı yazın...',
+                          decoration: _inputDecoration(context),
                         ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(22),
-                        borderSide: const BorderSide(
-                          color: VoiceRoomTokens.neonPurple,
-                          width: 1.2,
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
                 if (showMusicRequest && onMusicRequest != null) ...[
                   const SizedBox(width: 6),
@@ -175,11 +174,26 @@ class VoiceRoomSpecFooter extends StatelessWidget {
                 ),
               ],
             ),
-            VoiceRoomJoinToastStack(
-              events: events,
-              messages: messages,
-              enabled: joinNotificationsEnabled,
-            ),
+            useLiveSlices
+                ? Consumer(
+                    builder: (context, ref, _) {
+                      final toast = ref.watch(
+                        voiceRoomLiveProvider(key).select(
+                          (s) => (s.messages, s.realtimeEvents),
+                        ),
+                      );
+                      return VoiceRoomJoinToastStack(
+                        events: toast.$2,
+                        messages: toast.$1,
+                        enabled: joinNotificationsEnabled,
+                      );
+                    },
+                  )
+                : VoiceRoomJoinToastStack(
+                    events: events,
+                    messages: messages,
+                    enabled: joinNotificationsEnabled,
+                  ),
             VoiceRoomBottomActionBar(
               headphonesOn: headphonesOn,
               onToggleAudioOutput: onToggleAudioOutput,
@@ -195,6 +209,39 @@ class VoiceRoomSpecFooter extends StatelessWidget {
               showSpeakRequest: showSpeakRequest,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(BuildContext context) {
+    return InputDecoration(
+      hintText: 'Mesajınızı yazın...',
+      hintStyle: TextStyle(
+        color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
+        fontSize: 13,
+      ),
+      filled: true,
+      fillColor: Colors.white.withValues(alpha: 0.08),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 10,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(22),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(22),
+        borderSide: BorderSide(
+          color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.35),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(22),
+        borderSide: const BorderSide(
+          color: VoiceRoomTokens.neonPurple,
+          width: 1.2,
         ),
       ),
     );

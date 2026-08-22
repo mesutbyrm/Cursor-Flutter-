@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.338+374 (2026-08-22) — Performans FAZ 6/7
+
+- **Discover SSE:** max 12→6 oda, home şeridi 6→4, stagger 250ms
+- **Shorts pool:** max 5→3 controller (aktif + önceki + sonraki)
+- **Voice room footer:** chat toast / mention ayrı provider slice — mesajda tüm footer rebuild yok
+- **SSE poll:** bağlıyken REST poll 90/180 sn, daha seyrek tick
+
 ## 1.0.337+373 (2026-08-22) — Performans FAZ 3/5/6
 
 - **Token bellek önbelleği:** Dio hot path `peekAccess()` — secure storage her istekte okunmaz

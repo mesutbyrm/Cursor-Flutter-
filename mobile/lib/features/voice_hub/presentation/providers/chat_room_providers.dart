@@ -1503,13 +1503,13 @@ class VoiceRoomLiveController
         (state.dj.playing || state.dj.nowPlaying != null);
     // SSE varken mesaj poll zaten kapalı; DJ yokken daha seyrek yenile.
     final interval = sse
-        ? (active ? 60 : 120)
+        ? (active ? 90 : 180)
         : 8;
     _poll = Timer.periodic(Duration(seconds: interval), (_) {
       if (_pollPaused) return;
       _pollTick++;
       final djActive = state.dj.playing || state.dj.nowPlaying != null;
-      if (sse && !djActive && _pollTick % 2 != 0) return;
+      if (sse && !djActive && _pollTick % 3 != 0) return;
       // SSE sağlıklıyken DJ/queue REST poll yapma — yalnızca SSE kopunca.
       final fullDj = !sse && djActive;
       unawaited(refresh(includeDj: fullDj));

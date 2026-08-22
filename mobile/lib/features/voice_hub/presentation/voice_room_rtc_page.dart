@@ -1811,11 +1811,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 ),
                 Consumer(
                   builder: (context, ref, _) {
-                    final footerLive = ref.watch(
-                      voiceRoomLiveProvider(_liveRoomKey).select(
-                        (s) => (s.messages, s.realtimeEvents, s.presence),
-                      ),
-                    );
                     final headphonesOn = ref.watch(
                       voiceRoomUiProvider.select((s) => s.headphonesOn),
                     );
@@ -1824,6 +1819,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           .select((s) => s.chatNotificationSoundEnabled),
                     );
                     return VoiceRoomSpecFooter(
+                      liveRoomKey: _liveRoomKey,
                       controller: _messageCtrl,
                       focusNode: _messageFocus,
                       onSend: () => _sendChatMessage(room),
@@ -1837,13 +1833,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       onGift: () => _openGiftShop(
                         context,
                         room: room,
-                        presence: footerLive.$3,
+                        presence: ref.read(voiceRoomLiveProvider(_liveRoomKey)).presence,
                       ),
                       onInvite: () => unawaited(_shareRoom()),
-                      presence: footerLive.$3,
                       selfUserId: user?.id,
-                      events: footerLive.$2,
-                      messages: footerLive.$1,
                       onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
                       onChanged: _onChatChanged,
                       joinNotificationsEnabled: joinNotificationsEnabled,

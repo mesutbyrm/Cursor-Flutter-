@@ -57,11 +57,41 @@
 
 ## Henüz yapılmadı (sonraki fazlar)
 
-- Discover SSE sayısı azaltma (12 → 4-6)
-- `voice_room_rtc_page` granular `select` rebuild
 - `shrinkWrap` nested scroll refactor
-- Shorts pool 5 → 3
+- `voice_room_rtc_page` üst gövde granular select (kısmen footer yapıldı)
 - Gerçek cihaz benchmark (`PERFORMANCE_AFTER.md`)
+
+---
+
+## FAZ 6/7 — 1.0.338+374
+
+### Discover presence SSE
+
+| Önce | Sonra |
+|------|--------|
+| max 12 eşzamanlı oda SSE | **6** |
+| home şeridi 6 SSE | **4** |
+| stagger 180 ms | **250 ms** |
+
+### Shorts video pool
+
+| Önce | Sonra |
+|------|--------|
+| max 5 controller | **3** |
+| warm offset ±2 | yalnızca ±1 |
+
+### Voice room footer rebuild
+
+| Önce | Sonra |
+|------|--------|
+| `(messages, events, presence)` tuple → tüm footer rebuild | Mention + toast ayrı `Consumer` slice |
+
+### Voice room REST poll (SSE açık)
+
+| Önce | Sonra |
+|------|--------|
+| 60/120 sn, her 2. tick | **90/180 sn**, her 3. tick (DJ yokken) |
+
 
 ---
 
