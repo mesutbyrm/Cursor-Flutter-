@@ -20,11 +20,15 @@ import '../../data/datasources/canlifal_user_api_datasource.dart';
 import '../../data/datasources/achievements_remote_datasource.dart';
 import '../../data/datasources/daily_tasks_remote_datasource.dart';
 import '../../data/datasources/profile_remote_datasource.dart';
+import '../../../home/data/datasources/mobile_compound_remote_datasource.dart';
 import '../../domain/entities/daily_task_entity.dart';
 import '../../data/repositories/profile_repository_impl.dart';
 
 final profileRemoteProvider = Provider<ProfileRemoteDataSource>((ref) {
-  return ProfileRemoteDataSource(ref.watch(dioProvider));
+  return ProfileRemoteDataSource(
+    ref.watch(dioProvider),
+    ref.watch(mobileCompoundRemoteProvider),
+  );
 });
 
 final achievementsRemoteProvider = Provider<AchievementsRemoteDataSource>((ref) {

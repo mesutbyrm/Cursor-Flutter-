@@ -1,13 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/dio_provider.dart';
 import '../../../home/data/datasources/mobile_compound_remote_datasource.dart';
 import '../../domain/entities/fortune_type_entity.dart';
-
-final mobileCompoundRemoteProvider =
-    Provider<MobileCompoundRemoteDataSource>((ref) {
-  return MobileCompoundRemoteDataSource(ref.watch(dioProvider));
-});
 
 /// `GET /api/mobile/fortune-menu` — API fal türleri (yerel katalog yedeği).
 final fortuneMenuTypesProvider =

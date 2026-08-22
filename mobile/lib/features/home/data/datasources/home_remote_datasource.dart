@@ -19,8 +19,7 @@ import '../../domain/entities/online_advisor_entity.dart';
 import '../../domain/home_site_catalog.dart';
 
 class HomeRemoteDataSource {
-  HomeRemoteDataSource(this._dio)
-      : _compound = MobileCompoundRemoteDataSource(_dio);
+  HomeRemoteDataSource(this._dio, this._compound);
 
   final Dio _dio;
   final MobileCompoundRemoteDataSource _compound;

@@ -108,6 +108,9 @@ class ChatRoomSseService extends BaseSseService {
         'roomId': id,
         'reason': 'already_connected',
       });
+      if (status.value.phase == SseConnectionPhase.connected) {
+        onConnected?.call();
+      }
       return;
     }
     VoiceRoomDebugLog.sseConnect(roomId: id, url: streamUrlFor(id));

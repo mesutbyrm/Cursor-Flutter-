@@ -23,8 +23,7 @@ import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 
 class ProfileRemoteDataSource {
-  ProfileRemoteDataSource(this._dio)
-      : _compound = MobileCompoundRemoteDataSource(_dio);
+  ProfileRemoteDataSource(this._dio, this._compound);
 
   final Dio _dio;
   final MobileCompoundRemoteDataSource _compound;

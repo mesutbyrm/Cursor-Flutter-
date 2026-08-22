@@ -23,17 +23,55 @@ class TokenStorage {
 
   final FlutterSecureStorage _storage;
 
-  Future<String?> readAccess() => _storage.read(key: _kAccess);
-  Future<String?> readRefresh() => _storage.read(key: _kRefresh);
-  Future<String?> readUserId() => _storage.read(key: _kUserId);
+  String? _memoryAccess;
+  String? _memoryRefresh;
+  String? _memoryUserId;
+  var _accessHydrated = false;
+  var _refreshHydrated = false;
+  var _userIdHydrated = false;
+
+  /// Dio hot path — bellekte varsa secure storage okumaz.
+  String? peekAccess() => _memoryAccess;
+
+  String? peekRefresh() => _memoryRefresh;
+
+  String? peekUserId() => _memoryUserId;
+
+  Future<String?> readAccess() async {
+    if (_accessHydrated) return _memoryAccess;
+    final value = await _storage.read(key: _kAccess);
+    _memoryAccess = value;
+    _accessHydrated = true;
+    return value;
+  }
+
+  Future<String?> readRefresh() async {
+    if (_refreshHydrated) return _memoryRefresh;
+    final value = await _storage.read(key: _kRefresh);
+    _memoryRefresh = value;
+    _refreshHydrated = true;
+    return value;
+  }
+
+  Future<String?> readUserId() async {
+    if (_userIdHydrated) return _memoryUserId;
+    final value = await _storage.read(key: _kUserId);
+    _memoryUserId = value;
+    _userIdHydrated = true;
+    return value;
+  }
 
   Future<void> writeTokens({
     required String access,
     String? refresh,
     String? userId,
   }) async {
+    _memoryAccess = access;
+    _accessHydrated = true;
     await _storage.write(key: _kAccess, value: access);
     if (refresh != null) {
+      _memoryRefresh = refresh;
+      _refreshHydrated = true;
       await _storage.write(key: _kRefresh, value: refresh);
     }
     if (userId != null && userId.isNotEmpty) {
@@ -43,10 +81,18 @@ class TokenStorage {
 
   Future<void> writeUserId(String userId) async {
     if (userId.isEmpty) return;
+    _memoryUserId = userId;
+    _userIdHydrated = true;
     await _storage.write(key: _kUserId, value: userId);
   }
 
   Future<void> clear() async {
+    _memoryAccess = null;
+    _memoryRefresh = null;
+    _memoryUserId = null;
+    _accessHydrated = true;
+    _refreshHydrated = true;
+    _userIdHydrated = true;
     await _storage.delete(key: _kAccess);
     await _storage.delete(key: _kRefresh);
     await _storage.delete(key: _kUserId);

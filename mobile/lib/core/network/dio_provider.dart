@@ -90,7 +90,8 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
       onRequest: (options, handler) async {
         final public = _isPublicAuthPath(options.path);
         if (!public) {
-          final token = await tokenStorage.readAccess();
+          final token =
+              tokenStorage.peekAccess() ?? await tokenStorage.readAccess();
           if (token != null &&
               token.isNotEmpty &&
               token != TokenStorage.sessionCookieMarker) {

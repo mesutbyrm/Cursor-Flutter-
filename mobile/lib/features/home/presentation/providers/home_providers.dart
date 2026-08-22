@@ -9,6 +9,7 @@ import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../social/presentation/providers/social_providers.dart';
 import '../../data/datasources/home_remote_datasource.dart';
+import '../../data/datasources/mobile_compound_remote_datasource.dart';
 import '../../data/repositories/home_repository_impl.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_fortune_card_entity.dart';
@@ -81,7 +82,10 @@ void invalidateHomeKeepAliveProviders(dynamic ref) {
 }
 
 final homeRemoteProvider = Provider<HomeRemoteDataSource>((ref) {
-  return HomeRemoteDataSource(ref.watch(dioProvider));
+  return HomeRemoteDataSource(
+    ref.watch(dioProvider),
+    ref.watch(mobileCompoundRemoteProvider),
+  );
 });
 
 final homeRepositoryProvider = Provider<HomeRepository>((ref) {

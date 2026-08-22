@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.337+373 (2026-08-22) — Performans FAZ 3/5/6
+
+- **Token bellek önbelleği:** Dio hot path `peekAccess()` — secure storage her istekte okunmaz
+- **Mobile compound tek instance:** `/api/mobile/home` duplicate önbellek paylaşımı (home/profile/fortune)
+- **SSE oda girişi:** Keşif bağlantısı varken `onConnected` yeniden tetiklenir
+- **Sosyal feed video:** Dokunana kadar oynatılmaz — scroll sırasında N video player açılmaz
+
 ## 1.0.336+372 (2026-08-21) — Sesli oda tam senkronizasyon II
 
 - **CI pipeline:** main push her zaman CI tetikler; commit status + flutter test gate + APK HTTP/metadata doğrulama

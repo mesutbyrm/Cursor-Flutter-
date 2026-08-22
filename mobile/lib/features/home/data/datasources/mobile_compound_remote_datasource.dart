@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
@@ -90,4 +91,20 @@ class MobileCompoundRemoteDataSource {
     _homeCache = null;
     _homeFetchedAt = null;
   }
+
+  void invalidateFortuneMenuCache() {
+    _fortuneMenuCache = null;
+    _fortuneMenuFetchedAt = null;
+  }
+
+  void invalidateAllCaches() {
+    invalidateHomeCache();
+    invalidateFortuneMenuCache();
+  }
 }
+
+/// Tek instance — home / profile / fortune aynı `/api/mobile/*` önbelleğini paylaşır.
+final mobileCompoundRemoteProvider =
+    Provider<MobileCompoundRemoteDataSource>((ref) {
+  return MobileCompoundRemoteDataSource(ref.watch(dioProvider));
+});

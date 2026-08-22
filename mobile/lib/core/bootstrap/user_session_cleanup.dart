@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/games/presentation/providers/game_providers.dart';
+import '../../features/home/data/datasources/mobile_compound_remote_datasource.dart';
 import '../../features/home/presentation/providers/home_providers.dart';
 import '../../features/messages/data/hidden_conversations_store.dart';
 import '../../features/messages/data/deleted_messages_store.dart';
@@ -32,6 +33,7 @@ Future<void> invalidateUserSessionCaches(Ref ref, {String? userId}) async {
   ref.invalidate(gameCatalogProvider);
   ref.invalidate(gameRoomsProvider);
   ref.invalidate(socialNotifierProvider);
+  ref.invalidate(mobileCompoundRemoteProvider);
 
   await NotificationsRepositoryImpl.clearLocalReadState();
   if (userId != null && userId.isNotEmpty) {
