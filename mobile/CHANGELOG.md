@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.350+388 (2026-08-23) — Sosyal kısa video kaldırma
+
+- **Sosyal sekmesi:** Kısa video şeridi (`ShortsHubStrip`) kaldırıldı; diğer hub sayfalarında kalır
+
 ## 1.0.349+387 (2026-08-23) — CI sürüm sabitleme
 
 - **APK CI:** Metadata doğrulama derleme anındaki `steps.meta` sürümünü kullanır (`git pull` sonrası pubspec kayması giderildi)
