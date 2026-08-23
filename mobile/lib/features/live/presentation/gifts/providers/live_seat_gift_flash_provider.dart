@@ -34,9 +34,40 @@ class LiveSeatGiftFlashNotifier extends Notifier<Map<String, List<LiveSeatGiftFl
 
   static const _ttl = Duration(seconds: 3);
 
+  static String flashSignature(
+    Map<String, List<LiveSeatGiftFlash>> state, {
+    String? userId,
+    String? displayName,
+  }) {
+    final keys = receiverKeys(userId: userId, displayName: displayName);
+    if (keys.isEmpty) return '';
+    final parts = <String>[];
+    for (final k in keys) {
+      for (final f in state[k] ?? const []) {
+        if (!f.expired) parts.add('${f.id}:${f.jeton}');
+      }
+    }
+    if (parts.isEmpty) return '';
+    parts.sort();
+    return parts.join(';');
+  }
+
+  static List<String> receiverKeys({
+    String? userId,
+    String? displayName,
+  }) {
+    return [
+      if (userId != null && userId.trim().isNotEmpty)
+        receiverKey(userId: userId),
+      if (displayName != null && displayName.trim().isNotEmpty)
+        receiverKey(displayName: displayName),
+    ];
+  }
+
   @override
   Map<String, List<LiveSeatGiftFlash>> build() {
-    final service = ref.watch(liveGiftRealtimeProvider);
+    final service = ref.read(liveGiftRealtimeProvider);
+    _sub?.cancel();
     _sub = service.events.listen(_onGift);
     ref.onDispose(() {
       _sub?.cancel();

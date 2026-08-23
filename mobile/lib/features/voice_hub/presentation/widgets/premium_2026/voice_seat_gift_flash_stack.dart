@@ -19,11 +19,22 @@ class VoiceSeatGiftFlashStack extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(voiceSeatGiftFlashProvider(roomKey));
-    final flashes = ref
-        .read(voiceSeatGiftFlashProvider(roomKey).notifier)
-        .forReceiver(userId: userId, displayName: displayName);
-    if (flashes.isEmpty) return const SizedBox.shrink();
+    final signature = ref.watch(
+      voiceSeatGiftFlashProvider(roomKey).select(
+        (list) => VoiceSeatGiftFlashNotifier.flashSignature(
+          list,
+          userId: userId,
+          displayName: displayName,
+        ),
+      ),
+    );
+    if (signature.isEmpty) return const SizedBox.shrink();
+
+    final flashes = VoiceSeatGiftFlashNotifier.flashesForReceiver(
+      ref.read(voiceSeatGiftFlashProvider(roomKey)),
+      userId: userId,
+      displayName: displayName,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,

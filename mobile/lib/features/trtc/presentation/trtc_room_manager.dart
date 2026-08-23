@@ -32,6 +32,7 @@ class TrtcRoomManager {
   bool _isHost = false;
   bool _twoWayVideo = false;
   bool _audioOnly = false;
+  bool _notifiersDisposed = false;
   String? _localUserId;
 
   String? remoteAnchorUserId;
@@ -594,6 +595,15 @@ class TrtcRoomManager {
     await leave();
     _cloud = null;
     _device = null;
+    if (!_notifiersDisposed) {
+      _notifiersDisposed = true;
+      remoteAnchorUserIdNotifier.dispose();
+      remoteVideoAvailable.dispose();
+      remoteVideoByUser.dispose();
+      remoteAudioByUser.dispose();
+      networkQuality.dispose();
+      remoteUserIdsNotifier.dispose();
+    }
   }
 
   void dispose() {

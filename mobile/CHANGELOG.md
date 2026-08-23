@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.339+375 (2026-08-23) — Performans FAZ 7/8
+
+- **Hediye flaşı:** Koltuk başına `select` signature — başka koltuğa hediye gelince tüm koltuklar rebuild olmaz
+- **Gift stream:** `ref.read` + subscription cancel — duplicate listener leak giderildi
+- **TRTC:** `ValueNotifier` dispose `disposeAsync` içinde
+- **Profil sekmeleri:** `LazyNestedGridView` / `LazyListView` (scroll perf helper)
+
 ## 1.0.338+374 (2026-08-22) — Performans FAZ 6/7
 
 - **Discover SSE:** max 12→6 oda, home şeridi 6→4, stagger 250ms

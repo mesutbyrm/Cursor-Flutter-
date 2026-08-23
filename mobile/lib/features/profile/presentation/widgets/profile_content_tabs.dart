@@ -6,6 +6,7 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../core/widgets/lazy_list_views.dart';
 import '../../../fortune/domain/entities/user_fortune_entity.dart';
 import '../../../fortune/presentation/providers/fortune_api_providers.dart';
 import '../../../shorts/domain/entities/short_video_entity.dart';
@@ -38,9 +39,7 @@ class _VideosTab extends ConsumerWidget {
             child: Center(child: Text('Henüz video yok')),
           );
         }
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+        return LazyNestedGridView(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             crossAxisSpacing: 2,
@@ -160,7 +159,7 @@ class _FortuneTab extends ConsumerWidget {
             child: Center(child: Text('Henüz fal kaydı yok')),
           );
         }
-        return ListView.separated(
+        return LazyListView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: items.length,

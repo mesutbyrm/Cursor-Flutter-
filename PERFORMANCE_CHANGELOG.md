@@ -92,6 +92,29 @@
 |------|--------|
 | 60/120 sn, her 2. tick | **90/180 sn**, her 3. tick (DJ yokken) |
 
+---
+
+## FAZ 7/8 — 1.0.339+375
+
+### Koltuk hediye flaşı rebuild
+
+| Önce | Sonra |
+|------|--------|
+| `ref.watch(full flash list)` → tüm koltuklar rebuild | `select(flashSignature)` per receiver |
+| Boş koltuk `[]` referansı rebuild | signature `''` stabil |
+
+### Gift event subscription leak
+
+| Önce | Sonra |
+|------|--------|
+| `ref.watch` + yeni `listen` provider rebuild'de | `ref.read` + `_sub?.cancel()` |
+
+### TRTC memory
+
+| Önce | Sonra |
+|------|--------|
+| 6× `ValueNotifier` dispose yok | `disposeAsync` içinde dispose (tek sefer) |
+
 
 ---
 

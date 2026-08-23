@@ -47,7 +47,8 @@ class VoiceSeatGiftTotals extends Notifier<Map<String, SeatGiftAggregate>> {
 
   @override
   Map<String, SeatGiftAggregate> build() {
-    final service = ref.watch(voiceRoomGiftRealtimeProvider);
+    final service = ref.read(voiceRoomGiftRealtimeProvider);
+    _sub?.cancel();
     _sub = service.events.listen(_record);
     ref.onDispose(() => _sub?.cancel());
     return const {};

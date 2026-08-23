@@ -59,7 +59,8 @@ class VoiceSeatGiftFlashNotifier
 
   @override
   List<VoiceSeatGiftFlash> build(String roomKey) {
-    final service = ref.watch(voiceRoomGiftRealtimeProvider);
+    final service = ref.read(voiceRoomGiftRealtimeProvider);
+    _sub?.cancel();
     _sub = service.events.listen(_onGift);
     ref.onDispose(() {
       _sub?.cancel();
@@ -69,6 +70,54 @@ class VoiceSeatGiftFlashNotifier
       _timers.clear();
     });
     return const [];
+  }
+
+  static List<String> receiverKeys({
+    String? userId,
+    String? displayName,
+  }) {
+    return [
+      if (userId != null && userId.trim().isNotEmpty)
+        receiverKey(userId: userId),
+      if (displayName != null && displayName.trim().isNotEmpty)
+        receiverKey(displayName: displayName),
+    ];
+  }
+
+  /// Koltuk başına rebuild — boş koltuklar `''` döner (liste referansı değişse bile).
+  static String flashSignature(
+    List<VoiceSeatGiftFlash> state, {
+    String? userId,
+    String? displayName,
+  }) {
+    final flashes = flashesForReceiver(
+      state,
+      userId: userId,
+      displayName: displayName,
+    );
+    if (flashes.isEmpty) return '';
+    final parts = flashes.map((f) => '${f.id}:${f.jeton}:${f.quantity}').toList()
+      ..sort();
+    return parts.join(';');
+  }
+
+  static List<VoiceSeatGiftFlash> flashesForReceiver(
+    List<VoiceSeatGiftFlash> state, {
+    String? userId,
+    String? displayName,
+  }) {
+    final keys = receiverKeys(userId: userId, displayName: displayName);
+    if (keys.isEmpty) return const [];
+    final out = <VoiceSeatGiftFlash>[];
+    final seen = <String>{};
+    for (final f in state) {
+      if (f.expired || seen.contains(f.id)) continue;
+      if (keys.any((k) => f.receiverKey == k)) {
+        seen.add(f.id);
+        out.add(f);
+      }
+    }
+    return out;
   }
 
   static String receiverKey({String? userId, String? displayName}) {
@@ -142,24 +191,12 @@ class VoiceSeatGiftFlashNotifier
   List<VoiceSeatGiftFlash> forReceiver({
     String? userId,
     String? displayName,
-  }) {
-    final keys = <String>[
-      if (userId != null && userId.trim().isNotEmpty)
-        receiverKey(userId: userId),
-      if (displayName != null && displayName.trim().isNotEmpty)
-        receiverKey(displayName: displayName),
-    ];
-    final out = <VoiceSeatGiftFlash>[];
-    final seen = <String>{};
-    for (final f in state) {
-      if (f.expired || seen.contains(f.id)) continue;
-      if (keys.any((k) => f.receiverKey == k)) {
-        seen.add(f.id);
-        out.add(f);
-      }
-    }
-    return out;
-  }
+  }) =>
+      flashesForReceiver(
+        state,
+        userId: userId,
+        displayName: displayName,
+      );
 }
 
 final voiceSeatGiftFlashProvider = NotifierProvider.autoDispose

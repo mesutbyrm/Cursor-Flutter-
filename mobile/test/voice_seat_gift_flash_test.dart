@@ -18,6 +18,36 @@ void main() {
     test('ttl is 3 seconds', () {
       expect(VoiceSeatGiftFlashNotifier.ttl, const Duration(seconds: 3));
     });
+
+    test('flashSignature empty when receiver has no flashes', () {
+      final sig = VoiceSeatGiftFlashNotifier.flashSignature(
+        const [],
+        userId: 'u1',
+      );
+      expect(sig, '');
+    });
+
+    test('flashSignature stable for unrelated receiver', () {
+      final state = [
+        VoiceSeatGiftFlash(
+          id: 'g1:ida',
+          senderName: 'A',
+          receiverKey: 'id:a',
+          giftName: 'Rose',
+          quantity: 1,
+          jeton: 5,
+          expiresAt: DateTime.now().add(const Duration(seconds: 3)),
+        ),
+      ];
+      expect(
+        VoiceSeatGiftFlashNotifier.flashSignature(state, userId: 'b'),
+        '',
+      );
+      expect(
+        VoiceSeatGiftFlashNotifier.flashSignature(state, userId: 'a'),
+        isNotEmpty,
+      );
+    });
   });
 
   test('VoiceSeatGiftFlash expires after ttl', () {

@@ -18,11 +18,20 @@ class LiveSeatGiftFlashStack extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(liveSeatGiftFlashProvider);
+    final signature = ref.watch(
+      liveSeatGiftFlashProvider.select(
+        (m) => LiveSeatGiftFlashNotifier.flashSignature(
+          m,
+          userId: userId,
+          displayName: displayName,
+        ),
+      ),
+    );
+    if (signature.isEmpty) return const SizedBox.shrink();
+
     final flashes = ref
         .read(liveSeatGiftFlashProvider.notifier)
         .forReceiver(userId: userId, displayName: displayName);
-    if (flashes.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
