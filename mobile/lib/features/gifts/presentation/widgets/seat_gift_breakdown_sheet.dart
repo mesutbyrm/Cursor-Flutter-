@@ -54,9 +54,11 @@ void showSeatGiftBreakdownSheet(
                 style: TextStyle(color: Colors.white54, fontSize: 13),
               )
             else
-              Flexible(
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.sizeOf(context).height * 0.4,
+                ),
                 child: ListView.separated(
-                  shrinkWrap: true,
                   itemCount: contributors.length,
                   separatorBuilder: (_, __) => const Divider(
                     color: Colors.white12,

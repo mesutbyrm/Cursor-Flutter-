@@ -92,7 +92,6 @@ class _SessionGiftSummaryBody extends StatelessWidget {
                   maxHeight: MediaQuery.sizeOf(context).height * 0.28,
                 ),
                 child: ListView.separated(
-                  shrinkWrap: true,
                   itemCount: summary.senders.length,
                   separatorBuilder: (_, __) => const Divider(
                     height: 1,

@@ -52,6 +52,6 @@ void main() {
 
     final grid = tester.widget<GridView>(find.byType(GridView));
     expect(grid.physics, isA<NeverScrollableScrollPhysics>());
-    expect(grid.shrinkWrap, isTrue);
+    expect(grid.shrinkWrap, isFalse);
   });
 }

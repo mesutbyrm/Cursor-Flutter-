@@ -75,36 +75,54 @@ class _UserPostsTikTokGridState extends ConsumerState<UserPostsTikTokGrid> {
             }
             return false;
           },
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.only(top: 8),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 2,
-                  mainAxisSpacing: 2,
-                  childAspectRatio: 9 / 16,
-                ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              const crossAxisCount = 3;
+              const spacing = 2.0;
+              const aspect = 9 / 16;
+              final gridHeight = ListPerf.nestedGridHeight(
                 itemCount: posts.length,
-                itemBuilder: (context, index) {
-                  return ListPerf.repaint(
-                    _TikTokPostTile(post: posts[index]),
-                  );
-                },
-              ),
-              if (hasMore)
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: spacing,
+                crossAxisSpacing: spacing,
+                childAspectRatio: aspect,
+                crossAxisExtent: constraints.maxWidth,
+              );
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: gridHeight,
+                    child: GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.only(top: 8),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
+                        childAspectRatio: aspect,
+                      ),
+                      itemCount: posts.length,
+                      itemBuilder: (context, index) {
+                        return ListPerf.repaint(
+                          _TikTokPostTile(post: posts[index]),
+                        );
+                      },
+                    ),
                   ),
-                ),
-            ],
+                  if (hasMore)
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         );
       },

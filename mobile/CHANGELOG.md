@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.346+382 (2026-08-23) — Performans FAZ 16
+
+- **LazyNestedGridView:** Merkezi `nestedGridHeight` — profil grid'lerinde `shrinkWrap` kaldırıldı
+- **Profil:** Cüzdan eylem grid, yayıncı paneli Wrap, içerik sekmeleri (fal/izlenen)
+- **Paylaşım grid:** TikTok tarzı profil paylaşım ızgarası sabit yükseklik
+- **Hediye:** Top gifters listesi, oturum özeti ve koltuk dökümü sheet scroll düzeltmesi
+- **Kısa video:** Kullanıcı profil video bölümü sabit yükseklik grid
+
 ## 1.0.345+381 (2026-08-23) — Performans FAZ 15
 
 - **Oda ayarları / arka plan:** Hub settings tile grid + preset grid — `shrinkWrap` kaldırıldı

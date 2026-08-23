@@ -1,4 +1,5 @@
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -100,23 +101,40 @@ class ProfileWalletSection extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: actions.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 2.35,
-          ),
-          itemBuilder: (context, i) {
-            final a = actions[i];
-            return _WalletAction(
-              icon: a.icon,
-              label: a.label,
-              onTap: a.onTap,
-              accent: a.accent,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const crossAxisCount = 2;
+            const spacing = 10.0;
+            const aspect = 2.35;
+            final gridHeight = ListPerf.nestedGridHeight(
+              itemCount: actions.length,
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: spacing,
+              crossAxisSpacing: spacing,
+              childAspectRatio: aspect,
+              crossAxisExtent: constraints.maxWidth,
+            );
+            return SizedBox(
+              height: gridHeight,
+              child: GridView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: actions.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: spacing,
+                  mainAxisSpacing: spacing,
+                  childAspectRatio: aspect,
+                ),
+                itemBuilder: (context, i) {
+                  final a = actions[i];
+                  return _WalletAction(
+                    icon: a.icon,
+                    label: a.label,
+                    onTap: a.onTap,
+                    accent: a.accent,
+                  );
+                },
+              ),
             );
           },
         ),

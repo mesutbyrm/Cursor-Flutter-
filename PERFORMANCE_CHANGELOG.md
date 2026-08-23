@@ -1,6 +1,6 @@
 # Performans Değişiklik Günlüğü
 
-**Sürüm:** `1.0.345+381`  
+**Sürüm:** `1.0.346+382`  
 **Tarih:** 2026-08-23  
 **Fazlar:** FAZ 3 (network/startup), FAZ 5 (social video), FAZ 6 (SSE)
 
@@ -251,10 +251,28 @@ Profil düzenleme / OTP / avatar: `refreshMe(force: true)`
 
 ---
 
+## FAZ 16 — 1.0.346+382
+
+### Profil + hediye + LazyNestedGridView
+
+| Önce | Sonra |
+|------|--------|
+| `LazyNestedGridView` her zaman `shrinkWrap` | `nestedGridHeight` + sabit `SizedBox` |
+| Profil cüzdan / yayıncı panel grid `shrinkWrap` | Sabit yükseklik / `Wrap` |
+| `profile_content_tabs` fal + izlenen `shrinkWrap` | `nestedListHeight` / `nestedGridHeight` |
+| TikTok paylaşım grid `shrinkWrap` | Sabit yükseklik grid |
+| Top gifters `shrinkWrap` liste | `nestedListHeight` (max 10) |
+| Hediye sheet listeleri `shrinkWrap` / `Flexible` | `ConstrainedBox` scroll |
+
+**Dosyalar:** `lazy_list_views.dart`, `profile_content_tabs.dart`, `profile_wallet_section.dart`, `profile_broadcaster_panel.dart`, `user_posts_tiktok_grid.dart`, `user_shorts_videos_section.dart`, `top_gifters_leaderboard.dart`, `session_gift_summary_sheet.dart`, `seat_gift_breakdown_sheet.dart`
+
+---
+
 ## Henüz yapılmadı (sonraki fazlar)
 
 - Gerçek cihaz benchmark değerlerinin doldurulması
 - Hediye animasyonları CDN offload
+- `user_posts_timeline` değişken yükseklik nested scroll (sliver birleştirme)
 
 
 ---
@@ -262,6 +280,6 @@ Profil düzenleme / OTP / avatar: `refreshMe(force: true)`
 ## Regression
 
 - `flutter test`: 1010 pass
-- `shrinkWrap: true` (voice_hub sheets): **9 → 0** (kalan ~30 repo genelinde)
+- `shrinkWrap: true` (`mobile/lib`): **~29 → ~20**
 - `flutter analyze`: mevcut info seviyesi korunmalı
 - Backend API: değişiklik yok

@@ -1,4 +1,5 @@
 import 'package:canlifal_social/core/performance/animation_perf.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -159,14 +160,30 @@ class _FortuneTab extends ConsumerWidget {
             child: Center(child: Text('Henüz fal kaydı yok')),
           );
         }
-        return LazyListView(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: items.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 8),
-          itemBuilder: (context, index) {
-            final f = items[index];
-            return _FortuneTile(fortune: f);
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            const itemExtent = 72.0;
+            const separator = 8.0;
+            final listHeight = ListPerf.nestedListHeight(
+              itemCount: items.length,
+              itemExtent: itemExtent,
+              separatorExtent: separator,
+            );
+            return SizedBox(
+              height: listHeight,
+              child: LazyListView(
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: items.length,
+                separatorBuilder: (_, _) => const SizedBox(height: separator),
+                itemBuilder: (context, index) {
+                  final f = items[index];
+                  return SizedBox(
+                    height: itemExtent,
+                    child: _FortuneTile(fortune: f),
+                  );
+                },
+              ),
+            );
           },
         );
       },
@@ -221,17 +238,35 @@ class _WatchedTab extends ConsumerWidget {
             child: Center(child: Text('Henüz izlenen video yok')),
           );
         }
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 2,
-            mainAxisSpacing: 2,
-            childAspectRatio: 9 / 16,
-          ),
-          itemCount: videos.length,
-          itemBuilder: (context, index) => _WatchedTile(video: videos[index]),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            const crossAxisCount = 3;
+            const spacing = 2.0;
+            const aspect = 9 / 16;
+            final gridHeight = ListPerf.nestedGridHeight(
+              itemCount: videos.length,
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: spacing,
+              crossAxisSpacing: spacing,
+              childAspectRatio: aspect,
+              crossAxisExtent: constraints.maxWidth,
+            );
+            return SizedBox(
+              height: gridHeight,
+              child: GridView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: spacing,
+                  mainAxisSpacing: spacing,
+                  childAspectRatio: aspect,
+                ),
+                itemCount: videos.length,
+                itemBuilder: (context, index) =>
+                    _WatchedTile(video: videos[index]),
+              ),
+            );
+          },
         );
       },
     );

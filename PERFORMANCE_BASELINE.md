@@ -250,12 +250,12 @@ Optimizasyon **tamamlandı** sayılmadan önce:
 
 ## 9. Post-optimizasyon snapshot (FAZ 15 sonrası — 2026-08-23)
 
-**Sürüm:** `1.0.345+381`
+**Sürüm:** `1.0.346+382`
 
-| Metrik | Baseline (FAZ 2) | FAZ 15 sonrası |
+| Metrik | Baseline (FAZ 2) | FAZ 16 sonrası |
 |--------|------------------|----------------|
 | `flutter test` | 994 pass | **1010 pass** |
-| `shrinkWrap: true` (`mobile/lib`) | **51** | **~29** |
+| `shrinkWrap: true` (`mobile/lib`) | **51** | **~20** |
 | Discover SSE max | 12 | **6** (home: **4**) |
 | Shorts video pool max | 5 | **3** |
 | Token secure read / istek | Her istek | Bellek cache (`peekAccess`) |
