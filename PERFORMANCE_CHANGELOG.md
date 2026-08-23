@@ -1,6 +1,6 @@
 # Performans Değişiklik Günlüğü
 
-**Sürüm:** `1.0.347+383`  
+**Sürüm:** `1.0.348+384`  
 **Tarih:** 2026-08-23  
 **Fazlar:** FAZ 3 (network/startup), FAZ 5 (social video), FAZ 6 (SSE)
 
@@ -288,19 +288,33 @@ Profil düzenleme / OTP / avatar: `refreshMe(force: true)`
 
 ---
 
-## Henüz yapılmadı (sonraki fazlar)
+## FAZ 18 — 1.0.348+384 (final)
 
-- Gerçek cihaz benchmark değerlerinin doldurulması
-- Hediye animasyonları CDN offload
-- `user_posts_timeline` değişken yükseklik nested scroll (sliver birleştirme)
-- `jeton_payment_notify_sheet` form ListView
+### shrinkWrap sıfırlama + profil tek scroll
+
+| Önce | Sonra |
+|------|--------|
+| Kullanıcı profili `ListView` + nested `shrinkWrap` timeline | `CustomScrollView` + `UserPostsTimelineSliver` |
+| Jeton ödeme formu `ListView` shrinkWrap | `SingleChildScrollView` |
+| `LazyNestedGridView` fallback shrinkWrap | `nestedGridHeightForDelegate` (tüm delegate türleri) |
+| `shrinkWrap: true` (`mobile/lib`) | **0** |
+
+**Dosyalar:** `user_profile_page.dart`, `user_posts_timeline.dart`, `jeton_payment_notify_sheet.dart`, `list_perf.dart`, `lazy_list_views.dart`
+
+---
+
+## Program tamamlandı
+
+- FAZ 3–18: `1.0.336+372` → `1.0.348+384`
+- `shrinkWrap: true`: **51 → 0**
+- `flutter test`: **1011 pass**
+- Kalan: fiziksel cihaz benchmark (`PERFORMANCE_AFTER.md`), hediye animasyon CDN
 
 
 ---
 
 ## Regression
 
-- `flutter test`: 1010 pass
-- `shrinkWrap: true` (`mobile/lib`): **~19 → ~3**
-- `flutter analyze`: mevcut info seviyesi korunmalı
+- `flutter test`: 1011 pass
+- `shrinkWrap: true` (`mobile/lib`): **0**
 - Backend API: değişiklik yok

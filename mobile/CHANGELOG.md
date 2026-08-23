@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.348+384 (2026-08-23) — Performans FAZ 18 (final)
+
+- **Kullanıcı profili:** `CustomScrollView` + `UserPostsTimelineSliver` — nested scroll kaldırıldı
+- **Jeton ödeme formu:** `ListView` shrinkWrap → `SingleChildScrollView`
+- **LazyNestedGridView:** Tüm grid delegate türleri için `nestedGridHeightForDelegate`
+- **`shrinkWrap: true`:** repo genelinde **0** (performans programı tamamlandı)
+
 ## 1.0.347+383 (2026-08-23) — Performans FAZ 17
 
 - **VIP / hediye / fal:** Ayrıcalık grid, koleksiyon albümü, fal türleri grid — sabit yükseklik

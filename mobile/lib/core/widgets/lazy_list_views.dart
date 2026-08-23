@@ -164,38 +164,23 @@ class LazyNestedGridView extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final delegate = gridDelegate;
-        if (delegate is SliverGridDelegateWithFixedCrossAxisCount) {
-          final horizontalPad =
-              padding?.resolve(Directionality.of(context)).horizontal ?? 0;
-          final gridHeight = ListPerf.nestedGridHeight(
-            itemCount: itemCount,
-            crossAxisCount: delegate.crossAxisCount,
-            mainAxisSpacing: delegate.mainAxisSpacing,
-            crossAxisSpacing: delegate.crossAxisSpacing,
-            childAspectRatio: delegate.childAspectRatio,
-            crossAxisExtent: constraints.maxWidth - horizontalPad,
-          );
-          return SizedBox(
-            height: gridHeight,
-            child: LazyGridView(
-              physics: const NeverScrollableScrollPhysics(),
-              padding: padding,
-              cacheExtent: cacheExtent,
-              gridDelegate: gridDelegate,
-              itemCount: itemCount,
-              itemBuilder: itemBuilder,
-            ),
-          );
-        }
-        return LazyGridView(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: padding,
-          cacheExtent: cacheExtent,
-          gridDelegate: gridDelegate,
+        final horizontalPad =
+            padding?.resolve(Directionality.of(context)).horizontal ?? 0;
+        final gridHeight = ListPerf.nestedGridHeightForDelegate(
           itemCount: itemCount,
-          itemBuilder: itemBuilder,
+          gridDelegate: gridDelegate,
+          crossAxisExtent: constraints.maxWidth - horizontalPad,
+        );
+        return SizedBox(
+          height: gridHeight,
+          child: LazyGridView(
+            physics: const NeverScrollableScrollPhysics(),
+            padding: padding,
+            cacheExtent: cacheExtent,
+            gridDelegate: gridDelegate,
+            itemCount: itemCount,
+            itemBuilder: itemBuilder,
+          ),
         );
       },
     );
