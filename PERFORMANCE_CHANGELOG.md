@@ -1,7 +1,7 @@
 # Performans Değişiklik Günlüğü
 
-**Sürüm:** `1.0.344+380`  
-**Tarih:** 2026-08-22  
+**Sürüm:** `1.0.345+381`  
+**Tarih:** 2026-08-23  
 **Fazlar:** FAZ 3 (network/startup), FAZ 5 (social video), FAZ 6 (SSE)
 
 ---
@@ -234,6 +234,23 @@ Profil düzenleme / OTP / avatar: `refreshMe(force: true)`
 
 ---
 
+## FAZ 15 — 1.0.345+381
+
+### Hub settings + moderasyon + profil grid
+
+| Önce | Sonra |
+|------|--------|
+| Hub settings tile grid `shrinkWrap` | `LayoutBuilder` + `nestedGridHeight` |
+| Arka plan preset grid `shrinkWrap` | Sabit yükseklik grid |
+| Moderasyon eylem grid `Flexible` + `shrinkWrap` | Sabit yükseklik grid |
+| Koltuk seçici `GridView.count` `shrinkWrap` | `nestedGridHeight` (11 koltuk) |
+| Profil izlenen / skeleton grid `shrinkWrap` | Sabit yükseklik grid |
+| `ShortsProfileGrid` nested scroll `shrinkWrap` | Sabit yükseklik grid |
+
+**Dosyalar:** `voice_room_hub_settings.dart`, `voice_room_moderation_sheet.dart`, `profile_content_section.dart`, `shorts_profile_content.dart`
+
+---
+
 ## Henüz yapılmadı (sonraki fazlar)
 
 - Gerçek cihaz benchmark değerlerinin doldurulması
@@ -245,6 +262,6 @@ Profil düzenleme / OTP / avatar: `refreshMe(force: true)`
 ## Regression
 
 - `flutter test`: 1010 pass
-- `shrinkWrap: true` (voice_hub sheets): **9 → 0** (kalan ~39 repo genelinde)
+- `shrinkWrap: true` (voice_hub sheets): **9 → 0** (kalan ~30 repo genelinde)
 - `flutter analyze`: mevcut info seviyesi korunmalı
 - Backend API: değişiklik yok

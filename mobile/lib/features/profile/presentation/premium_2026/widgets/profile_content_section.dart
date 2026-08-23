@@ -1,4 +1,5 @@
 import 'package:canlifal_social/core/performance/animation_perf.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/widgets/lazy_list_views.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -624,32 +625,49 @@ class _ShortsGrid extends StatelessWidget {
     if (videos.isEmpty) {
       return const _EmptyMessage('Henüz izlenen video yok');
     }
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      addRepaintBoundaries: false,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-        childAspectRatio: 9 / 14,
-      ),
-      itemCount: videos.length,
-      itemBuilder: (context, index) {
-        final video = videos[index];
-        final thumb = video.thumbnailUrl;
-        return GestureDetector(
-          onTap: () => context.push('/shorts?videoId=${video.id}'),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: DecoratedBox(
-              decoration: const BoxDecoration(color: Color(0xFF1A0F3D)),
-              child: thumb != null && thumb.isNotEmpty
-                  ? CanlifalNetworkImage(url: thumb, fit: BoxFit.cover)
-                  : const Center(
-                      child: Icon(Icons.play_circle_outline_rounded),
-                    ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const crossAxisCount = 3;
+        const spacing = 8.0;
+        const aspect = 9 / 14;
+        final gridHeight = ListPerf.nestedGridHeight(
+          itemCount: videos.length,
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          childAspectRatio: aspect,
+          crossAxisExtent: constraints.maxWidth,
+        );
+        return SizedBox(
+          height: gridHeight,
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            addRepaintBoundaries: false,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: spacing,
+              mainAxisSpacing: spacing,
+              childAspectRatio: aspect,
             ),
+            itemCount: videos.length,
+            itemBuilder: (context, index) {
+              final video = videos[index];
+              final thumb = video.thumbnailUrl;
+              return GestureDetector(
+                onTap: () => context.push('/shorts?videoId=${video.id}'),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(color: Color(0xFF1A0F3D)),
+                    child: thumb != null && thumb.isNotEmpty
+                        ? CanlifalNetworkImage(url: thumb, fit: BoxFit.cover)
+                        : const Center(
+                            child: Icon(Icons.play_circle_outline_rounded),
+                          ),
+                  ),
+                ),
+              );
+            },
           ),
         );
       },
@@ -664,22 +682,40 @@ class _ContentSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        addRepaintBoundaries: false,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-          childAspectRatio: 9 / 14,
-        ),
-        itemCount: 6,
-        itemBuilder: (_, _) => const PremiumSkeleton(
-          width: double.infinity,
-          height: 120,
-          borderRadius: BorderRadius.all(Radius.circular(14)),
-        ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const crossAxisCount = 3;
+          const spacing = 8.0;
+          const aspect = 9 / 14;
+          const itemCount = 6;
+          final gridHeight = ListPerf.nestedGridHeight(
+            itemCount: itemCount,
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childAspectRatio: aspect,
+            crossAxisExtent: constraints.maxWidth,
+          );
+          return SizedBox(
+            height: gridHeight,
+            child: GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              addRepaintBoundaries: false,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: spacing,
+                mainAxisSpacing: spacing,
+                childAspectRatio: aspect,
+              ),
+              itemCount: itemCount,
+              itemBuilder: (_, _) => const PremiumSkeleton(
+                width: double.infinity,
+                height: 120,
+                borderRadius: BorderRadius.all(Radius.circular(14)),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

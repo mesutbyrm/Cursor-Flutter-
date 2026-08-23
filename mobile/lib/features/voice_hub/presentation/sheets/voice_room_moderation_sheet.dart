@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -619,18 +620,35 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
               child: CircularProgressIndicator(color: Color(0xFF6C3FC5)),
             )
           else
-            Flexible(
-              child: GridView.builder(
-                shrinkWrap: true,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  childAspectRatio: 1.05,
-                ),
-                itemCount: actions.length,
-                itemBuilder: (context, i) => actions[i],
-              ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const crossAxisCount = 3;
+                const spacing = 8.0;
+                const aspect = 1.05;
+                final gridHeight = ListPerf.nestedGridHeight(
+                  itemCount: actions.length,
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: spacing,
+                  crossAxisSpacing: spacing,
+                  childAspectRatio: aspect,
+                  crossAxisExtent: constraints.maxWidth,
+                );
+                return SizedBox(
+                  height: gridHeight,
+                  child: GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: spacing,
+                      crossAxisSpacing: spacing,
+                      childAspectRatio: aspect,
+                    ),
+                    itemCount: actions.length,
+                    itemBuilder: (context, i) => actions[i],
+                  ),
+                );
+              },
             ),
         ],
       ),
@@ -861,23 +879,43 @@ Future<void> _pickEmptySeatAndAssign(
               ),
             ),
             const SizedBox(height: 14),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 4,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 1.4,
-              children: [
-                for (final seat in seats)
-                  _SeatPickTile(
-                    seat: seat,
-                    occupantName: occupied[seat]?.displayName,
-                    onTap: occupied.containsKey(seat)
-                        ? null
-                        : () => Navigator.pop(ctx, seat),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const crossAxisCount = 4;
+                const spacing = 10.0;
+                const aspect = 1.4;
+                final gridHeight = ListPerf.nestedGridHeight(
+                  itemCount: seats.length,
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: spacing,
+                  crossAxisSpacing: spacing,
+                  childAspectRatio: aspect,
+                  crossAxisExtent: constraints.maxWidth,
+                );
+                return SizedBox(
+                  height: gridHeight,
+                  child: GridView(
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: spacing,
+                      crossAxisSpacing: spacing,
+                      childAspectRatio: aspect,
+                    ),
+                    children: [
+                      for (final seat in seats)
+                        _SeatPickTile(
+                          seat: seat,
+                          occupantName: occupied[seat]?.displayName,
+                          onTap: occupied.containsKey(seat)
+                              ? null
+                              : () => Navigator.pop(ctx, seat),
+                        ),
+                    ],
                   ),
-              ],
+                );
+              },
             ),
           ],
         ),

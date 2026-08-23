@@ -245,3 +245,24 @@ Optimizasyon **tamamlandı** sayılmadan önce:
 ---
 
 *Ölçülemeyen metrikler için "tahmini" değer yazılmadı. Optimizasyon sonrası karşılaştırma yalnızca gerçek ölçümlerle yapılacaktır.*
+
+---
+
+## 9. Post-optimizasyon snapshot (FAZ 15 sonrası — 2026-08-23)
+
+**Sürüm:** `1.0.345+381`
+
+| Metrik | Baseline (FAZ 2) | FAZ 15 sonrası |
+|--------|------------------|----------------|
+| `flutter test` | 994 pass | **1010 pass** |
+| `shrinkWrap: true` (`mobile/lib`) | **51** | **~29** |
+| Discover SSE max | 12 | **6** (home: **4**) |
+| Shorts video pool max | 5 | **3** |
+| Token secure read / istek | Her istek | Bellek cache (`peekAccess`) |
+| `/api/me` refresh | Her çağrı | 8 sn throttle + dedupe |
+| Voice hub sheets `shrinkWrap` | 9 | **0** |
+| CI arm64 APK | Yok | `canlifal-mobile-arm64-release.apk` |
+
+**Kalan `shrinkWrap` alanları (düşük öncelik):** gifts sheet'leri, shorts studio, admin/agency panelleri, eski profil widget'ları (`profile_content_tabs`, `user_posts_*`).
+
+**Cihaz metrikleri:** Hâlâ ölçülmedi — [`PERFORMANCE_AFTER.md`](PERFORMANCE_AFTER.md) protokolü ile fiziksel cihazda doldurulacak.

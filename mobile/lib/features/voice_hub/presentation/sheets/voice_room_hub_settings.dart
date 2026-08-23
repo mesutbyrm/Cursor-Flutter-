@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/media/cloud_upload_service.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -243,42 +244,62 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
         child: ListView(
           controller: scroll,
           children: [
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 0.92,
-              ),
-              itemCount: tiles.length,
-              itemBuilder: (context, i) {
-                final t = tiles[i];
-                return Tooltip(
-                  message: t.label,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: t.onTap,
-                      borderRadius: BorderRadius.circular(14),
-                      child: Ink(
-                        decoration: BoxDecoration(
-                          color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.12),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const crossAxisCount = 4;
+                const spacing = 8.0;
+                const aspect = 0.92;
+                const horizontalPad = 16.0;
+                final gridHeight = ListPerf.nestedGridHeight(
+                  itemCount: tiles.length,
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: spacing,
+                  crossAxisSpacing: spacing,
+                  childAspectRatio: aspect,
+                  crossAxisExtent: constraints.maxWidth - horizontalPad,
+                );
+                return SizedBox(
+                  height: gridHeight,
+                  child: GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: spacing,
+                      mainAxisSpacing: spacing,
+                      childAspectRatio: aspect,
+                    ),
+                    itemCount: tiles.length,
+                    itemBuilder: (context, i) {
+                      final t = tiles[i];
+                      return Tooltip(
+                        message: t.label,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: t.onTap,
+                            borderRadius: BorderRadius.circular(14),
+                            child: Ink(
+                              decoration: BoxDecoration(
+                                color: VoiceRoomTokens.neonPurple
+                                    .withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.12),
+                                ),
+                              ),
+                              padding: const EdgeInsets.all(10),
+                              child: Icon(
+                                t.icon,
+                                color: VoiceRoomTokens.neonBlue,
+                                size: 26,
+                              ),
+                            ),
                           ),
                         ),
-                        padding: const EdgeInsets.all(10),
-                        child: Icon(
-                          t.icon,
-                          color: VoiceRoomTokens.neonBlue,
-                          size: 26,
-                        ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 );
               },
@@ -485,28 +506,46 @@ class _VoiceRoomBackgroundSheetState
               )
             else if (_presets.isNotEmpty) ...[
               const SizedBox(height: 12),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.zero,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  childAspectRatio: 0.75,
-                ),
-                itemCount: _presets.length,
-                itemBuilder: (_, i) {
-                  final url = _presets[i];
-                  return GestureDetector(
-                    onTap: _uploading ? null : () => _applyPreset(url),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: CanlifalNetworkImage(
-                        url: url,
-                        thumbnailWidth: 180,
-                        fit: BoxFit.cover,
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  const crossAxisCount = 3;
+                  const spacing = 8.0;
+                  const aspect = 0.75;
+                  final gridHeight = ListPerf.nestedGridHeight(
+                    itemCount: _presets.length,
+                    crossAxisCount: crossAxisCount,
+                    mainAxisSpacing: spacing,
+                    crossAxisSpacing: spacing,
+                    childAspectRatio: aspect,
+                    crossAxisExtent: constraints.maxWidth,
+                  );
+                  return SizedBox(
+                    height: gridHeight,
+                    child: GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
+                        childAspectRatio: aspect,
                       ),
+                      itemCount: _presets.length,
+                      itemBuilder: (_, i) {
+                        final url = _presets[i];
+                        return GestureDetector(
+                          onTap: _uploading ? null : () => _applyPreset(url),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: CanlifalNetworkImage(
+                              url: url,
+                              thumbnailWidth: 180,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   );
                 },

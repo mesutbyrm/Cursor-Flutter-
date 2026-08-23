@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.345+381 (2026-08-23) — Performans FAZ 15
+
+- **Oda ayarları / arka plan:** Hub settings tile grid + preset grid — `shrinkWrap` kaldırıldı
+- **Moderasyon sheet:** Eylem grid + koltuk seçici — sabit yükseklik `nestedGridHeight`
+- **Profil içerik:** İzlenen videolar grid + skeleton — `shrinkWrap` kaldırıldı
+- **Shorts profil grid:** `nestedInProfileScroll` yolu sabit yükseklik grid
+
 ## 1.0.344+380 (2026-08-23) — Performans FAZ 14
 
 - **Voice sheet'ler:** Menü, komut paneli, kullanıcı listeleri — `shrinkWrap` kaldırıldı

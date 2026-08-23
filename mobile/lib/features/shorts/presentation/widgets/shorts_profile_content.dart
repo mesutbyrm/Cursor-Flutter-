@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
@@ -361,25 +362,42 @@ class ShortsProfileGrid extends StatelessWidget {
   });
 
   final List<ShortVideoEntity> videos;
-  /// Profil CustomScrollView içindeyse shrinkWrap zorunlu.
+  /// Profil CustomScrollView içinde sabit yükseklik grid kullanılır.
   final bool nestedInProfileScroll;
 
   @override
   Widget build(BuildContext context) {
     if (nestedInProfileScroll) {
-      return GridView.builder(
-        padding: EdgeInsets.zero,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: 4,
-          mainAxisSpacing: 4,
-          childAspectRatio: 9 / 14,
-        ),
-        itemCount: videos.length,
-        addRepaintBoundaries: false,
-        itemBuilder: (context, i) => _VideoTile(video: videos[i]),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          const crossAxisCount = 3;
+          const spacing = 4.0;
+          const aspect = 9 / 14;
+          final gridHeight = ListPerf.nestedGridHeight(
+            itemCount: videos.length,
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childAspectRatio: aspect,
+            crossAxisExtent: constraints.maxWidth,
+          );
+          return SizedBox(
+            height: gridHeight,
+            child: GridView.builder(
+              padding: EdgeInsets.zero,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: spacing,
+                mainAxisSpacing: spacing,
+                childAspectRatio: aspect,
+              ),
+              itemCount: videos.length,
+              addRepaintBoundaries: false,
+              itemBuilder: (context, i) => _VideoTile(video: videos[i]),
+            ),
+          );
+        },
       );
     }
     return GridView.builder(
