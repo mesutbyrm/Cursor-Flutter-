@@ -10,6 +10,7 @@ import '../../../../feed/presentation/widgets/discover_premium_2026/discover_pre
 import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_visual.dart';
 import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/performance/list_perf.dart';
+import '../../../../../core/performance/scroll_perf.dart';
 import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../../core/providers/auth_selectors.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
@@ -367,30 +368,46 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     }
     i--;
     if (i == 0) {
-      return GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: metrics.gridColumns,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: metrics.gridColumns >= 4 ? 0.82 : 0.88,
-        ),
+      const spacing = 10.0;
+      final aspectRatio = metrics.gridColumns >= 4 ? 0.82 : 0.88;
+      final gridWidth = MediaQuery.sizeOf(context).width -
+          metrics.horizontalPad * 2;
+      final gridHeight = ListPerf.nestedGridHeight(
         itemCount: _gridCats.length,
-        itemBuilder: (context, j) {
-          final c = _gridCats[j];
-          final count = _roomCountForCat(c.id);
-          return _CategoryIconTile(
-            cat: c,
-            roomLabel: count > 0 ? '${VoiceLiveHeader2026Format.count(count)} oda' : '—',
-            onTap: () {
-              setState(() {
-                _tab = c.id == 'night' ? 'discover' : c.id;
-                _resetVisibleRooms();
-              });
-            },
-          );
-        },
+        crossAxisCount: metrics.gridColumns,
+        mainAxisSpacing: spacing,
+        crossAxisSpacing: spacing,
+        childAspectRatio: aspectRatio,
+        crossAxisExtent: gridWidth,
+      );
+      return SizedBox(
+        height: gridHeight,
+        child: GridView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: metrics.gridColumns,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childAspectRatio: aspectRatio,
+          ),
+          itemCount: _gridCats.length,
+          itemBuilder: (context, j) {
+            final c = _gridCats[j];
+            final count = _roomCountForCat(c.id);
+            return _CategoryIconTile(
+              cat: c,
+              roomLabel: count > 0
+                  ? '${VoiceLiveHeader2026Format.count(count)} oda'
+                  : '—',
+              onTap: () {
+                setState(() {
+                  _tab = c.id == 'night' ? 'discover' : c.id;
+                  _resetVisibleRooms();
+                });
+              },
+            );
+          },
+        ),
       );
     }
     i--;

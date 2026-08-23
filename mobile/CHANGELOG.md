@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.341+377 (2026-08-23) — Performans FAZ 10
+
+- **Discover kategori grid:** `shrinkWrap` kaldırıldı — `ListPerf.nestedGridHeight` ile sabit yükseklik grid (hub + kategori sheet)
+- **Shell prefetch:** Hediye katalogları T+200ms → **T+600ms** (kademe 1b) — açılışta paralel GET yükü azaldı
+- **APK denetimi:** `PERFORMANCE_APK_AUDIT.md` — boyut bileşenleri ve öncelikli aksiyonlar
+
 ## 1.0.340+376 (2026-08-23) — Performans FAZ 9
 
 - **Voice sahne koltukları:** Koltuk başına `VoiceSeatSnapshot` + `ref.select` — başka koltuk değişince tüm grid rebuild olmaz

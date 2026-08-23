@@ -1,6 +1,6 @@
 # Performans Değişiklik Günlüğü
 
-**Sürüm:** `1.0.340+376`  
+**Sürüm:** `1.0.341+377`  
 **Tarih:** 2026-08-22  
 **Fazlar:** FAZ 3 (network/startup), FAZ 5 (social video), FAZ 6 (SSE)
 
@@ -139,17 +139,44 @@
 
 ---
 
+## FAZ 10 — 1.0.341+377
+
+### Discover kategori grid (shrinkWrap)
+
+| Önce | Sonra |
+|------|--------|
+| `GridView.builder(shrinkWrap: true)` nested scroll | `SizedBox` + sabit yükseklik `ListPerf.nestedGridHeight` |
+| Hub + kategori sheet layout ölçüm maliyeti | Önceden hesaplanmış grid yüksekliği |
+
+**Dosyalar:** `voice_discover_hub_2026.dart`, `voice_discover_2026.dart`, `list_perf.dart`  
+**Test:** `mobile/test/list_perf_nested_grid_test.dart`
+
+### Shell prefetch kademeleme
+
+| Önce | Sonra |
+|------|--------|
+| T+200ms: cüzdan + bildirim + profil + **3× hediye katalog** | T+200ms: cüzdan + bildirim + profil |
+| | T+**600ms**: hediye katalogları (tier 1b) |
+
+**Dosya:** `shell_prefetch.dart`
+
+### APK boyutu denetimi
+
+- Belge: `PERFORMANCE_APK_AUDIT.md`
+- Bundle assets: **~9,4 MB** (asıl boyut native SDK: TRTC, FFmpeg, Firebase)
+
+---
+
 ## Henüz yapılmadı (sonraki fazlar)
 
-- Discover hub `shrinkWrap` grid → sliver refactor
+- ABI split APK / asset CDN offload
 - Gerçek cihaz benchmark (`PERFORMANCE_AFTER.md`)
-- APK boyutu / bağımlılık denetimi (FAZ 10)
 
 
 ---
 
 ## Regression
 
-- `flutter test`: 1003 pass (4 yeni seat snapshot test)
+- `flutter test`: 1005 pass (2 yeni nested grid test)
 - `flutter analyze`: mevcut info seviyesi korunmalı
 - Backend API: değişiklik yok
