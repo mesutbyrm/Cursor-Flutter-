@@ -6,6 +6,10 @@
 
 https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
 
+**arm64-only (daha küçük, çoğu telefon):**
+
+https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-arm64-release.apk
+
 > 404 alırsanız: [Build release APK](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml) → **Run workflow** → dal **`main`** → işlem bitince `apk-latest` güncellenir.
 
 ## Öne çıkan sürümler
