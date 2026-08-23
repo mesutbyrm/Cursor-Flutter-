@@ -614,26 +614,37 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           set -eux
-          URL="https://github.com/${{ github.repository }}/releases/download/apk-latest/canlifal-mobile-release.apk"
-          echo "Downloading: $URL"
-          HTTP="000"
-          for attempt in 1 2 3 4 5 6; do
-            HTTP=$(curl -sS -L -o /tmp/canlifal-apk-verify.apk -w '%{http_code}' "$URL" || echo "000")
-            echo "Attempt $attempt HTTP=$HTTP"
-            if [[ "$HTTP" == "200" && -s /tmp/canlifal-apk-verify.apk ]]; then
-              break
-            fi
-            sleep 15
-          done
-          test "$HTTP" = "200"
-          test -s /tmp/canlifal-apk-verify.apk
           EXPECT_NAME=$(grep -E '^version:' mobile/pubspec.yaml | awk '{print $2}' | cut -d+ -f1)
           EXPECT_BUILD=$(grep -E '^version:' mobile/pubspec.yaml | awk '{print $2}' | cut -d+ -f2)
           AAPT=$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" -name aapt -type f 2>/dev/null | sort -V | tail -1)
           test -n "$AAPT"
-          BADGING=$("$AAPT" dump badging /tmp/canlifal-apk-verify.apk)
-          echo "$BADGING" | grep -F "versionName='${EXPECT_NAME}'"
-          echo "$BADGING" | grep -F "versionCode='${EXPECT_BUILD}'"
+          verify_apk() {
+            local apk="$1"
+            test -s "$apk"
+            local BADGING
+            BADGING=$("$AAPT" dump badging "$apk")
+            echo "$BADGING" | grep -F "versionName='${EXPECT_NAME}'"
+            echo "$BADGING" | grep -F "versionCode='${EXPECT_BUILD}'"
+          }
+          echo "Local APK metadata doğrulama..."
+          verify_apk "canlifal-mobile-release.apk"
+          URL="https://github.com/${{ github.repository }}/releases/download/apk-latest/canlifal-mobile-release.apk"
+          echo "Downloading apk-latest: $URL"
+          HTTP="000"
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            HTTP=$(curl -sS -L -o /tmp/canlifal-apk-verify.apk -w '%{http_code}' "$URL" || echo "000")
+            echo "Attempt $attempt HTTP=$HTTP"
+            if [[ "$HTTP" == "200" && -s /tmp/canlifal-apk-verify.apk ]]; then
+              if verify_apk /tmp/canlifal-apk-verify.apk; then
+                break
+              fi
+              echo "apk-latest metadata henüz güncellenmedi, tekrar denenecek..."
+            fi
+            sleep 20
+          done
+          test "$HTTP" = "200"
+          test -s /tmp/canlifal-apk-verify.apk
+          verify_apk /tmp/canlifal-apk-verify.apk
           echo "http_code=$HTTP" >> "$GITHUB_OUTPUT"
           echo "metadata=PASS" >> "$GITHUB_OUTPUT"
 

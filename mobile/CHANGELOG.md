@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.349+386 (2026-08-23) — CI metadata doğrulama
+
+- **APK CI:** Yerel derlenen APK önce doğrulanır; `apk-latest` CDN gecikmesi için retry artırıldı
+
 ## 1.0.349+385 (2026-08-23) — Kısa video hub şeritleri
 
 - **Ortak bileşen:** `ShortsHubStrip` — `GET /api/short-videos?tab=foryou` (keşfet yedek)
