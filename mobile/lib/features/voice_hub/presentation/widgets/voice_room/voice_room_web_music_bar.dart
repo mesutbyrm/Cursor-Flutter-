@@ -325,7 +325,7 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
                       tooltip: 'Sonraki',
                     ),
                   ],
-                  if (widget.canControlMusic && widget.onStop != null) ...[
+                  if (widget.onStop != null) ...[
                     const SizedBox(width: 4),
                     _BarIconButton(
                       onPressed: widget.onStop,

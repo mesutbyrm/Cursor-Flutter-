@@ -2085,34 +2085,36 @@ class VoiceRoomLiveController
     bool skipPayment = false,
   }) async {
     _markLocalMusicRequestGrace();
+    // Sheet kapanış animasyonu sırasında UI donmasın.
+    await Future<void>.delayed(Duration.zero);
+    if (!_sessionActive) return null;
+
+    final videoId = hit.videoId.trim();
+    if (videoId.isEmpty) {
+      return 'Geçersiz şarkı seçimi.';
+    }
+    final alreadyQueued = state.dj.nowPlaying?.videoIdField == videoId ||
+        state.dj.musicQueue.any((e) => e.videoIdField == videoId);
+    if (alreadyQueued) {
+      return 'Bu şarkı zaten kuyrukta.';
+    }
+    if (!skipPayment) {
+      final balances = ref.read(walletBalancesProvider).valueOrNull;
+      final jeton = VoiceMusicAccess.jetonFromBalances(balances);
+      if (!VoiceMusicAccess.canAffordRequest(
+        dj: state.dj,
+        jetonBalance: jeton,
+        withVideo: withVideo,
+      )) {
+        final cost = withVideo
+            ? VoiceMusicAccess.videoRequestCost(state.dj)
+            : VoiceMusicAccess.audioRequestCost(state.dj);
+        return 'Yetersiz jeton. Gerekli: $cost';
+      }
+    }
+
     state = state.copyWith(sending: true, clearPendingMusicSearch: true);
     try {
-      final videoId = hit.videoId.trim();
-      if (videoId.isEmpty) {
-        state = state.copyWith(sending: false);
-        return 'Geçersiz şarkı seçimi.';
-      }
-      final alreadyQueued = state.dj.nowPlaying?.videoIdField == videoId ||
-          state.dj.musicQueue.any((e) => e.videoIdField == videoId);
-      if (alreadyQueued) {
-        state = state.copyWith(sending: false);
-        return 'Bu şarkı zaten kuyrukta.';
-      }
-      if (!skipPayment) {
-        final balances = ref.read(walletBalancesProvider).valueOrNull;
-        final jeton = VoiceMusicAccess.jetonFromBalances(balances);
-        if (!VoiceMusicAccess.canAffordRequest(
-          dj: state.dj,
-          jetonBalance: jeton,
-          withVideo: withVideo,
-        )) {
-          final cost = withVideo
-              ? VoiceMusicAccess.videoRequestCost(state.dj)
-              : VoiceMusicAccess.audioRequestCost(state.dj);
-          state = state.copyWith(sending: false);
-          return 'Yetersiz jeton. Gerekli: $cost';
-        }
-      }
       final result = await ref.read(enqueueSongUseCaseProvider)(
             roomId: _roomKey,
             alternateRoomId: _musicAlternateKey,

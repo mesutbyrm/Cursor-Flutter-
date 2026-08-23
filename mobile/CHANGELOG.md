@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.351+389 (2026-08-23) — Sesli oda müzik durdurma
+
+- **Durdur / kapat:** Tüm kullanıcılar müzik şeridinden anında yerel çıkışı kapatabilir (ses + video)
+- **Sunucu kuyruğu:** Yalnızca yetkili kullanıcılar (oda sahibi, admin, isteyen) sunucu kuyruğunu temizler
+- **Müzik isteği:** Sheet kapanışında UI donması giderildi (`submitSelectedSong` yield)
+- **Soğuk başlangıç:** Uygulama yeniden açılınca yetim `audio_service` oturumu temizlenir
+
 ## 1.0.350+388 (2026-08-23) — Sosyal kısa video kaldırma
 
 - **Sosyal sekmesi:** Kısa video şeridi (`ShortsHubStrip`) kaldırıldı; diğer hub sayfalarında kalır

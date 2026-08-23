@@ -84,11 +84,12 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                     await ctrl.resumeMusic();
                   }
                 },
-                onStop: canStopMusic
-                    ? () async {
-                        await ctrl.closeMusicPlayer();
-                      }
-                    : null,
+                onStop: () async {
+                  await ctrl.closeMusicPlayer();
+                },
+                onClose: () async {
+                  await ctrl.closeMusicPlayer();
+                },
                 onSkipNext: canControlMusic
                     ? () async {
                         await ctrl.skipMusic();

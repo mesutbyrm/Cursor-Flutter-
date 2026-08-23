@@ -8,6 +8,14 @@ part of 'chat_room_providers.dart';
 /// `part` olduğundan aynı kütüphanededir: private alan/metotlara erişir ve
 /// davranış birebir korunur (yalnızca fiziksel konum değişti).
 extension VoiceRoomMusicControls on VoiceRoomLiveController {
+  /// Hoparlör / video çıkışını anında kes — sunucu kuyruğuna dokunmaz.
+  void _haltLocalMusicPlaybackImmediate() {
+    unawaited(ref.read(voiceRoomDjPlayerProvider).stop());
+    if (_roomKey.isEmpty) return;
+    ref.read(roomSongBlocProvider(_roomKey)).add(const RoomSongUserPause());
+    ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+  }
+
   bool _isLocalMusicOutputActive() {
     if (_roomKey.isEmpty) return false;
     final playerActive =
@@ -219,15 +227,17 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
     }
   }
 
-  /// X / kapat — yalnızca yetkili kullanıcılar sunucu kuyruğunu durdurur.
+  /// Durdur / kapat — her kullanıcıda yerel çıkış anında kesilir; sunucu
+  /// kuyruğu yalnızca yetkili kullanıcılar için temizlenir.
   Future<void> closeMusicPlayer() async {
+    ref.read(voiceRoomMusicSessionProvider.notifier).markUserDismissed();
+    _haltLocalMusicPlaybackImmediate();
+
     if (!_canStopMusic()) {
-      ref.read(voiceRoomMusicSessionProvider.notifier).markUserDismissed();
       ref.read(voiceRoomMusicSessionProvider.notifier).dismissAfterClose();
       return;
     }
-    ref.read(voiceRoomMusicSessionProvider.notifier).markUserDismissed();
-    await ref.read(voiceRoomDjPlayerProvider).stop();
+
     try {
       final result = await ref.read(chatRoomRemoteProvider).clearMusicQueue(
         roomKey: _roomKey,
@@ -235,6 +245,7 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
       );
       if (result.autoAdvanced) {
         await refresh();
+        ref.read(voiceRoomMusicSessionProvider.notifier).dismissAfterClose();
         return;
       }
       await refresh();
@@ -247,9 +258,6 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
           musicQueue: const [],
         ),
       );
-    }
-    if (_roomKey.isNotEmpty) {
-      ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
     }
     ref.read(voiceRoomMusicSessionProvider.notifier).dismissAfterClose();
   }
