@@ -60,9 +60,8 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
           isOwner: perms.isRoomOwner || perms.isSiteAdmin,
         ),
         VoiceWebOwnerStage(
+          roomKey: liveKey,
           room: room,
-          presence: live.presence,
-          seatSlots: live.seatSlots,
           djUserIds: live.dj.djUsers.map((u) => u.id).toList(),
           speakingUserIds: speakingIds,
           selfUserId: user?.id,

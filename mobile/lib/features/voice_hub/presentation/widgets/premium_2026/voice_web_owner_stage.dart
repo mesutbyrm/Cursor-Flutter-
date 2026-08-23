@@ -3,20 +3,18 @@ import 'package:flutter/material.dart';
 import '../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
-import '../../../domain/entities/voice_room_seat_slot.dart';
 import '../../utils/voice_room_seat_layout.dart';
 import '../../utils/voice_room_seat_capacity.dart';
 import '../../utils/voice_room_speak_access.dart';
-import 'voice_mic_seat.dart';
+import 'voice_web_owner_stage_seat.dart';
 
 /// canlifal.com: sol Kurucu (koltuk 1) + sağda 2×5 (koltuk 2–11).
 /// Koltuk 11 (sağ alt admin) yalnızca doluysa görünür; sahip yoksa koltuk 1 boş kalır.
 class VoiceWebOwnerStage extends StatelessWidget {
   const VoiceWebOwnerStage({
     super.key,
+    required this.roomKey,
     required this.room,
-    required this.presence,
-    this.seatSlots = const [],
     this.djUserIds,
     this.speakingUserId,
     this.speakingUserIds = const {},
@@ -29,9 +27,8 @@ class VoiceWebOwnerStage extends StatelessWidget {
     this.remoteTrtcUserId,
   });
 
+  final String roomKey;
   final VoiceRoomEntity room;
-  final List<ChatRoomPresence> presence;
-  final List<VoiceRoomSeatSlot> seatSlots;
   final List<String>? djUserIds;
   final String? speakingUserId;
   final Set<String> speakingUserIds;
@@ -43,32 +40,12 @@ class VoiceWebOwnerStage extends StatelessWidget {
   final String? selfUserId;
   final String? remoteTrtcUserId;
 
-  List<String> get _effectiveDjIds =>
-      djUserIds ?? room.djUserIds;
+  List<String> get _effectiveDjIds => djUserIds ?? room.djUserIds;
 
-  bool _isSpeaking(ChatRoomPresence? user) {
-    if (user == null) return false;
-    return speakingUserIds.contains(user.id) ||
-        speakingUserId == user.id ||
-        user.isSpeaking;
-  }
-
-  VoiceRoomSeatSlot? _slotFor(int seatIndex) {
-    for (final s in seatSlots) {
-      if (s.index == seatIndex) return s;
-    }
-    return null;
-  }
-
-  bool _isLocked(int seatIndex, ChatRoomPresence? user) {
-    if (user != null) return false;
-    return _slotFor(seatIndex)?.isLocked == true;
-  }
-
-  bool? _micOpenFor(ChatRoomPresence? user, int seatIndex) {
-    if (user == null) return null;
-    final slot = _slotFor(seatIndex);
-    return slot?.micOn ?? user.micOpen;
+  Set<String> get _effectiveSpeakingIds {
+    if (speakingUserIds.isNotEmpty) return speakingUserIds;
+    if (speakingUserId != null) return {speakingUserId!};
+    return const {};
   }
 
   @override
@@ -88,18 +65,10 @@ class VoiceWebOwnerStage extends StatelessWidget {
         final gridH = rowH * 2 + gap;
         final totalH = gridH.clamp(112.0, 176.0);
 
-        final seats = VoiceRoomSeatLayout(
-          room: room,
-          presence: presence,
-          seatSlots: seatSlots,
-        ).build();
-        final host = seats[1];
-        final rows = voiceWebOwnerSeatRows(
-          room: room,
-          seatSlots: seatSlots,
-        );
+        final rows = voiceWebOwnerSeatRows(room: room);
         final topInternal = rows.top;
         final bottomInternal = rows.bottom;
+        final speaking = _effectiveSpeakingIds;
 
         return SizedBox(
           height: totalH,
@@ -108,18 +77,16 @@ class VoiceWebOwnerStage extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                VoiceMicSeat(
-                  user: host,
+                VoiceWebOwnerStageSeat(
+                  roomKey: roomKey,
+                  room: room,
                   seatIndex: 1,
                   size: hostSize,
-                  isHost: host != null,
-                  room: room,
+                  isHost: true,
                   djUserIds: _effectiveDjIds,
-                  speaking: _isSpeaking(host),
-                  locked: _isLocked(1, host),
-                  micOpen: _micOpenFor(host, 1),
-                  onTap: () => onSeatTap?.call(1, host),
-                  onLongPress: host == null ? () => onSeatLongPress?.call(1) : null,
+                  speakingUserIds: speaking,
+                  onSeatTap: onSeatTap,
+                  onSeatLongPress: onSeatLongPress,
                   trtc: trtc,
                   trtcReady: trtcReady,
                   selfUserId: selfUserId,
@@ -131,18 +98,18 @@ class VoiceWebOwnerStage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _seatRow(
-                        seats: seats,
                         internalNums: topInternal,
                         size: cell,
                         gap: gap,
+                        speaking: speaking,
                       ),
                       const SizedBox(height: gap),
                       _seatRow(
-                        seats: seats,
                         internalNums: bottomInternal,
                         size: cell,
                         gap: gap,
                         columns: bottomInternal.length,
+                        speaking: speaking,
                       ),
                     ],
                   ),
@@ -156,10 +123,10 @@ class VoiceWebOwnerStage extends StatelessWidget {
   }
 
   Widget _seatRow({
-    required Map<int, ChatRoomPresence> seats,
     required List<int> internalNums,
     required double size,
     required double gap,
+    required Set<String> speaking,
     int columns = 5,
   }) {
     return Row(
@@ -169,18 +136,15 @@ class VoiceWebOwnerStage extends StatelessWidget {
           return SizedBox(width: size);
         }
         final internal = internalNums[col];
-        final user = seats[internal];
-        return VoiceMicSeat(
-          user: user,
+        return VoiceWebOwnerStageSeat(
+          roomKey: roomKey,
+          room: room,
           seatIndex: internal,
           size: size,
-          room: room,
           djUserIds: _effectiveDjIds,
-          speaking: _isSpeaking(user),
-          locked: _isLocked(internal, user),
-          micOpen: _micOpenFor(user, internal),
-          onTap: () => onSeatTap?.call(internal, user),
-          onLongPress: user == null ? () => onSeatLongPress?.call(internal) : null,
+          speakingUserIds: speaking,
+          onSeatTap: onSeatTap,
+          onSeatLongPress: onSeatLongPress,
           trtc: trtc,
           trtcReady: trtcReady,
           selfUserId: selfUserId,

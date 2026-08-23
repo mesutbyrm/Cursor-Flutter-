@@ -67,11 +67,11 @@ class VoiceLiveChatFeed extends StatelessWidget {
               border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
             child: Container(
-              constraints: BoxConstraints(maxHeight: maxHeight),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              child: ListView.builder(
+              child: SizedBox(
+                height: maxHeight,
+                child: ListView.builder(
                 reverse: true,
-                shrinkWrap: true,
                 padding: EdgeInsets.zero,
                 scrollCacheExtent: ScrollPerf.scrollCache(ScrollPerf.chatCacheExtent),
                 addAutomaticKeepAlives: false,
@@ -84,6 +84,7 @@ class VoiceLiveChatFeed extends StatelessWidget {
                     _Bubble(message: msg, onUserTap: onUserTap),
                   );
                 },
+              ),
               ),
             ),
           ),

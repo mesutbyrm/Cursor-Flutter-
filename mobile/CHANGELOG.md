@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.340+376 (2026-08-23) — Performans FAZ 9
+
+- **Voice sahne koltukları:** Koltuk başına `VoiceSeatSnapshot` + `ref.select` — başka koltuk değişince tüm grid rebuild olmaz
+- **Canlı sohbet feed:** `shrinkWrap` kaldırıldı — sabit yükseklik `ListView` (nested scroll maliyeti azaldı)
+
 ## 1.0.339+375 (2026-08-23) — Performans FAZ 7/8
 
 - **Hediye flaşı:** Koltuk başına `select` signature — başka koltuğa hediye gelince tüm koltuklar rebuild olmaz

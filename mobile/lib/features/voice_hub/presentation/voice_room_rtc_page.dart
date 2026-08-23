@@ -1604,9 +1604,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           ),
                         const _VoiceRoomRtcDiagnosticBanner(),
                         VoiceWebOwnerStage(
+                              roomKey: _liveRoomKey,
                               room: room,
-                              presence: live.presence,
-                              seatSlots: live.seatSlots,
                               djUserIds: mergedDjIds,
                               speakingUserIds: speakingIds,
                               onUserTap: _openUser,

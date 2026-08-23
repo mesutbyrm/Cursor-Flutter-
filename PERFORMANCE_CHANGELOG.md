@@ -1,6 +1,6 @@
 # Performans Değişiklik Günlüğü
 
-**Sürüm:** `1.0.337+373`  
+**Sürüm:** `1.0.340+376`  
 **Tarih:** 2026-08-22  
 **Fazlar:** FAZ 3 (network/startup), FAZ 5 (social video), FAZ 6 (SSE)
 
@@ -115,11 +115,41 @@
 |------|--------|
 | 6× `ValueNotifier` dispose yok | `disposeAsync` içinde dispose (tek sefer) |
 
+---
+
+## FAZ 9 — 1.0.340+376
+
+### Voice sahne koltuk grid rebuild
+
+| Önce | Sonra |
+|------|--------|
+| `VoiceWebOwnerStage` tüm `presence` listesi prop → 11 koltuk rebuild | Koltuk başına `VoiceWebOwnerStageSeat` + `select(VoiceSeatSnapshot)` |
+| Mesaj/DJ değişimi tüm koltukları yeniden çizer | Yalnızca değişen koltuk snapshot'ı rebuild |
+
+**Dosyalar:** `voice_seat_snapshot.dart`, `voice_web_owner_stage_seat.dart`, `voice_web_owner_stage.dart`  
+**Test:** `mobile/test/voice_seat_snapshot_test.dart`
+
+### Canlı sohbet feed scroll
+
+| Önce | Sonra |
+|------|--------|
+| `ListView.builder(shrinkWrap: true)` nested scroll | Sabit `SizedBox(height)` + normal `ListView` |
+
+**Dosya:** `voice_live_chat_dock.dart`
+
+---
+
+## Henüz yapılmadı (sonraki fazlar)
+
+- Discover hub `shrinkWrap` grid → sliver refactor
+- Gerçek cihaz benchmark (`PERFORMANCE_AFTER.md`)
+- APK boyutu / bağımlılık denetimi (FAZ 10)
+
 
 ---
 
 ## Regression
 
-- `flutter test`: beklenen 996+ pass (2 yeni token test)
+- `flutter test`: 1003 pass (4 yeni seat snapshot test)
 - `flutter analyze`: mevcut info seviyesi korunmalı
 - Backend API: değişiklik yok
