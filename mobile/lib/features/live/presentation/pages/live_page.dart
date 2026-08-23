@@ -20,6 +20,7 @@ import '../../../../core/performance/lazy_screen_section.dart';
 import '../utils/open_live_stream.dart';
 import '../widgets/live_discover_category_chips.dart';
 import '../widgets/live_stream_list_tile.dart';
+import '../../../shorts/presentation/widgets/shorts_hub_strip.dart';
 
 class LivePage extends ConsumerStatefulWidget {
   const LivePage({super.key});
@@ -99,6 +100,15 @@ class _LivePageState extends ConsumerState<LivePage>
                   onPressed: _refresh,
                 ),
               ],
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 4),
+              child: ShortsHubStrip(
+                title: 'Kısa Videolar',
+                emoji: '🎬',
+                padding: EdgeInsets.zero,
+                bottomSpacing: 4,
+              ),
             ),
             DiscoverSegmentedTabs(
               controller: _tab,

@@ -9,6 +9,7 @@ import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_cosmic
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_tokens.dart';
 import '../../domain/entities/bana_ozel_entities.dart';
 import '../providers/bana_ozel_providers.dart';
+import '../../../shorts/presentation/widgets/shorts_hub_strip.dart';
 
 /// Bana Özel kataloğu — `GET /api/bana-ozel` + `POST /api/bana-ozel/open`.
 class BanaOzelPage extends ConsumerStatefulWidget {
@@ -215,6 +216,13 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                           ref.read(banaOzelCatalogProvider.notifier).refresh(),
                       child: CustomScrollView(
                         slivers: [
+                          const SliverToBoxAdapter(
+                            child: ShortsHubStrip(
+                              title: 'Kısa Videolar',
+                              emoji: '🎬',
+                              padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                            ),
+                          ),
                           SliverToBoxAdapter(
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),

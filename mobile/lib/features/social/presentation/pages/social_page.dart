@@ -10,6 +10,7 @@ import '../widgets/instagram/social_stories_rail.dart';
 import '../widgets/instagram/social_instagram_app_bar.dart';
 import '../widgets/instagram/social_feed_composer.dart';
 import '../widgets/social_discover_shortcuts.dart';
+import '../../../shorts/presentation/widgets/shorts_hub_strip.dart';
 import '../widgets/social_feed_scroll_view.dart';
 
 /// CanlıFal Sosyal — premium mistik akış.
@@ -81,6 +82,14 @@ class _SocialPageState extends ConsumerState<SocialPage>
               child: SocialInstagramAppBar(onPostPublished: _scrollFeedToTop),
             ),
             const RepaintBoundary(child: SocialStoriesRail()),
+            const RepaintBoundary(
+              child: ShortsHubStrip(
+                title: 'Kısa Videolar',
+                emoji: '🎬',
+                padding: EdgeInsets.fromLTRB(12, 4, 12, 0),
+                bottomSpacing: 4,
+              ),
+            ),
             const RepaintBoundary(child: SocialDiscoverShortcuts()),
             RepaintBoundary(
               child: SocialFeedComposer(onPostPublished: _scrollFeedToTop),

@@ -14,6 +14,7 @@ import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import '../performance/voice_rooms_perf.dart';
 import '../providers/voice_rooms_discover_providers.dart';
 import '../widgets/voice_rooms_ui/voice_rooms_ui.dart';
+import '../../../shorts/presentation/widgets/shorts_hub_strip.dart';
 
 /// Sesli Odalar ana ekranı — Premium 2026 UI + TikTok seviyesi performans.
 class VoiceRoomsPage extends ConsumerStatefulWidget {
@@ -147,6 +148,18 @@ class _VoiceRoomsPageState extends ConsumerState<VoiceRoomsPage>
                   scrollCacheExtent: VoiceRoomsPerf.scrollCacheExtent,
                   slivers: [
                     const SliverToBoxAdapter(child: VoiceRoomsAppBar()),
+                    const SliverToBoxAdapter(
+                      child: ShortsHubStrip(
+                        title: 'Kısa Videolar',
+                        emoji: '🎬',
+                        padding: EdgeInsets.fromLTRB(
+                          VoiceRoomsUiTokens.padScreenH,
+                          4,
+                          VoiceRoomsUiTokens.padScreenH,
+                          0,
+                        ),
+                      ),
+                    ),
                     const SliverToBoxAdapter(child: VoiceRoomsCategorySection()),
                     const SliverToBoxAdapter(child: SizedBox(height: 8)),
                     const SliverToBoxAdapter(child: VoiceRoomsFeaturedSection()),

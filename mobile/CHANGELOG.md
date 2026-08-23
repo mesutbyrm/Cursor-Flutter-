@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.349+385 (2026-08-23) — Kısa video hub şeritleri
+
+- **Ortak bileşen:** `ShortsHubStrip` — `GET /api/short-videos?tab=foryou` (keşfet yedek)
+- **Ana sayfa:** Trend videolar Canlı Falcılar'ın hemen üstünde
+- **Hub sayfaları:** Canlı Falcılar, Sesli Odalar, Canlı Yayınlar, Fal & Tarot, Bana Özel, Sosyal
+- **Tıklama:** `/shorts?videoId=` + görüntülenme kaydı; boşsa bölüm gizlenir
+
 ## 1.0.348+384 (2026-08-23) — Performans FAZ 18 (final)
 
 - **Kullanıcı profili:** `CustomScrollView` + `UserPostsTimelineSliver` — nested scroll kaldırıldı

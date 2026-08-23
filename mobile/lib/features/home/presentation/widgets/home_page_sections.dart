@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
 import 'approved/fortune_section.dart';
+import 'approved/trending_video_section.dart';
 import 'approved/home_header.dart';
 import 'approved/home_horoscope_section.dart';
 import 'approved/home_quick_actions.dart';
@@ -62,6 +63,12 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homeVoiceSectionDelay,
           child: VoiceRoomSection(),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeTrendingSectionDelay,
+          child: TrendingVideoSection(),
         ),
       ),
       const SliverToBoxAdapter(

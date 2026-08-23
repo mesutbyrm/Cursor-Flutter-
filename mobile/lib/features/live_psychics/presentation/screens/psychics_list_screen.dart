@@ -11,6 +11,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../controllers/psychics_list_controller.dart';
 import '../widgets/psychic_fortune_types.dart';
 import '../widgets/psychic_recent_sessions_panel.dart';
+import '../../../shorts/presentation/widgets/shorts_hub_strip.dart';
 
 /// Çevrimiçi falcı listesi — pull to refresh + infinite scroll.
 class PsychicsListScreen extends ConsumerWidget {
@@ -90,6 +91,11 @@ class PsychicsListScreen extends ConsumerWidget {
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     children: [
+                      const ShortsHubStrip(
+                        title: 'Kısa Videolar',
+                        emoji: '🎬',
+                        padding: EdgeInsets.zero,
+                      ),
                       PsychicsFilterBar(
                         filters: state.filters,
                         favoritesOnly: state.favoritesOnly,
@@ -122,17 +128,24 @@ class PsychicsListScreen extends ConsumerWidget {
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     itemCount: state.items.length +
                         (state.isLoadingMore ? 1 : 0) +
-                        1 +
+                        2 +
                         (authed ? 1 : 0),
                     separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (_, i) {
                       if (i == 0) {
+                        return const ShortsHubStrip(
+                          title: 'Kısa Videolar',
+                          emoji: '🎬',
+                          padding: EdgeInsets.zero,
+                        );
+                      }
+                      if (i == 1) {
                         return PsychicsFilterBar(
                           filters: state.filters,
                           favoritesOnly: state.favoritesOnly,
                         );
                       }
-                      final itemIndex = i - 1;
+                      final itemIndex = i - 2;
                       if (itemIndex >= state.items.length) {
                         if (state.isLoadingMore &&
                             itemIndex == state.items.length) {

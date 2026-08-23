@@ -17,6 +17,7 @@ import '../widgets/fortune_zodiac_hub_card.dart';
 import '../widgets/ultra_premium/ultra_fortune_tokens.dart';
 import '../widgets/ultra_premium/ultra_fortune_types_section.dart';
 import '../../../bana_ozel/presentation/widgets/bana_ozel_hub_section.dart';
+import '../../../shorts/presentation/widgets/shorts_hub_strip.dart';
 
 /// Fal & Tarot ana sekme — Ultra Premium 2026 Liquid Glass mistik evren.
 class FortuneTarotHubPage extends ConsumerStatefulWidget {
@@ -71,6 +72,13 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
             slivers: [
               const SliverToBoxAdapter(child: UltraFortuneAppBar()),
               const SliverToBoxAdapter(child: UltraFortuneHeroSection()),
+              const SliverToBoxAdapter(
+                child: ShortsHubStrip(
+                  title: 'Kısa Videolar',
+                  emoji: '🎬',
+                  padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                ),
+              ),
               const SliverToBoxAdapter(
                 child: LazyScreenSection(
                   delay: LazyLoadPerf.fortuneProphecy,

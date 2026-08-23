@@ -28,15 +28,16 @@ Yenileme: `refreshHomeData()` + `invalidateHomeKeepAliveProviders()` (`home_prov
 | 6 | `StoriesSection` | `GET /api/stories` | deferred |
 | 7 | `LiveBroadcastSection` | Canlı yayınlar | deferred |
 | 8 | `VoiceRoomSection` | Sesli odalar + presence | deferred |
-| 9 | `PsychicsHomeSection` | `GET /api/fortune-tellers` | deferred |
-| 10 | `HomeAdvisorsRow` | `GET /api/advisors/online` | deferred |
-| 11 | `FortuneSection` | `GET /api/homepage-fortune-cards` + katalog (14 tür) | deferred |
-| 12 | `HomeBanaOzelSection` | `GET /api/bana-ozel` | deferred |
-| 13 | `HomeFortuneRequestTypesSection` | `GET /api/fortune-request-types` | deferred |
-| 14 | `HomeOnlineFalSection` | `GET /api/online-fal` | deferred + viewport |
-| 15 | `MoreFortunesButton` | `/fortune/types` | deferred |
-| 16 | `HomeGamesSection` | `GET /api/games`, oyun merkezi | deferred + viewport |
-| 17 | `HomeHoroscopeSection` | 12 burç + profil burcu vurgusu | deferred + viewport |
+| 9 | `TrendingVideoSection` | `GET /api/short-videos?tab=foryou` | deferred |
+| 10 | `PsychicsHomeSection` | `GET /api/fortune-tellers` | deferred |
+| 11 | `HomeAdvisorsRow` | `GET /api/advisors/online` | deferred |
+| 12 | `FortuneSection` | `GET /api/homepage-fortune-cards` + katalog (14 tür) | deferred |
+| 13 | `HomeBanaOzelSection` | `GET /api/bana-ozel` | deferred |
+| 14 | `HomeFortuneRequestTypesSection` | `GET /api/fortune-request-types` | deferred |
+| 15 | `HomeOnlineFalSection` | `GET /api/online-fal` | deferred + viewport |
+| 16 | `MoreFortunesButton` | `/fortune/types` | deferred |
+| 17 | `HomeGamesSection` | `GET /api/games`, oyun merkezi | deferred + viewport |
+| 18 | `HomeHoroscopeSection` | 12 burç + profil burcu vurgusu | deferred + viewport |
 
 ## Sesli odalar (ana sayfa)
 
@@ -49,7 +50,7 @@ Yenileme: `refreshHomeData()` + `invalidateHomeKeepAliveProviders()` (`home_prov
 Aşağıdakiler ana sayfadan çıkarıldı (ilgili hub/rotalardan erişilebilir):
 
 - Platform istatistikleri, sosyal şerit, homepage-buttons satırı
-- Trend videolar, trend konular, yayın görselleri
+- Trend konular, yayın görselleri
 - Liderlik tabloları, büyüme teaser'ları
 - Ünlüler, fan kulüpleri, futbol, blog, keşfet grid, Gold üyelik
 
