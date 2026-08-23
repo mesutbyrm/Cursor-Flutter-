@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/performance/effects_perf.dart';
+import '../../../../core/performance/list_perf.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/premium_bottom_sheet.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
@@ -481,17 +482,34 @@ class _VideoGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 9 / 14,
-      ),
-      itemCount: videos.length,
-      itemBuilder: (context, i) => _VideoTile(video: videos[i]),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const crossAxisCount = 2;
+        const spacing = 10.0;
+        const aspect = 9 / 14;
+        final gridHeight = ListPerf.nestedGridHeight(
+          itemCount: videos.length,
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          childAspectRatio: aspect,
+          crossAxisExtent: constraints.maxWidth,
+        );
+        return SizedBox(
+          height: gridHeight,
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: spacing,
+              mainAxisSpacing: spacing,
+              childAspectRatio: aspect,
+            ),
+            itemCount: videos.length,
+            itemBuilder: (context, i) => _VideoTile(video: videos[i]),
+          ),
+        );
+      },
     );
   }
 }

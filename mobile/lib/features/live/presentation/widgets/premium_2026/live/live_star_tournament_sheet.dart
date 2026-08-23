@@ -70,9 +70,11 @@ class _LiveStarTournamentSheet extends ConsumerWidget {
                     ),
                   );
                 }
-                return Flexible(
+                return ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.sizeOf(context).height * 0.5,
+                  ),
                   child: ListView.separated(
-                    shrinkWrap: true,
                     itemCount: list.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (context, i) =>

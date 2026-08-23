@@ -830,9 +830,11 @@ class _MusicPickerSheetState extends State<_MusicPickerSheet> {
             subtitle: const Text('Bağlantı ve başlık gir'),
             onTap: _addExternalMusic,
           ),
-          Flexible(
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.45,
+            ),
             child: ListView.builder(
-              shrinkWrap: true,
               itemCount: _items.length,
               itemBuilder: (context, i) {
                 final m = _items[i];

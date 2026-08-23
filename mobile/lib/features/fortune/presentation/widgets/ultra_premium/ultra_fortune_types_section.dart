@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/performance/list_perf.dart';
 import '../../navigation/fortune_card_navigation.dart';
 import '../../providers/fortune_types_display_provider.dart';
 import '../premium_2026/fortune_premium_card.dart';
@@ -146,17 +147,34 @@ class _UltraFortuneTypesSectionState extends ConsumerState<UltraFortuneTypesSect
     required int itemCount,
     required Widget Function(BuildContext, int) itemBuilder,
   }) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 0.92,
-      ),
-      itemCount: itemCount,
-      itemBuilder: itemBuilder,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const crossAxisCount = 2;
+        const spacing = 12.0;
+        const aspect = 0.92;
+        final gridHeight = ListPerf.nestedGridHeight(
+          itemCount: itemCount,
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          childAspectRatio: aspect,
+          crossAxisExtent: constraints.maxWidth,
+        );
+        return SizedBox(
+          height: gridHeight,
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: spacing,
+              crossAxisSpacing: spacing,
+              childAspectRatio: aspect,
+            ),
+            itemCount: itemCount,
+            itemBuilder: itemBuilder,
+          ),
+        );
+      },
     );
   }
 }

@@ -54,70 +54,90 @@ class _ProfileGiftsPageState extends ConsumerState<ProfileGiftsPage> {
               _lazy.reset(items.length);
               final visible = _lazy.visibleCount.clamp(0, items.length);
               final hasMore = _lazy.hasMore;
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.85,
-                    ),
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  const crossAxisCount = 3;
+                  const spacing = 12.0;
+                  const aspect = 0.85;
+                  const horizontalPad = 40.0;
+                  final gridHeight = ListPerf.nestedGridHeight(
                     itemCount: visible,
-                    itemBuilder: (context, i) {
-                        final g = items[i];
-                        final isUrl = g.icon.startsWith('http');
-                        return ListPerf.repaint(
-                          ProfileGlass(
-                            padding: const EdgeInsets.all(10),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                if (isUrl)
-                                  CanlifalNetworkImage(
-                                    url: g.icon,
-                                    height: 36,
-                                    errorWidget: Text(g.name, maxLines: 1),
-                                  )
-                                else
-                          Text(g.icon, style: const TextStyle(fontSize: 32)),
-                        const SizedBox(height: 6),
-                        Text(
-                          g.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
+                    crossAxisCount: crossAxisCount,
+                    mainAxisSpacing: spacing,
+                    crossAxisSpacing: spacing,
+                    childAspectRatio: aspect,
+                    crossAxisExtent: constraints.maxWidth - horizontalPad,
+                  );
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        height: gridHeight,
+                        child: GridView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            mainAxisSpacing: spacing,
+                            crossAxisSpacing: spacing,
+                            childAspectRatio: aspect,
                           ),
+                          itemCount: visible,
+                          itemBuilder: (context, i) {
+                            final g = items[i];
+                            final isUrl = g.icon.startsWith('http');
+                            return ListPerf.repaint(
+                              ProfileGlass(
+                                padding: const EdgeInsets.all(10),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    if (isUrl)
+                                      CanlifalNetworkImage(
+                                        url: g.icon,
+                                        height: 36,
+                                        errorWidget: Text(g.name, maxLines: 1),
+                                      )
+                                    else
+                                      Text(g.icon,
+                                          style: const TextStyle(fontSize: 32)),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      g.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    Text(
+                                      'x${g.count}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        color: AppThemeColors.accentPink,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                        Text(
-                          'x${g.count}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            color: AppThemeColors.accentPink,
-                          ),
+                      ),
+                      if (hasMore)
+                        TextButton(
+                          onPressed: () {
+                            _lazy.loadMore();
+                            setState(() {});
+                          },
+                          child: const Text('Daha fazla hediye göster'),
                         ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                  ),
-                  if (hasMore)
-                    TextButton(
-                      onPressed: () {
-                        _lazy.loadMore();
-                        setState(() {});
-                      },
-                      child: const Text('Daha fazla hediye göster'),
-                    ),
-                  const SizedBox(height: 16),
-                ],
+                      const SizedBox(height: 16),
+                    ],
+                  );
+                },
               );
             },
           ),

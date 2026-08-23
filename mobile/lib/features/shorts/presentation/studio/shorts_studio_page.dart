@@ -265,9 +265,11 @@ class _DraftEntrySheet extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 12),
-            Flexible(
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.45,
+              ),
               child: ListView.separated(
-                shrinkWrap: true,
                 itemCount: metas.length,
                 separatorBuilder: (_, _) => const Divider(height: 1),
                 itemBuilder: (context, i) {

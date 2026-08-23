@@ -2,7 +2,7 @@
 
 **Program:** FAZ 3–15 (2026-08-22 → 2026-08-23)  
 **Başlangıç sürümü:** `1.0.336+372`  
-**Bitiş sürümü:** `1.0.346+382`  
+**Bitiş sürümü:** `1.0.347+383`  
 **Test:** 994 → **1010 pass**
 
 ---
@@ -25,7 +25,7 @@
 
 | Metrik | Önce | Sonra |
 |--------|-----:|------:|
-| `shrinkWrap: true` | 51 | ~29 |
+| `shrinkWrap: true` | 51 | ~3 |
 | Voice hub sheet shrinkWrap | 9 | 0 |
 | `flutter test` | 994 | 1010 |
 

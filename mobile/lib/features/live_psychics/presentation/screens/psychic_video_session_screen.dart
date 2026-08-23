@@ -418,7 +418,6 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                         padding: const EdgeInsets.all(8),
                         borderRadius: 14,
                         child: ListView.builder(
-                          shrinkWrap: true,
                           itemCount: state.messages.length,
                           itemBuilder: (_, i) {
                             final msg = state.messages[i];

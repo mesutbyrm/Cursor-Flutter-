@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -153,22 +154,31 @@ class PremiumMessageListSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    const itemExtent = 52.0;
+    const separator = 12.0;
+    final listHeight = ListPerf.nestedListHeight(
       itemCount: count,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
-      itemBuilder: (_, i) {
-        final mine = i.isEven;
-        return Align(
-          alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-          child: PremiumSkeleton(
-            width: mine ? 220 : 260,
-            height: 52,
-            borderRadius: BorderRadius.circular(16),
-          ),
-        );
-      },
+      itemExtent: itemExtent,
+      separatorExtent: separator,
+    );
+    return SizedBox(
+      height: listHeight,
+      child: ListView.separated(
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: count,
+        separatorBuilder: (_, _) => const SizedBox(height: separator),
+        itemBuilder: (_, i) {
+          final mine = i.isEven;
+          return Align(
+            alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+            child: PremiumSkeleton(
+              width: mine ? 220 : 260,
+              height: itemExtent,
+              borderRadius: BorderRadius.circular(16),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -220,22 +230,40 @@ class PremiumShortGridSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 9 / 14,
-      ),
-      itemCount: count,
-      itemBuilder: (_, _) => const PremiumSkeleton(
-        width: double.infinity,
-        height: double.infinity,
-        borderRadius: BorderRadius.all(Radius.circular(14)),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const crossAxisCount = 2;
+        const spacing = 10.0;
+        const aspect = 9 / 14;
+        const horizontalPad = 32.0;
+        final gridHeight = ListPerf.nestedGridHeight(
+          itemCount: count,
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          childAspectRatio: aspect,
+          crossAxisExtent: constraints.maxWidth - horizontalPad,
+        );
+        return SizedBox(
+          height: gridHeight,
+          child: GridView.builder(
+            padding: const EdgeInsets.all(16),
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: spacing,
+              mainAxisSpacing: spacing,
+              childAspectRatio: aspect,
+            ),
+            itemCount: count,
+            itemBuilder: (_, _) => const PremiumSkeleton(
+              width: double.infinity,
+              height: double.infinity,
+              borderRadius: BorderRadius.all(Radius.circular(14)),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
@@ -107,18 +108,30 @@ class PremiumFeatureGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final cols = constraints.maxWidth >= 400 ? 2 : 1;
-        return GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+        const spacing = 10.0;
+        final aspect = cols == 1 ? 4.5 : 2.8;
+        final gridHeight = ListPerf.nestedGridHeight(
+          itemCount: _items.length,
           crossAxisCount: cols,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: cols == 1 ? 4.5 : 2.8,
-          children: _items
-              .map(
-                (e) => _FeatureBadge(icon: e.$1, label: e.$2),
-              )
-              .toList(),
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          childAspectRatio: aspect,
+          crossAxisExtent: constraints.maxWidth,
+        );
+        return SizedBox(
+          height: gridHeight,
+          child: GridView.count(
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: cols,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childAspectRatio: aspect,
+            children: _items
+                .map(
+                  (e) => _FeatureBadge(icon: e.$1, label: e.$2),
+                )
+                .toList(),
+          ),
         );
       },
     );

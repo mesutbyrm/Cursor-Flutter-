@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/performance/list_perf.dart';
 import '../../domain/vip_privilege.dart';
 import '../../domain/vip_tier.dart';
 import '../theme/vip_gold_tokens.dart';
@@ -38,56 +39,74 @@ class VipPrivilegeGrid extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 0.82,
-          ),
-          itemCount: perks.length,
-          itemBuilder: (ctx, i) {
-            final p = perks[i];
-            return VipLuxuryCard(
-              padding: const EdgeInsets.all(10),
-              highlighted: p.unlocked && tier.isVip,
-              onTap: () => showVipPrivilegeDetailSheet(
-                context,
-                privilege: p,
-                currentTier: tier,
-              ),
-              child: Opacity(
-                opacity: p.unlocked ? 1 : 0.45,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      p.icon,
-                      color: p.unlocked
-                          ? VipGoldTokens.goldMid
-                          : Colors.white38,
-                      size: 26,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      p.title,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    if (!p.unlocked)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 4),
-                        child: Icon(Icons.lock_rounded, size: 12, color: Colors.white38),
-                      ),
-                  ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const crossAxisCount = 3;
+            const spacing = 10.0;
+            const aspect = 0.82;
+            final gridHeight = ListPerf.nestedGridHeight(
+              itemCount: perks.length,
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: spacing,
+              crossAxisSpacing: spacing,
+              childAspectRatio: aspect,
+              crossAxisExtent: constraints.maxWidth,
+            );
+            return SizedBox(
+              height: gridHeight,
+              child: GridView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: spacing,
+                  crossAxisSpacing: spacing,
+                  childAspectRatio: aspect,
                 ),
+                itemCount: perks.length,
+                itemBuilder: (ctx, i) {
+                  final p = perks[i];
+                  return VipLuxuryCard(
+                    padding: const EdgeInsets.all(10),
+                    highlighted: p.unlocked && tier.isVip,
+                    onTap: () => showVipPrivilegeDetailSheet(
+                      context,
+                      privilege: p,
+                      currentTier: tier,
+                    ),
+                    child: Opacity(
+                      opacity: p.unlocked ? 1 : 0.45,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            p.icon,
+                            color: p.unlocked
+                                ? VipGoldTokens.goldMid
+                                : Colors.white38,
+                            size: 26,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            p.title,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          if (!p.unlocked)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 4),
+                              child: Icon(Icons.lock_rounded,
+                                  size: 12, color: Colors.white38),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             );
           },

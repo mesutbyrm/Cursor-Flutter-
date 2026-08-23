@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.347+383 (2026-08-23) — Performans FAZ 17
+
+- **VIP / hediye / fal:** Ayrıcalık grid, koleksiyon albümü, fal türleri grid — sabit yükseklik
+- **Canlı falcı:** Bahşiş + süre uzatma sheet grid'leri optimize edildi
+- **Üyelik / keşfet / admin:** Premium özellik grid, shorts keşfet video grid, admin/ajans panelleri
+- **Studio:** Emoji picker grid, taslak/müzik listeleri `ConstrainedBox` scroll
+- **Skeleton:** Mesaj listesi + kısa video grid iskelet sabit yükseklik
+
 ## 1.0.346+382 (2026-08-23) — Performans FAZ 16
 
 - **LazyNestedGridView:** Merkezi `nestedGridHeight` — profil grid'lerinde `shrinkWrap` kaldırıldı

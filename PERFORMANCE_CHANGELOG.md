@@ -1,6 +1,6 @@
 # Performans Değişiklik Günlüğü
 
-**Sürüm:** `1.0.346+382`  
+**Sürüm:** `1.0.347+383`  
 **Tarih:** 2026-08-23  
 **Fazlar:** FAZ 3 (network/startup), FAZ 5 (social video), FAZ 6 (SSE)
 
@@ -268,11 +268,32 @@ Profil düzenleme / OTP / avatar: `refreshMe(force: true)`
 
 ---
 
+## FAZ 17 — 1.0.347+383
+
+### Kalan grid/sheet shrinkWrap temizliği
+
+| Önce | Sonra |
+|------|--------|
+| VIP ayrıcalık grid `shrinkWrap` | `nestedGridHeight` |
+| Profil hediyeler + koleksiyon albüm grid | Sabit yükseklik |
+| Fal türleri ultra grid | Sabit yükseklik |
+| Falcı bahşiş / süre uzatma grid | Sabit yükseklik |
+| Üyelik özellik grid | Sabit yükseklik |
+| Shorts keşfet video grid | Sabit yükseklik |
+| Admin / ajans panel grid | Sabit yükseklik |
+| Studio emoji / taslak / müzik listeleri | Sabit yükseklik veya `ConstrainedBox` |
+| Skeleton grid/list iskelet | Sabit yükseklik |
+
+**Dosyalar:** `vip_privilege_grid.dart`, `profile_gifts_page.dart`, `gift_collection_page.dart`, `ultra_fortune_types_section.dart`, `psychic_tip_sheet.dart`, `psychic_extend_sheet.dart`, `premium_membership_widgets.dart`, `live_star_tournament_sheet.dart`, `shorts_explore_page.dart`, `admin_panel_page.dart`, `agency_dashboard_screen.dart`, `premium_skeleton.dart`, `psychic_video_session_screen.dart`, `studio_compose_page.dart`, `shorts_studio_page.dart`, `studio_publish_page.dart`
+
+---
+
 ## Henüz yapılmadı (sonraki fazlar)
 
 - Gerçek cihaz benchmark değerlerinin doldurulması
 - Hediye animasyonları CDN offload
 - `user_posts_timeline` değişken yükseklik nested scroll (sliver birleştirme)
+- `jeton_payment_notify_sheet` form ListView
 
 
 ---
@@ -280,6 +301,6 @@ Profil düzenleme / OTP / avatar: `refreshMe(force: true)`
 ## Regression
 
 - `flutter test`: 1010 pass
-- `shrinkWrap: true` (`mobile/lib`): **~29 → ~20**
+- `shrinkWrap: true` (`mobile/lib`): **~19 → ~3**
 - `flutter analyze`: mevcut info seviyesi korunmalı
 - Backend API: değişiklik yok

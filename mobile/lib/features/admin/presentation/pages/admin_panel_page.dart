@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -286,44 +287,61 @@ class _ActionGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 1.35,
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, i) {
-        final item = items[i];
-        return DiscoverGlassCard(
-          onTap: item.onTap,
-          padding: const EdgeInsets.all(14),
-          borderColor: AppThemeColors.accentPink.withValues(alpha: 0.25),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(item.icon, color: AppThemeColors.accentCyan, size: 22),
-                  const Spacer(),
-                  if (item.badge > 0)
-                    _Badge(count: item.badge),
-                ],
-              ),
-              const Spacer(),
-              Text(
-                item.label,
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  height: 1.25,
-                  color: context.colors.onSurface,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const crossAxisCount = 2;
+        const spacing = 10.0;
+        const aspect = 1.35;
+        final gridHeight = ListPerf.nestedGridHeight(
+          itemCount: items.length,
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          childAspectRatio: aspect,
+          crossAxisExtent: constraints.maxWidth,
+        );
+        return SizedBox(
+          height: gridHeight,
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: spacing,
+              mainAxisSpacing: spacing,
+              childAspectRatio: aspect,
+            ),
+            itemCount: items.length,
+            itemBuilder: (context, i) {
+              final item = items[i];
+              return DiscoverGlassCard(
+                onTap: item.onTap,
+                padding: const EdgeInsets.all(14),
+                borderColor: AppThemeColors.accentPink.withValues(alpha: 0.25),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(item.icon,
+                            color: AppThemeColors.accentCyan, size: 22),
+                        const Spacer(),
+                        if (item.badge > 0) _Badge(count: item.badge),
+                      ],
+                    ),
+                    const Spacer(),
+                    Text(
+                      item.label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        height: 1.25,
+                        color: context.colors.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              );
+            },
           ),
         );
       },

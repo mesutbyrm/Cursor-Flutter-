@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../domain/entities/agency_entity.dart';
@@ -207,19 +208,37 @@ class _StatGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 2.2,
-      children: [
-        _statCard('Üye', '$memberCount'),
-        _statCard('Toplam Kazanç', '$totalEarnings jeton'),
-        _statCard('Bekleyen', '$pendingEarnings jeton'),
-        _statCard('Açık Görev', '$taskCount'),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const crossAxisCount = 2;
+        const spacing = 10.0;
+        const aspect = 2.2;
+        const itemCount = 4;
+        final gridHeight = ListPerf.nestedGridHeight(
+          itemCount: itemCount,
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          childAspectRatio: aspect,
+          crossAxisExtent: constraints.maxWidth,
+        );
+        return SizedBox(
+          height: gridHeight,
+          child: GridView.count(
+            crossAxisCount: crossAxisCount,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childAspectRatio: aspect,
+            children: [
+              _statCard('Üye', '$memberCount'),
+              _statCard('Toplam Kazanç', '$totalEarnings jeton'),
+              _statCard('Bekleyen', '$pendingEarnings jeton'),
+              _statCard('Açık Görev', '$taskCount'),
+            ],
+          ),
+        );
+      },
     );
   }
 

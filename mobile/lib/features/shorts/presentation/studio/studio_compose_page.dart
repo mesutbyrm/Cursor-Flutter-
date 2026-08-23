@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -376,29 +377,47 @@ class _EmojiPickerSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 6,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-              ),
-              itemCount: entry.value.length,
-              itemBuilder: (context, index) {
-                final emoji = entry.value[index];
-                return InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: () => Navigator.pop(context, emoji),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white12),
+            Builder(
+              builder: (context) {
+                const crossAxisCount = 6;
+                const spacing = 8.0;
+                final gridHeight = ListPerf.nestedGridHeight(
+                  itemCount: entry.value.length,
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: spacing,
+                  crossAxisSpacing: spacing,
+                  childAspectRatio: 1,
+                  crossAxisExtent: MediaQuery.sizeOf(context).width - 32,
+                );
+                return SizedBox(
+                  height: gridHeight,
+                  child: GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: spacing,
+                      crossAxisSpacing: spacing,
                     ),
-                    child: Center(
-                      child: Text(emoji, style: const TextStyle(fontSize: 28)),
-                    ),
+                    itemCount: entry.value.length,
+                    itemBuilder: (context, index) {
+                      final emoji = entry.value[index];
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () => Navigator.pop(context, emoji),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.white12),
+                          ),
+                          child: Center(
+                            child: Text(emoji,
+                                style: const TextStyle(fontSize: 28)),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 );
               },

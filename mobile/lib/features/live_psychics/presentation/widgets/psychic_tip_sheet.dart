@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 const psychicTipAmounts = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500];
@@ -95,52 +96,70 @@ class _PsychicTipSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 5,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 0.85,
-            ),
-            itemCount: psychicTipAmounts.length,
-            itemBuilder: (_, i) {
-              final amount = psychicTipAmounts[i];
-              final affordable = jetonBalance >= amount;
-              return Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: affordable
-                      ? () => Navigator.pop(context, amount)
-                      : null,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      color: affordable
-                          ? AppThemeColors.accentPink.withValues(alpha: 0.85)
-                          : Colors.white12,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '$amount',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13,
-                            color: affordable ? Colors.white : Colors.white38,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const crossAxisCount = 5;
+              const spacing = 8.0;
+              const aspect = 0.85;
+              final gridHeight = ListPerf.nestedGridHeight(
+                itemCount: psychicTipAmounts.length,
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: spacing,
+                crossAxisSpacing: spacing,
+                childAspectRatio: aspect,
+                crossAxisExtent: constraints.maxWidth,
+              );
+              return SizedBox(
+                height: gridHeight,
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    mainAxisSpacing: spacing,
+                    crossAxisSpacing: spacing,
+                    childAspectRatio: aspect,
+                  ),
+                  itemCount: psychicTipAmounts.length,
+                  itemBuilder: (_, i) {
+                    final amount = psychicTipAmounts[i];
+                    final affordable = jetonBalance >= amount;
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: affordable
+                            ? () => Navigator.pop(context, amount)
+                            : null,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Ink(
+                          decoration: BoxDecoration(
+                            color: affordable
+                                ? AppThemeColors.accentPink.withValues(alpha: 0.85)
+                                : Colors.white12,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '$amount',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 13,
+                                  color:
+                                      affordable ? Colors.white : Colors.white38,
+                                ),
+                              ),
+                              const Icon(
+                                Icons.monetization_on_rounded,
+                                size: 14,
+                                color: Color(0xFFFFD54F),
+                              ),
+                            ],
                           ),
                         ),
-                        const Icon(
-                          Icons.monetization_on_rounded,
-                          size: 14,
-                          color: Color(0xFFFFD54F),
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
               );
             },
