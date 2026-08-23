@@ -335,8 +335,10 @@ jobs:
         id: meta
         working-directory: ${{ github.workspace }}
         run: |
-          VERSION=$(grep -E '^version:' mobile/pubspec.yaml | head -1 | sed 's/version:[[:space:]]*//')
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          RAW=$(grep -E '^version:' mobile/pubspec.yaml | head -1 | awk '{print $2}')
+          echo "version=$RAW" >> "$GITHUB_OUTPUT"
+          echo "version_name=${RAW%%+*}" >> "$GITHUB_OUTPUT"
+          echo "version_code=${RAW#*+}" >> "$GITHUB_OUTPUT"
 
       - name: APK artifact yükle
         id: artifact_upload
@@ -614,8 +616,8 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           set -eux
-          EXPECT_NAME=$(grep -E '^version:' mobile/pubspec.yaml | awk '{print $2}' | cut -d+ -f1)
-          EXPECT_BUILD=$(grep -E '^version:' mobile/pubspec.yaml | awk '{print $2}' | cut -d+ -f2)
+          EXPECT_NAME="${{ steps.meta.outputs.version_name }}"
+          EXPECT_BUILD="${{ steps.meta.outputs.version_code }}"
           AAPT=$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" -name aapt -type f 2>/dev/null | sort -V | tail -1)
           test -n "$AAPT"
           verify_apk() {
@@ -669,8 +671,8 @@ jobs:
           elif [[ "$HTTP" != "200" ]]; then
             METADATA="FAIL"
           fi
-          VERSION=$(grep -E '^version:' mobile/pubspec.yaml | head -1 | awk '{print $2}' | cut -d+ -f1)
-          VCODE=$(grep -E '^version:' mobile/pubspec.yaml | head -1 | awk '{print $2}' | cut -d+ -f2)
+          VERSION="${{ steps.meta.outputs.version_name }}"
+          VCODE="${{ steps.meta.outputs.version_code }}"
           bash scripts/ci-release-gate-summary.sh \
             "$BUILD_SHA" "$VERSION" "$VCODE" \
             "$ANALYZE" "$TESTS" "$APK_BUILD" "$SIGNING" "$ARTIFACT" "$HTTP" "$METADATA"

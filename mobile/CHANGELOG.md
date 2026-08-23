@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.349+387 (2026-08-23) — CI sürüm sabitleme
+
+- **APK CI:** Metadata doğrulama derleme anındaki `steps.meta` sürümünü kullanır (`git pull` sonrası pubspec kayması giderildi)
+
 ## 1.0.349+386 (2026-08-23) — CI metadata doğrulama
 
 - **APK CI:** Yerel derlenen APK önce doğrulanır; `apk-latest` CDN gecikmesi için retry artırıldı
