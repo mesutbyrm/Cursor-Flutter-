@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
@@ -25,28 +26,44 @@ class VoiceRoomBasicRealtimeFeed extends StatelessWidget {
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: events.length.clamp(0, 12),
-      separatorBuilder: (_, _) => const SizedBox(height: 6),
-      itemBuilder: (context, index) {
-        final e = events[index];
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(_iconFor(e.kind), size: 16, color: _colorFor(context, e.kind)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                e.message,
-                style: const TextStyle(fontSize: 13, height: 1.25),
-              ),
+    final visibleCount = events.length.clamp(0, 12);
+    const itemExtent = 36.0;
+    const separator = 6.0;
+    final height = ListPerf.nestedListHeight(
+      itemCount: visibleCount,
+      itemExtent: itemExtent,
+      separatorExtent: separator,
+    );
+
+    return SizedBox(
+      height: height,
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: visibleCount,
+        separatorBuilder: (_, _) => const SizedBox(height: separator),
+        itemBuilder: (context, index) {
+          final e = events[index];
+          return SizedBox(
+            height: itemExtent,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(_iconFor(e.kind), size: 16, color: _colorFor(context, e.kind)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    e.message,
+                    style: const TextStyle(fontSize: 13, height: 1.25),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
-          ],
-        );
-      },
+          );
+        },
+      ),
     );
   }
 

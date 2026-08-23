@@ -33,4 +33,14 @@ abstract final class ListPerf {
     final rows = (itemCount / crossAxisCount).ceil();
     return rows * cellHeight + mainAxisSpacing * (rows - 1);
   }
+
+  /// Parent scroll içinde dikey liste — sabit satır yüksekliği ile.
+  static double nestedListHeight({
+    required int itemCount,
+    required double itemExtent,
+    double separatorExtent = 0,
+  }) {
+    if (itemCount <= 0) return 0;
+    return itemCount * itemExtent + separatorExtent * (itemCount - 1);
+  }
 }

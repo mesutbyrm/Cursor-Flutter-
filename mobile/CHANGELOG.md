@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.342+378 (2026-08-23) — Performans FAZ 11/12
+
+- **APK arm64:** CI artık `canlifal-mobile-arm64-release.apk` üretiyor (~%30–40 daha küçük indirme)
+- **Temel oda feed:** `shrinkWrap` kaldırıldı — sabit yükseklik liste
+- **Benchmark:** `PERFORMANCE_AFTER.md` — gerçek cihaz ölçüm protokolü
+
 ## 1.0.341+377 (2026-08-23) — Performans FAZ 10
 
 - **Discover kategori grid:** `shrinkWrap` kaldırıldı — `ListPerf.nestedGridHeight` ile sabit yükseklik grid (hub + kategori sheet)

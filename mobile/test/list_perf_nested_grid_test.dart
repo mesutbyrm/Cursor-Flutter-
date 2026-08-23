@@ -38,4 +38,24 @@ void main() {
       );
     });
   });
+
+  group('ListPerf.nestedListHeight', () {
+    test('returns zero for empty list', () {
+      expect(
+        ListPerf.nestedListHeight(itemCount: 0, itemExtent: 40),
+        0,
+      );
+    });
+
+    test('computes height with separators', () {
+      expect(
+        ListPerf.nestedListHeight(
+          itemCount: 3,
+          itemExtent: 40,
+          separatorExtent: 8,
+        ),
+        136,
+      );
+    });
+  });
 }

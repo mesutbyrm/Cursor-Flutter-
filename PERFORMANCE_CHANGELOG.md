@@ -1,6 +1,6 @@
 # Performans Değişiklik Günlüğü
 
-**Sürüm:** `1.0.341+377`  
+**Sürüm:** `1.0.342+378`  
 **Tarih:** 2026-08-22  
 **Fazlar:** FAZ 3 (network/startup), FAZ 5 (social video), FAZ 6 (SSE)
 
@@ -165,18 +165,50 @@
 - Belge: `PERFORMANCE_APK_AUDIT.md`
 - Bundle assets: **~9,4 MB** (asıl boyut native SDK: TRTC, FFmpeg, Firebase)
 
+### CI arm64 APK (FAZ 11)
+
+| Varlık | Açıklama |
+|--------|----------|
+| `canlifal-mobile-release.apk` | Universal (arm + arm64 + x64) — `apk-latest` |
+| `canlifal-mobile-arm64-release.apk` | Yalnızca arm64 — daha küçük indirme |
+
+**Betik:** `scripts/build-apk-arm64.sh`
+
+---
+
+## FAZ 11/12 — 1.0.342+378
+
+### arm64-only APK (CI)
+
+| Önce | Sonra |
+|------|--------|
+| Yalnızca universal ~241 MB | + **arm64-only** asset (`apk-latest` release) |
+| | `scripts/build-apk-arm64.sh` yerel derleme |
+
+### Temel oda realtime feed
+
+| Önce | Sonra |
+|------|--------|
+| `ListView.separated(shrinkWrap: true)` | `ListPerf.nestedListHeight` + sabit `SizedBox` |
+
+**Dosya:** `voice_room_basic_realtime_feed.dart`
+
+### Cihaz benchmark şablonu
+
+- `PERFORMANCE_AFTER.md` — cold start, FPS, bellek, SSE doğrulama protokolü
+
 ---
 
 ## Henüz yapılmadı (sonraki fazlar)
 
-- ABI split APK / asset CDN offload
-- Gerçek cihaz benchmark (`PERFORMANCE_AFTER.md`)
+- Gerçek cihaz benchmark değerlerinin doldurulması
+- Hediye animasyonları CDN offload
 
 
 ---
 
 ## Regression
 
-- `flutter test`: 1005 pass (2 yeni nested grid test)
+- `flutter test`: 1007 pass (2 yeni nested list test)
 - `flutter analyze`: mevcut info seviyesi korunmalı
 - Backend API: değişiklik yok
