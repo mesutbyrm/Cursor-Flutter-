@@ -112,7 +112,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
               favoriteTeam: _favoriteTeam,
             );
       } catch (_) {}
-      await ref.read(authControllerProvider.notifier).refreshMe();
+      await ref.read(authControllerProvider.notifier).refreshMe(force: true);
       ref.invalidate(profileExtendedProvider);
       ref.invalidate(profileUserStatisticsProvider);
       ref.invalidate(walletBalancesProvider);

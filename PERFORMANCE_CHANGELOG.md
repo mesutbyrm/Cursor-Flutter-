@@ -1,6 +1,6 @@
 # Performans Değişiklik Günlüğü
 
-**Sürüm:** `1.0.342+378`  
+**Sürüm:** `1.0.343+379`  
 **Tarih:** 2026-08-22  
 **Fazlar:** FAZ 3 (network/startup), FAZ 5 (social video), FAZ 6 (SSE)
 
@@ -199,6 +199,28 @@
 
 ---
 
+## FAZ 13 — 1.0.343+379
+
+### `/api/me` refresh dedupe
+
+| Önce | Sonra |
+|------|--------|
+| `refreshMe()` her çağrıda `GET /api/me` | 8 sn throttle + in-flight paylaşım |
+| Profil hub yenileme + pull-to-refresh üst üste | Tek ağ isteği |
+
+**Dosyalar:** `refresh_me_gate.dart`, `auth_providers.dart`  
+**Test:** `mobile/test/refresh_me_gate_test.dart`  
+Profil düzenleme / OTP / avatar: `refreshMe(force: true)`
+
+### Voice hub shrinkWrap
+
+| Önce | Sonra |
+|------|--------|
+| Mention önerileri `shrinkWrap: true` | `nestedListHeight` (max 220) |
+| Yakındaki odalar listesi `shrinkWrap: true` | Sabit yükseklik `ListView` |
+
+---
+
 ## Henüz yapılmadı (sonraki fazlar)
 
 - Gerçek cihaz benchmark değerlerinin doldurulması
@@ -209,6 +231,6 @@
 
 ## Regression
 
-- `flutter test`: 1007 pass (2 yeni nested list test)
+- `flutter test`: 1010 pass (3 yeni refresh gate test)
 - `flutter analyze`: mevcut info seviyesi korunmalı
 - Backend API: değişiklik yok

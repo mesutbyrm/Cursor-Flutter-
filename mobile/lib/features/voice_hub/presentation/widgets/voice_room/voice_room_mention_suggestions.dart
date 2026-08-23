@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:flutter/material.dart';
 
 import 'package:canlifal_social/core/widgets/user_avatar.dart';
@@ -33,9 +34,14 @@ class VoiceRoomMentionSuggestions extends StatelessWidget {
             color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.45),
           ),
         ),
-        child: ListView.separated(
-          shrinkWrap: true,
-          padding: const EdgeInsets.symmetric(vertical: 4),
+        child: SizedBox(
+          height: ListPerf.nestedListHeight(
+            itemCount: users.length,
+            itemExtent: 52,
+            separatorExtent: 1,
+          ).clamp(52, 220),
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: 4),
           itemCount: users.length,
           separatorBuilder: (_, _) => Divider(
             height: 1,
@@ -68,6 +74,7 @@ class VoiceRoomMentionSuggestions extends StatelessWidget {
               onTap: () => onPick(user),
             );
           },
+        ),
         ),
       ),
     );

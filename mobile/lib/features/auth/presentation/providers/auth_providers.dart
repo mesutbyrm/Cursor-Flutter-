@@ -36,6 +36,7 @@ import '../../../trtc/presentation/trtc_bootstrap_service.dart';
 import '../../data/datasources/auth_service.dart';
 import 'auth_service_provider.dart';
 import '../../../../core/network/auth_token_refresh_coordinator.dart';
+import '../../../../core/auth/refresh_me_gate.dart';
 
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
   return AuthRemoteDataSource(ref.watch(dioProvider));
@@ -64,6 +65,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
   Timer? _bootWatchdog;
   var _sessionEpoch = 0;
+  final _refreshMeGate = RefreshMeGate();
 
   Future<UserEntity?> _sessionUser() => LoadingTimeout.run(
         ref.read(authRepositoryProvider).currentUser(),
@@ -428,7 +430,11 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     state = const AsyncValue.data(null);
   }
 
-  Future<void> refreshMe() async {
+  Future<void> refreshMe({bool force = false}) async {
+    await _refreshMeGate.run(() => _refreshMeBody(), force: force);
+  }
+
+  Future<void> _refreshMeBody() async {
     final previous = state.valueOrNull;
     state = previous != null
         ? AsyncValue<UserEntity?>.loading().copyWithPrevious(

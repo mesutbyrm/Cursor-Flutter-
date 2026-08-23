@@ -139,7 +139,7 @@ class _AvatarSheetBody extends ConsumerWidget {
       final service = ref.read(profileAvatarServiceProvider);
       final url = await service.uploadAvatarFile(file);
       await service.saveAvatarUrl(url);
-      await ref.read(authControllerProvider.notifier).refreshMe();
+      await ref.read(authControllerProvider.notifier).refreshMe(force: true);
       await refreshProfileHub(ref);
       onUpdated();
       messenger?.showSnackBar(
@@ -157,7 +157,7 @@ class _AvatarSheetBody extends ConsumerWidget {
     final messenger = ScaffoldMessenger.maybeOf(context);
     try {
       await ref.read(profileAvatarServiceProvider).deleteAvatar();
-      await ref.read(authControllerProvider.notifier).refreshMe();
+      await ref.read(authControllerProvider.notifier).refreshMe(force: true);
       await refreshProfileHub(ref);
       onUpdated();
       messenger?.showSnackBar(

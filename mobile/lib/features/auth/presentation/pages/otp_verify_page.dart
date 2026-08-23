@@ -103,7 +103,7 @@ class _OtpVerifyPageState extends ConsumerState<OtpVerifyPage> {
             email: email,
             code: _code,
           );
-      await ref.read(authControllerProvider.notifier).refreshMe();
+      await ref.read(authControllerProvider.notifier).refreshMe(force: true);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('E-posta doğrulandı')),
