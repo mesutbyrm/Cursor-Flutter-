@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/navigation/wallet_navigation.dart';
+import '../../../../core/performance/list_perf.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -465,22 +466,40 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
                   color: const Color(0xFF38BDF8),
                 ),
                 if (canModerate)
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      childAspectRatio: 1.55,
-                    ),
-                    itemCount: _modGrid.length,
-                    itemBuilder: (context, index) {
-                      final c = _modGrid[index];
-                      return _PromoActionCard(
-                        card: c,
-                        compact: true,
-                        onTap: () => _onPromoTap(c),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      const crossAxisCount = 2;
+                      const spacing = 8.0;
+                      const aspect = 1.55;
+                      final gridHeight = ListPerf.nestedGridHeight(
+                        itemCount: _modGrid.length,
+                        crossAxisCount: crossAxisCount,
+                        mainAxisSpacing: spacing,
+                        crossAxisSpacing: spacing,
+                        childAspectRatio: aspect,
+                        crossAxisExtent: constraints.maxWidth,
+                      );
+                      return SizedBox(
+                        height: gridHeight,
+                        child: GridView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            mainAxisSpacing: spacing,
+                            crossAxisSpacing: spacing,
+                            childAspectRatio: aspect,
+                          ),
+                          itemCount: _modGrid.length,
+                          itemBuilder: (context, index) {
+                            final c = _modGrid[index];
+                            return _PromoActionCard(
+                              card: c,
+                              compact: true,
+                              onTap: () => _onPromoTap(c),
+                            );
+                          },
+                        ),
                       );
                     },
                   )

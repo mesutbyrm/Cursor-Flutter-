@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/performance/list_perf.dart';
+
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -251,17 +253,36 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: 20),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.15,
-                ),
-                itemCount: actions.length,
-                itemBuilder: (context, i) => _MenuActionCard(action: actions[i]),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  const crossAxisCount = 2;
+                  const spacing = 12.0;
+                  const aspect = 1.15;
+                  final gridHeight = ListPerf.nestedGridHeight(
+                    itemCount: actions.length,
+                    crossAxisCount: crossAxisCount,
+                    mainAxisSpacing: spacing,
+                    crossAxisSpacing: spacing,
+                    childAspectRatio: aspect,
+                    crossAxisExtent: constraints.maxWidth,
+                  );
+                  return SizedBox(
+                    height: gridHeight,
+                    child: GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
+                        childAspectRatio: aspect,
+                      ),
+                      itemCount: actions.length,
+                      itemBuilder: (context, i) =>
+                          _MenuActionCard(action: actions[i]),
+                    ),
+                  );
+                },
               ),
             ],
           ),

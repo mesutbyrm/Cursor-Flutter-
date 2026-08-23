@@ -109,7 +109,6 @@ class _VoiceUsersSheetState extends ConsumerState<_VoiceUsersSheet> {
             else
               Flexible(
                 child: ListView.builder(
-                  shrinkWrap: true,
                   itemCount: _users.length,
                   itemBuilder: (_, i) {
                     final u = _users[i];

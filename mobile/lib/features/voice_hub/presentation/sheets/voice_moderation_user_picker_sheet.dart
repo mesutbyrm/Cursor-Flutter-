@@ -91,7 +91,6 @@ class _KickBanPickerSheet extends ConsumerWidget {
             const SizedBox(height: 8),
             Flexible(
               child: ListView.builder(
-                shrinkWrap: true,
                 itemCount: users.length,
                 itemBuilder: (context, i) {
                   final u = users[i];
@@ -262,7 +261,6 @@ class _UnbanBanListSheetState extends ConsumerState<_UnbanBanListSheet> {
             else
               Flexible(
                 child: ListView.builder(
-                  shrinkWrap: true,
                   itemCount: _bans.length,
                   itemBuilder: (context, i) {
                     final ban = _bans[i];

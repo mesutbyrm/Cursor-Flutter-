@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/wallet_navigation.dart';
+import '../../../../core/performance/list_perf.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../../core/network/api_exception.dart';
@@ -606,17 +607,22 @@ class _VoiceRoomManagementPanelState
       context: context,
       backgroundColor: const Color(0xFF12082A),
       builder: (ctx) => SafeArea(
-        child: ListView.builder(
-          shrinkWrap: true,
-          itemCount: users.length,
-          itemBuilder: (_, i) {
-            final u = users[i];
-            return ListTile(
-              leading: VoiceNeonAvatar(url: u.image, size: 36),
-              title: Text(u.displayName, style: const TextStyle(color: Colors.white)),
-              onTap: () => Navigator.pop(ctx, u),
-            );
-          },
+        child: SizedBox(
+          height: ListPerf.nestedListHeight(
+            itemCount: users.length,
+            itemExtent: 56,
+          ).clamp(56, 420),
+          child: ListView.builder(
+            itemCount: users.length,
+            itemBuilder: (_, i) {
+              final u = users[i];
+              return ListTile(
+                leading: VoiceNeonAvatar(url: u.image, size: 36),
+                title: Text(u.displayName, style: const TextStyle(color: Colors.white)),
+                onTap: () => Navigator.pop(ctx, u),
+              );
+            },
+          ),
         ),
       ),
     );

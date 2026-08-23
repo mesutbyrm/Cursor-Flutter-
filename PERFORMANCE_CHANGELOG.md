@@ -1,6 +1,6 @@
 # Performans Değişiklik Günlüğü
 
-**Sürüm:** `1.0.343+379`  
+**Sürüm:** `1.0.344+380`  
 **Tarih:** 2026-08-22  
 **Fazlar:** FAZ 3 (network/startup), FAZ 5 (social video), FAZ 6 (SSE)
 
@@ -221,6 +221,19 @@ Profil düzenleme / OTP / avatar: `refreshMe(force: true)`
 
 ---
 
+## FAZ 14 — 1.0.344+380
+
+### Voice hub sheet scroll
+
+| Önce | Sonra |
+|------|--------|
+| 9× `shrinkWrap` (menü, komut, picker, yönetim) | `nestedGridHeight` / `Flexible` / sabit liste |
+| DM composer eylem grid `shrinkWrap` | `LayoutBuilder` + sabit grid |
+
+**Dosyalar:** `voice_room_menu_sheet.dart`, `voice_room_commands_panel.dart`, `voice_room_management_panel.dart`, `voice_moderation_user_picker_sheet.dart`, `voice_room_voice_users_sheet.dart`, `voice_room_muted_users_sheet.dart`, `chat_composer.dart`
+
+---
+
 ## Henüz yapılmadı (sonraki fazlar)
 
 - Gerçek cihaz benchmark değerlerinin doldurulması
@@ -231,6 +244,7 @@ Profil düzenleme / OTP / avatar: `refreshMe(force: true)`
 
 ## Regression
 
-- `flutter test`: 1010 pass (3 yeni refresh gate test)
+- `flutter test`: 1010 pass
+- `shrinkWrap: true` (voice_hub sheets): **9 → 0** (kalan ~39 repo genelinde)
 - `flutter analyze`: mevcut info seviyesi korunmalı
 - Backend API: değişiklik yok

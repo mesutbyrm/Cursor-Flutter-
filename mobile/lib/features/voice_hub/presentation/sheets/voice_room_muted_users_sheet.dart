@@ -77,7 +77,6 @@ class _MutedUsersSheet extends ConsumerWidget {
             else
               Flexible(
                 child: ListView.builder(
-                  shrinkWrap: true,
                   itemCount: muted.length,
                   itemBuilder: (context, i) {
                     final u = muted[i];

@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.344+380 (2026-08-23) — Performans FAZ 14
+
+- **Voice sheet'ler:** Menü, komut paneli, kullanıcı listeleri — `shrinkWrap` kaldırıldı
+- **DM composer:** Eylem grid sabit yükseklik
+- **Flexible listeler:** Gereksiz `shrinkWrap` (sesli kullanıcı / mute / moderasyon picker)
+
 ## 1.0.343+379 (2026-08-23) — Performans FAZ 13
 
 - **`/api/me` dedupe:** `RefreshMeGate` — 8 sn throttle + eşzamanlı `refreshMe` tekilleştirme

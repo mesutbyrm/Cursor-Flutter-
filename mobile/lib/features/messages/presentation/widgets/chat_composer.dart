@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
@@ -105,61 +106,78 @@ class ChatComposer extends StatelessWidget {
               blur: 24,
             ),
           ),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 0.92,
-            ),
-            itemCount: actions.length,
-            itemBuilder: (context, i) {
-              final a = actions[i];
-              return InkWell(
-                borderRadius: BorderRadius.circular(18),
-                onTap: () {
-                  Navigator.pop(sheet);
-                  onAction?.call(a.$1);
-                },
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.055),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              const crossAxisCount = 4;
+              const spacing = 10.0;
+              const aspect = 0.92;
+              final gridHeight = ListPerf.nestedGridHeight(
+                itemCount: actions.length,
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: spacing,
+                crossAxisSpacing: spacing,
+                childAspectRatio: aspect,
+                crossAxisExtent: constraints.maxWidth,
+              );
+              return SizedBox(
+                height: gridHeight,
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    mainAxisSpacing: spacing,
+                    crossAxisSpacing: spacing,
+                    childAspectRatio: aspect,
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
+                  itemCount: actions.length,
+                  itemBuilder: (context, i) {
+                    final a = actions[i];
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: () {
+                        Navigator.pop(sheet);
+                        onAction?.call(a.$1);
+                      },
+                      child: DecoratedBox(
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [
-                              a.$4.withValues(alpha: 0.95),
-                              AppThemeColors.accentPurple.withValues(alpha: 0.65),
-                            ],
-                          ),
+                          color: Colors.white.withValues(alpha: 0.055),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                         ),
-                        child: Icon(a.$2, color: Colors.white, size: 22),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        a.$3,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  colors: [
+                                    a.$4.withValues(alpha: 0.95),
+                                    AppThemeColors.accentPurple.withValues(alpha: 0.65),
+                                  ],
+                                ),
+                              ),
+                              child: Icon(a.$2, color: Colors.white, size: 22),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              a.$3,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               );
             },
