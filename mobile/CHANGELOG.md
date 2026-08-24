@@ -1,5 +1,23 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.356+394 (2026-08-24) — Müzik isteği ANR düzeltmesi
+
+- **Müzik isteği:** Sheet kapanışından sonra 320ms gecikmeli gönderim; aynı frame'de provider/WebView güncellemesi engellendi
+- **Flash mesajları:** İstek durumu (⏳/✅) artık yalnızca üst banner'da — sohbet listesine çift sistem satırı eklenmez
+- **WebView:** Ses modu oynatıcı başlatma 280ms gecikmeli (soğuk başlangıç ANR önleme)
+- **SnackBar:** Kuyruğa ekleme vs çalmaya başlama mesajı doğru gösterilir
+
+## 1.0.355+393 (2026-08-24) — Sesli oda eksikler ve stabilite
+
+- **Koltuk:** Optimistik oturma artık `seatSlots` haritasını da günceller — yetkili girişte anında koltukta görünme
+- **Müzik UI:** Merkez panel ve alt dock canlı DJ state'i slice provider ile izler (donma/lag giderildi)
+- **Müzik kapat:** Now-playing şeridi tüm kullanıcılara `closeMusicPlayer` ile yerel kapatma
+- **Uygulama resume:** Oda dışındayken yetim müzik oturumu temizlenir
+- **Presence:** SSE sessiz kaldığında heartbeat ile üye listesi yenilenir (çapraz cihaz leave/join)
+- **PK daveti:** Oda kataloğu girişte önceden yüklenir (başka odadayken davet kaçırma azalır)
+- **Speaking:** Mikrofon açıkken sahte konuşma pulse kaldırıldı (RTC + Basic)
+- **Müzik arama:** Basic sayfada çift sheet açılması engellendi (`_musicSearchOpen`)
+
 ## 1.0.354+392 (2026-08-24) — Sesli oda performans optimizasyonu
 
 - **Rebuild:** RTC sayfasında `_RtcLiveShell` tam-sayfa watch kaldırıldı; koltuk sahnesi `_VoiceRoomRtcSeatStage` ile izole edildi

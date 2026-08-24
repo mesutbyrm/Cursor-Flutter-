@@ -725,8 +725,18 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   if (err != null) {
                     showJetonAwareError(context, err, ref: ref);
                   } else {
+                    final liveNow =
+                        ref.read(voiceRoomLiveProvider(_liveRoomKey));
+                    final queuedOnly = liveNow.dj.playing &&
+                        liveNow.dj.nowPlaying?.videoIdField != hit.videoId;
                     messenger.showSnackBar(
-                      SnackBar(content: Text('«$songTitle» çalmaya başladı')),
+                      SnackBar(
+                        content: Text(
+                          queuedOnly
+                              ? '«$songTitle» kuyruğa eklendi'
+                              : '«$songTitle» çalmaya başladı',
+                        ),
+                      ),
                     );
                   }
                 },

@@ -2,20 +2,28 @@ import 'dart:async';
 
 import '../../../../core/network/api_exception.dart';
 
-/// Ağ + DJ state güncellemesini bir sonraki microtask'e erteler.
-/// Sheet kapanışı / oda rebuild'i ile çakışınca UI donmasını önler.
+/// Sheet kapanış animasyonu + oda rebuild'i bittikten sonra isteği gönderir.
+/// Aynı frame'de provider/WebView güncellemesi ANR yapar.
+const kVoiceMusicSubmitDeferMs = 320;
+
+/// Ağ + DJ state güncellemesini modal sheet kapanışından sonra erteler.
 void deferVoiceMusicSubmit({
   required Future<String?> Function() submit,
   required void Function(String? error) onComplete,
 }) {
   unawaited(
-    Future<void>.microtask(() async {
+    (() async {
+      await Future<void>.delayed(
+        const Duration(milliseconds: kVoiceMusicSubmitDeferMs),
+      );
+      // Bir event-loop turu — sheet pop animasyonu + rebuild bitsin.
+      await Future<void>.delayed(Duration.zero);
       try {
         final err = await submit();
         onComplete(err);
       } catch (e) {
         onComplete(ApiException.userMessage(e));
       }
-    }),
+    })(),
   );
 }

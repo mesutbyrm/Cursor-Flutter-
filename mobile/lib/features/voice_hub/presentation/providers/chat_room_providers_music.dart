@@ -53,6 +53,7 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
     required ChatRoomDjState dj,
     required bool shouldPlay,
     bool withVideo = false,
+    String? successFlash,
   }) {
     // Provider güncellemesi sheet/pop animasyonu sırasında gelirse oda ANR yapar.
     unawaited(
@@ -64,10 +65,13 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
             .onMusicStartedFromServer();
         ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
         ref.read(voiceRoomUiProvider.notifier).ensureMusicAudible();
+        if (successFlash != null && successFlash.trim().isNotEmpty) {
+          pulseMusicRequestFlash(successFlash);
+        }
         _commitDjUi(dj);
         if (!shouldPlay) return;
-        // Oda UI çizimi bitsin, sonra WebView soğuk başlatma.
-        await Future<void>.delayed(const Duration(milliseconds: 80));
+        // Oda UI çizimi bitsin, sonra WebView soğuk başlatma (ANR önleme).
+        await Future<void>.delayed(const Duration(milliseconds: 280));
         if (!_sessionActive || _roomKey.isEmpty) return;
         unawaited(_startDjPlaybackNonBlocking(dj, preferVideo: withVideo));
       }),

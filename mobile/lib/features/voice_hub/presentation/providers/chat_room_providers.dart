@@ -1293,7 +1293,7 @@ class VoiceRoomLiveController
             _pushRealtimeEvent(VoiceRoomRealtimeKind.moderation, modMsg);
             showModerationToast(modMsg);
           } else {
-            _showMusicRequestFlashLine(modMsg);
+            _showMusicRequestFlashLine(modMsg, toChat: true);
           }
         }
         return;
@@ -1310,7 +1310,7 @@ class VoiceRoomLiveController
           if (VoiceRoomBasicMode.enabled) {
             showModerationToast(muteMsg);
           } else {
-            _showMusicRequestFlashLine(muteMsg);
+            _showMusicRequestFlashLine(muteMsg, toChat: true);
           }
         }
         return;
@@ -2086,8 +2086,6 @@ class VoiceRoomLiveController
     bool skipPayment = false,
   }) async {
     _markLocalMusicRequestGrace();
-    // Sheet kapanış animasyonu sırasında UI donmasın.
-    await Future<void>.delayed(Duration.zero);
     if (!_sessionActive) return null;
 
     final videoId = hit.videoId.trim();
@@ -2163,8 +2161,8 @@ class VoiceRoomLiveController
         dj: dj,
         shouldPlay: shouldPlay && !isQueuedOnly,
         withVideo: withVideo,
+        successFlash: '✅ «${hit.title}» kuyruğa eklendi',
       );
-      _showMusicRequestFlashLine('✅ «${hit.title}» kuyruğa eklendi');
       return null;
     } catch (e) {
       state = state.copyWith(error: ApiException.userMessage(e));
@@ -2257,9 +2255,12 @@ class VoiceRoomLiveController
     _appendSongRequestChatLine(line, dedupeKey: msg.id);
   }
 
-  void _showMusicRequestFlashLine(String line) {
+  void _showMusicRequestFlashLine(String line, {bool toChat = false}) {
     if (line.trim().isEmpty) return;
-    _appendSongRequestChatLine(line);
+    if (toChat) {
+      _appendSongRequestChatLine(line);
+      return;
+    }
     pulseMusicRequestFlash(line);
   }
 
