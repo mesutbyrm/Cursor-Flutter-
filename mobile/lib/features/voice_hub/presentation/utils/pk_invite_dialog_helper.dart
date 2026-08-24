@@ -7,6 +7,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../../app/router/app_router.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
