@@ -2,13 +2,17 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.356+394` |
-| Tarih (UTC) | 2026-08-24 20:41 |
-| Commit | [`39eb8c1d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/39eb8c1d14aea130a3aec91867278a868043d685) |
-| İş akışı | [Run 32773727112](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32773727112) |
+| Sürüm | `1.0.357+395` |
+| Tarih (UTC) | 2026-08-24 21:35 |
+| Commit | [`01ec8e1b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/01ec8e1b) |
+| İş akışı | [Run 32779034964](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32779034964) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
+
+## 1.0.357+395 (2026-08-24) — Müzik arama sheet geçişi
+
+- **Müzik arama:** Şarkı seçiminden sonra mod seçici sheet'i 150ms gecikmeyle açılır (üst üste sheet animasyonu ANR riski azalır)
 
 ## 1.0.356+394 (2026-08-24) — Müzik isteği ANR düzeltmesi
 
