@@ -182,6 +182,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   Timer? _sseAutoRetryTimer;
   var _sseAutoRetryCount = 0;
   static const _maxSseAutoRetry = 3;
+  StreamSubscription<void>? _trtcConnectionLostSub;
 
   VoidCallback? _remoteVideoListener;
   VoidCallback? _remoteAudioListener;
@@ -291,6 +292,23 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       if (_disposed || state.leaving) return;
       unawaited(retryRoomSse());
     });
+  }
+
+  void _wireTrtcCoordinator(TrtcLiveRoomCoordinator coordinator) {
+    unawaited(_trtcConnectionLostSub?.cancel());
+    _trtcConnectionLostSub = coordinator.onConnectionLost.listen((_) {
+      if (_disposed || state.leaving) return;
+      _setPhase(PsychicSessionPhase.reconnecting);
+      state = state.copyWith(rtcReady: false);
+    });
+    coordinator.onReconnected = () {
+      if (_disposed || state.leaving) return;
+      _joinedTrtcRoom = _activeTrtcRoomId();
+      state = state.copyWith(rtcReady: true, clearRtcError: true);
+      _setPhase(PsychicSessionPhase.connected);
+      unawaited(_syncRoomInfo());
+      unawaited(_broadcastMediaState());
+    };
   }
 
   /// Falcı manuel olarak süreyi başlatır (kılavuz §11.1).
@@ -553,6 +571,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       await _trtcCoordinator?.leave();
       _trtcCoordinator?.dispose();
       _trtcCoordinator = createTrtcLiveRoomCoordinator(ref);
+      _wireTrtcCoordinator(_trtcCoordinator!);
       await _trtcCoordinator!.join(
         roomId: roomId,
         roomType: 'stream',
@@ -792,6 +811,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     await _trtcCoordinator?.leave();
     _trtcCoordinator?.dispose();
     _trtcCoordinator = createTrtcLiveRoomCoordinator(ref);
+    _wireTrtcCoordinator(_trtcCoordinator!);
 
     if (_trtc.inRoom) {
       await _trtc.leave();
@@ -1182,6 +1202,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _signalPoll?.cancel();
     _rejoinRtcDebounce?.cancel();
     _sseAutoRetryTimer?.cancel();
+    unawaited(_trtcConnectionLostSub?.cancel());
+    _trtcConnectionLostSub = null;
     unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
     unawaited(_trtcCoordinator?.leave());
     _trtcCoordinator?.dispose();

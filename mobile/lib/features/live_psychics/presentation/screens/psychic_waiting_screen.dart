@@ -90,13 +90,17 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
       sessionId: session.sessionId,
       tellerId: session.psychic.id,
     );
-    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _checkStatus());
+    _poll = Timer.periodic(const Duration(seconds: 2), (_) => _checkStatus());
     _timeout = Timer.periodic(const Duration(seconds: 1), (_) => _tickTimeout());
     unawaited(_checkStatus());
   }
 
   void onRemoteCancelled() {
     if (!state.closed) unawaited(_onRejected());
+  }
+
+  void onAppResumed() {
+    if (!state.closed) unawaited(_checkStatus());
   }
 
   void _tickTimeout() {
@@ -240,13 +244,42 @@ final psychicWaitingNavProvider =
 final psychicWaitingExitProvider = StateProvider.autoDispose<String?>((ref) => null);
 
 /// Danışan bekleme ekranı — falcı onayı.
-class PsychicWaitingScreen extends ConsumerWidget {
+class PsychicWaitingScreen extends ConsumerStatefulWidget {
   const PsychicWaitingScreen({super.key, required this.session});
 
   final PsychicSessionEntity session;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PsychicWaitingScreen> createState() =>
+      _PsychicWaitingScreenState();
+}
+
+class _PsychicWaitingScreenState extends ConsumerState<PsychicWaitingScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref
+          .read(psychicWaitingControllerProvider(widget.session).notifier)
+          .onAppResumed();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final session = widget.session;
     final waiting = ref.watch(psychicWaitingControllerProvider(session));
     final psychic = session.psychic;
 

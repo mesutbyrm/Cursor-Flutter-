@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.359+397 (2026-08-24) — Canlı Falcılar TRTC + bekleme
+
+- **TRTC kopma:** Koordinatör `onConnectionLost` / `onReconnected` UI ile senkron — otomatik yeniden bağlanma görünür
+- **Bekleme ekranı:** Durum poll 2 sn; uygulama ön plana gelince anında kabul kontrolü
+
 ## 1.0.358+396 (2026-08-24) — Canlı Falcılar bağlantı stabilitesi
 
 - **Oturum başlangıcı:** Oda kimliği backend'den gelene kadar kısa bekleme — erken TRTC join kopması azalır
