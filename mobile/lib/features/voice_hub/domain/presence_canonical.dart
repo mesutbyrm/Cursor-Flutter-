@@ -44,7 +44,7 @@ List<ChatRoomPresence> dedupePresencesById(List<ChatRoomPresence> list) {
       roleSymbol: p.roleSymbol ?? prev.roleSymbol,
       membership: p.membership ?? prev.membership,
       seatIndex: p.seatIndex ?? prev.seatIndex,
-      isSpeaking: p.isSpeaking || prev.isSpeaking,
+      isSpeaking: p.isSpeaking,
       isMuted: p.isMuted && prev.isMuted,
       micOn: p.micOn ?? prev.micOn,
     );

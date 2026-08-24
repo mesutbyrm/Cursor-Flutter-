@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
@@ -39,58 +40,64 @@ class VoiceRoomBottomActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final useBlur =
+        !kIsWeb && defaultTargetPlatform != TargetPlatform.android;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(8, 0, 8, bottom + 4),
-      child: ClipRRect(
+    final bar = Container(
+      padding: EdgeInsets.fromLTRB(4, 8, 4, 10 + bottom),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: useBlur ? 0.72 : 0.88),
         borderRadius: BorderRadius.circular(28),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(4, 8, 4, 10),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.72),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.28),
+        border: Border.all(
+          color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.28),
+        ),
+      ),
+      child: Row(
+        children: [
+          _SpeakerAction(
+            headphonesOn: headphonesOn,
+            onTap: onToggleAudioOutput,
+          ),
+          if (showSettings) _SettingsAction(onTap: onSettings),
+          if (showSpeakRequest && onSpeakRequest != null)
+            _SpeakRequestAction(
+              pending: speakRequestPending,
+              onTap: onSpeakRequest!,
+            ),
+          Expanded(
+            child: Center(
+              child: _CenterMicButton(
+                micOn: micOn,
+                enabled: micEnabled,
+                onTap: onMicToggle,
               ),
             ),
-            child: Row(
-              children: [
-                _SpeakerAction(
-                  headphonesOn: headphonesOn,
-                  onTap: onToggleAudioOutput,
-                ),
-                if (showSettings) _SettingsAction(onTap: onSettings),
-                if (showSpeakRequest && onSpeakRequest != null)
-                  _SpeakRequestAction(
-                    pending: speakRequestPending,
-                    onTap: onSpeakRequest!,
-                  ),
-                Expanded(
-                  child: Center(
-                    child: _CenterMicButton(
-                      micOn: micOn,
-                      enabled: micEnabled,
-                      onTap: onMicToggle,
-                    ),
-                  ),
-                ),
-                _SideAction(
-                  emoji: '🎁',
-                  label: 'Hediye',
-                  color: AppThemeColors.coinGold,
-                  onTap: onGift,
-                ),
-                _SideAction(
-                  emoji: '📨',
-                  label: 'Davet',
-                  onTap: onInvite,
-                ),
-              ],
-            ),
           ),
-        ),
+          _SideAction(
+            emoji: '🎁',
+            label: 'Hediye',
+            color: AppThemeColors.coinGold,
+            onTap: onGift,
+          ),
+          _SideAction(
+            emoji: '📨',
+            label: 'Davet',
+            onTap: onInvite,
+          ),
+        ],
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: useBlur
+            ? BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: bar,
+              )
+            : bar,
       ),
     );
   }

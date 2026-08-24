@@ -16,6 +16,20 @@ void main() {
       expect(out.first.id, 'u1');
     });
 
+    test('does not keep sticky isSpeaking when server clears it', () {
+      final speaking = dedupePresencesById([
+        const ChatRoomPresence(id: 'u1', name: 'Ali', isSpeaking: false),
+        const ChatRoomPresence(id: 'u1', name: 'Ali', isSpeaking: true),
+      ]);
+      expect(speaking.single.isSpeaking, isTrue);
+
+      final cleared = dedupePresencesById([
+        speaking.single,
+        const ChatRoomPresence(id: 'u1', name: 'Ali', isSpeaking: false),
+      ]);
+      expect(cleared.single.isSpeaking, isFalse);
+    });
+
     test('reconcilePresenceWithServer uses server list', () {
       final local = [
         const ChatRoomPresence(id: 'a', name: 'A'),

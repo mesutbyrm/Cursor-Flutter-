@@ -60,6 +60,21 @@ final voiceRoomGiftEventsProvider = Provider.autoDispose
   );
 });
 
+String voiceRoomSpeakingSignature(List<ChatRoomPresence> presence) {
+  final ids = [for (final p in presence) if (p.isSpeaking) p.id]..sort();
+  return ids.join('|');
+}
+
+/// Konuşma göstergesi — yalnızca speaking id seti değişince rebuild.
+final voiceRoomSpeakingSignatureProvider = Provider.autoDispose
+    .family<String, String>((ref, roomKey) {
+  return ref.watch(
+    voiceRoomLiveProvider(roomKey).select(
+      (s) => voiceRoomSpeakingSignature(s.presence),
+    ),
+  );
+});
+
 final voiceRoomConnectionSliceProvider = Provider.autoDispose
     .family<({bool loading, bool sseConnected, bool selfInRoom}), String>(
   (ref, roomKey) {

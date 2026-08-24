@@ -45,6 +45,7 @@ import '../domain/entities/voice_room_seat_slot.dart';
 import 'audio/voice_room_audio_coordinator.dart';
 import 'audio/voice_room_music_audio_session.dart';
 import 'providers/chat_room_providers.dart';
+import 'providers/room_fragment_providers.dart';
 import '../music/presentation/providers/room_music_providers.dart';
 import '../music/presentation/widgets/room_song_mini_player.dart';
 import '../music/presentation/widgets/music_search_picker_sheet.dart';
@@ -1089,9 +1090,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         _liveRoomKey.isNotEmpty ? _liveRoomKey : widget.room.id,
       ),
     );
-    ref.watch(
-      voiceRoomLiveProvider(_liveRoomKey).select(_RtcLiveShell.fromState),
-    );
     final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
     final roomErrorBanner =
         VoiceRoomErrorDisplay.bannerMessage(live.error, live: live);
@@ -1135,11 +1133,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       perms: perms,
       nowPlaying: live.dj.nowPlaying,
     );
-    final speakingIds = <String>{
-      for (final p in live.presence)
-        if (p.isSpeaking) p.id,
-    };
-    if (!_isMicMuted && user != null) speakingIds.add(user.id);
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
     final metrics = VoiceRoomResponsiveMetrics.of(context);
     final keyboardOpen = metrics.keyboardOpen;
@@ -1604,37 +1597,37 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             ),
                           ),
                         const _VoiceRoomRtcDiagnosticBanner(),
-                        VoiceWebOwnerStage(
-                              roomKey: _liveRoomKey,
+                        _VoiceRoomRtcSeatStage(
+                          liveRoomKey: _liveRoomKey,
+                          room: room,
+                          mergedDjIds: mergedDjIds,
+                          selfUserId: user?.id,
+                          micMuted: _isMicMuted,
+                          audioReady: _audioReady,
+                          trtc: _audio?.trtcManager,
+                          remoteTrtcUserId:
+                              _audio?.trtcManager.remoteAnchorUserId,
+                          onUserTap: _openUser,
+                          onSeatTap: (seatIndex, occupant) => unawaited(
+                            _onSeatTap(
+                              context,
                               room: room,
-                              djUserIds: mergedDjIds,
-                              speakingUserIds: speakingIds,
-                              onUserTap: _openUser,
-                              onSeatTap: (seatIndex, user) => unawaited(
-                                _onSeatTap(
-                                  context,
-                                  room: room,
-                                  live: live,
-                                  perms: perms,
-                                  internalSeatIndex: seatIndex,
-                                  occupant: user,
-                                ),
-                              ),
-                              onSeatLongPress: (seatIndex) => unawaited(
-                                _onSeatLongPress(
-                                  context,
-                                  room: room,
-                                  live: live,
-                                  perms: perms,
-                                  internalSeatIndex: seatIndex,
-                                ),
-                              ),
-                              trtc: _audio?.trtcManager,
-                              trtcReady: _audioReady,
-                              selfUserId: user?.id,
-                              remoteTrtcUserId:
-                                  _audio?.trtcManager.remoteAnchorUserId,
+                              live: ref.read(voiceRoomLiveProvider(_liveRoomKey)),
+                              perms: perms,
+                              internalSeatIndex: seatIndex,
+                              occupant: occupant,
                             ),
+                          ),
+                          onSeatLongPress: (seatIndex) => unawaited(
+                            _onSeatLongPress(
+                              context,
+                              room: room,
+                              live: ref.read(voiceRoomLiveProvider(_liveRoomKey)),
+                              perms: perms,
+                              internalSeatIndex: seatIndex,
+                            ),
+                          ),
+                        ),
                         VoiceRoomCenterMusicPanel(
                           room: room,
                           live: live,
@@ -1991,61 +1984,57 @@ class _VoiceRoomRtcVipEntrance extends ConsumerWidget {
   }
 }
 
-/// Yeni sohbet mesajı geldiğinde koltuk/arka plan yeniden çizilmez.
-@immutable
-class _RtcLiveShell {
-  const _RtcLiveShell({
-    required this.presence,
-    required this.dj,
-    required this.serverPermissions,
-    required this.backgroundUrl,
-    required this.loading,
-    required this.error,
-    required this.enterBanner,
-    required this.realtimeEvents,
+/// Koltuk sahnesi — konuşma/koltuk güncellemelerinde tüm RTC sayfası değil yalnızca stage rebuild.
+class _VoiceRoomRtcSeatStage extends ConsumerWidget {
+  const _VoiceRoomRtcSeatStage({
+    required this.liveRoomKey,
+    required this.room,
+    required this.mergedDjIds,
+    required this.selfUserId,
+    required this.micMuted,
+    required this.audioReady,
+    required this.trtc,
+    required this.remoteTrtcUserId,
+    required this.onUserTap,
+    required this.onSeatTap,
+    required this.onSeatLongPress,
   });
 
-  factory _RtcLiveShell.fromState(VoiceRoomLiveState s) => _RtcLiveShell(
-        presence: s.presence,
-        dj: s.dj,
-        serverPermissions: s.serverPermissions,
-        backgroundUrl: s.backgroundUrl,
-        loading: s.loading,
-        error: s.error,
-        enterBanner: s.enterBanner,
-        realtimeEvents: s.realtimeEvents,
-      );
-
-  final List<ChatRoomPresence> presence;
-  final ChatRoomDjState dj;
-  final ChatRoomMyPermissions? serverPermissions;
-  final String? backgroundUrl;
-  final bool loading;
-  final String? error;
-  final String? enterBanner;
-  final List<VoiceRoomRealtimeEvent> realtimeEvents;
+  final String liveRoomKey;
+  final VoiceRoomEntity room;
+  final List<String> mergedDjIds;
+  final String? selfUserId;
+  final bool micMuted;
+  final bool audioReady;
+  final TrtcRoomManager? trtc;
+  final String? remoteTrtcUserId;
+  final void Function(ChatRoomPresence user)? onUserTap;
+  final void Function(int seatIndex, ChatRoomPresence? occupant) onSeatTap;
+  final void Function(int seatIndex) onSeatLongPress;
 
   @override
-  bool operator ==(Object other) =>
-      other is _RtcLiveShell &&
-      identical(presence, other.presence) &&
-      dj == other.dj &&
-      serverPermissions == other.serverPermissions &&
-      backgroundUrl == other.backgroundUrl &&
-      loading == other.loading &&
-      error == other.error &&
-      enterBanner == other.enterBanner &&
-      identical(realtimeEvents, other.realtimeEvents);
-
-  @override
-  int get hashCode => Object.hash(
-        presence,
-        dj,
-        serverPermissions,
-        backgroundUrl,
-        loading,
-        error,
-        enterBanner,
-        realtimeEvents,
-      );
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(voiceRoomSpeakingSignatureProvider(liveRoomKey));
+    final seatSlice = ref.watch(voiceRoomSeatSliceProvider(liveRoomKey));
+    final speakingIds = <String>{
+      for (final p in seatSlice.presence)
+        if (p.isSpeaking) p.id,
+    };
+    if (!micMuted && selfUserId != null) {
+      speakingIds.add(selfUserId!);
+    }
+    return VoiceWebOwnerStage(
+      roomKey: liveRoomKey,
+      room: room,
+      djUserIds: mergedDjIds,
+      speakingUserIds: speakingIds,
+      onUserTap: onUserTap,
+      onSeatTap: onSeatTap,
+      onSeatLongPress: onSeatLongPress,
+      trtc: trtc,
+      trtcReady: audioReady,
+      selfUserId: selfUserId,
+      remoteTrtcUserId: remoteTrtcUserId,
+    );
+  }
 }

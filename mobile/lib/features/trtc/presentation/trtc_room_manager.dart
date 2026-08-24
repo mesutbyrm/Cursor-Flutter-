@@ -384,11 +384,13 @@ class TrtcRoomManager {
 
   void _configureAudioProcessing() {
     if (_cloud == null) return;
-    // TRTC videoCall/live/voiceChatRoom sahnelerinde AEC/ANS/AGC varsayılan açık.
-    _cloud!.enableAudioVolumeEvaluation(
-      true,
-      TRTCAudioVolumeEvaluateParams(interval: 300),
-    );
+    // Sesli oda: speaking SSE'den gelir; 300ms volume poll gereksiz CPU.
+    if (!_audioOnly) {
+      _cloud!.enableAudioVolumeEvaluation(
+        true,
+        TRTCAudioVolumeEvaluateParams(interval: 300),
+      );
+    }
     _device?.setAudioRoute(TXAudioRoute.speakerPhone);
   }
 

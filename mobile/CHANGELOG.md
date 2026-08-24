@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.354+392 (2026-08-24) — Sesli oda performans optimizasyonu
+
+- **Rebuild:** RTC sayfasında `_RtcLiveShell` tam-sayfa watch kaldırıldı; koltuk sahnesi `_VoiceRoomRtcSeatStage` ile izole edildi
+- **Speaking:** Sticky `isSpeaking` OR düzeltildi — sunucu `false` gönderince pulse durur
+- **TRTC:** Sesli oda (`audioOnly`) modda gereksiz volume evaluation kapatıldı
+- **GPU:** Android alt kontrol barında blur kaldırıldı (solid panel); iOS blur korundu
+- **Dokümantasyon:** `PERFORMANCE_VOICE_ROOM_ANALIZ.md`, `VOICE_ROOM_PERFORMANCE_CHECKLIST.md`
+
 ## 1.0.353+391 (2026-08-24) — Koltuk, müzik donması, PK daveti
 
 - **Koltuk:** Oda girişinde ownerId korunur; yetkili kullanıcıya anında optimistik koltuk; join + izinler paralel

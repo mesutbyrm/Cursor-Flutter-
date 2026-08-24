@@ -264,9 +264,9 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
               : (prev.chatRole ?? 'listener'),
           roleSymbol: p.roleSymbol ?? prev.roleSymbol,
           membership: p.membership ?? prev.membership,
-          seatIndex: p.seatIndex ?? prev.seatIndex,
-          isSpeaking: p.isSpeaking || prev.isSpeaking,
-          isMuted: p.isMuted,
+      seatIndex: p.seatIndex ?? prev.seatIndex,
+      isSpeaking: p.isSpeaking,
+      isMuted: p.isMuted,
         ),
       );
     }
