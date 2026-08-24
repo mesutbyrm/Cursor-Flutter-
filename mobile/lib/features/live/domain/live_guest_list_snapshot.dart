@@ -9,6 +9,7 @@ class LiveGuestListSnapshot {
     this.maxGuests = 8,
     this.gridSlots = 2,
     this.guests = const [],
+    this.joinRequests = const [],
   });
 
   final String? streamId;
@@ -16,15 +17,25 @@ class LiveGuestListSnapshot {
   final int maxGuests;
   final int gridSlots;
   final List<Map<String, dynamic>> guests;
+  final List<Map<String, dynamic>> joinRequests;
 
   factory LiveGuestListSnapshot.fromJson(Map<String, dynamic> json) {
-    final rawGuests = json['guests'];
-    final guests = <Map<String, dynamic>>[];
-    if (rawGuests is List) {
-      for (final g in rawGuests) {
-        if (g is Map) guests.add(asJsonMap(g));
-      }
+    List<Map<String, dynamic>> parseList(dynamic raw) {
+      if (raw is! List) return const [];
+      return [
+        for (final g in raw)
+          if (g is Map) asJsonMap(g),
+      ];
     }
+
+    final guests = parseList(json['guests']);
+    final joinRequests = parseList(
+      json['joinRequests'] ??
+          json['pendingRequests'] ??
+          json['requests'] ??
+          json['pending'],
+    );
+
     return LiveGuestListSnapshot(
       streamId: pick(json, ['streamId', 'stream_id'])?.toString(),
       count: asInt(json['count']),
@@ -35,6 +46,7 @@ class LiveGuestListSnapshot {
           ? 2
           : asInt(json['gridSlots'] ?? json['grid_slots']),
       guests: guests,
+      joinRequests: joinRequests,
     );
   }
 
@@ -43,15 +55,32 @@ class LiveGuestListSnapshot {
     return guests
         .map((g) => {
               'userId': pick(g, ['userId', 'user_id', 'id'])?.toString() ?? '',
-              'userName': pick(g, ['userName', 'username', 'displayName'])
+              'userName': pick(g, ['displayName', 'name', 'userName', 'username'])
                   ?.toString(),
-              'displayName': pick(g, ['displayName', 'userName', 'username'])
-                  ?.toString(),
+              'displayName':
+                  pick(g, ['displayName', 'name', 'userName', 'username'])
+                      ?.toString(),
               'agoraUid': g['agoraUid'] ?? g['uid'],
               'slotIndex': g['slotIndex'] ?? g['seatIndex'],
               'status': g['status'] ?? 'live',
               'jeton': parseGuestJeton(g),
               'jetonEarned': parseGuestJeton(g),
+            })
+        .where((g) => (g['userId'] as String).isNotEmpty)
+        .toList(growable: false);
+  }
+
+  List<Map<String, dynamic>> toJoinRequests() {
+    return joinRequests
+        .map((g) => {
+              'userId': pick(g, ['userId', 'user_id', 'id'])?.toString() ?? '',
+              'userName': pick(g, ['displayName', 'name', 'userName', 'username'])
+                  ?.toString(),
+              'displayName':
+                  pick(g, ['displayName', 'name', 'userName', 'username'])
+                      ?.toString(),
+              'status': g['status'] ?? 'pending',
+              'requestedAt': g['requestedAt'] ?? g['createdAt'],
             })
         .where((g) => (g['userId'] as String).isNotEmpty)
         .toList(growable: false);

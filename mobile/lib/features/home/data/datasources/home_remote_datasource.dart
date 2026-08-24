@@ -1,21 +1,39 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/images/canlifal_image_urls.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../../core/util/fortune_price_parser.dart';
+import '../models/mobile_compound_models.dart';
+import 'mobile_compound_remote_datasource.dart';
 import '../../domain/entities/home_banner_entity.dart';
+import '../../domain/entities/home_blog_post_entity.dart';
 import '../../domain/entities/home_fortune_card_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
+import '../../domain/entities/home_page_button_entity.dart';
+import '../../domain/entities/home_trend_topic_entity.dart';
 import '../../domain/entities/home_trend_video_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
+import '../../domain/home_site_catalog.dart';
 
 class HomeRemoteDataSource {
-  HomeRemoteDataSource(this._dio);
+  HomeRemoteDataSource(this._dio, this._compound);
 
   final Dio _dio;
+  final MobileCompoundRemoteDataSource _compound;
+
+  Future<MobileHomeBundle?> fetchMobileHome({bool force = false}) =>
+      _compound.fetchHome(force: force);
+
+  void invalidateMobileHomeCache() => _compound.invalidateHomeCache();
 
   Future<List<HomeBannerEntity>> fetchBanners() async {
+    final compound = await fetchMobileHome();
+    if (compound != null && compound.banners.isNotEmpty) {
+      return compound.banners;
+    }
     for (final path in [
       ApiEndpoints.homeBanners,
       ApiEndpoints.socialAnnouncements,
@@ -29,11 +47,70 @@ class HomeRemoteDataSource {
     return const [];
   }
 
+  /// `GET /api/homepage-ticker` — kayan yazı satırları (API dokümanı §23).
+  Future<List<String>> fetchHomepageTicker() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.homepageTicker);
+      return _tickerLinesFromBody(res.data);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  List<String> _tickerLinesFromBody(dynamic body) {
+    final lines = <String>[];
+    void add(String? raw) {
+      final t = raw?.trim() ?? '';
+      if (t.isEmpty) return;
+      if (!lines.contains(t)) lines.add(t);
+    }
+
+    if (body is String) {
+      add(body);
+      return lines;
+    }
+    if (body is List) {
+      for (final item in body) {
+        if (item is String) {
+          add(item);
+        } else if (item is Map) {
+          final m = Map<String, dynamic>.from(item);
+          add(
+            (m['message'] ??
+                    m['text'] ??
+                    m['title'] ??
+                    m['content'] ??
+                    m['line'] ??
+                    m['ticker'])
+                ?.toString(),
+          );
+        }
+      }
+      return lines;
+    }
+    if (body is Map) {
+      final m = Map<String, dynamic>.from(body);
+      final nested = m['items'] ??
+          m['tickers'] ??
+          m['messages'] ??
+          m['data'] ??
+          m['lines'];
+      if (nested != null) return _tickerLinesFromBody(nested);
+      add(
+        (m['message'] ?? m['text'] ?? m['title'] ?? m['content'])?.toString(),
+      );
+    }
+    return lines;
+  }
+
   Future<List<OnlineAdvisorEntity>> fetchOnlineAdvisors() async {
+    final compound = await fetchMobileHome();
+    if (compound != null && compound.advisors.isNotEmpty) {
+      return compound.advisors;
+    }
     for (final path in [
       ApiEndpoints.homeAdvisorsOnline,
       ApiEndpoints.fortuneTellers,
-      ApiEndpoints.socialFortuneTellers,
     ]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);
@@ -62,6 +139,116 @@ class HomeRemoteDataSource {
       }
     } catch (_) {}
     return const [];
+  }
+
+  /// `GET /api/homepage-buttons` — ana sayfa hızlı erişim butonları.
+  Future<List<HomePageButtonEntity>> fetchHomepageButtons() async {
+    final compound = await fetchMobileHome();
+    if (compound != null && compound.homepageButtons.isNotEmpty) {
+      return compound.homepageButtons;
+    }
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.homepageButtons);
+      final items = _itemsFromBody(
+        res.data,
+        keys: const ['buttons', 'homepageButtons', 'items', 'data'],
+      );
+      final buttons = items
+          .map(_mapHomepageButton)
+          .where((b) => b.id.isNotEmpty && b.isActive)
+          .toList();
+      buttons.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      return buttons;
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// `GET /api/trends` — trend konular.
+  Future<List<HomeTrendTopicEntity>> fetchTrendingTopics() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.trends);
+      final items = _itemsFromBody(
+        res.data,
+        keys: const ['trends', 'topics', 'tags', 'items', 'data'],
+      );
+      return items
+          .map(_mapTrendTopic)
+          .where((t) => t.tag.trim().isNotEmpty)
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// `GET /api/blog/recent` — son blog yazıları.
+  Future<List<HomeBlogPostEntity>> fetchBlogRecent() async {
+    for (final path in [ApiEndpoints.blogRecent, ApiEndpoints.blog]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final items = _itemsFromBody(
+          res.data,
+          keys: const ['posts', 'blogs', 'items', 'data', 'results'],
+        );
+        if (items.isEmpty) continue;
+        return items
+            .map(_mapBlogPost)
+            .where((p) => p.id.isNotEmpty && p.title.isNotEmpty)
+            .take(8)
+            .toList();
+      } catch (_) {}
+    }
+    return const [];
+  }
+
+  /// `GET /api/celebrities` — ana sayfa ünlüler şeridi.
+  Future<List<HomeFanClubItem>> fetchCelebrities() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.celebrities);
+      final items = _itemsFromBody(
+        res.data,
+        keys: const ['celebrities', 'items', 'data', 'results'],
+      );
+      if (items.isEmpty) return const [];
+      return items
+          .map(_mapCelebrity)
+          .where((c) => c.id.isNotEmpty && c.title.isNotEmpty)
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// `GET /api/fan-clubs` — popüler fan kulüpleri.
+  Future<List<HomeFanClubItem>> fetchFanClubs() async {
+    for (final path in [ApiEndpoints.fanClubsPopular, ApiEndpoints.fanClubs]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final items = _itemsFromBody(
+          res.data,
+          keys: const ['fanClubs', 'clubs', 'items', 'data', 'results'],
+        );
+        if (items.isEmpty) continue;
+        return items
+            .map(_mapFanClub)
+            .where((c) => c.id.isNotEmpty && c.title.isNotEmpty)
+            .toList();
+      } catch (_) {}
+    }
+    return const [];
+  }
+
+  /// `POST /api/horoscope/daily` — günlük burç yorumu.
+  Future<String?> fetchDailyHoroscope(String zodiacSign) async {
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.horoscopeDaily,
+        data: {'zodiacSign': zodiacSign},
+      );
+      return _horoscopeTextFromBody(res.data);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<List<DailyRewardEntity>> fetchDailyRewards() async {
@@ -167,10 +354,18 @@ class HomeRemoteDataSource {
       id: _str(m, ['id', '_id']) ?? '',
       title: (desc != null && desc.isNotEmpty) ? desc : channel,
       channelName: channel,
-      thumbnailUrl: _str(m, ['thumbnailUrl', 'thumbnail_url', 'thumbnail']),
+      thumbnailUrl: _resolveTrendThumb(m),
       duration: durationStr,
       viewCount: asInt(pick(m, ['viewsCount', 'views_count', 'viewCount'])),
-      videoUrl: _str(m, ['videoUrl', 'video_url']),
+      likesCount: asInt(pick(m, [
+        'likesCount',
+        'likes_count',
+        'likeCount',
+        'likes',
+      ])),
+      videoUrl: CanlifalImageUrls.resolve(
+        _str(m, ['videoUrl', 'video_url']),
+      ),
       badge: 'YENİ',
     );
   }
@@ -262,18 +457,46 @@ class HomeRemoteDataSource {
   /// Dış datasource'lar için JSON → entity (canlı falcı modülü).
   OnlineAdvisorEntity _mapAdvisor(dynamic raw) {
     final m = asJsonMap(raw);
+    final user = asJsonMap(m['user'] ?? m['profile']);
     final online = m['isOnline'] == true ||
         m['online'] == true ||
-        m['status'] == 'online';
+        m['status']?.toString().toLowerCase() == 'online';
+    final id = _str(m, ['id', '_id', 'tellerId', 'fortuneTellerId']) ??
+        _str(user, ['tellerId', 'fortuneTellerId']) ??
+        _str(m, ['userId']) ??
+        _str(user, ['id', 'userId']) ??
+        '';
     return OnlineAdvisorEntity(
-      id: _str(m, ['id', '_id', 'userId']) ?? '',
-      name: _str(m, ['name', 'displayName', 'username']) ?? 'Falcı',
+      id: id,
+      name: _str(m, ['name', 'displayName', 'username']) ??
+          _str(user, ['displayName', 'name', 'username']) ??
+          'Falcı',
       category: _advisorCategory(m),
-      avatarUrl: _str(m, ['avatarUrl', 'image', 'avatar', 'photoUrl']),
+      avatarUrl: _str(m, ['avatarUrl', 'image', 'avatar', 'photoUrl']) ??
+          _str(user, ['avatarUrl', 'image', 'avatar']),
       isOnline: online,
-      rating: _dbl(m, ['rating', 'score']),
+      rating: _dbl(m, ['rating', 'score', 'averageRating']) != 0
+          ? _dbl(m, ['rating', 'score', 'averageRating'])
+          : _dbl(user, ['rating', 'score']),
+      reviewCount: asInt(
+        pick(m, ['reviewCount', 'reviews', 'totalReviews']),
+      ),
+      pricePerMinute: asInt(pick(m, [
+        'pricePerMinute',
+        'pricePerSession',
+        'sessionPrice',
+        'price',
+        'minutePrice',
+      ])),
       viewerCount: asInt(pick(m, ['viewerCount', 'viewers', 'audience'])),
-      specialties: _stringList(m['specialties']),
+      specialties: _stringList(m['specialties'] ?? user['specialties']),
+      liveStreamId: _str(m, [
+            'liveStreamId',
+            'streamId',
+            'videoStreamId',
+            'currentStreamId',
+          ]) ??
+          _str(user, ['liveStreamId', 'streamId']),
     );
   }
 
@@ -305,18 +528,162 @@ class HomeRemoteDataSource {
       channelName: _str(m, ['channelName', 'author', 'username']) ??
           _str(asJsonMap(m['channel'] ?? m['celebrity']), ['name', 'displayName']) ??
           'Canlifal',
-      thumbnailUrl: _str(m, [
-        'thumbnailUrl',
-        'thumbnail',
-        'imageUrl',
-        'coverUrl',
-        'image',
-      ]),
+      thumbnailUrl: _resolveTrendThumb(m),
       duration: _str(m, ['duration', 'length']) ?? '0:30',
       badge: _str(m, ['badge', 'tag', 'label']) ?? badges[idx],
       viewCount: asInt(pick(m, ['viewCount', 'views', 'viewers'])),
-      videoUrl: videoUrl,
+      likesCount: asInt(pick(m, ['likesCount', 'likes_count', 'likeCount', 'likes'])),
+      videoUrl: CanlifalImageUrls.resolve(videoUrl),
     );
+  }
+
+  String? _resolveTrendThumb(Map<String, dynamic> m) {
+    final direct = CanlifalImageUrls.resolve(
+      _str(m, [
+        'thumbnailUrl',
+        'thumbnail_url',
+        'thumbnail',
+        'coverUrl',
+        'cover_url',
+        'imageUrl',
+        'image',
+        'thumbUrl',
+        'posterUrl',
+        'cloud_storage_thumb',
+        'thumbPath',
+      ]),
+    );
+    if (direct.isNotEmpty) return direct;
+    final video = _str(m, ['videoUrl', 'video_url', 'playbackUrl']);
+    final derived = CanlifalImageUrls.thumbFromVideoUrl(video);
+    if (derived != null && derived.isNotEmpty) return derived;
+    return null;
+  }
+
+  HomePageButtonEntity _mapHomepageButton(dynamic raw) {
+    final m = asJsonMap(raw);
+    return HomePageButtonEntity(
+      id: _str(m, ['id', '_id', 'slug']) ?? '',
+      label: _str(m, ['label', 'title', 'name']) ?? '',
+      iconUrl: CanlifalImageUrls.resolve(
+        _str(m, ['iconUrl', 'icon', 'imageUrl', 'image']),
+      ),
+      linkUrl: _str(m, ['linkUrl', 'href', 'route', 'path', 'url']),
+      specialBehavior:
+          _str(m, ['specialBehavior', 'special_behavior', 'behavior']),
+      sortOrder: asInt(pick(m, ['sortOrder', 'order', 'position'])) ?? 0,
+      isActive: m['isActive'] != false && m['isVisible'] != false,
+    );
+  }
+
+  HomeTrendTopicEntity _mapTrendTopic(dynamic raw) {
+    final m = asJsonMap(raw);
+    final tag = _str(m, ['tag', 'name', 'title', 'label', 'topic']) ?? '';
+    final views = pick(m, ['views', 'viewCount', 'count', 'posts']);
+    var viewsLabel = _str(m, ['viewsLabel', 'viewsText']);
+    if (viewsLabel == null && views is num && views > 0) {
+      viewsLabel = views >= 1000
+          ? '${(views / 1000).toStringAsFixed(1)}K'
+          : '$views';
+    }
+    final slug = _str(m, ['slug', 'id']);
+    final routeRaw = _str(m, ['route', 'path', 'url']);
+    final route = routeRaw != null && routeRaw.startsWith('/')
+        ? routeRaw
+        : (slug != null && slug.isNotEmpty ? '/shorts?tag=$slug' : '/shorts');
+    return HomeTrendTopicEntity(
+      tag: tag.startsWith('#') ? tag : '#$tag',
+      viewsLabel: viewsLabel,
+      route: route,
+    );
+  }
+
+  HomeBlogPostEntity _mapBlogPost(dynamic raw) {
+    final m = asJsonMap(raw);
+    final slug = _str(m, ['slug', 'id']);
+    final routeRaw = _str(m, ['route', 'path', 'url', 'href']);
+    final route = routeRaw != null && routeRaw.startsWith('/')
+        ? routeRaw
+        : (slug != null && slug.isNotEmpty ? '/blog/$slug' : '/blog-hub');
+    return HomeBlogPostEntity(
+      id: _str(m, ['id', '_id', 'slug']) ?? '',
+      title: _str(m, ['title', 'name', 'headline']) ?? '',
+      excerpt: _str(m, ['excerpt', 'summary', 'description', 'subtitle']),
+      imageUrl: CanlifalImageUrls.resolve(
+        _str(m, ['imageUrl', 'image', 'coverUrl', 'thumbnail']),
+      ),
+      route: route,
+    );
+  }
+
+  HomeFanClubItem _mapCelebrity(dynamic raw) {
+    final m = asJsonMap(raw);
+    final slug = _str(m, ['slug', 'id', 'username']);
+    final routeRaw = _str(m, ['route', 'path', 'url']);
+    final route = routeRaw != null && routeRaw.startsWith('/')
+        ? routeRaw
+        : (slug != null && slug.isNotEmpty
+            ? '/celebrities/$slug'
+            : '/celebrities-hub');
+    return HomeFanClubItem(
+      id: _str(m, ['id', '_id', 'slug']) ?? '',
+      title: _str(m, ['title', 'name', 'displayName', 'username']) ?? '',
+      subtitle: _str(m, ['subtitle', 'description', 'category', 'role']),
+      imageUrl: CanlifalImageUrls.resolve(
+        _str(m, ['imageUrl', 'image', 'avatarUrl', 'profileImageUrl', 'photoUrl']),
+      ),
+      route: route,
+      memberCount: asInt(
+        pick(m, ['followerCount', 'followersCount', 'fanCount', 'memberCount']),
+      ),
+    );
+  }
+
+  HomeFanClubItem _mapFanClub(dynamic raw) {
+    final m = asJsonMap(raw);
+    final slug = _str(m, ['slug', 'id']);
+    final routeRaw = _str(m, ['route', 'path', 'url']);
+    final route = routeRaw != null && routeRaw.startsWith('/')
+        ? routeRaw
+        : (slug != null && slug.isNotEmpty
+            ? '/fan-club/$slug'
+            : '/fan-club-hub');
+    return HomeFanClubItem(
+      id: _str(m, ['id', '_id', 'slug']) ?? '',
+      title: _str(m, ['title', 'name', 'displayName']) ?? '',
+      subtitle: _str(m, ['subtitle', 'description', 'category']),
+      imageUrl: CanlifalImageUrls.resolve(
+        _str(m, ['imageUrl', 'image', 'coverUrl', 'avatarUrl', 'logoUrl']),
+      ),
+      route: route,
+      memberCount: asInt(
+        pick(m, ['memberCount', 'membersCount', 'followersCount']),
+      ),
+    );
+  }
+
+  String? _horoscopeTextFromBody(dynamic body) {
+    if (body is String) {
+      final t = body.trim();
+      return t.isEmpty ? null : t;
+    }
+    if (body is! Map) return null;
+    final m = asJsonMap(body);
+    final data = m['data'] is Map ? asJsonMap(m['data']) : m;
+    final text = pick(data, [
+      'horoscope',
+      'text',
+      'content',
+      'message',
+      'reading',
+      'summary',
+      'description',
+    ]);
+    if (text != null) {
+      final s = text.toString().trim();
+      if (s.isNotEmpty) return s;
+    }
+    return null;
   }
 
   DailyRewardEntity _mapDailyReward(dynamic raw) {
@@ -364,6 +731,10 @@ class HomeRemoteDataSource {
 
   /// canlifal.com ana sayfa fal vitrin — web `/` ile aynı kart listesi.
   Future<List<HomeFortuneCardEntity>> fetchHomepageFortuneCards() async {
+    final compound = await fetchMobileHome();
+    if (compound != null && compound.fortuneCards.isNotEmpty) {
+      return compound.fortuneCards;
+    }
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.homepageFortuneCards);
       final items = _itemsFromBody(res.data, keys: const ['cards', 'items']);
@@ -388,8 +759,17 @@ class HomeRemoteDataSource {
       title: _str(m, const ['name', 'title']) ?? '',
       slug: slug,
       icon: _str(m, const ['icon', 'emoji']) ?? '🔮',
-      imageUrl: _str(m, const ['image', 'imageUrl', 'thumbnail']),
+      imageUrl: CanlifalImageUrls.resolve(
+        _str(m, const ['image', 'imageUrl', 'thumbnail']),
+      ),
       routePath: href.isNotEmpty ? href : null,
+      description: _str(m, const [
+        'description',
+        'descTr',
+        'desc',
+        'subtitle',
+      ]),
+      jetonCost: parseFortuneJetonPrice(m),
     );
   }
 

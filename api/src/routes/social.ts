@@ -376,10 +376,8 @@ socialRouter.get(
   requireAuth,
   async (req, res) => {
     const uid = req.userId!;
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-    res.flushHeaders();
+    const { applySseResponseHeaders } = await import("../lib/sseResponseHeaders.js");
+    applySseResponseHeaders(res);
     // Mevcut bekleyen oturumları hemen gönder
     const pending = listIncomingFortuneSessionsForTeller(uid);
     for (const session of pending) {

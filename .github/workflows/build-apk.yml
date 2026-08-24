@@ -28,22 +28,19 @@ on:
         description: docs/LATEST_APK_BUILD.md commit
         type: boolean
         default: false
+  # main push: CI yeşil olmadan APK derlenmez.
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
   push:
-    branches:
-      - main
     tags:
       - 'v*'
-    paths:
-      - 'mobile/**'
-      - 'scripts/acceptance-tests/**'
-      - 'scripts/run-release-gate.sh'
-      - 'scripts/dart-analyze-gate.sh'
-      - 'scripts/run-acceptance-tests.sh'
-      - '.github/workflows/build-apk.yml'
 
 permissions:
   contents: write
   actions: write
+  statuses: write
 
 concurrency:
   group: build-apk-${{ github.ref }}
@@ -53,8 +50,16 @@ concurrency:
 jobs:
   build:
     name: APK
+    # workflow_run: yalnızca CI başarılıysa; manuel/tag push her zaman.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      contents: write
+      actions: write
+      statuses: write
     defaults:
       run:
         working-directory: mobile
@@ -70,6 +75,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Build SHA (kaynak commit)
+        id: build_sha
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -eux
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            SHA="${{ github.event.workflow_run.head_sha }}"
+          else
+            SHA="${{ github.sha }}"
+          fi
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Build SHA: $SHA"
 
       - name: Disk alanı aç (runner ön-yüklü gereksiz paketler)
         continue-on-error: true
@@ -109,6 +129,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.44.8'
           cache: true
 
       - name: Pub cache
@@ -132,23 +153,54 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
+      - name: Android NDK cache
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/android/sdk/ndk
+          key: android-ndk-${{ runner.os }}-flutter-stable
+          restore-keys: |
+            android-ndk-${{ runner.os }}-
+
       - name: Accept Android licenses
         run: yes | flutter doctor --android-licenses || true
 
+      - name: Install Android NDK (nttld)
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27c
+
+      - name: Link NDK for Flutter Gradle
+        working-directory: ${{ github.workspace }}
+        env:
+          ANDROID_NDK_VERSION: 27.0.12077973
+        run: |
+          set -euxo pipefail
+          chmod +x scripts/ci-link-android-ndk.sh
+          bash scripts/ci-link-android-ndk.sh
+
       - name: Release gate
+        id: release_gate
         working-directory: ${{ github.workspace }}
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
           ACCEPTANCE_USER_EMAIL: ${{ secrets.ACCEPTANCE_USER_EMAIL }}
           ACCEPTANCE_USER_PASSWORD: ${{ secrets.ACCEPTANCE_USER_PASSWORD }}
+          ACCEPTANCE_USER_USERNAME: ${{ secrets.ACCEPTANCE_USER_USERNAME }}
+          ACCEPTANCE_HOST_EMAIL: ${{ secrets.ACCEPTANCE_HOST_EMAIL }}
+          ACCEPTANCE_HOST_PASSWORD: ${{ secrets.ACCEPTANCE_HOST_PASSWORD }}
+          ACCEPTANCE_VIEWER_EMAIL: ${{ secrets.ACCEPTANCE_VIEWER_EMAIL }}
+          ACCEPTANCE_VIEWER_PASSWORD: ${{ secrets.ACCEPTANCE_VIEWER_PASSWORD }}
           ACCEPTANCE_ADMIN_EMAIL: ${{ secrets.ACCEPTANCE_ADMIN_EMAIL }}
           ACCEPTANCE_ADMIN_PASSWORD: ${{ secrets.ACCEPTANCE_ADMIN_PASSWORD }}
           ACCEPTANCE_TELLER_EMAIL: ${{ secrets.ACCEPTANCE_TELLER_EMAIL }}
           ACCEPTANCE_TELLER_PASSWORD: ${{ secrets.ACCEPTANCE_TELLER_PASSWORD }}
-          ACCEPTANCE_USER_USERNAME: ${{ secrets.ACCEPTANCE_USER_USERNAME }}
+          ACCEPTANCE_TELLER_ID: ${{ secrets.ACCEPTANCE_TELLER_ID }}
+          ACCEPTANCE_TELLER_USER_ID: ${{ secrets.ACCEPTANCE_TELLER_USER_ID }}
           ACCEPTANCE_ADMIN_USERNAME: ${{ secrets.ACCEPTANCE_ADMIN_USERNAME }}
           ACCEPTANCE_TELLER_USERNAME: ${{ secrets.ACCEPTANCE_TELLER_USERNAME }}
-        run: bash scripts/run-release-gate.sh
+        run: |
+          bash scripts/acceptance-preflight.sh
+          bash scripts/run-release-gate.sh
 
       - name: Release gate raporu (başarısızlıkta)
         if: failure()
@@ -185,6 +237,7 @@ jobs:
           fi
 
       - name: Release keystore (Google Sign-In SHA-1 tutarlılığı)
+        id: release_keystore
         working-directory: ${{ github.workspace }}
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -204,10 +257,12 @@ jobs:
           EOF
             echo "Release keystore hazır — sabit SHA-1 ile imzalanacak."
           else
-            echo "ANDROID_KEYSTORE_BASE64 yok — debug imza (Google girişi çalışmayabilir)."
+            echo "::error::ANDROID_KEYSTORE_BASE64 yok — release build reddedildi (debug imza yasak)."
+            exit 1
           fi
 
       - name: flutter build apk --release (Gate 9)
+        id: gate9_build
         run: |
           set -eux
           DEFINES=""
@@ -215,6 +270,50 @@ jobs:
             DEFINES=$(bash ../scripts/print-firebase-dart-defines.sh || true)
           fi
           flutter pub get
+          # Universal APK — apk-latest versionCode pubspec build number ile birebir (split-per-abi 2*1000+N üretir).
+          # shellcheck disable=SC2086
+          flutter build apk --release \
+            --target-platform android-arm,android-arm64,android-x64 \
+            --tree-shake-icons \
+            --obfuscate \
+            --split-debug-info=build/app/outputs/symbols \
+            $DEFINES
+          test -s build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Gate 9 — release build doğrulama
+        id: gate9_verify
+        run: |
+          set -eux
+          test -s build/app/outputs/flutter-apk/app-release.apk
+          ls -lh build/app/outputs/flutter-apk/app-release.apk
+          EXPECT_BUILD=$(grep -E '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f2)
+          EXPECT_NAME=$(grep -E '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)
+          AAPT=$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" -name aapt -type f 2>/dev/null | sort -V | tail -1)
+          test -n "$AAPT" || { echo "::error::aapt bulunamadı"; exit 127; }
+          BADGING=$("$AAPT" dump badging build/app/outputs/flutter-apk/app-release.apk)
+          echo "$BADGING" | grep -F "versionName='${EXPECT_NAME}'"
+          echo "$BADGING" | grep -F "versionCode='${EXPECT_BUILD}'"
+          echo "Gate 9: release APK oluşturuldu (versionName=${EXPECT_NAME}, versionCode=${EXPECT_BUILD})"
+
+      - name: Copy universal APK
+        id: copy_apk
+        working-directory: ${{ github.workspace }}
+        run: |
+          VERSION=$(grep -E '^version:' mobile/pubspec.yaml | head -1 | sed 's/version:[[:space:]]*//')
+          cp mobile/build/app/outputs/flutter-apk/app-release.apk canlifal-mobile-release.apk
+          cp mobile/build/app/outputs/flutter-apk/app-release.apk "canlifal-${VERSION}-release.apk"
+          ls -lh canlifal-mobile-release.apk "canlifal-${VERSION}-release.apk"
+          test -s canlifal-mobile-release.apk
+          test -s "canlifal-${VERSION}-release.apk"
+
+      - name: flutter build apk arm64-only (indirme boyutu)
+        working-directory: mobile
+        run: |
+          set -eux
+          DEFINES=""
+          if [[ -f android/app/google-services.json ]]; then
+            DEFINES=$(bash ../scripts/print-firebase-dart-defines.sh || true)
+          fi
           # shellcheck disable=SC2086
           flutter build apk --release \
             --target-platform android-arm64 \
@@ -223,34 +322,31 @@ jobs:
             --split-debug-info=build/app/outputs/symbols \
             $DEFINES
           test -s build/app/outputs/flutter-apk/app-release.apk
-
-      - name: Gate 9 — release build doğrulama
-        run: |
-          set -eux
-          test -s build/app/outputs/flutter-apk/app-release.apk
           ls -lh build/app/outputs/flutter-apk/app-release.apk
-          echo "Gate 9: release APK oluşturuldu"
 
-      - name: Copy APK
+      - name: Copy arm64 APK
         working-directory: ${{ github.workspace }}
         run: |
-          cp mobile/build/app/outputs/flutter-apk/app-release.apk canlifal-mobile-release.apk
-          ls -lh canlifal-mobile-release.apk
-          test -s canlifal-mobile-release.apk
+          cp mobile/build/app/outputs/flutter-apk/app-release.apk canlifal-mobile-arm64-release.apk
+          test -s canlifal-mobile-arm64-release.apk
+          ls -lh canlifal-mobile-arm64-release.apk
 
       - name: Sürüm meta
         id: meta
         working-directory: ${{ github.workspace }}
         run: |
-          VERSION=$(grep -E '^version:' mobile/pubspec.yaml | head -1 | sed 's/version:[[:space:]]*//')
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          RAW=$(grep -E '^version:' mobile/pubspec.yaml | head -1 | awk '{print $2}')
+          echo "version=$RAW" >> "$GITHUB_OUTPUT"
+          echo "version_name=${RAW%%+*}" >> "$GITHUB_OUTPUT"
+          echo "version_code=${RAW#*+}" >> "$GITHUB_OUTPUT"
 
       - name: APK artifact yükle
+        id: artifact_upload
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: canlifal-mobile-release-${{ steps.meta.outputs.version }}
-          path: canlifal-mobile-release.apk
+          name: canlifal-${{ steps.meta.outputs.version }}-release
+          path: canlifal-${{ steps.meta.outputs.version }}-release.apk
           retention-days: 30
           if-no-files-found: error
 
@@ -262,9 +358,10 @@ jobs:
           {
             echo "# Canlifal APK ${VERSION}"
             echo ""
-            echo "**İndir:** https://github.com/${{ github.repository }}/releases/download/apk-latest/canlifal-mobile-release.apk"
+            echo "**İndir (universal):** https://github.com/${{ github.repository }}/releases/download/apk-latest/canlifal-mobile-release.apk"
+            echo "**İndir (arm64, daha küçük):** https://github.com/${{ github.repository }}/releases/download/apk-latest/canlifal-mobile-arm64-release.apk"
             echo ""
-            echo "Commit: \`${{ github.sha }}\` · Run: ${{ github.run_id }}"
+            echo "Commit: \`${{ steps.build_sha.outputs.sha }}\` · Run: ${{ github.run_id }}"
           } > /tmp/release_notes_min.md
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.full_release_notes }}" == "true" ]]; then
             {
@@ -273,38 +370,212 @@ jobs:
               echo ""
               bash scripts/extract-changelog-head.sh
             } >> /tmp/release_notes_min.md
+          elif [[ "${{ github.ref }}" == "refs/heads/main" && "${{ github.event_name }}" == "workflow_run" ]]; then
+            {
+              echo ""
+              echo "## Bu sürümde (CHANGELOG)"
+              echo ""
+              bash scripts/extract-changelog-head.sh
+            } >> /tmp/release_notes_min.md
           fi
 
-      - name: apk-latest yükle (main push)
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: softprops/action-gh-release@v2
+      - name: apk-latest yükle (main)
+        id: apk_latest_upload
+        if: >-
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' || github.event_name == 'workflow_run')
+        uses: actions/github-script@v7
+        env:
+          RELEASE_TITLE: Canlifal APK ${{ steps.meta.outputs.version }}
+          NOTES_PATH: /tmp/release_notes_min.md
         with:
-          tag_name: apk-latest
-          name: Canlifal APK ${{ steps.meta.outputs.version }}
-          body_path: /tmp/release_notes_min.md
-          files: canlifal-mobile-release.apk
-          make_latest: true
-          overwrite_files: true
+          github-token: ${{ secrets.GH_RELEASE_PAT || secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const tag = 'apk-latest';
+            const assetNames = [
+              'canlifal-mobile-release.apk',
+              'canlifal-mobile-arm64-release.apk',
+            ];
+            const notes = fs.readFileSync(process.env.NOTES_PATH, 'utf8');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            let release;
+            try {
+              const { data } = await github.rest.repos.getReleaseByTag({ owner, repo, tag });
+              release = data;
+              core.info(`Mevcut release id=${release.id}`);
+            } catch (error) {
+              if (error.status !== 404) {
+                core.warning(`getReleaseByTag: ${error.status} — create deneniyor`);
+              }
+              if (error.status === 404 || error.status === 403) {
+                try {
+                  const { data } = await github.rest.repos.createRelease({
+                    owner,
+                    repo,
+                    tag_name: tag,
+                    name: process.env.RELEASE_TITLE,
+                    body: notes,
+                    target_commitish: context.sha,
+                  });
+                  release = data;
+                  core.info(`Yeni release id=${release.id}`);
+                } catch (createError) {
+                  if (createError.status === 422) {
+                    const { data } = await github.rest.repos.getReleaseByTag({ owner, repo, tag });
+                    release = data;
+                  } else {
+                    throw createError;
+                  }
+                }
+              } else {
+                throw error;
+              }
+            }
+
+            for (const assetName of assetNames) {
+              const apkPath = path.join(process.env.GITHUB_WORKSPACE, assetName);
+              if (!fs.existsSync(apkPath) || fs.statSync(apkPath).size === 0) {
+                core.warning(`APK atlandı: ${assetName}`);
+                continue;
+              }
+              core.info(`Yüklenecek: ${apkPath} (${fs.statSync(apkPath).size} bytes)`);
+              for (const asset of release.assets || []) {
+                if (asset.name === assetName) {
+                  core.info(`Eski asset siliniyor: ${asset.id}`);
+                  await github.rest.repos.deleteReleaseAsset({
+                    owner,
+                    repo,
+                    asset_id: asset.id,
+                  });
+                }
+              }
+              const apkData = fs.readFileSync(apkPath);
+              await github.rest.repos.uploadReleaseAsset({
+                owner,
+                repo,
+                release_id: release.id,
+                name: assetName,
+                data: apkData,
+                headers: {
+                  'content-type': 'application/vnd.android.package-archive',
+                  'content-length': apkData.length,
+                },
+              });
+            }
+
+            await github.rest.repos.updateRelease({
+              owner,
+              repo,
+              release_id: release.id,
+              name: process.env.RELEASE_TITLE,
+              body: notes,
+            });
+            core.info(`apk-latest yüklendi: ${process.env.RELEASE_TITLE}`);
 
       - name: apk-latest yükle (manuel)
         if: github.event_name == 'workflow_dispatch' && inputs.publish_release == true
-        uses: softprops/action-gh-release@v2
+        uses: actions/github-script@v7
+        env:
+          RELEASE_TITLE: Canlifal APK ${{ steps.meta.outputs.version }}
+          NOTES_PATH: /tmp/release_notes_min.md
         with:
-          tag_name: apk-latest
-          name: Canlifal APK ${{ steps.meta.outputs.version }}
-          body_path: /tmp/release_notes_min.md
-          files: canlifal-mobile-release.apk
-          make_latest: true
-          overwrite_files: true
+          github-token: ${{ secrets.GH_RELEASE_PAT || secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const tag = 'apk-latest';
+            const assetNames = [
+              'canlifal-mobile-release.apk',
+              'canlifal-mobile-arm64-release.apk',
+            ];
+            const notes = fs.readFileSync(process.env.NOTES_PATH, 'utf8');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            let release;
+            try {
+              const { data } = await github.rest.repos.getReleaseByTag({ owner, repo, tag });
+              release = data;
+            } catch (error) {
+              if (error.status === 404 || error.status === 403) {
+                try {
+                  const { data } = await github.rest.repos.createRelease({
+                    owner,
+                    repo,
+                    tag_name: tag,
+                    name: process.env.RELEASE_TITLE,
+                    body: notes,
+                    target_commitish: context.sha,
+                  });
+                  release = data;
+                } catch (createError) {
+                  if (createError.status === 422) {
+                    const { data } = await github.rest.repos.getReleaseByTag({ owner, repo, tag });
+                    release = data;
+                  } else {
+                    throw createError;
+                  }
+                }
+              } else {
+                throw error;
+              }
+            }
+
+            for (const assetName of assetNames) {
+              const apkPath = path.join(process.env.GITHUB_WORKSPACE, assetName);
+              if (!fs.existsSync(apkPath) || fs.statSync(apkPath).size === 0) {
+                core.warning(`APK atlandı: ${assetName}`);
+                continue;
+              }
+              for (const asset of release.assets || []) {
+                if (asset.name === assetName) {
+                  await github.rest.repos.deleteReleaseAsset({
+                    owner,
+                    repo,
+                    asset_id: asset.id,
+                  });
+                }
+              }
+              const apkData = fs.readFileSync(apkPath);
+              await github.rest.repos.uploadReleaseAsset({
+                owner,
+                repo,
+                release_id: release.id,
+                name: assetName,
+                data: apkData,
+                headers: {
+                  'content-type': 'application/vnd.android.package-archive',
+                  'content-length': apkData.length,
+                },
+              });
+            }
+
+            await github.rest.repos.updateRelease({
+              owner,
+              repo,
+              release_id: release.id,
+              name: process.env.RELEASE_TITLE,
+              body: notes,
+            });
 
       - name: Sürüm etiketi (v*)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: canlifal-mobile-release.apk
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            canlifal-mobile-release.apk
+            canlifal-mobile-arm64-release.apk
+          make_latest: true
 
-      - name: docs/LATEST_APK_BUILD.md (opsiyonel)
-        if: github.event_name == 'workflow_dispatch' && inputs.update_build_doc == true
+      - name: docs/LATEST_APK_BUILD.md
+        if: >-
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' || github.event_name == 'workflow_run')
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -319,7 +590,7 @@ jobs:
             echo "|------|--------|"
             echo "| Sürüm | \`${{ steps.meta.outputs.version }}\` |"
             echo "| Tarih (UTC) | $(date -u +"%Y-%m-%d %H:%M") |"
-            echo "| Commit | [\`${{ github.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) |"
+            echo "| Commit | [\`${{ steps.build_sha.outputs.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ steps.build_sha.outputs.sha }}) |"
             echo "| İş akışı | [Run ${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) |"
             echo "| APK | [canlifal-mobile-release.apk](https://github.com/${{ github.repository }}/releases/download/apk-latest/canlifal-mobile-release.apk) |"
             echo ""
@@ -335,3 +606,91 @@ jobs:
           git diff --staged --quiet || git commit -m "chore(docs): APK derleme bildirimi ${{ steps.meta.outputs.version }}"
           git pull --rebase origin main 2>/dev/null || git pull --no-rebase origin main -X ours || true
           git push origin main 2>/dev/null || true
+
+      - name: APK download HTTP + metadata doğrulama
+        id: apk_http_verify
+        if: >-
+          success() &&
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' || github.event_name == 'workflow_run')
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -eux
+          EXPECT_NAME="${{ steps.meta.outputs.version_name }}"
+          EXPECT_BUILD="${{ steps.meta.outputs.version_code }}"
+          AAPT=$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" -name aapt -type f 2>/dev/null | sort -V | tail -1)
+          test -n "$AAPT"
+          verify_apk() {
+            local apk="$1"
+            test -s "$apk"
+            local BADGING
+            BADGING=$("$AAPT" dump badging "$apk")
+            echo "$BADGING" | grep -F "versionName='${EXPECT_NAME}'"
+            echo "$BADGING" | grep -F "versionCode='${EXPECT_BUILD}'"
+          }
+          echo "Local APK metadata doğrulama..."
+          verify_apk "canlifal-mobile-release.apk"
+          URL="https://github.com/${{ github.repository }}/releases/download/apk-latest/canlifal-mobile-release.apk"
+          echo "Downloading apk-latest: $URL"
+          HTTP="000"
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            HTTP=$(curl -sS -L -o /tmp/canlifal-apk-verify.apk -w '%{http_code}' "$URL" || echo "000")
+            echo "Attempt $attempt HTTP=$HTTP"
+            if [[ "$HTTP" == "200" && -s /tmp/canlifal-apk-verify.apk ]]; then
+              if verify_apk /tmp/canlifal-apk-verify.apk; then
+                break
+              fi
+              echo "apk-latest metadata henüz güncellenmedi, tekrar denenecek..."
+            fi
+            sleep 20
+          done
+          test "$HTTP" = "200"
+          test -s /tmp/canlifal-apk-verify.apk
+          verify_apk /tmp/canlifal-apk-verify.apk
+          echo "http_code=$HTTP" >> "$GITHUB_OUTPUT"
+          echo "metadata=PASS" >> "$GITHUB_OUTPUT"
+
+      - name: CANLIFAL RELEASE GATE özeti
+        if: always()
+        working-directory: ${{ github.workspace }}
+        env:
+          BUILD_SHA: ${{ steps.build_sha.outputs.sha }}
+        run: |
+          set +e
+          gate() { if [[ "$1" == "success" ]]; then echo PASS; else echo FAIL; fi; }
+          ANALYZE=$(gate "${{ steps.release_gate.outcome }}")
+          TESTS=$(gate "${{ steps.release_gate.outcome }}")
+          APK_BUILD=$(gate "${{ steps.gate9_build.outcome }}")
+          SIGNING=$(gate "${{ steps.release_keystore.outcome }}")
+          ARTIFACT=$(gate "${{ steps.artifact_upload.outcome }}")
+          HTTP="${{ steps.apk_http_verify.outputs.http_code || 'SKIP' }}"
+          METADATA="${{ steps.apk_http_verify.outputs.metadata || 'SKIP' }}"
+          if [[ "$HTTP" != "200" && "${{ steps.apk_http_verify.outcome }}" == "skipped" ]]; then
+            HTTP="SKIP"
+            METADATA="SKIP"
+          elif [[ "$HTTP" != "200" ]]; then
+            METADATA="FAIL"
+          fi
+          VERSION="${{ steps.meta.outputs.version_name }}"
+          VCODE="${{ steps.meta.outputs.version_code }}"
+          bash scripts/ci-release-gate-summary.sh \
+            "$BUILD_SHA" "$VERSION" "$VCODE" \
+            "$ANALYZE" "$TESTS" "$APK_BUILD" "$SIGNING" "$ARTIFACT" "$HTTP" "$METADATA"
+
+      - name: Commit status — Release APK
+        if: always()
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = '${{ steps.build_sha.outputs.sha }}';
+            const ok = '${{ job.status }}' === 'success';
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha,
+              state: ok ? 'success' : 'failure',
+              context: 'Canlifal Release / APK',
+              description: ok ? 'Release APK gate PASS' : 'Release gate FAILED',
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });

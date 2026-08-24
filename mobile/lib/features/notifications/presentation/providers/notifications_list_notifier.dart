@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/performance/list_perf.dart';
@@ -66,6 +68,8 @@ class NotificationsListNotifier extends AsyncNotifier<NotificationsListState> {
                 type: n.type,
                 targetPath: n.targetPath,
                 targetId: n.targetId,
+                imageUrl: n.imageUrl,
+                senderId: n.senderId,
               )
             else
               n,
@@ -90,6 +94,8 @@ class NotificationsListNotifier extends AsyncNotifier<NotificationsListState> {
               type: n.type,
               targetPath: n.targetPath,
               targetId: n.targetId,
+              imageUrl: n.imageUrl,
+              senderId: n.senderId,
             ),
         ],
       ),
@@ -103,6 +109,25 @@ class NotificationsListNotifier extends AsyncNotifier<NotificationsListState> {
       cur.copyWith(
         visibleCount: (cur.visibleCount + ListPerf.defaultPageSize)
             .clamp(0, cur.all.length),
+      ),
+    );
+  }
+
+  /// SSE ile gelen yeni bildirim — listeye başa ekle.
+  void prepend(AppNotificationEntity notification) {
+    final cur = state.valueOrNull;
+    if (cur == null) {
+      unawaited(refresh());
+      return;
+    }
+    final withoutDup = [
+      for (final n in cur.all)
+        if (n.id != notification.id) n,
+    ];
+    state = AsyncValue.data(
+      cur.copyWith(
+        all: [notification, ...withoutDup],
+        visibleCount: (cur.visibleCount + 1).clamp(0, withoutDup.length + 1),
       ),
     );
   }

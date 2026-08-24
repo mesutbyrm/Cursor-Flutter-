@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/performance/list_perf.dart';
+
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -14,7 +16,6 @@ import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import 'voice_moderation_user_picker_sheet.dart';
-import 'voice_room_authority_sheet.dart';
 import 'voice_room_hub_settings.dart';
 import 'voice_room_management_panel.dart';
 import 'voice_room_muted_users_sheet.dart';
@@ -69,7 +70,7 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).valueOrNull;
-    final pk = ref.watch(pkBattleRemoteProvider);
+    final pk = ref.watch(pkBattleForRoomProvider(room));
     final pkLive = isPkBattleLive(pk);
     final role = VoiceRoomMenuRole.label(perms, user: user, live: live);
     final canManageAuthority = perms.isSiteAdmin ||
@@ -233,34 +234,55 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
                   ),
                   onPressed: () {
                     Navigator.pop(context);
-                    showVoiceRoomAuthoritySheet(
+                    showVoiceRoomManagementPanel(
                       context,
                       ref,
                       room: room,
                       live: live,
                       perms: perms,
                       isOwner: isOwner,
+                      onUserTap: onUserTap,
+                      initial: VoiceMgmtInitial.users,
                     );
                   },
                   icon: const Icon(Icons.admin_panel_settings_rounded),
                   label: const Text(
-                    'Yetki Ver',
+                    'Kullanıcı yönetimi',
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
                 ),
               ],
               const SizedBox(height: 20),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.15,
-                ),
-                itemCount: actions.length,
-                itemBuilder: (context, i) => _MenuActionCard(action: actions[i]),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  const crossAxisCount = 2;
+                  const spacing = 12.0;
+                  const aspect = 1.15;
+                  final gridHeight = ListPerf.nestedGridHeight(
+                    itemCount: actions.length,
+                    crossAxisCount: crossAxisCount,
+                    mainAxisSpacing: spacing,
+                    crossAxisSpacing: spacing,
+                    childAspectRatio: aspect,
+                    crossAxisExtent: constraints.maxWidth,
+                  );
+                  return SizedBox(
+                    height: gridHeight,
+                    child: GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
+                        childAspectRatio: aspect,
+                      ),
+                      itemCount: actions.length,
+                      itemBuilder: (context, i) =>
+                          _MenuActionCard(action: actions[i]),
+                    ),
+                  );
+                },
               ),
             ],
           ),

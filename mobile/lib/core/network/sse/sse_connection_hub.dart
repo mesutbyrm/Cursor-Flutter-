@@ -54,6 +54,21 @@ class SseConnectionHub {
     }
   }
 
+  /// Odadan çıkış — ref sayacını düşür; keşif SSE'si açık kalabilir.
+  void releaseVoiceRoomSession(String roomId) {
+    releaseVoiceRoom(roomId);
+  }
+
+  /// Zorunlu kapatma — tüm ref'leri sıfırla (yalnızca oda değişimi acil durum).
+  void forceReleaseVoiceRoom(String roomId) {
+    final id = roomId.trim();
+    final lease = _voiceRooms[id];
+    if (lease == null) return;
+    lease.refCount = 0;
+    unawaited(lease.service.disconnect());
+    _voiceRooms.remove(id);
+  }
+
   int voiceRoomRefCount(String roomId) =>
       _voiceRooms[roomId.trim()]?.refCount ?? 0;
 
@@ -104,6 +119,20 @@ class SseConnectionHub {
       await lease.service.disconnect();
     }
     _videoStreams.clear();
+  }
+
+  /// İnternet geri gelince aktif SSE bağlantılarını yeniden kur.
+  Future<void> reconnectAllActive() async {
+    for (final lease in _voiceRooms.values) {
+      if (lease.refCount > 0) {
+        await lease.service.reconnectNow();
+      }
+    }
+    for (final lease in _videoStreams.values) {
+      if (lease.refCount > 0) {
+        await lease.service.reconnectNow();
+      }
+    }
   }
 }
 

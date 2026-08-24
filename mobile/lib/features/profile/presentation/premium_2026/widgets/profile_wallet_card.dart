@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../../../core/theme/app_theme_colors.dart';
+import '../../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
+import '../../widgets/payment_methods_summary_line.dart';
 import '../../widgets/premium/profile_glass.dart';
+import '../profile_membership_helpers.dart';
 import '../profile_screen_state.dart';
 import '../profile_theme.dart';
 import 'profile_action_tile.dart';
 
 /// Cüzdan — tek kart + alt aksiyonlar.
-class ProfileWalletCard extends StatelessWidget {
+class ProfileWalletCard extends ConsumerWidget {
   const ProfileWalletCard({
     super.key,
     required this.state,
@@ -30,13 +35,31 @@ class ProfileWalletCard extends StatelessWidget {
   final VoidCallback? onSubscriptions;
 
   @override
-  Widget build(BuildContext context) {
-    final membership = state.membership?.trim();
-    final hasPremium = membership != null && membership.isNotEmpty;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final info = resolveProfileMembership(
+      rawMembership: state.wallet?.membership ?? state.membership,
+      daysRemaining: state.membershipDays,
+    );
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(info, ui.tiers);
+    final subscriptionLabel = buildMembershipWalletSubscriptionStatLabel(
+      info: info,
+      catalogTier: catalogTier,
+      daysRemaining: state.membershipDays,
+      expiresAt: state.wallet?.membershipExpiresAt,
+    );
+    final premiumStatLabel = buildMembershipWalletPremiumStatLabel(info: info);
+    final premiumStatRowLabel =
+        buildMembershipWalletPremiumStatRowLabel(info: info);
+    final subscriptionStatRowLabel =
+        buildMembershipWalletSubscriptionStatRowLabel(info: info);
+    final subscriptionsTileLabel =
+        buildMembershipWalletSubscriptionsTileLabel(info: info);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+          const MembershipPendingPaymentBanner(padding: EdgeInsets.only(bottom: 12)),
           const ProfileSectionTitle(title: 'Cüzdan'),
           ProfileGlass(
             padding: const EdgeInsets.all(20),
@@ -49,7 +72,7 @@ class ProfileWalletCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _BalanceBlock(
-                        label: 'Jeton',
+                        label: buildMembershipCurrencyJetonLabel(),
                         value: profileFormatCount(state.jeton),
                         icon: Icons.monetization_on_rounded,
                         color: AppThemeColors.coinGold,
@@ -58,7 +81,7 @@ class ProfileWalletCard extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _BalanceBlock(
-                        label: 'CFC',
+                        label: buildMembershipCurrencyCfcLabel(),
                         value: profileFormatCount(state.cfc),
                         icon: Icons.diamond_rounded,
                         color: AppThemeColors.diamondBlue,
@@ -89,17 +112,14 @@ class ProfileWalletCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _MiniStat(
-                        label: 'Premium',
-                        value: hasPremium ? membership : 'Standart',
+                        label: premiumStatRowLabel,
+                        value: premiumStatLabel,
                       ),
                     ),
                     Expanded(
                       child: _MiniStat(
-                        label: 'Abonelik',
-                        value: state.membershipDays != null &&
-                                state.membershipDays! > 0
-                            ? '${state.membershipDays} gün'
-                            : '—',
+                        label: subscriptionStatRowLabel,
+                        value: subscriptionLabel,
                       ),
                     ),
                   ],
@@ -118,13 +138,13 @@ class ProfileWalletCard extends StatelessWidget {
               final tiles = <Widget>[
                 ProfileActionTile(
                   icon: Icons.add_card_rounded,
-                  label: 'Jeton Yükle',
+                  label: buildMembershipWalletJetonTopUpActionLabel(),
                   onTap: onTopUp,
                   gradient: [const Color(0xFF4A3818), const Color(0xFF1A1408)],
                 ),
                 ProfileActionTile(
                   icon: Icons.diamond_outlined,
-                  label: 'CFC Yükle',
+                  label: buildMembershipWalletCenterCfcStoreTitle(),
                   onTap: onCfcTopUp,
                   gradient: [const Color(0xFF183050), const Color(0xFF081018)],
                 ),
@@ -148,7 +168,7 @@ class ProfileWalletCard extends StatelessWidget {
                 ),
                 ProfileActionTile(
                   icon: Icons.workspace_premium_rounded,
-                  label: 'Abonelikler',
+                  label: subscriptionsTileLabel,
                   onTap: onSubscriptions,
                   gradient: [const Color(0xFF3A3010), const Color(0xFF181008)],
                 ),
@@ -166,6 +186,13 @@ class ProfileWalletCard extends StatelessWidget {
                 ],
               );
             },
+          ),
+          const SizedBox(height: 10),
+          const PaymentMethodsSummaryLine(
+            prefix: 'Ödeme kanalları',
+            fontSize: 10,
+            textAlign: TextAlign.start,
+            showRecommended: false,
           ),
         ],
     );

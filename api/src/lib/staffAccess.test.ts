@@ -16,6 +16,10 @@ test("effectiveStaffRole promotes username admin to admin", () => {
     effectiveStaffRole({ role: "user", username: "Admin" }),
     "admin",
   );
+  assert.equal(
+    effectiveStaffRole({ role: "user", username: "yonetim" }),
+    "yonetici",
+  );
 });
 
 test("isStaffUser accepts admin username without DB role", () => {

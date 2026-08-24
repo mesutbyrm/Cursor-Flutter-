@@ -12,10 +12,43 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     ChatRoomMyPermissions? server,
     ChatRoomPresence? self,
   ) {
+    final ownerId = (state.ownerId ?? _roomMeta.ownerId ?? '').trim();
+    if (ownerId.isNotEmpty && ownerId == user.id) {
+      return VoiceRoomSeatPriority.tierFounder;
+    }
+
     final staff = ref.read(staffAccessProvider);
-    if (staff.canManagePayments) {
+    if (staff.isFounder) {
       return VoiceRoomSeatPriority.tierAdmin;
     }
+
+    if (server != null) {
+      if (server.isGlobalAdmin) return VoiceRoomSeatPriority.tierAdmin;
+      if (server.isRoomOwner || server.canGiveFounder) {
+        return VoiceRoomSeatPriority.tierFounder;
+      }
+      if (server.canGiveSop) return VoiceRoomSeatPriority.tierSop;
+      if (server.canModerate ||
+          server.canGiveOp ||
+          server.canMuteUsers ||
+          server.canKickUsers ||
+          server.canManageRoom ||
+          server.canGiveVoice) {
+        final symTier = VoiceRoomSeatPriority.tierFromRoleSymbol(server.role);
+        if (symTier != null) return symTier;
+        return VoiceRoomSeatPriority.tierOp;
+      }
+      final serverSym = server.role?.trim();
+      if (serverSym != null && serverSym.isNotEmpty) {
+        final symTier = VoiceRoomSeatPriority.tierFromRoleSymbol(serverSym);
+        if (symTier != null) return symTier;
+      }
+    }
+
+    final symbol = self?.roleSymbol ?? _roleSymbolForUser(user);
+    final symTier = VoiceRoomSeatPriority.tierFromRoleSymbol(symbol);
+    if (symTier != null) return symTier;
+
     final tier = VoiceRoomSeatPriority.forUser(
       user,
       room: _roomMeta,
@@ -34,6 +67,35 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       myTier: myPriority,
       presence: presence,
       room: _roomMeta,
+      seatSlots: state.seatSlots,
+    );
+  }
+
+  /// Presence `join` body — yetkili kullanıcı için boş koltuk tahmini.
+  int? peekJoinSeatIndexForPrivilegedUser() {
+    if (_roomKey.isEmpty) return null;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return null;
+
+    ChatRoomPresence? self;
+    for (final p in state.presence) {
+      if (p.id == user.id) {
+        self = p;
+        break;
+      }
+    }
+    final existing = self?.seatIndex;
+    if (existing != null && existing >= 1) return existing;
+
+    final priority = _privilegedRolePriority(
+      user,
+      state.serverPermissions,
+      self,
+    );
+    if (priority == null) return null;
+    return _pickAutoSeatIndex(
+      myPriority: priority,
+      presence: state.presence,
     );
   }
 
@@ -83,15 +145,31 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       'seat': seatIndex,
       'priority': priority,
     });
-    // Manuel "Koltuğa Al" ile AYNI çalışan yolu kullan (voiceSeatRestService
-    // .takeSeat). Eski joinSeat ucu 200 dönüp koltuğa oturtmuyordu; bu yüzden
-    // yetkili otomatik koltuğa geçmiyordu.
-    final err = await assignSeat(seatIndex: seatIndex, userId: user.id);
-    if (err == null) {
-      _autoSeatAttempted = true;
-      return;
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        final err = await assignSeat(seatIndex: seatIndex);
+        if (err == null) {
+          _autoSeatAttempted = true;
+          return;
+        }
+        await ref.read(chatRoomRemoteProvider).joinSeat(
+              roomKey: _roomKey,
+              alternateKey: _musicAlternateKey,
+              seatIndex: seatIndex,
+            );
+        await _refreshSeatsFromBackend();
+        _autoSeatAttempted = true;
+        return;
+      } catch (_) {
+        final err = await assignSeat(seatIndex: seatIndex);
+        if (err == null) {
+          _applyOptimisticSeat(userId: user.id, seatIndex: seatIndex);
+          _autoSeatAttempted = true;
+          return;
+        }
+        await Future<void>.delayed(Duration(milliseconds: 400 * (attempt + 1)));
+      }
     }
-    // İzinler veya presence gecikirse bir sonraki poll'da tekrar dene.
     for (final p in state.presence) {
       if (p.id == user.id && p.seatIndex != null) {
         _autoSeatAttempted = true;
@@ -105,7 +183,10 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
 
   Future<String?> requestSpeak() async {
     try {
-      await ref.read(chatRoomRemoteProvider).requestSpeak(_roomKey);
+      await ref.read(chatRoomRemoteProvider).requestSpeak(
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+          );
       ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(true);
       return null;
     } catch (e) {
@@ -119,7 +200,10 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
 
   Future<String?> cancelSpeakRequest() async {
     try {
-      await ref.read(chatRoomRemoteProvider).cancelSpeakRequest(_roomKey);
+      await ref.read(chatRoomRemoteProvider).cancelSpeakRequest(
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+          );
       ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
       return null;
     } catch (e) {
@@ -129,37 +213,261 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
 
   Future<List<String>> fetchSpeakRequests() async {
     try {
-      return await ref.read(chatRoomRemoteProvider).fetchSpeakRequests(_roomKey);
+      return await ref.read(chatRoomRemoteProvider).fetchSpeakRequests(
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+          );
     } catch (_) {
       return [];
     }
+  }
+
+  /// Giriş / yenileme sonrası konuşma isteği kuyruğu ile UI senkronu.
+  Future<void> _syncSpeakRequestPending() async {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null || _roomKey.isEmpty) return;
+    for (final p in state.presence) {
+      if (p.id == user.id && p.seatIndex != null) {
+        ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
+        return;
+      }
+    }
+    try {
+      final ids = await fetchSpeakRequests();
+      ref
+          .read(voiceRoomUiProvider.notifier)
+          .setRequestSpeakPending(ids.contains(user.id));
+    } catch (_) {}
   }
 
   Future<String?> approveSpeakRequest(String userId) async {
     try {
       await ref
           .read(chatRoomRemoteProvider)
-          .approveSpeakRequest(_roomKey, userId);
+          .approveSpeakRequest(
+            _presenceApiKey,
+            userId,
+            alternateKey: _presenceAlternateKey,
+          );
       return null;
     } catch (e) {
       return ApiException.userMessage(e);
     }
+  }
+
+  Future<String?> rejectSpeakRequest(String userId) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).rejectSpeakRequest(
+            _presenceApiKey,
+            userId,
+            alternateKey: _presenceAlternateKey,
+          );
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> blockSpeakRequestUser({
+    required String userId,
+    String? reason,
+  }) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).banUser(
+            roomKey: _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+            userId: userId,
+            reason: reason ?? 'Konuşma isteği engellendi',
+          );
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  /// Mikrofon açmadan önce boş koltuğa otur — yalnızca backend koltuk haritası.
+  Future<bool> ensureSelfOnSeatForMic() async {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return false;
+    for (final p in state.presence) {
+      if (p.id == user.id && p.seatIndex != null) return true;
+    }
+    final empty = state.seatSlots
+        .where((s) => s.isEmpty)
+        .map((s) => s.index)
+        .toList();
+    if (empty.isEmpty) return false;
+    final err = await assignSeat(seatIndex: empty.first);
+    return err == null;
   }
 
   Future<String?> assignSeat({required int seatIndex, String? userId}) async {
+    final selfId = userId ?? ref.read(authControllerProvider).valueOrNull?.id;
     try {
-      await ref
-          .read(voiceSeatRestServiceProvider)
-          .takeSeat(_roomKey, seatIndex, userId: userId);
-      await refresh();
+      if (userId == null && selfId != null && selfId.isNotEmpty) {
+        ChatRoomPresence? self;
+        for (final p in state.presence) {
+          if (p.id == selfId) {
+            self = p;
+            break;
+          }
+        }
+        final currentSeat = self?.seatIndex;
+        if (currentSeat != null &&
+            currentSeat != seatIndex &&
+            currentSeat >= 0) {
+          VoiceEventLog.seatTake(roomId: _roomKey, seatIndex: seatIndex);
+          await ref.read(chatRoomRemoteProvider).swapSeat(
+                roomKey: _roomKey,
+                alternateKey: _musicAlternateKey,
+                seatIndex: seatIndex,
+              );
+        } else {
+          VoiceEventLog.seatTake(roomId: _roomKey, seatIndex: seatIndex);
+          await ref
+              .read(voiceSeatRestServiceProvider)
+              .takeSeat(_roomKey, seatIndex, userId: userId);
+        }
+      } else {
+        VoiceEventLog.seatTake(roomId: _roomKey, seatIndex: seatIndex);
+        await ref
+            .read(voiceSeatRestServiceProvider)
+            .takeSeat(_roomKey, seatIndex, userId: userId);
+      }
+      if (selfId != null && selfId.isNotEmpty) {
+        ChatRoomPresence? occupant;
+        for (final p in state.presence) {
+          if (p.id == selfId) {
+            occupant = p;
+            break;
+          }
+        }
+        _applyOptimisticSeat(userId: selfId, seatIndex: seatIndex);
+        final nextSlots = _patchSeatSlots(
+          state.seatSlots,
+          userId: selfId,
+          newIndex: seatIndex,
+          previousIndex: occupant?.seatIndex,
+          occupantName: occupant?.displayName,
+          occupantImage: occupant?.image,
+        );
+        final nextPresence = _syncPresenceSeatIndexFromSlots(
+          state.presence,
+          nextSlots,
+        );
+        state = state.copyWith(seatSlots: nextSlots, presence: nextPresence);
+      }
+      unawaited(_refreshSeatsFromBackend());
       return null;
     } catch (e) {
       return ApiException.userMessage(e);
     }
   }
 
-  Future<String?> clearUserSeat({required String userId}) async {
+  Future<String?> lockSeat({required int seatIndex}) async {
     try {
+      await ref.read(chatRoomRemoteProvider).lockSeat(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            seatIndex: seatIndex,
+          );
+      await _refreshSeatsFromBackend();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> unlockSeat({required int seatIndex}) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).unlockSeat(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            seatIndex: seatIndex,
+          );
+      await _refreshSeatsFromBackend();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> kickFromSeat({required int seatIndex}) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).kickFromSeat(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            seatIndex: seatIndex,
+          );
+      await _refreshSeatsFromBackend();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  void _applyOptimisticSeat({
+    required String userId,
+    required int seatIndex,
+  }) {
+    final next = state.presence.map((p) {
+      if (p.id != userId) {
+        // Aynı koltuktaki başka kullanıcıyı boşalt.
+        if (p.seatIndex == seatIndex) {
+          return ChatRoomPresence(
+            id: p.id,
+            name: p.name,
+            nickname: p.nickname,
+            image: p.image,
+            chatRole: p.chatRole,
+            roleSymbol: p.roleSymbol,
+            membership: p.membership,
+            seatIndex: null,
+            isSpeaking: p.isSpeaking,
+            isMuted: p.isMuted,
+          );
+        }
+        return p;
+      }
+      return ChatRoomPresence(
+        id: p.id,
+        name: p.name,
+        nickname: p.nickname,
+        image: p.image,
+        chatRole: p.chatRole,
+        roleSymbol: p.roleSymbol,
+        membership: p.membership,
+        seatIndex: seatIndex,
+        isSpeaking: p.isSpeaking,
+        isMuted: p.isMuted,
+      );
+    }).toList();
+    if (!next.any((p) => p.id == userId)) return;
+    state = state.copyWith(presence: next);
+  }
+
+  Future<String?> clearUserSeat({required String userId}) async {
+    final prev = [
+      for (final p in state.presence)
+        if (p.id == userId)
+          ChatRoomPresence(
+            id: p.id,
+            name: p.name,
+            nickname: p.nickname,
+            image: p.image,
+            chatRole: p.chatRole,
+            roleSymbol: p.roleSymbol,
+            membership: p.membership,
+            seatIndex: null,
+            isSpeaking: false,
+            isMuted: p.isMuted,
+          )
+        else
+          p,
+    ];
+    state = state.copyWith(presence: prev);
+    try {
+      VoiceEventLog.seatLeave(roomId: _roomKey);
       await ref.read(chatRoomRemoteProvider).clearSeat(
             roomKey: _roomKey,
             alternateKey: _musicAlternateKey,
@@ -170,5 +478,36 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     } catch (e) {
       return ApiException.userMessage(e);
     }
+  }
+
+  Future<void> _autoSeatAfterRoleGrant(String userId) async {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null || user.id != userId) return;
+    ChatRoomPresence? self;
+    for (final p in state.presence) {
+      if (p.id == userId) {
+        self = p;
+        break;
+      }
+    }
+    final priority = _privilegedRolePriority(
+      user,
+      state.serverPermissions,
+      self,
+    );
+    if (priority == null) return;
+    final seatIndex = _pickAutoSeatIndex(
+      myPriority: priority,
+      presence: state.presence,
+    );
+    if (seatIndex == null || seatIndex < 1) return;
+    final err = await assignSeat(seatIndex: seatIndex, userId: userId);
+    if (err != null) return;
+    try {
+      await ref.read(chatRoomRemoteProvider).unmuteUser(
+            roomKey: _roomKey,
+            userId: userId,
+          );
+    } catch (_) {}
   }
 }

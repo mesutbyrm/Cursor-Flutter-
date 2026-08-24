@@ -15,16 +15,29 @@ typedef GiftGoalKey = ({String context, String contextId});
 
 /// Bir hedefin canlı durumu + tamamlanma sinyali.
 class GiftGoalState {
-  const GiftGoalState({this.goal, this.justCompleted = false});
+  const GiftGoalState({
+    this.goal,
+    this.justCompleted = false,
+    this.dismissed = false,
+  });
 
   final GiftGoal? goal;
 
   /// Bu tick'te hedef ilk kez doldu — kutlama tetiklenmeli.
   final bool justCompleted;
 
-  GiftGoalState copyWith({GiftGoal? goal, bool? justCompleted}) => GiftGoalState(
+  /// Kullanıcı tamamlanan hedef şeridini kapattı.
+  final bool dismissed;
+
+  GiftGoalState copyWith({
+    GiftGoal? goal,
+    bool? justCompleted,
+    bool? dismissed,
+  }) =>
+      GiftGoalState(
         goal: goal ?? this.goal,
         justCompleted: justCompleted ?? this.justCompleted,
+        dismissed: dismissed ?? this.dismissed,
       );
 }
 
@@ -48,6 +61,7 @@ class GiftGoalController
   }
 
   Future<void> _tick() async {
+    if (state.dismissed) return;
     try {
       final remote = ref.read(giftGoalRemoteProvider);
       final goals = await remote.fetchGoals(
@@ -80,10 +94,21 @@ class GiftGoalController
     }
   }
 
+  /// Hedef tamamlandıktan sonra şeridi kapat.
+  Future<void> dismissCompleted() async {
+    final goal = state.goal;
+    state = state.copyWith(dismissed: true, justCompleted: false);
+    _timer?.cancel();
+    if (goal == null) return;
+    try {
+      await ref.read(giftGoalRemoteProvider).closeGoal(goal.id);
+    } catch (_) {}
+  }
+
   /// Yeni hedef oluşturulduktan sonra anında takibe al.
   void adopt(GiftGoal goal) {
     _wasCompleted = goal.isCompleted;
-    state = GiftGoalState(goal: goal);
+    state = GiftGoalState(goal: goal, dismissed: false);
     _start();
   }
 

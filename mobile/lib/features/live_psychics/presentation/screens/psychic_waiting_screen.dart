@@ -5,11 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:canlifal_social/app/router/app_router.dart';
-import 'package:canlifal_social/core/network/token_storage.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/ui/premium/live_badge.dart';
 import 'package:canlifal_social/core/ui/premium_2026/cosmic_galaxy_background.dart';
 import 'package:canlifal_social/core/widgets/user_avatar.dart';
+import 'package:canlifal_social/core/network/psychic_event_log.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_booking_feedback_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_close_dialog.dart';
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
@@ -45,10 +45,10 @@ class PsychicWaitingState {
   final int remainingSeconds;
 
   String get statusLabel => switch (phase) {
-        PsychicWaitingPhase.waiting => 'Bekliyor',
-        PsychicWaitingPhase.accepted => 'Kabul',
-        PsychicWaitingPhase.rejected => 'Red',
-        PsychicWaitingPhase.expired => 'Süre doldu',
+        PsychicWaitingPhase.waiting => 'REQUESTING',
+        PsychicWaitingPhase.accepted => 'ACCEPTING',
+        PsychicWaitingPhase.rejected => 'REJECTED',
+        PsychicWaitingPhase.expired => 'TIMEOUT',
       };
 
   String get remainingLabel {
@@ -86,10 +86,13 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
 
   Future<void> _init() async {
     await PsychicSessionStore.save(session);
-    _poll = Timer.periodic(const Duration(seconds: 1), (_) => _checkStatus());
+    PsychicEventLog.requestSend(
+      sessionId: session.sessionId,
+      tellerId: session.psychic.id,
+    );
+    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _checkStatus());
     _timeout = Timer.periodic(const Duration(seconds: 1), (_) => _tickTimeout());
     unawaited(_checkStatus());
-    unawaited(_connectSse());
   }
 
   void onRemoteCancelled() {
@@ -105,38 +108,6 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
       return;
     }
     state = state.copyWith(remainingSeconds: next);
-  }
-
-  Future<void> _connectSse() async {
-    final storage = ref.read(tokenStorageProvider);
-    await ref.read(psychicRoomSseServiceProvider).connect(
-          sessionId: session.sessionId,
-          accessToken: storage.readAccess,
-          onRoomUpdate: (room) {
-            if (state.closed) return;
-            _handleRoomStatus(room.status);
-          },
-          onSessionEnded: (_) {
-            if (state.closed) return;
-            unawaited(_onRejected());
-          },
-        );
-  }
-
-  void _handleRoomStatus(PsychicSessionStatus status) {
-    if (status == PsychicSessionStatus.rejected ||
-        status == PsychicSessionStatus.cancelled ||
-        status == PsychicSessionStatus.ended) {
-      unawaited(_onRejected());
-      return;
-    }
-    if (status == PsychicSessionStatus.expired) {
-      unawaited(_onExpired());
-      return;
-    }
-    if (status.isActive) {
-      unawaited(_onAccepted());
-    }
   }
 
   Future<void> _checkStatus() async {
@@ -167,14 +138,17 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     state = state.copyWith(phase: PsychicWaitingPhase.accepted, closed: true);
     _poll?.cancel();
     _timeout?.cancel();
+    final room = await ref
+        .read(livePsychicsRepositoryProvider)
+        .fetchRoom(session.sessionId);
     final activeSession = session.copyWith(
-      tellerUserId: status?.tellerUserId ?? session.tellerUserId,
-      trtcRoomIdOverride: status?.trtcRoomId,
+      tellerUserId: status?.tellerUserId ?? room?.tellerUserId ?? session.tellerUserId,
+      trtcRoomIdOverride: status?.trtcRoomId ?? room?.roomId ?? session.trtcRoomIdOverride,
       durationMinutes: status?.durationMinutes ?? session.durationMinutes,
       totalJeton: status?.totalJeton ?? session.totalJeton,
+      clientId: room?.clientId ?? session.clientId,
     );
     await PsychicSessionStore.save(activeSession);
-    await ref.read(psychicRoomSseServiceProvider).disconnect();
     ref.read(psychicWaitingNavProvider.notifier).state = activeSession;
   }
 
@@ -189,7 +163,6 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     state = state.copyWith(phase: PsychicWaitingPhase.rejected, closed: true);
     _poll?.cancel();
     _timeout?.cancel();
-    await ref.read(psychicRoomSseServiceProvider).disconnect();
     await PsychicSessionStore.clear();
     invalidateWalletCacheFromRef(ref);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
@@ -208,9 +181,8 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     _poll?.cancel();
     _timeout?.cancel();
     unawaited(
-      ref.read(livePsychicsRepositoryProvider).endSession(session.sessionId),
+      ref.read(livePsychicsRepositoryProvider).cancelSession(session.sessionId),
     );
-    await ref.read(psychicRoomSseServiceProvider).disconnect();
     await PsychicSessionStore.clear();
     invalidateWalletCacheFromRef(ref);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
@@ -235,7 +207,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
         .signal(session.sessionId);
     await _exitImmediate();
     unawaited(
-      ref.read(livePsychicsRepositoryProvider).endSession(session.sessionId),
+      ref.read(livePsychicsRepositoryProvider).cancelSession(session.sessionId),
     );
   }
 
@@ -244,7 +216,6 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     state = state.copyWith(closed: true);
     _poll?.cancel();
     _timeout?.cancel();
-    await ref.read(psychicRoomSseServiceProvider).disconnect();
     await PsychicSessionStore.clear();
     invalidateWalletCacheFromRef(ref);
     _navigateExit();
@@ -254,7 +225,6 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   void dispose() {
     _poll?.cancel();
     _timeout?.cancel();
-    unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
     super.dispose();
   }
 }
@@ -283,7 +253,7 @@ class PsychicWaitingScreen extends ConsumerWidget {
     ref.listen<PsychicSessionEntity?>(psychicWaitingNavProvider, (prev, next) {
       if (next == null) return;
       context.pushReplacement(
-        '/canli-falcilar/${next.psychic.id}/session',
+        '/canli-falcilar/${next.psychic.id}/ad-transition',
         extra: next,
       );
       ref.read(psychicWaitingNavProvider.notifier).state = null;

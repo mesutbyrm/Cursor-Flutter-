@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/short_video_entity.dart';
+import '../../domain/entities/short_video_liker.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/shorts_count_format.dart';
+import '../../../../core/widgets/user_avatar.dart';
 
 Future<void> showShortVideoAnalyticsSheet(
   BuildContext context,
@@ -61,6 +63,7 @@ class _ShortVideoAnalyticsSheet extends ConsumerWidget {
               if (a.profileVisits > 0)
                 _StatRow('Profil tıklama', formatShortCount(a.profileVisits)),
             ],
+            likers: a.recentLikers,
           ),
         ),
       ),
@@ -83,10 +86,15 @@ class _StatRow {
 }
 
 class _AnalyticsBody extends StatelessWidget {
-  const _AnalyticsBody({required this.title, required this.rows});
+  const _AnalyticsBody({
+    required this.title,
+    required this.rows,
+    this.likers = const [],
+  });
 
   final String title;
   final List<_StatRow> rows;
+  final List<ShortVideoLiker> likers;
 
   @override
   Widget build(BuildContext context) {
@@ -136,6 +144,52 @@ class _AnalyticsBody extends StatelessWidget {
               ],
             ),
           ),
+        if (likers.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          const Text(
+            'Beğenenler',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 72,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: likers.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              itemBuilder: (_, i) {
+                final l = likers[i];
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    UserAvatar(
+                      url: l.avatarUrl,
+                      radius: 22,
+                    ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: 56,
+                      child: Text(
+                        l.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ],
     );
   }

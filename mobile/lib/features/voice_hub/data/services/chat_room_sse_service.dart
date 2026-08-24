@@ -7,6 +7,8 @@ import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
+import '../../../gifts/domain/gift_payload_util.dart';
+import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../presentation/utils/voice_sse_dj_payload.dart';
 import 'voice_room_debug_log.dart';
 
@@ -26,6 +28,7 @@ class ChatRoomSseService extends BaseSseService {
   void Function(Map<String, dynamic> payload)? _onUserLeave;
   void Function(Map<String, dynamic> payload)? _onDjUpdate;
   void Function(Map<String, dynamic> payload)? _onSong;
+  void Function(Map<String, dynamic> payload)? _onSongQueue;
   void Function(Map<String, dynamic> payload)? _onGift;
   void Function(Map<String, dynamic> payload)? _onRoomUpdate;
   void Function(Map<String, dynamic> payload)? _onModeration;
@@ -34,6 +37,7 @@ class ChatRoomSseService extends BaseSseService {
   void Function(Map<String, dynamic> payload)? _onFortuneRequest;
   void Function(PkBattleRemote battle, String event)? _onPk;
   void Function(List<String> users)? _onTyping;
+  void Function(Map<String, dynamic> payload)? _onRoomEvent;
 
   static String streamUrlFor(String roomId) {
     final base = BaseSseService.createSseDio().options.baseUrl
@@ -68,6 +72,7 @@ class ChatRoomSseService extends BaseSseService {
     void Function(Map<String, dynamic> payload)? onUserLeave,
     void Function(Map<String, dynamic> payload)? onDjUpdate,
     void Function(Map<String, dynamic> payload)? onSong,
+    void Function(Map<String, dynamic> payload)? onSongQueue,
     void Function(Map<String, dynamic> payload)? onGift,
     void Function(Map<String, dynamic> payload)? onRoomUpdate,
     void Function(Map<String, dynamic> payload)? onModeration,
@@ -76,6 +81,7 @@ class ChatRoomSseService extends BaseSseService {
     void Function(Map<String, dynamic> payload)? onFortuneRequest,
     void Function(PkBattleRemote battle, String event)? onPk,
     void Function(List<String> users)? onTyping,
+    void Function(Map<String, dynamic> payload)? onRoomEvent,
   }) async {
     final id = roomId.trim();
     if (id.isEmpty) return;
@@ -87,6 +93,7 @@ class ChatRoomSseService extends BaseSseService {
     _onUserLeave = onUserLeave;
     _onDjUpdate = onDjUpdate;
     _onSong = onSong;
+    _onSongQueue = onSongQueue;
     _onGift = onGift;
     _onRoomUpdate = onRoomUpdate;
     _onModeration = onModeration;
@@ -95,11 +102,15 @@ class ChatRoomSseService extends BaseSseService {
     _onFortuneRequest = onFortuneRequest;
     _onPk = onPk;
     _onTyping = onTyping;
+    _onRoomEvent = onRoomEvent;
     if (isLiveForRoom(id)) {
       VoiceRoomDebugLog.log('sse.connect.skip', {
         'roomId': id,
         'reason': 'already_connected',
       });
+      if (status.value.phase == SseConnectionPhase.connected) {
+        onConnected?.call();
+      }
       return;
     }
     VoiceRoomDebugLog.sseConnect(roomId: id, url: streamUrlFor(id));
@@ -111,11 +122,13 @@ class ChatRoomSseService extends BaseSseService {
 
   @override
   void onReconnecting(int attempt) {
+    final roomId = _roomId ?? '';
     VoiceRoomDebugLog.sseReconnect(
-      roomId: _roomId ?? '',
+      roomId: roomId,
       attempt: attempt,
       delaySec: 0,
     );
+    GiftSyncLog.sseReconnect(roomId, attempt, 0);
   }
 
   @override
@@ -185,6 +198,21 @@ class ChatRoomSseService extends BaseSseService {
         _onDjUpdate?.call(djMap);
         return;
       }
+      case ChatRoomSseEventType.songStarted:
+      case ChatRoomSseEventType.songPaused:
+      case ChatRoomSseEventType.songResumed:
+      case ChatRoomSseEventType.songFinished:
+      case ChatRoomSseEventType.queueUpdated:
+      case ChatRoomSseEventType.songRemoved:
+      case ChatRoomSseEventType.songChanged:
+        _onSongQueue?.call(map);
+        return;
+      case ChatRoomSseEventType.playerState: {
+        final djMap = unwrapVoiceSseDjPayload(map);
+        _onDjUpdate?.call(djMap);
+        _onSongQueue?.call(map);
+        return;
+      }
       case ChatRoomSseEventType.gift:
         _onGift?.call(map);
         return;
@@ -227,6 +255,9 @@ class ChatRoomSseService extends BaseSseService {
       case ChatRoomSseEventType.pk:
         _emitPk(map);
         return;
+      case ChatRoomSseEventType.roomEvent:
+        _onRoomEvent?.call(map);
+        return;
       case ChatRoomSseEventType.typing:
         final users = (map['users'] is List
                 ? map['users'] as List
@@ -239,6 +270,10 @@ class ChatRoomSseService extends BaseSseService {
         if (users.isNotEmpty) _onTyping?.call(users);
         return;
       case ChatRoomSseEventType.unknown:
+        if (GiftPayloadUtil.looksLikeGift(map)) {
+          _onGift?.call(map);
+          return;
+        }
         if (map['typing'] is List) {
           final users = (map['typing'] as List)
               .map((e) => e.toString())
@@ -311,16 +346,31 @@ class ChatRoomSseService extends BaseSseService {
   }
 
   bool _tryEmitPk(Map<String, dynamic> map) {
-    if (!map.containsKey('battle') && !map.containsKey('pk')) return false;
+    if (!map.containsKey('battle') &&
+        !map.containsKey('pk') &&
+        !map.containsKey('data') &&
+        !map.containsKey('inviteId') &&
+        !map.containsKey('battleId')) {
+      return false;
+    }
     _emitPk(map);
     return true;
   }
 
   void _emitPk(Map<String, dynamic> map) {
-    final raw = map['battle'] ?? map['pk'] ?? map['data'];
-    if (raw is! Map) return;
-    final battle = PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
-    if (battle.id.isEmpty) return;
+    final nested = map['battle'] ?? map['pk'] ?? map['match'] ?? map['data'];
+    Map<String, dynamic>? raw;
+    if (nested is Map) {
+      raw = Map<String, dynamic>.from(nested);
+    } else if (map['id'] != null ||
+        map['inviteId'] != null ||
+        map['battleId'] != null ||
+        map['status'] != null) {
+      raw = map;
+    }
+    if (raw == null) return;
+    final battle = PkBattleRemote.fromJson(raw);
+    if (battle.effectiveId.isEmpty) return;
     final event = map['event']?.toString() ??
         map['type']?.toString() ??
         'pk';

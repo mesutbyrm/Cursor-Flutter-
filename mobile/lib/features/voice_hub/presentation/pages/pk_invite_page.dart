@@ -1,12 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/pk_event_log.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../../domain/pk/pk_duration_options.dart';
+import '../../domain/pk/pk_guest_user_resolver.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
+import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../widgets/premium_2026/pk/pk_duration_picker.dart';
 
@@ -22,6 +27,7 @@ class PkInvitePage extends ConsumerStatefulWidget {
 
 class _PkInvitePageState extends ConsumerState<PkInvitePage> {
   var _loading = false;
+  var _inviting = false;
   var _syncing = true;
   var _durationSeconds = pkDefaultDurationSeconds;
   String? _error;
@@ -35,7 +41,10 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _syncRoomPk());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(ref.read(voiceRoomsListNotifierProvider.notifier).refresh());
+      _syncRoomPk();
+    });
   }
 
   Future<void> _syncRoomPk() async {
@@ -75,10 +84,21 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
   }
 
   Future<void> _invite(VoiceRoomEntity opponent) async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    if (_inviting) return;
+    _inviting = true;
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
+    // Ağ + stale PK temizliği UI thread'i kilitlemesin.
+    await Future<void>.delayed(Duration.zero);
+    if (!mounted) {
+      _inviting = false;
+      return;
+    }
+    PkEventLog.requestStart(roomId: _roomKey, targetId: opponent.id);
     try {
       final remote = ref.read(pkBattleRemoteProvider.notifier);
       await remote.prepareRoomForInvite(
@@ -92,17 +112,29 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
         setState(() => _error = 'Geçersiz rakip oda seçildi');
         return;
       }
-      // Yeni kontrat: davet bir kullanıcıya gider → rakip oda sahibi.
-      final guestUserId = opponent.ownerId?.trim() ?? '';
-      if (guestUserId.isEmpty) {
+      // Yeni kontrat: davet bir odaya gider — rakip oda kimliği yeterli.
+      var guestUserId = resolvePkGuestUserId(ownerId: opponent.ownerId);
+      if (guestUserId == null || guestUserId.isEmpty) {
+        try {
+          final presence = await ref.read(chatRoomRemoteProvider).fetchPresence(
+                oppKey,
+                alternateKey:
+                    opponent.slug != oppKey ? opponent.slug : null,
+              );
+          guestUserId = resolvePkGuestUserId(presence: presence);
+        } catch (_) {}
+      }
+      if (guestUserId == null || guestUserId.isEmpty) {
         setState(() => _error =
-            'Rakip odanın sahibi bulunamadı — bu odaya PK daveti gönderilemez.');
+            'Rakip oda sahibi bulunamadı. Rakip odada en az bir yönetici veya '
+            'sahip çevrimiçi olmalı.');
         return;
       }
       final battle = await remote.inviteRoom(
         roomId: _roomKey,
         alternateRoomId: _altRoomKey,
         guestUserId: guestUserId,
+        opponentRoomId: oppKey,
         durationSeconds: _durationSeconds,
       );
       if (!mounted) return;
@@ -111,21 +143,20 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
             'PK daveti gönderilemedi. Oda veya rakip bulunamadı — tekrar deneyin.');
         return;
       }
-      remote.connectSocket(
-        roomId: _roomKey,
-        alternateRoomId: _altRoomKey,
-        battleId: battle.id,
-      );
+      PkEventLog.requestSuccess(battleId: battle.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      Navigator.of(context).pop();
+      messenger.showSnackBar(
         const SnackBar(
           content: Text(
             'PK daveti gönderildi. Rakip kabul edince PK başlayacak.',
           ),
         ),
       );
-      context.pop();
+      return;
     } catch (e) {
+      PkEventLog.error('request', e);
       if (mounted) {
         var msg = ApiException.userMessage(e);
         final lower = msg.toLowerCase();
@@ -140,6 +171,7 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
         setState(() => _error = msg);
       }
     } finally {
+      _inviting = false;
       if (mounted) setState(() => _loading = false);
     }
   }

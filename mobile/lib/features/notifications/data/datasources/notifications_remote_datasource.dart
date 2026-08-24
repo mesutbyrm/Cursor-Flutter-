@@ -68,30 +68,86 @@ class NotificationsRemoteDataSource {
         pick(json, ['createdAt', 'created_at', 'timestamp'])?.toString() ?? '',
       ),
       type: pick(json, ['type', 'category'])?.toString(),
-      targetPath: pick(json, ['targetPath', 'actionUrl', 'link', 'href'])
-          ?.toString(),
+      targetPath: pick(json, [
+        'targetPath',
+        'actionUrl',
+        'link',
+        'href',
+        'deepLink',
+        'deeplink',
+      ])?.toString(),
       targetId: pick(json, [
-            'targetId',
-            'entityId',
-            'refId',
-            'sessionId',
-            'session_id',
-          ])?.toString(),
+        'targetId',
+        'entityId',
+        'refId',
+        'referenceId',
+        'sessionId',
+        'session_id',
+        'conversationId',
+      ])?.toString(),
+      imageUrl: pick(json, [
+        'imageUrl',
+        'image',
+        'avatar',
+        'avatarUrl',
+        'iconUrl',
+        'thumbnail',
+      ])?.toString(),
+      senderId: pick(json, [
+        'senderId',
+        'userId',
+        'actorId',
+        'fromUserId',
+      ])?.toString(),
     );
   }
 
+  Future<int?> fetchUnreadCount() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.notificationsUnread);
+      final map = asJsonMap(res.data);
+      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+      final countRaw = pick(data, ['count', 'unread', 'unreadCount']);
+      if (countRaw != null) return asInt(countRaw);
+    } catch (_) {}
+    return null;
+  }
+
   Future<void> markRead(String id) async {
+    try {
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.notifications,
+        data: {'notificationId': id},
+      );
+      return;
+    } catch (_) {}
+    try {
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.notifications,
+        data: {'id': id, 'read': true},
+      );
+      return;
+    } catch (_) {}
     await _dio.safePatch(ApiEndpoints.notificationRead(id), data: const {});
   }
 
   Future<void> markAllRead() async {
-    try {
-      await _dio.safePatch(ApiEndpoints.notifications, data: const {'readAll': true});
-    } catch (_) {
-      await _dio.safePatch(
-        ApiEndpoints.notifications,
-        data: const {'markAllRead': true},
-      );
+    final bodies = [
+      const {'markAll': true},
+      const {'readAll': true},
+      const {'markAllRead': true},
+    ];
+    for (final body in bodies) {
+      try {
+        await _dio.safePost<dynamic>(ApiEndpoints.notifications, data: body);
+        return;
+      } catch (_) {}
+    }
+    for (final body in bodies) {
+      try {
+        await _dio.safePatch<dynamic>(ApiEndpoints.notifications, data: body);
+        return;
+      } catch (_) {}
     }
   }
 

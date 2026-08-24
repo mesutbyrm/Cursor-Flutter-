@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../gifts/data/leaderboard_remote_datasource.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/datasources/voice_rooms_discover_remote_datasource.dart';
 import '../../data/repositories/voice_rooms_discover_repository_impl.dart';
+import '../../data/mappers/voice_rooms_discover_mapper.dart';
 import '../../domain/repositories/voice_rooms_discover_repository.dart';
 import '../../presentation/widgets/voice_rooms_ui/voice_rooms_mock_data.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -45,6 +47,8 @@ class VoiceRoomsDiscoverViewState {
     this.allRooms = const [],
     this.nearbyPage = 0,
     this.hasMoreNearby = true,
+    this.roomsApiPage = 1,
+    this.roomsApiHasMore = false,
     this.error,
   });
 
@@ -61,6 +65,8 @@ class VoiceRoomsDiscoverViewState {
   final List<VoiceRoomEntity> allRooms;
   final int nearbyPage;
   final bool hasMoreNearby;
+  final int roomsApiPage;
+  final bool roomsApiHasMore;
   final String? error;
 
   String? get selectedCategoryId =>
@@ -80,6 +86,8 @@ class VoiceRoomsDiscoverViewState {
     List<VoiceRoomEntity>? allRooms,
     int? nearbyPage,
     bool? hasMoreNearby,
+    int? roomsApiPage,
+    bool? roomsApiHasMore,
     String? error,
     bool clearError = false,
   }) {
@@ -97,6 +105,8 @@ class VoiceRoomsDiscoverViewState {
       allRooms: allRooms ?? this.allRooms,
       nearbyPage: nearbyPage ?? this.nearbyPage,
       hasMoreNearby: hasMoreNearby ?? this.hasMoreNearby,
+      roomsApiPage: roomsApiPage ?? this.roomsApiPage,
+      roomsApiHasMore: roomsApiHasMore ?? this.roomsApiHasMore,
       error: clearError ? null : (error ?? this.error),
     );
   }
@@ -138,11 +148,14 @@ class VoiceRoomsDiscoverNotifier extends StateNotifier<VoiceRoomsDiscoverViewSta
         allRooms: bundle.allRooms,
         nearbyRooms: nearby,
         nearbyPage: 0,
+        roomsApiPage: bundle.apiPage,
+        roomsApiHasMore: bundle.apiHasMore,
         hasMoreNearby: _repo.hasMoreNearby(
           rooms: bundle.allRooms,
           tab: state.nearbyTab,
           loadedCount: nearby.length,
-        ),
+        ) ||
+            bundle.apiHasMore,
         clearError: true,
       );
       unawaited(_loadSecondary(forceRefresh: forceRefresh));
@@ -150,21 +163,21 @@ class VoiceRoomsDiscoverNotifier extends StateNotifier<VoiceRoomsDiscoverViewSta
       if (_disposed) return;
       state = state.copyWith(
         isBootstrapping: false,
-        error: e.toString(),
+        error: ApiException.userMessage(e),
       );
     }
   }
 
   Future<void> _loadSecondary({bool forceRefresh = false}) async {
     try {
-      final results = await Future.wait([
-        _repo.fetchTrends(forceRefresh: forceRefresh),
-        _repo.fetchActiveSpeakers(forceRefresh: forceRefresh),
-      ]);
+      final trends = await _repo.fetchTrends(forceRefresh: forceRefresh);
+      final speakers = VoiceRoomsDiscoverMapper.speakersFromRooms(
+        state.allRooms,
+      );
       if (_disposed) return;
       state = state.copyWith(
-        trends: results[0] as List<TrendingTopicItem>,
-        speakers: results[1] as List<ActiveSpeakerItem>,
+        trends: trends,
+        speakers: speakers,
       );
     } catch (_) {}
   }
@@ -191,34 +204,90 @@ class VoiceRoomsDiscoverNotifier extends StateNotifier<VoiceRoomsDiscoverViewSta
           rooms: state.allRooms,
           tab: tab,
           loadedCount: nearby.length,
-        ),
+        ) ||
+            state.roomsApiHasMore,
       );
     } catch (e) {
-      state = state.copyWith(error: e.toString());
+      state = state.copyWith(error: ApiException.userMessage(e));
     }
   }
 
   Future<void> loadMoreNearby() async {
-    if (state.isLoadingMore || !state.hasMoreNearby || state.allRooms.isEmpty) {
-      return;
-    }
-    state = state.copyWith(isLoadingMore: true);
-    final nextPage = state.nearbyPage + 1;
-    final nearby = _repo.mapNearbyPage(
-      rooms: state.allRooms,
-      tab: state.nearbyTab,
-      page: nextPage,
-    );
-    state = state.copyWith(
-      isLoadingMore: false,
-      nearbyRooms: nearby,
-      nearbyPage: nextPage,
-      hasMoreNearby: _repo.hasMoreNearby(
+    if (state.isLoadingMore) return;
+    if (!state.hasMoreNearby && !state.roomsApiHasMore) return;
+    if (state.allRooms.isEmpty && !state.roomsApiHasMore) return;
+
+    final localHasMore = state.allRooms.isNotEmpty &&
+        _repo.hasMoreNearby(
+          rooms: state.allRooms,
+          tab: state.nearbyTab,
+          loadedCount: state.nearbyRooms.length,
+        );
+
+    if (localHasMore) {
+      state = state.copyWith(isLoadingMore: true);
+      final nextPage = state.nearbyPage + 1;
+      final nearby = _repo.mapNearbyPage(
         rooms: state.allRooms,
         tab: state.nearbyTab,
-        loadedCount: nearby.length,
-      ),
-    );
+        page: nextPage,
+      );
+      state = state.copyWith(
+        isLoadingMore: false,
+        nearbyRooms: nearby,
+        nearbyPage: nextPage,
+        hasMoreNearby: _repo.hasMoreNearby(
+              rooms: state.allRooms,
+              tab: state.nearbyTab,
+              loadedCount: nearby.length,
+            ) ||
+            state.roomsApiHasMore,
+      );
+      return;
+    }
+
+    if (!state.roomsApiHasMore) return;
+
+    state = state.copyWith(isLoadingMore: true);
+    try {
+      final nextApiPage = state.roomsApiPage + 1;
+      final apiPage = await _repo.fetchRoomsPage(
+        categoryId: state.selectedCategoryId,
+        page: nextApiPage,
+      );
+      if (_disposed) return;
+
+      final existingIds = state.allRooms.map((r) => r.id).toSet();
+      final merged = [
+        ...state.allRooms,
+        ...apiPage.rooms.where((r) => !existingIds.contains(r.id)),
+      ];
+
+      final nextNearbyPage = state.nearbyPage + 1;
+      final nearby = _repo.mapNearbyPage(
+        rooms: merged,
+        tab: state.nearbyTab,
+        page: nextNearbyPage,
+      );
+
+      state = state.copyWith(
+        isLoadingMore: false,
+        allRooms: merged,
+        roomsApiPage: apiPage.page,
+        roomsApiHasMore: apiPage.hasMore,
+        nearbyRooms: nearby,
+        nearbyPage: nextNearbyPage,
+        hasMoreNearby: _repo.hasMoreNearby(
+              rooms: merged,
+              tab: state.nearbyTab,
+              loadedCount: nearby.length,
+            ) ||
+            apiPage.hasMore,
+      );
+    } catch (e) {
+      if (_disposed) return;
+      state = state.copyWith(isLoadingMore: false, error: ApiException.userMessage(e));
+    }
   }
 
   Future<void> refresh() => bootstrap(forceRefresh: true);

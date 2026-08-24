@@ -4,18 +4,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../domain/membership_model.dart';
+import '../../domain/membership_package_entity.dart';
 
 class MembershipFeatureTable extends StatelessWidget {
   const MembershipFeatureTable({
     super.key,
     required this.selectedTier,
+    this.tiers,
   });
 
   final MembershipTierId selectedTier;
+  final List<MembershipTierModel>? tiers;
 
-  static const _headers = ['Basic', 'Gold', 'Premium', 'Diamond'];
+  static const _falDiscountInsertIndex = 1;
 
-  int get _selectedCol => selectedTier.index;
+  List<String> get _headers {
+    if (tiers != null && tiers!.length == MembershipCatalogData.tiers.length) {
+      return [for (final t in tiers!) t.title];
+    }
+    return const ['Basic', 'Gold', 'Premium', 'Diamond', 'SVIP'];
+  }
+
+  int get _columnCount => _headers.length;
+
+  int get _selectedCol => selectedTier.index.clamp(0, _columnCount - 1);
 
   @override
   Widget build(BuildContext context) {
@@ -23,8 +35,8 @@ class MembershipFeatureTable extends StatelessWidget {
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 420;
         final labelW = compact ? 108.0 : 140.0;
-        final colW = ((constraints.maxWidth - labelW - 24) / 4)
-            .clamp(compact ? 52.0 : 64.0, 96.0);
+        final colW = ((constraints.maxWidth - labelW - 24) / _columnCount)
+            .clamp(compact ? 48.0 : 56.0, 88.0);
 
         return Container(
           decoration: BoxDecoration(
@@ -53,15 +65,16 @@ class MembershipFeatureTable extends StatelessWidget {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: SizedBox(
-                  width: labelW + colW * 4 + 24,
+                  width: labelW + colW * _columnCount + 24,
                   child: Column(
                     children: [
                       _HeaderRow(
                         labelWidth: labelW,
                         colWidth: colW,
                         selectedCol: _selectedCol,
+                        headers: _headers,
                       ),
-                      ...MembershipCatalogData.featureRows
+                      ..._effectiveFeatureRows()
                           .asMap()
                           .entries
                           .map(
@@ -86,6 +99,102 @@ class MembershipFeatureTable extends StatelessWidget {
       },
     );
   }
+
+  List<MembershipFeatureRow> _effectiveFeatureRows() {
+    final source = tiers;
+    if (source == null || source.isEmpty) {
+      return MembershipCatalogData.featureRows;
+    }
+    final rows = List<MembershipFeatureRow>.from(
+      MembershipCatalogData.featureRows,
+    );
+    if (rows.isEmpty) return rows;
+    rows[0] = MembershipFeatureRow(
+      label: _tokenRowLabel(source),
+      values: [
+        for (final t in source)
+          MembershipFeatureText('${t.monthlyTokens}'),
+      ],
+    );
+    final falRow = MembershipFeatureRow(
+      label: 'Fal indirimi',
+      values: [
+        for (final t in source)
+          MembershipFeatureText(
+            t.falDiscountPercent > 0 ? '%${t.falDiscountPercent}' : 'Yok',
+          ),
+      ],
+    );
+    if (rows.length > _falDiscountInsertIndex) {
+      rows.insert(_falDiscountInsertIndex, falRow);
+    } else {
+      rows.add(falRow);
+    }
+    rows.removeWhere((r) => r.label == 'Jeton Alımında İndirim');
+    return _appendApiFeatureRows(rows, source);
+  }
+
+  static List<MembershipFeatureRow> _appendApiFeatureRows(
+    List<MembershipFeatureRow> rows,
+    List<MembershipTierModel> tiers,
+  ) {
+    final existingLabels = rows.map((r) => r.label.toLowerCase()).toSet();
+    final featureOrder = <String>[];
+    final featureTitles = <String, String>{};
+
+    for (final tier in tiers) {
+      for (final feature in tier.featureHighlights) {
+        if (featureTitles.containsKey(feature.id)) continue;
+        final title = feature.title.trim();
+        if (title.isEmpty) continue;
+        if (existingLabels.contains(title.toLowerCase())) continue;
+        featureTitles[feature.id] = title;
+        featureOrder.add(feature.id);
+      }
+    }
+
+    if (featureOrder.isEmpty) return rows;
+
+    final result = List<MembershipFeatureRow>.from(rows);
+    for (final id in featureOrder) {
+      final label = featureTitles[id]!;
+      result.add(
+        MembershipFeatureRow(
+          label: label,
+          values: [
+            for (final tier in tiers)
+              _featureCellForTier(tier, id),
+          ],
+        ),
+      );
+    }
+    return result;
+  }
+
+  static MembershipFeatureValue _featureCellForTier(
+    MembershipTierModel tier,
+    String featureId,
+  ) {
+    for (final feature in tier.featureHighlights) {
+      if (feature.id != featureId) continue;
+      final subtitle = feature.subtitle?.trim();
+      if (subtitle != null && subtitle.isNotEmpty) {
+        return MembershipFeatureText(subtitle);
+      }
+      return const MembershipFeatureBool(true);
+    }
+    return const MembershipFeatureBool(false);
+  }
+
+  static String _tokenRowLabel(List<MembershipTierModel> tiers) {
+    if (tiers.isEmpty) return 'Aylık Jeton';
+    final days = tiers.first.durationDays;
+    final sameDuration = tiers.every((t) => t.durationDays == days);
+    if (sameDuration && days > 0 && days != 30) {
+      return 'Jeton ($days gün)';
+    }
+    return 'Aylık Jeton';
+  }
 }
 
 class _HeaderRow extends StatelessWidget {
@@ -93,11 +202,13 @@ class _HeaderRow extends StatelessWidget {
     required this.labelWidth,
     required this.colWidth,
     required this.selectedCol,
+    required this.headers,
   });
 
   final double labelWidth;
   final double colWidth;
   final int selectedCol;
+  final List<String> headers;
 
   @override
   Widget build(BuildContext context) {
@@ -123,11 +234,11 @@ class _HeaderRow extends StatelessWidget {
               ),
             ),
           ),
-          for (var i = 0; i < MembershipFeatureTable._headers.length; i++)
+          for (var i = 0; i < headers.length; i++)
             SizedBox(
               width: colWidth,
               child: Text(
-                MembershipFeatureTable._headers[i],
+                headers[i],
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: i == selectedCol

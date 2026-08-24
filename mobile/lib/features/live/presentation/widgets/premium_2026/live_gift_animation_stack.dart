@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../gifts/presentation/widgets/gift_stage_layout.dart';
 import '../../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import '../../../domain/entities/live_gift_event.dart';
 
@@ -23,7 +24,10 @@ class LiveGiftAnimationStack extends StatelessWidget {
             child: IgnorePointer(
               child: Opacity(
                 opacity: 1.0 - (i * 0.22),
-                child: PremiumGiftFullscreenOverlay(event: events[i]),
+                child: PremiumGiftFullscreenOverlay(
+                  event: events[i],
+                  stageContext: GiftStageContext.liveStream,
+                ),
               ),
             ),
           ),

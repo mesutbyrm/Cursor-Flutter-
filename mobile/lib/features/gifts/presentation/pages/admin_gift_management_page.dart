@@ -7,10 +7,12 @@ import '../../../../core/network/api_exception.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../domain/admin_gift_stats.dart';
 import '../../domain/admin_gift_type.dart';
+import '../../domain/gift_entity.dart';
 import '../providers/admin_gift_providers.dart';
+import '../providers/gift_catalog_invalidate.dart';
 import '../providers/gift_providers.dart';
 
-/// Admin Hediye Yönetim Paneli — katalog CRUD, istatistik, gelir kuralları.
+/// Admin Hediye Yönetim Paneli — katalog CRUD ve istatistik (`/api/admin/gifts`).
 /// Admin ve kurucu (yonetici) erişebilir.
 class AdminGiftManagementPage extends ConsumerStatefulWidget {
   const AdminGiftManagementPage({super.key});
@@ -32,7 +34,7 @@ class _AdminGiftManagementPageState
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() => setState(() {}));
   }
 
@@ -83,7 +85,6 @@ class _AdminGiftManagementPageState
             tabs: const [
               Tab(text: 'Katalog'),
               Tab(text: 'İstatistik'),
-              Tab(text: 'Gelir'),
             ],
           ),
         ),
@@ -95,8 +96,8 @@ class _AdminGiftManagementPageState
                     '/admin/gifts/new',
                   );
                   if (!context.mounted || created != true) return;
+                  invalidateGiftCatalogProviders(ref);
                   ref.invalidate(adminGiftListProvider);
-                  ref.invalidate(liveGiftCatalogProvider);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Hediye başarıyla oluşturuldu.'),
@@ -149,10 +150,6 @@ class _AdminGiftManagementPageState
                   _LazyTab(
                     active: _tabController.index == 1,
                     child: const _StatsTab(),
-                  ),
-                  _LazyTab(
-                    active: _tabController.index == 2,
-                    child: const _RevenueTab(),
                   ),
                 ],
               ),
@@ -211,8 +208,8 @@ class _CatalogTab extends ConsumerWidget {
         }
         return RefreshIndicator(
           onRefresh: () async {
+            invalidateGiftCatalogProviders(ref);
             ref.invalidate(adminGiftListProvider);
-            ref.invalidate(liveGiftCatalogProvider);
             await ref.read(adminGiftListProvider.future);
           },
           child: ListView.builder(
@@ -239,8 +236,12 @@ class _ConsumerFallbackList extends ConsumerWidget {
         ref.invalidate(adminGiftListProvider);
         ref.invalidate(liveGiftCatalogProvider);
         await Future.wait([
-          ref.read(adminGiftListProvider.future).catchError((_) => const []),
-          ref.read(liveGiftCatalogProvider.future).catchError((_) => const []),
+          ref
+              .read(adminGiftListProvider.future)
+              .catchError((_) => const <AdminGiftType>[]),
+          ref
+              .read(liveGiftCatalogProvider.future)
+              .catchError((_) => const <GiftEntity>[]),
         ]);
       },
       child: liveCatalog.when(
@@ -274,7 +275,13 @@ class _ConsumerFallbackList extends ConsumerWidget {
             for (final g in items)
               ListTile(
                 leading: g.iconUrl != null && g.iconUrl!.isNotEmpty
-                    ? Image.network(g.iconUrl!, width: 36, height: 36, errorBuilder: (_, _, _) => const Text('🎁'))
+                    ? CanlifalNetworkImage(
+                        url: g.iconUrl!,
+                        width: 36,
+                        height: 36,
+                        fit: BoxFit.cover,
+                        errorWidget: const Text('🎁'),
+                      )
                     : const Text('🎁', style: TextStyle(fontSize: 22)),
                 title: Text(
                   g.name,
@@ -317,8 +324,8 @@ class _GiftRow extends ConsumerWidget {
   ) async {
     try {
       await ref.read(adminGiftRemoteProvider).updateGift(gift.id, body);
+      invalidateGiftCatalogProviders(ref);
       ref.invalidate(adminGiftListProvider);
-      await ref.read(adminGiftListProvider.future);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(
@@ -349,18 +356,46 @@ class _GiftRow extends ConsumerWidget {
               SizedBox(
                 width: 40,
                 height: 40,
-                child:
-                    gift.thumbnailUrl != null && gift.thumbnailUrl!.isNotEmpty
-                    ? CanlifalNetworkImage(
-                        url: gift.thumbnailUrl!,
-                        fit: BoxFit.contain,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    if (gift.thumbnailUrl != null &&
+                        gift.thumbnailUrl!.isNotEmpty)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: CanlifalNetworkImage(
+                          url: gift.thumbnailUrl!,
+                          fit: BoxFit.contain,
+                          width: 40,
+                          height: 40,
+                        ),
                       )
-                    : Center(
+                    else
+                      Center(
                         child: Text(
                           gift.icon ?? '🎁',
                           style: const TextStyle(fontSize: 24),
                         ),
                       ),
+                    if (gift.hasVideoAnimation)
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF7C4DFF),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Icon(
+                            Icons.videocam_rounded,
+                            size: 10,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -754,200 +789,6 @@ class _RankList extends StatelessWidget {
               ),
             ),
       ],
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Gelir kuralları
-// ---------------------------------------------------------------------------
-class _RevenueTab extends ConsumerWidget {
-  const _RevenueTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(adminRevenueRulesProvider);
-    return async.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(
-        child: Text(
-          ApiException.userMessage(e),
-          style: const TextStyle(color: Color(0x99FFFFFF)),
-        ),
-      ),
-      data: (rules) => RefreshIndicator(
-        onRefresh: () async => ref.invalidate(adminRevenueRulesProvider),
-        child: rules.isEmpty
-            ? ListView(
-                children: const [
-                  SizedBox(height: 120),
-                  Center(
-                    child: Text(
-                      'Kural yok.',
-                      style: TextStyle(color: Color(0x99FFFFFF)),
-                    ),
-                  ),
-                ],
-              )
-            : ListView(
-                padding: const EdgeInsets.all(14),
-                children: [
-                  const Text(
-                    'Kod değişmeden gelir paylaşımını düzenleyin (site / oda-yayın sahibi / alıcı).',
-                    style: TextStyle(color: Color(0x99FFFFFF), fontSize: 12),
-                  ),
-                  const SizedBox(height: 12),
-                  for (final r in rules) _RevenueRuleCard(rule: r),
-                ],
-              ),
-      ),
-    );
-  }
-}
-
-class _RevenueRuleCard extends ConsumerWidget {
-  const _RevenueRuleCard({required this.rule});
-  final AdminRevenueRule rule;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1030),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x22FFFFFF)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  rule.context,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              if (rule.total != 100)
-                Text(
-                  'Toplam %${rule.total}',
-                  style: const TextStyle(
-                    color: Color(0xFFFF6E6E),
-                    fontSize: 11,
-                  ),
-                ),
-              TextButton(
-                onPressed: () => _edit(context, ref),
-                child: const Text('Düzenle'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              _share('Site', rule.sitePercent, const Color(0xFF7C3AED)),
-              _share('Sahip', rule.ownerPercent, const Color(0xFF3D7BFF)),
-              _share('Alıcı', rule.receiverPercent, const Color(0xFF66E36F)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _share(String label, int pct, Color color) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            '%$pct',
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
-            ),
-          ),
-          Text(
-            label,
-            style: const TextStyle(color: Color(0xCCFFFFFF), fontSize: 11),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _edit(BuildContext context, WidgetRef ref) async {
-    final site = TextEditingController(text: '${rule.sitePercent}');
-    final owner = TextEditingController(text: '${rule.ownerPercent}');
-    final receiver = TextEditingController(text: '${rule.receiverPercent}');
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1030),
-        title: Text(
-          '${rule.context} — gelir paylaşımı',
-          style: const TextStyle(color: Colors.white, fontSize: 15),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _numField('Site %', site),
-            _numField('Sahip %', owner),
-            _numField('Alıcı %', receiver),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Vazgeç'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Kaydet'),
-          ),
-        ],
-      ),
-    );
-    if (saved != true) return;
-    try {
-      await ref.read(adminGiftRemoteProvider).updateRevenueRule(rule.context, {
-        'sitePercent': int.tryParse(site.text.trim()) ?? rule.sitePercent,
-        'ownerPercent': int.tryParse(owner.text.trim()) ?? rule.ownerPercent,
-        'receiverPercent':
-            int.tryParse(receiver.text.trim()) ?? rule.receiverPercent,
-      });
-      ref.invalidate(adminRevenueRulesProvider);
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
-      }
-    } finally {
-      site.dispose();
-      owner.dispose();
-      receiver.dispose();
-    }
-  }
-
-  Widget _numField(String label, TextEditingController c) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: TextField(
-        controller: c,
-        keyboardType: TextInputType.number,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Color(0x99FFFFFF)),
-        ),
-      ),
     );
   }
 }

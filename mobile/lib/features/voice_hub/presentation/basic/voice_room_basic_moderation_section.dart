@@ -4,19 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../../domain/entities/voice_room_seat_slot.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../sheets/voice_room_moderation_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
 import '../utils/voice_room_permissions.dart';
+import '../utils/voice_room_user_actions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium_2026/voice_web_owner_stage.dart';
+import '../widgets/premium_2026/voice_pk_invite_banner.dart';
+import '../widgets/premium_2026/voice_gift_announcement_ticker.dart';
 import '../widgets/voice_room/voice_room_duyuru_ticker.dart';
-import '../widgets/voice_room/voice_room_join_entry_strip.dart';
 import '../widgets/voice_room/voice_room_staff_join_banner.dart';
 import 'voice_room_basic_premium_section.dart';
 
@@ -29,6 +33,7 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
     required this.live,
     required this.perms,
     required this.user,
+    this.isMicMuted = true,
   });
 
   final VoiceRoomEntity room;
@@ -36,16 +41,30 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
   final VoiceRoomLiveState live;
   final VoiceRoomPermissions perms;
   final UserEntity? user;
+  final bool isMicMuted;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final speakingIds = <String>{
+      for (final p in live.presence)
+        if (p.isSpeaking) p.id,
+    };
+    if (!isMicMuted && user?.id != null) speakingIds.add(user!.id);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        VoiceWebOwnerStage(
+        VoicePkInviteBanner(
           room: room,
-          presence: live.presence,
+          liveKey: liveKey,
+          isOwner: perms.isRoomOwner || perms.isSiteAdmin,
+        ),
+        VoiceWebOwnerStage(
+          roomKey: liveKey,
+          room: room,
           djUserIds: live.dj.djUsers.map((u) => u.id).toList(),
+          speakingUserIds: speakingIds,
+          selfUserId: user?.id,
           onSeatTap: (seatIndex, occupant) => unawaited(
             onVoiceRoomBasicSeatTap(
               context: context,
@@ -58,13 +77,24 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
               occupant: occupant,
             ),
           ),
+          onSeatLongPress: (seatIndex) => unawaited(
+            onVoiceRoomBasicSeatLongPress(
+              context: context,
+              ref: ref,
+              room: room,
+              liveKey: liveKey,
+              live: live,
+              perms: perms,
+              internalSeatIndex: seatIndex,
+            ),
+          ),
         ),
         VoiceRoomStaffJoinBanner(
           enterBanner: live.enterBanner,
         ),
-        VoiceRoomJoinEntryStrip(
-          events: live.realtimeEvents,
-          messages: live.messages,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+          child: const VoiceGiftAnnouncementTicker(),
         ),
         if (live.moderatorAnnouncement?.trim().isNotEmpty == true)
           VoiceRoomDuyuruTicker(
@@ -108,33 +138,6 @@ void openVoiceRoomBasicUser(
       );
   final isOwner = permissions.isRoomOwner || permissions.isSiteAdmin;
 
-  if (permissions.canModerate || isOwner) {
-    if (auth != null && user.id == auth.id) {
-      showVoiceUserProfileSheet(context, user: user);
-      return;
-    }
-    final djIds = liveState.dj.djUsers.map((u) => u.id).toSet();
-    void openGift() => openVoiceRoomBasicGiftShop(
-          context,
-          ref,
-          room: room,
-          presence: liveState.presence,
-          receiver: user,
-        );
-    showVoiceRoomModerationSheet(
-      context: context,
-      ref: ref,
-      room: room,
-      targetUser: VoiceRoomModerationTarget.fromPresence(user),
-      isOwnerOrMod: true,
-      perms: permissions,
-      isOwner: isOwner,
-      isTargetDj: djIds.contains(user.id),
-      onGift: openGift,
-    );
-    return;
-  }
-
   void openGift() => openVoiceRoomBasicGiftShop(
         context,
         ref,
@@ -142,9 +145,16 @@ void openVoiceRoomBasicUser(
         presence: liveState.presence,
         receiver: user,
       );
-  showVoiceUserProfileSheet(
-    context,
+
+  VoiceRoomUserActions.openUserSheet(
+    context: context,
+    ref: ref,
+    room: room,
+    liveState: liveState,
     user: user,
+    permissions: permissions,
+    isOwner: isOwner,
+    selfId: auth?.id,
     onGift: openGift,
   );
 }
@@ -170,6 +180,21 @@ Future<void> onVoiceRoomBasicSeatTap({
     );
     return;
   }
+  VoiceRoomSeatSlot? slot;
+  for (final s in live.seatSlots) {
+    if (s.index == internalSeatIndex) {
+      slot = s;
+      break;
+    }
+  }
+  if (slot?.isLocked == true && !perms.canAssignSeats) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bu koltuk kilitli')),
+      );
+    }
+    return;
+  }
   if (perms.canAssignSeats) {
     await showVoiceRoomBasicAssignSeatSheet(
       context: context,
@@ -182,21 +207,34 @@ Future<void> onVoiceRoomBasicSeatTap({
     );
     return;
   }
-  if (perms.canTakeSeat) {
-    final err = await ref
-        .read(voiceRoomLiveProvider(liveKey).notifier)
-        .assignSeat(seatIndex: internalSeatIndex);
-    if (!context.mounted) return;
-    if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-    }
-    return;
+  final err = await ref
+      .read(voiceRoomLiveProvider(liveKey).notifier)
+      .assignSeat(seatIndex: internalSeatIndex);
+  if (!context.mounted) return;
+  if (err != null) {
+    showJetonAwareError(context, err, ref: ref);
   }
-  await requestVoiceRoomBasicSpeak(
+}
+
+Future<void> onVoiceRoomBasicSeatLongPress({
+  required BuildContext context,
+  required WidgetRef ref,
+  required VoiceRoomEntity room,
+  required String liveKey,
+  required VoiceRoomLiveState live,
+  required VoiceRoomPermissions perms,
+  required int internalSeatIndex,
+}) async {
+  if (!perms.canAssignSeats) return;
+  await showVoiceRoomBasicAssignSeatSheet(
     context: context,
     ref: ref,
+    room: room,
     liveKey: liveKey,
-    pending: ref.read(voiceRoomUiProvider).requestSpeakPending,
+    live: live,
+    seatIndex: internalSeatIndex,
+    perms: perms,
+    showAllMembers: true,
   );
 }
 
@@ -208,13 +246,23 @@ Future<void> showVoiceRoomBasicAssignSeatSheet({
   required VoiceRoomLiveState live,
   required int seatIndex,
   required VoiceRoomPermissions perms,
+  bool showAllMembers = false,
 }) async {
   final self = ref.read(authControllerProvider).valueOrNull;
   final ctrl = ref.read(voiceRoomLiveProvider(liveKey).notifier);
-  final onStage = voiceWebOnStageIds(room: room, presence: live.presence);
-  final candidates = live.presence
-      .where((p) => !onStage.contains(p.id) || p.seatIndex == seatIndex)
-      .toList();
+  final onStage = voiceBackendSeatedIds(live.presence);
+  VoiceRoomSeatSlot? seatSlot;
+  for (final s in live.seatSlots) {
+    if (s.index == seatIndex) {
+      seatSlot = s;
+      break;
+    }
+  }
+  final candidates = showAllMembers
+      ? List<ChatRoomPresence>.from(live.presence)
+      : live.presence
+          .where((p) => !onStage.contains(p.id) || p.seatIndex == seatIndex)
+          .toList();
   final canManageDj = perms.isRoomOwner ||
       perms.isSiteAdmin ||
       perms.canManageDj ||
@@ -231,10 +279,41 @@ Future<void> showVoiceRoomBasicAssignSeatSheet({
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Koltuk $seatIndex — sahne yönetimi',
+            showAllMembers
+                ? 'Koltuk $seatIndex — sahne yönetimi'
+                : 'Koltuk $seatIndex — sahne yönetimi',
             style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
           ),
           const SizedBox(height: 8),
+          if (perms.canAssignSeats) ...[
+            if (seatSlot != null && !seatSlot.isEmpty)
+              ListTile(
+                leading: const Icon(Icons.person_off_rounded, color: Colors.orange),
+                title: Text('${seatSlot.name ?? 'Kullanıcı'} koltuktan at'),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final err = await ctrl.kickFromSeat(seatIndex: seatIndex);
+                  if (context.mounted && err != null) {
+                    showJetonAwareError(context, err, ref: ref);
+                  }
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.lock_rounded, color: Colors.amber),
+              title: Text(
+                seatSlot?.isLocked == true ? 'Kilidi aç' : 'Koltuğu kilitle',
+              ),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final err = seatSlot?.isLocked == true
+                    ? await ctrl.unlockSeat(seatIndex: seatIndex)
+                    : await ctrl.lockSeat(seatIndex: seatIndex);
+                if (context.mounted && err != null) {
+                  showJetonAwareError(context, err, ref: ref);
+                }
+              },
+            ),
+          ],
           if (self != null)
             ListTile(
               leading: const Icon(Icons.event_seat_rounded),
@@ -243,8 +322,7 @@ Future<void> showVoiceRoomBasicAssignSeatSheet({
                 Navigator.pop(ctx);
                 final err = await ctrl.assignSeat(seatIndex: seatIndex);
                 if (context.mounted && err != null) {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(SnackBar(content: Text(err)));
+                  showJetonAwareError(context, err, ref: ref);
                 }
               },
             ),
@@ -256,8 +334,7 @@ Future<void> showVoiceRoomBasicAssignSeatSheet({
                 Navigator.pop(ctx);
                 final err = await ctrl.addRoomDj(self.id);
                 if (context.mounted && err != null) {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(SnackBar(content: Text(err)));
+                  showJetonAwareError(context, err, ref: ref);
                 }
               },
             ),
@@ -311,8 +388,7 @@ Future<void> showVoiceRoomBasicAssignSeatSheet({
                   userId: p.id,
                 );
                 if (context.mounted && err != null) {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(SnackBar(content: Text(err)));
+                  showJetonAwareError(context, err, ref: ref);
                 }
               },
             ),
@@ -346,7 +422,7 @@ Future<void> requestVoiceRoomBasicSpeak({
       : await liveCtrl.requestSpeak();
   if (!context.mounted) return;
   if (err != null) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+    showJetonAwareError(context, err, ref: ref);
     return;
   }
   showVoiceRequestSpeakSheet(

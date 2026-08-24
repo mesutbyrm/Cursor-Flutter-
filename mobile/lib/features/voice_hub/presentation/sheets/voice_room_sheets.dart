@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +14,7 @@ import '../theme/voice_room_tokens.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import '../widgets/voice_room_gift_sheet.dart';
+import 'voice_room_management_panel.dart';
 
 Future<void> showVoiceSpeakerListSheet(
   BuildContext context, {
@@ -65,6 +67,8 @@ Future<void> showVoiceRequestSpeakSheet(
   );
 }
 
+/// @deprecated [showVoiceRoomManagementPanel] kullanın — tek oda ayarları paneli.
+@Deprecated('Use showVoiceRoomManagementPanel instead')
 Future<void> showVoiceRoomSettingsSheet(
   BuildContext context,
   WidgetRef ref, {
@@ -74,22 +78,18 @@ Future<void> showVoiceRoomSettingsSheet(
   required List<ChatRoomPresence> presence,
   void Function(ChatRoomPresence user)? onUserTap,
 }) {
-  return showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => Consumer(
-      builder: (_, sheetRef, _) => _RoomSettingsSheet(
-        ref: sheetRef,
-        room: room,
-        isOwner: isOwner,
-        perms: perms,
-        presence: presence,
-        onUserTap: onUserTap,
-        state: sheetRef.watch(voiceRoomUiProvider),
-        notifier: sheetRef.read(voiceRoomUiProvider.notifier),
-      ),
-    ),
+  final roomKey =
+      room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id.trim();
+  final live = ref.read(voiceRoomLiveProvider(roomKey));
+  return showVoiceRoomManagementPanel(
+    context,
+    ref,
+    room: room,
+    live: live,
+    perms: perms,
+    isOwner: isOwner,
+    onUserTap: onUserTap,
+    initial: VoiceMgmtInitial.roomMgmt,
   );
 }
 
@@ -122,7 +122,6 @@ Future<void> showVoiceMoreMenuSheet(
   VoidCallback? onPkBattle,
   VoidCallback? onGoldVip,
 }) {
-  final ui = ref.read(voiceRoomUiProvider);
   return showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
@@ -147,18 +146,6 @@ Future<void> showVoiceMoreMenuSheet(
             onTap: () {
               Navigator.pop(ctx);
               onSpeakers();
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.music_note_rounded),
-            title: Text(
-              ui.backgroundMusicEnabled
-                  ? 'Arka plan müziğini kapat'
-                  : 'Arka plan müziği',
-            ),
-            onTap: () {
-              Navigator.pop(ctx);
-              onBackgroundMusic();
             },
           ),
           if (onPickBackground != null)
@@ -186,15 +173,7 @@ Future<void> showVoiceMoreMenuSheet(
               onShare();
             },
           ),
-          if (onPkBattle != null)
-            ListTile(
-              leading: const Icon(Icons.flash_on_rounded, color: AppThemeColors.accentPink),
-              title: const Text('PK Savaşı'),
-              onTap: () {
-                Navigator.pop(ctx);
-                onPkBattle();
-              },
-            ),
+          // Sesli sohbet prompt: Müzik Aç / DJ / PK alt menüde yok.
           if (onGoldVip != null)
             ListTile(
               leading: const Icon(Icons.workspace_premium_rounded,
@@ -681,7 +660,7 @@ Future<void> showVoiceUserManagementSheet(
                             } catch (e) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(e.toString())),
+                                  SnackBar(content: Text(ApiException.userMessage(e))),
                                 );
                               }
                             }
@@ -797,7 +776,7 @@ Future<void> showVoiceUserModerationSheet(
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.toString())),
+                        SnackBar(content: Text(ApiException.userMessage(e))),
                       );
                     }
                   }
@@ -826,7 +805,7 @@ Future<void> showVoiceUserModerationSheet(
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.toString())),
+                        SnackBar(content: Text(ApiException.userMessage(e))),
                       );
                     }
                   }
@@ -855,7 +834,7 @@ Future<void> showVoiceUserModerationSheet(
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.toString())),
+                        SnackBar(content: Text(ApiException.userMessage(e))),
                       );
                     }
                   }
@@ -1018,6 +997,7 @@ Future<void> showPremiumVoiceGiftShop(
   required VoiceRoomEntity room,
   List<ChatRoomPresence> seatedUsers = const [],
   ChatRoomPresence? initialReceiver,
+  VoidCallback? onGiftSent,
 }) {
   return showVoiceRoomGiftPicker(
     context,
@@ -1025,5 +1005,6 @@ Future<void> showPremiumVoiceGiftShop(
     room: room,
     seatedUsers: seatedUsers,
     initialReceiver: initialReceiver,
+    onGiftSent: onGiftSent,
   );
 }

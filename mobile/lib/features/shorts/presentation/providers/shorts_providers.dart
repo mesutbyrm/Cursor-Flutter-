@@ -79,6 +79,8 @@ class ShortsFeedNotifier
       _cursor = page.nextCursor;
       _hasMore = page.hasMore;
       state = AsyncValue.data([...cur, ...page.videos]);
+    } catch (_) {
+      // Sayfalama hatası mevcut akışı silmesin.
     } finally {
       _loadingMore = false;
     }
@@ -156,4 +158,92 @@ final shortMusicSearchProvider =
 final shortHashtagVideosProvider =
     FutureProvider.family<List<ShortVideoEntity>, String>((ref, name) async {
   return ref.read(shortsRepositoryProvider).fetchHashtagVideos(name);
+});
+
+class ShortHashtagFeedState {
+  const ShortHashtagFeedState({
+    this.videos = const [],
+    this.page = 1,
+    this.hasMore = true,
+    this.loadingMore = false,
+  });
+
+  final List<ShortVideoEntity> videos;
+  final int page;
+  final bool hasMore;
+  final bool loadingMore;
+}
+
+class ShortHashtagNotifier extends FamilyAsyncNotifier<ShortHashtagFeedState, String> {
+  static const _pageSize = 20;
+  late String _tag;
+
+  @override
+  Future<ShortHashtagFeedState> build(String tag) async {
+    _tag = tag;
+    final videos = await ref
+        .read(shortsRepositoryProvider)
+        .fetchHashtagVideos(_tag, page: 1, limit: _pageSize);
+    return ShortHashtagFeedState(
+      videos: videos,
+      page: 1,
+      hasMore: videos.length >= _pageSize,
+    );
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final videos = await ref
+          .read(shortsRepositoryProvider)
+          .fetchHashtagVideos(_tag, page: 1, limit: _pageSize);
+      return ShortHashtagFeedState(
+        videos: videos,
+        page: 1,
+        hasMore: videos.length >= _pageSize,
+      );
+    });
+  }
+
+  Future<void> loadMore() async {
+    final cur = state.valueOrNull;
+    if (cur == null || !cur.hasMore || cur.loadingMore) return;
+    state = AsyncValue.data(cur.copyWith(loadingMore: true));
+    try {
+      final nextPage = cur.page + 1;
+      final batch = await ref.read(shortsRepositoryProvider).fetchHashtagVideos(
+            _tag,
+            page: nextPage,
+            limit: _pageSize,
+          );
+      state = AsyncValue.data(
+        ShortHashtagFeedState(
+          videos: [...cur.videos, ...batch],
+          page: nextPage,
+          hasMore: batch.length >= _pageSize,
+        ),
+      );
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+}
+
+extension on ShortHashtagFeedState {
+  ShortHashtagFeedState copyWith({bool? loadingMore}) => ShortHashtagFeedState(
+        videos: videos,
+        page: page,
+        hasMore: hasMore,
+        loadingMore: loadingMore ?? this.loadingMore,
+      );
+}
+
+final shortHashtagFeedProvider = AsyncNotifierProvider.family<
+    ShortHashtagNotifier, ShortHashtagFeedState, String>(
+  ShortHashtagNotifier.new,
+);
+
+final shortMusicVideosProvider =
+    FutureProvider.family<List<ShortVideoEntity>, String>((ref, musicId) async {
+  return ref.read(shortsRepositoryProvider).fetchMusicVideos(musicId);
 });

@@ -1,4 +1,5 @@
 import 'gift_animation_kind.dart';
+import 'gift_animation_policy.dart';
 import 'gift_entity.dart';
 import 'gift_rarity.dart';
 
@@ -175,7 +176,7 @@ abstract final class PremiumGiftCatalog2026 {
   }) {
     final r = rarity(giftId);
     if (r.index >= GiftRarity.epic.index) return true;
-    if (coinCost >= 100) return true;
+    if (coinCost >= GiftAnimationPolicy.expensiveJetonThreshold) return true;
     return false;
   }
 

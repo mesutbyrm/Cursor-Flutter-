@@ -27,4 +27,11 @@ abstract final class DeletedMessagesStore {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key(userId), jsonEncode(set.toList()));
   }
+
+  /// Logout — kullanıcıya özel silinen mesaj kimliklerini temizle.
+  static Future<void> clearForUser(String userId) async {
+    if (userId.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key(userId));
+  }
 }

@@ -11,6 +11,11 @@ class VoiceSeatRestService {
 
   final ChatRoomRemoteDataSource _remote;
 
+  /// Koltuk değiştir — `action: swap` veya take fallback.
+  Future<void> swapSeat(String roomId, int seatIndex) async {
+    await _remote.swapSeat(roomKey: roomId, seatIndex: seatIndex);
+  }
+
   /// PATCH/POST `/api/chat/rooms/:roomId/seats`
   Future<void> takeSeat(String roomId, int seatIndex, {String? userId}) async {
     await _remote.assignSeat(

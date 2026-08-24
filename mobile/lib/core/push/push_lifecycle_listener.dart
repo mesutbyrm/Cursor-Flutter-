@@ -9,6 +9,7 @@ import '../../features/admin/presentation/providers/staff_access_provider.dart';
 import '../../features/auth/domain/entities/user_entity.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/live_psychics/presentation/controllers/psychic_flow.dart';
+import '../../features/live_psychics/presentation/controllers/psychic_push_action_bridge.dart';
 import '../../features/live_psychics/presentation/controllers/psychic_invite_coordinator.dart';
 import '../../features/live_psychics/presentation/controllers/psychic_incoming_controller.dart';
 import '../../features/live_psychics/presentation/providers/live_psychics_providers.dart';
@@ -24,6 +25,7 @@ import '../../features/messages/presentation/providers/conversations_list_notifi
 import '../../features/messages/presentation/providers/messages_providers.dart';
 import '../../features/notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
+import '../../features/voice_hub/presentation/utils/voice_room_session_utils.dart';
 import '../onesignal/onesignal_bootstrap.dart';
 import 'push_notification_service.dart';
 import 'push_navigation_handler.dart';
@@ -41,7 +43,8 @@ class PushLifecycleListener extends ConsumerStatefulWidget {
       _PushLifecycleListenerState();
 }
 
-class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
+class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
+    with WidgetsBindingObserver {
   Timer? _pushSyncTimer;
   Timer? _adminPollTimer;
   bool _pushSyncing = false;
@@ -50,6 +53,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     bindPushRegistrarTokenRefresh(() {
       if (!mounted) return;
       ref.read(pushRegistrarProvider).registerIfPossible(allowTokenRetry: true);
@@ -58,6 +62,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
       if (!mounted) return;
       PushNavigationHandler.install(
         ref.read(goRouterProvider),
+        authenticated: () => ref.read(authControllerProvider).valueOrNull != null,
         onReceived: _onPushReceived,
         onFortuneInviteData: (data) {
           final invite = parsePsychicIncomingLoose(data);
@@ -102,12 +107,16 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
             return;
           }
           if (update.isRejected) {
+            ref
+                .read(psychicSessionCancelSignalProvider.notifier)
+                .signal(update.sessionId);
             ref.read(psychicBookingFeedbackProvider.notifier).state =
                 'Randevu reddedildi — jetonlar iade edildi';
             ref.refreshWalletCache(force: true);
           }
         },
         onSessionEndedData: (ended) {
+          final isTeller = ref.read(approvedPsychicProvider).isApprovedTeller;
           ref
               .read(psychicSessionCancelSignalProvider.notifier)
               .signal(ended.sessionId);
@@ -125,14 +134,45 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
                     ? ended.totalJeton
                     : null,
             message: ended.message,
-            promptReview: true,
+            promptReview: !isTeller,
+            isTeller: isTeller,
             navigateAfter: true,
           );
           ref.refreshWalletCache(force: true);
         },
+        onPrepareVoiceRoomSwitch: (nextLiveKey, {source = 'push'}) =>
+            prepareVoiceRoomSwitch(
+              ref,
+              nextLiveKey: nextLiveKey,
+              source: source,
+            ),
       );
       PushNavigationHandler.staffCanManagePayments = () =>
           ref.read(staffAccessProvider).canManagePayments;
+      PsychicPushActionBridge.onRespond = (
+        String sessionId,
+        String action,
+        Map<String, dynamic> data,
+      ) async {
+        final repo = ref.read(livePsychicsRepositoryProvider);
+        final respond = await repo.respondSession(sessionId, action: action);
+        if (action == 'accept') {
+          if (!respond.success) return;
+          final tellerId = data['tellerId']?.toString() ??
+              data['tellerUserId']?.toString();
+          await PsychicFlow.openTellerSessionFromPush(
+            router: ref.read(goRouterProvider),
+            sessionId: sessionId,
+            tellerId: tellerId,
+            tellerProfile: ref.read(approvedPsychicProvider).profile,
+            roomId: respond.roomId,
+            repo: repo,
+          );
+        } else {
+          ref.read(psychicIncomingQueueProvider.notifier).remove(sessionId);
+          ref.read(psychicSessionCancelSignalProvider.notifier).signal(sessionId);
+        }
+      };
       _queuePushSync(null, ref.read(authControllerProvider));
     });
 
@@ -248,9 +288,31 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _adminPollTimer?.cancel();
     _pushSyncTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _onAppResumed();
+    }
+  }
+
+  void _onAppResumed() {
+    if (!mounted) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return;
+    ref.invalidate(notificationsUnreadApiProvider);
+    ref.invalidate(notificationsListProvider);
+    unawaited(
+      ref.read(conversationsListNotifierProvider.notifier).refresh(
+            silent: true,
+            forceRefresh: true,
+          ),
+    );
   }
 
   @override

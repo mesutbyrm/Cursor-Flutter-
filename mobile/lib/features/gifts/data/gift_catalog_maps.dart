@@ -1,4 +1,5 @@
 import '../domain/gift_animation_kind.dart';
+import '../domain/gift_asset_type.dart';
 import '../domain/gift_entity.dart';
 
 /// Yerel animasyon / emoji eşlemesi (API `animation: lottie:rose` vb.).
@@ -50,46 +51,56 @@ abstract final class GiftCatalogMaps {
     'yacht': '🛥️',
   };
 
-  /// Premium 2026 — painter fallback (asset yok veya SVGA eksik).
+  /// CMS animasyonu varsa premium painter kullanma.
   static bool usePremiumPainter(GiftEntity gift) {
+    if (gift.hasCmsAnimation) return false;
     final id = gift.id.toLowerCase();
-    if (id == 'galaksi' ||
+    return id == 'galaksi' ||
         id == 'aslan' ||
         id == 'yat' ||
         id == 'roket' ||
         id == 'rocket' ||
         id == 'elmas' ||
         id == 'diamond' ||
-        id == 'kristal') {
-      return true;
-    }
-    return false;
+        id == 'kristal';
   }
 
   static String? lottieAsset(GiftEntity gift) {
     final ref = gift.animationRef;
+    if (ref != null && ref.startsWith('http')) return null;
     if (ref == null) return lottieAssetByKey[gift.id];
     return lottieAssetByKey[ref] ?? lottieAssetByKey[gift.id];
   }
 
   static String? svgaAsset(GiftEntity gift) {
     final ref = gift.animationRef;
+    if (ref != null && ref.startsWith('http')) return null;
     if (ref == null) return svgaAssetByKey[gift.id];
     return svgaAssetByKey[ref] ?? svgaAssetByKey[gift.id];
   }
 
   static String emoji(GiftEntity gift) =>
-      emojiById[gift.id] ?? emojiById[gift.animationRef ?? ''] ?? '🎁';
+      gift.iconEmoji ??
+      emojiById[gift.id] ??
+      emojiById[gift.animationRef ?? ''] ??
+      '🎁';
 
   static GiftAnimationKind resolvedKind(GiftEntity gift) {
-    if (gift.animationKind == GiftAnimationKind.rive) {
-      return GiftAnimationKind.lottie;
+    if (gift.assetType == GiftAssetType.video) {
+      return GiftAnimationKind.video;
     }
-    if (gift.animationKind != GiftAnimationKind.lottie) {
+    if (gift.animationKind != GiftAnimationKind.lottie &&
+        gift.animationKind != GiftAnimationKind.none) {
       return gift.animationKind;
+    }
+    final network = gift.networkAnimationUrl;
+    if (network != null) {
+      final fromUrl = GiftAnimationKind.fromUrl(network);
+      if (fromUrl != GiftAnimationKind.none) return fromUrl;
     }
     if (svgaAsset(gift) != null) return GiftAnimationKind.svga;
     if (lottieAsset(gift) != null) return GiftAnimationKind.lottie;
+    if (network != null) return GiftAnimationKind.image;
     return GiftAnimationKind.none;
   }
 }

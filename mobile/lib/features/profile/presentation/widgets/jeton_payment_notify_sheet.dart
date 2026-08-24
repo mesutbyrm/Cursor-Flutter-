@@ -270,11 +270,13 @@ class _JetonPaymentNotifySheetState
   }
 
   Widget _buildForm() {
-    return ListView(
+    return SingleChildScrollView(
       key: const ValueKey('form'),
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
-      shrinkWrap: true,
-      children: [
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
         Center(
           child: Container(
             width: 40,
@@ -468,7 +470,8 @@ class _JetonPaymentNotifySheetState
             ],
           ),
         ),
-      ],
+        ],
+      ),
     );
   }
 

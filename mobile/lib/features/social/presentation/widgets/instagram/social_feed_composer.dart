@@ -10,14 +10,19 @@ import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../search/domain/entities/search_user_entity.dart';
-import '../../../../search/presentation/providers/search_providers.dart';
 import '../../../domain/entities/create_social_post_input.dart';
 import '../../providers/social_composer_providers.dart';
 import '../../providers/social_create_post_provider.dart';
+import '../social_mention_picker_sheet.dart';
+import '../social_local_video_preview.dart';
+import '../../utils/social_post_location_helper.dart';
 
 /// Sosyal akış üstü — aynı sayfada paylaşım (metin, foto, video, duygu, #, @).
 class SocialFeedComposer extends ConsumerStatefulWidget {
-  const SocialFeedComposer({super.key});
+  const SocialFeedComposer({super.key, this.onPostPublished});
+
+  /// Başarılı inline paylaşımdan sonra (ör. akışı üste kaydır).
+  final VoidCallback? onPostPublished;
 
   @override
   ConsumerState<SocialFeedComposer> createState() => _SocialFeedComposerState();
@@ -33,6 +38,8 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
   String? _imagePath;
   String? _videoPath;
   String? _moodEmoji;
+  String? _locationLabel;
+  var _locationLoading = false;
 
   static const _moods = ['😊', '😍', '🔥', '✨', '😢', '🎉', '💜', '🙏'];
 
@@ -120,10 +127,33 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => const _MentionPickerSheet(),
+      builder: (ctx) => const SocialMentionPickerSheet(),
     );
     if (picked != null) {
       _insertText('@${picked.username} ');
+    }
+  }
+
+  Future<void> _addLocation() async {
+    if (_locationLoading) return;
+    setState(() => _locationLoading = true);
+    try {
+      final result = await pickSocialPostLocationLabel();
+      if (!mounted) return;
+      if (!result.ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.errorMessage ?? 'Konum alınamadı')),
+        );
+        return;
+      }
+      final label = result.label!;
+      setState(() => _locationLabel = label);
+      if (!_caption.text.contains('📍')) {
+        _insertText('${formatSocialPostLocationSnippet(label)} ');
+      }
+      _expand();
+    } finally {
+      if (mounted) setState(() => _locationLoading = false);
     }
   }
 
@@ -157,9 +187,11 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
         _imagePath = null;
         _videoPath = null;
         _moodEmoji = null;
+        _locationLabel = null;
         _expanded = false;
       });
       _focus.unfocus();
+      widget.onPostPublished?.call();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Paylaşım yayınlandı')),
       );
@@ -291,6 +323,18 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                   ),
                 ),
               ),
+            if (_locationLabel != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Chip(
+                    avatar: const Icon(Icons.location_on_rounded, size: 16),
+                    label: Text(_locationLabel!),
+                    onDeleted: () => setState(() => _locationLabel = null),
+                  ),
+                ),
+              ),
             if (_imagePath != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
@@ -303,21 +347,7 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
                 child: _MediaPreview(
-                  child: const Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      ColoredBox(
-                        color: Color(0xFF1A0F3D),
-                        child: Center(
-                          child: Icon(
-                            Icons.videocam_rounded,
-                            size: 48,
-                            color: Colors.white54,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: SocialLocalVideoPreview(videoPath: _videoPath!),
                   onClear: () => setState(() => _videoPath = null),
                 ),
               ),
@@ -355,6 +385,18 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                     onPressed: _pickMention,
                     icon: const Icon(Icons.alternate_email_rounded, size: 22),
                     color: AppThemeColors.accentCyan,
+                  ),
+                  IconButton(
+                    tooltip: 'Konum',
+                    onPressed: _locationLoading ? null : _addLocation,
+                    icon: _locationLoading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.location_on_outlined, size: 22),
+                    color: AppThemeColors.onlineGreen,
                   ),
                   const Spacer(),
                   FilledButton(
@@ -485,97 +527,6 @@ class _ComposerAction extends StatelessWidget {
                 fontSize: 12,
                 color: context.colors.onSurfaceVariant,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MentionPickerSheet extends ConsumerStatefulWidget {
-  const _MentionPickerSheet();
-
-  @override
-  ConsumerState<_MentionPickerSheet> createState() =>
-      _MentionPickerSheetState();
-}
-
-class _MentionPickerSheetState extends ConsumerState<_MentionPickerSheet> {
-  final _query = TextEditingController();
-  var _loading = false;
-  List<SearchUserEntity> _results = const [];
-
-  @override
-  void dispose() {
-    _query.dispose();
-    super.dispose();
-  }
-
-  Future<void> _search(String q) async {
-    if (q.trim().length < 2) {
-      setState(() => _results = const []);
-      return;
-    }
-    setState(() => _loading = true);
-    try {
-      final list =
-          await ref.read(searchRemoteProvider).searchUsers(q.trim());
-      if (mounted) setState(() => _results = list);
-    } catch (_) {
-      if (mounted) setState(() => _results = const []);
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bottom = MediaQuery.viewInsetsOf(context).bottom;
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottom),
-      child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * 0.55,
-        child: Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                'Kişi etiketle',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextField(
-                controller: _query,
-                decoration: InputDecoration(
-                  hintText: 'Kullanıcı adı ara…',
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  filled: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                onChanged: _search,
-              ),
-            ),
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
-                      itemCount: _results.length,
-                      itemBuilder: (context, i) {
-                        final u = _results[i];
-                        return ListTile(
-                          leading: UserAvatar(url: u.image, radius: 18),
-                          title: Text(u.name),
-                          subtitle: Text('@${u.username}'),
-                          onTap: () => Navigator.pop(context, u),
-                        );
-                      },
-                    ),
             ),
           ],
         ),

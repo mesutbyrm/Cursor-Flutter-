@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/chat_room_providers.dart';
 
-/// Uygulama tamamen kapanınca audio_service temizliği.
+/// Uygulama yaşam döngüsü: soğuk başlangıçta yetim audio_service temizliği.
 class VoiceRoomMusicLifecycleHost extends ConsumerStatefulWidget {
   const VoiceRoomMusicLifecycleHost({super.key, required this.child});
 
@@ -21,6 +23,14 @@ class _VoiceRoomMusicLifecycleHostState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_clearOrphanedMusicOnStartup());
+    });
+  }
+
+  Future<void> _clearOrphanedMusicOnStartup() async {
+    // Yalnızca yetim audio_service oturumunu kes; dismissed bayrağı set etme.
+    await ref.read(voiceRoomDjPlayerProvider).shutdown();
   }
 
   @override
@@ -32,7 +42,7 @@ class _VoiceRoomMusicLifecycleHostState
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.detached) {
-      ref.read(voiceRoomDjPlayerProvider).shutdown();
+      unawaited(ref.read(voiceRoomDjPlayerProvider).shutdown());
     }
   }
 

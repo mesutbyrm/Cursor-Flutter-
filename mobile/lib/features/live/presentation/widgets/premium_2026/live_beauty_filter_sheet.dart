@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../agora/presentation/agora_room_manager.dart';
+import '../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../domain/entities/live_beauty_settings.dart';
 import '../../providers/live_beauty_provider.dart';
 
@@ -136,8 +136,8 @@ class _CameraPreviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final agora = notifier.boundAgora;
-    final hasPreview = agora?.engine != null && agora!.isHost;
+    final trtc = notifier.boundTrtc;
+    final hasPreview = trtc != null && trtc.cameraOn;
 
     return Container(
       height: 120,
@@ -152,13 +152,12 @@ class _CameraPreviewCard extends StatelessWidget {
         fit: StackFit.expand,
         alignment: Alignment.center,
         children: [
-          if (hasPreview)
-            AgoraLocalVideoView(manager: agora)
-          else
-            const Text(
-              '📷 Önizleme',
-              style: TextStyle(color: Colors.white38, fontSize: 12),
-            ),
+          hasPreview
+              ? TrtcLocalVideoView(manager: trtc)
+              : const Text(
+                  '📷 Önizleme',
+                  style: TextStyle(color: Colors.white38, fontSize: 12),
+                ),
           if (hasPreview && !settings.enabled)
             Container(
               color: Colors.black.withValues(alpha: 0.35),

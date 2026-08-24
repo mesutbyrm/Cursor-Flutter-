@@ -68,7 +68,19 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
   @override
   void initState() {
     super.initState();
-    _collectNewEntries();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _baselineFromHistory());
+  }
+
+  void _baselineFromHistory() {
+    _lastJoinMsgCount = widget.messages
+        .where((m) => m.kind == ChatMessageKind.systemJoin)
+        .length;
+    _lastLeaveMsgCount = widget.messages
+        .where((m) => m.kind == ChatMessageKind.systemLeave)
+        .length;
+    if (widget.events.isNotEmpty) {
+      _lastSeenEvent = widget.events.first;
+    }
   }
 
   bool _isStaffJoin(String content, ChatRoomUserRef? user) {
@@ -159,6 +171,9 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
   }
 
   void _enqueue(_JoinLine line) {
+    while (_queue.length > 1) {
+      _queue.removeAt(0);
+    }
     _queue.add(line);
     if (_active == null) _showNext();
   }

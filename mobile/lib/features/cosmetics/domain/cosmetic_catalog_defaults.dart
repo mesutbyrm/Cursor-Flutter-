@@ -1,0 +1,405 @@
+import '../../vip_gold/domain/vip_tier.dart';
+import 'cosmetic_catalog_generators.dart';
+import 'cosmetic_effect_kind.dart';
+import 'cosmetic_item.dart';
+import 'cosmetic_slot.dart';
+
+/// Yerleşik katalog — backend boş/eksik olduğunda veya offline.
+abstract final class CosmeticCatalogDefaults {
+  static List<CosmeticItem> forSlot(CosmeticSlot slot) {
+    return switch (slot) {
+      CosmeticSlot.profileFrame => [
+        ..._frames,
+        ...CosmeticCatalogGenerators.profileFrames()
+            .where((e) => _frames.every((f) => f.id != e.id)),
+      ],
+      CosmeticSlot.nameEffect => [
+        ..._nameEffects,
+        ...CosmeticCatalogGenerators.nameEffects()
+            .where((e) => _nameEffects.every((f) => f.id != e.id)),
+      ],
+      CosmeticSlot.profileEffect => _profileEffects,
+      CosmeticSlot.avatarAccessory =>
+        CosmeticCatalogGenerators.avatarAccessories(),
+      CosmeticSlot.entranceAnimation => _entrances,
+      CosmeticSlot.chatBubble => [
+        ..._chatBubbles,
+        ...CosmeticCatalogGenerators.chatBubbles()
+            .where((e) => _chatBubbles.every((f) => f.id != e.id)),
+      ],
+      CosmeticSlot.microphoneFrame => [
+        ..._micFrames,
+        ...CosmeticCatalogGenerators.microphoneFrames()
+            .where((e) => _micFrames.every((f) => f.id != e.id)),
+      ],
+      CosmeticSlot.badge => [
+        ..._membershipBadges,
+        ...CosmeticCatalogGenerators.membershipBadges()
+            .where((e) => _membershipBadges.every((f) => f.id != e.id)),
+      ],
+    };
+  }
+
+  static List<CosmeticItem> get all => [
+        ..._frames,
+        ..._nameEffects,
+        ..._profileEffects,
+        ..._entrances,
+        ..._chatBubbles,
+        ..._micFrames,
+        ..._membershipBadges,
+      ];
+
+  static const _frames = [
+    CosmeticItem(
+      id: 'frame_admin_lightning',
+      slot: CosmeticSlot.profileFrame,
+      name: 'Admin — Şimşek',
+      effectKind: CosmeticEffectKind.lightning,
+      requiredRole: 'admin',
+      sortOrder: 1,
+    ),
+    CosmeticItem(
+      id: 'frame_mod_neon',
+      slot: CosmeticSlot.profileFrame,
+      name: 'Moderatör — Neon',
+      effectKind: CosmeticEffectKind.neonGlow,
+      requiredRole: 'moderator',
+      sortOrder: 2,
+    ),
+    CosmeticItem(
+      id: 'frame_owner_crown',
+      slot: CosmeticSlot.profileFrame,
+      name: 'Oda Sahibi — Taç',
+      effectKind: CosmeticEffectKind.crown,
+      requiredRole: 'owner',
+      sortOrder: 3,
+    ),
+    CosmeticItem(
+      id: 'frame_gold_rotating',
+      slot: CosmeticSlot.profileFrame,
+      name: 'Gold — Dönen Işık',
+      effectKind: CosmeticEffectKind.rotatingLight,
+      requiredTier: VipTier.gold,
+      sortOrder: 10,
+    ),
+    CosmeticItem(
+      id: 'frame_gold_fire',
+      slot: CosmeticSlot.profileFrame,
+      name: 'Gold — Ateş',
+      effectKind: CosmeticEffectKind.fire,
+      requiredTier: VipTier.gold,
+      sortOrder: 11,
+    ),
+    CosmeticItem(
+      id: 'frame_premium_diamond',
+      slot: CosmeticSlot.profileFrame,
+      name: 'Premium — Elmas',
+      effectKind: CosmeticEffectKind.diamond,
+      requiredTier: VipTier.premium,
+      sortOrder: 20,
+    ),
+    CosmeticItem(
+      id: 'frame_vip_rainbow',
+      slot: CosmeticSlot.profileFrame,
+      name: 'VIP — Gökkuşağı',
+      effectKind: CosmeticEffectKind.rainbow,
+      requiredTier: VipTier.diamond,
+      sortOrder: 30,
+    ),
+    CosmeticItem(
+      id: 'frame_broadcaster_cosmic',
+      slot: CosmeticSlot.profileFrame,
+      name: 'Yayıncı — Kozmik',
+      effectKind: CosmeticEffectKind.cosmicStars,
+      requiredRole: 'broadcaster',
+      sortOrder: 40,
+    ),
+    CosmeticItem(
+      id: 'frame_fortune_aura',
+      slot: CosmeticSlot.profileFrame,
+      name: 'Falcı — Aura',
+      effectKind: CosmeticEffectKind.aura,
+      requiredRole: 'fortune_teller',
+      sortOrder: 41,
+    ),
+    CosmeticItem(
+      id: 'frame_support_heart',
+      slot: CosmeticSlot.profileFrame,
+      name: 'Destek — Kalp',
+      effectKind: CosmeticEffectKind.heart,
+      requiredRole: 'support',
+      sortOrder: 42,
+    ),
+    CosmeticItem(
+      id: 'frame_official_gold',
+      slot: CosmeticSlot.profileFrame,
+      name: 'Resmi Hesap — Altın',
+      effectKind: CosmeticEffectKind.goldParticles,
+      requiredRole: 'official',
+      sortOrder: 5,
+    ),
+  ];
+
+  static const _nameEffects = [
+    CosmeticItem(
+      id: 'name_gold',
+      slot: CosmeticSlot.nameEffect,
+      name: 'Altın yazı',
+      effectKind: CosmeticEffectKind.goldText,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'name_silver',
+      slot: CosmeticSlot.nameEffect,
+      name: 'Gümüş yazı',
+      effectKind: CosmeticEffectKind.silverText,
+      requiredTier: VipTier.premium,
+    ),
+    CosmeticItem(
+      id: 'name_diamond',
+      slot: CosmeticSlot.nameEffect,
+      name: 'Elmas yazı',
+      effectKind: CosmeticEffectKind.diamondText,
+      requiredTier: VipTier.diamond,
+    ),
+    CosmeticItem(
+      id: 'name_neon',
+      slot: CosmeticSlot.nameEffect,
+      name: 'Neon yazı',
+      effectKind: CosmeticEffectKind.neonText,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'name_rainbow',
+      slot: CosmeticSlot.nameEffect,
+      name: 'Rainbow yazı',
+      effectKind: CosmeticEffectKind.rainbowText,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'name_fire',
+      slot: CosmeticSlot.nameEffect,
+      name: 'Ateş yazısı',
+      effectKind: CosmeticEffectKind.fireText,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'name_hologram',
+      slot: CosmeticSlot.nameEffect,
+      name: 'Hologram',
+      effectKind: CosmeticEffectKind.hologramText,
+      requiredTier: VipTier.diamond,
+    ),
+  ];
+
+  static const _profileEffects = [
+    CosmeticItem(
+      id: 'pfx_stars',
+      slot: CosmeticSlot.profileEffect,
+      name: 'Dönen yıldızlar',
+      effectKind: CosmeticEffectKind.particleStars,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'pfx_galaxy',
+      slot: CosmeticSlot.profileEffect,
+      name: 'Kozmik galaksi',
+      effectKind: CosmeticEffectKind.particleGalaxy,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'pfx_gold_dust',
+      slot: CosmeticSlot.profileEffect,
+      name: 'Altın tozları',
+      effectKind: CosmeticEffectKind.particleGoldDust,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'pfx_hearts',
+      slot: CosmeticSlot.profileEffect,
+      name: 'Kalpler',
+      effectKind: CosmeticEffectKind.particleHearts,
+      requiredTier: VipTier.premium,
+    ),
+  ];
+
+  static const _entrances = [
+    CosmeticItem(
+      id: 'ent_gold_rain',
+      slot: CosmeticSlot.entranceAnimation,
+      name: 'Altın yağmuru',
+      effectKind: CosmeticEffectKind.entranceGoldRain,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'ent_fireworks',
+      slot: CosmeticSlot.entranceAnimation,
+      name: 'Havai fişek',
+      effectKind: CosmeticEffectKind.entranceFireworks,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'ent_galaxy',
+      slot: CosmeticSlot.entranceAnimation,
+      name: 'Galaksi',
+      effectKind: CosmeticEffectKind.entranceGalaxy,
+      requiredTier: VipTier.diamond,
+    ),
+    CosmeticItem(
+      id: 'ent_crown',
+      slot: CosmeticSlot.entranceAnimation,
+      name: 'Taç',
+      effectKind: CosmeticEffectKind.entranceCrown,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'ent_dragon',
+      slot: CosmeticSlot.entranceAnimation,
+      name: 'Ejderha',
+      effectKind: CosmeticEffectKind.entranceDragon,
+      requiredTier: VipTier.diamond,
+    ),
+    CosmeticItem(
+      id: 'ent_meteor',
+      slot: CosmeticSlot.entranceAnimation,
+      name: 'Meteor',
+      effectKind: CosmeticEffectKind.entranceMeteor,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'ent_wings',
+      slot: CosmeticSlot.entranceAnimation,
+      name: 'Kanat açılması',
+      effectKind: CosmeticEffectKind.entranceWings,
+      requiredTier: VipTier.diamond,
+    ),
+    CosmeticItem(
+      id: 'ent_angel',
+      slot: CosmeticSlot.entranceAnimation,
+      name: 'Melek',
+      effectKind: CosmeticEffectKind.entranceAngel,
+      requiredTier: VipTier.premium,
+    ),
+  ];
+
+  static const _chatBubbles = [
+    CosmeticItem(
+      id: 'bubble_gold',
+      slot: CosmeticSlot.chatBubble,
+      name: 'Altın balon',
+      effectKind: CosmeticEffectKind.goldText,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'bubble_neon',
+      slot: CosmeticSlot.chatBubble,
+      name: 'Neon balon',
+      effectKind: CosmeticEffectKind.neonText,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'bubble_glass',
+      slot: CosmeticSlot.chatBubble,
+      name: 'Cam balon',
+      effectKind: CosmeticEffectKind.glassText,
+      requiredTier: VipTier.premium,
+    ),
+  ];
+
+  static const _micFrames = [
+    CosmeticItem(
+      id: 'mic_gold_ring',
+      slot: CosmeticSlot.microphoneFrame,
+      name: 'Altın halka',
+      effectKind: CosmeticEffectKind.goldParticles,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'mic_neon',
+      slot: CosmeticSlot.microphoneFrame,
+      name: 'Neon çerçeve',
+      effectKind: CosmeticEffectKind.neonGlow,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'mic_fire',
+      slot: CosmeticSlot.microphoneFrame,
+      name: 'Ateş çerçeve',
+      effectKind: CosmeticEffectKind.fire,
+      requiredTier: VipTier.premium,
+    ),
+  ];
+
+  static const _membershipBadges = [
+    CosmeticItem(
+      id: 'badge_premium',
+      slot: CosmeticSlot.badge,
+      name: 'Premium',
+      effectKind: CosmeticEffectKind.imageOverlay,
+      requiredTier: VipTier.premium,
+    ),
+    CosmeticItem(
+      id: 'badge_gold',
+      slot: CosmeticSlot.badge,
+      name: 'Gold',
+      effectKind: CosmeticEffectKind.goldParticles,
+      requiredTier: VipTier.gold,
+    ),
+    CosmeticItem(
+      id: 'badge_diamond',
+      slot: CosmeticSlot.badge,
+      name: 'Diamond',
+      effectKind: CosmeticEffectKind.diamond,
+      requiredTier: VipTier.diamond,
+    ),
+    CosmeticItem(
+      id: 'badge_founder',
+      slot: CosmeticSlot.badge,
+      name: 'Kurucu',
+      effectKind: CosmeticEffectKind.crown,
+      requiredRole: 'founder',
+    ),
+  ];
+
+  /// Yetki / üyelik için varsayılan çerçeve (Gold seçim yoksa).
+  static CosmeticItem? defaultFrameFor({
+    required VipTier tier,
+    String? role,
+    String? chatRole,
+  }) {
+    final r = _normalizeRole(role, chatRole);
+    if (r.contains('admin') || r.contains('superadmin')) {
+      return _frames.firstWhere((f) => f.id == 'frame_admin_lightning');
+    }
+    if (r.contains('moderator') || r.contains('mod') || r == 'op') {
+      return _frames.firstWhere((f) => f.id == 'frame_mod_neon');
+    }
+    if (r.contains('owner') || r.contains('founder')) {
+      return _frames.firstWhere((f) => f.id == 'frame_owner_crown');
+    }
+    if (r.contains('broadcaster') || r.contains('streamer')) {
+      return _frames.firstWhere((f) => f.id == 'frame_broadcaster_cosmic');
+    }
+    if (r.contains('fortune') || r.contains('falc')) {
+      return _frames.firstWhere((f) => f.id == 'frame_fortune_aura');
+    }
+    if (r.contains('support') || r.contains('destek')) {
+      return _frames.firstWhere((f) => f.id == 'frame_support_heart');
+    }
+    if (tier.index >= VipTier.diamond.index) {
+      return _frames.firstWhere((f) => f.id == 'frame_vip_rainbow');
+    }
+    if (tier.index >= VipTier.gold.index) {
+      return _frames.firstWhere((f) => f.id == 'frame_gold_rotating');
+    }
+    if (tier.index >= VipTier.premium.index) {
+      return _frames.firstWhere((f) => f.id == 'frame_premium_diamond');
+    }
+    return null;
+  }
+
+  static String _normalizeRole(String? role, String? chatRole) {
+    return '${role ?? ''} ${chatRole ?? ''}'.toLowerCase();
+  }
+}

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../utils/voice_room_seat_layout.dart';
+import '../../utils/voice_room_seat_capacity.dart';
 import 'voice_mic_seat.dart';
 
 /// PART 3 — Ekrana sığan yarım daire 8 mikrofon + merkez host.
@@ -28,15 +29,22 @@ class VoiceRoomResponsiveStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final micSeats = maxSeats > 0
+        ? maxSeats
+        : resolveVoiceRoomSeatCount(room: room);
     return LayoutBuilder(
       builder: (context, constraints) {
         final w = constraints.maxWidth;
         final h = constraints.maxHeight;
         if (w <= 0 || h <= 0) return const SizedBox.shrink();
 
-        final seats = VoiceRoomSeatLayout(room: room, presence: presence).build();
+        final seats = VoiceRoomSeatLayout(
+          room: room,
+          presence: presence,
+          seatCapacity: micSeats,
+        ).build();
         final host = _resolveHost(seats);
-        final others = _orderedSpeakers(seats, host);
+        final others = _orderedSpeakers(seats, host, micSeats);
 
         final hostSize = (math.min(w, h) * 0.26).clamp(72.0, 108.0);
         final arcRadius = (w * 0.34).clamp(100.0, 160.0);
@@ -56,6 +64,7 @@ class VoiceRoomResponsiveStage extends StatelessWidget {
                   center: center,
                   radius: arcRadius,
                   hostSize: hostSize,
+                  micSeats: micSeats,
                 ),
                 Positioned(
                   left: center.dx - hostSize / 2,
@@ -102,10 +111,11 @@ class VoiceRoomResponsiveStage extends StatelessWidget {
   List<ChatRoomPresence> _orderedSpeakers(
     Map<int, ChatRoomPresence> seats,
     ChatRoomPresence? host,
+    int micSeats,
   ) {
     final list = <ChatRoomPresence>[];
     final hostId = host?.id;
-    for (var i = 2; i <= maxSeats; i++) {
+    for (var i = 2; i <= micSeats; i++) {
       final u = seats[i];
       if (u != null && u.id != hostId) list.add(u);
     }
@@ -113,7 +123,7 @@ class VoiceRoomResponsiveStage extends StatelessWidget {
       if (p.id == hostId) continue;
       if (list.any((e) => e.id == p.id)) continue;
       list.add(p);
-      if (list.length >= maxSeats - 1) break;
+      if (list.length >= micSeats - 1) break;
     }
     return list;
   }
@@ -123,8 +133,9 @@ class VoiceRoomResponsiveStage extends StatelessWidget {
     required Offset center,
     required double radius,
     required double hostSize,
+    required int micSeats,
   }) {
-    final slots = maxSeats - 1;
+    final slots = micSeats - 1;
     final widgets = <Widget>[];
     for (var i = 0; i < slots; i++) {
       final t = slots == 1 ? 0.5 : i / (slots - 1);

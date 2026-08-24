@@ -15,8 +15,11 @@ import '../../live/domain/entities/live_stream_entity.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/domain/entities/voice_room_sort.dart';
 import '../../live/presentation/providers/live_providers.dart';
+import '../../live/presentation/providers/discover_live_streams.dart';
+import '../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import 'providers/voice_rooms_presence_provider.dart';
 import 'utils/open_voice_chat_room_flow.dart';
+import '../../vip_gold/domain/voice_room_access.dart';
 import '../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import 'widgets/premium_2026/voice_discover_hub_2026.dart';
 
@@ -35,10 +38,10 @@ class VoiceRoomsBody extends ConsumerStatefulWidget {
 
 class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     with AutomaticKeepAliveClientMixin {
-  Timer? _presenceTimer;
   Timer? _liveStreamsTimer;
   var _liveStreamsReady = false;
   var _prefetchedRoomImages = false;
+  var _presenceSynced = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -46,13 +49,19 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
   @override
   void initState() {
     super.initState();
-    _presenceTimer = Timer(LazyLoadPerf.voiceRoomPresence, () {
-      if (mounted) {
-        ref.read(voiceRoomsPresenceProvider);
-      }
-    });
     _liveStreamsTimer = Timer(LazyLoadPerf.voiceRoomLiveStreams, () {
       if (mounted) setState(() => _liveStreamsReady = true);
+    });
+  }
+
+  void _syncPresenceOnce(List<VoiceRoomEntity> rooms) {
+    if (_presenceSynced || rooms.isEmpty) return;
+    _presenceSynced = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(voiceRoomsPresenceProvider.notifier).mergeTrackRooms(
+            rooms.take(VoiceRoomsPresenceNotifier.maxTrackedRooms).toList(),
+          );
     });
   }
 
@@ -74,7 +83,6 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
 
   @override
   void dispose() {
-    _presenceTimer?.cancel();
     _liveStreamsTimer?.cancel();
     super.dispose();
   }
@@ -116,6 +124,7 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
 
         final ordered = _orderedRooms(list, ref.watch(myVoiceRoomProvider));
         final live = liveStreams.valueOrNull ?? const [];
+        _syncPresenceOnce(ordered);
         _prefetchDiscoverImages(ordered);
 
         return PremiumImmersiveBackground(
@@ -124,7 +133,7 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
             backgroundColor: DiscoverPremiumVisual.backgroundMid,
             onRefresh: () async {
               ref.invalidate(voiceRoomsProvider);
-              ref.invalidate(liveStreamsProvider);
+              invalidateDiscoverLiveStreams(ref);
             },
             child: VoiceDiscoverHub2026(
               rooms: ordered,
@@ -132,6 +141,9 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
               topPadding: topPad,
               onRoomTap: (r) => openVoiceRoomWithVipGate(context, ref, r),
               onSearchChanged: (_) {},
+              onLoadMore: () => ref
+                  .read(voiceRoomsListNotifierProvider.notifier)
+                  .loadMore(),
             ),
           ),
         );
@@ -143,8 +155,9 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     List<VoiceRoomEntity> all,
     VoiceRoomEntity? mine,
   ) {
-    final sorted = sortVoiceRoomsByPopularity(all);
-    if (mine == null) return sorted;
+    final public = all.where((r) => !r.isVipGoldRoom).toList();
+    final sorted = sortVoiceRoomsByPopularity(public);
+    if (mine == null || mine.isVipGoldRoom) return sorted;
     final rest = sorted.where((r) => r.id != mine.id).toList();
     return [mine, ...rest];
   }

@@ -4,16 +4,11 @@ import '../../../../../core/network/dio_provider.dart';
 import '../../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../data/datasources/live_gifts_remote_datasource.dart';
 import '../../../data/services/live_gift_realtime_service.dart';
-import '../../../data/services/live_gift_socket_bridge.dart';
 import '../../../domain/entities/live_gift_type.dart';
 import '../live_gift_controller.dart';
 
 final liveGiftsRemoteProvider = Provider<LiveGiftsRemoteDataSource>((ref) {
   return LiveGiftsRemoteDataSource(ref.watch(dioProvider));
-});
-
-final liveGiftSocketBridgeProvider = Provider<LiveGiftSocketBridge>((ref) {
-  return LiveGiftSocketBridge(ref.watch(liveGiftsRemoteProvider));
 });
 
 final liveGiftRealtimeProvider = Provider<LiveGiftRealtimeService>((ref) {
@@ -35,6 +30,6 @@ final liveGiftControllerProvider =
 
 final liveGiftTypesProvider =
     FutureProvider.autoDispose<List<LiveVideoGiftType>>((ref) async {
-  final catalog = await ref.watch(liveGiftCatalogProvider.future);
+  final catalog = await ref.watch(liveStreamGiftCatalogProvider.future);
   return catalog.map(LiveVideoGiftType.fromGift).toList();
 });

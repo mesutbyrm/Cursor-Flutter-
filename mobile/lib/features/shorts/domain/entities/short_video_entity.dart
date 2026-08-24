@@ -100,6 +100,17 @@ class ShortVideoEntity extends Equatable {
   bool get isMatureContent =>
       contentRating == 'mature' || contentRating == 'restricted';
 
+  /// Kapak: thumbnail → müzik kapağı → yazar avatarı.
+  String? get displayThumbnailUrl {
+    final thumb = thumbnailUrl?.trim();
+    if (thumb != null && thumb.isNotEmpty) return thumb;
+    final cover = music?.coverUrl?.trim();
+    if (cover != null && cover.isNotEmpty) return cover;
+    final avatar = author?.avatarUrl?.trim();
+    if (avatar != null && avatar.isNotEmpty) return avatar;
+    return null;
+  }
+
   ShortVideoEntity copyWith({
     int? viewsCount,
     int? likesCount,

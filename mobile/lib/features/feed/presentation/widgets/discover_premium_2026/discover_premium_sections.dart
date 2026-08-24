@@ -9,6 +9,7 @@ import '../../../../../core/ui/premium/premium.dart';
 import '../../../domain/discover_category.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/domain/entities/voice_room_sort.dart';
+import '../../../../vip_gold/domain/voice_room_access.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
 import '../discover/discover_live_carousel.dart';
 import '../discover/discover_section_header.dart';
@@ -126,7 +127,7 @@ class DiscoverPremiumVoicePanel extends ConsumerWidget {
           query: query,
         );
         final trending = trendingRooms(sorted);
-        final vip = vipRooms(sorted);
+        final publicRooms = sorted.where((r) => !r.isVipGoldRoom).toList();
 
         if (filtered.isEmpty && query.isNotEmpty) {
           return const PremiumEmptyHint(
@@ -140,20 +141,13 @@ class DiscoverPremiumVoicePanel extends ConsumerWidget {
             if (categoryId == null || categoryId == 'pk')
               DiscoverPremiumRoomRow(
                 title: 'Trend odalar',
-                rooms: trending,
-                onAction: () => context.push('/voice-rooms'),
-                onRoomTap: onRoomTap,
-              ),
-            if (vip.isNotEmpty)
-              DiscoverPremiumRoomRow(
-                title: 'VIP odalar',
-                rooms: vip.take(6).toList(),
+                rooms: trending.where((r) => !r.isVipGoldRoom).toList(),
                 onAction: () => context.push('/voice-rooms'),
                 onRoomTap: onRoomTap,
               ),
             DiscoverPremiumRoomRow(
               title: _sectionTitle(categoryId),
-              rooms: (categoryId != null ? filtered : sorted).take(12).toList(),
+              rooms: (categoryId != null ? filtered : publicRooms).take(12).toList(),
               onAction: () => context.push('/voice-rooms'),
               onRoomTap: onRoomTap,
             ),

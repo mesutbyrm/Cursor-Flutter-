@@ -5,7 +5,7 @@ import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 
-/// Seans sonrası değerlendirme — `POST /api/teller/reviews`.
+/// Seans sonrası değerlendirme — `POST /api/room/{sessionId}/review`.
 Future<bool?> showPsychicReviewSheet(
   BuildContext context, {
   required String sessionId,

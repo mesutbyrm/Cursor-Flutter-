@@ -104,12 +104,16 @@ class ActiveSpeakerItem {
     required this.name,
     required this.diamonds,
     required this.avatarColor,
+    this.avatarUrl,
+    this.onlineLabel,
   });
 
   final int rank;
   final String name;
   final String diamonds;
   final Color avatarColor;
+  final String? avatarUrl;
+  final String? onlineLabel;
 }
 
 abstract final class VoiceRoomsMockData {

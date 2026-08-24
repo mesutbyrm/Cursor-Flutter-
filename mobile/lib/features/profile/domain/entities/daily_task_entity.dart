@@ -1,4 +1,5 @@
 import '../../../../core/util/json_util.dart';
+import '../../../vip_gold/domain/vip_tier.dart';
 
 class DailyTaskEntity {
   const DailyTaskEntity({
@@ -26,18 +27,32 @@ class DailyTaskEntity {
       if (pCurrent != null) current = asInt(pCurrent);
       if (pTarget != null) target = asInt(pTarget);
     }
+    final completed = json['completed'] == true ||
+        json['done'] == true ||
+        json['isCompleted'] == true ||
+        (target > 0 && current >= target);
+    final normalizedTarget = target < 1 ? 1 : target;
+    final effectiveCurrent =
+        completed && current < normalizedTarget ? normalizedTarget : current;
+    final rewardJeton = asInt(pick(json, [
+      'rewardJeton',
+      'jetonReward',
+      'earnedJeton',
+      'reward',
+      'coins',
+    ]));
     return DailyTaskEntity(
-      id: pick(json, ['id', 'taskId', 'slug', 'key'])?.toString() ?? '',
+      id: pick(json, ['id', 'taskId', 'slug', 'key', 'type'])?.toString() ?? '',
       title: pick(json, ['title', 'name', 'label'])?.toString() ?? 'Görev',
       description: pick(json, ['description', 'detail'])?.toString(),
-      current: current,
-      target: target < 1 ? 1 : target,
-      completed: json['completed'] == true ||
-          json['done'] == true ||
-          json['isCompleted'] == true ||
-          (target > 0 && current >= target),
-      claimed: json['claimed'] == true || json['rewardClaimed'] == true,
-      rewardJeton: asInt(pick(json, ['rewardJeton', 'jetonReward', 'coins'])),
+      current: effectiveCurrent,
+      target: normalizedTarget,
+      completed: completed,
+      claimed: json['claimed'] == true ||
+          json['rewardClaimed'] == true ||
+          json['alreadyClaimed'] == true ||
+          completed,
+      rewardJeton: rewardJeton,
       rewardXp: asInt(pick(json, ['rewardXp', 'xpReward', 'xp'])),
       route: pick(json, ['route', 'deepLink', 'path'])?.toString(),
       icon: pick(json, ['icon', 'emoji'])?.toString(),
@@ -55,6 +70,20 @@ class DailyTaskEntity {
   final int rewardXp;
   final String? route;
   final String? icon;
+
+  /// Üretim `/api/daily-missions` `type` → uygulama rotası.
+  String get resolvedRoute {
+    if (route != null && route!.trim().isNotEmpty) return route!.trim();
+    return switch (id) {
+      'login' => '/feed',
+      'open_fortune' => '/fortune',
+      'watch_stream' => '/live',
+      'send_gift' => '/live',
+      'profile_complete' => '/profile/edit',
+      'share' => '/invite-friends',
+      _ => '/feed',
+    };
+  }
 
   double get progressRatio => (current / target).clamp(0.0, 1.0);
 }
@@ -90,7 +119,9 @@ class UserLevelEntity {
       vipTier: pick(m, ['vipTier', 'membership', 'membershipTier'])?.toString(),
       isVip: m['isVip'] == true ||
           m['vip'] == true ||
-          (pick(m, ['membership'])?.toString().trim().isNotEmpty == true),
+          VipTier.fromMembership(
+            pick(m, ['membership', 'membershipTier'])?.toString(),
+          ).isVip,
     );
   }
 

@@ -13,6 +13,7 @@ class StaffAccess {
     required this.canManageGifts,
     this.siteRole,
     this.username,
+    this.isFounder = false,
   });
 
   final bool canManagePayments;
@@ -22,12 +23,16 @@ class StaffAccess {
   final bool canManageGifts;
   final String? siteRole;
   final String? username;
+  /// Kurucu (yonetici) — admin atama/çıkarma dahil tam yetki.
+  final bool isFounder;
 
   /// Profil / panel başlığı — kullanıcı adı öncelikli (`admin` → Site Admin, `yonetici` → Kurucu).
   String get roleLabel {
     final u = username?.toLowerCase().trim() ?? '';
     if (u == 'admin') return 'Site Admin';
+    if (u == 'siteadmin') return 'Site Admin';
     if (u == 'yonetici') return 'Kurucu';
+    if (u == 'yonetim') return 'Yönetim';
     if (siteRole != null && siteRole!.isNotEmpty) {
       return StaffRoles.labelTr(siteRole!);
     }
@@ -51,40 +56,73 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
   );
   final wallet = ref.watch(walletBalancesProvider).valueOrNull;
   final authRole = user.role;
-  final siteRole = walletRole?.trim().isNotEmpty == true ? walletRole : authRole;
-  final username = user.username;
+  final username = user.username.trim();
+  final usernameLower = username.toLowerCase();
+
+  // Kurucu / siteadmin nick — rol beklemeden tam yetki.
+  final usernameIsFounder =
+      StaffRoles.founderUsernames.contains(usernameLower);
+  final usernameIsSiteAdmin =
+      StaffRoles.siteAdminUsernames.contains(usernameLower);
+
+  final siteRole = walletRole?.trim().isNotEmpty == true
+      ? walletRole
+      : (authRole?.trim().isNotEmpty == true ? authRole : null);
+
+  final walletIsAdmin = wallet?.isAdmin == true;
+
+  // Sunucu admin rolü — tüm özellikler açık (web ile aynı).
+  if (walletIsAdmin) {
+    return StaffAccess(
+      canManagePayments: true,
+      isSiteAdmin: true,
+      showAdminPanel: true,
+      canManageGifts: true,
+      siteRole: siteRole?.trim().isNotEmpty == true ? siteRole : 'admin',
+      username: username,
+      isFounder: usernameIsFounder,
+    );
+  }
 
   final canManagePayments = wallet?.canManagePayments == true ||
-      StaffRoles.isAdminOrManager(
+      wallet?.isAdmin == true ||
+      usernameIsSiteAdmin ||
+      StaffRoles.isAdminOrManager(role: siteRole, username: username);
+
+  final isSiteAdmin = usernameIsSiteAdmin ||
+      StaffRoles.hasFullStaffAccess(
         role: siteRole,
         username: username,
-      ) ||
-      wallet?.isAdmin == true;
+        walletIsAdmin: wallet?.isAdmin == true,
+      );
 
-  final isSiteAdmin = StaffRoles.hasFullStaffAccess(
-    role: siteRole,
-    username: username,
-    walletIsAdmin: wallet?.isAdmin == true || canManagePayments,
-  );
-
-  final showAdminPanel = StaffRoles.canAccessAdminPanel(
-    role: siteRole,
-    username: username,
-    walletIsAdmin: wallet?.isAdmin,
-  );
+  final showAdminPanel = usernameIsSiteAdmin ||
+      StaffRoles.canAccessAdminPanel(
+        role: siteRole,
+        username: username,
+        walletIsAdmin: wallet?.isAdmin,
+      );
 
   String? effectiveRole = siteRole?.trim().isNotEmpty == true
       ? siteRole!.toLowerCase().trim()
       : null;
-  if (effectiveRole == null &&
-      StaffRoles.managerUsernames.contains(username.toLowerCase().trim())) {
-    effectiveRole = username.toLowerCase().trim();
+  if (effectiveRole == null && usernameIsSiteAdmin) {
+    effectiveRole = switch (usernameLower) {
+      'siteadmin' || 'admin' => 'admin',
+      'yonetim' => 'yonetim',
+      _ => usernameLower,
+    };
   }
   if (isSiteAdmin && effectiveRole == null) {
     effectiveRole = 'admin';
   }
 
-  final canManageGifts = canManagePayments;
+  final canManageGifts = isSiteAdmin || canManagePayments;
+  final isFounder =
+      effectiveRole == 'yonetici' ||
+      effectiveRole == 'yonetim' ||
+      usernameLower == 'yonetici' ||
+      usernameLower == 'yonetim';
 
   return StaffAccess(
     canManagePayments: canManagePayments,
@@ -93,5 +131,6 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
     canManageGifts: canManageGifts,
     siteRole: effectiveRole,
     username: username,
+    isFounder: isFounder,
   );
 });

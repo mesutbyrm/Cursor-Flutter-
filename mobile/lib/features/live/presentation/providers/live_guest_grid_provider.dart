@@ -53,13 +53,13 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
     required int slotIndex,
     required String userId,
     required String displayName,
-    int? agoraUid,
+    String? rtcUserId,
   }) {
     _upsert(
       slotIndex,
       userId: userId,
       displayName: displayName,
-      agoraUid: agoraUid,
+      rtcUserId: rtcUserId,
     );
   }
 
@@ -85,14 +85,14 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
     state = state.copyWith(slots: list);
   }
 
-  void syncRemoteUids(List<int> uids) {
+  void syncRemoteUserIds(List<String> userIds) {
     if (state.layout == LiveGuestLayout.solo) return;
     final list = [...state.slots];
     var remoteIdx = 0;
-    for (var i = 1; i < list.length && remoteIdx < uids.length; i++) {
+    for (var i = 1; i < list.length && remoteIdx < userIds.length; i++) {
       if (list[i].isEmpty) {
         list[i] = list[i].copyWith(
-          agoraUid: uids[remoteIdx],
+          rtcUserId: userIds[remoteIdx],
           displayName: 'Konuk ${remoteIdx + 1}',
         );
         remoteIdx++;
@@ -102,13 +102,14 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
   }
 
   void syncCoBroadcasters(List<Map<String, dynamic>> guests) {
-    if (guests.isEmpty) return;
+    final approved = guests.where(_isApprovedCoGuest).toList();
+    if (approved.isEmpty) return;
     if (state.layout == LiveGuestLayout.solo) {
-      setLayout(resolveGuestLayout(guestCount: guests.length));
+      setLayout(resolveGuestLayout(guestCount: approved.length));
     }
     final list = [...state.slots];
     var slot = 1;
-    for (final g in guests) {
+    for (final g in approved) {
       if (slot >= list.length) break;
       final userId = g['userId']?.toString() ?? '';
       final name = g['userName']?.toString() ??
@@ -118,7 +119,7 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
       list[slot] = list[slot].copyWith(
         userId: userId,
         displayName: name,
-        agoraUid: int.tryParse('${g['agoraUid'] ?? g['uid'] ?? ''}'),
+        rtcUserId: _guestRtcUserId(g),
         jetonEarned: parseGuestJeton(g),
       );
       slot++;
@@ -130,11 +131,17 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
     _upsert(0, jetonEarned: jeton);
   }
 
+  void reset() {
+    state = LiveGuestGridState(
+      slots: [const LiveGuestSlot(index: 0, isHost: true)],
+    );
+  }
+
   void _upsert(
     int index, {
     String? userId,
     String? displayName,
-    int? agoraUid,
+    String? rtcUserId,
     bool? isHost,
     int? jetonEarned,
   }) {
@@ -145,12 +152,32 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
     list[index] = list[index].copyWith(
       userId: userId,
       displayName: displayName,
-      agoraUid: agoraUid,
+      rtcUserId: rtcUserId,
       isHost: isHost,
       jetonEarned: jetonEarned,
     );
     state = state.copyWith(slots: list);
   }
+}
+
+bool _isApprovedCoGuest(Map<String, dynamic> g) {
+  final status =
+      (g['status'] ?? g['state'] ?? 'approved').toString().toLowerCase();
+  return status == 'approved' ||
+      status == 'active' ||
+      status == 'joined' ||
+      status == 'live';
+}
+
+String? _guestRtcUserId(Map<String, dynamic> guest) {
+  final direct = guest['rtcUserId'] ?? guest['trtcUserId'] ?? guest['userId'];
+  if (direct != null && '$direct'.trim().isNotEmpty) {
+    return '$direct'.trim();
+  }
+  final legacy = guest['agoraUid'] ?? guest['uid'];
+  if (legacy == null) return null;
+  final text = '$legacy'.trim();
+  return text.isEmpty ? null : text;
 }
 
 final liveGuestGridProvider =

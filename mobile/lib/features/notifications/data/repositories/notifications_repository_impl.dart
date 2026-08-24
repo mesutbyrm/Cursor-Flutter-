@@ -134,6 +134,8 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
         'type': n.type,
         'targetPath': n.targetPath,
         'targetId': n.targetId,
+        'imageUrl': n.imageUrl,
+        'senderId': n.senderId,
       };
 
   static AppNotificationEntity _decodeNotification(Map<String, dynamic> json) {
@@ -146,6 +148,8 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       type: json['type']?.toString(),
       targetPath: json['targetPath']?.toString(),
       targetId: json['targetId']?.toString(),
+      imageUrl: json['imageUrl']?.toString(),
+      senderId: json['senderId']?.toString(),
     );
   }
 
@@ -167,6 +171,10 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       targetId: a.targetId,
     );
   }
+
+  /// Logout — yerel okundu hafızasını temizle (kullanıcılar arası sızıntı önleme).
+  static Future<void> clearLocalReadState() =>
+      _NotificationReadMemory.clearAll();
 
   Future<void> _invalidateCache() => ApiCacheStore.clear(_cacheKey);
 
@@ -250,6 +258,12 @@ class _NotificationReadMemory {
     );
   }
 
+  static Future<void> clearAll() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(NotificationsRepositoryImpl._readIdsKey);
+    await prefs.remove(NotificationsRepositoryImpl._readAllBeforeKey);
+  }
+
   AppNotificationEntity apply(AppNotificationEntity n) {
     if (n.read) return n;
     final idRead = n.id.trim().isNotEmpty && readIds.contains(n.id.trim());
@@ -267,6 +281,8 @@ class _NotificationReadMemory {
       type: n.type,
       targetPath: n.targetPath,
       targetId: n.targetId,
+      imageUrl: n.imageUrl,
+      senderId: n.senderId,
     );
   }
 }

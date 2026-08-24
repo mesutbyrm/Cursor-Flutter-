@@ -7,7 +7,11 @@ import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
+import '../../../membership/presentation/controllers/membership_controller.dart';
+import '../../../membership/presentation/widgets/membership_status_pill.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../providers/profile_hub_providers.dart';
+import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_glass.dart';
 import '../premium_2026/profile_theme.dart';
 
@@ -122,7 +126,10 @@ class _AboutCard extends StatelessWidget {
             if (ext.joinedAt != null)
               _InfoRow(
                 Icons.calendar_month_rounded,
-                'Üyelik: ${DateFormat('d MMMM yyyy', 'tr').format(ext.joinedAt!.toLocal())}',
+                buildMembershipAboutStatsPlatformJoinRowLabel(
+                  formattedDate: DateFormat('d MMMM yyyy', 'tr')
+                      .format(ext.joinedAt!.toLocal()),
+                ),
               ),
           ],
         ],
@@ -151,7 +158,7 @@ String _zodiacTr(String raw) {
   };
 }
 
-class _StatisticsCard extends StatelessWidget {
+class _StatisticsCard extends ConsumerWidget {
   const _StatisticsCard({
     required this.stats,
     required this.detail,
@@ -163,8 +170,42 @@ class _StatisticsCard extends StatelessWidget {
   final bool loading;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final membership = ref.watch(profileMembershipInfoProvider);
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(membership, ui.tiers);
+    final expiresAt =
+        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
+    final planDurationValue = buildMembershipAboutStatsPlanDurationValue(
+      info: membership,
+      catalogTier: catalogTier,
+      daysRemaining: membership.daysRemaining,
+      expiresAt: expiresAt,
+    );
+    final statusPill = buildMembershipStatusPillLabel(
+      info: membership,
+      expiresAt: expiresAt,
+    );
+    final sectionSubtitle = buildMembershipAboutStatsSectionSubtitle(
+      info: membership,
+      catalogTier: catalogTier,
+      daysRemaining: membership.daysRemaining,
+      expiresAt: expiresAt,
+    );
     final rows = <({IconData icon, String label, String value})>[
+      (
+        icon: Icons.workspace_premium_outlined,
+        label: buildMembershipAboutStatsPlanRowLabel(),
+        value: buildMembershipAboutStatsPlanValue(
+          info: membership,
+          expiresAt: expiresAt,
+        ),
+      ),
+      (
+        icon: Icons.timer_outlined,
+        label: buildMembershipAboutStatsPlanDurationRowLabel(),
+        value: planDurationValue,
+      ),
       (
         icon: Icons.auto_awesome_rounded,
         label: 'Fal Baktırdığım',
@@ -217,12 +258,32 @@ class _StatisticsCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (statusPill != null) ...[
+                MembershipStatusPill(
+                  label: statusPill,
+                  expired: membership.isExpired,
+                ),
+                const SizedBox(width: 8),
+              ],
               TextButton(
                 onPressed: () => context.push('/profile/growth'),
                 child: const Text('Tümü >'),
               ),
             ],
           ),
+          if (sectionSubtitle.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              sectionSubtitle,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 1.25,
+              ),
+            ),
+          ],
+          const SizedBox(height: 6),
           if (loading)
             const PremiumSkeleton(height: 120, width: double.infinity)
           else

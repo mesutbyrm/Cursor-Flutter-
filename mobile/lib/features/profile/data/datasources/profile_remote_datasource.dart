@@ -9,6 +9,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/payment_debug_log.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../home/data/datasources/mobile_compound_remote_datasource.dart';
 import '../../../auth/data/models/user_dto.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
@@ -16,16 +17,22 @@ import '../../../wallet/domain/wallet_balances.dart';
 import '../jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
+import '../../domain/entities/payment_method_entity.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 
 class ProfileRemoteDataSource {
-  ProfileRemoteDataSource(this._dio);
+  ProfileRemoteDataSource(this._dio, this._compound);
 
   final Dio _dio;
+  final MobileCompoundRemoteDataSource _compound;
 
   Future<UserEntity> user(String userId) async {
+    final compound = await _compound.fetchUserProfile(userId);
+    if (compound != null && compound.user.id.isNotEmpty) {
+      return compound.user;
+    }
     final res = await _dio.safeGet<Map<String, dynamic>>(
       ApiEndpoints.userProfile(userId),
     );
@@ -34,6 +41,18 @@ class ProfileRemoteDataSource {
     final map = u is Map ? asJsonMap(u) : body;
     final dto = UserDto.fromJson(map);
     return _entityFromDto(dto, {...body, ...map});
+  }
+
+  Future<ProfileExtendedEntity> userExtended(String userId) async {
+    final compound = await _compound.fetchUserProfile(userId);
+    if (compound != null) {
+      return compound.extended;
+    }
+    final res = await _dio.safeGet<Map<String, dynamic>>(
+      ApiEndpoints.userProfile(userId),
+    );
+    final body = res.data ?? {};
+    return ProfileExtendedEntity.fromJson(body);
   }
 
   static bool looksLikeUsernameKey(String id) {
@@ -107,7 +126,34 @@ class ProfileRemoteDataSource {
     String? newPassword,
     String? birthDate,
     String? birthTime,
+    String? favoriteTeam,
   }) async {
+    final onlyPasswordChange = currentPassword != null &&
+        newPassword != null &&
+        displayName == null &&
+        bio == null &&
+        avatarUrl == null &&
+        username == null &&
+        birthDate == null &&
+        birthTime == null &&
+        favoriteTeam == null;
+
+    if (currentPassword != null && newPassword != null) {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.authChangePassword,
+        data: {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        },
+      );
+      if (onlyPasswordChange) {
+        final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.me);
+        final body = res.data ?? {};
+        final data = body['data'] is Map ? asJsonMap(body['data']) : body;
+        return UserDto.fromApiMap(data).toEntity();
+      }
+    }
+
     final res = await _dio.safePatch<Map<String, dynamic>>(
       ApiEndpoints.me,
       data: {
@@ -121,10 +167,9 @@ class ProfileRemoteDataSource {
           'avatarUrl': avatarUrl,
         },
         'username': ?username,
-        'currentPassword': ?currentPassword,
-        'newPassword': ?newPassword,
         if (birthDate != null && birthDate.isNotEmpty) 'birthDate': birthDate,
         if (birthTime != null && birthTime.isNotEmpty) 'birthTime': birthTime,
+        if (favoriteTeam != null) 'favoriteTeam': favoriteTeam,
       },
     );
     final body = res.data ?? {};
@@ -133,12 +178,17 @@ class ProfileRemoteDataSource {
   }
 
   Future<ProfileStatsEntity> myStats() async {
-    try {
-      final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.meStats);
-      return ProfileStatsEntity.fromJson(res.data ?? {});
-    } catch (_) {
-      return const ProfileStatsEntity();
+    for (final path in [
+      ApiEndpoints.userStats,
+      ApiEndpoints.userStatistics,
+      ApiEndpoints.meStats,
+    ]) {
+      try {
+        final res = await _dio.safeGet<Map<String, dynamic>>(path);
+        return ProfileStatsEntity.fromJson(res.data ?? {});
+      } catch (_) {}
     }
+    return const ProfileStatsEntity();
   }
 
   Future<ProfileExtendedEntity> extendedProfile() async {
@@ -214,6 +264,7 @@ class ProfileRemoteDataSource {
     String? birthTime,
     String? zodiacSign,
     String? city,
+    String? favoriteTeam,
   }) async {
     final res = await _dio.safePatch<Map<String, dynamic>>(
       ApiEndpoints.userSiteProfile,
@@ -226,6 +277,7 @@ class ProfileRemoteDataSource {
         if (birthTime != null && birthTime.isNotEmpty) 'birthTime': birthTime,
         'zodiacSign': ?zodiacSign,
         'city': ?city,
+        if (favoriteTeam != null) 'favoriteTeam': favoriteTeam,
       },
     );
     final body = res.data ?? {};
@@ -255,52 +307,57 @@ class ProfileRemoteDataSource {
   }
 
   Future<List<GiftReceivedSummaryEntity>> giftsReceivedSummary() async {
-    try {
-      final res =
-          await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.meGiftsReceived);
-      final body = res.data ?? {};
-      final data = body['data'] is Map ? asJsonMap(body['data']) : body;
-      final raw = data['summary'];
-      if (raw is! List) return const [];
-      return raw
-          .map((e) => GiftReceivedSummaryEntity.fromJson(asJsonMap(e)))
-          .toList();
-    } catch (_) {
-      return const [];
+    for (final path in [
+      ApiEndpoints.userReceivedGifts,
+      '/api/users/me/gifts-received',
+    ]) {
+      try {
+        final res = await _dio.safeGet<Map<String, dynamic>>(path);
+        final body = res.data ?? {};
+        final data = body['data'] is Map ? asJsonMap(body['data']) : body;
+        final raw = data['summary'] ?? data['gifts'] ?? data['items'] ?? data;
+        if (raw is! List) continue;
+        return raw
+            .map((e) => GiftReceivedSummaryEntity.fromJson(asJsonMap(e)))
+            .toList();
+      } catch (_) {}
     }
+    return const [];
   }
 
   Future<List<BroadcastHistoryItemEntity>> broadcastHistory() async {
-    try {
-      final res = await _dio.safeGet<Map<String, dynamic>>(
-        ApiEndpoints.meBroadcastHistory,
-      );
-      final body = res.data ?? {};
-      final data = body['data'] is Map ? asJsonMap(body['data']) : body;
-      final raw = data['items'];
-      if (raw is! List) return const [];
-      return raw
-          .map((e) => BroadcastHistoryItemEntity.fromJson(asJsonMap(e)))
-          .toList();
-    } catch (_) {
-      return const [];
+    for (final path in [
+      ApiEndpoints.userBroadcastHistory,
+      ApiEndpoints.meBroadcastHistory,
+    ]) {
+      try {
+        final res = await _dio.safeGet<Map<String, dynamic>>(path);
+        final body = res.data ?? {};
+        final data = body['data'] is Map ? asJsonMap(body['data']) : body;
+        final raw = data['items'];
+        if (raw is! List) continue;
+        return raw
+            .map((e) => BroadcastHistoryItemEntity.fromJson(asJsonMap(e)))
+            .toList();
+      } catch (_) {}
     }
+    return const [];
   }
 
   Future<List<ProfileActivityItemEntity>> myActivity() async {
-    try {
-      final res =
-          await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.meActivity);
-      final body = res.data ?? {};
-      final data = body['data'] is Map ? asJsonMap(body['data']) : body;
-      final raw = data['items'];
-      if (raw is! List) return const [];
-      return raw
-          .map((e) => ProfileActivityItemEntity.fromJson(asJsonMap(e)))
-          .toList();
-    } catch (_) {
-      return const [];
+    for (final path in [ApiEndpoints.userActivity, ApiEndpoints.meActivity]) {
+      try {
+        final res = await _dio.safeGet<Map<String, dynamic>>(path);
+        final body = res.data ?? {};
+        final data = body['data'] is Map ? asJsonMap(body['data']) : body;
+        final raw = data['items'];
+        if (raw is! List) continue;
+        return raw
+            .map((e) => ProfileActivityItemEntity.fromJson(asJsonMap(e)))
+            .toList();
+      } catch (_) {}
     }
+    return const [];
   }
 
   Future<List<UserEntity>> followers(String userId) async {
@@ -447,6 +504,23 @@ class WalletRemoteDataSource {
     }
     final remote = PaymentConfigEntity.fromJson(_unwrap(data));
     return PaymentDefaults.merge(remote);
+  }
+
+  /// Ödeme kanalları — `GET /api/payments/methods`.
+  Future<List<PaymentMethodEntity>> paymentMethods() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.paymentMethods);
+      final data = res.data;
+      if (data is List) {
+        return PaymentMethodEntity.parseList(data);
+      }
+      if (data is Map) {
+        final map = _unwrap(data);
+        final raw = map['methods'] ?? map['items'] ?? map['data'];
+        if (raw is List) return PaymentMethodEntity.parseList(raw);
+      }
+    } catch (_) {}
+    return PaymentMethodEntity.defaults;
   }
 
   bool _paymentRequestAccepted(dynamic data, int code) {
@@ -663,7 +737,7 @@ class WalletRemoteDataSource {
             ));
   }
 
-  /// Bekleyen ödeme talebini iptal — `PATCH /api/payment/requests`.
+  /// Bekleyen ödeme talebini iptal — `PATCH /api/payments/requests`.
   Future<void> cancelPaymentRequest(String requestId) async {
     final id = requestId.trim();
     if (id.isEmpty) {

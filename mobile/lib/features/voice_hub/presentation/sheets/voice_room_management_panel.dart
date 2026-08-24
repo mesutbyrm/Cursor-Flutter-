@@ -1,28 +1,51 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../core/navigation/wallet_navigation.dart';
+import '../../../../core/performance/list_perf.dart';
+import '../../../moderation/domain/entities/report_target.dart';
+import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../live/presentation/providers/live_providers.dart';
 import '../../../vip_gold/domain/voice_room_access.dart';
 import '../../../gifts/presentation/providers/gift_battle_providers.dart';
 import '../../../gifts/presentation/providers/gift_goal_providers.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/voice_room_ban_entry.dart';
+import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/chat_room_providers.dart';
+import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
+import '../utils/voice_room_user_actions.dart';
+import '../utils/voice_room_category_catalog.dart';
+import '../utils/voice_room_seat_capacity.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
+import 'voice_room_commands_panel.dart';
 import 'voice_room_hub_settings.dart';
+import 'voice_room_menu_sheet.dart' show VoiceRoomMenuRole;
 import 'voice_room_moderation_sheet.dart';
-import 'voice_moderation_user_picker_sheet.dart';
+import 'voice_room_muted_users_sheet.dart';
+import 'voice_room_sheets.dart';
+import 'voice_room_voice_users_sheet.dart';
+import 'voice_youtube_song_sheet.dart';
+import 'voice_room_speak_queue_sheet.dart';
+import 'voice_room_tools_sheet.dart';
+import 'voice_room_music_settings_sheet.dart';
 
-enum _MgmtView { home, chat, users, room, penalties, userActions }
+enum VoiceMgmtInitial { home, userMgmt, users, chatMgmt, roomMgmt, userSettings }
 
-/// Oda Yönetim paneli — Sohbet, Kullanıcılar, Oda yönetimi, Cezalar.
+enum _MgmtView { home, userMgmt, chatMgmt, roomMgmt, userSettings, users, penalties }
+
+/// Oda ayarları — Kullanıcı / Sohbet / Oda yönetimi / Kullanıcı ayarları.
 Future<void> showVoiceRoomManagementPanel(
   BuildContext context,
   WidgetRef ref, {
@@ -31,6 +54,8 @@ Future<void> showVoiceRoomManagementPanel(
   required VoiceRoomPermissions perms,
   required bool isOwner,
   void Function(ChatRoomPresence user)? onUserTap,
+  VoidCallback? onPkInvite,
+  VoiceMgmtInitial initial = VoiceMgmtInitial.home,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -44,6 +69,8 @@ Future<void> showVoiceRoomManagementPanel(
         perms: perms,
         isOwner: isOwner,
         onUserTap: onUserTap,
+        onPkInvite: onPkInvite,
+        initial: initial,
       ),
     ),
   );
@@ -56,6 +83,8 @@ class _VoiceRoomManagementPanel extends ConsumerStatefulWidget {
     required this.perms,
     required this.isOwner,
     this.onUserTap,
+    this.onPkInvite,
+    this.initial = VoiceMgmtInitial.home,
   });
 
   final VoiceRoomEntity room;
@@ -63,6 +92,8 @@ class _VoiceRoomManagementPanel extends ConsumerStatefulWidget {
   final VoiceRoomPermissions perms;
   final bool isOwner;
   final void Function(ChatRoomPresence user)? onUserTap;
+  final VoidCallback? onPkInvite;
+  final VoiceMgmtInitial initial;
 
   @override
   ConsumerState<_VoiceRoomManagementPanel> createState() =>
@@ -71,20 +102,39 @@ class _VoiceRoomManagementPanel extends ConsumerStatefulWidget {
 
 class _VoiceRoomManagementPanelState
     extends ConsumerState<_VoiceRoomManagementPanel> {
-  _MgmtView _view = _MgmtView.home;
-  ChatRoomPresence? _selectedUser;
+  late _MgmtView _view = _mapInitial(widget.initial);
   List<VoiceRoomBanEntry> _bans = const [];
   var _loadingBans = false;
 
-  VoiceRoomEntity get room => widget.room;
+  static _MgmtView _mapInitial(VoiceMgmtInitial initial) => switch (initial) {
+        VoiceMgmtInitial.home => _MgmtView.home,
+        VoiceMgmtInitial.userMgmt => _MgmtView.userMgmt,
+        VoiceMgmtInitial.users => _MgmtView.users,
+        VoiceMgmtInitial.chatMgmt => _MgmtView.chatMgmt,
+        VoiceMgmtInitial.roomMgmt => _MgmtView.roomMgmt,
+        VoiceMgmtInitial.userSettings => _MgmtView.userSettings,
+      };
+
+  String get _liveRoomKey => widget.room.liveKey;
+
+  VoiceRoomEntity get room {
+    final base = widget.room;
+    final live = _live;
+    final synced =
+        ref.watch(voiceRoomByIdProvider(base.liveKey)).valueOrNull ?? base;
+    return synced.copyWith(
+      seatCount: live.roomSeatCount ?? synced.seatCount,
+      maxUsers: live.roomMaxUsers ?? synced.maxUsers,
+    );
+  }
   VoiceRoomPermissions get perms => widget.perms;
   bool get isOwner => widget.isOwner;
 
   VoiceRoomLiveController get _ctrl =>
-      ref.read(voiceRoomLiveProvider(room.liveKey).notifier);
+      ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
 
   VoiceRoomLiveState get _live =>
-      ref.watch(voiceRoomLiveProvider(room.liveKey));
+      ref.watch(voiceRoomLiveProvider(_liveRoomKey));
 
   Future<void> _snack(String text) async {
     if (!mounted) return;
@@ -105,14 +155,23 @@ class _VoiceRoomManagementPanelState
   void _go(_MgmtView view) => setState(() => _view = view);
 
   void _back() {
-    if (_view == _MgmtView.userActions) {
-      setState(() {
-        _view = _MgmtView.users;
-        _selectedUser = null;
-      });
+    if (_view == _MgmtView.users || _view == _MgmtView.penalties) {
+      setState(() => _view = _MgmtView.userMgmt);
       return;
     }
-    setState(() => _view = _MgmtView.home);
+    if (_view != _MgmtView.home) {
+      setState(() => _view = _MgmtView.home);
+      return;
+    }
+  }
+
+  void _closeAndVoid(VoidCallback action) {
+    final ctx = context;
+    Navigator.pop(ctx);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!ctx.mounted) return;
+      action();
+    });
   }
 
   @override
@@ -134,10 +193,11 @@ class _VoiceRoomManagementPanelState
             Expanded(
               child: switch (_view) {
                 _MgmtView.home => _homeView(scroll),
-                _MgmtView.chat => _chatView(scroll),
+                _MgmtView.userMgmt => _userMgmtHub(scroll),
+                _MgmtView.chatMgmt => _chatView(scroll),
+                _MgmtView.roomMgmt => _roomView(scroll),
+                _MgmtView.userSettings => _userSettingsView(scroll),
                 _MgmtView.users => _usersView(scroll),
-                _MgmtView.userActions => _userActionsView(),
-                _MgmtView.room => _roomView(scroll),
                 _MgmtView.penalties => _penaltiesView(scroll),
               },
             ),
@@ -149,11 +209,12 @@ class _VoiceRoomManagementPanelState
 
   Widget _header() {
     final title = switch (_view) {
-      _MgmtView.home => 'Oda Yönetim paneli',
-      _MgmtView.chat => 'Sohbet',
+      _MgmtView.home => 'Ayarlar',
+      _MgmtView.userMgmt => 'Kullanıcı yönetimi',
+      _MgmtView.chatMgmt => 'Sohbet yönetimi',
+      _MgmtView.roomMgmt => 'Oda yönetimi',
+      _MgmtView.userSettings => 'Kullanıcı ayarları',
       _MgmtView.users => 'Kullanıcılar',
-      _MgmtView.userActions => _selectedUser?.displayName ?? 'Kullanıcı',
-      _MgmtView.room => 'Oda yönetimi',
       _MgmtView.penalties => 'Cezalar',
     };
     return Row(
@@ -180,12 +241,40 @@ class _VoiceRoomManagementPanelState
   }
 
   Widget _homeView(ScrollController scroll) {
-    final tiles = [
-      (Icons.chat_bubble_outline_rounded, 'Sohbet', _MgmtView.chat),
-      (Icons.people_outline_rounded, 'Kullanıcılar', _MgmtView.users),
-      (Icons.meeting_room_outlined, 'Oda yönetimi', _MgmtView.room),
-      (Icons.gavel_outlined, 'Cezalar', _MgmtView.penalties),
+    final tiles = <(IconData, String, String, _MgmtView, bool)>[
+      if (perms.canManageUsers)
+        (
+          Icons.people_alt_outlined,
+          'Kullanıcı yönetimi',
+          'Yetki, susturma, ban, kick',
+          _MgmtView.userMgmt,
+          true,
+        ),
+      if (perms.canManageChat)
+        (
+          Icons.chat_bubble_outline_rounded,
+          'Sohbet yönetimi',
+          'Duyuru, temizle, oda sessize',
+          _MgmtView.chatMgmt,
+          true,
+        ),
+      if (perms.canManageRoomSettings)
+        (
+          Icons.meeting_room_outlined,
+          'Oda yönetimi',
+          'Arkaplan, PK, müzik, hediye savaşı',
+          _MgmtView.roomMgmt,
+          true,
+        ),
+      (
+        Icons.person_outline_rounded,
+        'Kullanıcı ayarları',
+        'Efektler, rumuz, bildirimler',
+        _MgmtView.userSettings,
+        true,
+      ),
     ];
+
     return ListView(
       controller: scroll,
       children: [
@@ -196,13 +285,213 @@ class _VoiceRoomManagementPanelState
             child: ListTile(
               leading: Icon(t.$1, color: VoiceRoomTokens.neonBlue),
               title: Text(t.$2, style: const TextStyle(fontWeight: FontWeight.w800)),
+              subtitle: Text(
+                t.$3,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white.withValues(alpha: 0.55),
+                ),
+              ),
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () {
-                if (t.$3 == _MgmtView.penalties) _loadBans();
-                _go(t.$3);
+                if (t.$4 == _MgmtView.userMgmt) _loadBans();
+                _go(t.$4);
               },
             ),
           ),
+      ],
+    );
+  }
+
+  Widget _userMgmtHub(ScrollController scroll) {
+    return ListView(
+      controller: scroll,
+      children: [
+        _hubTile(
+          Icons.people_outline_rounded,
+          'Odadaki kullanıcılar',
+          'Ses ver, koltuk, yetki, kanaldan at',
+          () => _go(_MgmtView.users),
+        ),
+        _hubTile(
+          Icons.gavel_outlined,
+          'Cezalar',
+          'Ban, kick, sessize alınanlar',
+          () {
+            _loadBans();
+            _go(_MgmtView.penalties);
+          },
+        ),
+        if (perms.canMuteUsers || isOwner)
+          _hubTile(
+            Icons.volume_off_rounded,
+            'Sessize alınmış kullanıcılar',
+            'Susturma listesi',
+            () => _closeAndVoid(() {
+              showVoiceMutedUsersSheet(
+                context: context,
+                ref: ref,
+                roomKey: room.liveKey,
+                presence: _live.presence,
+                perms: perms,
+              );
+            }),
+          ),
+        _hubTile(
+          Icons.headset_mic_rounded,
+          'Seste olanlar',
+          'Ses kanalındaki kullanıcılar (voice API)',
+          () => _closeAndVoid(() {
+            showVoiceRoomVoiceUsersSheet(
+              context,
+              ref: ref,
+              liveKey: room.liveKey,
+              onUserTap: widget.onUserTap,
+            );
+          }),
+        ),
+        if (perms.canAssignSeats || isOwner || perms.isSiteAdmin)
+          _hubTile(
+            Icons.record_voice_over_rounded,
+            'Konuşma sırası',
+            'El kaldıranlar ve dinleyici kuyruğu',
+            () => _closeAndVoid(() {
+              showVoiceSpeakQueueSheet(
+                context,
+                ref,
+                room: room,
+                live: _live,
+                perms: perms,
+              );
+            }),
+          ),
+      ],
+    );
+  }
+
+  Widget _hubTile(
+    IconData icon,
+    String title,
+    String subtitle,
+    VoidCallback onTap,
+  ) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.12),
+      child: ListTile(
+        leading: Icon(icon, color: VoiceRoomTokens.neonBlue),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.white.withValues(alpha: 0.55),
+          ),
+        ),
+        trailing: const Icon(Icons.chevron_right_rounded),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  Widget _userSettingsView(ScrollController scroll) {
+    final ui = ref.watch(voiceRoomUiProvider);
+    final user = ref.watch(authControllerProvider).valueOrNull;
+    final role = VoiceRoomMenuRole.label(perms, user: user, live: _live);
+
+    return ListView(
+      controller: scroll,
+      children: [
+        ListTile(
+          leading: const Icon(Icons.badge_outlined),
+          title: const Text('Rumuzunuz'),
+          subtitle: Text(role),
+        ),
+        ListTile(
+          leading: const Icon(Icons.edit_outlined),
+          title: const Text('Takma adı değiştir'),
+          onTap: () async {
+            await _changeNickname();
+            if (mounted) Navigator.pop(context);
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.auto_awesome_outlined),
+          title: const Text('Efektler ve görünüm'),
+          onTap: () => _closeAndVoid(() => showVoiceEffectsSheet(context, ref)),
+        ),
+        SwitchListTile(
+          title: const Text('Bildirim sesi'),
+          subtitle: const Text('Giriş ve oda bildirimleri'),
+          value: ui.chatNotificationSoundEnabled,
+          onChanged: (_) {
+            ref.read(voiceRoomUiProvider.notifier).toggleChatNotificationSound();
+          },
+        ),
+        SwitchListTile(
+          title: const Text('Hediye animasyonları'),
+          value: ui.giftAnimationsEnabled,
+          onChanged: (_) {
+            ref.read(voiceRoomUiProvider.notifier).toggleGiftAnimations();
+          },
+        ),
+        if (!_selfOnSeat(user))
+          ListTile(
+            leading: Icon(
+              ui.requestSpeakPending
+                  ? Icons.hourglass_top_rounded
+                  : Icons.pan_tool_alt_rounded,
+              color: VoiceRoomTokens.neonPink,
+            ),
+            title: Text(
+              ui.requestSpeakPending
+                  ? 'Konuşma isteğini iptal'
+                  : 'Konuşma isteği gönder',
+            ),
+            subtitle: Text(
+              ui.requestSpeakPending
+                  ? 'Moderatör onayı bekleniyor'
+                  : 'Onay sonrası koltuğa alınırsınız',
+            ),
+            onTap: () async {
+              final pending = ui.requestSpeakPending;
+              final err = pending
+                  ? await _ctrl.cancelSpeakRequest()
+                  : await _ctrl.requestSpeak();
+              await _snack(
+                err ??
+                    (pending
+                        ? 'Konuşma isteği iptal edildi'
+                        : 'Konuşma isteği gönderildi'),
+              );
+            },
+          ),
+        ListTile(
+          leading: const Icon(Icons.diamond_outlined, color: VoiceRoomTokens.gold),
+          title: const Text('Jeton yükle'),
+          onTap: () => _closeAndVoid(() => openJetonStore(context, ref: ref)),
+        ),
+        ListTile(
+          leading: const Icon(Icons.flag_outlined, color: VoiceRoomTokens.neonPink),
+          title: const Text('Odayı şikayet et'),
+          subtitle: const Text('Uygunsuz içerik veya davranış bildir'),
+          onTap: () {
+            final roomKey = widget.room.apiRoomKey.isNotEmpty
+                ? widget.room.apiRoomKey
+                : widget.room.id;
+            _closeAndVoid(
+              () => openReportFlow(
+                context,
+                ReportTarget(
+                  type: ReportTargetType.voiceRoom,
+                  targetId: roomKey,
+                  displayTitle: widget.room.displayTitle,
+                  contextLabel: 'Sesli oda',
+                ),
+              ),
+            );
+          },
+        ),
       ],
     );
   }
@@ -261,8 +550,40 @@ class _VoiceRoomManagementPanelState
               );
               if (ok != true) return;
               final err = await _ctrl.clearChatAsModerator();
+              if (!mounted) return;
+              Navigator.pop(context);
               await _snack(err ?? 'Sohbet temizlendi');
             },
+          ),
+        if (canMod || isOwner)
+          ListTile(
+            leading: const Icon(Icons.terminal_rounded),
+            title: const Text('Oda komutları'),
+            subtitle: const Text('!duyuru, !kick, !ban, müzik isteği'),
+            onTap: () => _closeAndVoid(() {
+              showVoiceRoomCommandsPanel(
+                context,
+                ref,
+                room: room,
+                perms: perms,
+                isOwner: isOwner,
+              );
+            }),
+          ),
+        if (canMod)
+          ListTile(
+            leading: const Icon(Icons.block_rounded),
+            title: const Text('Yasaklı kelimeler'),
+            subtitle: Text('${_live.bannedWords.length} kelime — düzenle'),
+            onTap: () => _closeAndVoid(() {
+              showVoiceRoomToolsSheet(
+                context,
+                ref,
+                room: room,
+                perms: perms,
+                isOwner: isOwner,
+              );
+            }),
           ),
         if (isOwner)
           ListTile(
@@ -270,11 +591,6 @@ class _VoiceRoomManagementPanelState
             title: const Text('Sahipligi devret'),
             onTap: () => _pickUserForTransfer(scroll),
           ),
-        ListTile(
-          leading: const Icon(Icons.badge_outlined),
-          title: const Text('Takma adı değiştir'),
-          onTap: _changeNickname,
-        ),
       ],
     );
   }
@@ -291,17 +607,22 @@ class _VoiceRoomManagementPanelState
       context: context,
       backgroundColor: const Color(0xFF12082A),
       builder: (ctx) => SafeArea(
-        child: ListView.builder(
-          shrinkWrap: true,
-          itemCount: users.length,
-          itemBuilder: (_, i) {
-            final u = users[i];
-            return ListTile(
-              leading: VoiceNeonAvatar(url: u.image, size: 36),
-              title: Text(u.displayName, style: const TextStyle(color: Colors.white)),
-              onTap: () => Navigator.pop(ctx, u),
-            );
-          },
+        child: SizedBox(
+          height: ListPerf.nestedListHeight(
+            itemCount: users.length,
+            itemExtent: 56,
+          ).clamp(56, 420),
+          child: ListView.builder(
+            itemCount: users.length,
+            itemBuilder: (_, i) {
+              final u = users[i];
+              return ListTile(
+                leading: VoiceNeonAvatar(url: u.image, size: 36),
+                title: Text(u.displayName, style: const TextStyle(color: Colors.white)),
+                onTap: () => Navigator.pop(ctx, u),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -318,11 +639,18 @@ class _VoiceRoomManagementPanelState
       ),
     );
     if (confirm != true) return;
-    final err = await _ctrl.assignRoleToUser(
-      targetUserId: picked.id,
-      roleSymbol: '~',
-    );
-    await _snack(err ?? 'Oda devredildi');
+    try {
+      await ref.read(chatRoomRemoteProvider).transferOwnership(
+            roomKey: widget.room.apiRoomKey.isNotEmpty
+                ? widget.room.apiRoomKey
+                : widget.room.id,
+            newOwnerId: picked.id,
+          );
+      await _ctrl.refresh();
+      await _snack('Oda ${picked.displayName} kullanıcısına devredildi');
+    } catch (e) {
+      await _snack(ApiException.userMessage(e));
+    }
   }
 
   Future<void> _changeNickname() async {
@@ -377,186 +705,159 @@ class _VoiceRoomManagementPanelState
                 .join(' · '),
           ),
           trailing: const Icon(Icons.chevron_right_rounded),
-          onTap: () {
-            setState(() {
-              _selectedUser = u;
-              _view = _MgmtView.userActions;
-            });
-          },
+          onTap: () => _openUserModeration(u),
         );
       },
     );
   }
 
-  Widget _userActionsView() {
-    final u = _selectedUser;
-    if (u == null) return const SizedBox.shrink();
-    final canMod = perms.canModerate ||
-        isOwner ||
-        perms.canMuteUsers ||
-        perms.canKickUsers ||
-        perms.canBanUsers;
-    if (!canMod) {
-      return Center(
-        child: TextButton(
-          onPressed: () => widget.onUserTap?.call(u),
-          child: const Text('Profili aç'),
-        ),
-      );
+  void _openUserModeration(ChatRoomPresence u) {
+    if (!VoiceRoomUserActions.canOpenModerationSheet(perms)) {
+      widget.onUserTap?.call(u);
+      return;
     }
     final target = VoiceRoomModerationTarget.fromPresence(u);
     final isDj = room.djUserIds.contains(u.id) ||
         _live.dj.djUsers.any((d) => d.id == u.id);
-
-    return GridView.count(
-      crossAxisCount: 2,
-      padding: const EdgeInsets.all(8),
-      mainAxisSpacing: 8,
-      crossAxisSpacing: 8,
-      childAspectRatio: 1.4,
-      children: [
-        _actionTile('Sustur', Icons.mic_off_rounded, () => _muteUser(u.id)),
-        _actionTile('Kanaldan at', Icons.logout_rounded, () => _kickUser(u.id)),
-        _actionTile('Engelle', Icons.block_rounded, () => _banUser(u.id)),
-        _actionTile('Yetki ver', Icons.admin_panel_settings_outlined,
-            () => _showRolePicker(u)),
-        if (target.isModerator || target.isSop || target.isSpeaker)
-          _actionTile('Yetki kaldır', Icons.remove_moderator_outlined,
-              () => _revokeRole(u)),
-        _actionTile('Ban kaldır', Icons.lock_open_rounded, () => _unbanUser(u.id)),
-        _actionTile('Detaylı moderasyon', Icons.more_horiz_rounded, () {
-          Navigator.pop(context);
-          showVoiceRoomModerationSheet(
-            context: context,
-            ref: ref,
-            room: room,
-            targetUser: target,
-            isOwnerOrMod: true,
-            perms: perms,
-            isOwner: isOwner,
-            isTargetDj: isDj,
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _actionTile(String label, IconData icon, VoidCallback onTap) {
-    return Material(
-      color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: VoiceRoomTokens.neonBlue),
-            const SizedBox(height: 6),
-            Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showRolePicker(ChatRoomPresence u) async {
-    final sym = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: const Color(0xFF12082A),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Yetki seç', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
-            ),
-            for (final e in const [
-              ('+', '+V Ses'),
-              ('@', 'Moderatör'),
-              ('&', 'Yetkili'),
-            ])
-              ListTile(
-                title: Text('${e.$1} ${e.$2}', style: const TextStyle(color: Colors.white)),
-                onTap: () => Navigator.pop(ctx, e.$1),
-              ),
-          ],
-        ),
-      ),
-    );
-    if (sym == null) return;
-    final err = await _ctrl.assignRoleToUser(targetUserId: u.id, roleSymbol: sym);
-    if (sym == '+') {
-      for (var seat = 0; seat <= 14; seat++) {
-        final seatErr = await _ctrl.assignSeat(seatIndex: seat, userId: u.id);
-        if (seatErr == null) break;
-      }
-    }
-    await _snack(err ?? 'Yetki verildi ($sym)');
-  }
-
-  Future<void> _revokeRole(ChatRoomPresence u) async {
-    final err = await _ctrl.assignRoleToUser(targetUserId: u.id, roleSymbol: '+');
-    await _snack(err ?? 'Yetki kaldırıldı');
-  }
-
-  Future<void> _muteUser(String userId) async {
-    try {
-      await ref.read(chatRoomRemoteProvider).muteUser(
-            roomKey: room.liveKey,
-            userId: userId,
-            minutes: 30,
-            reason: 'Oda moderasyonu',
-          );
-      await _ctrl.refresh();
-      await _snack('Kullanıcı susturuldu');
-    } catch (e) {
-      await _snack(ApiException.userMessage(e));
-    }
-  }
-
-  Future<void> _kickUser(String userId) async {
-    final result = await _ctrl.kickUserModeration(userId: userId);
-    await _snack(result?.feedbackMessage ?? 'Kullanıcı atıldı');
-  }
-
-  Future<void> _banUser(String userId) async {
-    final err = await _ctrl.banUserModeration(userId: userId);
-    await _snack(err ?? 'Kullanıcı engellendi (ban)');
-  }
-
-  Future<void> _unbanUser(String userId) async {
-    final err = await _ctrl.unbanUserModeration(userId: userId);
-    await _snack(err ?? 'Ban kaldırıldı');
+    _closeAndVoid(() {
+      showVoiceRoomModerationSheet(
+        context: context,
+        ref: ref,
+        room: room,
+        targetUser: target,
+        isOwnerOrMod: true,
+        perms: perms,
+        isOwner: isOwner,
+        isTargetDj: isDj,
+      );
+    });
   }
 
   Widget _roomView(ScrollController scroll) {
     final canBg = perms.canChangeBackground || isOwner;
-    final isVip = room.isVipGoldRoom;
+    final pk = ref.watch(pkBattleForRoomProvider(room));
+    final pkLive = isPkBattleLive(pk);
+    final roomKey = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
 
     return ListView(
       controller: scroll,
       children: [
-        if (canBg) ...[
+        ListTile(
+          leading: Icon(
+            pkLive ? Icons.flash_on_rounded : Icons.sports_mma_rounded,
+            color: VoiceRoomTokens.neonPink,
+          ),
+          title: Text(pkLive ? 'PK savaşı' : 'PK daveti'),
+          onTap: () => _closeAndVoid(() {
+            if (pkLive) {
+              context.push('/voice-room/$roomKey/pk', extra: room);
+            } else if (widget.onPkInvite != null) {
+              widget.onPkInvite!();
+            } else {
+              context.push('/voice-room/$roomKey/pk-invite', extra: room);
+            }
+          }),
+        ),
+        if (perms.canManageDj || isOwner || perms.canModerate)
+          ListTile(
+            leading: const Icon(Icons.library_music_rounded),
+            title: const Text('Müzik kontrolü'),
+            subtitle: const Text('Şarkı isteği (video/ses) ve DJ'),
+            onTap: () => _closeAndVoid(() {
+              showVoiceMusicControlHub(
+                context,
+                ref,
+                room: room,
+                perms: perms,
+                isOwner: isOwner,
+              );
+            }),
+          ),
+        if (isOwner || perms.canManageRoom)
+          ListTile(
+            leading: const Icon(Icons.tune_rounded),
+            title: const Text('Müzik ayarları'),
+            subtitle: Text(
+              'DJ: ${_live.dj.musicEnabled ? "açık" : "kapalı"} · '
+              '${_live.dj.musicRequestCost} jeton · kuyruk ${_live.dj.maxMusicQueue}',
+            ),
+            onTap: () => _closeAndVoid(() {
+              showVoiceRoomMusicSettingsDialog(context, ref, room: room);
+            }),
+          ),
+        ListTile(
+          leading: const Icon(Icons.music_note_rounded),
+          title: const Text('Şarkı isteği'),
+          subtitle: const Text('Video (CDN) veya ses (YouTube API)'),
+          onTap: () => _closeAndVoid(() {
+            showVoiceYoutubeSongSheet(context, ref, room: room);
+          }),
+        ),
+        if (canBg)
           ListTile(
             leading: const Icon(Icons.photo_library_rounded),
-            title: const Text('Arkaplan resmini değiştir'),
-            subtitle: const Text('Galeriden veya kameradan yükle'),
+            title: const Text('Arkaplan'),
+            subtitle: const Text('Sunucudaki hazır görseller veya yükle'),
             onTap: () {
               Navigator.pop(context);
               showVoiceRoomBackgroundSheet(context, ref, room: room);
             },
-          ),
-          ListTile(
-            leading: const Icon(Icons.collections_rounded),
-            title: const Text('Hazır arkaplanlar'),
-            onTap: _pickCatalogBackground,
-          ),
-        ] else
+          )
+        else
           const ListTile(
             title: Text('Arkaplan değiştirme yetkiniz yok'),
           ),
+        if (isOwner || perms.canManageRoom) ...[
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.edit_rounded),
+            title: const Text('Oda adı ve açıklama'),
+            subtitle: Text(room.displayTitle),
+            onTap: _editRoomDetails,
+          ),
+          ListTile(
+            leading: const Icon(Icons.category_rounded),
+            title: const Text('Kategori'),
+            subtitle: Text(voiceRoomCategoryLabel(room.category)),
+            onTap: _pickCategory,
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.lock_outline_rounded),
+            title: const Text('Oda kilidi'),
+            subtitle: Text(
+              room.isLocked == true || room.hasPassword == true
+                  ? 'Giriş kısıtlı'
+                  : 'Herkes girebilir',
+            ),
+            value: room.isLocked == true,
+            onChanged: (v) async {
+              final err = await _ctrl.setRoomLocked(v);
+              if (!mounted) return;
+              if (err != null) {
+                await _snack(err);
+                setState(() {});
+                return;
+              }
+              await _snack(v ? 'Oda kilitlendi' : 'Oda kilidi kaldırıldı');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.event_seat_rounded),
+            title: const Text('Koltuk sayısı'),
+            subtitle: Text(
+              '${_live.roomSeatCount ?? room.seatCount ?? kDefaultVoiceSeatCount} mikrofon',
+            ),
+            onTap: _pickSeatCount,
+          ),
+          ListTile(
+            leading: const Icon(Icons.groups_rounded),
+            title: const Text('Maksimum kullanıcı'),
+            subtitle: Text(
+              '${_live.roomMaxUsers ?? room.maxUsers ?? 15} kişi',
+            ),
+            onTap: _pickMaxUsers,
+          ),
+        ],
         if (isOwner || perms.canManageRoom) ...[
           const Divider(),
           ListTile(
@@ -573,12 +874,12 @@ class _VoiceRoomManagementPanelState
             onTap: _startGiftGoal,
           ),
         ],
-        if (isVip && (isOwner || perms.canManageRoom)) ...[
+        if (isOwner || perms.canManageRoom) ...[
           const Divider(),
           ListTile(
             leading: const Icon(Icons.lock_rounded),
-            title: const Text('Oda şifresi (VIP)'),
-            subtitle: const Text('Girenler şifreyi bilmeli'),
+            title: const Text('Giriş şifresi'),
+            subtitle: const Text('Odaya giriş için şifre belirle'),
             onTap: _setRoomPassword,
           ),
         ],
@@ -718,47 +1019,177 @@ class _VoiceRoomManagementPanelState
     return '$v';
   }
 
-  Future<void> _pickCatalogBackground() async {
+  bool _selfOnSeat(UserEntity? user) {
+    final id = user?.id;
+    if (id == null || id.isEmpty) return false;
+    for (final p in _live.presence) {
+      if (p.id == id && p.seatIndex != null) return true;
+    }
+    return false;
+  }
+
+  Future<void> _editRoomDetails() async {
+    final nameCtrl = TextEditingController(text: room.displayTitle);
+    final descCtrl = TextEditingController(text: room.descTr ?? '');
+    final rulesCtrl = TextEditingController(text: room.rulesTr ?? '');
     try {
-      final urls = await _ctrl.fetchBackgrounds();
-      if (!mounted || urls.isEmpty) {
-        await _snack('Arkaplan listesi boş');
-        return;
-      }
-      final picked = await showModalBottomSheet<String>(
+      final ok = await showDialog<bool>(
         context: context,
-        backgroundColor: const Color(0xFF12082A),
-        isScrollControlled: true,
-        builder: (ctx) => SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.45,
-          child: GridView.builder(
-            padding: const EdgeInsets.all(12),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemCount: urls.length,
-            itemBuilder: (_, i) => GestureDetector(
-              onTap: () => Navigator.pop(ctx, urls[i]),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: CanlifalNetworkImage(
-                  url: urls[i],
-                  thumbnailWidth: 240,
-                  fit: BoxFit.cover,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Oda bilgileri'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Oda adı',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLength: 64,
                 ),
-              ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Açıklama',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                  maxLength: 280,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: rulesCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Oda kuralları',
+                    border: OutlineInputBorder(),
+                    hintText: 'Sohbette kayan kurallar metni',
+                  ),
+                  maxLines: 4,
+                  maxLength: 500,
+                ),
+              ],
             ),
           ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('İptal')),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Kaydet'),
+            ),
+          ],
         ),
       );
-      if (picked == null) return;
-      final err = await _ctrl.setRoomBackground(picked);
-      await _snack(err ?? 'Arkaplan güncellendi');
-    } catch (e) {
-      await _snack(ApiException.userMessage(e));
+      if (ok != true) return;
+      final err = await _ctrl.updateRoomDetails(
+        name: nameCtrl.text,
+        description: descCtrl.text,
+        rules: rulesCtrl.text,
+      );
+      await _snack(err ?? 'Oda bilgileri güncellendi');
+    } finally {
+      nameCtrl.dispose();
+      descCtrl.dispose();
+      rulesCtrl.dispose();
     }
+  }
+
+
+  Future<void> _pickCategory() async {
+    final current = normalizeVoiceRoomCategory(room.category);
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Oda kategorisi'),
+        children: kVoiceRoomAssignableCategories
+            .map(
+              (c) => SimpleDialogOption(
+                onPressed: () => Navigator.pop(ctx, c.id),
+                child: Row(
+                  children: [
+                    if (c.id == current)
+                      const Icon(Icons.check_rounded, size: 20)
+                    else
+                      const SizedBox(width: 20),
+                    const SizedBox(width: 8),
+                    Text(c.label),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+    if (picked == null || picked == current) return;
+    final err = await _ctrl.updateRoomCategory(picked);
+    await _snack(
+      err ?? 'Kategori ${voiceRoomCategoryLabel(picked)} olarak güncellendi',
+    );
+  }
+
+  Future<void> _pickSeatCount() async {
+    final current =
+        _live.roomSeatCount ?? room.seatCount ?? kDefaultVoiceSeatCount;
+    final options = const [8, 10, 12, 15];
+    final picked = await showDialog<int>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Koltuk sayısı'),
+        children: options
+            .map(
+              (n) => SimpleDialogOption(
+                onPressed: () => Navigator.pop(ctx, n),
+                child: Row(
+                  children: [
+                    if (n == current)
+                      const Icon(Icons.check_rounded, size: 20)
+                    else
+                      const SizedBox(width: 20),
+                    const SizedBox(width: 8),
+                    Text('$n mikrofon'),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+    if (picked == null || picked == current) return;
+    final err = await _ctrl.updateRoomCapacity(seatCount: picked);
+    await _snack(err ?? 'Koltuk sayısı $picked olarak güncellendi');
+  }
+
+  Future<void> _pickMaxUsers() async {
+    final current = _live.roomMaxUsers ?? room.maxUsers ?? 15;
+    final options = const [15, 25, 50, 100];
+    final picked = await showDialog<int>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Maksimum kullanıcı'),
+        children: options
+            .map(
+              (n) => SimpleDialogOption(
+                onPressed: () => Navigator.pop(ctx, n),
+                child: Row(
+                  children: [
+                    if (n == current)
+                      const Icon(Icons.check_rounded, size: 20)
+                    else
+                      const SizedBox(width: 20),
+                    const SizedBox(width: 8),
+                    Text('$n kişi'),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+    if (picked == null || picked == current) return;
+    final err = await _ctrl.updateRoomCapacity(maxUsers: picked);
+    await _snack(err ?? 'Maksimum kullanıcı $picked olarak güncellendi');
   }
 
   Future<void> _setRoomPassword() async {
@@ -874,18 +1305,10 @@ class _VoiceRoomManagementPanelState
             padding: const EdgeInsets.only(top: 8),
             child: OutlinedButton.icon(
               onPressed: () {
-                Navigator.pop(context);
-                showVoiceModerationUserPicker(
-                  context: context,
-                  ref: ref,
-                  room: room,
-                  perms: perms,
-                  action: VoiceModerationPickerAction.kick,
-                  presence: _live.presence,
-                );
+                _go(_MgmtView.users);
               },
-              icon: const Icon(Icons.person_remove_rounded),
-              label: const Text('Kullanıcı at (kick)'),
+              icon: const Icon(Icons.people_outline_rounded),
+              label: const Text('Kullanıcı seç ve kanaldan at'),
             ),
           ),
       ],

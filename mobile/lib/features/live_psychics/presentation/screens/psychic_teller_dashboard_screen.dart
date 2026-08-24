@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +15,11 @@ import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_r
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_live_event_bus.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_invite_diagnostic_card.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_recent_sessions_panel.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_rtc_session_report_card.dart';
 
 class PsychicTellerDashboardState {
   const PsychicTellerDashboardState({
@@ -52,13 +58,78 @@ class PsychicTellerDashboardState {
 class PsychicTellerDashboardController
     extends AutoDisposeNotifier<PsychicTellerDashboardState> {
   Timer? _poll;
+  StreamSubscription<PsychicRequestEntity>? _liveBusSub;
 
   @override
   PsychicTellerDashboardState build() {
-    ref.onDispose(() => _poll?.cancel());
+    ref.onDispose(() {
+      _poll?.cancel();
+      _liveBusSub?.cancel();
+    });
+    _liveBusSub?.cancel();
+    _liveBusSub =
+        ref.read(psychicLiveEventBusProvider).stream.listen(_onLiveRequest);
+    ref.listen<PsychicSessionCancelEvent?>(
+      psychicSessionCancelSignalProvider,
+      (prev, next) {
+        if (next == null) return;
+        _removeRequest(next.sessionId);
+      },
+    );
     Future.microtask(refresh);
-    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _pollRequests());
+    _schedulePoll();
     return const PsychicTellerDashboardState();
+  }
+
+  void _schedulePoll() {
+    _poll?.cancel();
+    // PsychicIncomingHost SSE + event bus gerçek zamanlı; HTTP yalnızca yedek.
+    _poll = Timer.periodic(const Duration(seconds: 20), (_) => _pollRequests());
+  }
+
+  void _onLiveRequest(PsychicRequestEntity req) {
+    if (!req.isPending) return;
+    final profile = state.profile;
+    if (profile == null || !profile.isUsable) return;
+    final tellerId = req.tellerId.trim();
+    if (tellerId.isNotEmpty && tellerId != profile.id) return;
+    final list = [...state.requests];
+    list.removeWhere((r) => r.sessionId == req.sessionId);
+    list.insert(0, req);
+    state = state.copyWith(requests: list);
+  }
+
+  void _removeRequest(String sessionId) {
+    if (sessionId.isEmpty) return;
+    final next = state.requests
+        .where((r) => r.sessionId != sessionId)
+        .toList(growable: false);
+    if (next.length == state.requests.length) return;
+    state = state.copyWith(requests: next);
+  }
+
+  Future<PsychicEntity?> _profileWithServerOnline(PsychicEntity? profile) async {
+    if (profile == null) return null;
+    final onlineMap =
+        await ref.read(livePsychicsRepositoryProvider).fetchOnlineStatus();
+    if (onlineMap == null) return profile;
+    final isOnline = onlineMap['isOnline'] == true ||
+        onlineMap['online'] == true ||
+        onlineMap['status']?.toString().toLowerCase() == 'online';
+    return PsychicEntity(
+      id: profile.id,
+      userId: profile.userId,
+      name: profile.name,
+      bio: profile.bio,
+      avatarUrl: profile.avatarUrl,
+      isOnline: isOnline,
+      rating: profile.rating,
+      reviewCount: profile.reviewCount,
+      pricePerMinute: profile.pricePerMinute,
+      specialties: profile.specialties,
+      category: profile.category,
+      applicationStatus: profile.applicationStatus,
+    );
   }
 
   Future<void> refresh() async {
@@ -68,8 +139,9 @@ class PsychicTellerDashboardController
       await ref.read(approvedPsychicProvider.notifier).refresh();
       approved = ref.read(approvedPsychicProvider);
     }
-    final profile = approved.profile ??
+    var profile = approved.profile ??
         await ref.read(livePsychicsRepositoryProvider).fetchMyProfile();
+    profile = await _profileWithServerOnline(profile);
     state = state.copyWith(profile: profile, loading: false);
     await _pollRequests();
   }
@@ -126,21 +198,6 @@ class PsychicTellerDashboardController
       requests: state.requests
           .where((r) => r.sessionId != req.sessionId)
           .toList(growable: false),
-      clearProcessing: true,
-    );
-  }
-
-  Future<void> hold(PsychicRequestEntity req) async {
-    state = state.copyWith(processingId: req.sessionId);
-    final respond = await ref
-        .read(livePsychicsRepositoryProvider)
-        .respondSession(req.sessionId, action: 'hold');
-    state = state.copyWith(
-      requests: respond.success
-          ? state.requests
-              .where((r) => r.sessionId != req.sessionId)
-              .toList(growable: false)
-          : state.requests,
       clearProcessing: true,
     );
   }
@@ -319,8 +376,13 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                 ref.read(psychicTellerDashboardProvider.notifier).refresh(),
             child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-              itemCount: 6 + requests.length,
+              itemCount: (kDebugMode ? 9 : 7) + requests.length,
               itemBuilder: (context, index) {
+                final debugSlotCount = kDebugMode ? 2 : 0;
+                const recentSessionsIndex = 4;
+                final requestsHeaderIndex = recentSessionsIndex + 1 + debugSlotCount;
+                final requestsEmptyIndex = requestsHeaderIndex + 1;
+                final requestsStartIndex = requestsEmptyIndex + 1;
                 if (index == 0) {
                   return RepaintBoundary(
                     child: _ProfileHeader(
@@ -359,7 +421,28 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                     ),
                   );
                 }
-                if (index == 4) {
+                if (index == recentSessionsIndex) {
+                  return const RepaintBoundary(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: PsychicRecentSessionsPanel(),
+                    ),
+                  );
+                }
+                if (kDebugMode && index == recentSessionsIndex + 1) {
+                  return const RepaintBoundary(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: PsychicInviteDiagnosticCard(),
+                    ),
+                  );
+                }
+                if (kDebugMode && index == recentSessionsIndex + 2) {
+                  return const RepaintBoundary(
+                    child: PsychicRtcSessionReportCard(),
+                  );
+                }
+                if (index == requestsHeaderIndex) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 16, bottom: 12),
                     child: Text(
@@ -368,7 +451,7 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                     ),
                   );
                 }
-                if (index == 5) {
+                if (index == requestsEmptyIndex) {
                   if (requests.isEmpty) {
                     return Text(
                       profile.isOnline
@@ -379,7 +462,7 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                   }
                   return const SizedBox.shrink();
                 }
-                final req = requests[index - 6];
+                final req = requests[index - requestsStartIndex];
                 return RepaintBoundary(
                   child: _PendingTile(
                     request: req,
@@ -387,9 +470,6 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                     onAccept: () => ref
                         .read(psychicTellerDashboardProvider.notifier)
                         .accept(context, req),
-                    onHold: () => ref
-                        .read(psychicTellerDashboardProvider.notifier)
-                        .hold(req),
                     onReject: () => ref
                         .read(psychicTellerDashboardProvider.notifier)
                         .reject(req),
@@ -690,14 +770,12 @@ class _PendingTile extends StatelessWidget {
     required this.request,
     required this.processing,
     required this.onAccept,
-    required this.onHold,
     required this.onReject,
   });
 
   final PsychicRequestEntity request;
   final bool processing;
   final VoidCallback onAccept;
-  final VoidCallback onHold;
   final VoidCallback onReject;
 
   @override
@@ -734,13 +812,6 @@ class _PendingTile extends StatelessWidget {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Text('Kabul'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: processing ? null : onHold,
-                    child: const Text('Beklet'),
                   ),
                 ),
                 const SizedBox(width: 8),

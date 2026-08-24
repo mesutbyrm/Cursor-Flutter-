@@ -5,12 +5,12 @@ import '../../../../core/performance/list_perf.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../feed/domain/entities/post_entity.dart';
-import '../../../social/presentation/widgets/instagram/social_instagram_post_card.dart';
 import '../../../social/presentation/providers/user_social_posts_notifier.dart';
+import '../../../social/presentation/widgets/instagram/social_instagram_post_card.dart';
 
-/// Facebook tarzı dikey paylaşım duvarı — lazy builder + skeleton.
-class UserPostsTimeline extends ConsumerStatefulWidget {
-  const UserPostsTimeline({
+/// Paylaşım duvarı — parent [CustomScrollView] içinde tek scroll olarak kullanılır.
+class UserPostsTimelineSliver extends ConsumerStatefulWidget {
+  const UserPostsTimelineSliver({
     super.key,
     required this.userId,
     this.focusPostId,
@@ -20,10 +20,16 @@ class UserPostsTimeline extends ConsumerStatefulWidget {
   final String? focusPostId;
 
   @override
-  ConsumerState<UserPostsTimeline> createState() => _UserPostsTimelineState();
+  ConsumerState<UserPostsTimelineSliver> createState() =>
+      _UserPostsTimelineSliverState();
 }
 
-class _UserPostsTimelineState extends ConsumerState<UserPostsTimeline> {
+/// Geriye dönük alias — yalnızca sliver kullanımına yönlendirir.
+@Deprecated('Use UserPostsTimelineSliver inside CustomScrollView')
+typedef UserPostsTimeline = UserPostsTimelineSliver;
+
+class _UserPostsTimelineSliverState
+    extends ConsumerState<UserPostsTimelineSliver> {
   final _keys = <String, GlobalKey>{};
   var _scrolledToFocus = false;
 
@@ -54,27 +60,33 @@ class _UserPostsTimelineState extends ConsumerState<UserPostsTimeline> {
         ref.watch(userSocialPostsNotifierProvider(widget.userId));
 
     return postsAsync.when(
-      loading: () => const Column(
-        children: [
-          PremiumPostSkeleton(),
-          PremiumPostSkeleton(),
-        ],
+      loading: () => const SliverToBoxAdapter(
+        child: Column(
+          children: [
+            PremiumPostSkeleton(),
+            PremiumPostSkeleton(),
+          ],
+        ),
       ),
-      error: (e, _) => AppErrorView.fromError(
-        e,
-        compact: true,
-        onRetry: () => ref.invalidate(
-          userSocialPostsNotifierProvider(widget.userId),
+      error: (e, _) => SliverToBoxAdapter(
+        child: AppErrorView.fromError(
+          e,
+          compact: true,
+          onRetry: () => ref.invalidate(
+            userSocialPostsNotifierProvider(widget.userId),
+          ),
         ),
       ),
       data: (posts) {
         if (posts.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(
-              child: Text(
-                'Henüz paylaşım yok',
-                style: TextStyle(fontWeight: FontWeight.w600),
+          return const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Text(
+                  'Henüz paylaşım yok',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           );
@@ -86,36 +98,38 @@ class _UserPostsTimelineState extends ConsumerState<UserPostsTimeline> {
             .read(userSocialPostsNotifierProvider(widget.userId).notifier)
             .hasMore;
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListView.builder(
-              cacheExtent: ListPerf.cacheExtent, shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: posts.length,
-              itemBuilder: (context, index) {
-                final post = posts[index];
-                return ListPerf.repaint(
-                  KeyedSubtree(
-                    key: _keyFor(post.id),
-                    child: SocialInstagramPostCard(
-                      post: post,
-                      openProfileOnTap: false,
+        return SliverMainAxisGroup(
+          slivers: [
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final post = posts[index];
+                  return ListPerf.repaint(
+                    KeyedSubtree(
+                      key: _keyFor(post.id),
+                      child: SocialInstagramPostCard(
+                        post: post,
+                        openProfileOnTap: false,
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+                childCount: posts.length,
+              ),
             ),
             if (hasMore)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: TextButton(
-                  onPressed: () => ref
-                      .read(
-                        userSocialPostsNotifierProvider(widget.userId).notifier,
-                      )
-                      .loadMore(),
-                  child: const Text('Daha fazla yükle'),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: TextButton(
+                    onPressed: () => ref
+                        .read(
+                          userSocialPostsNotifierProvider(widget.userId)
+                              .notifier,
+                        )
+                        .loadMore(),
+                    child: const Text('Daha fazla yükle'),
+                  ),
                 ),
               ),
           ],

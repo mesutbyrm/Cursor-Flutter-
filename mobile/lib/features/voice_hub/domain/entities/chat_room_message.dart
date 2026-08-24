@@ -97,11 +97,12 @@ class ChatRoomMessage extends Equatable {
   });
 
   factory ChatRoomMessage.fromJson(Map<String, dynamic> json) {
-    final content = json['content']?.toString() ??
+    final rawContent = json['content']?.toString() ??
         json['body']?.toString() ??
         json['message']?.toString() ??
         json['text']?.toString() ??
         '';
+    final content = rawContent.trim();
     final userJson = json['user'] ?? json['sender'];
     ChatRoomUserRef? user;
     if (userJson is Map) {
@@ -118,7 +119,8 @@ class ChatRoomMessage extends Equatable {
     int? giftJeton;
     String? giftTarget;
 
-    if (content.startsWith('[SYSTEM_VIP_JOIN:') ||
+    if (isSystemProtocol(content) ||
+        content.startsWith('[SYSTEM_VIP_JOIN:') ||
         VoiceOfficialJoin.isOfficialEntrance(content)) {
       kind = ChatMessageKind.systemJoin;
     } else if (content.startsWith('[SYSTEM_BAN]')) {
@@ -161,23 +163,80 @@ class ChatRoomMessage extends Equatable {
     return RegExp(r'[🌹🎁💎✨🎉]|x\d+', caseSensitive: false).hasMatch(content);
   }
 
+  static bool isSystemProtocol(String raw) {
+    final c = raw.trim();
+    if (c.isEmpty) return false;
+    return c.startsWith('[SYSTEM_') ||
+        c.contains('[SYSTEM_VIP_JOIN') ||
+        c.contains('[SYSTEM_LEAVE]');
+  }
+
+  /// Ham protokol satırını kullanıcı dostu metne çevirir.
+  static String formatDisplay(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return trimmed;
+    if (trimmed.startsWith('[SYSTEM_VIP_JOIN:')) {
+      return _formatVipJoin(trimmed);
+    }
+    if (trimmed.startsWith('[SYSTEM_LEAVE]')) {
+      final who = trimmed.replaceFirst('[SYSTEM_LEAVE]', '').trim();
+      final name = _cleanName(who);
+      return name.isNotEmpty ? '$name odadan ayrıldı' : 'Bir kullanıcı odadan ayrıldı';
+    }
+    if (trimmed.startsWith('[SYSTEM_BAN]')) {
+      return 'Bir kullanıcı odadan uzaklaştırıldı';
+    }
+    return trimmed;
+  }
+
+  static String _formatVipJoin(String raw) {
+    var inner = raw.replaceFirst('[SYSTEM_VIP_JOIN:', '').trim();
+    if (inner.endsWith(']')) {
+      inner = inner.substring(0, inner.length - 1);
+    }
+    // ADMIN]%Admin · ADMIN:Ali · ADMIN]Ali
+    final match = RegExp(r'^([A-Za-z_]+)([\]%:])(.*)$').firstMatch(inner);
+    if (match != null) {
+      final who = _cleanName(match.group(3) ?? '');
+      if (who.isNotEmpty) return '$who odaya katıldı';
+    }
+    final parts = inner.split(':');
+    if (parts.length > 1) {
+      final who = _cleanName(parts.sublist(1).join(':'));
+      if (who.isNotEmpty) return '$who odaya katıldı';
+    }
+    final fallback = _cleanName(inner);
+    if (fallback.isNotEmpty) return '$fallback odaya katıldı';
+    return 'Bir kullanıcı odaya katıldı';
+  }
+
+  static String _cleanName(String raw) {
+    return raw
+        .replaceAll(']', '')
+        .replaceFirst(RegExp(r'^[%@~&]+'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
   static String _displayContent(String raw, ChatMessageKind kind) {
     if (kind == ChatMessageKind.systemJoin) {
-      if (raw.startsWith('[SYSTEM_VIP_JOIN:')) {
-        final name =
-            raw.replaceFirst('[SYSTEM_VIP_JOIN:', '').replaceAll(']', '');
-        final parts = name.split(':');
-        final who = parts.length > 1 ? parts.last : name;
-        return '$who Sohbet sesli odasına katıldı! 🎤';
+      if (isSystemProtocol(raw) || raw.startsWith('[SYSTEM_VIP_JOIN:')) {
+        return formatDisplay(raw);
       }
       if (!raw.contains('katıldı') && !raw.toUpperCase().contains('JOINED')) {
-        return '$raw Sohbet sesli odasına katıldı! 🎤';
+        return '${_cleanName(raw)} odaya katıldı';
       }
       return raw;
     }
     if (kind == ChatMessageKind.systemLeave) {
-      final who = raw.replaceFirst('[SYSTEM_LEAVE]', '');
-      return '$who odadan ayrıldı';
+      if (raw.startsWith('[SYSTEM_LEAVE]')) {
+        return formatDisplay(raw);
+      }
+      final who = _cleanName(raw);
+      return who.isNotEmpty ? '$who odadan ayrıldı' : raw;
+    }
+    if (isSystemProtocol(raw)) {
+      return formatDisplay(raw);
     }
     return raw;
   }

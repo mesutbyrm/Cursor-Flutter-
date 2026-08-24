@@ -24,7 +24,11 @@ class FortuneAutoShareSettingTile extends ConsumerWidget {
       data: (mode) => ListTile(
         leading: const Icon(Icons.auto_awesome_outlined),
         title: const Text('Fal Sonuçlarımı Otomatik Paylaş'),
-        subtitle: Text(mode.label),
+        subtitle: Text(
+          mode == FortuneAutoShareMode.off
+              ? 'Kapalı — backend paylaşımı gösterilmez'
+              : '${mode.label} — sunucu otomatik paylaşır, uygulama senkronize eder',
+        ),
         trailing: const Icon(Icons.chevron_right_rounded),
         onTap: () => _pickMode(context, ref, mode),
       ),
@@ -43,6 +47,15 @@ class FortuneAutoShareSettingTile extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                'Paylaşımı sunucu oluşturur. Bu ayar yalnızca sosyal akışta '
+                'gösterilip gösterilmeyeceğini belirler.',
+                style: TextStyle(fontSize: 12, color: Colors.white70),
+                textAlign: TextAlign.center,
+              ),
+            ),
             const Padding(
               padding: EdgeInsets.all(16),
               child: Text(

@@ -1,5 +1,3020 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.354+392 (2026-08-24) — Sesli oda performans optimizasyonu
+
+- **Rebuild:** RTC sayfasında `_RtcLiveShell` tam-sayfa watch kaldırıldı; koltuk sahnesi `_VoiceRoomRtcSeatStage` ile izole edildi
+- **Speaking:** Sticky `isSpeaking` OR düzeltildi — sunucu `false` gönderince pulse durur
+- **TRTC:** Sesli oda (`audioOnly`) modda gereksiz volume evaluation kapatıldı
+- **GPU:** Android alt kontrol barında blur kaldırıldı (solid panel); iOS blur korundu
+- **Dokümantasyon:** `PERFORMANCE_VOICE_ROOM_ANALIZ.md`, `VOICE_ROOM_PERFORMANCE_CHECKLIST.md`
+
+## 1.0.353+391 (2026-08-24) — Koltuk, müzik donması, PK daveti
+
+- **Koltuk:** Oda girişinde ownerId korunur; yetkili kullanıcıya anında optimistik koltuk; join + izinler paralel
+- **Müzik donması:** Videoda ikinci iframe kapatıldı; WebView mutex; oynatma 80–500ms gecikmeli
+- **PK daveti:** Sahip olunan odalar her zaman poll edilir (başka odadayken de); slug=username sahiplik
+- **PK liste:** Sahibi belli odalar displayOnline=0 olsa da listelenir; davet sayfasında oda listesi yenilenir
+
+## 1.0.352+390 (2026-08-24) — Sesli oda müzik isteği + video kapat
+
+- **Müzik isteği:** Anında «isteniyor…» flash; `sending` kilidi kaldırıldı; video WebView 400ms gecikmeyle açılır (donma önleme)
+- **Video kapat:** `VoiceRoomVideoCloseBar` — videolu müzikte herkese görünür kırmızı «Kapat» şeridi
+- **RoomVideoOverlay:** Kapat düğmesi tüm kullanıcılara açık (oynat/duraklat yalnızca yetkililer)
+- **Soğuk başlangıç:** Yalnızca yetim audio_service durdurulur; `dismissed` bayrağı set edilmez
+
+## 1.0.351+389 (2026-08-23) — Sesli oda müzik durdurma
+
+- **Durdur / kapat:** Tüm kullanıcılar müzik şeridinden anında yerel çıkışı kapatabilir (ses + video)
+- **Sunucu kuyruğu:** Yalnızca yetkili kullanıcılar (oda sahibi, admin, isteyen) sunucu kuyruğunu temizler
+- **Müzik isteği:** Sheet kapanışında UI donması giderildi (`submitSelectedSong` yield)
+- **Soğuk başlangıç:** Uygulama yeniden açılınca yetim `audio_service` oturumu temizlenir
+
+## 1.0.350+388 (2026-08-23) — Sosyal kısa video kaldırma
+
+- **Sosyal sekmesi:** Kısa video şeridi (`ShortsHubStrip`) kaldırıldı; diğer hub sayfalarında kalır
+
+## 1.0.349+387 (2026-08-23) — CI sürüm sabitleme
+
+- **APK CI:** Metadata doğrulama derleme anındaki `steps.meta` sürümünü kullanır (`git pull` sonrası pubspec kayması giderildi)
+
+## 1.0.349+386 (2026-08-23) — CI metadata doğrulama
+
+- **APK CI:** Yerel derlenen APK önce doğrulanır; `apk-latest` CDN gecikmesi için retry artırıldı
+
+## 1.0.349+385 (2026-08-23) — Kısa video hub şeritleri
+
+- **Ortak bileşen:** `ShortsHubStrip` — `GET /api/short-videos?tab=foryou` (keşfet yedek)
+- **Ana sayfa:** Trend videolar Canlı Falcılar'ın hemen üstünde
+- **Hub sayfaları:** Canlı Falcılar, Sesli Odalar, Canlı Yayınlar, Fal & Tarot, Bana Özel, Sosyal
+- **Tıklama:** `/shorts?videoId=` + görüntülenme kaydı; boşsa bölüm gizlenir
+
+## 1.0.348+384 (2026-08-23) — Performans FAZ 18 (final)
+
+- **Kullanıcı profili:** `CustomScrollView` + `UserPostsTimelineSliver` — nested scroll kaldırıldı
+- **Jeton ödeme formu:** `ListView` shrinkWrap → `SingleChildScrollView`
+- **LazyNestedGridView:** Tüm grid delegate türleri için `nestedGridHeightForDelegate`
+- **`shrinkWrap: true`:** repo genelinde **0** (performans programı tamamlandı)
+
+## 1.0.347+383 (2026-08-23) — Performans FAZ 17
+
+- **VIP / hediye / fal:** Ayrıcalık grid, koleksiyon albümü, fal türleri grid — sabit yükseklik
+- **Canlı falcı:** Bahşiş + süre uzatma sheet grid'leri optimize edildi
+- **Üyelik / keşfet / admin:** Premium özellik grid, shorts keşfet video grid, admin/ajans panelleri
+- **Studio:** Emoji picker grid, taslak/müzik listeleri `ConstrainedBox` scroll
+- **Skeleton:** Mesaj listesi + kısa video grid iskelet sabit yükseklik
+
+## 1.0.346+382 (2026-08-23) — Performans FAZ 16
+
+- **LazyNestedGridView:** Merkezi `nestedGridHeight` — profil grid'lerinde `shrinkWrap` kaldırıldı
+- **Profil:** Cüzdan eylem grid, yayıncı paneli Wrap, içerik sekmeleri (fal/izlenen)
+- **Paylaşım grid:** TikTok tarzı profil paylaşım ızgarası sabit yükseklik
+- **Hediye:** Top gifters listesi, oturum özeti ve koltuk dökümü sheet scroll düzeltmesi
+- **Kısa video:** Kullanıcı profil video bölümü sabit yükseklik grid
+
+## 1.0.345+381 (2026-08-23) — Performans FAZ 15
+
+- **Oda ayarları / arka plan:** Hub settings tile grid + preset grid — `shrinkWrap` kaldırıldı
+- **Moderasyon sheet:** Eylem grid + koltuk seçici — sabit yükseklik `nestedGridHeight`
+- **Profil içerik:** İzlenen videolar grid + skeleton — `shrinkWrap` kaldırıldı
+- **Shorts profil grid:** `nestedInProfileScroll` yolu sabit yükseklik grid
+
+## 1.0.344+380 (2026-08-23) — Performans FAZ 14
+
+- **Voice sheet'ler:** Menü, komut paneli, kullanıcı listeleri — `shrinkWrap` kaldırıldı
+- **DM composer:** Eylem grid sabit yükseklik
+- **Flexible listeler:** Gereksiz `shrinkWrap` (sesli kullanıcı / mute / moderasyon picker)
+
+## 1.0.343+379 (2026-08-23) — Performans FAZ 13
+
+- **`/api/me` dedupe:** `RefreshMeGate` — 8 sn throttle + eşzamanlı `refreshMe` tekilleştirme
+- **@ mention listesi:** `shrinkWrap` kaldırıldı — sabit yükseklik
+- **Yakındaki odalar listesi:** `shrinkWrap` kaldırıldı — `nestedListHeight`
+
+## 1.0.342+378 (2026-08-23) — Performans FAZ 11/12
+
+- **APK arm64:** CI artık `canlifal-mobile-arm64-release.apk` üretiyor (~%30–40 daha küçük indirme)
+- **Temel oda feed:** `shrinkWrap` kaldırıldı — sabit yükseklik liste
+- **Benchmark:** `PERFORMANCE_AFTER.md` — gerçek cihaz ölçüm protokolü
+
+## 1.0.341+377 (2026-08-23) — Performans FAZ 10
+
+- **Discover kategori grid:** `shrinkWrap` kaldırıldı — `ListPerf.nestedGridHeight` ile sabit yükseklik grid (hub + kategori sheet)
+- **Shell prefetch:** Hediye katalogları T+200ms → **T+600ms** (kademe 1b) — açılışta paralel GET yükü azaldı
+- **APK denetimi:** `PERFORMANCE_APK_AUDIT.md` — boyut bileşenleri ve öncelikli aksiyonlar
+
+## 1.0.340+376 (2026-08-23) — Performans FAZ 9
+
+- **Voice sahne koltukları:** Koltuk başına `VoiceSeatSnapshot` + `ref.select` — başka koltuk değişince tüm grid rebuild olmaz
+- **Canlı sohbet feed:** `shrinkWrap` kaldırıldı — sabit yükseklik `ListView` (nested scroll maliyeti azaldı)
+
+## 1.0.339+375 (2026-08-23) — Performans FAZ 7/8
+
+- **Hediye flaşı:** Koltuk başına `select` signature — başka koltuğa hediye gelince tüm koltuklar rebuild olmaz
+- **Gift stream:** `ref.read` + subscription cancel — duplicate listener leak giderildi
+- **TRTC:** `ValueNotifier` dispose `disposeAsync` içinde
+- **Profil sekmeleri:** `LazyNestedGridView` / `LazyListView` (scroll perf helper)
+
+## 1.0.338+374 (2026-08-22) — Performans FAZ 6/7
+
+- **Discover SSE:** max 12→6 oda, home şeridi 6→4, stagger 250ms
+- **Shorts pool:** max 5→3 controller (aktif + önceki + sonraki)
+- **Voice room footer:** chat toast / mention ayrı provider slice — mesajda tüm footer rebuild yok
+- **SSE poll:** bağlıyken REST poll 90/180 sn, daha seyrek tick
+
+## 1.0.337+373 (2026-08-22) — Performans FAZ 3/5/6
+
+- **Token bellek önbelleği:** Dio hot path `peekAccess()` — secure storage her istekte okunmaz
+- **Mobile compound tek instance:** `/api/mobile/home` duplicate önbellek paylaşımı (home/profile/fortune)
+- **SSE oda girişi:** Keşif bağlantısı varken `onConnected` yeniden tetiklenir
+- **Sosyal feed video:** Dokunana kadar oynatılmaz — scroll sırasında N video player açılmaz
+
+## 1.0.336+372 (2026-08-21) — Sesli oda tam senkronizasyon II
+
+- **CI pipeline:** main push her zaman CI tetikler; commit status + flutter test gate + APK HTTP/metadata doğrulama
+
+- **Hediye flaşı:** Koltuk başına max 3 / 3 sn TTL (global havuz yerine receiver-scoped)
+- **Çıkış mesajı:** SSE `user_leave` → chat `[Kullanıcı] odadan çıkış yaptı.`
+- **Konuşma isteği:** Moderatör popup (Evet/Hayır/Engelle) + kuyruk yenileme; canonical presence key
+- **Basic mode:** `systemLeave` SSE mesajları chat'e yansır
+
+## 1.0.335+371 (2026-08-21) — P0 sesli oda senkronizasyon
+
+- **Presence/onlineCount:** Canonical cuid ile join/leave/heartbeat; boş live API yanıtı presence silmez; hub yokken presence.length fallback
+- **Leave:** Tek leaveRoomSession akışı (çift leavePresence kaldırıldı); anında sayım düşürme
+- **Oda izolasyonu:** Aktif oda alias seti (slug/cuid) — gift/SSE olay eşlemesi
+- **Rejoin:** Backend snapshot + permissions sonrası auto-seat; stale 0→N flash giderildi
+- **Yetkili auto-seat:** canModerate/canGiveVoice; role grant seat index ≥1
+- **Seat↔TRTC:** Koltuk düşünce presence.seatIndex temizlenir; TRTC stopLocalAudio
+- **Hediye:** Slug/cuid alias ile anlık event işleme (oda dispose beklemez)
+
+## 1.0.334+370 (2026-08-21) — Sesli oda ayarları + hediye hedefi
+
+- **Oda yönetimi:** Kilit, koltuk sayısı, max kullanıcı, giriş şifresi — canonical room id + liste önbelleği anında güncellenir
+- **Yönetim paneli:** `voiceRoomByIdProvider` ile canlı oda durumu (kilit/kapasite)
+- **Hediye hedefi:** Hedefe ulaşınca kapat (X) butonu; hediye SSE sonrası anlık yenileme
+- **PK / müzik / arkaplan:** Ayar paneli senkronizasyonu ile doğru oda anahtarı kullanımı
+
+## 1.0.333+369 (2026-08-21) — V2 entegrasyon + release hazırlık
+
+- **Entegrasyon:** Aşama 2–12 PR'ları `main`'e birleştirildi (Home V1 + 10 V2 dal + Final Audit)
+- **Fix:** `bana_ozel_hub_section` chip overflow; `#353` `dm_message_dedupe` import; duplicate `clearLocalReadState`
+- **Mock kaldırma:** Sesli oda discover — boş API yanıtında sahte oda/trend/konuşmacı gösterimi kaldırıldı
+- **Endpoint doğrulama:** `/api/notifications/unread`, `/api/advisors/online`, `/api/banners` prod 404 → liste/mobile-home yedekleri doğrulandı
+- **Test:** `flutter test` 988 geçti, 2 skip; acceptance + FAZ0 otomatik kapılar geçti
+
+## 1.0.332+368 (2026-08-21) — Final Production Audit (Aşama 12)
+
+- **TRTC P0:** `_activeSession` — çoklu `TrtcRoomManager` aynı cloud instance çakışması engellendi
+- **Logout P1:** `teardownRealtimeOnLogout` — SSE hub dispose + oturum provider invalidation
+- **Voice PiP P1:** `ensureActiveSession` duplicate SSE attach guard
+- **DM P1:** call-signal poll yalnızca açık sohbet veya unread konuşmalar (max 4)
+- **Auth cache:** logout'ta notification read prefs + hidden/deleted DM store temizliği
+- **Docs:** `FINAL_PRODUCTION_AUDIT.md`, `FLUTTER_API_AUDIT.md`, `RELEASE_CHECKLIST.md`
+
+## 1.0.331+367 (2026-08-21) — Bildirimler + Mesajlar + Ayarlar + Navigasyon V2
+
+- **Bildirimler:** Backend unread count (`GET /api/notifications/unread`), avatar/imageUrl, okunmamış vurgu, tek tek okundu (optimistic + revert), zil tıklamasında otomatik tümünü okuma kaldırıldı
+- **Deep link:** `deepLink`/`referenceId` parse; oturumsuz push → login sonrası hedef route (`PostLoginNavigation`); güvenli `/feed` fallback
+- **Mesajlar:** `DmMessageDedupe` — duplicate messageId ve optimistic reconcile
+- **Logout:** `invalidateUserSessionCaches` — bildirim/mesaj/sosyal provider + yerel DM/bildirim hafızası temizliği
+- **Ayarlar:** Önbellek temizle (görsel + API cache; JWT korunur)
+- **Lifecycle:** Foreground resume → unread bildirim + konuşma yenileme
+- **Rozet:** `UnreadBadgeFormat` (9+ / 999+) tüm üst bar ve DM listesinde
+
+## 1.0.330+366 (2026-08-21) — Oyun Merkezi + Oyunlar V2
+
+- **Hamle:** `sendMove` artık odanın gerçek `gameType` değerini kullanır (okey101 sabiti kaldırıldı)
+- **State:** Oda izolasyonu, move/event dedup, foreground reconcile
+- **UI:** Premium oyun kartları, XOX tahta (backend board), oda loading skeleton
+- **Veri:** Sahte liderlik tablosu ve local fake Okey odaları kaldırıldı
+- **Eşleşme:** Otomatik eşleş `autoMatch` API'sine bağlandı
+- **Test:** `game_move_dedupe_test`, `game_state_parser_test`
+
+## 1.0.329+365 (2026-08-21) — Sosyal + Shorts + DM V2
+
+- **Shorts:** Fake GTV sponsor videoları kaldırıldı — yalnızca backend feed
+- **Social:** Pull-to-refresh yalnızca akış + hikâyeler; fake `addLocalPost` devre dışı
+- **Like:** Backend reconcile ile feed provider senkronu
+- **DM:** `messageId` deduplication
+- **Session:** Logout'ta sosyal/DM/shorts cache temizliği
+- **Story:** Backend `durationMs` desteği (görsel süre)
+- **Doc:** `docs/SOCIAL_V2.md`
+
+## 1.0.328+364 (2026-08-21) — Hediye + PK + Müzik V2
+
+- **PK:** Sahte `_baseScore` (8000+hash) kaldırıldı; skor backend/SSE otoriter
+- **PK:** SSE yabancı oda PK olayları global state'e yazılmaz (davet istisnası)
+- **PK:** Hediye taraf eşlemesi hashCode yerine receiver/sender id
+- **Gift:** `remainingBalance` ile anında cüzdan senkronu; oda izolasyonu
+- **Gift:** Sıfır fiyatlı hediyeler gönderim listesinden filtrelendi
+- **Room:** `room_event_scope.dart` — gift/PK/music event izolasyonu
+- **Doc:** `docs/GIFT_PK_MUSIC_V2.md`
+
+## 1.0.327+363 (2026-08-21) — Canlı yayın + Sesli oda V2
+
+- **Presence:** `dedupePresencesById` — duplicate participant önleme, server reconciliation
+- **SSE izolasyon:** `roomEventMatchesActiveRoom` — yabancı oda event'leri ignore
+- **Online sayı:** backend `onlineCount` öncelikli patch
+- **PK timer:** tek lifecycle — `ref.onDispose` build'de, init'te duplicate yok
+- **Oda geçişi:** mevcut `prepareVoiceRoomSwitch` korundu (LEAVE A → JOIN B)
+- **Test:** presence canonical, room scope, PK timer
+
+## 1.0.326+362 (2026-08-21) — Profil + Cüzdan + Jeton V2
+
+- **Cache:** `clearAuthenticatedUserCache` — logout/hesap değişiminde profil/cüzdan/üyelik cache temizliği
+- **Jeton:** `currentUserCoinBalanceProvider` ve profil cüzdan kartı — `walletBalancesProvider` tek kaynak
+- **UI:** Profil header burç/takım chip'leri (backend verisi), API hata banner + Tekrar Dene
+- **Test:** Profile/wallet parse, session cache, navigation testleri
+
+## 1.0.325+361 (2026-08-21) — Fal & Tarot V2 backend parity
+
+- **API:** homepage-fortune-cards → fortune-request-types → FortuneCatalog yedek
+- **Fiyat:** `parseFortuneJetonPrice` — jetonCost/priceInTokens/credits; 0 gizlenir
+- **Sıra:** Backend listesi korunur; sortOrder yalnızca backend sağlarsa
+- **Navigasyon:** `openFortuneTypeDestination`, `openFortuneTypesCatalog` → `/fortune/types`
+- **Açıklama:** Yalnızca API description; katalog metni API verisini ezmez
+- **Test:** Parse, navigation, fiyat edge case testleri
+
+## 1.0.324+360 (2026-08-21) — Canlı Falcılar V2 premium UI
+
+- **Kart:** Paylaşılan `PsychicPremiumCard` / `PsychicPremiumListTile` — avatar, gerçek online, rating, jeton/dk
+- **API:** `GET /api/fortune-tellers` + `GET /api/advisors/online`; advisor→teller id eşlemesi düzeltildi
+- **Online:** Rozet yalnızca backend `isOnline`; varsayılan `true` kaldırıldı
+- **Navigasyon:** `openPsychicCardDestination` — profil veya API `liveStreamId` ile yayın
+- **Popüler Falcılar:** Aynı design system, Tümünü Gör → `/canli-falcilar`
+
+## 1.0.323+359 (2026-08-20) — Bana Özel V2 premium UI
+
+- **Kart:** `BanaOzelPremiumCard` — fal görseli, gradient, jeton rozeti, press scale
+- **API:** `GET /api/bana-ozel` — `imageUrl`, `horoscopeSign`, fiyat parse genişletildi
+- **Görsel:** Backend URL → `FortuneTypeCoverImage` tür bazlı fallback
+- **Durum:** Skeleton, error/retry, premium empty state
+- **Navigasyon:** `openBanaOzelCatalog(slug)` korundu
+
+## 1.0.320+356 (2026-08-20) — Ana Sayfa V1 Premium UI
+
+- **Tasarım:** Koyu premium tema, cam kartlar, tutarlı tipografi ve accent kullanımı
+- **Header:** Arama + Keşfet/bildirim/mesaj/jeton gerçek navigasyon
+- **Hızlı aksiyonlar:** Oyunlar / Hediyeler / Yayıncı Ol (API + spec yedek)
+- **Bölümler:** Canlı yayın, sesli oda, falcılar, Fal & Tarot, Bana Özel, fal türleri, oyunlar, burç — bağımsız skeleton/hata/boş durum
+- **Veri:** Hardcoded jeton/online yedekleri kaldırıldı; sesli oda açma maliyeti API sabitinden
+- **Navigasyon:** Fal türü slug eşlemesi (`FortuneCatalog`), Tümü/Merkez/Fal butonları çalışır
+- **Performans:** Yatay listeler `HomeHorizontalList` ile tutarlı padding/lazy scroll
+
+## 1.0.319+355 (2026-08-20) — Bana Özel hub chip layout
+
+- **UI:** Fal hub önizleme chip’i taşma düzeltmesi (Expanded metin alanı)
+
+## 1.0.318+354 (2026-08-20) — Bana Özel hub test layout
+
+- **Test:** `bana_ozel_hub_section_test` geniş surface (overflow düzeltmesi)
+
+## 1.0.317+353 (2026-08-20) — Bana Özel katalog iyileştirmeleri
+
+- **isActive:** pasif içerikler katalogdan filtrelenir
+- **UI:** streak özeti (seri + toplam fal), kartlarda `descTr` alt satırı
+- **Test:** Fal hub widget testi, inactive item entity testi
+- **P0 smoke:** `GET /api/bana-ozel` üretim doğrulaması
+
+## 1.0.316+352 (2026-08-20) — Bana Özel bakiye helper test düzeltmesi
+
+- **Jeton:** `resolveJetonBalanceAfterOpen` pure helper + birim test (CI release gate)
+
+## 1.0.315+351 (2026-08-20) — Bana Özel slug derin bağlantı
+
+- **Derin bağlantı:** `/fortune/bana-ozel?slug=` — vitrin chip’inden doğrudan açma akışı
+- **Auth:** giriş/çıkış sonrası katalog yenileme (jeton + görevler)
+- **Navigasyon:** `openBanaOzelCatalog` helper; `/oyunlar` → `/games-hub`
+- **Test:** catalog notifier applyOpenResult + slug lookup
+
+## 1.0.314+350 (2026-08-20) — Bana Özel görev navigasyonu + homepage butonları
+
+- **todayTasks:** tıklanabilir chip’ler (growth hub, sosyal paylaşım)
+- **homepage-buttons:** `specialBehavior` parse (`bana-ozel`, `teller`) + merkezi navigasyon
+- **Site yolu:** `/yayinci-ol` → `/falci-ol` native eşlemesi
+- **Test:** homepage button route resolver + görev route testleri
+
+## 1.0.313+349 (2026-08-20) — Bana Özel test düzeltmeleri
+
+- **todayTasks:** string list parse düzeltmesi (`asJsonList` yerine doğrudan liste)
+- **Test:** ana sayfa vitrin başlığı `textContaining` ile eşleştirme
+
+## 1.0.312+348 (2026-08-20) — Bana Özel görevler + testler
+
+- **todayTasks:** API görev listesi parse + katalog sayfasında chip şeridi
+- **Open sonrası:** streak ve jeton bakiyesi senkronizasyonu iyileştirildi
+- **Test:** remote datasource, ana sayfa vitrin widget, entity genişletmesi
+- **Lint:** sonuç sayfası gereksiz import temizliği
+
+## 1.0.311+347 (2026-08-20) — Bana Özel (Fal & Tarot + ana sayfa)
+
+- **API:** `GET /api/bana-ozel`, `POST /api/bana-ozel/open` — jeton katalog + içerik açma
+- **Sayfa:** `/fortune/bana-ozel` katalog, kategori filtre, sonuç ekranı
+- **Ana sayfa:** `HomeBanaOzelSection` yatay vitrin
+- **Fal hub:** `BanaOzelHubSection` bandı + önizleme chip’leri
+- **Navigasyon:** `/bana-ozel` web yolu, online-fal `bana_ozel` bölümü, homepage butonu
+
+## 1.0.310+346 (2026-08-20) — Canlı Falcılar close/tip test + lint
+
+- **Test:** `psychic_close_dialog_test` — onay / vazgeç
+- **Test:** `psychic_tip_sheet_test` — bahşiş seçimi ve iptal
+- **Lint:** `psychic_video_call_layer` gereksiz `!` kaldırıldı; liste ekranı kullanılmayan import
+
+## 1.0.309+345 (2026-08-20) — Canlı Falcılar extend sheet test layout
+
+- **Test:** `psychic_extend_sheet_test` büyük surface (1100px) — CI overflow düzeltmesi
+- **Temizlik:** yinelenen `mobile/test/psychic_session_store_test.dart` kaldırıldı
+
+## 1.0.308+344 (2026-08-20) — Canlı Falcılar store ve sheet testleri
+
+- **Session store:** `psychic_session_store_test` — save/load/clear, bozuk JSON, overwrite
+- **Süre ekle sheet:** `psychic_extend_sheet_test` — jeton, staff muafiyeti, iptal
+- **Değerlendirme sheet:** `psychic_review_sheet_test` — gönder / şimdi değil
+- **Fake repo:** `submitReview` izleme alanları eklendi
+
+## 1.0.307+343 (2026-08-20) — Canlı Falcılar restore ve push bridge test
+
+- **Session restore:** `psychic_session_restore_test` — diskten bekleme oturumu yükleme
+- **Push bridge:** `psychic_push_action_bridge_test` — kabul/red aksiyon eşlemesi
+- **Temizlik:** `psychic_flow.dart` kullanılmayan import kaldırıldı
+- **Doküman:** `LIVE_PSYCHICS_REMAINING.md` manuel E2E adımları genişletildi
+
+## 1.0.306+342 (2026-08-20) — Canlı Falcılar dialog test layout
+
+- **Test:** incoming dialog için büyük surface (overflow önleme)
+
+## 1.0.305+341 (2026-08-20) — Canlı Falcılar incoming dialog test düzeltmesi
+
+- **Test:** Text.rich için `textContaining`, dialog fade pump süreleri
+
+## 1.0.304+340 (2026-08-20) — Canlı Falcılar widget test CI düzeltmesi
+
+- **Test:** `PsychicSessionStatusResult` import, fake repo `respondResult` ctor, booking sheet pump
+
+## 1.0.303+339 (2026-08-20) — Canlı Falcılar widget testleri
+
+- **Bekleme:** `psychic_waiting_screen_test` — state label + bekleme metni
+- **Randevu sheet:** süre/jeton/tür seçimi + staff ücretsiz banner
+- **Gelen çağrı:** kabul/red `respondSession` widget testleri
+- **Video state:** timer label, low-time ve SSE failed bayrakları
+
+## 1.0.302+338 (2026-08-20) — Canlı Falcılar test kapsamı
+
+- **Oda SSE parser:** `psychic_room_sse_parser.dart` ayrıştırıldı (timer, extend, end, tip, mesaj)
+- **Test:** `psychic_room_sse_parser_test`, `psychic_flow_push_test`, `live_psychics_remote_datasource_test`
+- **Push akışı:** Danışan `resumeFromPush` vs falcı `openTellerSessionFromPush` rol testleri
+- **Datasource:** createSession dual path, cancel, roomAction, respondSession, status query
+
+## 1.0.301+337 (2026-08-20) — Canlı Falcılar SSE parser
+
+- **Incoming SSE:** `psychic_incoming_sse_parser.dart` ayrıştırıldı (test edilebilir)
+- **Test:** `psychic_incoming_sse_parser_test` — connected, pending_sessions, cancel, presence
+- **Temizlik:** `psychic_incoming_sse_service` ölü yardımcı metotlar kaldırıldı
+- **Doküman:** `FLUTTER_AUDIT.md`, `API_ENDPOINT_MATRIX.md` live-psychics REMOVED satırları
+
+## 1.0.300+336 (2026-08-20) — Canlı Falcılar P2 API sadeleştirme
+
+- **createSession:** Kullanılmayan `tellerUserId`, `staffExempt`, `clientName` parametreleri kaldırıldı
+- **extendSession:** `totalJeton` imzadan çıkarıldı (API yalnızca `{action, minutes}`)
+- **Çift seans engeli:** Herhangi bir aktif/bekleyen danışan seansı yeni randevuyu bloklar
+- **Legacy endpoints:** `tellerChat`, `liveFalRequestAccept/Reject` kaldırıldı
+- **Test:** `PsychicClientSessionGuard` unit testleri
+
+## 1.0.299+335 (2026-08-20) — Canlı Falcılar görüşme UX
+
+- **120 sn uyarı:** Danışana «Süre azalıyor» snackbar + «Uzat» aksiyonu; timer kırmızı
+- **time_extended:** `newMaxMinutes` / `remainingSeconds` SSE senkronu
+- **Oda SSE:** Max 20 reconnect; kopunca banner + yenile; HTTP poll yedek
+- **Bekleme:** Gereksiz room SSE disconnect kaldırıldı
+
+## 1.0.298+334 (2026-08-20) — Canlı Falcılar push ve API sıkılaştırma
+
+- **Status sorgu:** Yalnızca `GET /api/fortune-tellers/session?sessionId=` (yanlış `/session/{id}` kaldırıldı)
+- **respondSession:** `body.isNotEmpty` false-positive düzeltmesi
+- **Push falcı kabul:** `openTellerSessionFromPush` — görüşme ekranına yönlendirme
+- **Push session_ended:** Değerlendirme yalnızca danışana
+- **Incoming SSE:** `pending_sessions` / `connected.pendingSessions`, max 20 reconnect, 401 anında retry
+- **Liste fallback:** `online=true` hata verirse client-side çevrimiçi filtre
+- **Kalan işler:** `docs/LIVE_PSYCHICS_REMAINING.md`
+
+## 1.0.297+333 (2026-08-20) — Canlı Falcılar oturum geçmişi + temizlik
+
+- **Danışan geçmişi:** Giriş yapmış kullanıcılar listede «Son Oturumlarım» panelini görür
+- **Paylaşılan widget:** Falcı paneli ve liste aynı `PsychicRecentSessionsPanel` bileşenini kullanır
+- **Temizlik:** Kullanılmayan `held` diyalog aksiyonu; ölü API sabitleri (`incoming`, `respond`, `liveFalPending`)
+
+## 1.0.296+332 (2026-08-20) — Canlı Falcılar panel ve liste
+
+- **Misafir liste:** Canlı Falcılar listesi giriş yapmadan gezilebilir; favoriler için giriş gerekir
+- **Falcı paneli:** Sunucudan çevrimiçi durumu senkronu (`toggle-online`); son oturumlar paneli (`GET /api/fortune-tellers/session`)
+- **SSE poll:** Gelen istek SSE aktifken 30 sn, değilse 4 sn HTTP yedek poll
+- **Değerlendirme:** Yorum alanı düzeltmesi
+
+## 1.0.295+331 (2026-08-20) — Canlı Falcılar akış tamamlama
+
+- **Kabul sonrası:** Bekleme → `ad-transition` (izin + reklam) → görüşme
+- **Push kabul:** `session_update` accept bekleme ekranından reklam geçişine yönlendirir (dead-code düzeltmesi)
+- **Push red:** Bekleme ekranı anında kapanır (`psychicSessionCancelSignal`)
+- **Davet push:** Geniş `fortune`/`falc` eşleşmesi kaldırıldı — yanlış bildirim popup'ı önlenir
+
+## 1.0.294+330 (2026-08-20) — Canlı Falcılar backend uyumu
+
+- **Seans iptali:** Bekleme ekranında `PATCH /api/fortune-tellers/sessions/{id}` `{action: cancel}` (oda `end` yerine)
+- **Seans oluşturma:** `/{tellerId}/session` → `{fortuneType, maxMinutes}`; yedek `/session` → `{tellerId, duration}`
+- **Değerlendirme:** `POST /api/room/{sessionId}/review` (yanlış teller/reviews uçları kaldırıldı)
+- **Gelen talepler:** Yalnızca `?status=pending`; `hold` aksiyonu ve otomatik çevrimiçi kaldırıldı
+- **Bekleme:** 3 sn session poll; oda SSE beklemede kapalı
+- **Görüşme:** Falcı manuel «Başlat» ile timer; SSE bağlıyken chat/oda poll durur
+- **Liste:** `/api/social/fortune-tellers` yedeği kaldırıldı
+
+## 1.0.293+329 (2026-08-20) — CI derleme düzeltmesi
+
+- **voice_seat_gift_flash_stack:** `LiveGiftCatalog` import yolu düzeltildi (`../../../../live/...`) — CodeQL/FAZ0 build FAIL giderildi
+
+## 1.0.292+328 (2026-08-20) — Sesli oda tam senkronizasyon (P3)
+
+- **Kişi sayısı:** `hubOnlineCount` sunucu kaynağı; yerel presence ile `max()` kaldırıldı; `GET /api/live/online-users` `totalCount` + `GET /state` `onlineCount`
+- **Hediye flaşı:** Koltuk altı max 3 hediye, her biri bağımsız 3 sn (`voiceSeatGiftFlashProvider`)
+- **PK:** SSE `pk_*` olaylarında `livePkInviteSignalProvider.bump()` — davet popup yedek poll
+- **Çıkış:** Odadan ayrılınca `hubOnlineCount` ve hediye flaşı temizlenir
+
+## 1.0.291+327 (2026-08-20) — Sesli oda P2 eşleştirme
+
+- **Kullanıcı sheet:** `VoiceRoomUserActions.openUserSheet` — RTC ve basic modda tek giriş noktası
+- **Giriş şeridi:** VIP/Gold/Diamond girişlerinde `formatTierEntranceLine` (rol etiketi + emoji)
+
+## 1.0.290+326 (2026-08-20) — Sesli oda P1 eşleştirme
+
+- **Moderasyon popup:** `canManageUsers` (mute/kick/voice vb.) olanlar chat/koltuk/katılımcı listesinden moderasyon sayfasını açar
+- **Koltuk:** Boş koltuğa her dinleyici tıklayarak oturabilir (web parity)
+- **Giriş bildirimi:** SSE `SYSTEM_JOIN` / `SYSTEM_VIP_JOIN` mesajları koltuk altı şeridini tetikler
+
+## 1.0.289+325 (2026-08-20) — Koltuk ↔ ses P0 düzeltmeleri
+
+- **canSpeak:** Admin/oda sahibi/moderatör hariç yalnızca backend `seatIndex≥1` ile konuşma; `canGiveVoice` koltuksuz izin vermez
+- **Koltuk kaybı / susturma:** Mic kapanınca `voice` session leave; `USER_MUTED` presence günceller
+- **Giriş:** Yetkili kullanıcı presence join'de `seatIndex` gönderir
+
+## 1.0.288+324 (2026-08-19) — Favoriler oda geçişi teardown
+
+- **Favoriler:** Oda favorisi açılırken entity yüklenemese bile `prepareVoiceRoomSwitch` önce çalışır (eski odada presence kalması)
+
+## 1.0.287+323 (2026-08-19) — PK davet kabulü oda teardown
+
+- **PK kabul:** Davet popup'ından kabul sonrası hedef odaya gitmeden önce `prepareVoiceRoomSwitch` (farklı odadayken koltuk/presence kalması)
+
+## 1.0.286+322 (2026-08-19) — Push/bildirim oda geçişi presence
+
+- **Push/PK bildirimi:** `/voice-room/*` yönlendirmeden önce `prepareVoiceRoomSwitch` — eski odada koltuk/presence kalması azaltıldı
+- **Bildirim listesi:** Aynı teardown async akışı (`navigateFromNotificationAsync`)
+- **Derin bağlantı:** `VoiceRoomGatedEntry` teardown bitene kadar yükleme gösterir (şifresiz odalar dahil)
+
+## 1.0.285+321 (2026-08-19) — PK daveti + oda geçişi düzeltmeleri
+
+- **PK bildirimi:** `targetPath: /` artık `GoException` vermez → `/feed` veya PK/oda rotası
+- **PK daveti:** Sesli oda + canlı yayın isteği UI donmasını azaltır; kabul/red microtask'e alındı
+- **PK alıcı:** Davet poll sıklaştı; SSE + bildirim sinyali `VoicePkInviteListener`'ı uyandırır
+- **Oda değişimi:** Eski odada presence/koltuk backend leave beklenir (oturma hatası)
+
+## 1.0.284+320 (2026-08-19) — Sesli oda müzik isteği donma düzeltmesi
+
+- **ANR önleme:** `!istek` arama sheet'i + mod seçici sonrası istek microtask'e ertelendi (RTC + Basic)
+- **Provider:** `_applyMusicRequestUi` DJ state güncellemesi sheet kapanışından sonra çalışır
+- **Arama sheet:** `onSelected` callback pop animasyonundan sonra tetiklenir
+- **Müzik hub:** `requestMusic` aynı erteleme desenine alındı
+
+## 1.0.283+319 (2026-08-19) — Canlı hediye panel hata UX
+
+- **LiveGiftPanel + PremiumGiftPanel:** yetersiz jeton artık sessizce yutulmuyor → `showJetonAwareError`
+- **Doc:** FAZ0_CLOSURE `1.0.282+318`
+
+## 1.0.282+318 (2026-08-19) — Canlı yayın + oyun + fal jeton UX
+
+- **Canlı hediye:** yetersiz jeton → `showJetonAwareError`
+- **Oyun lobisi:** oda oluştur / eşleş → jeton-aware hata
+- **Fal:** grant tüketimi + API bakiye hatası → jeton diyaloğu; purchase sheet’e Görevler
+
+## 1.0.281+317 (2026-08-19) — Hediye jeton UX
+
+- **Hediye gönderimi:** yetersiz jeton → `showJetonAwareError` (panel + sheet + premium 2026)
+- **Doc:** `FAZ0_STATUS.md` güncel (`1.0.280+316`)
+
+## 1.0.280+316 (2026-08-19) — Oda state error UX
+
+- **RTC + Basic:** `voiceRoomLive` state `error` → `showJetonAwareError` (jeton + diğer)
+- **Doc:** FAZ0_CLOSURE + M5 checklist `1.0.279+315`
+
+## 1.0.279+315 (2026-08-19) — Jeton UX tam kapsam (sesli oda)
+
+- **`showJetonAwareError`:** RTC moderasyon, DJ sheet, müzik kuyruğu, konuşma kuyruğu, araçlar
+- **Üyelik:** anlık jeton satın alma yetersiz bakiye → `showInsufficientJetonDialog`
+- **Doc:** `M5_M7_JETON_BLOCKER.md` sürüm güncellemesi
+
+## 1.0.278+314 (2026-08-19) — Jeton hata yardımcısı
+
+- **`showJetonAwareError`:** jeton mesajlarında SnackBar yerine `showInsufficientJetonDialog`
+- **Kapsam:** !duyuru komutu, RTC/basic şarkı isteği, Kader Çarkı + Şanslı Zar
+
+## 1.0.277+313 (2026-08-19) — Falcı profil jeton UX
+
+- **Falcı profil:** randevu + bahşiş yetersiz jeton → `showInsufficientJetonDialog` (Görevler + Jeton Yükle)
+- **Fal sheet:** yetersiz jeton alt sayfasına «Görevler» butonu eklendi
+
+## 1.0.276+312 (2026-08-19) — Canlı yayın jeton UX + M5 checklist
+
+- **Live broadcast:** falcı rezervasyonu yetersiz jeton → `showInsufficientJetonDialog`
+- **Doc:** M5 checklist + REMAINING_WORK `1.0.275+311`; `m5-device-prep` ön kontrol
+
+## 1.0.275+311 (2026-08-19) — Komut paneli Görevler + m5-device-prep
+
+- **Komut paneli:** Jeton kartında «Görevler» → `/profile/growth`
+- **Script:** `m5-device-prep.sh` — APK + hesap + m5-ready özeti
+
+## 1.0.274+310 (2026-08-19) — Oda açma jeton UX + FAZ0 checklist
+
+- **Oda açma:** yetersiz jeton → `showInsufficientJetonDialog`
+- **Growth Hub:** görev ödülü etiketi `+N ödül` (üretim credits/jeton ayrımı)
+- **Doc:** `FAZ0_CLOSURE_CHECKLIST.md` güncel (`faz0-next.sh`)
+
+## 1.0.273+309 (2026-08-19) — Görev claimed + faz0-next
+
+- **Daily missions:** tamamlanan görev `claimed=true` (gereksiz claim tap önlenir)
+- **Script:** `faz0-next.sh` — status + cheatsheet + probe (+ jeton varsa M7)
+
+## 1.0.272+308 (2026-08-19) — Müzik paneli jeton diyaloğu
+
+- **VoiceMusicHubPage** + **YouTube şarkı sheet:** yetersiz jeton → `showInsufficientJetonDialog`
+- **FAZ0_STATUS** + `faz0-status.sh` güncel (admin-jeton-cheatsheet)
+
+## 1.0.271+307 (2026-08-19) — Yetersiz jeton UX (sesli oda)
+
+- **Dialog:** `showInsufficientJetonDialog` — Jeton Yükle + Görevler (`/profile/growth`)
+- **Basic/RTC oda:** !istek jeton hatasında paylaşılan diyalog
+- **Claim:** daily-missions `alreadyClaimed` → başarı sayılır
+
+## 1.0.270+306 (2026-08-19) — Growth Hub görev ilerlemesi + claim
+
+- **Tamamlanan görevler:** ilerleme çubuğu 1/1 (üretim API `completed` alanı)
+- **Rota:** `type` → `/fortune`, `/live`, `/invite-friends` vb.
+- **Claim:** tamamlanmış göreve dokununca `POST /api/daily-missions` `taskType`
+
+## 1.0.269+305 (2026-08-19) — Günlük görev API eşlemesi + jeton bonus
+
+- **Daily missions:** `type` → görev id; `reward`/`earnedJeton` → jeton ödülü (Growth Hub artık üretim API görevlerini gösterir)
+- **Claim:** `POST /api/daily-missions` body `taskType` (kılavuz uyumu)
+- **Jeton:** Growth Hub yenilemede `POST /api/jeton` `daily_login` bonus denemesi
+- **Test:** `daily_task_entity_test.dart`
+
+## 1.0.268+304 (2026-08-19) — FAZ8/9 testler + FAZ11/12 otomatik kapılar
+
+- **Shorts:** count format, content filter, copyright guard testleri (FAZ8)
+- **Messages:** cache codec test (FAZ9)
+- **Scripts:** `faz11-security-scan.sh`, `faz12-automated-gates.sh`
+- **Doc:** `PHASE_12_ACCEPTANCE.md`
+
+## 1.0.267+303 (2026-08-18) — Faz master + social getUserPosts
+
+- **Social:** `GET /api/users/{userId}/posts` kılavuz §9.10 (`fetchUserPosts`)
+- **Faz:** `PHASE_MASTER_TRACKER.md`, FAZ3–13 parity/status, `run-phase-tests.sh`
+- **Test:** 12 faz paketi PASS (182+ unit test)
+
+## 1.0.266+302 (2026-08-18) — SSE geç katalog + basic oda sync
+
+- **SSE:** Oda listesi geç gelince `syncSseRoomKeyFromCatalog` (RTC listener)
+- **Basic oda:** `_effectiveRoom` kısmi cuid önek eşleşmesi
+- **FAZ 0:** `VOICE_ROOM_KEY_RESOLUTION.md`, TEST_ACCOUNTS oda tablosu, SSE `connected` örneği
+
+## 1.0.265+301 (2026-08-18) — SSE oda listesi bekleme + key upgrade
+
+- **Kenar durum:** Oda listesi yüklenmeden SSE kısmi `cmoohrbr` ile başlayabiliyordu
+- **Düzeltme:** Girişte oda kataloğu beklenir; canonical id değişince SSE yeniden bağlanır
+- **Release:** `releaseVoiceRoom` artık gerçek SSE anahtarını (`_sseAttachedRoomKey`) kullanır
+- **RTC:** `_roomSynced` kısmi cuid önek eşleşmesi
+
+## 1.0.264+300 (2026-08-18) — SSE kısmi cuid→tam id çözümleme (müzik senkron)
+
+- **Kök neden:** SSE `…/rooms/{id}/stream` kısmi cuid (`cmoohrbr`) ile **Room not found**; tam Prisma id gerekli (`cmoohrbrx00a4nt08zlkdjyil`)
+- **Düzeltme:** `VoiceRoomKeyResolver` — önek eşleşmesi + oda listesinden canonical id; SSE aboneliği tam cuid ile
+- **Test:** `voice_room_key_resolver_test.dart` (5 senaryo)
+- **M7:** `probe-music-room.sh` önek çözümleme + SSE cuid yakalama
+
+## 1.0.263+299 (2026-08-18) — DJ player: youtube-stream API üretimde atla
+
+- **ANR:** `youtube-stream` API URL'leri üretimde `resolvePlayableUrl` çağırmaz (IFrame yolu)
+- **Test:** `voice_room_dj_player_resolve_test.dart`
+- **M7:** `scripts/probe-music-room.sh` + `docs/M7_MUSIC_SSE_CAPTURE.md` (üretim probe)
+
+## 1.0.262+298 (2026-08-18) — MCP read_source + B3/B4 dokümanları
+
+- **MCP v1.2.0:** `read_source`, `search_source`, `list_services` (OpenAPI path excerpt destekli)
+- **FAZ 0:** `GIFT_REALTIME_SSE_VS_SOCKET.md`, `PK_STATE_MACHINE_FLUTTER.md`
+
+## 1.0.261+297 (2026-08-18) — DJ üretim YouTube skip + B2 parity doc
+
+- **DJ player:** Üretimde YouTube watch/stream URL'leri için ağır çözümleme atlanır (IFrame yolu)
+- **Test:** Mock Dio ile `requestMusicByQuery` → `song-request` yolu doğrulandı
+- **FAZ 0:** `docs/MISSING_ENDPOINTS_FLUTTER_ACTIVE.md` (68 MISSING × Flutter × probe)
+
+## 1.0.260+296 (2026-08-18) — Stream resolve ANR + müzik probe doc
+
+- **Stream resolve:** Üretimde Piped/Invidious/explode paralel çözümleme kapalı; IFrame yolu
+- **Müzik hub:** Üretimde seçim prefetch (explode) yok
+- **FAZ 0:** `docs/MUSIC_API_PRODUCTION_PROBE.md` (backend M6–M7 referansı)
+
+## 1.0.259+295 (2026-08-18) — ANR: youtube_explode üretimde kapalı
+
+- **Müzik arama:** `canlifal.com` üzerinde istemci `youtube_explode` yedeği devre dışı (ANR önleme)
+- **FAZ 0:** `docs/REMAINING_WORK.md` canlı takip listesi; `docs/SSE_EVENTS_FLUTTER_PARSED.md`
+
+## 1.0.258+294 (2026-08-18) — !istek doğrudan song-request + MCP backend-docs
+
+- **!istek:** Üretimde ölü `music-request-by-query` atlanır; doğrudan sunucu arama + `song-request`
+- **MCP:** `mcp-server` artık `backend-docs/endpoints_index.json` ve `schema.prisma` okur (`list_models`, `search_schema`)
+
+## 1.0.257+293 (2026-08-18) — !istek üretim yedeği + backend-docs
+
+- **Kök neden:** Üretimde `POST …/music-request-by-query` **404** — `!istek` hiç çalışmıyordu
+- **Yedek:** 404'te sunucu YouTube arama + `song-request` (youtube_explode istemci yedeği yok)
+- **Oynatma:** Kırık `youtube-audio?url=` proxy kaldırıldı; googlevideo doğrudan CDN / IFrame
+- **FAZ 0:** `backend-docs/` (OpenAPI, endpoints_index, Prisma, B1.12 parity raporu)
+
+## 1.0.256+292 (2026-08-18) — Müzik ANR kök düzeltme (grace + IFrame ses)
+
+- **Kök neden:** API beklerken SSE/refresh çift oynatma; `youtube_explode` ana thread'i kilitliyordu
+- **Erken grace (12 sn):** `!istek` / müzik isteği başında SSE ve sunucu sync atlanır
+- **Oynatma:** Doğrudan `musicUrl` → `just_audio`; yoksa gizli YouTube IFrame ses (explode yok)
+- **Video isteği:** Yalnızca IFrame video; çift ses yolu kaldırıldı
+
+## 1.0.255+291 (2026-08-18) — Müzik isteği ANR koordinatörü
+
+- **ANR kök neden:** Eşzamanlı `_playDjInBackground` çağrıları sıraya alındı; son istek birleştirilir
+- **SSE grace:** Yerel `!istek` sonrası 5 sn SSE oynatma/sync atlanır (çift tetikleme yok)
+- **Çift oynatma:** `applyAudioOutputGate` + istek yolu aynı anda çalmıyor
+- **Sunucu stream:** `musicUrl` hazırsa gereksiz YouTube resolve atlanır
+- **RoomSongJoinSync:** 350ms debounce ile spam azaltıldı
+
+## 1.0.254+290 (2026-08-18) — !istek ANR + müzik çalma düzeltmesi
+
+- **!istek donma (ANR):** Çift `refresh`/`_syncMusicFromServer` fırtınası engellendi; istek non-blocking
+- **Müzik çalma:** `userDismissedPlayer`, nested `musicUrl`, SSE `ensureMusicAudible` hizalandı
+- **Koltuk:** Geçici boş API yanıtında `seatIndex` korunur
+- **Mikrofon:** `autoOpenMic` ayarı koltuk/konuşma yetkisinde otomatik açar
+- **CI:** Acceptance test hesabı silinmişse `mobile-register` ile otomatik yeniden oluşturulur
+
+## 1.0.253+289 (2026-08-18) — Ana sayfa 5sn donma (presence SSE)
+
+- **Kök neden:** T+3sn `VoiceRoomsPresenceScope` 12 oda SSE'sini aynı anda açıyordu; ana thread kilitleniyordu
+- **Presence:** Otomatik `voiceRoomsProvider` dinleme kaldırıldı; yalnızca ekran `mergeTrackRooms` çağırınca SSE
+- **SSE:** Oda bağlantıları 180ms aralıkla kademeli (ANR önleme); ana sayfada en fazla 6 oda
+- **Kabuk:** Global presence scope kaldırıldı — açılışta ağır SSE yükü yok
+- **Hikâyeler:** Ortadaki spinner yerine iskelet halkalar (UI donmuş görünümü azaltır)
+- **Ticker:** Bootstrap sonrası gereksiz ticker yenilemesi atlanır
+
+## 1.0.252+288 (2026-08-18) — Ana sayfa donma (ANR) düzeltmesi
+
+- **Kök neden:** `homeLiveVoiceRoomsProvider` presence + `ref.listen` döngüsü ana thread'i kilitliyordu
+- **Çözüm:** Oda listesi API'den bir kez; SSE izleme yalnızca bölüm mount'ta tek sefer
+- **homeVoiceRoomsProvider:** `ref.read` ile future yeniden tetiklenmesi durduruldu
+
+## 1.0.251+287 (2026-08-17) — Ana sayfa odalar + müzik ANR + çalma
+
+- **Ana sayfa:** Tüm sesli sohbet odaları listelenir (dolu önce); boş odalar sönük kart
+- **Performans:** Ana sayfa oda kartlarında animasyon kapatıldı (açılış hızı)
+- **Müzik ANR:** İstek `submitSelectedSong` + microtask; player kurulumu UI’ı bloklamaz
+- **Müzik çalma:** `submitSelectedSong` içinde `_playDjInBackground` artık arka planda
+
+## 1.0.250+286 (2026-08-17) — Müzik isteği ANR + sağ ray konumu
+
+- **ANR düzeltmesi:** Müzik sheet kapanmadan oda provider'ı izlenmiyor; istek gönderilmeden önce sheet kapanır
+- **Performans:** Seçili şarkı alanında her build'de yeni TextEditingController oluşturma kaldırıldı
+- **Sağ ray:** Ayarlar/müzik amblemleri ekranın sağ ortasına (hafif aşağı) taşındı
+- **Test:** `voice_room_side_action_rail_test`
+
+## 1.0.249+285 (2026-08-17) — Sesli oda çıkış + UI cilası
+
+- **Çıkış diyalogu:** Root navigator üzerinden gösterilir; geri/çıkış daha güvenilir
+- **Sağ ray:** Konum biraz daha aşağı (`topInset` 136); klavye açıkken kuyruk kartı gizlenir
+- **Mesaj çubuğu:** `!istek` ipucu; kullanılmayan ayar/müzik parametreleri temizlendi
+- **Test:** `voice_room_leave_flow_test` — oda rotası çıkış eşlemesi
+
+## 1.0.248+284 (2026-08-17) — Sesli oda UI + çıkış + müzik
+
+- **Sağ ray:** Ayarlar ve müzik amblemleri mesaj çubuğundan kaldırıldı; web gibi sağ kenarda biraz aşağıda
+- **Müzik:** `!istek` komutu veya sağdaki müzik amblemi ile şarkı isteği; kuyruk mini kartı sağ altta
+- **Çıkış:** Geri / çıkış tuşu ve sistem geri — onay diyalogu + backend leave önce, sonra navigasyon
+- **Backend uyumu:** Müzik görünürlüğü `live.dj.musicEnabled` ile; presence/koltuk leave timeout güvenli
+
+## 1.0.247+283 (2026-08-17) — Sosyal fal kartları + sesli oda şeridi
+
+- **Fal gönderileri:** Tam fal metni (`detail`) gösterilir; 250 karakterden sonra «daha fazla»
+- **Rozetler:** Otomatik paylaşım, birlikte baktıran sayısı, görüntülenme ve paylaşım sayısı
+- **Sesli oda şeridi:** Dolu odalar parlar (glow + PK/müzik); boş odalar sönük «Boş» etiketi
+- **Çıkış:** Backend presence/koltuk leave navigasyondan önce — odadan çıkış düzeltmesi
+
+## 1.0.246+282 (2026-08-17) — Anasayfa sadeleştirme + dolu sesli odalar
+
+- **Anasayfa:** Gereksiz bölümler kaldırıldı (istatistik, sosyal şerit, trend, liderlik, ünlüler, fan kulübü, futbol, blog, keşfet, Gold vb.)
+- **Sesli odalar:** Boş odalar ana sayfada gösterilmez; dolu odalarda online kişi sayısı görünür
+- **Backend uyumu:** `musicPlaying`, `isPkLive` / `pkActive` alanları API ve LiveField keşfinden okunur
+- **Kart:** PK ve müzik rozetleri yalnızca backend durumuna göre gösterilir
+- **Prefetch:** Kaldırılan bölümler için gereksiz API çağrıları bootstrap'tan çıkarıldı
+
+## 1.0.245+281 (2026-08-17) — Referans / ajans komisyon sistemi (tek seviye)
+
+- **Backend (`api/`):** `ReferralCommissionService`, Prisma migration, immutable `ReferralCommissionLedger`, admin ayarları
+- **Komisyon:** Yalnızca kesinleşmiş ekonomik işlemlerden; kayıt/jeton alımı komisyon üretmez; hak sahibinden kesilmez
+- **Entegrasyon:** Canlı yayın hediyesi, sesli oda hediyesi (oda sahibi/koltuk hakedişi); idempotency + limit + fraud hold
+- **API:** `/api/referral/me`, `/stats`, `/users`, `/earnings`, `/ledger`, `/invite-link`, `/settings`, admin uçları
+- **Flutter:** Arkadaşını davet et (WhatsApp/Telegram paylaşım), Referanslarım, Kazançlarım — tüm tutarlar backend'den
+- **Test:** `referralCommissionService.test.ts` (formül + invariant), `referral_entities_test.dart`
+
+## 1.0.244+280 (2026-08-17) — Sesli oda senkronu (çıkış, PK hediye, koltuk, mik)
+
+- **Çıkış:** Heartbeat durur → backend presence/koltuk leave önce → TRTC `exitRoom` → ekran beklemeden kapanır
+- **Oda değişimi:** Eski odada presence anında düşer; arka planda temizlik
+- **PK hediye:** POST yanıtındaki `pkBattle` + hediye event anında uygulanır (30 sn poll beklemez)
+- **SSE:** `PK_SCORE_UPDATED`, `PK_ACCEPTED/REJECTED`, `gift_ranking_updated` room_event desteği
+- **PK davet:** `targetUserId` + hedef oda kimliği gönderilir; SSE varken gereksiz poll kapatılır
+- **Koltuk:** SSE reconnect sonrası `GET /seats`; koltuk ataması sonrası backend yenileme
+- **Mikrofon:** Koltuğa oturunca otomatik unmute kaldırıldı; varsayılan kapalı
+
+## 1.0.243+279 (2026-08-17) — Anasayfa, sesli oda çıkışı, bot yayın
+
+- **Anasayfa:** `/games-hub` ve alt rotaları, `/games-room/:id`, `/blog-hub`, `/dreams-hub` eklendi; oyun/blog/rüya/futbol kısayolları düzeltildi
+- **Anasayfa UX:** Hikâye girişi, sosyal şerit ve falcı kartları tıklanabilir; boş oyun rotası oyun merkezine yönlendirir
+- **Sesli oda:** «Çık» doğrudan odadan çıkar; navigasyon her zaman `/voice-rooms` listesine döner
+- **Bot yayın:** Bot hesaplar canlı yayını 5 dakika sonra otomatik kapatır
+- **Rota:** Yinelenen `/gifts/leaderboard` tanımı kaldırıldı
+
+## 1.0.242+278 (2026-08-17) — Çocuk güvenliği politikası düzeltmesi
+
+- **Yasal:** Çocuk Güvenliği Politikası artık `GET /api/legal/child-safety` üzerinden yüklenir (`site-pages/cocuk-guvenligi` 404 idi)
+- **WebView:** Koyu temada yasal sayfa metni okunabilir renklerle gösterilir
+- **Test:** `legal_document_test`
+
+## 1.0.241+277 (2026-08-17) — Sosyal bölüm faz 11
+
+- **Detay önbelleği:** `resolveSocialPostForDetail` — akıştaki gönderi anında gösterilir, API ile birleştirilir
+- **Metin gönderisi:** Yalnızca metin kartına dokununca detay sayfası açılır
+- **Sayfalama hatası:** `SocialFeedLoadMoreErrorBanner` + «Tekrar dene»
+- **Test:** `social_post_resolver_test` + client acceptance `20u`
+
+## 1.0.240+276 (2026-08-17) — Sosyal bölüm faz 10
+
+- **Yorum senkronu:** `notifySocialPostCommentAdded` — akış + gönderi detayı sayacı birlikte güncellenir
+- **Akış sonu:** Sayfalama bittiğinde `SocialFeedEndBanner` («Tüm paylaşımları gördün»)
+- **App bar:** Arama kısayolu (`/search`)
+- **Test:** `social_feed_sync_test`, `social_feed_end_label_test` + client acceptance `20t`
+
+## 1.0.239+275 (2026-08-17) — Sosyal bölüm faz 9
+
+- **Paylaşım sonrası:** `prependPost` — tam akış yenilemesi yerine optimistik ekleme (composer + create)
+- **Çift yenileme düzeltmesi:** `openSocialCreatePost` artık gereksiz `refresh()` çağırmıyor
+- **Gönderi detayı:** Pull-to-refresh (`refreshSocialPostDetail`)
+- **Test:** `social_notifier_feed_ops_test` + client acceptance `20s`
+
+## 1.0.238+274 (2026-08-17) — Sosyal bölüm faz 8
+
+- **Gönderi detayı:** `buildSocialPostDetailRoute` — medya dokunuşu ve kart aksiyonları ortak rota
+- **Silme:** Akıştan optimistik kaldırma (`removePost`) — tam yenileme yerine
+- **Boş akış:** Gönderi oluşturma sonrası üste kaydırma (`onPostPublished`)
+- **Hikâyeler:** Profil rotası `buildSocialUserProfileRoute` ile hizalandı
+- **Yorumlar:** `@` etiketleme düğmesi — `SocialMentionPickerSheet`
+- **Test:** `social_post_detail_route_test` + client acceptance `20r`
+
+## 1.0.237+273 (2026-08-17) — Sosyal bölüm faz 7
+
+- **Yorumlar:** `#hashtag` / `@mention` bağlantılı metin; yazar avatar/isim → profil
+- **Yorum listesi:** Pull-to-refresh ile yenileme
+- **Paylaşım girişi:** App bar `+` sonrası akış üste kayar (`onPublished`)
+- **Profil rotası:** `buildSocialUserProfileRoute` merkezi helper
+- **Test:** `social_user_profile_route_test` + client acceptance `20q`
+
+## 1.0.236+272 (2026-08-17) — Sosyal bölüm faz 6
+
+- **Bağlantılı metin:** Gönderi açıklamalarında `#hashtag` → shorts keşif, `@kullanıcı` → arama
+- **Paylaşım metni:** `buildSocialPostShareText` — kart + detay sayfası ortak
+- **Arama rotası:** `/search?q=` ile `GlobalSearchPage` başlangıç sorgusu
+- **Test:** `social_caption_link_parser_test` + client acceptance `20p`
+
+## 1.0.235+271 (2026-08-17) — Sosyal bölüm faz 5
+
+- **Pull-to-refresh:** `refreshSocialFeedSection` — akış + hikâyeler + canlı/sesli odalar birlikte yenilenir
+- **Paylaşım sonrası:** Inline composer başarıda akış üste kayar (`onPostPublished`)
+- **Aktif odalar:** Gömülü şerit başlığı canlı/sesli durumuna göre dinamik
+- **CI:** `api-social-phase.sh` stage3 acceptance'a eklendi
+- **Test:** `social_feed_refresh_test` + `socialActiveRoomsAvailable` pozitif senaryolar + client `20o`
+
+## 1.0.234+270 (2026-08-17) — Sosyal bölüm faz 4
+
+- **Video önizleme:** `SocialLocalVideoPreview` — yerel video için thumbnail + play overlay (composer + create)
+- **Keşif kısayolları:** Etiket/rota sabitleri `social_discover_shortcut_labels.dart` ile merkezileştirildi
+- **CI:** `api-social-phase.sh` final acceptance aşamasına eklendi (`api-final-phase.sh`)
+- **Test:** `social_discover_shortcut_labels_test` + client acceptance `20n`
+
+## 1.0.233+269 (2026-08-17) — Sosyal bölüm faz 3
+
+- **Keşif kısayolları:** Ünlüler, Fan Club, Canlı ve Sesli odalar chip satırı (`SocialDiscoverShortcuts`)
+- **Konum paylaşımı:** Ortak `pickSocialPostLocationLabel` helper — tam ekran create + inline composer
+- **Gönderi oluşturma:** Başarılı paylaşımdan sonra akış `socialNotifierProvider.refresh()` ile yenilenir
+- **Test:** `social_post_location_helper_test` + client acceptance `20m`
+- **API:** `scripts/acceptance-tests/api-social-phase.sh` — gönderi listesi / yorum / beğeni doğrulaması
+
+## 1.0.232+268 (2026-08-16) — Sosyal bölüm faz 2
+
+- **Akış düzeni:** Aktif oda yokken boş oda şeridi slotları kaldırıldı (`includeRoomStrips`)
+- **Paylaşım girişi:** App bar + ve boş akış CTA tam ekran gönderi oluşturucuya yönlendirir
+- **Gönderi detayı:** `SharePlus` ile paylaşım (deprecated `Share.share` kaldırıldı)
+- **Hikâyeler:** Hata mesajları `ApiException.userMessage` ile okunabilir
+- **Test:** `socialActiveRoomsAvailable` + layout `includeRoomStrips` testleri
+
+## 1.0.231+267 (2026-08-16) — Sosyal bölüm eksikleri
+
+- **Aktif odalar:** Sahte demo oda şeridi kaldırıldı; canlı/sesli oda yoksa şerit gizlenir
+- **Gönderi oluşturma:** Tam ekran sayfada video seçimi, kullanıcı etiketleme, hashtag ve GPS konum ekleme
+- **Etiketleme:** `SocialMentionPickerSheet` paylaşımlı bileşen — composer + create sayfası
+- **Profil ziyaretçileri:** API hataları artık sessizce boş listeye düşmez; kullanıcıya hata gösterilir
+- **Test:** `social_feed_layout_test`
+
+## 1.0.230+266 (2026-08-16) — Profil üyelik faz 40
+
+- **Para birimi etiketleri:** `buildMembershipCurrencyJetonLabel` + `buildMembershipCurrencyCfcLabel` + `buildMembershipHubCurrencyElmasLabel`
+- **Cüzdan aksiyonları:** `buildMembershipWalletJetonTopUpActionLabel` + bakiye başlık helper'ları
+- **Jeton mağazası:** `buildMembershipJetonStoreBuyActionLabel` + satın alma sayfası başlık/alt başlık + WhatsApp ipucu
+- **Hub:** `buildMembershipHubServicesSectionTitle` — Hizmetlerim bölüm başlığı
+- **İstatistikler:** `buildMembershipAboutStatsPlatformJoinRowLabel` — platform katılım tarihi
+- **Görevler merkezi:** `buildMembershipGrowthHubRoadmapSectionTitle` + `buildMembershipGrowthHubRoadmapHintText`
+- **Sayfalar:** para çekme, CFC yükle, jeton satın al başlıkları merkezileştirildi
+- **Acceptance:** client `20l` üyelik helper sözleşme testleri
+
+## 1.0.229+265 (2026-08-16) — Profil üyelik faz 39
+
+- **Premium tier kartı:** `buildMembershipPackageCardBuyActionLabel` + `buildMembershipPackageCardExtendActionLabel` + `buildMembershipPackageCardActiveSubtitle` + `buildMembershipPackageVipTagLabel`
+- **Ayarlar / kozmetik:** `buildMembershipSettingsCosmeticsRowLabel` — Premium Profil satırı
+- **Profil başlığı:** `buildMembershipProfileHeaderVipBadgeLabel` — tier-aware VIP rozeti
+- **Cüzdan merkezi:** `buildMembershipWalletCenterWithdrawalTitle` + `buildMembershipWalletCenterCfcStoreTitle` + `buildMembershipWalletCenterJetonStoreTitle`
+- **Acceptance:** client `20k` üyelik helper sözleşme testleri
+- **Test:** paket kartı CTA, kozmetik satır, cüzdan hub başlıkları, VIP rozet
+
+## 1.0.228+264 (2026-08-16) — Profil üyelik faz 38
+
+- **İstatistikler:** `buildMembershipAboutStatsPlanRowLabel` + `buildMembershipAboutStatsPlanDurationRowLabel`
+- **Rozet bölümü:** `buildMembershipBadgesSectionTitle` + `buildMembershipBadgesSectionManageActionLabel`
+- **Jeton mağazası:** `buildMembershipJetonStoreExtendBannerText` — uzatma banner metni
+- **Ödeme talebi:** `buildMembershipPaymentRequestDefaultNotes` + `buildMembershipCfcPaymentRequestDefaultNotes`
+- **Görevler merkezi:** `buildMembershipGrowthHubLevelVipPillLabel` — seviye VIP pill
+- **Aktif üyelik kartı:** `buildMembershipActiveMembershipCardTitle/Subtitle`
+- **Acceptance:** client `20j` üyelik helper sözleşme testleri
+- **Test:** istatistik satırları, jeton banner, ödeme notları, VIP pill
+
+## 1.0.227+263 (2026-08-16) — Profil üyelik faz 37
+
+- **Cüzdan kartı:** `buildMembershipWalletPremiumStatRowLabel` + `buildMembershipWalletSubscriptionStatRowLabel`
+- **Checkout:** `buildMembershipCheckoutPackageTitle/PaymentNotes/Badge` + `buildMembershipPagePurchaseButtonLabel`
+- **Ortak avantajlar:** `buildMembershipCommonBenefitsSectionTitle` — tier-aware başlık
+- **Para birimi kartı:** `resolveMembershipHubSummaryRowLeadingAccent` — ikon vurgusu
+- **Mağaza teaser:** `buildMembershipStoreTeaserBannerActionLabel` — CTA etiketi
+- **Üyelik sayfası:** `buildMembershipPageTokenPackagesSectionTitle` — jeton bölüm başlığı
+- **Acceptance:** client `20i` üyelik helper sözleşme testleri
+- **Test:** cüzdan satır etiketleri, checkout notları, common benefits başlık
+
+## 1.0.226+262 (2026-08-16) — Profil üyelik faz 36
+
+- **Hizmetler şeridi:** `buildMembershipHubMembershipServiceCardTitle` + `buildMembershipHubVipGoldServiceCardTitle`
+- **Profil düzenleme:** `buildMembershipProfileEditSectionTitle` — dinamik bölüm başlığı
+- **Ayarlar:** `buildMembershipSettingsVipGoldRowLabel` — VIP Gold satır etiketi
+- **Kısayollar:** `buildMembershipShortcutsCosmeticsChipLabel` — kozmetik chip
+- **Görevler merkezi:** `buildMembershipGrowthHubPlansButtonLabel` + `buildMembershipGrowthHubVipButtonLabel`
+- **Üyelik sayfası:** `buildMembershipPageAppBarTitle/Subtitle`, `buildMembershipPageFeaturesSectionTitle`, `buildMembershipPageTokenPackagesSubtitle`
+- **Acceptance:** client `20h` üyelik helper sözleşme testleri
+- **Test:** hizmet kartı, ayarlar VIP, app bar, growth hub butonları
+
+## 1.0.225+261 (2026-08-16) — Profil üyelik faz 35
+
+- **VIP kısayol:** `buildMembershipShortcutsVipChipLabel` — chip ana etiket (VIP Gold / VIP Yenile)
+- **Üyelik sayfası:** `buildMembershipPageActiveBannerText` — aktif plan banner metni
+- **Yönet tile:** `resolveMembershipManageTileLeadingAccent` — ikon vurgu rengi (standart / ücretli / süresi doldu)
+- **Cüzdan bölümü:** `buildMembershipWalletSectionBalanceHint` — dinamik bakiye açıklaması
+- **Yükseltme banner:** `buildMembershipPageUpgradeBannerTitle/Subtitle/ActionLabel` — üyelik sayfası CTA
+- **Acceptance:** client `20g` üyelik helper sözleşme testleri
+- **Test:** VIP chip, aktif banner, manage tile accent, wallet balance hint
+
+## 1.0.224+260 (2026-08-16) — Profil üyelik faz 34
+
+- **Premium kart:** `buildMembershipPremiumCardManageActionLabel` — ikincil yönet CTA
+- **İstatistikler:** `buildMembershipAboutStatsSectionSubtitle` — plan özeti alt başlık
+- **Para çekme:** `buildMembershipWithdrawalPageSubtitle` — dinamik sayfa alt başlığı
+- **Cüzdan merkezi:** `buildMembershipWalletStoreHubCardSubtitle` — jeton/CFC hub kartları
+- **Cüzdan bölümü:** `ProfileWalletSection` abonelik karo helper hizası
+- **Acceptance:** client `20f` üyelik helper sözleşme testleri
+- **Test:** about stats subtitle, withdrawal subtitle, wallet store hub
+
+## 1.0.223+259 (2026-08-16) — Profil üyelik faz 33
+
+- **Cüzdan kartı:** `buildMembershipWalletPremiumStatLabel` + `buildMembershipWalletSubscriptionsTileLabel`
+- **Kısayollar:** `buildMembershipShortcutsPlanChipLabel` — plan chip ana etiket
+- **Mağaza teaser:** `buildMembershipStoreTeaserBannerTitle` — hub başlık hizası
+- **Cüzdan merkezi:** `buildMembershipWalletCenterPageSubtitle` — dinamik sayfa alt başlığı
+- **Acceptance:** client `20e` üyelik helper sözleşme testleri
+- **Test:** cüzdan kartı, mağaza teaser banner, wallet center subtitle
+
+## 1.0.222+258 (2026-08-16) — Profil üyelik faz 32
+
+- **Premium kart:** `buildMembershipPremiumCardSubtitle` + `buildMembershipPremiumCardPrimaryActionLabel` — cüzdan hizası
+- **VIP banner:** `buildMembershipVipBannerTitle` + `buildMembershipVipBannerActionLabel` — hub başlık/CTA helper
+- **Cüzdan header:** `buildMembershipWalletQuickLinkLabel` — dinamik Üyelik/Gold/Yenile
+- **Lazy premium:** `ProfileLazyPremium` wallet hub alt başlığı
+- **Acceptance:** client `20d` üyelik helper sözleşme testleri
+- **Test:** VIP banner, premium kart CTA, wallet quick link
+
+## 1.0.221+257 (2026-08-16) — Profil üyelik faz 31
+
+- **Rozet bölümü:** `buildMembershipBadgesSectionSubtitle` — açık/kilitli rozet oranı
+- **Hizmetler şeridi:** `buildMembershipHubVipGoldServiceCardHint` — VIP Gold kart ipucu
+- **Cüzdan kazanç:** `buildMembershipWalletEarningsTeaser` — üyelik teaser satırı
+- **Kısayollar:** plan chip `buildMembershipWalletHubSubtitle` ile cüzdan hizası
+- **Acceptance:** client `20c` üyelik helper sözleşme testleri
+- **Test:** rozet bölümü, cüzdan kazanç teaser widget testleri
+
+## 1.0.220+256 (2026-08-15) — Profil üyelik faz 30
+
+- **Cüzdan header:** `buildMembershipWalletActiveBannerText` + `shouldShowMembershipWalletActiveBanner`
+- **Hizmetler şeridi:** `buildMembershipHubServiceCardHint` — üyelik kartı alt ipucu
+- **Hızlı menü:** `buildMembershipQuickMenuLabel` — dinamik Üyelik/Gold/Yenile
+- **Checkout footer:** `buildMembershipCheckoutFooterHint` + `MembershipCheckoutFooterHint`
+- **Test:** wallet banner, service hint, quick menu, checkout footer
+
+## 1.0.219+255 (2026-08-15) — Profil üyelik faz 29
+
+- **Ayarlar tile:** `buildMembershipSettingsManageSubtitle` — manage tile cüzdan hizası
+- **Hub istatistikler:** `buildMembershipAboutStatsPlanValue` + süresi dolmuş `MembershipStatusPill`
+- **Growth hub:** üyelik kartı status pill (aktif / süresi doldu)
+- **Acceptance:** client `20b` üyelik helper sözleşme testleri
+- **Test:** about stats pill widget, settings subtitle, status pill helper
+
+## 1.0.218+254 (2026-08-15) — Profil üyelik faz 28
+
+- **VIP pill:** `buildMembershipHubVipPillLabel` — profil hub başlık ortak helper
+- **Hub alt başlık:** `buildMembershipWalletHubSubtitle` — cüzdan merkezi + currency card hizası
+- **Mağaza teaser:** `buildMembershipStoreTeaserSubtitle` + `MembershipStoreTeaserBanner` (jeton/CFC)
+- **Test:** VIP pill, wallet hub subtitle, store teaser helper + widget
+
+## 1.0.217+253 (2026-08-15) — Profil üyelik faz 27
+
+- **Tier kart rozeti:** `resolveMembershipTierCardBadge` — Aktif / Popüler / Süresi doldu
+- **Katalog senkron:** `applyMembershipTierBadges` — aktif wire id + API popular tier
+- **Üyelik kartı:** `MembershipCard` üst rozet pill + membershipInfo/apiPackages
+- **Test:** badge helper, catalog merge, membership card widget
+
+## 1.0.216+252 (2026-08-15) — Profil üyelik faz 26
+
+- **Hub başlık:** `buildMembershipHubSectionTitle` — ayarlar karo + currency card
+- **Görevler merkezi:** `buildGrowthHubMembershipTitle` başlık helper
+- **Hub CTA:** `buildMembershipHubActionLabel` — Yenile / Yönet / Planlar
+- **Test:** hub section title, growth hub title, action label
+
+## 1.0.215+251 (2026-08-15) — Profil üyelik faz 25
+
+- **Kart başlığı:** `buildMembershipPremiumCardTitle` — premium kart + cüzdan merkezi
+- **Cüzdan kartı:** `buildMembershipWalletSubscriptionStatLabel` abonelik satırı
+- **Cüzdan merkezi:** ücretsiz kullanıcı `buildFreeUserMembershipTeaserSubtitle`
+- **Üyelik sayfası:** aktif banner `formatMembershipPlanDuration` ortak helper
+- **Test:** premium title, wallet stat, VIP banner teaser widget
+
+## 1.0.214+250 (2026-08-15) — Profil üyelik faz 24
+
+- **Ücretsiz teaser:** `buildFreeUserMembershipTeaserSubtitle` — API popular tier + süre/fal ipucu
+- **VIP banner:** profil hub ücretsiz CTA dinamik öne çıkan plan alt başlığı
+- **VIP Gold kısayol:** `buildVipGoldShortcutSubtitle` chip alt başlığı
+- **Üyelik sayfası:** süresi dolmuş banner ortak `buildMembershipPageExpiredBannerText`
+- **Cüzdan merkezi:** süresi dolmuş premium kart başlığı `buildMembershipExpiredPlanLabel`
+- **Test:** teaser, VIP shortcut, membership page banner metni
+
+## 1.0.213+249 (2026-08-15) — Profil üyelik faz 23
+
+- **Süresi dolmuş etiketler:** `buildMembershipExpiredPlanLabel` / `buildMembershipExpiredBannerText` ortak helper
+- **Katalog ipucu:** süresi dolmuş alt başlıkta `expiresAt` bitiş tarihi
+- **Hub istatistik:** üyelik planı satırı tier + bitiş tarihi
+- **Görevler / currency / premium kart / ayarlar:** süresi dolmuş başlık helper hizalaması
+- **Jeton checkout:** `PaymentMethodsSummaryLine` `showRecommended: false`
+- **Test:** expired plan label, banner text, catalog hint tarih
+
+## 1.0.212+248 (2026-08-15) — Profil üyelik faz 22
+
+- **Ortak avantajlar:** `mergeMembershipCommonHighlights` — katalog + seçili tier `features[]` (id dedupe)
+- **Ödeme özeti:** checkout sheet ve support footer `showRecommended: false`
+- **Premium kart:** `catalogTier` fallback `buildMembershipCatalogHintSubtitle`
+- **Hub kısayollar:** Planlar / Planı Yönet chip katalog ipucu alt başlığı
+- **Cüzdan header:** süresi dolmuş banner bitiş tarihi (`expiresAt`)
+- **Hub header:** süresi dolmuş VIP pill bitiş tarihi
+- **Test:** merge highlights, checkout önerilen yok, hub shortcuts ipucu
+
+## 1.0.211+247 (2026-08-14) — Profil üyelik faz 21
+
+- **Üyelik sayfası:** Aktif/süresi dolmuş banner `expiresAt` ISO bitiş tarihi
+- **Controller:** `membershipExpiresAt` + cüzdan senkronu
+- **Hub header:** VIP pill süresi dolmuş / bitiş tarihi etiketi
+- **Premium kart:** `expiresAt` fallback `buildMembershipCatalogHintSubtitle`
+- **Özellik tablosu:** API `features[].subtitle` metin hücresi
+- **Ödeme özeti:** `MembershipPaymentMethodsSummary` `showRecommended: false`
+- **Test:** manage tile, feature subtitle, banner expiry
+
+## 1.0.210+246 (2026-08-14) — Profil üyelik faz 20
+
+- **expiresAt sweep:** lazy premium, cüzdan kartı, hub istatistik, currency card, wallet header
+- **VIP banner:** yalnızca ücretsiz kullanıcı CTA (ölü paid/expired dallar kaldırıldı)
+- **Checkout:** `membership_page` açık `checkoutMethods()` normalizasyonu
+- **Wallet header:** aktif üyelik banner — `expiresAt` ile gün bilgisi olmasa da göster
+- **Test:** hub widget routing, merge features[], showRecommended
+
+## 1.0.209+245 (2026-08-14) — Profil üyelik faz 19
+
+- **Ödeme özeti:** `PaymentMethodsSummaryLine` → `checkoutMethods()` tek kaynak
+- **Bitiş tarihi:** `expiresAt` ISO — banner, görevler, ayarlar karo ipuçları
+- **Görevler merkezi:** `buildGrowthHubMembershipSubtitle` ortak helper
+- **Ayarlar karo:** `ProfileMembershipManageTile` katalog ipuçları
+- **Özellik tablosu:** Paket bazlı API `features[]` dinamik satırlar
+- **Test:** checkout sheet, growth hub subtitle, feature table API satırları
+
+## 1.0.208+244 (2026-08-14) — Profil üyelik faz 18
+
+- **Profil hub:** Süresi dolmuş ücretli kullanıcıya premium kart (yenile CTA)
+- **Görevler merkezi:** `buildMembershipCatalogHintSubtitle` / `formatMembershipPlanDuration`
+- **Ödeme kanalları:** `PaymentMethodEntity.checkoutMethods` — ortak whitelist + fallback
+- **Jeton checkout:** Bilinmeyen API kanalları filtrelenir; tier dinamik onay mesajı
+- **Çift refresh:** Üyelik jeton checkout `onPurchaseDone` yalnızca pending talep yeniler
+- **Destek footer:** Önerilen kanal özeti ile üst özet hizalandı
+- **Temizlik:** Kullanılmayan `jeton_native_checkout.dart` kaldırıldı
+
+## 1.0.207+243 (2026-08-14) — Profil üyelik faz 17
+
+- **CFC senkron:** `refreshMembershipAfterPurchase` — CFC üyelik talebi / anında ödeme sonrası
+- **Özellik tablosu:** API tier birleşiminde yinelenen "Jeton Alımında İndirim" satırı kaldırıldı
+- **Avantaj kartları:** `common_benefits` dinamik grid — API `features[]` sayısına uyum
+- **Checkout sheet:** `PaymentMethodsSummaryLine` güvenli ödeme alt bilgisi
+- **Cüzdan:** `profile_wallet_card`, `wallet_center_page`, `wallet_balance_header` katalog ipuçları
+- **Üyelik sayfası:** Aktif banner kalan / toplam gün (`durationDays`)
+- **Test:** `common_benefits_test`, `formatMembershipPlanDuration`
+
+## 1.0.206+242 (2026-08-14) — Profil üyelik faz 16
+
+- **API features[]:** Katalog `features` parse; üyelik sayfasında dinamik avantaj kartları
+- **Jeton mağazası:** `paymentMethodsProvider` ile dinamik ödeme kanalları + özet satırı
+- **Profil hub:** VIP banner, cüzdan özeti ve premium kart katalog ipuçları (süre, fal indirimi)
+- **İstatistikler:** "Plan süresi" kalan / toplam gün (`durationDays`)
+- **Tier kartı:** Fal indirimi rozeti; checkout yenilemede `paymentMethodsProvider` invalidation
+- **Jeton checkout:** Güvenli ödeme altında canlı kanal özeti
+
+## 1.0.205+241 (2026-08-14) — Profil üyelik faz 15
+
+- **Özellik tablosu:** Ayrı "Fal indirimi" satırı; jeton indirimi satırı korunur
+- **Plan süresi UI:** Tier kartı, CTA ve özellik tablosu `durationDays` kullanır
+- **Ödeme özeti:** Destek footer, profil cüzdan kartı; jeton/CFC sayfalarında üyelik pending banner
+- **Görevler kartı:** Katalog `durationDays` / `falDiscountPercent` alt başlıkta
+- **Hub yenileme:** `paymentMethodsProvider` invalidation
+
+## 1.0.204+240 (2026-08-14) — Profil üyelik faz 14
+
+- **Bekleyen üyelik talebi:** Cüzdan, görevler merkezi ve profil hub banner
+- **Canlı ödeme özeti:** `PaymentMethodsSummaryLine` — cüzdan CFC kartı + üyelik sayfası
+- **API süre:** `durationDays` tier birleşimi; checkout metinleri ve CFC talebi
+- **Özellik tablosu:** API tier başlıkları + fal indirimi (`falDiscountPercent`) satırı
+- **Yenileme:** `paymentRequestsNotifierProvider` hub refresh akışlarına eklendi
+
+## 1.0.203+239 (2026-08-14) — Profil üyelik faz 13
+
+- **Tier kartları:** API `popular` / `isActive` — Popüler ve Aktif rozetleri
+- **Önerilen plan:** API `recommended` paketi varsayılan seçim
+- **Tek dokunuş CFC:** Bakiye yeterliyken `paymentMethod: cfc` veya anında `cfc_balance` talebi
+- **Ödeme özeti:** Üyelik sayfasında `paymentMethodsProvider` canlı kanal listesi
+- **Checkout sheet:** Dinamik ödeme kanalı etiketleri
+
+## 1.0.202+238 (2026-08-14) — Profil üyelik faz 12
+
+- **API katalog birleşimi:** Tier kartları ve jeton paketleri sunucu fiyat/jeton ile güncellenir
+- **Özellik tablosu:** Aylık jeton satırı API birleşik tier'lardan okunur
+- **Üyelik checkout:** WhatsApp/Papara veya CFC ödeme seçimi (bottom sheet)
+- **CFC üyelik:** `buildMembershipCfcPaymentRequest` + dinamik ödeme kanalları
+- **Test:** `membership_catalog_merge_test.dart`
+
+## 1.0.201+237 (2026-08-14) — Profil üyelik faz 11
+
+- **SVIP katalog:** Üyelik planları, özellik tablosu ve fallback paketler
+- **Satın alma:** `POST /api/memberships/purchase` — `MembershipRemoteDataSource.purchaseMembership`
+- **CFC checkout:** Dinamik ödeme kanalları (`paymentMethodsProvider`)
+- **Plan kimliği:** SVIP / `super_vip` alias eşlemesi
+- **Test:** `membership_model_test.dart`
+
+## 1.0.200+236 (2026-08-14) — Profil üyelik faz 10 (düzeltme)
+
+- **CI:** Sosyal akış import yolları ve `PaymentConfigEntity` import düzeltmesi
+
+## 1.0.200+235 (2026-08-14) — Profil üyelik faz 10
+
+- **Ödeme yöntemleri:** `GET /api/payments/methods` — jeton checkout dinamik kanal listesi
+- **Görevler merkezi:** Üyelik durumu özeti kartı (aktif / süresi dolmuş / planlar)
+- **Sosyal akış:** `VipBadge` + SVIP; `membership` alanı `roleFrom` ile çözülür
+- **Doğrulama rozeti:** Verified ve üyelik rozetleri ayrı gösterilir
+- **Test:** `payment_method_entity_test.dart`
+
+## 1.0.199+234 (2026-08-14) — Profil üyelik faz 9
+
+- **Cüzdan:** Süresi dolmuş üyelik yenileme banner'ı; aktif etiket SVIP uyumlu
+- **Cüzdan merkezi:** Premium kart özeti (aktif / süresi dolmuş / ücretsiz)
+- **Üyelik sayfası:** Süresi dolmuş banner; `currentMembershipLabel` getter
+- **Destek footer:** Canlı `paymentConfig` (WhatsApp / Papara)
+
+## 1.0.198+233 (2026-08-14) — Profil üyelik faz 8
+
+- **Üyelik rozetleri:** Hub'da dokunarak equip; seçili rozet işareti
+- **Rozetleri Yönet:** Kozmetik sayfasına rozet sekmesi eklendi
+- **resolvedMembershipBadgeProvider:** Kullanıcının seçtiği rozet öncelikli
+- **Üyelik sayfası:** SVIP etiketi (`tierLabel`, DIAMOND yerine)
+- **Temizlik:** Kullanılmayan `ProfilePremiumBanner` kaldırıldı
+
+## 1.0.197+232 (2026-08-14) — Profil üyelik faz 7
+
+- **Süresi dolmuş üyelik:** `effectiveTier`, hub banner yenileme, rozet kilidi
+- **Ayrıcalıklar yönlendirme:** Premium → plan sayfası; VIP → `/vip-gold`
+- **Üyelik sayfası:** Bekleyen üyelik ödemesi banner + canlı ödeme config
+- **Test:** süre dolmuş / aktif üyelik senaryoları
+
+## 1.0.196+231 (2026-08-14) — Profil üyelik faz 6
+
+- **Başka kullanıcı profili:** Ücretli üyelik rozeti (`VipBadge`) görünür
+- **API:** `getUserExtended` — compound profilden `vipLevel` / `membershipTier`
+- **Provider:** `userProfileExtendedProvider`
+- **Test:** `user_profile_membership_badge_test.dart`
+
+## 1.0.195+230 (2026-08-14) — Profil üyelik faz 5
+
+- **ProfileHubMembershipSection:** Ücretsiz → VIP banner; ücretli → lazy `ProfilePremiumCard`
+- **Ayarlar:** `ProfileMembershipManageTile` + VIP Gold satırı
+- **Hizmetlerim:** Sabit "Üyelik Merkezi" kartı → `/premium-membership`
+- **Test:** `profile_hub_membership_section_test.dart`
+
+## 1.0.194+229 (2026-08-14) — Profil üyelik faz 4
+
+- **Profil düzenle:** Üyelik yönetim kartı (plan, kalan gün, plan sayfası)
+- **Satın alma senkronu:** `refreshMembershipAfterPurchase` — jeton/üyelik sonrası rozet+katalog
+- **Katalog:** `free` → `basic` normalizasyonu; SVIP tier seçimi
+- **Görevler:** Yol haritasına Planlar butonu; yenilemede üyelik provider'ları
+- **ProfileLazyPremium:** Cüzdan tabanlı tier çözümlemesi
+
+## 1.0.193+228 (2026-08-14) — Profil üyelik faz 3
+
+- **profileMembershipInfoProvider:** Cüzdan tabanlı merkezi üyelik özeti
+- **Yenileme:** Profil pull-to-refresh üyelik kataloğu ve rozetleri invalidate eder
+- **Kısayollar:** Planlar / VIP Gold / Kozmetik şeridi
+- **İstatistikler:** Üyelik planı ve kalan süre satırları
+- **Fal erişimi:** `free` artık sınırsız premium fal hakkı vermiyor
+- **Üyelik sayfası:** `hasActivePaidMembership` tier helper ile hizalandı
+
+## 1.0.192+227 (2026-08-14) — Profil üyelik faz 2
+
+- **Para kartı:** Üyelik özeti satırı (plan, kalan gün, Yönet/Yükselt)
+- **Cüzdan başlığı:** Tüm ücretli tier'lar için banner (yalnızca Gold değil)
+- **Görevler:** `free`/`basic` premium rozeti açmıyor; VIP tier doğru
+- **Rozet çözümleme:** En yüksek uygun üyelik rozeti seçiliyor
+- **Abonelikler:** Cüzdan kartından `/premium-membership` yönlendirmesi
+
+## 1.0.191+226 (2026-08-14) — Profil üyelik bölümü tamamlama
+
+- **isVip düzeltmesi:** `free`/`basic` artık VIP sayılmıyor; tier `VipTier` ile çözümleniyor
+- **Hızlı menü:** Üyelik kısayolu eklendi → `/premium-membership`
+- **VIP banner:** Ücretsiz kullanıcıya plan teşviki; aktif üyeye "Yönet" + ayrıcalıklar CTA
+- **Rozetler:** Kilit/açık durumu, tier etiketi ve plan sayfasına dokunma
+- **Ayarlar:** "Üyelik Yönetimi" satırı eklendi
+- **Test:** `profile_membership_helpers_test.dart`
+
+## 1.0.190+225 (2026-08-13) — Ana sayfa faz 12: başlık birliği, oyunlar birleşik
+
+- **Başlık stili:** `HomeSectionHeader` kaldırıldı; danışmanlar ve oyunlar `HomeSectionTitle` kullanıyor
+- **Oyunlar:** `HomeGamesRow` + `HomeGameCenterSection` → tek `HomeGamesSection`
+- **Dokümantasyon:** `docs/HOME_PAGE_SECTIONS.md` güncellendi (30 bölüm)
+
+## 1.0.189+224 (2026-08-13) — Ana sayfa faz 11: yetim widget temizliği
+
+- **Temizlik:** 12 kullanılmayan ana sayfa widget dosyası kaldırıldı (eski mockup / yinelenen sürümler)
+- **Dokümantasyon:** `docs/HOME_PAGE_SECTIONS.md` — bölüm sırası, API ve lazy katman envanteri
+- **Referans:** `home_page_sections.dart` üst yorumunda envanter bağlantısı
+
+## 1.0.188+223 (2026-08-13) — Ana sayfa faz 10: viewport lazy, birleşik ödüller
+
+- **Viewport lazy:** Alt bölümler `HomeViewportSection` ile kaydırma yakınına gelince mount edilir
+- **İstatistikler:** Şerit + genişletilebilir detay ızgarası tek `HomePlatformStatsSection` altında
+- **Büyüme & ödüller:** Görevler, davet ve reklam teaser'ları yatay `HomeGrowthTeasersSection` şeridi
+- **Temizlik:** Faz 9'da birleştirilen eski widget dosyaları kaldırıldı
+- **Test:** `HomeViewportSection` widget testi eklendi
+
+## 1.0.187+222 (2026-08-13) — Ana sayfa faz 9: birleşik şeritler
+
+- **Liderlik tabloları:** Hediye, PK ve ajans önizlemeleri tek sekmeli `HomeLeaderboardsSection` altında
+- **Sosyal şerit:** Son girişler + seni beğenenler tek `HomeSocialStripSection` (girişte beğenenler sekmesi)
+- **Temizlik:** Kullanılmayan `HomeFanClubRow` kaldırıldı
+- **Test:** Ajans ve PK liderlik entity parse testleri eklendi
+
+## 1.0.186+221 (2026-08-13) — Ana sayfa faz 8: fal türleri, popup duyuru
+
+- **Fal türleri:** `GET /api/fortune-request-types` yatay chip şeridi
+- **Duyuru şeridi:** `GET /api/popups` ilk kayıt inline banner (modal dışı)
+- **Test:** Ana sayfa entity parse birim testleri (`home_entities_test.dart`)
+- **Yenileme:** Popup ve fal türleri bootstrap + pull-to-refresh kapsamında
+
+## 1.0.185+220 (2026-08-13) — Ana sayfa faz 7: yayın görselleri, beğenenler, reklam
+
+- **Yayın arka planları:** `GET /api/broadcast-images` yatay önizleme → `/live/prep`
+- **Seni beğenenler:** `GET /api/user/likers` şeridi (giriş gerekli)
+- **Reklam izle:** `GET /api/ads/active` teaser → `/profile/growth`
+- **Yenileme:** Yayın görselleri, beğenenler ve reklam bootstrap + pull-to-refresh kapsamında
+
+## 1.0.184+219 (2026-08-13) — Ana sayfa faz 6: istatistik ızgarası, online fal, ajans
+
+- **Canlı istatistik ızgarası:** Oyun, sosyal, fal ve giriş metrikleri (`GET /api/public-stats`) → `/profile/broadcaster-stats`
+- **Online fal:** `GET /api/online-fal` yatay bölüm kartları → canlı falcılar
+- **Ajans liderleri:** Top 3 önizleme (`GET /api/agency/leaderboard`) → ajans paneli
+- **Yenileme:** Online fal ve ajans liderliği bootstrap + pull-to-refresh kapsamında
+
+## 1.0.183+218 (2026-08-13) — Ana sayfa faz 5: dinamik aksiyonlar, danışmanlar, PK
+
+- **Hızlı erişim:** `HomeQuickActions` ilk 3 `homepage-buttons` ile dinamik; kalan butonlar pill şeridinde
+- **Popüler falcılar:** `HomeAdvisorsRow` canlı danışman şeridi ana sayfaya eklendi
+- **Son girişler:** `GET /api/public-stats` → `recentLogins` yatay önizleme
+- **PK liderleri:** Haftalık top 3 (`GET /api/pk/leaderboard`) → `/pk/leaderboard`
+- **Yenileme:** PK liderliği bootstrap + pull-to-refresh kapsamında
+
+## 1.0.182+217 (2026-08-13) — Ana sayfa faz 4: davet, hediye liderliği, futbol
+
+- **Davet teaser:** Giriş yapmış kullanıcılar için `GET /api/referral` özet kartı → `/invite-friends`
+- **Hediye liderleri:** Haftalık top 3 önizleme (`GET /api/leaderboards`) → hediye sıralaması
+- **Futbol:** `GET /api/football` yatay maç kartları → web `/futbol`
+- **Yenileme:** Davet, hediye liderliği ve futbol bootstrap + pull-to-refresh kapsamında
+
+## 1.0.181+216 (2026-08-13) — Ana sayfa: trend, blog, falcı yedeği
+
+- **Trend konular:** `GET /api/trends` yatay etiket şeridi
+- **Blog önizleme:** `GET /api/blog/recent` yatay kartlar
+- **Canlı falcılar:** API boşsa compound `liveTellers` / danışman listesine düşer
+- **Yenileme:** Trend, blog ve görüntülenen falcılar refresh/bootstrap kapsamında
+
+## 1.0.180+215 (2026-08-13) — Ana sayfa devam: ünlüler, istatistik, oyun merkezi
+
+- **Canlı istatistik:** `GET /api/public-stats` — arama altı kompakt çevrimiçi / canlı / sesli şerit
+- **Ünlüler:** `GET /api/celebrities` yatay kart şeridi
+- **Oyun Merkezi:** `HomeGameCenterSection` — liderlik önizlemesi + CTA
+- **Keşfet:** Blog, rüyalar, ünlüler ve oyunlar kartları eklendi
+- **Yenileme:** Compound cache invalidation; falcılar, görevler ve platform stats refresh
+- **Ticker:** Çoklu satırda timer yeniden oluşturma hatası düzeltildi
+
+## 1.0.179+214 (2026-08-13) — Ana sayfa eksikleri tamamlandı
+
+- **Homepage butonları:** `GET /api/homepage-buttons` + compound parse; banner altı hızlı erişim şeridi
+- **Kayan yazı:** Arama altında inline ticker (`GET /api/homepage-ticker`)
+- **Oyunlar & etkinlikler:** `HomeGamesRow` ana sayfaya bağlandı (oyunlar + günlük ödüller)
+- **Fan Club:** `GET /api/fan-clubs` API; statik katalog yedek
+- **Günlük burç:** Her burç için `POST /api/horoscope/daily` bottom sheet + yıldızname yönlendirme
+- **Günlük görevler:** Ana sayfa teaser → `/profile/growth`
+- **Yenileme:** `refreshHomeData` oyun, ödül, ticker, buton ve fan club provider'larını kapsar
+- **Sıralama:** Hikayeler yukarı; yetim «Keşfet» başlığı kaldırıldı
+
+## 1.0.178+213 (2026-08-13) — PK sonuç, davet poll, Basic müzik paneli
+
+- **PK sonuç:** Savaş bitince `/pk/result` sayfasına yönlendirme (`PkResultPage`)
+- **PK davet poll:** `fetchMyInvites` REST yedeği `VoicePkInviteListener` içinde
+- **Basic müzik:** `VoiceRoomCenterMusicPanel` — kuyruk özeti ve !istek flaşı (RTC parity)
+- **Temizlik:** Kullanılmayan `showVoiceRoomBasicIncomingPkInvite` kaldırıldı
+
+## 1.0.177+212 (2026-08-13) — PK oda kapsamı ve Basic sahne parity
+
+- **PK menü/yönetim:** `pkBattleForRoomProvider` — yanlış odada PK daveti/savaş etiketi engellendi
+- **PK şeridi:** Skor ve süre doğrudan sunucu `PkBattleRemote` kaydından (oda değişiminde senkron)
+- **PK savaş:** Sunucu otoriter modda mod değiştirici gizlendi; «Destekle» hediye seçiciye bağlandı
+- **Basic sahne:** `seatSlots`, konuşma göstergesi, koltuk kilidi/atma (RTC ile parity)
+- **Basic dispose:** `leaveRoomSession(awaitBackend: true)` + 6s timeout
+
+## 1.0.176+211 (2026-08-12) — Müzik, çıkış ve PK daveti düzeltmeleri
+
+- **Müzik:** Videolu isteklerde YouTube katmanı artık silinmiyor; ses modunda stream yoksa gizli YouTube yedek oynatıcı devreye girer
+- **Şarkı isteği:** Kuyruk boşta `nowPlaying` kalsa bile yeni parça çalınır (`isQueuedOnly` düzeltmesi)
+- **Çıkış:** `VoiceRoomLeaveFlow.navigateAwayFromRoom` — `leaveRoomSession` sonrası root navigator ile liste ekranına dönüş
+- **PK daveti:** Kılavuz §9.3 `{ guestUserId, durationSec }` gövdesi öncelikli; kısmi başarı yanıtı sentezlenir; rakip sahip yoksa anlamlı hata
+
+## 1.0.175+210 (2026-08-12) — PK oda kapsamı ve çıkış akışı
+
+- **PK:** `pkBattleForRoomProvider` + `pkBattleBelongsToRoom` — yanlış odada PK şeridi / skor senkronu engellendi
+- **Çıkış:** `VoiceRoomLeaveFlow` — Basic + RTC ortak onay diyalogu ve hediye özeti
+- **RTC:** Geri tuşu artık onay diyalogu gösteriyor (Basic ile parity)
+
+## 1.0.174+209 (2026-08-12) — Müzik video, şikayet, çıkış özeti
+
+- **Videolu müzik:** `VoiceRoomMusicBackgroundLayer` + gizli ses oynatıcı Basic ve RTC stack'ine eklendi
+- **Oda şikayet:** Yönetim paneli → Kullanıcı ayarları → «Odayı şikayet et» (`POST /api/reports`, voice_room)
+- **Hediye dinleyici:** Büyük hediye marquee tek kaynak (`GiftEventListener`); Basic çift kayıt kaldırıldı
+- **RTC çıkış:** Oturum hediye özeti sheet'i (Basic ile aynı)
+
+## 1.0.173+208 (2026-08-12) — Oda çıkış UX ve konuşma isteği
+
+- **Oda kapatıldı / yasak:** SSE veya hata sonrası diyalog + otomatik liste ekranına dönüş (Basic + RTC)
+- **Konuşma isteği:** Alt menüde «El kaldır» butonu — koltukta olmayan dinleyiciler için
+- **Hata ekranı:** «Oda listesine dön» backend leave tamamlanana kadar bekler
+
+## 1.0.172+207 (2026-08-12) — Sesli oda senkron ve keşfet
+
+- **Oda kapatıldı (SSE):** `room_closed` → oturum sonlandırma, presence/koltuk temizliği, `leaveRoomSession(force: true)`
+- **Konuşma isteği:** Giriş/yenileme sonrası kuyruk ile UI senkronu; çıkışta pending sıfırlanır
+- **Müzik ayarları:** Yönetim panelinde videolu istek jeton maliyeti (`videoRequestCost`) PATCH
+- **Keşfet:** API sayfalama (`fetchRoomsPage`) — yerel liste bittiğinde sonraki sayfa yüklenir; önbellek `category` + `v2` anahtarı
+
+## 1.0.171+206 (2026-08-12) — Oda çıkış + canlı PK daveti
+
+- **Sesli oda çıkış:** RTC sayfasında `leaveRoomSession` önce tamamlanıyor, sonra navigasyon (dispose sonrası `ref` hatası giderildi)
+- **Hata ekranı:** "Oda listesine dön" backend leave tetikler
+- **Canlı PK:** `POST /api/video-streams/pk` gövdesine `streamId` + `targetStreamId` eklendi (`targetStreamId gerekli` hatası)
+
+## 1.0.170+205 (2026-08-12) — Keşfet kategori + tanı kartı
+
+- **Keşfet:** `GET /api/chat/rooms?type=voice&category=` — sunucu tarafı kategori filtresi (kılavuz §9.3)
+- **Yedek:** Backend kategori döndürmezse istemci heuristic filtresi korunur
+- **Tanı kartı:** "Socket" → "Hediye sync"; hediye poll başlayınca işaretlenir (TRTC beklemez)
+
+## 1.0.169+204 (2026-08-12) — Sesli oda giriş hatası
+
+- **Kök neden:** `GiftBattleController.build()` içinde `_start()` → `state` okunuyordu → `Bad state: Tried to read the state of an uninitialized provider`
+- **Çözüm:** Poll başlatma `Future.microtask` ile ertelendi; aktif/pasif aralık parametre ile seçiliyor
+- **Ek:** Oda girişinde `_schedulePoll(musicActive: false)` — build sonrası güvenli varsayılan
+
+## 1.0.168+203 (2026-08-12) — Oda kategorisi
+
+- **Kategori alanı:** `VoiceRoomEntity.category` — liste ve state snapshot parse
+- **Yönetim paneli:** Kategori seçici → `PATCH /settings` (`category`)
+- **Oda açma:** Kurulumda kategori (Sohbet, Müzik, Aşk, Oyun, Gece)
+- **Keşfet filtresi:** Backend `category` varsa doğrudan eşleşme
+
+## 1.0.167+202 (2026-08-12) — Müzik ve oda açma kapasitesi
+
+- **Müzik ayarları:** Yönetim paneli + paylaşılan dialog (`PATCH /music-settings`)
+- **Yasaklı kelimeler:** Sohbet yönetimi → araçlar sayfası kısayolu
+- **Oda açma:** Kurulumda koltuk (8–15) ve max kullanıcı (15–100) seçimi
+- **CI:** `gift_session_controller_test` — voice_realtime prefetch için path_provider mock
+
+## 1.0.166+201 (2026-08-12) — Oda kuralları ve konuşma isteği
+
+- **Oda kuralları:** Yönetim panelinde düzenleme → `PATCH /settings` (`rules` / `rulesTr`)
+- **Oda açma:** `POST /rooms/create` — `type: voice`, `seatCount: 8`, `maxUsers: 15` (kılavuz §9.3)
+- **Konuşma isteği:** Kullanıcı ayarları → `POST/DELETE /speak-request` (koltukta değilken)
+- **State snapshot:** `rulesTr` parse
+
+## 1.0.165+200 (2026-08-12) — Oda kapasitesi ve yönetim
+
+- **maxUsers:** Yönetim panelinde maksimum kullanıcı seçici (15 / 25 / 50 / 100)
+- **Konuşma sırası:** Kullanıcı yönetimi → el kaldıranlar kuyruğu (`speak-requests`)
+- **Web sahne:** `VoiceWebOwnerStage` koltuk ızgarası `seatCount`'a göre dinamik
+- **Hediye efektleri:** Koltuk efekt sınırı oda kapasitesiyle hizalı
+
+## 1.0.164+199 (2026-08-12) — Dinamik koltuk kapasitesi
+
+- **Backend `seatCount`:** Oda listesi, state snapshot ve `GET /seats` ile senkron
+- **Koltuk haritası:** 8–15 arası dinamik slot; admin koltuğu (11) kapasite > 10 iken
+- **Yönetim paneli:** Koltuk sayısı seçici (8 / 10 / 12 / 15) → `PATCH /settings`
+- **Sahne düzeni:** `VoiceRoomSeatLayout`, grid ve otomatik koltuk ataması backend kapasitesine göre
+
+## 1.0.163+198 (2026-08-12) — Sesli oda backend UI hizalaması
+
+- **Oda ayarları (PATCH /settings):** Ad, açıklama, `isLocked` kilidi — yönetim paneli
+- **Giriş şifresi:** Tüm oda sahipleri için (yalnızca VIP değil)
+- **Seste olanlar:** `GET /voice` → `voiceUsers` listesi (yönetim → kullanıcılar)
+- **!istek:** Doğrudan `POST …/music-request-by-query` (web ile aynı)
+- **updateRoomSettings API:** `name`, `description`, `isLocked`, `maxUsers`, `seatCount` alanları
+
+## 1.0.162+197 (2026-08-12) — PK canlı yayın + sesli oda düzeltmeleri
+
+- **Canlı PK davet:** Pending iken split ekran açılmaz; kabul/red sonrası `active` başlar
+- **Canlı PK split:** Sol kendi / sağ rakip; yayıncı mute + rakibi çıkar + PK bitir
+- **Canlı PK izleyici:** Rakip panelinde HLS yedek ses (`audible`)
+- **Sesli PK:** `prepareShell` — sayfa sunucu onayı gelmeden aktif sayılmaz
+- **Sesli PK taraf:** Aktif odada sol = kendi oda (`applyRemoteBattleForVoiceRoom`)
+- **Oda içi şerit:** `VoicePkRoomStrip` — aktif skor/süre; challenger bekleyen metin
+- **Sesli çıkış:** PK sayfasından dönünce remote/gift realtime oda oturumunu bozmaz
+- **Performans:** PK/hediye poll seyrekleştirildi; SSE varken sesli PK aktif oda poll atlanır
+- **SSE:** Çift `applyRemoteBattle` kaldırıldı
+
+## 1.0.161+196 (2026-08-12) — Global hediye overlay + PK davet/kabul senkronu
+
+- **Global hediye:** `GlobalGiftOverlay` — küçük toast (~56px), kuyruk + `eventId` dedupe, admin `display-settings` (TTL 2 dk)
+- **Dev marquee kaldırıldı:** Büyük hediye kartı (`StaffEntranceMarquee` / `recent-big` poll) hediye için devre dışı
+- **PK 405 düzeltmesi:** Canlı PK `opponentStreamId` + `durationSeconds`; sesli PK `opponentRoomId`; `/api/pk/request` fallback kaldırıldı
+- **PK davet:** `LivePkInviteListener` / `VoicePkInviteListener` — ana backend oda/yayın poll; hedefe özel dialog
+- **API mirror:** `GET/PATCH /api/gifts/display-settings`, chat/video-stream `/pk` alias
+- **Rapor:** `docs/GIFT_PK_FLUTTER_SYNC_REPORT.md`
+
+## 1.0.160+195 (2026-08-12) — Master prompt faz 1–2 (canlı, sesli, sosyal, shorts)
+
+- **Canlı yayın çıkış:** Leave coordinator — timer, co-host teardown, TRTC mute/leave, SSE; izleyici mic kapalı
+- **Canlı yayın poll:** SSE bağlıyken yedek poll aralığı uzatıldı
+- **Sesli oda çıkış:** TRTC/müzik kes → backend presence leave → SSE/state (peer offline hızlanır)
+- **Sesli oda reconnect:** `reconnecting` fazı; kopmada `leaveSeat` yok; snackbar (basic + RTC)
+- **Sesli oda DJ:** SSE sağlıklıyken REST DJ poll atlanır
+- **Sosyal akış:** `loadMore` hata toleransı; sayfalama spinner
+- **Kısa video:** `displayThumbnailUrl` (thumbnail → müzik → avatar); dispose pause; loadMore hata toleransı
+- **PK 405 + hediye:** Önceki 1.0.159 düzeltmeleri dahil (video-streams PK body, oda çıkış race, tam ekran hediye video)
+
+## 1.0.159+194 (2026-08-12) — PK 405, oda çıkışı, video hediye
+
+- **PK daveti (canlı):** `POST /api/video-streams/pk` — `action:create`, `streamId`, `targetStreamId`, `duration` (sn); legacy body yedek
+- **PK daveti (sesli oda):** 405'te `guestUserId` + `durationSec` yedek gövdesi
+- **Oda çıkışı:** `leaveRoomSession(force)` — bağlantı açıkken tekrar çıkış; basic oda önce leave sonra navigasyon
+- **Canlı yayın kapanış:** `_exitBroadcast` finally ile `_leaving` sıfırlanır
+- **Video hediye:** Tam sahne `BoxFit.cover`, süre 10 sn; hediye kutusu yerine video önceliği
+
+## 1.0.158+193 (2026-08-12) — Sesli oda + canlı yayın master fix
+
+- **Sesli oda TRTC:** Yalnızca audio — video renderer/subscription devre dışı; `setDefaultStreamRecvMode(audio-only)`
+- **Sesli oda müzik:** Tek `RoomMusicService` + `just_audio`; YouTube watch URL doğrudan oynatılmaz; video katmanları kaldırıldı
+- **Canlı yayın müzik:** `MusicVideoPlayer` (video_player) koltukların altında; gerçek `videoUrl`/`streamUrl` SSE'den
+- **Oda çıkışı:** `RoomLeaveCoordinator` — idempotent leave, müzik/TRTC/SSE/heartbeat sıralı temizlik
+- **SSE dedup:** `RoomMusicPlaybackDedupe` — aynı track/event iki kez oynatılmaz
+- **State:** `room_fragment_providers` — chat/seat/müzik/bağlantı ayrı slice rebuild
+- **SongPlaybackFields:** `resolvedAudioStreamUrl` / `resolvedVideoStreamUrl` ayrımı
+
+## 1.0.157+192 (2026-08-12) — Canlı hediye, PK, müzik, yayın kapanış
+
+- **Canlı yayın hediyeleri:** Socket.IO `gift` + genişletilmiş SSE tipleri; REST poll SSE ile birlikte (yedek)
+- **PK davet:** `durationSec` + kılavuz `respond` path; 3 sn poll yedek
+- **Sesli oda çıkış:** Hediye özeti sheet (atılan/kazanılan jeton) — anında çıkış sonrası
+- **Müzik:** Video modda `just_audio` + WebView; SSE `isVideoRequest` korunur; `streamUrl` parse
+- **Chat bar UI:** Büyük dikey ayarlar/müzik ikonları, gönder ile boşluk
+- **Yayın kapanış:** Yayıncı ve izleyici anında `/feed`
+- **Canlı Falcılar:** `online=true` hata yedeği — filtresiz ikinci istek
+
+## 1.0.156+191 (2026-08-11) — Sesli oda müzik + koltuk + çıkış
+
+- **Müzik oynatma:** `song_started` SSE → DJ/just_audio + videolu WebView katmanı (basic oda)
+- **YouTube/S3:** Video arka plan + gizli IFrame senkron; `normalizeSongSseForDjPlayback`
+- **UI:** Mesaj gönder üstü müzik ikonu + ayarlar; alt bardan ayarlar kaldırıldı
+- **!istek / şarkı isteği:** `showVoiceYoutubeSongSheet` — sesli veya videolu seçim
+- **Koltuk:** `action: take` öncelikli oturma; yetkili semboller (+ V % @ & ~)
+- **Çıkış:** Anında navigasyon; presence leave arka planda
+
+## 1.0.155+190 (2026-08-11) — Master sync tam faz (PK, sosyal, bot, fal)
+
+- **PK davet:** Canlı + sesli 8s HTTP yedek poll; `invited` durumu; `targetUserId` / `guestUserId` hedef eşlemesi
+- **Sosyal akış:** `hasMore` pagination yedeği; görüntülenme `registerView` + API; fal kartında «X kişi baktı» rozeti
+- **Fal senkron:** `SocialFortuneFeedSync` — `postIdHint` ile `fetchPost` öncelikli
+- **Bot guard:** `BotAccountGuard` / `isBotAccountProvider` — canlı, sesli oda, sosyal paylaşım, PK
+- **Fal katalog:** Aura, İstihare, Kurşun dökme, Doğum haritası; yanlış alias düzeltmeleri
+- **SSE:** `RoomRealtimeEventParser` — PK davet olay normalizasyonu
+- Rapor: `docs/FLUTTER_MASTER_SYNC_AUDIT.md` güncellendi
+
+## 1.0.154+189 (2026-08-11) — Master sync P0: oda çıkış + swipe TRTC
+
+- **Sesli oda:** `refresh()` artık `_sessionActive` yokken presence yeniden join etmez (Music PiP stale presence)
+- **Basic çıkış:** `awaitBackend: true` — backend leave tamamlanmadan navigasyon yok
+- **Swipe canlı:** `suspendForSwipe` / `resumeFromSwipe` — ekran dışı yayın TRTC+SSE bırakır
+- Rapor: `docs/FLUTTER_MASTER_SYNC_AUDIT.md`
+
+## 1.0.153+188 (2026-08-11) — CI import düzeltmesi
+
+- `LiveVipEntranceBanner` / `LiveRoomChatMessage` — `EntranceTheme` package import (CodeQL derleme hatası)
+
+## 1.0.153+187 (2026-08-11) — Gold giriş banner + takım renkleri
+
+- **Takım teması:** `TeamCatalog` + `EntranceTheme` — backend `team` nesnesi veya `favoriteTeam` (`PATCH /api/me`)
+- **Tek kaynak:** `userRoomProfileProvider` — üyelik (`walletBalances`) + takım (`profileExtended`) senkron
+- **Giriş FX:** `VipEntranceOverlay`, `LiveVipEntranceBanner` takım gradient; takım yoksa 🇹🇷 kırmızı/beyaz
+- **Profil:** Düzenle ekranında takım seçici; kayıtta cüzdan + profil invalidate
+- Rapor: `docs/LIVE_VOICE_SYNC_FIX_REPORT.md` güncellendi
+
+## 1.0.152+186 (2026-08-11) — Canlı/sesli oda tam senkron (P0)
+
+- **Canlı çıkış:** `LiveRoomController.tearDownSession()` — SSE, socket, hediye, backend leave anında (idempotent)
+- **Fal isteği (yayıncı):** Sağ üst `LiveHostFortuneRequestStack` — max 3 kart, Cevapla/Reddet/Beklet
+- **Sesli PK:** SSE bağlıyken 8s poll atlanır; `pkBattleRemoteProvider` SSE birincil
+- Rapor: `docs/LIVE_VOICE_SYNC_FIX_REPORT.md`
+
+## 1.0.151+185 (2026-08-11) — Tek backend yönlendirme
+
+- **ApiBackendRouter:** Taşınan tüm yollar (`/api/pk/*`, `/api/live/pk/active`, `/api/live/guest/*`, `/api/games/rooms`, `/api/membership/*`) artık `canlifal.com` (main)
+- **PK SSE:** `PkMatchSseService` ana backend'e bağlanır
+- **Canlı socket:** `LiveNamespaceSocketService` ana backend `/live` namespace
+- §8 korundu: `/api/live/gift/send`, `/api/trtc/token`, `/api/trtc/usersig`
+
+## 1.0.150+184 (2026-08-11) — PK, fal paneli, yayın özeti, hediye
+
+- **Sesli oda PK:** Oda bazlı poll + `guestUserId` davet body; aktif PK'da otomatik PK sayfasına yönlendirme
+- **Canlı PK:** `pkRoomProvider` skorları birleşik maçla senkron
+- **Fal yayını:** Sağ şeritte sürekli «Fal İste» paneli (`liveFortuneMyStatusProvider` durum)
+- **Yayın/oda özeti:** Kapanışta sohbete izleyici · jeton · süre sistem mesajları; sesli oda + canlı yayın
+- **Canlı hediye:** Hediye dinleyici anında bağlanır; yayın hediyeleri gecikmesiz başlatılır
+
+## 1.0.149+183 (2026-08-11) — Backend API contract sync
+
+- **docs/BACKEND_API_REFERENCE.md** eklendi (Flutter master contract)
+- **Battles/Goals:** `ApiBackendRouter` → ana backend (`canlifal.com`); ikinci backend yönlendirmesi kaldırıldı
+- **Gift battle/goal:** POST/GET sözleşmesi ve JSON alan eşlemesi (secondsLeft, rank, percent, totalScore, lastCallActive)
+
+## 1.0.148+182 (2026-08-10) — Debug derleme + CI
+
+- **Gradle:** Release keystore kontrolü yalnızca `assembleRelease` / `bundleRelease` sırasında — debug ve CodeQL tekrar çalışır
+- **CI:** `build-debug-apk.yml` — keystore olmadan `apk-debug-latest` debug APK yayınlar
+
+## 1.0.147+181 (2026-08-10) — Sesli oda müzik oynatma
+
+- **SSE oynatma kapısı:** Ses modunda `RoomSongBloc` parça tutarken just_audio yeniden başlatılmıyordu — düzeltildi
+- **Android stream:** googlevideo için backend proxy önce denenir (`/api/chat/youtube-audio`)
+- **Video mini player:** Odaya girildiğinde mevcut parça için ilk senkron eklendi
+
+## 1.0.146+180 (2026-08-10) — Release candidate lock
+
+- **Production logging:** TRTC/FCM/OneSignal push token ve `audio.trtc.token` logları yalnızca `kDebugMode`
+- **VoiceRoomDebugLog:** `audio.trtc.token` / `audio.agora.token` release kritik log listesinden çıkarıldı
+
+## 1.0.145+179 (2026-08-10) — Stage 16 production parity
+
+- **CI release gate:** Hatalı GitHub Secrets durumunda dokümante test hesaplarına otomatik geri dönüş; `acceptance-preflight.sh` + `set-acceptance-secrets.sh`
+- **PK routing:** Sesli oda PK ana backend (`canlifal.com`); games yalnızca `/api/pk/*`, `/api/live/pk/active`, `/api/live/guest/*`
+- **Socket.IO temizliği:** Ölü hediye/PK socket köprüleri kaldırıldı (SSE + REST birincil)
+- **404 cleanup:** `current-song`, `music-stream`, `live/pk/sweep`, `liveFalPending`, `fortuneTellerIncomingSessions` çağrıları kaldırıldı
+- **PK body:** Tek uç `POST /api/chat/rooms/{id}/pk` — `{ action, targetRoomId, duration, battleId }`
+- **401 refresh:** Yalnızca ana backend 401'inde token yenileme (games origin hariç)
+- **Müzik:** `youtube-stream` canonical; join-seat sırası düzeltildi
+- **Poll:** Canlı PK 8s, sesli oda davet 10s yedek
+
+## 1.0.144+178 (2026-08-07) — Production master P0
+
+- **Aşama 6 hediye/jeton:** Backend `coinCost`/`spentAmount` toplam jeton parse; katalog enrich sıfır `totalCoin` doldurur; voice send yanıtı `newBalance`/`spentAmount`; `insufficient_jeton` hata eşlemesi; UI'da 0 jeton satırları gizlenir
+- **Aşama 7 müzik/!istek:** `controlPlayback` switch fall-through düzeltmesi; pause POST `action:pause`; pauseMusic yerel player duraklatma; duplicate videoId kuyruk engeli
+- **Aşama 8 final:** Otomatik acceptance betiği (`api-final-phase.sh`); APK split-per-abi ~94MB arm64 (universal ~247MB); release/security audit raporu
+- **Canlı yayın oluşturma:** `createVideoStream` — 25s write timeout, timeout/5xx/429 için 1 retry; prep ekranında JWT ön kontrol; çift 15s timeout kaldırıldı (Dio + ApiException mesajları)
+- **Falcı paneli:** `PsychicInviteDiagnosticCard` yalnızca `kDebugMode`; release listede debug slot'lar kaldırıldı
+- **approvedPsychicProvider:** önce `my-profile`, hata durumunda onaylı profil cache korunur (`src=error` yerine `cached_profile`)
+- **Durum matrisi:** `docs/FLUTTER_PRODUCTION_MASTER_STATUS.md`
+
+## 1.0.143+177 (2026-08-07) — Stabil entegrasyon (1.0.138–142 paketi)
+
+Tüm son backend senkron değişiklikleri `main` üzerinde birleştirildi; `dart analyze` + 374 test geçti.
+
+- **Müzik (1.0.138):** `!istek` SSE + `just_audio` / YouTube video parity
+- **Fal paylaşım (1.0.139):** `POST /api/social/posts/auto-fortune`
+- **Canlı yayın (1.0.139–142):** Host `streamEnded`, SSE-aware poll, `createVideoStream` parse
+- **Canlı falcı (1.0.140):** SSE-primary poll, falcı paneli event bus
+- **Sesli oda (1.0.141–143):** RTC selective watch, tek oda ayarları paneli, güvenli roomKey yönlendirme
+- **CI:** CodeQL runner kuyruğu (`max-parallel`, `c-cpp` kaldırıldı)
+
+## 1.0.142+176 (2026-08-05) — P2 oda ayarları + canlı yayın parse
+
+- **Oda ayarları tek panel:** `showVoiceRoomSettingsSheet` / `showVoiceRoomHubSettingsSheet` artık `showVoiceRoomManagementPanel`'e yönlendiriyor
+- **Canlı yayın oluşturma:** `createVideoStream` yanıt parse — `videoStreamId`, `liveStreamId`, `liveStream` alias + `create.parse_fail` teşhis logu
+- **Jeton animasyonu:** Hediye animasyonu yalnızca SSE/socket kaynaklarından (mevcut kural belgelendi)
+
+## 1.0.141+175 (2026-08-05) — Sesli oda RTC performans
+
+- `voice_room_rtc_page.dart`: selective `ref.watch` — footer UI, müzik mini oynatıcı, VIP giriş, teşhis banner izole widget'lara taşındı
+- `roomSongBlocProvider` artık yalnızca mini oynatıcı alt ağacında dinlenir (tüm sayfa yeniden çizilmez)
+- `voiceRoomUiProvider` / `voiceRoomMusicSessionProvider` tam state yerine `select` kullanımı
+
+## 1.0.140+174 (2026-08-05) — Backend senkron P1 (SSE poll azaltma)
+
+- **Canlı falcı seansı:** SSE bağlıyken sinyal poll 30 sn (önceden 3 sn); oda/sohbet poll zaten SSE-aware
+- **Falcı paneli:** Event bus + 20 sn yedek HTTP poll (önceden 3 sn); `PsychicIncomingHost` SSE → bus yayını
+- **Canlı yayın:** Host/izleyici poll aralıkları `liveRoomProvider.sseConnected` ile yavaşlatılır (sinyal 10 sn, fal 30 sn, misafir 20 sn)
+- **Sesli oda:** Kullanılmayan `showVoiceRoomSettingsSheet` / `showVoiceRoomHubSettingsSheet` `@Deprecated` — `showVoiceRoomManagementPanel` kullanın
+
+## 1.0.139+173 (2026-08-05) — Backend senkron (fal paylaşım + canlı yayın)
+
+- **Fal otomatik paylaşım:** `POST /api/social/posts/auto-fortune` (web parity) — anında akışa prepend
+- **Canlı yayın:** Host SSE `streamEnded` → yayın sonu diyaloğu
+- **Rapor:** `docs/BACKEND_FLUTTER_SYNC_REPORT.md` — backend-first gap analizi
+
+## 1.0.138+172 (2026-08-05) — Müzik sistemi (web parity)
+
+- `!istek` akışı: SSE `song_started` / `song_changed` / `player_state` / `queue_updated` → oynatıcı
+- **Ses modu:** `just_audio` (`setUrl` + `play`) — gizli YouTube iframe kaldırıldı
+- **Video modu:** Mevcut `YoutubeVideoBackground` / hediye video renderer
+- `SongPlaybackFields`: `musicUrl` → `videoUrl` → `youtubeUrl` → `videoId` null-safe çözümleme
+- `RoomSongDto.hasTrack` yalnızca `videoId` değil, tüm URL alanlarını kabul eder
+- `[MusicPipeline]` teşhis logları: Song Event, Parsed VideoId/MusicUrl, Starting Audio/Video
+
+## 1.0.137+171 (2026-08-05) — Derleme düzeltmeleri
+
+- Shorts: `const` scroll physics düzeltmesi; müzik tile go_router navigasyonu
+- Sosyal: `commentsCount` alan adı düzeltmesi
+
+## 1.0.136+170 (2026-08-05) — UI tamamlama
+
+### Hikâyeler
+- Video hikâye yükleme (`createStoryVideo`, galeri seçici)
+- Paylaşılan `showStoryCreateSheet` — fotoğraf veya video
+- Görüntüleyici: yerel silme listesi, video yükleme göstergesi, basılı tutunca video duraklatma
+- Ana sayfa `StoriesSection` — kendi hikâyeni görüntüle / uzun basarak ekle
+- go_router `/social/stories/view`
+
+### Sesli oda
+- `VoiceRoomCenterMusicPanel` RTC sahnesine bağlandı
+- TRTC müzik karışım hatası → flash banner (`pulseMusicRequestFlash`)
+- Footer `!istek` butonu müzik açıkken görünür
+
+### Falcı paneli
+- `PsychicInviteDiagnosticCard` + `PsychicRtcSessionReportCard` (debug RTC günlüğü)
+
+### Shorts
+- Müzik detay sayfası `RefreshIndicator`
+- Hashtag video sayısı üst bilgi
+- GPS etiketi ters coğrafi kodlama (Nominatim)
+
+### Canlı yayın
+- Sinyal poll ardışık hata banner'ı
+
+## 1.0.135+169 (2026-08-05) — WIP senkronizasyon (3)
+
+### Push (sunucu)
+- `docs/PSYCHIC_ONESIGNAL_ACTION_BUTTONS.md` — Kabul/Reddet `actionId` ve REST örneği
+
+### Sesli oda / TRTC
+- `!istek` müzik: TRTC `TXAudioEffectManager` ile uplink karışımı (`VoiceRoomTrtcMusicMixer`)
+- `chat_room_providers` parçalama: SSE (`chat_room_providers_sse.dart`), pause/resume (`chat_room_providers_playback.dart`)
+
+### Hikâyeler
+- Video oynatma (`video_player`), 5 sn otomatik ilerleme, basılı tutunca duraklat
+- Kendi hikâyesini görüntüleme; `DELETE /api/stories` ile silme
+
+### Shorts
+- Hashtag sayfalandırma (`ShortHashtagNotifier`)
+- Müzik detay akışı (`/shorts/music/:id`)
+- Keşfet GPS konum (`geolocator`)
+
+### Canlı yayın
+- `VideoWebrtcSignalService` kaldırıldı — sinyal poll doğrudan sayfada
+
+### Performans / tanılama
+- `docs/RTC_LIFECYCLE.md`
+- `PsychicRtcSessionReport` — falcı 1:1 RTC olay günlüğü
+
+## 1.0.134+168 (2026-08-05) — WIP senkronizasyon (2)
+
+### Sesli oda
+- `!istek` müzik barı: `RoomSongBloc`/IFrame tek kaynak; pause/resume bloc-first
+- Koltuk kilidi: `isLocked` parse, UI kilit ikonu, kilitli koltuğa oturma engeli, kilidi aç
+- `unlockSeat` API (`action: unlock`)
+
+### Sosyal
+- Sosyal sekmesine hikâye şeridi (`SocialStoriesRail`)
+- Gönderi detay: paylaş, yorumlar, silince geri dön
+
+### Shorts
+- Hashtag sayfası pull-to-refresh
+
+### RTC temizlik
+- `VoiceTrtcException` (eski Agora adı typedef ile uyumlu)
+
+## 1.0.133+167 (2026-08-05) — WIP senkronizasyon
+
+### Canlı falcı TRTC
+- Tek join kilidi (`_joiningRtc`); SSE/room poll ile çakışan rejoin engellendi
+- Heartbeat reconnect join sırasında askıya alınır (`setReconnectSuspended`)
+- `startLocalPreview(viewId=0)` kaldırıldı — kamera flip-flop düzeltmesi
+- Yerel PiP sabit viewId; kamera aç/kapa yalnızca mute/unmute
+- `expectedAnchorUserId` 1:1 görüşmede zorunlu
+- Bootstrap: önce TRTC join, sonra SSE (paralel rejoin yok)
+- Uygulama ön plana dönünce `onAppResumed` → RTC yeniden bağlanma
+- Medya durumu `/api/room/signal` ile `media_state` yayını (kamera/mic)
+
+### Sesli oda !istek / DJ
+- SSE `dj` → `RoomSongBloc.eventFromSse` doğrudan besleme
+- DJ payload: `musicUrl`/`videoId`/`elapsedSeconds` ile geç katılan senkronu
+- Oynatma sırasında video katmanı sıfırlanmıyor; `_syncRoomVideo` çağrılıyor
+
+### Push (falcı çevrimdışı)
+- OneSignal bildirim aksiyonu: Kabul/Reddet → `respondSession` + deep link
+- Gelen çağrı diyaloğu: 60 sn geri sayım, süre dolunca otomatik red
+
+## 1.0.132+166 (2026-08-05)
+
+### Ana sayfa görselleri
+- **Trend videolar:** CDN küçük resim + yerel mistik kapak yedeği
+- **Fal & Tarot:** Yerel `.webp` mistik kapaklar (tarot, kahve, katina vb.)
+- **Keşfet / Gold:** Unsplash yerine yerel mistik görseller; ağ katmanı isteğe bağlı
+- **API:** `/api/mobile/home` fal kartı `image` alanı düzgün çözümlenir
+
+## 1.0.131+165 (2026-08-05)
+
+### Hediye, canlı yayın ve falcı senkron düzeltmeleri
+- **Sesli oda hediyeleri:** Canlı yayınla aynı Gift Engine overlay — tüm hediyeler hızlı gösterim
+- **Hediye sesi:** Sesli oda, canlı yayın ve PK'da hediye sesi her yerde çalar
+- **Canlı yayın mikrofon:** İzleyici hesabı yayıncı onayı olmadan ses/video yayınlamaz
+- **Çoklu yayın isteği:** Yayıncı kabul etmeden misafir koltuğuna çıkmaz; bekleyen istek banner'ı
+- **PK daveti:** SSE ile anında iletim (canlı yayın + sesli oda)
+- **Canlı Falcılar:** Karşılıklı görüşmede kamera aç/kapa döngüsü düzeltildi (PiP katman)
+- **Bahşiş popup:** Falcıya «Danışan size bahşiş gönderdi» bildirimi
+
+## 1.0.130+164 (2026-08-04)
+
+### Sesli oda müzik / !istek (web parity)
+- **Müzik İste:** Sağ alt FAB — yetersiz jetonda pasif, yeterli jetonda aktif
+- **Arama modalı:** YouTube `GET /api/youtube/search` + A-Z sanatçı hızlı gezinme
+- **Mod seçimi:** «🎵 Sadece Ses (10 Jeton)» / «🎬 Videolu (20 Jeton)»
+- **Videolu mod:** Koltuk altından mesaj alanına çerçevesiz YouTube arka plan
+- **Ses modu:** Gizli 1×1 embed — yalnızca ses
+- **Mini kuyruk kartı:** Sağ altta sıradaki ilk 3 istek
+- **SSE:** Birleşik `type: dj` olayı → `RoomSongBloc` senkronu
+- **Performans:** `RepaintBoundary`, seçici `ref.watch`, gizli oynatıcı
+
+## 1.0.129+163 (2026-08-04)
+
+### Backend ↔ Flutter senkronizasyon — tamamlama
+- **Sosyal:** `SocialPostDetailPage` + `/social/post/:id` + `/sosyal?post=` deep link
+- **Stories:** Presigned upload + `POST /api/stories` JSON; ana sayfa hikâye şeridi her zaman görünür
+- **Sesli oda:** Koltuk kilitle / koltuktan at UI + controller
+- **Shorts:** Keşfet/hashtag API 404'de feed tabanlı yedek
+- **Provider:** `chat_room_providers_entry.dart` — giriş/bootstrap ayrımı
+- **CDN cache:** `/api/stories` TTL
+
+## 1.0.128+162 (2026-08-04)
+
+### Backend ↔ Flutter senkronizasyon (devam)
+- **RTC:** `flutter_webrtc` kaldırıldı; Agora/LiveKit token sabitleri silindi
+- **Canlı yayın:** `TrtcLiveRoomCoordinator` — heartbeat + otomatik TRTC reconnect
+- **Canlı moderasyon:** Susturmayı kaldır / banı kaldır UI
+- **Falcı:** Gelen istek poll sırası üretim `GET /sessions?status=pending` öncelikli
+- **Sosyal:** `GET /api/social/posts/{id}` — `fetchPost` + `postDetailProvider`
+- **Sesli oda:** `lockSeat` / `kickFromSeat` (kılavuz §9.3)
+- **CDN:** Hediye/shorts/story/banner göreli yolları CDN üzerinden çözümleme
+- **Stats:** `socialPublicStats` fallback kaldırıldı → `/api/public-stats`
+- **Rapor:** `docs/BACKEND_FLUTTER_SYNC_REPORT.md`
+
+## 1.0.127+161 (2026-08-04)
+
+### Audit tamamlama — müzik IFrame, TRTC-only, platform API
+- **Müzik tek yol:** `_applyDjPlayback` yalnızca `RoomSongBloc` + IFrame; `just_audio` stream resolve kaldırıldı
+- **DJ sync:** `chat_room_providers_dj_sync.dart` mixin — SSE/poll müzik senkronu ayrıldı
+- **Agora/LiveKit:** Modüller ve `livekit_client` kaldırıldı; ses motoru TRTC-only
+- **Platform API:** `broadcast-images`, `football`, `online-fal`, `translations`, `user/likers` bağlandı
+- **Global müzik şeridi:** `VoiceRoomWebMusicBar` IFrame ilerleme (`RoomSongBloc`)
+- **Hediye test:** `gift_session_controller_test` flaky düzeltmesi
+
+## 1.0.126+160 (2026-08-04)
+
+### IFrame-only + platform API (ara sürüm)
+- DJ realtime `RoomSongBloc` durumu; Agora/LiveKit temizliği başlangıcı
+
+## 1.0.125+159 (2026-08-04)
+
+### Oda müzik sistemi (SongQueueService) + hediye düzeltmesi
+- **Backend:** `SongQueueService`, `room_song_queue` / `room_current_song` / `room_song_history`, SSE `song_*` olayları, `serverTime` senkronu
+- **API:** `current-song`, `queue`, `skip`, `pause`, `resume`, `DELETE song/:queueId` — yalnızca YouTube Data API + IFrame (stream URL yok)
+- **Flutter:** `flutter_bloc` + `RoomSongMiniPlayer` (`youtube_player_iframe`), 500 ms drift seek
+- **Hediye:** Videolu hediyeler gecikmesiz tam ekran; prefetch arka planda; 🎁 yerine thumbnail
+
+## 1.0.124+158 (2026-08-04)
+
+### Sesli oda tam senkronizasyon
+- **Oda çıkışı:** Anında TRTC/SSE/state temizliği; navigasyon bloklanmaz; PK socket kapatılır
+- **Hediye video:** Backend `durationMs` birebir; erken kapanma kaldırıldı
+- **Hoparlör/mikrofon:** TRTC `muteLocalAudio`; hoparlör kapalıyken müzik/hediye/RTC sessiz
+- **Çevrimiçi:** Backend `onlineCount` + AppBar jeton yanında premium rozet
+- **Müzik:** Koltuk altı 1x1 YouTube kutusu; sağ altta müzik istek butonu (jetonlu)
+- **!istek:** SSE `dj_update` sonrası oynatma gate düzeltmesi
+
+## 1.0.122+157 (2026-08-04)
+
+### CI / Gradle
+- **ABI:** `ndk.abiFilters` kaldırıldı — CI `--split-per-abi` ile çakışma (Gate 9) giderildi
+
+## 1.0.122+156 (2026-08-04)
+
+### CI düzeltmesi
+- **GiftSyncLog:** `chat_room_providers.dart` eksik import — APK derleme gate test derlemesi düzeltildi
+- **Gift SSE:** `parseGiftEvent` nullable dönüş — `onEngineQueueUpdated` imzası uyumlu
+
+## 1.0.122+155 (2026-08-03)
+
+### Platform & SDK güncellemesi
+- **Flutter:** Stable `3.44.8` (CI + `.flutter-version`)
+- **Dart:** `3.12.x` (`>=3.8.0 <4.0.0`)
+- **Android:** minSdk **26** (Android 8+), targetSdk **36** (Android 16 hazır)
+- **ABI:** `arm64-v8a`, `armeabi-v7a`, `x86_64` — CI `--split-per-abi`
+- **iOS:** minimum deployment **15.0**
+- **Gradle:** AGP 8.13, Kotlin 2.2.21, Gradle 8.14, R8 full mode
+- **Cihaz:** Tablet/katlanır ekran (`resizeableActivity`, `supports-screens`, PiP)
+- **Performans:** `DevicePerfTuning` — düşük RAM image cache küçültme
+- **Build:** tree-shake-icons, obfuscate, split-debug-info (CI)
+- **Rapor:** `docs/FLUTTER_PLATFORM_UPGRADE.md`
+
+## 1.0.121+154 (2026-08-03)
+
+### Sesli oda mimari — TRTC/SSE/hediye performans (web paritesi)
+- **TRTC:** `exitRoom` tamamlanana kadar beklenir; yeniden giriş öncesi dispose garantisi
+- **SSE:** Oda çıkışında `releaseVoiceRoom` — keşif presence bağlantısı korunur
+- **Gift Engine SSE:** `gift_received` / `gift_queue_updated` / `gift_finished` motor yönlendirmesi
+- **Gift socket:** SSE aktifken Socket.IO hediye dinleyicisi kapatılır (çift teslimat önlenir)
+- **RTC:** İkinci SSE presence + çift hediye listener kaldırıldı
+- **Join:** Giriş bootstrap sıralı — gereksiz paralel GET azaltıldı
+- **Heartbeat:** Oturum başında tek timer; çıkışta iptal
+- **Rapor:** `docs/FLUTTER_WEB_ARCHITECTURE_REPORT.md`
+
+## 1.0.120+153 (2026-08-03)
+
+### !istek müzik — web paritesi (videolu / sesli)
+- **Videolu Çal:** YouTube arka planda blur + karartma; sohbet üstte; iframe sessiz (ses `just_audio`)
+- **Sadece Ses Çal:** Video render yok — yalnızca `just_audio` (düşük CPU/RAM)
+- **Oda oynatıcı:** Kapak, sanatçı, ilerleme, ses, oynat/duraklat/sonraki, videolu/sesli göstergesi
+- **Hata:** Video açılamazsa otomatik ses moduna geçiş
+- **PiP:** Odadan çıkınca global mini oynatıcı videolu modda da görünür
+
+## 1.0.119+152 (2026-08-03)
+
+### Web senkronizasyon — hediye motoru SSE + performans
+- **Gift Engine SSE:** `gift_received` animasyon, `gift_queue_updated` yalnızca kuyruk, `gift_finished` dequeue; legacy motor sonrası yok sayılır (backend denetim §9)
+- **SSE heartbeat:** 45 sn timeout (15 sn × 3) — sesli oda + video yayın
+- **SSE ref-count:** Oda çıkışında `releaseVoiceRoom` — keşif presence bağlantısı korunur
+- **Video SSE gift:** Tam payload (`engine` üst seviye) parse
+- **RTC:** Gereksiz ikinci SSE presence listener kaldırıldı
+- **Rapor:** `docs/FLUTTER_WEB_SYNC_REPORT.md`
+
+## 1.0.118+151 (2026-08-02)
+
+### Sesli oda UX — hediye, koltuk, müzik, komutlar
+- **Hediye sesi:** SFX havuzu genişletildi, yeniden deneme; video preload süresi uzatıldı, tam oynatma (loop kapalı, bitişte dequeue)
+- **Koltuk:** Boş koltuğa uzun bas → odadaki herkes listesi → seçilen kişi oturur; oturma sonrası anında senkron
+- **Koltuk stabilitesi:** Kendi koltuğun geçici boş yanıtta korunur; yetki/internet dışı düşme azaltıldı
+- **Ses ver:** Ayarlar/oda panelinden kaldırıldı; boş koltuk dokunuşu artık söz hakkı istemez
+- **!istek video:** YouTube tam ekran arka plan + just_audio yedek ses
+- **!kapat:** Sıradaki şarkıya geçer (skip); yalnızca oda sahibi, admin veya isteyen
+
+## 1.0.117+150 (2026-08-01)
+
+### Sesli oda — PK, koltuk, hediye sesi, müzik
+- **PK daveti:** `action: create` (sunucunun kabul ettiği tek davet aksiyonu; `invite` kaldırıldı)
+- **Koltuk stabilitesi:** Boş/geçici seat yanıtı koltuğu silmez; `seatSlots` → `presence.seatIndex` senkronu
+- **Hediye sesi:** Animasyon kapalı veya poll kaynaklı hediyelerde de SFX çalar
+- **Müzik kontrolü:** `POST /music` gövdesi `{ action: play|pause|skip, videoId?, title? }` (kılavuz §9)
+
+## 1.0.116+149 (2026-08-01)
+
+### Sesli oda yönetimi — backend uyumu
+- **PK daveti:** Üretim sözleşmesi `{ action, targetRoomId, duration }`; `/api/live/pk` games backend yönlendirmesi
+- **Oda komutları:** Hub ayarlarından doğru komut paneli; `!dj` → DJ assign/remove API
+- **Arkaplan:** API + yerleşik 40 görsel birleşik liste; boş ekran düzeltmesi
+- **Hediye savaşı:** Games API gövdesi (`roomId`, `duration`, zarf parse) ve yedek `action: start`
+
+## 1.0.115+148 (2026-07-31)
+
+### Web ↔ Flutter parity (Faz 5)
+- **Platform API:** `popups`, `ads/active`, `ads/reward`, `fortune-request-types`, `user/theme`, `fortune-requests/my-status` → datasource + provider
+- **Popup UI:** `AppPopupsListener` — oturum açıkken site popup bildirimleri
+- **Tema senkronu:** Ayarlar ↔ `GET/POST /api/user/theme`; giriş sonrası sunucudan çekme
+- **Canlı fal:** API fal türü kataloğu; `my-status` uç noktası
+- **DM SSE:** 404'te reconnect durur, poll-only yedek
+- **429:** `ApiException` + `ApiSnackBar` standart rate-limit mesajı
+- **Shorts:** Preload ±2 video; keşfet grid `RepaintBoundary`
+- **Modeller:** Chat test modelleri `voice_hub/data/models` altına taşındı
+
+## 1.0.114+147 (2026-07-31)
+
+### Web ↔ Flutter parity (Faz 4)
+- **Legacy `services/`:** Auth, config, mobile compound feature katmanına taşındı; kullanılmayan servis dosyaları silindi
+- **Ana sayfa:** `homeLiveStreamsProvider` → `liveStreamsListNotifier`; `invalidateHomeKeepAliveProviders` (SSE + 60s bridge)
+- **DM:** Bildirim SSE mesaj olayında konuşma yenileme; sohbet ekranında `MessageSseService` + poll yedek (8s/15s)
+- **API registry:** `chat_room_providers` müzik log path'leri; `conversationStream` endpoint sabiti
+- **Performans:** Voice discover cache 2dk; ana sayfa canlı kartları `RepaintBoundary`
+
+## 1.0.113+146 (2026-07-31)
+
+### Web ↔ Flutter parity (Faz 3)
+- **Sosyal akış:** `feedNotifierProvider` → `socialNotifierProvider` (beğeni, görüntüleme, yerel paylaşım)
+- **Sesli odalar:** Tek liste kaynağı (`voiceRoomsListNotifier`); `invalidateDiscoverVoiceRooms`
+- **Hediye API:** insights/battle/goal/admin datasource path'leri `api_endpoints.dart` registry
+- **Marquee:** Büyük hediye poll `giftRepositoryProvider` (legacy `giftService` kaldırıldı)
+- **DM:** Açık sohbet global poll ile senkron; chat poll 8s; `openDmConversationIdProvider`
+- **Legacy:** Kullanılmayan `services/` provider'ları `@Deprecated`
+
+## 1.0.112+145 (2026-07-31)
+
+### Web ↔ Flutter parity (Faz 2)
+- **Canlı yayın:** Tek keşif kaynağı (`liveStreamsListNotifier`); `invalidateDiscoverLiveStreams` ile çift fetch önlendi
+- **Global state:** `userFollowersProvider`, `userFollowingProvider`, `postCommentsProvider`
+- **DM:** Konuşma listesindeki çift 12s poll kaldırıldı (global `DmRealtimeListener`)
+- **Falcı oda:** SSE bağlıyken oda poll 20s (3s yerine)
+- **Admin:** Ödeme SSE (`/api/admin/payments/stream`) + 30s poll yedek
+- **API registry:** Müzik kuyruğu, hediye, admin arka plan path'leri `api_endpoints.dart`'a taşındı
+
+## 1.0.111+144 (2026-07-31)
+
+### Web ↔ Flutter parity (Faz 1)
+- **Ağ:** Apple/verify public auth; timeout 15s/30s; GET retry 429+5xx (max 3)
+- **Cache:** Kısa TTL; wallet/me/messages/social için stale fallback kapalı; sosyal `forceRefresh`
+- **Gerçek zamanlı:** Canlı hediye SSE aktifken REST poll kapalı; SSE reconnect jitter
+- **API:** `public-stats`, `fortune-access/check`, `payment-methods`, `search`, `social/post/view`, presence heartbeat
+- **Bildirim:** `PATCH /api/notifications` web uyumlu mark-read
+- **Burç:** `POST /api/horoscope/daily` öncelikli
+- **Rapor:** `docs/WEB_FLUTTER_PARITY_GAP_REPORT.md`
+
+## 1.0.110+143 (2026-07-31)
+
+### Fal sosyal senkron — tamamlama
+- **Ana akış:** Fal paylaşımı bulununca `feedNotifierProvider` da güncellenir (`prependPost`)
+- **Eşleştirme:** `findMatchingFortunePost` ayrı modül + birim testleri
+- **API:** `shareFortuneAuto` kullanımdan kaldırıldı (`@Deprecated`); backend tek kaynak
+
+## 1.0.109+142 (2026-07-31)
+
+### Fal & Tarot — otomatik sosyal paylaşım senkronizasyonu
+- **Backend tek kaynak:** Flutter artık `POST /api/social/posts/auto-fortune` ile paylaşım oluşturmaz; sunucunun oluşturduğu gönderi gösterilir
+- **Gerçek zamanlı:** Bildirim SSE (`fortune_share`) → sosyal akış otomatik güncellenir (`prependPost`)
+- **Fal tamamlanınca:** Coordinator tek noktadan senkronize eder; sonuç sayfalarındaki çift paylaşım kaldırıldı
+- **Metadata:** `shareCount`, `fortuneId`, `visibility`, `fortuneSlug`; yazar rol rozeti (Gold/Diamond/Premium/Admin)
+- **Sosyal sekme:** Uygulama ön plana gelince akış yenilenir
+
+## 1.0.108+141 (2026-07-31)
+
+### Backend parity (senkronizasyon — 2. tur)
+- **Falcı SSE:** `session_cancelled` / red olayları anında dialog ve kuyruğu kapatır; 401'de token yenileme
+- **Falcı seans SSE:** 401'de JWT refresh + yeniden bağlanma (kılavuz §6)
+- **Canlı yayın VIP giriş:** Gold/Diamond/Premium/Admin katılımcıları için bölüm bazlı kayan duyuru
+- **Fal türü seçici:** Dropdown yerine ikonlu kart ızgarası (Kahve, Tarot, Astroloji vb.)
+- **Sesli oda RTC:** Koltukların altında «Sırada» müzik kuyruğu listesi
+
+## 1.0.107+140 (2026-07-31)
+
+### Backend parity (senkronizasyon — 1. tur)
+- **Canlı yayın sohbet:** Alt bara emoji, hediye, bahşiş ve gönder butonları eklendi (web parity)
+- **VIP/yetkili duyuru:** Diamond/Premium/Gold/Admin/Moderatör için bölüm bazlı kayan metin (`formatTierEntranceLine`)
+- **Falcı bahşiş:** Gönderen «Bahşişiniz başarıyla gönderildi»; falcı «X size N Jeton bahşiş gönderdi» (backend event ile)
+
+### Mevcut (önceki sürümlerden)
+- Canlı falcı: SSE istek/kabul, TRTC görüşme, bahşiş API
+- Sesli oda: `!istek`, müzik kuyruğu, YouTube embed
+- Hediye: gerçek zamanlı SSE, MP4/PNG/SVG cache
+
+## 1.0.106+139 (2026-07-31)
+
+### Oturum (giriş sonrası çıkış düzeltmesi)
+- **Token yenileme:** `/api/auth/mobile-refresh` yanıtı `user` alanı olmadan parse edilir (önceden refresh sessizce başarısız oluyordu)
+- **401 zinciri:** `validateSession` artık token'ı doğrudan silmez; tek yol `AuthTokenRefreshCoordinator`
+- **Giriş koruması:** Login sonrası 45 sn grace — geçici ağ/401 hatasında otomatik logout engellendi
+- **Arka plan doğrulama:** Yeni girişte eski `_validateSessionInBackground` iptal edilir (`_sessionEpoch`)
+
+## 1.0.105+138 (2026-07-31)
+
+### CI (düzeltme)
+- **CI/CodeQL:** `cancel-in-progress: false` — eşzamanlı push'ta tüm kontrollerin iptal olması engellendi
+- **APK:** `main` push'ta yalnızca CI başarılı olduktan sonra derlenir (`workflow_run`)
+
+### Hediye senkronizasyonu & performans
+- **Gerçek zamanlı hediye:** SSE/socket → tek `publishRemote` hattı; `GiftEventListener` feed, sohbet ve son hediyeleri yönetir (çift işleme yok)
+- **Dedupe:** Oda çıkışında sıfırlanır; `_seen` üst sınırı 2048; anında feed (ertelenmiş kuyruk kaldırıldı)
+- **MP4 hediyeler:** İlk kare siyah önleme, thumbnail, seek(0), oynatma bitince dispose; soğuk açılışta sıcak controller temizliği
+- **PNG/SVG:** Katalog disk önbelleği (`assetType`, `animationUrl`); bozuk dosya otomatik silinir; top 8 video preload
+- **SSE canlı yayın:** `Last-Event-ID`, exponential backoff, keep-alive; yeniden bağlanma logları
+- **Oturum temizliği:** `AppSessionReset.onColdStart()`; oda çıkışında video/gift cache + realtime dedupe sıfırlama
+- **Teşhis logları:** `gift_sent`, `event_received`, `video_started/ended`, `cache_hit/miss`, `sse_reconnect`, pipeline ms
+
+## 1.0.104+137 (2026-07-30)
+
+### Sesli oda yönetimi (birleştirme)
+- **Tek moderasyon merkezi:** Ayarlar → Kullanıcı yönetimi → kullanıcı seç → ses ver, koltuğa al, koltuktan indir, kanaldan at, yetki (anında koltuk)
+- Tekrarlayan «Yetki Ver», «Detaylı moderasyon» ve çift kick/ban menüleri kaldırıldı
+- **Arkaplan:** yalnızca sunucu kataloğu + yükleme sheet’i (`fetchBackgrounds`)
+- **Müzik:** şarkı isteği video (CDN arka plan) / ses (YouTube API); DJ hub doğrudan Oda yönetimi’nden
+- Oda komutları paneli sadeleştirildi (duyuru, temizle, kullanıcı yönetimi)
+
+## 1.0.103+136 (2026-07-30)
+
+### Duyuru şeridi & giriş
+- **1000+ jeton hediyeler** ve **Gold/admin girişleri** tüm sayfalarda üst şeritte (navbar altı)
+- Ana sayfa arama altındaki hediye şeridi kaldırıldı (çift gösterim yok)
+- Sesli odada yetkili/sahip/admin girişi koltukların **altında** sağdan sola kayar
+
+### Sohbet stilleri
+- Gold üyeler ve admin nick kullanıcılar tüm sesli oda sohbetlerinde şekilli profil + neon yazı
+
+### PK daveti
+- B odası sahibine popup: «X odası size PK isteği attı — Kabul / Reddet»
+- Aktif oda + sahip odaları için socket; 3 sn poll yedek; çift popup önlendi
+
+### Sesli oda
+- Oda sahibi, yetkili ve DJ odaya girince otomatik koltuğa oturur
+
+## 1.0.102+135 (2026-07-30)
+
+### Performans (production)
+- **Soğuk açılış:** Çerez jar `LazyCookieJar` ile runApp sonrası; splash yolu kısaldı
+- **Auth:** Token + oturum önbelleği paralel okunur; arka planda doğrulama (stale-while-revalidate)
+- **Mobil config:** İlk kareden 600ms sonra yüklenir (ağ rekabeti azalır)
+- **Kabuk prefetch:** Tek timer; hediye katalog önbellekteyse tekrar istek yok
+- **Sesli oda giriş:** Presence sonrası SSE hemen; state/seats arka planda; gereksiz refresh kaldırıldı
+- **Oda çıkış:** Gift realtime + PK + SSE + TRTC ses dispose tamamlandı
+- **API önbellek:** SharedPreferences max 80 kayıt — otomatik budama
+
+## 1.0.101+134 (2026-07-30)
+
+### Ana sayfa & videolar
+- Trend küçük resimler: R2/CDN + video yolundan thumb türetme
+- Trend kartlarda izlenme + beğeni sayısı
+- Fal/Keşfet/Gold fantastik görseller
+- Video analitiği: beğenenler; admin tüm videoları silebilir
+
+### Hediye
+- Panel: şeffaf siyah cam arkaplan
+- Ses öncelikli; video min 10sn oynatma; controller havuzu
+
+## 1.0.100+132 (2026-07-30)
+
+### Ana sayfa — Keşfet & Gold 2026 premium
+- Cam kartlar (24px radius, mor neon kenarlık, blur, shimmer)
+- Yatay kaydırma, eşit boyut, CachedNetworkImage + Shimmer
+- Gold tier temaları: Basic bronz, Premium mavi, Gold altın, Diamond mor
+
+### Hediye pipeline
+- Sıra: ses → animasyon → jeton güncelleme
+- `GiftSoundPool` (just_audio, 4 kanal, preload)
+- Video controller ısıtma havuzu, prefetch öncelikli kuyruk
+- Pipeline zamanlama logları, release debug log azaltma
+
+### Performans
+- Hediye katalog prefetch erken (T+200ms)
+- Sesli oda API yanıt logları release'te kapalı
+- Voice hediye fade süreleri kısaltıldı (100/150ms)
+
+## 1.0.99+131 (2026-07-29)
+
+### Düzeltme
+- **GiftMediaType:** `.webp` URL'leri doğru algılanır (CI test düzeltmesi)
+
+## 1.0.99+130 (2026-07-29)
+
+### Sesli oda hediye görünürlüğü
+- **Animasyon katmanı:** Tam ekran/video hediyeler %100 opaklık; `Positioned.fill` ile arka plan üstünde net görünür
+- **Video varsayılanları:** CMS'den gelmeyen video hediyeler `FULL_SCREEN`, `LARGE` öncelik, 8 sn süre
+- **Koltuk altı:** Hediye atanlar etiket paneli (`VoiceGiftSenderTagsPanel`) kaldırıldı
+
+## 1.0.99+129 (2026-07-29)
+
+### UI
+- Sesli oda ve canlı yayında **Son hediyeler** kutusu kaldırıldı (duyuru şeridi kaldı)
+- Tam ekran hediye motoru ayarında video `BoxFit.cover` ile ekranı doldurur
+
+## 1.0.99+128 (2026-07-29)
+
+### Hediye medya — backend paritesi
+- **GiftMediaWidget:** PNG, SVG, WEBP, MP4 tek oynatıcıda; `mediaType==video` → VideoPlayer (Image değil)
+- **Video:** disk önbelleği (`VideoCacheService`), muted + looping, init bitene kadar thumbnail
+- **AspectRatio:** backend `width`/`height` (veya `mediaWidth`/`mediaHeight`); `BoxFit.contain`
+- **CDN:** R2 `gift/gifts/*` → `cdn.girlive.com` (`CloudMediaUrl`)
+- **Katalog:** 45 sn'de bir `giftVersion` kontrolü — yeni hediyeler uygulama yeniden başlatmadan görünür
+
+## 1.0.99+126 (2026-07-28)
+
+### Videolu hediyeler + performans + hızlı koltuk
+- **Sesli oda / canlı:** `voice_realtime` ve `voice_announce` kaynaklı hediyeler artık animasyon kuyruğuna girer
+- **Katalog zenginleştirme:** CMS'den `videoUrl`, `thumbnailUrl`, `assetFormat`, `engineAnimationType` otomatik eklenir
+- **Video tanıma:** `assetType: video` ve uzantısız CDN URL'leri doğru şekilde MP4/WEBM olarak oynatılır
+- **Performans:** Video tam indirme kaldırıldı (VideoPlayer akış); yalnızca küçük önizleme önbelleği
+- **Oda girişi:** Presence sonrası erken otomatik koltuk; hediye katalog önbelleği atlanır; ses bekleme 1,5 sn
+
+## 1.0.98+125 (2026-07-28)
+
+### Sesli oda hediye animasyonu — ambient katman
+- Video/animasyon arka plan üstünde, UI (koltuk/sohbet/bar) altında oynar
+- Opaklık %40, üst LinearGradient fade — sert siyah kesim kaldırıldı
+- BoxFit.cover ile doğal birleşim; bitişte yumuşak fade-out
+- IgnorePointer + RepaintBoundary; yeni CMS videoları URL uzantısından tanınır
+
+## 1.0.97+124 (2026-07-28)
+
+### Gift Engine — backend render (web paritesi)
+- **FIFO kuyruk:** Aynı anda tek animasyon; bitince sıradaki otomatik oynar (üst üste bindirme yok)
+- **Priority:** SMALL / MEDIUM (%35) / LARGE (%60) / ULTRA (tam ekran) — backend `priority`
+- **Display Area:** FULL_SCREEN, CENTER, SEAT, TOP, BOTTOM — backend `displayArea` / `screenPosition`
+- **Animasyon türleri:** PNG, SVG, Lottie, MP4, WEBM, Particle (+ Rive/SVGA fallback)
+- **Koltuk efektleri:** Glow, Border, Shake, Pulse, Particle — backend `seatEffects`
+- **Combo:** x2 / x5 / x10 / x100 rozeti — backend `combo` (istemci hesaplamaz)
+- **Gift Feed:** Sağ panel; gönderen + hediye + jeton; `feedDurationMs` sonra kaybolur
+- **Performans:** Asset preload, RepaintBoundary, bellek/video önbelleği, controller dispose
+
+## 1.0.96+123 (2026-07-28)
+
+### Çerez / oturum düzeltmesi (kritik)
+- **"Failed to load cookies for the request"** hatası giderildi: `PersistCookieJar` artık `getApplicationSupportDirectory()` altında (`canlifal_cookies`) saklanıyor; okunamaz `.cookies` kök dizini kullanılmıyor
+- Çerez jar `runApp` öncesinde `forceInit` ile hazırlanıyor — sosyal feed, sesli odalar, canlı yayın, yönetim paneli ve hediye ekranları tekrar API'ye bağlanır
+
+## 1.0.95+122 (2026-07-28)
+
+### Yükleme, fal ödeme, profil ve VIP
+- **Sesli odalar:** `GET /api/chat/rooms?type=voice` düzeltmesi; ana sayfada API sayısı ile liste (SSE beklemeden)
+- **Canlı yayın:** `/api/live/rooms` 401'de video-streams yedeğine düşme
+- **Sosyal feed:** `feed=following` + `items`/`data` parse; giriş sonrası otomatik yenileme
+- **Fal&Tarot:** Kayıt/profil doğum tarihi kullanımı; jeton veya CFC ile ödeme; tek reklam → +10 CFC → otomatik fal açılışı
+- **Profil istatistikleri:** Beğeni/izlenme gerçek API; hediye sayısı beğeni yerine kullanılmaz
+- **VIP ayrıcalıkları:** Site üyelik tablosu ile uyumlu liste; tıklanınca kademe karşılaştırması
+
+## 1.0.94+121 (2026-07-28)
+
+### Performans — soğuk açılış, sesli oda giriş/çıkış, bellek
+- **Startup:** Hive, API önbelleği ve çerez yükleme runApp sonrasına ertelendi; ilk kare daha hızlı
+- **Ana sayfa:** Bildirim/mesaj/cüzdan rozetleri T+200ms shell prefetch ile yüklenir (ilk karede API yok)
+- **Cüzdan:** Auth jeton değeri anında gösterilir; arka planda sessiz yenileme
+- **Sesli oda giriş:** Snapshot sonrası gereksiz `refresh()` kaldırıldı; hediye katalog önbelleği atlanır
+- **PK socket:** Tek sahip (provider); sayfa tarafında çift bağlantı yok
+- **SSE oda güncellemesi:** 450ms debounce ile gereksiz yenileme azaltıldı
+- **Oda çıkışı:** TRTC `leave()`, SSE kapatma ve oturum temizliği oda değişiminde await
+- **RTC/Basic sayfa:** Çift `audio.leave()` ve paylaşılan coordinator `dispose` hatası düzeltildi
+- **SDK init:** OneSignal, Firebase, Sentry paralel başlatılır
+
+## 1.0.93+120 (2026-07-27)
+
+### Canlı yayın UX — alt bar, beğeni, turnuva, performans
+- **Düşen emoji kaldırıldı:** Açılışta otomatik 💖🌹⭐ animasyonu ve hediye parçacıkları kapalı
+- **Alt bar sade:** Yalnızca mesaj + «Daha fazla»; emoji, misafir, oyun, hediye menüde
+- **Popüler No / Lig:** PK liderlik tablosundan gerçek sıra; tıklanınca liderlik sayfası
+- **Yıldız turnuvası:** `/api/tournaments` listesi ve katılım sheet'i
+- **Çift dokunma beğeni:** Gerçek double-tap; kişi bazlı sayaç + signal senkronu
+- **Yayın kapatma:** Yayıncı geri tuşunda onay; izleyici yayın bitince sonraki yayına geçiş
+- **Hediye donması:** Panel anında kapanır, gönderim arka planda
+- **Ödüllü reklam:** Tam yükleme beklenir (15 sn timeout)
+- **Keşfet:** Ana sayfada «Keşfet» başlığı + canlı yayınlar ve trend videolar
+
+## 1.0.92+119 (2026-07-27)
+
+### Hediye görünürlüğü, otomatik koltuk, PK iletimi, performans
+- **Hediye/jeton:** SSE hediyeleri tekrar `publishRemote` ile koltuk rozeti, liderlik ve kazanç panellerine iletilir
+- **Payload:** Dış zarf sender/jeton alanları `mergeEnvelope` ile korunur; `giftId` parse düzeltmesi
+- **Animasyon:** Katılım öncesi 15 sn tolerans; canlı socket kaynağı da animasyon tetikler
+- **Otomatik koltuk:** Oda sahibi önceliği; `seatSlots` doluluk haritası; `seat_changed` sonrası yeniden deneme
+- **PK:** `pk_invite`/`PK_INVITE` socket olayları; `/api/pk/me/invites` 6 sn poll yedek
+- **Yükleme:** Hediye katalog prefetch kabukta (mevcut kademe korunur)
+
+## 1.0.91+118 (2026-07-27)
+
+### Backend §9 uyumu — SSE hediye, Last-Event-ID, assetFormat
+- **Hediye animasyonu:** Yalnızca SSE `source: sse`; katılım öncesi hediyeler atlanır; poll SSE açıkken kapalı
+- **Render meta:** `assetFormat`, `imageUrl`, `videoUrl`, `thumbnailUrl` parse + oynatıcı seçimi
+- **SSE reconnect:** `Last-Event-ID` header ile kaçırılan olaylar
+- **Heartbeat:** Presence 15 sn (backend 45 sn stale penceresi)
+- **Jeton UI:** Canlı yayın koltuk/host panelinde yalnızca sayı
+
+## 1.0.90+117 (2026-07-27)
+
+### Canlı oda senkronizasyonu
+- **Hediye:** Yerel animasyon kaldırıldı; yalnızca SSE/uzak olay ile oynatılır (tüm cihazlar aynı anda)
+- **Video hediye:** MP4/webm ön-indirme + `assetUrl`/`assetType` ile doğru oynatıcı
+- **Jeton rozeti:** Koltuk altında yalnızca sayı (Toplam/Jeton metni kaldırıldı)
+- **Oda çıkışı:** Koltuk/presence önce temizlenir; TRTC/SSE/hediye/PK önbellekleri sıfırlanır
+- **Bellek:** Oda çıkışında hediye önbelleği; görsel önbellek 100 MB sınırı
+
+## 1.0.89+116 (2026-07-27)
+
+### CI düzeltmesi — TRTC ve hediye paketi
+- **Derleme:** Agora motoru tamamen kaldırıldı; import yolları ve güzellik filtresi düzeltildi
+- **11 koltuk:** `parseVoiceRoomSeatMap` ve oda düzeni 11 koltukla hizalandı
+- **Gönderen paneli:** Hediye atan kişinin toplam adedi (×N) koltuk sol altında görünür
+
+## 1.0.88+115 (2026-07-27)
+
+### Canlı Falcılar, TRTC, hediye ve oda sistemi
+- **TRTC tek motor:** Agora bağımlılığı kaldırıldı; ses/görüntü yalnızca Tencent TRTC
+- **11 koltuk:** Backend ile uyumlu 0–10; yetkili kullanıcılar (+ ve üzeri) otomatik oturur
+- **Hediye render:** Backend meta ile tam ekran `cover`; sesli odada koltuk altı–mesaj kutusu bandı
+- **Gönderen paneli:** Koltuk sol altında son 3 isim, 4 sn karararak kapanır
+- **VIP şifre:** Derin bağlantıda şifre kapısı; bildirim tıklanınca anında ekran açılır
+
+## 1.0.87+114 (2026-07-27)
+
+### Sesli oda hediye donması + yükleme hızı
+- **Gönderim:** Panel hemen kapanır; hediye yayını ve animasyon arka planda işlenir
+- **Sesli oda animasyon:** Ağır tam ekran/Lottie yerine hızlı sahne ikonu; API zaman aşımı 25 sn
+- **Katalog:** Hediye listesi önbellekte; panel her açılışta yeniden indirmez
+- **Genel:** Son hediyeler kutusunda blur kaldırıldı; katalog prefetch ile canlı/sesli bölümler hızlandı
+
+## 1.0.86+113 (2026-07-27)
+
+### Sesli oda hediye donması (ANR)
+- **Performans:** Hediye animasyonları izole widget’ta; oda sayfası her hediyede yeniden çizilmez
+- **Gönderim:** Hediye sonrası gereksiz oda `refresh()` kaldırıldı; ses arka planda çalar
+- **Animasyon:** Sesli odada parçacık/glow kapatıldı; tekrarlayan Lottie decode azaltıldı
+- **State:** Hediye oturumu tek seferde güncellenir
+
+## 1.0.85+112 (2026-07-27)
+
+### Büyük hediye sahnesi
+- **Sesli oda / canlı yayın:** Hediyeler koltukların altından mesaj alanına kadar büyük gösterilir
+- **Etiket:** Yalnızca sol üstte «gönderen → alıcı»; jeton/ad/isim şeritleri kaldırıldı
+- **Tam ekran hediyeler:** Aynı sahne bandında, aynı boyutta oynatılır
+
+## 1.0.84+111 (2026-07-27)
+
+### Hediye görünürlük, tam ekran ve oda performansı
+- **CMS animasyon:** Ağ URL'si olan hediyeler her fiyatta tam ekran; minimum 3 sn süre
+- **SSE/socket:** `gift_sent` tipi + payload birleştirme — tüm katılımcılar hediye/jeton görür
+- **Canlı yayın:** Socket.IO hediye köprüsü ana yayın sayfasında
+- **Sesli oda:** State+seats paralel, hızlı çıkış/oda geçişi, TRTC bekleme 4 sn
+- **Yetkili otomatik koltuk:** `/join-seat` + 3 deneme, snapshot sonrası hemen oturma
+- **Saatlik sıfırlama:** Oda jeton toplamı ve sıralama her saat başı yenilenir
+
+## 1.0.83+110 (2026-07-24)
+
+### Hediye kataloğu + koleksiyon örnekleri
+- **Sesli oda / canlı yayın:** Admin katalog hediyeleri `visibleInVoiceRoom` / `visibleInLiveStream` ile birleşik gösterim
+- **Admin «Hediye & Koleksiyon»:** 40 arkaplan efekti, 20 oda teması, 20 avatar aksesuarı, 10 mikrofon çerçevesi, 10 sohbet balonu, 20 isim efekti, 10 üyelik rozeti, 20 profil çerçevesi, 20 başarı rozeti
+- **Kozmetik kataloğu:** Örnek setler Gold profil ekranında da kullanılabilir
+- **Arkaplan:** Yerleşik sesli oda arkaplan listesi 40 görsele çıkarıldı
+
+## 1.0.82+109 (2026-07-24)
+
+### Resmî servis + hediye sistemi dokümantasyonu
+- **Dokümanlar:** `docs/CANLIFAL_FLUTTER_RESMI_SERVIS_ENTEGRASYONU.md`, `docs/CANLIFAL_HEDIYE_SISTEMI_DOKUMANTASYONU.md` repoya eklendi
+- **GiftAssetType / GiftDisplayType:** `unknown` fallback ile backend şeması
+- **Animasyon paritesi:** fiyat eşikleri 100/200/500 jeton → 3s/4s/5s kuyruk; ≥200 tam ekran flash
+- **Idempotency:** hediye gönderim POST'larına `idempotencyKey` (çift düşüm koruması)
+- **Katalog alanları:** `assetType`, `displayType`, `contentVersion` parse
+
+## 1.0.81+108 (2026-07-23)
+
+### Gerçek zamanlı parite (dokümantasyon §17–19)
+- **Seans SSE ham olay:** `type` olmadan `timerStartedAt`, `actualMinutesUsed`, `addedMinutes`, `message` alanlarından tür çıkarımı
+- **SSE keep-alive:** Seans odası kanalında `: heartbeat` yorumları yok sayılır; 20 sn timeout ile yeniden bağlanma
+- **Hediye SSE:** Sesli oda düz + canlı yayın iç içe payload; CMS katalogdan video animasyon zenginleştirme (önceki madde tamamlandı)
+
+## 1.0.80+107 (2026-07-23)
+
+### Gerçek zamanlı hediye sistemi (dokümantasyon uyumu)
+- **SSE hediye parse:** Sesli oda düz payload (`giftTypeId`, `giftName`, `giftIcon`, `amount`) + canlı yayın iç içe `gift` nesnesi
+- **Video animasyon:** SSE yalnızca emoji gönderse bile CMS `assetUrl` ile katalogdan zenginleştirme
+- **SSE heartbeat:** Sunucu 15 sn keep-alive → istemci 20 sn timeout (doküman §4–5)
+- **Birleşik katalog:** Sesli oda + canlı yayın + genel CMS tek indeks
+
+## 1.0.79+106 (2026-07-23)
+
+### Backend dokümantasyonu ile tam hizalama
+- **Admin hediye API:** `canlifal.com` ana backend (`/api/admin/gifts`, `/stats`) — games API yönlendirmesi kaldırıldı
+- **DTO alanları:** `iconImageCloudPath`, `cloudStoragePath`, `assetUrl`, `assetType` (`gift_types` şeması)
+- **Yükleme:** yalnızca `POST /api/upload/presigned` (dokümante edilmiş uç)
+- **Yetki:** JWT `admin` / `yonetici` rolü; dokümanda olmayan `X-Staff-*` başlıkları kaldırıldı
+- **Gelir sekmesi:** dokümanda olmayan `/revenue/rules` kaldırıldı
+
+## 1.0.78+105 (2026-07-23)
+
+### Admin / yonetim tam yetki + hediye video
+- **`admin` ve `yonetim` nickleri:** Cüzdan rolü beklemeden tam site yetkisi; hediye CRUD ve admin panel
+- **Admin API başlıkları:** `X-Staff-Role` + `X-Staff-Username` — backend ile uyumlu yetki çözümlemesi
+- **Video hediyeler:** CMS `animationUrl` alanı sesli oda ve canlı yayında oynatılır; admin editörde MP4/WebM önizleme
+- **Admin katalog:** Video animasyon rozeti; CDN/cloud path URL çözümlemesi
+
+## 1.0.77+104 (2026-07-23)
+
+### Hediye yönetimi hızlandırma + video animasyon
+- **Admin panel:** Tüm backend bayrakları (şanslı, kombo, öne çıkan, popüler, gizli, sıralama); kayıt sonrası anında katalog yenileme
+- **Video/GIF/Lottie CDN:** Yüklenen MP4/WebM/GIF animasyonlar sesli oda ve canlı yayında tam ekran oynatılır
+- **Ses:** Admin CDN ses dosyası (`soundUrl`) oda/yayında çalınır
+- **Performans:** Admin katalog keepAlive; kayıt sonrası bloklayıcı liste beklemesi kaldırıldı; animasyon prefetch
+
+## 1.0.76+103 (2026-07-23)
+
+### Backend hediyeleri kullanılabilir
+- **CMS katalog birincil:** Sesli oda ve canlı yayın `GET /api/gifts/catalog` ile admin panelinden eklenen hediyeleri gösterir
+- **Versiyon senkronu:** Panel açılışında katalog yenilenir; `thumbnailUrl` / `assetUrl` / emoji ikon desteği
+- **Yedek:** CMS boş veya hata → eski `/api/gifts` ve `/api/video-streams/gifts` uçları
+
+## 1.0.75+102 (2026-07-23)
+
+### 🍀 Şanslı Hediye (Talih Kutusu)
+- **Katalog CMS:** `GET /api/gifts/version` + `GET /api/gifts/catalog` — `isLucky` alanı, versiyon önbelleği
+- **Şanslı hediye API:** `config`, `send`, `history` (kişisel özet + global jackpot akışı)
+- **Gönderim:** `isLucky` hediyeler `POST /api/gifts/lucky/send` ile yönlendirilir (sesli oda + canlı yayın)
+- **UI:** 🍀 rozeti, spin/kutu açılış overlay, JACKPOT kayan duyuru, «Son Büyük Kazançlar» şeridi
+
+## 1.0.74+101 (2026-07-23)
+
+### Ana sayfa görselleri + Canlı Falcılar oda düzeltmesi
+- **Fal & Tarot:** API görselleri (`homepage-fortune-cards`) öncelikli; yanlış Unsplash katmanı kaldırıldı
+- **Günlük burç:** Her burç için ayırt edici gökyüzü / element görseli
+- **Keşfet & Gold:** Kutu ve paket adına uygun görseller güncellendi
+- **Canlı Falcılar:** TRTC oda — önce `GET /api/room` senkronu, sonra bağlantı; `trtcRoomId` güncellenir
+- **Randevu:** Seans oluşturma hatası kullanıcıya gösterilir; bekleme ekranında oda bilgisi çekilir
+
+## 1.0.73+100 (2026-07-23)
+
+### Sesli oda bağlantı düzeltmesi
+- **Zaman aşımı:** `/api/chat/rooms` istekleri 15/22 sn timeout (global 3/5 sn yerine)
+- **Presence join:** 3 deneme + gövde varyantları; geçici hata banner'ı gizlenir
+- **Optimistic UI:** Odaya girerken kullanıcı hemen çevrimiçi sayılır; arka planda join tamamlanır
+- **SSE bağlanınca:** Hata temizlenir ve presence join yeniden denenir
+
+## 1.0.72+99 (2026-07-23)
+
+### Backend uyum + performans
+- **Açılış:** Ana sayfa API dalgaları; kabuk prefetch çift istek düzeltmesi; marquee gecikmesi
+- **Trend video:** 5 thumbnail karesi (%10–80, gerçek süre); kapak seçimi zorunlu
+- **Canlı Falcılar kartı:** 132×176 premium kart — yıldız, yorum, ücret, canlı rozeti
+- **Canlı fal:** SSE bahşiş eventleri; falcı popup; TRTC dispose leave
+- **Sesli PK:** Davet eşleşmesi genişletildi (opponent oda/kullanıcı)
+- Rapor: `docs/FLUTTER_BACKEND_SYNC_REPORT_2026-07-23.md`
+
+## 1.0.71+98 (2026-07-22)
+
+### Hediye sistemi, cüzdan ve performans
+- **Hediye sohbet mesajı:** «Mesut, Ayşe'ye 100 Jeton değerinde Rose gönderdi.» — sesli oda ve canlı yayın
+- **Koltuk altı sayaç:** Canlı yayında kümülatif jeton rozeti + tıklanınca gönderici dökümü (sesli oda ile aynı)
+- **Geç katılanlar:** Oda hediye geçmişi API'den koltuk toplamlarına seed
+- **Cüzdan:** Kazanç özeti (bekleyen, çekilebilir, bugün/ay, gönderilen/alınan jeton)
+- **Para çek:** `POST /api/withdrawals` — ad, banka, IBAN, tutar; geçmiş talepler
+- **Komisyon oranı:** `GET /api/platform/commission-rate` (salt okunur gösterim)
+- **Performans:** Odadan çıkışta hediye provider/state temizliği (bellek sızıntısı önleme)
+
+## 1.0.70+97 (2026-07-21)
+
+### Ana sayfa sesli odalar + oda içi hediye gösterimi
+- **Sesli odalar:** Yalnızca içinde kullanıcı olan odalar listelenir; canlı kişi sayısı (SSE + REST)
+- **5 kullanıcı:** Oda kartında en fazla 5 avatar; fazlası `+N` rozeti
+- **Hediye anlık:** Gönderen → alıcı, hediye adı ve jeton miktarı tüm rollerde (oda sahibi, konuk, izleyici)
+- **Son hediyeler:** 5 kayıt; kayan duyuru şeridi (`VoiceGiftAnnouncementTicker`) yeniden bağlandı
+- **Uçuş animasyonu:** Alıcı adı ve hediye bilgisi gösterilir
+
+## 1.0.69+96 (2026-07-21)
+
+### Backend dokümantasyon uyumu (Faz 2)
+- **ApiEndpoints:** sesli oda uçları merkezileştirildi (music-queue, settings, moderation, speak-request, banned-words, …)
+- **chat_room_remote_datasource:** tüm inline `/api/chat/rooms/...` path'leri `ApiEndpoints`'e taşındı
+- **Profil:** `userStats`, `userActivity`, `userBroadcastHistory` birincil; `/api/users/me/*` yedek
+- **Hediye:** `check-reciprocal` gönderim öncesi sesli oda, canlı yayın ve `GiftService`'te
+- **SSE seat_update:** 300 ms debounce ile koltuk yenileme
+- **Cache policy:** `/api/user/stats` ve `/api/user/activity` TTL kuralları
+
+## 1.0.68+95 (2026-07-21)
+
+### Backend dokümantasyon uyumu (Faz 1)
+- **Giriş:** `emailOrUsername` kaldırıldı — kılavuz §9.1 `{email}` veya `{username}` + `password`
+- **Alınan hediyeler:** birincil uç `GET /api/user/received-gifts` (eski `/api/users/me/gifts-received` yedek)
+- **Presence heartbeat:** 12 sn → 25 sn (PART4/PART10)
+- **SSE alias:** `seat_update` → koltuk yenileme; `pk_score` → PK skor olayı
+- **Endpoint sabitleri:** `giftsCheckReciprocal`, `authVerifyDevice`, `authReclaimDevice`
+- **GiftRepository:** `checkReciprocal(userId)` — kılavuz §9.9
+- Uyumluluk raporu: `docs/FLUTTER_BACKEND_COMPLIANCE_REPORT.md`
+
+## 1.0.67+94 (2026-07-21)
+
+### Sesli oda — backend %100 senkronizasyon
+- **GET /state** ve **GET /seats** — odaya girişte tek kaynaklı durum; Flutter artık koltuk/owner/mic üretmiyor
+- **Oda akışı:** Join → state → seats → TRTC (backend `trtcRoomId` + `numericUid`) → SSE → UI
+- **SSE `room_event`:** `user_joined`, `user_left`, `mic_changed`, `seat_changed`, `owner_changed`, `room_closed` — ek API çağrısı yok
+- Optimistic presence/koltuk ve otomatik koltuk seçimi kaldırıldı
+- Çıkışta state tamamen temizlenir (hayalet kullanıcı önleme)
+
+## 1.0.66+93 (2026-07-21)
+
+### Hediye senkronizasyonu — sesli oda ve canlı yayın
+- **Tek kaynak:** SSE/socket/poll → `GiftEventListener` → `giftSessionProvider` (host/guest/admin aynı state)
+- **Son hediyeler:** combo mantığı (❤️ x1 → x2 → x3), 5 sn TTL, ortak `UnifiedRecentGiftersBox`
+- **Animasyon kuyruğu:** aynı anda gelen hediyeler sırayla oynar; premium fullscreen + uçuş overlay
+- Host için `if (isHost) return` / gönderen filtresi kaldırıldı — tüm roller aynı event yolunu kullanır
+- **Loglar:** broadcast, SSE bağlantı, host/guest alma, işleme ve UI render (`GiftSyncLog`)
+- Canlı yayın, sesli oda RTC/basic ve PK sayfaları birleşik sisteme taşındı
+
+## 1.0.65+92 (2026-07-20)
+
+### Sesli oda — mikrofon ve otomatik koltuk
+- **No voice permission:** izleyici girişinde gereksiz `POST /voice` kaldırıldı; mikrofon açılırken önce koltuğa oturma
+- **Geçersiz alan:** koltuk atama artık yalnızca `/api/chat/rooms/{id}/seats` kullanıyor (yanlış `/api/live/seats` kaldırıldı)
+- Koltuk API: `take` / `sit` / `force` + `targetUserId` yedekleri; 400/422'de sonraki format denenir
+- **Yetkili otomatik koltuk:** sunucu `myPermissions` yüklendikten sonra tekrar denenir; `@` `&` `~` rolleri tanınır
+- Normal kullanıcı mikrofon açarken boş koltuğa otomatik oturma
+
+## 1.0.64+91 (2026-07-20)
+
+### Sesli oda — oda sahibi yetkileri ve PK onayı
+- Oda sahibi girişte **dâhilî sunucu hatası** banner'ı artık odayı kilitlemiyor; yetkiler ayrıca yenileniyor
+- SSE açıkken bile `myPermissions` sunucudan çekiliyor — yetki verme, koltuğa alma, ses verme düzeltildi
+- Oda sahibi için sunucu bayrakları boşsa istemci tarafı yetki yedeği (`~` founder)
+- Rol atama: `set_role` + `give_voice` / `give_op` / `give_sop` / `give_founder` yedekleri
+- Koltuk atama: başka kullanıcı için önce `force` aksiyonu deneniyor
+- **PK daveti:** süre dolunca sunucuya otomatik red; sesli odada banner ve global dinleyici düzeltildi
+
+## 1.0.63+90 (2026-07-20)
+
+### Premium profil önizleme ve görsel iyileştirmeler
+- **Premium Profil:** üstte canlı profil önizleme paneli — seçilen çerçeve/efekt/isim profilde anında görünür
+- Giriş efekti için **“Giriş efektini oynat”** butonu; sohbet balonu ve mikrofon önizlemesi
+- Kozmetik kartlarında parlak seçim vurgusu ve **“Profilde aktif”** etiketi
+
+### Fal & Tarot görselleri
+- Ana sayfa ve keşfet önizlemesinde `FortuneTypeCoverImage` (yerel asset + Unsplash yedek)
+- API görselleri `CanlifalImageUrls.resolve` ile düzgün yüklenir
+
+### Keşfet ve Gold
+- Her kutu/paket için ayrı, net temalı görseller (karışık görünüm azaltıldı)
+- Daha hafif gradient overlay — arka plan fotoğrafları daha net
+
+### Trend video kapak önerileri
+- Video düzenleme ve yayınlama adımında otomatik **6 kapak önerisi**
+- Seçilen kapak video küçük resmi olarak kullanılır
+
+## 1.0.62+89 (2026-07-20)
+
+### Görsel iyileştirmeler ve premium sesli oda kaldırma
+- **Premium sesli odalar** ana sayfa ve keşfetten kaldırıldı (VIP sekmesi, VIP şeridi, premium oda satırı)
+- **Trend videolar:** `coverUrl` / `image` alanları destekleniyor; küçük resim yoksa sinematik yedek görsel
+- **Fal & Tarot:** sinematik Unsplash görselleri (ana sayfa + keşfet önizlemesi)
+- **Günlük burç:** her burç için gökyüzü / mistik arka plan görselleri
+- **Keşfet** ve **Gold üyelik** kartlarında premium arka plan görselleri
+
+## 1.0.61+88 (2026-07-19)
+
+### Sesli oda ayarları — üst menü kaldırıldı, alt Ayarlar birleşik
+- Üstteki **⋯** (üç nokta) menü kaldırıldı; tüm işlevler **Ayarlar** alt menüsünde
+- **Kullanıcı yönetimi:** yetki ver, kullanıcı listesi, cezalar, sessize alınanlar
+- **Sohbet yönetimi:** oda sessize, sohbet temizle, oda komutları
+- **Oda yönetimi:** PK, müzik, arkaplan, hediye savaşı/hedefi
+- **Kullanıcı ayarları:** rumuz, efektler, bildirim sesi, jeton
+- Sunucu `myPermissions` bayrakları (`canGiveVoice`, `canGiveOp`, `canGiveSop`…) kullanılıyor
+- **Ses verilince** boş koltuğa otomatik alma + mikrofon açma (alıcı cihazda)
+
+## 1.0.60+87 (2026-07-19)
+
+### Hediye senkronizasyonu ve jeton gösterimi
+- **Çift sayım düzeltildi:** 1000 jeton artık 2000 olarak görünmüyor (`jetonAmount` brüt; `coinCost × quantity` tekrar çarpılmıyor)
+- **Tüm cihazlarda hediye:** SSE/socket → tek `publishRemote` hattı; sayfa dinleyicisi kayıt + duyuru + animasyon
+- **Gönderen sıralaması:** Olay kimliği ile dedupe; gönderici başına brüt jeton toplamı
+- **Canlı yayın:** Liderlik tablosu dedupe; göndericide çift kazanç düzeltmesi
+
+### Oturum sonu net paylaşım (sesli oda + canlı)
+- Yayıncıya hediye: brüt 100 → yayıncı net 50, site 50
+- Misafire hediye: brüt 100 → misafir 35, yayıncı 15, site 50
+- Herkese görünen tutar her zaman **brüt** (100 jeton = 100 gösterilir)
+
+### Canlı Falcılar (TRTC)
+- Odaya girmeden önce eski TRTC oturumu kapatılır (donma çakışması)
+- Oda kimliği değişince tam yeniden bağlanma (yalnızca `reconnect` değil)
+
+## 1.0.59+86 (2026-07-19)
+
+### Premium entegrasyon — eksik bağlantılar tamamlandı
+- **Mikrofon çerçevesi:** Varsayılan sesli oda sahnesinde `selfUserId` ile kozmetik halka (basic mod)
+- **Giriş efekti:** RTC sesli oda sayfasında da `CosmeticEntranceOverlay` (basic ile aynı)
+- **Ayarlar:** Merkezi `/settings` sayfasına **Premium Profil** kısayolu
+- **Ana sayfa:** `DiscoverPremiumHomeSection` — premium oda kartları yatay şerit
+- **Sesli keşfet:** Popüler odalar `DiscoverPremiumRoomCard` kullanıyor
+- **Üyelik rozetleri:** API boşken yerel katalog (Premium/Gold/Diamond/Kurucu)
+- **PK sahnesi:** Mikrofon kozmetiği PK katılımcı şeridinde
+
+## 1.0.58+85 (2026-07-19)
+
+### Premium kozmetik — eksik alanlar tamamlandı
+- **Giriş efektleri:** Ejderha, meteor, kanat, melek + odaya girişte `CosmeticEntranceOverlay` (Gold seçim → sesli oda)
+- **Sohbet balonu:** Altın / neon / cam balon kataloğu + kendi mesajlarında uygulama
+- **Mikrofon çerçevesi:** Koltukta kendi avatarında dönen kozmetik halka
+- **Profil kozmetik sayfası:** 6 sekme (Çerçeve, İsim, Efekt, Giriş, Balon, Mikrofon)
+- **Üyelik rozetleri:** `GET /api/membership-badges` yatay şerit profilde
+- **Equip senkron:** `POST /api/user/cosmetics/equip` hazır olduğunda otomatik (404’te yerel prefs)
+
+### Backend notu
+- Kozmetik equip/loadout ve başkalarının giriş efektini görme için sunucu deploy gerekir (mobil hazır)
+
+## 1.0.57+84 (2026-07-19)
+
+### Ana sayfa — premium sesli oda kartları
+- `VoiceRoomSection` artık `DiscoverPremiumRoomCard` kullanıyor (canlı dalga, müzik, mikrofon, rozetler)
+- Kategori temalı arka planlar: fal, tarot, burç, kahve, Gold/VIP (`DiscoverRoomVisuals`)
+- Oda kapak görselleri önbelleğe alınır (prefetch)
+
+### Kozmetik & rozet
+- Profil çerçevesi kataloğu 30 dk disk önbelleği
+- Üyelik rozeti profil başlığında (`GET /api/membership-badges`)
+
+## 1.0.56+83 (2026-07-19)
+
+### Mobil Admin Paneli (WebView)
+- Profil > Ayarlar > **Yönetim Paneli** (yalnızca Admin / Süper Admin)
+- Tam ekran in-app WebView — harici tarayıcı açılmaz
+- JWT SSO: çerez senkronu + bootstrap ile Bearer token aktarımı
+- HTTPS zorunlu, http engelli; canlifal.com içi navigasyon
+- Pull-to-refresh (toolbar), geri tuşu WebView geçmişi
+- Dosya yükleme: galeri, kamera, çoklu seçim, PDF/Excel (Android file selector)
+- Kamera/mikrofon izinleri, panoya kopyalama köprüsü
+- Giriş sayfası algılanırsa yerel admin paneline yönlendirme banner'ı
+- Yerel admin paneli (`/admin/panel`) yedek olarak korunur
+
+## 1.0.55+82 (2026-07-19)
+
+### Premium Profil Sistemi
+- Yetkiye göre dinamik profil çerçevesi (Admin, Mod, Oda Sahibi, Gold, VIP, Yayıncı, Falcı, Destek)
+- Animasyonlu çerçeveler: dönen ışık, neon, ateş, altın parçacık, elmas, kozmik, aura, kalp, şimşek, gökkuşağı, taç
+- Gold üyeler çerçeve, isim efekti ve profil parçacık efekti seçebilir (`/profile/cosmetics`)
+- İsim efektleri: altın, gümüş, elmas, neon, rainbow, ateş, hologram
+- Profil efektleri: yıldızlar, galaksi, altın toz, kalpler
+- Backend katalog: `GET /api/profile-frames`, `GET /api/membership-badges` (offline yerleşik katalog yedek)
+
+### Sesli sohbet kartları (Keşfet)
+- Canlı ses dalgası, dönen müzik ikonu, mikrofon nabız animasyonu
+- Oda seviyesi, popülerlik, kategori ve VIP/Gold/Admin rozetleri
+- Online sayısı sarı parlayan yazı; ilk avatar konuşan vurgusu (büyük + glow)
+
+## 1.0.54+81 (2026-07-18)
+
+### Profil — Yasal bölümü
+- Kullanıcı Sözleşmesi, Gizlilik, Çocuk Güvenliği, KVKK, Topluluk Kuralları
+- İçerik `GET /api/site-pages/{slug}` ile dinamik yüklenir (WebView)
+- Uygulama sürümü (v1.0.54) profil altında gösterilir
+
+### Sesli oda + PK + yetki + bildirim
+- Oda geçişinde eski presence anında temizlenir (`prepareVoiceRoomSwitch`)
+- Giriş: presence önce, sonra paralel yükleme; çıkış: leave await
+- PK daveti önce `POST /api/live/pk` (TRTC signaling)
+- Moderatör yetkisi → otomatik boş koltuk + unmute; host → koltuk 1
+- Çift bildirim: OneSignal aktifken FCM foreground kapalı
+- Hediye jeton: `jetonAmount` / `giftJeton` alanları parse edilir
+- Randevu davet debounce 60→20 sn
+
+## 1.0.53+80 (2026-07-17)
+
+### Sesli oda — Invalid type, PK, hız
+- «Invalid type»: tüm oda API gövdeleri Map; join presence GET yedek; hata şeridi gizlenir
+- Sistem mesajları: `[SYSTEM_VIP_JOIN]` / `[SYSTEM_LEAVE]` kullanıcı dostu Türkçe metin
+- PK davet: rakip sahip `ownerId` yoksa presence'tan çözülür; `opponentRoomId` gövde yedeği
+- Koltuk: optimistic güncelleme + hızlı refresh; poll aralığı kısaltıldı (8–120 sn)
+- SSE bağlanınca geçici hatalar temizlenir
+
+## 1.0.52+79 (2026-07-17)
+
+### Profil + canlı yayın + sesli oda
+- Profil: üst boşluk/kayma giderildi — kapak kısaldı, avatar kapak üzerine bindi
+- Video / Takipçi / Takip / Beğeni / İzlenme: nested API stats + hub istatistik yedekleri
+- Canlı yayın: sohbet yazma alanı yeniden görünür (SafeArea + kompakt hediye/sohbet)
+- Hediye: gönderen adı + jeton miktarı net; son hediyeler kutusu; banner küçültüldü
+- Zaten takip edilen yayıncıda «Takip Et» gizlenir
+- Yayına giren kişinin adı sohbette + son giriş şeridinde kalır
+- Sesli oda: PK davet eşleşmesi genişletildi; koltuk/komutlar anında (optimistic)
+
+## 1.0.51+78 (2026-07-17)
+
+### Sesli oda — komutlar, şifre, hediye, giriş
+- «Invalid type»: moderasyon/DJ/rol gövdeleri Map (jsonEncode string kaldırıldı)
+- VIP/şifreli oda: şifre girişi → `joinPresence` ile sunucuya; yanlış şifrede giriş yok
+- Ses Ver / Sustur / Koltuk Ata / Yetki Ver+Al / DJ Yap-Çıkar: anında API + refresh
+- Yetki verildiğinde kullanıcı hemen boş koltuğa alınır; Ses Ver sonrası unmute
+- Odayı devret: `POST …/transfer-ownership`
+- Giriş: çift şerit kaldırıldı; yetkili/Gold koltuk altında (5 sn); normal alt toast
+- Hediye: chat alanı temizlenir; duyuru 5 sn sonra kaybolur; kim→kime+jeton herkese
+- Hediye savaşı şeridi RTC odada; PK kabul/red mevcut banner+listener
+
+## 1.0.50+77 (2026-07-17)
+
+### Canlı yayın UI (mockup)
+- Yayın açma/izleme ekranı mockupa göre yenilendi: üst bar (isim, ID, takip, rozetler, top hediye atanlar, izleyici, Keşfet)
+- Alt bar: Sohbet, mesaj, Misafir, Eş Yayın, Oyunlar, Paylaş, **Hediye kutusu**, Daha fazla
+- Hediyeler açık şeritte değil — yalnızca hediye kutusundan panel açılır
+- Hediye Hedefi + Yıldız Turnuvası kartları; Fal İste sağ CTA; kalp beğeni
+- Yayıncı PK/Kontrol/Ayarlar/Güzellik “Daha fazla” menüsüne alındı
+
+## 1.0.49+76 (2026-07-17)
+
+### Düzeltme
+- `LiveRecentGiftersBox` import yolu — release gate derleme hatası giderildi
+
+## 1.0.48+75 (2026-07-17)
+
+### Backend + Flutter birlikte çalışma (doküman paketi)
+- Tüm yüklenen API/prompt dokümanları `docs/` ve `docs/prompts/` altına eklendi
+- Hediye gönderimi: kılavuz `giftId` + üretim `giftTypeId`
+- Canlı falcı: seans `POST …/{tellerId}/session` (+ `maxMinutes`); mesaj `content`+`message`
+- TRTC: `/token` 404’te `/usersig` yedek; host `userId` ile
+- Sesli oda SSE: `dj_update` alias; DJ `assign`/`remove`; mute/ban kılavuz action
+- Sesli alt menü: Müzik Aç / DJ kayar panel / PK kaldırıldı (prompt)
+- Ortak yayın: izleyiciye davet kabul/red dialog + RTC yükseltme
+
+## 1.0.47+74 (2026-07-17)
+
+### API dokümanı hizalama (`docs/FLUTTER_API_DOCS.md`)
+- Ana sayfa: `GET /api/homepage-ticker` kayan yazı kaynağı (+ `recent-big` poll)
+- Canlı PK: `POST /api/video-streams/pk` (`opponentStreamId`, `durationMinutes`); yanıt/aksiyon `pkBattleId`
+- PK skor: `POST /api/video-streams/pk/score` gövdesi `pkBattleId` + `points`
+- Hediye SSE: `totalPrice`, iç içe `giftType.icon` / `giftType.price` / `sender.name`
+- PK rakip listesi: önce `GET /api/video-streams/pk`, yedek `pk/list`
+- Canlı PK daveti: doküman yolu + birleşik `/api/pk/request` birlikte denenir
+
+## 1.0.46+73 (2026-07-17)
+
+### Ana sayfa
+- Sabit büyük hediye kartı kaldırıldı; arama çubuğu altında kayan şerit
+- Yetkili/Gold girişleri + 1000+ jeton hediyeleri sağdan sola (herkes görür)
+- `/api/gifts/recent-big` periyodik yenileme
+
+### PK
+- Canlı PK daveti: liste yüklenirken sonsuz spinner yok; davet sırasında sayfa kapanmıyor
+- İzleyicisi 0 olan yayınlar da listelenir (yayıncı belli ise)
+
+### Hediye
+- Çift/üst üste binen gösterim düzeltildi (tek katman + premium fullscreen)
+- Sesli oda ve canlı yayında son 3 hediye atan jeton miktarıyla görünür
+
+## 1.0.45+72 (2026-07-17)
+
+### Sesli oda — yetki, PK, hediye
+- `myPermissions` snake_case / truthy parse; yalnız `canGiveVoice` gelse bile uygulanır
+- Rol değişince oda yetkileri anında yenilenir; «Yetki ver» hata metni düzeltildi
+- Ses hakkı: boş koltuk 0–14 aralığında aranır
+- PK SSE/yanıt: üst düzey battle alanları + kısmi accept/reject yanıtı desteklenir
+- Hediye: herkes aynı anda görür (parmak izi dedupe); jeton miktarı `jetonAmount` ile gösterilir
+- Hediye duyuru şeridi premium odada koltuk altında
+
+### Canlı yayın — PK ve misafir
+- PK daveti önce birleşik `/api/pk/request` (karşı tarafta kabul/red dialog)
+- Misafir listesinden `joinRequests` korunur; invite gövdesinde `userId` + `inviteeId`
+- Yayın SSE: gift/pk üst düzey payload
+
+### Canlı falcı
+- TRTC iki yönlü: kamera erken başlatma / yeniden açma
+
+### Yetkili giriş şeridi
+- Navbar altında kayar; sesli sohbet odalarında global şerit kapalı (koltuk altı kalır)
+- Giriş duyurusunda kullanıcı adı yerine görünen isim
+
+## 1.0.44+71 (2026-07-17)
+
+### CI düzeltmesi
+- `voice_room_rtc_page`: eksik `VoiceWebChatOverlay` import geri eklendi
+
+## 1.0.44+70 (2026-07-17)
+
+### CI düzeltmesi
+- `staff_entrance_marquee_provider`: `ref.mounted` kaldırıldı (Notifier derleme hatası — Release gate)
+
+## 1.0.44+69 (2026-07-17)
+
+### Yetkili giriş duyurusu
+- Ana sayfada kalıcı mor kart kaldırıldı; yetkili girişleri geçici sağdan-sola kayan şerit
+- Tüm sayfalarda `StaffEntranceMarqueeHost` overlay; sesli odada koltuk altı banner
+
+### PK ve ses
+- PK daveti: kılavuz uyumlu `{ guestUserId, durationSec }` gövdesi öncelikli
+- Canlı yayın PK: `/api/video-streams/{id}/pk-battle` önce, birleşik API yedek
+- Mikrofon: izin isteği açılışta; siteadmin için `staffBypassVoiceApi` TRTC sayfasında
+
+## 1.0.44+68 (2026-07-17)
+
+### Sesli oda — «Invalid type» düzeltmesi
+- Koltuk/presence POST gövdeleri `jsonEncode` string yerine JSON Map (sunucu Zod hatası)
+- Otomatik koltuk: `take` action (yanlış `swap` kaldırıldı)
+- `/api/live/seats` 400 → chat room koltuk uçlarına yedek
+- Presence join: `action` / `type` gövde yedekleri
+- `seatIndex` string/num güvenli parse
+
+## 1.0.44+67 (2026-07-17)
+
+### Düzeltme
+- `voice_room_rtc_page`: `VoiceRoomYoutubeEmbedHost` import yolu (CI derleme)
+
+## 1.0.44+66 (2026-07-17)
+
+### Sesli oda — canlı oda entegrasyonu
+- **!istek:** `skipPayment` kaldırıldı; şarkı seçiminden sonra ses/videolu jeton seçici (10/20)
+- **Video isteği:** YouTube IFrame embed (`VoiceRoomYoutubeEmbedHost`) videolu modda aktif
+- **DJ çalma:** Video isteğinde IFrame; ses modunda just_audio (mevcut akış)
+- **Compound API:** `fortune_menu_providers` ve `home_remote_datasource` import düzeltmesi (CI)
+
+## 1.0.44+65 (2026-07-17)
+
+### CanlıFal Backend API referansı + uyumluluk raporu
+- Doküman: `docs/api/FLUTTER_BACKEND_COMPATIBILITY_REPORT.md`
+- Mobil birleşik uçlar: `GET /api/mobile/home`, `/api/mobile/fortune-menu`, `/api/mobile/user-profile/{id}`
+- `MobileCompoundService` — ana sayfa tek istek (canlı yayın, sesli oda, fal kartları, falcılar)
+- Profil: compound user-profile öncelikli, eski uç yedek
+- Fal menüsü: `fortuneMenuTypesProvider` (API + yerel katalog yedeği)
+
+## 1.0.44+64 (2026-07-17)
+
+### Düzeltme
+- `Dio` uzantısına `safePut` eklendi (profil güncelleme `PUT /api/user/profile` yedeği)
+
+## 1.0.44+63 (2026-07-17)
+
+### Düzeltme
+- Canlı yayın ayrılma: `DELETE .../join?viewerId=` derleme hatası giderildi (`safeDelete` query parametresi yok)
+
+## 1.0.44+62 (2026-07-17)
+
+### CanlifalTV API dokümantasyonu entegrasyonu
+- Referans: `docs/api/CANLIFALTV_FLUTTER_API.md`, parite: `CANLIFALTV_FLUTTER_PARITY.md`
+- Profil: `PUT /api/user/profile` yedek
+- Canlı yayın: `PATCH status ended`, `DELETE .../join` ayrılma
+- Hediye: `recipientUsername`, `type` alanları
+- Üyelik: `/api/memberships` + `/api/memberships/purchase` alias
+- Bildirim: `POST /api/notifications` `{markAll:true}`
+- Koltuk: `action: sit` yedek
+
+## 1.0.44+61 (2026-07-17)
+
+### 7 saha `/api/live/*` API entegrasyonu
+1. **Oda yaşam döngüsü** — create/join/leave/heartbeat
+2. **Oda keşif** — `GET /api/live/rooms` (stream + voice listesi)
+3. **Koltuk** — `POST/GET /api/live/seats`
+4. **Mesaj** — `POST/GET /api/live/message`
+5. **Hediye** — `gift-types` + `gift/send`
+6. **PK** — `GET/POST /api/live/pk` + `pk/score` (games yedeği)
+7. **Çevrimiçi** — `GET /api/live/online-users`
+
+- Katman: `mobile/lib/features/live/data/datasources/live_field/` (7 dosya + facade)
+- Provider: `liveFieldApiRemoteProvider`
+- Doküman: `docs/api/field/README.md`, `docs/api/FLUTTER_API_REFERENCE_LIVE_FIELD.md`
+
+## 1.0.44+60 (2026-07-17)
+
+### Backend API parity — 8 düzeltme (tek APK)
+1. **Presence heartbeat** — `PATCH /presence` (boş POST kaldırıldı)
+2. **Presence join** — `{action: "join", nickname?}` (`enterPresence` → `joinPresence`)
+3. **Voice session** — yalnızca `{action: "join"|"leave"}` (`type` kaldırıldı)
+4. **Live join** — `{nickname?}` body
+5. **Oda ownerId** — `ownerUserId`, `hostUserId`, `createdBy`, `userId`, `owner.id` alias
+6. **Voice hediye** — `giftId` + `receiverUserId` alias
+7. **Video PK create** — önce `{opponentStreamId, durationMinutes}` (kılavuz §9.4)
+8. **PK davet (sesli oda)** — games `{action:"create", targetRoomId, duration}` + kılavuz `{guestUserId, durationSec}`; `opponentRoomId` eklendi
+
+Rapor: `docs/API_PARITY_AUDIT_2026-07-17.md`
+
+## 1.0.44+59 (2026-07-17)
+
+### PK davet — «Invalid type» düzeltmesi
+- Games backend: `{action:"create", targetRoomId, duration}` + `{guestUserId, durationSec}` birlikte deneniyor
+- Rakip oda kimliği (`opponentRoomId`) PK isteğine eklendi
+- Presence join: `jsonEncode` yerine Map (çift kodlama önlendi)
+
+## 1.0.44+58 (2026-07-17)
+
+### Backend API parity (PK / Voice / Live)
+- Presence heartbeat: PATCH (kılavuz §9.3); join voice yalnızca `{action}`
+- PK video create: önce `{opponentStreamId, durationMinutes}` (kılavuz §9.4)
+- PK voice invite: `ChatService` action alanı kaldırıldı (`guestUserId` + `durationSec`)
+- Voice gift: `giftId` + `receiverUserId` alias; oda `ownerId` parse genişletildi
+- Live join: `{nickname?}` body
+- Rapor: `docs/API_PARITY_AUDIT_2026-07-17.md`
+
+## 1.0.44+57 (2026-07-16)
+
+### CI düzeltmesi (CodeQL)
+- `voice_room_rtc_page.dart`: TRTC import yolu (`../../trtc/...`)
+- `live_broadcast_room_page.dart`: `fetchTrtcParallel` named args, `TrtcCredentials` null guard, void RTC çağrıları
+- `open_live_stream.dart`: `fetchTrtcParallel` + `trtc` session alanı
+
+## 1.0.44+56 (2026-07-16)
+
+### Agora pasif — yalnızca Tencent TRTC
+- **Sesli oda:** `VoiceTrtcEngine` + `POST /api/trtc/token` (Agora token hatası kaldırıldı)
+- **Canlı yayın:** hazırlık, oda, misafir grid, PK önizleme TRTC
+- **Canlı fal video:** Agora yedek kaldırıldı
+- **DM sesli arama:** TRTC ses odası
+- **TRTC önizleme:** yayın hazırlığında kamera önizlemesi (`startPreviewOnly`)
+
+## 1.0.44+55 (2026-07-16)
+
+### CI düzeltmesi (CodeQL)
+- **`auth_providers.dart`:** TRTC bootstrap import yolu (`../../../trtc/...`)
+- **`trtc_providers.dart`:** `dio_provider` import yolu (`../../../../core/...`)
+
+## 1.0.44+54 (2026-07-16)
+
+### Tencent TRTC — Canlı Fal entegrasyonu
+- **API:** `POST /api/trtc/token`, `/api/live/join-room`, `/api/live/heartbeat`, `/api/live/leave-room`
+- **TRTC birincil:** Canlı fal video oturumu TRTC ile bağlanır; başarısızsa Agora yedek
+- **Heartbeat:** 10 sn canlı oda nabzı; kopunca otomatik yeniden bağlanma + UserSig yenileme
+- **Ses:** TRTC speech kalitesi, AEC/ANS/AGC (SDK varsayılan), hoparlör yönlendirme
+- **Güvenlik:** SDKSecret istemcide yok; UserSig yalnızca backend'den
+- **Giriş sonrası:** TRTC motoru ısıtma + mikrofon izni ön kontrolü
+- **Test:** `trtc_live_room_test.dart`
+
+## 1.0.44+52 (2026-07-16)
+
+### CI / derleme düzeltmesi
+- **`parseResponseBody`:** servis katmanı `fromData` API uyumu
+- **`services_providers.dart`:** `Dio` + `auth_service_provider` import
+- **`api_exception.dart`:** `Map<dynamic, dynamic>` → `Map<String, dynamic>` cast
+
+## 1.0.44+51 (2026-07-16)
+
+### Flutter yeni endpoint'ler
+- **Apple Sign-In:** `AuthService.loginWithApple` / `signInWithApple` → `POST /api/auth/mobile-apple`; `APPLE_SERVICE_ID` env; giriş/kayıt UI
+- **Mobil config:** `ConfigService.getConfig` → `GET /api/mobile/config`; `MobileConfigGate` bakım / zorunlu / isteğe bağlı güncelleme
+- **Şifre değiştirme:** `AuthService.changePassword` → `POST /api/auth/change-password`; profil güvenlik sayfası PATCH yerine bu uç
+- **Kullanıcı engelleme:** `UserService.blockUser` (toggle), `getBlockedUsers` → `/api/user/block` (+ eski `/api/user/blocked` yedek)
+- **Kullanıcı şikayet:** `UserService.reportUser` → `POST /api/user/report`
+- **Modeller:** `AppleFullName`, `MobileConfig`, `UserBlockResult`, `UserReportResult`, `BlockedUserEntry`
+- **Rapor:** `docs/FLUTTER_BACKEND_UYUMLULUK_RAPORU.md`
+- **Test:** `new_endpoints_test.dart`
+
+## 1.0.43+50 (2026-07-16)
+
+### Flutter diğer servisler (13 modül)
+- **`profile_service.dart`:** getMe, updateProfile, getUser, follow, credits, XP, achievements, arama
+- **`gift_service.dart`:** types, send, recent-big
+- **`fortune_service.dart`:** generateFortune SSE (14 fal tipi slug eşlemesi)
+- **`teller_service.dart`:** falcı listesi, session, favoriler
+- **`social_service.dart`:** post, yorum, beğeni
+- **`short_video_service.dart`:** liste, presigned upload, like, comment
+- **`message_service.dart`:** DM konuşmalar ve mesajlar
+- **`notification_service.dart`:** liste, markRead, SSE
+- **`push_service.dart`:** FCM token kayıt/silme
+- **`upload_service.dart`:** presigned PUT yükleme
+- **`payment_service.dart`:** paketler, jeton, üyelik, cüzdan
+- **`game_service.dart`:** oyunlar, daily-spin, görevler
+- **`misc_service.dart`:** homepage, duyuru, liderlik, burç, günlük giriş, referral
+- **`services_providers.dart`:** tüm Riverpod provider'ları tek export
+- **Endpoint:** gifts/types, send, recent-big, homepage-buttons, credit-packages, games/quests, vb.
+- **Test:** `other_services_test.dart`
+
+## 1.0.42+49 (2026-07-16)
+
+### Flutter Canlı Yayın servisi
+- **`lib/services/stream_service.dart`:** yayın listesi, başlat/bitir, join/leave, SSE, yorum, hediye, beğeni
+- **Co-broadcast:** `getCoStatus`, `joinCo`, `inviteCo`
+- **Moderasyon:** `getMods`, `addMod`, `muteUser`, `banUser`
+- **RTC:** `fetchAgoraToken`, `fetchTrtcUserSig`
+- **Kılavuz §9.4 uyumu:** leave için `DELETE .../join` + `POST .../leave` yedek; gifts `{giftId, giftTypeId}`
+- **Modeller:** `StreamSummary`, `StreamComment`
+- **`stream_service_provider.dart`:** Riverpod + `SseClient`
+- **Test:** `stream_service_test.dart`
+
+## 1.0.41+48 (2026-07-16)
+
+### Flutter Chat servisi
+- **`lib/services/chat_service.dart`:** oda listesi, mesajlar, presence, typing, SSE, hediye, koltuk, ses, Agora/TRTC token, DJ/müzik, PK
+- **Kılavuz §9.3 uyumu:** presence `{action: join|leave}`, seats `POST/PATCH`, voice `{action}`, gifts `{giftId, receiverUserId}`
+- **Modeller:** `ChatRoomSummary`, `ChatServiceMessage`, `ChatPresence`, `ChatMusicHit`
+- **`chat_service_provider.dart`:** Riverpod + `SseClient`
+- **Endpoint:** `chatRoomSeats`, `chatRoomMusic`, `chatRoomSongRequest`, `chatRoomPkScore`, `chatRoomMessage`
+- **Test:** `chat_service_test.dart`
+- **Düzeltme:** `auth_service_provider.dart` import yolları
+
+## 1.0.40+47 (2026-07-16)
+
+### SSE istemcisi
+- **`lib/core/sse_client.dart`:** Dio ByteStream GET SSE — 5 endpoint + AI fal POST stream
+- **Olay parse:** `data: { "type", "data" }` + `event:` satırı desteği
+- **Reconnect:** exponential backoff (max 20), 401 → refresh → yeniden bağlan
+- **Yaşam döngüsü:** arka plan `pauseAll`, ön plan `resumeAll` (`MainAppShell`)
+- **`sse_client_provider.dart`:** Riverpod + JWT refresh
+- **Test:** `sse_client_test.dart`
+
+## 1.0.39+46 (2026-07-16)
+
+### API response modeli + parsing
+- **`lib/core/api_response.dart`:** `ApiResponse<T>`, `ApiError`, `FieldError`, `Pagination`
+- **`parseResponse`:** yeni `{ success, data, error }` + eski düz JSON / string `error`
+- **`apiPageQuery`:** `?page=1&limit=20` liste parametreleri
+- **Test:** `api_response_test.dart`
+
+## 1.0.38+45 (2026-07-16)
+
+### Flutter Auth servisi
+- **`lib/services/auth_service.dart`:** login, register, Google/TikTok, refresh, forgot/reset password, logout (`POST /api/auth/logout` + `DELETE /api/devices/fcm`)
+- **`AuthResponse` / `AuthUser` modelleri** — tüm auth uçları ortak format
+- **Token storage:** `accessToken`, `refreshToken`, `userId` (`flutter_secure_storage`)
+- **401 interceptor:** queue pattern ile tek refresh; başarısız → otomatik logout / login
+- **Hata formatı:** yeni `{ error: { code, message } }` + eski `{ error: "..." }`
+
+## 1.0.37+44 (2026-07-16)
+
+### Canlı PK polling kaldırma + kalan performans
+- **Global PK davet:** `/live` namespace socket (sahip yayınlar) + bildirim SSE; `LivePkInviteListener` HTTP poll kaldırıldı
+- **Yayın odası PK:** 3 sn `_pkInvitePoll` kaldırıldı; SSE/socket + `pkPendingInvites` dinleyici
+- **PK rakip listesi:** global 3 sn poll kaldırıldı; davet sayfasında 10 sn yedek + `liveStreams` invalidation
+- **PK skor:** unified maçta SSE aktifken 5 sn poll kapalı; legacy yolda 15 sn yedek
+- **Sesli hediye:** socket aktifken REST poll tamamen kapalı
+- **Oda listesi:** ilk 3 oda Agora token ön-isıtma
+
+## 1.0.36+43 (2026-07-16)
+
+### Sesli oda + PK performans (web paritesi)
+- **Paralel oda girişi:** presence, mesajlar, PK durumu, hediye kataloğu, üye listesi `Future.wait`
+- **Agora token ön-isıtma:** oda listesi dokunuşunda arka planda; girişte `POST /voice` + Agora paralel
+- **PK davet:** HTTP polling kaldırıldı — Socket.IO (sahip odalar) + oda SSE; 30 sn popup
+- **PK banner:** 4 sn poll kaldırıldı; SSE/socket ile anlık güncelleme
+- **Presence:** SSE `user_left` anında listeden düşürür
+- **API:** connectTimeout 3 sn, receiveTimeout 5 sn; retry exponential backoff (max 2)
+- **Kabuk:** hediye kataloğu prefetch
+
+## 1.0.35+42 (2026-07-16)
+
+### Canlı PK / hediye / yayın stabilizasyonu
+- **PK listesi:** `GET /api/video-streams/pk/list` tek kaynak, cache kapalı, 3 sn poll, 5 sn timeout, owner-null ve izleyicisiz filtre, dedupe
+- **PK davet:** 3 sn poll + `pkPendingInvites` dinleyici, 30 sn popup süresi, süre dolunca otomatik red
+- **Hediye jeton:** `giftPrice` / `totalCoin` / `giftImage` parse; `jetonAmount` ile 0 jeton gösterimi kaldırıldı
+- **Hediye UI:** chat bildirimi 3× font + gradient/glow + 3 sn fade; koltuk altı 3 sn flaş listesi
+- **Yayın:** yayıncı heartbeat 15 sn (`signal ping`); SSE yeniden bağlanma ≤2 sn; «Yayına devam et» kanal açıksa yeniden oluşturmaz
+- **API:** Dio timeout 5 sn
+- **Test:** `live_pk_gift_stabilize_test.dart`
+
+## 1.0.34+41 (2026-07-15)
+
+### Backend entegrasyon ve performans
+- **ApiClient:** merkezi HTTP facade (`api_client.dart`) — tüm modüller `dioProvider` üzerinden
+- **Bildirim SSE:** `GET /api/notifications/stream` — web ile aynı gerçek zamanlı kanal
+- **Çevrimdışı banner:** kabukta `OfflineStatusBanner` aktif
+- **SSE ağ kurtarma:** çevrimiçi olunca aktif oda SSE yeniden bağlanır
+- **Cache:** `voiceRoomsProvider` + `liveGiftCatalogProvider` oturum `keepAlive`
+- **Açılış:** kabuk prefetch — cüzdan + bildirim + profil paralel (T+200ms)
+- **Admin:** sunucu `wallet.isAdmin` → tüm özellikler açık
+- **Doküman:** `docs/FLUTTER_BACKEND_INTEGRATION_STATUS.md`
+
+## 1.0.33+40 (2026-07-15)
+
+### Derleme düzeltmesi (CodeQL)
+- `api_backend_router_test.dart`: eksik `});` — admin hediye test bloğu kapanışı
+
+## 1.0.33+39 (2026-07-15)
+
+### Sesli oda PK parite
+- **Analiz:** `docs/PK_VOICE_ROOM_PARITY.md` — web vs Flutter endpoint, SSE, Socket.IO, iş akışı
+- **Düzeltme:** Boş `GET /pk` yanıtı (`activeBattle:null`) artık sahte davet üretmiyor
+- **PK geçmişi:** `/api/pk/me/history` öncelikli (games backend)
+- **Socket.IO:** PK skor/davet yedek kanalı yeniden etkin (`pk_battle_remote_provider`)
+- **Kılavuz:** `FLUTTER_ENTegrasyon_KILAVUZU.md` §9.3 sesli oda PK satırları
+
+## 1.0.32+38 (2026-07-14)
+
+### Derleme düzeltmesi (CodeQL)
+- `mini_music_player.dart`: müzik kuyruğu import yolu
+- `pk_opponent_room_filter.dart`: `ownerId` tanımı
+- `staff_roles.dart`: `managerUsernames` geri eklendi
+
+## 1.0.32+37 (2026-07-14)
+
+### Sesli odalar hub düzeltmeleri
+- Müzik mini player: yalnızca canlı oturumda; kuyruk modalı çalışır
+- Odalarım: sahip olunan odalar listelenir; oda oluştur akışı bağlandı
+- Popüler odalar: kimse yoksa gizlenir
+- En aktif konuşmacılar: gerçek oda sahipleri (online sayısı)
+- Çift alt bar: site nav `/voice-rooms` üzerinde gizlendi; sesli oda barı yönlendirir
+- PK daveti: polling iyileştirmesi, hedef eşleşmesi genişletildi
+- `siteadmin` nick tam yetkili (site admin)
+
+## 1.0.31+36 (2026-07-14)
+
+### Derleme düzeltmesi (CodeQL)
+- `voice_room_session_utils.dart`: `WidgetRef`/`Ref` tip uyumu — registry çağrısı inline (java-kotlin CodeQL derlemesi)
+
+## 1.0.30+35 (2026-07-14)
+
+### Sesli sohbet performans ve senkronizasyon
+- Oda girişi &lt; 1 sn: paralel presence+mesaj, optimistic kullanıcı, SSE hemen
+- Çıkış: anında yerel presence silme, koltuk clear, force SSE disconnect
+- Oda geçişi: aktif oturum kaydı, eski bağlantılar tam kapatma
+- Yetkili auto-seat: ~ & @ % sembolleri (oda sahibi öncelikli)
+- PK kabulünde TRTC/Agora prewarm
+- Profil prefetch; sohbet RepaintBoundary
+- Rapor: `docs/VOICE_CHAT_PERF_REPORT.md`
+
+## 1.0.29+34 (2026-07-14)
+
+### Performans optimizasyonu
+- Soğuk açılış: cookie `forceInit` ertelendi; shell prefetch kademeli (cüzdan → bildirim/profil → mesaj → shorts → jeton)
+- `isOnlineProvider` bağlantı stream'ine bağlandı (offline banner doğru çalışır)
+- Sesli oda basic: sohbet izole rebuild (`_BasicLiveShell`, `VoiceRoomBasicChatFeed` Consumer)
+- Sohbet overlay ve hediye paneli filtre önbelleği
+- Global poll aralıkları gevşetildi (DM, psikolog, PK)
+- Admin hediye: `CanlifalNetworkImage`; profil auth `.select`
+- Rapor: `docs/PERFORMANCE_OPTIMIZATION_REPORT.md`
+
+## 1.0.28+33 (2026-07-14)
+
+### Sesli oda, staff ve PK düzeltmeleri
+- Staff hesabı yalnızca **yonetici** (kurucu); `admin` nick artık sesli oda staff bypass almaz
+- Yetkili (yonetici) odaya girince otomatik koltuk; oda sahibi **Ses Ver** önce `+` rolü + boş koltuk atar
+- Hoparlör: açık = yeşil «Açık», kapalı = kırmızı «Kapalı»; uzak ses yeni katılanlarda da susturulur
+- PK daveti: «{oda} odasında PK isteği var» popup; redde davet gönderene «{oda} isteğinizi reddetti» bildirimi
+- PK kabulünde seçilen süreyle savaş başlar
+
+## 1.0.27+32 (2026-07-14)
+
+### Admin, ödeme, PK ve sesli oda düzeltmeleri
+- Jeton/CFC ödeme onay/red: doğru API uçları (`payment-requests` + `cfc-payment-requests`); boş talep kimliği düzeltildi
+- Ödeme bildirimleri sekmesinde **Onayla / Reddet** butonları
+- `admin` / `yonetici` nickleri cüzdan rolü beklemeden tam yetkili; `X-Staff-Role` admin API isteklerinde
+- Kurucu (yonetici) admin atayıp çıkarabilir; diğer adminler moderasyon rolleri
+- Sesli oda PK daveti uygulama genelinde dinlenir (`VoicePkInviteListener`)
+- Yetkililer odaya girince otomatik koltuk; sesli oda komut paneli basic modda da açılır
+- Admin hediye API ve kullanıcı yönetimi staff başlığı ile hizalandı
+
+## 1.0.26+31 (2026-07-13)
+
+### PK daveti + performans + komutlar
+- PK daveti: koltuk üstü banner (oda sahibi), Kabul/Reddet, 60 sn sonra kaybolur; 4 sn poll
+- Oda değiştirme: `go` ile tek oda, dispose'da oturum kapatma, ses motoru yalnızca `leave`
+- Moderasyon: Sustur/Sesi Aç tek düğme; Ses Ver/Yetki Al birleşik; Rol/Yetki tek yerde
+
+## 1.0.25+30 (2026-07-13)
+
+### Sesli oda açma + hediye + profil
+- Oda açma: oda adı + arka plan seçimi; ücretler 0 / 2500 / 5000 jeton
+- Hediye: sohbette çift satır kaldırıldı; 50 jetonun 100 görünmesi düzeltildi (birim fiyat)
+- Profil: istatistikler anında gösterilir; arka planda paralel yükleme
+
+## 1.0.24+29 (2026-07-13)
+
+### Sesli oda + canlı yayın UX
+- Giriş/çıkış: yalnızca o anki geçişler; odaya girince eski «çıkış yapan» duyurusu gösterilmez
+- Koltuk altında tek geçiş bandı; hediyeler çevrimiçi kutusundan kaldırıldı
+- Son 5 hediye atan (sağ kutu) + kayan duyuru: «Mesut, Suna … kahve … 🪙1000 jeton.🎉»
+- Admin/yönetici ses API hatasında Agora dinleme/konuşma devam eder (`action`+`type` join)
+- Canlı yayın kapatma hızlandı; izleyici/yayıncı hediye özeti ekranı
+- PK davetleri `myInvites` ile 2 sn poll; yanlış alıcı filtresi düzeltildi
+- Admin panel: **Sohbet odası görselleri** — R2/S3 yükleme; kullanıcı kendi arka planını yükleyemez
 
 ## 1.0.23+28 (2026-07-13)
 

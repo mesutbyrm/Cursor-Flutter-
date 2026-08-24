@@ -12,6 +12,9 @@ import '../providers/messages_unread_providers.dart';
 import '../providers/messages_providers.dart';
 import '../services/dm_voice_call_service.dart';
 
+/// Açık DM sohbeti — global poll yeni mesajda yeniler.
+final openDmConversationIdProvider = StateProvider<String?>((ref) => null);
+
 /// Uygulama genelinde DM güncellemesi — push dışında da liste ve rozet yenilenir.
 class DmRealtimeListener extends ConsumerStatefulWidget {
   const DmRealtimeListener({super.key, required this.child});
@@ -35,7 +38,7 @@ class _DmRealtimeListenerState extends ConsumerState<DmRealtimeListener> {
 
   void _startPoll() {
     _poll?.cancel();
-    _poll = Timer.periodic(const Duration(seconds: 8), (_) => _tick());
+    _poll = Timer.periodic(const Duration(seconds: 12), (_) => _tick());
     unawaited(_tick());
   }
 
@@ -58,6 +61,7 @@ class _DmRealtimeListenerState extends ConsumerState<DmRealtimeListener> {
     final unread = ref.read(conversationsUnreadTotalProvider);
     if (unread > _lastUnread) {
       unawaited(DmMessageSoundService.instance.playIncoming());
+      refreshOpenDmChat(ref, ref.read(openDmConversationIdProvider));
     }
     _lastUnread = unread;
 
@@ -65,13 +69,21 @@ class _DmRealtimeListenerState extends ConsumerState<DmRealtimeListener> {
   }
 
   Future<void> _scanCallSignals(String userId) async {
+    final openId = ref.read(openDmConversationIdProvider);
     final conversations =
         ref.read(conversationsListNotifierProvider).valueOrNull?.all ??
             const [];
     final repo = ref.read(messagesRepositoryProvider);
     final service = ref.read(dmVoiceCallServiceProvider);
 
-    for (final c in conversations.take(12)) {
+    final Iterable targets;
+    if (openId != null && openId.isNotEmpty) {
+      targets = conversations.where((c) => c.id == openId).take(1);
+    } else {
+      targets = conversations.where((c) => c.unreadCount > 0).take(4);
+    }
+
+    for (final c in targets) {
       if (c.id.isEmpty || c.id == userId) continue;
       try {
         final messages = await repo.messages(

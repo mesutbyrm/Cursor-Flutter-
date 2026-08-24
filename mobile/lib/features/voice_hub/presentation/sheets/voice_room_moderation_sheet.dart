@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -20,6 +21,7 @@ class VoiceRoomModerationTarget {
     this.isModerator = false,
     this.isSpeaker = false,
     this.isSop = false,
+    this.isMuted = false,
   });
 
   factory VoiceRoomModerationTarget.fromPresence(ChatRoomPresence user) {
@@ -41,6 +43,7 @@ class VoiceRoomModerationTarget {
       isModerator: isMod,
       isSpeaker: isSpeaker,
       isSop: isSop,
+      isMuted: user.isMuted,
     );
   }
 
@@ -50,6 +53,7 @@ class VoiceRoomModerationTarget {
   final bool isModerator;
   final bool isSpeaker;
   final bool isSop;
+  final bool isMuted;
 }
 
 final voiceModerationProvider = StateNotifierProvider.family<
@@ -82,17 +86,13 @@ class VoiceModerationNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<bool> addModerator(String userId) => _run(
-        () => _live.assignRoleToUser(targetUserId: userId, roleSymbol: '@'),
-      );
+  Future<bool> addModerator(String userId) => grantRoleAndSeat(userId, '@');
 
   Future<bool> removeModerator(String userId) => _run(
         () => _live.assignRoleToUser(targetUserId: userId, roleSymbol: '+'),
       );
 
-  Future<bool> addSop(String userId) => _run(
-        () => _live.assignRoleToUser(targetUserId: userId, roleSymbol: '&'),
-      );
+  Future<bool> addSop(String userId) => grantRoleAndSeat(userId, '&');
 
   Future<bool> removeSop(String userId) => _run(
         () => _live.assignRoleToUser(targetUserId: userId, roleSymbol: '+'),
@@ -101,15 +101,51 @@ class VoiceModerationNotifier extends StateNotifier<AsyncValue<void>> {
   Future<bool> grantVoice(String userId) async {
     state = const AsyncLoading();
     try {
+      final roleErr = await _live.assignRoleToUser(
+        targetUserId: userId,
+        roleSymbol: '+',
+      );
+      if (roleErr != null) {
+        state = AsyncError(roleErr, StackTrace.current);
+        return false;
+      }
+
+      final approveErr = await _live.approveSpeakRequest(userId);
+      if (approveErr != null) {
+        // approveSpeakRequest bazı odalarda 404 dönebilir; rol+koltuk yeterli olabilir.
+      }
+
+      final live = _ref.read(voiceRoomLiveProvider(_roomKey));
+      final occupied = <int>{
+        for (final p in live.presence)
+          if (p.seatIndex != null) p.seatIndex!,
+      };
+      int? freeSeat;
       for (var seat = 0; seat <= 14; seat++) {
-        final err = await _live.assignSeat(seatIndex: seat, userId: userId);
-        if (err == null) {
-          state = const AsyncData(null);
-          return true;
+        if (!occupied.contains(seat)) {
+          freeSeat = seat;
+          break;
         }
       }
-      state = AsyncError(StateError('Boş koltuk bulunamadı'), StackTrace.current);
-      return false;
+      if (freeSeat == null) {
+        state = AsyncError(StateError('Boş koltuk bulunamadı'), StackTrace.current);
+        return false;
+      }
+
+      final err = await _live.assignSeat(seatIndex: freeSeat, userId: userId);
+      if (err != null) {
+        state = AsyncError(err, StackTrace.current);
+        return false;
+      }
+      try {
+        await _ref.read(chatRoomRemoteProvider).unmuteUser(
+              roomKey: _roomKey,
+              userId: userId,
+            );
+      } catch (_) {}
+      await _live.refresh();
+      state = const AsyncData(null);
+      return true;
     } catch (e, st) {
       state = AsyncError(e, st);
       return false;
@@ -190,8 +226,77 @@ class VoiceModerationNotifier extends StateNotifier<AsyncValue<void>> {
   Future<bool> removeDj(String userId) => _run(() => _live.removeRoomDj(userId));
 
   Future<bool> transferOwnership(String userId) => _run(
-        () => _live.assignRoleToUser(targetUserId: userId, roleSymbol: '~'),
+        () async {
+          try {
+            await _ref.read(chatRoomRemoteProvider).transferOwnership(
+                  roomKey: _roomKey,
+                  newOwnerId: userId,
+                );
+            await _live.refresh();
+            return null;
+          } catch (e) {
+            return ApiException.userMessage(e);
+          }
+        },
       );
+
+  /// Rol ver + hemen boş koltuğa oturt (yetkili @ & ~ +).
+  Future<bool> grantRoleAndSeat(String userId, String roleSymbol) async {
+    state = const AsyncLoading();
+    try {
+      final roleErr = await _live.assignRoleToUser(
+        targetUserId: userId,
+        roleSymbol: roleSymbol,
+      );
+      if (roleErr != null) {
+        state = AsyncError(roleErr, StackTrace.current);
+        return false;
+      }
+      if (roleSymbol == '+' ||
+          roleSymbol == '@' ||
+          roleSymbol == '&' ||
+          roleSymbol == '~') {
+        final live = _ref.read(voiceRoomLiveProvider(_roomKey));
+        final occupied = <int>{
+          for (final p in live.presence)
+            if (p.seatIndex != null) p.seatIndex!,
+        };
+        // Zaten koltuktaysa sadece rol yeterli.
+        final alreadySeated = live.presence.any(
+          (p) => p.id == userId && p.seatIndex != null,
+        );
+        if (!alreadySeated) {
+          int? freeSeat;
+          for (var seat = 0; seat <= 14; seat++) {
+            if (!occupied.contains(seat)) {
+              freeSeat = seat;
+              break;
+            }
+          }
+          if (freeSeat != null) {
+            final err =
+                await _live.assignSeat(seatIndex: freeSeat, userId: userId);
+            if (err != null) {
+              state = AsyncError(err, StackTrace.current);
+              return false;
+            }
+          }
+        }
+        try {
+          await _ref.read(chatRoomRemoteProvider).unmuteUser(
+                roomKey: _roomKey,
+                userId: userId,
+              );
+        } catch (_) {}
+      }
+      await _live.refresh();
+      state = const AsyncData(null);
+      return true;
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      return false;
+    }
+  }
 
   Future<bool> setRoomMuted(bool mute) => _run(
         () => _live.toggleRoomMute(mute: mute),
@@ -269,6 +374,9 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(voiceModerationProvider(roomKey).notifier);
     final state = ref.watch(voiceModerationProvider(roomKey));
+    final roomMuted = ref.watch(
+      voiceRoomLiveProvider(roomKey).select((s) => s.roomMuted),
+    );
     final isLoading = state is AsyncLoading;
     final errorMsg =
         state is AsyncError ? ApiException.userMessage(state.error) : null;
@@ -286,18 +394,29 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
         ),
       if (perms.canGiveVoice || isOwner)
         _ModBox(
-          icon: Icons.record_voice_over_rounded,
-          label: '+V Ses Ver',
-          color: Colors.green,
-          onTap: () => _run(context, notifier, () async {
-            final ok = await notifier.grantVoice(targetUser.id);
-            return ok ? '${targetUser.username} koltuğa alındı' : 'Hata';
-          }),
+          icon: targetUser.isSpeaker
+              ? Icons.event_seat_outlined
+              : Icons.record_voice_over_rounded,
+          label: targetUser.isSpeaker ? 'Koltuktan indir' : 'Ses ver',
+          color: targetUser.isSpeaker ? Colors.orange : Colors.green,
+          onTap: () {
+            if (targetUser.isSpeaker) {
+              _run(context, notifier, () async {
+                final ok = await notifier.removeFromSeat(targetUser.id);
+                return ok ? 'Koltuktan indirildi' : 'Hata';
+              });
+            } else {
+              _run(context, notifier, () async {
+                final ok = await notifier.grantVoice(targetUser.id);
+                return ok ? '${targetUser.username} koltuğa alındı' : 'Hata';
+              });
+            }
+          },
         ),
       if (canAddModerators && (perms.canModerate || isOwner))
         _ModBox(
           icon: Icons.admin_panel_settings_outlined,
-          label: 'Yetki Ver',
+          label: 'Rol / Yetki',
           color: const Color(0xFF8B5CF6),
           onTap: () => _showRolePicker(context, ref, notifier),
         ),
@@ -331,42 +450,22 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
         ),
       if (perms.canMuteRoom || isOwner)
         _ModBox(
-          icon: Icons.volume_off_rounded,
-          label: 'Sesi Kapat',
-          color: Colors.orange,
+          icon: roomMuted ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+          label: roomMuted ? 'Sesi Aç' : 'Sesi Kapat',
+          color: roomMuted ? Colors.teal : Colors.orange,
           onTap: () => _run(context, notifier, () async {
-            final ok = await notifier.setRoomMuted(true);
-            return ok ? 'Oda sesi kapatıldı' : 'Hata';
-          }),
-        ),
-      if (perms.canMuteRoom || isOwner)
-        _ModBox(
-          icon: Icons.volume_up_rounded,
-          label: 'Sesi Aç',
-          color: Colors.teal,
-          onTap: () => _run(context, notifier, () async {
-            final ok = await notifier.setRoomMuted(false);
-            return ok ? 'Oda sesi açıldı' : 'Hata';
+            final ok = await notifier.setRoomMuted(!roomMuted);
+            return ok
+                ? (roomMuted ? 'Oda sesi açıldı' : 'Oda sesi kapatıldı')
+                : 'Hata';
           }),
         ),
       if (perms.canAssignSeats || isOwner)
         _ModBox(
-          icon: targetUser.isSpeaker
-              ? Icons.event_seat_outlined
-              : Icons.event_seat_rounded,
-          label: targetUser.isSpeaker ? 'Koltuktan İndir' : 'Koltuğa Al',
+          icon: Icons.event_seat_rounded,
+          label: 'Koltuğa al',
           color: const Color(0xFF3B82F6),
-          onTap: () {
-            if (targetUser.isSpeaker) {
-              _run(context, notifier, () async {
-                final ok = await notifier.removeFromSeat(targetUser.id);
-                return ok ? 'Koltuk güncellendi' : 'Hata';
-              });
-            } else {
-              // Boş koltukları göster, seçilene otur.
-              _pickEmptySeatAndAssign(context, ref, roomKey, targetUser.id);
-            }
-          },
+          onTap: () => _pickEmptySeatAndAssign(context, ref, roomKey, targetUser.id),
         ),
       if (perms.canManageDj || isOwner)
         _ModBox(
@@ -397,22 +496,18 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
         ),
       if (perms.canMuteUsers || isOwner)
         _ModBox(
-          icon: Icons.mic_off_rounded,
-          label: 'Mic Kapat',
-          color: Colors.redAccent,
+          icon: targetUser.isMuted ? Icons.mic_rounded : Icons.mic_off_rounded,
+          label: targetUser.isMuted ? 'Susturmayı Kaldır' : 'Sustur',
+          color: targetUser.isMuted ? Colors.lightGreen : Colors.redAccent,
           onTap: () => _run(context, notifier, () async {
-            final ok = await notifier.muteUser(targetUser.id);
-            return ok ? '${targetUser.username} susturuldu' : 'Hata';
-          }),
-        ),
-      if (perms.canMuteUsers || isOwner)
-        _ModBox(
-          icon: Icons.mic_rounded,
-          label: 'Mic Aç',
-          color: Colors.lightGreen,
-          onTap: () => _run(context, notifier, () async {
-            final ok = await notifier.unmuteUser(targetUser.id);
-            return ok ? 'Susturma kaldırıldı' : 'Hata';
+            final ok = targetUser.isMuted
+                ? await notifier.unmuteUser(targetUser.id)
+                : await notifier.muteUser(targetUser.id);
+            return ok
+                ? (targetUser.isMuted
+                    ? 'Susturma kaldırıldı'
+                    : '${targetUser.username} susturuldu')
+                : 'Hata';
           }),
         ),
       if (perms.canBanUsers || isOwner)
@@ -430,24 +525,14 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
             }),
           ),
         ),
-      if (perms.canMuteUsers || isOwner)
-        _ModBox(
-          icon: Icons.notifications_off_rounded,
-          label: 'Sessize Al',
-          color: Colors.deepOrange,
-          onTap: () => _run(context, notifier, () async {
-            final ok = await notifier.muteUser(targetUser.id);
-            return ok ? '${targetUser.username} 30 dk susturuldu' : 'Hata';
-          }),
-        ),
       if (perms.canKickUsers || isOwner)
         _ModBox(
           icon: Icons.logout_rounded,
-          label: 'Kick',
+          label: 'Kanaldan at',
           color: const Color(0xFFB8860B),
           onTap: () => _run(context, notifier, () async {
             final msg = await notifier.kickUser(targetUser.id);
-            return msg ?? '${targetUser.username} atıldı';
+            return msg ?? '${targetUser.username} kanaldan atıldı';
           }),
         ),
     ];
@@ -512,6 +597,22 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(errorMsg, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
           ],
+          if (canAddModerators && (perms.canModerate || isOwner)) ...[
+            const SizedBox(height: 10),
+            _RoleQuickBar(
+              perms: perms,
+              isOwner: isOwner,
+              onPick: (sym) => _run(context, notifier, () async {
+                if (sym == '+') {
+                  final ok = await notifier.grantVoice(targetUser.id);
+                  return ok ? 'Ses verildi — koltuğa alındı' : 'Hata';
+                }
+                final ok =
+                    await notifier.grantRoleAndSeat(targetUser.id, sym);
+                return ok ? 'Yetki verildi ($sym)' : 'Hata';
+              }),
+            ),
+          ],
           const SizedBox(height: 14),
           if (isLoading)
             const Padding(
@@ -519,18 +620,35 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
               child: CircularProgressIndicator(color: Color(0xFF6C3FC5)),
             )
           else
-            Flexible(
-              child: GridView.builder(
-                shrinkWrap: true,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  childAspectRatio: 1.05,
-                ),
-                itemCount: actions.length,
-                itemBuilder: (context, i) => actions[i],
-              ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const crossAxisCount = 3;
+                const spacing = 8.0;
+                const aspect = 1.05;
+                final gridHeight = ListPerf.nestedGridHeight(
+                  itemCount: actions.length,
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: spacing,
+                  crossAxisSpacing: spacing,
+                  childAspectRatio: aspect,
+                  crossAxisExtent: constraints.maxWidth,
+                );
+                return SizedBox(
+                  height: gridHeight,
+                  child: GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: spacing,
+                      crossAxisSpacing: spacing,
+                      childAspectRatio: aspect,
+                    ),
+                    itemCount: actions.length,
+                    itemBuilder: (context, i) => actions[i],
+                  ),
+                );
+              },
             ),
         ],
       ),
@@ -565,11 +683,8 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
     );
     if (picked == null || !context.mounted) return;
     await _run(context, notifier, () async {
-      final err = await ref.read(voiceRoomLiveProvider(roomKey).notifier).assignRoleToUser(
-            targetUserId: targetUser.id,
-            roleSymbol: picked,
-          );
-      return err ?? 'Rol verildi';
+      final ok = await notifier.grantRoleAndSeat(targetUser.id, picked);
+      return ok ? 'Yetki verildi ve koltuğa alındı' : 'Hata';
     });
   }
 
@@ -624,6 +739,55 @@ class _TargetSupporterBadge extends ConsumerWidget {
     final tier = async.asData?.value?.current;
     if (tier == null || tier.code.isEmpty) return const SizedBox.shrink();
     return SupporterBadgePill(code: tier.code, label: tier.label, compact: true);
+  }
+}
+
+class _RoleQuickBar extends StatelessWidget {
+  const _RoleQuickBar({
+    required this.perms,
+    required this.isOwner,
+    required this.onPick,
+  });
+
+  final VoiceRoomPermissions perms;
+  final bool isOwner;
+  final void Function(String roleSymbol) onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final roles = <(String, String, Color)>[];
+    if (perms.canGiveVoice || isOwner || perms.isSiteAdmin) {
+      roles.add(('+', 'Ses', const Color(0xFF3B82F6)));
+    }
+    if (perms.canGiveOp || perms.canModerate || isOwner) {
+      roles.add(('@', 'OP', const Color(0xFF25F4EE)));
+    }
+    if (perms.canGiveSop || perms.canBanUsers || isOwner) {
+      roles.add(('&', 'SOP', const Color(0xFFFF6B35)));
+    }
+    if (perms.canGiveFounder || perms.isSiteAdmin) {
+      roles.add(('~', 'Founder', const Color(0xFFFFD700)));
+    }
+    if (roles.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final r in roles)
+          ActionChip(
+            label: Text('${r.$1} ${r.$2}'),
+            backgroundColor: r.$3.withValues(alpha: 0.18),
+            side: BorderSide(color: r.$3.withValues(alpha: 0.55)),
+            labelStyle: TextStyle(
+              color: r.$3,
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
+            ),
+            onPressed: () => onPick(r.$1),
+          ),
+      ],
+    );
   }
 }
 
@@ -715,23 +879,43 @@ Future<void> _pickEmptySeatAndAssign(
               ),
             ),
             const SizedBox(height: 14),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 4,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 1.4,
-              children: [
-                for (final seat in seats)
-                  _SeatPickTile(
-                    seat: seat,
-                    occupantName: occupied[seat]?.displayName,
-                    onTap: occupied.containsKey(seat)
-                        ? null
-                        : () => Navigator.pop(ctx, seat),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const crossAxisCount = 4;
+                const spacing = 10.0;
+                const aspect = 1.4;
+                final gridHeight = ListPerf.nestedGridHeight(
+                  itemCount: seats.length,
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: spacing,
+                  crossAxisSpacing: spacing,
+                  childAspectRatio: aspect,
+                  crossAxisExtent: constraints.maxWidth,
+                );
+                return SizedBox(
+                  height: gridHeight,
+                  child: GridView(
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: spacing,
+                      crossAxisSpacing: spacing,
+                      childAspectRatio: aspect,
+                    ),
+                    children: [
+                      for (final seat in seats)
+                        _SeatPickTile(
+                          seat: seat,
+                          occupantName: occupied[seat]?.displayName,
+                          onTap: occupied.containsKey(seat)
+                              ? null
+                              : () => Navigator.pop(ctx, seat),
+                        ),
+                    ],
                   ),
-              ],
+                );
+              },
             ),
           ],
         ),

@@ -13,6 +13,11 @@ fi
 echo "=== Canlifal APK durumu ==="
 echo "Sürüm (kaynak): ${VERSION}"
 echo "İndirme: ${APK_URL}"
+
+RELEASE_NAME=$(gh release view apk-latest --repo "$REPO" --json name -q .name 2>/dev/null || echo "")
+if [[ -n "$RELEASE_NAME" ]]; then
+  echo "apk-latest: ${RELEASE_NAME}"
+fi
 echo ""
 
 if [[ -f "${ROOT}/docs/LATEST_APK_BUILD.md" ]]; then

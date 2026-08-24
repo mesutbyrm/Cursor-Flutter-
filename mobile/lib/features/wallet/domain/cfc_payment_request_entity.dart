@@ -9,6 +9,7 @@ class CfcPaymentRequestEntity {
     this.requestType = 'cfc',
     this.coins,
     this.packageTitle,
+    this.packageId,
     this.senderInfo,
     this.notes,
     this.reviewNote,
@@ -26,6 +27,7 @@ class CfcPaymentRequestEntity {
       requestType: type,
       coins: asInt(pick(json, ['coins'])),
       packageTitle: pick(json, ['packageTitle'])?.toString(),
+      packageId: pick(json, ['packageId'])?.toString(),
       senderInfo: json['senderInfo']?.toString(),
       notes: json['notes']?.toString(),
       reviewNote: json['reviewNote']?.toString(),
@@ -40,6 +42,7 @@ class CfcPaymentRequestEntity {
   final String requestType;
   final int? coins;
   final String? packageTitle;
+  final String? packageId;
   final String? senderInfo;
   final String? notes;
   final String? reviewNote;
@@ -68,6 +71,10 @@ class CfcPaymentRequestEntity {
   bool get isCfc => requestType != 'jeton';
 
   bool get isJeton => requestType == 'jeton';
+
+  bool get isMembershipCheckout =>
+      packageId?.startsWith('membership_') == true ||
+      (notes?.toLowerCase().contains('üyelik') ?? false);
 
   String get displayLine {
     if (isJeton) {

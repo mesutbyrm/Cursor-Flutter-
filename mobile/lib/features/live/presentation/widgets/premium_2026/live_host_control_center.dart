@@ -370,7 +370,7 @@ class _GiftsTab extends ConsumerWidget {
         return ListTile(
           leading: CircleAvatar(
             backgroundColor: const Color(0xFFB832FF).withValues(alpha: 0.3),
-            child: Text('${g.coinCost * g.quantity}', style: const TextStyle(fontSize: 11)),
+            child: Text('${g.jetonAmount}', style: const TextStyle(fontSize: 11)),
           ),
           title: Text(g.senderName, style: const TextStyle(color: Colors.white)),
           subtitle: Text(
@@ -459,24 +459,40 @@ class _GuestsTab extends ConsumerWidget {
               r['userName']?.toString() ?? r['displayName']?.toString() ?? 'İzleyici',
               style: const TextStyle(color: Colors.white),
             ),
-            trailing: FilledButton(
-              onPressed: () {
-                final uid = r['userId']?.toString() ?? '';
-                if (uid.isNotEmpty) {
-                  ref.read(coBroadcastProvider.notifier).approveRequest(
-                        streamId: streamId,
-                        userId: uid,
-                      );
-                  ref.read(liveGuestGridProvider.notifier).addGuest(
-                        slotIndex: 1,
-                        userId: uid,
-                        displayName: r['userName']?.toString() ??
-                            r['displayName']?.toString() ??
-                            'Konuk',
-                      );
-                }
-              },
-              child: const Text('Kabul'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    final uid = r['userId']?.toString() ?? '';
+                    if (uid.isEmpty) return;
+                    ref.read(coBroadcastProvider.notifier).rejectRequest(
+                          streamId: streamId,
+                          userId: uid,
+                        );
+                  },
+                  child: const Text('Red', style: TextStyle(color: Colors.white70)),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    final uid = r['userId']?.toString() ?? '';
+                    if (uid.isNotEmpty) {
+                      ref.read(coBroadcastProvider.notifier).approveRequest(
+                            streamId: streamId,
+                            userId: uid,
+                          );
+                      ref.read(liveGuestGridProvider.notifier).addGuest(
+                            slotIndex: 1,
+                            userId: uid,
+                            displayName: r['displayName']?.toString() ??
+                                r['userName']?.toString() ??
+                                'Konuk',
+                          );
+                    }
+                  },
+                  child: const Text('Kabul'),
+                ),
+              ],
             ),
           );
         }
@@ -752,7 +768,7 @@ class _StatsTab extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _statRow('Toplam Jeton', '${dash.totalJeton}'),
+        _statRow('💎', '${dash.totalJeton}'),
         _statRow('Dakikalık', '${dash.perMinuteJeton}'),
         _statRow('Saatlik', '${dash.perHourJeton}'),
         _statRow('Hediye', '${dash.giftCount}'),

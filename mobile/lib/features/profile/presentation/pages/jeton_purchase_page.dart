@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/jeton_payment_status_listener.dart';
@@ -86,7 +87,7 @@ class _JetonStoreHeader extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Jeton Satın Al',
+          buildMembershipJetonPurchasePageTitle(),
           textAlign: TextAlign.center,
           style: TextStyle(
             color: context.colors.onSurface,
@@ -97,7 +98,7 @@ class _JetonStoreHeader extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'İstediğiniz tutarı girin — jeton otomatik hesaplanır',
+          buildMembershipJetonPurchasePageSubtitle(),
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 13,

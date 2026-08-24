@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/images/canlifal_network_image.dart';
+import '../../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../../providers/chat_room_providers.dart';
 import 'voice_rooms_hero.dart';
-import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
 
@@ -29,23 +29,29 @@ class _MiniMusicPlayerState extends ConsumerState<MiniMusicPlayer> {
         final nowPlaying = dj.nowPlaying;
         return (
           hasLive: hasLive,
-          title: hasLive ? room!.displayTitle : VoiceRoomsMockData.musicTitle,
+          title: hasLive ? room!.displayTitle : '',
           artist: hasLive
               ? (nowPlaying?.requestedBy?.name.trim().isNotEmpty == true
                   ? '${nowPlaying!.requestedBy!.name} çalıyor'
-                  : VoiceRoomsMockData.musicArtist)
-              : VoiceRoomsMockData.musicArtist,
+                  : 'Canlı DJ')
+              : '',
           track: hasLive
               ? (nowPlaying?.title.trim().isNotEmpty == true
                   ? nowPlaying!.title
-                  : VoiceRoomsMockData.musicTrack)
-              : VoiceRoomsMockData.musicTrack,
-          playing: hasLive ? dj.playing : true,
+                  : 'Çalıyor')
+              : '',
+          playing: hasLive ? dj.playing : false,
           thumbUrl: nowPlaying?.thumbUrl,
           roomLiveKey: hasLive ? room!.liveKey : null,
+          room: room,
+          dj: dj,
         );
       }),
     );
+
+    if (!view.hasLive || view.roomLiveKey == null || view.room == null) {
+      return const SizedBox.shrink();
+    }
 
     final bottom = MediaQuery.paddingOf(context).bottom;
     return RepaintBoundary(
@@ -181,7 +187,17 @@ class _MiniMusicPlayerState extends ConsumerState<MiniMusicPlayer> {
             Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () {},
+                onTap: () {
+                  final liveKey = view.roomLiveKey;
+                  if (liveKey == null) return;
+                  showRoomMusicQueueSheet(
+                    context,
+                    ref,
+                    liveKey: liveKey,
+                    dj: view.dj,
+                    canControlMusic: false,
+                  );
+                },
                 customBorder: const CircleBorder(),
                 child: Padding(
                   padding: const EdgeInsets.all(6),

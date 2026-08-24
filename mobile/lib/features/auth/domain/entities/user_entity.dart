@@ -14,6 +14,7 @@ class UserEntity extends Equatable {
     this.isFollowing = false,
     this.isVerified = false,
     this.coinBalance = 0,
+    this.isBot = false,
   });
 
   final String id;
@@ -28,6 +29,7 @@ class UserEntity extends Equatable {
   final bool isFollowing;
   final bool isVerified;
   final int coinBalance;
+  final bool isBot;
 
   String get display => displayName?.trim().isNotEmpty == true
       ? displayName!.trim()
@@ -47,5 +49,6 @@ class UserEntity extends Equatable {
         isFollowing,
         isVerified,
         coinBalance,
+        isBot,
       ];
 }

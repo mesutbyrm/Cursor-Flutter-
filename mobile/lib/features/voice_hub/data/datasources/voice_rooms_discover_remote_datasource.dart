@@ -7,6 +7,8 @@ import '../../../gifts/data/leaderboard_remote_datasource.dart';
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
 import '../../../live/data/datasources/live_remote_datasource.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../live/domain/entities/voice_rooms_page.dart';
+import '../../presentation/utils/voice_room_category_catalog.dart';
 
 /// Abacus AI / canlifal.com sesli oda keşfet veri kaynağı.
 class VoiceRoomsDiscoverRemoteDataSource {
@@ -21,18 +23,57 @@ class VoiceRoomsDiscoverRemoteDataSource {
   final LeaderboardRemoteDataSource _leaderboard;
 
   Future<List<VoiceRoomEntity>> fetchVoiceRooms({String? categoryId}) async {
-    final rooms = await _liveRemote.fetchVoiceRooms();
-    if (categoryId == null || categoryId.isEmpty || categoryId == 'all') {
-      return rooms;
-    }
-    return rooms.where((r) => _matchesCategory(r, categoryId)).toList();
+    final page = await fetchVoiceRoomsPage(categoryId: categoryId, page: 1);
+    return page.rooms;
   }
 
+  Future<VoiceRoomsPage> fetchVoiceRoomsPage({
+    String? categoryId,
+    int page = 1,
+  }) async {
+    final serverCategory = _serverCategoryParam(categoryId);
+    final result = await _liveRemote.fetchVoiceRoomsPage(
+      page: page,
+      category: serverCategory,
+    );
+    var rooms = result.rooms;
+    if (categoryId != null &&
+        categoryId.isNotEmpty &&
+        categoryId != 'all' &&
+        serverCategory == null) {
+      rooms = rooms.where((r) => _matchesCategory(r, categoryId)).toList();
+    }
+    return VoiceRoomsPage(
+      rooms: rooms,
+      page: result.page,
+      hasMore: result.hasMore,
+    );
+  }
+
+  /// Kılavuz §9.3 — `GET /api/chat/rooms?type=voice&category=…`
+  static String? serverCategoryForDiscover(String? categoryId) {
+    final id = categoryId?.trim().toLowerCase() ?? '';
+    if (id.isEmpty || id == 'all' || id == 'popular') return null;
+    for (final c in kVoiceRoomAssignableCategories) {
+      if (c.id == id) return c.id;
+    }
+    return null;
+  }
+
+  String? _serverCategoryParam(String? categoryId) =>
+      serverCategoryForDiscover(categoryId);
+
   bool _matchesCategory(VoiceRoomEntity room, String categoryId) {
+    if (categoryId == 'popular') {
+      return room.displayOnline >= 50;
+    }
+    final cat = room.category?.trim().toLowerCase();
+    if (cat != null && cat.isNotEmpty) {
+      return cat == categoryId;
+    }
     final hay = '${room.nameTr} ${room.descTr ?? ''} ${room.roomType ?? ''}'
         .toLowerCase();
     return switch (categoryId) {
-      'popular' => room.displayOnline >= 50,
       'chat' => true,
       'music' =>
         room.activeDjId != null ||

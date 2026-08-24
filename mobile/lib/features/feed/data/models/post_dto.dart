@@ -99,11 +99,13 @@ abstract class PostDto with _$PostDto {
         pick(json, ['isLiked', 'liked', 'hasLiked']) == true ||
         pick(json, ['isLiked', 'liked', 'hasLiked']) == 1;
 
+    final authorDto = UserDto.fromApiMap(authorMap);
+
     return PostDto(
       id: pick(json, ['id', '_id', 'postId', 'storyId', 'mediaId'])
               ?.toString() ??
           '',
-      author: UserDto.fromJson(authorMap).toEntity(),
+      author: authorDto.toEntity(role: authorDto.roleFrom(authorMap)),
       caption: pick(json, ['caption', 'text', 'description', 'content'])
           as String?,
       mediaUrl: pick(json, [
@@ -148,6 +150,60 @@ abstract class PostDto with _$PostDto {
         postType: postType,
         likedByMe: likedByMe,
       );
+
+  /// Sosyal akış — tüm metadata alanları (paylaşım sayısı, gizlilik, fal id).
+  static PostEntity entityFromApiMap(
+    Map<String, dynamic> json, {
+    String? currentUserId,
+  }) {
+    final dto = PostDto.fromApiMap(json, currentUserId: currentUserId);
+    return dto.toEntity().copyWith(
+      shareCount: asInt(
+        pick(json, ['shareCount', 'sharesCount', 'shares', 'repostCount']),
+      ),
+      fortuneId: pick(json, [
+        'fortuneId',
+        'fortune_id',
+        'userFortuneId',
+        'readingId',
+      ])?.toString(),
+      visibility: pick(json, ['visibility', 'privacy', 'audience'])?.toString(),
+      fortuneSlug: pick(json, ['fortuneSlug', 'fortune_slug', 'slug'])
+          ?.toString(),
+      fortuneDetail: _parseFortuneDetail(json),
+    );
+  }
+
+  static String? _parseFortuneDetail(Map<String, dynamic> json) {
+    final direct = pick(json, [
+      'detail',
+      'fortuneDetail',
+      'fortune_detail',
+      'readingText',
+      'reading_text',
+      'fullText',
+      'full_text',
+      'fortuneText',
+      'fortune_text',
+      'reading',
+      'body',
+    ]);
+    if (direct is String && direct.trim().isNotEmpty) return direct.trim();
+    final fortuneRaw = pick(json, ['fortune', 'reading', 'userFortune']);
+    if (fortuneRaw is Map) {
+      final fm = asJsonMap(fortuneRaw);
+      final nested = pick(fm, [
+        'detail',
+        'text',
+        'content',
+        'result',
+        'reading',
+        'summary',
+      ]);
+      if (nested is String && nested.trim().isNotEmpty) return nested.trim();
+    }
+    return null;
+  }
 
   static DateTime? _parseDate(dynamic v) {
     if (v == null) return null;

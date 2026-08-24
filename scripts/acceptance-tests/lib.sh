@@ -12,6 +12,9 @@ _normalize_base_url() {
 }
 
 BASE="$(_normalize_base_url "${CANLIFAL_BASE_URL:-${API_BASE_URL:-https://canlifal.com}}")"
+SCRIPT_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=defaults.sh
+source "$SCRIPT_LIB_DIR/defaults.sh"
 REPORT_DIR="${ACCEPTANCE_REPORT_DIR:-docs}"
 REPORT_JSON="${REPORT_DIR}/ACCEPTANCE_TEST_REPORT.json"
 REPORT_MD="${REPORT_DIR}/ACCEPTANCE_TEST_REPORT.md"
@@ -93,6 +96,28 @@ print(raw[:120])
 " 2>/dev/null || echo "bilinmeyen hata"
 }
 
+register_acceptance_user() {
+  local email="$1" username="$2" password="$3" name="$4"
+  local body resp
+  body="$(
+    REGISTER_EMAIL="$email" REGISTER_USER="$username" REGISTER_PASS="$password" REGISTER_NAME="$name" python3 - <<'PY'
+import json, os
+print(json.dumps({
+    "email": os.environ["REGISTER_EMAIL"],
+    "password": os.environ["REGISTER_PASS"],
+    "name": os.environ["REGISTER_NAME"],
+    "username": os.environ["REGISTER_USER"],
+    "birthDate": "1990-01-01",
+    "birthTime": "12:00",
+}))
+PY
+  )"
+  resp=$(curl -sS -X POST "$BASE/api/auth/mobile-register" \
+    -H "Content-Type: application/json" \
+    -d "$body")
+  extract_token "$resp"
+}
+
 extract_token() {
   local resp="$1"
   local tok
@@ -140,25 +165,67 @@ print(pick_id(data))
 " 2>/dev/null || true
 }
 
-# Oturum: önce kullanıcı adı, sonra e-posta.
+# Oturum: önce kullanıcı adı, sonra e-posta; secret hatalıysa dokümante varsayılanlara dön.
 bootstrap_user_token() {
-  local resp tok
+  local resp tok try_user try_email try_pass
   if [[ -n "${USER_TOKEN:-}" ]]; then
     return 0
   fi
-  if [[ -n "${ACCEPTANCE_USER_USERNAME:-}" && -n "${ACCEPTANCE_USER_PASSWORD:-}" ]]; then
-    resp=$(mobile_login_identifier username "$ACCEPTANCE_USER_USERNAME" "$ACCEPTANCE_USER_PASSWORD")
+  try_user="${USER_USERNAME:-${ACCEPTANCE_USER_USERNAME:-}}"
+  try_email="${USER_EMAIL:-${ACCEPTANCE_USER_EMAIL:-}}"
+  try_pass="${USER_PASSWORD:-${ACCEPTANCE_USER_PASSWORD:-}}"
+
+  if [[ -n "$try_user" && -n "$try_pass" ]]; then
+    resp=$(mobile_login_identifier username "$try_user" "$try_pass")
     tok=$(extract_token "$resp")
     if [[ -n "$tok" ]]; then
       USER_TOKEN="$tok"
       return 0
     fi
   fi
-  if acceptance_user_secrets_configured; then
-    resp=$(mobile_login_identifier email "$ACCEPTANCE_USER_EMAIL" "$ACCEPTANCE_USER_PASSWORD")
+  if [[ -n "$try_email" && -n "$try_pass" ]]; then
+    resp=$(mobile_login_identifier email "$try_email" "$try_pass")
     tok=$(extract_token "$resp")
     if [[ -n "$tok" ]]; then
       USER_TOKEN="$tok"
+      return 0
+    fi
+  fi
+
+  if acceptance_any_user_secrets_configured &&
+     [[ -n "$try_pass" && ( -n "$try_email" || -n "$try_user" ) &&
+        ( "$try_email" != "$DEFAULT_ACCEPTANCE_USER_EMAIL" ||
+          "$try_pass" != "$DEFAULT_ACCEPTANCE_USER_PASSWORD" ||
+          ( -n "$try_user" && "$try_user" != "$DEFAULT_ACCEPTANCE_USER_USERNAME" ) ) ]]; then
+    echo "⚠️  Secret kimlik bilgileri başarısız — dokümante test hesabına dönülüyor" >&2
+    USER_EMAIL="$DEFAULT_ACCEPTANCE_USER_EMAIL"
+    USER_USERNAME="$DEFAULT_ACCEPTANCE_USER_USERNAME"
+    USER_PASSWORD="$DEFAULT_ACCEPTANCE_USER_PASSWORD"
+    HOST_EMAIL="$DEFAULT_ACCEPTANCE_HOST_EMAIL"
+    HOST_PASSWORD="$DEFAULT_ACCEPTANCE_HOST_PASSWORD"
+    VIEWER_EMAIL="$DEFAULT_ACCEPTANCE_USER_EMAIL"
+    VIEWER_PASSWORD="$DEFAULT_ACCEPTANCE_USER_PASSWORD"
+    local attempt
+    for attempt in 1 2 3; do
+      resp=$(mobile_login_identifier email "$USER_EMAIL" "$USER_PASSWORD")
+      tok=$(extract_token "$resp")
+      if [[ -n "$tok" ]]; then
+        USER_TOKEN="$tok"
+        return 0
+      fi
+      if [[ "$attempt" -lt 3 ]]; then
+        jeton_topup_debug "default login attempt $attempt failed — retry"
+        sleep 2
+      fi
+    done
+    tok=$(register_acceptance_user \
+      "$DEFAULT_ACCEPTANCE_USER_EMAIL" \
+      "$DEFAULT_ACCEPTANCE_USER_USERNAME" \
+      "$DEFAULT_ACCEPTANCE_USER_PASSWORD" \
+      "Cursor Test")
+    if [[ -n "$tok" ]]; then
+      USER_TOKEN="$tok"
+      echo "ℹ️  Dokümante test hesabı yeniden oluşturuldu (mobile-register)" >&2
       return 0
     fi
   fi
@@ -171,6 +238,9 @@ bootstrap_host_token() {
     return 0
   fi
   if [[ -z "${HOST_EMAIL:-}" || -z "${HOST_PASSWORD:-}" ]]; then
+  apply_acceptance_credential_defaults
+  fi
+  if [[ -z "${HOST_EMAIL:-}" || -z "${HOST_PASSWORD:-}" ]]; then
     return 1
   fi
   resp=$(mobile_login_identifier email "$HOST_EMAIL" "$HOST_PASSWORD")
@@ -179,8 +249,31 @@ bootstrap_host_token() {
     HOST_TOKEN="$tok"
     return 0
   fi
-  if [[ -n "${ACCEPTANCE_USER_USERNAME:-}" ]]; then
-    resp=$(mobile_login_identifier username "$ACCEPTANCE_USER_USERNAME" "$HOST_PASSWORD")
+  if [[ "$HOST_EMAIL" == "$DEFAULT_ACCEPTANCE_HOST_EMAIL" ]]; then
+    tok=$(register_acceptance_user \
+      "$DEFAULT_ACCEPTANCE_HOST_EMAIL" \
+      "cursorhost1786235468" \
+      "$DEFAULT_ACCEPTANCE_HOST_PASSWORD" \
+      "Cursor Host")
+    if [[ -n "$tok" ]]; then
+      HOST_TOKEN="$tok"
+      return 0
+    fi
+  fi
+  if [[ -n "${USER_USERNAME:-}" ]]; then
+    resp=$(mobile_login_identifier username "$USER_USERNAME" "$HOST_PASSWORD")
+    tok=$(extract_token "$resp")
+    if [[ -n "$tok" ]]; then
+      HOST_TOKEN="$tok"
+      return 0
+    fi
+  fi
+  if [[ "$HOST_EMAIL" != "$DEFAULT_ACCEPTANCE_HOST_EMAIL" ||
+        "$HOST_PASSWORD" != "$DEFAULT_ACCEPTANCE_HOST_PASSWORD" ]]; then
+    echo "⚠️  Host secret başarısız — dokümante host hesabına dönülüyor" >&2
+    HOST_EMAIL="$DEFAULT_ACCEPTANCE_HOST_EMAIL"
+    HOST_PASSWORD="$DEFAULT_ACCEPTANCE_HOST_PASSWORD"
+    resp=$(mobile_login_identifier email "$HOST_EMAIL" "$HOST_PASSWORD")
     tok=$(extract_token "$resp")
     if [[ -n "$tok" ]]; then
       HOST_TOKEN="$tok"
@@ -264,16 +357,306 @@ login_as_teller() {
 }
 
 login_as_admin() {
-  local resp
-  if [[ -n "${ACCEPTANCE_ADMIN_EMAIL:-}" ]]; then
+  local resp tok
+  ADMIN_TOKEN=""
+  if [[ -n "${ACCEPTANCE_ADMIN_EMAIL:-}" && -n "${ACCEPTANCE_ADMIN_PASSWORD:-}" ]]; then
     resp=$(mobile_login_identifier email "$ACCEPTANCE_ADMIN_EMAIL" "$ACCEPTANCE_ADMIN_PASSWORD")
-  elif [[ -n "${ACCEPTANCE_ADMIN_USERNAME:-}" ]]; then
+    tok=$(extract_token "$resp")
+    if [[ -n "$tok" ]]; then
+      ADMIN_TOKEN="$tok"
+      return 0
+    fi
+    jeton_topup_debug "admin login email failed for ${ACCEPTANCE_ADMIN_EMAIL}"
+  fi
+  if [[ -n "${ACCEPTANCE_ADMIN_USERNAME:-}" && -n "${ACCEPTANCE_ADMIN_PASSWORD:-}" ]]; then
     resp=$(mobile_login_identifier username "$ACCEPTANCE_ADMIN_USERNAME" "$ACCEPTANCE_ADMIN_PASSWORD")
-  else
+    tok=$(extract_token "$resp")
+    if [[ -n "$tok" ]]; then
+      ADMIN_TOKEN="$tok"
+      return 0
+    fi
+    jeton_topup_debug "admin login username failed for ${ACCEPTANCE_ADMIN_USERNAME}"
+  fi
+  return 1
+}
+
+jeton_topup_debug() {
+  [[ -n "${JETON_TOPUP_DEBUG:-}${ACCEPTANCE_DEBUG:-}" ]] || return 0
+  echo "[jeton-topup] $*" >&2
+}
+
+# Test kullanıcısına jeton ekle — yalnızca ACCEPTANCE_ADMIN_* ile; production gerçek kullanıcıya dokunmaz.
+top_up_test_jeton() {
+  local user_id="$1" target_balance="${2:-1500}" reason="${3:-acceptance-stage5}"
+  local current need amount body code
+  if [[ -z "$user_id" ]]; then
     return 1
   fi
-  ADMIN_TOKEN=$(extract_token "$resp")
-  [[ -n "${ADMIN_TOKEN:-}" ]]
+  if ! login_as_admin; then
+    return 2
+  fi
+  current=$(curl_json "$BASE/api/admin/users/$user_id" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" 2>/dev/null | python3 -c "
+import json,sys
+raw=sys.stdin.read().strip()
+if not raw: sys.exit(0)
+d=json.loads(raw)
+u=d.get('user') or d.get('data') or d
+for k in ('jetonBalance','coins','jeton'):
+    v=u.get(k) if isinstance(u,dict) else d.get(k)
+    if v is not None:
+        print(int(v)); break
+" 2>/dev/null || echo "")
+  if [[ -z "$current" ]]; then
+    current=0
+  fi
+  need=$((target_balance - current))
+  if [[ "$need" -le 0 ]]; then
+    printf '%s' "$current"
+    return 0
+  fi
+  amount="$need"
+  local bodies=()
+  bodies+=("$(USER_ID="$user_id" AMOUNT="$amount" REASON="$reason" python3 -c 'import json,os; print(json.dumps({"userId":os.environ["USER_ID"],"type":"jeton","amount":int(os.environ["AMOUNT"]),"action":"add","reason":os.environ["REASON"]}))')")
+  bodies+=("$(USER_ID="$user_id" AMOUNT="$amount" REASON="$reason" python3 -c 'import json,os; print(json.dumps({"userId":os.environ["USER_ID"],"creditType":"jeton","amount":int(os.environ["AMOUNT"]),"operation":"add","note":os.environ["REASON"]}))')")
+  bodies+=("$(USER_ID="$user_id" AMOUNT="$amount" python3 -c 'import json,os; print(json.dumps({"userId":os.environ["USER_ID"],"amount":os.environ["AMOUNT"],"currency":"jeton"}))')")
+  bodies+=("$(USER_ID="$user_id" AMOUNT="$amount" python3 -c 'import json,os; print(json.dumps({"userId":os.environ["USER_ID"],"amount":int(os.environ["AMOUNT"]),"currency":"JETON"}))')")
+  for body in "${bodies[@]}"; do
+    code=$(http_code -X POST "$BASE/api/admin/credits" \
+      -H "Authorization: Bearer $ADMIN_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "$body")
+    jeton_topup_debug "POST /api/admin/credits → HTTP $code body=$(printf '%s' "$body" | head -c 120)"
+    if [[ "$code" == "200" || "$code" == "201" ]]; then
+      sleep 1
+      printf '%s' "$target_balance"
+      return 0
+    fi
+    code=$(http_code -X PATCH "$BASE/api/admin/users/credits" \
+      -H "Authorization: Bearer $ADMIN_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "$body")
+    jeton_topup_debug "PATCH /api/admin/users/credits → HTTP $code"
+    if [[ "$code" == "200" || "$code" == "201" ]]; then
+      sleep 1
+      printf '%s' "$target_balance"
+      return 0
+    fi
+  done
+  # Son çare: kullanıcı PATCH (jetonBalance / coins)
+  for patch_body in \
+    "$(USER_ID="$user_id" TARGET="$target_balance" python3 -c 'import json,os; print(json.dumps({"jetonBalance":int(os.environ["TARGET"])}))')" \
+    "$(USER_ID="$user_id" TARGET="$target_balance" python3 -c 'import json,os; print(json.dumps({"coins":int(os.environ["TARGET"])}))')"
+  do
+    code=$(http_code -X PATCH "$BASE/api/admin/users/$user_id" \
+      -H "Authorization: Bearer $ADMIN_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "$patch_body")
+    jeton_topup_debug "PATCH /api/admin/users/$user_id → HTTP $code"
+    if [[ "$code" == "200" || "$code" == "201" ]]; then
+      sleep 1
+      printf '%s' "$target_balance"
+      return 0
+    fi
+  done
+  return 3
+}
+
+user_jeton_balance_from_me() {
+  local token="$1"
+  curl_json "$BASE/api/me" -H "Authorization: Bearer $token" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for k in ('jetonBalance','coins','credits'):
+    v=d.get(k)
+    if v is None and isinstance(d.get('user'),dict):
+        v=d['user'].get(k)
+    if v is not None:
+        print(int(v)); break
+" 2>/dev/null || echo "0"
+}
+
+# Test hesabı jetonu yetersizse (yalnızca doğrulanmış test e-postası + admin secret).
+ensure_test_jeton_minimum() {
+  local token="$1" user_id="$2" email="$3" min_balance="$4" label="${5:-test}"
+  local current need
+  current=$(user_jeton_balance_from_me "$token")
+  if [[ "$current" -ge "$min_balance" ]]; then
+    printf '%s' "$current"
+    return 0
+  fi
+  if ! is_verified_test_email "$email" 2>/dev/null; then
+    echo "FAIL: $label jeton=$current < $min_balance (test e-postası doğrulanamadı)" >&2
+    return 1
+  fi
+  if ! acceptance_admin_secrets_configured; then
+    echo "FAIL: $label jeton=$current < $min_balance — ACCEPTANCE_ADMIN_* yok; admin panelden test jetonu ekleyin" >&2
+    return 2
+  fi
+  need=$((min_balance - current))
+  if [[ -n "${JETON_TOPUP_DEBUG:-}${ACCEPTANCE_DEBUG:-}" ]]; then
+    if top_up_test_jeton "$user_id" "$min_balance" "stage6-$label"; then
+      sleep 1
+      current=$(user_jeton_balance_from_me "$token")
+      printf '%s' "$current"
+      return 0
+    fi
+  elif top_up_test_jeton "$user_id" "$min_balance" "stage6-$label" >/dev/null 2>&1; then
+    sleep 1
+    current=$(user_jeton_balance_from_me "$token")
+    printf '%s' "$current"
+    return 0
+  fi
+  echo "FAIL: $label jeton top-up başarısız (hedef=$min_balance)" >&2
+  return 3
+}
+
+is_verified_test_email() {
+  local email="$1"
+  [[ "$email" =~ ^cursor\.(test|host)\.[0-9]+@mailinator\.com$ ]]
+}
+
+fetch_me_field() {
+  local token="$1" field="$2"
+  curl_json "$BASE/api/me" -H "Authorization: Bearer $token" | python3 -c "
+import json,sys
+field=sys.argv[1]
+d=json.load(sys.stdin)
+u=d.get('user') or {}
+print(d.get(field) or u.get(field) or '')
+" "$field" 2>/dev/null || true
+}
+
+# TRTC yanıtı düz veya { success, data: { userSig, sdkAppId } } olabilir.
+trtc_response_has_sig() {
+  local body="$1"
+  printf '%s' "$body" | python3 -c "
+import json,sys
+raw=sys.stdin.read().strip()
+if not raw:
+    sys.exit(1)
+try:
+    d=json.loads(raw)
+except json.JSONDecodeError:
+    sys.exit(1)
+node=d.get('data') if isinstance(d.get('data'), dict) else d
+sig=node.get('userSig') or node.get('token') or d.get('userSig') or d.get('token')
+sdk=node.get('sdkAppId') or d.get('sdkAppId')
+if sig and sdk and len(str(sig)) > 20:
+    sys.exit(0)
+sys.exit(1)
+" 2>/dev/null
+}
+
+create_owned_chat_room() {
+  local token="$1" name="$2"
+  curl -sS -X POST "$BASE/api/chat/rooms/create" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -d "$(NAME="$name" python3 -c 'import json,os; print(json.dumps({
+      "name": os.environ["NAME"],
+      "description": "Acceptance test room",
+      "icon": "🎙️",
+      "paymentType": "jeton",
+      "roomType": "free"
+    }))')"
+}
+
+extract_chat_room_id() {
+  local body="$1"
+  printf '%s' "$body" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+r=d.get('room') or d.get('data') or {}
+if isinstance(r, dict):
+    print(r.get('id') or r.get('roomId') or '')
+" 2>/dev/null || true
+}
+
+# Kullanıcının takılı kalmış PK savaşını sonlandır (oda bazlı GET /pk).
+cleanup_room_pk() {
+  local token="$1" room_id="$2"
+  local status_body battle_id
+  [[ -z "$room_id" ]] && return 0
+  status_body=$(curl_json "$BASE/api/chat/rooms/$room_id/pk" -H "Authorization: Bearer $token" 2>/dev/null || echo "")
+  battle_id=$(printf '%s' "$status_body" | python3 -c "
+import json,sys
+raw=sys.stdin.read().strip()
+if not raw or raw=='null': sys.exit(0)
+d=json.loads(raw)
+if not isinstance(d, dict): sys.exit(0)
+if d.get('status') in ('active','pending'):
+    print(d.get('id') or '')
+" 2>/dev/null || echo "")
+  if [[ -n "$battle_id" ]]; then
+    curl -sS -o /dev/null -X POST "$BASE/api/chat/rooms/$room_id/pk" \
+      -H "Authorization: Bearer $token" \
+      -H "Content-Type: application/json" \
+      -d '{"action":"end","battleId":"'"$battle_id"'"}' || true
+    curl -sS -o /dev/null -X POST "$BASE/api/chat/rooms/$room_id/pk" \
+      -H "Authorization: Bearer $token" \
+      -H "Content-Type: application/json" \
+      -d '{"action":"cancel","battleId":"'"$battle_id"'"}' || true
+  fi
+}
+
+cleanup_user_pk_battles() {
+  local token="$1"
+  local rooms_body room_ids rid
+  rooms_body=$(curl_json "$BASE/api/chat/rooms?limit=30" -H "Authorization: Bearer $token" 2>/dev/null || echo "[]")
+  room_ids=$(printf '%s' "$rooms_body" | python3 -c "
+import json,sys
+raw=sys.stdin.read().strip()
+if not raw: sys.exit(0)
+d=json.loads(raw)
+rooms=d if isinstance(d,list) else d.get('rooms') or d.get('items') or []
+for r in rooms:
+    if isinstance(r,dict):
+        rid=str(r.get('id') or r.get('roomId') or '').strip()
+        if rid: print(rid)
+" 2>/dev/null || true)
+  while IFS= read -r rid; do
+    [[ -z "$rid" ]] && continue
+    cleanup_room_pk "$token" "$rid"
+  done <<<"$room_ids"
+}
+
+try_approve_host_teller() {
+  local host_token="$1"
+  local teller_id profile_body code
+  if ! login_as_admin; then
+    return 2
+  fi
+  profile_body=$(curl_json "$BASE/api/fortune-tellers/my-profile" \
+    -H "Authorization: Bearer $host_token" 2>/dev/null || echo "")
+  teller_id=$(printf '%s' "$profile_body" | python3 -c "
+import json,sys
+raw=sys.stdin.read().strip()
+if not raw: sys.exit(0)
+d=json.loads(raw)
+print(d.get('id') or '')
+" 2>/dev/null || echo "")
+  if [[ -z "$teller_id" ]]; then
+    return 3
+  fi
+  for endpoint in \
+    "$BASE/api/admin/teller-verification" \
+    "$BASE/api/admin/live-tellers/$teller_id/approve"
+  do
+    code=$(http_code -X POST "$endpoint" \
+      -H "Authorization: Bearer $ADMIN_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "$(TELLER_ID="$teller_id" python3 -c 'import json,os; print(json.dumps({
+        "tellerId": os.environ["TELLER_ID"],
+        "action": "approve",
+        "note": "acceptance-stage5-auto"
+      }))')")
+    if [[ "$code" == "200" || "$code" == "201" ]]; then
+      printf '%s' "$teller_id"
+      return 0
+    fi
+  done
+  return 4
 }
 
 find_payment_in_admin_list() {
@@ -445,27 +828,30 @@ try_resolve_gate_stream() {
 
 post_fortune_request() {
   local stream_id="$1" token="$2" host_token="${3:-}"
-  local jeton_cost body resp code rid err attempt
-  jeton_cost=$(user_jeton_balance "$token")
-  if [[ -z "$jeton_cost" || "$jeton_cost" -lt 1 ]]; then
-    jeton_cost=10
-  elif [[ "$jeton_cost" -gt 500 ]]; then
-    jeton_cost=10
+  local body resp code rid err nickname question
+  nickname="GateTest"
+  question="Release gate canlı yayın test fal sorusu?"
+  clear_pending_fortune_request "$stream_id" "$token" || true
+  body=$(QUESTION="$question" NICK="$nickname" python3 -c 'import json,os; print(json.dumps({
+    "typeId":"tek-soru",
+    "question":os.environ["QUESTION"],
+    "isHidden":False,
+    "nickname":os.environ["NICK"]
+  }))')
+  resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/video-streams/$stream_id/fortune-requests" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -d "$body")
+  code=$(echo "$resp" | tail -1 | sed 's/HTTP://')
+  resp=$(echo "$resp" | sed '$d')
+  rid=$(extract_request_id "$resp")
+  if [[ -n "$rid" ]]; then
+    printf '%s|%s|' "$rid" "$code"
+    return 0
   fi
-  local question="Release gate canlı yayın test fal sorusu?"
-  for attempt in 1 2; do
-    if [[ "$attempt" -eq 1 ]]; then
-      body=$(QUESTION="$question" JETON_COST="$jeton_cost" python3 -c 'import json,os; print(json.dumps({
-        "displayName":"GateTest",
-        "question":os.environ["QUESTION"],
-        "fortuneType":"tarot","type":"tarot",
-        "priority":"standard","jetonCost":int(os.environ["JETON_COST"])
-      }))')
-    else
-      body=$(QUESTION="$question" python3 -c 'import json,os; print(json.dumps({
-        "type":"tarot","fortuneType":"tarot","question":os.environ["QUESTION"]
-      }))')
-    fi
+  err=$(login_error_detail "$resp")
+  if [[ "$code" == "400" && "$err" == *"bekleyen"* ]]; then
+    clear_pending_fortune_request "$stream_id" "$token" || true
     resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/video-streams/$stream_id/fortune-requests" \
       -H "Authorization: Bearer $token" \
       -H "Content-Type: application/json" \
@@ -478,10 +864,7 @@ post_fortune_request() {
       return 0
     fi
     err=$(login_error_detail "$resp")
-    if [[ "$code" != "500" && "$code" != "502" && "$code" != "503" ]]; then
-      break
-    fi
-  done
+  fi
   if [[ -n "$host_token" ]]; then
     local list found_id
     list=$(curl_json "$BASE/api/video-streams/$stream_id/fortune-requests" \
@@ -517,6 +900,47 @@ for x in items(d):
   printf '|%s|%s' "$code" "$err"
 }
 
+clear_pending_fortune_request() {
+  local stream_id="$1" token="$2"
+  local pending rid
+  pending=$(curl_json "$BASE/api/video-streams/$stream_id/fortune-requests/my-status" \
+    -H "Authorization: Bearer $token" | python3 -c "
+import json,sys
+try:
+    d=json.load(sys.stdin)
+except json.JSONDecodeError:
+    sys.exit(0)
+if d.get('hasPendingRequest'):
+    print(d.get('requestId') or d.get('id') or 'yes')
+" 2>/dev/null || echo "")
+  [[ -z "$pending" ]] && return 0
+  rid="$pending"
+  if [[ "$rid" == "yes" ]]; then
+    rid=$(curl_json "$BASE/api/video-streams/$stream_id/fortune-requests" \
+      -H "Authorization: Bearer $token" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+items=d if isinstance(d,list) else d.get('requests') or []
+for x in items:
+    if isinstance(x,dict) and x.get('status')=='pending':
+        print(x.get('id','')); break
+" 2>/dev/null || echo "")
+  fi
+  [[ -z "$rid" ]] && return 0
+  curl -sS -o /dev/null -X DELETE "$BASE/api/video-streams/$stream_id/fortune-requests" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -d "{\"requestId\":\"$rid\"}" || true
+}
+
+patch_fortune_request_action() {
+  local stream_id="$1" host_token="$2" request_id="$3" action="$4"
+  curl -sS -w "\nHTTP:%{http_code}" -X PATCH "$BASE/api/video-streams/$stream_id/fortune-requests" \
+    -H "Authorization: Bearer $host_token" \
+    -H "Content-Type: application/json" \
+    -d "{\"action\":\"$action\",\"requestId\":\"$request_id\"}"
+}
+
 user_jeton_balance() {
   local token="$1"
   curl_json "$BASE/api/me" -H "Authorization: Bearer $token" | python3 -c "
@@ -544,6 +968,7 @@ record() {
     PASS) icon="✅"; PASS=$((PASS + 1)) ;;
     FAIL) icon="❌"; FAIL=$((FAIL + 1)) ;;
     SKIP) icon="⏭️"; SKIP=$((SKIP + 1)) ;;
+    BLOCKED) icon="⏸️"; SKIP=$((SKIP + 1)) ;;
     *) icon="•" ;;
   esac
   RESULT_LINES+=("| $id | $name | $icon $status | ${detail//|/\\|} |")
@@ -565,6 +990,10 @@ acceptance_user_secrets_configured() {
 
 acceptance_username_secrets_configured() {
   [[ -n "${ACCEPTANCE_USER_USERNAME:-}" && -n "${ACCEPTANCE_USER_PASSWORD:-}" ]]
+}
+
+acceptance_any_user_secrets_configured() {
+  acceptance_user_secrets_configured || acceptance_username_secrets_configured
 }
 
 acceptance_admin_secrets_configured() {

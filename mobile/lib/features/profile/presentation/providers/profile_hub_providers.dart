@@ -7,13 +7,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/media/cloud_upload_service.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
+import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
+import '../premium_2026/profile_membership_helpers.dart';
+import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 
 final cloudMediaUploadProvider = Provider<CloudMediaUploadService>((ref) {
   return CloudMediaUploadService(ref.watch(dioProvider));
+});
+
+/// Cüzdan tabanlı üyelik özeti — profil hub bileşenleri için.
+final profileMembershipInfoProvider =
+    Provider.autoDispose<ProfileMembershipInfo>((ref) {
+  final wallet = ref.watch(walletBalancesProvider).valueOrNull;
+  return profileMembershipFromWallet(wallet);
 });
 
 /// Genişletilmiş profil — şehir, burç, doğum tarihi, seri.
@@ -36,25 +48,63 @@ final profileVisitorBadgeProvider = Provider<int>((ref) {
   return stats?.profileViews ?? 0;
 });
 
+/// Profil verisi yenileme — yalnızca profil/cüzdan provider'ları (ana sayfa dokunulmaz).
+void invalidateProfileData(WidgetRef ref) {
+  ref.invalidate(profileExtendedProvider);
+  ref.invalidate(profileUserStatisticsProvider);
+  ref.invalidate(profileStatsProvider);
+  ref.invalidate(userLevelProvider);
+  ref.invalidate(walletBalancesProvider);
+  unawaited(ref.read(walletBalancesProvider.notifier).refresh(force: true));
+  unawaited(ref.read(profileExtendedProvider.future));
+  unawaited(ref.read(profileStatsProvider.future));
+}
+
 /// Profil hub yenileme — tüm ilgili provider'ları invalidate eder.
 Future<void> refreshProfileHub(WidgetRef ref, {String? userId}) async {
   ref.invalidate(profileExtendedProvider);
   ref.invalidate(profileUserStatisticsProvider);
   ref.invalidate(profileStatsProvider);
+  if (userId != null && userId.isNotEmpty) {
+    ref.invalidate(shortVideoProfileStatsProvider(userId));
+  }
   ref.invalidate(userLevelProvider);
   ref.invalidate(giftsReceivedSummaryProvider);
   ref.invalidate(userAchievementsProvider);
   ref.invalidate(walletBalancesProvider);
+  ref.invalidate(membershipBadgesCatalogProvider);
+  ref.invalidate(membershipCatalogProvider);
+  ref.invalidate(membershipControllerProvider);
+  ref.invalidate(paymentRequestsNotifierProvider);
+  ref.invalidate(paymentMethodsProvider);
+  unawaited(ref.read(authControllerProvider.notifier).refreshMe());
+  unawaited(ref.read(walletBalancesProvider.notifier).refresh(force: true));
+  unawaited(ref.read(profileExtendedProvider.future));
+  unawaited(ref.read(profileUserStatisticsProvider.future));
+  unawaited(ref.read(profileStatsProvider.future));
+  unawaited(ref.read(userLevelProvider.future));
+  unawaited(ref.read(giftsReceivedSummaryProvider.future));
+  unawaited(ref.read(userAchievementsProvider.future));
+}
+
+/// Satın alma / ödeme onayı sonrası üyelik + cüzdan senkronu.
+Future<void> refreshMembershipAfterPurchase(WidgetRef ref) async {
+  ref.invalidate(membershipBadgesCatalogProvider);
+  ref.invalidate(membershipCatalogProvider);
+  ref.invalidate(membershipControllerProvider);
+  ref.invalidate(walletBalancesProvider);
+  ref.invalidate(paymentRequestsNotifierProvider);
+  ref.invalidate(paymentMethodsProvider);
   await Future.wait([
-    ref.read(authControllerProvider.notifier).refreshMe(),
-    ref.read(walletBalancesProvider.notifier).refresh(force: true),
-    ref.read(profileExtendedProvider.future),
-    ref.read(profileUserStatisticsProvider.future),
-    ref.read(profileStatsProvider.future),
-    ref.read(userLevelProvider.future),
-    ref.read(giftsReceivedSummaryProvider.future),
-    ref.read(userAchievementsProvider.future),
+    _ignore(ref.read(walletBalancesProvider.notifier).refresh(force: true)),
+    _ignore(ref.read(membershipCatalogProvider.future)),
   ]);
+}
+
+Future<void> _ignore(Future<dynamic> future) async {
+  try {
+    await future;
+  } catch (_) {}
 }
 
 /// Profil sayfasında gerçek zamanlı senkron — bildirim + periyodik yenileme.

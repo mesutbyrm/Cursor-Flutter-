@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../performance/list_perf.dart';
 import '../performance/scroll_perf.dart';
 
 export '../performance/scroll_perf.dart' show ScrollSurface, ScrollPerf;
@@ -161,14 +162,27 @@ class LazyNestedGridView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LazyGridView(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: padding,
-      cacheExtent: cacheExtent,
-      gridDelegate: gridDelegate,
-      itemCount: itemCount,
-      itemBuilder: itemBuilder,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final horizontalPad =
+            padding?.resolve(Directionality.of(context)).horizontal ?? 0;
+        final gridHeight = ListPerf.nestedGridHeightForDelegate(
+          itemCount: itemCount,
+          gridDelegate: gridDelegate,
+          crossAxisExtent: constraints.maxWidth - horizontalPad,
+        );
+        return SizedBox(
+          height: gridHeight,
+          child: LazyGridView(
+            physics: const NeverScrollableScrollPhysics(),
+            padding: padding,
+            cacheExtent: cacheExtent,
+            gridDelegate: gridDelegate,
+            itemCount: itemCount,
+            itemBuilder: itemBuilder,
+          ),
+        );
+      },
     );
   }
 }

@@ -74,7 +74,7 @@ void main() {
   });
 
   group('buildVoiceRoomCreatePayload', () {
-    test('matches web JSON.stringify(D) shape exactly', () {
+    test('matches web JSON.stringify(D) shape with guide defaults', () {
       final payload = LiveRemoteDataSource.buildVoiceRoomCreatePayload(
         roomType: 'normal',
         roomName: 'Test Oda',
@@ -85,12 +85,18 @@ void main() {
         'icon',
         'paymentType',
         'roomType',
+        'type',
+        'seatCount',
+        'maxUsers',
       ]);
       expect(payload['name'], 'Test Oda');
       expect(payload['description'], isNotEmpty);
       expect(payload['icon'], isNotEmpty);
       expect(payload['paymentType'], 'jeton');
       expect(payload['roomType'], 'NORMAL');
+      expect(payload['type'], 'voice');
+      expect(payload['seatCount'], 8);
+      expect(payload['maxUsers'], 15);
     });
 
     test('free room uses FREE roomType enum', () {
@@ -116,6 +122,14 @@ void main() {
         paymentType: 'cfc',
       );
       expect(payload['paymentType'], 'cfc');
+    });
+
+    test('includes category when provided', () {
+      final payload = LiveRemoteDataSource.buildVoiceRoomCreatePayload(
+        roomType: 'normal',
+        category: 'Music',
+      );
+      expect(payload['category'], 'music');
     });
   });
 }

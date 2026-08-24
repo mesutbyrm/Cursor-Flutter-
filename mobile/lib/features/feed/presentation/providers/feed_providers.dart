@@ -16,6 +16,7 @@ final feedRepositoryProvider = Provider<FeedRepository>((ref) {
   return FeedRepositoryImpl(ref.watch(feedRemoteProvider));
 });
 
+@Deprecated('Use socialNotifierProvider — feed and social share one notifier.')
 class FeedNotifier extends AsyncNotifier<List<PostEntity>> {
   int _page = 1;
   bool _end = false;
@@ -104,30 +105,22 @@ class FeedNotifier extends AsyncNotifier<List<PostEntity>> {
     });
   }
 
-  void addLocalPost(String caption) {
-    final user = ref.read(authControllerProvider).valueOrNull;
-    final author = user ??
-        const UserEntity(
-          id: 'local_user',
-          username: 'kullanici',
-          displayName: 'Sen',
-        );
-    final post = PostEntity(
-      id: 'local_${DateTime.now().microsecondsSinceEpoch}',
-      author: author,
-      caption: caption.trim().isEmpty ? null : caption.trim(),
-      mediaUrl: null,
-      likesCount: 0,
-      commentsCount: 0,
-      viewsCount: 0,
-      isLiked: false,
-      createdAt: DateTime.now(),
-    );
-    state.whenData((list) {
-      state = AsyncValue.data([post, ...list]);
-    });
+  /// Backend fal paylaşımını ana akışın başına ekle (dedupe).
+  void prependPost(PostEntity post) {
+    if (post.id.isEmpty) return;
+    final cur = state.valueOrNull;
+    if (cur == null) {
+      state = AsyncValue.data([post]);
+      return;
+    }
+    if (cur.any((p) => p.id == post.id)) return;
+    state = AsyncValue.data([post, ...cur]);
   }
+
+  @Deprecated('Backend POST /api/social/posts kullanın')
+  void addLocalPost(String caption) {}
 }
 
+@Deprecated('Use socialNotifierProvider')
 final feedNotifierProvider =
     AsyncNotifierProvider<FeedNotifier, List<PostEntity>>(FeedNotifier.new);

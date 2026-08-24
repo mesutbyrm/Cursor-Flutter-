@@ -10,13 +10,15 @@ abstract final class VoiceRoomBackgroundCatalog {
     return base;
   }
 
-  static const int count = 30;
+  static const int count = 40;
+
+  static String urlForIndex(int index) {
+    final n = index.clamp(1, count);
+    return '$_origin/images/voice-bg-$n.jpg';
+  }
 
   static List<String> siteDefaults() {
-    return List.generate(
-      count,
-      (i) => '$_origin/images/voice-bg-${i + 1}.jpg',
-    );
+    return List.generate(count, (i) => urlForIndex(i + 1));
   }
 
   static List<String> parseApiList(dynamic raw) {

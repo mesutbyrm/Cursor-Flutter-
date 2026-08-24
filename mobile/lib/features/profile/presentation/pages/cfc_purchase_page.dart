@@ -11,8 +11,12 @@ import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
+import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
+import '../../../membership/presentation/widgets/membership_store_teaser_banner.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../widgets/cfc_balance_header.dart';
 import '../widgets/cfc_native_checkout.dart';
 import '../widgets/pending_payment_banner.dart';
@@ -55,6 +59,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
 
   Future<void> _refresh() async {
     ref.invalidate(paymentConfigProvider);
+    ref.invalidate(paymentMethodsProvider);
     ref.refreshWalletCache(force: true);
     await ref.read(paymentRequestsNotifierProvider.notifier).refresh();
   }
@@ -73,7 +78,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
-          title: 'CFC Yükle',
+          title: buildMembershipWalletCenterCfcStoreTitle(),
           subtitle: 'CFC (CanlıFal Coin) · ${CurrencyUsageInfo.cfcPriceHint}',
           onRefresh: _refresh,
           body: config.when(
@@ -118,6 +123,8 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                 ),
                 const SizedBox(height: 16),
                 const CurrencyUsageCard.cfc(),
+                const MembershipPendingPaymentBanner(),
+                const MembershipStoreTeaserBanner(store: MembershipStoreKind.cfc),
                 if (pendingCfc.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   PendingPaymentBanner(

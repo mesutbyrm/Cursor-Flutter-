@@ -4,25 +4,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../domain/entities/live_guest_layout.dart';
 import '../../../domain/entities/live_guest_slot.dart';
-import '../../../../agora/presentation/agora_room_manager.dart';
 import '../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../providers/live_guest_grid_provider.dart';
+import '../../gifts/providers/live_seat_gift_totals_provider.dart';
+import '../../gifts/widgets/live_seat_gift_flash_stack.dart';
+import 'package:canlifal_social/features/gifts/presentation/widgets/seat_gift_badge.dart';
 
-/// TikTok Party tarzı çoklu yayın grid — 2/4/6/9 koltuk.
+/// TikTok Party tarzı çoklu yayın grid — 2/4/6/9 koltuk (TRTC).
 class LiveGuestGrid extends ConsumerWidget {
   const LiveGuestGrid({
     super.key,
     required this.layout,
     required this.isHost,
-    this.agora,
     this.trtc,
     this.localPreviewKey,
     this.hostAvatarUrl,
     this.hostName,
     this.remoteUserId,
-    this.remoteUid,
     this.onInviteSlot,
     this.onGuestAction,
     this.hostJetonEarned = 0,
@@ -30,13 +31,11 @@ class LiveGuestGrid extends ConsumerWidget {
 
   final LiveGuestLayout layout;
   final bool isHost;
-  final AgoraRoomManager? agora;
   final TrtcRoomManager? trtc;
   final Key? localPreviewKey;
   final String? hostAvatarUrl;
   final String? hostName;
   final String? remoteUserId;
-  final int? remoteUid;
   final void Function(int slotIndex)? onInviteSlot;
   final void Function(int slotIndex, String action)? onGuestAction;
   final int hostJetonEarned;
@@ -54,16 +53,15 @@ class LiveGuestGrid extends ConsumerWidget {
 
     Widget cell(int i) {
       final slot = i < slots.length ? slots[i] : LiveGuestSlot(index: i);
+      final remoteId = slot.rtcUserId ?? slot.userId ?? (i == 1 ? remoteUserId : null);
       return _SlotCell(
         slot: slot,
         isHost: isHost,
-        agora: agora,
         trtc: trtc,
         localPreviewKey: i == 0 ? localPreviewKey : null,
         hostAvatarUrl: hostAvatarUrl,
         hostName: hostName,
-        remoteUid: slot.agoraUid ?? (i == 1 ? remoteUid : null),
-        remoteUserId: slot.userId ?? (i == 1 ? remoteUserId : null),
+        remoteUserId: remoteId,
         hostJetonEarned: hostJetonEarned,
         pinned: grid.pinnedIndex == i,
         onInvite: onInviteSlot == null ? null : () => onInviteSlot!(i),
@@ -75,7 +73,6 @@ class LiveGuestGrid extends ConsumerWidget {
 
     const gap = SizedBox(width: 3, height: 3);
 
-    // 2'li: yan yana 2 eşit dikdörtgen.
     if (layout == LiveGuestLayout.duo) {
       return Row(
         children: [
@@ -86,7 +83,6 @@ class LiveGuestGrid extends ConsumerWidget {
       );
     }
 
-    // 3'lü: sol yarı yayıncı (tam yükseklik), sağ yarı dikey 2 parça.
     if (layout == LiveGuestLayout.trio) {
       return Row(
         children: [
@@ -105,7 +101,6 @@ class LiveGuestGrid extends ConsumerWidget {
       );
     }
 
-    // 4'lü: eşit 2x2.
     if (layout == LiveGuestLayout.quad) {
       return Column(
         children: [
@@ -132,7 +127,6 @@ class LiveGuestGrid extends ConsumerWidget {
       );
     }
 
-    // 6 / 9: eşit grid.
     final cross = layout.crossAxisCount;
     return GridView.builder(
       physics: const NeverScrollableScrollPhysics(),
@@ -153,54 +147,28 @@ class LiveGuestGrid extends ConsumerWidget {
   }
 
   Widget _soloView() {
-    if (isHost && (agora != null || trtc != null)) {
-      return _localVideo(localPreviewKey);
+    if (isHost && trtc != null) {
+      return TrtcLocalVideoView(key: localPreviewKey, manager: trtc!);
     }
-    if ((remoteUid != null || remoteUserId != null) &&
-        (agora != null || trtc != null)) {
-      return _remoteVideo(remoteUid, remoteUserId);
-    }
-    return const ColoredBox(color: Colors.black);
-  }
-
-  Widget _localVideo(Key? key) {
-    if (agora != null) {
-      return AgoraLocalVideoView(key: key, manager: agora!);
-    }
-    if (trtc != null) {
-      return TrtcLocalVideoView(key: key, manager: trtc!);
-    }
-    return const ColoredBox(color: Colors.black);
-  }
-
-  Widget _remoteVideo(int? uid, String? userId) {
-    if (agora != null) {
-      final id = uid ?? agora!.remoteUid;
-      if (id != null && id > 0) {
-        return AgoraRemoteVideoView(key: ValueKey(id), manager: agora!, uid: id);
-      }
-    }
-    if (userId != null && trtc != null) {
+    if (remoteUserId != null && trtc != null) {
       return TrtcRemoteVideoView(
-        key: ValueKey(userId),
+        key: ValueKey(remoteUserId),
         manager: trtc!,
-        userId: userId,
+        userId: remoteUserId!,
       );
     }
     return const ColoredBox(color: Colors.black);
   }
 }
 
-class _SlotCell extends StatelessWidget {
+class _SlotCell extends ConsumerWidget {
   const _SlotCell({
     required this.slot,
     required this.isHost,
-    this.agora,
     this.trtc,
     this.localPreviewKey,
     this.hostAvatarUrl,
     this.hostName,
-    this.remoteUid,
     this.remoteUserId,
     this.pinned = false,
     this.onInvite,
@@ -210,12 +178,10 @@ class _SlotCell extends StatelessWidget {
 
   final LiveGuestSlot slot;
   final bool isHost;
-  final AgoraRoomManager? agora;
   final TrtcRoomManager? trtc;
   final Key? localPreviewKey;
   final String? hostAvatarUrl;
   final String? hostName;
-  final int? remoteUid;
   final String? remoteUserId;
   final bool pinned;
   final VoidCallback? onInvite;
@@ -226,36 +192,34 @@ class _SlotCell extends StatelessWidget {
       slot.isHost || slot.index == 0 ? hostJetonEarned : slot.jetonEarned;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUserId = ref.watch(authControllerProvider).valueOrNull?.id;
+    final slotUserId = slot.rtcUserId ?? slot.userId;
+    final isSelf = currentUserId != null &&
+        ((slotUserId != null && slotUserId == currentUserId) ||
+            (isHost && slot.isHost && slotUserId == null));
+
     Widget child;
-    if (slot.isHost || slot.index == 0) {
-      child = agora != null
-          ? AgoraLocalVideoView(key: localPreviewKey, manager: agora!)
-          : trtc != null
-              ? TrtcLocalVideoView(key: localPreviewKey, manager: trtc!)
-              : _placeholder(hostName ?? 'Sen', hostAvatarUrl);
-    } else if (slot.agoraUid != null && slot.agoraUid! > 0 && agora != null) {
-      child = AgoraRemoteVideoView(
-        key: ValueKey(slot.agoraUid),
-        manager: agora!,
-        uid: slot.agoraUid!,
-      );
-    } else if (remoteUid != null && agora != null) {
-      child = AgoraRemoteVideoView(
-        key: ValueKey(remoteUid),
-        manager: agora!,
-        uid: remoteUid!,
-      );
-    } else if (remoteUserId != null && trtc != null) {
-      child = TrtcRemoteVideoView(
-        key: ValueKey(remoteUserId),
-        manager: trtc!,
-        userId: remoteUserId!,
-      );
-    } else if (slot.isEmpty) {
-      return _emptySlot();
+    if (isSelf) {
+      child = trtc != null
+          ? TrtcLocalVideoView(key: localPreviewKey, manager: trtc!)
+          : _placeholder(hostName ?? 'Sen', hostAvatarUrl);
     } else {
-      child = _placeholder(slot.displayName ?? 'Konuk', null);
+      final remoteId = slotUserId ??
+          (slot.isHost || slot.index == 0 ? remoteUserId : null);
+      if (remoteId != null &&
+          remoteId != currentUserId &&
+          trtc != null) {
+        child = TrtcRemoteVideoView(
+          key: ValueKey(remoteId),
+          manager: trtc!,
+          userId: remoteId,
+        );
+      } else if (slot.isEmpty) {
+        return _emptySlot();
+      } else {
+        child = _placeholder(slot.displayName ?? hostName ?? 'Yayıncı', null);
+      }
     }
 
     return ClipRRect(
@@ -285,11 +249,42 @@ class _SlotCell extends StatelessWidget {
               slot.displayName ?? hostName ?? 'Yayıncı',
             ),
           ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 28,
+            child: LiveSeatGiftFlashStack(
+              userId: slot.userId ?? (slot.index == 0 ? null : remoteUserId),
+              displayName: slot.displayName ?? (slot.index == 0 ? hostName : null),
+            ),
+          ),
+          Positioned(
+            left: 6,
+            right: 6,
+            bottom: 6,
+            child: Center(
+              child: SeatGiftBadge(
+                compact: true,
+                receiverName: slot.displayName ?? hostName ?? 'Yayıncı',
+                aggregate: ref.watch(
+                  liveSeatGiftTotalsProvider.select(
+                    (m) => selectSeatGiftAggregate(
+                      m,
+                      userId: slot.userId ??
+                          (slot.index == 0 ? null : remoteUserId),
+                      displayName: slot.displayName ??
+                          (slot.index == 0 ? hostName : null),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
           if (_displayJeton > 0)
             Positioned(
               left: 6,
               top: 6,
-              child: _badge(Icons.monetization_on_rounded, '$_displayJeton jeton'),
+              child: _badge(Icons.monetization_on_rounded, '$_displayJeton'),
             ),
           if (isHost && slot.index > 0 && onAction != null)
             Positioned(

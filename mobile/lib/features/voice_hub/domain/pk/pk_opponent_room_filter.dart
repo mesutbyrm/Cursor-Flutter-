@@ -18,17 +18,31 @@ bool isPkEligibleOpponentRoom(
   final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
   if (key.isEmpty) return false;
   if (excludeRoomKey.isNotEmpty && key == excludeRoomKey) return false;
-  if (room.displayOnline <= 0) return false;
-  final ownerId = room.ownerId?.trim() ?? '';
-  if (ownerId.isEmpty) return false;
+  // displayOnline gecikse bile sahibi belli odalar listelensin.
+  if (room.displayOnline <= 0 && (room.ownerId?.trim().isEmpty ?? true)) {
+    return false;
+  }
   return true;
+}
+
+/// Oda sahibi — ownerId veya slug = kullanıcı adı.
+bool isUserOwnedVoiceRoom(
+  VoiceRoomEntity room, {
+  required String userId,
+  String? username,
+}) {
+  final oid = room.ownerId?.trim() ?? '';
+  if (oid.isNotEmpty && oid == userId) return true;
+  final uname = username?.trim().toLowerCase() ?? '';
+  return uname.isNotEmpty && room.slug.trim().toLowerCase() == uname;
 }
 
 bool isPkChallengerRoom(PkBattleRemote battle, VoiceRoomEntity room) {
   final keys = {room.apiRoomKey, room.id, room.slug}
       .where((k) => k.trim().isNotEmpty)
+      .map((k) => k.trim().toLowerCase())
       .toSet();
-  final challengerRoom = battle.voiceRoomId?.trim() ?? '';
+  final challengerRoom = battle.voiceRoomId?.trim().toLowerCase() ?? '';
   return challengerRoom.isNotEmpty && keys.contains(challengerRoom);
 }
 
@@ -42,17 +56,49 @@ bool isPkInviteTarget(
 
   final keys = {room.apiRoomKey, room.id, room.slug}
       .where((k) => k.trim().isNotEmpty)
+      .map((k) => k.trim().toLowerCase())
       .toSet();
-  final oppRoom = battle.opponentVoiceRoomId?.trim() ?? '';
-  if (oppRoom.isNotEmpty && keys.contains(oppRoom)) return true;
+
+  bool roomMatches(String? raw) {
+    final v = raw?.trim().toLowerCase() ?? '';
+    return v.isNotEmpty && keys.contains(v);
+  }
+
+  if (roomMatches(battle.opponentVoiceRoomId)) return true;
 
   final ownerId = room.ownerId?.trim() ?? '';
+  final uid = userId?.trim() ?? '';
   final opponentId = battle.opponentId?.trim() ?? '';
   if (ownerId.isNotEmpty && opponentId.isNotEmpty && ownerId == opponentId) {
     return true;
   }
-  final uid = userId?.trim() ?? '';
+  final targetUserId = battle.targetUserId?.trim() ?? '';
+  if (targetUserId.isNotEmpty) {
+    if (uid.isNotEmpty && uid == targetUserId) return true;
+    if (ownerId.isNotEmpty && ownerId == targetUserId) return true;
+  }
+  final guestUserId = battle.guestUserId?.trim() ?? '';
+  if (guestUserId.isNotEmpty) {
+    if (uid.isNotEmpty && uid == guestUserId) return true;
+    if (ownerId.isNotEmpty && ownerId == guestUserId) return true;
+  }
   if (uid.isNotEmpty && opponentId.isNotEmpty && uid == opponentId) {
+    return true;
+  }
+  final oppUser = battle.opponent?.userId.trim() ?? '';
+  if (uid.isNotEmpty && oppUser.isNotEmpty && uid == oppUser) {
+    return true;
+  }
+  if (ownerId.isNotEmpty && oppUser.isNotEmpty && ownerId == oppUser) {
+    return true;
+  }
+  if (roomMatches(battle.opponent?.roomId)) return true;
+
+  // Challenger odası değilsek ve oda sahibiysek: hedef biziz (alanlar eksik gelse bile).
+  if (!isPkChallengerRoom(battle, room) &&
+      uid.isNotEmpty &&
+      ownerId.isNotEmpty &&
+      uid == ownerId) {
     return true;
   }
   return false;
@@ -61,3 +107,96 @@ bool isPkInviteTarget(
 /// Menüde PK savaş ekranına gitmek için gerçekten aktif savaş var mı?
 bool isPkBattleLive(PkBattleRemote? battle) =>
     battle != null && battle.isActive && !battle.isEnded;
+
+/// PK kaydı bu sesli odaya ait mi (skor şeridi / SSE senkronu için).
+/// Gelen PK daveti hangi odaya gösterilecek — aktif oda öncelikli.
+VoiceRoomEntity? pickPkInviteTargetRoom({
+  required PkBattleRemote battle,
+  required String userId,
+  required List<VoiceRoomEntity> rooms,
+  VoiceRoomEntity? activeRoom,
+  String? username,
+}) {
+  if (userId.isEmpty || !battle.isPending) return null;
+
+  if (activeRoom != null &&
+      isPkInviteTarget(battle, activeRoom, userId: userId)) {
+    return activeRoom;
+  }
+
+  final owned = rooms
+      .where(
+        (r) => isUserOwnedVoiceRoom(
+          r,
+          userId: userId,
+          username: username,
+        ),
+      )
+      .toList(growable: false);
+
+  final candidates = <VoiceRoomEntity>[
+    if (activeRoom != null) activeRoom,
+    ...owned,
+  ];
+
+  final oppRoomId = battle.opponentVoiceRoomId?.trim() ?? '';
+  if (oppRoomId.isNotEmpty) {
+    for (final r in rooms) {
+      if (r.apiRoomKey == oppRoomId ||
+          r.id == oppRoomId ||
+          r.slug == oppRoomId) {
+        candidates.add(r);
+      }
+    }
+  }
+
+  final seen = <String>{};
+  for (final room in candidates) {
+    final k = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    if (k.isEmpty || !seen.add(k)) continue;
+    if (isPkInviteTarget(battle, room, userId: userId)) return room;
+  }
+
+  for (final room in rooms) {
+    final k = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    if (k.isEmpty || !seen.add(k)) continue;
+    if (isPkInviteTarget(battle, room, userId: userId)) return room;
+  }
+  return null;
+}
+
+/// PK davet diyaloğu — meydan okuyan oda etiketi.
+String pkChallengerRoomLabelFromRooms(
+  PkBattleRemote battle,
+  List<VoiceRoomEntity> rooms,
+) {
+  final roomId = battle.voiceRoomId?.trim() ?? '';
+  if (roomId.isNotEmpty) {
+    for (final r in rooms) {
+      if (r.apiRoomKey == roomId || r.id == roomId || r.slug == roomId) {
+        final name = r.nameTr.trim();
+        return name.isNotEmpty ? name : r.slug;
+      }
+    }
+  }
+  final challenger = battle.challenger?.displayName?.trim();
+  if (challenger != null && challenger.isNotEmpty) return challenger;
+  return 'Bir oda';
+}
+
+bool pkBattleBelongsToRoom(PkBattleRemote battle, VoiceRoomEntity room) {
+  final keys = {room.apiRoomKey, room.id, room.slug}
+      .where((k) => k.trim().isNotEmpty)
+      .map((k) => k.trim().toLowerCase())
+      .toSet();
+
+  bool matches(String? raw) {
+    final v = raw?.trim().toLowerCase() ?? '';
+    return v.isNotEmpty && keys.contains(v);
+  }
+
+  return matches(battle.voiceRoomId) ||
+      matches(battle.opponentVoiceRoomId) ||
+      matches(battle.challenger?.roomId) ||
+      matches(battle.opponent?.roomId);
+}

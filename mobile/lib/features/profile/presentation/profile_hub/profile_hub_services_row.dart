@@ -4,8 +4,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../../fortune/presentation/providers/fortune_api_providers.dart';
 import '../../../home/presentation/providers/home_providers.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_theme.dart';
+import '../providers/profile_hub_providers.dart';
+import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_glass.dart';
+import '../../../membership/presentation/controllers/membership_controller.dart';
+
+const _kMembershipServiceSlug = '__membership__';
+const _kVipGoldServiceSlug = '__vip_gold__';
 
 /// Hizmetlerim — API'den dinamik fal türleri.
 class ProfileHubServicesRow extends ConsumerWidget {
@@ -15,6 +22,27 @@ class ProfileHubServicesRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cardsAsync = ref.watch(homeFortuneCardsProvider);
     final historyAsync = ref.watch(fortuneHistoryProvider);
+    final membershipInfo = ref.watch(profileMembershipInfoProvider);
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(membershipInfo, ui.tiers);
+    final expiresAt =
+        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
+    final membershipTitle = buildMembershipHubMembershipServiceCardTitle(
+      info: membershipInfo,
+    );
+    final vipGoldTitle = buildMembershipHubVipGoldServiceCardTitle(
+      info: membershipInfo,
+    );
+    final membershipHint = buildMembershipHubServiceCardHint(
+      info: membershipInfo,
+      tiers: ui.tiers,
+      packages: ui.apiPackages,
+      catalogTier: catalogTier,
+      expiresAt: expiresAt,
+    );
+    final vipGoldHint = buildMembershipHubVipGoldServiceCardHint(
+      info: membershipInfo,
+    );
 
     return cardsAsync.when(
       loading: () => const SizedBox(
@@ -26,7 +54,22 @@ class ProfileHubServicesRow extends ConsumerWidget {
         if (cards.isEmpty) return _fallbackServices(context, ref);
         final history = historyAsync.valueOrNull ?? const [];
 
-        final services = cards.take(8).map((c) {
+        final services = [
+          _ServiceItem(
+            title: membershipTitle,
+            icon: '👑',
+            slug: _kMembershipServiceSlug,
+            count: 0,
+            hint: membershipHint,
+          ),
+          _ServiceItem(
+            title: vipGoldTitle,
+            icon: '💎',
+            slug: _kVipGoldServiceSlug,
+            count: 0,
+            hint: vipGoldHint,
+          ),
+          ...cards.take(6).map((c) {
           final slug = c.navigationSlug;
           final count = history
               .where((h) => (h.slug ?? h.type).contains(slug))
@@ -34,10 +77,11 @@ class ProfileHubServicesRow extends ConsumerWidget {
           return _ServiceItem(
             title: c.title,
             icon: c.icon,
-            slug: slug,
+            slug: c.navigationSlug,
             count: count,
           );
-        }).toList();
+        }),
+        ];
 
         return _ServicesScroller(services: services);
       },
@@ -45,6 +89,27 @@ class ProfileHubServicesRow extends ConsumerWidget {
   }
 
   Widget _fallbackServices(BuildContext context, WidgetRef ref) {
+    final membershipInfo = ref.watch(profileMembershipInfoProvider);
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(membershipInfo, ui.tiers);
+    final expiresAt =
+        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
+    final membershipTitle = buildMembershipHubMembershipServiceCardTitle(
+      info: membershipInfo,
+    );
+    final vipGoldTitle = buildMembershipHubVipGoldServiceCardTitle(
+      info: membershipInfo,
+    );
+    final membershipHint = buildMembershipHubServiceCardHint(
+      info: membershipInfo,
+      tiers: ui.tiers,
+      packages: ui.apiPackages,
+      catalogTier: catalogTier,
+      expiresAt: expiresAt,
+    );
+    final vipGoldHint = buildMembershipHubVipGoldServiceCardHint(
+      info: membershipInfo,
+    );
     const defaults = [
       _ServiceItem(title: 'Fal Geçmişim', icon: '☕', slug: 'kahve', count: 0),
       _ServiceItem(title: 'Tarot', icon: '🃏', slug: 'tarot', count: 0),
@@ -53,7 +118,22 @@ class ProfileHubServicesRow extends ConsumerWidget {
       _ServiceItem(title: 'Aura', icon: '🌈', slug: 'aura', count: 0),
     ];
     final history = ref.watch(fortuneHistoryProvider).valueOrNull ?? const [];
-    final withCounts = defaults.map((d) {
+    final withCounts = [
+      _ServiceItem(
+        title: membershipTitle,
+        icon: '👑',
+        slug: _kMembershipServiceSlug,
+        count: 0,
+        hint: membershipHint,
+      ),
+      _ServiceItem(
+        title: vipGoldTitle,
+        icon: '💎',
+        slug: _kVipGoldServiceSlug,
+        count: 0,
+        hint: vipGoldHint,
+      ),
+      ...defaults.map((d) {
       final count = history
           .where((h) => (h.slug ?? h.type).contains(d.slug))
           .length;
@@ -63,7 +143,8 @@ class ProfileHubServicesRow extends ConsumerWidget {
         slug: d.slug,
         count: count,
       );
-    }).toList();
+    }),
+    ];
     return _ServicesScroller(services: withCounts);
   }
 }
@@ -74,12 +155,14 @@ class _ServiceItem {
     required this.icon,
     required this.slug,
     required this.count,
+    this.hint,
   });
 
   final String title;
   final String icon;
   final String slug;
   final int count;
+  final String? hint;
 }
 
 class _ServicesScroller extends StatelessWidget {
@@ -92,10 +175,10 @@ class _ServicesScroller extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(bottom: 10),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
           child: Text(
-            'Hizmetlerim',
+            buildMembershipHubServicesSectionTitle(),
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w900,
@@ -134,6 +217,14 @@ class _ServiceCard extends StatelessWidget {
         borderRadius: ProfilePremiumTheme.radiusSm,
         child: InkWell(
           onTap: () {
+            if (item.slug == _kMembershipServiceSlug) {
+              context.push('/premium-membership');
+              return;
+            }
+            if (item.slug == _kVipGoldServiceSlug) {
+              context.push('/vip-gold');
+              return;
+            }
             if (item.slug == 'kahve' || item.title.contains('Geçmiş')) {
               context.push('/fortune/ready');
             } else {
@@ -156,6 +247,19 @@ class _ServiceCard extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
               ),
+              if (item.hint != null && item.hint!.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  item.hint!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: ProfilePremiumTheme.neonPurple.withValues(alpha: 0.9),
+                    fontSize: 8,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
               if (item.count > 0) ...[
                 const SizedBox(height: 2),
                 Text(

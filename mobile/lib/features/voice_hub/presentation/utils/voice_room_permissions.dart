@@ -18,6 +18,9 @@ class VoiceRoomPermissions {
     this.canBanUsers = false,
     this.canMuteRoom = false,
     this.canGiveVoice = false,
+    this.canGiveOp = false,
+    this.canGiveSop = false,
+    this.canGiveFounder = false,
     this.canManageRoom = false,
   });
 
@@ -31,6 +34,9 @@ class VoiceRoomPermissions {
   final bool canBanUsers;
   final bool canMuteRoom;
   final bool canGiveVoice;
+  final bool canGiveOp;
+  final bool canGiveSop;
+  final bool canGiveFounder;
   final bool canManageRoom;
 
   bool get hasFullAdmin => isSiteAdmin || isRoomOwner;
@@ -39,11 +45,34 @@ class VoiceRoomPermissions {
 
   bool get canAssignSeats => isRoomOwner || canManageRoom || canModerate;
 
+  bool get canManageUsers =>
+      canModerate ||
+      canMuteUsers ||
+      canKickUsers ||
+      canBanUsers ||
+      canGiveVoice ||
+      canGiveOp ||
+      canGiveSop ||
+      isRoomOwner ||
+      isSiteAdmin;
+
+  bool get canManageChat =>
+      canModerate || canMuteRoom || isRoomOwner || isSiteAdmin;
+
+  bool get canManageRoomSettings =>
+      canManageRoom ||
+      canChangeBackground ||
+      canManageDj ||
+      isRoomOwner ||
+      isSiteAdmin;
+
   static VoiceRoomPermissions forUser({
     required UserEntity? user,
     required VoiceRoomEntity room,
     ChatRoomPresence? selfPresence,
     ChatRoomMyPermissions? server,
+    bool staffSiteAdmin = false,
+    String? walletRole,
   }) {
     if (user == null) {
       return const VoiceRoomPermissions(
@@ -55,10 +84,15 @@ class VoiceRoomPermissions {
       );
     }
 
-    if (StaffRoles.isAdminOrManager(
-      role: user.role,
-      username: user.username,
-    )) {
+    final effectiveRole = walletRole?.trim().isNotEmpty == true
+        ? walletRole
+        : user.role;
+
+    if (staffSiteAdmin ||
+        StaffRoles.isSiteAdminUser(
+          role: effectiveRole,
+          username: user.username,
+        )) {
       return const VoiceRoomPermissions(
         isSiteAdmin: true,
         isRoomOwner: true,
@@ -70,18 +104,23 @@ class VoiceRoomPermissions {
         canBanUsers: true,
         canMuteRoom: true,
         canGiveVoice: true,
+        canGiveOp: true,
+        canGiveSop: true,
+        canGiveFounder: true,
         canManageRoom: true,
       );
     }
 
-    if (server != null && server.canModerate) {
+    // Sunucu `canGiveVoice` vb. gönderdiyse `canModerate` false olsa bile uygula.
+    if (server != null && (server.canModerate || server.hasAnyServerFlag)) {
       return VoiceRoomPermissions(
         isSiteAdmin: server.isGlobalAdmin,
         isRoomOwner: server.isRoomOwner,
         canModerate: server.canModerate,
         canManageDj: server.canManageRoom ||
             server.isGlobalAdmin ||
-            server.isRoomOwner,
+            server.isRoomOwner ||
+            server.canGiveVoice,
         canChangeBackground: server.canManageRoom ||
             server.isGlobalAdmin ||
             server.isRoomOwner,
@@ -89,19 +128,29 @@ class VoiceRoomPermissions {
         canKickUsers: server.canKickUsers,
         canBanUsers: server.canBanUsers,
         canMuteRoom: server.canMuteRoom,
-        canGiveVoice: server.canGiveVoice,
+        canGiveVoice: server.canGiveVoice ||
+            server.isRoomOwner ||
+            server.canManageRoom,
+        canGiveOp: server.canGiveOp ||
+            server.isRoomOwner ||
+            server.isGlobalAdmin,
+        canGiveSop: server.canGiveSop ||
+            server.isRoomOwner ||
+            server.isGlobalAdmin,
+        canGiveFounder: server.canGiveFounder || server.isGlobalAdmin,
         canManageRoom: server.canManageRoom,
       );
     }
 
     final rank = VoiceStaffRankParser.resolve(
       username: user.username,
-      role: user.role,
+      role: effectiveRole,
       chatRole: selfPresence?.chatRole ?? server?.role,
     );
     final staffPower = VoiceStaffRankParser.powerLevel(rank);
-    final isSiteAdmin = StaffRoles.isAdminOrManager(
-          role: user.role,
+    final isSiteAdmin = staffSiteAdmin ||
+        StaffRoles.isSiteAdminUser(
+          role: effectiveRole,
           username: user.username,
         ) ||
         server?.isGlobalAdmin == true ||
@@ -139,7 +188,10 @@ class VoiceRoomPermissions {
       canKickUsers: canKickBan,
       canBanUsers: canKickBan,
       canMuteRoom: canKickBan,
-      canGiveVoice: canMuteUsers,
+      canGiveVoice: canMuteUsers || isRoomOwner || canManageRoom,
+      canGiveOp: canMuteUsers || isRoomOwner || canManageRoom,
+      canGiveSop: canKickBan || isRoomOwner || canManageRoom,
+      canGiveFounder: isSiteAdmin || isRoomOwner,
       canManageRoom: canManageRoom,
     );
   }

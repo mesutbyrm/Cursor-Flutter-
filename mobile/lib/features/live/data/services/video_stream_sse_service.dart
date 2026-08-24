@@ -7,7 +7,9 @@ import 'package:flutter/foundation.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/live_debug_log.dart';
-import '../../domain/entities/live_gift_event.dart';
+import '../../../../core/network/sse/sse_reconnect_policy.dart';
+import '../../../gifts/presentation/sync/gift_sync_log.dart';
+import '../../../gifts/domain/gift_payload_util.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
 import '../../../live_psychics/domain/entities/psychic_request_entity.dart';
 import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
@@ -25,7 +27,11 @@ class VideoStreamSseService {
         baseUrl: Env.apiBaseUrl,
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: Duration.zero,
-        headers: {'Accept': 'text/event-stream'},
+        headers: {
+          'Accept': 'text/event-stream',
+          'Connection': 'keep-alive',
+        },
+        persistentConnection: true,
       ),
     );
   }
@@ -34,16 +40,19 @@ class VideoStreamSseService {
   CancelToken? _cancel;
   StreamSubscription<List<int>>? _bytesSub;
   Timer? _reconnectTimer;
+  Timer? _heartbeatWatchdog;
+  DateTime? _lastEventAt;
 
   String? _streamId;
   Future<String?> Function()? _accessToken;
   var _stopped = false;
   var _reconnectAttempt = 0;
+  String? _lastEventId;
 
   void Function()? _onConnected;
   void Function(int viewerCount)? _onViewerCount;
   void Function(LiveStreamChatMessage message)? _onMessage;
-  void Function(LiveGiftEvent event)? _onGift;
+  void Function(Map<String, dynamic> payload)? _onGift;
   VoidCallback? _onStreamEnded;
   void Function(Map<String, dynamic> battle)? _onPkBattle;
 
@@ -72,7 +81,7 @@ class VideoStreamSseService {
     void Function()? onConnected,
     void Function(int viewerCount)? onViewerCount,
     void Function(LiveStreamChatMessage message)? onMessage,
-    void Function(LiveGiftEvent event)? onGift,
+    void Function(Map<String, dynamic> payload)? onGift,
     VoidCallback? onStreamEnded,
     void Function(Map<String, dynamic> battle)? onPkBattle,
     void Function(PsychicRequestEntity request)? onFortuneRequest,
@@ -113,9 +122,14 @@ class VideoStreamSseService {
     final headers = <String, dynamic>{
       'Accept': 'text/event-stream',
       'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
     };
     if (token != null && token.trim().isNotEmpty) {
       headers['Authorization'] = 'Bearer ${token.trim()}';
+    }
+    final lastId = _lastEventId?.trim();
+    if (lastId != null && lastId.isNotEmpty) {
+      headers['Last-Event-ID'] = lastId;
     }
 
     _dio = _sseDio();
@@ -136,9 +150,12 @@ class VideoStreamSseService {
       }
 
       _reconnectAttempt = 0;
+      _lastEventAt = DateTime.now();
+      _startHeartbeatWatchdog();
       final buffer = StringBuffer();
       _bytesSub = byteStream.listen(
         (chunk) {
+          _lastEventAt = DateTime.now();
           buffer.write(utf8.decode(chunk, allowMalformed: true));
           _drainBuffer(buffer);
         },
@@ -154,12 +171,22 @@ class VideoStreamSseService {
 
   void _scheduleReconnect() {
     if (_stopped || _streamId == null) return;
+    if (_reconnectAttempt >= SseReconnectPolicy.maxAttempts) return;
     _reconnectTimer?.cancel();
     _reconnectAttempt++;
-    final delay = Duration(seconds: (_reconnectAttempt.clamp(1, 6) * 2));
+    final delay = SseReconnectPolicy.delayForAttempt(_reconnectAttempt);
+    GiftSyncLog.sseReconnect(_streamId!, _reconnectAttempt, delay.inMilliseconds);
     _reconnectTimer = Timer(delay, () {
       if (!_stopped) unawaited(_openStream());
     });
+  }
+
+  /// Anında yeniden bağlan.
+  Future<void> reconnectNow() async {
+    if (_stopped || _streamId == null) return;
+    _reconnectTimer?.cancel();
+    _reconnectAttempt = 0;
+    await _openStream();
   }
 
   void _drainBuffer(StringBuffer buffer) {
@@ -177,16 +204,17 @@ class VideoStreamSseService {
   }
 
   void _handleBlock(String block) {
+    final eventId = _parseEventId(block);
+    if (eventId != null && eventId.isNotEmpty) {
+      _lastEventId = eventId;
+    }
+
     final dataLines = <String>[];
     for (final line in block.split('\n')) {
       if (line.startsWith('data:')) {
         dataLines.add(line.substring(5).trimLeft());
       }
     }
-    // SSE heartbeat/comment blokları `: ...` yorum satırıdır; `data:` içermez,
-    // bu yüzden dataLines boş kalır ve doğal olarak atlanır. Önceki
-    // `block.contains('heartbeat')` kontrolü, içinde "heartbeat" geçen gerçek
-    // mesaj/hediye bloklarını da düşürüyordu.
     if (dataLines.isEmpty) return;
     final payload = dataLines.join('\n').trim();
     if (payload.isEmpty) return;
@@ -196,6 +224,15 @@ class VideoStreamSseService {
       if (decoded is! Map) return;
       _dispatch(Map<String, dynamic>.from(decoded));
     } catch (_) {}
+  }
+
+  String? _parseEventId(String block) {
+    for (final line in block.split('\n')) {
+      if (line.startsWith('id:')) {
+        return line.substring(3).trim();
+      }
+    }
+    return null;
   }
 
   void _dispatch(Map<String, dynamic> map) {
@@ -221,20 +258,21 @@ class VideoStreamSseService {
         }
         return;
       case 'gift':
-        final giftRaw = map['gift'];
-        if (giftRaw is Map && _streamId != null) {
-          final ev = _giftsRemote.parseGiftEvent(
-            Map<String, dynamic>.from(giftRaw),
-            streamId: _streamId!,
-          );
-          if (ev != null) _onGift?.call(ev);
-        }
+      case 'giftsent':
+      case 'gift_sent':
+      case 'gift_received':
+      case 'gift_queue_updated':
+      case 'gift_finished':
+      case 'giftsentevent':
+        _onGift?.call(GiftPayloadUtil.unwrap(map));
         return;
       case 'streamEnded':
         _onStreamEnded?.call();
         return;
       case 'pk':
-        final data = map['data'];
+      case 'pkbattle':
+      case 'pk_battle':
+        final data = map['data'] ?? map['battle'] ?? map['pk'] ?? map;
         if (data is Map) {
           _onPkBattle?.call(Map<String, dynamic>.from(data));
         }
@@ -276,19 +314,12 @@ class VideoStreamSseService {
         }
         if (map['event']?.toString() == 'STREAM_ENDED') {
           _onStreamEnded?.call();
+          return;
+        }
+        if (GiftPayloadUtil.looksLikeGift(map)) {
+          _onGift?.call(GiftPayloadUtil.unwrap(map));
         }
     }
-  }
-
-  Future<void> _closeStreamOnly() async {
-    _reconnectTimer?.cancel();
-    _reconnectTimer = null;
-    _cancel?.cancel('reconnect');
-    _cancel = null;
-    await _bytesSub?.cancel();
-    _bytesSub = null;
-    _dio?.close(force: true);
-    _dio = null;
   }
 
   Future<void> disconnect() async {
@@ -309,5 +340,36 @@ class VideoStreamSseService {
     _onModeratorUpdated = null;
     await _closeStreamOnly();
     LiveDebugLog.log('stream.sse.disconnect');
+  }
+
+  void _startHeartbeatWatchdog() {
+    _heartbeatWatchdog?.cancel();
+    _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 5), (_) {
+      final last = _lastEventAt;
+      if (last == null || _stopped) return;
+      if (DateTime.now().difference(last) >
+          const Duration(seconds: 45)) {
+        if (kDebugMode) {
+          debugPrint('VideoStreamSseService: heartbeat timeout — reconnecting');
+        }
+        unawaited(_openStream());
+      }
+    });
+  }
+
+  Future<void> _closeStreamOnly() async {
+    _reconnectTimer?.cancel();
+    _heartbeatWatchdog?.cancel();
+    _heartbeatWatchdog = null;
+    await _bytesSub?.cancel();
+    _bytesSub = null;
+    _cancel?.cancel('sse_close');
+    _cancel = null;
+    _dio?.close(force: true);
+    _dio = null;
+  }
+
+  void dispose() {
+    unawaited(disconnect());
   }
 }

@@ -4,6 +4,7 @@ import '../entities/psychic_gift_entity.dart';
 import '../entities/psychic_request_entity.dart';
 import '../entities/psychic_review_entity.dart';
 import '../entities/psychic_room_entity.dart';
+import '../entities/psychic_session_history_entity.dart';
 import '../entities/psychic_session_status.dart';
 
 class PsychicSessionCreateResult {
@@ -113,14 +114,12 @@ abstract class LivePsychicsRepository {
 
   Future<PsychicSessionCreateResult?> createSession({
     required String tellerId,
-    String? tellerUserId,
     required int durationMinutes,
     required String fortuneType,
-    bool staffExempt = false,
-    String? clientName,
   });
 
   Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId);
+  Future<List<PsychicSessionHistoryEntity>> fetchRecentSessions({int limit = 20});
   Future<List<PsychicSessionStatusResult>> fetchActiveSessions();
   Future<List<PsychicRequestEntity>> fetchIncomingRequests({
     String? currentUserId,
@@ -132,6 +131,10 @@ abstract class LivePsychicsRepository {
     required String action,
   });
 
+  /// Bekleyen seans iptali — `PATCH /api/fortune-tellers/sessions/{id}` `{action: cancel}`.
+  Future<bool> cancelSession(String sessionId);
+
+  /// Aktif seans sonlandırma — `PATCH /api/room/{id}` `{action: end}`.
   Future<bool> endSession(String sessionId);
   Future<void> clearRoomSignals(String sessionId);
   Future<List<Map<String, dynamic>>> fetchRoomSignals(String sessionId);
@@ -158,7 +161,6 @@ abstract class LivePsychicsRepository {
   Future<bool> extendSession({
     required String sessionId,
     required int minutes,
-    required int totalJeton,
   });
 
   Future<bool> tellerAddTime({

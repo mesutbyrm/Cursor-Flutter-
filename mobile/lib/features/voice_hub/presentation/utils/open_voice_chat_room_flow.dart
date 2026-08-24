@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../core/auth/bot_account_guard.dart';
+import '../../../../core/auth/bot_account_provider.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -12,8 +17,10 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
+import '../providers/chat_room_providers.dart';
+import 'voice_room_category_catalog.dart';
 
-/// canlifal.com — sesli sohbet odası aç (normal 100 / VIP 5000 jeton).
+/// canlifal.com — sesli sohbet odası aç (ücretsiz 0 / normal 2500 / VIP 5000 jeton).
 Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) async {
   final user = ref.read(authControllerProvider).valueOrNull;
   if (user == null) {
@@ -31,7 +38,6 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
   var balance = ref.read(walletBalancesProvider).valueOrNull?.jeton ??
       ref.read(authControllerProvider).valueOrNull?.coinBalance ??
       0;
-  // Önbellekli bakiye ile hemen sheet aç; güncelleme arka planda.
   ref.read(walletBalancesProvider.future).then((b) {
     balance = b.jeton;
   }).catchError((_) {});
@@ -57,7 +63,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
             ),
             const SizedBox(height: 8),
             Text(
-              'Sesli oda açma: $normalCost jeton\nVIP oda açma: $vipCost jeton / ay',
+              'Ücretsiz oda: 0 jeton\nSesli oda: $normalCost jeton\nVIP oda: $vipCost jeton',
               style: TextStyle(
                 color: ctx.colors.onSurfaceMuted.withValues(alpha: 0.95),
                 fontSize: 13,
@@ -105,7 +111,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
               onPressed: () =>
                   Navigator.of(ctx, rootNavigator: true).pop(_OpenRoomChoice.vip),
               icon: const Icon(Icons.workspace_premium_rounded),
-              label: Text('VIP oda aç · $vipCost jeton/ay'),
+              label: Text('VIP oda aç · $vipCost jeton'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppThemeColors.coinGold,
                 side: const BorderSide(color: AppThemeColors.coinGold),
@@ -124,6 +130,24 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
   );
 
   if (choice == null || !context.mounted) return;
+
+  final setup = await showModalBottomSheet<_OpenRoomSetup>(
+    context: context,
+    isScrollControlled: true,
+    useRootNavigator: true,
+    backgroundColor: const Color(0xFF12081F),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) => _OpenRoomSetupSheet(
+      defaultName: user.display.trim().isNotEmpty
+          ? user.display.trim()
+          : (user.username.trim().isNotEmpty ? user.username.trim() : 'Sohbet'),
+      backgroundsFuture: ref.read(chatRoomRemoteProvider).fetchBackgrounds(),
+    ),
+  );
+
+  if (setup == null || !context.mounted) return;
 
   _showLoadingDialog(context);
 
@@ -149,14 +173,11 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
 
   if (cost > 0 && balance < cost) {
     _dismissLoadingDialog(context);
-    _showSnackBar(
-      context,
-      SnackBar(
-        content: Text('Yetersiz jeton ($cost gerekli, $balance mevcut).'),
-        action: SnackBarAction(
-          label: 'Jeton yükle',
-          onPressed: () => openJetonStore(context, ref: ref),
-        ),
+    unawaited(
+      showInsufficientJetonDialog(
+        context,
+        message: 'Yetersiz jeton ($cost gerekli, $balance mevcut).',
+        ref: ref,
       ),
     );
     return;
@@ -166,11 +187,300 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
     context,
     ref,
     choice: choice,
+    setup: setup,
     loadingVisible: true,
   );
 }
 
 enum _OpenRoomChoice { free, standard, vip }
+
+class _OpenRoomSetup {
+  const _OpenRoomSetup({
+    required this.roomName,
+    this.backgroundUrl,
+    this.seatCount = 8,
+    this.maxUsers = 15,
+    this.category = kDefaultVoiceRoomCategory,
+  });
+
+  final String roomName;
+  final String? backgroundUrl;
+  final int seatCount;
+  final int maxUsers;
+  final String category;
+}
+
+class _OpenRoomSetupSheet extends StatefulWidget {
+  const _OpenRoomSetupSheet({
+    required this.defaultName,
+    required this.backgroundsFuture,
+  });
+
+  final String defaultName;
+  final Future<List<String>> backgroundsFuture;
+
+  @override
+  State<_OpenRoomSetupSheet> createState() => _OpenRoomSetupSheetState();
+}
+
+class _OpenRoomSetupSheetState extends State<_OpenRoomSetupSheet> {
+  late final TextEditingController _nameCtrl;
+  List<String> _backgrounds = const [];
+  String? _selectedBg;
+  var _loadingBg = true;
+  int _seatCount = 8;
+  int _maxUsers = 15;
+  String _category = kDefaultVoiceRoomCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtrl = TextEditingController(text: widget.defaultName);
+    _loadBackgrounds();
+  }
+
+  Future<void> _loadBackgrounds() async {
+    try {
+      final urls = await widget.backgroundsFuture;
+      if (!mounted) return;
+      setState(() {
+        _backgrounds = urls;
+        _selectedBg = urls.isNotEmpty ? urls.first : null;
+        _loadingBg = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingBg = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    super.dispose();
+  }
+
+  void _confirm() {
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) return;
+    Navigator.of(context, rootNavigator: true).pop(
+      _OpenRoomSetup(
+        roomName: name,
+        backgroundUrl: _selectedBg,
+        seatCount: _seatCount,
+        maxUsers: _maxUsers,
+        category: _category,
+      ),
+    );
+  }
+
+  Widget _capacityChips({
+    required String label,
+    required List<int> options,
+    required int value,
+    required ValueChanged<int> onSelected,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.75),
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: options.map((n) {
+            final selected = n == value;
+            return ChoiceChip(
+              label: Text('$n'),
+              selected: selected,
+              onSelected: (_) => setState(() => onSelected(n)),
+              selectedColor: AppThemeColors.accentPurple.withValues(alpha: 0.45),
+              labelStyle: TextStyle(
+                color: selected ? Colors.white : Colors.white70,
+                fontWeight: FontWeight.w700,
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          16,
+          20,
+          24 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Oda bilgileri',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _nameCtrl,
+              maxLength: 40,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Oda adı',
+                labelStyle: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.7),
+                ),
+                counterStyle: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.45),
+                ),
+                filled: true,
+                fillColor: Colors.white.withValues(alpha: 0.06),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Arka plan görseli',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.75),
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (_loadingBg)
+              const SizedBox(
+                height: 100,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: AppThemeColors.accentPink,
+                    strokeWidth: 2,
+                  ),
+                ),
+              )
+            else if (_backgrounds.isEmpty)
+              Text(
+                'Varsayılan arka plan kullanılacak',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 12,
+                ),
+              )
+            else
+              SizedBox(
+                height: 100,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _backgrounds.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (_, i) {
+                    final url = _backgrounds[i];
+                    final selected = url == _selectedBg;
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedBg = url),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: selected
+                                ? AppThemeColors.accentCyan
+                                : Colors.white24,
+                            width: selected ? 2.5 : 1,
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: CanlifalNetworkImage(
+                            url: url,
+                            width: 140,
+                            height: 96,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            const SizedBox(height: 16),
+            _capacityChips(
+              label: 'Koltuk sayısı',
+              options: const [8, 10, 12, 15],
+              value: _seatCount,
+              onSelected: (v) => _seatCount = v,
+            ),
+            const SizedBox(height: 12),
+            _capacityChips(
+              label: 'Maksimum kullanıcı',
+              options: const [15, 25, 50, 100],
+              value: _maxUsers,
+              onSelected: (v) => _maxUsers = v,
+            ),
+            const SizedBox(height: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Kategori',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.75),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: kVoiceRoomAssignableCategories.map((c) {
+                    final selected = c.id == _category;
+                    return ChoiceChip(
+                      label: Text(c.label),
+                      selected: selected,
+                      onSelected: (_) => setState(() => _category = c.id),
+                      selectedColor:
+                          AppThemeColors.accentPurple.withValues(alpha: 0.45),
+                      labelStyle: TextStyle(
+                        color: selected ? Colors.white : Colors.white70,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: _confirm,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppThemeColors.accentPurple,
+                minimumSize: const Size.fromHeight(48),
+              ),
+              child: const Text('Odayı aç'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+              child: const Text('İptal'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 void _showLoadingDialog(BuildContext context) {
   showDialog<void>(
@@ -197,14 +507,23 @@ Future<void> _createAndEnter(
   BuildContext context,
   WidgetRef ref, {
   required _OpenRoomChoice choice,
+  required _OpenRoomSetup setup,
   bool loadingVisible = false,
 }) async {
+  if (BotAccountGuard.blockIfBot(
+    ref,
+    context,
+    'sesli oda açma',
+    readIsBot: () => ref.read(isBotAccountProvider),
+  )) {
+    if (loadingVisible && context.mounted) Navigator.pop(context);
+    return;
+  }
   if (!loadingVisible) {
     _showLoadingDialog(context);
   }
 
   try {
-    final user = ref.read(authControllerProvider).valueOrNull;
     final roomType = switch (choice) {
       _OpenRoomChoice.free => 'free',
       _OpenRoomChoice.vip => 'vip',
@@ -215,7 +534,11 @@ Future<void> _createAndEnter(
         .createVoiceChatRoom(
           vip: choice == _OpenRoomChoice.vip,
           roomType: roomType,
-          roomName: user?.display ?? user?.username,
+          roomName: setup.roomName,
+          background: setup.backgroundUrl,
+          seatCount: setup.seatCount,
+          maxUsers: setup.maxUsers,
+          category: setup.category,
         )
         .timeout(
           const Duration(seconds: 45),
@@ -228,7 +551,7 @@ Future<void> _createAndEnter(
       final rooms = await ref
           .read(voiceRoomsProvider.future)
           .timeout(const Duration(seconds: 20), onTimeout: () => <VoiceRoomEntity>[]);
-      final me = user?.id;
+      final me = ref.read(authControllerProvider).valueOrNull?.id;
       if (me != null && me.isNotEmpty) {
         VoiceRoomEntity? newest;
         for (final r in rooms) {
@@ -308,16 +631,7 @@ Future<void> _createAndEnter(
     }
     if (msg.toLowerCase().contains('yetersiz') ||
         msg.toLowerCase().contains('jeton')) {
-      _showSnackBar(
-        context,
-        SnackBar(
-          content: Text(msg),
-          action: SnackBarAction(
-            label: 'Jeton yükle',
-            onPressed: () => openJetonStore(context, ref: ref),
-          ),
-        ),
-      );
+      unawaited(showInsufficientJetonDialog(context, message: msg, ref: ref));
       return;
     }
     _showSnackBar(context, SnackBar(content: Text(msg)));

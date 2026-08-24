@@ -7,7 +7,6 @@ import '../../../../notifications/presentation/providers/notifications_providers
 import '../../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import 'voice_rooms_hero.dart';
 import 'voice_rooms_fx.dart';
-import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
 
@@ -18,7 +17,7 @@ class VoiceRoomsAppBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userName = ref.watch(
       authControllerProvider.select(
-        (a) => a.valueOrNull?.display ?? VoiceRoomsMockData.userName,
+        (a) => a.valueOrNull?.display ?? '',
       ),
     );
     final vipLevel = ref.watch(vipTierProvider.select((t) => t.index + 1));

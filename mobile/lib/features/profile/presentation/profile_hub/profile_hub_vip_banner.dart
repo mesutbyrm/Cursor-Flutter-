@@ -1,50 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
+import '../../../membership/presentation/controllers/membership_controller.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_theme.dart';
+import '../providers/profile_hub_providers.dart';
+import '../providers/profile_providers.dart';
 
-/// VIP ayrıcalıklar banner'ı.
-class ProfileHubVipBanner extends StatelessWidget {
+/// Ücretsiz kullanıcıya premium plan teşviki (profil hub — yalnızca free dal).
+class ProfileHubVipBanner extends ConsumerWidget {
   const ProfileHubVipBanner({
     super.key,
     this.membership,
-    this.daysRemaining,
-    this.expiresAt,
     this.onViewPrivileges,
   });
 
   final String? membership;
-  final int? daysRemaining;
-  final String? expiresAt;
   final VoidCallback? onViewPrivileges;
 
   @override
-  Widget build(BuildContext context) {
-    final active = membership != null && membership!.trim().isNotEmpty;
-    final label = active ? membership!.trim() : 'VIP';
+  Widget build(BuildContext context, WidgetRef ref) {
+    final info = ref.watch(profileMembershipInfoProvider);
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(info, ui.tiers);
+    final expiresAt =
+        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
+    final title = buildMembershipVipBannerTitle(
+      info: info,
+      expiresAt: expiresAt,
+    );
+    final subtitle = buildMembershipPremiumCardSubtitle(
+      info: info,
+      tiers: ui.tiers,
+      packages: ui.apiPackages,
+      catalogTier: catalogTier,
+      expiresAt: expiresAt,
+    );
+    final actionLabel = buildMembershipVipBannerActionLabel(info: info);
 
-    String subtitle;
-    if (active && daysRemaining != null && daysRemaining! > 0) {
-      subtitle = 'Aktif üyelik · $daysRemaining gün kaldı';
-    } else if (active && expiresAt != null && expiresAt!.isNotEmpty) {
-      final dt = DateTime.tryParse(expiresAt!);
-      subtitle = dt != null
-          ? 'Bitiş: ${DateFormat('d MMM yyyy', 'tr').format(dt.toLocal())}'
-          : 'Size özel ayrıcalıkların tadını çıkarın!';
-    } else if (active) {
-      subtitle = 'Size özel ayrıcalıkların tadını çıkarın!';
-    } else {
-      subtitle = 'Premium üyelik avantajlarını keşfedin';
+    void openPlans() {
+      if (onViewPrivileges != null) {
+        onViewPrivileges!();
+        return;
+      }
+      context.push('/premium-membership');
     }
 
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusMd),
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [
-            ProfilePremiumTheme.neonPurple.withValues(alpha: 0.85),
-            const Color(0xFF4A148C),
+            Color(0xFF3D2060),
+            Color(0xFF1A0A30),
           ],
         ),
         boxShadow: [
@@ -59,14 +68,14 @@ class ProfileHubVipBanner extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            const Text('👑', style: TextStyle(fontSize: 28)),
+            const Text('✨', style: TextStyle(fontSize: 28)),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$label Ayrıcalıkları',
+                    title,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
@@ -88,10 +97,10 @@ class ProfileHubVipBanner extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: onViewPrivileges ?? () => context.push('/vip-gold'),
-              child: const Text(
-                'Ayrıcalıkları Gör >',
-                style: TextStyle(
+              onPressed: openPlans,
+              child: Text(
+                actionLabel,
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
                   fontSize: 11,

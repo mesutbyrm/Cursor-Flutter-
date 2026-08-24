@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/media/cloud_upload_service.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,9 +15,11 @@ import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../theme/voice_room_tokens.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import 'voice_room_management_panel.dart';
+import 'voice_room_commands_panel.dart';
 import 'voice_room_sheets.dart';
 
 Future<void> showVoiceRoomBackgroundSheet(
@@ -35,6 +38,8 @@ Future<void> showVoiceRoomBackgroundSheet(
   );
 }
 
+/// @deprecated [showVoiceRoomManagementPanel] kullanın — tek oda ayarları paneli.
+@Deprecated('Use showVoiceRoomManagementPanel instead')
 Future<void> showVoiceRoomHubSettingsSheet(
   BuildContext context,
   WidgetRef ref, {
@@ -44,17 +49,15 @@ Future<void> showVoiceRoomHubSettingsSheet(
   required bool isOwner,
   void Function(ChatRoomPresence user)? onUserTap,
 }) {
-  return showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => _HubSettingsSheet(
-      room: room,
-      live: live,
-      perms: perms,
-      isOwner: isOwner,
-      onUserTap: onUserTap,
-    ),
+  return showVoiceRoomManagementPanel(
+    context,
+    ref,
+    room: room,
+    live: live,
+    perms: perms,
+    isOwner: isOwner,
+    onUserTap: onUserTap,
+    initial: VoiceMgmtInitial.chatMgmt,
   );
 }
 
@@ -147,71 +150,15 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
   }
 
   void _openRoomCommands() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => VoiceGlass(
-        borderRadius: 24,
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Oda Komutları',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Moderatör ve oda sahibi için (canlifal.com ile uyumlu)',
-              style: TextStyle(
-                fontSize: 11,
-                color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
-              ),
-            ),
-            const SizedBox(height: 12),
-            ..._roomCommands.map(
-              (c) => ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(c.$2, color: VoiceRoomTokens.neonBlue, size: 20),
-                title: Text(c.$1, style: const TextStyle(fontWeight: FontWeight.w800)),
-                subtitle: Text(c.$3, style: const TextStyle(fontSize: 11)),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  await ref
-                      .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
-                      .sendMessage(c.$1);
-                  if (!context.mounted) return;
-                  final liveErr =
-                      ref.read(voiceRoomLiveProvider(widget.room.liveKey)).error;
-                  if (liveErr != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(liveErr)),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${c.$1} gönderildi')),
-                    );
-                  }
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+    Navigator.pop(context);
+    showVoiceRoomCommandsPanel(
+      context,
+      ref,
+      room: widget.room,
+      perms: widget.perms,
+      isOwner: widget.isOwner,
     );
   }
-
-  static const _roomCommands = [
-    ('!duyuru', Icons.campaign_rounded, 'Oda duyurusu yayınla'),
-    ('!temizle', Icons.cleaning_services_rounded, 'Sohbet akışını temizle'),
-    ('!kick', Icons.person_remove_rounded, 'Kullanıcıyı odadan çıkar'),
-    ('!ban', Icons.block_rounded, 'Kullanıcıyı yasakla'),
-    ('!unban', Icons.lock_open_rounded, 'Yasağı kaldır'),
-    ('!dj', Icons.headphones_rounded, 'DJ yetkisi ver / al'),
-    ('!muzik', Icons.queue_music_rounded, 'Müzik kuyruğunu yönet'),
-  ];
 
   Future<void> _applyBackground(String url) async {
     final err = await ref
@@ -297,42 +244,62 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
         child: ListView(
           controller: scroll,
           children: [
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 0.92,
-              ),
-              itemCount: tiles.length,
-              itemBuilder: (context, i) {
-                final t = tiles[i];
-                return Tooltip(
-                  message: t.label,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: t.onTap,
-                      borderRadius: BorderRadius.circular(14),
-                      child: Ink(
-                        decoration: BoxDecoration(
-                          color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.12),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const crossAxisCount = 4;
+                const spacing = 8.0;
+                const aspect = 0.92;
+                const horizontalPad = 16.0;
+                final gridHeight = ListPerf.nestedGridHeight(
+                  itemCount: tiles.length,
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: spacing,
+                  crossAxisSpacing: spacing,
+                  childAspectRatio: aspect,
+                  crossAxisExtent: constraints.maxWidth - horizontalPad,
+                );
+                return SizedBox(
+                  height: gridHeight,
+                  child: GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: spacing,
+                      mainAxisSpacing: spacing,
+                      childAspectRatio: aspect,
+                    ),
+                    itemCount: tiles.length,
+                    itemBuilder: (context, i) {
+                      final t = tiles[i];
+                      return Tooltip(
+                        message: t.label,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: t.onTap,
+                            borderRadius: BorderRadius.circular(14),
+                            child: Ink(
+                              decoration: BoxDecoration(
+                                color: VoiceRoomTokens.neonPurple
+                                    .withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.12),
+                                ),
+                              ),
+                              padding: const EdgeInsets.all(10),
+                              child: Icon(
+                                t.icon,
+                                color: VoiceRoomTokens.neonBlue,
+                                size: 26,
+                              ),
+                            ),
                           ),
                         ),
-                        padding: const EdgeInsets.all(10),
-                        child: Icon(
-                          t.icon,
-                          color: VoiceRoomTokens.neonBlue,
-                          size: 26,
-                        ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 );
               },
@@ -494,6 +461,7 @@ class _VoiceRoomBackgroundSheetState
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final canUpload = ref.watch(staffAccessProvider).isSiteAdmin;
     return DraggableScrollableSheet(
       initialChildSize: 0.55,
       minChildSize: 0.35,
@@ -511,7 +479,9 @@ class _VoiceRoomBackgroundSheetState
             ),
             const SizedBox(height: 8),
             Text(
-              'Hazır arka planlardan seçin veya galeriden yükleyin.',
+              canUpload
+                  ? 'Hazır arka planlardan seçin veya yükleyin.'
+                  : 'Admin tarafından yüklenen arka planlardan seçin.',
               style: TextStyle(
                 color: context.colors.onSurfaceMuted,
                 fontSize: 13,
@@ -525,53 +495,82 @@ class _VoiceRoomBackgroundSheetState
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               )
+            else if (_presets.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text(
+                  'Arka plan listesi yüklenemedi. Tekrar deneyin.',
+                  style: TextStyle(color: context.colors.onSurfaceMuted),
+                  textAlign: TextAlign.center,
+                ),
+              )
             else if (_presets.isNotEmpty) ...[
               const SizedBox(height: 12),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.zero,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  childAspectRatio: 0.75,
-                ),
-                itemCount: _presets.length,
-                itemBuilder: (_, i) {
-                  final url = _presets[i];
-                  return GestureDetector(
-                    onTap: _uploading ? null : () => _applyPreset(url),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: CanlifalNetworkImage(
-                        url: url,
-                        thumbnailWidth: 180,
-                        fit: BoxFit.cover,
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  const crossAxisCount = 3;
+                  const spacing = 8.0;
+                  const aspect = 0.75;
+                  final gridHeight = ListPerf.nestedGridHeight(
+                    itemCount: _presets.length,
+                    crossAxisCount: crossAxisCount,
+                    mainAxisSpacing: spacing,
+                    crossAxisSpacing: spacing,
+                    childAspectRatio: aspect,
+                    crossAxisExtent: constraints.maxWidth,
+                  );
+                  return SizedBox(
+                    height: gridHeight,
+                    child: GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
+                        childAspectRatio: aspect,
                       ),
+                      itemCount: _presets.length,
+                      itemBuilder: (_, i) {
+                        final url = _presets[i];
+                        return GestureDetector(
+                          onTap: _uploading ? null : () => _applyPreset(url),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: CanlifalNetworkImage(
+                              url: url,
+                              thumbnailWidth: 180,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   );
                 },
               ),
             ],
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: _uploading ? null : _pickFromCamera,
-              icon: const Icon(Icons.photo_camera_rounded),
-              label: const Text('Kamera'),
-            ),
-            const SizedBox(height: 10),
-            FilledButton.icon(
-              onPressed: _uploading ? null : _pickFromGallery,
-              icon: _uploading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.photo_library_rounded),
-              label: Text(_uploading ? 'Yükleniyor…' : 'Galeriden seç'),
-            ),
+            if (canUpload) ...[
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: _uploading ? null : _pickFromCamera,
+                icon: const Icon(Icons.photo_camera_rounded),
+                label: const Text('Kamera'),
+              ),
+              const SizedBox(height: 10),
+              FilledButton.icon(
+                onPressed: _uploading ? null : _pickFromGallery,
+                icon: _uploading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.photo_library_rounded),
+                label: Text(_uploading ? 'Yükleniyor…' : 'Galeriden seç'),
+              ),
+            ],
           ],
         ),
       ),

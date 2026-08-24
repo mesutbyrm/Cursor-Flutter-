@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../onesignal/onesignal_bootstrap.dart';
 import 'push_navigation_handler.dart';
 
 /// Uygulama içi + sistem bildirimleri (FCM foreground ve izinler).
@@ -150,6 +151,8 @@ class PushNotificationService {
 
   Future<void> showRemoteMessage(RemoteMessage msg) async {
     if (!_initialized) await init();
+    // OneSignal aktifken FCM foreground bildirimi gösterme — çift bildirim önlenir.
+    if (OneSignalBootstrap.isReady) return;
 
     final data = Map<String, dynamic>.from(msg.data);
     if (PushNavigationHandler.handleFortuneInviteData(
@@ -200,7 +203,7 @@ class PushNotificationService {
     try {
       return await FirebaseMessaging.instance.getToken();
     } catch (e) {
-      debugPrint('FCM getToken failed: $e');
+      if (kDebugMode) debugPrint('FCM getToken failed: $e');
       return null;
     }
   }

@@ -5,8 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/widgets/discover_tab_layout.dart';
 import '../../../domain/game_center_models.dart';
+import '../../../domain/game_models.dart';
+import '../../providers/game_providers.dart';
 import '../providers/game_center_providers.dart';
 import '../widgets/game_center_widgets.dart';
+import '../../widgets/game_catalog_card.dart';
 
 /// Profesyonel Oyun Merkezi — canlifal.com jeton ve skor API'leriyle entegre.
 class GameCenterPage extends ConsumerWidget {
@@ -18,6 +21,8 @@ class GameCenterPage extends ConsumerWidget {
     final leaderboard = ref.watch(
       gameCenterLeaderboardProvider(LeaderboardPeriod.weekly),
     );
+    final catalog = ref.watch(gameCatalogProvider);
+    final rooms = ref.watch(gameCenterLiveRoomsProvider);
 
     return DiscoverSubPage(
       title: 'Oyun Merkezi',
@@ -99,9 +104,33 @@ class GameCenterPage extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 22),
-            const GameCenterEmptyState(
-              message:
-                  'Daha fazla oyun yakında. Okey 101 hazır — hemen oyna!',
+            const GameCenterSectionHeader(title: 'Oyun kataloğu'),
+            catalog.when(
+              loading: () => const GameCenterLoadingBody(),
+              error: (_, __) => const GameCenterEmptyState(
+                message: 'Oyun listesi yüklenemedi. Tekrar dene.',
+              ),
+              data: (items) {
+                if (items.isEmpty) {
+                  return const GameCenterEmptyState(
+                    message: 'Şu anda listelenecek oyun yok.',
+                  );
+                }
+                final roomCounts = _roomCountsByGame(rooms.valueOrNull);
+                return Column(
+                  children: [
+                    for (final game in items.take(12))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: GameCatalogCard(
+                          game: game,
+                          activeRooms: roomCounts[game.id],
+                          onTap: () => _openGame(context, ref, game),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 16),
             _LeaderboardTeaser(
@@ -111,7 +140,7 @@ class GameCenterPage extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: () => context.push('/games-hub/lobby'),
+              onPressed: () => context.push('/games-hub'),
               icon: const Icon(Icons.hub_rounded),
               label: const Text('Klasik oyun lobisi (API odaları)'),
             ),
@@ -119,6 +148,43 @@ class GameCenterPage extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Map<String, int> _roomCountsByGame(List<GameRoomItem>? rooms) {
+    if (rooms == null) return const {};
+    final counts = <String, int>{};
+    for (final room in rooms) {
+      final key = room.gameId.toLowerCase();
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  Future<void> _openGame(
+    BuildContext context,
+    WidgetRef ref,
+    GameCatalogItem game,
+  ) async {
+    final route = game.route;
+    if (route != null && route.isNotEmpty) {
+      context.push(route);
+      return;
+    }
+    try {
+      final room = await ref.read(gameRemoteProvider).createRoom(game);
+      ref.invalidate(gameRoomsProvider);
+      if (!context.mounted) return;
+      if (room != null) {
+        context.push(
+          '/games-room/${room.id}?title=${Uri.encodeComponent(room.title)}&game=${Uri.encodeComponent(game.id)}',
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Oyun başlatılamadı: $e')),
+      );
+    }
   }
 
   void _showHelp(BuildContext context) {
@@ -158,13 +224,8 @@ class _LeaderboardTeaser extends StatelessWidget {
     if (isLoading) return const GameCenterLoadingBody();
     final top = entries.take(3).toList();
     if (top.isEmpty) {
-      return GameCenterLeaderboardPreview(
-        entries: const [
-          LeaderboardEntry(id: '1', name: 'Merve', score: 28560, rank: 1),
-          LeaderboardEntry(id: '2', name: 'Yiğit', score: 22450, rank: 2),
-          LeaderboardEntry(id: '3', name: 'Ece', score: 18750, rank: 3),
-        ],
-        onSeeAll: onTap,
+      return const GameCenterEmptyState(
+        message: 'Henüz liderlik verisi yok.',
       );
     }
     return GameCenterLeaderboardPreview(entries: top, onSeeAll: onTap);

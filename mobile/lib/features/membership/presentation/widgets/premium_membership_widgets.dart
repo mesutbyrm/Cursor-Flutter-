@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../profile/presentation/widgets/jeton_store_widgets.dart';
 import '../../domain/membership_package_entity.dart';
@@ -106,18 +108,30 @@ class PremiumFeatureGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final cols = constraints.maxWidth >= 400 ? 2 : 1;
-        return GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+        const spacing = 10.0;
+        final aspect = cols == 1 ? 4.5 : 2.8;
+        final gridHeight = ListPerf.nestedGridHeight(
+          itemCount: _items.length,
           crossAxisCount: cols,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: cols == 1 ? 4.5 : 2.8,
-          children: _items
-              .map(
-                (e) => _FeatureBadge(icon: e.$1, label: e.$2),
-              )
-              .toList(),
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          childAspectRatio: aspect,
+          crossAxisExtent: constraints.maxWidth,
+        );
+        return SizedBox(
+          height: gridHeight,
+          child: GridView.count(
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: cols,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childAspectRatio: aspect,
+            children: _items
+                .map(
+                  (e) => _FeatureBadge(icon: e.$1, label: e.$2),
+                )
+                .toList(),
+          ),
         );
       },
     );
@@ -210,7 +224,9 @@ class PremiumActiveMembershipCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Zaten ${tierLabel.toUpperCase()} üyesiniz',
+                      buildMembershipActiveMembershipCardTitle(
+                        tierLabel: tierLabel,
+                      ),
                       style: TextStyle(
                         color: AppThemeColors.coinGold,
                         fontWeight: FontWeight.w900,
@@ -219,7 +235,9 @@ class PremiumActiveMembershipCard extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      '$daysRemaining gününüz kaldı — uzatmak için dokunun',
+                      buildMembershipActiveMembershipCardSubtitle(
+                        daysRemaining: daysRemaining,
+                      ),
                       style: TextStyle(
                         color: context.colors.onSurfaceVariant.withValues(alpha: 0.95),
                         fontSize: 12,
@@ -307,7 +325,9 @@ class PremiumTierCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent = accentFor(package.id);
     final active = package.isActive && (package.daysRemaining ?? 0) > 0;
-    final btnLabel = active ? 'Uzat' : 'Satın Al';
+    final btnLabel = active
+        ? buildMembershipPackageCardExtendActionLabel()
+        : buildMembershipPackageCardBuyActionLabel();
     final btnFg = package.id == 'gold' ? Colors.black87 : Colors.white;
 
     return LayoutBuilder(
@@ -328,7 +348,10 @@ class PremiumTierCard extends StatelessWidget {
             if (active) ...[
               SizedBox(height: 4),
               Text(
-                '${package.title} üyesiniz, ${package.daysRemaining ?? 0} gün kaldı, uzatın',
+                buildMembershipPackageCardActiveSubtitle(
+                  tierTitle: package.title,
+                  daysRemaining: package.daysRemaining ?? 0,
+                ),
                 style: TextStyle(
                   fontSize: 11,
                   color: accent.withValues(alpha: 0.95),
@@ -347,7 +370,7 @@ class PremiumTierCard extends StatelessWidget {
                 ),
                 _TagPill(
                   icon: Icons.diamond_rounded,
-                  label: 'VIP',
+                  label: buildMembershipPackageVipTagLabel(),
                   color: accent,
                 ),
               ],

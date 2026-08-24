@@ -1,14 +1,13 @@
-import 'package:canlifal_social/features/agora/domain/agora_channel_names.dart';
 import 'package:canlifal_social/features/voice_hub/data/datasources/chat_room_remote_datasource.dart';
-import 'package:canlifal_social/features/voice_hub/presentation/audio/voice_agora_engine.dart';
+import 'package:canlifal_social/features/voice_hub/presentation/audio/voice_trtc_engine.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ChatRoomRemoteDataSource API doc', () {
-    test('presence heartbeat interval is 12 seconds', () {
+    test('presence heartbeat interval is 15 seconds (backend SEAT_STALE_MS)', () {
       expect(
         ChatRoomRemoteDataSource.presenceHeartbeatInterval.inSeconds,
-        12,
+        15,
       );
     });
 
@@ -36,15 +35,19 @@ void main() {
     });
   });
 
-  group('VoiceAgoraEngine', () {
+  group('VoiceTrtcEngine', () {
     test('exposes microphone permission helper', () {
-      expect(VoiceAgoraEngine.requestMicrophonePermission, isNotNull);
+      expect(VoiceTrtcEngine.requestMicrophonePermission, isNotNull);
     });
 
-    test('forVoiceRoom channel matches entity trtcRoomId convention', () {
+    test('trtcRoomIdFor matches entity trtcRoomId convention', () {
       expect(
-        AgoraChannelNames.forVoiceRoom('room-abc'),
+        VoiceTrtcEngine.trtcRoomIdFor('room-abc'),
         'voice_room_room-abc',
+      );
+      expect(
+        VoiceTrtcEngine.trtcRoomIdFor('voice_room_abc'),
+        'voice_room_abc',
       );
     });
   });

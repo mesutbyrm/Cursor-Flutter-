@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -6,12 +9,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/config/env.dart';
+import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../gifts/domain/gift_revenue_display.dart';
 import '../../../../gifts/presentation/providers/gift_providers.dart';
+import '../../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../../../gifts/domain/gift_rarity.dart';
 import '../../../../gifts/domain/premium_gift_catalog_2026.dart';
+import '../../../../gifts/presentation/widgets/lucky_gift_badge.dart';
+import '../../../../gifts/presentation/widgets/lucky_gift_spin_overlay.dart';
 import '../../../../gifts/presentation/widgets/premium_2026/premium_gift_icon.dart';
 import '../../../../live/domain/entities/live_gift_catalog.dart';
 import '../../../../live/domain/entities/live_gift_event.dart';
@@ -21,7 +28,9 @@ import '../../../domain/entities/chat_room_presence.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../providers/pk_battle_remote_provider.dart';
+import '../../providers/staff_entrance_marquee_provider.dart';
 import '../../providers/voice_gift_providers.dart';
+import '../../utils/voice_gift_pk_sync.dart';
 import '../voice_room_gift_sheet.dart';
 
 /// TikTok Live — blur panel, 8 premium hediye, combo, sıralama.
@@ -37,7 +46,7 @@ class VoicePremiumGiftPanel2026 extends ConsumerStatefulWidget {
 
   final VoiceRoomEntity room;
   final VoidCallback onClose;
-  final void Function(LiveGiftEvent event) onSent;
+  final VoidCallback onSent;
   final List<ChatRoomPresence> seatedUsers;
   final ChatRoomPresence? initialReceiver;
 
@@ -55,6 +64,9 @@ class _VoicePremiumGiftPanel2026State
   bool _sending = false;
   _GiftCategory _category = _GiftCategory.all;
   ChatRoomPresence? _receiver;
+  List<LiveVideoGiftType>? _catalogSource;
+  _GiftCategory? _catalogCategory;
+  List<LiveVideoGiftType>? _displayCatalog;
 
   @override
   void initState() {
@@ -96,6 +108,20 @@ class _VoicePremiumGiftPanel2026State
     };
   }
 
+  List<LiveVideoGiftType> _displayGifts(List<LiveVideoGiftType> list) {
+    if (identical(_catalogSource, list) &&
+        _catalogCategory == _category &&
+        _displayCatalog != null) {
+      return _displayCatalog!;
+    }
+    _catalogSource = list;
+    _catalogCategory = _category;
+    _displayCatalog = _filterGifts(
+      PremiumGiftCatalog2026.sortCatalog(list, (g) => g.id),
+    );
+    return _displayCatalog!;
+  }
+
   @override
   Widget build(BuildContext context) {
     final gifts = ref.watch(voiceRoomGiftTypesProvider);
@@ -103,28 +129,15 @@ class _VoicePremiumGiftPanel2026State
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: Container(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
           height: MediaQuery.sizeOf(context).height * 0.72,
           decoration: BoxDecoration(
-            color: const Color(0xFF0C0C18).withValues(alpha: 0.98),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppThemeColors.accentPink.withValues(alpha: 0.35),
-                const Color(0xFF0C0C18).withValues(alpha: 0.97),
-              ],
-            ),
+            color: Colors.black.withValues(alpha: 0.52),
             border: Border(
-              top: BorderSide(color: AppThemeColors.accentPink.withValues(alpha: 0.55)),
+              top: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: AppThemeColors.accentPurple.withValues(alpha: 0.3),
-                blurRadius: 36,
-                offset: const Offset(0, -10),
-              ),
-            ],
           ),
           child: Column(
             children: [
@@ -233,11 +246,7 @@ class _VoicePremiumGiftPanel2026State
                     child: Text(ApiException.userMessage(e)),
                   ),
                   data: (list) {
-                    final sorted = PremiumGiftCatalog2026.sortCatalog(
-                      list,
-                      (g) => g.id,
-                    );
-                    final filtered = _filterGifts(sorted);
+                    final filtered = _displayGifts(list);
                     return _GiftsTab(
                       gifts: filtered,
                       selected: _selected,
@@ -253,6 +262,7 @@ class _VoicePremiumGiftPanel2026State
             ],
           ),
         ),
+      ),
     ).animate().slideY(begin: 1, end: 0, duration: 360.ms, curve: Curves.easeOutCubic);
   }
 
@@ -270,10 +280,12 @@ class _VoicePremiumGiftPanel2026State
       final receiverIsOwner =
           ownerId.isNotEmpty && receiver.id.trim() == ownerId;
       // PK aktifse: battleId ile gönder → alıcı katılımcının skoru otomatik artar.
-      final activePk = ref.read(pkBattleRemoteProvider);
+      final activePk = ref.read(pkBattleForRoomProvider(widget.room));
       final pkBattleId =
-          (activePk != null && activePk.isActive) ? activePk.id : null;
-      final result = await ref.read(chatRoomGiftsRemoteProvider).sendGift(
+          (activePk != null && activePk.isActive) ? activePk.effectiveId : null;
+      final result = await ref
+          .read(chatRoomGiftsRemoteProvider)
+          .sendGift(
             roomId: roomKey,
             giftTypeId: g.id,
             quantity: _qty,
@@ -281,51 +293,86 @@ class _VoicePremiumGiftPanel2026State
             receiverName: receiver.displayName,
             receiverId: receiver.id,
             battleId: pkBattleId,
+            isLucky: g.isLucky,
+          )
+          .timeout(const Duration(seconds: 25));
+      if (result.luckyResult != null) {
+        final lucky = result.luckyResult!;
+        ref.refreshWalletCache(force: true);
+        if (mounted) {
+          widget.onClose();
+          await showLuckyGiftSpinOverlay(
+            context,
+            result: lucky,
+            giftName: PremiumGiftCatalog2026.displayName(
+              g.id,
+              fallback: LiveGiftCatalog.displayName(g),
+            ),
           );
-      final gross = g.price * _qty;
-      final revenue = result.revenue;
-      await ref.read(giftSoundServiceProvider).playFor(g.toEntity());
-      final raw = LiveGiftEvent(
-        id: 'local-${DateTime.now().microsecondsSinceEpoch}',
-        senderId: user?.id,
-        receiverId: receiver.id,
-        senderName: user?.display ?? 'Sen',
-        receiverName: receiver.displayName,
-        giftId: g.id,
-        giftName: PremiumGiftCatalog2026.displayName(
-          g.id,
-          fallback: LiveGiftCatalog.displayName(g),
-        ),
-        quantity: _qty,
-        coinCost: gross,
-        timestamp: DateTime.now(),
-        combo: 1,
-        rarity: PremiumGiftCatalog2026.rarity(g.id),
-      );
-      ref.refreshWalletCache(force: true);
-      ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier).refresh();
-      if (mounted) {
-        widget.onSent(raw);
-        widget.onClose();
-        final myId = user?.id.trim() ?? '';
-        final receiverNet = GiftRevenueDisplay.voiceReceiverNet(
-          gross: gross,
-          receiverIsOwner: receiverIsOwner,
-          revenue: revenue,
-        );
-        var msg = '${raw.giftName} x$_qty gönderildi ($gross jeton)';
-        if (myId.isNotEmpty && myId == receiver.id.trim()) {
-          msg = '${raw.giftName} aldınız — size $receiverNet jeton kaldı';
+          if (lucky.isJackpot) {
+            ref.read(staffEntranceMarqueeProvider.notifier).enqueueLuckyJackpot(
+                  userName: user?.display ?? 'Sen',
+                  giftName: PremiumGiftCatalog2026.displayName(
+                    g.id,
+                    fallback: LiveGiftCatalog.displayName(g),
+                  ),
+                  multiplier: lucky.multiplier.round(),
+                  wonJetons: lucky.wonJetons,
+                );
+          }
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
+        return;
+      }
+      final gross = result.spentAmount ??
+          result.giftEvent?.jetonAmount ??
+          (g.price * _qty);
+      final revenue = result.revenue;
+      GiftSyncLog.giftSent(
+        roomId: roomKey,
+        giftId: g.id,
+        eventId: result.transactionId ??
+            result.giftEvent?.id ??
+            'api_send_${DateTime.now().millisecondsSinceEpoch}',
+      );
+      applyVoiceGiftSendSideEffects(
+        ref: ref,
+        roomKey: roomKey,
+        result: result,
+      );
+      if (result.newBalance != null) {
+        ref.invalidate(walletBalancesProvider);
+      } else {
+        ref.refreshWalletCache(force: true);
+      }
+      if (mounted) {
+        final messenger = ScaffoldMessenger.maybeOf(context);
+        widget.onClose();
+        scheduleMicrotask(() {
+          widget.onSent();
+          final myId = user?.id.trim() ?? '';
+          final receiverNet = GiftRevenueDisplay.voiceReceiverNet(
+            gross: gross,
+            receiverIsOwner: receiverIsOwner,
+            revenue: revenue,
+          );
+          final giftLabel = PremiumGiftCatalog2026.displayName(
+            g.id,
+            fallback: LiveGiftCatalog.displayName(g),
+          );
+          var msg = '$giftLabel x$_qty gönderildi ($gross jeton)';
+          if (myId.isNotEmpty && myId == receiver.id.trim()) {
+            msg =
+                '$giftLabel aldınız — size $receiverNet jeton kaldı';
+          }
+          messenger?.showSnackBar(SnackBar(content: Text(msg)));
+        });
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
+        final msg = e is TimeoutException
+            ? 'Hediye gönderimi zaman aşımına uğradı. Tekrar deneyin.'
+            : ApiException.userMessage(e);
+        showJetonAwareError(context, msg, ref: ref);
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -460,6 +507,7 @@ class _PremiumGiftTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = gift.iconUrl(Env.siteOrigin);
+    final emoji = gift.displayEmoji;
     final rarity = PremiumGiftCatalog2026.rarity(gift.id);
     final glow = rarity.glowColor;
     final name = PremiumGiftCatalog2026.displayName(
@@ -492,13 +540,21 @@ class _PremiumGiftTile extends StatelessWidget {
         ),
         child: Column(
           children: [
-            _RarityBadge(rarity: rarity),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _RarityBadge(rarity: rarity),
+                if (gift.isLucky) const LuckyGiftBadge(compact: true),
+              ],
+            ),
             const SizedBox(height: 4),
             SizedBox(
               height: 52,
-              child: url.isEmpty
-                  ? PremiumGiftIcon(giftId: canonical, size: 48, animate: selected)
-                  : CanlifalNetworkImage(url: url, fit: BoxFit.contain),
+              child: emoji != null
+                  ? Text(emoji, style: const TextStyle(fontSize: 44))
+                  : url.isEmpty
+                      ? PremiumGiftIcon(giftId: canonical, size: 48, animate: selected)
+                      : CanlifalNetworkImage(url: url, fit: BoxFit.contain),
             ),
             Text(
               name,

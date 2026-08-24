@@ -1,16 +1,13 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
-import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../domain/gift_rarity.dart';
 import '../../../domain/premium_gift_catalog_2026.dart';
 import '../../../../live/domain/entities/live_gift_event.dart';
 import '../../../../live/presentation/gifts/widgets/floating_gift_particles.dart';
-import '../gift_animation_player.dart';
-import 'gift_coin_burst_overlay.dart';
+import '../gift_stage_layout.dart';
 
 /// Hediye tam ekran animasyonu — hata sesli odayı çökertmesin.
 class SafePremiumGiftFullscreenOverlay extends StatelessWidget {
@@ -18,10 +15,14 @@ class SafePremiumGiftFullscreenOverlay extends StatelessWidget {
     super.key,
     this.event,
     this.onDismissed,
+    this.stageContext = GiftStageContext.voiceRoom,
+    this.lightweight = false,
   });
 
   final LiveGiftEvent? event;
   final VoidCallback? onDismissed;
+  final GiftStageContext stageContext;
+  final bool lightweight;
 
   @override
   Widget build(BuildContext context) {
@@ -31,21 +32,27 @@ class SafePremiumGiftFullscreenOverlay extends StatelessWidget {
         key: ValueKey('gift-fs-${event!.id}'),
         event: event,
         onDismissed: onDismissed,
+        stageContext: stageContext,
+        lightweight: lightweight,
       ),
     );
   }
 }
 
-/// TikTok Live — tam ekran hediye + combo + neon + parçacık + jeton.
+/// Koltuk altı ↔ mesaj alanı — büyük hediye, yalnızca gönderen → alıcı etiketi.
 class PremiumGiftFullscreenOverlay extends StatefulWidget {
   const PremiumGiftFullscreenOverlay({
     super.key,
     this.event,
     this.onDismissed,
+    this.stageContext = GiftStageContext.voiceRoom,
+    this.lightweight = false,
   });
 
   final LiveGiftEvent? event;
   final VoidCallback? onDismissed;
+  final GiftStageContext stageContext;
+  final bool lightweight;
 
   @override
   State<PremiumGiftFullscreenOverlay> createState() =>
@@ -55,18 +62,22 @@ class PremiumGiftFullscreenOverlay extends StatefulWidget {
 class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverlay>
     with TickerProviderStateMixin {
   final _particlesKey = GlobalKey<FloatingGiftParticlesState>();
-  final _coinKey = GlobalKey<GiftCoinBurstOverlayState>();
-  late AnimationController _glowCtrl;
-  AnimationController? _flashCtrl;
-  Animation<double>? _flashAnim;
+  AnimationController? _glowCtrl;
 
   @override
   void initState() {
     super.initState();
-    _glowCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2400),
-    )..repeat();
+    if (!widget.lightweight) {
+      _glowCtrl = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 2400),
+      )..repeat();
+    }
+    if (widget.event != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.event != null) _triggerEffects(widget.event!);
+      });
+    }
   }
 
   @override
@@ -80,32 +91,15 @@ class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverl
   }
 
   void _triggerEffects(LiveGiftEvent e) {
+    if (widget.lightweight) return;
     final emoji = PremiumGiftCatalog2026.emoji(e.giftId);
-    final rarity = PremiumGiftCatalog2026.rarity(e.giftId);
-    final comboBonus = (e.coinCost * e.quantity ~/ 50).clamp(0, 20);
-    _particlesKey.currentState?.burst(emoji, count: 10 + comboBonus);
-    _coinKey.currentState?.burst(count: 8 + (e.coinCost ~/ 50).clamp(0, 16));
-
-    // Epic+ hediyeler için ekran flaşı
-    if (rarity.index >= GiftRarity.epic.index) {
-      _flashCtrl?.dispose();
-      _flashCtrl = AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 600),
-      );
-      _flashAnim = TweenSequence<double>([
-        TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.55), weight: 30),
-        TweenSequenceItem(tween: Tween(begin: 0.55, end: 0.0), weight: 70),
-      ]).animate(CurvedAnimation(parent: _flashCtrl!, curve: Curves.easeOut));
-      _flashCtrl!.forward();
-      setState(() {});
-    }
+    final comboBonus = (e.jetonAmount ~/ 50).clamp(0, 12);
+    _particlesKey.currentState?.burst(emoji, count: 8 + comboBonus);
   }
 
   @override
   void dispose() {
-    _glowCtrl.dispose();
-    _flashCtrl?.dispose();
+    _glowCtrl?.dispose();
     super.dispose();
   }
 
@@ -116,80 +110,52 @@ class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverl
 
     final rarity = PremiumGiftCatalog2026.rarity(e.giftId);
     final glow = rarity.glowColor;
-    final emojis = [
-      PremiumGiftCatalog2026.emoji(e.giftId),
-      '✨',
-      '💖',
-      '⭐',
-    ];
 
     return IgnorePointer(
       child: Stack(
-        fit: StackFit.expand,
+        clipBehavior: Clip.none,
         children: [
-          AnimatedBuilder(
-            animation: _glowCtrl,
-            builder: (context, _) {
-              return CustomPaint(
-                painter: _NeonVignettePainter(
-                  phase: _glowCtrl.value,
-                  glow: glow,
-                ),
-                size: Size.infinite,
-              );
-            },
-          ),
-          Container(color: Colors.black.withValues(alpha: 0.48))
-              .animate(key: ValueKey(e.id))
-              .fadeIn(duration: 200.ms),
-          FloatingGiftParticles(
-            key: _particlesKey,
-            emojis: emojis,
-            spawnFromGiftId: e.giftId,
-          ),
-          GiftCoinBurstOverlay(key: _coinKey, active: true),
-          if (_flashAnim != null)
-            AnimatedBuilder(
-              animation: _flashAnim!,
-              builder: (_, __) => IgnorePointer(
-                child: Container(
-                  color: glow.withValues(alpha: _flashAnim!.value),
-                ),
-              ),
-            ),
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+          GiftStageBand(
+            stage: widget.stageContext,
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                _GlowTrailRing(glow: glow, animation: _glowCtrl),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: 260,
-                  height: 260,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: AppThemeColors.glowShadow(glow, blur: 48),
+                if (!widget.lightweight && _glowCtrl != null)
+                  AnimatedBuilder(
+                    animation: _glowCtrl!,
+                    builder: (context, _) {
+                      return CustomPaint(
+                        painter: _StageGlowPainter(
+                          phase: _glowCtrl!.value,
+                          glow: glow,
                         ),
-                        child: _GiftHero(giftId: e.giftId, event: e),
-                      ),
-                    ],
+                        size: Size.infinite,
+                      );
+                    },
                   ),
+                if (!widget.lightweight)
+                  FloatingGiftParticles(
+                    key: _particlesKey,
+                    emojis: [PremiumGiftCatalog2026.emoji(e.giftId), '✨'],
+                    spawnFromGiftId: e.giftId,
+                  ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final size = GiftStageMetrics.giftSizeFor(constraints);
+                    return GiftStageLargeDisplay(
+                      event: e,
+                      giftSize: size,
+                      showBackdrop: true,
+                    );
+                  },
                 ),
-                const SizedBox(height: 12),
-                _JetonBadge(jeton: e.coinCost * e.quantity, glow: glow),
-                const SizedBox(height: 14),
-                _SenderBanner(event: e, glow: glow),
               ],
             ),
           )
-              .animate(key: ValueKey('hero-${e.id}'))
-              .fadeIn(duration: 280.ms)
+              .animate(key: ValueKey('gift-stage-${e.id}'))
+              .fadeIn(duration: 220.ms)
               .scale(
-                begin: const Offset(0.6, 0.6),
+                begin: const Offset(0.88, 0.88),
                 end: const Offset(1, 1),
                 curve: Curves.easeOutBack,
               ),
@@ -199,148 +165,8 @@ class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverl
   }
 }
 
-class _GiftHero extends StatelessWidget {
-  const _GiftHero({required this.giftId, required this.event});
-
-  final String giftId;
-  final LiveGiftEvent event;
-
-  @override
-  Widget build(BuildContext context) {
-    return GiftAnimationPlayer(
-      giftId: giftId,
-      event: event,
-      size: 220,
-      preferPremiumVisual: true,
-    );
-  }
-}
-
-class _JetonBadge extends StatelessWidget {
-  const _JetonBadge({required this.jeton, required this.glow});
-
-  final int jeton;
-  final Color glow;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            glow.withValues(alpha: 0.5),
-            AppThemeColors.accentPink.withValues(alpha: 0.35),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppThemeColors.coinGold.withValues(alpha: 0.7), width: 2),
-        boxShadow: AppThemeColors.glowShadow(AppThemeColors.coinGold, blur: 20),
-      ),
-      child: Text(
-        '$jeton jeton',
-        style: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 1.2,
-          foreground: Paint()
-            ..shader = context.colors.brandGradient.createShader(
-              const Rect.fromLTWH(0, 0, 200, 44),
-            ),
-          shadows: [Shadow(color: glow.withValues(alpha: 0.9), blurRadius: 18)],
-        ),
-      ),
-    )
-        .animate()
-        .scale(
-          begin: const Offset(0.3, 0.3),
-          end: const Offset(1, 1),
-          duration: 500.ms,
-          curve: Curves.elasticOut,
-        )
-        .shimmer(duration: 1200.ms, color: Colors.white24);
-  }
-}
-
-class _SenderBanner extends StatelessWidget {
-  const _SenderBanner({required this.event, required this.glow});
-
-  final LiveGiftEvent event;
-  final Color glow;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: glow.withValues(alpha: 0.55)),
-        boxShadow: AppThemeColors.glowShadow(glow, blur: 14),
-      ),
-      child: Text(
-        event.notificationText,
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-      ),
-    );
-  }
-}
-
-class _GlowTrailRing extends StatelessWidget {
-  const _GlowTrailRing({required this.glow, required this.animation});
-
-  final Color glow;
-  final Animation<double> animation;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, _) {
-        return CustomPaint(
-          size: const Size(280, 280),
-          painter: _GlowRingPainter(phase: animation.value, glow: glow),
-        );
-      },
-    );
-  }
-}
-
-class _GlowRingPainter extends CustomPainter {
-  _GlowRingPainter({required this.phase, required this.glow});
-
-  final double phase;
-  final Color glow;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final c = Offset(size.width / 2, size.height / 2);
-    final r = size.width * 0.42;
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..shader = SweepGradient(
-        startAngle: phase * pi * 2,
-        colors: [
-          glow.withValues(alpha: 0.05),
-          glow,
-          AppThemeColors.accentPink,
-          glow.withValues(alpha: 0.05),
-        ],
-      ).createShader(Rect.fromCircle(center: c, radius: r))
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-    canvas.drawCircle(c, r, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _GlowRingPainter old) =>
-      old.phase != phase || old.glow != glow;
-}
-
-class _NeonVignettePainter extends CustomPainter {
-  _NeonVignettePainter({required this.phase, required this.glow});
+class _StageGlowPainter extends CustomPainter {
+  _StageGlowPainter({required this.phase, required this.glow});
 
   final double phase;
   final Color glow;
@@ -353,13 +179,12 @@ class _NeonVignettePainter extends CustomPainter {
       Paint()
         ..shader = RadialGradient(
           center: Alignment(
-            -0.3 + sin(phase * pi * 2) * 0.2,
-            -0.2 + cos(phase * pi * 2) * 0.15,
+            -0.2 + sin(phase * pi * 2) * 0.15,
+            0.1 + cos(phase * pi * 2) * 0.1,
           ),
-          radius: 1.1,
+          radius: 1.0,
           colors: [
-            glow.withValues(alpha: 0.22),
-            AppThemeColors.accentPurple.withValues(alpha: 0.12),
+            glow.withValues(alpha: 0.18),
             Colors.transparent,
           ],
         ).createShader(rect),
@@ -367,6 +192,6 @@ class _NeonVignettePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _NeonVignettePainter old) =>
+  bool shouldRepaint(covariant _StageGlowPainter old) =>
       old.phase != phase || old.glow != glow;
 }

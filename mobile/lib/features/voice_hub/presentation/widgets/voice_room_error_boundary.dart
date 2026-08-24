@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +7,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/widgets/discover/discover_empty_state.dart';
 import '../../data/services/voice_room_debug_log.dart';
+import '../providers/chat_room_providers.dart';
+import '../utils/voice_room_leave_flow.dart';
 import '../providers/voice_room_diagnostic_provider.dart';
 import '../theme/voice_room_tokens.dart';
 
@@ -59,6 +63,23 @@ class _VoiceRoomErrorBoundaryState extends ConsumerState<VoiceRoomErrorBoundary>
     return VoiceRoomInlineError(message: message, compact: true);
   }
 
+  Future<void> _leaveAndNavigate() async {
+    final key = widget.roomId.trim();
+    if (key.isNotEmpty) {
+      try {
+        await ref
+            .read(voiceRoomLiveProvider(key).notifier)
+            .leaveRoomSession(
+              source: 'error_boundary_leave',
+              awaitBackend: true,
+              force: true,
+            )
+            .timeout(const Duration(seconds: 8));
+      } catch (_) {}
+    }
+    VoiceRoomLeaveFlow.navigateAwayFromRoom(context: context);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_capturedError != null) {
@@ -70,7 +91,7 @@ class _VoiceRoomErrorBoundaryState extends ConsumerState<VoiceRoomErrorBoundary>
           ref.read(voiceRoomDiagnosticProvider.notifier).setUiBuildError(null);
           setState(() => _capturedError = null);
         },
-        onLeave: () => context.go('/voice-rooms'),
+        onLeave: () => unawaited(_leaveAndNavigate()),
       );
     }
     return widget.child;
@@ -230,7 +251,7 @@ class VoiceRoomDiagnosticCard extends StatelessWidget {
           _row('JWT', state.hasJwt ? 'gönderildi' : 'yok'),
           _row('Presence', state.presenceJoined ? '${state.presenceCount} kişi' : 'hayır'),
           _row('SSE', state.sseConnected ? 'bağlı' : 'bekliyor'),
-          _row('Socket', state.socketConnected ? 'bağlı' : 'bekliyor'),
+          _row('Hediye sync', state.socketConnected ? 'aktif' : 'bekliyor'),
           _row(
             'TRTC',
             state.trtcEntered

@@ -18,7 +18,7 @@ class ShortsFeedPlaceholderTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final video = entry.video;
-    final thumb = video?.thumbnailUrl;
+    final thumb = video?.displayThumbnailUrl;
     Widget body = ColoredBox(
       color: Colors.black,
       child: thumb != null && thumb.isNotEmpty

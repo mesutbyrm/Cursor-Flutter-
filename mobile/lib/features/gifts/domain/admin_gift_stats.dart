@@ -27,7 +27,7 @@ class AdminGiftRankRow {
   final String? iconUrl;
 }
 
-/// Hediye istatistikleri — `/api/admin/gifts/statistics`.
+/// Hediye istatistikleri — `GET /api/admin/gifts/stats`.
 class AdminGiftStats {
   const AdminGiftStats({
     this.totalGifts = 0,

@@ -8,6 +8,7 @@ import '../../../../gifts/presentation/widgets/supporter_badge_pill.dart';
 import '../../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../profile_screen_state.dart';
+import '../profile_membership_helpers.dart';
 import '../profile_theme.dart';
 
 /// Kapak, avatar rozetleri, üst aksiyonlar ve isim bloğu.
@@ -29,6 +30,10 @@ class ProfileHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = state.user;
     final level = state.level.level;
+    final membershipInfo = resolveProfileMembership(
+      rawMembership: state.membership,
+      daysRemaining: state.membershipDays,
+    );
 
     return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -79,6 +84,9 @@ class ProfileHeader extends ConsumerWidget {
               url: user.avatarUrl,
               level: level,
               isVip: state.isVip,
+              vipBadgeLabel: buildMembershipProfileHeaderVipBadgeLabel(
+                info: membershipInfo,
+              ),
               isBroadcaster: state.liveStreams > 0,
               isVerified: user.isVerified,
               onTap: onAvatarTap ?? onEdit,
@@ -165,6 +173,7 @@ class _AvatarWithBadges extends StatelessWidget {
     required this.url,
     required this.level,
     required this.isVip,
+    required this.vipBadgeLabel,
     required this.isBroadcaster,
     required this.isVerified,
     this.onTap,
@@ -173,6 +182,7 @@ class _AvatarWithBadges extends StatelessWidget {
   final String? url;
   final int level;
   final bool isVip;
+  final String vipBadgeLabel;
   final bool isBroadcaster;
   final bool isVerified;
   final VoidCallback? onTap;
@@ -233,7 +243,7 @@ class _AvatarWithBadges extends StatelessWidget {
             Positioned(
               right: -2,
               top: -2,
-              child: _BadgePill('VIP', const Color(0xFFFFD54F)),
+              child: _BadgePill(vipBadgeLabel, const Color(0xFFFFD54F)),
             ),
         ],
       ),

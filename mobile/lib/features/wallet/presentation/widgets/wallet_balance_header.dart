@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../membership/presentation/controllers/membership_controller.dart';
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../../core/widgets/dual_balance_chips.dart';
 
 /// CFC + Jeton + kısa yönlendirme — CFC yükle / Premium üyelik.
-class WalletBalanceHeader extends StatelessWidget {
+class WalletBalanceHeader extends ConsumerWidget {
   const WalletBalanceHeader({
     super.key,
     required this.jeton,
     required this.cfc,
     this.membership,
     this.daysRemaining,
+    this.membershipExpiresAt,
     this.showQuickLinks = true,
   });
 
@@ -20,12 +24,29 @@ class WalletBalanceHeader extends StatelessWidget {
   final int cfc;
   final String? membership;
   final int? daysRemaining;
+  final String? membershipExpiresAt;
   final bool showQuickLinks;
 
   @override
-  Widget build(BuildContext context) {
-    final tier = membership?.toLowerCase() ?? 'basic';
-    final isGold = tier == 'gold' && (daysRemaining ?? 0) > 0;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final info = resolveProfileMembership(
+      rawMembership: membership,
+      daysRemaining: daysRemaining,
+    );
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(info, ui.tiers);
+    final showMembershipBanner = shouldShowMembershipWalletActiveBanner(
+      info: info,
+      daysRemaining: daysRemaining,
+      expiresAt: membershipExpiresAt,
+    );
+    final activeBannerText = buildMembershipWalletActiveBannerText(
+      info: info,
+      catalogTier: catalogTier,
+      daysRemaining: daysRemaining,
+      expiresAt: membershipExpiresAt,
+    );
+    final showExpiredBanner = info.isExpired;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -34,7 +55,7 @@ class WalletBalanceHeader extends StatelessWidget {
           children: [
             Expanded(
               child: _BalanceLine(
-                label: 'Jeton Bakiyeniz',
+                label: buildMembershipWalletJetonBalanceHeaderLabel(),
                 value: '$jeton',
                 color: AppThemeColors.coinGold,
               ),
@@ -42,7 +63,7 @@ class WalletBalanceHeader extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _BalanceLine(
-                label: 'CFC Bakiyeniz',
+                label: buildMembershipWalletCfcBalanceHeaderLabel(),
                 value: '$cfc',
                 color: AppThemeColors.diamondBlue,
               ),
@@ -51,37 +72,89 @@ class WalletBalanceHeader extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         DualBalanceChips(jeton: jeton, cfc: cfc),
-        if (isGold) ...[
+        if (showMembershipBanner) ...[
           const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => context.push('/premium-membership'),
               borderRadius: BorderRadius.circular(14),
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFFFFD54F).withValues(alpha: 0.35),
-                  const Color(0xFFB8860B).withValues(alpha: 0.2),
-                ],
-              ),
-              border: Border.all(
-                color: const Color(0xFFFFD54F).withValues(alpha: 0.6),
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.workspace_premium_rounded,
-                    color: Color(0xFFFFD54F), size: 22),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'GOLD ÜYESİNİZ — $daysRemaining gün kaldı, uzatın',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                    ),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFFFD54F).withValues(alpha: 0.35),
+                      const Color(0xFFB8860B).withValues(alpha: 0.2),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: const Color(0xFFFFD54F).withValues(alpha: 0.6),
                   ),
                 ),
-              ],
+                child: Row(
+                  children: [
+                    const Icon(Icons.workspace_premium_rounded,
+                        color: Color(0xFFFFD54F), size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        activeBannerText,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, size: 18),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+        if (showExpiredBanner) ...[
+          const SizedBox(height: 12),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => context.push('/premium-membership'),
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  color: const Color(0xFF4A3050).withValues(alpha: 0.55),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.timer_off_rounded,
+                        color: Colors.white70, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        buildMembershipExpiredBannerText(
+                          info: info,
+                          expiresAt: membershipExpiresAt,
+                        ),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded,
+                        color: Colors.white54, size: 18),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -92,7 +165,7 @@ class WalletBalanceHeader extends StatelessWidget {
               Expanded(
                 child: _QuickLink(
                   icon: Icons.diamond_rounded,
-                  label: 'CFC Yükle',
+                  label: buildMembershipWalletCenterCfcStoreTitle(),
                   color: AppThemeColors.diamondBlue,
                   onTap: () => context.push('/cfc-store'),
                 ),
@@ -101,7 +174,7 @@ class WalletBalanceHeader extends StatelessWidget {
               Expanded(
                 child: _QuickLink(
                   icon: Icons.monetization_on_rounded,
-                  label: 'Jeton',
+                  label: buildMembershipCurrencyJetonLabel(),
                   color: AppThemeColors.coinGold,
                   onTap: () => context.push('/jeton-store'),
                 ),
@@ -110,7 +183,7 @@ class WalletBalanceHeader extends StatelessWidget {
               Expanded(
                 child: _QuickLink(
                   icon: Icons.workspace_premium_rounded,
-                  label: 'Üyelik',
+                  label: buildMembershipWalletQuickLinkLabel(info: info),
                   color: const Color(0xFFFFD54F),
                   onTap: () => context.push('/premium-membership'),
                 ),

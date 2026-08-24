@@ -13,7 +13,7 @@ import 'session_gift_summary.dart';
 /// Oturum sonu hediye özeti — mevcut provider verilerinden üretilir.
 abstract final class SessionGiftSummaryBuilder {
   static SessionGiftSummary forLiveBroadcast({
-    required WidgetRef ref,
+    required dynamic ref,
     required String streamId,
     required String hostUserId,
     required String hostDisplayName,
@@ -29,7 +29,9 @@ abstract final class SessionGiftSummaryBuilder {
     final grid = ref.read(liveGuestGridProvider);
     for (final slot in grid.slots) {
       if (!slot.isHost && slot.jetonEarned > 0) {
-        guestNet += slot.jetonEarned;
+        guestNet += (slot.jetonEarned is int
+            ? slot.jetonEarned as int
+            : (slot.jetonEarned as num).round());
       }
     }
 
@@ -39,7 +41,9 @@ abstract final class SessionGiftSummaryBuilder {
     if (!isHost && myId.isNotEmpty) {
       for (final slot in grid.slots) {
         if (slot.userId == myId && slot.jetonEarned > 0) {
-          myNet += slot.jetonEarned;
+          myNet += (slot.jetonEarned is int
+              ? slot.jetonEarned as int
+              : (slot.jetonEarned as num).round());
         }
       }
     }
@@ -66,7 +70,7 @@ abstract final class SessionGiftSummaryBuilder {
   }
 
   static SessionGiftSummary forVoiceRoom({
-    required WidgetRef ref,
+    required dynamic ref,
     required String roomTitle,
     required String? ownerUserId,
     required String? ownerDisplayName,
@@ -83,30 +87,28 @@ abstract final class SessionGiftSummaryBuilder {
     final myId = myUserId?.trim() ?? '';
     final myName = myDisplayName?.trim() ?? '';
 
-    var ownerGross = 0;
-    if (ownerId.isNotEmpty) {
-      ownerGross = seatTotals[VoiceSeatGiftTotals.idKey(ownerId)]?.totalCoins ?? 0;
-    }
-    if (ownerGross == 0 && ownerName.isNotEmpty) {
-      ownerGross =
-          seatTotals[VoiceSeatGiftTotals.nameKey(ownerName)]?.totalCoins ?? 0;
-    }
+    var ownerNet = 0;
+    var guestNet = 0;
 
-    var guestGross = 0;
     for (final entry in seatTotals.entries) {
       final agg = entry.value;
-      if (ownerId.isNotEmpty && entry.key == VoiceSeatGiftTotals.idKey(ownerId)) {
-        continue;
+      final gross = agg.totalCoins;
+      if (gross <= 0) continue;
+      final isOwnerSeat = (ownerId.isNotEmpty &&
+              entry.key == VoiceSeatGiftTotals.idKey(ownerId)) ||
+          (ownerName.isNotEmpty &&
+              entry.key == VoiceSeatGiftTotals.nameKey(ownerName));
+      final split = GiftRevenueDisplay.estimateVoiceGift(
+        gross: gross,
+        receiverIsOwner: isOwnerSeat,
+      );
+      if (isOwnerSeat) {
+        ownerNet += split.receiverNet;
+      } else {
+        guestNet += split.receiverNet;
+        ownerNet += split.ownerNet;
       }
-      if (ownerName.isNotEmpty &&
-          entry.key == VoiceSeatGiftTotals.nameKey(ownerName)) {
-        continue;
-      }
-      guestGross += agg.totalCoins;
     }
-
-    final ownerNet = GiftRevenueDisplay.liveBroadcasterNet(ownerGross);
-    final guestNet = GiftRevenueDisplay.liveBroadcasterNet(guestGross);
 
     final isOwner = myId.isNotEmpty && myId == ownerId;
     var myNet = 0;
@@ -118,7 +120,10 @@ abstract final class SessionGiftSummaryBuilder {
             displayName: myName.isNotEmpty ? myName : null,
           );
       if (mine != null && mine.totalCoins > 0) {
-        myNet = GiftRevenueDisplay.liveBroadcasterNet(mine.totalCoins);
+        myNet = GiftRevenueDisplay.estimateVoiceGift(
+          gross: mine.totalCoins,
+          receiverIsOwner: false,
+        ).receiverNet;
       }
     }
 
@@ -144,7 +149,7 @@ abstract final class SessionGiftSummaryBuilder {
   }
 
   /// Alıcı veya yayıncı odadan çıkınca cüzdanı yenile.
-  static Future<void> refreshWalletIfRecipient(WidgetRef ref, SessionGiftSummary s) async {
+  static Future<void> refreshWalletIfRecipient(dynamic ref, SessionGiftSummary s) async {
     if (s.myNetJeton > 0 || s.recipientOnly) {
       await ref.refreshWalletCache(force: true);
     }

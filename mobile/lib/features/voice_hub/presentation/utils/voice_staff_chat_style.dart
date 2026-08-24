@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/auth/voice_staff_rank.dart';
+import '../../../vip_gold/domain/vip_tier.dart';
 import '../../domain/entities/chat_room_message.dart';
+import '../../domain/voice_official_join.dart';
 import '../theme/voice_room_tokens.dart';
 
 /// Faz 8 — yetkili sohbet renkleri ve neon metin.
@@ -31,6 +33,19 @@ abstract final class VoiceStaffChatStyle {
     final rank = rankOf(user);
     return VoiceStaffRankParser.powerLevel(rank) >=
         VoiceStaffRankParser.powerLevel(VoiceStaffRank.voice);
+  }
+
+  /// Gold üyeler ve admin nick — tüm sohbetlerde şekilli profil/yazı.
+  static bool isGoldOrAdminChatUser(ChatRoomUserRef? user) {
+    if (user == null) return false;
+    final tier = VipTier.fromMembership(user.membership);
+    if (tier.index >= VipTier.gold.index) return true;
+    final nick = user.nickname ?? user.name;
+    if (VoiceStaffRankParser.fromUsername(nick) != VoiceStaffRank.none) {
+      return true;
+    }
+    final role = user.chatRole?.toLowerCase() ?? '';
+    return role == 'admin' || role == 'superadmin';
   }
 
   static VoiceStaffRank rankOf(ChatRoomUserRef? user) {
@@ -85,33 +100,76 @@ abstract final class VoiceStaffChatStyle {
   /// Faz 9 — koltuk altı giriş animasyonu metni: «👑 Admin Mesut odaya giriş yaptı».
   static String entryRoleLabel(ChatRoomUserRef? user) {
     if (user?.chatRole == 'dj') return 'DJ';
+    final membership = user?.membership?.toLowerCase() ?? '';
+    if (membership.contains('diamond')) return 'Diamond Üye';
+    if (membership.contains('premium')) return 'Premium Üye';
+    if (membership.contains('gold') || membership.contains('vip')) {
+      return 'Gold Üye';
+    }
     return switch (rankOf(user)) {
       VoiceStaffRank.admin => 'Admin',
       VoiceStaffRank.founder => 'Kurucu',
-      VoiceStaffRank.sop => 'SOP',
-      VoiceStaffRank.op => 'Mod',
-      VoiceStaffRank.voice => 'Voice',
+      VoiceStaffRank.sop => 'Destek',
+      VoiceStaffRank.op => 'Moderatör',
+      VoiceStaffRank.voice => 'Yetkili',
       VoiceStaffRank.none => 'Yetkili',
     };
   }
 
   static String entryEmoji(ChatRoomUserRef? user) {
     if (user?.chatRole == 'dj') return '🎧';
+    final membership = user?.membership?.toLowerCase() ?? '';
+    if (membership.contains('diamond')) return '💎';
+    if (membership.contains('premium')) return '⭐';
+    if (membership.contains('gold') || membership.contains('vip')) return '👑';
     return switch (rankOf(user)) {
-      VoiceStaffRank.admin => '👑',
-      VoiceStaffRank.founder => '🏛️',
-      VoiceStaffRank.sop => '⭐',
+      VoiceStaffRank.admin => '🛡️',
+      VoiceStaffRank.founder => '🎉',
+      VoiceStaffRank.sop => '💬',
       VoiceStaffRank.op => '🛡️',
       VoiceStaffRank.voice => '🎤',
       VoiceStaffRank.none => '✨',
     };
   }
 
+  /// Web parity — bölüm bazlı giriş duyurusu.
+  static String formatTierEntranceLine({
+    required String displayName,
+    ChatRoomUserRef? user,
+    String section = 'sesli odaya',
+  }) {
+    final name = displayName.trim().isEmpty ? 'Kullanıcı' : displayName.trim();
+    final emoji = entryEmoji(user);
+    final role = entryRoleLabel(user);
+    final sectionLabel = switch (section) {
+      'canlı yayına' => 'canlı yayına katıldı',
+      'fal bölümüne' => 'fal bölümüne giriş yaptı',
+      'sosyal paylaşımlara' => 'sosyal paylaşımlara giriş yaptı',
+      _ => 'sesli odaya giriş yaptı',
+    };
+    return '$emoji $role $name $sectionLabel.';
+  }
+
   static String formatStaffEntryLine(
     String name, {
     ChatRoomUserRef? user,
     String? roomName,
+    String section = 'sesli odaya',
   }) {
+    if (user != null &&
+        (isStaffUser(user) ||
+            isGoldOrAdminChatUser(user) ||
+            VoiceOfficialJoin.isEntranceWorthy(
+              content: name,
+              membership: user.membership,
+              chatRole: user.chatRole,
+            ))) {
+      return formatTierEntranceLine(
+        displayName: name,
+        user: user,
+        section: section,
+      );
+    }
     final clean = name.trim();
     final displayName =
         clean.isEmpty ? 'Kullanıcı' : (clean.length > 28 ? '${clean.substring(0, 26)}…' : clean);

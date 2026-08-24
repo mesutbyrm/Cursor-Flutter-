@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -42,18 +43,32 @@ class TopGiftersLeaderboard extends StatelessWidget {
       );
     }
 
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: entries.length.clamp(0, 10),
-      separatorBuilder: (_, _) => const SizedBox(height: 8),
-      itemBuilder: (ctx, i) {
-        final e = entries[i];
-        return _LeaderRow(entry: e)
-            .animate(delay: (40 * i).ms)
-            .fadeIn(duration: 220.ms)
-            .slideX(begin: 0.05, end: 0);
-      },
+    final visible = entries.length.clamp(0, 10);
+    const itemExtent = 58.0;
+    const separator = 8.0;
+    final listHeight = ListPerf.nestedListHeight(
+      itemCount: visible,
+      itemExtent: itemExtent,
+      separatorExtent: separator,
+    );
+
+    return SizedBox(
+      height: listHeight,
+      child: ListView.separated(
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: visible,
+        separatorBuilder: (_, _) => const SizedBox(height: separator),
+        itemBuilder: (ctx, i) {
+          final e = entries[i];
+          return SizedBox(
+            height: itemExtent,
+            child: _LeaderRow(entry: e)
+                .animate(delay: (40 * i).ms)
+                .fadeIn(duration: 220.ms)
+                .slideX(begin: 0.05, end: 0),
+          );
+        },
+      ),
     );
   }
 }

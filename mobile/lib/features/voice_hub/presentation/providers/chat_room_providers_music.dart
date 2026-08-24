@@ -8,6 +8,106 @@ part of 'chat_room_providers.dart';
 /// `part` olduğundan aynı kütüphanededir: private alan/metotlara erişir ve
 /// davranış birebir korunur (yalnızca fiziksel konum değişti).
 extension VoiceRoomMusicControls on VoiceRoomLiveController {
+  /// Hoparlör / video çıkışını anında kes — sunucu kuyruğuna dokunmaz.
+  void _haltLocalMusicPlaybackImmediate() {
+    unawaited(ref.read(voiceRoomDjPlayerProvider).stop());
+    if (_roomKey.isEmpty) return;
+    ref.read(roomSongBlocProvider(_roomKey)).add(const RoomSongUserPause());
+    ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+  }
+
+  bool _isLocalMusicOutputActive() {
+    if (_roomKey.isEmpty) return false;
+    final playerActive =
+        ref.read(roomMusicServiceProvider).player.playback.value.playing;
+    final videoActive =
+        ref.read(roomVideoControllerProvider(_roomKey)).hasActiveVideo;
+    return playerActive || videoActive;
+  }
+
+  Future<String?> _resolvePlaybackStreamUrl({
+    required String videoId,
+    String? serverUrl,
+  }) async {
+    final fields = SongPlaybackFields.parseQuiet({
+      'musicUrl': serverUrl,
+      'videoId': videoId,
+    });
+    final direct = fields.resolvedAudioStreamUrl;
+    if (direct != null && direct.isNotEmpty) return direct;
+    final vid = videoId.trim();
+    if (vid.isEmpty || _roomKey.isEmpty) return null;
+    try {
+      return await ref
+          .read(resolveStreamUseCaseProvider)(
+            roomId: _roomKey,
+            videoId: vid,
+          )
+          .timeout(const Duration(seconds: 12));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _applyMusicRequestUi({
+    required ChatRoomDjState dj,
+    required bool shouldPlay,
+    bool withVideo = false,
+  }) {
+    // Provider güncellemesi sheet/pop animasyonu sırasında gelirse oda ANR yapar.
+    unawaited(
+      Future<void>.microtask(() async {
+        if (!_sessionActive || _roomKey.isEmpty) return;
+        _markLocalMusicRequestGrace();
+        ref
+            .read(voiceRoomMusicSessionProvider.notifier)
+            .onMusicStartedFromServer();
+        ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
+        ref.read(voiceRoomUiProvider.notifier).ensureMusicAudible();
+        _commitDjUi(dj);
+        if (!shouldPlay) return;
+        // Oda UI çizimi bitsin, sonra WebView soğuk başlatma.
+        await Future<void>.delayed(const Duration(milliseconds: 80));
+        if (!_sessionActive || _roomKey.isEmpty) return;
+        unawaited(_startDjPlaybackNonBlocking(dj, preferVideo: withVideo));
+      }),
+    );
+  }
+
+  Future<void> _startDjPlaybackNonBlocking(
+    ChatRoomDjState dj, {
+    bool preferVideo = false,
+  }) async {
+    await Future<void>.delayed(Duration.zero);
+    if (!_sessionActive || _roomKey.isEmpty) return;
+
+    final isVideo = preferVideo || dj.nowPlaying?.isVideoRequest == true;
+    if (isVideo) {
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      if (!_sessionActive || _roomKey.isEmpty) return;
+    }
+
+    if (!_sessionActive) return;
+    unawaited(_playDjInBackground(dj));
+  }
+
+  /// Hoparlör aç/kapa — müzik çıkışını anında kes veya (kullanıcı isterse) sürdür.
+  Future<void> applyAudioOutputGate({required bool speakerOn}) async {
+    if (!speakerOn) {
+      await ref.read(voiceRoomDjPlayerProvider).stop();
+      if (_roomKey.isNotEmpty) {
+        ref.read(roomSongBlocProvider(_roomKey)).add(const RoomSongUserPause());
+        ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+      }
+      return;
+    }
+    final ui = ref.read(voiceRoomUiProvider);
+    if (!ui.backgroundMusicEnabled) return;
+    final dj = state.dj;
+    if (!_hasDjPlayableSource(dj)) return;
+    unawaited(_playDjInBackground(dj));
+  }
+
   Future<List<YoutubeSearchHit>> searchYoutube(String query) =>
       ref.read(chatRoomRemoteProvider).searchYoutube(query);
 
@@ -29,6 +129,19 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
 
   Future<List<PopularMusicSuggestion>> fetchPopularMusic() =>
       ref.read(chatRoomRemoteProvider).fetchPopularMusic();
+
+  /// Video yüklenemezse — ses moduna geç (IFrame mini player).
+  Future<void> fallbackVideoToAudioOnly() async {
+    final np = state.dj.nowPlaying;
+    if (np == null || !np.isVideoRequest) return;
+    ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+    final audioNp = np.asAudioRequest();
+    final dj = state.dj.copyWith(nowPlaying: audioNp);
+    _lastDjPlaybackSignature = '';
+    state = state.copyWith(dj: dj);
+    _syncRoomSongBloc();
+    _showMusicRequestFlashLine('📺 Video açılamadı — ses moduna geçildi.');
+  }
 
   Future<String?> skipMusic() async {
     if (!_canControlMusic()) {
@@ -118,15 +231,17 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
     }
   }
 
-  /// X / kapat — yalnızca yetkili kullanıcılar sunucu kuyruğunu durdurur.
+  /// Durdur / kapat — her kullanıcıda yerel çıkış anında kesilir; sunucu
+  /// kuyruğu yalnızca yetkili kullanıcılar için temizlenir.
   Future<void> closeMusicPlayer() async {
+    ref.read(voiceRoomMusicSessionProvider.notifier).markUserDismissed();
+    _haltLocalMusicPlaybackImmediate();
+
     if (!_canStopMusic()) {
-      ref.read(voiceRoomMusicSessionProvider.notifier).markUserDismissed();
       ref.read(voiceRoomMusicSessionProvider.notifier).dismissAfterClose();
       return;
     }
-    ref.read(voiceRoomMusicSessionProvider.notifier).markUserDismissed();
-    await ref.read(voiceRoomDjPlayerProvider).stop();
+
     try {
       final result = await ref.read(chatRoomRemoteProvider).clearMusicQueue(
         roomKey: _roomKey,
@@ -134,6 +249,7 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
       );
       if (result.autoAdvanced) {
         await refresh();
+        ref.read(voiceRoomMusicSessionProvider.notifier).dismissAfterClose();
         return;
       }
       await refresh();
@@ -147,15 +263,13 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
         ),
       );
     }
-    if (_roomKey.isNotEmpty) {
-      ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
-    }
     ref.read(voiceRoomMusicSessionProvider.notifier).dismissAfterClose();
   }
 
   Future<String?> updateMusicSettings({
     bool? musicEnabled,
     int? musicRequestCost,
+    int? videoRequestCost,
     int? maxMusicQueue,
   }) async {
     try {
@@ -165,6 +279,7 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
             roomKey: _roomKey,
             musicEnabled: musicEnabled,
             musicRequestCost: musicRequestCost,
+            videoRequestCost: videoRequestCost,
             maxMusicQueue: maxMusicQueue,
           );
       await refresh();

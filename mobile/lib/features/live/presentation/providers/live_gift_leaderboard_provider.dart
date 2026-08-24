@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
 import '../../../gifts/presentation/providers/gift_providers.dart';
+import '../../../gifts/presentation/sync/gift_hourly_reset.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_gift_event.dart';
 
@@ -46,10 +49,19 @@ class LiveGiftSender {
 class LiveGiftLeaderboardNotifier
     extends AutoDisposeFamilyNotifier<List<LiveGiftSender>, String> {
   final _totals = <String, _Agg>{};
+  final _recordedIds = <String>{};
+  void Function()? _cancelHourlyReset;
 
   @override
   List<LiveGiftSender> build(String streamId) {
-    ref.onDispose(clear);
+    GiftHourlyReset.scheduleRepeating(
+      clear,
+      onCancel: (cancel) => _cancelHourlyReset = cancel,
+    );
+    ref.onDispose(() {
+      _cancelHourlyReset?.call();
+      clear();
+    });
     return const [];
   }
 
@@ -65,6 +77,7 @@ class LiveGiftLeaderboardNotifier
 
   void setInitialFromApi(List<GiftLeaderboardEntry> entries) {
     _totals.clear();
+    _recordedIds.clear();
     for (final e in entries) {
       final id = e.userId ?? e.displayName;
       if (id.isEmpty) continue;
@@ -82,9 +95,12 @@ class LiveGiftLeaderboardNotifier
   }
 
   void record(LiveGiftEvent event) {
+    final eventId = event.id.trim();
+    if (eventId.isNotEmpty && !_recordedIds.add(eventId)) return;
+
     final id = event.senderId ?? event.senderName;
     if (id.isEmpty) return;
-    final coins = event.coinCost * event.quantity;
+    final coins = event.jetonAmount;
     final emoji = LiveGiftCatalog.emojiById[event.giftId] ?? '🎁';
     final prev = _totals[id];
     _totals[id] = _Agg(
@@ -118,6 +134,7 @@ class LiveGiftLeaderboardNotifier
 
   void clear() {
     _totals.clear();
+    _recordedIds.clear();
     state = const [];
   }
 }

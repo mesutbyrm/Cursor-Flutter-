@@ -6,10 +6,12 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/sse/base_sse_service.dart';
 import '../../../../core/network/sse/sse_reconnect_policy.dart';
 import '../../domain/entities/psychic_room_entity.dart';
 import '../../domain/entities/psychic_session_status.dart';
-import '../models/psychic_model.dart';
+import '../../domain/session_room_sse_event.dart';
+import 'psychic_room_sse_parser.dart';
 
 /// Seans oda SSE — `GET /api/room/{sessionId}/stream`.
 class PsychicRoomSseService {
@@ -19,26 +21,32 @@ class PsychicRoomSseService {
   CancelToken? _cancel;
   StreamSubscription<List<int>>? _bytesSub;
   Timer? _reconnectTimer;
+  Timer? _heartbeatWatchdog;
+  DateTime? _lastEventAt;
   String? _sessionId;
   String? _myUserId;
   Future<String?> Function()? _accessToken;
+  Future<bool> Function()? _refreshTokens;
   void Function()? _onConnected;
   void Function(PsychicChatMessage message)? _onMessage;
   void Function(PsychicRoomEntity room)? _onRoomUpdate;
   void Function(PsychicSessionStatus status)? _onSessionEnded;
   void Function(int amount, String? fromName)? _onTipReceived;
+  void Function()? _onFailed;
   var _stopped = false;
   var _reconnectAttempt = 0;
 
   Future<void> connect({
     required String sessionId,
     required Future<String?> Function() accessToken,
+    Future<bool> Function()? refreshTokens,
     String? myUserId,
     void Function()? onConnected,
     void Function(PsychicChatMessage message)? onMessage,
     void Function(PsychicRoomEntity room)? onRoomUpdate,
     void Function(PsychicSessionStatus status)? onSessionEnded,
     void Function(int amount, String? fromName)? onTipReceived,
+    void Function()? onFailed,
   }) async {
     final id = sessionId.trim();
     if (id.isEmpty) return;
@@ -46,11 +54,20 @@ class PsychicRoomSseService {
     _sessionId = id;
     _myUserId = myUserId;
     _accessToken = accessToken;
+    _refreshTokens = refreshTokens;
     _onConnected = onConnected;
     _onMessage = onMessage;
     _onRoomUpdate = onRoomUpdate;
     _onSessionEnded = onSessionEnded;
     _onTipReceived = onTipReceived;
+    _onFailed = onFailed;
+    await _openStream();
+  }
+
+  /// SSE yeniden bağlanmayı dene (kullanıcı «Yenile» veya give-up sonrası).
+  Future<void> retryConnection() async {
+    if (_stopped) return;
+    _reconnectAttempt = 0;
     await _openStream();
   }
 
@@ -84,10 +101,13 @@ class PsychicRoomSseService {
         return;
       }
       _reconnectAttempt = 0;
+      _lastEventAt = DateTime.now();
+      _startHeartbeatWatchdog();
       _onConnected?.call();
       final buffer = StringBuffer();
       _bytesSub = stream.listen(
         (chunk) {
+          _lastEventAt = DateTime.now();
           buffer.write(utf8.decode(chunk, allowMalformed: true));
           _drain(buffer);
         },
@@ -95,6 +115,17 @@ class PsychicRoomSseService {
         onDone: () => _scheduleReconnect(),
         cancelOnError: false,
       );
+    } on DioException catch (e) {
+      if (kDebugMode) debugPrint('PsychicRoomSse: $e');
+      if (e.response?.statusCode == 401 && _refreshTokens != null) {
+        final ok = await _refreshTokens!();
+        if (ok && !_stopped) {
+          await _openStream();
+          return;
+        }
+        return;
+      }
+      _scheduleReconnect();
     } catch (e) {
       if (kDebugMode) debugPrint('PsychicRoomSse: $e');
       _scheduleReconnect();
@@ -116,6 +147,8 @@ class PsychicRoomSseService {
   }
 
   void _handleBlock(String block) {
+    if (isSessionRoomSseCommentBlock(block)) return;
+
     String? eventName;
     final dataLines = <String>[];
     for (final line in block.split('\n')) {
@@ -129,90 +162,50 @@ class PsychicRoomSseService {
       final decoded = jsonDecode(payload);
       if (decoded is! Map) return;
       final map = Map<String, dynamic>.from(decoded);
-      final type = (map['type'] ?? eventName ?? '').toString().toLowerCase();
-      if (type == 'ended' ||
-          type == 'session_ended' ||
-          type == 'session_end' ||
-          type == 'expired' ||
-          type == 'session_expired' ||
-          type == 'cancelled' ||
-          type == 'session_cancelled' ||
-          type == 'rejected') {
-        _onSessionEnded?.call(
-          type.contains('cancel') || type == 'rejected'
-              ? PsychicSessionStatus.cancelled
-              : type.contains('expir')
-                  ? PsychicSessionStatus.expired
-                  : PsychicSessionStatus.ended,
-        );
-        return;
-      }
-      if (type == 'tip' ||
-          type == 'tip_received' ||
-          type == 'bahsis' ||
-          type == 'tip_sent' ||
-          type == 'gift' ||
-          type == 'gift_received' ||
-          type == 'gift_sent' ||
-          type == 'hediye' ||
-          type.contains('gift') ||
-          type.contains('hediye')) {
-        final amount = _parseTipAmount(map);
-        if (amount > 0) {
-          final from = map['senderName']?.toString() ??
-              map['clientName']?.toString() ??
-              map['fromName']?.toString();
-          _onTipReceived?.call(amount, from);
-        }
-        return;
-      }
-      if (type == 'timer_started' || type == 'time_extended') {
-        final room = PsychicModel.roomFromJson(
-          map['room'] is Map
-              ? Map<String, dynamic>.from(map['room'] as Map)
-              : map,
-          fallbackId: _sessionId ?? '',
-        );
-        _onRoomUpdate?.call(room);
-        return;
-      }
-      final msg = PsychicModel.chatFromJson(map, myUserId: _myUserId);
-      if (msg.text.trim().isNotEmpty) {
-        _onMessage?.call(msg);
-        return;
-      }
-      final room = PsychicModel.roomFromJson(
-        map['room'] is Map
-            ? Map<String, dynamic>.from(map['room'] as Map)
-            : map,
-        fallbackId: _sessionId ?? '',
+      final event = parseSessionRoomSsePayload(
+        map,
+        eventName: eventName,
+        sessionId: _sessionId ?? '',
+        myUserId: _myUserId,
       );
-      if (room.status == PsychicSessionStatus.cancelled ||
-          room.status == PsychicSessionStatus.rejected ||
-          room.status == PsychicSessionStatus.ended ||
-          room.status == PsychicSessionStatus.expired) {
-        _onSessionEnded?.call(room.status);
-        return;
+      if (event == null) return;
+      switch (event) {
+        case PsychicRoomSseConnected(:final room):
+        case PsychicRoomSseRoomUpdate(:final room):
+          _onRoomUpdate?.call(room);
+        case PsychicRoomSseSessionEnded(:final status):
+          _onSessionEnded?.call(status);
+        case PsychicRoomSseMessage(:final message):
+          _onMessage?.call(message);
+        case PsychicRoomSseTip(:final amount, :final fromName):
+          _onTipReceived?.call(amount, fromName);
       }
-      _onRoomUpdate?.call(room);
     } catch (_) {}
   }
 
-  int _parseTipAmount(Map<String, dynamic> map) {
-    final raw = map['amount'] ??
-        map['jeton'] ??
-        map['tipAmount'] ??
-        map['giftValue'] ??
-        map['coins'] ??
-        map['coin'] ??
-        map['price'] ??
-        map['value'];
-    if (raw is num) return raw.toInt();
-    return int.tryParse(raw?.toString() ?? '') ?? 0;
+  void _startHeartbeatWatchdog() {
+    _heartbeatWatchdog?.cancel();
+    _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 5), (_) {
+      final last = _lastEventAt;
+      if (last == null || _stopped) return;
+      if (DateTime.now().difference(last) > BaseSseService.heartbeatTimeout) {
+        if (kDebugMode) {
+          debugPrint('PsychicRoomSse: heartbeat timeout — reconnecting');
+        }
+        unawaited(_openStream());
+      }
+    });
   }
 
   void _scheduleReconnect() {
     if (_stopped) return;
+    if (SseReconnectPolicy.shouldGiveUp(_reconnectAttempt)) {
+      if (kDebugMode) {
+        debugPrint('PsychicRoomSse: max reconnect attempts reached');
+      }
+      _onFailed?.call();
+      return;
+    }
     _reconnectTimer?.cancel();
     _reconnectAttempt++;
     _reconnectTimer = Timer(
@@ -225,6 +218,8 @@ class PsychicRoomSseService {
 
   Future<void> _closeStreamOnly() async {
     _reconnectTimer?.cancel();
+    _heartbeatWatchdog?.cancel();
+    _heartbeatWatchdog = null;
     _cancel?.cancel();
     await _bytesSub?.cancel();
     _dio?.close(force: true);
@@ -232,6 +227,7 @@ class PsychicRoomSseService {
 
   Future<void> disconnect() async {
     _stopped = true;
+    _refreshTokens = null;
     await _closeStreamOnly();
   }
 }

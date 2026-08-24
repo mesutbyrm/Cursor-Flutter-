@@ -3,14 +3,13 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
-import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
-import '../../../../../../core/ui/premium/live_badge.dart';
 import '../../../../../../core/widgets/user_avatar.dart';
 import '../../../../domain/entities/live_broadcast_session.dart';
+import '../../../providers/live_gift_leaderboard_provider.dart';
 
-/// TikTok tarzı üst bar — blur, takip, izleyici, neon.
+/// Mockup üst bar — yayıncı bilgisi, takip, rozetler, top hediye atanlar, izleyici.
 class LivePremiumTopBar extends StatelessWidget {
   const LivePremiumTopBar({
     super.key,
@@ -23,6 +22,12 @@ class LivePremiumTopBar extends StatelessWidget {
     this.onBack,
     this.onProfileTap,
     this.onViewersTap,
+    this.onDiscoverTap,
+    this.topGifters = const [],
+    this.popularRank,
+    this.leagueLabel,
+    this.onPopularTap,
+    this.onLeagueTap,
   });
 
   final LiveBroadcastSession session;
@@ -34,107 +39,198 @@ class LivePremiumTopBar extends StatelessWidget {
   final VoidCallback? onBack;
   final VoidCallback? onProfileTap;
   final VoidCallback? onViewersTap;
+  final VoidCallback? onDiscoverTap;
+  final List<LiveGiftSender> topGifters;
+  final int? popularRank;
+  final String? leagueLabel;
+  final VoidCallback? onPopularTap;
+  final VoidCallback? onLeagueTap;
 
   @override
   Widget build(BuildContext context) {
-    final viewers = session.viewerCount;
+    final displayId = _displayId(session);
+    final name = session.streamerName ?? 'Yayıncı';
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(22),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.42),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: AppThemeColors.accentPink.withValues(alpha: 0.35)),
-            boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPurple, blur: 14),
-          ),
-          child: Row(
-            children: [
-              if (onBack != null)
-                IconButton(
-                  onPressed: onBack,
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                ),
-              GestureDetector(
-                onTap: onProfileTap,
-                child: UserAvatar(url: session.avatarUrl, radius: 20),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      session.streamerName ?? 'Yayıncı',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      session.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (!session.isHost && !following)
-                _FollowButton(loading: followLoading, onTap: onFollow),
-              if (following && !session.isHost)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white12,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Text(
-                    'Takipte',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-                  ),
-                ),
-              const SizedBox(width: 8),
-              const LiveBadge(compact: true),
-              const SizedBox(width: 6),
-              _StatPill(
-                icon: Icons.visibility_rounded,
-                label: _fmt(viewers),
-                onTap: onViewersTap,
-              ),
-              const SizedBox(width: 4),
-              elapsedBadge,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (onBack != null)
               IconButton(
-                onPressed: onClose,
-                icon: const Icon(Icons.close_rounded, size: 22),
+                onPressed: onBack,
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
               ),
-            ],
-          ),
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(6, 5, 8, 5),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.48),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: onProfileTap,
+                          child: UserAvatar(url: session.avatarUrl, radius: 18),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 13,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Text(
+                                'ID: $displayId',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (!session.isHost && !following)
+                          _FollowChip(loading: followLoading, onTap: onFollow),
+                        if (following && !session.isHost)
+                          Container(
+                            margin: const EdgeInsets.only(left: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white12,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Text(
+                              'Takipte',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _TopGiftersRow(gifters: topGifters, onTap: onViewersTap),
+            const SizedBox(width: 6),
+            _ViewerPill(
+              count: session.viewerCount,
+              onTap: onViewersTap,
+            ),
+            IconButton(
+              onPressed: onClose,
+              icon: const Icon(Icons.close_rounded, size: 22, color: Colors.white),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            ),
+          ],
         ),
-      ),
-    ).animate().fadeIn(duration: 320.ms).slideY(begin: -0.15, end: 0);
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            if (popularRank != null)
+              _BadgeChip(
+                emoji: '🔥',
+                label: 'Popüler No. $popularRank',
+                color: const Color(0xFFFF6B35),
+                onTap: onPopularTap,
+              ),
+            if (popularRank != null && (leagueLabel ?? '').isNotEmpty)
+              const SizedBox(width: 6),
+            if ((leagueLabel ?? '').isNotEmpty)
+              _BadgeChip(
+                emoji: '💎',
+                label: leagueLabel!,
+                color: const Color(0xFF7C4DFF),
+                onTap: onLeagueTap,
+              ),
+            const Spacer(),
+            if (onDiscoverTap != null)
+              GestureDetector(
+                onTap: onDiscoverTap,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.card_giftcard_rounded,
+                          size: 14, color: Color(0xFFFFD54F)),
+                      SizedBox(width: 4),
+                      Text(
+                        'Keşfet >',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(width: 6),
+            elapsedBadge,
+          ],
+        ),
+      ],
+    );
   }
 
-  static String _fmt(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return '$n';
+  static String _displayId(LiveBroadcastSession s) {
+    final handle = s.streamerHandle?.trim();
+    if (handle != null && handle.isNotEmpty && handle != 'yayinci') {
+      return handle;
+    }
+    final host = s.hostUserId?.trim();
+    if (host != null && host.isNotEmpty) {
+      if (host.length <= 9) return host;
+      final digits = host.replaceAll(RegExp(r'\D'), '');
+      if (digits.length >= 6) return digits.substring(digits.length - 7);
+      return host.substring(0, 7);
+    }
+    final sid = s.streamId?.trim();
+    if (sid != null && sid.isNotEmpty) {
+      return sid.length <= 8 ? sid : sid.substring(sid.length - 7);
+    }
+    return '—';
   }
 }
 
-/// Yayın süresi — saniyelik timer yalnızca bu widget'ı yeniler.
 class LiveElapsedTimePill extends StatefulWidget {
   const LiveElapsedTimePill({super.key});
 
@@ -160,21 +256,31 @@ class _LiveElapsedTimePillState extends State<LiveElapsedTimePill> {
     super.dispose();
   }
 
-  String get _label {
+  @override
+  Widget build(BuildContext context) {
     final h = _elapsed.inHours.toString().padLeft(2, '0');
     final m = _elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
     final s = _elapsed.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$h:$m:$s';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _StatPill(icon: Icons.schedule_rounded, label: _label);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        '$h:$m:$s',
+        style: const TextStyle(
+          fontWeight: FontWeight.w800,
+          fontSize: 11,
+          color: Colors.white70,
+        ),
+      ),
+    );
   }
 }
 
-class _FollowButton extends StatelessWidget {
-  const _FollowButton({required this.loading, required this.onTap});
+class _FollowChip extends StatelessWidget {
+  const _FollowChip({required this.loading, required this.onTap});
 
   final bool loading;
   final VoidCallback onTap;
@@ -187,21 +293,25 @@ class _FollowButton extends StatelessWidget {
         onTap: loading ? null : onTap,
         borderRadius: BorderRadius.circular(14),
         child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            gradient: context.colors.brandGradient,
+            gradient: const LinearGradient(
+              colors: [Color(0xFF9C27FF), Color(0xFF7C4DFF)],
+            ),
             borderRadius: BorderRadius.circular(14),
-            boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink, blur: 12),
           ),
           child: loading
               ? const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               : const Text(
-                  '+ Takip',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+                  '+ Takip Et',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
                 ),
         ),
       ),
@@ -209,38 +319,202 @@ class _FollowButton extends StatelessWidget {
   }
 }
 
-class _StatPill extends StatelessWidget {
-  const _StatPill({
-    required this.icon,
+class _BadgeChip extends StatelessWidget {
+  const _BadgeChip({
+    required this.emoji,
     required this.label,
+    required this.color,
     this.onTap,
   });
 
-  final IconData icon;
+  final String emoji;
   final String label;
+  final Color color;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final chip = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        '$emoji $label',
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          color: Colors.white,
+        ),
+      ),
+    );
+    if (onTap == null) return chip;
+    return GestureDetector(onTap: onTap, child: chip);
+  }
+}
+
+class _ViewerPill extends StatelessWidget {
+  const _ViewerPill({required this.count, this.onTap});
+
+  final int count;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final pill = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.black.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: Colors.white70),
-          const SizedBox(width: 4),
+          const Icon(Icons.person_rounded, size: 14, color: Colors.white70),
+          const SizedBox(width: 3),
           Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11),
+            _fmt(count),
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
     );
     if (onTap == null) return pill;
     return GestureDetector(onTap: onTap, child: pill);
+  }
+
+  static String _fmt(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) {
+      final s = n.toString();
+      if (n >= 10000) {
+        final withDot = StringBuffer();
+        for (var i = 0; i < s.length; i++) {
+          if (i > 0 && (s.length - i) % 3 == 0) withDot.write('.');
+          withDot.write(s[i]);
+        }
+        return withDot.toString();
+      }
+      return '${(n / 1000).toStringAsFixed(1)}K';
+    }
+    return '$n';
+  }
+}
+
+class _TopGiftersRow extends StatelessWidget {
+  const _TopGiftersRow({required this.gifters, this.onTap});
+
+  final List<LiveGiftSender> gifters;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final top = gifters.take(3).toList();
+    if (top.isEmpty) return const SizedBox.shrink();
+
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 22.0 + (top.length - 1) * 16.0 + 8,
+        height: 36,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            for (var i = 0; i < top.length; i++)
+              Positioned(
+                left: i * 16.0,
+                child: _TopGifterAvatar(
+                  sender: top[i],
+                  rank: i + 1,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TopGifterAvatar extends StatelessWidget {
+  const _TopGifterAvatar({required this.sender, required this.rank});
+
+  final LiveGiftSender sender;
+  final int rank;
+
+  @override
+  Widget build(BuildContext context) {
+    final crown = switch (rank) {
+      1 => const Color(0xFFFFD700),
+      2 => const Color(0xFFC0C0C0),
+      _ => const Color(0xFFCD7F32),
+    };
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: crown, width: 1.5),
+              ),
+              child: ClipOval(
+                child: SizedBox(
+                  width: 26,
+                  height: 26,
+                  child: sender.avatarUrl != null && sender.avatarUrl!.isNotEmpty
+                      ? CanlifalNetworkImage(
+                          url: sender.avatarUrl!,
+                          fit: BoxFit.cover,
+                        )
+                      : ColoredBox(
+                          color: AppThemeColors.accentPurple,
+                          child: Center(
+                            child: Text(
+                              sender.username.isNotEmpty
+                                  ? sender.username[0].toUpperCase()
+                                  : '?',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: -6,
+              right: -2,
+              child: Text(
+                '👑',
+                style: TextStyle(fontSize: 9, color: crown),
+              ),
+            ),
+          ],
+        ),
+        Text(
+          _shortCoins(sender.totalCoins),
+          style: TextStyle(
+            fontSize: 8,
+            fontWeight: FontWeight.w900,
+            color: crown,
+            height: 1.1,
+          ),
+        ),
+      ],
+    );
+  }
+
+  static String _shortCoins(int n) {
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return '$n';
   }
 }

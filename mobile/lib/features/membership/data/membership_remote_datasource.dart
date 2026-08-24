@@ -1,11 +1,13 @@
 import 'package:dio/dio.dart';
 
 import '../../../core/network/api_endpoints.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import '../../wallet/domain/wallet_balances.dart';
 import '../domain/membership_package_entity.dart';
 import 'membership_catalog_fallback.dart';
+import '../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 
 class MembershipRemoteDataSource {
   MembershipRemoteDataSource(this._dio);
@@ -13,14 +15,36 @@ class MembershipRemoteDataSource {
   final Dio _dio;
 
   Future<MembershipCatalogEntity> loadCatalog(WalletBalances wallet) async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.membershipPackages);
-      final parsed = _parseResponse(res.data, wallet);
-      if (parsed != null) return parsed;
-    } catch (_) {
-      // 404 HTML, oturum, ağ
+    for (final path in [
+      ApiEndpoints.membershipPackages,
+      ApiEndpoints.membershipsCatalog,
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final parsed = _parseResponse(res.data, wallet);
+        if (parsed != null) return parsed;
+      } catch (_) {}
     }
     return _fallbackCatalog(wallet);
+  }
+
+  /// `POST /api/memberships/purchase` — kılavuz §9 `{planId}`; isteğe bağlı `paymentMethod`.
+  Future<void> purchaseMembership(
+    String planId, {
+    String? paymentMethod,
+  }) async {
+    final id = planId.trim();
+    if (id.isEmpty) {
+      throw const ApiException('Plan kimliği boş');
+    }
+    final method = paymentMethod?.trim();
+    await _dio.safePost<Map<String, dynamic>>(
+      ApiEndpoints.membershipPurchase,
+      data: {
+        'planId': id,
+        if (method != null && method.isNotEmpty) 'paymentMethod': method,
+      },
+    );
   }
 
   MembershipCatalogEntity? _parseResponse(dynamic data, WalletBalances wallet) {
@@ -45,8 +69,11 @@ class MembershipRemoteDataSource {
     // Plans yanıtında mevcut üyelik/gün bilgisi yok; cüzdandan tamamla ki
     // "aktif üyelik" kartı ve uzatma doğru görünsün.
     final currentFromApi = catalog.currentMembership.toLowerCase();
-    final resolvedCurrent = (currentFromApi.isEmpty || currentFromApi == 'basic')
-        ? (wallet.membership ?? 'basic')
+    final walletTier = membershipWireId(wallet.membership);
+    final resolvedCurrent = (currentFromApi.isEmpty ||
+            currentFromApi == 'basic' ||
+            currentFromApi == 'free')
+        ? walletTier
         : catalog.currentMembership;
     return catalog.copyWith(
       currentMembership: resolvedCurrent,
@@ -57,12 +84,13 @@ class MembershipRemoteDataSource {
   }
 
   MembershipCatalogEntity _fallbackCatalog(WalletBalances wallet) {
+    final wire = membershipWireId(wallet.membership);
     return MembershipCatalogEntity(
       packages: fallbackMembershipPackages(
-        currentMembership: wallet.membership ?? 'basic',
+        currentMembership: wire,
         catalogDaysRemaining: wallet.membershipDaysRemaining,
       ),
-      currentMembership: wallet.membership ?? 'basic',
+      currentMembership: wire,
       jetonBalance: wallet.jeton,
       cfcBalance: wallet.cfc,
       daysRemaining: wallet.membershipDaysRemaining,

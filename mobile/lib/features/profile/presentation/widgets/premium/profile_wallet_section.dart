@@ -1,10 +1,14 @@
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/widgets/dual_balance_chips.dart';
+import '../../premium_2026/profile_membership_helpers.dart';
+import '../../providers/profile_hub_providers.dart';
 import 'profile_glass.dart';
 
-class ProfileWalletSection extends StatelessWidget {
+class ProfileWalletSection extends ConsumerWidget {
   const ProfileWalletSection({
     super.key,
     required this.jeton,
@@ -27,17 +31,21 @@ class ProfileWalletSection extends StatelessWidget {
   final VoidCallback? onSubscriptions;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final info = ref.watch(profileMembershipInfoProvider);
+    final subscriptionsLabel =
+        buildMembershipWalletSubscriptionsTileLabel(info: info);
+
     final actions = [
       (
         icon: Icons.add_card_rounded,
-        label: 'Jeton Yükle',
+        label: buildMembershipWalletJetonTopUpActionLabel(),
         onTap: onTopUp,
         accent: AppThemeColors.coinGold,
       ),
       (
         icon: Icons.diamond_rounded,
-        label: 'CFC Yükle',
+        label: buildMembershipWalletCenterCfcStoreTitle(),
         onTap: onCfcTopUp,
         accent: AppThemeColors.diamondBlue,
       ),
@@ -61,7 +69,7 @@ class ProfileWalletSection extends StatelessWidget {
       ),
       (
         icon: Icons.workspace_premium_rounded,
-        label: 'Abonelikler',
+        label: subscriptionsLabel,
         onTap: onSubscriptions,
         accent: AppThemeColors.coinGold,
       ),
@@ -86,30 +94,47 @@ class ProfileWalletSection extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Jeton: canlı yayın, sohbet ve hediye · CFC: oyun ve fal',
+                buildMembershipWalletSectionBalanceHint(info: info),
                 style: ProfileTypography.cardSubtitle(context),
               ),
             ],
           ),
         ),
         const SizedBox(height: 12),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: actions.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 2.35,
-          ),
-          itemBuilder: (context, i) {
-            final a = actions[i];
-            return _WalletAction(
-              icon: a.icon,
-              label: a.label,
-              onTap: a.onTap,
-              accent: a.accent,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const crossAxisCount = 2;
+            const spacing = 10.0;
+            const aspect = 2.35;
+            final gridHeight = ListPerf.nestedGridHeight(
+              itemCount: actions.length,
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: spacing,
+              crossAxisSpacing: spacing,
+              childAspectRatio: aspect,
+              crossAxisExtent: constraints.maxWidth,
+            );
+            return SizedBox(
+              height: gridHeight,
+              child: GridView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: actions.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: spacing,
+                  mainAxisSpacing: spacing,
+                  childAspectRatio: aspect,
+                ),
+                itemBuilder: (context, i) {
+                  final a = actions[i];
+                  return _WalletAction(
+                    icon: a.icon,
+                    label: a.label,
+                    onTap: a.onTap,
+                    accent: a.accent,
+                  );
+                },
+              ),
             );
           },
         ),

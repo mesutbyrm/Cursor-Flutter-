@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../live/domain/entities/live_gift_event.dart';
 
-/// Combo devre dışı — olaylar olduğu gibi iletilir.
+/// Combo devre dışı — olaylar olduğu gibi iletilir (alan kaybı yok).
 class VoiceGiftComboTracker extends Notifier<void> {
   @override
   void build() {}
@@ -27,9 +27,13 @@ extension _LiveGiftEventCombo on LiveGiftEvent {
       giftName: giftName,
       quantity: quantity,
       coinCost: coinCost,
-      timestamp: timestamp,
+      giftPrice: giftPrice,
+      totalCoin: totalCoin,
+      totalDiamond: totalDiamond,
       combo: c,
+      timestamp: timestamp,
       iconUrl: iconUrl,
+      giftImageUrl: giftImageUrl,
       animationKey: animationKey,
       rarity: rarity,
       animationKind: animationKind,

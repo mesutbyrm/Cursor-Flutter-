@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
@@ -6,20 +8,27 @@ import '../../../../core/network/token_storage.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/jeton_package_entity.dart';
+import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
+import '../../domain/entities/payment_method_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../../data/datasources/canlifal_user_api_datasource.dart';
 import '../../data/datasources/achievements_remote_datasource.dart';
 import '../../data/datasources/daily_tasks_remote_datasource.dart';
 import '../../data/datasources/profile_remote_datasource.dart';
+import '../../../home/data/datasources/mobile_compound_remote_datasource.dart';
 import '../../domain/entities/daily_task_entity.dart';
 import '../../data/repositories/profile_repository_impl.dart';
 
 final profileRemoteProvider = Provider<ProfileRemoteDataSource>((ref) {
-  return ProfileRemoteDataSource(ref.watch(dioProvider));
+  return ProfileRemoteDataSource(
+    ref.watch(dioProvider),
+    ref.watch(mobileCompoundRemoteProvider),
+  );
 });
 
 final achievementsRemoteProvider = Provider<AchievementsRemoteDataSource>((ref) {
@@ -76,10 +85,35 @@ class WalletBalancesNotifier extends AsyncNotifier<WalletBalances> {
   DateTime? _lastFetchedAt;
   WalletBalances? _cached;
 
+  void _resetLocalCache() {
+    _cached = null;
+    _lastFetchedAt = null;
+  }
+
   @override
   Future<WalletBalances> build() async {
     ref.keepAlive();
-    return _load(force: true);
+    ref.listen<String?>(
+      authControllerProvider.select((a) => a.valueOrNull?.id),
+      (prev, next) {
+        if (prev != null && prev != next) {
+          _resetLocalCache();
+          state = const AsyncValue.loading();
+          unawaited(refresh(force: true));
+        }
+        if (next == null) {
+          _resetLocalCache();
+          state = const AsyncValue.data(WalletBalances.empty);
+        }
+      },
+    );
+    final authJeton = ref.read(authControllerProvider).valueOrNull?.coinBalance;
+    if (authJeton != null && _cached == null) {
+      _cached = WalletBalances(jeton: authJeton);
+      _lastFetchedAt = DateTime.now();
+    }
+    Future.microtask(() => refresh(force: false));
+    return _cached ?? WalletBalances.empty;
   }
 
   Future<WalletBalances> refresh({bool force = false}) async {
@@ -93,6 +127,16 @@ class WalletBalancesNotifier extends AsyncNotifier<WalletBalances> {
     final next = await AsyncValue.guard(() => _load(force: true));
     state = next;
     return next.value ?? _cached ?? WalletBalances.empty;
+  }
+
+  /// Hediye SSE/REST yanıtındaki `remainingBalance` — anında UI senkronu.
+  void applyJetonFromServer(int jeton) {
+    if (jeton < 0) return;
+    final base = _cached ?? state.valueOrNull ?? WalletBalances.empty;
+    final next = base.copyWith(jeton: jeton);
+    _cached = next;
+    _lastFetchedAt = DateTime.now();
+    state = AsyncData(next);
   }
 
   Future<WalletBalances> _load({required bool force}) async {
@@ -132,8 +176,19 @@ final userProfileProvider =
   return ref.watch(profileRepositoryProvider).getUser(userId);
 });
 
+final userProfileExtendedProvider =
+    FutureProvider.family<ProfileExtendedEntity, String>((ref, userId) async {
+  return ref.watch(profileRepositoryProvider).getUserExtended(userId);
+});
+
 final paymentConfigProvider = FutureProvider<PaymentConfigEntity>((ref) async {
   return ref.watch(walletRepositoryProvider).paymentConfig();
+});
+
+final paymentMethodsProvider =
+    FutureProvider<List<PaymentMethodEntity>>((ref) async {
+  ref.keepAlive();
+  return ref.watch(walletRepositoryProvider).paymentMethods();
 });
 
 final jetonPackagesProvider =
@@ -180,6 +235,20 @@ final profileActivityProvider =
 final allPaymentRequestsProvider =
     FutureProvider.autoDispose<List<CfcPaymentRequestEntity>>((ref) async {
   return ref.watch(walletRepositoryProvider).myPaymentRequests();
+});
+
+/// Takipçi listesi — profil ve sosyal ekranlar ortak cache.
+final userFollowersProvider =
+    FutureProvider.family<List<UserEntity>, String>((ref, userId) async {
+  if (userId.trim().isEmpty) return const [];
+  return ref.watch(profileRemoteProvider).followers(userId);
+});
+
+/// Takip edilenler listesi.
+final userFollowingProvider =
+    FutureProvider.family<List<UserEntity>, String>((ref, userId) async {
+  if (userId.trim().isEmpty) return const [];
+  return ref.watch(profileRemoteProvider).following(userId);
 });
 
 /// Yayın ekipmanı tercihleri (oturum boyunca).

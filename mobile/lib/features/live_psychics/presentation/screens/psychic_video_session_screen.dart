@@ -5,28 +5,56 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_close_dialog.dart';
-import 'package:canlifal_social/features/live/presentation/widgets/broadcast_room/live_room_video_background.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_video_controller.dart';
 import 'package:canlifal_social/features/profile/presentation/widgets/premium/profile_glass.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_peer_left_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
-import 'package:canlifal_social/features/agora/presentation/agora_room_manager.dart';
+import '../widgets/psychic_video_call_layer.dart';
 
 final _psychicSessionChatProvider =
     StateProvider.autoDispose.family<TextEditingController, PsychicSessionEntity>(
   (ref, _) => TextEditingController(),
 );
 
-/// Canlı fal video oturumu — Agora + süre + sohbet.
-class PsychicVideoSessionScreen extends ConsumerWidget {
+/// Canlı fal video oturumu — Tencent TRTC + süre + sohbet.
+class PsychicVideoSessionScreen extends ConsumerStatefulWidget {
   const PsychicVideoSessionScreen({super.key, required this.session});
 
   final PsychicSessionEntity session;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PsychicVideoSessionScreen> createState() =>
+      _PsychicVideoSessionScreenState();
+}
+
+class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref
+          .read(psychicVideoControllerProvider(widget.session).notifier)
+          .onAppResumed();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final session = widget.session;
     final state = ref.watch(psychicVideoControllerProvider(session));
     final ctrl = ref.read(psychicVideoControllerProvider(session).notifier);
     final chat = ref.watch(_psychicSessionChatProvider(session));
@@ -35,6 +63,27 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
     ref.listen(psychicVideoControllerProvider(session), (prev, next) {
       if (next.timeUpPending && session.isClient) {
         ctrl.handleClientTimeUp(context);
+      }
+      if (next.lowTimeWarningPending &&
+          prev?.lowTimeWarningPending != true &&
+          session.isClient &&
+          context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Süreniz azalıyor — ${next.timerLabel} kaldı',
+            ),
+            duration: const Duration(seconds: 8),
+            action: SnackBarAction(
+              label: 'Uzat',
+              onPressed: () async {
+                final choice = await ctrl.openExtendSheet(context);
+                if (!context.mounted || choice == null) return;
+                await ctrl.extendSession(choice);
+              },
+            ),
+          ),
+        );
       }
       if (next.leaving && prev?.leaving != true && context.mounted) {
         final peerMsg = ref.read(psychicPeerLeftProvider)?.message;
@@ -105,7 +154,7 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
           fit: StackFit.expand,
           children: [
             Positioned.fill(
-              child: _VideoLayer(
+              child: PsychicVideoCallLayer(
                 session: session,
                 state: state,
                 ctrl: ctrl,
@@ -148,63 +197,23 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-            if (state.rtcReady && !session.isClient)
-              Positioned(
-                top: MediaQuery.paddingOf(context).top + 56,
-                right: 12,
-                child: Material(
-                  elevation: 4,
-                  borderRadius: BorderRadius.circular(10),
-                  clipBehavior: Clip.antiAlias,
-                  child: SizedBox(
-                    width: 88,
-                    height: 120,
-                    child: AgoraLocalVideoView(
-                      key: ValueKey(state.localPreviewKey),
-                      manager: ctrl.agora,
-                    ),
-                  ),
-                ),
-              ),
             if (state.rtcReady && session.isClient)
               Positioned(
-                top: MediaQuery.paddingOf(context).top + 56,
-                right: 12,
+                top: MediaQuery.paddingOf(context).top + 56 + 140 - 28,
+                right: 16,
                 child: Material(
-                  elevation: 4,
-                  borderRadius: BorderRadius.circular(10),
-                  clipBehavior: Clip.antiAlias,
-                  child: SizedBox(
-                    width: 88,
-                    height: 120,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        AgoraLocalVideoView(
-                          key: ValueKey(state.localPreviewKey),
-                          manager: ctrl.agora,
-                        ),
-                        Positioned(
-                          right: 4,
-                          bottom: 4,
-                          child: Material(
-                            color: Colors.black54,
-                            shape: const CircleBorder(),
-                            child: InkWell(
-                              onTap: ctrl.switchCamera,
-                              customBorder: const CircleBorder(),
-                              child: const Padding(
-                                padding: EdgeInsets.all(4),
-                                child: Icon(
-                                  Icons.cameraswitch_rounded,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                  color: Colors.black54,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    onTap: ctrl.switchCamera,
+                    customBorder: const CircleBorder(),
+                    child: const Padding(
+                      padding: EdgeInsets.all(6),
+                      child: Icon(
+                        Icons.cameraswitch_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
                   ),
                 ),
@@ -231,9 +240,24 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '${state.tipThankYouAmount} jeton bahşiş gönderildi — teşekkürler!',
+                            'Bahşişiniz başarıyla gönderildi.',
                             textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                            ),
                           ),
+                          if (state.tipThankYouAmount != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(
+                                '${state.tipThankYouAmount} jeton',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.75),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -254,17 +278,17 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                           const Text('🎁', style: TextStyle(fontSize: 40)),
                           const SizedBox(height: 10),
                           Text(
-                            state.tipReceivedFrom?.trim().isNotEmpty == true
-                                ? state.tipReceivedFrom!
-                                : 'Danışan',
+                            'Danışan size bahşiş gönderdi',
+                            textAlign: TextAlign.center,
                             style: const TextStyle(
+                              color: Colors.white,
                               fontWeight: FontWeight.w900,
-                              fontSize: 18,
+                              fontSize: 17,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Text(
-                            'size ${state.tipReceivedAmount} jetonluk hediye gönderdi!',
+                            '${state.tipReceivedAmount} Jeton',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Color(0xFFFFD54F),
@@ -282,7 +306,53 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
               top: MediaQuery.paddingOf(context).top + 8,
               left: 12,
               right: 12,
-              child: ProfileGlass(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (state.sseFailed)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Material(
+                        color: const Color(0xFF5C1A1A),
+                        borderRadius: BorderRadius.circular(12),
+                        child: InkWell(
+                          onTap: () => unawaited(ctrl.retryRoomSse()),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.wifi_off_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Canlı bağlantı koptu — dokunarak yenile',
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(alpha: 0.95),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.refresh_rounded,
+                                  color: Colors.white70,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ProfileGlass(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 borderRadius: 16,
                 child: Row(
@@ -302,8 +372,11 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                             state.timerStarted
                                 ? state.timerLabel
                                 : 'Süre bekleniyor',
-                            style: const TextStyle(
-                              color: Color(0xFFFFD54F),
+                            style: TextStyle(
+                              color: state.timerStarted &&
+                                      state.remaining.inSeconds <= 120
+                                  ? const Color(0xFFFF5252)
+                                  : const Color(0xFFFFD54F),
                               fontWeight: FontWeight.w800,
                               fontSize: 13,
                             ),
@@ -328,6 +401,8 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+                ],
+              ),
             ),
             Positioned(
               left: 12,
@@ -343,7 +418,6 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                         padding: const EdgeInsets.all(8),
                         borderRadius: 14,
                         child: ListView.builder(
-                          shrinkWrap: true,
                           itemCount: state.messages.length,
                           itemBuilder: (_, i) {
                             final msg = state.messages[i];
@@ -409,19 +483,37 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _ControlBtn(
-                        icon: ctrl.agora.micOn
+                        icon: ctrl.micOn
                             ? Icons.mic_rounded
                             : Icons.mic_off_rounded,
                         label: 'Mik',
                         onTap: ctrl.toggleMic,
                       ),
                       _ControlBtn(
-                        icon: ctrl.agora.cameraOn
+                        icon: ctrl.cameraOn
                             ? Icons.videocam_rounded
                             : Icons.videocam_off_rounded,
                         label: 'Kamera',
                         onTap: ctrl.toggleCamera,
                       ),
+                      if (!session.isClient && !state.timerStarted)
+                        _ControlBtn(
+                          icon: Icons.play_arrow_rounded,
+                          label: 'Başlat',
+                          onTap: () async {
+                            final ok = await ctrl.startTimer();
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  ok
+                                      ? 'Seans süresi başlatıldı'
+                                      : 'Süre başlatılamadı',
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       if (!session.isClient)
                         _ControlBtn(
                           icon: Icons.schedule_rounded,
@@ -488,96 +580,6 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _VideoLayer extends StatelessWidget {
-  const _VideoLayer({
-    required this.session,
-    required this.state,
-    required this.ctrl,
-  });
-
-  final PsychicSessionEntity session;
-  final PsychicVideoState state;
-  final PsychicVideoController ctrl;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!state.rtcReady) {
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          const LiveRoomVideoBackground(),
-          Center(
-            child: ProfileGlass(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              borderRadius: 20,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (state.rtcError != null) ...[
-                    Text(
-                      state.rtcError!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: ctrl.retryRtc,
-                      child: const Text('Yeniden Bağlan'),
-                    ),
-                  ] else ...[
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Bağlantı kuruluyor…',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
-    if (!session.isClient) {
-      return ValueListenableBuilder<int?>(
-        valueListenable: ctrl.agora.remoteUidNotifier,
-        builder: (context, remoteUid, _) {
-          if (remoteUid != null) {
-            return AgoraRemoteVideoView(
-              key: ValueKey('remote-$remoteUid'),
-              manager: ctrl.agora,
-              uid: remoteUid,
-            );
-          }
-          return AgoraLocalVideoView(
-            key: ValueKey(state.localPreviewKey),
-            manager: ctrl.agora,
-          );
-        },
-      );
-    }
-
-    return ValueListenableBuilder<int?>(
-      valueListenable: ctrl.agora.remoteUidNotifier,
-      builder: (context, remoteUid, _) {
-        if (remoteUid != null) {
-          return AgoraRemoteVideoView(
-            key: ValueKey('remote-$remoteUid'),
-            manager: ctrl.agora,
-            uid: remoteUid,
-          );
-        }
-        return const LiveRoomVideoBackground();
-      },
     );
   }
 }

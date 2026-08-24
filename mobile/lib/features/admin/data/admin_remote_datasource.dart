@@ -24,6 +24,8 @@ class AdminRemoteDataSource {
 
   final Dio _dio;
 
+  Options _opts([Options? base]) => base ?? Options();
+
   Future<List<Map<String, dynamic>>> searchUsers(String query) async {
     final q = query.trim();
     if (q.isEmpty) return const [];
@@ -34,7 +36,7 @@ class AdminRemoteDataSource {
     ]) {
       try {
         final res = await _adminTimeout(
-          _dio.safeGet<dynamic>(path, forceRefresh: true),
+          _dio.safeGet<dynamic>(path, forceRefresh: true, options: _opts()),
         );
         final items = normalizeAdminUserList(_flattenList(res.data));
         if (items.isNotEmpty) return items;
@@ -52,6 +54,7 @@ class AdminRemoteDataSource {
       _dio.safeGet<dynamic>(
         ApiEndpoints.adminUser(userId),
         forceRefresh: true,
+        options: _opts(),
       ),
     );
     return normalizeAdminUserMap(_unwrapMap(res.data));
@@ -65,6 +68,7 @@ class AdminRemoteDataSource {
       _dio.safePatch<dynamic>(
         ApiEndpoints.adminUser(userId),
         data: patch,
+        options: _opts(),
       ),
     );
     return normalizeAdminUserMap(_unwrapMap(res.data));

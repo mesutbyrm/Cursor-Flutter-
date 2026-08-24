@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/bootstrap/shell_header_badges_provider.dart';
+import '../../../../../core/navigation/unread_badge_format.dart';
 import '../../../../../core/widgets/canlifal_logo.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../messages/presentation/providers/messages_providers.dart';
@@ -41,10 +43,12 @@ class HomeHeader extends StatelessWidget {
               height: 44,
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: HomeApprovedDesign.searchFill,
+                color: HomeApprovedDesign.searchFill.withValues(alpha: 0.85),
                 borderRadius:
                     BorderRadius.circular(HomeApprovedDesign.searchRadius),
-                border: Border.all(color: HomeApprovedDesign.border),
+                border: Border.all(
+                  color: HomeApprovedDesign.border.withValues(alpha: 0.85),
+                ),
               ),
               child: Row(
                 children: [
@@ -102,9 +106,11 @@ class _DiscoverBadge extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: HomeApprovedDesign.surface,
+          color: HomeApprovedDesign.surface.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(HomeApprovedDesign.pillRadius),
-          border: Border.all(color: HomeApprovedDesign.border),
+          border: Border.all(
+            color: HomeApprovedDesign.border.withValues(alpha: 0.9),
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -135,15 +141,13 @@ class _NotificationBadge extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unreadNotif = ref.watch(notificationsUnreadCountProvider);
+    final badgesReady = ref.watch(shellHeaderBadgesEnabledProvider);
+    final unreadNotif =
+        badgesReady ? ref.watch(notificationsUnreadCountProvider) : 0;
     return _IconBadge(
       icon: Icons.notifications_none_rounded,
       badge: unreadNotif,
-      onTap: () async {
-        await markAllNotificationsRead(ref);
-        if (!context.mounted) return;
-        context.push('/notifications');
-      },
+      onTap: () => context.push('/notifications'),
     );
   }
 }
@@ -153,7 +157,9 @@ class _MessagesBadge extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unreadMsg = ref.watch(messagesUnreadCountProvider);
+    final badgesReady = ref.watch(shellHeaderBadgesEnabledProvider);
+    final unreadMsg =
+        badgesReady ? ref.watch(messagesUnreadCountProvider) : 0;
     return _IconBadge(
       icon: Icons.chat_bubble_outline_rounded,
       badge: unreadMsg,
@@ -168,9 +174,10 @@ class _HomeJetonPill extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final walletJeton = ref.watch(
-      walletBalancesProvider.select((w) => w.valueOrNull?.jeton),
-    );
+    final badgesReady = ref.watch(shellHeaderBadgesEnabledProvider);
+    final walletJeton = badgesReady
+        ? ref.watch(walletBalancesProvider.select((w) => w.valueOrNull?.jeton))
+        : null;
     final authJeton = ref.watch(
       authControllerProvider.select((a) => a.valueOrNull?.coinBalance),
     );
@@ -216,7 +223,7 @@ class _IconBadge extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  badge > 9 ? '9+' : '$badge',
+                  UnreadBadgeFormat.label(badge),
                   style: const TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w800,
@@ -250,9 +257,11 @@ class _CoinPill extends StatelessWidget {
         height: 34,
         padding: const EdgeInsets.only(left: 8, right: 4),
         decoration: BoxDecoration(
-          color: HomeApprovedDesign.surface,
+          color: HomeApprovedDesign.surface.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(HomeApprovedDesign.pillRadius),
-          border: Border.all(color: HomeApprovedDesign.border),
+          border: Border.all(
+            color: HomeApprovedDesign.border.withValues(alpha: 0.9),
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

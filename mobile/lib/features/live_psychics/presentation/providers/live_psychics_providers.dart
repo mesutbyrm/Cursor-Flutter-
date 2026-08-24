@@ -15,8 +15,11 @@ final homeOnlinePsychicsProvider =
   ref.keepAlive();
   final repo = ref.watch(livePsychicsRepositoryProvider);
   final all = await repo.fetchPsychics(page: 1, limit: 20, onlineOnly: true);
-  final online = all.where((p) => p.isOnline).toList();
-  return online.isNotEmpty ? online : all;
+  final online = all.where((p) => p.isOnline && p.id.isNotEmpty).toList();
+  if (online.isNotEmpty) return online;
+  // API online=true ile döndüyse isOnline alanı eksik olabilir.
+  if (all.isNotEmpty) return all.where((p) => p.id.isNotEmpty).toList();
+  return const [];
 });
 
 final livePsychicsRemoteProvider = Provider<LivePsychicsRemoteDataSource>((ref) {

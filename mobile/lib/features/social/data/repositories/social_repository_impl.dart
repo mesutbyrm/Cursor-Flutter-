@@ -12,10 +12,14 @@ class SocialRepositoryImpl implements SocialRepository {
   final String? currentUserId;
 
   @override
-  Future<SocialFeedPage> fetchPage({int page = 1}) async {
-    final r = await _remote.fetch(page: page, currentUserId: currentUserId);
+  Future<SocialFeedPage> fetchPage({int page = 1, bool forceRefresh = false}) async {
+    final r = await _remote.fetch(
+      page: page,
+      currentUserId: currentUserId,
+      forceRefresh: forceRefresh,
+    );
     return SocialFeedPage(
-      posts: r.posts.map((e) => e.toEntity()).toList(),
+      posts: r.posts,
       hasMore: r.hasMore,
     );
   }
@@ -31,12 +35,24 @@ class SocialRepositoryImpl implements SocialRepository {
     String userId, {
     int page = 1,
   }) async {
+    try {
+      final r = await _remote.fetchUserPosts(
+        userId: userId,
+        page: page,
+        currentUserId: currentUserId,
+      );
+      if (r.posts.isNotEmpty || page > 1) {
+        return SocialFeedPage(posts: r.posts, hasMore: r.hasMore);
+      }
+    } catch (_) {
+      // Yedek: authorId query (eski sunucu)
+    }
     final r = await _remote.fetch(
       page: page,
       authorId: userId,
       currentUserId: currentUserId,
     );
-    var posts = r.posts.map((e) => e.toEntity()).toList();
+    var posts = r.posts;
     var hasMore = r.hasMore;
     if (posts.isEmpty && page == 1) {
       final fallback = await _remote.fetch(
@@ -44,7 +60,6 @@ class SocialRepositoryImpl implements SocialRepository {
         currentUserId: currentUserId,
       );
       posts = fallback.posts
-          .map((e) => e.toEntity())
           .where((p) => p.author.id == userId)
           .toList();
       hasMore = fallback.hasMore;
@@ -53,12 +68,17 @@ class SocialRepositoryImpl implements SocialRepository {
   }
 
   @override
+  Future<PostEntity?> fetchPost(String postId) =>
+      _remote.fetchPost(postId, currentUserId: currentUserId);
+
+  @override
   Future<PostEntity> createPost(CreateSocialPostInput input) async {
     final dto = await _remote.createPost(input);
     return dto.toEntity();
   }
 
   @override
+  @Deprecated('Backend creates fortune posts; use SocialFortuneFeedSync instead')
   Future<PostEntity> shareFortuneAuto(ShareFortuneInput input) async {
     final dto = await _remote.shareFortuneAuto(input);
     return dto.toEntity();
@@ -84,4 +104,11 @@ class SocialRepositoryImpl implements SocialRepository {
   @override
   Future<void> createStoryImage(String imagePath) =>
       _remote.createStoryImage(imagePath);
+
+  @override
+  Future<void> createStoryVideo(String videoPath) =>
+      _remote.createStoryVideo(videoPath);
+
+  @override
+  Future<void> deleteStory(String storyId) => _remote.deleteStory(storyId);
 }

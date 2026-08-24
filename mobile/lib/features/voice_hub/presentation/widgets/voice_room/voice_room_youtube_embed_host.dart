@@ -1,19 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// DJ müziği artık just_audio stream ile çalıyor — YouTube IFrame kullanılmıyor.
+import '../../../video/presentation/widgets/youtube_video_background.dart';
+
+/// Video isteği modunda YouTube IFrame; ses modunda gizli kalır.
 class VoiceRoomYoutubeEmbedHost extends ConsumerWidget {
   const VoiceRoomYoutubeEmbedHost({
     super.key,
     required this.roomKey,
     this.compact = false,
+    this.fillBackground = true,
   });
 
   final String roomKey;
   final bool compact;
+  /// Video isteğinde tam ekran arka plan (koltukların arkasında).
+  final bool fillBackground;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const SizedBox.shrink();
+    final child = YoutubeVideoBackground(
+      roomKey: roomKey,
+      compact: compact,
+      fillBackground: fillBackground,
+    );
+    if (fillBackground && !compact) {
+      return Positioned.fill(child: child);
+    }
+    return child;
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:canlifal_social/core/navigation/wallet_navigation.dart';
 import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/ui/premium/live_badge.dart';
@@ -131,12 +132,10 @@ class PsychicProfileScreen extends ConsumerWidget {
     if (!context.mounted || result == null) return;
 
     if (!isStaff && balance < result.jeton) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Yetersiz jeton. Gerekli: ${result.jeton}, bakiye: $balance',
-          ),
-        ),
+      await showInsufficientJetonDialog(
+        context,
+        message: 'Yetersiz jeton. Gerekli: ${result.jeton}, bakiye: $balance',
+        ref: ref,
       );
       return;
     }
@@ -186,12 +185,10 @@ class PsychicProfileScreen extends ConsumerWidget {
     if (!context.mounted || amount == null) return;
 
     if (balance < amount) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Yetersiz jeton. Gerekli: $amount, bakiye: $balance',
-          ),
-        ),
+      await showInsufficientJetonDialog(
+        context,
+        message: 'Yetersiz jeton. Gerekli: $amount, bakiye: $balance',
+        ref: ref,
       );
       return;
     }

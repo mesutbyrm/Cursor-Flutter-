@@ -2,96 +2,63 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/navigation/native_site_routes.dart';
 import '../../../domain/home_site_catalog.dart';
+import '../../data/section_visual_catalog.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_section_title.dart';
+import '../premium_2026/premium_home_glass_card.dart';
 
-/// Keşfet — 4 sütun grid.
+/// Keşfet — 2026 premium yatay cam kart satırı.
 class DiscoverSection extends StatelessWidget {
   const DiscoverSection({super.key});
 
+  static const _cardW = 148.0;
+  static const _cardH = 200.0;
+  static const _gap = 12.0;
+
+  static const _subtitles = <String, String>{
+    'trends': 'Kısa videolar ve trendler',
+    'invite': 'Arkadaşlarını davet et',
+    'gifts': 'Hediye koleksiyonun',
+    'blog': 'Yeni yazılar ve rehberler',
+    'dreams': 'Rüya yorumları ve sözlük',
+    'celebrities': 'Ünlü profilleri ve fan kulüpleri',
+    'games': 'Oyun merkezi ve turnuvalar',
+  };
+
   @override
   Widget build(BuildContext context) {
+    final tiles = HomeSiteCatalog.discoverTiles;
     return Column(
       children: [
         const HomeSectionTitle(emoji: '🧭', title: 'Keşfet'),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 0.82,
+        SizedBox(
+          height: _cardH,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
             ),
-            itemCount: HomeSiteCatalog.discoverTiles.length,
-            itemBuilder: (_, i) {
-              final tile = HomeSiteCatalog.discoverTiles[i];
-              return _Tile(
-                icon: tile.icon,
-                label: tile.label,
-                gradient: tile.gradient,
+            cacheExtent: _cardW * 2,
+            itemCount: tiles.length,
+            separatorBuilder: (_, _) => const SizedBox(width: _gap),
+            itemBuilder: (context, i) {
+              final tile = tiles[i];
+              return PremiumHomeGlassCard(
+                title: tile.label,
+                subtitle: _subtitles[tile.id],
+                coverSlug: SectionVisualCatalog.discoverSlug(tile.id),
+                networkUrl: SectionVisualCatalog.discoverTile(tile.id),
+                heroTag: 'home-discover-${tile.id}',
+                width: _cardW,
+                height: _cardH,
+                accentColor: tile.gradient.first,
                 onTap: () => openNativeSitePath(context, tile.route),
               );
             },
           ),
         ),
       ],
-    );
-  }
-}
-
-class _Tile extends StatelessWidget {
-  const _Tile({
-    required this.icon,
-    required this.label,
-    required this.gradient,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final List<Color> gradient;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: HomeApprovedDesign.surface,
-          borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-          border: Border.all(color: HomeApprovedDesign.border),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              gradient.first.withValues(alpha: 0.35),
-              HomeApprovedDesign.surface,
-            ],
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 22, color: gradient.first),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: HomeApprovedDesign.textPrimary,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

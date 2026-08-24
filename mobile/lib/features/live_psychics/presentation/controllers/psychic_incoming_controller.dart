@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/psychic_event_log.dart';
 import '../../domain/entities/psychic_request_entity.dart';
 
 class PsychicIncomingQueue extends Notifier<List<PsychicRequestEntity>> {
@@ -8,6 +9,7 @@ class PsychicIncomingQueue extends Notifier<List<PsychicRequestEntity>> {
 
   void enqueue(PsychicRequestEntity request) {
     if (request.sessionId.isEmpty || !request.isPending) return;
+    PsychicEventLog.requestReceive(sessionId: request.sessionId);
     final list = [...state];
     list.removeWhere((r) => r.sessionId == request.sessionId);
     list.insert(0, request);

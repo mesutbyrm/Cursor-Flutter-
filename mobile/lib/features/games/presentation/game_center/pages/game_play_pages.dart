@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/widgets/discover_tab_layout.dart';
 import '../../../domain/game_center_models.dart';
@@ -48,9 +49,7 @@ class _WheelOfFortunePageState extends ConsumerState<WheelOfFortunePage>
       final balance = await ref.read(gameCenterJetonProvider.future);
       if (!mounted) return;
       if (balance < 10) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('10 jeton gerekli')),
-        );
+        showJetonAwareError(context, '10 jeton gerekli', ref: ref);
         return;
       }
     } else if (_freeUsed) {
@@ -628,11 +627,11 @@ class _LiveRoomLauncher extends ConsumerWidget {
             onPressed: () async {
               final room = await ref
                   .read(gameCenterRepositoryProvider)
-                  .createLiveRoom(gameId);
+                  .autoMatchLiveRoom(gameId);
               if (!context.mounted) return;
               if (room != null) {
                 context.push(
-                  '/games-room/${room.id}?title=${Uri.encodeComponent(room.title)}',
+                  '/games-room/${room.id}?title=${Uri.encodeComponent(room.title)}&game=${Uri.encodeComponent(gameId)}',
                 );
               }
             },
@@ -759,9 +758,7 @@ class _LuckyDicePageState extends ConsumerState<LuckyDicePage> {
     final balance = await ref.read(gameCenterJetonProvider.future);
     if (!mounted) return;
     if (balance < 5) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('5 jeton gerekli')),
-      );
+      showJetonAwareError(context, '5 jeton gerekli', ref: ref);
       return;
     }
     final a = 1 + Random().nextInt(6);

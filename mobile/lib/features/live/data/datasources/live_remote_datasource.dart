@@ -6,19 +6,42 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/live_debug_log.dart';
 import '../../../../core/util/json_util.dart';
+import '../datasources/live_field/live_field_api_remote_datasource.dart';
+import '../datasources/live_field/live_field_room_discovery_api.dart';
 import '../models/live_stream_dto.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/entities/voice_room_entity.dart';
+import '../../domain/entities/voice_rooms_page.dart';
+import '../../../voice_hub/presentation/utils/voice_room_key_resolver.dart';
 
 class LiveRemoteDataSource {
   LiveRemoteDataSource(this._dio);
 
   final Dio _dio;
 
+  LiveFieldApiRemoteDataSource get _liveField => LiveFieldApiRemoteDataSource(_dio);
+
   static const int _pageSize = 30;
 
   Future<List<LiveStreamEntity>> fetch({int page = 1, String? category}) async {
+    try {
+      final livePage = await _liveField.discovery.fetchRooms(
+        type: 'stream',
+        page: page,
+        limit: _pageSize,
+      );
+      final fromLive = livePage.rooms
+          .where((r) => r.isStream && r.id.isNotEmpty)
+          .map(_mapLiveFieldStream)
+          .toList();
+      if (fromLive.isNotEmpty) return fromLive;
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405 && e.statusCode != 401) {
+        rethrow;
+      }
+    } catch (_) {}
+
     final query = <String, String>{
       'limit': '$_pageSize',
       'page': '$page',
@@ -36,6 +59,33 @@ class LiveRemoteDataSource {
       query: {'page': page, 'limit': 30},
     );
     return _parseStreamList(res.data);
+  }
+
+  /// PK rakip listesi — API dokümanı: GET /api/video-streams/pk, yedek pk/list + canlı.
+  Future<List<LiveStreamEntity>> fetchPkEligibleStreams({
+    CancelToken? cancelToken,
+  }) async {
+    for (final path in [
+      ApiEndpoints.videoStreamPk,
+      ApiEndpoints.videoStreamPkList,
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          path,
+          forceRefresh: true,
+          cancelToken: cancelToken,
+          options: Options(
+            receiveTimeout: const Duration(seconds: 5),
+            sendTimeout: const Duration(seconds: 5),
+          ),
+        );
+        final parsed = _parseStreamList(res.data);
+        if (parsed.isNotEmpty) return parsed;
+      } catch (_) {}
+    }
+
+    final live = await fetch(page: 1);
+    return live.where((s) => s.isLive).toList();
   }
 
   List<LiveStreamEntity> _parseStreamList(dynamic body) {
@@ -100,11 +150,67 @@ class LiveRemoteDataSource {
     return s == 'true' || s == '1' || s == 'yes';
   }
 
-  /// canlifal.com `/api/chat/rooms` — site ile aynı oda kartları.
-  Future<List<VoiceRoomEntity>> fetchVoiceRooms() async {
+  static const int voiceRoomsPageSize = 30;
+
+  /// İlk sayfa — geriye dönük uyumluluk.
+  Future<List<VoiceRoomEntity>> fetchVoiceRooms({String? category}) async {
+    final page = await fetchVoiceRoomsPage(
+      page: 1,
+      limit: voiceRoomsPageSize,
+      category: category,
+    );
+    return page.rooms;
+  }
+
+  /// Sayfalanmış sesli oda listesi — uygulama açılışında tümünü yüklemez.
+  Future<VoiceRoomsPage> fetchVoiceRoomsPage({
+    int page = 1,
+    int limit = voiceRoomsPageSize,
+    String? category,
+  }) async {
+    final safeLimit = limit.clamp(1, 100);
+    final categoryParam = category?.trim().toLowerCase();
+    try {
+      final livePage = await _liveField.discovery.fetchRooms(
+        type: 'voice',
+        page: page,
+        limit: safeLimit,
+        category: categoryParam,
+      );
+      final fromLive = livePage.rooms
+          .where((r) => r.isVoice && r.id.isNotEmpty)
+          .map(_mapLiveFieldVoice)
+          .toList();
+      if (fromLive.isNotEmpty) {
+        final total = livePage.total;
+        final hasMore = total != null
+            ? page * safeLimit < total
+            : fromLive.length >= safeLimit;
+        return VoiceRoomsPage(
+          rooms: fromLive,
+          page: page,
+          hasMore: hasMore,
+        );
+      }
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405 && e.statusCode != 401) {
+        rethrow;
+      }
+    } catch (_) {}
+
+    if (page > 1) {
+      return VoiceRoomsPage(rooms: const [], page: page, hasMore: false);
+    }
+
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.chatRooms,
-      query: const {'withCounts': 'true'},
+      query: {
+        'type': 'voice',
+        'withCounts': 'true',
+        'limit': '$safeLimit',
+        if (categoryParam != null && categoryParam.isNotEmpty)
+          'category': categoryParam,
+      },
     );
     final body = res.data;
     dynamic list = body;
@@ -116,14 +222,21 @@ class LiveRemoteDataSource {
         list = pick(body, ['rooms', 'items', 'data']) ?? body;
       }
     }
-    if (list is! List) return const [];
-    return asJsonList(list)
+    if (list is! List) {
+      return VoiceRoomsPage(rooms: const [], page: page, hasMore: false);
+    }
+    final rooms = asJsonList(list)
         .map(_mapVoiceRoom)
         .where((r) => r.apiRoomKey.isNotEmpty)
         .toList();
+    return VoiceRoomsPage(
+      rooms: rooms,
+      page: page,
+      hasMore: rooms.length >= safeLimit,
+    );
   }
 
-  static const int voiceRoomNormalOpenJetonCost = 100;
+  static const int voiceRoomNormalOpenJetonCost = 2500;
   static const int voiceRoomVipOpenJetonCost = 5000;
 
   static int openRoomJetonCost({required bool vip, String? roomType}) {
@@ -184,6 +297,10 @@ class LiveRemoteDataSource {
     String paymentType = 'jeton',
     String? description,
     String? icon,
+    String? background,
+    int seatCount = 8,
+    int maxUsers = 15,
+    String? category,
   }) {
     final meta = voiceRoomCreateMetadata(
       roomType: roomType,
@@ -191,6 +308,7 @@ class LiveRemoteDataSource {
     );
     final desc = description?.trim();
     final ic = icon?.trim();
+    final bg = background?.trim();
     return {
       'name': meta.name,
       'description':
@@ -198,6 +316,12 @@ class LiveRemoteDataSource {
       'icon': (ic != null && ic.isNotEmpty) ? ic : meta.icon,
       'paymentType': normalizePaymentType(paymentType),
       'roomType': resolveRoomTypeEnum(roomType, vip: vip),
+      'type': 'voice',
+      'seatCount': seatCount.clamp(8, 15),
+      'maxUsers': maxUsers.clamp(15, 100),
+      if (bg != null && bg.isNotEmpty) 'background': bg,
+      if (category != null && category.trim().isNotEmpty)
+        'category': category.trim().toLowerCase(),
     };
   }
 
@@ -209,6 +333,10 @@ class LiveRemoteDataSource {
     String paymentType = 'jeton',
     String? description,
     String? icon,
+    String? background,
+    int seatCount = 8,
+    int maxUsers = 15,
+    String? category,
   }) async {
     final resolvedType = roomType ?? (vip ? 'vip' : 'normal');
     final payload = buildVoiceRoomCreatePayload(
@@ -218,6 +346,10 @@ class LiveRemoteDataSource {
       paymentType: paymentType,
       description: description,
       icon: icon,
+      background: background,
+      seatCount: seatCount,
+      maxUsers: maxUsers,
+      category: category,
     );
     final name = payload['name']?.toString() ?? 'Sohbet';
 
@@ -357,13 +489,18 @@ class LiveRemoteDataSource {
           norm(r.id) == norm(id)) {
         return r;
       }
+      if (needle.length >= VoiceRoomKeyResolver.minPrefixLength &&
+          r.id.length >= VoiceRoomKeyResolver.minPrefixLength &&
+          r.id.toLowerCase().startsWith(lower)) {
+        return r;
+      }
     }
     return null;
   }
 
   Future<VoiceRoomEntity?> _fetchVoiceRoomDirect(String id) async {
     final paths = [
-      '/api/chat/rooms/$id',
+      ApiEndpoints.chatRoomDetail(id),
       '${ApiEndpoints.chatRooms}/$id',
     ];
     for (final path in paths) {
@@ -412,10 +549,12 @@ class LiveRemoteDataSource {
     return null;
   }
 
-  Future<int> joinVideoStream(String streamId) async {
+  Future<int> joinVideoStream(String streamId, {String? nickname}) async {
     LiveDebugLog.log('stream.join', {'streamId': streamId});
+    final nick = nickname?.trim();
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamJoin(streamId),
+      data: nick != null && nick.isNotEmpty ? {'nickname': nick} : null,
     );
     final body = res.data;
     if (body is Map) {
@@ -428,10 +567,20 @@ class LiveRemoteDataSource {
     return 0;
   }
 
-  Future<void> leaveVideoStream(String streamId) async {
+  Future<void> leaveVideoStream(String streamId, {String? viewerId}) async {
+    final leavePath = viewerId != null && viewerId.isNotEmpty
+        ? '${ApiEndpoints.videoStreamJoin(streamId)}?viewerId=${Uri.encodeComponent(viewerId)}'
+        : ApiEndpoints.videoStreamJoin(streamId);
+    try {
+      await _dio.safeDelete<dynamic>(leavePath);
+      LiveDebugLog.log('stream.leave', {'streamId': streamId, 'via': 'delete'});
+      return;
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    } catch (_) {}
     try {
       await _dio.safePost<dynamic>(ApiEndpoints.videoStreamLeave(streamId));
-      LiveDebugLog.log('stream.leave', {'streamId': streamId});
+      LiveDebugLog.log('stream.leave', {'streamId': streamId, 'via': 'post'});
     } catch (_) {}
   }
 
@@ -503,42 +652,151 @@ class LiveRemoteDataSource {
   }) async {
     final started = DateTime.now();
     LiveDebugLog.log('create.request', {'title': title});
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.videoStreams,
-      data: {
-        'title': title,
-        'name': title,
-        if (description != null && description.isNotEmpty)
-          'description': description,
-        if (category != null && category.isNotEmpty) 'category': category,
-        if (tags != null && tags.isNotEmpty) 'tags': tags,
-        if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
-          'thumbnailUrl': thumbnailUrl,
-        if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
-          'coverUrl': thumbnailUrl,
-        if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
-          'broadcastImage': thumbnailUrl,
-        if (backgroundUrl != null && backgroundUrl.isNotEmpty)
-          'backgroundUrl': backgroundUrl,
-        'isPrivate': isPrivate,
-        'private': isPrivate,
-        'isImageMode': isImageMode,
-        'requestType': 'live',
-        'status': 'live',
-      },
+    final writeOptions = Options(
+      receiveTimeout: const Duration(seconds: 25),
+      sendTimeout: const Duration(seconds: 20),
     );
-    final streamId = _extractStreamId(res.data);
-    if (streamId == null || streamId.isEmpty) {
-      throw ApiException(
-        'Yayın oluşturuldu ancak oda kimliği alınamadı. '
-        'Yanıt: ${res.statusCode}',
-      );
+    Object? lastError;
+    for (var attempt = 1; attempt <= 2; attempt++) {
+      try {
+        final res = await _dio.safePost<dynamic>(
+          ApiEndpoints.videoStreams,
+          data: _createVideoStreamPayload(
+            title: title,
+            description: description,
+            category: category,
+            tags: tags,
+            thumbnailUrl: thumbnailUrl,
+            isPrivate: isPrivate,
+            isImageMode: isImageMode,
+            backgroundUrl: backgroundUrl,
+          ),
+          options: writeOptions,
+        );
+        final streamId = _extractStreamId(res.data);
+        if (streamId == null || streamId.isEmpty) {
+          final preview = res.data?.toString();
+          LiveDebugLog.log('create.parse_fail', {
+            'status': res.statusCode,
+            'bodyType': res.data?.runtimeType.toString(),
+            'preview': preview != null && preview.length > 240
+                ? '${preview.substring(0, 240)}…'
+                : preview,
+          });
+          throw ApiException(
+            'Yayın oluşturuldu ancak oda kimliği alınamadı. '
+            'Yanıt: ${res.statusCode}',
+          );
+        }
+        LiveDebugLog.log('create.ok', {
+          'streamId': streamId,
+          'elapsedMs': DateTime.now().difference(started).inMilliseconds,
+          'attempt': attempt,
+        });
+        return streamId;
+      } catch (e) {
+        lastError = e;
+        if (attempt < 2 && _isRetryableWriteError(e)) {
+          final reconciled = await _reconcileCreatedStreamId(title);
+          if (reconciled != null && reconciled.isNotEmpty) {
+            LiveDebugLog.log('create.reconciled', {
+              'streamId': reconciled,
+              'attempt': attempt,
+            });
+            return reconciled;
+          }
+          LiveDebugLog.log('create.retry', {'attempt': attempt, 'error': '$e'});
+          await Future<void>.delayed(Duration(milliseconds: 400 * attempt));
+          continue;
+        }
+        throw e is ApiException ? e : ApiException(ApiException.userMessage(e));
+      }
     }
-    LiveDebugLog.log('create.ok', {
-      'streamId': streamId,
-      'elapsedMs': DateTime.now().difference(started).inMilliseconds,
-    });
-    return streamId;
+    throw ApiException(ApiException.userMessage(lastError ?? 'Yayın oluşturulamadı'));
+  }
+
+  Map<String, dynamic> _createVideoStreamPayload({
+    required String title,
+    String? description,
+    String? category,
+    List<String>? tags,
+    String? thumbnailUrl,
+    bool isPrivate = false,
+    bool isImageMode = false,
+    String? backgroundUrl,
+  }) {
+    return {
+      'title': title,
+      'name': title,
+      if (description != null && description.isNotEmpty)
+        'description': description,
+      if (category != null && category.isNotEmpty) 'category': category,
+      if (tags != null && tags.isNotEmpty) 'tags': tags,
+      if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
+        'thumbnailUrl': thumbnailUrl,
+      if (thumbnailUrl != null && thumbnailUrl.isNotEmpty) 'coverUrl': thumbnailUrl,
+      if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
+        'broadcastImage': thumbnailUrl,
+      if (backgroundUrl != null && backgroundUrl.isNotEmpty)
+        'backgroundUrl': backgroundUrl,
+      'isPrivate': isPrivate,
+      'private': isPrivate,
+      'isImageMode': isImageMode,
+      'requestType': 'live',
+      'status': 'live',
+    };
+  }
+
+  /// Belirsiz timeout/5xx sonrası yinelenen POST yerine mevcut canlı yayını bul.
+  Future<String?> _reconcileCreatedStreamId(String title) async {
+    final normalized = title.trim().toLowerCase();
+    if (normalized.isEmpty) return null;
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.videoStreams,
+        query: {'limit': '20', 'status': 'live'},
+      );
+      for (final stream in _parseStreamList(res.data)) {
+        if (!stream.isLive || stream.id.isEmpty) continue;
+        if (stream.title.trim().toLowerCase() == normalized) {
+          return stream.id;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  bool _isRetryableWriteError(Object error) {
+    if (error is ApiException) {
+      final code = error.statusCode;
+      if (code == 429) return true;
+      if (code != null && code >= 500) return true;
+      final lower = error.message.toLowerCase();
+      return lower.contains('zaman aşımı') ||
+          lower.contains('timeout') ||
+          lower.contains('bağlantı') ||
+          lower.contains('yanıt vermedi');
+    }
+    if (error is DioException) {
+      return error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.receiveTimeout ||
+          error.type == DioExceptionType.sendTimeout ||
+          error.type == DioExceptionType.connectionError;
+    }
+    return false;
+  }
+
+  /// Yayıncı bağlantı canlılığı — 15 sn aralıkla sinyal ping.
+  Future<void> sendStreamHeartbeat(String streamId) async {
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.videoStreamSignal(streamId),
+        data: {
+          'type': 'ping',
+          'data': {'ts': DateTime.now().toUtc().toIso8601String()},
+        },
+      );
+    } catch (_) {}
   }
 
   /// Agora bağlandıktan sonra çağır — takipçilere push bildirimi.
@@ -607,6 +865,10 @@ class LiveRemoteDataSource {
     if (body is String && body.trim().isNotEmpty && !body.contains('<html')) {
       return body.trim();
     }
+    if (body is num) {
+      final asStr = body.toString().trim();
+      return asStr.isNotEmpty ? asStr : null;
+    }
     Map<String, dynamic>? map;
     if (body is Map<String, dynamic>) {
       map = body;
@@ -617,20 +879,41 @@ class LiveRemoteDataSource {
     if (map['success'] == true && map['data'] != null) {
       return _extractStreamId(map['data']);
     }
-    final streamObj = map['stream'] ?? map['videoStream'] ?? map['broadcast'];
+    if (map['success'] == false) return null;
+    final streamObj = map['stream'] ??
+        map['videoStream'] ??
+        map['broadcast'] ??
+        map['liveStream'];
     if (streamObj is Map) {
       final nested = _extractStreamId(streamObj);
       if (nested != null) return nested;
     }
-    final id = pick(map, ['id', '_id', 'streamId', 'roomId']);
-    return id?.toString();
+    final id = pick(map, [
+      'id',
+      '_id',
+      'streamId',
+      'roomId',
+      'videoStreamId',
+      'liveStreamId',
+      'broadcastId',
+    ]);
+    return id?.toString().trim();
   }
 
   Future<void> endVideoStream(String streamId) async {
     try {
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.videoStream(streamId),
+        data: const {'status': 'ended'},
+      );
+      return;
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    } catch (_) {}
+    try {
       await _dio.safePost<dynamic>(ApiEndpoints.videoStreamEnd(streamId));
     } catch (_) {
-      await _dio.safeDelete<dynamic>('/api/video-streams/$streamId');
+      await _dio.safeDelete<dynamic>(ApiEndpoints.videoStream(streamId));
     }
   }
 
@@ -649,9 +932,23 @@ class LiveRemoteDataSource {
       for (final u in ru) {
         if (u is Map) {
           final m = asJsonMap(u);
-          final img = pick(m, ['image', 'avatar'])?.toString();
+          final img = pick(m, ['image', 'avatar', 'avatarUrl'])?.toString();
           if (img != null && img.isNotEmpty) recent.add(img);
         }
+      }
+    }
+    if (recent.isEmpty) {
+      for (final key in ['presence', 'users', 'participants', 'members']) {
+        final raw = json[key];
+        if (raw is! List) continue;
+        for (final u in raw) {
+          if (u is Map) {
+            final m = asJsonMap(u);
+            final img = pick(m, ['image', 'avatar', 'avatarUrl'])?.toString();
+            if (img != null && img.isNotEmpty) recent.add(img);
+          }
+        }
+        if (recent.isNotEmpty) break;
       }
     }
     final djIds = <String>[];
@@ -681,6 +978,39 @@ class LiveRemoteDataSource {
         isVipRaw == 'true' ||
         isVipRaw == '1';
     final roomType = pick(json, ['roomType', 'type'])?.toString();
+    final lockedRaw = pick(json, [
+      'isLocked',
+      'locked',
+      'hasPassword',
+      'passwordRequired',
+      'requiresPassword',
+      'isPasswordProtected',
+    ]);
+    final isLocked = lockedRaw == true ||
+        lockedRaw == 1 ||
+        lockedRaw == 'true' ||
+        lockedRaw == '1';
+    final hasPassRaw = pick(json, ['hasPassword', 'passwordRequired', 'requiresPassword']);
+    final hasPassword = hasPassRaw == true ||
+        hasPassRaw == 1 ||
+        hasPassRaw == 'true' ||
+        hasPassRaw == '1' ||
+        (pick(json, ['password'])?.toString().trim().isNotEmpty == true);
+    final isPkLive = _boolFlag(json, [
+      'isPkLive',
+      'pkActive',
+      'pkLive',
+      'inPk',
+      'isPk',
+    ]);
+    final isMusicPlaying = _boolFlag(json, [
+      'musicPlaying',
+      'isMusicPlaying',
+      'djPlaying',
+      'isPlaying',
+    ]) ||
+        pick(json, ['activeDjId']) != null ||
+        djIds.isNotEmpty;
     return VoiceRoomEntity(
       id: rawId,
       slug: slug,
@@ -688,18 +1018,70 @@ class LiveRemoteDataSource {
       descTr: pick(json, ['descTr', 'descEn', 'description']) as String?,
       rulesTr: pick(json, ['rules', 'rulesTr', 'roomRules']) as String?,
       icon: pick(json, ['icon']) as String?,
+      category: pick(json, ['category', 'subcategory'])?.toString(),
       onlineCount: asInt(pick(json, ['onlineCount'])),
       userCount: asInt(pick(json, ['userCount'])),
       backgroundImageUrl: pick(json, ['backgroundImage']) as String?,
       ownerName: ownerName,
       ownerAvatarUrl: ownerAvatar,
-      ownerId: pick(json, ['ownerId'])?.toString() ??
-          (o is Map ? pick(asJsonMap(o), ['id'])?.toString() : null),
+      ownerId: pick(json, [
+            'ownerId',
+            'ownerUserId',
+            'hostUserId',
+            'createdBy',
+            'userId',
+            'hostId',
+          ])?.toString() ??
+          (o is Map
+              ? pick(asJsonMap(o), ['id', 'userId', 'realCid', 'gcid'])
+                  ?.toString()
+              : null),
       activeDjId: pick(json, ['activeDjId'])?.toString(),
       djUserIds: djIds,
       recentUserAvatars: recent,
       isVip: isVip ? true : null,
       roomType: roomType,
+      isLocked: isLocked || hasPassword ? true : null,
+      hasPassword: hasPassword || isLocked ? true : null,
+      seatCount: asInt(pick(json, ['seatCount', 'maxSeats', 'seats_count'])),
+      maxUsers: asInt(pick(json, ['maxUsers', 'max_users', 'userLimit'])),
+      isPkLive: isPkLive,
+      isMusicPlaying: isMusicPlaying,
+    );
+  }
+
+  LiveStreamEntity _mapLiveFieldStream(LiveFieldRoomSummary room) {
+    return LiveStreamEntity(
+      id: room.id,
+      title: room.title ?? 'Canlı Yayın',
+      streamerName: room.hostName ?? '',
+      thumbnailUrl: room.thumbnailUrl,
+      viewerCount: room.viewerCount,
+      isLive: room.isLive,
+      hostUserId: room.hostId,
+    );
+  }
+
+  VoiceRoomEntity _mapLiveFieldVoice(LiveFieldRoomSummary room) {
+    final avatars = <String>[];
+    if (room.hostImage != null && room.hostImage!.trim().isNotEmpty) {
+      avatars.add(room.hostImage!.trim());
+    }
+    return VoiceRoomEntity(
+      id: room.id,
+      slug: room.slug ?? '',
+      nameTr: room.title ?? room.slug ?? 'Oda',
+      descTr: null,
+      onlineCount: room.viewerCount,
+      userCount: room.viewerCount,
+      backgroundImageUrl: room.backgroundImage,
+      ownerName: room.hostName,
+      ownerAvatarUrl: room.hostImage,
+      ownerId: room.hostId,
+      recentUserAvatars: avatars,
+      roomType: 'voice',
+      isPkLive: room.isPkLive,
+      isMusicPlaying: room.musicPlaying,
     );
   }
 }

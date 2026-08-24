@@ -8,9 +8,9 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../theme/voice_room_tokens.dart';
-import 'voice_online_gift_box.dart';
+import 'voice_header_online_badge.dart';
 
-/// Web sohbet odası üst bar — oda adı, ID, çevrimiçi kutusu, galeri, ayarlar, çıkış.
+/// Web sohbet odası üst bar — oda adı, ID, jeton + çevrimiçi, galeri, ayarlar, çıkış.
 class VoiceWebRoomHeader extends ConsumerWidget {
   const VoiceWebRoomHeader({
     super.key,
@@ -18,6 +18,8 @@ class VoiceWebRoomHeader extends ConsumerWidget {
     required this.onlineCount,
     required this.onBack,
     required this.onExit,
+    this.coinBalance = 0,
+    this.onCoinsTap,
     this.onAudience,
     this.onGallery,
     this.onSettings,
@@ -29,6 +31,8 @@ class VoiceWebRoomHeader extends ConsumerWidget {
 
   final VoiceRoomEntity room;
   final int onlineCount;
+  final int coinBalance;
+  final VoidCallback? onCoinsTap;
   final VoidCallback onBack;
   final VoidCallback onExit;
   final VoidCallback? onAudience;
@@ -126,11 +130,42 @@ class VoiceWebRoomHeader extends ConsumerWidget {
                   ),
                 ),
               ),
-              VoiceOnlineGiftBox(
-                onlineCount: onlineCount,
+              VoiceHeaderOnlineBadge(
+                count: onlineCount,
                 onTap: onAudience,
               ),
-              const SizedBox(width: 4),
+              if (onCoinsTap != null)
+                GestureDetector(
+                  onTap: onCoinsTap,
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.black.withValues(alpha: 0.45),
+                      border: Border.all(
+                        color: AppThemeColors.diamondBlue.withValues(alpha: 0.45),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('💎', style: TextStyle(fontSize: 12)),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatJeton(coinBalance),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 11,
+                            color: AppThemeColors.diamondBlue,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              const SizedBox(width: 2),
               _GlassIconBtn(
                 icon: Icons.ios_share_rounded,
                 onTap: onShare,
@@ -138,10 +173,6 @@ class VoiceWebRoomHeader extends ConsumerWidget {
               _GlassIconBtn(
                 icon: Icons.photo_library_outlined,
                 onTap: onGallery,
-              ),
-              _GlassIconBtn(
-                icon: Icons.settings_rounded,
-                onTap: onSettings,
               ),
               _GlassIconBtn(
                 icon: Icons.meeting_room_outlined,
@@ -155,6 +186,12 @@ class VoiceWebRoomHeader extends ConsumerWidget {
             ],
           ),
     );
+  }
+
+  static String _formatJeton(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return '$n';
   }
 }
 

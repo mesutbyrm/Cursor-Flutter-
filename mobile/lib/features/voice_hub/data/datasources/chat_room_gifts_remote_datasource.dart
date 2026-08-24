@@ -1,22 +1,61 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../gifts/data/gift_idempotency.dart';
+import '../../../gifts/data/gift_reciprocal_guard.dart';
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
+import '../../../gifts/data/gift_repository.dart';
+import '../../../gifts/domain/gift_platform.dart';
+import '../../../gifts/data/lucky_gift_remote_datasource.dart';
+import '../../../gifts/domain/lucky_gift_entities.dart';
+import '../../../live/data/datasources/live_field/live_field_api_remote_datasource.dart';
 import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
+import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/entities/voice_gift_revenue.dart';
 
 /// Sesli oda hediyeleri — katalog canlı yayınla aynı, gönderim oda uç noktasına.
 class ChatRoomGiftsRemoteDataSource {
-  ChatRoomGiftsRemoteDataSource(this._dio, this._liveGifts);
+  ChatRoomGiftsRemoteDataSource(this._dio, this._liveGifts, {LuckyGiftRemoteDataSource? lucky})
+      : _lucky = lucky ?? LuckyGiftRemoteDataSource(_dio);
 
   final Dio _dio;
   final LiveGiftsRemoteDataSource _liveGifts;
+  final LuckyGiftRemoteDataSource _lucky;
 
-  Future<List<LiveVideoGiftType>> fetchGiftTypes() async {
+  Future<List<LiveVideoGiftType>> fetchGiftTypes({String? context}) async {
+    try {
+      final repo = GiftRepository(_dio, luckyDs: _lucky);
+      final catalog = await repo.fetchCatalog(
+        platform: GiftPlatform.mobile,
+        context: context ?? 'voice_room',
+      );
+      if (catalog.isNotEmpty) {
+        return catalog.map(LiveVideoGiftType.fromGift).toList();
+      }
+    } catch (_) {}
+    try {
+      final liveTypes =
+          await LiveFieldApiRemoteDataSource(_dio).gifts.fetchGiftTypes();
+      if (liveTypes.isNotEmpty) {
+        return liveTypes
+            .map(
+              (g) => LiveVideoGiftType(
+                id: g.id,
+                name: g.name,
+                price: g.price,
+                iconPath: g.thumbnailUrl ?? g.assetUrl,
+                animationRef: g.assetUrl,
+                isLucky: g.isLucky,
+              ),
+            )
+            .toList();
+      }
+    } catch (_) {}
     try {
       return await _liveGifts.fetchGiftTypes();
     } catch (_) {
@@ -33,30 +72,132 @@ class ChatRoomGiftsRemoteDataSource {
     String? receiverId,
     String platform = 'mobile',
     String? battleId,
+    bool isLucky = false,
   }) async {
+    if (isLucky) {
+      final lucky = await _lucky.sendLuckyGift(
+        giftTypeId: giftTypeId,
+        quantity: quantity,
+        context: 'voice_room',
+        contextId: roomId,
+      );
+      return VoiceGiftSendResult(
+        luckyResult: lucky,
+        newBalance: lucky.newBalance,
+      );
+    }
+    if (receiverId != null && receiverId.isNotEmpty) {
+      await assertReciprocalGiftAllowed(_dio, receiverId);
+    }
+    try {
+      final field = await LiveFieldApiRemoteDataSource(_dio).gifts.sendGift(
+            roomId: roomId,
+            roomType: 'voice',
+            giftTypeId: giftTypeId,
+            recipientId: receiverId,
+            quantity: quantity,
+            isLucky: isLucky,
+          );
+      return _mapSendResponse(
+        body: field.raw,
+        roomId: roomId,
+        fallbackSpent: field.spentAmount,
+        newBalance: field.senderBalance,
+        transactionId: field.transactionId,
+      );
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    } catch (_) {}
+
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.chatRoomGifts(roomId),
       data: {
         'giftTypeId': giftTypeId,
+        'giftId': giftTypeId,
         'quantity': quantity,
-        'streamId': roomId,
         if (senderName != null && senderName.isNotEmpty) 'senderName': senderName,
         if (receiverName != null && receiverName.isNotEmpty)
           'receiverName': receiverName,
-        if (receiverId != null && receiverId.isNotEmpty) 'receiverId': receiverId,
-        // PK aktifken: gift-engine battleId ile alıcı katılımcının skorunu artırır.
+        if (receiverId != null && receiverId.isNotEmpty) ...{
+          'receiverId': receiverId,
+          'receiverUserId': receiverId,
+        },
         if (battleId != null && battleId.isNotEmpty) 'battleId': battleId,
         'platform': platform,
+        'idempotencyKey': newGiftIdempotencyKey(),
       },
     );
     final body = res.data;
     Map<String, dynamic>? revenueMap;
+    Map<String, dynamic>? payload;
     if (body is Map) {
+      payload = Map<String, dynamic>.from(body);
       final rev = body['revenue'];
       if (rev is Map) revenueMap = Map<String, dynamic>.from(rev);
     }
-    return VoiceGiftSendResult(
+    return _mapSendResponse(
+      body: payload ?? const {},
+      roomId: roomId,
       revenue: VoiceGiftRevenueBreakdown.fromJson(revenueMap),
+    );
+  }
+
+  VoiceGiftSendResult _mapSendResponse({
+    required Map<String, dynamic> body,
+    required String roomId,
+    VoiceGiftRevenueBreakdown? revenue,
+    int? fallbackSpent,
+    int? newBalance,
+    String? transactionId,
+  }) {
+    final unwrapped = body['data'] is Map
+        ? Map<String, dynamic>.from(body['data'] as Map)
+        : body;
+    final event = _liveGifts.parseGiftEvent(unwrapped, streamId: roomId);
+    final balance = newBalance ??
+        asInt(
+          pick(unwrapped, [
+            'newBalance',
+            'balance',
+            'coinBalance',
+            'senderBalance',
+          ]),
+        );
+    final spent = fallbackSpent ??
+        event?.jetonAmount ??
+        asInt(
+          pick(unwrapped, [
+            'spentAmount',
+            'coinCost',
+            'totalCoin',
+            'totalCost',
+            'price',
+          ]),
+        );
+    final txId = transactionId ??
+        pick(unwrapped, ['id', 'giftEventId', 'transactionId'])?.toString();
+    final pkRaw = unwrapped['pkBattle'] ??
+        unwrapped['pk'] ??
+        unwrapped['battle'] ??
+        body['pkBattle'] ??
+        body['pk'];
+    PkBattleRemote? pkBattle;
+    if (pkRaw is Map) {
+      final parsed = PkBattleRemote.fromJson(Map<String, dynamic>.from(pkRaw));
+      if (parsed.effectiveId.isNotEmpty) pkBattle = parsed;
+    }
+    return VoiceGiftSendResult(
+      revenue: revenue ??
+          VoiceGiftRevenueBreakdown.fromJson(
+            unwrapped['revenue'] is Map
+                ? Map<String, dynamic>.from(unwrapped['revenue'] as Map)
+                : null,
+          ),
+      newBalance: balance == 0 ? null : balance,
+      spentAmount: spent == 0 ? null : spent,
+      giftEvent: event,
+      transactionId: txId,
+      pkBattle: pkBattle,
     );
   }
 

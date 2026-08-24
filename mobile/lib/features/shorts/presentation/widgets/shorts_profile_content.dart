@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../../domain/repositories/shorts_repository.dart';
@@ -32,81 +34,53 @@ class ShortsProfileStatsRow extends ConsumerWidget {
     required this.userId,
     this.fallbackFollowers = 0,
     this.fallbackFollowing = 0,
+    this.fallbackLikes = 0,
+    this.fallbackViews = 0,
+    this.fallbackVideos = 0,
     this.tappable = true,
   });
 
   final String userId;
   final int fallbackFollowers;
   final int fallbackFollowing;
+  final int fallbackLikes;
+  final int fallbackViews;
+  final int fallbackVideos;
   final bool tappable;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(shortVideoProfileStatsProvider(userId));
+    final hubStats = ref.watch(profileStatsProvider).valueOrNull;
 
-    return statsAsync.when(
-      loading: () => ProfileGlass(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Row(
-          children: List.generate(
-            4,
-            (_) => const Expanded(
-              child: Center(
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-      error: (_, _) => ProfileGlass(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Row(
-          children: [
-            Expanded(
-              child: _StatCell(
-                label: 'Takipçi',
-                value: formatShortCount(fallbackFollowers),
-                onTap: tappable
-                    ? () => context.push('/profile/followers?userId=$userId')
-                    : null,
-              ),
-            ),
-            _divider(context),
-            Expanded(
-              child: _StatCell(
-                label: 'Takip',
-                value: formatShortCount(fallbackFollowing),
-                onTap: tappable
-                    ? () => context.push('/profile/following?userId=$userId')
-                    : null,
-              ),
-            ),
-          ],
-        ),
-      ),
-      data: (stats) => ProfileGlass(
+    int pick(int primary, int secondary, int tertiary) {
+      if (primary > 0) return primary;
+      if (secondary > 0) return secondary;
+      return tertiary;
+    }
+
+    Widget row({
+      required int videos,
+      required int followers,
+      required int following,
+      required int likes,
+      required int views,
+    }) {
+      return ProfileGlass(
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Row(
           children: [
             Expanded(
               child: _StatCell(
                 label: 'Video',
-                value: formatShortCount(stats.videosCount),
+                value: formatShortCount(videos),
               ),
             ),
             _divider(context),
             Expanded(
               child: _StatCell(
                 label: 'Takipçi',
-                value: formatShortCount(
-                  stats.followersCount > 0
-                      ? stats.followersCount
-                      : fallbackFollowers,
-                ),
+                value: formatShortCount(followers),
                 onTap: tappable
                     ? () => context.push('/profile/followers?userId=$userId')
                     : null,
@@ -116,11 +90,7 @@ class ShortsProfileStatsRow extends ConsumerWidget {
             Expanded(
               child: _StatCell(
                 label: 'Takip',
-                value: formatShortCount(
-                  stats.followingCount > 0
-                      ? stats.followingCount
-                      : fallbackFollowing,
-                ),
+                value: formatShortCount(following),
                 onTap: tappable
                     ? () => context.push('/profile/following?userId=$userId')
                     : null,
@@ -130,18 +100,65 @@ class ShortsProfileStatsRow extends ConsumerWidget {
             Expanded(
               child: _StatCell(
                 label: 'Beğeni',
-                value: formatShortCount(stats.totalLikes),
+                value: formatShortCount(likes),
               ),
             ),
             _divider(context),
             Expanded(
               child: _StatCell(
                 label: 'İzlenme',
-                value: formatShortCount(stats.totalViews),
+                value: formatShortCount(views),
               ),
             ),
           ],
         ),
+      );
+    }
+
+    final hubFollowers = hubStats?.followers ?? 0;
+    final hubFollowing = hubStats?.following ?? 0;
+    final hubLikes = hubStats?.likes ?? 0;
+    final hubViews = hubStats?.profileViews ?? 0;
+
+    if (statsAsync.isLoading && statsAsync.valueOrNull == null) {
+      return row(
+        videos: fallbackVideos,
+        followers: pick(0, hubFollowers, fallbackFollowers),
+        following: pick(0, hubFollowing, fallbackFollowing),
+        likes: pick(0, hubLikes, fallbackLikes),
+        views: pick(0, hubViews, fallbackViews),
+      );
+    }
+
+    return statsAsync.when(
+      loading: () => row(
+        videos: fallbackVideos,
+        followers: pick(0, hubFollowers, fallbackFollowers),
+        following: pick(0, hubFollowing, fallbackFollowing),
+        likes: pick(0, hubLikes, fallbackLikes),
+        views: pick(0, hubViews, fallbackViews),
+      ),
+      error: (_, _) => row(
+        videos: fallbackVideos,
+        followers: pick(0, hubFollowers, fallbackFollowers),
+        following: pick(0, hubFollowing, fallbackFollowing),
+        likes: pick(0, hubLikes, fallbackLikes),
+        views: pick(0, hubViews, fallbackViews),
+      ),
+      data: (stats) => row(
+        videos: pick(stats.videosCount, 0, fallbackVideos),
+        followers: pick(
+          stats.followersCount,
+          hubFollowers,
+          fallbackFollowers,
+        ),
+        following: pick(
+          stats.followingCount,
+          hubFollowing,
+          fallbackFollowing,
+        ),
+        likes: pick(stats.totalLikes, hubLikes, fallbackLikes),
+        views: pick(stats.totalViews, 0, fallbackViews),
       ),
     );
   }
@@ -345,25 +362,42 @@ class ShortsProfileGrid extends StatelessWidget {
   });
 
   final List<ShortVideoEntity> videos;
-  /// Profil CustomScrollView içindeyse shrinkWrap zorunlu.
+  /// Profil CustomScrollView içinde sabit yükseklik grid kullanılır.
   final bool nestedInProfileScroll;
 
   @override
   Widget build(BuildContext context) {
     if (nestedInProfileScroll) {
-      return GridView.builder(
-        padding: EdgeInsets.zero,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: 4,
-          mainAxisSpacing: 4,
-          childAspectRatio: 9 / 14,
-        ),
-        itemCount: videos.length,
-        addRepaintBoundaries: false,
-        itemBuilder: (context, i) => _VideoTile(video: videos[i]),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          const crossAxisCount = 3;
+          const spacing = 4.0;
+          const aspect = 9 / 14;
+          final gridHeight = ListPerf.nestedGridHeight(
+            itemCount: videos.length,
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childAspectRatio: aspect,
+            crossAxisExtent: constraints.maxWidth,
+          );
+          return SizedBox(
+            height: gridHeight,
+            child: GridView.builder(
+              padding: EdgeInsets.zero,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: spacing,
+                mainAxisSpacing: spacing,
+                childAspectRatio: aspect,
+              ),
+              itemCount: videos.length,
+              addRepaintBoundaries: false,
+              itemBuilder: (context, i) => _VideoTile(video: videos[i]),
+            ),
+          );
+        },
       );
     }
     return GridView.builder(

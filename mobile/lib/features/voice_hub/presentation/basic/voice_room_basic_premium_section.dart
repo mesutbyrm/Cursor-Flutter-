@@ -1,11 +1,11 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/auth/bot_account_guard.dart';
+import '../../../../core/auth/bot_account_provider.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/domain/entities/user_entity.dart';
@@ -15,8 +15,6 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
-import '../../domain/pk/pk_duration_options.dart';
-import '../widgets/voice_room/voice_room_join_toast_stack.dart';
 import '../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../providers/chat_room_providers.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
@@ -25,6 +23,7 @@ import '../sheets/voice_room_menu_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
+import '../utils/voice_chat_message_filters.dart';
 import '../widgets/chat/chat_message_widgets.dart';
 import '../widgets/voice_room/voice_room_mention_text_field.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
@@ -76,25 +75,40 @@ class VoiceRoomBasicJoinTicker extends StatefulWidget {
       _VoiceRoomBasicJoinTickerState();
 }
 
-class _VoiceRoomBasicJoinTickerState extends State<VoiceRoomBasicJoinTicker> {
+class _VoiceRoomBasicJoinTickerState extends State<VoiceRoomBasicJoinTicker>
+    with SingleTickerProviderStateMixin {
   final _scrollCtrl = ScrollController();
-  Timer? _marqueeTimer;
+  // Kayan yazı artık vsync Ticker ile (kareye hizalı, daha akıcı) sürülüyor.
+  // Ayrıca oda başka bir route ile örtülünce Ticker otomatik durur; eski 40 ms
+  // Timer arka planda da çalışıp CPU harcıyordu.
+  late final _ticker = createTicker(_onMarqueeTick);
+  Duration _lastTick = Duration.zero;
 
   @override
   void initState() {
     super.initState();
-    _marqueeTimer = Timer.periodic(const Duration(milliseconds: 40), (_) {
-      if (!_scrollCtrl.hasClients) return;
-      final max = _scrollCtrl.position.maxScrollExtent;
-      if (max <= 0) return;
-      final next = _scrollCtrl.offset + 1.2;
-      _scrollCtrl.jumpTo(next > max ? 0 : next);
-    });
+    _ticker.start();
+  }
+
+  void _onMarqueeTick(Duration elapsed) {
+    if (_lastTick == Duration.zero) {
+      _lastTick = elapsed;
+      return;
+    }
+    final dt = (elapsed - _lastTick).inMicroseconds / 1e6; // saniye
+    _lastTick = elapsed;
+    if (!_scrollCtrl.hasClients) return;
+    final max = _scrollCtrl.position.maxScrollExtent;
+    if (max <= 0) return;
+    // ~30 px/sn (eski: 1.2 px / 40 ms). Kareye hizalı ilerleme.
+    var next = _scrollCtrl.offset + 30.0 * dt;
+    if (next > max) next = 0;
+    _scrollCtrl.jumpTo(next);
   }
 
   @override
   void dispose() {
-    _marqueeTimer?.cancel();
+    _ticker.dispose();
     _scrollCtrl.dispose();
     super.dispose();
   }
@@ -168,27 +182,29 @@ class _VoiceRoomBasicJoinTickerState extends State<VoiceRoomBasicJoinTicker> {
   }
 }
 
-/// Sohbet akışı — kaydırılabilir mesaj listesi.
-class VoiceRoomBasicChatFeed extends StatelessWidget {
+/// Sohbet akışı — yalnızca mesaj/presence dilimini izler (oda gövdesi rebuild etmez).
+class VoiceRoomBasicChatFeed extends ConsumerWidget {
   const VoiceRoomBasicChatFeed({
     super.key,
-    required this.messages,
-    this.events = const [],
-    this.presence = const [],
+    required this.liveKey,
     this.onMention,
     this.onUserPerms,
   });
 
-  final List<ChatRoomMessage> messages;
-  final List<VoiceRoomRealtimeEvent> events;
-  final List<ChatRoomPresence> presence;
+  final String liveKey;
   /// Tek dokunuş — @kullanıcı adı mesaj kutusuna eklenir.
   final void Function(String userId, String name)? onMention;
   /// Çift dokunuş — kullanıcı yetkileri (moderasyon) açılır.
   final void Function(String userId, String name)? onUserPerms;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final messages = ref.watch(
+      voiceRoomLiveProvider(liveKey).select((s) => s.messages),
+    );
+    final presence = ref.watch(
+      voiceRoomLiveProvider(liveKey).select((s) => s.presence),
+    );
     // Presence'tan id→profil resmi — mesajda görsel yoksa buradan çözülür.
     final avatarById = <String, String>{};
     for (final p in presence) {
@@ -197,13 +213,15 @@ class VoiceRoomBasicChatFeed extends StatelessWidget {
         avatarById[p.id] = img;
       }
     }
-    final visible = messages
-        .where(
-          (m) =>
-              m.kind == ChatMessageKind.text ||
-              m.kind == ChatMessageKind.gift,
-        )
-        .toList();
+    final visible = messages.where((m) {
+      if (m.kind == ChatMessageKind.systemJoin ||
+          m.kind == ChatMessageKind.systemLeave) {
+        return true;
+      }
+      if (m.kind != ChatMessageKind.text) return false;
+      if (ChatRoomMessage.isSystemProtocol(m.content)) return false;
+      return VoiceChatMessageFilters.shouldShow(m);
+    }).toList();
 
     return Stack(
       children: [
@@ -225,15 +243,17 @@ class VoiceRoomBasicChatFeed extends StatelessWidget {
             itemCount: visible.length,
             itemBuilder: (context, index) {
               final msg = visible[visible.length - 1 - index];
-              return ChatMessageWidget(
-                key: ValueKey(msg.id),
-                message: msg,
-                showAvatar: true,
-                avatarUrl: msg.user?.id != null
-                    ? avatarById[msg.user!.id]
-                    : null,
-                onUserTap: onMention,
-                onUserDoubleTap: onUserPerms,
+              return RepaintBoundary(
+                child: ChatMessageWidget(
+                  key: ValueKey(msg.id),
+                  message: msg,
+                  showAvatar: true,
+                  avatarUrl: msg.user?.id != null
+                      ? avatarById[msg.user!.id]
+                      : null,
+                  onUserTap: onMention,
+                  onUserDoubleTap: onUserPerms,
+                ),
               );
             },
           ),
@@ -241,17 +261,14 @@ class VoiceRoomBasicChatFeed extends StatelessWidget {
           left: 0,
           right: 0,
           bottom: 4,
-          child: VoiceRoomJoinToastStack(
-            events: events,
-            messages: messages,
-          ),
+          child: const SizedBox.shrink(),
         ),
       ],
     );
   }
 }
 
-/// Sabit mesaj çubuğu — klavye üstünde.
+/// Sabit mesaj çubuğu — klavye üstünde; gönder + emoji.
 class VoiceRoomBasicMessageBar extends StatefulWidget {
   const VoiceRoomBasicMessageBar({
     super.key,
@@ -304,11 +321,11 @@ class _VoiceRoomBasicMessageBarState extends State<VoiceRoomBasicMessageBar> {
               excludeUserId: widget.selfUserId,
               onChanged: widget.onChanged,
               onSubmitted: (_) => widget.onSend(),
-              hintText: 'Mesaj yaz…',
+              hintText: 'Mesaj yaz… (!istek)',
               minLines: 1,
               maxLines: 3,
               decoration: InputDecoration(
-                hintText: 'Mesaj yaz…',
+                hintText: 'Mesaj yaz… (!istek)',
                 isDense: true,
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -318,12 +335,13 @@ class _VoiceRoomBasicMessageBarState extends State<VoiceRoomBasicMessageBar> {
               ),
             ),
           ),
+          const SizedBox(width: 8),
           IconButton(
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             onPressed: widget.onSend,
-            icon: const Icon(Icons.send_rounded, size: 22),
+            icon: const Icon(Icons.send_rounded, size: 26),
           ),
         ],
       ),
@@ -368,9 +386,11 @@ class VoiceRoomBasicCompactControls extends ConsumerWidget {
           _MiniBtn(
             icon: speakerOn
                 ? Icons.volume_up_rounded
-                : Icons.hearing_disabled_rounded,
-            label: 'Ses',
+                : Icons.volume_off_rounded,
+            label: speakerOn ? 'Açık' : 'Kapalı',
             active: speakerOn,
+            activeColor: const Color(0xFF22C55E),
+            inactiveColor: const Color(0xFFEF4444),
             onTap: onSpeaker,
           ),
           const SizedBox(width: 6),
@@ -423,6 +443,8 @@ class _MiniBtn extends StatelessWidget {
     required this.onTap,
     this.active = false,
     this.danger = false,
+    this.activeColor,
+    this.inactiveColor,
   });
 
   final IconData icon;
@@ -430,15 +452,26 @@ class _MiniBtn extends StatelessWidget {
   final VoidCallback onTap;
   final bool active;
   final bool danger;
+  final Color? activeColor;
+  final Color? inactiveColor;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final bg = danger
-        ? scheme.errorContainer
-        : active
-            ? scheme.primaryContainer
-            : scheme.surfaceContainerHighest;
+    final Color fg;
+    final Color bg;
+    if (danger) {
+      fg = scheme.onErrorContainer;
+      bg = scheme.errorContainer;
+    } else if (activeColor != null || inactiveColor != null) {
+      fg = active ? (activeColor ?? scheme.primary) : (inactiveColor ?? scheme.error);
+      bg = fg.withValues(alpha: 0.18);
+    } else {
+      fg = scheme.onSurface;
+      bg = active
+          ? scheme.primaryContainer
+          : scheme.surfaceContainerHighest;
+    }
     return Material(
       color: bg,
       borderRadius: BorderRadius.circular(10),
@@ -450,8 +483,11 @@ class _MiniBtn extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 18),
-              Text(label, style: const TextStyle(fontSize: 9)),
+              Icon(icon, size: 18, color: danger ? null : fg),
+              Text(
+                label,
+                style: TextStyle(fontSize: 9, color: danger ? null : fg),
+              ),
             ],
           ),
         ),
@@ -539,8 +575,17 @@ Future<void> shareVoiceRoom(BuildContext context, VoiceRoomEntity room) async {
 
 Future<void> openVoiceRoomBasicPkInvite(
   BuildContext context,
+  WidgetRef ref,
   VoiceRoomEntity room,
 ) async {
+  if (BotAccountGuard.blockIfBot(
+    ref,
+    context,
+    'PK daveti gönderme',
+    readIsBot: () => ref.read(isBotAccountProvider),
+  )) {
+    return;
+  }
   final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
   if (key.isEmpty) {
     if (!context.mounted) return;
@@ -583,61 +628,6 @@ Future<void> connectVoiceRoomBasicPkBattle(
       remote.clear();
       return;
     }
-  }
-  remote.connectSocket(
-    roomId: roomKey,
-    alternateRoomId: room.slug != roomKey ? room.slug : null,
-    battleId: battle.id,
-  );
-}
-
-Future<void> showVoiceRoomBasicIncomingPkInvite({
-  required BuildContext context,
-  required WidgetRef ref,
-  required VoiceRoomEntity room,
-  required String inviteId,
-}) async {
-  final battle = ref.read(pkBattleRemoteProvider);
-  final durationLabel = battle != null
-      ? pkDurationBySeconds(battle.durationSeconds).label
-      : '3 dakika';
-  final accept = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('PK Daveti'),
-      content: Text(
-        'Bir oda size PK daveti gönderdi.\nSüre: $durationLabel\n\nKabul ediyor musunuz?',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Reddet'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Kabul Et'),
-        ),
-      ],
-    ),
-  );
-  final remote = ref.read(pkBattleRemoteProvider.notifier);
-  final roomKey = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-  final altRoom = room.slug != roomKey ? room.slug : null;
-  if (accept == true) {
-    await remote.accept(
-      inviteId,
-      roomId: roomKey,
-      alternateRoomId: altRoom,
-    );
-    if (context.mounted) {
-      context.push('/voice-room/$roomKey/pk', extra: room);
-    }
-  } else if (accept == false) {
-    await remote.reject(
-      inviteId,
-      roomId: roomKey,
-      alternateRoomId: altRoom,
-    );
   }
 }
 

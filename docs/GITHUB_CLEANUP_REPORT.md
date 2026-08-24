@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-07-13 14:48 UTC
+Oluşturulma: 2026-08-24 04:33 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -10,7 +10,7 @@ Base: `main`
 | Metrik | Adet |
 |--------|------|
 | Kapatılan PR | 0 |
-| Silinen remote dal | 1 |
+| Silinen remote dal | 0 |
 | Kalan açık PR | 2 |
 | Korunan / aktif dal | 0 |
 
@@ -24,14 +24,14 @@ Base: `main`
 
 | Dal | Neden |
 |-----|-------|
-| cursor/admin-full-access-df6c | merged into main |
+| — | — |
 
 ## Kalan açık PR'lar
 
 | PR | Head | Base | Not |
 |----|------|------|-----|
-| #236 | claude/fortune-teller-bugs-features-1eie7a | main | draft=true | perf(feed): ana sayfa barrier watchdog'unu ağaç temizlenince durdur |
-| #236 | claude/fortune-teller-bugs-features-1eie7a | main | draft=true | perf(feed): ana sayfa barrier watchdog'unu ağaç temizlenince durdur |
+| #244 | dependabot/npm_and_yarn/site/canlifal-jeton-web/npm_and_yarn-f433e91868 | main | draft=false | chore(deps): bump next from 14.2.35 to 15.5.18 in /site/canlifal-jeton-web in the npm_and_yarn group across 1 directory |
+| #244 | dependabot/npm_and_yarn/site/canlifal-jeton-web/npm_and_yarn-f433e91868 | main | draft=false | chore(deps): bump next from 14.2.35 to 15.5.18 in /site/canlifal-jeton-web in the npm_and_yarn group across 1 directory |
 
 ## Aktif / korunan dallar
 

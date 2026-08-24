@@ -9,10 +9,10 @@ import '../../features/trtc/presentation/providers/trtc_providers.dart';
 import '../../features/voice_hub/presentation/audio/voice_room_music_audio_session.dart';
 import '../providers/auth_selectors.dart';
 
-/// Sesli oda girişi — UI ≤2 sn; ses/TRTC arka planda hazırlanır.
+/// Sesli oda girişi — UI ≤1 sn; TRTC token arka planda hazırlanır.
 abstract final class VoiceRoomEntryPerf {
-  static const entryBudget = Duration(seconds: 2);
-  static const trtcCacheTtl = Duration(minutes: 3);
+  static const entryBudget = Duration(seconds: 1);
+  static const tokenCacheTtl = Duration(minutes: 3);
 
   static final Map<String, _TrtcCacheEntry> _trtcCache = {};
 
@@ -34,7 +34,7 @@ abstract final class VoiceRoomEntryPerf {
     final key = _cacheKey(userId, roomId);
     final entry = _trtcCache.remove(key);
     if (entry == null) return null;
-    if (DateTime.now().difference(entry.at) > trtcCacheTtl) return null;
+    if (DateTime.now().difference(entry.at) > tokenCacheTtl) return null;
     return entry.cred;
   }
 
@@ -44,7 +44,8 @@ abstract final class VoiceRoomEntryPerf {
     required String roomId,
     required TrtcCredentials cred,
   }) {
-    _trtcCache[_cacheKey(userId, roomId)] = _TrtcCacheEntry(cred, DateTime.now());
+    _trtcCache[_cacheKey(userId, roomId)] =
+        _TrtcCacheEntry(cred, DateTime.now());
   }
 
   static String _cacheKey(String userId, String roomId) =>
@@ -61,15 +62,17 @@ abstract final class VoiceRoomEntryPerf {
     final key = _cacheKey(userId, roomId);
     final existing = _trtcCache[key];
     if (existing != null &&
-        DateTime.now().difference(existing.at) <= trtcCacheTtl) {
+        DateTime.now().difference(existing.at) <= tokenCacheTtl) {
       return;
     }
 
     try {
-      final cred = await ref.read(trtcRemoteProvider).fetchUserSig(
-            userId: userId,
-            roomId: roomId,
-          );
+      final remote = ref.read(trtcRemoteProvider);
+      final cred = await remote.fetchToken(
+        roomId: roomId,
+        role: 'audience',
+        userId: userId,
+      );
       _trtcCache[key] = _TrtcCacheEntry(cred, DateTime.now());
     } catch (_) {}
   }

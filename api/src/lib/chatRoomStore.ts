@@ -28,6 +28,7 @@ import {
   type VoiceStaffRank,
 } from "./voiceStaffRank";
 import type { RoomType } from "@prisma/client";
+import { pkCache, pkRoomCacheKey } from "./pkCache";
 import {
   presenceHeartbeat,
   presenceJoinRoom,
@@ -86,6 +87,9 @@ export type ChatRoomRow = {
   roomType?: RoomType;
   maxUsers?: number;
   isVip?: boolean;
+  musicPlaying?: boolean;
+  isPkLive?: boolean;
+  pkActive?: boolean;
 };
 
 const SITE_BACKGROUNDS = Array.from(
@@ -242,11 +246,36 @@ export function listChatRooms(): ChatRoomRow[] {
       .slice(-12)
       .map((u) => ({ image: u.image }))
       .reverse();
+    const canonical = resolveRoomId(r.id);
+    const dj = normalizeDjState(
+      djByRoom.get(canonical) ?? {
+        activeDjId: r.activeDjId ?? null,
+        musicUrl: null,
+        playing: false,
+        currentVideoId: null,
+        trackStartedAt: null,
+        positionMs: 0,
+      },
+    );
+    const queue = listMusicQueue(canonical);
+    const musicPlaying = Boolean(
+      dj.playing && (dj.musicUrl || dj.currentVideoId || queue.length > 0),
+    );
+    const pkCached = pkCache.get(pkRoomCacheKey(canonical));
+    const pkStatus = pkCached?.payload?.status;
+    const isPkLive =
+      pkStatus === "active" ||
+      pkStatus === "pending" ||
+      pkCached?.payload?.status === "ACTIVE";
     return {
       ...r,
       onlineCount: users.length,
       userCount: users.length,
       recentUsers: recent,
+      activeDjId: dj.activeDjId ?? r.activeDjId ?? null,
+      musicPlaying,
+      isPkLive,
+      pkActive: isPkLive,
     };
   });
 }
@@ -995,7 +1024,7 @@ export function getDjState(roomId: string, user: User | null) {
   const queue = listMusicQueue(roomId);
   const nowPlaying = queue.length > 0 ? queue[0]! : null;
   const playing = Boolean(
-    dj.playing && (dj.musicUrl || queue.length > 0),
+    dj.playing && (dj.musicUrl || dj.currentVideoId || queue.length > 0),
   );
   const canRequestMusic =
     settings.musicEnabled &&
@@ -1610,7 +1639,7 @@ export async function resolveYoutubeStreamUrl(
 export async function tryStartMusicFromQueue(roomId: string) {
   const key = resolveRoomId(roomId);
   const current = djByRoom.get(key);
-  if (current?.playing && current.musicUrl) return current;
+  if (current?.playing && current.currentVideoId) return current;
   const { playing: playingRow, queued } = await getRoomMusicItems(roomId);
   const nextRow = playingRow ?? queued[0] ?? null;
   if (!nextRow) return current ?? null;
@@ -1619,12 +1648,11 @@ export async function tryStartMusicFromQueue(roomId: string) {
   }
   const next = toApiMusicItem(nextRow);
   const videoId = next.youtubeId ?? extractYoutubeId(next.youtubeUrl);
-  const watchUrl = videoId ? youtubeWatchUrl(videoId) : next.youtubeUrl.trim();
-  const stream = videoId ? await resolveYoutubeStreamUrl(videoId) : null;
-  if (!stream) return current ?? null;
+  if (!videoId) return current ?? null;
+  // IFrame Player modu — stream URL üretilmez; yalnızca videoId senkronize edilir.
   const nextDj = markDjPlaying(normalizeDjState(current), {
     activeDjId: next.requestedBy.id,
-    musicUrl: stream,
+    musicUrl: null,
     playing: true,
     currentVideoId: videoId,
     positionMs: 0,

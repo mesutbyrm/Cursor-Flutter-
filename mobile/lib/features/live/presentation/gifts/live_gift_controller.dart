@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../gifts/data/gift_sound_service.dart';
 import '../../../gifts/domain/gift_revenue_display.dart';
+import '../../../gifts/domain/lucky_gift_entities.dart';
 import '../../data/datasources/live_gifts_remote_datasource.dart';
 import '../../data/services/live_gift_realtime_service.dart';
 import '../../domain/entities/live_gift_catalog.dart';
@@ -68,7 +69,7 @@ class LiveGiftController extends ChangeNotifier {
   Future<List<LiveVideoGiftType>> loadCatalog() =>
       _remote.fetchGiftTypes();
 
-  Future<void> send({
+  Future<LuckyGiftSpinResult?> send({
     required LiveVideoGiftType gift,
     required String senderName,
     String? senderId,
@@ -77,7 +78,8 @@ class LiveGiftController extends ChangeNotifier {
     String? pkMatchId,
   }) async {
     final streamId = _streamId;
-    if (streamId == null || streamId.isEmpty || sending) return;
+    if (streamId == null || streamId.isEmpty || sending) return null;
+    panelOpen = false;
     sending = true;
     notifyListeners();
 
@@ -94,72 +96,31 @@ class LiveGiftController extends ChangeNotifier {
         senderId: senderId,
         toUserId: toUserId,
         pkMatchId: pkMatchId,
+        isLucky: gift.isLucky,
       );
+      if (result.luckyResult != null) {
+        if (result.newBalance != null) coinBalance = result.newBalance;
+        return result.luckyResult;
+      }
       if (result.newBalance != null) coinBalance = result.newBalance;
-      final gross = gift.price * quantity;
-      streamerEarnings =
-          (streamerEarnings ?? 0) + GiftRevenueDisplay.liveBroadcasterNet(gross);
 
-      final base = result.event!;
-      final enriched = _withoutCombo(
-        LiveGiftEvent(
-          id: base.id,
-          senderId: base.senderId ?? senderId,
-          senderName: base.senderName,
-          receiverName: base.receiverName,
-          giftId: base.giftId,
-          giftName: base.giftName,
-          quantity: base.quantity,
-          coinCost: base.coinCost,
-          combo: 1,
-          timestamp: base.timestamp,
-          iconUrl: base.iconUrl ?? gift.iconPath,
-          animationKey: base.animationKey ?? gift.animationRef,
-          rarity: gift.rarity,
-          animationKind: gift.animationKind,
-          soundKey: base.soundKey ?? gift.soundKey,
-        ),
-      );
-      _realtime.publishLocal(enriched);
       await _sound?.playFor(gift.toEntity());
+      return null;
     } finally {
       sending = false;
       notifyListeners();
     }
   }
 
-  LiveGiftEvent _withoutCombo(LiveGiftEvent event) => event.copyWithCombo(1);
-
   void _onIncoming(LiveGiftEvent event) {
     if (!_isDisplayable(event)) return;
-    final enriched = _withoutCombo(event);
-    notifications.insert(0, enriched);
-    if (notifications.length > 5) {
-      notifications.removeRange(5, notifications.length);
-    }
-    fullscreenQueue.insert(0, enriched);
-    if (fullscreenQueue.length > 3) {
-      fullscreenQueue.removeRange(3, fullscreenQueue.length);
-    }
-    activeFullscreen = enriched;
-    final gross = enriched.coinCost * enriched.quantity;
+    final gross = event.jetonAmount;
     streamerEarnings =
         (streamerEarnings ?? 0) + GiftRevenueDisplay.liveBroadcasterNet(gross);
+    if (event.remainingBalance != null && event.remainingBalance! > 0) {
+      coinBalance = event.remainingBalance;
+    }
     notifyListeners();
-
-    final duration = enriched.rarity.fullscreenDuration;
-    Future.delayed(duration, () {
-      fullscreenQueue.removeWhere((e) => e.id == enriched.id);
-      if (activeFullscreen?.id == enriched.id) {
-        activeFullscreen = fullscreenQueue.isNotEmpty ? fullscreenQueue.first : null;
-      }
-      notifyListeners();
-    });
-
-    Future.delayed(const Duration(seconds: 5), () {
-      notifications.removeWhere((e) => e.id == enriched.id);
-      notifyListeners();
-    });
   }
 
   bool _isDisplayable(LiveGiftEvent e) {
@@ -172,27 +133,5 @@ class LiveGiftController extends ChangeNotifier {
     _sub?.cancel();
     detach();
     super.dispose();
-  }
-}
-
-extension _LiveGiftEventCopy on LiveGiftEvent {
-  LiveGiftEvent copyWithCombo(int c) {
-    return LiveGiftEvent(
-      id: id,
-      senderId: senderId,
-      senderName: senderName,
-      receiverName: receiverName,
-      giftId: giftId,
-      giftName: giftName,
-      quantity: quantity,
-      coinCost: coinCost,
-      combo: c,
-      timestamp: timestamp,
-      iconUrl: iconUrl,
-      animationKey: animationKey,
-      rarity: rarity,
-      animationKind: animationKind,
-      soundKey: soundKey,
-    );
   }
 }

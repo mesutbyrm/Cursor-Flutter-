@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/network_perf.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../domain/game_models.dart';
 import '../providers/game_providers.dart';
+import '../widgets/game_catalog_card.dart';
 
 class GamesHubPage extends ConsumerWidget {
   const GamesHubPage({super.key});
@@ -64,8 +66,7 @@ class GamesHubPage extends ConsumerWidget {
               data: (items) {
                 if (items.isEmpty) {
                   return const _EmptyCard(
-                    message:
-                        'Açık oyun odası yok. Bir oyun seçip oda oluşturabilirsin.',
+                    message: 'Şu anda açık oyun odası yok.',
                   );
                 }
                 return Column(
@@ -172,21 +173,11 @@ class _GameGroup extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: items.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            childAspectRatio: 0.92,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
+        for (final game in items)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _GameTile(game: game),
           ),
-          itemBuilder: (context, index) {
-            final game = items[index];
-            return _GameTile(game: game);
-          },
-        ),
       ],
     );
   }
@@ -199,49 +190,16 @@ class _GameTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          final route = game.route;
-          if (route != null && route.isNotEmpty) {
-            context.push(route);
-            return;
-          }
-          _showGameActions(context, ref, game);
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(game.icon, color: context.colors.primary, size: 28),
-              const SizedBox(height: 8),
-              Text(
-                game.title,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              if (game.jetonCost > 0) ...[
-                const SizedBox(height: 4),
-                Text(
-                  '${game.jetonCost} Jeton',
-                  style: TextStyle(
-                    color: context.coinGold,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
+    return GameCatalogCard(
+      game: game,
+      onTap: () {
+        final route = game.route;
+        if (route != null && route.isNotEmpty) {
+          context.push(route);
+          return;
+        }
+        _showGameActions(context, ref, game);
+      },
     );
   }
 
@@ -319,14 +277,12 @@ class _GameTile extends ConsumerWidget {
       Navigator.pop(context);
       if (room != null) {
         context.push(
-          '/games-room/${room.id}?title=${Uri.encodeComponent(room.title)}',
+          '/games-room/${room.id}?title=${Uri.encodeComponent(room.title)}&game=${Uri.encodeComponent(game.id)}',
         );
       }
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
+      showJetonAwareError(context, ApiException.userMessage(e), ref: ref);
     }
   }
 
@@ -342,14 +298,12 @@ class _GameTile extends ConsumerWidget {
       Navigator.pop(context);
       if (room != null) {
         context.push(
-          '/games-room/${room.id}?title=${Uri.encodeComponent(room.title)}',
+          '/games-room/${room.id}?title=${Uri.encodeComponent(room.title)}&game=${Uri.encodeComponent(game.id)}',
         );
       }
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
+      showJetonAwareError(context, ApiException.userMessage(e), ref: ref);
     }
   }
 }
@@ -374,7 +328,7 @@ class _RoomTile extends ConsumerWidget {
           ref.invalidate(gameRoomsProvider);
           if (context.mounted) {
             context.push(
-              '/games-room/${room.id}?title=${Uri.encodeComponent(room.title)}',
+              '/games-room/${room.id}?title=${Uri.encodeComponent(room.title)}&game=${Uri.encodeComponent(room.gameId)}',
             );
           }
         },

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:canlifal_social/core/auth/voice_staff_rank.dart';
 import 'package:canlifal_social/features/voice_hub/domain/entities/chat_room_message.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/theme/voice_room_tokens.dart';
+import 'package:canlifal_social/features/voice_hub/domain/voice_official_join.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/utils/voice_staff_chat_style.dart';
 
 void main() {
@@ -44,7 +45,7 @@ void main() {
       );
       expect(
         VoiceStaffChatStyle.formatStaffEntryLine('Mesut', user: user),
-        'Mesut giriş yaptı',
+        '🛡️ Admin Mesut sesli odaya giriş yaptı.',
       );
       expect(
         VoiceStaffChatStyle.formatStaffEntryLine(
@@ -52,7 +53,7 @@ void main() {
           user: user,
           roomName: 'Test Oda',
         ),
-        'Mesut Test Oda odasına giriş yaptı',
+        '🛡️ Admin Mesut sesli odaya giriş yaptı.',
       );
     });
 
@@ -66,6 +67,25 @@ void main() {
       expect(
         VoiceStaffChatStyle.isStaffEntry(content: '% Ali odaya katıldı'),
         isTrue,
+      );
+    });
+  });
+
+  group('VoiceOfficialJoin home banner filter', () {
+    test('staff join announcement is not a static banner', () {
+      expect(
+        VoiceOfficialJoin.isHomeBannerEntranceAnnouncement(
+          'siteadmin GirLive sesli odasına katıldı!',
+          subtitle: 'siteadmin',
+        ),
+        isTrue,
+      );
+      expect(
+        VoiceOfficialJoin.isHomeBannerEntranceAnnouncement(
+          'Yeni fal kampanyası',
+          subtitle: 'Bu hafta %20 indirim',
+        ),
+        isFalse,
       );
     });
   });

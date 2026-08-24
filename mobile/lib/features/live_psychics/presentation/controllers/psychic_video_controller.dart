@@ -1,18 +1,23 @@
 import 'dart:async';
 
-/// Canlı fal video oturumu — **Agora** (canlı yayın ile aynı altyapı).
+/// Canlı fal video oturumu — Tencent TRTC.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:canlifal_social/core/config/env.dart';
 import 'package:canlifal_social/core/network/api_exception.dart';
+import 'package:canlifal_social/core/network/dio_provider.dart';
 import 'package:canlifal_social/core/network/live_debug_log.dart';
+import 'package:canlifal_social/core/network/psychic_event_log.dart';
 import 'package:canlifal_social/features/auth/domain/entities/user_entity.dart';
 import 'package:canlifal_social/core/network/token_storage.dart';
+import 'package:dio/dio.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
-import 'package:canlifal_social/features/agora/domain/agora_channel_names.dart';
-import 'package:canlifal_social/features/agora/presentation/agora_room_manager.dart';
-import 'package:canlifal_social/features/agora/presentation/providers/agora_providers.dart';
 import 'package:canlifal_social/features/live/presentation/providers/live_beauty_provider.dart';
+import 'package:canlifal_social/features/trtc/presentation/providers/trtc_providers.dart';
+import 'package:canlifal_social/features/trtc/presentation/trtc_live_room_coordinator.dart';
+import 'package:canlifal_social/features/trtc/presentation/trtc_room_manager.dart';
+import 'package:canlifal_social/features/live_psychics/domain/psychic_session_phase.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_extend_sheet.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_tip_sheet.dart';
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
@@ -25,12 +30,17 @@ import 'package:canlifal_social/features/live_psychics/presentation/providers/li
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_peer_left_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/diagnostics/psychic_rtc_session_report.dart';
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
+
+enum PsychicRtcBackend { none, trtc }
 
 class PsychicVideoState {
   const PsychicVideoState({
+    this.phase = PsychicSessionPhase.joining,
     this.rtcReady = false,
     this.rtcError,
+    this.rtcBackend = PsychicRtcBackend.none,
     this.messages = const [],
     this.remaining = Duration.zero,
     this.timerStarted = false,
@@ -45,10 +55,16 @@ class PsychicVideoState {
     this.sseConnected = false,
     this.localPreviewKey = 0,
     this.timeUpPending = false,
+    this.lowTimeWarningPending = false,
+    this.sseFailed = false,
+    this.remoteCamera = const {},
+    this.remoteMicrophone = const {},
   });
 
+  final PsychicSessionPhase phase;
   final bool rtcReady;
   final String? rtcError;
+  final PsychicRtcBackend rtcBackend;
   final List<PsychicChatMessage> messages;
   final Duration remaining;
   final bool timerStarted;
@@ -63,6 +79,12 @@ class PsychicVideoState {
   final bool sseConnected;
   final int localPreviewKey;
   final bool timeUpPending;
+  final bool lowTimeWarningPending;
+  final bool sseFailed;
+  /// Uzak katılımcı kamera durumu — userId → açık mı (yerel kameradan bağımsız).
+  final Map<String, bool> remoteCamera;
+  /// Uzak katılımcı mikrofon durumu — userId → açık mı (yerel mikrofondan bağımsız).
+  final Map<String, bool> remoteMicrophone;
 
   String get timerLabel {
     final m = remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -71,8 +93,10 @@ class PsychicVideoState {
   }
 
   PsychicVideoState copyWith({
+    PsychicSessionPhase? phase,
     bool? rtcReady,
     String? rtcError,
+    PsychicRtcBackend? rtcBackend,
     bool clearRtcError = false,
     List<PsychicChatMessage>? messages,
     Duration? remaining,
@@ -90,10 +114,16 @@ class PsychicVideoState {
     bool? sseConnected,
     int? localPreviewKey,
     bool? timeUpPending,
+    bool? lowTimeWarningPending,
+    bool? sseFailed,
+    Map<String, bool>? remoteCamera,
+    Map<String, bool>? remoteMicrophone,
   }) {
     return PsychicVideoState(
+      phase: phase ?? this.phase,
       rtcReady: rtcReady ?? this.rtcReady,
       rtcError: clearRtcError ? null : (rtcError ?? this.rtcError),
+      rtcBackend: rtcBackend ?? this.rtcBackend,
       messages: messages ?? this.messages,
       remaining: remaining ?? this.remaining,
       timerStarted: timerStarted ?? this.timerStarted,
@@ -112,21 +142,28 @@ class PsychicVideoState {
       sseConnected: sseConnected ?? this.sseConnected,
       localPreviewKey: localPreviewKey ?? this.localPreviewKey,
       timeUpPending: timeUpPending ?? this.timeUpPending,
+      lowTimeWarningPending:
+          lowTimeWarningPending ?? this.lowTimeWarningPending,
+      sseFailed: sseFailed ?? this.sseFailed,
+      remoteCamera: remoteCamera ?? this.remoteCamera,
+      remoteMicrophone: remoteMicrophone ?? this.remoteMicrophone,
     );
   }
 }
 
 class PsychicVideoController extends StateNotifier<PsychicVideoState> {
-  PsychicVideoController(this.ref, this.session)
-      : super(PsychicVideoState(remaining: Duration(minutes: session.durationMinutes))) {
-    _agora = AgoraRoomManager();
+  PsychicVideoController(this.ref, PsychicSessionEntity session)
+      : session = session,
+        super(PsychicVideoState(remaining: Duration(minutes: session.durationMinutes))) {
+    _trtc = ref.read(trtcRoomManagerProvider);
     _bootstrap();
   }
 
   final Ref ref;
-  final PsychicSessionEntity session;
+  PsychicSessionEntity session;
 
-  late final AgoraRoomManager _agora;
+  late final TrtcRoomManager _trtc;
+  TrtcLiveRoomCoordinator? _trtcCoordinator;
   final _seenChatIds = <String>{};
   String? _lastChatAfter;
   Timer? _tick;
@@ -137,16 +174,70 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   var _disposed = false;
   var _remoteEndHandled = false;
   final _seenSignalIds = <String>{};
-  String? _joinedChannel;
+  final _seenTipEventIds = <String>{};
+  String? _joinedTrtcRoom;
+  var _rejoiningRtc = false;
+  var _joiningRtc = false;
 
-  AgoraRoomManager get agora => _agora;
+  VoidCallback? _remoteVideoListener;
+  VoidCallback? _remoteAudioListener;
+
+  void _setPhase(PsychicSessionPhase next) {
+    final from = state.phase;
+    final allowed = PsychicSessionPhaseGuard.transition(from, next);
+    if (allowed == null) return;
+    PsychicEventLog.phase(from.name, allowed.name, sessionId: session.sessionId);
+    state = state.copyWith(phase: allowed);
+  }
+
+  void _attachRemoteMediaListeners() {
+    _remoteVideoListener ??= () {
+      if (_disposed) return;
+      final map = Map<String, bool>.from(_trtc.remoteVideoByUser.value);
+      state = state.copyWith(remoteCamera: map);
+      for (final entry in map.entries) {
+        PsychicEventLog.remoteVideo(
+          sessionId: session.sessionId,
+          userId: entry.key,
+          available: entry.value,
+        );
+      }
+    };
+    _remoteAudioListener ??= () {
+      if (_disposed) return;
+      final map = Map<String, bool>.from(_trtc.remoteAudioByUser.value);
+      state = state.copyWith(remoteMicrophone: map);
+      for (final entry in map.entries) {
+        PsychicEventLog.remoteAudio(
+          sessionId: session.sessionId,
+          userId: entry.key,
+          available: entry.value,
+        );
+      }
+    };
+    _trtc.remoteVideoByUser.addListener(_remoteVideoListener!);
+    _trtc.remoteAudioByUser.addListener(_remoteAudioListener!);
+  }
+
+  void _detachRemoteMediaListeners() {
+    if (_remoteVideoListener != null) {
+      _trtc.remoteVideoByUser.removeListener(_remoteVideoListener!);
+    }
+    if (_remoteAudioListener != null) {
+      _trtc.remoteAudioByUser.removeListener(_remoteAudioListener!);
+    }
+  }
+
+  TrtcRoomManager get trtc => _trtc;
+  bool get micOn => _trtc.micOn;
+  bool get cameraOn => _trtc.cameraOn;
 
   String get channelId {
     final fromRoom = state.room?.roomId?.trim();
     final raw = (fromRoom != null && fromRoom.isNotEmpty)
         ? fromRoom
         : session.trtcRoomId;
-    return AgoraChannelNames.forRoom(raw);
+    return raw.trim();
   }
 
   Future<void> _bootstrap() async {
@@ -154,17 +245,25 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       'sessionId': session.sessionId,
       'isClient': session.isClient,
     });
+    PsychicRtcSessionReport.record('bootstrap', {
+      'sessionId': session.sessionId,
+      'isClient': session.isClient,
+    });
     await PsychicSessionStore.save(session);
     _startTimers();
-    unawaited(_syncRoomInfo(startTimerIfTeller: true));
-    await Future.wait([
-      _joinRtc(),
-      _connectRoomSse(),
-    ]);
+    await _syncRoomInfo();
+    await _joinRtc();
+    await _connectRoomSse();
     _startChatPoll();
-    if (!session.isClient && !state.timerStarted) {
-      unawaited(_ensureTimerStarted());
+  }
+
+  /// Falcı manuel olarak süreyi başlatır (kılavuz §11.1).
+  Future<bool> startTimer() async {
+    if (_disposed || state.leaving || state.timerStarted || session.isClient) {
+      return false;
     }
+    await _ensureTimerStarted();
+    return state.timerStarted;
   }
 
   Future<void> _ensureTimerStarted() async {
@@ -189,28 +288,53 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         unawaited(_onTimeUp());
         return;
       }
-      state = state.copyWith(remaining: Duration(seconds: secs));
+      var lowTimeWarning = state.lowTimeWarningPending;
+      if (session.isClient &&
+          !lowTimeWarning &&
+          !state.timeUpPending &&
+          secs <= 120) {
+        lowTimeWarning = true;
+      }
+      state = state.copyWith(
+        remaining: Duration(seconds: secs),
+        lowTimeWarningPending: lowTimeWarning,
+      );
     });
 
     _ping?.cancel();
     _ping = Timer.periodic(const Duration(seconds: 60), (_) => _sendPing());
 
+    _scheduleRoomPoll();
+    _scheduleSignalPoll();
+  }
+
+  void _scheduleSignalPoll() {
+    _signalPoll?.cancel();
+    if (_disposed) return;
+    // SSE bağlıyken oturum sonu / bahşiş SSE'den gelir; sinyal poll yalnızca
+    // media_state (RTC) için yedek — daha seyrek.
+    final interval = state.sseConnected
+        ? const Duration(seconds: 30)
+        : const Duration(seconds: 3);
+    _signalPoll = Timer.periodic(interval, (_) {
+      unawaited(_pollRoomSignals());
+    });
+    unawaited(_pollRoomSignals());
+  }
+
+  void _scheduleRoomPoll() {
     _roomPoll?.cancel();
-    _roomPoll = Timer.periodic(const Duration(seconds: 3), (_) {
+    if (_disposed || state.sseConnected) return;
+    final interval = state.sseConnected
+        ? const Duration(seconds: 20)
+        : const Duration(seconds: 3);
+    _roomPoll = Timer.periodic(interval, (_) {
       unawaited(_syncRoomInfo());
     });
-
-    _signalPoll?.cancel();
-    if (!session.isClient) {
-      _signalPoll = Timer.periodic(const Duration(seconds: 3), (_) {
-        unawaited(_pollRoomSignals());
-      });
-      unawaited(_pollRoomSignals());
-    }
   }
 
   Future<void> _pollRoomSignals() async {
-    if (_disposed || state.leaving || session.isClient) return;
+    if (_disposed || state.leaving) return;
     final repo = ref.read(livePsychicsRepositoryProvider);
     final signals = await repo.fetchRoomSignals(session.sessionId);
     if (_disposed) return;
@@ -219,33 +343,74 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           '${sig['type']}_${sig['createdAt'] ?? sig['timestamp']}';
       if (id.isEmpty || !_seenSignalIds.add(id)) continue;
       final type = (sig['type'] ?? '').toString().toLowerCase();
-      if (!type.contains('tip') &&
-          !type.contains('bahsis') &&
-          !type.contains('gift') &&
-          !type.contains('hediye')) continue;
-      final data = sig['data'] is Map
-          ? Map<String, dynamic>.from(sig['data'] as Map)
-          : sig;
-      final amountRaw = data['amount'] ??
-          data['jeton'] ??
-          data['tipAmount'] ??
-          data['giftValue'] ??
-          data['coins'] ??
-          data['coin'] ??
-          data['price'] ??
-          data['value'] ??
-          sig['amount'];
-      final amount = amountRaw is num
-          ? amountRaw.round()
-          : int.tryParse('$amountRaw') ?? 0;
-      final from = data['fromName']?.toString() ??
-          data['senderName']?.toString() ??
-          data['from']?.toString();
-      _onTipReceived(amount, from);
+      if (type.contains('session_end') || type.contains('end_session')) {
+        unawaited(_handleRemoteSessionEnded(PsychicSessionStatus.ended));
+        return;
+      }
+      if (type.contains('media_state') || type.contains('rtc_state')) {
+        _onPeerMediaSignal(sig);
+        continue;
+      }
+      if (!session.isClient &&
+          (type.contains('tip') ||
+              type.contains('bahsis') ||
+              type.contains('gift') ||
+              type.contains('hediye'))) {
+        final data = sig['data'] is Map
+            ? Map<String, dynamic>.from(sig['data'] as Map)
+            : sig;
+        final amountRaw = data['amount'] ??
+            data['jeton'] ??
+            data['tipAmount'] ??
+            data['giftValue'] ??
+            data['coins'] ??
+            data['coin'] ??
+            data['price'] ??
+            data['value'] ??
+            sig['amount'];
+        final amount = amountRaw is num
+            ? amountRaw.round()
+            : int.tryParse('$amountRaw') ?? 0;
+        final from = data['fromName']?.toString() ??
+            data['senderName']?.toString() ??
+            data['from']?.toString();
+        _onTipReceived(amount, from, eventId: id);
+      }
     }
   }
 
-  Future<void> _syncRoomInfo({bool startTimerIfTeller = false}) async {
+  void _onPeerMediaSignal(Map<String, dynamic> sig) {
+    // Karşı tarafın medya durumu — yalnızca log; TRTC akışı zorlanmaz.
+    final data = sig['data'] is Map
+        ? Map<String, dynamic>.from(sig['data'] as Map)
+        : sig;
+    LiveDebugLog.log('psychic.media.peer', {
+      'sessionId': session.sessionId,
+      'cameraEnabled': data['cameraEnabled'] ?? data['cameraOn'],
+      'micEnabled': data['micEnabled'] ?? data['micOn'],
+    });
+  }
+
+  Future<void> _broadcastMediaState() async {
+    if (_disposed || state.leaving) return;
+    final peerId = session.remotePeerIdFor(room: state.room);
+    if (peerId.isEmpty) return;
+    unawaited(
+      ref.read(livePsychicsRepositoryProvider).sendRoomSignal(
+            sessionId: session.sessionId,
+            type: 'media_state',
+            data: {
+              'cameraEnabled': _trtc.cameraOn,
+              'micEnabled': _trtc.micOn,
+              'videoPublished': _trtc.cameraOn,
+              'audioPublished': _trtc.micOn,
+            },
+            receiverId: peerId,
+          ),
+    );
+  }
+
+  Future<void> _syncRoomInfo() async {
     if (_disposed || state.leaving) return;
     final repo = ref.read(livePsychicsRepositoryProvider);
     final info = await repo.fetchRoom(session.sessionId);
@@ -274,28 +439,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     final maxMinutes =
         info.maxMinutes > 0 ? info.maxMinutes : session.durationMinutes;
 
-    if (startTimerIfTeller && !session.isClient && !info.timerStarted) {
-      final result = await repo.roomAction(session.sessionId, 'start_timer');
-      if (result != null) {
-        final startedAtRaw = result['timerStartedAt']?.toString();
-        final startedAt = startedAtRaw != null
-            ? DateTime.tryParse(startedAtRaw)
-            : DateTime.now();
-        final room = info.copyWith(
-          timerStarted: true,
-          timerStartedAt: startedAt,
-          maxMinutes: maxMinutes,
-        );
-        state = state.copyWith(
-          room: room,
-          timerStarted: true,
-          waitingForTimer: false,
-          remaining: Duration(seconds: room.remainingSeconds),
-        );
-        return;
-      }
-    }
-
     var room = info.copyWith(maxMinutes: maxMinutes);
     var timerStarted = info.timerStarted;
     var waitingForTimer = session.isClient && !info.timerStarted;
@@ -315,34 +458,91 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
     final newRoomId = room.roomId;
     if (newRoomId != null && newRoomId.isNotEmpty) {
-      final updated = session.copyWith(
+      session = session.copyWith(
         tellerUserId: room.tellerUserId ?? session.tellerUserId,
         clientId: room.clientId ?? session.clientId,
         trtcRoomIdOverride: newRoomId,
       );
-      unawaited(PsychicSessionStore.save(updated));
+      unawaited(PsychicSessionStore.save(session));
     }
 
     // Yalnızca gerçekten farklı bir KANALA geçildiyse yeniden bağlan. Ham oda
     // kimliği null'dan gerçek değere dönse bile normalize kanal aynıysa
     // (room_{sessionId}) gereksiz yeniden bağlanma yapıp gecikme yaratma.
     if (newRoomId != null && newRoomId.isNotEmpty) {
-      final newChannel = AgoraChannelNames.forRoom(newRoomId);
-      if (newChannel.isNotEmpty &&
-          _joinedChannel != null &&
-          newChannel != _joinedChannel &&
-          (state.rtcReady || state.rtcError != null)) {
+      final joined = _joinedTrtcRoom;
+      if (joined != null &&
+          _canonicalRoomChannel(newRoomId) != _canonicalRoomChannel(joined) &&
+          (state.rtcReady || state.rtcError != null) &&
+          !_joiningRtc &&
+          !_rejoiningRtc) {
         await _rejoinRtc();
       }
     }
   }
 
+  String _canonicalRoomChannel(String? raw) {
+    final id = raw?.trim() ?? '';
+    if (id.isEmpty) return session.sessionId.trim();
+    final base = session.sessionId.trim();
+    if (id == base || id == 'room_$base') return base;
+    if (id.startsWith('room_')) return id.substring(5);
+    return id;
+  }
+
   Future<void> _rejoinRtc() async {
-    _joinedChannel = null;
-    await _agora.leave();
-    if (_disposed) return;
-    state = state.copyWith(rtcReady: false);
-    await _joinRtc();
+    if (_disposed || state.leaving || _rejoiningRtc || _joiningRtc) return;
+    final roomId = _activeTrtcRoomId();
+    if (roomId.isEmpty) return;
+    if (_canonicalRoomChannel(_joinedTrtcRoom) ==
+            _canonicalRoomChannel(roomId) &&
+        state.rtcReady) {
+      return;
+    }
+
+    _rejoiningRtc = true;
+    _trtcCoordinator?.setReconnectSuspended(true);
+    _joinedTrtcRoom = null;
+    _setPhase(PsychicSessionPhase.reconnecting);
+    state = state.copyWith(rtcReady: false, clearRtcError: true);
+    try {
+      final user = await _waitForAuth();
+      if (user == null) {
+        state = state.copyWith(rtcError: 'Oturum için giriş gerekli');
+        return;
+      }
+      if (_trtc.inRoom) {
+        await _trtc.leave();
+      }
+      await _trtcCoordinator?.leave();
+      _trtcCoordinator?.dispose();
+      _trtcCoordinator = createTrtcLiveRoomCoordinator(ref);
+      await _trtcCoordinator!.join(
+        roomId: roomId,
+        roomType: 'stream',
+        userId: user.id,
+        isHost: !session.isClient,
+        twoWayVideo: true,
+        expectedAnchorUserId: session.remotePeerIdFor(room: state.room),
+      );
+      _joinedTrtcRoom = roomId;
+      ref.read(liveBeautyProvider.notifier).bindRtc(trtc: _trtc);
+      _attachRemoteMediaListeners();
+      state = state.copyWith(rtcReady: true, clearRtcError: true);
+      _setPhase(PsychicSessionPhase.connected);
+    } catch (e) {
+      _setPhase(PsychicSessionPhase.error);
+      state = state.copyWith(rtcError: ApiException.userMessage(e));
+    } finally {
+      _trtcCoordinator?.setReconnectSuspended(false);
+      _rejoiningRtc = false;
+    }
+  }
+
+  String _activeTrtcRoomId() {
+    final fromRoom = state.room?.roomId?.trim();
+    if (fromRoom != null && fromRoom.isNotEmpty) return fromRoom;
+    return session.trtcRoomId.trim();
   }
 
   Future<void> _sendPing() async {
@@ -358,9 +558,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   void _startChatPoll() {
     _chatPoll?.cancel();
-    final interval = state.sseConnected
-        ? const Duration(seconds: 20)
-        : const Duration(seconds: 3);
+    if (_disposed || state.sseConnected) return;
+    const interval = Duration(seconds: 3);
     _chatPoll = Timer.periodic(interval, (_) => unawaited(_pollChat()));
     unawaited(_pollChat());
   }
@@ -368,16 +567,37 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   Future<void> _connectRoomSse() async {
     final user = ref.read(authControllerProvider).valueOrNull;
     final storage = ref.read(tokenStorageProvider);
+    final refreshDio = Dio(
+      BaseOptions(
+        baseUrl: Env.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 3),
+        receiveTimeout: const Duration(seconds: 5),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
     await ref.read(psychicRoomSseServiceProvider).connect(
           sessionId: session.sessionId,
           accessToken: storage.readAccess,
+          refreshTokens: () => tryRefreshAccessToken(refreshDio, storage),
           myUserId: user?.id,
           onConnected: () {
             if (_disposed) return;
-            if (!state.sseConnected) {
-              state = state.copyWith(sseConnected: true);
-              _startChatPoll();
+            if (!state.sseConnected || state.sseFailed) {
+              state = state.copyWith(sseConnected: true, sseFailed: false);
+              _chatPoll?.cancel();
+              _roomPoll?.cancel();
+              _scheduleSignalPoll();
             }
+          },
+          onFailed: () {
+            if (_disposed || state.leaving) return;
+            state = state.copyWith(sseConnected: false, sseFailed: true);
+            _scheduleRoomPoll();
+            _startChatPoll();
+            _scheduleSignalPoll();
           },
           onMessage: _onSseChatMessage,
           onRoomUpdate: _onSseRoomUpdate,
@@ -387,14 +607,19 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           },
           onTipReceived: (amount, fromName) {
             if (_disposed || state.leaving) return;
-            _onTipReceived(amount, fromName);
+            _onTipReceived(amount, fromName, eventId: 'sse-$amount-$fromName');
           },
         );
   }
 
-  void _onTipReceived(int amount, String? fromName) {
+  void _onTipReceived(int amount, String? fromName, {String? eventId}) {
     if (amount <= 0) return;
+    final id = eventId?.trim();
+    if (id != null && id.isNotEmpty && !_seenTipEventIds.add(id)) return;
+
+    // Danışan yalnızca kendi gönderim teşekkürünü görür; falcı SSE/sinyal popup alır.
     if (session.isClient) return;
+
     final total = state.sessionTipsTotal + amount;
     state = state.copyWith(
       tipReceivedAmount: amount,
@@ -429,19 +654,29 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     var remaining = state.remaining;
     if (info.timerStarted) {
       remaining = Duration(seconds: info.remainingSeconds);
+    } else if (info.maxMinutes > (state.room?.maxMinutes ?? 0)) {
+      final added = info.maxMinutes - (state.room?.maxMinutes ?? session.durationMinutes);
+      if (added > 0) {
+        remaining = state.remaining + Duration(minutes: added);
+      }
     }
     state = state.copyWith(
       room: info,
       timerStarted: info.timerStarted,
       waitingForTimer: session.isClient && !info.timerStarted,
       remaining: remaining,
+      lowTimeWarningPending: remaining.inSeconds > 120
+          ? false
+          : state.lowTimeWarningPending,
     );
     if (info.roomId != null && info.roomId!.isNotEmpty) {
-      final newChannel = AgoraChannelNames.forRoom(info.roomId!);
-      if (newChannel.isNotEmpty &&
-          _joinedChannel != null &&
-          newChannel != _joinedChannel &&
-          (state.rtcReady || state.rtcError != null)) {
+      final newRoomId = info.roomId!;
+      final joined = _joinedTrtcRoom;
+      if (joined != null &&
+          _canonicalRoomChannel(newRoomId) != _canonicalRoomChannel(joined) &&
+          (state.rtcReady || state.rtcError != null) &&
+          !_joiningRtc &&
+          !_rejoiningRtc) {
         unawaited(_rejoinRtc());
       }
     }
@@ -479,58 +714,91 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       state = state.copyWith(rtcError: 'Oturum için giriş gerekli');
       return;
     }
-    if (!_agora.isSupported) {
+    if (!_trtc.isSupported) {
       state = state.copyWith(rtcError: 'Video bu cihazda desteklenmiyor');
       return;
     }
 
-    // Kanal kimliği her zaman session'dan (sessionId fallback) türetilebilir.
-    // Oda senkronunu beklemeden hemen bağlan — hem gecikmeyi düşürür hem de
-    // iki taraf da aynı kanalı (room_{sessionId}) hesapladığı için EŞ ZAMANLI
-    // bağlanır. Backend farklı bir oda kimliği verirse _syncRoomInfo (bootstrap
-    // içinde paralel çalışıyor) kanalı karşılaştırıp gerekiyorsa yeniden bağlar.
-    final roomId = channelId;
-    if (roomId.trim().isEmpty) {
+    final trtcRoomId = _activeTrtcRoomId();
+    if (trtcRoomId.isEmpty) {
       state = state.copyWith(rtcError: 'Oda bilgisi alınamadı. Tekrar deneyin.');
       return;
     }
 
-    LiveDebugLog.log('psychic.agora.join.request', {
+    await _joinTrtc(user: user, roomId: trtcRoomId);
+  }
+
+  Future<void> _joinTrtc({
+    required UserEntity user,
+    required String roomId,
+  }) async {
+    if (_joiningRtc || _rejoiningRtc) return;
+    _joiningRtc = true;
+    _setPhase(PsychicSessionPhase.joining);
+    _trtcCoordinator?.setReconnectSuspended(true);
+    try {
+    PsychicEventLog.joinStart(
+      sessionId: session.sessionId,
+      roomId: roomId,
+    );
+    LiveDebugLog.log('psychic.trtc.join.request', {
       'sessionId': session.sessionId,
-      'channel': roomId,
+      'roomId': roomId,
       'userId': user.id,
     });
 
-    try {
-      final cred = await ref.read(agoraRemoteProvider).fetchToken(
-            channelName: roomId,
-            role: 'host',
-          );
-      final effectiveChannel = cred.channelName.trim().isNotEmpty
-          ? cred.channelName.trim()
-          : roomId;
+    await _trtcCoordinator?.leave();
+    _trtcCoordinator?.dispose();
+    _trtcCoordinator = createTrtcLiveRoomCoordinator(ref);
 
-      await _agora.joinTwoWayVideo(
-        credentials: cred.copyWith(channelName: effectiveChannel),
-      );
-      _joinedChannel = effectiveChannel;
-      ref.read(liveBeautyProvider.notifier).bindRtc(agora: _agora);
-      LiveDebugLog.log('psychic.agora.join.ok', {
-        'sessionId': session.sessionId,
-        'channel': effectiveChannel,
-        'uid': cred.uid,
-      });
-      state = state.copyWith(rtcReady: true, clearRtcError: true);
-      if (!session.isClient && !state.timerStarted) {
-        unawaited(_ensureTimerStarted());
-      }
+    if (_trtc.inRoom) {
+      await _trtc.leave();
+    }
+
+    await _trtcCoordinator!.join(
+      roomId: roomId,
+      roomType: 'stream',
+      userId: user.id,
+      isHost: !session.isClient,
+      twoWayVideo: true,
+      expectedAnchorUserId: session.remotePeerIdFor(room: state.room),
+    );
+    PsychicEventLog.trtcJoin(
+      sessionId: session.sessionId,
+      role: session.isClient ? 'client' : 'host',
+    );
+
+    _joinedTrtcRoom = roomId;
+    ref.read(liveBeautyProvider.notifier).bindRtc(trtc: _trtc);
+    _attachRemoteMediaListeners();
+    PsychicEventLog.joinSuccess(sessionId: session.sessionId, roomId: roomId);
+    PsychicEventLog.localAudio(enabled: _trtc.micOn, sessionId: session.sessionId);
+    PsychicEventLog.localVideo(enabled: _trtc.cameraOn, sessionId: session.sessionId);
+    LiveDebugLog.log('psychic.trtc.join.ok', {
+      'sessionId': session.sessionId,
+      'roomId': roomId,
+    });
+    PsychicRtcSessionReport.record('join_ok', {
+      'sessionId': session.sessionId,
+      'roomId': roomId,
+      'micOn': _trtc.micOn,
+      'cameraOn': _trtc.cameraOn,
+      'isClient': session.isClient,
+    });
+    state = state.copyWith(
+      rtcReady: true,
+      rtcBackend: PsychicRtcBackend.trtc,
+      clearRtcError: true,
+    );
+    _setPhase(PsychicSessionPhase.connected);
+    unawaited(_broadcastMediaState());
     } catch (e) {
-      LiveDebugLog.log('psychic.agora.join.fail', {
-        'sessionId': session.sessionId,
-        'channel': roomId,
-        'error': ApiException.userMessage(e),
-      });
+      PsychicEventLog.error('join', e, sessionId: session.sessionId);
+      _setPhase(PsychicSessionPhase.error);
       state = state.copyWith(rtcError: ApiException.userMessage(e));
+    } finally {
+      _trtcCoordinator?.setReconnectSuspended(false);
+      _joiningRtc = false;
     }
   }
 
@@ -608,14 +876,18 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       Future<void>.delayed(const Duration(seconds: 3), () {
         if (!_disposed) state = state.copyWith(clearTipThankYou: true);
       });
-      final tellerUid = session.tellerUserId ?? state.room?.tellerUserId;
+      final tellerUid = session.tellerUserId ??
+          state.room?.tellerUserId ??
+          session.psychic.userId;
       unawaited(
         ref.read(livePsychicsRepositoryProvider).sendRoomSignal(
               sessionId: session.sessionId,
               type: 'tip',
               data: {
                 'amount': amount,
-                'senderName': ref.read(authControllerProvider).valueOrNull?.display,
+                'senderName':
+                    ref.read(authControllerProvider).valueOrNull?.display,
+                'senderId': ref.read(authControllerProvider).valueOrNull?.id,
               },
               receiverId: tellerUid,
             ),
@@ -662,7 +934,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     final ok = await ref.read(livePsychicsRepositoryProvider).extendSession(
           sessionId: session.sessionId,
           minutes: choice.minutes,
-          totalJeton: choice.jeton,
         );
     if (ok) {
       invalidateWalletCacheFromRef(ref);
@@ -707,22 +978,37 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   void toggleMic() {
-    _agora.setMicEnabled(!_agora.micOn);
+    final next = !_trtc.micOn;
+    _trtc.setMicEnabled(next);
+    PsychicEventLog.localAudio(enabled: next, sessionId: session.sessionId);
+    unawaited(_broadcastMediaState());
   }
 
   void toggleCamera() {
-    _agora.setCameraEnabled(!_agora.cameraOn);
-    state = state.copyWith(localPreviewKey: state.localPreviewKey + 1);
+    final next = !_trtc.cameraOn;
+    _trtc.setCameraEnabled(next);
+    PsychicEventLog.localVideo(enabled: next, sessionId: session.sessionId);
+    unawaited(_broadcastMediaState());
   }
 
-  void switchCamera() => _agora.switchCamera();
+  void switchCamera() => _trtc.switchCamera();
+
+  Future<void> retryRoomSse() async {
+    if (_disposed || state.leaving) return;
+    state = state.copyWith(sseFailed: false);
+    await ref.read(psychicRoomSseServiceProvider).retryConnection();
+  }
 
   Future<void> leave({
     bool silent = false,
     String? peerEndedMessage,
   }) async {
     if (state.leaving) return;
+    _setPhase(PsychicSessionPhase.ending);
     state = state.copyWith(leaving: true);
+    _detachRemoteMediaListeners();
+    _trtc.setMicEnabled(false);
+    _trtc.setCameraEnabled(false);
     _tick?.cancel();
     _chatPoll?.cancel();
     _ping?.cancel();
@@ -743,7 +1029,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     //    (Önceki sürümde ardışık ağ çağrıları takılırsa seans "kapanmıyordu".)
     unawaited(() async {
       try {
-        await _agora.leave();
+        await _trtcCoordinator?.leave();
       } catch (_) {}
     }());
 
@@ -782,6 +1068,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     ));
 
     unawaited(PsychicSessionStore.clear());
+    PsychicEventLog.sessionEnd(sessionId: sessionId, reason: 'leave');
+    _setPhase(PsychicSessionPhase.ended);
     invalidateWalletCacheFromRef(ref);
   }
 
@@ -797,17 +1085,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     const t = Duration(seconds: 4);
     // Karşı tarafa "session_end" sinyalini önce gönder ki SSE ile haber alsın.
     try {
-      await repo.sendRoomSignal(
-        sessionId: sessionId,
-        type: 'session_end',
-        data: {
-          'endedByRole': isClient ? 'client' : 'teller',
-          if (endedBy != null) 'endedBy': endedBy,
-        },
-        receiverId: isClient ? tellerReceiver : clientReceiver,
-      ).timeout(t);
-    } catch (_) {}
-    try {
       await repo.roomAction(
         sessionId,
         'end',
@@ -816,9 +1093,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           if (endedBy != null) 'endedBy': endedBy,
         },
       ).timeout(t);
-    } catch (_) {}
-    try {
-      await repo.endSession(sessionId).timeout(t);
     } catch (_) {}
     try {
       await repo.clearRoomSignals(sessionId).timeout(t);
@@ -839,7 +1113,12 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   void onAppResumed() {
-    if (!_disposed && !state.leaving && !state.rtcReady && state.rtcError == null) {
+    if (_disposed || state.leaving) return;
+    if (!state.rtcReady && state.rtcError == null) {
+      unawaited(_rejoinRtc());
+      return;
+    }
+    if (state.rtcReady && !_trtc.inRoom) {
       unawaited(_rejoinRtc());
     }
   }
@@ -847,13 +1126,19 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   @override
   void dispose() {
     _disposed = true;
+    _detachRemoteMediaListeners();
     _tick?.cancel();
     _chatPoll?.cancel();
     _ping?.cancel();
     _roomPoll?.cancel();
     _signalPoll?.cancel();
     unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
-    _agora.dispose();
+    unawaited(_trtcCoordinator?.leave());
+    _trtcCoordinator?.dispose();
+    _trtcCoordinator = null;
+    if (_trtc.inRoom) {
+      unawaited(_trtc.leave());
+    }
     super.dispose();
   }
 }

@@ -20,12 +20,18 @@ import '../../../admin/presentation/providers/admin_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
+import '../../../membership/presentation/widgets/membership_store_teaser_banner.dart';
+import '../premium_2026/profile_membership_helpers.dart';
+import '../../../membership/presentation/widgets/membership_store_teaser_banner.dart';
 import '../../data/jeton_packages_catalog.dart';
 import '../../data/jeton_payment_request.dart';
 import '../../data/services/payment_receipt_upload_service.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
+import '../../domain/entities/payment_method_entity.dart';
 import '../providers/payment_requests_notifier.dart';
+import 'payment_methods_summary_line.dart';
 import 'pending_payment_banner.dart';
 import '../providers/profile_providers.dart';
 
@@ -68,6 +74,7 @@ class _JetonPremiumPurchaseViewState
       if (!mounted) return;
       ref.read(walletBalancesProvider.notifier).refresh(force: true);
       ref.read(paymentRequestsNotifierProvider.notifier).refresh();
+      ref.invalidate(paymentMethodsProvider);
     });
   }
 
@@ -121,6 +128,79 @@ class _JetonPremiumPurchaseViewState
   String _formatTryDisplay(double v) {
     final fmt = NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 0);
     return fmt.format(v);
+  }
+
+  static JetonPayMethod? _jetonMethodFromId(String id) {
+    return switch (PaymentMethodEntity.normalizeCheckoutMethodId(id)) {
+      'whatsapp' => JetonPayMethod.whatsapp,
+      'papara' => JetonPayMethod.papara,
+      'bank_transfer' => JetonPayMethod.bank,
+      _ => null,
+    };
+  }
+
+  static ({Color color, IconData icon, String subtitle}) _methodStyle(
+    JetonPayMethod method,
+  ) {
+    return switch (method) {
+      JetonPayMethod.whatsapp => (
+          color: const Color(0xFF25D366),
+          icon: Icons.chat_rounded,
+          subtitle: 'Tek tıkla destek hattı',
+        ),
+      JetonPayMethod.papara => (
+          color: const Color(0xFF7C3AED),
+          icon: Icons.account_balance_wallet_rounded,
+          subtitle: 'Anında transfer',
+        ),
+      JetonPayMethod.bank => (
+          color: const Color(0xFF2563EB),
+          icon: Icons.account_balance_rounded,
+          subtitle: 'IBAN ile transfer',
+        ),
+    };
+  }
+
+  List<PaymentMethodEntity> _resolvePaymentMethods(
+    AsyncValue<List<PaymentMethodEntity>> methodsAsync,
+  ) {
+    return methodsAsync.when(
+      data: (methods) => PaymentMethodEntity.checkoutMethods(methods),
+      loading: () => PaymentMethodEntity.defaults,
+      error: (_, _) => PaymentMethodEntity.defaults,
+    );
+  }
+
+  Widget _buildMethodTile({
+    required PaymentMethodEntity method,
+    required String username,
+    required PaymentConfigEntity cfg,
+    required ({int jeton, double tl, bool valid, String? error}) amounts,
+  }) {
+    final jetonMethod = _jetonMethodFromId(method.id);
+    if (jetonMethod == null) return const SizedBox.shrink();
+    final style = _methodStyle(jetonMethod);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: _MethodTile(
+        title: method.label,
+        subtitle: style.subtitle,
+        icon: style.icon,
+        color: style.color,
+        selected: _method == jetonMethod,
+        onTap: () async {
+          setState(() => _method = jetonMethod);
+          if (jetonMethod == JetonPayMethod.whatsapp && amounts.valid) {
+            await _openWhatsApp(
+              jeton: amounts.jeton,
+              tl: amounts.tl,
+              username: username,
+              cfg: cfg,
+            );
+          }
+        },
+      ),
+    );
   }
 
   ({int jeton, double tl, bool valid, String? error}) _parseAmounts() {
@@ -320,6 +400,8 @@ class _JetonPremiumPurchaseViewState
     final me = ref.watch(authControllerProvider).valueOrNull;
     final username = me?.display ?? me?.username ?? 'Kullanıcı';
     final amounts = _parseAmounts();
+    final methodsAsync = ref.watch(paymentMethodsProvider);
+    final paymentMethods = _resolvePaymentMethods(methodsAsync);
 
     return ResponsiveConstrained(
       child: Padding(
@@ -331,6 +413,8 @@ class _JetonPremiumPurchaseViewState
               jeton: displayJeton,
               loading: wallet.isLoading && displayJeton == null,
             ),
+            const MembershipPendingPaymentBanner(),
+            const MembershipStoreTeaserBanner(store: MembershipStoreKind.jeton),
             if (pendingJeton.isNotEmpty) ...[
               const SizedBox(height: 12),
               PendingPaymentBanner(
@@ -402,41 +486,18 @@ class _JetonPremiumPurchaseViewState
             const SizedBox(height: 20),
             const _SectionTitle('Ödeme Yöntemi'),
             const SizedBox(height: 10),
-            _MethodTile(
-              title: 'Papara',
-              subtitle: 'Anında transfer',
-              icon: Icons.account_balance_wallet_rounded,
-              color: const Color(0xFF7C3AED),
-              selected: _method == JetonPayMethod.papara,
-              onTap: () => setState(() => _method = JetonPayMethod.papara),
-            ),
-            const SizedBox(height: 8),
-            _MethodTile(
-              title: 'Banka Havalesi / EFT',
-              subtitle: 'IBAN ile transfer',
-              icon: Icons.account_balance_rounded,
-              color: const Color(0xFF2563EB),
-              selected: _method == JetonPayMethod.bank,
-              onTap: () => setState(() => _method = JetonPayMethod.bank),
-            ),
-            const SizedBox(height: 8),
-            _MethodTile(
-              title: 'WhatsApp Destek',
-              subtitle: 'Tek tıkla destek hattı',
-              icon: Icons.chat_rounded,
-              color: const Color(0xFF25D366),
-              selected: _method == JetonPayMethod.whatsapp,
-              onTap: () async {
-                setState(() => _method = JetonPayMethod.whatsapp);
-                if (amounts.valid) {
-                  await _openWhatsApp(
-                    jeton: amounts.jeton,
-                    tl: amounts.tl,
-                    username: username,
-                    cfg: cfg,
-                  );
-                }
-              },
+            for (final method in paymentMethods)
+              _buildMethodTile(
+                method: method,
+                username: username,
+                cfg: cfg,
+                amounts: amounts,
+              ),
+            const PaymentMethodsSummaryLine(
+              prefix: 'Kanallar',
+              textAlign: TextAlign.start,
+              fontSize: 10,
+              showRecommended: false,
             ),
             if (_method == JetonPayMethod.papara) ...[
               const SizedBox(height: 14),
@@ -483,7 +544,7 @@ class _JetonPremiumPurchaseViewState
               _DetailCard(
                 children: [
                   Text(
-                    'WhatsApp ile ödeme yaptıktan sonra «Satın Al» ile talebi iletin.',
+                    buildMembershipJetonPurchaseWhatsappHintText(),
                     style: TextStyle(
                       color: context.colors.onSurfaceMuted,
                       height: 1.4,
@@ -509,7 +570,9 @@ class _JetonPremiumPurchaseViewState
                     )
                   : const Icon(Icons.shopping_bag_rounded),
               label: Text(
-                _submitting ? 'Gönderiliyor…' : 'Satın Al',
+                _submitting
+                    ? 'Gönderiliyor…'
+                    : buildMembershipJetonStoreBuyActionLabel(),
                 style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
               ),
               style: FilledButton.styleFrom(

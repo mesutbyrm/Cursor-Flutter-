@@ -1,0 +1,39 @@
+{
+  "runId": "",
+  "baseUrl": "",
+  "pass": 5,
+  "fail": 0,
+  "skip": 0,
+  "results": [
+    {
+      "id": "SEARCH",
+      "name": "Music search",
+      "status": "✅ PASS",
+      "detail": "12 sonuç, videoId+title"
+    },
+    {
+      "id": "AUTH",
+      "name": "Login",
+      "status": "✅ PASS",
+      "detail": "token alındı"
+    },
+    {
+      "id": "QUEUE",
+      "name": "Queue costs",
+      "status": "✅ PASS",
+      "detail": "kuyruk OK, audio=10 jeton"
+    },
+    {
+      "id": "SONGREQ",
+      "name": "Song request",
+      "status": "✅ PASS",
+      "detail": "HTTP 400 (Yetersiz jeton. 10 jeton gerekiyor.)"
+    },
+    {
+      "id": "SSE_DJ",
+      "name": "SSE dj stream",
+      "status": "✅ PASS",
+      "detail": "stream açık"
+    }
+  ]
+}

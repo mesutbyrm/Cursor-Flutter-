@@ -1,6 +1,7 @@
 import '../domain/entities/jeton_package_entity.dart';
+import '../presentation/premium_2026/profile_membership_helpers.dart';
 
-/// Özel TL/jeton tutarıyla jeton talebi — site `POST /api/payment/requests`.
+/// Özel TL/jeton tutarıyla jeton talebi — site `POST /api/payments/requests`.
 Map<String, dynamic> buildCustomJetonPaymentRequest({
   required int coins,
   required double priceTry,
@@ -44,7 +45,7 @@ Map<String, dynamic> buildCustomJetonPaymentRequest({
   };
 }
 
-/// canlifal.com `POST /api/payment/requests` — jeton talebi gövdesi.
+/// canlifal.com `POST /api/payments/requests` — jeton talebi gövdesi.
 /// Yalnızca `coins` gönderilir; `amount` üretimde çift krediye yol açabiliyor.
 Map<String, dynamic> buildJetonPaymentRequest({
   required JetonPackageEntity package,
@@ -80,7 +81,7 @@ Map<String, dynamic> buildJetonPaymentRequest({
   };
 }
 
-/// Gold üyelik — site `POST /api/payment/requests` (admin onayı sonrası üyelik).
+/// Gold üyelik — site `POST /api/payments/requests` (admin onayı sonrası üyelik).
 Map<String, dynamic> buildMembershipPaymentRequest({
   required JetonPackageEntity package,
   required String method,
@@ -93,7 +94,11 @@ Map<String, dynamic> buildMembershipPaymentRequest({
   final tierId = package.id.startsWith('membership_')
       ? package.id.substring('membership_'.length)
       : package.id;
-  final baseNotes = notes ?? 'Gold üyelik · $method';
+  final baseNotes = notes ??
+      buildMembershipPaymentRequestDefaultNotes(
+        method: method,
+        tierId: tierId,
+      );
   return {
     'requestType': 'jeton',
     'type': 'jeton',
@@ -117,5 +122,49 @@ Map<String, dynamic> buildMembershipPaymentRequest({
     'notifyAdmins': true,
     'notifyStaff': true,
     'source': 'mobile_membership_checkout',
+  };
+}
+
+/// Üyelik — CFC ödeme talebi (`POST /api/payments/requests`).
+Map<String, dynamic> buildMembershipCfcPaymentRequest({
+  required String tierId,
+  required String tierTitle,
+  required int cfcAmount,
+  required double priceTry,
+  required String method,
+  int durationDays = 30,
+  String? notes,
+  String? senderLabel,
+  String? receiptReference,
+}) {
+  final receipt = receiptReference?.trim();
+  final durationLabel = durationDays > 0 ? '$durationDays gün' : '30 gün';
+  final baseNotes = notes ??
+      buildMembershipCfcPaymentRequestDefaultNotes(
+        tierTitle: tierTitle,
+        method: method,
+      );
+  return {
+    'requestType': 'cfc',
+    'type': 'cfc',
+    'method': method,
+    'packageId': 'membership_$tierId',
+    'packageTitle': '$tierTitle Üyelik · $durationLabel',
+    'tierId': tierId,
+    'membershipTier': tierId,
+    'amount': cfcAmount,
+    'priceTry': priceTry,
+    if (senderLabel != null && senderLabel.trim().isNotEmpty)
+      'senderInfo': senderLabel.trim(),
+    if (receipt != null && receipt.isNotEmpty) ...{
+      'receiptReference': receipt,
+      'receiptUrl': receipt,
+    },
+    'notes': receipt != null && receipt.isNotEmpty
+        ? '$baseNotes\nDekont: $receipt'
+        : baseNotes,
+    'notifyAdmins': true,
+    'notifyStaff': true,
+    'source': 'mobile_membership_cfc_checkout',
   };
 }

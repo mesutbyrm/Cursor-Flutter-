@@ -26,4 +26,10 @@ abstract final class CurrencyUsageInfo {
   ];
 
   static double tlForCfc(int cfcAmount) => cfcAmount * cfcTlPerCoin;
+
+  /// TL tutarından gerekli CFC (yukarı yuvarlanır).
+  static int cfcForTl(num tl) {
+    if (tl <= 0) return 0;
+    return (tl / cfcTlPerCoin).ceil();
+  }
 }

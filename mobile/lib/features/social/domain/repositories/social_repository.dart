@@ -12,17 +12,23 @@ class SocialFeedPage {
 }
 
 abstract class SocialRepository {
-  Future<SocialFeedPage> fetchPage({int page});
+  Future<SocialFeedPage> fetchPage({int page = 1, bool forceRefresh = false});
 
   /// Kullanıcı profilinde TikTok tarzı ızgara için paylaşımlar.
   Future<List<PostEntity>> fetchPostsByUser(String userId, {int page = 1});
 
   Future<SocialFeedPage> fetchPostsByUserPage(String userId, {int page = 1});
 
+  /// Tek gönderi — kılavuz §9.10 `getPost`.
+  Future<PostEntity?> fetchPost(String postId);
+
   /// Instagram / Facebook tarzı yeni paylaşım.
   Future<PostEntity> createPost(CreateSocialPostInput input);
 
   /// Fal baktırıldığında otomatik sosyal gönderi.
+  ///
+  /// **Kullanılmıyor:** Backend fal tamamlanınca paylaşımı oluşturur; mobil yalnızca
+  /// `SocialFortuneFeedSync` ile senkronize eder.
   Future<PostEntity> shareFortuneAuto(ShareFortuneInput input);
 
   Future<void> deletePost(String postId);
@@ -34,4 +40,9 @@ abstract class SocialRepository {
   Future<SocialCommentEntity> addComment(String postId, String text);
 
   Future<void> createStoryImage(String imagePath);
+
+  Future<void> createStoryVideo(String videoPath);
+
+  /// DELETE `/api/stories` — üretim sözleşmesi.
+  Future<void> deleteStory(String storyId);
 }

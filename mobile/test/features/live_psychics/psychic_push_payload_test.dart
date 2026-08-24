@@ -229,5 +229,14 @@ void main() {
     test('does not match session_ended', () {
       expect(isPsychicInviteEventType('session_ended'), isFalse);
     });
+
+    test('does not match bare fortune notification', () {
+      expect(isPsychicInviteEventType('fortune'), isFalse);
+      expect(isPsychicInviteEventType('daily_fortune'), isFalse);
+    });
+
+    test('matches fortune_session_request', () {
+      expect(isPsychicInviteEventType('fortune_session_request'), isTrue);
+    });
   });
 }

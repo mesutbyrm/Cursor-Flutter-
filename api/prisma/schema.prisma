@@ -30,6 +30,15 @@ model User {
   role            String         @default("user")
   followerCount   Int            @default(0)
   followingCount  Int            @default(0)
+  referralCode          String?        @unique
+  referredByUserId      String?
+  referredBy            User?          @relation("UserReferrals", fields: [referredByUserId], references: [id], onDelete: SetNull)
+  referrals             User[]         @relation("UserReferrals")
+  referralJoinedAt      DateTime?
+  referralStatus        String         @default("active")
+  isFoundingUser        Boolean        @default(false)
+  referralFraudScore    Int            @default(0)
+  referralDebtJeton     Int            @default(0)
   emailVerifiedAt DateTime?
   emailVerificationCode String?
   emailVerificationExpiresAt DateTime?
@@ -47,6 +56,11 @@ model User {
   shortVideos           ShortVideo[]
   shortVideoComments    ShortVideoComment[]
   fortuneTeller  FortuneTeller?
+  referralCommissionsEarned ReferralCommissionLedger[] @relation("ReferrerCommissions")
+  referralCommissionsSource ReferralCommissionLedger[] @relation("ReferredCommissions")
+
+  @@index([referredByUserId])
+  @@index([referralCode])
 }
 
 /// Mobil / web fal geçmişi kaydı.
@@ -507,6 +521,68 @@ model ShortVideoView {
   @@index([videoId])
 }
 
+/// Oda şarkı kuyruğu (SongQueueService — FIFO).
+model RoomSongQueue {
+  id        String   @id @default(cuid())
+  roomId    String
+  userId    String
+  username  String?
+  videoId   String
+  title     String
+  thumbnail String?
+  duration  String?
+  channel   String?
+  status    String   @default("queued")
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([roomId, status, position])
+  @@map("room_song_queue")
+}
+
+/// Oda şu an çalan şarkı (senkron otorite).
+model RoomCurrentSong {
+  id         String    @id @default(cuid())
+  roomId     String    @unique
+  queueId    String?
+  videoId    String?
+  title      String?
+  thumbnail  String?
+  durationSec Int?
+  channel    String?
+  ownerId    String?
+  ownerName  String?
+  startedAt  DateTime?
+  pausedAt   DateTime?
+  paused     Boolean   @default(false)
+  elapsedMs  Int       @default(0)
+  updatedAt  DateTime  @updatedAt
+
+  @@map("room_current_song")
+}
+
+/// Oda şarkı geçmişi — kim istedi, kaç kez çalındı.
+model RoomSongHistory {
+  id            String    @id @default(cuid())
+  roomId        String
+  queueId       String?
+  videoId       String
+  title         String
+  thumbnail     String?
+  durationSec   Int?
+  channel       String?
+  requestedById String
+  requestedBy   String?
+  playCount     Int       @default(1)
+  playedAt      DateTime  @default(now())
+  finishedAt    DateTime?
+  skipped       Boolean   @default(false)
+
+  @@index([roomId, playedAt])
+  @@index([videoId])
+  @@map("room_song_history")
+}
+
 /// Sesli oda müzik kuyruğu — oda başına sıralı şarkı istekleri.
 model MusicQueue {
   id         String   @id @default(cuid())
@@ -610,6 +686,76 @@ model VoiceRoomFinanceAuditLog {
   @@index([actorId, createdAt])
   @@map("voice_room_finance_audit_log")
 }
+/// Referans / ajans komisyon ayarları (admin paneli).
+model ReferralSettings {
+  id                              String   @id @default("default")
+  livePlatformCommissionRate      Int      @default(50)
+  voiceRoomPlatformCommissionRate Int      @default(50)
+  falPlatformCommissionRate       Int      @default(50)
+  otherPlatformCommissionRate     Int      @default(50)
+  referralCommissionRate          Int      @default(5)
+  normalReferralMonthlyCap        Int      @default(10000)
+  foundingUserReferralMonthlyCap  Int      @default(25000)
+  lifetimeReferralCap             Int      @default(100000)
+  foundingUserLimit               Int      @default(1000)
+  foundingUserEnabled             Boolean  @default(true)
+  pendingHours                    Int      @default(24)
+  fraudHoldThreshold              Int      @default(61)
+  fraudBlockThreshold             Int      @default(81)
+  fraudReviewThreshold            Int      @default(31)
+  updatedAt                       DateTime @updatedAt
+
+  @@map("referral_settings")
+}
+
+/// Referans komisyon defteri — immutable audit.
+model ReferralCommissionLedger {
+  id                 String    @id @default(cuid())
+  transactionId      String
+  referrerUserId     String
+  referrer           User      @relation("ReferrerCommissions", fields: [referrerUserId], references: [id], onDelete: Cascade)
+  referredUserId     String
+  referred           User      @relation("ReferredCommissions", fields: [referredUserId], references: [id], onDelete: Cascade)
+  sourceType         String
+  sourceId           String
+  grossJeton         Int
+  beneficiaryShare   Int
+  platformShare      Int
+  referralRate       Int
+  referralCommission Int
+  platformNet        Int
+  status             String    @default("PENDING")
+  fraudScore         Int       @default(0)
+  cappedAmount       Int       @default(0)
+  metadata           String?
+  createdAt          DateTime  @default(now())
+  availableAt        DateTime?
+  reversedAt         DateTime?
+  reverseReason      String?
+
+  @@unique([transactionId, referrerUserId])
+  @@index([referrerUserId, createdAt])
+  @@index([referredUserId, createdAt])
+  @@index([sourceType, sourceId])
+  @@index([status, createdAt])
+  @@map("referral_commission_ledger")
+}
+
+/// Referans borç mahsup kaydı (iade/chargeback sonrası).
+model ReferralRecoveryLedger {
+  id             String   @id @default(cuid())
+  userId         String
+  ledgerId       String?
+  amount         Int
+  recovered      Int      @default(0)
+  reason         String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@map("referral_recovery_ledger")
+}
+
 model FortuneTeller {
   id             String   @id @default(cuid())
   userId         String   @unique

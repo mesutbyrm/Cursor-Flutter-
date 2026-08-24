@@ -7,7 +7,7 @@ import 'package:canlifal_social/core/widgets/user_avatar.dart';
 import 'package:canlifal_social/features/fortune/data/services/rewarded_ad_service.dart';
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
-import 'package:canlifal_social/features/agora/presentation/agora_room_manager.dart';
+import 'package:canlifal_social/features/trtc/presentation/trtc_room_manager.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 final _psychicAdNavProvider =
@@ -132,7 +132,7 @@ class PsychicAdScreen extends ConsumerWidget {
 final _psychicAdInitProvider = FutureProvider.autoDispose
     .family<void, PsychicSessionEntity>((ref, session) async {
   await PsychicSessionStore.save(session);
-  final ok = await AgoraRoomManager.requestPermissions(video: true);
+  final ok = await TrtcRoomManager.requestPermissions(video: true);
   ref.read(_psychicAdPermissionsProvider.notifier).state = ok;
 
   final paidWithJeton = session.totalJeton > 0;

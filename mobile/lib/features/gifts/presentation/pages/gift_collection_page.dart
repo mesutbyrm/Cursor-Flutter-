@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/images/canlifal_network_image.dart';
+import '../../../../core/performance/list_perf.dart';
 import '../../domain/gift_collection.dart';
 import '../../domain/supporter_badge.dart';
 import '../providers/gift_insights_providers.dart';
@@ -223,50 +224,68 @@ class _GiftGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-        childAspectRatio: 0.82,
-      ),
-      itemCount: items.length,
-      itemBuilder: (_, i) {
-        final it = items[i];
-        return Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: const Color(0x22FFFFFF),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Expanded(
-                child: it.iconUrl != null && it.iconUrl!.isNotEmpty
-                    ? CanlifalNetworkImage(url: it.iconUrl!, fit: BoxFit.contain)
-                    : const Icon(Icons.card_giftcard_rounded,
-                        color: Color(0xFFB388FF), size: 30),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                it.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white, fontSize: 10),
-              ),
-              if (it.count > 0)
-                Text(
-                  '×${it.count}',
-                  style: const TextStyle(
-                    color: Color(0xFFFFD54F),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                  ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const crossAxisCount = 4;
+        const spacing = 8.0;
+        const aspect = 0.82;
+        final gridHeight = ListPerf.nestedGridHeight(
+          itemCount: items.length,
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          childAspectRatio: aspect,
+          crossAxisExtent: constraints.maxWidth,
+        );
+        return SizedBox(
+          height: gridHeight,
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: spacing,
+              mainAxisSpacing: spacing,
+              childAspectRatio: aspect,
+            ),
+            itemCount: items.length,
+            itemBuilder: (_, i) {
+              final it = items[i];
+              return Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0x22FFFFFF),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-            ],
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: it.iconUrl != null && it.iconUrl!.isNotEmpty
+                          ? CanlifalNetworkImage(
+                              url: it.iconUrl!, fit: BoxFit.contain)
+                          : const Icon(Icons.card_giftcard_rounded,
+                              color: Color(0xFFB388FF), size: 30),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      it.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
+                    ),
+                    if (it.count > 0)
+                      Text(
+                        '×${it.count}',
+                        style: const TextStyle(
+                          color: Color(0xFFFFD54F),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
           ),
         );
       },

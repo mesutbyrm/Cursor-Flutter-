@@ -4,6 +4,7 @@ import '../../domain/entities/psychic_gift_entity.dart';
 import '../../domain/entities/psychic_request_entity.dart';
 import '../../domain/entities/psychic_review_entity.dart';
 import '../../domain/entities/psychic_room_entity.dart';
+import '../../domain/entities/psychic_session_history_entity.dart';
 import '../../domain/repositories/live_psychics_repository.dart';
 import '../repositories/live_psychics_remote_datasource.dart';
 
@@ -105,24 +106,24 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
   @override
   Future<PsychicSessionCreateResult?> createSession({
     required String tellerId,
-    String? tellerUserId,
     required int durationMinutes,
     required String fortuneType,
-    bool staffExempt = false,
-    String? clientName,
   }) =>
       _remote.createSession(
         tellerId: tellerId,
-        tellerUserId: tellerUserId,
         durationMinutes: durationMinutes,
         fortuneType: fortuneType,
-        staffExempt: staffExempt,
-        clientName: clientName,
       );
 
   @override
   Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId) =>
       _remote.fetchSessionStatus(sessionId);
+
+  @override
+  Future<List<PsychicSessionHistoryEntity>> fetchRecentSessions({
+    int limit = 20,
+  }) =>
+      _remote.fetchRecentSessions(limit: limit);
 
   @override
   Future<List<PsychicSessionStatusResult>> fetchActiveSessions() =>
@@ -144,6 +145,10 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
     required String action,
   }) =>
       _remote.respondSession(sessionId, action: action);
+
+  @override
+  Future<bool> cancelSession(String sessionId) =>
+      _remote.cancelSession(sessionId);
 
   @override
   Future<bool> endSession(String sessionId) => _remote.endSession(sessionId);
@@ -198,12 +203,10 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
   Future<bool> extendSession({
     required String sessionId,
     required int minutes,
-    required int totalJeton,
   }) =>
       _remote.extendSession(
         sessionId: sessionId,
         minutes: minutes,
-        totalJeton: totalJeton,
       );
 
   @override

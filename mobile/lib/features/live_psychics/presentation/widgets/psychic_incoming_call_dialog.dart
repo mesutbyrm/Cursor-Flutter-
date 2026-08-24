@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/network/api_exception.dart';
+import 'package:canlifal_social/core/network/psychic_event_log.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/widgets/user_avatar.dart';
 
@@ -10,7 +13,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/providers/ps
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_fortune_types.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
-enum PsychicIncomingDialogAction { dismissed, rejected, accepted, held }
+enum PsychicIncomingDialogAction { dismissed, rejected, accepted }
 
 class PsychicIncomingDialogClose {
   const PsychicIncomingDialogClose({
@@ -76,10 +79,36 @@ class _PsychicIncomingCallDialog extends ConsumerStatefulWidget {
       _PsychicIncomingCallDialogState();
 }
 
+/// Falcı bildiriminde otomatik red süresi (saniye).
+const psychicIncomingCallTimeoutSeconds = 60;
+
 class _PsychicIncomingCallDialogState
     extends ConsumerState<_PsychicIncomingCallDialog> {
   var _busy = false;
   String? _busyAction;
+  Timer? _timeoutTimer;
+  var _remainingSeconds = psychicIncomingCallTimeoutSeconds;
+
+  @override
+  void initState() {
+    super.initState();
+    _timeoutTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || _busy) return;
+      final next = _remainingSeconds - 1;
+      if (next <= 0) {
+        _timeoutTimer?.cancel();
+        unawaited(_respond('reject'));
+        return;
+      }
+      setState(() => _remainingSeconds = next);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timeoutTimer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _respond(String action) async {
     if (_busy) return;
@@ -102,6 +131,7 @@ class _PsychicIncomingCallDialogState
 
       if (action == 'accept') {
         if (respond.success) {
+          PsychicEventLog.accept(sessionId: widget.sessionId);
           Navigator.pop(
             context,
             PsychicIncomingDialogClose(
@@ -122,20 +152,6 @@ class _PsychicIncomingCallDialogState
         return;
       }
 
-      if (action == 'hold' && respond.success) {
-        Navigator.pop(
-          context,
-          PsychicIncomingDialogClose(
-            action: PsychicIncomingDialogAction.held,
-            respond: respond,
-          ),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('İstek bekletildi — daha sonra kabul edebilirsiniz')),
-        );
-        return;
-      }
-
       Navigator.pop(
         context,
         PsychicIncomingDialogClose(
@@ -143,6 +159,9 @@ class _PsychicIncomingCallDialogState
           respond: respond,
         ),
       );
+      if (action == 'reject') {
+        PsychicEventLog.reject(sessionId: widget.sessionId);
+      }
     } catch (e, st) {
       debugPrint(
         '[PsychicInviteDialog] $action session=${widget.sessionId} '
@@ -180,7 +199,6 @@ class _PsychicIncomingCallDialogState
 
     final timeLabel = TimeOfDay.now().format(context);
     final accepting = _busy && _busyAction == 'accept';
-    final holding = _busy && _busyAction == 'hold';
     final rejecting = _busy && _busyAction == 'reject';
 
     return Material(
@@ -325,6 +343,23 @@ class _PsychicIncomingCallDialogState
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
+                      Icons.timer_outlined,
+                      size: 14,
+                      color: Colors.white.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Kalan: $_remainingSeconds sn',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: _remainingSeconds <= 15
+                            ? const Color(0xFFFF5252)
+                            : Colors.white.withValues(alpha: 0.55),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Icon(
                       Icons.access_time_rounded,
                       size: 14,
                       color: Colors.white.withValues(alpha: 0.5),
@@ -347,15 +382,6 @@ class _PsychicIncomingCallDialogState
                   busy: accepting,
                   enabled: !_busy,
                   onTap: () => _respond('accept'),
-                ),
-                const SizedBox(height: 12),
-                _ActionBtn(
-                  label: holding ? 'Bekletiliyor…' : 'Beklet',
-                  icon: Icons.pause_circle_outline_rounded,
-                  gradient: const [Color(0xFFFF9800), Color(0xFFFFB74D)],
-                  busy: holding,
-                  enabled: !_busy,
-                  onTap: () => _respond('hold'),
                 ),
                 const SizedBox(height: 12),
                 _ActionBtn(

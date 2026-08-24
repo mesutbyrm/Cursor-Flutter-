@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/auth/bot_account_guard.dart';
+import '../../../../core/auth/bot_account_provider.dart';
 import '../../../feed/domain/entities/post_entity.dart';
 import '../../domain/entities/create_social_post_input.dart';
 import 'social_providers.dart';
@@ -14,12 +16,15 @@ class SocialCreatePostNotifier extends AsyncNotifier<void> {
   Future<void> build() async {}
 
   Future<PostEntity> submit(CreateSocialPostInput input) async {
+    if (ref.read(isBotAccountProvider)) {
+      throw StateError(BotAccountGuard.blockedMessage('gönderi paylaşma'));
+    }
     state = const AsyncValue.loading();
     try {
       final post =
           await ref.read(socialRepositoryProvider).createPost(input);
       state = const AsyncValue.data(null);
-      await ref.read(socialNotifierProvider.notifier).refresh();
+      ref.read(socialNotifierProvider.notifier).prependPost(post);
       return post;
     } catch (e, st) {
       state = AsyncValue.error(e, st);

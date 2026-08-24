@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/payment_defaults.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../profile/presentation/widgets/payment_methods_summary_line.dart';
 import '../../domain/membership_model.dart';
 
-class MembershipSupportFooter extends StatelessWidget {
+class MembershipSupportFooter extends ConsumerWidget {
   const MembershipSupportFooter({super.key});
 
-  Future<void> _openSupport() async {
-    final digits =
-        PaymentDefaults.whatsapp.replaceAll(RegExp(r'[^0-9]'), '');
+  Future<void> _openSupport(String whatsapp) async {
+    final digits = whatsapp.replaceAll(RegExp(r'[^0-9]'), '');
     final uri = Uri.parse('https://wa.me/$digits');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -18,7 +20,11 @@ class MembershipSupportFooter extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final config = ref.watch(paymentConfigProvider).valueOrNull;
+    final cfg =
+        config != null ? PaymentDefaults.merge(config) : PaymentDefaults.config;
+
     return Column(
       children: [
         Text(
@@ -29,11 +35,17 @@ class MembershipSupportFooter extends StatelessWidget {
             fontSize: 13,
           ),
         ),
+        const SizedBox(height: 6),
+        const PaymentMethodsSummaryLine(
+          prefix: 'Ödeme',
+          textAlign: TextAlign.center,
+          showRecommended: false,
+        ),
         const SizedBox(height: 8),
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: _openSupport,
+            onTap: () => _openSupport(cfg.whatsappNumber),
             borderRadius: BorderRadius.circular(14),
             child: Ink(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

@@ -5,6 +5,9 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import 'package:canlifal_social/features/profile/presentation/premium_2026/profile_membership_helpers.dart';
+import 'package:canlifal_social/features/shorts/presentation/widgets/shorts_profile_content.dart';
+import 'package:canlifal_social/features/vip_gold/presentation/widgets/vip_badge.dart';
 
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../../core/providers/auth_selectors.dart';
@@ -12,6 +15,9 @@ import '../../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../feed/domain/entities/post_entity.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/network/api_exception.dart';
+import '../../utils/social_caption_link_parser.dart';
+import '../../utils/social_post_detail_route.dart';
+import '../../utils/social_user_profile_route.dart';
 import '../../providers/social_providers.dart';
 import 'social_post_caption.dart';
 import 'social_post_comments_sheet.dart';
@@ -23,10 +29,12 @@ class SocialInstagramPostCard extends ConsumerStatefulWidget {
     super.key,
     required this.post,
     this.openProfileOnTap = true,
+    this.onDeleted,
   });
 
   final PostEntity post;
   final bool openProfileOnTap;
+  final VoidCallback? onDeleted;
 
   @override
   ConsumerState<SocialInstagramPostCard> createState() =>
@@ -42,6 +50,14 @@ class _SocialInstagramPostCardState
   void initState() {
     super.initState();
     _syncFromPost(widget.post);
+    final postId = widget.post.id;
+    if (postId.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(socialNotifierProvider.notifier).registerView(postId);
+        ref.read(socialRemoteProvider).registerPostView(postId);
+      });
+    }
   }
 
   @override
@@ -61,16 +77,18 @@ class _SocialInstagramPostCardState
 
   PostEntity get post => widget.post;
 
-  bool get _isFortunePost =>
-      post.postType == 'fortune' ||
-      post.isAutoShare ||
-      (post.fortuneType != null && post.fortuneType!.isNotEmpty);
+  bool get _isFortunePost => post.isFortunePost;
+
+  String? get _bodyText {
+    if (_isFortunePost) return post.displayFortuneBody;
+    return post.caption?.trim();
+  }
 
   bool get _hasMedia =>
       post.mediaUrl != null && post.mediaUrl!.trim().isNotEmpty;
 
   void _openAuthorTimeline(BuildContext context) {
-    context.push('/user/${post.author.id}', extra: post.id);
+    context.push(buildSocialUserProfileRoute(post.author.id), extra: post.id);
   }
 
   @override
@@ -113,33 +131,40 @@ class _SocialInstagramPostCardState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if ((post.caption?.trim().isNotEmpty ?? false) && _hasMedia)
-                      SocialPostCaption(post: post, inlineBodyOnly: true),
-                    if (!_hasMedia && (post.caption?.trim().isNotEmpty ?? false))
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(14),
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFF2A1548), Color(0xFF14102A)],
+                    if ((_bodyText?.isNotEmpty ?? false) && _hasMedia)
+                      SocialPostCaption(
+                        post: post,
+                        inlineBodyOnly: true,
+                        bodyText: _bodyText,
+                      ),
+                    if (!_hasMedia && (_bodyText?.isNotEmpty ?? false))
+                      GestureDetector(
+                        onTap: () => _openPostDetail(context),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [Color(0xFF2A1548), Color(0xFF14102A)],
+                              ),
+                              border: Border.all(
+                                color: AppThemeColors.accentPurple
+                                    .withValues(alpha: 0.35),
+                              ),
                             ),
-                            border: Border.all(
-                              color: AppThemeColors.accentPurple
-                                  .withValues(alpha: 0.35),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: SocialPostTextPreview(
-                              text: post.caption!.trim(),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: SocialPostTextPreview(
+                                text: _bodyText!,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    if (post.isAutoShare || post.fortuneCount > 0)
+                    if (_isFortunePost)
                       Padding(
                         padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
                         child: Wrap(
@@ -149,6 +174,10 @@ class _SocialInstagramPostCardState
                             if (post.isAutoShare) const _AutoShareBadge(),
                             if (post.fortuneCount > 0)
                               _CoViewersBadge(count: post.fortuneCount),
+                            if (post.displayViewCount > 0)
+                              _FortuneViewsBadge(count: post.displayViewCount),
+                            if (post.shareCount > 0)
+                              _ShareCountBadge(count: post.shareCount),
                           ],
                         ),
                       ),
@@ -156,6 +185,7 @@ class _SocialInstagramPostCardState
                       _PostMediaBlock(
                         post: post,
                         onFortuneTap: () => _openFortune(context),
+                        onTap: () => _openPostDetail(context),
                       ),
                   ],
                 ),
@@ -180,15 +210,16 @@ class _SocialInstagramPostCardState
                     ),
                     SizedBox(width: 16),
                     _ActionWithCount(
-                      icon: Icons.visibility_outlined,
-                      count: post.viewCount,
-                      hideZeroCount: false,
-                      onTap: () {},
+                      icon: Icons.ios_share_rounded,
+                      count: post.shareCount,
+                      onTap: () => _sharePost(context),
                     ),
                     SizedBox(width: 16),
-                    _ActionIcon(
-                      icon: Icons.ios_share_rounded,
-                      onTap: () => _sharePost(context),
+                    _ActionWithCount(
+                      icon: Icons.visibility_outlined,
+                      count: post.displayViewCount,
+                      hideZeroCount: false,
+                      onTap: () => _openPostDetail(context),
                     ),
                     const Spacer(),
                     if (_isFortunePost) ...[
@@ -252,7 +283,8 @@ class _SocialInstagramPostCardState
 
     try {
       await ref.read(socialRepositoryProvider).deletePost(post.id);
-      await ref.read(socialNotifierProvider.notifier).refresh();
+      ref.read(socialNotifierProvider.notifier).removePost(post.id);
+      widget.onDeleted?.call();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Gönderi silindi')),
@@ -299,8 +331,13 @@ class _SocialInstagramPostCardState
       if (!mounted) return;
       setState(() {
         _liked = r.liked;
-        if (r.likesCount > 0) _likeCount = r.likesCount;
+        _likeCount = r.likesCount > 0 ? r.likesCount : _likeCount;
       });
+      ref.read(socialNotifierProvider.notifier).reconcileLike(
+            post.id,
+            liked: r.liked,
+            likesCount: _likeCount,
+          );
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -313,6 +350,11 @@ class _SocialInstagramPostCardState
     }
   }
 
+  void _openPostDetail(BuildContext context) {
+    if (post.id.isEmpty) return;
+    context.push(buildSocialPostDetailRoute(post.id));
+  }
+
   void _openComments(BuildContext context) {
     SocialPostCommentsSheet.show(
       context,
@@ -322,13 +364,15 @@ class _SocialInstagramPostCardState
   }
 
   Future<void> _sharePost(BuildContext context) async {
-    final base = Env.siteOrigin.replaceAll(RegExp(r'/+$'), '');
-    final link = '$base/sosyal?post=${post.id}';
-    final caption = post.caption?.trim();
-    final text = caption != null && caption.isNotEmpty
-        ? '$caption\n\n$link'
-        : 'Canlifal paylaşımı\n$link';
+    final text = buildSocialPostShareText(
+      postId: post.id,
+      caption: _bodyText ?? post.caption,
+      siteOrigin: Env.siteOrigin,
+    );
     await SharePlus.instance.share(ShareParams(text: text));
+    if (post.id.isNotEmpty) {
+      ref.read(socialNotifierProvider.notifier).bumpShareCount(post.id);
+    }
   }
 }
 
@@ -381,14 +425,29 @@ class _PostHeader extends StatelessWidget {
                                     post.author.display,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 14,
                                     ),
                                   ),
                                 ),
+                                if (post.author.isVerified) ...[
+                                  const SizedBox(width: 4),
+                                  const ShortsVerifiedBadge(size: 14),
+                                ],
+                                if (shouldShowSocialMembershipBadge(
+                                  post.author.role,
+                                )) ...[
+                                  const SizedBox(width: 4),
+                                  VipBadge(
+                                    tier: resolveProfileMembership(
+                                      rawMembership: post.author.role,
+                                    ).tier,
+                                    compact: true,
+                                  ),
+                                ],
                                 if (timeLabel != null) ...[
-                                  SizedBox(width: 6),
+                                  const SizedBox(width: 6),
                                   Text(
                                     '· $timeLabel',
                                     style: TextStyle(
@@ -553,14 +612,72 @@ class _CoViewersBadge extends StatelessWidget {
   }
 }
 
+class _FortuneViewsBadge extends StatelessWidget {
+  const _FortuneViewsBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFF38BDF8).withValues(alpha: 0.75),
+          width: 1.2,
+        ),
+      ),
+      child: Text(
+        '$count kişi baktı',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF7DD3FC).withValues(alpha: 0.95),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShareCountBadge extends StatelessWidget {
+  const _ShareCountBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppThemeColors.accentPurple.withValues(alpha: 0.65),
+          width: 1.2,
+        ),
+      ),
+      child: Text(
+        '$count kişi paylaştı',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
+        ),
+      ),
+    );
+  }
+}
+
 class _PostMediaBlock extends StatelessWidget {
   const _PostMediaBlock({
     required this.post,
     required this.onFortuneTap,
+    this.onTap,
   });
 
   final PostEntity post;
   final VoidCallback onFortuneTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -572,20 +689,24 @@ class _PostMediaBlock extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(top: 4),
-      child: isVideo
-          ? SocialPostVideoPlayer(
-              videoUrl: mediaUrl,
-              videoId: post.id,
-            )
-          : AspectRatio(
-              aspectRatio: 4 / 5,
-              child: CanlifalNetworkImage(
-                url: mediaUrl,
-                fit: BoxFit.cover,
-                placeholder: const _MysticMediaPlaceholder(),
-                errorWidget: const _MysticMediaPlaceholder(),
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: isVideo
+            ? SocialPostVideoPlayer(
+                videoUrl: mediaUrl,
+                videoId: post.id,
+              )
+            : AspectRatio(
+                aspectRatio: 4 / 5,
+                child: CanlifalNetworkImage(
+                  url: mediaUrl,
+                  fit: BoxFit.cover,
+                  placeholder: const _MysticMediaPlaceholder(),
+                  errorWidget: const _MysticMediaPlaceholder(),
+                ),
               ),
-            ),
+      ),
     );
   }
 }

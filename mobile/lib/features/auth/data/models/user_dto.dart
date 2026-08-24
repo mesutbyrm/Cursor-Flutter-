@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../../core/util/json_util.dart';
+import '../../../../core/auth/bot_account_guard.dart';
 import '../../domain/entities/user_entity.dart';
 
 part 'user_dto.freezed.dart';
@@ -74,6 +75,28 @@ abstract class UserDto with _$UserDto {
     final direct = pick(json, ['role', 'tier', 'userRole'])?.toString();
     if (direct != null && direct.trim().isNotEmpty) return direct.trim();
 
+    final membership = pick(json, [
+      'membership',
+      'membershipTier',
+      'membership_tier',
+      'vipLevel',
+      'vip_level',
+      'subscription',
+      'subscriptionTier',
+      'subscription_tier',
+      'plan',
+      'userMembership',
+    ])?.toString();
+    if (membership != null && membership.trim().isNotEmpty) {
+      final normalized = membership.trim().toLowerCase();
+      if (normalized != 'free' &&
+          normalized != 'basic' &&
+          normalized != 'member' &&
+          normalized != 'üye') {
+        return membership.trim();
+      }
+    }
+
     if (json['isFortuneTeller'] == true ||
         json['isLiveFortuneTeller'] == true ||
         json['canGoOnline'] == true) {
@@ -130,7 +153,7 @@ abstract class UserDto with _$UserDto {
     return UserDto.fromApiMap(merged);
   }
 
-  UserEntity toEntity({String? role}) => UserEntity(
+  UserEntity toEntity({String? role, Map<String, dynamic>? source}) => UserEntity(
         id: id,
         username: username,
         email: email,
@@ -142,5 +165,6 @@ abstract class UserDto with _$UserDto {
         followingCount: followingCount,
         isFollowing: isFollowing,
         coinBalance: coinBalance,
+        isBot: BotAccountGuard.fromJsonMap(source),
       );
 }

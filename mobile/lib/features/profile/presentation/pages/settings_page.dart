@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/bootstrap/app_cache_clear.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
@@ -10,6 +11,7 @@ import '../../../../core/widgets/theme_mode_selector.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../fortune/presentation/widgets/fortune_auto_share_setting_tile.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../widgets/premium/profile_glass.dart';
 
 /// Merkezi ayarlar — hesap, güvenlik, gizlilik, bildirimler.
@@ -34,6 +36,12 @@ class SettingsPage extends ConsumerWidget {
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
+                    _SettingsTile(
+                      icon: Icons.palette_outlined,
+                      label: buildMembershipSettingsCosmeticsRowLabel(),
+                      onTap: () => context.push('/profile/cosmetics'),
+                    ),
+                    const _Divider(),
                     _SettingsTile(
                       icon: Icons.person_outline_rounded,
                       label: 'Profili Düzenle',
@@ -120,6 +128,49 @@ class SettingsPage extends ConsumerWidget {
               const SizedBox(height: 20),
               const _SectionLabel('Görünüm'),
               const ThemeModeSelector(),
+              const SizedBox(height: 20),
+              const _SectionLabel('Depolama'),
+              ProfileGlass(
+                padding: EdgeInsets.zero,
+                child: _SettingsTile(
+                  icon: Icons.cleaning_services_outlined,
+                  label: 'Önbelleği Temizle',
+                  onTap: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Önbelleği temizle'),
+                        content: const Text(
+                          'Görsel ve API önbelleği temizlenir. Oturum bilginiz silinmez.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('İptal'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Temizle'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed != true || !context.mounted) return;
+                    try {
+                      await AppCacheClear.clearNonAuthCaches();
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Önbellek temizlendi')),
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(ApiException.userMessage(e))),
+                      );
+                    }
+                  },
+                ),
+              ),
               if (kDebugMode) ...[
                 const SizedBox(height: 20),
                 const _SectionLabel('Geliştirici'),

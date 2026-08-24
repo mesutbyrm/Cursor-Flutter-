@@ -12,8 +12,9 @@ import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/entities/live_swipe_feed_args.dart';
 import '../providers/live_providers.dart';
+import '../providers/discover_live_streams.dart';
 
-/// Agora oturumu hazırla — swipe ve tek yayın için ortak.
+/// TRTC oturumu hazırla — swipe ve tek yayın için ortak.
 Future<LiveBroadcastSession> buildLiveSessionForStream(
   WidgetRef ref,
   LiveStreamEntity stream,
@@ -23,8 +24,8 @@ Future<LiveBroadcastSession> buildLiveSessionForStream(
     throw StateError('İzlemek için giriş yapın');
   }
 
-  final agora = await LiveEntryPerf.fetchAgoraParallel(
-    ref,
+  final trtc = await LiveEntryPerf.fetchTrtcParallel(
+    ref: ref,
     streamId: stream.id,
     role: 'audience',
     userId: user.id,
@@ -32,7 +33,7 @@ Future<LiveBroadcastSession> buildLiveSessionForStream(
 
   return LiveBroadcastSession.fromStream(stream).copyWith(
     streamId: stream.id,
-    agora: agora,
+    trtc: trtc,
     hostUserId: stream.hostUserId,
   );
 }
@@ -49,7 +50,7 @@ Future<void> _validateStreamStillLive(
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Yayın sona erdi')),
       );
-      ref.invalidate(liveStreamsProvider);
+      invalidateDiscoverLiveStreams(ref);
       if (context.canPop()) context.pop();
     }
   } catch (_) {}

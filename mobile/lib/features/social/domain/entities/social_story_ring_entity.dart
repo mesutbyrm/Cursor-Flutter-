@@ -16,6 +16,19 @@ class SocialStoryRingEntity extends Equatable {
   final List<SocialStoryItemEntity> stories;
   final bool isOwn;
 
+  SocialStoryRingEntity copyWith({
+    UserEntity? user,
+    String? previewUrl,
+    List<SocialStoryItemEntity>? stories,
+    bool? isOwn,
+  }) =>
+      SocialStoryRingEntity(
+        user: user ?? this.user,
+        previewUrl: previewUrl ?? this.previewUrl,
+        stories: stories ?? this.stories,
+        isOwn: isOwn ?? this.isOwn,
+      );
+
   @override
   List<Object?> get props => [user, previewUrl, stories, isOwn];
 }
@@ -27,6 +40,7 @@ class SocialStoryItemEntity extends Equatable {
     this.type = 'image',
     this.caption,
     this.createdAt,
+    this.durationMs,
   });
 
   final String id;
@@ -34,7 +48,9 @@ class SocialStoryItemEntity extends Equatable {
   final String type;
   final String? caption;
   final DateTime? createdAt;
+  /// Backend/medya süresi (ms) — yoksa görsel için varsayılan kullanılır.
+  final int? durationMs;
 
   @override
-  List<Object?> get props => [id, mediaUrl, type, caption, createdAt];
+  List<Object?> get props => [id, mediaUrl, type, caption, createdAt, durationMs];
 }

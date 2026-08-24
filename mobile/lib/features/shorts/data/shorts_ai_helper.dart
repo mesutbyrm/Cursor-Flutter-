@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
+import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 import '../domain/entities/short_explore_entity.dart';
@@ -10,16 +11,21 @@ import '../domain/entities/shorts_ai_metadata.dart';
 class ShortsAiHelper {
   ShortsAiHelper._();
 
+  /// Videodan 5 kare — %10, %25, %40, %60, %80 (gerçek süreye göre).
+  static const thumbnailPercents = [0.10, 0.25, 0.40, 0.60, 0.80];
+
   static Future<List<String>> generateThumbnailCandidates(String videoPath) async {
     if (!await File(videoPath).exists()) return const [];
+    final durationMs = await _videoDurationMs(videoPath);
     final dir = await getTemporaryDirectory();
     final out = <String>[];
-    for (final pct in [0.15, 0.45, 0.75]) {
+    for (final pct in thumbnailPercents) {
       try {
+        final timeMs = _timeMsForPercent(durationMs, pct);
         final path = await VideoThumbnail.thumbnailFile(
           video: videoPath,
           imageFormat: ImageFormat.JPEG,
-          timeMs: await _timeMsForPercent(videoPath, pct),
+          timeMs: timeMs,
           maxWidth: 720,
           quality: 88,
           thumbnailPath: dir.path,
@@ -30,9 +36,24 @@ class ShortsAiHelper {
     return out;
   }
 
-  static Future<int> _timeMsForPercent(String videoPath, double pct) async {
-    // video_thumbnail timeMs — yaklaşık kare; süre bilinmiyorsa sabit aralık.
-    return (pct * 12000).round().clamp(100, 14000);
+  static int _timeMsForPercent(int durationMs, double pct) {
+    if (durationMs <= 0) {
+      return (pct * 12000).round().clamp(100, 14000);
+    }
+    final ms = (durationMs * pct).round();
+    return ms.clamp(1, durationMs - 1);
+  }
+
+  static Future<int> _videoDurationMs(String videoPath) async {
+    final controller = VideoPlayerController.file(File(videoPath));
+    try {
+      await controller.initialize();
+      return controller.value.duration.inMilliseconds;
+    } catch (_) {
+      return 0;
+    } finally {
+      await controller.dispose();
+    }
   }
 
   static ShortsAiMetadata fallbackMetadata(String description) {

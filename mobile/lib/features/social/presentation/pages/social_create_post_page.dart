@@ -9,10 +9,14 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../search/domain/entities/search_user_entity.dart';
 import '../../domain/entities/create_social_post_input.dart';
 import '../providers/social_create_post_provider.dart';
+import '../utils/social_post_location_helper.dart';
+import '../widgets/social_mention_picker_sheet.dart';
+import '../widgets/social_local_video_preview.dart';
 
-/// Instagram tarzı yeni gönderi — görsel önizleme + açıklama + Paylaş.
+/// Instagram tarzı yeni gönderi — görsel/video önizleme + açıklama + Paylaş.
 class SocialCreatePostPage extends ConsumerStatefulWidget {
   const SocialCreatePostPage({super.key, this.initialCaption});
 
@@ -27,7 +31,10 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
   final _caption = TextEditingController();
   final _picker = ImagePicker();
   String? _imagePath;
+  String? _videoPath;
+  String? _locationLabel;
   var _submitting = false;
+  var _locationLoading = false;
 
   @override
   void initState() {
@@ -45,7 +52,9 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
 
   bool get _canShare =>
       !_submitting &&
-      (_caption.text.trim().isNotEmpty || _imagePath != null);
+      (_caption.text.trim().isNotEmpty ||
+          _imagePath != null ||
+          _videoPath != null);
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -56,13 +65,86 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
         imageQuality: 88,
       );
       if (file != null && mounted) {
-        setState(() => _imagePath = file.path);
+        setState(() {
+          _imagePath = file.path;
+          _videoPath = null;
+        });
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Görsel seçilemedi: $e')),
       );
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    try {
+      final file = await _picker.pickVideo(
+        source: ImageSource.gallery,
+        maxDuration: const Duration(minutes: 3),
+      );
+      if (file != null && mounted) {
+        setState(() {
+          _videoPath = file.path;
+          _imagePath = null;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Video seçilemedi: $e')),
+      );
+    }
+  }
+
+  void _insertText(String snippet) {
+    final text = _caption.text;
+    final sel = _caption.selection;
+    final start = sel.start >= 0 ? sel.start : text.length;
+    final end = sel.end >= 0 ? sel.end : text.length;
+    final next = text.replaceRange(start, end, snippet);
+    _caption.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: start + snippet.length),
+    );
+    setState(() {});
+  }
+
+  Future<void> _pickMention() async {
+    final picked = await showModalBottomSheet<SearchUserEntity>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF120A24),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => const SocialMentionPickerSheet(),
+    );
+    if (picked != null) {
+      _insertText('@${picked.username} ');
+    }
+  }
+
+  Future<void> _addLocation() async {
+    if (_locationLoading) return;
+    setState(() => _locationLoading = true);
+    try {
+      final result = await pickSocialPostLocationLabel();
+      if (!mounted) return;
+      if (!result.ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.errorMessage ?? 'Konum alınamadı')),
+        );
+        return;
+      }
+      final label = result.label!;
+      setState(() => _locationLabel = label);
+      if (!_caption.text.contains('📍')) {
+        _insertText('${formatSocialPostLocationSnippet(label)} ');
+      }
+    } finally {
+      if (mounted) setState(() => _locationLoading = false);
     }
   }
 
@@ -74,6 +156,7 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
             CreateSocialPostInput(
               caption: _caption.text.trim(),
               imagePath: _imagePath,
+              videoPath: _videoPath,
             ),
           );
       if (!mounted) return;
@@ -164,11 +247,25 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
                 children: [
                   _MediaPreview(
                     imagePath: _imagePath,
+                    videoPath: _videoPath,
                     onPickGallery: () => _pickImage(ImageSource.gallery),
                     onPickCamera: () => _pickImage(ImageSource.camera),
-                    onClear: () => setState(() => _imagePath = null),
+                    onPickVideo: _pickVideo,
+                    onClear: () => setState(() {
+                      _imagePath = null;
+                      _videoPath = null;
+                    }),
                   ),
                   SizedBox(height: 20),
+                  if (_locationLabel != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Chip(
+                        avatar: const Icon(Icons.location_on_rounded, size: 18),
+                        label: Text(_locationLabel!),
+                        onDeleted: () => setState(() => _locationLabel = null),
+                      ),
+                    ),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -186,7 +283,8 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
                           decoration: InputDecoration(
                             hintText: 'Bir açıklama yaz…',
                             hintStyle: TextStyle(
-                              color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
+                              color: context.colors.onSurfaceMuted
+                                  .withValues(alpha: 0.9),
                             ),
                             border: InputBorder.none,
                             counterStyle: TextStyle(
@@ -211,24 +309,24 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
                     onTap: () => _pickImage(ImageSource.camera),
                   ),
                   _OptionTile(
+                    icon: Icons.videocam_outlined,
+                    label: 'Video seç',
+                    onTap: _pickVideo,
+                  ),
+                  _OptionTile(
                     icon: Icons.location_on_outlined,
-                    label: 'Konum ekle',
-                    muted: true,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Konum yakında')),
-                      );
-                    },
+                    label: _locationLoading ? 'Konum alınıyor…' : 'Konum ekle',
+                    onTap: _locationLoading ? null : _addLocation,
                   ),
                   _OptionTile(
                     icon: Icons.tag_faces_outlined,
                     label: 'Kişileri etiketle',
-                    muted: true,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Etiketleme yakında')),
-                      );
-                    },
+                    onTap: _pickMention,
+                  ),
+                  _OptionTile(
+                    icon: Icons.tag_rounded,
+                    label: 'Hashtag ekle',
+                    onTap: () => _insertText('#'),
                   ),
                 ],
               ),
@@ -243,44 +341,32 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
 class _MediaPreview extends StatelessWidget {
   const _MediaPreview({
     required this.imagePath,
+    required this.videoPath,
     required this.onPickGallery,
     required this.onPickCamera,
+    required this.onPickVideo,
     required this.onClear,
   });
 
   final String? imagePath;
+  final String? videoPath;
   final VoidCallback onPickGallery;
   final VoidCallback onPickCamera;
+  final VoidCallback onPickVideo;
   final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
     if (imagePath != null) {
-      return Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: Image.file(
-                File(imagePath!),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Material(
-              color: Colors.black54,
-              shape: const CircleBorder(),
-              child: IconButton(
-                icon: Icon(Icons.close_rounded, color: Colors.white),
-                onPressed: onClear,
-              ),
-            ),
-          ),
-        ],
+      return _MediaFrame(
+        onClear: onClear,
+        child: Image.file(File(imagePath!), fit: BoxFit.cover),
+      );
+    }
+    if (videoPath != null) {
+      return _MediaFrame(
+        onClear: onClear,
+        child: SocialLocalVideoPreview(videoPath: videoPath!),
       );
     }
 
@@ -305,25 +391,62 @@ class _MediaPreview extends StatelessWidget {
               color: context.colors.onSurfaceMuted.withValues(alpha: 0.8),
             ),
             SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 12,
+              runSpacing: 12,
               children: [
                 _PickChip(
                   icon: Icons.photo_library_rounded,
                   label: 'Galeri',
                   onTap: onPickGallery,
                 ),
-                SizedBox(width: 12),
                 _PickChip(
                   icon: Icons.photo_camera_rounded,
                   label: 'Kamera',
                   onTap: onPickCamera,
+                ),
+                _PickChip(
+                  icon: Icons.videocam_rounded,
+                  label: 'Video',
+                  onTap: onPickVideo,
                 ),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MediaFrame extends StatelessWidget {
+  const _MediaFrame({required this.child, required this.onClear});
+
+  final Widget child;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: AspectRatio(aspectRatio: 1, child: child),
+        ),
+        Positioned(
+          top: 8,
+          right: 8,
+          child: Material(
+            color: Colors.black54,
+            shape: const CircleBorder(),
+            child: IconButton(
+              icon: Icon(Icons.close_rounded, color: Colors.white),
+              onPressed: onClear,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -374,27 +497,22 @@ class _OptionTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    this.muted = false,
   });
 
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
-  final bool muted;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(
-        icon,
-        color: muted ? context.colors.onSurfaceMuted : context.colors.onSurface,
-      ),
+      leading: Icon(icon, color: context.colors.onSurface),
       title: Text(
         label,
         style: TextStyle(
           fontWeight: FontWeight.w600,
-          color: muted ? context.colors.onSurfaceMuted : context.colors.onSurface,
+          color: context.colors.onSurface,
         ),
       ),
       trailing: Icon(

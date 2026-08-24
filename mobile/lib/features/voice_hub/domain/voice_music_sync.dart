@@ -60,9 +60,7 @@ abstract final class VoiceMusicSync {
         c.contains('şu an çalıyor') ||
         c.contains('şimdi çalıyor') ||
         c.contains('öncelikli istek') ||
-        c.contains('müzik durduruldu') ||
-        c.startsWith('!istek') ||
-        c.startsWith('/istek');
+        c.contains('müzik durduruldu');
   }
 }
 

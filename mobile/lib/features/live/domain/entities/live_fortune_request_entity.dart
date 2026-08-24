@@ -70,10 +70,15 @@ extension LiveFortuneRequestStatusX on LiveFortuneRequestStatus {
     final v = raw?.trim().toLowerCase() ?? '';
     return switch (v) {
       'held' || 'hold' || 'beklet' || 'on_hold' => LiveFortuneRequestStatus.held,
-      'reviewing' || 'inceleniyor' || 'in_progress' || 'accepted' =>
+      'reviewing' ||
+      'inceleniyor' ||
+      'in_progress' ||
+      'accepted' ||
+      'selected' =>
         LiveFortuneRequestStatus.reviewing,
       'answered' || 'completed' || 'yanitlandi' => LiveFortuneRequestStatus.answered,
-      'cancelled' || 'canceled' || 'rejected' => LiveFortuneRequestStatus.cancelled,
+      'cancelled' || 'canceled' || 'rejected' || 'refunded' =>
+        LiveFortuneRequestStatus.cancelled,
       _ => LiveFortuneRequestStatus.pending,
     };
   }
@@ -123,11 +128,14 @@ class LiveFortuneRequestEntity extends Equatable {
       username: json['username']?.toString(),
       displayName: json['displayName']?.toString() ??
           json['display_name']?.toString() ??
+          json['nickname']?.toString() ??
           'Misafir',
       question: json['question']?.toString() ??
+          json['message']?.toString() ??
           json['fortuneQuestion']?.toString() ??
           '',
-      fortuneType: json['fortuneType']?.toString() ??
+      fortuneType: json['typeId']?.toString() ??
+          json['fortuneType']?.toString() ??
           json['type']?.toString() ??
           json['fortune_type']?.toString() ??
           'general',
@@ -135,7 +143,12 @@ class LiveFortuneRequestEntity extends Equatable {
         json['priority']?.toString() ?? json['priorityType']?.toString(),
       ),
       status: LiveFortuneRequestStatusX.fromWire(json['status']?.toString()),
-      jetonCost: asInt(json['jetonCost'] ?? json['jeton_cost'] ?? json['cost']),
+      jetonCost: asInt(
+        json['jetonCost'] ??
+            json['jetonAmount'] ??
+            json['jeton_cost'] ??
+            json['cost'],
+      ),
       createdAt: DateTime.tryParse(created) ?? DateTime.now(),
     );
   }

@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/images/canlifal_network_image.dart';
+import '../../../../profile/presentation/providers/profile_hub_providers.dart';
+import '../../data/section_visual_catalog.dart';
+import '../../../domain/home_zodiac_signs.dart';
 import '../../theme/home_approved_design.dart';
+import '../../theme/home_premium_design.dart';
+import '../home_horoscope_daily_sheet.dart';
 import 'home_section_title.dart';
+import '../premium_2026/home_horizontal_list.dart';
 
 /// Web ana sayfa — günlük burç şeridi (12 burç).
-class HomeHoroscopeSection extends StatelessWidget {
+class HomeHoroscopeSection extends ConsumerWidget {
   const HomeHoroscopeSection({super.key});
 
-  static const signs = <(String name, String glyph, Color primary, Color secondary)>[
+  static const signs =
+      <(String name, String glyph, Color primary, Color secondary)>[
     ('Koç', '♈', Color(0xFFE53935), Color(0xFFFF8A80)),
     ('Boğa', '♉', Color(0xFF43A047), Color(0xFFA5D6A7)),
     ('İkizler', '♊', Color(0xFF1E88E5), Color(0xFF90CAF9)),
@@ -23,8 +32,30 @@ class HomeHoroscopeSection extends StatelessWidget {
     ('Balık', '♓', Color(0xFF3949AB), Color(0xFF9FA8DA)),
   ];
 
+  static String? _matchUserSign(String? raw) {
+    final value = raw?.trim().toLowerCase();
+    if (value == null || value.isEmpty) return null;
+    for (final (name, _, _, _) in signs) {
+      if (name.toLowerCase() == value) return name;
+      if (HomeZodiacSigns.apiValueFor(name) == value) return name;
+    }
+    return null;
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userSign = ref.watch(profileExtendedProvider).valueOrNull?.zodiacSign;
+    final highlighted = _matchUserSign(userSign);
+
+    final ordered = [...signs];
+    if (highlighted != null) {
+      ordered.sort((a, b) {
+        if (a.$1 == highlighted) return -1;
+        if (b.$1 == highlighted) return 1;
+        return 0;
+      });
+    }
+
     return Column(
       children: [
         HomeSectionTitle(
@@ -33,24 +64,27 @@ class HomeHoroscopeSection extends StatelessWidget {
           actionLabel: 'Tümü >',
           onAction: () => context.push('/fortune/yildiz-haritasi'),
         ),
-        SizedBox(
-          height: 96,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-            itemCount: signs.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (context, i) {
-              final (name, glyph, primary, secondary) = signs[i];
-              return _SignChip(
-                name: name,
+        HomeHorizontalList(
+          height: 108,
+          itemCount: ordered.length,
+          itemBuilder: (context, i) {
+            final (name, glyph, primary, secondary) = ordered[i];
+            final isMine = highlighted != null && name == highlighted;
+            return _SignChip(
+              name: name,
+              glyph: glyph,
+              primary: primary,
+              secondary: secondary,
+              imageUrl: SectionVisualCatalog.horoscopeFor(name),
+              highlighted: isMine,
+              onTap: () => showHomeHoroscopeDailySheet(
+                context,
+                ref,
+                signName: name,
                 glyph: glyph,
-                primary: primary,
-                secondary: secondary,
-                onTap: () => context.push('/fortune/yildiz-haritasi'),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ],
     );
@@ -63,14 +97,18 @@ class _SignChip extends StatelessWidget {
     required this.glyph,
     required this.primary,
     required this.secondary,
+    required this.imageUrl,
     required this.onTap,
+    this.highlighted = false,
   });
 
   final String name;
   final String glyph;
   final Color primary;
   final Color secondary;
+  final String imageUrl;
   final VoidCallback onTap;
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
@@ -80,51 +118,75 @@ class _SignChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
         child: SizedBox(
-          width: 76,
+          width: 80,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 56,
-                height: 56,
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [primary, secondary],
-                  ),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.12),
+                    color: highlighted
+                        ? HomePremiumDesign.accent
+                        : primary.withValues(alpha: 0.55),
+                    width: highlighted ? 2 : 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: primary.withValues(alpha: 0.35),
-                      blurRadius: 10,
+                      color: (highlighted ? HomePremiumDesign.accent : primary)
+                          .withValues(alpha: highlighted ? 0.45 : 0.35),
+                      blurRadius: highlighted ? 14 : 10,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                alignment: Alignment.center,
-                child: Text(
-                  glyph,
-                  style: const TextStyle(
-                    fontSize: 26,
-                    height: 1,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CanlifalNetworkImage(url: imageUrl, fit: BoxFit.cover),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            primary.withValues(alpha: 0.55),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: Text(
+                        glyph,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          height: 1,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          shadows: [
+                            Shadow(color: Colors.black54, blurRadius: 6),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 6),
               Text(
-                name,
+                highlighted ? '$name · Sen' : name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: HomeApprovedDesign.textSecondary,
+                  color: highlighted
+                      ? HomePremiumDesign.accent
+                      : HomeApprovedDesign.textSecondary,
                 ),
               ),
             ],

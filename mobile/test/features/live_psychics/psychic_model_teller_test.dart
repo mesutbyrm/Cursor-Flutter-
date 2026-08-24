@@ -19,6 +19,22 @@ void main() {
     expect(entity.applicationStatus, 'approved');
     expect(entity.isApproved, isTrue);
     expect(entity.isUsable, isTrue);
+    expect(entity.pricePerMinute, 100);
+    expect(entity.isOnline, isTrue);
+  });
+
+  test('parses optional liveStreamId when API provides it', () {
+    final entity = PsychicModel.psychicFromJson({
+      'id': 'teller_1',
+      'displayName': 'Yayında Falcı',
+      'isOnline': true,
+      'liveStreamId': 'stream_abc',
+      'pricePerMinute': 80,
+    });
+
+    expect(entity.liveStreamId, 'stream_abc');
+    expect(entity.hasLiveBroadcast, isTrue);
+    expect(entity.pricePerMinute, 80);
   });
 
   test('my-profile nested fortuneTeller key', () {
@@ -48,5 +64,75 @@ void main() {
 
     expect(entity.applicationStatus, 'approved');
     expect(entity.isUsable, isTrue);
+  });
+
+  test('sessionHistoryFromJson parses client and teller', () {
+    final entity = PsychicModel.sessionHistoryFromJson({
+      'id': 'sess_abc',
+      'fortuneType': 'tarot',
+      'status': 'completed',
+      'maxMinutes': 10,
+      'minutesUsed': 8,
+      'createdAt': '2025-06-17T12:00:00Z',
+      'user': {'name': 'Mehmet K.'},
+      'teller': {'displayName': 'Ayşe'},
+    });
+
+    expect(entity.sessionId, 'sess_abc');
+    expect(entity.clientName, 'Mehmet K.');
+    expect(entity.tellerName, 'Ayşe');
+    expect(entity.maxMinutes, 10);
+    expect(entity.minutesUsed, 8);
+  });
+
+  test('respondSessionSuccess rejects empty body and accepts roomId', () {
+    expect(
+      PsychicModel.respondSessionSuccess({}, action: 'accept'),
+      isFalse,
+    );
+    expect(
+      PsychicModel.respondSessionSuccess(
+        {'roomId': 'room_1'},
+        action: 'accept',
+      ),
+      isTrue,
+    );
+    expect(
+      PsychicModel.respondSessionSuccess(
+        {'success': true},
+        action: 'reject',
+      ),
+      isTrue,
+    );
+    expect(
+      PsychicModel.respondSessionSuccess(
+        {'status': 'rejected'},
+        action: 'reject',
+      ),
+      isTrue,
+    );
+    expect(
+      PsychicModel.respondSessionSuccess(
+        {'success': false, 'message': 'hata'},
+        action: 'accept',
+      ),
+      isFalse,
+    );
+  });
+
+  test('roomFromJson parses newMaxMinutes and remainingSeconds', () {
+    final room = PsychicModel.roomFromJson(
+      {
+        'id': 'sess_1',
+        'status': 'active',
+        'timerStarted': true,
+        'newMaxMinutes': 15,
+        'remainingSeconds': 600,
+      },
+      fallbackId: 'sess_1',
+    );
+
+    expect(room.maxMinutes, 15);
+    expect(room.remainingSeconds, 600);
   });
 }

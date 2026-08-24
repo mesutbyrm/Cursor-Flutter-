@@ -1,6 +1,6 @@
 import '../../../../core/util/json_util.dart';
 
-/// `GET /api/payment/config` — CFC yükleme kanalları.
+/// `GET /api/payments/config` — CFC yükleme kanalları.
 class PaymentConfigEntity {
   const PaymentConfigEntity({
     required this.whatsappNumber,

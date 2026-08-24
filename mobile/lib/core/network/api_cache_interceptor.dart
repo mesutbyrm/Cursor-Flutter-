@@ -75,11 +75,14 @@ class ApiCacheInterceptor extends Interceptor {
   ) async {
     final key = err.requestOptions.extra['_apiCacheKey'] as String?;
     if (key != null) {
-      final stale = await ApiHttpCache.readStale(key);
-      if (stale != null) {
-        final response = ApiHttpCache.toResponse(stale, err.requestOptions);
-        ApiHttpCache.completeInflight(key, response);
-        return handler.resolve(response);
+      final path = ApiCachePolicy.normalizedPath(err.requestOptions.path);
+      if (ApiCachePolicy.allowsStaleFallback(path)) {
+        final stale = await ApiHttpCache.readStale(key);
+        if (stale != null) {
+          final response = ApiHttpCache.toResponse(stale, err.requestOptions);
+          ApiHttpCache.completeInflight(key, response);
+          return handler.resolve(response);
+        }
       }
       ApiHttpCache.failInflight(key, err);
     }

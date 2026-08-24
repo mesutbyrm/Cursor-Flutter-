@@ -1,32 +1,31 @@
+import 'package:canlifal_social/features/voice_hub/presentation/utils/voice_sse_dj_payload.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:canlifal_social/features/voice_hub/presentation/utils/voice_sse_dj_payload.dart';
-
 void main() {
-  group('unwrapVoiceSseDjPayload', () {
-    test('flattens nested data map', () {
-      final flat = unwrapVoiceSseDjPayload({
-        'type': 'dj',
-        'data': {
-          'playing': true,
-          'musicUrl': 'https://example.com/stream',
-          'nowPlaying': {'videoId': 'abc', 'title': 'Test'},
-        },
-      });
-      expect(flat['playing'], isTrue);
-      expect(flat['musicUrl'], 'https://example.com/stream');
-      expect(flat['nowPlaying'], isA<Map>());
+  test('normalizeSongSseForDjPlayback maps song_started to playing dj payload', () {
+    final normalized = normalizeSongSseForDjPlayback({
+      'type': 'song_started',
+      'currentSong': {
+        'videoId': 'abc123',
+        'title': 'Test',
+        'musicUrl': 'https://example.com/stream',
+        'withVideo': true,
+      },
     });
+    expect(normalized['playing'], isTrue);
+    expect(normalized['nowPlaying'], isA<Map>());
+    expect(normalized['musicUrl'], 'https://example.com/stream');
+    expect(normalized['videoId'], 'abc123');
+  });
 
-    test('voiceSseDjIsPlaying accepts isPlaying', () {
-      expect(voiceSseDjIsPlaying({'isPlaying': true}), isTrue);
-      expect(voiceSseDjIsPlaying({'playing': false}), isFalse);
-    });
-
-    test('voiceSseTrackStartedAtMs parses ISO', () {
-      final ms = voiceSseTrackStartedAtMs('2025-06-25T12:00:00.000Z');
-      expect(ms, isNotNull);
-      expect(ms!, greaterThan(0));
-    });
+  test('shouldApplyDjPlaybackFromSongSse includes song_started', () {
+    expect(
+      shouldApplyDjPlaybackFromSongSse({'type': 'song_started'}),
+      isTrue,
+    );
+    expect(
+      shouldApplyDjPlaybackFromSongSse({'type': 'message'}),
+      isFalse,
+    );
   });
 }

@@ -1,21 +1,32 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/pk_event_log.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../live/domain/pk/pk_session_phase.dart';
+import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
+import '../../../live/presentation/providers/live_providers.dart';
+import '../../../live/presentation/providers/pk_session_phase_provider.dart';
 import '../../data/datasources/pk_battle_remote_datasource.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_duration_options.dart';
+import '../../domain/pk/pk_opponent_room_filter.dart';
 import 'pk_battle_provider.dart';
+import 'voice_room_session_registry.dart';
 
 final pkBattleRemoteDataSourceProvider = Provider<PkBattleRemoteDataSource>((ref) {
   return PkBattleRemoteDataSource(ref.watch(dioProvider));
 });
 
-/// Sunucu PK senkronu — REST; canlı güncellemeler oda SSE üzerinden gelir.
+/// Sunucu PK senkronu — REST + SSE; odadayken SSE birincil.
 class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   PkBattleRemoteDataSource get _api => ref.read(pkBattleRemoteDataSourceProvider);
 
   @override
-  PkBattleRemote? build() => null;
+  PkBattleRemote? build() {
+    return null;
+  }
 
   Future<PkBattleRemote?> loadRoomBattle(String roomId, {String? alternateRoomId}) async {
     final battle = await _api.fetchRoomBattle(
@@ -71,6 +82,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     required String roomId,
     String? alternateRoomId,
     required String guestUserId,
+    String? opponentRoomId,
     int durationSeconds = 180,
   }) async {
     final stale = state;
@@ -80,9 +92,16 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
       roomId: roomId,
       alternateRoomId: alternateRoomId,
       guestUserId: guestUserId,
+      opponentRoomId: opponentRoomId,
       durationSeconds: durationSeconds,
     );
-    if (battle != null) _apply(battle, 'pk:invite');
+    if (battle != null) {
+      PkEventLog.requestSuccess(battleId: battle.id);
+      _apply(battle, 'pk:invite');
+      if (battle.isPending) {
+        ref.read(livePkInviteSignalProvider.notifier).bump();
+      }
+    }
     return battle;
   }
 
@@ -108,6 +127,8 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     String? alternateRoomId,
     String? streamId,
   }) async {
+    PkEventLog.acceptStart(inviteId: battleId);
+    ref.read(pkSessionPhaseProvider.notifier).transitionTo(PkSessionPhase.accepting);
     final PkBattleRemote? battle;
     if (roomId != null && roomId.trim().isNotEmpty) {
       battle = await _api.acceptBattle(
@@ -124,7 +145,10 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     } else {
       return null;
     }
-    if (battle != null) _apply(battle, 'pk:accept');
+    if (battle != null) {
+      PkEventLog.acceptSuccess(battleId: battle.id);
+      _apply(battle, 'pk:accept');
+    }
     return battle;
   }
 
@@ -134,6 +158,8 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     String? alternateRoomId,
     String? streamId,
   }) async {
+    PkEventLog.reject(inviteId: battleId);
+    ref.read(pkSessionPhaseProvider.notifier).transitionTo(PkSessionPhase.rejecting);
     final PkBattleRemote? battle;
     if (roomId != null && roomId.trim().isNotEmpty) {
       battle = await _api.rejectBattle(
@@ -150,7 +176,9 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     } else {
       return null;
     }
-    if (battle != null) _apply(battle, 'pk:reject');
+    if (battle != null) {
+      _apply(battle, 'pk:reject');
+    }
     return battle;
   }
 
@@ -160,6 +188,8 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     String? alternateRoomId,
     String? streamId,
   }) async {
+    PkEventLog.ending(battleId: battleId);
+    ref.read(pkSessionPhaseProvider.notifier).transitionTo(PkSessionPhase.ending);
     final PkBattleRemote? battle;
     if (roomId != null && roomId.trim().isNotEmpty) {
       battle = await _api.endBattle(
@@ -176,39 +206,116 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     } else {
       return null;
     }
-    if (battle != null) _apply(battle, 'pk:end');
+    if (battle != null) {
+      PkEventLog.ended(battleId: battleId);
+      _apply(battle, 'pk:end');
+    }
     return battle;
   }
 
-  /// Eski çağrılar uyumluluk için korunur — PK artık oda SSE üzerinden gelir.
-  void connectSocket({
-    String? roomId,
-    String? alternateRoomId,
-    String? streamId,
-    String? battleId,
-  }) {}
-
-  /// Eski çağrılar uyumluluk için korunur — ayrı socket bağlantısı yok.
-  void disconnectSocket() {}
-
-  /// Oda SSE üzerinden gelen PK güncellemesi — socket bağlantısı gerekmez.
+  /// Oda SSE üzerinden gelen PK güncellemesi.
   void ingestSseBattle(PkBattleRemote battle) {
-    state = battle;
+    if (!_shouldIngestBattle(battle)) return;
+    _apply(battle, 'sse:pk');
+    if (battle.isPending) {
+      ref.read(livePkInviteSignalProvider.notifier).bump();
+    }
+  }
+
+  /// Yabancı oda PK olaylarını global state'e yazma; davet hedefi istisnası.
+  bool _shouldIngestBattle(PkBattleRemote battle) {
+    final user = ref.read(authControllerProvider).valueOrNull;
+
+    final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+    if (activeKey.isNotEmpty) {
+      final room = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
+      if (room != null) {
+        if (pkBattleBelongsToRoom(battle, room)) return true;
+        if (battle.isPending &&
+            user != null &&
+            isPkInviteTarget(battle, room, userId: user.id)) {
+          return true;
+        }
+      }
+    }
+
+    if (battle.isPending && user != null) {
+      for (final room in ref.read(myOwnedVoiceRoomsProvider)) {
+        if (isPkInviteTarget(battle, room, userId: user.id)) return true;
+        if (pkBattleBelongsToRoom(battle, room)) return true;
+      }
+    }
+
+    if (activeKey.isEmpty) return true;
+    if (!battle.isPending) return false;
+    return false;
   }
 
   void _apply(PkBattleRemote battle, String event) {
     state = battle;
+    _syncPhase(battle, event);
+    if (battle.isActive || battle.isEnded) {
+      _syncPkBattleState(battle);
+    }
+  }
+
+  void _syncPkBattleState(PkBattleRemote battle) {
+    final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+    if (activeKey.isNotEmpty) {
+      final room = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
+      if (room != null) {
+        if (!pkBattleBelongsToRoom(battle, room)) return;
+        ref
+            .read(pkBattleProvider.notifier)
+            .applyRemoteBattleForVoiceRoom(battle, room);
+        return;
+      }
+    }
     ref.read(pkBattleProvider.notifier).applyRemoteBattle(battle);
+  }
+
+  void _syncPhase(PkBattleRemote battle, String event) {
+    final phase = ref.read(pkSessionPhaseProvider.notifier);
+    if (battle.isEnded) {
+      if (battle.status == 'rejected') {
+        phase.transitionTo(PkSessionPhase.rejected);
+      } else {
+        phase.transitionTo(PkSessionPhase.ended);
+      }
+      return;
+    }
+    if (battle.isActive) {
+      phase.transitionTo(PkSessionPhase.connecting);
+      phase.transitionTo(PkSessionPhase.active);
+      return;
+    }
+    if (battle.isPending) {
+      if (event.contains('invite')) {
+        phase.transitionTo(PkSessionPhase.requesting);
+      } else {
+        phase.transitionTo(PkSessionPhase.incoming);
+      }
+    }
   }
 
   void clear() {
     state = null;
+    ref.read(pkSessionPhaseProvider.notifier).reset();
   }
 }
 
 final pkBattleRemoteProvider =
     NotifierProvider<PkBattleRemoteController, PkBattleRemote?>(
   PkBattleRemoteController.new,
+);
+
+/// Oda bağlamında görünen PK — global state yanlış oda ile karışmasın.
+final pkBattleForRoomProvider = Provider.family<PkBattleRemote?, VoiceRoomEntity>(
+  (ref, room) {
+    final battle = ref.watch(pkBattleRemoteProvider);
+    if (battle == null || battle.isEnded) return null;
+    return pkBattleBelongsToRoom(battle, room) ? battle : null;
+  },
 );
 
 /// PK geçmişi listesi.

@@ -126,7 +126,16 @@ class ShortsRemoteDataSource {
           ]) ??
           '')
           .toString(),
-      thumbnailUrl: pick(json, ['thumbnailUrl', 'thumbnail_url'])?.toString(),
+      thumbnailUrl: pick(json, [
+        'thumbnailUrl',
+        'thumbnail_url',
+        'coverUrl',
+        'cover_url',
+        'imageUrl',
+        'image',
+        'thumbUrl',
+        'posterUrl',
+      ])?.toString(),
       description: pick(json, ['description', 'caption'])?.toString(),
       viewsCount: asInt(pick(json, ['viewsCount', 'views_count'])),
       likesCount: asInt(pick(json, ['likesCount', 'likes_count'])),
@@ -247,20 +256,70 @@ class ShortsRemoteDataSource {
     double? lng,
     String? source,
   }) async {
-    final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.shortVideosExplore,
-      query: {
-        'limit': limit,
-        if (query != null && query.trim().isNotEmpty) 'q': query.trim(),
-        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
-        if (section != null && section.isNotEmpty) 'section': section,
-        if (location != null && location.isNotEmpty) 'location': location,
-        if (lat != null) 'lat': lat,
-        if (lng != null) 'lng': lng,
-        if (source != null && source.isNotEmpty) 'source': source,
-      },
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.shortVideosExplore,
+        query: {
+          'limit': limit,
+          if (query != null && query.trim().isNotEmpty) 'q': query.trim(),
+          if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+          if (section != null && section.isNotEmpty) 'section': section,
+          if (location != null && location.isNotEmpty) 'location': location,
+          if (lat != null) 'lat': lat,
+          if (lng != null) 'lng': lng,
+          if (source != null && source.isNotEmpty) 'source': source,
+        },
+      );
+      return _explorePageFromResponse(_unwrap(res.data));
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      return _exploreFallbackFromFeed(query: query, limit: limit);
+    }
+  }
+
+  Future<ShortExplorePage> _exploreFallbackFromFeed({
+    String? query,
+    int limit = 24,
+  }) async {
+    final feed = await fetchFeed(limit: limit);
+    var videos = feed.videos;
+    if (query != null && query.trim().isNotEmpty) {
+      final q = query.trim().toLowerCase();
+      videos = videos
+          .where(
+            (v) =>
+                (v.description ?? '').toLowerCase().contains(q) ||
+                v.hashtags.any((h) => h.toLowerCase().contains(q)),
+          )
+          .toList();
+    }
+    final tags = _hashtagsFromVideos(videos);
+    return ShortExplorePage(
+      videos: videos,
+      trendingHashtags: tags,
+      forYouVideos: videos,
+      hasMore: feed.hasMore,
+      nextCursor: feed.nextCursor,
     );
-    return _explorePageFromResponse(_unwrap(res.data));
+  }
+
+  List<ShortHashtagEntity> _hashtagsFromVideos(List<ShortVideoEntity> videos) {
+    final counts = <String, int>{};
+    for (final v in videos) {
+      for (final tag in v.hashtags) {
+        final name = tag.replaceAll('#', '').trim();
+        if (name.isEmpty) continue;
+        counts[name] = (counts[name] ?? 0) + 1;
+      }
+    }
+    final sorted = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return sorted
+        .take(12)
+        .map(
+          (e) => ShortHashtagEntity(name: e.key, videosCount: e.value),
+        )
+        .toList();
   }
 
   Future<ShortExplorePage> fetchExploreHub({
@@ -628,13 +687,43 @@ class ShortsRemoteDataSource {
     );
     final m = _unwrap(res.data);
     if (m == null) return const ShortProfileStats();
+    // Üretim yanıtı bazen `stats` / `profile` altında gelir.
+    final nested = pick(m, ['stats', 'profile', 'summary', 'counts']);
+    final src = nested is Map
+        ? <String, dynamic>{...m, ...asJsonMap(nested)}
+        : m;
     return ShortProfileStats(
-      videosCount: asInt(pick(m, ['videosCount', 'videoCount'])),
-      totalLikes: asInt(pick(m, ['totalLikes', 'likesCount'])),
-      totalViews: asInt(pick(m, ['totalViews', 'viewsCount', 'total_views'])),
-      followersCount: asInt(pick(m, ['followersCount', 'followerCount'])),
-      followingCount: asInt(pick(m, ['followingCount'])),
-      isFollowing: asBool(pick(m, ['isFollowing', 'following'])),
+      videosCount: asInt(pick(src, [
+        'videosCount',
+        'videoCount',
+        'postCount',
+        'postsCount',
+        'shortVideosCount',
+      ])),
+      totalLikes: asInt(pick(src, [
+        'totalLikes',
+        'likesCount',
+        'likes',
+        'likeCount',
+      ])),
+      totalViews: asInt(pick(src, [
+        'totalViews',
+        'viewsCount',
+        'total_views',
+        'views',
+        'viewCount',
+      ])),
+      followersCount: asInt(pick(src, [
+        'followersCount',
+        'followerCount',
+        'followers',
+      ])),
+      followingCount: asInt(pick(src, [
+        'followingCount',
+        'following',
+        'followingsCount',
+      ])),
+      isFollowing: asBool(pick(src, ['isFollowing', 'followedByMe'])),
     );
   }
 
@@ -656,30 +745,45 @@ class ShortsRemoteDataSource {
   }
 
   Future<List<ShortHashtagEntity>> searchHashtags(String query) async {
-    final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.shortVideosHashtagsSearch,
-      query: {'q': query.trim()},
-    );
-    final m = _unwrap(res.data);
-    final raw = m?['hashtags'] ?? m?['items'];
-    if (raw is! List) return const [];
-    return asJsonList(raw)
-        .map((j) => _hashtagFrom(asJsonMap(j)))
-        .where((h) => h.name.isNotEmpty)
-        .toList();
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.shortVideosHashtagsSearch,
+        query: {'q': query.trim()},
+      );
+      final m = _unwrap(res.data);
+      final raw = m?['hashtags'] ?? m?['items'];
+      if (raw is! List) return const [];
+      return asJsonList(raw)
+          .map((j) => _hashtagFrom(asJsonMap(j)))
+          .where((h) => h.name.isNotEmpty)
+          .toList();
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      final feed = await fetchFeed(limit: 40);
+      final q = query.trim().toLowerCase();
+      return _hashtagsFromVideos(feed.videos)
+          .where((h) => h.name.toLowerCase().contains(q))
+          .toList();
+    }
   }
 
   Future<List<ShortHashtagEntity>> fetchTrendingHashtags() async {
-    final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.shortVideosHashtagsTrending,
-    );
-    final m = _unwrap(res.data);
-    final raw = m?['hashtags'] ?? m?['items'];
-    if (raw is! List) return const [];
-    return asJsonList(raw)
-        .map((j) => _hashtagFrom(asJsonMap(j)))
-        .where((h) => h.name.isNotEmpty)
-        .toList();
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.shortVideosHashtagsTrending,
+      );
+      final m = _unwrap(res.data);
+      final raw = m?['hashtags'] ?? m?['items'];
+      if (raw is! List) return const [];
+      return asJsonList(raw)
+          .map((j) => _hashtagFrom(asJsonMap(j)))
+          .where((h) => h.name.isNotEmpty)
+          .toList();
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      final feed = await fetchFeed(limit: 40);
+      return _hashtagsFromVideos(feed.videos);
+    }
   }
 
   Future<List<ShortMusicEntity>> searchMusic(String query) async {
@@ -698,13 +802,51 @@ class ShortsRemoteDataSource {
         .toList();
   }
 
-  Future<List<ShortVideoEntity>> fetchHashtagVideos(String name) async {
-    final encoded = Uri.encodeComponent(name.replaceAll('#', ''));
-    final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.shortVideosHashtag(encoded),
-    );
-    final m = _unwrap(res.data);
-    return _videosFrom(m?['videos']);
+  Future<List<ShortVideoEntity>> fetchHashtagVideos(
+    String name, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final tag = name.replaceAll('#', '').trim();
+    try {
+      final encoded = Uri.encodeComponent(tag);
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.shortVideosHashtag(encoded),
+        query: {'page': page, 'limit': limit},
+      );
+      final m = _unwrap(res.data);
+      return _videosFrom(m?['videos'] ?? m?['items']);
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      final feed = await fetchFeed(limit: 50);
+      final lower = tag.toLowerCase();
+      return feed.videos
+          .where(
+            (v) => v.hashtags.any((h) => h.toLowerCase() == lower),
+          )
+          .toList();
+    }
+  }
+
+  Future<List<ShortVideoEntity>> fetchMusicVideos(
+    String musicId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final id = musicId.trim();
+    if (id.isEmpty) return const [];
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.shortVideosMusic,
+        query: {'musicId': id, 'page': page, 'limit': limit},
+      );
+      final m = _unwrap(res.data);
+      return _videosFrom(m?['videos'] ?? m?['items']);
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      final feed = await fetchFeed(limit: 50);
+      return feed.videos.where((v) => v.music?.id == id).toList();
+    }
   }
 
   Future<List<ShortVideoAuthor>> searchMentions(String query) async {

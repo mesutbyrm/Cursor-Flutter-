@@ -2,59 +2,77 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
 import 'package:share_plus/share_plus.dart';
+
 import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../utils/kick_strike_ui.dart';
 import '../widgets/voice_room_error_boundary.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/auth/staff_roles.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
-import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../domain/entities/chat_room_dj_state.dart';
+import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../../domain/entities/voice_room_realtime_event.dart';
 import '../../domain/voice_official_join.dart';
-import '../../../gifts/domain/session_gift_summary_builder.dart';
-import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
-import '../../../gifts/domain/gift_revenue_display.dart';
-import '../../../gifts/domain/premium_gift_catalog_2026.dart';
-import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
-import '../providers/voice_gift_combo_tracker.dart';
-import '../providers/voice_gift_leaderboard_provider.dart';
-import '../../domain/pk/pk_opponent_room_filter.dart';
+import '../../../gifts/presentation/sync/gift_event_listener.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_gift_providers.dart';
 import '../audio/voice_room_audio_coordinator.dart';
+import '../audio/voice_trtc_engine.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_audio_providers.dart';
+import '../utils/voice_room_key_resolver.dart';
+import '../providers/voice_session_phase_provider.dart';
+import '../../domain/voice/voice_session_phase.dart';
 import '../providers/voice_room_ui_provider.dart';
-import '../../domain/entities/voice_room_realtime_event.dart';
+import '../sheets/voice_room_commands_panel.dart';
 import '../utils/voice_room_permissions.dart';
+import '../utils/voice_room_error_display.dart';
 import '../utils/voice_room_speak_access.dart';
+import '../utils/voice_room_session_exit.dart';
+import '../utils/voice_room_leave_flow.dart';
 import '../theme/voice_room_tokens.dart';
-import '../widgets/premium/voice_gift_flight_overlay.dart';
+import '../../../gifts/presentation/engine/gift_engine_overlay.dart';
+import '../../../gifts/presentation/sync/gift_session_controller.dart';
+import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
+import '../widgets/premium/voice_gift_stage_overlays.dart';
 import '../widgets/premium_2026/voice_cosmic_background.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
+import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
+import '../../../cosmetics/presentation/widgets/cosmetic_entrance_overlay.dart';
+import '../../../vip_gold/presentation/providers/user_room_profile_provider.dart';
 import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'voice_room_basic_moderation_section.dart';
-import '../sheets/voice_room_menu_sheet.dart';
 import 'voice_room_basic_premium_section.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
+import '../sheets/music_mode_picker_sheet.dart';
+import '../utils/voice_music_access.dart';
+import '../utils/voice_music_submit.dart';
+import '../sheets/voice_youtube_song_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
+import '../../music/presentation/providers/room_music_providers.dart';
+import '../../music/presentation/widgets/room_song_mini_player.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../sheets/voice_room_management_panel.dart';
 import '../widgets/premium_2026/voice_live_action_bar_2026.dart';
 import '../widgets/premium_2026/voice_live_header_2026.dart';
 import '../widgets/premium_2026/voice_online_gift_box.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
-import '../widgets/voice_room/voice_room_now_playing_bar.dart';
+import '../widgets/voice_room/voice_room_center_music_panel.dart';
+import '../widgets/voice_room/voice_room_music_background_layer.dart';
+import '../widgets/voice_room/voice_room_video_close_bar.dart';
+import '../widgets/voice_room/voice_room_music_queue_mini_card.dart';
+import '../widgets/voice_room/voice_room_side_action_rail.dart';
 import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../../gifts/presentation/widgets/first_gifter_badge.dart';
 import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
-import '../../../gifts/presentation/widgets/gift_live_feed_strip.dart';
 
 /// Aşama 1 — oda listesi, giriş/çıkış, mikrofon, hoparlör, katılımcılar, oda sahibi.
 class VoiceRoomBasicPage extends ConsumerStatefulWidget {
@@ -75,13 +93,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   String? _loginError;
   var _isMicMuted = true;
   var _leaving = false;
+  var _leaveSessionStarted = false;
+  var _forcedExitHandled = false;
   final _messageCtrl = TextEditingController();
-  StreamSubscription<LiveGiftEvent>? _giftSub;
-  LiveGiftEvent? _fullscreenGift;
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
-  String? _shownPkInviteId;
-
   String get _liveRoomKey {
     final pinned = _pinnedLiveRoomKey?.trim();
     if (pinned != null && pinned.isNotEmpty) return pinned;
@@ -94,6 +110,12 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final w = widget.room;
     final rooms = ref.read(voiceRoomsProvider).valueOrNull;
     if (rooms == null) return w;
+    final resolved = VoiceRoomKeyResolver.resolveFromKnownRooms(w.liveKey, rooms);
+    if (resolved != null) {
+      for (final r in rooms) {
+        if (r.id == resolved) return r;
+      }
+    }
     for (final r in rooms) {
       if (r.id == w.id || r.apiRoomKey == w.apiRoomKey) return r;
     }
@@ -110,6 +132,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       if (widget.room.apiRoomKey.isEmpty) {
         unawaited(ref.read(voiceRoomsProvider.future));
       }
+      ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).ensureActiveSession();
       _startPremiumRealtime(ref.read(authControllerProvider).valueOrNull);
       unawaited(_joinAudioBackground());
     });
@@ -118,18 +141,28 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   @override
   void dispose() {
     _messageCtrl.dispose();
-    _giftSub?.cancel();
     ref.read(voiceRoomGiftRealtimeProvider).stop();
+    ref.read(pkBattleRemoteProvider.notifier).clear();
+    final liveKey = _pinnedLiveRoomKey;
+    if (!_leaveSessionStarted &&
+        liveKey != null &&
+        liveKey.isNotEmpty) {
+      unawaited(
+        ref
+            .read(voiceRoomLiveProvider(liveKey).notifier)
+            .leaveRoomSession(
+              source: 'basic_dispose',
+              awaitBackend: true,
+              force: true,
+            )
+            .timeout(const Duration(seconds: 6))
+            .catchError((_) {}),
+      );
+    }
     final audio = _audio;
     _audio = null;
     if (audio != null) {
-      unawaited(
-        audio.leave().whenComplete(() {
-          try {
-            audio.dispose();
-          } catch (_) {}
-        }),
-      );
+      unawaited(audio.leave());
     }
     super.dispose();
   }
@@ -151,6 +184,29 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     _startGiftRealtime();
     _maybeShowVipEntrance(user);
     unawaited(connectVoiceRoomBasicPkBattle(ref, _effectiveRoom()));
+  }
+
+  void _wireAudioReconnectCallbacks() {
+    final audio = _audio;
+    if (audio == null) return;
+    audio.onReconnecting = () {
+      if (!mounted || _leaving) return;
+      ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
+            VoiceSessionPhase.reconnecting,
+          );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ses bağlantısı koptu — yeniden bağlanılıyor…'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    };
+    audio.onReconnected = () {
+      if (!mounted || _leaving) return;
+      ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
+            VoiceSessionPhase.connected,
+          );
+    };
   }
 
   Future<void> _joinAudioBackground() async {
@@ -195,14 +251,34 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
     try {
       final roomId = room.apiRoomKey;
+      if (!ref.read(voiceRoomLiveProvider(_liveRoomKey)).backendSyncReady) {
+        final deadline = DateTime.now().add(const Duration(milliseconds: 1500));
+        while (DateTime.now().isBefore(deadline)) {
+          await Future<void>.delayed(const Duration(milliseconds: 200));
+          if (!mounted) return;
+          if (ref.read(voiceRoomLiveProvider(_liveRoomKey)).backendSyncReady) {
+            break;
+          }
+        }
+      }
+      final sync = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+      final staffBypass = StaffRoles.isSiteAdminUser(
+        role: user.role,
+        username: user.username,
+      );
+      _audio!.setStaffBypassVoiceApi(staffBypass);
       await _audio!.join(
         roomId: roomId,
         remote: ref.read(chatRoomRemoteProvider),
         enableMic: false,
+        staffBypassVoiceApi: staffBypass,
+        userId: user.id,
+        backendTrtc: sync.roomTrtc,
       );
       if (!mounted) return;
       unawaited(VoiceRoomMusicAudioSession.activateForPlayback());
       _audio!.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
+      _wireAudioReconnectCallbacks();
       setState(() {
         _audioJoining = false;
         _audioReady = true;
@@ -219,7 +295,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     }
   }
 
-  void _toggleMic() {
+  Future<void> _toggleMic() async {
     if (_audio == null || !_audioReady) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Ses bağlantısı hazır değil')),
@@ -228,6 +304,18 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     }
     final muted = !_isMicMuted;
     if (!muted) {
+      final micOk = await VoiceTrtcEngine.requestMicrophonePermission();
+      if (!micOk) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Mikrofon izni gerekli. Ayarlardan mikrofonu açıp tekrar deneyin.',
+            ),
+          ),
+        );
+        return;
+      }
       final user = ref.read(authControllerProvider).valueOrNull;
       final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
       final room = _effectiveRoom();
@@ -250,16 +338,22 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         room: room,
         presence: live.presence,
       )) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Konuşmak için koltuğa oturmalısınız'),
-          ),
-        );
-        return;
+        final notifier = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+        final seated = await notifier.ensureSelfOnSeatForMic();
+        if (!mounted) return;
+        if (!seated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Konuşmak için boş bir koltuğa oturmalısınız'),
+            ),
+          );
+          return;
+        }
+        await notifier.refresh();
       }
     }
     try {
-      _audio!.setMicEnabled(!muted);
+      await _audio!.setMicEnabled(!muted);
       if (mounted) setState(() => _isMicMuted = muted);
     } catch (e) {
       if (!mounted) return;
@@ -267,6 +361,44 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         SnackBar(content: Text(ApiException.userMessage(e))),
       );
     }
+  }
+
+  Future<void> _maybeAutoOpenMic() async {
+    if (_audio == null || !_audioReady || !_isMicMuted) return;
+    if (!ref.read(voiceRoomUiProvider).autoOpenMic) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+    final room = _effectiveRoom();
+    ChatRoomPresence? selfPresence;
+    for (final p in live.presence) {
+      if (p.id == user?.id) {
+        selfPresence = p;
+        break;
+      }
+    }
+    final perms = VoiceRoomPermissions.forUser(
+      user: user,
+      room: room,
+      selfPresence: selfPresence,
+      server: live.serverPermissions,
+      staffSiteAdmin: ref.read(staffAccessProvider).isFounder,
+      walletRole: ref.read(staffAccessProvider).siteRole ??
+          ref.read(walletBalancesProvider).valueOrNull?.role,
+    );
+    if (!VoiceRoomSpeakAccess.canSpeak(
+      user: user,
+      perms: perms,
+      room: room,
+      presence: live.presence,
+    )) {
+      return;
+    }
+    final micOk = await VoiceTrtcEngine.requestMicrophonePermission();
+    if (!micOk || !mounted) return;
+    try {
+      await _audio!.setMicEnabled(true);
+      if (mounted) setState(() => _isMicMuted = false);
+    } catch (_) {}
   }
 
   void _onChatChanged(String text) {
@@ -277,7 +409,13 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
   void _toggleSpeaker() {
     ref.read(voiceRoomUiProvider.notifier).toggleHeadphones();
-    _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
+    final on = ref.read(voiceRoomUiProvider).headphonesOn;
+    _audio?.setHeadphonesOn(on);
+    unawaited(
+      ref
+          .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+          .applyAudioOutputGate(speakerOn: on),
+    );
     if (mounted) setState(() {});
   }
 
@@ -285,65 +423,14 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final room = _effectiveRoom();
     final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
     if (key.isEmpty) return;
-    final service = ref.read(voiceRoomGiftRealtimeProvider);
-    service.start(key);
-    _giftSub?.cancel();
-    _giftSub = service.events.listen(_onGiftEvent);
-  }
-
-  void _onGiftEvent(LiveGiftEvent raw) {
-    if (!mounted) return;
-    final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
-    ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
-    ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).announceGift(event);
-
-    final ui = ref.read(voiceRoomUiProvider);
-    if (!ui.giftAnimationsEnabled) return;
-
-    ref.read(voiceGiftFlightQueueProvider.notifier).enqueue(event);
-
-    final room = _effectiveRoom();
-    final user = ref.read(authControllerProvider).valueOrNull;
-    final myId = user?.id.trim() ?? '';
-    final ownerId = room.ownerId?.trim() ?? '';
-    if (myId.isNotEmpty && ownerId.isNotEmpty && myId == ownerId) {
-      final receiverIsOwner = event.receiverName.trim().toLowerCase() ==
-          (room.ownerName ?? '').trim().toLowerCase();
-      final ownerNet = GiftRevenueDisplay.voiceOwnerDisplayNet(
-        gross: event.coinCost * event.quantity,
-        receiverIsOwner: receiverIsOwner,
-      );
-      if (ownerNet > 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${event.senderName} → ${event.receiverName}: +$ownerNet jeton (oda payı)',
-            ),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-
-    final showFullscreen = PremiumGiftCatalog2026.triggersFullscreen(
-      giftId: event.giftId,
-      coinCost: event.coinCost,
-    );
-    if (showFullscreen) {
-      if (mounted) setState(() => _fullscreenGift = event);
-      final duration = PremiumGiftCatalog2026.rarity(event.giftId).fullscreenDuration;
-      Future.delayed(duration, () {
-        if (mounted && _fullscreenGift?.id == event.id) {
-          setState(() => _fullscreenGift = null);
-        }
-      });
-    }
+    ref.read(voiceRoomGiftRealtimeProvider).start(key);
   }
 
   void _maybeShowVipEntrance(UserEntity user) {
     if (_vipEntrancePlayed || !mounted) return;
+    final cosmetic = ref.read(resolvedEntranceEffectProvider);
     final tier = ref.read(vipTierProvider);
-    if (!tier.hasEntranceFx) return;
+    if (cosmetic == null && !tier.hasEntranceFx) return;
     _vipEntrancePlayed = true;
     if (mounted) setState(() => _showVipEntrance = true);
   }
@@ -376,71 +463,35 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   Future<void> _leaveRoom() async {
     if (_leaving) return;
     _leaving = true;
-
-    ref.read(pkBattleRemoteProvider.notifier).clear();
-    ref.read(voiceRoomGiftRealtimeProvider).stop();
-    _giftSub?.cancel();
-    _giftSub = null;
-
-    final liveCtrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
-    final audio = _audio;
-    _audio = null;
-
+    _leaveSessionStarted = true;
+    final liveKey = _liveRoomKey;
     final room = _effectiveRoom();
-    final user = ref.read(authControllerProvider).valueOrNull;
-    final summary = SessionGiftSummaryBuilder.forVoiceRoom(
-      ref: ref,
-      roomTitle: room.nameTr,
-      ownerUserId: room.ownerId,
-      ownerDisplayName: room.ownerName,
-      myUserId: user?.id,
-      myDisplayName: user?.display,
-    );
-    await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
-
-    unawaited(liveCtrl.leaveRoomSession(source: 'basic_leave'));
-    if (audio != null) {
-      unawaited(
-        audio.leave().whenComplete(() {
-          try {
-            audio.dispose();
-          } catch (_) {}
-        }),
+    try {
+      await VoiceRoomLeaveFlow.leaveWithSummary(
+        context: context,
+        ref: ref,
+        liveKey: liveKey,
+        room: room,
+        source: 'basic_leave',
+        prepareLeave: () async {
+          ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
+          _audio = null;
+        },
       );
+    } finally {
+      if (mounted) _leaving = false;
     }
+  }
 
-    if (!mounted) return;
-    if (summary.hasData) {
-      await showSessionGiftSummarySheet(context, summary: summary);
-    }
-    if (!mounted) return;
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go('/voice-rooms');
-    }
-    _leaving = false;
+  void _openMusicRequest(VoiceRoomEntity room) {
+    unawaited(showVoiceYoutubeSongSheet(context, ref, room: room));
   }
 
   Future<void> _confirmLeave() async {
-    final leave = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Odadan çık'),
-        content: const Text('Sesli sohbetten ayrılmak istiyor musunuz?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Kal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Çık'),
-          ),
-        ],
-      ),
-    );
-    if (leave == true && mounted) await _leaveRoom();
+    if (_leaving) return;
+    final ok = await VoiceRoomLeaveFlow.confirmLeave(context);
+    if (!ok || !mounted) return;
+    await _leaveRoom();
   }
 
   void _openManagementPanel(
@@ -457,26 +508,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       perms: perms,
       isOwner: isOwner,
       onUserTap: (u) => _openUser(u, room, perms),
-    );
-  }
-
-  void _openTools(
-    VoiceRoomEntity room,
-    VoiceRoomLiveState live,
-    VoiceRoomPermissions perms,
-    bool isOwner,
-    UserEntity? user,
-    bool canControlMusic,
-  ) {
-    showVoiceRoomMenuSheet(
-      context,
-      ref,
-      room: room,
-      live: live,
-      perms: perms,
-      isOwner: isOwner,
-      onUserTap: (p) => _openUser(p, room, perms),
-      onPkInvite: () => openVoiceRoomBasicPkInvite(context, room),
+      onPkInvite: () => openVoiceRoomBasicPkInvite(context, ref, room),
     );
   }
 
@@ -558,6 +590,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       room: room,
       selfPresence: self,
       server: live.serverPermissions,
+      staffSiteAdmin: ref.read(staffAccessProvider).isFounder,
+      walletRole: ref.read(staffAccessProvider).siteRole ??
+          ref.read(walletBalancesProvider).valueOrNull?.role,
     );
   }
 
@@ -565,15 +600,35 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   Widget build(BuildContext context) {
     final roomKey = _liveRoomKey.isNotEmpty ? _liveRoomKey : widget.room.id;
     ref.watch(voiceRoomForegroundLifecycleProvider(roomKey));
-    final live = ref.watch(voiceRoomLiveProvider(_liveRoomKey));
+    ref.watch(
+      voiceRoomLiveProvider(_liveRoomKey).select(_BasicLiveShell.fromState),
+    );
+    final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+    final roomErrorBanner =
+        VoiceRoomErrorDisplay.bannerMessage(live.error, live: live);
     final ui = ref.watch(voiceRoomUiProvider);
     final room = _effectiveRoom();
     final online = live.onlineCountFor(room);
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _permissions(user, live, room);
     final canControlMusic = _canControlMusic(live, room, user, perms);
+    final canCloseMusic = VoiceMusicAccess.canStopMusic(
+      user: user,
+      perms: perms,
+      nowPlaying: live.dj.nowPlaying,
+    );
+    final canSpeak = VoiceRoomSpeakAccess.canSpeak(
+      user: user,
+      perms: perms,
+      room: room,
+      presence: live.presence,
+    );
+    final speakPending = ui.requestSpeakPending;
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
-    final flightQueue = ref.watch(voiceGiftFlightQueueProvider);
+    final showMusicRequestFab = live.dj.musicEnabled;
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final sessionKey =
+        room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
     final jeton = ref.watch(
       walletBalancesProvider.select((a) => a.valueOrNull?.jeton ?? 0),
@@ -589,25 +644,22 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       }
     }
 
-    ref.listen(pkBattleRemoteProvider, (prev, next) {
-      if (next == null || !isOwner || !next.isPending) return;
-      final userId = ref.read(authControllerProvider).valueOrNull?.id;
-      final isTarget = isPkInviteTarget(next, room, userId: userId);
-      final inviteId = next.inviteId ?? next.id;
-      if (!isTarget || inviteId.isEmpty || _shownPkInviteId == inviteId) return;
-      _shownPkInviteId = inviteId;
-      unawaited(
-        showVoiceRoomBasicIncomingPkInvite(
-          context: context,
-          ref: ref,
-          room: room,
-          inviteId: inviteId,
-        ),
-      );
-    });
-
     ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
       if (!mounted) return;
+
+      final exitMsg = VoiceRoomSessionExit.detectExitMessage(prev: prev, next: next);
+      if (exitMsg != null && !_forcedExitHandled && !_leaving) {
+        _forcedExitHandled = true;
+        unawaited(
+          VoiceRoomSessionExit.handleForcedExit(
+            context: context,
+            ref: ref,
+            liveKey: _liveRoomKey,
+            message: exitMsg,
+          ),
+        );
+        return;
+      }
 
       final toast = next.moderationToast;
       if (toast != null && toast != prev?.moderationToast) {
@@ -635,20 +687,13 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         );
       }
 
-      if (next.realtimeEvents.length > (prev?.realtimeEvents.length ?? 0)) {
-        final latest = next.realtimeEvents.first;
-        if (latest.kind == VoiceRoomRealtimeKind.moderation &&
-            latest.message.toLowerCase().contains('yasaklandınız')) {
-          unawaited(_leaveRoom());
-        }
-      }
-
       final q = next.pendingMusicSearchQuery;
       if (q != null &&
           prev?.pendingMusicSearchQuery != q &&
           mounted) {
         final skipPayment = next.pendingMusicSearchSkipPayment;
         final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+        final dj = next.dj;
         ctrl.clearPendingMusicSearch();
         unawaited(
           showMusicSearchPickerSheet(
@@ -657,20 +702,32 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             query: q,
             onSelected: (hit) async {
               if (!mounted) return;
-              final messenger = ScaffoldMessenger.of(context);
-              final err = await ctrl.submitSelectedSong(
-                hit,
-                withVideo: false,
-                skipPayment: skipPayment,
+              final withVideo = await showMusicModePickerSheet(
+                context,
+                audioCost: VoiceMusicAccess.audioRequestCost(dj),
+                videoCost: VoiceMusicAccess.videoRequestCost(dj),
+                songTitle: hit.title,
               );
-              if (!mounted) return;
-              if (err != null) {
-                messenger.showSnackBar(SnackBar(content: Text(err)));
-              } else {
-                messenger.showSnackBar(
-                  SnackBar(content: Text('«${hit.title}» çalmaya başladı')),
-                );
-              }
+              if (!mounted || withVideo == null) return;
+              final messenger = ScaffoldMessenger.of(context);
+              final songTitle = hit.title;
+              deferVoiceMusicSubmit(
+                submit: () => ctrl.submitSelectedSong(
+                  hit,
+                  withVideo: withVideo,
+                  skipPayment: skipPayment,
+                ),
+                onComplete: (err) {
+                  if (!mounted) return;
+                  if (err != null) {
+                    showJetonAwareError(context, err, ref: ref);
+                  } else {
+                    messenger.showSnackBar(
+                      SnackBar(content: Text('«$songTitle» çalmaya başladı')),
+                    );
+                  }
+                },
+              );
             },
           ),
         );
@@ -678,12 +735,28 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
       if (next.error != null && next.error != prev?.error && mounted) {
         final err = next.error!;
-        if (err.contains('jeton')) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(err)),
-          );
-          ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearError();
-        }
+        showJetonAwareError(context, err, ref: ref);
+        ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearError();
+      }
+
+      if (next.openCommandsPanel && !(prev?.openCommandsPanel ?? false)) {
+        ref
+            .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+            .clearOpenCommandsPanel();
+        if (!mounted) return;
+        final room = _effectiveRoom();
+        final userNow = ref.read(authControllerProvider).valueOrNull;
+        final permsNow = _permissions(userNow, next, room);
+        final owner = permsNow.isRoomOwner || permsNow.isSiteAdmin;
+        unawaited(
+          showVoiceRoomCommandsPanel(
+            context,
+            ref,
+            room: room,
+            perms: permsNow,
+            isOwner: owner,
+          ),
+        );
       }
 
       if (_audioReady) {
@@ -702,6 +775,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             room: room,
             selfPresence: selfPresence,
             server: next.serverPermissions,
+            staffSiteAdmin: ref.read(staffAccessProvider).isFounder,
+            walletRole: ref.read(staffAccessProvider).siteRole ??
+                ref.read(walletBalancesProvider).valueOrNull?.role,
           );
           final canSpeak = VoiceRoomSpeakAccess.canSpeak(
             user: user,
@@ -712,15 +788,27 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           if (!canSpeak && !_isMicMuted) {
             _audio?.setMicEnabled(false);
             if (mounted) setState(() => _isMicMuted = true);
+          } else if (canSpeak) {
+            unawaited(_maybeAutoOpenMic());
           }
         }
       }
     });
 
-    return PopScope(
+    ref.listen(voiceRoomUiProvider, (prev, next) {
+      if (prev?.autoOpenMic != next.autoOpenMic && next.autoOpenMic) {
+        unawaited(_maybeAutoOpenMic());
+      }
+    });
+
+    return GiftEventListener(
+      sessionKey: sessionKey,
+      isHost: isOwner,
+      child: PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) unawaited(_confirmLeave());
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        await _confirmLeave();
       },
       child: Scaffold(
         resizeToAvoidBottomInset: true,
@@ -729,6 +817,36 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
+            if (_liveRoomKey.isNotEmpty) ...[
+              VoiceRoomMusicBackgroundLayer(roomKey: _liveRoomKey),
+              VoiceRoomHiddenAudioPlayer(roomKey: _liveRoomKey),
+            ],
+            Consumer(
+              builder: (context, ref, _) {
+                final activeGift = ref.watch(
+                  giftSessionProvider(sessionKey)
+                      .select((s) => s.activeAnimation),
+                );
+                final giftsOn = ref.watch(
+                  voiceRoomUiProvider.select((s) => s.giftAnimationsEnabled),
+                );
+                return Positioned.fill(
+                  child: IgnorePointer(
+                    child: GiftEngineOverlay(
+                      event: activeGift,
+                      enabled: giftsOn,
+                      stage: GiftStageContext.voiceRoom,
+                      sessionKey: sessionKey,
+                      onFinished: (id) {
+                        ref
+                            .read(giftSessionProvider(sessionKey).notifier)
+                            .dequeueAnimation(id);
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
             SafeArea(
               bottom: false,
               child: Column(
@@ -746,14 +864,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     presence: live.presence,
                     room: room,
                     onUserTap: (u) => _openUser(u, room, perms),
-                  ),
-                  onMore: () => _openTools(
-                    room,
-                    live,
-                    perms,
-                    isOwner,
-                    user,
-                    canControlMusic,
                   ),
                   onCoinsTap: () => openJetonStore(context, ref: ref),
                 ),
@@ -789,12 +899,14 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     live: live,
                     perms: perms,
                     user: user,
+                    isMicMuted: _isMicMuted,
                   ),
-                  // Müzik yalnızca ses — video şeridi kaldırıldı (donma önlenir).
-                  // Koltuk altı "şu an çalan şarkı" şeridi (yeşil kutu).
-                  VoiceRoomNowPlayingBar(
-                    roomKey: _liveRoomKey,
-                    canControl: canControlMusic,
+                  VoiceRoomCenterMusicPanel(
+                    room: room,
+                    live: live,
+                    canControlMusic: canControlMusic,
+                    canCloseMusic: canCloseMusic,
+                    musicRequestFlash: live.musicRequestFlash,
                   ),
                   // Aktif hediye savaşı — canlı skor + geri sayım.
                   GiftBattleStrip(
@@ -811,26 +923,24 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     context: 'voice_room',
                     contextId: _liveRoomKey,
                   ),
-                  // Canlı hediye akışı şeridi (gizli hediyeler hariç).
-                  GiftLiveFeedStrip(
-                    context: 'voice_room',
-                    contextId: _liveRoomKey,
-                  ),
                   Expanded(
-                    child: VoiceRoomBasicChatFeed(
-                      messages: live.messages,
-                      events: live.realtimeEvents,
-                      presence: live.presence,
-                      onMention: (userId, name) => _insertMention(name),
-                      onUserPerms: (userId, name) =>
-                          _openUserById(userId, live, room, perms),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        VoiceRoomBasicChatFeed(
+                          liveKey: _liveRoomKey,
+                          onMention: (userId, name) => _insertMention(name),
+                          onUserPerms: (userId, name) =>
+                              _openUserById(userId, live, room, perms),
+                        ),
+                      ],
                     ),
                   ),
-                  if (live.error != null)
+                  if (roomErrorBanner != null)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        live.error!,
+                        roomErrorBanner,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.error,
@@ -858,34 +968,94 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                       perms,
                       isOwner,
                     ),
+                    showSettings: false,
                     headphonesOn: ui.headphonesOn,
                     onToggleAudioOutput: _toggleSpeaker,
                     onInvite: () => unawaited(_shareRoom(room)),
+                    showSpeakRequest: user != null && !canSpeak,
+                    speakRequestPending: speakPending,
+                    onSpeakRequest: () => unawaited(
+                      requestVoiceRoomBasicSpeak(
+                        context: context,
+                        ref: ref,
+                        liveKey: _liveRoomKey,
+                        pending: speakPending,
+                      ),
+                    ),
                   ),
                 ],
               ],
             ),
             ),
-            VoiceGiftFlightOverlay(
-              events: flightQueue,
-              enabled: ui.giftAnimationsEnabled,
-              onFinished: (id) =>
-                  ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
+            VoiceGiftHudOverlays(sessionKey: sessionKey),
+            if (_liveRoomKey.isNotEmpty)
+              VoiceRoomVideoCloseBar(roomKey: _liveRoomKey),
+            if (_liveRoomKey.isNotEmpty)
+              BlocProvider.value(
+                value: ref.read(roomSongBlocProvider(_liveRoomKey)),
+                child: RoomSongMiniPlayer(
+                  roomId: _liveRoomKey,
+                  canControl: canControlMusic,
+                  bottomInset: 88,
+                  muted: ui.effectiveMusicMuted,
+                  hidden: true,
+                ),
+              ),
+            VoiceRoomSideActionRail(
+              onSettings: () => _openManagementPanel(
+                room,
+                live,
+                perms,
+                isOwner,
+              ),
+              onMusic: showMusicRequestFab
+                  ? () => _openMusicRequest(room)
+                  : null,
+              showMusic: showMusicRequestFab,
             ),
-            SafePremiumGiftFullscreenOverlay(event: _fullscreenGift),
+            if (!keyboardOpen && showMusicRequestFab)
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 118, right: 4),
+                  child: VoiceRoomMusicQueueMiniCard(
+                    dj: live.dj,
+                    liveKey: _liveRoomKey,
+                    canControlMusic: canControlMusic,
+                    canStopMusic: canCloseMusic,
+                  ),
+                ),
+              ),
             if (_showVipEntrance && user != null)
-              VipEntranceOverlay(
-                tier: ref.watch(vipTierProvider),
-                userName: user.displayName?.trim().isNotEmpty == true
-                    ? user.displayName!.trim()
-                    : user.username,
-                onFinished: () {
-                  if (mounted) setState(() => _showVipEntrance = false);
+              Builder(
+                builder: (context) {
+                  final name = user.displayName?.trim().isNotEmpty == true
+                      ? user.displayName!.trim()
+                      : user.username;
+                  final cosmetic = ref.watch(resolvedEntranceEffectProvider);
+                  if (cosmetic != null) {
+                    return CosmeticEntranceOverlay(
+                      userName: name,
+                      effectKind: cosmetic.effectKind,
+                      onFinished: () {
+                        if (mounted) setState(() => _showVipEntrance = false);
+                      },
+                    );
+                  }
+                  return VipEntranceOverlay(
+                    tier: ref.watch(vipTierProvider),
+                    theme: ref.watch(myEntranceThemeProvider),
+                    userName: name,
+                    onFinished: () {
+                      if (mounted) setState(() => _showVipEntrance = false);
+                    },
+                  );
                 },
               ),
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -918,6 +1088,64 @@ class _Banner extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Oda gövdesi rebuild sınırı — sohbet mesajları hariç.
+class _BasicLiveShell {
+  const _BasicLiveShell({
+    required this.presence,
+    required this.dj,
+    required this.serverPermissions,
+    required this.backgroundUrl,
+    required this.loading,
+    required this.error,
+    required this.roomMuted,
+    required this.realtimeEvents,
+  });
+
+  factory _BasicLiveShell.fromState(VoiceRoomLiveState s) => _BasicLiveShell(
+        presence: s.presence,
+        dj: s.dj,
+        serverPermissions: s.serverPermissions,
+        backgroundUrl: s.backgroundUrl,
+        loading: s.loading,
+        error: s.error,
+        roomMuted: s.roomMuted,
+        realtimeEvents: s.realtimeEvents,
+      );
+
+  final List<ChatRoomPresence> presence;
+  final ChatRoomDjState dj;
+  final ChatRoomMyPermissions? serverPermissions;
+  final String? backgroundUrl;
+  final bool loading;
+  final String? error;
+  final bool roomMuted;
+  final List<VoiceRoomRealtimeEvent> realtimeEvents;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _BasicLiveShell &&
+      identical(presence, other.presence) &&
+      dj == other.dj &&
+      serverPermissions == other.serverPermissions &&
+      backgroundUrl == other.backgroundUrl &&
+      loading == other.loading &&
+      error == other.error &&
+      roomMuted == other.roomMuted &&
+      identical(realtimeEvents, other.realtimeEvents);
+
+  @override
+  int get hashCode => Object.hash(
+        presence,
+        dj,
+        serverPermissions,
+        backgroundUrl,
+        loading,
+        error,
+        roomMuted,
+        realtimeEvents,
+      );
 }
 
 /// Rota sarmalayıcı — hata sınırı ile temel sayfa.

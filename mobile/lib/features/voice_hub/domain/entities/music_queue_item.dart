@@ -27,11 +27,14 @@ class MusicQueueItem extends Equatable {
       user = ChatRoomUserRef.fromJson(Map<String, dynamic>.from(u));
     }
     final videoId = json['videoId']?.toString();
-    final url = json['youtubeUrl']?.toString() ??
-        json['url']?.toString() ??
-        (videoId != null && videoId.isNotEmpty
-            ? 'https://www.youtube.com/watch?v=$videoId'
-            : '');
+    final musicUrl = json['musicUrl']?.toString();
+    final url = musicUrl?.trim().isNotEmpty == true
+        ? musicUrl!
+        : (json['youtubeUrl']?.toString() ??
+            json['url']?.toString() ??
+            (videoId != null && videoId.isNotEmpty
+                ? 'https://www.youtube.com/watch?v=$videoId'
+                : ''));
     return MusicQueueItem(
       id: json['id']?.toString() ?? videoId ?? '',
       title: json['title']?.toString() ?? 'Şarkı',
@@ -63,6 +66,9 @@ class MusicQueueItem extends Equatable {
   }
 
   static bool _isVideoRequest(Map<String, dynamic> json) {
+    final playMode = json['playMode']?.toString().toLowerCase().trim();
+    if (playMode == 'video') return true;
+    if (playMode == 'audio') return false;
     final type = _parseRequestType(json);
     if (type == 'video') return true;
     if (type == 'audio') return false;

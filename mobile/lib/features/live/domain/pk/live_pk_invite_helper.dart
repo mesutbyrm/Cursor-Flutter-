@@ -1,4 +1,6 @@
+import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import 'pk_room_models.dart';
+import 'pk_status_helper.dart';
 
 /// Gelen PK daveti bu yayın sahibine mi ait?
 bool isLivePkInviteRecipient(
@@ -46,7 +48,7 @@ bool isLivePkInviteRecipientMap(
   String? myUserId,
 }) {
   final status = battle['status']?.toString() ?? '';
-  if (status != 'pending') return false;
+  if (!isPkInvitePendingStatus(status)) return false;
   final sid = myStreamId.trim();
   final uid = myUserId?.trim() ?? '';
   final hostStream =
@@ -90,5 +92,33 @@ bool isLivePkInviteRecipientMap(
   if (opponentStream != null && opponentStream.isNotEmpty && opponentStream == sid) {
     return true;
   }
+  return false;
+}
+
+/// Canlı PK davet alıcısı — backend `opponentId` / `targetUserId` / stream ile eşleşir.
+bool isLivePkInviteRecipientBattle(
+  PkBattleRemote battle, {
+  required String myUserId,
+  String? myStreamId,
+}) {
+  final uid = myUserId.trim();
+  if (uid.isEmpty || !battle.isPending) return false;
+
+  final sid = myStreamId?.trim() ?? '';
+  final hostStream = battle.liveStreamId?.trim() ?? '';
+  if (sid.isNotEmpty && hostStream.isNotEmpty && hostStream == sid) {
+    return false;
+  }
+  if (uid.isNotEmpty && battle.challengerId == uid) return false;
+
+  final target = battle.targetUserId?.trim() ?? battle.guestUserId?.trim() ?? '';
+  if (target.isNotEmpty) return target == uid;
+
+  final opponent = battle.opponentId?.trim() ?? '';
+  if (opponent.isNotEmpty && opponent == uid) return true;
+
+  final oppStream = battle.opponentLiveStreamId?.trim() ?? '';
+  if (sid.isNotEmpty && oppStream.isNotEmpty && oppStream == sid) return true;
+
   return false;
 }

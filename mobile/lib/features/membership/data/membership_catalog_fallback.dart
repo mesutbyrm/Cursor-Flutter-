@@ -1,6 +1,6 @@
 import '../domain/membership_package_entity.dart';
 
-/// `/api/membership/packages` boş dönerse — Basic/Gold/Premium/Diamond (TL fiyatları).
+/// `/api/memberships/packages` boş dönerse — Basic/Gold/Premium/Diamond (TL fiyatları).
 ///
 /// Aylık: Basic ₺500 / Gold ₺1000 / Premium ₺1500 / Diamond ₺2500
 /// Aylık jeton: 250 / 1500 / 3500 / 7500 — jeton alımında indirim yok.
@@ -38,5 +38,6 @@ List<MembershipPackageEntity> fallbackMembershipPackages({
     tier(id: 'gold', title: 'Gold', priceTry: 1000, monthlyTokens: 1500),
     tier(id: 'premium', title: 'Premium', priceTry: 1500, monthlyTokens: 3500),
     tier(id: 'diamond', title: 'Diamond', priceTry: 2500, monthlyTokens: 7500),
+    tier(id: 'svip', title: 'SVIP', priceTry: 3500, monthlyTokens: 10000),
   ];
 }

@@ -34,6 +34,23 @@ class SearchRemoteDataSource {
     return const [];
   }
 
+  /// Genel arama — `/api/search` (kılavuz §9.13); yedek kullanıcı araması.
+  Future<List<SearchUserEntity>> searchAll(String query) async {
+    final q = query.trim();
+    if (q.length < 2) return const [];
+
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.searchAll(q),
+        forceRefresh: true,
+      );
+      final parsed = _parseList(res.data);
+      if (parsed != null && parsed.isNotEmpty) return parsed;
+    } catch (_) {}
+
+    return searchUsers(q);
+  }
+
   List<SearchUserEntity>? _parseList(dynamic body) {
     if (body is String) {
       if (body.contains('<!DOCTYPE') || body.contains('<html')) return null;

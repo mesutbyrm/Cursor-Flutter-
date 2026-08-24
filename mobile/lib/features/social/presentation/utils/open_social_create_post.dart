@@ -5,11 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 
 /// Instagram tarzı tam ekran paylaşım oluşturucu.
-void openSocialCreatePost(
+Future<void> openSocialCreatePost(
   BuildContext context,
   WidgetRef ref, {
   String? initialCaption,
-}) {
+  VoidCallback? onPublished,
+}) async {
   final authed = ref.read(authControllerProvider).valueOrNull;
   if (authed == null) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -20,5 +21,8 @@ void openSocialCreatePost(
     context.go('/login');
     return;
   }
-  context.push('/social/create', extra: initialCaption);
+  final created = await context.push<bool>('/social/create', extra: initialCaption);
+  if (created == true) {
+    onPublished?.call();
+  }
 }

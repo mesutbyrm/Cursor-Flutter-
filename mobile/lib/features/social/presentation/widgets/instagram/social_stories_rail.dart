@@ -3,17 +3,18 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
-import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../../core/network/api_exception.dart';
+import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/domain/entities/user_entity.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../domain/entities/social_story_ring_entity.dart';
-import '../../pages/story_viewer_page.dart';
+import '../../utils/story_navigation.dart';
+import '../../utils/social_user_profile_route.dart';
 import '../../providers/social_providers.dart';
+import '../../widgets/story_create_sheet.dart';
 
 /// Yatay hikâye şeridi — «Hikayen» ve diğer kullanıcı halkaları.
 class SocialStoriesRail extends ConsumerWidget {
@@ -35,7 +36,7 @@ class SocialStoriesRail extends ConsumerWidget {
           ),
         ),
         error: (e, _) => _StoriesError(
-          message: e.toString(),
+          message: ApiException.userMessage(e),
           onRetry: () => ref.invalidate(socialStoryRingsProvider),
         ),
         data: (rings) => _StoriesList(me: me, rings: rings),
@@ -85,7 +86,8 @@ class _StoriesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final others = rings.where((r) => r.user.id != me?.id).toList();
+    final others = rings.where((r) => !r.isOwn).toList();
+    final ownRing = rings.where((r) => r.isOwn).firstOrNull;
     final itemCount = 1 + others.length;
 
     return LazyHorizontalListView(
@@ -93,7 +95,7 @@ class _StoriesList extends StatelessWidget {
       itemCount: itemCount,
       itemBuilder: (context, index) {
         if (index == 0) {
-          return _OwnStoryChip(user: me);
+          return _OwnStoryChip(user: me, ownRing: ownRing);
         }
         final ring = others[index - 1];
         return Padding(
@@ -106,9 +108,10 @@ class _StoriesList extends StatelessWidget {
 }
 
 class _OwnStoryChip extends ConsumerWidget {
-  const _OwnStoryChip({this.user});
+  const _OwnStoryChip({this.user, this.ownRing});
 
   final UserEntity? user;
+  final SocialStoryRingEntity? ownRing;
 
   Future<void> _addStory(BuildContext context, WidgetRef ref) async {
     final me = ref.read(authControllerProvider).valueOrNull;
@@ -121,34 +124,25 @@ class _OwnStoryChip extends ConsumerWidget {
       }
       return;
     }
-    final picked = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-    if (picked == null || !context.mounted) return;
-    try {
-      await ref.read(socialRepositoryProvider).createStoryImage(picked.path);
-      ref.invalidate(socialStoryRingsProvider);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Hikâyen paylaşıldı')),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
-      }
-    }
+    await showStoryCreateSheet(context, ref);
+  }
+
+  void _openOwnStories(BuildContext context) {
+    final ring = ownRing;
+    if (ring == null || ring.stories.isEmpty) return;
+    openStoryViewer(context, ring.copyWith(isOwn: true));
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final hasStories = ownRing != null && ownRing!.stories.isNotEmpty;
     return _StoryRingFrame(
       label: 'Hikayen',
       isOwn: true,
-      onTap: () => _addStory(context, ref),
+      onTap: hasStories
+          ? () => _openOwnStories(context)
+          : () => _addStory(context, ref),
+      onLongPress: hasStories ? () => _addStory(context, ref) : null,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -184,14 +178,11 @@ class _StoryRingChip extends StatelessWidget {
     return _StoryRingFrame(
       label: ring.user.display,
       onTap: () {
-        if (ring.previewUrl != null && ring.previewUrl!.isNotEmpty) {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => StoryViewerPage(ring: ring),
-            ),
-          );
+        if (ring.previewUrl != null && ring.previewUrl!.isNotEmpty ||
+            ring.stories.isNotEmpty) {
+          openStoryViewer(context, ring);
         } else {
-          context.push('/user/${ring.user.id}');
+          context.push(buildSocialUserProfileRoute(ring.user.id));
         }
       },
       child: _RingAvatar(
@@ -207,18 +198,21 @@ class _StoryRingFrame extends StatelessWidget {
     required this.label,
     required this.child,
     this.onTap,
+    this.onLongPress,
     this.isOwn = false,
   });
 
   final String label;
   final Widget child;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final bool isOwn;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: SizedBox(
         width: 76,
         child: Column(

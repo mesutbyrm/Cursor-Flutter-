@@ -61,31 +61,55 @@ class LiveStreamExtrasDataSource {
     String? battleId,
     int duration = 180,
   }) async {
-    final body = <String, dynamic>{
-      'action': action,
-      'targetStreamId': ?targetStreamId,
-      'battleId': ?battleId,
-      if (action == 'create') 'streamId': streamId,
-      if (action == 'create') 'duration': duration,
-    };
+    final normalized = action.toLowerCase();
+    final durationMinutes = (duration / 60).ceil().clamp(1, 60);
+    final battleKey = battleId?.trim() ?? '';
 
-    try {
-      final res = await _dio.safePost<dynamic>(
-        ApiEndpoints.videoStreamPk,
-        data: body,
-      );
-      final battle = _unwrapBattle(res.data);
-      if (battle != null) return battle;
-    } catch (_) {}
+    // API dokümanı §8: POST /api/video-streams/pk — { opponentStreamId, durationMinutes }
+    if (normalized == 'create' && targetStreamId != null) {
+      try {
+        final res = await _dio.safePost<dynamic>(
+          ApiEndpoints.videoStreamPk,
+          data: {
+            'opponentStreamId': targetStreamId,
+            'hostStreamId': streamId,
+            'streamId': streamId,
+            'durationMinutes': durationMinutes,
+          },
+        );
+        final battle = _unwrapBattle(res.data);
+        if (battle != null) return battle;
+      } catch (_) {}
 
+      // Kılavuz §9.4 yedek: POST …/{streamId}/pk-battle
+      try {
+        final res = await _dio.safePost<dynamic>(
+          ApiEndpoints.videoStreamPkBattle(streamId),
+          data: {
+            'opponentStreamId': targetStreamId,
+            'durationMinutes': durationMinutes,
+          },
+        );
+        final battle = _unwrapBattle(res.data);
+        if (battle != null) return battle;
+      } catch (_) {}
+      return null;
+    }
+
+    // API dokümanı: POST …/pk-battle — { action, pkBattleId }
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamPkBattle(streamId),
       data: {
         'action': action,
-        'targetStreamId': ?targetStreamId,
-        'opponentStreamId': ?targetStreamId,
-        'battleId': ?battleId,
-        if (action == 'create') 'duration': duration,
+        if (targetStreamId != null && targetStreamId.isNotEmpty) ...{
+          'targetStreamId': targetStreamId,
+          'opponentStreamId': targetStreamId,
+        },
+        if (battleKey.isNotEmpty) ...{
+          'pkBattleId': battleKey,
+          'battleId': battleKey,
+          'inviteId': battleKey,
+        },
       },
     );
     return _unwrapBattle(res.data);
@@ -119,13 +143,30 @@ class LiveStreamExtrasDataSource {
       final data = map['data'] is Map
           ? Map<String, dynamic>.from(map['data'] as Map)
           : map;
-      final raw = data['battle'] ?? data['pk'];
-      if (raw is Map) return Map<String, dynamic>.from(raw);
-      if (data.containsKey('id') || data.containsKey('status')) {
+      final raw = data['battle'] ?? data['pk'] ?? data['pkBattle'];
+      if (raw is Map) {
+        final nested = Map<String, dynamic>.from(raw);
+        _normalizePkBattleId(nested);
+        return nested;
+      }
+      if (data.containsKey('id') ||
+          data.containsKey('pkBattleId') ||
+          data.containsKey('status')) {
+        _normalizePkBattleId(data);
         return data;
       }
     }
     return null;
+  }
+
+  void _normalizePkBattleId(Map<String, dynamic> data) {
+    final id = (data['id'] ?? data['pkBattleId'] ?? data['battleId'])
+        ?.toString()
+        .trim();
+    if (id == null || id.isEmpty) return;
+    data['id'] = id;
+    data['pkBattleId'] ??= id;
+    data['battleId'] ??= id;
   }
 
   Future<List<Map<String, dynamic>>> pollSignals(
@@ -195,10 +236,32 @@ class LiveStreamExtrasDataSource {
         final snap = LiveGuestListSnapshot.fromJson(
           asJsonMap(res.data),
         );
-        return (
-          coBroadcasters: snap.toCoBroadcasters(),
-          joinRequests: const <Map<String, dynamic>>[],
-        );
+        final joinRequests = snap.toJoinRequests();
+        // Misafir listesinde bekleyen istek yoksa co-broadcast uçuna düş.
+        if (joinRequests.isNotEmpty || snap.guests.isNotEmpty) {
+          if (joinRequests.isNotEmpty) {
+            return (
+              coBroadcasters: snap.toCoBroadcasters(),
+              joinRequests: joinRequests,
+            );
+          }
+          // Misafirler var ama istek yok — yine de co-broadcast'ten istekleri dene.
+          try {
+            final coRes = await _dio.safeGet<dynamic>(
+              ApiEndpoints.videoStreamCoBroadcast(streamId),
+            );
+            return (
+              coBroadcasters: snap.toCoBroadcasters(),
+              joinRequests: _listFromBody(coRes.data,
+                  keys: ['joinRequests', 'pendingRequests', 'requests']),
+            );
+          } catch (_) {
+            return (
+              coBroadcasters: snap.toCoBroadcasters(),
+              joinRequests: const <Map<String, dynamic>>[],
+            );
+          }
+        }
       }
     } catch (_) {}
 
@@ -246,7 +309,10 @@ class LiveStreamExtrasDataSource {
     try {
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.videoStreamCoBroadcastInvite(streamId),
-        data: {'inviteeId': inviteeId},
+        data: {
+          'userId': inviteeId,
+          'inviteeId': inviteeId,
+        },
       );
       return _unwrapCoBroadcaster(res.data);
     } catch (_) {

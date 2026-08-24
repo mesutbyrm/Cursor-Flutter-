@@ -1,7 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../../core/network/api_endpoints.dart';
 import '../../../../../core/network/api_exception.dart';
+import '../../../../../core/util/json_util.dart';
+import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/room_playback_sync.dart';
 import '../../../presentation/audio/voice_room_dj_stream_loader.dart';
@@ -47,30 +50,26 @@ class RoomMusicRemoteDataSource {
     return m;
   }
 
+  /// @deprecated IFrame-only oynatma — yalnızca geriye dönük uyumluluk.
+  @Deprecated('RoomSongBloc IFrame oynatma kullanın; stream URL çözümlemesi kaldırıldı')
   Future<String?> resolveStreamUrl({
     required String roomId,
     required String videoId,
   }) async {
     String? raw;
-    VoiceRoomMusicPipelineLog.apiResponse(
-      endpoint: ApiEndpoints.chatRoomMusicStream(roomId),
-      method: 'POST',
-      caller: 'resolveStreamUrl',
-      videoId: videoId,
-    );
     try {
-      final res = await _dio.post<dynamic>(
-        ApiEndpoints.chatRoomMusicStream(roomId),
-        data: {'videoId': videoId},
+      final res = await _dio.get<dynamic>(
+        ApiEndpoints.chatYoutubeStream,
+        queryParameters: {'videoId': videoId},
       );
       final data = res.data;
       if (data is Map) {
         raw = data['streamUrl']?.toString() ?? data['url']?.toString();
       }
       VoiceRoomMusicPipelineLog.apiResponse(
-        endpoint: ApiEndpoints.chatRoomMusicStream(roomId),
-        method: 'POST',
-        caller: 'resolveStreamUrl.ok',
+        endpoint: ApiEndpoints.chatYoutubeStream,
+        method: 'GET',
+        caller: 'resolveStreamUrl',
         statusCode: res.statusCode,
         musicUrl: raw,
         videoId: videoId,
@@ -79,36 +78,9 @@ class RoomMusicRemoteDataSource {
       VoiceRoomMusicPipelineLog.justAudioError(
         e,
         st,
-        phase: 'resolveStreamUrl.music-stream',
+        phase: 'resolveStreamUrl.youtube-stream',
         url: videoId,
       );
-    }
-    if (raw == null || !raw.startsWith('http')) {
-      try {
-        final res = await _dio.get<dynamic>(
-          ApiEndpoints.chatYoutubeStream,
-          queryParameters: {'videoId': videoId},
-        );
-        final data = res.data;
-        if (data is Map) {
-          raw = data['streamUrl']?.toString() ?? data['url']?.toString();
-        }
-        VoiceRoomMusicPipelineLog.apiResponse(
-          endpoint: ApiEndpoints.chatYoutubeStream,
-          method: 'GET',
-          caller: 'resolveStreamUrl.fallback',
-          statusCode: res.statusCode,
-          musicUrl: raw,
-          videoId: videoId,
-        );
-      } catch (e, st) {
-        VoiceRoomMusicPipelineLog.justAudioError(
-          e,
-          st,
-          phase: 'resolveStreamUrl.youtube-stream',
-          url: videoId,
-        );
-      }
     }
     if (raw == null || !raw.startsWith('http')) {
       VoiceRoomMusicPipelineLog.nullMusicUrl(
@@ -162,11 +134,23 @@ class RoomMusicRemoteDataSource {
       if (!withVideo) 'videoMode': 'audio',
     };
     final res = await _dio.post<dynamic>(
-      '/api/chat/rooms/$roomId/song-request',
+      ApiEndpoints.chatRoomSongRequest(roomId),
       data: body,
     );
     return _parseQueueResponse(res.data);
   }
+
+  @visibleForTesting
+  ({
+    MusicQueueItem? item,
+    List<MusicQueueItem> queue,
+    int? queuePosition,
+    String? streamUrl,
+    bool playing,
+    int? newBalance,
+  })
+  parseQueueResponseForTest(Map<String, dynamic> data) =>
+      _parseQueueResponse(data);
 
   ({
     MusicQueueItem? item,
@@ -198,11 +182,28 @@ class RoomMusicRemoteDataSource {
       item: item,
       queue: queue,
       queuePosition: _parseOptionalInt(map['queuePosition']),
-      streamUrl: map['musicUrl']?.toString(),
-      playing: map['playing'] == true,
+      streamUrl: _extractStreamUrl(map),
+      playing: map['playing'] == true || map['isPlaying'] == true,
       newBalance: _parseOptionalInt(map['newBalance']) ??
           _parseOptionalInt(map['coinBalance']),
     );
+  }
+
+  String? _extractStreamUrl(Map<String, dynamic> map) {
+    final direct = pick(map, ['musicUrl', 'streamUrl', 'audioUrl', 'url'])
+        ?.toString()
+        .trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+    for (final key in const ['nowPlaying', 'item', 'currentSong', 'song']) {
+      final node = map[key];
+      if (node is! Map) continue;
+      final nested = pick(
+        Map<String, dynamic>.from(node),
+        ['musicUrl', 'streamUrl', 'audioUrl', 'url'],
+      )?.toString().trim();
+      if (nested != null && nested.isNotEmpty) return nested;
+    }
+    return null;
   }
 
   int? _parseOptionalInt(dynamic raw) {
@@ -211,34 +212,51 @@ class RoomMusicRemoteDataSource {
     return int.tryParse('$raw');
   }
 
-  static String _musicPath(String roomId) => '/api/chat/rooms/$roomId/music';
+  static String _musicPath(String roomId) => ApiEndpoints.chatRoomMusic(roomId);
 
   Future<RoomPlaybackSync?> fetchDjSync(String roomId) async {
-    final res = await _dio.get<dynamic>('/api/chat/rooms/$roomId/music-queue');
+    final res = await _dio.get<dynamic>(ApiEndpoints.chatRoomMusicQueue(roomId));
     final data = res.data;
     if (data is! Map) return null;
     return RoomPlaybackSync.fromPayload(Map<String, dynamic>.from(data));
   }
 
   Future<void> pauseDj(String roomId) async {
-    await _dio.delete<dynamic>(_musicPath(roomId));
+    try {
+      await _dio.post<dynamic>(
+        _musicPath(roomId),
+        data: const {'action': 'pause'},
+      );
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404 || e.response?.statusCode == 405) {
+        await _dio.delete<dynamic>(_musicPath(roomId));
+        return;
+      }
+      rethrow;
+    }
   }
 
-  Future<void> resumeDj(String roomId, {String? musicUrl}) async {
+  Future<void> resumeDj(String roomId, {String? musicUrl, String? videoId, String? title}) async {
+    final resolvedVideoId = (videoId?.trim().isNotEmpty == true)
+        ? videoId!.trim()
+        : ChatRoomDjState.videoIdFromLoose(musicUrl ?? '');
     await _dio.post<dynamic>(
       _musicPath(roomId),
       data: {
-        'playing': true,
-        if (musicUrl != null) 'musicUrl': musicUrl,
+        'action': 'play',
+        if (resolvedVideoId != null && resolvedVideoId.isNotEmpty)
+          'videoId': resolvedVideoId,
+        if (title != null && title.trim().isNotEmpty) 'title': title.trim(),
+        if (musicUrl != null && musicUrl.isNotEmpty) 'musicUrl': musicUrl,
       },
     );
   }
 
   Future<void> skipQueue(String roomId) async {
-    await _dio.post<dynamic>('/api/chat/rooms/$roomId/music-queue/advance');
+    await _dio.post<dynamic>(ApiEndpoints.chatRoomMusicQueueAdvance(roomId));
   }
 
   Future<void> stopQueue(String roomId) async {
-    await _dio.delete<dynamic>('/api/chat/rooms/$roomId/music-queue');
+    await _dio.delete<dynamic>(ApiEndpoints.chatRoomMusicQueue(roomId));
   }
 }

@@ -19,17 +19,36 @@ abstract final class StaffRoles {
     'founder',
   };
 
-  static const managerUsernames = {'admin', 'yonetici'};
+  /// Kurucu / yönetim — sesli oda staff bypass ve tam site yetkisi.
+  static const founderUsernames = {'yonetici', 'yonetim'};
 
-  /// Site yöneticisi kullanıcı adı (`admin` — IRC staff moderatörü değil).
-  /// Tam yetkili hesaplar — admin + kurucu (yonetici).
-  static const siteAdminUsernames = managerUsernames;
+  /// Tam yetkili site admin nickleri (admin + kurucu + yönetim).
+  static const siteAdminUsernames = {
+    'admin',
+    'yonetici',
+    'yonetim',
+    'siteadmin',
+  };
 
-  /// Admin paneli, hediye CRUD, sesli oda bypass — admin ve yönetici.
+  /// Eski uyumluluk — site admin nick listesi.
+  static const managerUsernames = siteAdminUsernames;
+
+  /// Sesli oda staff — yalnızca kurucu (yonetici) hesabı.
+  static bool isFounderUser({String? role, String? username}) {
+    final u = username?.toLowerCase().trim() ?? '';
+    if (founderUsernames.contains(u)) return true;
+    final r = role?.toLowerCase().trim() ?? '';
+    return r == 'yonetici' || r == 'yonetim' || r == 'founder';
+  }
+
+  /// Admin paneli, hediye CRUD — kurucu / siteadmin nick veya sunucu rolü.
   static bool isSiteAdminUser({String? role, String? username}) {
+    final u = username?.toLowerCase().trim() ?? '';
+    if (siteAdminUsernames.contains(u)) return true;
+    if (isFounderUser(role: role, username: username)) return true;
     if (isAdminOrManager(role: role, username: username)) return true;
     final r = role?.toLowerCase().trim() ?? '';
-    return r == 'super_admin' || r == 'superadmin' || r == 'founder';
+    return r == 'super_admin' || r == 'superadmin' || r == 'admin';
   }
 
   /// Tüm yönetim işlemleri (jeton, CFC, üyelik, hediye, oda).
@@ -59,13 +78,27 @@ abstract final class StaffRoles {
     final r = role?.toLowerCase().trim() ?? '';
     if (adminOrManager.contains(r)) return true;
     final u = username?.toLowerCase().trim() ?? '';
-    return managerUsernames.contains(u);
+    return siteAdminUsernames.contains(u);
+  }
+
+  /// Mobil WebView admin — yalnızca Admin / Süper Admin (moderatör hariç).
+  static bool isStrictWebAdmin({
+    String? role,
+    String? username,
+    bool? walletIsAdmin,
+  }) {
+    if (walletIsAdmin == true) return true;
+    final r = role?.toLowerCase().trim() ?? '';
+    if (r == 'admin' || r == 'superadmin' || r == 'super_admin') return true;
+    final u = username?.toLowerCase().trim() ?? '';
+    return u == 'admin' || u == 'siteadmin' || u == 'yonetim';
   }
 
   static String labelTr(String role) {
     return switch (role.toLowerCase()) {
       'admin' => 'Site Admin',
       'yonetici' => 'Kurucu',
+      'yonetim' => 'Yönetim',
       'moderator' => 'Moderatör',
       'destek' => 'Destek',
       'yardim' => 'Yardım',

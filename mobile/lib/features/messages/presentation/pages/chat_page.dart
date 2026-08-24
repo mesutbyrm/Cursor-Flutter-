@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/token_storage.dart';
+import '../providers/message_sse_provider.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
@@ -20,6 +23,7 @@ import '../providers/chat_messages_list_notifier.dart';
 import '../providers/conversations_list_notifier.dart';
 import '../providers/messages_providers.dart';
 import '../services/dm_voice_call_service.dart';
+import '../widgets/dm_realtime_listener.dart';
 import '../widgets/chat_composer.dart';
 import '../widgets/chat_composer_bar.dart';
 import '../widgets/chat_message_actions.dart';
@@ -49,6 +53,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
   String? _peerName;
   String? _peerAvatar;
   var _peerOnline = false;
+  var _dmSseActive = false;
 
   @override
   void initState() {
@@ -56,7 +61,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
     WidgetsBinding.instance.addObserver(this);
     _scroll.addListener(_onScroll);
     _text.addListener(_onTextChanged);
-    _typingPoll = Timer.periodic(const Duration(milliseconds: 2500), (_) async {
+    _typingPoll = Timer.periodic(const Duration(milliseconds: 3500), (_) async {
       if (!mounted) return;
       final recentlyTyped = _lastTypedAt != null &&
           DateTime.now().difference(_lastTypedAt!) < const Duration(seconds: 4);
@@ -67,6 +72,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      ref.read(openDmConversationIdProvider.notifier).state =
+          widget.conversationId;
       _loadPeerMeta();
       ref
           .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
@@ -83,13 +90,49 @@ class _ChatPageState extends ConsumerState<ChatPage>
               forceRefresh: true,
             ),
       );
+      unawaited(_connectDmSse());
+      _startMessagePoll();
     });
-    _poll = Timer.periodic(const Duration(seconds: 4), (_) {
+  }
+
+  void _startMessagePoll() {
+    _poll?.cancel();
+    final interval = _dmSseActive
+        ? const Duration(seconds: 15)
+        : const Duration(seconds: 8);
+    _poll = Timer.periodic(interval, (_) {
       if (!mounted) return;
       ref
           .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
           .refresh(silent: true, forceRefresh: true);
     });
+  }
+
+  Future<void> _connectDmSse() async {
+    try {
+      final storage = ref.read(tokenStorageProvider);
+      final connected =
+          await ref.read(messageSseServiceProvider).connectToConversation(
+                conversationId: widget.conversationId,
+                accessToken: storage.readAccess,
+                refreshTokens: () =>
+                    tryRefreshAccessToken(ref.read(dioProvider), storage),
+                onEvent: (_) {
+                  if (!mounted) return;
+                  ref
+                      .read(
+                        chatMessagesListNotifierProvider(widget.conversationId)
+                            .notifier,
+                      )
+                      .refresh(silent: true, forceRefresh: true);
+                },
+              );
+      if (!mounted) return;
+      _dmSseActive = connected;
+      _startMessagePoll();
+    } catch (_) {
+      // Üretimde SSE yoksa poll yedek kalır.
+    }
   }
 
   void _loadPeerMeta() {
@@ -108,6 +151,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
   @override
   void dispose() {
+    ref.read(openDmConversationIdProvider.notifier).state = null;
+    unawaited(ref.read(messageSseServiceProvider).disconnect());
     WidgetsBinding.instance.removeObserver(this);
     _poll?.cancel();
     _typingPoll?.cancel();

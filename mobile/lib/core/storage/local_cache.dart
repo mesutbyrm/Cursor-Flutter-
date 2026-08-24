@@ -6,9 +6,12 @@ abstract final class LocalCache {
   static Box<dynamic>? _box;
 
   static Future<void> init() async {
+    if (_box != null && _box!.isOpen) return;
     await Hive.initFlutter();
     _box = await Hive.openBox<dynamic>(_boxName);
   }
+
+  static Future<void> ensureInitialized() => init();
 
   static Box<dynamic> get box {
     final b = _box;
@@ -17,6 +20,8 @@ abstract final class LocalCache {
     }
     return b;
   }
+
+  static bool get isReady => _box != null && _box!.isOpen;
 
   static Future<void> setString(String key, String value) async {
     await box.put(key, value);

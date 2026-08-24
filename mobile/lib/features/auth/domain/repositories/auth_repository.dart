@@ -14,6 +14,7 @@ abstract class AuthRepository {
     String language,
   });
   Future<UserEntity> loginWithGoogle();
+  Future<UserEntity> loginWithApple({String? referralCode});
   Future<UserEntity> loginWithTikTok();
   Future<UserEntity?> currentUser();
   Future<void> requestPasswordReset(String email);

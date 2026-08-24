@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 
 class PsychicExtendOption {
   const PsychicExtendOption({
@@ -119,66 +120,90 @@ class _PsychicExtendSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 1.55,
-            ),
-            itemCount: psychicExtendOptions.length,
-            itemBuilder: (_, i) {
-              final opt = psychicExtendOptions[i];
-              final affordable = staffExempt || jetonBalance >= opt.jeton;
-              return Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: affordable
-                      ? () => Navigator.pop(context, opt)
-                      : null,
-                  borderRadius: BorderRadius.circular(14),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      color: affordable
-                          ? const Color(0xFFFFD54F)
-                          : Colors.white12,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${opt.minutes} dakika',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12,
-                            color: affordable ? Colors.black87 : Colors.white38,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const crossAxisCount = 2;
+              const spacing = 10.0;
+              const aspect = 1.55;
+              final gridHeight = ListPerf.nestedGridHeight(
+                itemCount: psychicExtendOptions.length,
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: spacing,
+                crossAxisSpacing: spacing,
+                childAspectRatio: aspect,
+                crossAxisExtent: constraints.maxWidth,
+              );
+              return SizedBox(
+                height: gridHeight,
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    mainAxisSpacing: spacing,
+                    crossAxisSpacing: spacing,
+                    childAspectRatio: aspect,
+                  ),
+                  itemCount: psychicExtendOptions.length,
+                  itemBuilder: (_, i) {
+                    final opt = psychicExtendOptions[i];
+                    final affordable =
+                        staffExempt || jetonBalance >= opt.jeton;
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: affordable
+                            ? () => Navigator.pop(context, opt)
+                            : null,
+                        borderRadius: BorderRadius.circular(14),
+                        child: Ink(
+                          decoration: BoxDecoration(
+                            color: affordable
+                                ? const Color(0xFFFFD54F)
+                                : Colors.white12,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '${opt.minutes} dakika',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12,
+                                  color:
+                                      affordable ? Colors.black87 : Colors.white38,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '${opt.jeton}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 11,
+                                      color: affordable
+                                          ? Colors.black54
+                                          : Colors.white38,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Icon(
+                                    Icons.monetization_on_rounded,
+                                    size: 12,
+                                    color: affordable
+                                        ? const Color(0xFFE6A800)
+                                        : Colors.white24,
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              '${opt.jeton}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13,
-                                color: affordable ? Colors.black87 : Colors.white38,
-                              ),
-                            ),
-                            Icon(
-                              Icons.monetization_on_rounded,
-                              size: 14,
-                              color: affordable ? Colors.black54 : Colors.white24,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
               );
             },

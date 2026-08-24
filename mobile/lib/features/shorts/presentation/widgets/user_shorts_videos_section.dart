@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 
 import '../../domain/repositories/shorts_repository.dart';
 import '../providers/shorts_providers.dart';
@@ -54,31 +55,49 @@ class UserShortsVideosSection extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 4,
-                    mainAxisSpacing: 4,
-                    childAspectRatio: 9 / 14,
-                  ),
-                  itemCount: list.length,
-                  itemBuilder: (context, i) {
-                    final v = list[i];
-                    return GestureDetector(
-                      onTap: () => context.push('/shorts?videoId=${v.id}'),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: v.thumbnailUrl != null
-                            ? CanlifalNetworkImage(
-                                url: v.thumbnailUrl!,
-                                fit: BoxFit.cover,
-                              )
-                            : const ColoredBox(
-                                color: Color(0xFF1A0F3D),
-                                child: Icon(Icons.play_circle_outline),
-                              ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    const crossAxisCount = 3;
+                    const spacing = 4.0;
+                    const aspect = 9 / 14;
+                    final gridHeight = ListPerf.nestedGridHeight(
+                      itemCount: list.length,
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: spacing,
+                      crossAxisSpacing: spacing,
+                      childAspectRatio: aspect,
+                      crossAxisExtent: constraints.maxWidth,
+                    );
+                    return SizedBox(
+                      height: gridHeight,
+                      child: GridView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          crossAxisSpacing: spacing,
+                          mainAxisSpacing: spacing,
+                          childAspectRatio: aspect,
+                        ),
+                        itemCount: list.length,
+                        itemBuilder: (context, i) {
+                          final v = list[i];
+                          return GestureDetector(
+                            onTap: () => context.push('/shorts?videoId=${v.id}'),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: v.thumbnailUrl != null
+                                  ? CanlifalNetworkImage(
+                                      url: v.thumbnailUrl!,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : const ColoredBox(
+                                      color: Color(0xFF1A0F3D),
+                                      child: Icon(Icons.play_circle_outline),
+                                    ),
+                            ),
+                          );
+                        },
                       ),
                     );
                   },

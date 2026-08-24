@@ -3,54 +3,54 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/agora/domain/entities/agora_credentials.dart';
-import '../../features/agora/presentation/providers/agora_providers.dart';
 import '../../features/live/domain/entities/live_stream_entity.dart';
 import '../../features/live/presentation/providers/live_providers.dart';
+import '../../features/trtc/domain/entities/trtc_credentials.dart';
+import '../../features/trtc/presentation/providers/trtc_providers.dart';
 import '../providers/auth_selectors.dart';
 import 'network_perf.dart';
 
-/// Canlı yayın girişi — ilk kare ASAP; Agora/REST arka planda hazırlanır.
+/// Canlı yayın girişi — ilk kare ASAP; TRTC/REST arka planda hazırlanır.
 abstract final class LiveEntryPerf {
   static const firstFrameBudget = Duration(seconds: 2);
-  static const agoraCacheTtl = Duration(minutes: 3);
+  static const trtcCacheTtl = Duration(minutes: 3);
 
-  static final Map<String, _AgoraCacheEntry> _agoraCache = {};
+  static final Map<String, _TrtcCacheEntry> _trtcCache = {};
 
   /// Liste dokunuşu — navigasyondan hemen önce.
   static void prewarmOnStreamTap(WidgetRef ref, LiveStreamEntity stream) {
     if (!stream.isLive) return;
     final streamId = stream.id.trim();
     if (streamId.isEmpty) return;
-    unawaited(_prefetchAgora(ref, streamId, 'audience'));
+    unawaited(_prefetchTrtc(ref, streamId, 'audience'));
     unawaited(_prefetchJoin(ref, streamId));
   }
 
-  static AgoraCredentials? takeAgora({
+  static TrtcCredentials? takeTrtc({
     required String userId,
     required String streamId,
   }) {
     final key = _cacheKey(userId, streamId);
-    final entry = _agoraCache.remove(key);
+    final entry = _trtcCache.remove(key);
     if (entry == null) return null;
-    if (DateTime.now().difference(entry.at) > agoraCacheTtl) return null;
+    if (DateTime.now().difference(entry.at) > trtcCacheTtl) return null;
     return entry.cred;
   }
 
   @visibleForTesting
-  static void testPutAgora({
+  static void testPutTrtc({
     required String userId,
     required String streamId,
-    required AgoraCredentials cred,
+    required TrtcCredentials cred,
   }) {
-    _agoraCache[_cacheKey(userId, streamId)] =
-        _AgoraCacheEntry(cred, DateTime.now());
+    _trtcCache[_cacheKey(userId, streamId)] =
+        _TrtcCacheEntry(cred, DateTime.now());
   }
 
   static String _cacheKey(String userId, String streamId) =>
       '${userId.trim()}:${streamId.trim()}';
 
-  static Future<void> _prefetchAgora(
+  static Future<void> _prefetchTrtc(
     WidgetRef ref,
     String streamId,
     String role,
@@ -59,18 +59,20 @@ abstract final class LiveEntryPerf {
     if (userId == null || userId.isEmpty) return;
 
     final key = _cacheKey(userId, streamId);
-    final existing = _agoraCache[key];
+    final existing = _trtcCache[key];
     if (existing != null &&
-        DateTime.now().difference(existing.at) <= agoraCacheTtl) {
+        DateTime.now().difference(existing.at) <= trtcCacheTtl) {
       return;
     }
 
     try {
-      final cred = await ref.read(agoraRemoteProvider).fetchToken(
-            channelName: streamId,
-            role: role,
-          );
-      _agoraCache[key] = _AgoraCacheEntry(cred, DateTime.now());
+      final remote = ref.read(trtcRemoteProvider);
+      final cred = await remote.fetchToken(
+        roomId: streamId,
+        role: role,
+        userId: userId,
+      );
+      _trtcCache[key] = _TrtcCacheEntry(cred, DateTime.now());
     } catch (_) {}
   }
 
@@ -80,30 +82,26 @@ abstract final class LiveEntryPerf {
     } catch (_) {}
   }
 
-  /// Token + join paralel — swipe/oda soğuk yolu.
-  static Future<AgoraCredentials> fetchAgoraParallel(
-    WidgetRef ref, {
+  static Future<TrtcCredentials> fetchTrtcParallel({
+    required WidgetRef ref,
     required String streamId,
     required String role,
     required String userId,
   }) async {
-    final cached = takeAgora(userId: userId, streamId: streamId);
-    if (cached != null && cached.matchesChannel(streamId)) return cached;
-
-    final results = await NetworkPerf.parallel([
-      ref.read(agoraRemoteProvider).fetchToken(
-            channelName: streamId,
-            role: role,
-          ),
-      ref.read(liveRemoteProvider).joinVideoStream(streamId),
-    ]);
-    return results[0] as AgoraCredentials;
+    return NetworkPerf.parallel<TrtcCredentials>([
+      () async {
+        final cached = takeTrtc(userId: userId, streamId: streamId);
+        if (cached != null) return cached;
+        final remote = ref.read(trtcRemoteProvider);
+        return remote.fetchToken(roomId: streamId, role: role, userId: userId);
+      }(),
+    ]).then((list) => list.first);
   }
 }
 
-class _AgoraCacheEntry {
-  _AgoraCacheEntry(this.cred, this.at);
+class _TrtcCacheEntry {
+  _TrtcCacheEntry(this.cred, this.at);
 
-  final AgoraCredentials cred;
+  final TrtcCredentials cred;
   final DateTime at;
 }

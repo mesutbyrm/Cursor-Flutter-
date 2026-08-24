@@ -1,12 +1,18 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/media/cloud_media_url.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../gifts/data/gift_idempotency.dart';
+import '../../../gifts/data/lucky_gift_remote_datasource.dart';
+import '../../../gifts/domain/lucky_gift_entities.dart';
+import '../../../gifts/data/gift_reciprocal_guard.dart';
 import '../../../gifts/domain/gift_animation_kind.dart';
 import '../../../gifts/domain/gift_entity.dart';
 import '../../../gifts/domain/gift_platform.dart';
+import '../../../gifts/domain/gift_media_spec.dart';
 import '../../../gifts/domain/gift_rarity.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_gift_event.dart';
@@ -17,21 +23,35 @@ class LiveGiftSendResult {
     this.newBalance,
     this.streamerBalance,
     this.event,
+    this.luckyResult,
   });
 
   final int? newBalance;
   final int? streamerBalance;
   final LiveGiftEvent? event;
+  final LuckyGiftSpinResult? luckyResult;
 }
 
 class LiveGiftsRemoteDataSource {
-  LiveGiftsRemoteDataSource(this._dio);
+  LiveGiftsRemoteDataSource(this._dio, {LuckyGiftRemoteDataSource? lucky})
+      : _lucky = lucky ?? LuckyGiftRemoteDataSource(_dio);
 
   final Dio _dio;
+  final LuckyGiftRemoteDataSource _lucky;
 
   Future<List<LiveVideoGiftType>> fetchGiftTypes({
     GiftPlatform platform = GiftPlatform.mobile,
+    String? context,
   }) async {
+    try {
+      final cms = await _lucky.fetchCatalogCms(
+        platform: platform,
+        context: context,
+      );
+      if (cms.isNotEmpty) {
+        return cms.map(LiveVideoGiftType.fromGift).toList();
+      }
+    } catch (_) {}
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.videoStreamGiftsCatalog,
       query: {'platform': platform.queryValue},
@@ -91,12 +111,31 @@ class LiveGiftsRemoteDataSource {
     String? senderId,
     String? toUserId,
     String? pkMatchId,
+    bool isLucky = false,
   }) async {
+    if (isLucky) {
+      final lucky = await _lucky.sendLuckyGift(
+        giftTypeId: giftTypeId,
+        quantity: quantity,
+        context: pkMatchId != null && pkMatchId.isNotEmpty ? 'pk' : 'live_stream',
+        contextId: streamId,
+      );
+      return LiveGiftSendResult(
+        newBalance: lucky.newBalance,
+        luckyResult: lucky,
+      );
+    }
+    if (toUserId != null && toUserId.isNotEmpty) {
+      await assertReciprocalGiftAllowed(_dio, toUserId);
+    }
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamGifts(streamId),
       data: {
+        // Kılavuz §9.4: giftId; üretimde giftTypeId de kabul edilir.
+        'giftId': giftTypeId,
         'giftTypeId': giftTypeId,
         'quantity': quantity,
+        'idempotencyKey': newGiftIdempotencyKey(),
         'platform': GiftPlatform.mobile.queryValue,
         if (senderName.trim().isNotEmpty) 'senderName': senderName.trim(),
         if (receiverName.trim().isNotEmpty) 'receiverName': receiverName.trim(),
@@ -116,7 +155,9 @@ class LiveGiftsRemoteDataSource {
           giftId: giftTypeId,
           giftName: giftName,
           quantity: quantity,
-          coinCost: unitPrice * quantity,
+          coinCost: unitPrice,
+          giftPrice: unitPrice,
+          totalCoin: unitPrice * quantity,
           timestamp: DateTime.now(),
           animationKey: giftTypeId,
         );
@@ -140,18 +181,23 @@ class LiveGiftsRemoteDataSource {
     Map<String, dynamic> json, {
     required String streamId,
   }) {
-    final giftId = _resolveGiftId(json);
-    if (giftId == null || giftId.isEmpty) return null;
+    final catalogId = _resolveCatalogGiftId(json);
+    if (catalogId == null || catalogId.isEmpty) return null;
 
-    final ts = DateTime.tryParse(
-          pick(json, ['createdAt', 'created_at', 'timestamp'])?.toString() ??
-              '',
-        ) ??
-        DateTime.now();
+    final tsMs = _normalizeTimestampMs(
+      pick(json, ['timestamp', 'ts', 'eventTimestamp']),
+      pick(json, ['createdAt', 'created_at'])?.toString(),
+    );
+    final ts = tsMs > 0
+        ? DateTime.fromMillisecondsSinceEpoch(tsMs)
+        : DateTime.now();
 
     var id = pick(json, ['id', '_id', 'giftEventId'])?.toString();
     if (id == null || id.isEmpty) {
-      id = '$streamId-${ts.millisecondsSinceEpoch}-$giftId';
+      id = pick(json, ['giftId'])?.toString();
+    }
+    if (id == null || id.isEmpty) {
+      id = '$streamId-$tsMs-$catalogId';
     }
 
     final sender = _resolvePersonName(
@@ -169,6 +215,7 @@ class LiveGiftsRemoteDataSource {
       json,
       flatKeys: const [
         'receiverName',
+        'recipientName',
         'streamerName',
         'hostName',
         'toUserName',
@@ -179,27 +226,132 @@ class LiveGiftsRemoteDataSource {
 
     // İsim geçersizse (ikon URL'i, JSON parçası, çok uzun metin) hediyeyi
     // DÜŞÜRME — güvenli varsayılan adla göster; animasyon yine çalışsın.
-    var giftName = _resolveGiftName(json, giftId);
+    var giftName = _resolveGiftName(json, catalogId);
     if (!_isValidLabel(giftName)) {
-      giftName = LiveGiftCatalog.displayNameOverrides[giftId] ?? 'Hediye';
+      giftName = LiveGiftCatalog.displayNameOverrides[catalogId] ?? 'Hediye';
     }
 
-    final qtyRaw = asInt(pick(json, ['quantity', 'count', 'amount']));
+    final qtyRaw = asInt(pick(json, ['quantity', 'count', 'giftCount']));
     final qty = qtyRaw > 0 ? qtyRaw : 1;
-    final price = asInt(pick(json, ['price', 'coinCost', 'totalCost']));
+    final unitPriceField = asInt(
+      pick(json, ['giftPrice', 'unitPrice', 'pricePerUnit', 'coinPrice']),
+    );
+    // SSE dokümanı: giftType.price iç içe gelebilir.
+    final nestedGiftPrice = () {
+      final gt = json['giftType'] ?? json['gift'];
+      if (gt is Map) {
+        return asInt(pick(asJsonMap(gt), ['price', 'coinCost', 'jeton']));
+      }
+      return 0;
+    }();
+    final nestedTotalCoin = () {
+      final gt = json['giftType'] ?? json['gift'];
+      if (gt is Map) {
+        return asInt(
+          pick(asJsonMap(gt), [
+            'totalPrice',
+            'totalCoin',
+            'totalCoins',
+            'amount',
+          ]),
+        );
+      }
+      return 0;
+    }();
+    final coinCostTotal = asInt(pick(json, ['coinCost']));
+    final flatPrice = asInt(pick(json, ['price']));
+    final totalCoin = () {
+      final direct = asInt(
+        pick(json, [
+          'totalCoin',
+          'totalCoins',
+          'totalCost',
+          'totalPrice',
+          'spentAmount',
+          'giftValue',
+          'amount',
+          'coins',
+          'jeton',
+          'jetonAmount',
+          'giftJeton',
+          'coinAmount',
+        ]),
+      );
+      if (direct > 0) return direct;
+      if (coinCostTotal > 0) return coinCostTotal;
+      if (nestedTotalCoin > 0) return nestedTotalCoin;
+      // Üretim eventPayload: price = toplam jeton (coinCost ile aynı).
+      if (flatPrice > 0 && unitPriceField <= 0) return flatPrice;
+      return 0;
+    }();
+    final resolvedUnit = unitPriceField > 0
+        ? unitPriceField
+        : (nestedGiftPrice > 0 ? nestedGiftPrice : 0);
+    final unitPrice = resolvedUnit > 0
+        ? resolvedUnit
+        : (totalCoin > 0 && qty > 0 ? totalCoin ~/ qty : 0);
+    final resolvedTotal = totalCoin > 0
+        ? totalCoin
+        : (unitPrice > 0 ? unitPrice * qty : 0);
+    final totalDiamond = asInt(
+      pick(json, ['totalDiamond', 'totalDiamonds', 'diamonds']),
+    );
     final comboRaw = asInt(pick(json, ['combo', 'comboCount']));
 
-    final icon = pick(json, ['icon', 'iconUrl'])?.toString();
-    final iconUrl = icon == null || icon.isEmpty
-        ? null
-        : icon.startsWith('http')
-            ? icon
-            : '${Env.siteOrigin}${icon.startsWith('/') ? icon : '/$icon'}';
+    final icon = pick(json, [
+      'giftImage',
+      'giftImageUrl',
+      'image',
+      'icon',
+      'iconUrl',
+      'giftIcon',
+    ])?.toString();
+    // SSE dokümanı: giftType.icon / gift.giftIcon iç içe gelebilir.
+    String? nestedIcon;
+    final giftType = json['giftType'] ?? json['gift'];
+    if (giftType is Map) {
+      final gt = asJsonMap(giftType);
+      nestedIcon = pick(gt, ['icon', 'iconUrl', 'image', 'giftIcon'])
+          ?.toString();
+    }
+    final iconUrl = _resolveImageUrl(icon ?? nestedIcon);
 
-    final animKey = pick(json, ['animation', 'animationKey'])?.toString();
+    final animKey = pick(json, ['animation', 'animationKey', 'assetUrl'])
+        ?.toString();
+    String? nestedAnimUrl;
+    String? nestedAssetType;
+    if (giftType is Map) {
+      final gt = asJsonMap(giftType);
+      nestedAnimUrl = pick(gt, ['assetUrl', 'animationUrl', 'animation'])
+          ?.toString();
+      nestedAssetType =
+          pick(gt, ['assetType', 'animationType', 'animationKind'])?.toString();
+    }
+    final resolvedAnimKey = animKey ?? nestedAnimUrl;
     final animType = GiftAnimationKind.parse(
-      pick(json, ['animationType', 'animationKind'])?.toString(),
+      pick(json, ['animationType', 'animationKind', 'assetType'])?.toString() ??
+          nestedAssetType,
     );
+    final resolvedAnimType = animType == GiftAnimationKind.lottie &&
+            resolvedAnimKey != null
+        ? GiftAnimationKind.fromUrl(resolvedAnimKey)
+        : animType;
+    final finalAnimType =
+        resolvedAnimType != GiftAnimationKind.none ? resolvedAnimType : animType;
+
+    final render = () {
+      final r = json['giftRender'] ?? json['render'] ?? json['giftEngine'];
+      if (r is Map) return asJsonMap(r);
+      return json;
+    }();
+
+    List<String> seatEffects = const [];
+    final rawEffects = pick(render, ['seatEffects', 'seat_effects', 'seatEffect']);
+    if (rawEffects is List) {
+      seatEffects = rawEffects.map((e) => e.toString()).toList();
+    } else if (rawEffects != null) {
+      seatEffects = [rawEffects.toString()];
+    }
 
     return LiveGiftEvent(
       id: id,
@@ -207,17 +359,121 @@ class LiveGiftsRemoteDataSource {
       receiverId: _resolveReceiverId(json),
       senderName: sender,
       receiverName: receiver,
-      giftId: giftId,
+      giftId: catalogId,
       giftName: giftName,
       quantity: qty,
-      coinCost: price,
+      coinCost: unitPrice,
+      giftPrice: unitPrice,
+      totalCoin: resolvedTotal,
+      totalDiamond: totalDiamond,
       combo: comboRaw > 0 ? comboRaw : 1,
       timestamp: ts,
       iconUrl: iconUrl,
-      animationKey: animKey,
+      giftImageUrl: iconUrl,
+      animationKey: resolvedAnimKey,
       rarity: GiftRarity.parse(pick(json, ['rarity'])?.toString()),
-      animationKind: animType,
+      animationKind: finalAnimType,
       soundKey: pick(json, ['sound'])?.toString(),
+      remainingBalance: asInt(
+        pick(json, [
+          'remainingBalance',
+          'balance',
+          'newBalance',
+          'coinBalance',
+        ]),
+      ),
+      seatIndex: asInt(pick(json, ['seatIndex', 'seat_index'])),
+      senderAvatar: _resolveImageUrl(
+        pick(json, ['senderAvatar', 'senderImage', 'sender_avatar'])?.toString(),
+      ),
+      receiverAvatar: _resolveImageUrl(
+        pick(json, [
+          'receiverAvatar',
+          'receiverImage',
+          'receiver_avatar',
+        ])?.toString(),
+      ),
+      giftType: pick(json, ['giftType', 'type', 'gift_type'])?.toString(),
+      giftIcon: pick(render, ['giftIcon', 'icon', 'gift_icon'])?.toString() ??
+          pick(json, ['giftIcon'])?.toString(),
+      assetUrl: _resolveImageUrl(
+        pick(render, ['assetUrl', 'animationUrl', 'animation'])?.toString() ??
+            nestedAnimUrl ??
+            resolvedAnimKey,
+      ),
+      assetType: pick(render, ['assetType', 'animationType'])?.toString() ??
+          nestedAssetType,
+      displayType:
+          pick(render, ['displayType', 'display_type'])?.toString(),
+      isFullscreen: pick(render, ['isFullscreen']) == true ||
+          json['isFullscreen'] == true,
+      visibleAsFullscreen: pick(render, ['visibleAsFullscreen']) == true,
+      screenPosition:
+          pick(render, ['screenPosition', 'screen_position'])?.toString(),
+      displayDurationMs: asInt(
+        pick(render, ['displayDurationMs', 'display_duration_ms']),
+      ),
+      tier: pick(render, ['tier'])?.toString(),
+      assetFormat: pick(render, ['assetFormat', 'asset_format'])?.toString() ??
+          pick(json, ['assetFormat', 'asset_format'])?.toString(),
+      imageUrl: _resolveImageUrl(
+        pick(render, ['imageUrl', 'image_url'])?.toString() ??
+            pick(json, ['imageUrl', 'image_url'])?.toString(),
+      ),
+      videoUrl: _resolveImageUrl(
+        pick(render, ['videoUrl', 'video_url'])?.toString() ??
+            pick(json, ['videoUrl', 'video_url'])?.toString(),
+      ),
+      thumbnailUrl: _resolveImageUrl(
+        pick(render, ['thumbnailUrl', 'thumbnail_url'])?.toString() ??
+            pick(json, ['thumbnailUrl', 'thumbnail_url'])?.toString(),
+      ),
+      animationDurationMs: asInt(
+        pick(render, ['animationDurationMs', 'animation_duration_ms']),
+      ),
+      startDelayMs: asInt(pick(render, ['startDelayMs', 'start_delay_ms'])),
+      effectColor: pick(render, ['effectColor', 'effect_color'])?.toString(),
+      musicUrl: _resolveImageUrl(
+        pick(render, ['musicUrl', 'music_url', 'soundUrl'])?.toString(),
+      ),
+      enginePriority: pick(render, ['priority', 'giftPriority'])?.toString(),
+      engineDisplayArea:
+          pick(render, ['displayArea', 'display_area'])?.toString(),
+      engineAnimationType: pick(render, [
+        'animationType',
+        'animation_type',
+        'assetFormat',
+      ])?.toString(),
+      engineDurationMs: asInt(
+        pick(render, ['durationMs', 'duration_ms']),
+      ),
+      engineQueueGapMs: asInt(
+        pick(render, ['queueGapMs', 'queue_gap_ms', 'gapMs']),
+      ),
+      engineFeedDurationMs: asInt(
+        pick(render, ['feedDurationMs', 'feed_duration_ms']),
+      ),
+      engineSeatEffects: seatEffects,
+      engineParticleKey: pick(render, [
+        'particleKey',
+        'particle_key',
+        'particleEffect',
+      ])?.toString(),
+      mediaType: GiftMediaSpec.parseMediaType(render),
+      mediaWidth: GiftMediaSpec.parseDimensions(render).$1,
+      mediaHeight: GiftMediaSpec.parseDimensions(render).$2,
+      engine: json['engine'] == true,
+      engineEvent: pick(json, ['event'])?.toString(),
+      giftHistoryId: pick(json, [
+        'giftHistoryId',
+        'historyId',
+        'transactionId',
+        'giftEventId',
+      ])?.toString(),
+      queueItemId: pick(json, [
+        'queueItemId',
+        'queueId',
+      ])?.toString(),
     );
   }
 
@@ -228,14 +484,47 @@ class LiveGiftsRemoteDataSource {
     return data;
   }
 
-  String? _resolveGiftId(Map<String, dynamic> json) {
+  int _normalizeTimestampMs(dynamic raw, String? iso) {
+    var ms = asInt(raw);
+    if (ms > 0 && ms < 10000000000) ms *= 1000;
+    if (ms > 0) return ms;
+    final parsed = DateTime.tryParse(iso ?? '');
+    return parsed?.millisecondsSinceEpoch ?? 0;
+  }
+
+  String? _resolveCatalogGiftId(Map<String, dynamic> json) {
     final nested = pick(json, ['giftType', 'gift']);
     if (nested is Map) {
       final m = asJsonMap(nested);
-      final id = pick(m, ['id', 'slug', 'giftTypeId'])?.toString();
+      final id = pick(m, ['id', 'slug', 'giftTypeId', 'giftId'])?.toString();
       if (id != null && id.isNotEmpty) return id;
     }
-    return pick(json, ['giftTypeId', 'giftId', 'type'])?.toString();
+    return pick(json, ['giftTypeId', 'giftId', 'type', 'slug'])?.toString();
+  }
+
+  String? _resolveGiftId(Map<String, dynamic> json) => _resolveCatalogGiftId(json);
+
+  String? _resolveImageUrl(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    if (CloudMediaUrl.isCloudStoragePath(raw)) {
+      return CloudMediaUrl.resolve(raw, siteOrigin: Env.siteOrigin);
+    }
+    if (raw.startsWith('http')) return raw;
+    if (_isBareAssetFilename(raw)) return null;
+    return CloudMediaUrl.resolve(raw, siteOrigin: Env.siteOrigin);
+  }
+
+  bool _isBareAssetFilename(String s) {
+    final l = s.trim().toLowerCase();
+    if (l.startsWith('http')) return false;
+    return l.endsWith('.png') ||
+        l.endsWith('.jpg') ||
+        l.endsWith('.jpeg') ||
+        l.endsWith('.webp') ||
+        l.endsWith('.gif') ||
+        l.endsWith('.svga') ||
+        l.endsWith('.json') ||
+        l.contains('assets/');
   }
 
   String _resolveGiftName(Map<String, dynamic> json, String giftId) {
@@ -243,15 +532,15 @@ class LiveGiftsRemoteDataSource {
     if (nested is Map) {
       final fromType = jsonDisplayLabel(
         nested,
-        keys: const ['nameTr', 'name', 'nameEn', 'label'],
+        keys: const ['nameTr', 'name', 'nameEn', 'label', 'giftName'],
       );
-      if (fromType != null) return fromType;
+      if (fromType != null && !_isBareAssetFilename(fromType)) return fromType;
     }
     final flat = jsonDisplayLabel(
-      pick(json, ['giftName', 'giftTypeName']),
+      pick(json, ['giftName', 'giftTypeName', 'name']),
     );
-    if (flat != null) return flat;
-    return LiveGiftCatalog.displayNameOverrides[giftId] ?? giftId;
+    if (flat != null && !_isBareAssetFilename(flat)) return flat;
+    return LiveGiftCatalog.displayNameOverrides[giftId] ?? 'Hediye';
   }
 
   String _resolvePersonName(
@@ -289,6 +578,7 @@ class LiveGiftsRemoteDataSource {
       'receiverId',
       'receiverUserId',
       'toUserId',
+      'recipientId',
       'streamerId',
       'hostId',
     ])?.toString();

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../admin/presentation/providers/staff_access_provider.dart';
+
 import 'package:video_player/video_player.dart';
 
 import '../../../../core/firebase/firebase_bootstrap.dart';
@@ -251,6 +253,8 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
   void _moreMenu() {
     final me = ref.read(currentUserIdProvider);
     final isOwner = me != null && me == video.userId;
+    final isAdmin = ref.read(staffAccessProvider).isSiteAdmin;
+    final canManage = isOwner || isAdmin;
 
     showModalBottomSheet<void>(
       context: context,
@@ -293,7 +297,7 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
                 _activatePip();
               },
             ),
-            if (isOwner)
+            if (canManage)
               ListTile(
                 leading: const Icon(Icons.insights_outlined),
                 title: const Text('Video analitikleri'),
@@ -326,10 +330,13 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
                 );
               },
             ),
-            if (isOwner)
+            if (canManage)
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                title: const Text('Videoyu sil', style: TextStyle(color: Colors.redAccent)),
+                title: Text(
+                  isAdmin && !isOwner ? 'Videoyu sil (admin)' : 'Videoyu sil',
+                  style: const TextStyle(color: Colors.redAccent),
+                ),
                 onTap: () {
                   Navigator.pop(ctx);
                   _deleteOwnVideo();

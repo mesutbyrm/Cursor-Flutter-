@@ -45,13 +45,7 @@ class AdRewardCelebration {
       if (amount <= 0) amount = fallbackAmount;
       ref.invalidate(walletBalancesProvider);
       ref.invalidate(fortuneAccessStateProvider);
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
-      }
-    }
+    } catch (_) {}
 
     if (context.mounted) {
       await CfcRewardOverlay.show(context, amount: amount);

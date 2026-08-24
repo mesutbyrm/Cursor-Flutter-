@@ -6,11 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/ui/premium/premium_icon_button.dart';
 import '../../../../../core/widgets/messages_notifications_actions.dart';
-import '../../providers/social_composer_providers.dart';
+import '../../utils/open_social_create_post.dart';
 
 /// CanlıFal Sosyal üst çubuk — paylaşım + mesajlar + bildirimler.
 class SocialInstagramAppBar extends ConsumerWidget {
-  const SocialInstagramAppBar({super.key});
+  const SocialInstagramAppBar({super.key, this.onPostPublished});
+
+  /// Tam ekran paylaşım başarılı olunca (ör. akışı üste kaydır).
+  final VoidCallback? onPostPublished;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,6 +49,12 @@ class SocialInstagramAppBar extends ConsumerWidget {
           ),
           const Spacer(),
           PremiumIconButton(
+            icon: Icons.search_rounded,
+            size: 40,
+            onTap: () => context.push('/search'),
+          ),
+          const SizedBox(width: 4),
+          PremiumIconButton(
             icon: Icons.play_circle_outline,
             size: 40,
             onTap: () => context.push('/shorts'),
@@ -54,8 +63,11 @@ class SocialInstagramAppBar extends ConsumerWidget {
           PremiumIconButton(
             icon: Icons.add_box_outlined,
             size: 40,
-            onTap: () =>
-                ref.read(socialComposerExpandedProvider.notifier).state = true,
+            onTap: () => openSocialCreatePost(
+              context,
+              ref,
+              onPublished: onPostPublished,
+            ),
           ),
           const SizedBox(width: 4),
           const MessagesNotificationsActions(spacing: 4),

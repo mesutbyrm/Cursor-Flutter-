@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/navigation/wallet_navigation.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../live/presentation/gifts/live_gift_controller.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -171,14 +174,27 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
   Future<void> _send() async {
     final g = _selected;
     if (g == null) return;
-    await widget.controller.send(
-      gift: g,
-      senderName: widget.senderName,
-      senderId: widget.senderId,
-      quantity: _qty,
-    );
-    ref.refreshWalletCache(force: true);
-    if (mounted) widget.onClose();
+    widget.onClose();
+    unawaited(_sendAsync(g));
+  }
+
+  Future<void> _sendAsync(LiveVideoGiftType g) async {
+    try {
+      await widget.controller.send(
+        gift: g,
+        senderName: widget.senderName,
+        senderId: widget.senderId,
+        quantity: _qty,
+      );
+      ref.refreshWalletCache(force: true);
+    } catch (e) {
+      if (!mounted) return;
+      showJetonAwareError(
+        context,
+        ApiException.userMessage(e),
+        ref: ref,
+      );
+    }
   }
 }
 
@@ -217,10 +233,7 @@ class _GiftsTab extends StatelessWidget {
     return switch (category) {
       'fortune' => all.where(isFortune).toList(),
       'vip' => all.where(isVip).toList(),
-      'event' => all
-          .where((g) => !isFortune(g) && !isVip(g))
-          .where((g) => !PremiumGiftCatalog2026.giftIds.contains(g.id))
-          .toList(),
+      'event' => all.where((g) => !isFortune(g) && !isVip(g)).toList(),
       _ => PremiumGiftCatalog2026.sortCatalog(all, (g) => g.id),
     };
   }

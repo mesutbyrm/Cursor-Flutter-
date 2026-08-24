@@ -24,9 +24,14 @@ abstract class BaseSseService {
   Future<bool> Function()? _refreshTokens;
   var _stopped = true;
   var _reconnectAttempt = 0;
+  String? _lastEventId;
   DateTime? _lastEventAt;
 
-  static const heartbeatTimeout = Duration(seconds: 90);
+  /// Son SSE `id:` — reconnect'te Last-Event-ID olarak gönderilir.
+  String? get lastEventId => _lastEventId;
+
+  /// Üretim heartbeat 15 sn — 3× tolerans (denetim raporu §9.4).
+  static const heartbeatTimeout = Duration(seconds: 45);
 
   static Dio createSseDio() {
     return Dio(
@@ -51,6 +56,9 @@ abstract class BaseSseService {
 
   /// İsteğe bağlı — auth zorunlu mu?
   bool get requiresAuth => true;
+
+  /// Alt sınıflar belirli HTTP kodlarında reconnect'i durdurabilir (ör. DM SSE 404).
+  bool shouldReconnectOnHttpError(int? statusCode) => true;
 
   /// Alt sınıf her SSE bloğunu işler.
   void onSseBlock(String block);
@@ -84,6 +92,13 @@ abstract class BaseSseService {
     );
   }
 
+  /// Ağ geri geldiğinde veya manuel yenileme — backoff sıfırlanır.
+  Future<void> reconnectNow() async {
+    if (_stopped || _accessToken == null) return;
+    _reconnectAttempt = 0;
+    await _openStream();
+  }
+
   void dispose() {
     unawaited(disconnect());
     status.dispose();
@@ -114,6 +129,10 @@ abstract class BaseSseService {
     };
     if (token != null && token.trim().isNotEmpty) {
       headers['Authorization'] = 'Bearer ${token.trim()}';
+    }
+    final lastId = _lastEventId?.trim();
+    if (lastId != null && lastId.isNotEmpty) {
+      headers['Last-Event-ID'] = lastId;
     }
 
     _dio = connectionDio();
@@ -146,7 +165,13 @@ abstract class BaseSseService {
         (chunk) {
           _lastEventAt = DateTime.now();
           buffer.write(utf8.decode(chunk, allowMalformed: true));
-          drainSseBuffer(buffer, onSseBlock);
+          drainSseBuffer(buffer, (block) {
+            final eventId = parseSseEventId(block);
+            if (eventId != null && eventId.isNotEmpty) {
+              _lastEventId = eventId;
+            }
+            onSseBlock(block);
+          });
         },
         onError: (Object e) {
           status.emit(
@@ -163,6 +188,18 @@ abstract class BaseSseService {
       );
     } on DioException catch (e) {
       if (kDebugMode) debugPrint('$runtimeType SSE: $e');
+      final statusCode = e.response?.statusCode;
+      if (!shouldReconnectOnHttpError(statusCode)) {
+        _stopped = true;
+        status.emit(
+          SseConnectionStatus(
+            phase: SseConnectionPhase.failed,
+            attempt: _reconnectAttempt,
+            lastError: e,
+          ),
+        );
+        return;
+      }
       // Kılavuz §6: 401 → refresh sonra yeniden bağlan.
       if (e.response?.statusCode == 401 && _refreshTokens != null) {
         final ok = await _refreshTokens!.call();
@@ -200,7 +237,7 @@ abstract class BaseSseService {
 
   void _startHeartbeatWatchdog() {
     _heartbeatWatchdog?.cancel();
-    _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 30), (_) {
+    _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 5), (_) {
       final last = _lastEventAt;
       if (last == null || _stopped) return;
       if (DateTime.now().difference(last) > heartbeatTimeout) {
@@ -267,6 +304,16 @@ abstract class BaseSseService {
     buffer
       ..clear()
       ..write(raw);
+  }
+
+  /// SSE bloğundaki `id:` satırı.
+  static String? parseSseEventId(String block) {
+    for (final line in block.split('\n')) {
+      if (line.startsWith('id:')) {
+        return line.substring(3).trim();
+      }
+    }
+    return null;
   }
 
   /// `data:` satırlarından JSON map çıkarır.

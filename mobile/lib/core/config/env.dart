@@ -82,24 +82,19 @@ class Env {
     defaultValue: 'canlifal://tiktok-auth',
   );
 
+  /// Apple Sign-In Service ID (iOS / Android web auth).
+  static const String appleServiceId = String.fromEnvironment(
+    'APPLE_SERVICE_ID',
+    defaultValue: '',
+  );
+
+  static const String appleRedirectUri = String.fromEnvironment(
+    'APPLE_REDIRECT_URI',
+    defaultValue: 'https://canlifal.com/api/auth/callback/apple',
+  );
+
+  static bool get hasAppleLogin => appleServiceId.trim().isNotEmpty;
+
   static bool get hasTikTokLogin =>
       tiktokClientKey.trim().isNotEmpty && !kIsWeb;
-
-  /// Sesli sohbet Agora — App ID only (token yok).
-  static const agoraVoiceAppId = String.fromEnvironment(
-    'AGORA_VOICE_APP_ID',
-    defaultValue: 'f1cf983a38114b04a4e9102c303ba63e',
-  );
-
-  /// `auto` | `livekit` | `trtc` | `agora` — sesli oda ses motoru.
-  static const String voiceEngine = String.fromEnvironment(
-    'VOICE_ENGINE',
-    defaultValue: 'auto',
-  );
-
-  static bool get preferLiveKit =>
-      voiceEngine == 'livekit' ||
-      (voiceEngine == 'auto' && !kIsWeb);
-
-  static bool get forceTrtc => voiceEngine == 'trtc';
 }

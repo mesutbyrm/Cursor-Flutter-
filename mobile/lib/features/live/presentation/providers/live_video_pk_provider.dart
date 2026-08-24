@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/auth/bot_account_guard.dart';
+import '../../../../core/auth/bot_account_provider.dart';
 import '../../data/datasources/live_stream_extras_datasource.dart';
 import '../../data/pk/pk_room_remote_datasource.dart';
 import '../../domain/pk/pk_room_models.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
+import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import 'live_providers.dart';
 import 'live_namespace_providers.dart';
 import 'pk_room_providers.dart';
@@ -63,41 +66,88 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   PkRoomRemoteDataSource get _pk => ref.read(pkRoomRemoteProvider);
 
   Timer? _poll;
+  var _sseActive = false;
 
   @override
   LiveVideoPkState build(String streamId) {
     ref.onDispose(() => _poll?.cancel());
     Future.microtask(() => refresh());
-    _startPolling();
     return const LiveVideoPkState();
   }
 
   void _startPolling() {
+    if (_sseActive) return;
     _poll?.cancel();
-    _poll = Timer.periodic(const Duration(seconds: 5), (_) => refresh());
+    _poll = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (state.battle == null ||
+          state.status == 'completed' ||
+          state.status == 'ended') {
+        _poll?.cancel();
+        return;
+      }
+      refresh();
+    });
+  }
+
+  void _stopPolling() {
+    _poll?.cancel();
+    _poll = null;
   }
 
   Future<void> refresh() async {
-    // 1) Birleşik PK API (Faz 1–3) — öncelikli.
+    // 1) Ana backend — GET /api/video-streams/{id}/pk-battle
+    try {
+      final api = ref.read(pkBattleRemoteDataSourceProvider);
+      final remote = await api.fetchStreamBattle(arg);
+      if (remote != null && !remote.isEnded) {
+        final map = pkBattleRemoteToBattleMap(remote, myStreamId: arg);
+        state = state.copyWith(
+          battle: map,
+          unifiedMatchId: remote.effectiveId,
+          clearError: true,
+        );
+        if (remote.isActive) {
+          _sseActive = true;
+          _stopPolling();
+        } else {
+          _sseActive = false;
+          _stopPolling();
+        }
+        _syncLiveSocketBattle();
+        return;
+      }
+    } catch (_) {}
+
+    // 2) Birleşik PK — yalnızca aktif maç (pending davet burada işlenmez).
     try {
       final unified = await _pk.activeForStream(arg);
-      if (unified != null && unified.mode == PkRoomMode.oneVsOne) {
+      if (unified != null &&
+          unified.mode == PkRoomMode.oneVsOne &&
+          !unified.isPending) {
         final map = pkRoomMatchToBattleMap(unified, myStreamId: arg);
         state = state.copyWith(
           battle: map,
           unifiedMatchId: unified.id,
           clearError: true,
         );
+        _sseActive = true;
+        _stopPolling();
         _syncLiveSocketBattle();
-        // SSE ile canlı takip (skor/süre).
         ref.read(pkRoomProvider(unified.id).notifier).adopt(unified);
         return;
       }
     } catch (_) {}
 
-    // 2) Eski video-stream PK yolu (geriye dönük).
+    _sseActive = false;
+
+    // 3) Eski video-stream PK yolu (geriye dönük).
     final battle = await _remote.fetchPkBattle(arg);
-    if (battle == null && state.battle == null) return;
+    if (battle == null && state.battle == null) {
+      _stopPolling();
+      state = state.copyWith(clearBattle: true, clearUnifiedMatchId: true);
+      return;
+    }
+    final status = battle?['status']?.toString() ?? '';
     state = state.copyWith(
       battle: battle,
       clearBattle: battle == null,
@@ -105,15 +155,31 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       clearError: true,
     );
     _syncLiveSocketBattle();
+    if (battle != null && status == 'active') _startPolling();
+  }
+
+  /// Kabul sonrası veya SSE'den — ana backend PK durumunu yeniler.
+  Future<void> ingestRemoteBattle([String? battleId]) async {
+    await refresh();
   }
 
   void applyRemoteBattle(Map<String, dynamic> battle) {
+    final status = battle['status']?.toString() ?? '';
+    // Pending davet split ekranı açmaz; yalnızca kabul sonrası aktif senkron.
+    if (status == 'pending' || status == 'invited') {
+      state = state.copyWith(battle: battle, clearError: true);
+      return;
+    }
     final matchId = battle['id']?.toString() ?? battle['battleId']?.toString();
     state = state.copyWith(
       battle: battle,
       unifiedMatchId: matchId ?? state.unifiedMatchId,
       clearError: true,
     );
+    if (state.isUnified && matchId != null && matchId.isNotEmpty) {
+      _sseActive = true;
+      _stopPolling();
+    }
     _syncLiveSocketBattle();
   }
 
@@ -129,19 +195,28 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   }
 
   Future<void> create({String? opponentStreamId, String? targetStreamId}) async {
+    if (ref.read(isBotAccountProvider)) {
+      state = state.copyWith(
+        loading: false,
+        error: BotAccountGuard.blockedMessage('PK başlatma'),
+      );
+      return;
+    }
     state = state.copyWith(loading: true, clearError: true);
     final opponent = targetStreamId ?? opponentStreamId;
     try {
       if (opponent != null && opponent.isNotEmpty) {
-        final unified = await _pk.request(
-          hostStreamId: arg,
+        final api = ref.read(pkBattleRemoteDataSourceProvider);
+        final remote = await api.streamPkAction(
+          streamId: arg,
+          action: 'create',
           opponentStreamId: opponent,
-          durationSec: 180,
+          duration: 180,
         );
-        if (unified != null) {
+        if (remote != null) {
           state = state.copyWith(
-            battle: pkRoomMatchToBattleMap(unified, myStreamId: arg),
-            unifiedMatchId: unified.id,
+            battle: pkBattleRemoteToBattleMap(remote, myStreamId: arg),
+            unifiedMatchId: remote.effectiveId,
             loading: false,
           );
           return;

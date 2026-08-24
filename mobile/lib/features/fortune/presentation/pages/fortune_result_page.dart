@@ -31,42 +31,13 @@ class _FortuneResultPageState extends ConsumerState<FortuneResultPage> {
   final _shareCardKey = GlobalKey();
   var _manualShared = false;
   var _socialSharing = false;
-  var _autoShareTried = false;
 
   FortuneReadingResult get result => widget.result;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _autoShareToSocial());
-  }
 
   @override
   void dispose() {
     _scroll.dispose();
     super.dispose();
-  }
-
-  Future<void> _autoShareToSocial() async {
-    if (_autoShareTried) return;
-    _autoShareTried = true;
-    final me = ref.read(authControllerProvider).valueOrNull;
-    if (me == null) return;
-    try {
-      final shared =
-          await ref.read(fortuneShareHandlerProvider).autoShareIfEnabled(result);
-      if (!mounted || !shared) return;
-      setState(() => _manualShared = true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('CanlıFal Sosyal bölümünde paylaşıldı'),
-          action: SnackBarAction(
-            label: 'Gizlilik',
-            onPressed: () => context.push('/settings'),
-          ),
-        ),
-      );
-    } catch (_) {}
   }
 
   Future<void> _shareToSocialFeed() async {
@@ -89,7 +60,7 @@ class _FortuneResultPageState extends ConsumerState<FortuneResultPage> {
           _socialSharing = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Falın sosyal akışta paylaşıldı ✨')),
+          const SnackBar(content: Text('Sosyal akış güncellendi ✨')),
         );
       }
     } catch (_) {

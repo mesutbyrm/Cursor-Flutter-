@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 /// Onaylı ana sayfa mockup — sabit ölçü ve renkler.
 abstract final class HomeApprovedDesign {
-  static const background = Color(0xFF0B0B15);
-  static const surface = Color(0xFF14141F);
-  static const searchFill = Color(0xFF1A1A24);
-  static const border = Color(0xFF2A2A38);
+  static const background = Color(0xFF070A12);
+  static const surface = Color(0xFF111827);
+  static const searchFill = Color(0xFF151C2C);
+  static const border = Color(0xFF243047);
 
-  static const purple = Color(0xFFA020F0);
+  static const purple = Color(0xFF8B5CF6);
   static const pink = Color(0xFFFF007F);
   static const gold = Color(0xFFFFD700);
   static const liveRed = Color(0xFFFF2D55);
@@ -30,8 +30,8 @@ abstract final class HomeApprovedDesign {
   static const trendThumb = 120.0;
   static const fortuneCardW = 100.0;
   static const fortuneCardH = 120.0;
-  static const tellerCardW = 200.0;
-  static const tellerCardH = 88.0;
+  static const tellerCardW = 132.0;
+  static const tellerCardH = 176.0; // canlı yayın kartı ile aynı oran (3:4)
   static const storySize = 68.0;
 
   static const brandGradient = LinearGradient(
@@ -47,9 +47,12 @@ abstract final class HomeApprovedDesign {
   );
 
   static const liveGlow = BoxShadow(
-    color: Color(0x66A020F0),
-    blurRadius: 14,
+    color: Color(0x408B5CF6),
+    blurRadius: 12,
     spreadRadius: 0,
-    offset: Offset(0, 4),
+    offset: Offset(0, 3),
   );
+
+  static const sectionTitleSize = 20.0;
+  static const cardTitleSize = 15.0;
 }

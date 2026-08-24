@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/config/app_version.dart';
 import '../../../../../core/theme/app_palette.dart';
 import '../../../../../core/widgets/theme_mode_selector.dart';
+import '../../../../admin_web/presentation/providers/admin_web_access_provider.dart';
 import '../../widgets/premium/profile_glass.dart';
+import '../profile_membership_helpers.dart';
+import '../../providers/profile_hub_providers.dart';
+import 'profile_membership_manage_tile.dart';
 
 /// Ayarlar — gruplu liste; tema, hesap, keşfet, destek.
 class ProfileSettingsSection extends StatelessWidget {
@@ -40,6 +46,19 @@ class ProfileSettingsSection extends StatelessWidget {
               ),
               Divider(height: 1, indent: 52, color: palette.divider),
               _SettingsRow(
+                icon: Icons.auto_awesome_rounded,
+                label: buildMembershipSettingsCosmeticsRowLabel(),
+                onTap: () => context.push('/profile/cosmetics'),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: ProfileMembershipManageTile(),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              const _VipGoldSettingsRow(),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              _SettingsRow(
                 icon: Icons.shield_outlined,
                 label: 'Hesap Güvenliği',
                 onTap: () => context.push('/profile/security'),
@@ -50,6 +69,7 @@ class ProfileSettingsSection extends StatelessWidget {
                 label: 'Bildirimler',
                 onTap: () => context.push('/notifications'),
               ),
+              const _AdminWebSettingsRow(),
             ],
           ),
           const SizedBox(height: 16),
@@ -72,6 +92,64 @@ class ProfileSettingsSection extends StatelessWidget {
                 icon: Icons.search_rounded,
                 label: 'Kullanıcı Ara',
                 onTap: () => context.push('/search'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _Group(
+            title: 'Yasal',
+            children: [
+              _SettingsRow(
+                icon: Icons.description_outlined,
+                label: 'Kullanıcı Sözleşmesi',
+                onTap: () => context.push(
+                  '/legal/kullanim-sartlari',
+                  extra: 'Kullanıcı Sözleşmesi',
+                ),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              _SettingsRow(
+                icon: Icons.privacy_tip_outlined,
+                label: 'Gizlilik Politikası',
+                onTap: () => context.push(
+                  '/legal/gizlilik-politikasi',
+                  extra: 'Gizlilik Politikası',
+                ),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              _SettingsRow(
+                icon: Icons.child_care_outlined,
+                label: 'Çocuk Güvenliği Politikası',
+                onTap: () => context.push(
+                  '/legal/cocuk-guvenligi',
+                  extra: 'Çocuk Güvenliği Politikası',
+                ),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              _SettingsRow(
+                icon: Icons.gavel_outlined,
+                label: 'KVKK',
+                onTap: () => context.push('/legal/kvkk', extra: 'KVKK'),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              _SettingsRow(
+                icon: Icons.groups_outlined,
+                label: 'Topluluk Kuralları',
+                onTap: () => context.push(
+                  '/legal/topluluk-kurallari',
+                  extra: 'Topluluk Kuralları',
+                ),
+              ),
+              Divider(height: 1, indent: 52, color: palette.divider),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+                child: Text(
+                  'Sürüm v${AppVersion.name}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: palette.textSecondary,
+                  ),
+                ),
               ),
             ],
           ),
@@ -196,6 +274,44 @@ class _SettingsRow extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Yalnızca Admin / Süper Admin — tam ekran WebView yönetim paneli.
+class _VipGoldSettingsRow extends ConsumerWidget {
+  const _VipGoldSettingsRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final info = ref.watch(profileMembershipInfoProvider);
+    return _SettingsRow(
+      icon: Icons.diamond_outlined,
+      label: buildMembershipSettingsVipGoldRowLabel(info: info),
+      onTap: () => context.push('/vip-gold'),
+    );
+  }
+}
+
+/// Yalnızca Admin / Süper Admin — tam ekran WebView yönetim paneli.
+class _AdminWebSettingsRow extends ConsumerWidget {
+  const _AdminWebSettingsRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!ref.watch(adminWebAccessProvider)) {
+      return const SizedBox.shrink();
+    }
+    final palette = context.palette;
+    return Column(
+      children: [
+        Divider(height: 1, indent: 52, color: palette.divider),
+        _SettingsRow(
+          icon: Icons.admin_panel_settings_outlined,
+          label: 'Yönetim Paneli',
+          onTap: () => context.push('/admin/web'),
+        ),
+      ],
     );
   }
 }

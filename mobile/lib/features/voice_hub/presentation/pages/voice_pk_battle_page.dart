@@ -5,7 +5,9 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../gifts/presentation/sync/gift_event_listener.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/widgets/broadcast_room/live_pk_score_bar.dart';
@@ -18,8 +20,14 @@ import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_provider.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_gift_combo_tracker.dart';
+import '../providers/voice_gift_leaderboard_provider.dart';
 import '../providers/voice_gift_providers.dart';
+import '../providers/voice_room_ui_provider.dart';
 import '../theme/voice_room_tokens.dart';
+import '../../../gifts/presentation/engine/gift_engine_overlay.dart';
+import '../../../gifts/presentation/sync/gift_session_controller.dart';
+import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
+import '../widgets/premium/voice_gift_stage_overlays.dart';
 import '../widgets/premium_2026/voice_cosmic_background.dart';
 import '../widgets/premium_2026/pk/pk_action_bottom_bar.dart';
 import '../widgets/premium_2026/pk/pk_animated_score_bar.dart';
@@ -31,7 +39,6 @@ import '../widgets/premium_2026/pk/pk_mode_switcher.dart';
 import '../widgets/premium_2026/pk/pk_player_hud_frame.dart';
 import '../widgets/premium_2026/pk/pk_team_battle_strip.dart';
 import '../widgets/premium_2026/pk/pk_vs_emblem.dart';
-import '../widgets/premium_2026/pk/pk_winner_celebration.dart';
 import '../widgets/voice_room_gift_sheet.dart';
 
 /// Premium 2026 PK savaş — 1v1, takım, realtime skor, hediye gücü, kazanan FX.
@@ -55,6 +62,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   StreamSubscription<LiveGiftEvent>? _giftSub;
   var _lastGiftSideLeft = true;
   var _chatOpen = false;
+  var _resultNavigated = false;
 
   @override
   void initState() {
@@ -64,14 +72,14 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
 
   void _bootstrap() {
     final live = ref.read(voiceRoomLiveProvider(widget.room.liveKey));
-    ref.read(pkBattleProvider.notifier).init(
+    ref.read(pkBattleProvider.notifier).prepareShell(
           room: widget.room,
           presence: live.presence,
           left: widget.leftUser,
           right: widget.rightUser,
         );
     _startGiftRealtime();
-    _startPkRemote();
+    unawaited(_startPkRemote());
   }
 
   Future<void> _startPkRemote() async {
@@ -95,12 +103,6 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
         return;
       }
     }
-
-    remote.connectSocket(
-      roomId: roomKey,
-      alternateRoomId: r.slug != roomKey ? r.slug : null,
-      battleId: battle.id,
-    );
   }
 
   void _startGiftRealtime() {
@@ -126,15 +128,30 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   void _onGiftEvent(LiveGiftEvent raw) {
     if (!mounted) return;
     final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
+    ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
+
     final toLeft = ref.read(pkBattleProvider.notifier).giftTargetsLeft(event);
     _lastGiftSideLeft = toLeft;
     ref.read(pkBattleProvider.notifier).applyGift(event, toLeft: toLeft);
   }
 
+  void _openResultPageIfNeeded({
+    required PkBattleState pk,
+    PkBattleRemote? remote,
+  }) {
+    if (_resultNavigated || !mounted) return;
+    final ended = pk.isFinished || (remote?.isEnded ?? false);
+    if (!ended) return;
+    _resultNavigated = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.pushReplacement('/pk/result');
+    });
+  }
+
   @override
   void dispose() {
     _giftSub?.cancel();
-    ref.read(pkBattleRemoteProvider.notifier).disconnectSocket();
     super.dispose();
   }
 
@@ -142,18 +159,56 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   Widget build(BuildContext context) {
     final live = ref.watch(voiceRoomLiveProvider(widget.room.liveKey));
     final pk = ref.watch(pkBattleProvider);
-    final remote = ref.watch(pkBattleRemoteProvider);
+    final remote = ref.watch(pkBattleForRoomProvider(widget.room));
     final leadingLeft = pk.left.total >= pk.right.total;
     final isChallenger = remote != null &&
         [widget.room.apiRoomKey, widget.room.id, widget.room.slug]
             .contains(remote.voiceRoomId);
+    final room = widget.room;
+    final sessionKey =
+        room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
 
-    return Scaffold(
+    ref.listen<PkBattleState>(pkBattleProvider, (prev, next) {
+      _openResultPageIfNeeded(pk: next, remote: remote);
+    });
+    ref.listen<PkBattleRemote?>(pkBattleForRoomProvider(widget.room), (prev, next) {
+      _openResultPageIfNeeded(pk: pk, remote: next);
+    });
+
+    return GiftEventListener(
+      sessionKey: sessionKey,
+      child: Scaffold(
       backgroundColor: VoiceRoomTokens.bgDeep,
       body: Stack(
         fit: StackFit.expand,
         children: [
           const VoiceCosmicBackground(),
+          Consumer(
+            builder: (context, ref, _) {
+              final activeGift = ref.watch(
+                giftSessionProvider(sessionKey)
+                    .select((s) => s.activeAnimation),
+              );
+              final giftsOn = ref.watch(
+                voiceRoomUiProvider.select((s) => s.giftAnimationsEnabled),
+              );
+              return Positioned.fill(
+                child: IgnorePointer(
+                  child: GiftEngineOverlay(
+                    event: activeGift,
+                    enabled: giftsOn,
+                    stage: GiftStageContext.voiceRoom,
+                    sessionKey: sessionKey,
+                    onFinished: (id) {
+                      ref
+                          .read(giftSessionProvider(sessionKey).notifier)
+                          .dequeueAnimation(id);
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
           PkFloatingReactions(
             burstToken: pk.reactionBurst,
             enabled: pk.isActive,
@@ -169,7 +224,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                   timer: pk.timerLabel,
                   phase: pk.phase,
                   onBack: () => context.pop(),
-                  onMode: pk.isActive
+                  onMode: pk.isActive && !pk.serverAuthoritative
                       ? (m) => ref.read(pkBattleProvider.notifier).setMode(m)
                       : null,
                   mode: pk.mode,
@@ -205,7 +260,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                               final roomKey =
                                   r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
                               ref.read(pkBattleRemoteProvider.notifier).accept(
-                                    remote.id,
+                                    remote.effectiveId,
                                     roomId: roomKey,
                                     alternateRoomId:
                                         r.slug != roomKey ? r.slug : null,
@@ -216,7 +271,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                               final roomKey =
                                   r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
                               ref.read(pkBattleRemoteProvider.notifier).reject(
-                                    remote.id,
+                                    remote.effectiveId,
                                     roomId: roomKey,
                                     alternateRoomId:
                                         r.slug != roomKey ? r.slug : null,
@@ -234,17 +289,56 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                             ),
                           ),
                   ),
-                PkMicParticipantRow(presence: live.presence),
+                PkMicParticipantRow(
+                  presence: live.presence,
+                  selfUserId: ref.read(authControllerProvider).valueOrNull?.id,
+                ),
                 Expanded(
                   flex: 2,
                   child: PkGiftFeedPanel(messages: live.messages),
                 ),
+                if (pk.isActive)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final battle = ref.read(
+                            pkBattleForRoomProvider(widget.room),
+                          );
+                          final battleId = battle?.effectiveId ?? '';
+                          if (battleId.isEmpty) return;
+                          final r = widget.room;
+                          final roomKey =
+                              r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+                          PkEventLog.ending(battleId: battleId);
+                          await ref.read(pkBattleRemoteProvider.notifier).end(
+                                battleId,
+                                roomId: roomKey,
+                                alternateRoomId:
+                                    r.slug != roomKey ? r.slug : null,
+                              );
+                          PkEventLog.ended(battleId: battleId);
+                          if (context.mounted) context.pop();
+                        },
+                        icon: const Icon(Icons.stop_circle_outlined, size: 18),
+                        label: const Text('PK\'yi Bitir'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.45),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 PkActionBottomBar(
-                  onSupport: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Destek skora eklendi!')),
-                    );
-                  },
+                  onSupport: () => showVoiceRoomGiftPicker(
+                    context,
+                    ref,
+                    room: widget.room,
+                  ),
                   onGift: () => showVoiceRoomGiftPicker(
                     context,
                     ref,
@@ -266,12 +360,9 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
               ],
             ),
           ),
-          PkWinnerCelebration(
-            state: pk,
-            onRestart: () => ref.read(pkBattleProvider.notifier).restart(),
-            onClose: () => context.pop(),
-          ),
+          VoiceGiftHudOverlays(sessionKey: sessionKey),
         ],
+      ),
       ),
     );
   }

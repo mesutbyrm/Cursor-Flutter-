@@ -6,7 +6,10 @@ import 'package:go_router/go_router.dart';
 
 import 'package:canlifal_social/app/router/app_router.dart';
 import 'package:canlifal_social/core/bootstrap/auth_route_paths.dart';
+import 'package:canlifal_social/core/config/env.dart';
+import 'package:canlifal_social/core/network/dio_provider.dart';
 import 'package:canlifal_social/core/network/token_storage.dart';
+import 'package:dio/dio.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_incoming_sse_service.dart';
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
@@ -153,7 +156,12 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
 
   void _startPoll() {
     _poll?.cancel();
-    _poll = Timer.periodic(const Duration(seconds: 2), (_) => _pollApi());
+    if (!_mayRunTellerBackgroundSync()) return;
+    final sseActive = _sseService?.isStreamActive == true;
+    final interval = sseActive
+        ? const Duration(seconds: 30)
+        : const Duration(seconds: 4);
+    _poll = Timer.periodic(interval, (_) => _pollApi());
     unawaited(_pollApi());
   }
 
@@ -176,7 +184,6 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     final wasTeller = _isFortuneTeller;
     _isFortuneTeller = true;
     _tellerProfileId = profile.id;
-    await ref.read(livePsychicsRepositoryProvider).setOnline(online: true);
     if (!wasTeller) {
       await _connectSse();
     }
@@ -188,10 +195,27 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
         _sseService ?? ref.read(psychicIncomingSseServiceProvider);
     _sseService ??= service;
     final tokens = ref.read(tokenStorageProvider);
+    final refreshDio = Dio(
+      BaseOptions(
+        baseUrl: Env.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 3),
+        receiveTimeout: const Duration(seconds: 5),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
     await service.connect(
           accessToken: tokens.readAccess,
+          refreshTokens: () => tryRefreshAccessToken(refreshDio, tokens),
           onRequest: _onSseRequest,
+          onSessionCancelled: (sessionId) {
+            if (!mounted) return;
+            ref.read(psychicSessionCancelSignalProvider.notifier).signal(sessionId);
+          },
         );
+    if (mounted) _startPoll();
   }
 
   void _attachLiveEventBus() {
@@ -206,6 +230,8 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   void _onSseRequest(PsychicRequestEntity req) {
     if (!mounted || !_mayRunTellerBackgroundSync()) return;
     if (!req.isPending) return;
+    final bus = ref.read(psychicLiveEventBusProvider);
+    if (!bus.isClosed) bus.add(req);
     final uid = ref.read(authControllerProvider).valueOrNull?.id;
     if (!shouldPresentPsychicIncomingInvite(
       authUserId: uid,
@@ -464,7 +490,6 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
         _isFortuneTeller = true;
         _tellerProfileId = profile.id;
         if (!wasTeller || prev?.profile?.id != profile.id) {
-          unawaited(ref.read(livePsychicsRepositoryProvider).setOnline(online: true));
           unawaited(_connectSse());
           unawaited(_pollApi());
         }

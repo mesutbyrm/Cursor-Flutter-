@@ -9,6 +9,10 @@ import '../../domain/usecases/enqueue_song_usecase.dart';
 import '../../domain/usecases/resolve_stream_usecase.dart';
 import '../../domain/usecases/search_music_usecase.dart';
 
+import '../../data/datasources/room_song_remote_datasource.dart';
+import '../bloc/room_song_bloc.dart';
+import '../bloc/room_song_event.dart';
+
 final roomMusicRemoteDataSourceProvider = Provider<RoomMusicRemoteDataSource>(
   (ref) => RoomMusicRemoteDataSource(ref.watch(dioProvider)),
 );
@@ -33,4 +37,20 @@ final resolveStreamUseCaseProvider = Provider<ResolveStreamUseCase>(
 
 final controlPlaybackUseCaseProvider = Provider<ControlPlaybackUseCase>(
   (ref) => ControlPlaybackUseCase(ref.watch(roomMusicRepositoryProvider)),
+);
+
+final roomSongRemoteDataSourceProvider = Provider<RoomSongRemoteDataSource>(
+  (ref) => RoomSongRemoteDataSource(ref.watch(dioProvider)),
+);
+
+final roomSongBlocProvider = Provider.autoDispose.family<RoomSongBloc, String>(
+  (ref, roomId) {
+    final id = roomId.trim();
+    final bloc = RoomSongBloc(ref.watch(roomSongRemoteDataSourceProvider));
+    ref.onDispose(bloc.close);
+    if (id.isNotEmpty) {
+      bloc.add(RoomSongJoinSync(id));
+    }
+    return bloc;
+  },
 );

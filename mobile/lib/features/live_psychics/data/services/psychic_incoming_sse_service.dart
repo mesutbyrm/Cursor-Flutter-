@@ -8,8 +8,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/sse/sse_reconnect_policy.dart';
 import '../../domain/entities/psychic_request_entity.dart';
-import '../../presentation/providers/psychic_live_event_bus.dart';
-import '../../presentation/providers/psychic_push_payload.dart';
+import 'psychic_incoming_sse_parser.dart';
 
 /// Falcı gelen istek SSE — `GET /api/fortune-tellers/sessions/stream`.
 class PsychicIncomingSseService {
@@ -20,19 +19,28 @@ class PsychicIncomingSseService {
   StreamSubscription<List<int>>? _bytesSub;
   Timer? _reconnectTimer;
   Future<String?> Function()? _accessToken;
+  Future<bool> Function()? _refreshTokens;
   void Function(PsychicRequestEntity request)? _onRequest;
+  void Function(String sessionId)? _onSessionCancelled;
   void Function()? _onPresenceTick;
   var _stopped = false;
+  var _streamActive = false;
   var _reconnectAttempt = 0;
+
+  bool get isStreamActive => _streamActive && !_stopped;
 
   Future<void> connect({
     required Future<String?> Function() accessToken,
     required void Function(PsychicRequestEntity request) onRequest,
+    Future<bool> Function()? refreshTokens,
+    void Function(String sessionId)? onSessionCancelled,
     void Function()? onPresenceTick,
   }) async {
     _stopped = false;
     _accessToken = accessToken;
+    _refreshTokens = refreshTokens;
     _onRequest = onRequest;
+    _onSessionCancelled = onSessionCancelled;
     _onPresenceTick = onPresenceTick;
     await _openStream();
   }
@@ -70,6 +78,7 @@ class PsychicIncomingSseService {
         return;
       }
       _reconnectAttempt = 0;
+      _streamActive = true;
       final buffer = StringBuffer();
       _bytesSub = stream.listen(
         (chunk) {
@@ -80,6 +89,17 @@ class PsychicIncomingSseService {
         onDone: () => _scheduleReconnect(),
         cancelOnError: false,
       );
+    } on DioException catch (e) {
+      if (kDebugMode) debugPrint('PsychicIncomingSse: $e');
+      if (e.response?.statusCode == 401 && _refreshTokens != null) {
+        final ok = await _refreshTokens!();
+        if (ok && !_stopped) {
+          await _openStream();
+          return;
+        }
+        return;
+      }
+      _scheduleReconnect();
     } catch (e) {
       if (kDebugMode) debugPrint('PsychicIncomingSse: $e');
       _scheduleReconnect();
@@ -112,29 +132,20 @@ class PsychicIncomingSseService {
     if (payload.isEmpty || payload == '[DONE]') return;
     try {
       final decoded = jsonDecode(payload);
-      if (decoded is! Map) return;
-      final map = Map<String, dynamic>.from(decoded);
-      if (eventName != null && eventName.isNotEmpty) {
-        map.putIfAbsent('event', () => eventName);
-        map.putIfAbsent('type', () => eventName);
-      }
-      final type = (map['type'] ?? eventName ?? '').toString().toLowerCase();
-      if (type.contains('online') ||
-          type.contains('offline') ||
-          type.contains('presence') ||
-          type.contains('status')) {
-        _onPresenceTick?.call();
-      }
-      if (type.contains('request') ||
-          type.contains('session') ||
-          type.contains('invite') ||
-          map.containsKey('sessionId') ||
-          map.containsKey('request') ||
-          map.containsKey('session')) {
-        final req = parsePsychicIncomingPayload(map) ??
-            parsePsychicSsePayload(map);
-        if (req != null && req.sessionId.isNotEmpty && req.isPending) {
-          _onRequest?.call(req);
+      final events = parsePsychicIncomingSsePayload(
+        decoded,
+        eventName: eventName,
+      );
+      for (final event in events) {
+        switch (event) {
+          case PsychicIncomingPresenceTick():
+            _onPresenceTick?.call();
+          case PsychicIncomingSessionRequests(:final requests):
+            for (final req in requests) {
+              _onRequest?.call(req);
+            }
+          case PsychicIncomingSessionCancelled(:final sessionId):
+            _onSessionCancelled?.call(sessionId);
         }
       }
     } catch (_) {}
@@ -142,6 +153,12 @@ class PsychicIncomingSseService {
 
   void _scheduleReconnect() {
     if (_stopped) return;
+    if (SseReconnectPolicy.shouldGiveUp(_reconnectAttempt)) {
+      if (kDebugMode) {
+        debugPrint('PsychicIncomingSse: max reconnect attempts reached');
+      }
+      return;
+    }
     _reconnectTimer?.cancel();
     _reconnectAttempt++;
     _reconnectTimer = Timer(
@@ -153,6 +170,7 @@ class PsychicIncomingSseService {
   }
 
   Future<void> _closeStreamOnly() async {
+    _streamActive = false;
     _reconnectTimer?.cancel();
     _cancel?.cancel('reconnect');
     await _bytesSub?.cancel();
@@ -165,7 +183,9 @@ class PsychicIncomingSseService {
   Future<void> disconnect() async {
     _stopped = true;
     _onRequest = null;
+    _onSessionCancelled = null;
     _onPresenceTick = null;
+    _refreshTokens = null;
     await _closeStreamOnly();
   }
 }

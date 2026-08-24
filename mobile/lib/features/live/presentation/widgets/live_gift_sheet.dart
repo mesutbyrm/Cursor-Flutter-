@@ -3,12 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../gifts/presentation/widgets/lucky_gift_badge.dart';
+import '../../../gifts/presentation/widgets/lucky_gift_spin_overlay.dart';
+import '../../../gifts/presentation/providers/gift_providers.dart';
+import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_gift_type.dart';
+import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../gifts/providers/live_gift_providers.dart';
 
 Future<void> showLiveGiftPicker(
@@ -17,6 +23,7 @@ Future<void> showLiveGiftPicker(
   required String streamId,
   String receiverName = 'Yayıncı',
 }) async {
+  ref.invalidate(liveStreamGiftCatalogProvider);
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -91,34 +98,65 @@ Future<void> showLiveGiftPicker(
                                 final user = ref.read(authControllerProvider).valueOrNull;
                                 final sender = user?.displayName ?? user?.username ?? 'Kullanıcı';
                                 try {
-                                  await ref.read(liveGiftsRemoteProvider).sendGift(
+                                  final result = await ref
+                                      .read(liveGiftsRemoteProvider)
+                                      .sendGift(
                                         streamId: streamId,
                                         giftTypeId: g.id,
                                         senderName: sender,
                                         receiverName: receiverName,
-                                        giftName: LiveGiftCatalog.displayName(g),
+                                        giftName:
+                                            LiveGiftCatalog.displayName(g),
                                         unitPrice: g.price,
                                         senderId: user?.id,
+                                        isLucky: g.isLucky,
                                       );
                                   if (context.mounted) {
                                     ref.refreshWalletCache(force: true);
                                     Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          '${LiveGiftCatalog.displayName(g)} gönderildi',
+                                    if (result.luckyResult != null) {
+                                      final lucky = result.luckyResult!;
+                                      await showLuckyGiftSpinOverlay(
+                                        context,
+                                        result: lucky,
+                                        giftName: LiveGiftCatalog.displayName(g),
+                                      );
+                                      if (lucky.isJackpot) {
+                                        ref
+                                            .read(staffEntranceMarqueeProvider
+                                                .notifier)
+                                            .enqueueLuckyJackpot(
+                                              userName: sender,
+                                              giftName:
+                                                  LiveGiftCatalog.displayName(g),
+                                              multiplier:
+                                                  lucky.multiplier.round(),
+                                              wonJetons: lucky.wonJetons,
+                                            );
+                                      }
+                                    } else {
+                                      GiftSyncLog.giftSent(
+                                        roomId: streamId,
+                                        giftId: g.id,
+                                        eventId:
+                                            'api_send_${DateTime.now().millisecondsSinceEpoch}',
+                                      );
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            '${LiveGiftCatalog.displayName(g)} gönderildi',
+                                          ),
                                         ),
-                                      ),
-                                    );
+                                      );
+                                    }
                                   }
                                 } catch (e) {
                                   if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          ApiException.userMessage(e),
-                                        ),
-                                      ),
+                                    showJetonAwareError(
+                                      context,
+                                      ApiException.userMessage(e),
+                                      ref: ref,
                                     );
                                   }
                                 }
@@ -148,6 +186,7 @@ class _GiftTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = gift.iconUrl(Env.siteOrigin);
+    final emoji = gift.displayEmoji;
     return Material(
       color: AppTheme.surfaceElevated,
       borderRadius: BorderRadius.circular(14),
@@ -159,14 +198,23 @@ class _GiftTile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              if (gift.isLucky)
+                Align(
+                  alignment: Alignment.topRight,
+                  child: LuckyGiftBadge(compact: true),
+                ),
               Expanded(
-                child: url.isEmpty
-                    ? const Icon(Icons.card_giftcard, size: 36)
-                    : CanlifalNetworkImage(
-                        url: url,
-                        fit: BoxFit.contain,
-                        errorWidget: const Icon(Icons.card_giftcard),
-                      ),
+                child: emoji != null
+                    ? Center(
+                        child: Text(emoji, style: const TextStyle(fontSize: 36)),
+                      )
+                    : url.isEmpty
+                        ? const Icon(Icons.card_giftcard, size: 36)
+                        : CanlifalNetworkImage(
+                            url: url,
+                            fit: BoxFit.contain,
+                            errorWidget: const Icon(Icons.card_giftcard),
+                          ),
               ),
               const SizedBox(height: 4),
               Text(

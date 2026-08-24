@@ -3,6 +3,7 @@ import '../../domain/entities/psychic_entity.dart';
 import '../../domain/entities/psychic_request_entity.dart';
 import '../../domain/entities/psychic_room_entity.dart';
 import '../../domain/entities/psychic_review_entity.dart';
+import '../../domain/entities/psychic_session_history_entity.dart';
 import '../../domain/entities/psychic_session_status.dart';
 import '../../domain/repositories/live_psychics_repository.dart';
 
@@ -54,6 +55,14 @@ abstract final class PsychicModel {
         '';
     final userId = str(m, ['userId', 'tellerUserId', 'ownerId']) ??
         str(user, ['id', 'userId']);
+    final streamId = str(m, [
+          'liveStreamId',
+          'streamId',
+          'videoStreamId',
+          'currentStreamId',
+          'broadcastStreamId',
+        ]) ??
+        str(user, ['liveStreamId', 'streamId']);
     return PsychicEntity(
       id: profileId.isNotEmpty ? profileId : (userId ?? ''),
       userId: userId,
@@ -84,6 +93,7 @@ abstract final class PsychicModel {
       specialties: specs,
       category: str(m, ['category', 'specialty']) ?? str(user, ['category']),
       applicationStatus: _applicationStatusFrom(m, user),
+      liveStreamId: streamId,
     );
   }
 
@@ -258,16 +268,28 @@ abstract final class PsychicModel {
         ]) ??
         (isTeller ? clientId : tellerUserId);
     final statusRaw = str(data, ['status']) ?? 'active';
-    final elapsed = asInt(pick(data, ['elapsedSeconds', 'elapsed_seconds']));
+    var elapsed = asInt(pick(data, ['elapsedSeconds', 'elapsed_seconds']));
+    final remainingDirect =
+        asInt(pick(data, ['remainingSeconds', 'remaining_seconds']));
+    final maxMin = () {
+      final v = asInt(pick(data, [
+        'maxMinutes',
+        'durationMinutes',
+        'duration',
+        'newMaxMinutes',
+      ]));
+      return v > 0 ? v : 10;
+    }();
+    if (remainingDirect > 0 && maxMin > 0) {
+      elapsed = (maxMin * 60) - remainingDirect;
+      if (elapsed < 0) elapsed = 0;
+    }
     final roomId = str(data, ['roomId', 'trtcRoomId', 'trtc_room_id']) ??
         str(asJsonMap(data['room']), ['roomId', 'trtcRoomId', 'id']);
     return PsychicRoomEntity(
       sessionId: id,
       status: PsychicSessionStatus.fromApi(statusRaw),
-      maxMinutes: () {
-        final v = asInt(pick(data, ['maxMinutes', 'durationMinutes', 'duration']));
-        return v > 0 ? v : 10;
-      }(),
+      maxMinutes: maxMin,
       timerStarted: data['timerStarted'] == true,
       elapsedSeconds: elapsed,
       roomId: roomId,
@@ -408,6 +430,58 @@ abstract final class PsychicModel {
       createdAt: createdRaw != null && createdRaw.isNotEmpty
           ? DateTime.tryParse(createdRaw)
           : null,
+    );
+  }
+
+  /// PATCH `/api/fortune-tellers/sessions/{id}` yanıtı — `body.isNotEmpty` başarı sayılmaz.
+  static bool respondSessionSuccess(
+    Map<String, dynamic> body, {
+    required String action,
+  }) {
+    if (body['success'] == false) return false;
+    if (body['success'] == true) return true;
+    final roomId = str(body, ['roomId', 'trtcRoomId', 'room_id']) ??
+        str(asJsonMap(body['session'] ?? {}), ['roomId', 'id']);
+    if (roomId != null && roomId.isNotEmpty) return true;
+    final status = str(body, ['status'])?.toLowerCase() ?? '';
+    final act = action.toLowerCase();
+    if (act == 'accept') {
+      return status == 'accepted' || status == 'active';
+    }
+    if (act == 'reject' || act == 'cancel') {
+      return status == 'rejected' ||
+          status == 'cancelled' ||
+          status == 'canceled' ||
+          status == 'declined';
+    }
+    return false;
+  }
+
+  static PsychicSessionHistoryEntity sessionHistoryFromJson(dynamic raw) {
+    final m = asJsonMap(raw);
+    final teller = asJsonMap(m['teller'] ?? m['fortuneTeller']);
+    final user = asJsonMap(m['user'] ?? m['client']);
+    final createdRaw = pick(m, ['createdAt', 'startedAt'])?.toString();
+    return PsychicSessionHistoryEntity(
+      sessionId: str(m, ['id', 'sessionId']) ?? '',
+      status: PsychicSessionStatus.fromApi(str(m, ['status'])),
+      fortuneType: str(m, ['fortuneType', 'category']) ?? 'general',
+      creditsCharged: asInt(pick(m, ['creditsCharged', 'totalJeton', 'jeton'])),
+      maxMinutes: asInt(pick(m, ['maxMinutes', 'durationMinutes', 'duration'])),
+      minutesUsed: () {
+        final v = asInt(pick(m, ['minutesUsed', 'elapsedMinutes']));
+        return v > 0 ? v : null;
+      }(),
+      createdAt: createdRaw != null && createdRaw.isNotEmpty
+          ? DateTime.tryParse(createdRaw)
+          : null,
+      tellerId: str(teller, ['id', 'tellerId']) ??
+          str(m, ['tellerId', 'fortuneTellerId']),
+      tellerName: str(teller, ['displayName', 'name']) ??
+          str(m, ['tellerName']),
+      tellerAvatarUrl: str(teller, ['avatarUrl', 'avatar', 'image']),
+      clientName: str(user, ['name', 'displayName', 'username']),
+      clientAvatarUrl: str(user, ['avatarUrl', 'avatar', 'image']),
     );
   }
 }

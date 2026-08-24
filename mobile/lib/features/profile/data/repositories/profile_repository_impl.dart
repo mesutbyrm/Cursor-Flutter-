@@ -7,6 +7,7 @@ import '../../../../core/pagination/paged_result.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
+import '../../domain/entities/payment_method_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../datasources/canlifal_user_api_datasource.dart';
@@ -29,6 +30,17 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
+  Future<ProfileExtendedEntity> getUserExtended(String id) async {
+    if (ProfileRemoteDataSource.looksLikeUsernameKey(id)) {
+      try {
+        final user = await _canlifal.lookupByUsername(id);
+        return _remote.userExtended(user.id);
+      } catch (_) {}
+    }
+    return _remote.userExtended(id);
+  }
+
+  @override
   Future<void> follow(String id) => _remote.follow(id);
 
   @override
@@ -44,6 +56,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     String? newPassword,
     String? birthDate,
     String? birthTime,
+    String? favoriteTeam,
   }) =>
       _remote.updateMe(
         displayName: displayName,
@@ -54,6 +67,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         newPassword: newPassword,
         birthDate: birthDate,
         birthTime: birthTime,
+        favoriteTeam: favoriteTeam,
       );
 
   @override
@@ -123,20 +137,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
       stats = ProfileStatsEntity(
         liveStreams: broadcasts.length,
         likes: stats.likes,
-        followers: stats.followers,
-        following: stats.following,
-        giftsReceivedCount: stats.giftsReceivedCount,
-        giftsReceivedCoins: stats.giftsReceivedCoins,
-        earningsJeton: stats.earningsJeton,
-        approvedTopUpTotal: stats.approvedTopUpTotal,
-        profileViews: stats.profileViews,
-      );
-    }
-
-    if (stats.likes == 0 && stats.giftsReceivedCount > 0) {
-      stats = ProfileStatsEntity(
-        liveStreams: stats.liveStreams,
-        likes: stats.giftsReceivedCount,
         followers: stats.followers,
         following: stats.following,
         giftsReceivedCount: stats.giftsReceivedCount,
@@ -247,6 +247,10 @@ class WalletRepositoryImpl implements WalletRepository {
 
   @override
   Future<PaymentConfigEntity> paymentConfig() => _remote.paymentConfig();
+
+  @override
+  Future<List<PaymentMethodEntity>> paymentMethods() =>
+      _remote.paymentMethods();
 
   @override
   Future<void> submitPaymentRequest(Map<String, dynamic> body) =>

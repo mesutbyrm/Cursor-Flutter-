@@ -8,6 +8,7 @@ import 'package:tencent_rtc_sdk/trtc_cloud.dart';
 import 'package:tencent_rtc_sdk/trtc_cloud_def.dart';
 import 'package:tencent_rtc_sdk/trtc_cloud_listener.dart';
 import 'package:tencent_rtc_sdk/trtc_cloud_video_view.dart';
+import 'package:tencent_rtc_sdk/tx_audio_effect_manager.dart';
 import 'package:tencent_rtc_sdk/tx_device_manager.dart';
 
 import '../../voice_hub/data/services/voice_room_debug_log.dart';
@@ -15,31 +16,68 @@ import '../domain/entities/trtc_credentials.dart';
 
 /// Tencent TRTC oda oturumu — canlı yayın ve sesli sohbet.
 class TrtcRoomManager {
+  /// Tek `TRTCCloud.sharedInstance()` — eşzamanlı çoklu manager oturumu engelle.
+  static TrtcRoomManager? _activeSession;
+
   TRTCCloud? _cloud;
   TXDeviceManager? _device;
   TRTCCloudListener? _listener;
   Completer<int>? _enterRoomCompleter;
+  Completer<void>? _exitRoomCompleter;
 
   bool _inRoom = false;
+  bool _previewOnly = false;
   bool _micOn = true;
   bool _cameraOn = true;
   bool _isHost = false;
   bool _twoWayVideo = false;
+  bool _audioOnly = false;
+  bool _notifiersDisposed = false;
   String? _localUserId;
 
   String? remoteAnchorUserId;
   final ValueNotifier<String?> remoteAnchorUserIdNotifier =
       ValueNotifier<String?>(null);
   final ValueNotifier<bool> remoteVideoAvailable = ValueNotifier(false);
+  /// Katılımcı bazlı uzak video durumu — yerel kamera ile karıştırılmaz.
+  final ValueNotifier<Map<String, bool>> remoteVideoByUser =
+      ValueNotifier<Map<String, bool>>({});
+  /// Katılımcı bazlı uzak ses durumu — yerel mikrofon ile karıştırılmaz.
+  final ValueNotifier<Map<String, bool>> remoteAudioByUser =
+      ValueNotifier<Map<String, bool>>({});
 
   int? _boundRemoteViewId;
   String? _boundRemoteUserId;
   String? _expectedAnchorUserId;
 
+  /// Bağlantı koptuğunda çağrılır (yeniden bağlanma koordinatörde).
+  VoidCallback? onConnectionLost;
+
+  final ValueNotifier<int?> networkQuality = ValueNotifier<int?>(null);
+
   bool get isSupported => !kIsWeb;
   bool get inRoom => _inRoom;
+  /// Agora uyumluluk — `inChannel` yerine.
+  bool get inChannel => _inRoom;
+
+  final ValueNotifier<List<String>> remoteUserIdsNotifier =
+      ValueNotifier<List<String>>([]);
+  final Set<String> _remoteUserIds = {};
   bool get micOn => _micOn;
   bool get cameraOn => _cameraOn;
+
+  void _trtcLog(String event, [Map<String, Object?> fields = const {}]) {
+    _logTrtc(event, fields);
+  }
+
+  static void _logTrtc(String event, [Map<String, Object?> fields = const {}]) {
+    if (!kDebugMode) return;
+    final safe = Map<String, Object?>.from(fields)
+      ..remove('userSig')
+      ..remove('token')
+      ..remove('accessToken');
+    debugPrint('[TRTC] $event $safe');
+  }
 
   static Future<bool> requestPermissions({required bool video}) async {
     if (kIsWeb) return false;
@@ -62,20 +100,43 @@ class TrtcRoomManager {
       }
       return true;
     } on MissingPluginException {
-      debugPrint(
-        'permission_handler kayıtlı değil — uygulamayı tamamen kapatıp yeniden kurun.',
-      );
+      _logTrtc('permission_plugin_missing');
       return false;
     } catch (e) {
-      debugPrint('İzin hatası: $e');
+      _logTrtc('permission_error', {'error': e.runtimeType.toString()});
       return false;
     }
   }
 
+  /// Önizleme — kanala girmeden kamera (yayın hazırlığı).
+  Future<void> startPreviewOnly() async {
+    if (!isSupported) return;
+    final ok = await requestPermissions(video: true);
+    if (!ok) throw StateError('Kamera izni gerekli');
+
+    _cloud ??= await TRTCCloud.sharedInstance();
+    _device ??= _cloud!.getDeviceManager();
+    _previewOnly = true;
+    _isHost = true;
+    _cameraOn = true;
+    _configureAudioProcessing();
+  }
+
+  /// Önizlemeden yayın odasına geçerken motoru bırak.
+  Future<void> shutdownForHandoff() async {
+    if (_previewOnly) {
+      _cloud?.stopLocalPreview();
+      _previewOnly = false;
+    }
+    await leave();
+  }
+
+  void muteAllRemoteAudioStreams(bool mute) => setAllRemoteAudioMuted(mute);
+
   Future<void> join({
     required TrtcCredentials credentials,
     required bool isHost,
-    required bool audioOnly,
+    bool audioOnly = false,
     String? expectedAnchorUserId,
     bool twoWayVideo = false,
   }) async {
@@ -83,12 +144,13 @@ class TrtcRoomManager {
       throw StateError('TRTC yalnızca Android/iOS üzerinde desteklenir');
     }
 
-    final roomId = credentials.roomId.trim();
+    final roomId = credentials.effectiveStrRoomId;
     if (roomId.isEmpty) {
       throw StateError('TRTC oda kimliği boş — yayına bağlanılamadı');
     }
 
     try {
+      _trtcLog('initialize', {'roomId': roomId});
       await TRTCCloud.sharedInstance();
     } catch (e) {
       throw StateError(
@@ -105,6 +167,14 @@ class TrtcRoomManager {
       await leave();
     }
 
+    final other = _activeSession;
+    if (other != null && other != this && other._inRoom) {
+      await other.leave();
+    }
+
+    _previewOnly = false;
+    _audioOnly = audioOnly;
+
     _cloud ??= await TRTCCloud.sharedInstance();
     _device ??= _cloud!.getDeviceManager();
     _isHost = isHost;
@@ -120,7 +190,10 @@ class TrtcRoomManager {
       _cloud!.unRegisterListener(_listener!);
     }
     _listener = TRTCCloudListener(
-      onError: (code, msg) => debugPrint('TRTC error $code: $msg'),
+      onError: (code, msg) =>
+          _trtcLog('error', {'code': code, 'message': msg}),
+      onWarning: (code, msg) =>
+          _trtcLog('warning', {'code': code, 'message': msg}),
       onEnterRoom: (result) {
         _inRoom = result > 0;
         VoiceRoomDebugLog.log('audio.trtc.enter_room', {
@@ -129,26 +202,58 @@ class TrtcRoomManager {
           'host': _isHost,
           'audioOnly': audioOnly,
         });
-        debugPrint('TRTC enterRoom: $result room=$roomId host=$_isHost');
+        _trtcLog('enter_room', {
+          'result': result,
+          'roomId': roomId,
+          'host': _isHost,
+        });
+        if (result > 0) {
+          _trtcLog('join_success', {'roomId': roomId, 'result': result});
+        }
         final c = _enterRoomCompleter;
         if (c != null && !c.isCompleted) c.complete(result);
       },
       onRemoteUserEnterRoom: (userId) {
-        debugPrint('TRTC remote enter: $userId');
+        _trtcLog('remote_enter', {'userId': userId});
         if (userId == _localUserId) return;
+        _trtcLog('remote_user_joined', {'userId': userId});
+        _trackRemoteUser(userId, joined: true);
         if (_twoWayVideo) {
           _setRemoteAnchor(userId);
           _cloud?.muteRemoteAudio(userId, false);
         }
       },
       onRemoteUserLeaveRoom: (userId, _) {
+        _trtcLog('remote_leave', {'userId': userId});
+        _trackRemoteUser(userId, joined: false);
         if (remoteAnchorUserId == userId) {
           _clearRemoteAnchor();
         }
       },
+      onExitRoom: (reason) {
+        _trtcLog('exit_room', {'reason': reason});
+        _inRoom = false;
+        final c = _exitRoomCompleter;
+        if (c != null && !c.isCompleted) c.complete();
+      },
+      onConnectionLost: () {
+        _trtcLog('connection_lost');
+        onConnectionLost?.call();
+      },
+      onNetworkQuality: (local, remote) {
+        networkQuality.value = local.quality.index;
+      },
       onUserVideoAvailable: (userId, available) {
-        debugPrint('TRTC video $userId available=$available');
+        if (_audioOnly) {
+          if (available && userId != _localUserId) {
+            _cloud?.stopRemoteView(userId, TRTCVideoStreamType.big);
+          }
+          return;
+        }
+        _trtcLog('user_video', {'userId': userId, 'available': available});
         if (userId == _localUserId) return;
+        _trtcLog('remote_video', {'userId': userId, 'available': available});
+        _setRemoteVideoState(userId, available);
         if (!_twoWayVideo && _isHost) return;
         if (available) {
           _setRemoteAnchor(userId);
@@ -156,11 +261,14 @@ class TrtcRoomManager {
         } else if (remoteAnchorUserId == userId) {
           remoteVideoAvailable.value = false;
           stopRemoteView(userId);
+          _clearRemoteAnchor();
         }
       },
       onUserAudioAvailable: (userId, available) {
-        debugPrint('TRTC audio $userId available=$available');
+        _trtcLog('user_audio', {'userId': userId, 'available': available});
         if (userId == _localUserId) return;
+        _trtcLog('remote_audio', {'userId': userId, 'available': available});
+        _setRemoteAudioState(userId, available);
         if (!_twoWayVideo && _isHost) return;
         if (available) {
           _cloud?.muteRemoteAudio(userId, false);
@@ -170,9 +278,12 @@ class TrtcRoomManager {
       },
     );
     _cloud!.registerListener(_listener!);
+    _configureAudioProcessing();
 
     // Canlı yayın izleyicisi: otomatik ses/video alımı (enterRoom öncesi).
-    if (!audioOnly) {
+    if (audioOnly) {
+      _cloud!.setDefaultStreamRecvMode(true, false);
+    } else {
       _cloud!.setDefaultStreamRecvMode(true, true);
     }
 
@@ -190,6 +301,13 @@ class TrtcRoomManager {
     final scene = audioOnly
         ? TRTCAppScene.voiceChatRoom
         : (twoWayVideo ? TRTCAppScene.videoCall : TRTCAppScene.live);
+    _trtcLog('join_start', {
+      'roomId': roomId,
+      'userId': credentials.userId,
+      'sdkAppId': credentials.sdkAppId,
+      'audioOnly': audioOnly,
+      'role': publishAsAnchor ? 'anchor' : 'audience',
+    });
     _cloud!.enterRoom(params, scene);
 
     final enterResult = await _enterRoomCompleter!.future.timeout(
@@ -203,26 +321,82 @@ class TrtcRoomManager {
       );
     }
 
+    _activeSession = this;
+
     if (audioOnly) {
-      _cloud!.startLocalAudio(TRTCAudioQuality.defaultMode);
+      _cloud!.startLocalAudio(TRTCAudioQuality.speech);
       _device?.setAudioRoute(TXAudioRoute.speakerPhone);
       _micOn = true;
+      _trtcLog('local_audio', {'roomId': roomId, 'enabled': true});
     } else if (publishAsAnchor) {
-      _cloud!.startLocalAudio(TRTCAudioQuality.defaultMode);
+      _cloud!.startLocalAudio(TRTCAudioQuality.speech);
       _cloud!.muteLocalVideo(TRTCVideoStreamType.big, false);
+      // Yerel önizleme yalnızca TrtcLocalVideoView.onViewCreated ile bağlanır.
+      // viewId=0 kullanımı uzak tam ekran yüzeyini ele geçirip kamera flip-flop yapar.
       _micOn = true;
       _cameraOn = true;
       _device?.setAudioRoute(TXAudioRoute.speakerPhone);
+      _trtcLog('local_audio', {'roomId': roomId, 'enabled': true});
+      _trtcLog('local_video', {'roomId': roomId, 'enabled': true});
     } else {
       _device?.setAudioRoute(TXAudioRoute.speakerPhone);
     }
   }
 
+  void _setRemoteVideoState(String userId, bool available) {
+    if (userId.isEmpty || userId == _localUserId) return;
+    final next = Map<String, bool>.from(remoteVideoByUser.value);
+    if (available) {
+      next[userId] = true;
+    } else {
+      next.remove(userId);
+    }
+    remoteVideoByUser.value = next;
+  }
+
+  void _setRemoteAudioState(String userId, bool available) {
+    if (userId.isEmpty || userId == _localUserId) return;
+    final next = Map<String, bool>.from(remoteAudioByUser.value);
+    if (available) {
+      next[userId] = true;
+    } else {
+      next.remove(userId);
+    }
+    remoteAudioByUser.value = next;
+  }
+
+  void _trackRemoteUser(String userId, {required bool joined}) {
+    if (userId.isEmpty || userId == _localUserId) return;
+    if (joined) {
+      _remoteUserIds.add(userId);
+    } else {
+      _remoteUserIds.remove(userId);
+    }
+    remoteUserIdsNotifier.value = _remoteUserIds.toList(growable: false);
+  }
+
+  /// Yayın kalitesi — TRTC varsayılan encoder (no-op).
+  Future<void> setStreamQuality(dynamic preset) async {}
+
+  void muteRemoteAudio(String userId, bool mute) {
+    _cloud?.muteRemoteAudio(userId, mute);
+  }
+
+  void _configureAudioProcessing() {
+    if (_cloud == null) return;
+    // Sesli oda: speaking SSE'den gelir; 300ms volume poll gereksiz CPU.
+    if (!_audioOnly) {
+      _cloud!.enableAudioVolumeEvaluation(
+        true,
+        TRTCAudioVolumeEvaluateParams(interval: 300),
+      );
+    }
+    _device?.setAudioRoute(TXAudioRoute.speakerPhone);
+  }
+
   void _setRemoteAnchor(String userId) {
     if (userId.isEmpty || userId == _localUserId) return;
-    if (!_twoWayVideo &&
-        _expectedAnchorUserId != null &&
-        userId != _expectedAnchorUserId) {
+    if (_expectedAnchorUserId != null && userId != _expectedAnchorUserId) {
       return;
     }
     remoteAnchorUserId = userId;
@@ -246,28 +420,36 @@ class TrtcRoomManager {
   }
 
   void startLocalPreview(int viewId) {
-    if (_cloud == null || !_inRoom) return;
+    if (_audioOnly) return;
+    if (_cloud == null) return;
+    if (!_inRoom && !_previewOnly) return;
     _cloud!.muteLocalVideo(TRTCVideoStreamType.big, false);
     _cloud!.startLocalPreview(true, viewId);
     _cameraOn = true;
+    _trtcLog('local_video', {'viewId': viewId, 'enabled': true});
   }
 
   void stopLocalPreview() {
     _cloud?.stopLocalPreview();
     _cloud?.muteLocalVideo(TRTCVideoStreamType.big, true);
     _cameraOn = false;
+    _trtcLog('local_video', {'enabled': false});
   }
 
   void startRemoteView(String userId, int viewId) {
+    if (_audioOnly) return;
     if (_cloud == null || !_inRoom) return;
     _boundRemoteUserId = userId;
     _boundRemoteViewId = viewId;
     _cloud!.startRemoteView(userId, TRTCVideoStreamType.big, viewId);
     _cloud!.muteRemoteAudio(userId, false);
+    _trtcLog('remote_video', {'userId': userId, 'viewId': viewId, 'enabled': true});
+    _trtcLog('remote_audio', {'userId': userId, 'muted': false});
   }
 
   void stopRemoteView(String userId) {
     _cloud?.stopRemoteView(userId, TRTCVideoStreamType.big);
+    _trtcLog('remote_video', {'userId': userId, 'enabled': false});
     if (_boundRemoteUserId == userId) {
       _boundRemoteViewId = null;
       _boundRemoteUserId = null;
@@ -275,23 +457,34 @@ class TrtcRoomManager {
   }
 
   void setMicEnabled(bool enabled) {
+    if (!_inRoom && !_previewOnly) return;
     if (enabled) {
-      _cloud?.startLocalAudio(TRTCAudioQuality.defaultMode);
+      _cloud?.startLocalAudio(TRTCAudioQuality.speech);
+      _cloud?.muteLocalAudio(false);
     } else {
+      _cloud?.muteLocalAudio(true);
       _cloud?.stopLocalAudio();
     }
     _micOn = enabled;
+    _trtcLog('mute_unmute', {'micEnabled': enabled, 'stoppedPublish': !enabled});
+  }
+
+  /// Koltuk kaybında ses yayınını tamamen durdur.
+  void stopLocalAudioPublish() {
+    if (_cloud == null) return;
+    _cloud!.muteLocalAudio(true);
+    _cloud!.stopLocalAudio();
+    _micOn = false;
+    _trtcLog('local_audio_stopped', const {});
   }
 
   void setCameraEnabled(bool enabled) {
-    if (_cloud == null || !_inRoom) return;
-    if (!_isHost && !_twoWayVideo) return;
-    if (enabled) {
-      _cloud!.muteLocalVideo(TRTCVideoStreamType.big, false);
-    } else {
-      _cloud!.muteLocalVideo(TRTCVideoStreamType.big, true);
-    }
+    if (_cloud == null) return;
+    if (!_inRoom && !_previewOnly) return;
+    if (!_isHost && !_twoWayVideo && !_previewOnly) return;
+    _cloud!.muteLocalVideo(TRTCVideoStreamType.big, !enabled);
     _cameraOn = enabled;
+    _trtcLog('camera_on_off', {'cameraEnabled': enabled});
   }
 
   void setAllRemoteAudioMuted(bool mute) {
@@ -303,37 +496,129 @@ class TrtcRoomManager {
   }
 
   Future<void> leave() async {
+    _trtcLog('leave', {'inRoom': _inRoom});
+    stopPublishedMusic();
+    onConnectionLost = null;
+    networkQuality.value = null;
     remoteVideoAvailable.value = false;
     _expectedAnchorUserId = null;
     _clearRemoteAnchor();
+    _remoteUserIds.clear();
+    remoteUserIdsNotifier.value = const [];
+    remoteVideoByUser.value = const {};
+    remoteAudioByUser.value = const {};
     if (_cloud != null) {
       _cloud!.stopLocalPreview();
       _cloud!.stopLocalAudio();
-      _cloud!.exitRoom();
+      if (_inRoom) {
+        _exitRoomCompleter = Completer<void>();
+        _cloud!.exitRoom();
+        try {
+          await _exitRoomCompleter!.future.timeout(
+            const Duration(milliseconds: 500),
+            onTimeout: () {},
+          );
+        } catch (_) {}
+        _exitRoomCompleter = null;
+      }
       if (_listener != null) {
         _cloud!.unRegisterListener(_listener!);
+        _listener = null;
       }
     }
     _inRoom = false;
+    _previewOnly = false;
+    _audioOnly = false;
     _isHost = false;
     _twoWayVideo = false;
     _localUserId = null;
     _micOn = false;
     _cameraOn = false;
+    if (_activeSession == this) {
+      _activeSession = null;
+    }
+  }
+
+  static const int voiceRoomMusicId = 88001;
+  var _publishedMusicPlaying = false;
+
+  /// DJ / !istek müziğini TRTC uplink'e karıştır (uzak dinleyiciler duyar).
+  Future<void> playPublishedMusic(
+    String url, {
+    int startMs = 0,
+    int publishVolume = 80,
+  }) async {
+    if (!isSupported || _cloud == null || url.trim().isEmpty) return;
+    final path = url.trim();
+    stopPublishedMusic();
+    final effect = _cloud!.getAudioEffectManager();
+    effect.startPlayMusic(
+      AudioMusicParam(
+        id: voiceRoomMusicId,
+        path: path,
+        publish: true,
+        loopCount: 0,
+        startTimeMS: startMs.clamp(0, 1 << 30),
+      ),
+    );
+    effect.setMusicPublishVolume(voiceRoomMusicId, publishVolume);
+    _publishedMusicPlaying = true;
+    VoiceRoomDebugLog.log('trtc.music.publish.start', {
+      'url': path.length > 64 ? '${path.substring(0, 64)}…' : path,
+      'startMs': startMs,
+    });
+  }
+
+  void pausePublishedMusic() {
+    if (_cloud == null || !_publishedMusicPlaying) return;
+    _cloud!.getAudioEffectManager().pausePlayMusic(voiceRoomMusicId);
+    _publishedMusicPlaying = false;
+    VoiceRoomDebugLog.log('trtc.music.publish.pause', {});
+  }
+
+  void resumePublishedMusic() {
+    if (_cloud == null) return;
+    _cloud!.getAudioEffectManager().resumePlayMusic(voiceRoomMusicId);
+    _publishedMusicPlaying = true;
+    VoiceRoomDebugLog.log('trtc.music.publish.resume', {});
+  }
+
+  void stopPublishedMusic() {
+    if (_cloud == null) return;
+    try {
+      _cloud!.getAudioEffectManager().stopPlayMusic(voiceRoomMusicId);
+    } catch (_) {}
+    _publishedMusicPlaying = false;
+  }
+
+  Future<void> disposeAsync() async {
+    _trtcLog('dispose');
+    stopPublishedMusic();
+    await leave();
+    _cloud = null;
+    _device = null;
+    if (!_notifiersDisposed) {
+      _notifiersDisposed = true;
+      remoteAnchorUserIdNotifier.dispose();
+      remoteVideoAvailable.dispose();
+      remoteVideoByUser.dispose();
+      remoteAudioByUser.dispose();
+      networkQuality.dispose();
+      remoteUserIdsNotifier.dispose();
+    }
   }
 
   void dispose() {
-    leave();
-    _cloud = null;
-    _device = null;
-    _listener = null;
+    unawaited(disposeAsync());
   }
 
   static void destroyEngine() {
     try {
       TRTCCloud.destroySharedInstance();
     } catch (e) {
-      debugPrint('TRTC destroy: $e');
+      if (kDebugMode) {
+        debugPrint('TRTC destroy: $e');
+      }
     }
   }
 }

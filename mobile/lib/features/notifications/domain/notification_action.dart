@@ -1,15 +1,63 @@
 import 'package:go_router/go_router.dart';
 
+import '../../voice_hub/presentation/utils/voice_room_nav_paths.dart';
 import 'entities/app_notification_entity.dart';
 
-/// Bildirime tıklanınca hedef route.
+typedef VoiceRoomSwitchPreparer = Future<void> Function(
+  String nextLiveKey, {
+  String source,
+});
+
+/// Bildirime tıklanınca hedef route (senkron — unit testler).
 void navigateFromNotification(
   GoRouter router,
   AppNotificationEntity n, {
   bool staffCanManagePayments = false,
 }) {
+  // ignore: discarded_futures
+  _navigateFromNotificationImpl(
+    router,
+    n,
+    staffCanManagePayments: staffCanManagePayments,
+    pushPath: (router, path) async => _pushInAppPathSync(router, path),
+  );
+}
+
+/// Push / bildirim — sesli oda geçişinde önce aktif oturumu kapatır.
+Future<void> navigateFromNotificationAsync(
+  GoRouter router,
+  AppNotificationEntity n, {
+  bool staffCanManagePayments = false,
+  VoiceRoomSwitchPreparer? prepareVoiceRoomSwitch,
+}) async {
+  await _navigateFromNotificationImpl(
+    router,
+    n,
+    staffCanManagePayments: staffCanManagePayments,
+    pushPath: (router, path) => _pushInAppPathAsync(
+      router,
+      path,
+      prepareVoiceRoomSwitch: prepareVoiceRoomSwitch,
+    ),
+  );
+}
+
+Future<void> _navigateFromNotificationImpl(
+  GoRouter router,
+  AppNotificationEntity n, {
+  required bool staffCanManagePayments,
+  required Future<void> Function(GoRouter router, String path) pushPath,
+}) async {
   final path = n.targetPath?.trim();
   if (path != null && path.isNotEmpty) {
+    if (path == '/' || path == '/index' || path == '/home') {
+      final fallback = _routeFromTypeAndText(
+        n,
+        staffCanManagePayments: staffCanManagePayments,
+      );
+      await pushPath(router, fallback ?? '/feed');
+      return;
+    }
     if (path.startsWith('http://') || path.startsWith('https://')) {
       final uri = Uri.parse(path);
       final shortsId = _shortVideoIdFromUri(uri);
@@ -17,7 +65,7 @@ void navigateFromNotification(
         router.push('/shorts?videoId=$shortsId');
         return;
       }
-      _pushInAppPath(router, uri.path);
+      await pushPath(router, uri.path);
       return;
     }
     final shortsId = _shortVideoIdFromPath(path);
@@ -33,14 +81,53 @@ void navigateFromNotification(
       router.push(path.replaceFirst(':id', n.targetId!));
       return;
     }
-    _pushInAppPath(router, path);
+    await pushPath(router, path);
     return;
   }
 
   final route = _routeFromTypeAndText(n, staffCanManagePayments: staffCanManagePayments);
   if (route != null) {
-    _pushInAppPath(router, route);
+    await pushPath(router, route);
+    return;
   }
+  await pushPath(router, '/feed');
+}
+
+void _pushInAppPathSync(GoRouter router, String path) {
+  _applyInAppPath(router, path);
+}
+
+Future<void> _pushInAppPathAsync(
+  GoRouter router,
+  String path, {
+  VoiceRoomSwitchPreparer? prepareVoiceRoomSwitch,
+}) async {
+  var p = path.startsWith('/') ? path : '/$path';
+  final voiceKey = voiceRoomLiveKeyFromPath(p);
+  if (voiceKey != null && prepareVoiceRoomSwitch != null) {
+    await prepareVoiceRoomSwitch(voiceKey, source: 'notification');
+  }
+  _applyInAppPath(router, p);
+}
+
+void _applyInAppPath(GoRouter router, String path) {
+  var p = path.startsWith('/') ? path : '/$path';
+  if (p == '/' || p == '/index' || p == '/home') {
+    router.go('/feed');
+    return;
+  }
+  const tabRoots = {'/feed', '/live', '/social', '/messages', '/profile'};
+  if (tabRoots.contains(p) || p == '/canli-falcilar' || p == '/voice-rooms') {
+    router.go(p);
+    return;
+  }
+  if (p.startsWith('/voice-room/') ||
+      p.startsWith('/live/') ||
+      p.startsWith('/chat/')) {
+    router.go(p);
+    return;
+  }
+  router.push(p);
 }
 
 String? _shortVideoIdFromPath(String path) {
@@ -66,16 +153,6 @@ String? _shortVideoIdFromUri(Uri uri) {
     }
   }
   return null;
-}
-
-void _pushInAppPath(GoRouter router, String path) {
-  final p = path.startsWith('/') ? path : '/$path';
-  const tabRoots = {'/feed', '/live', '/social', '/messages', '/profile'};
-  if (tabRoots.contains(p) || p == '/canli-falcilar' || p == '/voice-rooms') {
-    router.go(p);
-    return;
-  }
-  router.push(p);
 }
 
 String? _routeFromTypeAndText(
@@ -126,6 +203,21 @@ String? _routeFromTypeAndText(
     case 'gift_received':
     case 'live':
       return '/live';
+    case 'pk':
+    case 'pk_battle':
+    case 'pk_invite':
+    case 'pk_request':
+    case 'pkbattle':
+      if (n.targetPath != null && n.targetPath!.contains('voice-room')) {
+        return n.targetPath!;
+      }
+      if (n.targetPath != null && n.targetPath!.contains('/live')) {
+        return n.targetPath!;
+      }
+      if (n.targetId != null && n.targetId!.isNotEmpty) {
+        return '/voice-room/${n.targetId}';
+      }
+      return '/live';
     case 'fortune_session_invite':
     case 'fortune_session_request':
     case 'session_request':
@@ -162,6 +254,9 @@ String? _routeFromTypeAndText(
       return '/social';
     case 'comment':
     case 'like':
+      if (n.targetPath != null && n.targetPath!.trim().isNotEmpty) {
+        return n.targetPath!.startsWith('/') ? n.targetPath! : '/${n.targetPath!}';
+      }
       if (_isShortVideoNotification(type, text, n)) {
         if (n.targetId != null && n.targetId!.isNotEmpty) {
           return '/shorts?videoId=${n.targetId}';
@@ -215,6 +310,15 @@ String? _routeFromTypeAndText(
       text.contains('fal') ||
       text.contains('falcı')) {
     return '/canli-falcilar';
+  }
+  if (text.contains('pk') || text.contains('düello')) {
+    if (n.targetPath != null && n.targetPath!.contains('voice-room')) {
+      return n.targetPath!;
+    }
+    if (n.targetId != null && n.targetId!.isNotEmpty) {
+      return '/voice-room/${n.targetId}';
+    }
+    return '/live';
   }
   if (text.contains('hediye')) {
     return '/live';

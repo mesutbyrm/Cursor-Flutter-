@@ -9,17 +9,18 @@ on:
   pull_request:
     branches: [main]
   schedule:
+    # Perşembe 15:34 UTC — düşük yoğunluk; paralel job sayısı max-parallel ile sınırlı
     - cron: '34 15 * * 4'
 
 concurrency:
   group: codeql-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     permissions:
       security-events: write
       packages: read
@@ -28,6 +29,8 @@ jobs:
 
     strategy:
       fail-fast: false
+      # Ücretsiz hosted runner kuyruğu: 4 paralel job → 15 dk "runner not acquired".
+      max-parallel: ${{ github.event_name == 'schedule' && 1 || 2 }}
       matrix:
         include:
           - language: actions
@@ -36,8 +39,6 @@ jobs:
             build-mode: none
           - language: java-kotlin
             build-mode: manual
-          - language: c-cpp
-            build-mode: none
 
     steps:
       - name: Checkout repository
@@ -49,16 +50,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
-          cache-dependency-path: |
-            mobile/android/**/*.gradle*
-            mobile/android/**/gradle-wrapper.properties
+          # Gradle cache CodeQL izleyicisini boş bırakır (FROM-CACHE → javac/kotlinc çalışmaz).
 
       - name: Setup Flutter
         if: matrix.language == 'java-kotlin'
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.44.8'
           cache: true
 
       - name: Initialize CodeQL
@@ -72,25 +71,67 @@ jobs:
         working-directory: mobile
         run: yes | flutter doctor --android-licenses || true
 
+      - name: Free disk space for NDK
+        if: matrix.language == 'java-kotlin'
+        working-directory: ${{ github.workspace }}
+        run: |
+          chmod +x scripts/ci-free-disk-for-ndk.sh
+          bash scripts/ci-free-disk-for-ndk.sh
+
+      - name: Setup Android NDK (nttld)
+        if: matrix.language == 'java-kotlin'
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27c
+
+      - name: Link NDK for Flutter Gradle
+        if: matrix.language == 'java-kotlin'
+        working-directory: ${{ github.workspace }}
+        env:
+          ANDROID_NDK_VERSION: 27.0.12077973
+        run: |
+          set -euxo pipefail
+          chmod +x scripts/ci-link-android-ndk.sh
+          bash scripts/ci-link-android-ndk.sh
+
       - name: Build Flutter Android for CodeQL
         if: matrix.language == 'java-kotlin'
         working-directory: mobile
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
         run: |
           set -euxo pipefail
 
+          FLUTTER_ROOT="$(dirname "$(dirname "$(command -v flutter)")")"
+          export PATH="${FLUTTER_ROOT}/bin:${PATH}"
+
           flutter pub get
+          flutter precache --android
 
           if grep -qE '^[[:space:]]*build_runner:' pubspec.yaml; then
             dart run build_runner build --delete-conflicting-outputs
           fi
 
-          if [[ ! -f android/gradlew ]]; then
-            flutter create --platforms=android .
-          fi
-          chmod +x android/gradlew
-          test -x android/gradlew
+          mkdir -p android
+          cat > android/local.properties <<EOF
+          sdk.dir=${ANDROID_HOME}
+          flutter.sdk=${FLUTTER_ROOT}
+          EOF
 
-          flutter build apk --debug
+          # gradlew clean → Agora externalNativeBuildCleanDebug ninja hatası verir.
+          # build-apk.yml ile aynı yol; CodeQL Java/Kotlin izlerini yakalar.
+          flutter build apk --debug \
+            --target-platform android-arm64 \
+            --no-pub
+
+      - name: Free disk space before CodeQL analyze
+        if: matrix.language == 'java-kotlin'
+        working-directory: ${{ github.workspace }}
+        run: |
+          chmod +x scripts/ci-free-disk-before-codeql-analyze.sh
+          bash scripts/ci-free-disk-before-codeql-analyze.sh
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4

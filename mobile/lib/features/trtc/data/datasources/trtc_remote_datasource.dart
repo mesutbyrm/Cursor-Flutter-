@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
@@ -11,6 +13,68 @@ class TrtcRemoteDataSource {
   TrtcRemoteDataSource(this._dio);
 
   final Dio _dio;
+
+  void _log(String event, Map<String, Object?> fields) {
+    if (!kDebugMode) return;
+    final safe = Map<String, Object?>.from(fields)
+      ..remove('userSig')
+      ..remove('token')
+      ..remove('accessToken');
+    debugPrint('[TRTC] $event $safe');
+  }
+
+  Future<TrtcCredentials> fetchToken({
+    required String roomId,
+    String role = 'audience',
+    String? userId,
+  }) async {
+    final started = DateTime.now();
+    _log('token_request', {'endpoint': ApiEndpoints.trtcToken, 'roomId': roomId, 'role': role});
+    LiveDebugLog.log('trtc.token.request', {'roomId': roomId, 'role': role});
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.trtcToken,
+        data: {'roomId': roomId, 'role': role},
+      );
+      final map = _unwrapTrtcBody(res.data);
+      if (map == null) {
+        throw DioException(
+          requestOptions: res.requestOptions,
+          message: 'Geçersiz TRTC token yanıtı',
+        );
+      }
+      final cred = _validate(TrtcCredentials.fromJson(map, requestedRoomId: roomId));
+      _log('token_received', {
+        'roomId': cred.effectiveStrRoomId,
+        'sdkAppId': cred.sdkAppId,
+        'userId': cred.userId,
+      });
+      LiveDebugLog.log('trtc.token.ok', {
+        'roomId': cred.roomId,
+        'elapsedMs': DateTime.now().difference(started).inMilliseconds,
+      });
+      return cred;
+    } on ApiException catch (e) {
+      // Kılavuz §9.13: POST /api/trtc/usersig yedek.
+      if (!Env.useMobileAuth && (e.statusCode == 404 || e.statusCode == 405)) {
+        final uid = userId?.trim() ?? '';
+        if (uid.isNotEmpty) {
+          return fetchUserSig(userId: uid, roomId: roomId);
+        }
+      }
+      rethrow;
+    } on DioException catch (e) {
+      if (!Env.useMobileAuth &&
+          (e.response?.statusCode == 404 || e.response?.statusCode == 405)) {
+        final uid = userId?.trim() ?? '';
+        if (uid.isNotEmpty) {
+          return fetchUserSig(userId: uid, roomId: roomId);
+        }
+        throw ApiException('TRTC token uç noktası bulunamadı', statusCode: 404);
+      }
+      rethrow;
+    }
+  }
 
   Future<TrtcCredentials> fetchUserSig({
     required String userId,
@@ -34,15 +98,9 @@ class TrtcRemoteDataSource {
           message: 'Geçersiz TRTC yanıtı',
         );
       }
-      final cred = TrtcCredentials.fromJson(map, requestedRoomId: roomId);
-      if (cred.sdkAppId <= 0 || cred.userSig.isEmpty) {
-        throw ApiException(
-          'TRTC yapılandırması eksik (sdkAppId veya userSig). '
-          'Uygulamayı güncelleyin veya destek ile iletişime geçin.',
-        );
-      }
-      if (cred.userId.isEmpty) {
-        throw ApiException('TRTC kullanıcı kimliği alınamadı');
+      var cred = _validate(TrtcCredentials.fromJson(map, requestedRoomId: roomId));
+      if (cred.userId.isEmpty && userId.isNotEmpty) {
+        cred = cred.copyWith(userId: userId);
       }
       LiveDebugLog.log('usersig.ok', {
         'roomId': cred.roomId,
@@ -58,6 +116,16 @@ class TrtcRemoteDataSource {
       });
       rethrow;
     }
+  }
+
+  TrtcCredentials _validate(TrtcCredentials cred) {
+    if (!cred.isValid) {
+      throw ApiException(
+        'TRTC yapılandırması eksik (sdkAppId veya userSig). '
+        'Uygulamayı güncelleyin veya destek ile iletişime geçin.',
+      );
+    }
+    return cred;
   }
 
   static Map<String, dynamic>? _unwrapTrtcBody(dynamic body) {

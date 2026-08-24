@@ -3,7 +3,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../domain/membership_model.dart';
+import '../../domain/membership_package_entity.dart';
 
 class MembershipCard extends StatelessWidget {
   const MembershipCard({
@@ -11,16 +13,28 @@ class MembershipCard extends StatelessWidget {
     required this.tier,
     required this.selected,
     required this.onTap,
+    this.membershipInfo,
+    this.apiPackages = const [],
     this.animationIndex = 0,
   });
 
   final MembershipTierModel tier;
   final bool selected;
   final VoidCallback onTap;
+  final ProfileMembershipInfo? membershipInfo;
+  final List<MembershipPackageEntity> apiPackages;
   final int animationIndex;
 
   @override
   Widget build(BuildContext context) {
+    final badge = membershipInfo == null
+        ? _badgeFromTier(tier)
+        : resolveMembershipTierCardBadge(
+            tier: tier,
+            info: membershipInfo!,
+            packages: apiPackages,
+          );
+
     final card = GestureDetector(
       onTap: onTap,
       child: AnimatedScale(
@@ -76,33 +90,7 @@ class MembershipCard extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (tier.popular)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(999),
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFFFFD54F),
-                            Color(0xFFFFB300),
-                          ],
-                        ),
-                      ),
-                      child: const Text(
-                        'Popüler',
-                        style: TextStyle(
-                          color: Color(0xFF1A1030),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    )
-                  else
-                    const SizedBox(height: 18),
+                  _TierBadge(badge: badge),
                   Hero(
                     tag: 'membership-badge-${tier.wireId}',
                     child: Container(
@@ -178,13 +166,39 @@ class MembershipCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '₺${tier.monthlyPriceTry}/ay',
+                    '₺${tier.monthlyPriceTry} · ${tier.durationLabel}',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.55),
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  if (tier.falDiscountPercent > 0) ...[
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        color: MembershipCatalogData.purple
+                            .withValues(alpha: 0.25),
+                        border: Border.all(
+                          color: MembershipCatalogData.purple
+                              .withValues(alpha: 0.45),
+                        ),
+                      ),
+                      child: Text(
+                        '%${tier.falDiscountPercent} fal',
+                        style: const TextStyle(
+                          color: Color(0xFFC4B5FD),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -197,5 +211,62 @@ class MembershipCard extends StatelessWidget {
         .animate(delay: (80 * animationIndex).ms)
         .fadeIn(duration: 360.ms, curve: Curves.easeOut)
         .slideY(begin: 0.12, end: 0, duration: 420.ms, curve: Curves.easeOutCubic);
+  }
+
+  MembershipTierCardBadge _badgeFromTier(MembershipTierModel tier) {
+    if (tier.isActivePlan) return MembershipTierCardBadge.active;
+    if (tier.popular) return MembershipTierCardBadge.popular;
+    return MembershipTierCardBadge.none;
+  }
+}
+
+class _TierBadge extends StatelessWidget {
+  const _TierBadge({required this.badge});
+
+  final MembershipTierCardBadge badge;
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (badge) {
+      MembershipTierCardBadge.active => _pillBadge(
+          label: 'Aktif',
+          colors: const [Color(0xFF34D399), Color(0xFF059669)],
+          textColor: const Color(0xFF052E16),
+        ),
+      MembershipTierCardBadge.popular => _pillBadge(
+          label: 'Popüler',
+          colors: const [Color(0xFFFFD54F), Color(0xFFFFB300)],
+          textColor: const Color(0xFF1A1030),
+        ),
+      MembershipTierCardBadge.expired => _pillBadge(
+          label: 'Süresi doldu',
+          colors: const [Color(0xFF9CA3AF), Color(0xFF6B7280)],
+          textColor: const Color(0xFF111827),
+        ),
+      MembershipTierCardBadge.none => const SizedBox(height: 18),
+    };
+  }
+
+  Widget _pillBadge({
+    required String label,
+    required List<Color> colors,
+    required Color textColor,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        gradient: LinearGradient(colors: colors),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
   }
 }

@@ -71,7 +71,7 @@ class _LiveRoomChatFalPanelState extends State<LiveRoomChatFalPanel>
             ],
           ),
         SizedBox(
-          height: widget.showFortuneTab ? 220 : 160,
+          height: widget.showFortuneTab ? 180 : 132,
           child: widget.showFortuneTab
               ? TabBarView(
                   controller: _tabs,

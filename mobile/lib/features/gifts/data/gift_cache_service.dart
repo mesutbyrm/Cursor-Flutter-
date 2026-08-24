@@ -14,15 +14,24 @@ class GiftCacheService {
   Future<Uint8List?> getBytes(String url) async {
     if (url.isEmpty) return null;
     final mem = _memory.get(url);
-    if (mem != null) return mem;
+    if (mem != null) {
+      return mem;
+    }
 
     try {
       final file = await _fileCache.getSingleFile(url);
       final bytes = await file.readAsBytes();
+      if (bytes.isEmpty) {
+        await _fileCache.removeFile(url);
+        return null;
+      }
       _memory.put(url, bytes);
       return bytes;
     } catch (e) {
       debugPrint('GiftCacheService: $url — $e');
+      try {
+        await _fileCache.removeFile(url);
+      } catch (_) {}
       return null;
     }
   }
@@ -36,6 +45,15 @@ class GiftCacheService {
   }
 
   void clear() => _memory.clear();
+
+  void clearMemory() => clear();
+
+  /// Bozuk disk girdilerini temizle (sessiz).
+  Future<void> pruneCorruptEntries() async {
+    try {
+      await _fileCache.emptyCache();
+    } catch (_) {}
+  }
 }
 
 class _LruMemoryCache<K, V> {

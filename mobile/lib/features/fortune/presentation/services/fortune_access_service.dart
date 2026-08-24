@@ -4,6 +4,7 @@ import '../../../../core/performance/network_perf.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../data/datasources/fortune_access_remote_datasource.dart';
 import '../../data/fortune_access_local_store.dart';
 import '../../data/services/rewarded_ad_service.dart';
@@ -39,6 +40,7 @@ class FortuneAccessService {
     final wallet = _ref.read(walletBalancesProvider).valueOrNull;
     final tier = _ref.read(vipTierProvider);
     final jeton = wallet?.jeton ?? 0;
+    final cfc = wallet?.cfc ?? 0;
     final serverCredits = wallet?.fortuneAdCredits;
     final adCredits = serverCredits ?? store.adCredits;
     if (serverCredits != null && serverCredits != store.adCredits) {
@@ -50,6 +52,7 @@ class FortuneAccessService {
       adCredits: adCredits,
       adsWatchedToday: store.adsWatchedToday,
       jetonBalance: jeton,
+      cfcBalance: cfc,
       isPremiumUnlimited: isPremium,
     );
   }
@@ -60,9 +63,8 @@ class FortuneAccessService {
     String? membership,
   ) {
     if (!config.premiumUnlimited) return false;
-    final hasMembership = (membership ?? '').trim().isNotEmpty &&
-        membership!.toLowerCase() != 'basic';
-    return hasMembership && tier.index >= VipTier.premium.index;
+    return hasPaidMembershipRaw(membership) &&
+        tier.index >= VipTier.premium.index;
   }
 
   /// Fal açılmadan önce ödeme / hak tüketimi.
@@ -93,6 +95,19 @@ class FortuneAccessService {
         }
         await _ref.read(walletBalancesProvider.notifier).refresh(force: true);
         _ref.invalidate(fortuneAccessStateProvider);
+        return;
+      case FortuneAccessMethod.cfc:
+        final config = await _ref.read(fortuneAccessConfigProvider.future);
+        try {
+          await _remote.consumeCfcAccess(
+            slug: type.slug,
+            cfcCost: grant.jetonCost > 0 ? grant.jetonCost : config.jetonCost,
+          );
+        } catch (_) {}
+        await _ref.read(walletBalancesProvider.notifier).refresh(force: true);
+        _ref.invalidate(fortuneAccessStateProvider);
+        return;
+      case FortuneAccessMethod.adUnlocked:
         return;
     }
   }
@@ -135,6 +150,8 @@ class FortuneAccessService {
       FortuneAccessMethod.premium => 'premium',
       FortuneAccessMethod.adCredit => 'ad_credit',
       FortuneAccessMethod.jeton => 'jeton',
+      FortuneAccessMethod.cfc => 'cfc',
+      FortuneAccessMethod.adUnlocked => 'ad_reward',
     };
   }
 }

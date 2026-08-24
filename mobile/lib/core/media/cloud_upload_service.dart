@@ -150,12 +150,30 @@ class CloudMediaUploadService {
     return host == 'canlifal.com' || host.endsWith('.canlifal.com');
   }
 
+  /// Görsel veya video — presigned yükleme.
+  Future<String> uploadMediaFile(
+    File file, {
+    required String folder,
+    bool isPublic = true,
+    bool requireSiteOrigin = false,
+  }) =>
+      uploadImageFile(
+        file,
+        folder: folder,
+        isPublic: isPublic,
+        requireSiteOrigin: requireSiteOrigin,
+      );
+
   static String _contentType(String path) {
     final lower = path.toLowerCase();
     if (lower.endsWith('.png')) return 'image/png';
     if (lower.endsWith('.webp')) return 'image/webp';
     if (lower.endsWith('.heic')) return 'image/heic';
     if (lower.endsWith('.heif')) return 'image/heif';
+    if (lower.endsWith('.mp4')) return 'video/mp4';
+    if (lower.endsWith('.webm')) return 'video/webm';
+    if (lower.endsWith('.mov')) return 'video/quicktime';
+    if (lower.endsWith('.m4v')) return 'video/x-m4v';
     return 'image/jpeg';
   }
 }

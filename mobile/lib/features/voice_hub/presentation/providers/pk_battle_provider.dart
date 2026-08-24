@@ -8,6 +8,7 @@ import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/pk/pk_battle_mode.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_battle_state.dart';
+import '../../domain/pk/pk_opponent_room_filter.dart';
 
 /// PK savaş kontrolü — skor, zamanlayıcı, hediye gücü, kazanan.
 class PkBattleNotifier extends Notifier<PkBattleState> {
@@ -16,15 +17,21 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
   List<ChatRoomPresence> _presence = const [];
 
   @override
-  PkBattleState build() => const PkBattleState();
+  PkBattleState build() {
+    ref.onDispose(() {
+      _tick?.cancel();
+      _tick = null;
+    });
+    return const PkBattleState();
+  }
 
-  void init({
+  /// PK sayfası açılışında — sunucu onayı gelene kadar aktif sayma.
+  void prepareShell({
     required VoiceRoomEntity room,
     required List<ChatRoomPresence> presence,
     ChatRoomPresence? left,
     ChatRoomPresence? right,
     PkBattleMode mode = PkBattleMode.oneVsOne,
-    int durationSeconds = 300,
   }) {
     _room = room;
     _presence = presence;
@@ -40,13 +47,33 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
 
     state = PkBattleState(
       mode: mode,
-      phase: PkBattlePhase.active,
-      secondsLeft: durationSeconds,
+      phase: PkBattlePhase.ready,
+      secondsLeft: 0,
       left: sides.$1,
       right: sides.$2,
     );
+  }
 
-    ref.onDispose(() => _tick?.cancel());
+  void init({
+    required VoiceRoomEntity room,
+    required List<ChatRoomPresence> presence,
+    ChatRoomPresence? left,
+    ChatRoomPresence? right,
+    PkBattleMode mode = PkBattleMode.oneVsOne,
+    int durationSeconds = 300,
+  }) {
+    prepareShell(
+      room: room,
+      presence: presence,
+      left: left,
+      right: right,
+      mode: mode,
+    );
+    state = state.copyWith(
+      phase: PkBattlePhase.active,
+      secondsLeft: durationSeconds,
+    );
+    _tick?.cancel();
     _tick = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
   }
 
@@ -79,14 +106,14 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
       final teamB = presence.skip(half).toList();
       return (
         PkSideState(
-          score: _baseScore(teamA),
+          score: 0,
           giftPower: 0,
-          winStreak: 2,
+          winStreak: 0,
           members: teamA,
           leader: l ?? (teamA.isNotEmpty ? teamA.first : null),
         ),
         PkSideState(
-          score: _baseScore(teamB),
+          score: 0,
           giftPower: 0,
           winStreak: 0,
           members: teamB,
@@ -97,28 +124,20 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
 
     return (
       PkSideState(
-        score: _baseScore(l != null ? [l] : const []),
+        score: 0,
         giftPower: 0,
-        winStreak: 3,
+        winStreak: 0,
         members: l != null ? [l] : const [],
         leader: l,
       ),
       PkSideState(
-        score: _baseScore(r != null ? [r] : const []),
+        score: 0,
         giftPower: 0,
-        winStreak: 1,
+        winStreak: 0,
         members: r != null ? [r] : const [],
         leader: r,
       ),
     );
-  }
-
-  int _baseScore(List<ChatRoomPresence> users) {
-    var s = 0;
-    for (final u in users) {
-      s += 8000 + (u.id.hashCode.abs() % 4000);
-    }
-    return s;
   }
 
   void setMode(PkBattleMode mode) {
@@ -139,7 +158,8 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
 
   void applyGift(LiveGiftEvent event, {required bool toLeft}) {
     if (!state.isActive || state.serverAuthoritative) return;
-    final power = event.coinCost * event.quantity;
+    if (!giftSideResolvable(event)) return;
+    final power = event.jetonAmount;
     final bump = (power * 0.85).round().clamp(50, 500000);
 
     if (toLeft) {
@@ -155,23 +175,62 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
     }
   }
 
-  /// Gönderici hangi tarafta — id veya isim eşlemesi.
+  /// Hediye hangi PK tarafına sayılır — alıcı id ile eşleme (tahmin yok).
   bool giftTargetsLeft(LiveGiftEvent event) {
-    final leftIds = {
-      ...state.left.members.map((e) => e.id),
-      if (state.left.leader != null) state.left.leader!.id,
+    final leftIds = _sideUserIds(state.left);
+    final rightIds = _sideUserIds(state.right);
+    final rid = event.receiverId?.trim();
+    if (rid != null && rid.isNotEmpty) {
+      if (leftIds.contains(rid)) return true;
+      if (rightIds.contains(rid)) return false;
+    }
+    final sid = event.senderId?.trim();
+    if (sid != null && sid.isNotEmpty) {
+      if (leftIds.contains(sid)) return true;
+      if (rightIds.contains(sid)) return false;
+    }
+    return true;
+  }
+
+  bool giftSideResolvable(LiveGiftEvent event) {
+    final leftIds = _sideUserIds(state.left);
+    final rightIds = _sideUserIds(state.right);
+    final rid = event.receiverId?.trim();
+    if (rid != null && rid.isNotEmpty) {
+      return leftIds.contains(rid) || rightIds.contains(rid);
+    }
+    final sid = event.senderId?.trim();
+    if (sid != null && sid.isNotEmpty) {
+      return leftIds.contains(sid) || rightIds.contains(sid);
+    }
+    return false;
+  }
+
+  Set<String> _sideUserIds(PkSideState side) {
+    return {
+      ...side.members.map((e) => e.id.trim()).where((id) => id.isNotEmpty),
+      if (side.leader != null && side.leader!.id.trim().isNotEmpty)
+        side.leader!.id.trim(),
     };
-    final sid = event.senderId;
-    if (sid != null && leftIds.contains(sid)) return true;
-    final rightIds = {
-      ...state.right.members.map((e) => e.id),
-      if (state.right.leader != null) state.right.leader!.id,
-    };
-    if (sid != null && rightIds.contains(sid)) return false;
-    return event.senderName.hashCode.isEven;
   }
 
   void applyRemoteBattle(PkBattleRemote remote) {
+    _applyRemoteBattleInternal(remote, swapSides: false);
+  }
+
+  /// Sesli oda: sol taraf her zaman bu odanın tarafı (kendim).
+  void applyRemoteBattleForVoiceRoom(
+    PkBattleRemote remote,
+    VoiceRoomEntity room,
+  ) {
+    final swap = !isPkChallengerRoom(remote, room);
+    _applyRemoteBattleInternal(remote, swapSides: swap);
+  }
+
+  void _applyRemoteBattleInternal(
+    PkBattleRemote remote, {
+    required bool swapSides,
+  }) {
     _tick?.cancel();
     final phase = remote.isActive
         ? PkBattlePhase.active
@@ -185,9 +244,9 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
       if (side == 'tie') {
         winner = PkBattleWinner.tie;
       } else if (side == 'challenger') {
-        winner = PkBattleWinner.left;
+        winner = swapSides ? PkBattleWinner.right : PkBattleWinner.left;
       } else if (side == 'opponent') {
-        winner = PkBattleWinner.right;
+        winner = swapSides ? PkBattleWinner.left : PkBattleWinner.right;
       }
     }
 
@@ -201,6 +260,17 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
       );
     }
 
+    final leftScore =
+        swapSides ? remote.opponentScore : remote.challengerScore;
+    final rightScore =
+        swapSides ? remote.challengerScore : remote.opponentScore;
+    final leftLeader = leaderFrom(
+      swapSides ? remote.opponent : remote.challenger,
+    );
+    final rightLeader = leaderFrom(
+      swapSides ? remote.challenger : remote.opponent,
+    );
+
     state = state.copyWith(
       phase: phase,
       secondsLeft: remote.secondsLeft,
@@ -209,19 +279,28 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
       serverAuthoritative: true,
       winner: winner,
       left: state.left.copyWith(
-        score: remote.challengerScore,
+        score: leftScore,
         giftPower: 0,
-        winStreak: remote.challenger?.winStreak ?? state.left.winStreak,
-        leader: leaderFrom(remote.challenger) ?? state.left.leader,
+        winStreak: swapSides
+            ? remote.opponent?.winStreak ?? state.left.winStreak
+            : remote.challenger?.winStreak ?? state.left.winStreak,
+        leader: leftLeader ?? state.left.leader,
       ),
       right: state.right.copyWith(
-        score: remote.opponentScore,
+        score: rightScore,
         giftPower: 0,
-        winStreak: remote.opponent?.winStreak ?? state.right.winStreak,
-        leader: leaderFrom(remote.opponent) ?? state.right.leader,
+        winStreak: swapSides
+            ? remote.challenger?.winStreak ?? state.right.winStreak
+            : remote.opponent?.winStreak ?? state.right.winStreak,
+        leader: rightLeader ?? state.right.leader,
       ),
-      reactionBurst: remote.isActive ? state.reactionBurst + 1 : state.reactionBurst,
+      reactionBurst:
+          remote.isActive ? state.reactionBurst + 1 : state.reactionBurst,
     );
+    if (remote.isActive && remote.secondsLeft > 0) {
+      _tick?.cancel();
+      _tick = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
+    }
   }
 
   void _onTick() {

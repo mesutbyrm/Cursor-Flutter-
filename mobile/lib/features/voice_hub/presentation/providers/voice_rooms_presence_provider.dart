@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
-import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
 
 /// Keşfet listesinde anlık çevrimiçi sayıları — merkezi SSE hub (oda başına tek bağlantı).
@@ -37,22 +36,34 @@ class VoiceRoomsPresenceState {
 }
 
 class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
+  /// Discover ekranında aynı anda görünür/öncelikli odalar izlenir.
   static const maxTrackedRooms = 6;
 
+  /// Ana sayfa şeridi — daha az eşzamanlı SSE (ANR önleme).
+  static const homeTrackedRooms = 4;
+
+  static const _connectStagger = Duration(milliseconds: 250);
+
   final Map<String, StreamSubscription<ChatRoomSseEvent>> _subs = {};
+  var _syncGeneration = 0;
 
   @override
   VoiceRoomsPresenceState build() {
     ref.onDispose(_disposeAll);
-    ref.listen(voiceRoomsProvider, (prev, next) {
-      final rooms = next.valueOrNull;
-      if (rooms != null) _syncRooms(rooms);
-    });
-    final rooms = ref.read(voiceRoomsProvider).valueOrNull;
-    if (rooms != null) {
-      Future.microtask(() => _syncRooms(rooms));
-    }
     return const VoiceRoomsPresenceState();
+  }
+
+  /// Yalnızca çağıran ekran istediğinde SSE izleme başlar (kabuk açılışında değil).
+  void mergeTrackRooms(List<VoiceRoomEntity> extra) {
+    if (extra.isEmpty) return;
+    final merged = <String, VoiceRoomEntity>{};
+    for (final r in extra) {
+      final key = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+      if (key.isEmpty) continue;
+      merged[key] = r;
+    }
+    if (merged.isEmpty) return;
+    _syncRooms(merged.values.toList());
   }
 
   void _syncRooms(List<VoiceRoomEntity> rooms) {
@@ -62,13 +73,36 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
       final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
       if (key.isEmpty) continue;
       keys.add(key);
-      if (_subs.containsKey(key)) continue;
-      _connectRoom(key);
     }
+    final generation = ++_syncGeneration;
+    unawaited(_staggerConnectRooms(keys.toList(growable: false), generation));
     for (final key in _subs.keys.toList()) {
       if (!keys.contains(key)) _disconnectRoom(key);
     }
     state = state.copyWith(connectedRooms: keys);
+  }
+
+  Future<void> _staggerConnectRooms(List<String> keys, int generation) async {
+    for (var i = 0; i < keys.length; i++) {
+      if (generation != _syncGeneration) return;
+      final key = keys[i];
+      final hub = ref.read(sseConnectionHubProvider);
+      final service = hub.voiceRoom(key);
+      final live = service.isLiveForRoom(key);
+      if (_subs.containsKey(key) && live) {
+        if (i < keys.length - 1) {
+          await Future<void>.delayed(_connectStagger);
+        }
+        continue;
+      }
+      if (_subs.containsKey(key) && !live) {
+        _disconnectRoom(key, releaseHub: false);
+      }
+      await _connectRoom(key);
+      if (i < keys.length - 1) {
+        await Future<void>.delayed(_connectStagger);
+      }
+    }
   }
 
   Future<void> _connectRoom(String roomId) async {
@@ -82,6 +116,7 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
         accessToken: tokens.readAccess,
       );
     }
+    _subs[roomId]?.cancel();
     _subs[roomId] = service.events.listen((event) {
       final update = _presenceFromEvent(event, fallbackRoomId: roomId);
       if (update == null) return;
@@ -128,20 +163,27 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
     state = state.copyWith(counts: counts);
   }
 
-  void _disconnectRoom(String roomId) {
+  void _disconnectRoom(String roomId, {bool releaseHub = true}) {
     _subs.remove(roomId)?.cancel();
-    ref.read(sseConnectionHubProvider).releaseVoiceRoom(roomId);
+    if (releaseHub) {
+      ref.read(sseConnectionHubProvider).releaseVoiceRoom(roomId);
+    }
   }
 
   void _disposeAll() {
+    _syncGeneration++;
     final keys = _subs.keys.toList();
     for (final sub in List.from(_subs.values)) {
       sub.cancel();
     }
     _subs.clear();
-    final hub = ref.read(sseConnectionHubProvider);
-    for (final key in keys) {
-      hub.releaseVoiceRoom(key);
+    try {
+      final hub = ref.read(sseConnectionHubProvider);
+      for (final key in keys) {
+        hub.releaseVoiceRoom(key);
+      }
+    } catch (_) {
+      // ProviderContainer dispose sırasında hub okunamayabilir.
     }
   }
 }

@@ -29,7 +29,7 @@ class GameCenterRepositoryImpl implements GameCenterRepository {
     LeaderboardPeriod period,
   ) async {
     final scores = await _games.fetchLeaderboard(period: period.apiValue);
-    if (scores.isEmpty) return _demoLeaderboard(period);
+    if (scores.isEmpty) return const [];
     return scores
         .asMap()
         .entries
@@ -77,31 +77,18 @@ class GameCenterRepositoryImpl implements GameCenterRepository {
     return _games.joinRoom(roomId);
   }
 
-  List<LeaderboardEntry> _demoLeaderboard(LeaderboardPeriod period) {
-    final base = switch (period) {
-      LeaderboardPeriod.daily => 4200,
-      LeaderboardPeriod.weekly => 18500,
-      LeaderboardPeriod.monthly => 72000,
-    };
-    const names = [
-      'Merve',
-      'Yiğit',
-      'Ece',
-      'Can',
-      'Selin',
-      'Burak',
-      'Deniz',
-      'Ayşe',
-      'Emre',
-      'Zeynep',
-    ];
-    return List.generate(names.length, (i) {
-      return LeaderboardEntry(
-        id: 'demo-$i',
-        name: names[i],
-        score: base - (i * (base ~/ 12)),
-        rank: i + 1,
-      );
-    });
+  @override
+  Future<GameRoomItem?> autoMatchLiveRoom(String gameId) async {
+    final catalog = await _games.fetchCatalog();
+    final items = catalog.isNotEmpty ? catalog : GameCatalogFallback.all;
+    final game = items.firstWhere(
+      (g) => g.id == gameId,
+      orElse: () => GameCatalogItem(
+        id: gameId,
+        title: gameId,
+        kind: GameKind.multiplayer,
+      ),
+    );
+    return _games.autoMatch(game);
   }
 }

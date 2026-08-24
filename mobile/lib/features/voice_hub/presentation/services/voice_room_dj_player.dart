@@ -21,6 +21,17 @@ import 'voice_room_music_control_delegate.dart';
 class VoiceRoomDjPlayer {
   VoiceRoomDjPlayer(this._resolver, this._streamLoader);
 
+  /// Üretimde YouTube kaynakları IFrame'e bırakılır (ANR önleme).
+  @visibleForTesting
+  static bool skipsStreamResolveOnProduction(String musicUrl) {
+    if (!YoutubeStreamResolver.disableHeavyStreamResolve) return false;
+    final trimmed = musicUrl.trim();
+    if (trimmed.isEmpty) return false;
+    return YoutubeStreamResolver.needsResolveBeforePlay(trimmed) ||
+        YoutubeStreamResolver.isYoutubePageUrl(trimmed) ||
+        YoutubeStreamResolver.isYoutubeStreamApiUrl(trimmed);
+  }
+
   final YoutubeStreamResolver _resolver;
   final VoiceRoomDjStreamLoader _streamLoader;
   Future<VoiceRoomAudioHandler>? _handlerFuture;
@@ -382,6 +393,10 @@ class VoiceRoomDjPlayer {
 
   Future<String?> _resolveSource(String musicUrl) async {
     final trimmed = musicUrl.trim();
+    // Üretim: YouTube IFrame oynatır; ağır stream çözümleme ANR riski.
+    if (skipsStreamResolveOnProduction(trimmed)) {
+      return null;
+    }
     if (ChatRoomDjState.isEphemeralStreamUrl(trimmed)) {
       final watch = ChatRoomDjState.youtubePlaybackSeed(trimmed);
       if (watch != null) return _resolver.resolvePlayableUrl(watch);

@@ -47,7 +47,8 @@ class VoiceSeatGiftTotals extends Notifier<Map<String, SeatGiftAggregate>> {
 
   @override
   Map<String, SeatGiftAggregate> build() {
-    final service = ref.watch(voiceRoomGiftRealtimeProvider);
+    final service = ref.read(voiceRoomGiftRealtimeProvider);
+    _sub?.cancel();
     _sub = service.events.listen(_record);
     ref.onDispose(() => _sub?.cancel());
     return const {};
@@ -65,7 +66,7 @@ class VoiceSeatGiftTotals extends Notifier<Map<String, SeatGiftAggregate>> {
         (receiverId == null || receiverId.isEmpty)) {
       return;
     }
-    final coins = ev.coinCost * (ev.quantity <= 0 ? 1 : ev.quantity);
+    final coins = ev.jetonAmount;
     final count = ev.quantity <= 0 ? 1 : ev.quantity;
     final sender =
         ev.senderName.trim().isNotEmpty ? ev.senderName.trim() : 'Bilinmeyen';
@@ -114,6 +115,15 @@ class VoiceSeatGiftTotals extends Notifier<Map<String, SeatGiftAggregate>> {
     }
     return null;
   }
+
+  /// Odaya geç katılanlar için API/SSE geçmişinden toplamları doldurur.
+  void seedFromEvents(Iterable<LiveGiftEvent> events) {
+    for (final ev in events) {
+      _record(ev);
+    }
+  }
+
+  void clear() => state = const {};
 }
 
 final voiceSeatGiftTotalsProvider =

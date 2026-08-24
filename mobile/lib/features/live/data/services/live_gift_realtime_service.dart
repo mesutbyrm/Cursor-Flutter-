@@ -10,10 +10,20 @@ class LiveGiftRealtimeService {
   final LiveGiftsRemoteDataSource _remote;
   final _local = StreamController<LiveGiftEvent>.broadcast();
   final Set<String> _seen = {};
+  final Map<String, DateTime> _fingerprints = {};
 
   Timer? _pollTimer;
   String? _streamId;
   DateTime? _since;
+  var _sseActive = false;
+
+  /// SSE bağlı olsa da REST yedek poll açık — üretimde hediye Socket.IO üzerinden gelebilir.
+  void setSseActive(bool active) {
+    _sseActive = active;
+    if (_streamId != null && _streamId!.isNotEmpty) {
+      if (_pollTimer == null) start(_streamId!);
+    }
+  }
 
   Stream<LiveGiftEvent> get events => _local.stream;
 
@@ -22,7 +32,7 @@ class LiveGiftRealtimeService {
     stop();
     _streamId = streamId;
     _since = DateTime.now().subtract(const Duration(minutes: 2));
-    _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) => _poll());
+    _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) => _poll());
     _poll();
   }
 
@@ -37,13 +47,40 @@ class LiveGiftRealtimeService {
     _local.close();
   }
 
-  void publishLocal(LiveGiftEvent event) {
-    _seen.add(event.id);
-    if (!_local.isClosed) _local.add(event);
+  void resetDedupeState() {
+    _seen.clear();
+    _fingerprints.clear();
   }
 
+  String _fingerprint(LiveGiftEvent e) {
+    final sender = (e.senderId ?? e.senderName).trim().toLowerCase();
+    final receiver = (e.receiverId ?? e.receiverName).trim().toLowerCase();
+    final gift = e.giftId.trim().isNotEmpty ? e.giftId : e.giftName;
+    return '$sender|$receiver|$gift|${e.quantity}|${e.jetonAmount}';
+  }
+
+  bool _isDuplicateFingerprint(LiveGiftEvent event) {
+    final fp = _fingerprint(event);
+    final prev = _fingerprints[fp];
+    final now = event.timestamp;
+    if (prev != null && now.difference(prev).inMilliseconds.abs() < 4000) {
+      return true;
+    }
+    _fingerprints[fp] = now;
+    if (_fingerprints.length > 64) {
+      final cutoff = now.subtract(const Duration(seconds: 30));
+      _fingerprints.removeWhere((_, t) => t.isBefore(cutoff));
+    }
+    return false;
+  }
+
+  /// Yerel animasyon devre dışı — hediyeler yalnızca SSE/socket/poll üzerinden oynar.
+  void publishLocal(LiveGiftEvent event) {}
+
   void publishRemote(LiveGiftEvent event) {
-    if (_seen.add(event.id) && !_local.isClosed) _local.add(event);
+    if (!_seen.add(event.id)) return;
+    if (_isDuplicateFingerprint(event)) return;
+    if (!_local.isClosed) _local.add(event);
   }
 
   Future<void> _poll() async {
@@ -55,9 +92,7 @@ class LiveGiftRealtimeService {
         since: _since,
       );
       for (final e in batch) {
-        if (_seen.add(e.id)) {
-          if (!_local.isClosed) _local.add(e);
-        }
+        publishRemote(e);
         if (e.timestamp.isAfter(_since ?? e.timestamp)) {
           _since = e.timestamp;
         }

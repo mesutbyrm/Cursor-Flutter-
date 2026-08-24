@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import '../domain/gift_collection.dart';
@@ -26,7 +27,7 @@ class GiftInsightsRemoteDataSource {
     int limit = 100,
   }) async {
     final res = await _dio.safeGet<dynamic>(
-      '/api/gifts/insights/leaderboard',
+      ApiEndpoints.giftsInsightsLeaderboard,
       query: {
         'type': type,
         'period': period,
@@ -70,8 +71,8 @@ class GiftInsightsRemoteDataSource {
   /// Destekçi rozeti (Bronz → Efsane). userId null ise kendi rozetim.
   Future<SupporterBadge?> fetchBadge({String? userId}) async {
     final path = userId == null || userId.isEmpty
-        ? '/api/gifts/insights/me/badge'
-        : '/api/gifts/insights/badge/$userId';
+        ? ApiEndpoints.giftsInsightsMeBadge
+        : ApiEndpoints.giftsInsightsBadge(userId);
     final res = await _dio.safeGet<dynamic>(path);
     final body = res.data;
     if (body is Map) return SupporterBadge.fromJson(asJsonMap(body));
@@ -81,7 +82,7 @@ class GiftInsightsRemoteDataSource {
   /// Hediye koleksiyonu (gönderilen/alınan, tamamlanma %).
   Future<GiftCollection> fetchCollection(String userId) async {
     final res =
-        await _dio.safeGet<dynamic>('/api/gifts/insights/collection/$userId');
+        await _dio.safeGet<dynamic>(ApiEndpoints.giftsInsightsCollection(userId));
     final body = res.data;
     if (body is Map) return GiftCollection.fromJson(asJsonMap(body));
     return const GiftCollection();
@@ -90,7 +91,7 @@ class GiftInsightsRemoteDataSource {
   /// Hediye albümü (alınan benzersiz hediyeler).
   Future<GiftAlbum> fetchAlbum(String userId) async {
     final res =
-        await _dio.safeGet<dynamic>('/api/gifts/insights/album/$userId');
+        await _dio.safeGet<dynamic>(ApiEndpoints.giftsInsightsAlbum(userId));
     final body = res.data;
     if (body is Map) return GiftAlbum.fromJson(asJsonMap(body));
     return const GiftAlbum();
@@ -102,7 +103,7 @@ class GiftInsightsRemoteDataSource {
     required String contextId,
   }) async {
     final res = await _dio.safeGet<dynamic>(
-      '/api/gifts/insights/first-gifter/$context/$contextId',
+      ApiEndpoints.giftsInsightsFirstGifter(context, contextId),
     );
     final body = res.data;
     if (body is Map) return FirstGifter.fromResponse(asJsonMap(body));
@@ -116,7 +117,7 @@ class GiftInsightsRemoteDataSource {
     int limit = 50,
   }) async {
     final res = await _dio.safeGet<dynamic>(
-      '/api/gifts/insights/feed',
+      ApiEndpoints.giftsInsightsFeed,
       query: {
         if (context != null) 'context': context,
         if (contextId != null) 'contextId': contextId,
@@ -143,7 +144,7 @@ class GiftInsightsRemoteDataSource {
     String scope = 'tr',
   }) async {
     final res = await _dio.safeGet<dynamic>(
-      '/api/gifts/insights/map',
+      ApiEndpoints.giftsInsightsMap,
       query: {'period': period, 'scope': scope},
     );
     final body = res.data;
@@ -154,7 +155,7 @@ class GiftInsightsRemoteDataSource {
   /// Bana özel hediye önerileri (AI/sezgisel).
   Future<List<GiftRecommendation>> fetchRecommendations({String? context}) async {
     final res = await _dio.safeGet<dynamic>(
-      '/api/gifts/insights/me/recommendations',
+      ApiEndpoints.giftsInsightsMeRecommendations,
       query: {if (context != null) 'context': context},
     );
     dynamic raw = res.data;
@@ -174,11 +175,11 @@ class GiftInsightsRemoteDataSource {
   /// Aktif görevler + bugünkü ilerlemem (birleştirilmiş).
   Future<List<GiftMission>> fetchMissions() async {
     // Tanımlar (public) + ilerleme (me) birleştirilir.
-    final defsRes = await _dio.safeGet<dynamic>('/api/gifts/missions');
+    final defsRes = await _dio.safeGet<dynamic>(ApiEndpoints.giftsMissions);
     final defs = _parseMissions(defsRes.data);
     Map<String, GiftMission> mine = {};
     try {
-      final meRes = await _dio.safeGet<dynamic>('/api/gifts/missions/me');
+      final meRes = await _dio.safeGet<dynamic>(ApiEndpoints.giftsMissionsMe);
       for (final m in _parseMissions(meRes.data)) {
         if (m.id.isNotEmpty) mine[m.id] = m;
       }
@@ -225,7 +226,7 @@ class GiftInsightsRemoteDataSource {
     int limit = 50,
   }) async {
     final res = await _dio.safeGet<dynamic>(
-      '/api/gifts/insights/me/history',
+      ApiEndpoints.giftsInsightsMeHistory,
       query: {
         if (direction != 'all') 'direction': direction,
         if (status != null) 'status': status,
@@ -249,7 +250,7 @@ class GiftInsightsRemoteDataSource {
 
   /// Görev ödülünü al.
   Future<bool> claimMission(String id) async {
-    final res = await _dio.safePost<dynamic>('/api/gifts/missions/$id/claim');
+    final res = await _dio.safePost<dynamic>(ApiEndpoints.giftsMissionClaim(id));
     final body = res.data;
     if (body is Map) {
       final ok = asJsonMap(body)['success'];

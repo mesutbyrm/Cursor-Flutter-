@@ -11,6 +11,7 @@ import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../live/presentation/utils/open_live_stream.dart';
+import '../../../voice_hub/presentation/utils/navigate_to_voice_room.dart';
 
 /// Ana sayfa hızlı işlemler (davet, jeton).
 class FeedQuickActions extends StatelessWidget {
@@ -289,22 +290,18 @@ class FeedVoiceRoomsStrip extends ConsumerWidget {
   }
 }
 
-class _RoomChip extends StatelessWidget {
+class _RoomChip extends ConsumerWidget {
   const _RoomChip({required this.room});
 
   final VoiceRoomEntity room;
 
-  void _open(BuildContext context) {
-    context.push('/voice-room/${room.id}', extra: room);
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Material(
       color: const Color(0xFF1E1E2A),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: () => _open(context),
+        onTap: () => navigateToVoiceRoom(context, ref, room: room),
         borderRadius: BorderRadius.circular(16),
         child: Container(
           width: 124,

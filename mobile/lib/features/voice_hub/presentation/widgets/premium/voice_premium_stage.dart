@@ -191,15 +191,6 @@ class _ListenerRow extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11),
             ),
           ),
-        if (show.isEmpty && totalOnline > 0)
-          Text(
-            '$totalOnline kişi çevrimiçi',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
-            ),
-          ),
       ],
     );
   }

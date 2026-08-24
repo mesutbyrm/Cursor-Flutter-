@@ -36,7 +36,7 @@ abstract final class VoiceRoomsDiscoverMapper {
   static List<FeaturedRoomItem> featuredFromRooms(List<VoiceRoomEntity> rooms) {
     final sorted = sortVoiceRoomsByPopularity(rooms);
     final picks = sorted.take(2).toList();
-    if (picks.isEmpty) return VoiceRoomsMockData.featured;
+    if (picks.isEmpty) return const [];
 
     final gradients = [
       [const Color(0xFF7B2FF7), const Color(0xFF4A00E0)],
@@ -63,9 +63,11 @@ abstract final class VoiceRoomsDiscoverMapper {
   }
 
   static List<PopularRoomItem> popularFromRooms(List<VoiceRoomEntity> rooms) {
-    final sorted = sortVoiceRoomsByPopularity(rooms);
+    final live = rooms.where((r) => r.displayOnline > 0).toList();
+    if (live.isEmpty) return const [];
+
+    final sorted = sortVoiceRoomsByPopularity(live);
     final picks = sorted.take(4).toList();
-    if (picks.isEmpty) return VoiceRoomsMockData.popularRooms;
 
     return List.generate(picks.length, (i) {
       final r = picks[i];
@@ -125,7 +127,7 @@ abstract final class VoiceRoomsDiscoverMapper {
   static List<TrendingTopicItem> trendsFromApi(
     List<Map<String, dynamic>> raw,
   ) {
-    if (raw.isEmpty) return VoiceRoomsMockData.trendingTopics;
+    if (raw.isEmpty) return const [];
     return raw.take(5).map((m) {
       final tag = (pick(m, ['tag', 'name', 'hashtag', 'title']) ?? '#Trend')
           .toString()
@@ -138,10 +140,45 @@ abstract final class VoiceRoomsDiscoverMapper {
     }).toList();
   }
 
+  static List<ActiveSpeakerItem> speakersFromRooms(List<VoiceRoomEntity> rooms) {
+    final candidates = <({String name, int online, String? avatarUrl})>[];
+    for (final r in rooms) {
+      if (r.displayOnline <= 0) continue;
+      final owner = r.ownerName?.trim();
+      if (owner != null && owner.isNotEmpty) {
+        candidates.add((
+          name: owner,
+          online: r.displayOnline,
+          avatarUrl: r.ownerAvatarUrl,
+        ));
+      }
+    }
+    if (candidates.isEmpty) return const [];
+
+    candidates.sort((a, b) => b.online.compareTo(a.online));
+    final colors = [
+      VoiceRoomsUiTokens.gold,
+      VoiceRoomsUiTokens.silver,
+      VoiceRoomsUiTokens.bronze,
+    ];
+    return candidates.take(3).toList().asMap().entries.map((e) {
+      final rank = e.key + 1;
+      final c = e.value;
+      return ActiveSpeakerItem(
+        rank: rank,
+        name: c.name,
+        diamonds: _formatCount(c.online),
+        avatarColor: colors[e.key % colors.length],
+        avatarUrl: c.avatarUrl,
+        onlineLabel: '${_formatCount(c.online)} dinleyici',
+      );
+    }).toList();
+  }
+
   static List<ActiveSpeakerItem> speakersFromLeaderboard(
     List<GiftLeaderboardEntry> entries,
   ) {
-    if (entries.isEmpty) return VoiceRoomsMockData.activeSpeakers;
+    if (entries.isEmpty) return const [];
     final colors = [
       VoiceRoomsUiTokens.gold,
       VoiceRoomsUiTokens.blue,

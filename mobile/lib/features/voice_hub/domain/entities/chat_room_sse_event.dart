@@ -8,6 +8,14 @@ enum ChatRoomSseEventType {
   music,
   musicStarted,
   musicStopped,
+  songStarted,
+  songPaused,
+  songResumed,
+  songFinished,
+  queueUpdated,
+  songRemoved,
+  songChanged,
+  playerState,
   userJoin,
   userLeave,
   roomUpdate,
@@ -19,6 +27,7 @@ enum ChatRoomSseEventType {
   fortuneRequest,
   pk,
   typing,
+  roomEvent,
   unknown,
 }
 
@@ -37,6 +46,8 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
       return ChatRoomSseEventType.message;
     case 'dj':
     case 'djevent':
+    case 'dj_update':
+    case 'djupdate':
       return ChatRoomSseEventType.dj;
     case 'song':
     case 'songrequest':
@@ -52,6 +63,22 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
     case 'musicstopped':
     case 'music_stop':
       return ChatRoomSseEventType.musicStopped;
+    case 'song_started':
+      return ChatRoomSseEventType.songStarted;
+    case 'song_paused':
+      return ChatRoomSseEventType.songPaused;
+    case 'song_resumed':
+      return ChatRoomSseEventType.songResumed;
+    case 'song_finished':
+      return ChatRoomSseEventType.songFinished;
+    case 'queue_updated':
+      return ChatRoomSseEventType.queueUpdated;
+    case 'song_removed':
+      return ChatRoomSseEventType.songRemoved;
+    case 'song_changed':
+      return ChatRoomSseEventType.songChanged;
+    case 'player_state':
+      return ChatRoomSseEventType.playerState;
     case 'user_join':
     case 'user_joined':
     case 'userjoined':
@@ -76,6 +103,8 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
       return ChatRoomSseEventType.announcement;
     case 'gift':
     case 'giftsent':
+    case 'gift_sent':
+    case 'gift-sent':
       return ChatRoomSseEventType.gift;
     case 'presence':
     case 'roomusers':
@@ -93,7 +122,30 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
     case 'pkbattle':
     case 'pkbattleupdated':
     case 'pk_battle_updated':
+    case 'pk_score':
+    case 'pkscore':
+    case 'pk_invite':
+    case 'pkinvite':
+    case 'pk_request':
+    case 'pkrequest':
+    case 'pk_ended':
+    case 'pkended':
+    case 'pk_accepted':
+    case 'pkaccepted':
+    case 'pk_rejected':
+    case 'pkrejected':
+    case 'pk_started':
+    case 'pkstarted':
+    case 'pk_score_updated':
+    case 'pkscoreupdated':
+    case 'gift_ranking_updated':
+    case 'giftrankingupdated':
       return ChatRoomSseEventType.pk;
+    case 'room_event':
+    case 'roomevent':
+    case 'seat_update':
+    case 'seatupdate':
+      return ChatRoomSseEventType.roomEvent;
     default:
       return ChatRoomSseEventType.unknown;
   }

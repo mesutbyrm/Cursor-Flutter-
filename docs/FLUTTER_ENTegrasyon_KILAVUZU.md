@@ -2126,7 +2126,11 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 | `addToQueue` | POST | `/api/chat/rooms/{roomId}/music-queue` | ✅ | `{videoId, title, thumbnail?}` |
 | `requestSong` | POST | `/api/chat/rooms/{roomId}/song-request` | ✅ | `{videoId, title}` |
 | `transferOwnership` | POST | `/api/chat/rooms/{roomId}/transfer-ownership` | ✅ | `{newOwnerId}` |
-| **SSE** | GET | `/api/chat/rooms/{roomId}/stream` | ✅ | - |
+| `getPkStatus` | GET | `/api/chat/rooms/{roomId}/pk` | Opsiyonel | Games backend — `{ roomId, activeBattle, pendingInvite }` |
+| `invitePk` | POST | `/api/chat/rooms/{roomId}/pk` | ✅ | `{ guestUserId, durationSec }` |
+| `respondPk` | POST | `/api/chat/rooms/{roomId}/pk/{inviteId}/respond` | ✅ | `{ action: "accept" \| "reject" }` |
+| `endPk` | POST | `/api/chat/rooms/{roomId}/pk/{battleId}/end` | ✅ | — |
+| **SSE** | GET | `/api/chat/rooms/{roomId}/stream` | ✅ | Event `pk` — skor, davet, bitiş |
 
 ### 9.4 LiveStreamRepository
 
@@ -2159,7 +2163,10 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 | `getFortuneRequests` | GET | `/api/video-streams/{streamId}/fortune-requests` | ✅ | - |
 | `sendFortuneRequest` | POST | `/api/video-streams/{streamId}/fortune-requests` | ✅ | `{fortuneType, message?}` |
 | `getMyFortuneStatus` | GET | `/api/video-streams/{streamId}/fortune-requests/my-status` | ✅ | - |
-| `startPkBattle` | POST | `/api/video-streams/{streamId}/pk-battle` | ✅ | `{opponentStreamId, durationMinutes?}` |
+| `startPkBattle` | POST | `/api/video-streams/pk` | ✅ | `{opponentStreamId, durationMinutes}` — yedek: `POST …/{streamId}/pk-battle` |
+| `respondPkBattle` | POST | `/api/video-streams/{streamId}/pk-battle` | ✅ | `{action: accept\|reject\|cancel\|end, pkBattleId}` |
+| `getPkBattle` | GET | `/api/video-streams/{streamId}/pk-battle` | ❌ | Aktif PK |
+| `getPkList` | GET | `/api/video-streams/pk` | ❌ | Aktif PK / rakip listesi |
 | **SSE** | GET | `/api/video-streams/{streamId}/stream` | ✅ | - |
 
 ### 9.5 FortuneRepository
@@ -2234,7 +2241,7 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 |-------|------|----------|------|--------------|
 | `getGiftTypes` | GET | `/api/gifts/types` | ❌ | - |
 | `sendGift` | POST | `/api/gifts/send` | ✅ | `{giftId, receiverUserId, quantity?, roomType?, roomId?}` |
-| `getRecentBigGifts` | GET | `/api/gifts/recent-big` | ❌ | - |
+| `getRecentBigGifts` | GET | `/api/gifts/recent-big` | Soft | Ana sayfa kayan şerit — 404’te sessiz |
 | `checkReciprocal` | GET | `/api/gifts/check-reciprocal` | ✅ | `?userId=xxx` |
 
 ### 9.10 SocialRepository
@@ -2293,7 +2300,7 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 | `getPopups` | GET | `/api/popups` | ✅ | Popup bildirimleri |
 | `getLeaderboard` | GET | `/api/leaderboards` | ❌ | Liderlik tablosu |
 | `getHomepageButtons` | GET | `/api/homepage-buttons` | ❌ | Ana sayfa butonları |
-| `getHomepageTicker` | GET | `/api/homepage-ticker` | ❌ | Alt bant mesajları |
+| `getHomepageTicker` | GET | `/api/homepage-ticker` | Soft | Alt bant / ana sayfa kayan yazılar — 404’te sessiz |
 | `getPublicStats` | GET | `/api/public-stats` | ❌ | Genel istatistikler |
 | `getTrendVideos` | GET | `/api/trend-videos` | ❌ | Trend videolar |
 | `getTrends` | GET | `/api/trends` | ❌ | Trend konular |

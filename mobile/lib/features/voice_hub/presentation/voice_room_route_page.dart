@@ -6,6 +6,7 @@ import '../../../core/network/api_exception.dart';
 import '../../live/presentation/providers/live_providers.dart';
 import 'theme/voice_room_tokens.dart';
 import 'basic/voice_room_page.dart';
+import 'voice_room_gated_entry.dart';
 import 'widgets/voice_room_error_boundary.dart';
 
 /// `/voice-room/:id` — oda `extra` yoksa canlifal.com listesinden yükler.
@@ -53,10 +54,7 @@ class VoiceRoomRoutePage extends ConsumerWidget {
           );
         }
         final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-        return VoiceRoomErrorBoundary(
-          roomId: key,
-          child: buildVoiceRoomPage(room),
-        );
+        return VoiceRoomGatedEntry(room: room);
       },
     );
   }

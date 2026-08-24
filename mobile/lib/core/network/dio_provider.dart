@@ -3,8 +3,10 @@ import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/env.dart';
+import 'auth_token_refresh_coordinator.dart';
 import '../performance/json_isolate_perf.dart';
 import 'api.dart';
+import 'api_backend_kind.dart';
 import 'api_exception.dart';
 import 'api_endpoints.dart';
 import 'api_monitor_interceptor.dart';
@@ -16,6 +18,8 @@ import 'api_timing_interceptor.dart';
 import 'connectivity/connectivity_service.dart';
 import 'cookie_jar_provider.dart';
 import 'gateway_fallback_interceptor.dart';
+import 'interceptors/api_version_interceptor.dart';
+import 'json_content_type_guard_interceptor.dart';
 import 'payment_request_interceptor.dart';
 import 'token_storage.dart';
 import 'voice_room_api_log_interceptor.dart';
@@ -24,8 +28,13 @@ bool _isPublicAuthPath(String path) {
   return path == ApiEndpoints.authMobileLogin ||
       path == ApiEndpoints.authMobileRegister ||
       path == ApiEndpoints.authMobileGoogle ||
+      path == ApiEndpoints.authMobileApple ||
       path == ApiEndpoints.authMobileTiktok ||
       path == ApiEndpoints.authMobileRefresh ||
+      path == ApiEndpoints.authMobileSendVerification ||
+      path == ApiEndpoints.authMobileVerifyEmail ||
+      path == ApiEndpoints.authForgotPassword ||
+      path == ApiEndpoints.authResetPassword ||
       path == ApiEndpoints.authLogin ||
       path == ApiEndpoints.authRegister ||
       path == ApiEndpoints.authGoogle ||
@@ -45,7 +54,7 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
     BaseOptions(
       baseUrl: Env.apiBaseUrl,
       connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 20),
+      receiveTimeout: const Duration(seconds: 30),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -60,6 +69,8 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
     contentLengthIsolateThreshold: JsonIsolatePerf.largeThreshold,
   );
 
+  // `/api/...` → `/api/v1/...` (FLUTTER_BACKEND_ENTEGRASYON_PROMPT.md).
+  dio.interceptors.add(ApiVersionInterceptor());
   // Backend seçimi — her istek doğru origin'e gider.
   dio.interceptors.add(BackendRoutingInterceptor());
   dio.interceptors.add(CookieManager(cookieJar));
@@ -67,6 +78,7 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
   dio.interceptors.add(VoiceRoomApiLogInterceptor());
   dio.interceptors.add(ApiMonitorInterceptor());
   dio.interceptors.add(ApiTimingInterceptor());
+  dio.interceptors.add(JsonContentTypeGuardInterceptor());
 
   final connectivity = ref.read(connectivityServiceProvider);
   dio.interceptors.add(
@@ -78,7 +90,8 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
       onRequest: (options, handler) async {
         final public = _isPublicAuthPath(options.path);
         if (!public) {
-          final token = await tokenStorage.readAccess();
+          final token =
+              tokenStorage.peekAccess() ?? await tokenStorage.readAccess();
           if (token != null &&
               token.isNotEmpty &&
               token != TokenStorage.sessionCookieMarker) {
@@ -90,25 +103,25 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
         for (final entry in Map.from(deviceRequestHeaders()).entries) {
           options.headers[entry.key] = entry.value;
         }
-        final staffRole = options.extra['staffRole'];
-        if (staffRole is String &&
-            staffRole.trim().isNotEmpty &&
-            options.path.startsWith('/api/admin/')) {
-          options.headers['X-Staff-Role'] = staffRole.trim();
-        }
         handler.next(options);
       },
       onError: (e, handler) async {
         final refreshPath = _refreshPath();
         final already = e.requestOptions.extra['_authRetry'] == true;
+        final backend = e.requestOptions.extra['apiBackend'];
+        final isMainOrigin =
+            backend == null || backend == ApiBackendKind.main.label;
         if (!already &&
+            isMainOrigin &&
             e.response?.statusCode == 401 &&
-            e.requestOptions.path != refreshPath) {
+            e.requestOptions.path != refreshPath &&
+            e.requestOptions.path != ApiEndpoints.authLogout) {
           e.requestOptions.extra['_authRetry'] = true;
-          final refreshed = await _tryRefresh(
-            tokenRefreshDio,
-            tokenStorage,
-            refreshPath,
+          final refreshed =
+              await AuthTokenRefreshCoordinator.instance.refreshLegacy(
+            refreshDio: tokenRefreshDio,
+            storage: tokenStorage,
+            refreshPath: refreshPath,
           );
           if (refreshed) {
             final token = await tokenStorage.readAccess();
@@ -136,7 +149,7 @@ final dioProvider = Provider<Dio>((ref) {
     BaseOptions(
       baseUrl: Env.apiBaseUrl,
       connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 20),
+      receiveTimeout: const Duration(seconds: 30),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -156,42 +169,11 @@ Future<bool> tryRefreshAccessToken(
   TokenStorage storage, {
   String? refreshPath,
 }) {
-  return _tryRefresh(dio, storage, refreshPath ?? _refreshPath());
-}
-
-Future<bool> _tryRefresh(
-  Dio dio,
-  TokenStorage storage,
-  String refreshPath,
-) async {
-  final refresh = await storage.readRefresh();
-  if (refresh == null || refresh.isEmpty) return false;
-  try {
-    final res = await dio.post<Map<String, dynamic>>(
-      refreshPath,
-      data: {'refreshToken': refresh},
-    );
-    final data = res.data;
-    if (data == null) return false;
-    final access = _pickToken(data, 'accessToken', 'access_token');
-    if (access == null) return false;
-    final newRefresh = _pickToken(data, 'refreshToken', 'refresh_token');
-    await storage.writeTokens(access: access, refresh: newRefresh ?? refresh);
-    return true;
-  } on DioException catch (e) {
-    final code = e.response?.statusCode;
-    if (code == 401 || code == 403) {
-      await storage.clear();
-    }
-    return false;
-  } catch (_) {
-    return false;
-  }
-}
-
-String? _pickToken(Map<String, dynamic> m, String a, String b) {
-  final v = m[a] ?? m[b];
-  return v is String ? v : null;
+  return tryRefreshAccessTokenLegacy(
+    dio,
+    storage,
+    refreshPath: refreshPath ?? _refreshPath(),
+  );
 }
 
 extension DioApi on Dio {
@@ -267,6 +249,26 @@ extension DioApi on Dio {
   }) async {
     try {
       return await patch<T>(
+        path,
+        data: data,
+        queryParameters: query,
+        options: options,
+        cancelToken: cancelToken,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<Response<T>> safePut<T>(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? query,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      return await put<T>(
         path,
         data: data,
         queryParameters: query,

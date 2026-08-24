@@ -1,18 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/navigation/native_site_routes.dart';
 import '../../../domain/home_site_catalog.dart';
+import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_section_title.dart';
 
-/// Fan Club — yatay kartlar.
-class FanClubSection extends StatelessWidget {
+/// Fan Club — yatay kartlar (`GET /api/fan-clubs`).
+class FanClubSection extends ConsumerWidget {
   const FanClubSection({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final clubsAsync = ref.watch(homeFanClubsProvider);
+    final clubs = clubsAsync.valueOrNull;
+    final items = (clubs != null && clubs.isNotEmpty)
+        ? clubs
+        : HomeSiteCatalog.fanClubs;
+    if (items.isEmpty) return const SizedBox.shrink();
+
     return Column(
       children: [
         HomeSectionTitle(
@@ -26,10 +35,10 @@ class FanClubSection extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-            itemCount: HomeSiteCatalog.fanClubs.length,
+            itemCount: items.length,
             separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (_, i) {
-              final club = HomeSiteCatalog.fanClubs[i];
+              final club = items[i];
               return _FanClubCard(
                 item: club,
                 onTap: () => openNativeSitePath(context, club.route),

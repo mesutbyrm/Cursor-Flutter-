@@ -6,7 +6,7 @@ class LiveGuestSlot extends Equatable {
     required this.index,
     this.userId,
     this.displayName,
-    this.agoraUid,
+    this.rtcUserId,
     this.isHost = false,
     this.cameraOn = true,
     this.micOn = true,
@@ -18,7 +18,7 @@ class LiveGuestSlot extends Equatable {
   final int index;
   final String? userId;
   final String? displayName;
-  final int? agoraUid;
+  final String? rtcUserId;
   final bool isHost;
   final bool cameraOn;
   final bool micOn;
@@ -26,12 +26,12 @@ class LiveGuestSlot extends Equatable {
   final bool mutedByHost;
   final int jetonEarned;
 
-  bool get isEmpty => userId == null && agoraUid == null && !isHost;
+  bool get isEmpty => userId == null && rtcUserId == null && !isHost;
 
   LiveGuestSlot copyWith({
     String? userId,
     String? displayName,
-    int? agoraUid,
+    String? rtcUserId,
     bool? isHost,
     bool? cameraOn,
     bool? micOn,
@@ -44,7 +44,7 @@ class LiveGuestSlot extends Equatable {
       index: index,
       userId: clearUser ? null : (userId ?? this.userId),
       displayName: clearUser ? null : (displayName ?? this.displayName),
-      agoraUid: clearUser ? null : (agoraUid ?? this.agoraUid),
+      rtcUserId: clearUser ? null : (rtcUserId ?? this.rtcUserId),
       isHost: isHost ?? this.isHost,
       cameraOn: cameraOn ?? this.cameraOn,
       micOn: micOn ?? this.micOn,
@@ -58,7 +58,7 @@ class LiveGuestSlot extends Equatable {
   List<Object?> get props => [
         index,
         userId,
-        agoraUid,
+        rtcUserId,
         isHost,
         cameraOn,
         micOn,

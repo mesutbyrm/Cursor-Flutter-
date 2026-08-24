@@ -9,7 +9,12 @@ import '../../domain/repositories/live_repository.dart';
 import '../../data/datasources/live_remote_datasource.dart';
 import '../../data/datasources/live_stream_extras_datasource.dart';
 import '../../data/repositories/live_repository_impl.dart';
-import '../../data/services/video_webrtc_signal_service.dart';
+import '../../../voice_hub/presentation/utils/voice_room_key_resolver.dart';
+import 'discover_live_streams.dart';
+import 'discover_voice_rooms.dart';
+
+export 'discover_live_streams.dart';
+export 'discover_voice_rooms.dart';
 
 final liveRemoteProvider = Provider<LiveRemoteDataSource>((ref) {
   return LiveRemoteDataSource(ref.watch(dioProvider));
@@ -19,23 +24,8 @@ final liveStreamExtrasProvider = Provider<LiveStreamExtrasDataSource>((ref) {
   return LiveStreamExtrasDataSource(ref.watch(dioProvider));
 });
 
-final videoWebrtcSignalServiceProvider =
-    Provider<VideoWebrtcSignalService>((ref) {
-  final s = VideoWebrtcSignalService(ref.watch(liveStreamExtrasProvider));
-  ref.onDispose(s.dispose);
-  return s;
-});
-
 final liveRepositoryProvider = Provider<LiveRepository>((ref) {
   return LiveRepositoryImpl(ref.watch(liveRemoteProvider));
-});
-
-final liveStreamsProvider = FutureProvider<List<LiveStreamEntity>>((ref) async {
-  return ref.watch(liveRepositoryProvider).fetchStreams(page: 1);
-});
-
-final voiceRoomsProvider = FutureProvider<List<VoiceRoomEntity>>((ref) async {
-  return ref.watch(liveRepositoryProvider).fetchVoiceRooms();
 });
 
 final voiceRoomByIdProvider =
@@ -45,6 +35,12 @@ final voiceRoomByIdProvider =
   if (cached != null) {
     String norm(String s) =>
         s.trim().toLowerCase().replaceAll(RegExp(r'-+$'), '');
+    final resolved = VoiceRoomKeyResolver.resolveFromKnownRooms(id, cached);
+    if (resolved != null) {
+      for (final r in cached) {
+        if (r.id == resolved) return r;
+      }
+    }
     for (final r in cached) {
       if (r.id == id ||
           r.slug == id ||
@@ -77,7 +73,7 @@ class PlatformVoiceRoomSettings {
   final int vipRoomMaxUsers;
 
   static const fallback = PlatformVoiceRoomSettings(
-    normalOpenCost: 100,
+    normalOpenCost: 2500,
     vipOpenCost: 5000,
     musicRequestCost: 10,
     freeRoomMaxUsers: 50,
@@ -96,7 +92,7 @@ final platformVoiceRoomSettingsProvider =
   int _int(String key, int fallback) =>
       (d[key] as num?)?.toInt() ?? fallback;
   return PlatformVoiceRoomSettings(
-    normalOpenCost: _int('normalOpenCost', 100),
+    normalOpenCost: _int('normalOpenCost', 2500),
     vipOpenCost: _int('vipOpenCost', 5000),
     musicRequestCost: _int('musicRequestCost', 10),
     freeRoomMaxUsers: _int('freeRoomMaxUsers', 50),
@@ -105,20 +101,33 @@ final platformVoiceRoomSettingsProvider =
   );
 });
 
-/// Giriş yapan kullanıcının sahip olduğu sesli oda (ownerId veya slug = username).
-final myVoiceRoomProvider = Provider<VoiceRoomEntity?>((ref) {
+/// Giriş yapan kullanıcının sahip olduğu sesli odalar (ownerId veya slug = username).
+final myOwnedVoiceRoomsProvider = Provider<List<VoiceRoomEntity>>((ref) {
   final user = ref.watch(authControllerProvider).valueOrNull;
   final rooms = ref.watch(voiceRoomsProvider).valueOrNull;
-  if (user == null || rooms == null || rooms.isEmpty) return null;
+  if (user == null || rooms == null || rooms.isEmpty) return const [];
+
+  final owned = <VoiceRoomEntity>[];
+  final seen = <String>{};
+  final uname = user.username.trim().toLowerCase();
 
   for (final r in rooms) {
-    final oid = r.ownerId;
-    if (oid != null && oid.isNotEmpty && oid == user.id) return r;
+    final key = r.apiRoomKey;
+    if (key.isEmpty || seen.contains(key)) continue;
+    final oid = r.ownerId?.trim() ?? '';
+    final isOwner = (oid.isNotEmpty && oid == user.id) ||
+        (uname.isNotEmpty && r.slug.trim().toLowerCase() == uname);
+    if (isOwner) {
+      seen.add(key);
+      owned.add(r);
+    }
   }
-  final uname = user.username.trim().toLowerCase();
-  if (uname.isEmpty) return null;
-  for (final r in rooms) {
-    if (r.slug.trim().toLowerCase() == uname) return r;
-  }
-  return null;
+  owned.sort((a, b) => b.displayOnline.compareTo(a.displayOnline));
+  return owned;
+});
+
+/// Giriş yapan kullanıcının sahip olduğu sesli oda (ownerId veya slug = username).
+final myVoiceRoomProvider = Provider<VoiceRoomEntity?>((ref) {
+  final owned = ref.watch(myOwnedVoiceRoomsProvider);
+  return owned.isEmpty ? null : owned.first;
 });

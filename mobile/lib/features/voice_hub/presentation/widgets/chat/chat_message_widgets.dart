@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:canlifal_social/core/auth/voice_staff_rank.dart';
 import 'package:canlifal_social/core/widgets/user_avatar.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 
+import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
+import 'package:canlifal_social/features/cosmetics/presentation/providers/cosmetics_providers.dart';
+import 'package:canlifal_social/features/cosmetics/presentation/widgets/cosmetic_chat_bubble.dart';
 import '../../../domain/entities/chat_room_message.dart';
 import '../../theme/voice_room_tokens.dart';
 import '../../utils/voice_staff_chat_style.dart';
@@ -44,7 +48,7 @@ class ChatMessageWidget extends StatelessWidget {
   }
 }
 
-class _ChatMessageBody extends StatelessWidget {
+class _ChatMessageBody extends ConsumerWidget {
   const _ChatMessageBody({
     required this.message,
     this.onUserTap,
@@ -67,10 +71,13 @@ class _ChatMessageBody extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (message.kind == ChatMessageKind.systemJoin ||
-        message.kind == ChatMessageKind.systemLeave) {
-      return _SystemJoinLine(content: message.content);
+        message.kind == ChatMessageKind.systemLeave ||
+        ChatRoomMessage.isSystemProtocol(message.content)) {
+      return _SystemJoinLine(
+        content: ChatRoomMessage.formatDisplay(message.content),
+      );
     }
     if (message.kind == ChatMessageKind.gift) {
       return GiftWidget(content: message.content);
@@ -82,9 +89,10 @@ class _ChatMessageBody extends StatelessWidget {
     final vip = user?.isBroadcaster == true || tier.index >= VipTier.gold.index;
     final rank = VoiceStaffChatStyle.rankOf(user);
     final isStaff = VoiceStaffChatStyle.isStaffUser(user);
+    final isPremiumChat = isStaff || VoiceStaffChatStyle.isGoldOrAdminChatUser(user);
     final showIstek = _isIstekLine(message.content);
 
-    if (isStaff) {
+    if (isPremiumChat) {
       return _StaffChatLine(
         name: name,
         content: message.content,
@@ -99,6 +107,10 @@ class _ChatMessageBody extends StatelessWidget {
     }
 
     final nameColor = _usernameColor(user, vip, rank);
+    final selfId = ref.watch(authControllerProvider).valueOrNull?.id;
+    final isSelf = selfId != null && user?.id == selfId;
+    final bubbleItem = isSelf ? ref.watch(resolvedChatBubbleProvider) : null;
+    final bubbleDecoration = CosmeticChatBubbleStyle.decoration(bubbleItem);
 
     return GestureDetector(
       onTap: user != null ? () => onUserTap?.call(user.id, name) : null,
@@ -106,11 +118,7 @@ class _ChatMessageBody extends StatelessWidget {
           user != null ? () => onUserDoubleTap?.call(user.id, name) : null,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.38),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        ),
+        decoration: bubbleDecoration,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -170,7 +178,14 @@ class _StaffChatLine extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onDoubleTap;
 
-  Color get _accent => VoiceStaffChatStyle.accentForUser(user);
+  Color get _accent {
+    if (VoiceStaffChatStyle.isGoldOrAdminChatUser(user) &&
+        VoiceStaffRankParser.powerLevel(rank) <
+            VoiceStaffRankParser.powerLevel(VoiceStaffRank.voice)) {
+      return VoiceRoomTokens.gold;
+    }
+    return VoiceStaffChatStyle.accentForUser(user);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -322,7 +337,22 @@ class _SystemJoinLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox.shrink();
+    final line = content.trim();
+    if (line.isEmpty) return const SizedBox.shrink();
+    return RepaintBoundary(
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(
+          line,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w700,
+            color: VoiceRoomTokens.gold.withValues(alpha: 0.95),
+            shadows: const [Shadow(color: Colors.black87, blurRadius: 8)],
+          ),
+        ),
+      ),
+    );
   }
 }
 

@@ -8,12 +8,19 @@ import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../domain/entities/profile_extended_entity.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_screen_state.dart';
 import '../premium_2026/profile_theme.dart';
 import '../providers/profile_hub_providers.dart';
 import 'profile_avatar_sheet.dart';
+import 'profile_meta_helpers.dart';
+import '../../../cosmetics/domain/cosmetic_item.dart';
+import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
+import '../../../cosmetics/presentation/widgets/cosmetic_avatar_frame.dart';
+import '../../../cosmetics/presentation/widgets/cosmetic_name_label.dart';
+import '../../../cosmetics/presentation/widgets/cosmetic_particle_overlay.dart';
 
-/// Referans profil başlığı — avatar, VIP, doğrulama, düzenle/QR/ayarlar.
+/// Referans profil başlığı
 class ProfileHubHeader extends ConsumerWidget {
   const ProfileHubHeader({
     super.key,
@@ -30,132 +37,173 @@ class ProfileHubHeader extends ConsumerWidget {
     final extAsync = ref.watch(profileExtendedProvider);
     final ext = extAsync.valueOrNull ?? const ProfileExtendedEntity();
     final level = state.level;
-    final vipLabel = _vipLabel(state, ext);
+    final vipLabel = buildMembershipHubVipPillLabel(
+      info: ref.watch(profileMembershipInfoProvider),
+      membershipExpiresAt: state.wallet?.membershipExpiresAt,
+      extVipLevel: ext.vipLevel,
+      fallbackStateIsVip: state.isVip,
+      levelVipTier: state.level.vipTier,
+    );
 
+    final topInset = MediaQuery.paddingOf(context).top;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _CoverBanner(coverUrl: ext.coverImage),
-        const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Stack(
+          clipBehavior: Clip.none,
           children: [
-            _AvatarBlock(
-              user: user,
-              level: level.level,
-              isVip: state.isVip,
-              isOnline: ext.isOnline,
-              isVerified: user.isVerified,
-              onTap: () => showProfileAvatarSheet(
-                context,
-                ref,
-                avatarUrl: user.avatarUrl,
-                onUpdated: onRefresh ?? () {},
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          user.display,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                          ),
+            _CoverBanner(coverUrl: ext.coverImage, topInset: topInset),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: -ProfilePremiumTheme.avatarOverlap,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _AvatarBlock(
+                      user: user,
+                      level: level.level,
+                      isVip: state.isVip,
+                      isOnline: ext.isOnline,
+                      isVerified: user.isVerified,
+                      onTap: () => showProfileAvatarSheet(
+                        context,
+                        ref,
+                        avatarUrl: user.avatarUrl,
+                        onUpdated: onRefresh ?? () {},
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: CosmeticNameLabel(
+                                    text: user.display,
+                                    item: ref.watch(resolvedNameEffectProvider),
+                                    maxLines: 1,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w900,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black54,
+                                          blurRadius: 8,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                if (vipLabel != null) ...[
+                                  const SizedBox(width: 6),
+                                  _VipPill(label: vipLabel),
+                                ],
+                                _MembershipBadgeChip(
+                                  badge: ref.watch(resolvedMembershipBadgeProvider),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '@${user.username}',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.85),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                shadows: const [
+                                  Shadow(color: Colors.black54, blurRadius: 6),
+                                ],
+                              ),
+                            ),
+                            _ProfileMetaChips(
+                              zodiac: ext.zodiacSign,
+                              team: ext.favoriteTeam ??
+                                  state.wallet?.favoriteTeam,
+                            ),
+                          ],
                         ),
                       ),
-                      if (vipLabel != null) ...[
-                        const SizedBox(width: 6),
-                        _VipPill(label: vipLabel),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '@${user.username}',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.55),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'ID: ${user.id}',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.35),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (user.isVerified) ...[
-                    const SizedBox(height: 6),
-                    Row(
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.verified_rounded,
-                          color: Color(0xFF29B6F6),
-                          size: 16,
+                        _ActionBtn(
+                          icon: Icons.edit_rounded,
+                          label: 'Düzenle',
+                          onTap: () => context.push('/profile/edit'),
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Doğrulanmış Üye',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        const SizedBox(height: 6),
+                        _ActionBtn(
+                          icon: Icons.qr_code_2_rounded,
+                          label: 'QR Kodum',
+                          onTap: () => context.push('/profile/qr'),
+                        ),
+                        const SizedBox(height: 6),
+                        _ActionBtn(
+                          icon: Icons.settings_rounded,
+                          label: 'Ayarlar',
+                          onTap: () => context.push('/settings'),
                         ),
                       ],
                     ),
                   ],
-                  if (user.bio != null && user.bio!.trim().isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      user.bio!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.72),
-                        fontSize: 12,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ],
+                ),
               ),
-            ),
-            Column(
-              children: [
-                _ActionBtn(
-                  icon: Icons.edit_rounded,
-                  label: 'Düzenle',
-                  onTap: () => context.push('/profile/edit'),
-                ),
-                const SizedBox(height: 8),
-                _ActionBtn(
-                  icon: Icons.qr_code_2_rounded,
-                  label: 'QR Kodum',
-                  onTap: () => context.push('/profile/qr'),
-                ),
-                const SizedBox(height: 8),
-                _ActionBtn(
-                  icon: Icons.settings_rounded,
-                  label: 'Ayarlar',
-                  onTap: () => context.push('/settings'),
-                ),
-              ],
             ),
           ],
         ),
+        SizedBox(height: ProfilePremiumTheme.avatarOverlap + 8),
+        Text(
+          'ID: ${user.id}',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.35),
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        if (user.isVerified) ...[
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Icon(
+                Icons.verified_rounded,
+                color: Color(0xFF29B6F6),
+                size: 16,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Doğrulanmış Üye',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (user.bio != null && user.bio!.trim().isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            user.bio!,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.72),
+              fontSize: 12,
+              height: 1.35,
+            ),
+          ),
+        ],
         if (extAsync.isLoading && extAsync.valueOrNull == null)
           const Padding(
             padding: EdgeInsets.only(top: 8),
@@ -164,32 +212,23 @@ class ProfileHubHeader extends ConsumerWidget {
       ],
     );
   }
-
-  String? _vipLabel(ProfileScreenState state, ProfileExtendedEntity ext) {
-    final m = state.membership?.trim();
-    if (m != null && m.isNotEmpty) return '💎 $m';
-    final v = ext.vipLevel?.trim();
-    if (v != null && v.isNotEmpty) return '💎 $v';
-    if (state.isVip) return '💎 VIP';
-    return state.level.vipTier?.trim().isNotEmpty == true
-        ? '💎 ${state.level.vipTier}'
-        : null;
-  }
 }
 
 class _CoverBanner extends StatelessWidget {
-  const _CoverBanner({this.coverUrl});
+  const _CoverBanner({this.coverUrl, this.topInset = 0});
 
   final String? coverUrl;
+  final double topInset;
 
   @override
   Widget build(BuildContext context) {
+    final height = ProfilePremiumTheme.coverHeight + topInset;
     return Hero(
       tag: 'profile-cover',
       child: ClipRRect(
         borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusLg),
         child: SizedBox(
-          height: ProfilePremiumTheme.coverHeight,
+          height: height,
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -203,12 +242,25 @@ class _CoverBanner extends StatelessWidget {
                 )
               else
                 _gradient(),
+              // Altta okunabilirlik için hafif karartma
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0x00000000),
+                      Color(0x99000000),
+                    ],
+                  ),
+                ),
+              ),
               Positioned(
                 right: -20,
-                top: -10,
+                top: topInset - 10,
                 child: Icon(
                   Icons.nightlight_round,
-                  size: 100,
+                  size: 88,
                   color: ProfilePremiumTheme.neonPurple.withValues(alpha: 0.2),
                 ),
               ),
@@ -227,7 +279,7 @@ class _CoverBanner extends StatelessWidget {
       );
 }
 
-class _AvatarBlock extends StatelessWidget {
+class _AvatarBlock extends ConsumerWidget {
   const _AvatarBlock({
     required this.user,
     required this.level,
@@ -245,34 +297,30 @@ class _AvatarBlock extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final frame = ref.watch(resolvedProfileFrameProvider);
+    final profileFx = ref.watch(resolvedProfileEffectProvider);
+
     return GestureDetector(
       onTap: onTap,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [
-                  ProfilePremiumTheme.neonPink,
-                  ProfilePremiumTheme.neonPurple,
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: ProfilePremiumTheme.neonPurple.withValues(alpha: 0.45),
-                  blurRadius: 24,
-                ),
-              ],
-            ),
+          CosmeticAvatarFrame(
+            item: frame,
+            size: 92,
+            showParticles: false,
             child: UserAvatar(
               url: user.avatarUrl,
-              radius: 42,
+              radius: 40,
             ),
           ),
+          if (profileFx != null)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: _ProfileFxHost(effect: profileFx),
+              ),
+            ),
           if (isOnline)
             Positioned(
               right: 4,
@@ -304,6 +352,153 @@ class _AvatarBlock extends StatelessWidget {
                   child: Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileFxHost extends StatefulWidget {
+  const _ProfileFxHost({required this.effect});
+
+  final CosmeticItem effect;
+
+  @override
+  State<_ProfileFxHost> createState() => _ProfileFxHostState();
+}
+
+class _ProfileFxHostState extends State<_ProfileFxHost>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CosmeticParticleOverlay(
+      kind: widget.effect.effectKind,
+      size: 92,
+      controller: _ctrl,
+    );
+  }
+}
+
+class _MembershipBadgeChip extends StatelessWidget {
+  const _MembershipBadgeChip({required this.badge});
+
+  final CosmeticItem? badge;
+
+  @override
+  Widget build(BuildContext context) {
+    if (badge == null) return const SizedBox.shrink();
+    final url = badge!.previewUrl ?? badge!.assetUrl;
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: url != null && url.isNotEmpty
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: CanlifalNetworkImage(
+                url: url,
+                width: 22,
+                height: 22,
+                fit: BoxFit.cover,
+                thumbnailWidth: 48,
+              ),
+            )
+          : Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                badge!.name,
+                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800),
+              ),
+            ),
+    );
+  }
+}
+
+class _ProfileMetaChips extends StatelessWidget {
+  const _ProfileMetaChips({this.zodiac, this.team});
+
+  final String? zodiac;
+  final String? team;
+
+  @override
+  Widget build(BuildContext context) {
+    final chips = <Widget>[];
+    final z = zodiac?.trim();
+    if (z != null && z.isNotEmpty) {
+      final emoji = profileZodiacEmoji(z);
+      chips.add(_MetaChip(
+        label: emoji != null
+            ? '$emoji ${profileZodiacLabelTr(z)}'
+            : profileZodiacLabelTr(z),
+      ));
+    }
+    final t = team?.trim();
+    if (t != null && t.isNotEmpty) {
+      chips.add(_MetaChip(label: t, icon: Icons.sports_soccer_rounded));
+    }
+    if (chips.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        children: chips,
+      ),
+    );
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({required this.label, this.icon});
+
+  final String label;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: ProfilePremiumTheme.glassBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 11, color: Colors.white70),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.82),
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],

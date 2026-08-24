@@ -44,7 +44,7 @@ class _ActiveBattle extends StatelessWidget {
   Widget build(BuildContext context) {
     final last = battle.isLastCall;
     final parts = battle.participants.take(2).toList();
-    final total = battle.totalScore == 0 ? 1 : battle.totalScore;
+    final total = battle.computedTotalScore == 0 ? 1 : battle.computedTotalScore;
 
     Widget strip = Container(
       margin: const EdgeInsets.fromLTRB(10, 4, 10, 2),

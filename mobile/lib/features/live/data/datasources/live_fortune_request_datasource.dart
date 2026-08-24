@@ -13,6 +13,24 @@ class LiveFortuneRequestDataSource {
 
   final Dio _dio;
 
+  static const _defaultTypeId = 'tek-soru';
+
+  /// Eski UI slug → üretim `typeId` (katalog `GET /api/fortune-request-types`).
+  static String resolveTypeId(String fortuneType) {
+    final raw = fortuneType.trim();
+    if (raw.isEmpty) return _defaultTypeId;
+    final lower = raw.toLowerCase();
+    return switch (lower) {
+      'tarot' || 'coffee' || 'astrology' || 'palmistry' || 'numerology' =>
+        _defaultTypeId,
+      'evet-hayir' || 'evet_hayir' => 'evet-hayır',
+      'detayli-fal' || 'detayli_fal' => 'detaylı-fal',
+      _ => raw.contains('-') || raw.contains('ı') || raw.contains('ş')
+          ? raw
+          : _defaultTypeId,
+    };
+  }
+
   Future<List<LiveFortuneRequestEntity>> fetchRequests(String streamId) async {
     final id = streamId.trim();
     if (id.isEmpty) return const [];
@@ -53,29 +71,26 @@ class LiveFortuneRequestDataSource {
     int? jetonCost,
   }) async {
     final id = streamId.trim();
-    // Serbest miktar (20-1000) — verilmezse öncelik kademesinden türetilir.
-    final cost = (jetonCost ?? priority.jetonCost).clamp(20, 1000);
-    final body = {
-      'displayName': displayName.trim(),
+    final typeId = resolveTypeId(fortuneType);
+    final productionBody = {
+      'typeId': typeId,
       'question': question.trim(),
-      'message': question.trim(),
-      'fortuneType': fortuneType,
-      'type': fortuneType,
-      'priority': priority.name,
-      'jetonCost': cost,
+      'isHidden': false,
+      'nickname': displayName.trim(),
     };
 
     final primaryPath = ApiEndpoints.videoStreamFortuneRequests(id);
     LiveDebugLog.log('fal.request.create', {
       'streamId': id,
       'path': primaryPath,
+      'typeId': typeId,
       'priority': priority.name,
     });
 
     try {
       final res = await _dio.safePost<dynamic>(
         primaryPath,
-        data: body,
+        data: productionBody,
       );
       LiveDebugLog.log('fal.request.create.ok', {
         'streamId': id,
@@ -84,35 +99,19 @@ class LiveFortuneRequestDataSource {
       });
       final row = _unwrap(res.data);
       if (row != null) return LiveFortuneRequestEntity.fromJson(row);
-    } catch (e) {
-      LiveDebugLog.log('fal.request.create.primary.fail', {
-        'streamId': id,
-        'path': primaryPath,
-        'error': ApiException.userMessage(e),
-      });
-    }
-
-    final fallbackPath = ApiEndpoints.liveFalRequestCreate;
-    LiveDebugLog.log('fal.request.create.fallback', {
-      'streamId': id,
-      'path': fallbackPath,
-    });
-    final res = await _dio.safePost<dynamic>(
-      fallbackPath,
-      data: {...body, 'streamId': id},
-    );
-    LiveDebugLog.log('fal.request.create.fallback.ok', {
-      'streamId': id,
-      'status': res.statusCode,
-    });
-    final row = _unwrap(res.data);
-    if (row == null) {
       throw DioException(
-        requestOptions: RequestOptions(path: fallbackPath),
+        requestOptions: RequestOptions(path: primaryPath),
         message: 'Fal isteği oluşturulamadı',
       );
+    } on DioException catch (e) {
+      LiveDebugLog.log('fal.request.create.fail', {
+        'streamId': id,
+        'path': primaryPath,
+        'status': e.response?.statusCode,
+        'error': ApiException.userMessage(e),
+      });
+      rethrow;
     }
-    return LiveFortuneRequestEntity.fromJson(row);
   }
 
   Future<LiveFortuneRequestEntity> updateStatus({
@@ -120,8 +119,37 @@ class LiveFortuneRequestDataSource {
     required String requestId,
     required LiveFortuneRequestStatus status,
   }) async {
-    final body = {'status': status.name};
+    final action = _productionAction(status);
+    if (action != null) {
+      try {
+        final res = await _dio.safePatch<dynamic>(
+          ApiEndpoints.videoStreamFortuneRequests(streamId.trim()),
+          data: {'action': action, 'requestId': requestId},
+        );
+        final row = _unwrap(res.data);
+        if (row != null) return LiveFortuneRequestEntity.fromJson(row);
+        return LiveFortuneRequestEntity(
+          id: requestId,
+          streamId: streamId,
+          userId: '',
+          displayName: '',
+          question: '',
+          fortuneType: _defaultTypeId,
+          priority: LiveFortunePriority.standard,
+          status: status,
+          jetonCost: 0,
+          createdAt: DateTime.now(),
+        );
+      } catch (e) {
+        LiveDebugLog.log('fal.request.update.production.fail', {
+          'requestId': requestId,
+          'action': action,
+          'error': ApiException.userMessage(e),
+        });
+      }
+    }
 
+    final body = {'status': status.name};
     try {
       final res = await _dio.safePatch<dynamic>(
         ApiEndpoints.videoStreamFortuneRequest(streamId.trim(), requestId),
@@ -169,7 +197,38 @@ class LiveFortuneRequestDataSource {
     );
   }
 
+  Future<Map<String, dynamic>?> fetchMyStatus(String streamId) async {
+    final id = streamId.trim();
+    if (id.isEmpty) return null;
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.videoStreamFortuneMyStatus(id),
+      );
+      final body = res.data;
+      if (body is Map) return Map<String, dynamic>.from(body);
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String? _productionAction(LiveFortuneRequestStatus status) => switch (status) {
+        LiveFortuneRequestStatus.reviewing => 'select',
+        LiveFortuneRequestStatus.answered => 'complete',
+        LiveFortuneRequestStatus.cancelled => 'refund',
+        _ => null,
+      };
+
   List<LiveFortuneRequestEntity> _parseList(dynamic body) {
+    if (body is List) {
+      return body
+          .whereType<Map>()
+          .map((e) => LiveFortuneRequestEntity.fromJson(
+                Map<String, dynamic>.from(e),
+              ))
+          .where((r) => r.id.isNotEmpty)
+          .toList();
+    }
     dynamic list;
     if (body is Map) {
       list = pick(Map<String, dynamic>.from(body), [

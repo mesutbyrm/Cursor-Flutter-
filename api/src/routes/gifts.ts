@@ -19,6 +19,7 @@ import {
 } from "../socket/giftHub";
 import { giftQueueEnqueue } from "../lib/redis/giftQueue";
 import { rateLimitMiddleware } from "../lib/redis/rateLimit";
+import { processLiveGiftReferral } from "../lib/referralGiftHooks";
 
 const platformSchema = z.enum(["mobile", "web", "all"]).optional();
 
@@ -104,7 +105,37 @@ function eventPayload(e: {
 
 export const giftsRouter = Router();
 
+/** Varsayılan global hediye bildirimi ayarları (admin panelinden güncellenir). */
+let giftDisplaySettings: Record<string, unknown> = {
+  enabled: true,
+  durationMs: 3000,
+  position: "topCenter",
+  size: "small",
+  maxQueue: 10,
+  animation: "slide",
+  showSender: true,
+  showReceiver: false,
+  showGiftName: true,
+  showAmount: true,
+  showGiftIcon: true,
+  maxVisible: 1,
+  backgroundOpacity: 0.85,
+  soundEnabled: true,
+};
+
 giftsRouter.use(rateLimitMiddleware("gift"));
+
+/** GET /api/gifts/display-settings — Flutter GlobalGiftOverlay */
+giftsRouter.get("/display-settings", optionalAuth, (_req, res) => {
+  return res.status(200).json({ settings: giftDisplaySettings });
+});
+
+/** PATCH /api/gifts/display-settings — admin (Bearer + role kontrolü üretimde) */
+giftsRouter.patch("/display-settings", optionalAuth, (req, res) => {
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  giftDisplaySettings = { ...giftDisplaySettings, ...body };
+  return res.status(200).json({ settings: giftDisplaySettings });
+});
 
 /** GET /api/gifts?platform=mobile|web */
 giftsRouter.get("/", async (req, res) => {
@@ -235,6 +266,12 @@ export async function sendStreamGift(
     }
     emitPkStreamSignal(pkResult.battle, userId ?? "system");
   }
+
+  void processLiveGiftReferral({
+    giftEventId: event.id,
+    grossAmount: totalCost,
+    receiverId,
+  }).catch((err) => console.error("[referral-live-gift]", err));
 
   return res.status(200).json({
     ...payload,

@@ -159,6 +159,55 @@ abstract final class VoiceRoomMusicPipelineLog {
     });
   }
 
+  /// Song Event — SSE / oynatma hattı teşhis logları.
+  static void songEvent({
+    required String event,
+    Map<String, dynamic>? receivedJson,
+    String? parsedVideoId,
+    String? parsedMusicUrl,
+    String? detail,
+  }) {
+    final jsonKeys = receivedJson == null
+        ? null
+        : receivedJson.keys.take(12).join(',');
+    _emit('song.$event', {
+      'receivedKeys': ?jsonKeys,
+      'parsedVideoId': parsedVideoId ?? '(null)',
+      'parsedMusicUrl': parsedMusicUrl ?? '(null)',
+      'detail': ?detail,
+    });
+    if (event == 'player_error' && detail != null) {
+      _emit('Player Error', {'detail': detail});
+    }
+    if (event == 'player_ready') {
+      _emit('Player Ready', const {});
+    }
+    if (event == 'starting_audio') {
+      _emit('Starting Audio', {
+        'musicUrl': parsedMusicUrl ?? '(null)',
+        'videoId': ?parsedVideoId,
+      });
+    }
+    if (event == 'starting_video') {
+      _emit('Starting Video', {
+        'videoId': parsedVideoId ?? '(null)',
+        'musicUrl': ?parsedMusicUrl,
+      });
+    }
+    if (receivedJson != null && event != 'parse') {
+      _emit('Received JSON', {
+        'type': receivedJson['type']?.toString(),
+        'keys': ?jsonKeys,
+      });
+    }
+    if (parsedVideoId != null && parsedVideoId.isNotEmpty) {
+      _emit('Parsed VideoId', {'videoId': parsedVideoId});
+    }
+    if (parsedMusicUrl != null && parsedMusicUrl.isNotEmpty) {
+      _emit('Parsed MusicUrl', {'musicUrl': parsedMusicUrl});
+    }
+  }
+
   static void beforeSetAudioSource({
     required String sourceUrl,
     required String sourceType,

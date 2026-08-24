@@ -58,6 +58,34 @@ abstract final class HomeSiteCatalog {
       gradient: [Color(0xFFFFD700), Color(0xFFB8860B)],
       route: '/profile/gifts',
     ),
+    HomeDiscoverTile(
+      id: 'blog',
+      label: 'Blog',
+      icon: Icons.menu_book_rounded,
+      gradient: [Color(0xFF6366F1), Color(0xFF4338CA)],
+      route: '/blog-hub',
+    ),
+    HomeDiscoverTile(
+      id: 'dreams',
+      label: 'Rüyalar',
+      icon: Icons.nights_stay_rounded,
+      gradient: [Color(0xFF0EA5E9), Color(0xFF0369A1)],
+      route: '/dreams-hub',
+    ),
+    HomeDiscoverTile(
+      id: 'celebrities',
+      label: 'Ünlüler',
+      icon: Icons.star_rounded,
+      gradient: [Color(0xFFF59E0B), Color(0xFFD97706)],
+      route: '/celebrities-hub',
+    ),
+    HomeDiscoverTile(
+      id: 'games',
+      label: 'Oyunlar',
+      icon: Icons.sports_esports_rounded,
+      gradient: [Color(0xFFEC4899), Color(0xFFBE185D)],
+      route: '/games-hub',
+    ),
   ];
 
   static const fanClubs = <HomeFanClubItem>[

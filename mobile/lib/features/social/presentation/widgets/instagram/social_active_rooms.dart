@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -11,20 +13,56 @@ import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
 import '../../../../live/presentation/utils/open_live_stream.dart';
+import '../../../../voice_hub/presentation/providers/voice_rooms_presence_provider.dart';
+import '../../../../voice_hub/presentation/utils/navigate_to_voice_room.dart';
+import '../../utils/social_feed_refresh.dart';
 
 /// «Aktif Odalar» — canlı yayın ve ses odaları yatay şeridi.
-class SocialActiveRooms extends ConsumerWidget {
+class SocialActiveRooms extends ConsumerStatefulWidget {
   const SocialActiveRooms({super.key, this.embeddedInFeed = false});
 
   /// Akışta her 2 gönderi arasında gösterilir.
   final bool embeddedInFeed;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SocialActiveRooms> createState() => _SocialActiveRoomsState();
+}
+
+class _SocialActiveRoomsState extends ConsumerState<SocialActiveRooms> {
+  var _presenceSynced = false;
+
+  void _syncPresenceOnce(List<VoiceRoomEntity> rooms) {
+    if (_presenceSynced || rooms.isEmpty) return;
+    _presenceSynced = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(voiceRoomsPresenceProvider.notifier).mergeTrackRooms(
+            rooms.take(VoiceRoomsPresenceNotifier.maxTrackedRooms).toList(),
+          );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final live = ref.watch(liveStreamsProvider);
     final rooms = ref.watch(voiceRoomsProvider);
+    final presence = ref.watch(voiceRoomsPresenceProvider);
 
-    final chips = _buildChips(live.valueOrNull, rooms.valueOrNull);
+    final chips = _buildChips(
+      live.valueOrNull,
+      rooms.valueOrNull,
+      presence,
+    );
+    final roomList = rooms.valueOrNull;
+    if (roomList != null && roomList.isNotEmpty) {
+      _syncPresenceOnce(roomList);
+    }
+    final hasLive = chips.any((c) => c.kind == _ActiveRoomKind.live);
+    final hasVoice = chips.any((c) => c.kind == _ActiveRoomKind.voice);
+    final embeddedTitle = buildSocialActiveRoomsEmbeddedTitle(
+      hasLive: hasLive,
+      hasVoice: hasVoice,
+    );
     if (chips.isEmpty && live.isLoading) {
       return SizedBox(
         height: 140,
@@ -38,17 +76,19 @@ class SocialActiveRooms extends ConsumerWidget {
       );
     }
 
-    final display = chips.isEmpty ? _demoChips() : chips;
+    if (chips.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Padding(
       padding: EdgeInsets.only(
-        top: embeddedInFeed ? 4 : 8,
-        bottom: embeddedInFeed ? 8 : 12,
+        top: widget.embeddedInFeed ? 4 : 8,
+        bottom: widget.embeddedInFeed ? 8 : 12,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!embeddedInFeed)
+          if (!widget.embeddedInFeed)
             DiscoverSectionHeader(
               title: 'Aktif Odalar',
               actionLabel: 'Tümünü Gör',
@@ -66,7 +106,7 @@ class SocialActiveRooms extends ConsumerWidget {
                   ),
                   SizedBox(width: 8),
                   Text(
-                    'Sesli sohbet odaları',
+                    embeddedTitle,
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
@@ -74,23 +114,23 @@ class SocialActiveRooms extends ConsumerWidget {
                   ),
                   const Spacer(),
                   TextButton(
-                    onPressed: () => context.go('/live'),
+                    onPressed: () => context.go('/voice-rooms'),
                     child: Text('Tümü'),
                   ),
                 ],
               ),
             ),
-          if (!embeddedInFeed) SizedBox(height: 10),
+          if (!widget.embeddedInFeed) SizedBox(height: 10),
           SizedBox(
             height: 118,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: display.length,
+              itemCount: chips.length,
               separatorBuilder: (_, _) => SizedBox(width: 16),
               itemBuilder: (ctx, i) => _ActiveRoomChip(
-                chip: display[i],
-                onTap: () => _openChip(context, ref, display[i]),
+                chip: chips[i],
+                onTap: () => _openChip(context, ref, chips[i]),
               ),
             ),
           ),
@@ -102,6 +142,7 @@ class SocialActiveRooms extends ConsumerWidget {
   List<_ActiveRoomChipData> _buildChips(
     List<LiveStreamEntity>? streams,
     List<VoiceRoomEntity>? rooms,
+    VoiceRoomsPresenceState presence,
   ) {
     final out = <_ActiveRoomChipData>[];
     final ringColors = _ringPalette;
@@ -118,6 +159,7 @@ class SocialActiveRooms extends ConsumerWidget {
             avatarUrl: s.thumbnailUrl,
             ringColor: ringColors[i % ringColors.length],
             liveStream: s,
+            isActive: s.viewerCount > 0,
           ),
         );
         i++;
@@ -125,20 +167,30 @@ class SocialActiveRooms extends ConsumerWidget {
     }
 
     if (rooms != null) {
+      final voiceRooms = [...rooms]
+        ..sort((a, b) {
+          final aCount = _voiceOnline(a, presence);
+          final bCount = _voiceOnline(b, presence);
+          return bCount.compareTo(aCount);
+        });
       var j = out.length;
-      for (final r in rooms.take(6 - out.length)) {
+      for (final r in voiceRooms.take(8 - out.length)) {
+        final online = _voiceOnline(r, presence);
         out.add(
           _ActiveRoomChipData(
             id: r.id,
             kind: _ActiveRoomKind.voice,
             name: r.ownerName ?? r.displayTitle,
-            viewers: r.displayOnline,
+            viewers: online,
             avatarUrl: r.ownerAvatarUrl ??
                 (r.recentUserAvatars.isNotEmpty
                     ? r.recentUserAvatars.first
                     : null),
             ringColor: ringColors[j % ringColors.length],
             voiceRoom: r,
+            isActive: online > 0,
+            isPkLive: r.isPkLive,
+            isMusicPlaying: r.hasMusicActivity,
           ),
         );
         j++;
@@ -148,43 +200,11 @@ class SocialActiveRooms extends ConsumerWidget {
     return out;
   }
 
-  static List<_ActiveRoomChipData> _demoChips() => [
-        _ActiveRoomChipData(
-          id: 'demo-1',
-          kind: _ActiveRoomKind.demo,
-          name: 'Medyum Elif',
-          viewers: 1200,
-          ringColor: AppThemeColors.accentPurple,
-        ),
-        _ActiveRoomChipData(
-          id: 'demo-2',
-          kind: _ActiveRoomKind.demo,
-          name: 'Tarot Rüya',
-          viewers: 856,
-          ringColor: AppThemeColors.liveRed,
-        ),
-        _ActiveRoomChipData(
-          id: 'demo-3',
-          kind: _ActiveRoomKind.demo,
-          name: 'Astro Ayşe',
-          viewers: 642,
-          ringColor: AppThemeColors.diamondBlue,
-        ),
-        _ActiveRoomChipData(
-          id: 'demo-4',
-          kind: _ActiveRoomKind.demo,
-          name: 'Kahve Usta',
-          viewers: 410,
-          ringColor: AppThemeColors.coinGold,
-        ),
-        _ActiveRoomChipData(
-          id: 'demo-5',
-          kind: _ActiveRoomKind.demo,
-          name: 'Rüya Yorum',
-          viewers: 288,
-          ringColor: const Color(0xFFFF8C42),
-        ),
-      ];
+  static int _voiceOnline(VoiceRoomEntity room, VoiceRoomsPresenceState presence) {
+    final sse = presence.countFor(room);
+    final api = room.displayOnline;
+    return sse > api ? sse : api;
+  }
 
   static const _ringPalette = [
     AppThemeColors.accentPurple,
@@ -208,18 +228,22 @@ class SocialActiveRooms extends ConsumerWidget {
         }
       case _ActiveRoomKind.voice:
         if (chip.voiceRoom != null) {
-          final room = chip.voiceRoom!;
-          context.push('/voice-room/${room.id}', extra: room);
+          unawaited(
+            navigateToVoiceRoom(
+              context,
+              ref,
+              room: chip.voiceRoom!,
+              source: 'social_active',
+            ),
+          );
         } else {
           context.push('/voice-rooms');
         }
-      case _ActiveRoomKind.demo:
-        context.go('/live');
     }
   }
 }
 
-enum _ActiveRoomKind { live, voice, demo }
+enum _ActiveRoomKind { live, voice }
 
 class _ActiveRoomChipData {
   const _ActiveRoomChipData({
@@ -228,9 +252,12 @@ class _ActiveRoomChipData {
     required this.name,
     required this.viewers,
     required this.ringColor,
+    required this.isActive,
     this.avatarUrl,
     this.liveStream,
     this.voiceRoom,
+    this.isPkLive = false,
+    this.isMusicPlaying = false,
   });
 
   final String id;
@@ -238,90 +265,194 @@ class _ActiveRoomChipData {
   final String name;
   final int viewers;
   final Color ringColor;
+  final bool isActive;
   final String? avatarUrl;
   final LiveStreamEntity? liveStream;
   final VoiceRoomEntity? voiceRoom;
+  final bool isPkLive;
+  final bool isMusicPlaying;
 }
 
-class _ActiveRoomChip extends StatelessWidget {
+class _ActiveRoomChip extends StatefulWidget {
   const _ActiveRoomChip({required this.chip, required this.onTap});
 
   final _ActiveRoomChipData chip;
   final VoidCallback onTap;
 
   @override
+  State<_ActiveRoomChip> createState() => _ActiveRoomChipState();
+}
+
+class _ActiveRoomChipState extends State<_ActiveRoomChip>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+    if (widget.chip.isActive) {
+      _pulseCtrl.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _ActiveRoomChip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.chip.isActive && !_pulseCtrl.isAnimating) {
+      _pulseCtrl.repeat(reverse: true);
+    } else if (!widget.chip.isActive && _pulseCtrl.isAnimating) {
+      _pulseCtrl.stop();
+      _pulseCtrl.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final chip = widget.chip;
+    final isActive = chip.isActive;
+    final ringColor = isActive
+        ? chip.ringColor
+        : chip.ringColor.withValues(alpha: 0.28);
+
     return GestureDetector(
-      onTap: onTap,
-      child: SizedBox(
-        width: 72,
-        child: Column(
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: 68,
-                  height: 68,
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: chip.ringColor, width: 2.5),
-                    boxShadow: AppThemeColors.glowShadow(chip.ringColor, blur: 12),
+      onTap: widget.onTap,
+      child: Opacity(
+        opacity: isActive ? 1 : 0.42,
+        child: SizedBox(
+          width: 72,
+          child: Column(
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AnimatedBuilder(
+                    animation: _pulseCtrl,
+                    builder: (context, _) {
+                      final glow =
+                          isActive ? 8 + (_pulseCtrl.value * 10) : 0.0;
+                      return Container(
+                        width: 68,
+                        height: 68,
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: ringColor,
+                            width: isActive ? 2.5 : 1.5,
+                          ),
+                          boxShadow: isActive
+                              ? AppThemeColors.glowShadow(
+                                  chip.ringColor,
+                                  blur: glow,
+                                )
+                              : null,
+                        ),
+                        child: _Avatar(url: chip.avatarUrl, name: chip.name),
+                      );
+                    },
                   ),
-                  child: _Avatar(url: chip.avatarUrl, name: chip.name),
-                ),
-                Positioned(
-                  right: 2,
-                  bottom: 2,
-                  child: Container(
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: AppThemeColors.onlineGreen,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: context.scaffoldBg,
-                        width: 2,
+                  if (isActive)
+                    Positioned(
+                      right: 2,
+                      bottom: 2,
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: AppThemeColors.onlineGreen,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: context.scaffoldBg,
+                            width: 2,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            Text(
-              chip.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: context.colors.onSurface,
+                  if (chip.isPkLive && isActive)
+                    Positioned(
+                      left: -2,
+                      top: -2,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF5252),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'PK',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (chip.isMusicPlaying && isActive)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Icon(
+                        Icons.music_note_rounded,
+                        size: 14,
+                        color: const Color(0xFFFFD54F)
+                            .withValues(alpha: 0.95),
+                      ),
+                    ),
+                ],
               ),
-            ),
-            SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.local_fire_department_rounded,
-                  size: 12,
-                  color: chip.ringColor.withValues(alpha: 0.95),
+              SizedBox(height: 8),
+              Text(
+                chip.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: isActive
+                      ? context.colors.onSurface
+                      : context.colors.onSurfaceMuted,
                 ),
-                SizedBox(width: 2),
-                Text(
-                  _formatViewers(chip.viewers),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
+              ),
+              SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isActive
+                        ? Icons.local_fire_department_rounded
+                        : Icons.mic_none_rounded,
+                    size: 12,
+                    color: ringColor.withValues(alpha: isActive ? 0.95 : 0.5),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  SizedBox(width: 2),
+                  Text(
+                    isActive ? _formatViewers(chip.viewers) : 'Boş',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: context.colors.onSurfaceMuted
+                          .withValues(alpha: isActive ? 0.95 : 0.55),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

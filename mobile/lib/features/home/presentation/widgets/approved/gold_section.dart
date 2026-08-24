@@ -5,12 +5,18 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../membership/domain/membership_package_entity.dart';
 import '../../../../membership/presentation/pages/premium_membership_page.dart';
+import '../../data/section_visual_catalog.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_section_title.dart';
+import '../premium_2026/premium_home_glass_card.dart';
 
-/// Gold Üyelikler — yatay paket kartları.
+/// Gold Üyelikler — 2026 premium yatay tier kartları.
 class GoldSection extends ConsumerWidget {
   const GoldSection({super.key});
+
+  static const _cardW = 148.0;
+  static const _cardH = 200.0;
+  static const _gap = 12.0;
 
   static const _fallbackPackages = [
     MembershipPackageEntity(
@@ -23,21 +29,21 @@ class GoldSection extends ConsumerWidget {
       falDiscountPercent: 0,
     ),
     MembershipPackageEntity(
-      id: 'gold',
-      planId: 'gold',
-      title: 'Gold',
-      durationDays: 30,
-      priceJeton: 2000,
-      bonusJeton: 1500,
-      falDiscountPercent: 0,
-    ),
-    MembershipPackageEntity(
       id: 'premium',
       planId: 'premium',
       title: 'Premium',
       durationDays: 30,
       priceJeton: 3000,
       bonusJeton: 3500,
+      falDiscountPercent: 0,
+    ),
+    MembershipPackageEntity(
+      id: 'gold',
+      planId: 'gold',
+      title: 'Gold',
+      durationDays: 30,
+      priceJeton: 2000,
+      bonusJeton: 1500,
       falDiscountPercent: 0,
     ),
     MembershipPackageEntity(
@@ -54,39 +60,40 @@ class GoldSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final catalog = ref.watch(membershipCatalogProvider);
-
     return catalog.when(
-      loading: () => Column(
-        children: [
-          HomeSectionTitle(
-            emoji: '👑',
-            title: 'Gold Üyelikler',
-            actionLabel: 'Tümünü Gör >',
-            onAction: () => context.push('/premium-membership'),
-          ),
-          SizedBox(
-            height: 148,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-              itemCount: 4,
-              separatorBuilder: (_, _) => const SizedBox(width: 10),
-              itemBuilder: (_, _) => const PremiumSkeleton(
-                width: 110,
-                height: 140,
-                borderRadius: BorderRadius.all(
-                  Radius.circular(HomeApprovedDesign.cardRadius),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      loading: () => _skeleton(context),
       error: (_, _) => _content(context, _fallbackPackages),
       data: (cat) => _content(
         context,
         cat.packages.isNotEmpty ? cat.packages : _fallbackPackages,
       ),
+    );
+  }
+
+  Widget _skeleton(BuildContext context) {
+    return Column(
+      children: [
+        HomeSectionTitle(
+          emoji: '👑',
+          title: 'Gold Üyelikler',
+          actionLabel: 'Tümünü Gör >',
+          onAction: () => context.push('/premium-membership'),
+        ),
+        SizedBox(
+          height: _cardH,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+            itemCount: 4,
+            separatorBuilder: (_, _) => const SizedBox(width: _gap),
+            itemBuilder: (_, _) => const PremiumSkeleton(
+              width: _cardW,
+              height: _cardH,
+              borderRadius: BorderRadius.all(Radius.circular(24)),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -100,16 +107,37 @@ class GoldSection extends ConsumerWidget {
           onAction: () => context.push('/premium-membership'),
         ),
         SizedBox(
-          height: 148,
+          height: _cardH,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-            itemCount: packages.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (_, i) => _TierCard(
-              pkg: packages[i],
-              onTap: () => context.push('/premium-membership'),
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
             ),
+            cacheExtent: _cardW * 3,
+            itemCount: packages.length,
+            separatorBuilder: (_, _) => const SizedBox(width: _gap),
+            itemBuilder: (_, i) {
+              final pkg = packages[i];
+              final theme = _tierTheme(pkg);
+              return PremiumHomeGlassCard(
+                title: pkg.title,
+                subtitle: '₺${pkg.priceJeton ~/ 2}/ay · +${pkg.bonusJeton} jeton',
+                coverSlug: SectionVisualCatalog.goldSlug(
+                  pkg.planId.isNotEmpty ? pkg.planId : pkg.id,
+                ),
+                networkUrl: SectionVisualCatalog.goldTier(
+                  pkg.planId.isNotEmpty ? pkg.planId : pkg.id,
+                  width: 400,
+                ),
+                heroTag: 'home-gold-${pkg.id}',
+                width: _cardW,
+                height: _cardH,
+                accentColor: theme.accent,
+                shimmer: theme.shimmer,
+                onTap: () => context.push('/premium-membership'),
+              );
+            },
           ),
         ),
       ],
@@ -117,82 +145,20 @@ class GoldSection extends ConsumerWidget {
   }
 }
 
-class _TierCard extends StatelessWidget {
-  const _TierCard({required this.pkg, required this.onTap});
+class _TierTheme {
+  const _TierTheme({required this.accent, this.shimmer = true});
 
-  final MembershipPackageEntity pkg;
-  final VoidCallback onTap;
+  final Color accent;
+  final bool shimmer;
+}
 
-  Color get _accent {
-    switch (pkg.id) {
-      case 'gold':
-        return HomeApprovedDesign.gold;
-      case 'diamond':
-        return HomeApprovedDesign.purple;
-      case 'premium':
-        return const Color(0xFF38BDF8);
-      default:
-        return const Color(0xFFD97706);
-    }
-  }
-
-  IconData get _icon {
-    switch (pkg.id) {
-      case 'gold':
-        return Icons.star_rounded;
-      case 'diamond':
-        return Icons.diamond_rounded;
-      case 'premium':
-        return Icons.diamond_outlined;
-      default:
-        return Icons.workspace_premium_rounded;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 110,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-        decoration: BoxDecoration(
-          color: HomeApprovedDesign.surface,
-          borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-          border: Border.all(color: _accent.withValues(alpha: 0.45)),
-          boxShadow: [
-            BoxShadow(
-              color: _accent.withValues(alpha: 0.18),
-              blurRadius: 12,
-              spreadRadius: -2,
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(_icon, size: 32, color: _accent),
-            const SizedBox(height: 8),
-            Text(
-              pkg.title,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
-                color: HomeApprovedDesign.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '₺${pkg.priceJeton ~/ 2}/ay',
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: HomeApprovedDesign.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+_TierTheme _tierTheme(MembershipPackageEntity pkg) {
+  final key = pkg.planId.isNotEmpty ? pkg.planId : pkg.id;
+  return switch (key) {
+    'basic' => const _TierTheme(accent: Color(0xFFCD7F32)),
+    'premium' => const _TierTheme(accent: Color(0xFF38BDF8)),
+    'gold' => const _TierTheme(accent: Color(0xFFFFD700)),
+    'diamond' => const _TierTheme(accent: Color(0xFFA855F7)),
+    _ => const _TierTheme(accent: Color(0xFFA020F0)),
+  };
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,7 +19,14 @@ import '../../data/datasources/achievements_remote_datasource.dart';
 import '../../domain/entities/daily_task_entity.dart';
 import '../../domain/entities/growth_progress_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
+import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
+import '../../../membership/presentation/widgets/membership_status_pill.dart';
+import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
+import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
+import '../../../membership/presentation/controllers/membership_controller.dart';
+import '../../../membership/domain/membership_model.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../widgets/premium/profile_glass.dart';
 
 class GrowthHubPage extends ConsumerWidget {
@@ -40,7 +49,11 @@ class GrowthHubPage extends ConsumerWidget {
         rewardsAsync.valueOrNull ?? const <DailyRewardEntity>[];
     final wallet = walletAsync.valueOrNull;
     final referral = referralAsync.valueOrNull;
-    final hasPremium = (wallet?.membership ?? '').trim().isNotEmpty;
+    final membershipInfo = resolveProfileMembership(
+      rawMembership: wallet?.membership,
+      daysRemaining: wallet?.membershipDaysRemaining,
+    );
+    final hasPremium = membershipInfo.hasActiveSubscription;
     final progress = GrowthProgressEntity.fromSignals(
       stats: stats,
       dailyRewards: rewards,
@@ -58,22 +71,7 @@ class GrowthHubPage extends ConsumerWidget {
         : progress.xp;
     final serverTasks = serverTasksAsync.valueOrNull ?? const <DailyTaskEntity>[];
     final taskCards = serverTasks.isNotEmpty
-        ? serverTasks
-            .map(
-              (t) => GrowthTaskEntity(
-                id: t.id,
-                title: t.title,
-                description: t.description ?? '',
-                current: t.current,
-                target: t.target,
-                rewardLabel: t.rewardJeton > 0
-                    ? '+${t.rewardJeton} Jeton'
-                    : (t.rewardXp > 0 ? '+${t.rewardXp} XP' : '+XP'),
-                route: t.route ?? '/feed',
-                icon: t.icon ?? '✅',
-              ),
-            )
-            .toList()
+        ? serverTasks.map(_growthTaskFromDaily).toList()
         : progress.tasks;
     final loading = auth.isLoading ||
         statsAsync.isLoading ||
@@ -112,9 +110,14 @@ class GrowthHubPage extends ConsumerWidget {
                     progress: progress,
                     level: displayLevel,
                     xp: displayXp,
+                    membershipInfo: membershipInfo,
                     vipTier: serverLevel?.vipTier,
-                    isVip: serverLevel?.isVip ?? hasPremium,
+                    isVip: serverLevel?.isVip ?? membershipInfo.isVip,
                   ),
+                  const SizedBox(height: 14),
+                  const MembershipPendingPaymentBanner(padding: EdgeInsets.zero),
+                  const SizedBox(height: 14),
+                  _MembershipStatusCard(info: membershipInfo),
                   const SizedBox(height: 20),
                   const ProfileSectionTitle(title: 'Bugünün görevleri'),
                 ]),
@@ -128,7 +131,15 @@ class GrowthHubPage extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _TaskCard(
                     task: taskCards[index],
-                    onTap: () => _openTask(context, taskCards[index].route),
+                    dailyTask: serverTasks.isNotEmpty
+                        ? serverTasks[index]
+                        : null,
+                    onTap: () => _onTaskTap(
+                      context,
+                      ref,
+                      taskCards[index],
+                      serverTasks.isNotEmpty ? serverTasks[index] : null,
+                    ),
                   ),
                 ),
               ),
@@ -174,7 +185,9 @@ class GrowthHubPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 20),
                   _RoadmapHintCard(
+                    info: membershipInfo,
                     onVip: () => context.push('/vip-gold'),
+                    onPremium: () => context.push('/premium-membership'),
                     onInvite: () => context.push('/invite-friends'),
                     onAdReward: () => _claimAdReward(context, ref),
                   ),
@@ -187,6 +200,43 @@ class GrowthHubPage extends ConsumerWidget {
     );
   }
 
+  static GrowthTaskEntity _growthTaskFromDaily(DailyTaskEntity t) {
+    return GrowthTaskEntity(
+      id: t.id,
+      title: t.title,
+      description: t.description ?? '',
+      current: t.current,
+      target: t.target,
+      rewardLabel: t.rewardJeton > 0
+          ? '+${t.rewardJeton} ödül'
+          : (t.rewardXp > 0 ? '+${t.rewardXp} XP' : '+XP'),
+      route: t.resolvedRoute,
+      icon: t.icon ?? '✅',
+    );
+  }
+
+  static Future<void> _onTaskTap(
+    BuildContext context,
+    WidgetRef ref,
+    GrowthTaskEntity task,
+    DailyTaskEntity? daily,
+  ) async {
+    if (daily != null && daily.completed && !daily.claimed) {
+      final ok = await ref.read(dailyTasksRemoteProvider).claimTask(daily.id);
+      if (ok) {
+        ref.invalidate(userDailyTasksProvider);
+        ref.refreshWalletCache(force: true);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${task.rewardLabel} ödülü alındı')),
+          );
+        }
+        return;
+      }
+    }
+    _openTask(context, task.route);
+  }
+
   static Future<void> _refresh(WidgetRef ref) async {
     ref.invalidate(profileStatsProvider);
     ref.invalidate(homeDailyRewardsProvider);
@@ -195,6 +245,17 @@ class GrowthHubPage extends ConsumerWidget {
     ref.invalidate(userAchievementsProvider);
     ref.invalidate(userDailyTasksProvider);
     ref.invalidate(userLevelProvider);
+    // Günlük jeton bonusu (zaten alındıysa sessizce atlanır)
+    unawaited(
+      ref.read(dailyTasksRemoteProvider).claimJetonDailyLoginBonus().then((_) {
+        ref.refreshWalletCache(force: true);
+      }),
+    );
+    ref.invalidate(membershipBadgesCatalogProvider);
+    ref.invalidate(membershipCatalogProvider);
+    ref.invalidate(membershipControllerProvider);
+    ref.invalidate(paymentRequestsNotifierProvider);
+    ref.invalidate(paymentMethodsProvider);
     await Future.wait([
       _ignore(ref.read(authControllerProvider.notifier).refreshMe()),
       _ignore(ref.read(profileStatsProvider.future)),
@@ -264,10 +325,121 @@ class GrowthHubPage extends ConsumerWidget {
   }
 }
 
+class _MembershipStatusCard extends ConsumerWidget {
+  const _MembershipStatusCard({required this.info});
+
+  final ProfileMembershipInfo info;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final paid = info.hasPaidTier;
+    final expired = info.isExpired;
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(info, ui.tiers);
+    final expiresAt =
+        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
+
+    final title = buildGrowthHubMembershipTitle(
+      info: info,
+      expiresAt: expiresAt,
+    );
+
+    final subtitle = buildGrowthHubMembershipSubtitle(
+      info: info,
+      catalogTier: catalogTier,
+      expiresAt: expiresAt,
+    );
+    final statusPill = buildMembershipStatusPillLabel(
+      info: info,
+      expiresAt: expiresAt,
+    );
+
+    final accent = expired
+        ? AppThemeColors.accentPink
+        : paid
+            ? AppThemeColors.coinGold
+            : AppThemeColors.accentPurple;
+
+    return ProfileGlass(
+      onTap: () => context.push(
+        paid && info.isVip ? '/vip-gold' : '/premium-membership',
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              paid ? Icons.workspace_premium_rounded : Icons.card_membership_rounded,
+              color: accent,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          color: c.onSurface,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    if (statusPill != null) ...[
+                      MembershipStatusPill(
+                        label: statusPill,
+                        expired: expired,
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: c.onSurfaceVariant,
+                    fontSize: 12,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            buildMembershipHubActionLabel(info: info),
+            style: TextStyle(
+              color: accent,
+              fontWeight: FontWeight.w900,
+              fontSize: 12,
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: c.onSurfaceMuted, size: 20),
+        ],
+      ),
+    );
+  }
+}
+
 class _LevelHero extends StatelessWidget {
   const _LevelHero({
     required this.displayName,
     required this.progress,
+    required this.membershipInfo,
     this.level,
     this.xp,
     this.vipTier,
@@ -276,6 +448,7 @@ class _LevelHero extends StatelessWidget {
 
   final String displayName;
   final GrowthProgressEntity progress;
+  final ProfileMembershipInfo membershipInfo;
   final int? level;
   final int? xp;
   final String? vipTier;
@@ -283,6 +456,11 @@ class _LevelHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final vipPillLabel = buildMembershipGrowthHubLevelVipPillLabel(
+      info: membershipInfo,
+      serverVipTier: vipTier,
+    );
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -361,7 +539,7 @@ class _LevelHero extends StatelessWidget {
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          vipTier?.isNotEmpty == true ? 'VIP · $vipTier' : 'VIP',
+                          vipPillLabel,
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
@@ -471,9 +649,11 @@ class _TaskCard extends StatelessWidget {
   const _TaskCard({
     required this.task,
     required this.onTap,
+    this.dailyTask,
   });
 
   final GrowthTaskEntity task;
+  final DailyTaskEntity? dailyTask;
   final VoidCallback onTap;
 
   @override
@@ -657,25 +837,32 @@ class _BadgeCard extends StatelessWidget {
 
 class _RoadmapHintCard extends StatelessWidget {
   const _RoadmapHintCard({
+    required this.info,
     required this.onVip,
+    required this.onPremium,
     required this.onInvite,
     required this.onAdReward,
   });
 
+  final ProfileMembershipInfo info;
   final VoidCallback onVip;
+  final VoidCallback onPremium;
   final VoidCallback onInvite;
   final VoidCallback onAdReward;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final plansLabel = buildMembershipGrowthHubPlansButtonLabel(info: info);
+    final vipLabel = buildMembershipGrowthHubVipButtonLabel(info: info);
+
     return ProfileGlass(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Sıradaki büyüme adımları',
+            buildMembershipGrowthHubRoadmapSectionTitle(),
             style: TextStyle(
               color: c.onSurface,
               fontSize: 16,
@@ -684,7 +871,7 @@ class _RoadmapHintCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'VIP avantajları, oda sıralamaları, hediye serileri ve PK turnuvaları roadmap fazlarına alındı. Bu merkez, kullanıcıya ilerleme hissini bugün vermek için ilk katmandır.',
+            buildMembershipGrowthHubRoadmapHintText(),
             style: TextStyle(
               color: c.onSurfaceVariant,
               height: 1.35,
@@ -695,12 +882,24 @@ class _RoadmapHintCard extends StatelessWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: onVip,
-                  icon: const Icon(Icons.workspace_premium_rounded),
-                  label: const Text('VIP'),
+                  onPressed: onPremium,
+                  icon: const Icon(Icons.card_membership_rounded),
+                  label: Text(plansLabel),
                 ),
               ),
               const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: onVip,
+                  icon: const Icon(Icons.workspace_premium_rounded),
+                  label: Text(vipLabel),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onInvite,

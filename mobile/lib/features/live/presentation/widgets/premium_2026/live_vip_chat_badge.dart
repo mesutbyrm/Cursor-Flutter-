@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+
+import 'package:canlifal_social/features/vip_gold/domain/entrance_theme.dart';
 
 /// Sohbet rozetleri — VIP, seviye, falcı, moderatör.
 enum LiveChatBadgeKind { vip, level, fortuneTeller, moderator }
@@ -67,15 +70,17 @@ class LiveVipChatBadge extends StatelessWidget {
   }
 }
 
-/// VIP giriş banner — altın çerçeve + parıltı.
+/// VIP giriş banner — takım renkleri + altın çerçeve.
 class LiveVipEntranceBanner extends StatefulWidget {
   const LiveVipEntranceBanner({
     super.key,
     required this.displayName,
+    this.theme,
     this.onDone,
   });
 
   final String displayName;
+  final EntranceTheme? theme;
   final VoidCallback? onDone;
 
   @override
@@ -101,23 +106,23 @@ class _LiveVipEntranceBannerState extends State<LiveVipEntranceBanner> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = widget.theme ?? EntranceTheme.turkey;
+    final subtitle = theme.teamName != null
+        ? '${theme.teamName} taraftarı'
+        : (theme.isDefaultTurkey ? '🇹🇷' : null);
+
     return Align(
       alignment: Alignment.topCenter,
       child: Container(
         margin: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + 72),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              const Color(0xFFFFD700).withValues(alpha: 0.35),
-              const Color(0xFFB832FF).withValues(alpha: 0.25),
-            ],
-          ),
+          gradient: theme.bannerGradient,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
+          border: Border.all(color: theme.borderColor, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFFD700).withValues(alpha: 0.35),
+              color: theme.glowColor,
               blurRadius: 16,
             ),
           ],
@@ -125,15 +130,45 @@ class _LiveVipEntranceBannerState extends State<LiveVipEntranceBanner> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.workspace_premium_rounded, color: Color(0xFFFFD700)),
+            if (theme.logoUrl != null && theme.logoUrl!.isNotEmpty)
+              ClipOval(
+                child: CachedNetworkImage(
+                  imageUrl: theme.logoUrl!,
+                  width: 22,
+                  height: 22,
+                  fit: BoxFit.cover,
+                  errorWidget: (_, __, ___) => Icon(
+                    Icons.workspace_premium_rounded,
+                    color: theme.iconColor,
+                    size: 20,
+                  ),
+                ),
+              )
+            else
+              Icon(Icons.workspace_premium_rounded, color: theme.iconColor),
             const SizedBox(width: 8),
-            Text(
-              '${widget.displayName} yayına katıldı',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 13,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${widget.displayName} yayına katıldı',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
+                ),
+                if (subtitle != null)
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.82),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
             ),
           ],
         ),

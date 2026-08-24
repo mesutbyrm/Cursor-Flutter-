@@ -1,5 +1,6 @@
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/entities/voice_room_entity.dart';
+import '../../domain/entities/voice_rooms_page.dart';
 import '../../domain/repositories/live_repository.dart';
 import '../datasources/live_remote_datasource.dart';
 
@@ -13,7 +14,16 @@ class LiveRepositoryImpl implements LiveRepository {
       _remote.fetch(page: page, category: category);
 
   @override
-  Future<List<VoiceRoomEntity>> fetchVoiceRooms() => _remote.fetchVoiceRooms();
+  Future<List<VoiceRoomEntity>> fetchVoiceRooms({String? category}) =>
+      _remote.fetchVoiceRooms(category: category);
+
+  @override
+  Future<VoiceRoomsPage> fetchVoiceRoomsPage({
+    int page = 1,
+    int limit = 30,
+    String? category,
+  }) =>
+      _remote.fetchVoiceRoomsPage(page: page, limit: limit, category: category);
 
   @override
   Future<VoiceRoomEntity?> fetchVoiceRoomById(String id) =>
@@ -27,6 +37,10 @@ class LiveRepositoryImpl implements LiveRepository {
     String paymentType = 'jeton',
     String? description,
     String? icon,
+    String? background,
+    int seatCount = 8,
+    int maxUsers = 15,
+    String? category,
   }) =>
       _remote.createVoiceChatRoom(
         vip: vip,
@@ -35,6 +49,10 @@ class LiveRepositoryImpl implements LiveRepository {
         paymentType: paymentType,
         description: description,
         icon: icon,
+        background: background,
+        seatCount: seatCount,
+        maxUsers: maxUsers,
+        category: category,
       );
 
   @override

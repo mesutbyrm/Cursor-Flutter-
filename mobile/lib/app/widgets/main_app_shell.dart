@@ -13,12 +13,23 @@ import '../../features/live_psychics/presentation/widgets/psychic_session_ended_
 import '../../features/profile/presentation/widgets/jeton_payment_status_listener.dart';
 import '../../features/shell/presentation/app_bottom_nav_host.dart';
 import '../../features/live/presentation/widgets/live_pk_invite_listener.dart';
+import '../../features/voice_hub/presentation/widgets/voice_pk_invite_listener.dart';
+import '../../features/voice_hub/presentation/widgets/voice_speak_request_listener.dart';
 import '../../features/messages/presentation/widgets/dm_realtime_listener.dart';
 import '../../features/messages/presentation/widgets/dm_voice_call_host.dart';
 import '../../features/video_call/presentation/incoming_video_call_screen.dart';
 import '../../features/voice_hub/presentation/widgets/voice_room/voice_room_global_music_bar.dart';
+import '../../features/gifts/presentation/global/global_gift_event_bridge.dart';
+import '../../features/gifts/presentation/global/global_gift_overlay.dart';
+import '../../features/voice_hub/presentation/widgets/staff_entrance_marquee_host.dart';
+import '../../features/voice_hub/presentation/widgets/global_site_marquee_listener.dart';
 import '../router/app_router.dart';
-import '../../core/bootstrap/voice_rooms_presence_scope.dart';
+import '../../core/network/sse/connectivity_sse_reconnect_provider.dart';
+import '../../core/sse_client_provider.dart';
+import '../../core/widgets/offline_status_banner.dart';
+import '../../features/gifts/presentation/providers/gift_catalog_version_watcher.dart';
+import '../../features/notifications/presentation/widgets/notifications_realtime_listener.dart';
+import '../../features/platform/presentation/widgets/app_popups_listener.dart';
 
 /// MaterialApp.router [builder] içeriği — [ListenableBuilder] kullanmaz.
 ///
@@ -38,8 +49,8 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
   GoRouter? _router;
   String _location = '/feed';
   var _listenerAttached = false;
-  var _realtimeReady = false;
   Timer? _realtimeTimer;
+  SseClientLifecycleBinding? _sseLifecycle;
 
   @override
   void initState() {
@@ -49,10 +60,11 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _attachRouter(ref.read(goRouterProvider));
+      _sseLifecycle = ref.read(sseClientLifecycleProvider);
+      _sseLifecycle?.attach();
     });
     _realtimeTimer = Timer(StartupPerf.shellRealtimeDelay, () {
       if (!mounted) return;
-      setState(() => _realtimeReady = true);
       unawaited(ref.read(approvedPsychicProvider.notifier).refresh());
       unawaited(ref.read(approvedAgencyProvider.notifier).refresh());
     });
@@ -61,6 +73,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
   @override
   void dispose() {
     _realtimeTimer?.cancel();
+    _sseLifecycle?.dispose();
     _detachRouter();
     super.dispose();
   }
@@ -99,6 +112,9 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(connectivitySseReconnectProvider);
+    watchGiftCatalogVersion(ref);
+
     final router = ref.read(goRouterProvider);
     if (!identical(router, _router)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -114,30 +130,41 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
 
     var body = widget.child;
     if (!isAuthRoute) {
+      body = AppPopupsListener(child: body);
+      body = NotificationsRealtimeListener(child: body);
       body = DmRealtimeListener(child: body);
       body = DmVoiceCallHost(child: body);
       body = JetonPaymentStatusListener(child: body);
       body = PsychicSessionEndedHost(child: body);
       body = PsychicIncomingHost(child: body);
       body = LivePkInviteListener(child: body);
+      body = VoicePkInviteListener(child: body);
+      body = VoiceSpeakRequestListener(child: body);
       body = VideoCallIncomingHost(child: body);
       body = AppBottomNavHost(location: location, child: body);
     }
 
-    if (!isAuthRoute && _realtimeReady) {
-      body = VoiceRoomsPresenceScope(child: body);
-    }
-
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        body,
-        if (showGlobalMusic)
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: VoiceRoomGlobalMusicBar(routePath: location),
+    return OfflineStatusBanner(
+      child: GlobalGiftEventBridge(
+        child: GlobalGiftOverlay(
+          child: GlobalSiteMarqueeListener(
+            child: StaffEntranceMarqueeHost(
+              routePath: location,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  body,
+                  if (showGlobalMusic)
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: VoiceRoomGlobalMusicBar(routePath: location),
+                    ),
+                ],
+              ),
+            ),
           ),
-      ],
+        ),
+      ),
     );
   }
 }

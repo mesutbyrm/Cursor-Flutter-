@@ -8,11 +8,14 @@ import '../../../../core/widgets/discover_refresh.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../live/presentation/providers/live_providers.dart';
 import '../providers/social_providers.dart';
+import '../utils/open_social_create_post.dart';
 import '../utils/social_feed_layout.dart';
 import '../widgets/instagram/social_active_rooms.dart';
 import '../widgets/instagram/social_instagram_post_card.dart';
-import '../providers/social_composer_providers.dart';
+import '../widgets/social_feed_end_banner.dart';
+import '../widgets/social_feed_load_more_error_banner.dart';
 
 /// Sosyal akış — yalnızca feed provider'ını izler; app bar/composer etkilenmez.
 class SocialFeedScrollView extends ConsumerWidget {
@@ -21,15 +24,23 @@ class SocialFeedScrollView extends ConsumerWidget {
     required this.controller,
     required this.onRefresh,
     required this.bottomPadding,
+    this.onPostPublished,
   });
 
   final ScrollController controller;
   final Future<void> Function() onRefresh;
   final double bottomPadding;
+  final VoidCallback? onPostPublished;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final social = ref.watch(socialNotifierProvider);
+    final live = ref.watch(liveStreamsProvider);
+    final rooms = ref.watch(voiceRoomsProvider);
+    final showRoomStrips = socialActiveRoomsAvailable(
+      streams: live.valueOrNull,
+      rooms: rooms.valueOrNull,
+    );
 
     return DiscoverRefresh.wrap(
       onRefresh: onRefresh,
@@ -63,17 +74,64 @@ class SocialFeedScrollView extends ConsumerWidget {
                         ? 'Henüz paylaşım yok.\nİlk gönderini paylaş veya canlifal.com oturumunu kontrol et.'
                         : 'Henüz paylaşım yok.\nİlk gönderini şimdi paylaş.',
                     actionLabel: 'Paylaşım oluştur',
-                    action: () => ref
-                        .read(socialComposerExpandedProvider.notifier)
-                        .state = true,
+                    action: () => openSocialCreatePost(
+                      context,
+                      ref,
+                      onPublished: onPostPublished,
+                    ),
                   ),
                 );
               }
-              final feedCount = SocialFeedLayout.itemCount(posts.length);
+              final notifier = ref.read(socialNotifierProvider.notifier);
+              final loadingMore = notifier.isLoadingMore;
+              final loadMoreError = notifier.loadMoreError;
+              final atEnd = !notifier.hasMore && !loadingMore;
+              final showLoadMoreError =
+                  loadMoreError != null && notifier.hasMore && !loadingMore;
+              final feedCount = SocialFeedLayout.itemCount(
+                posts.length,
+                includeRoomStrips: showRoomStrips,
+              );
+              var trailingSlots = 0;
+              if (loadingMore) trailingSlots++;
+              if (showLoadMoreError) trailingSlots++;
+              if (atEnd) trailingSlots++;
               return SliverList.builder(
-                itemCount: feedCount,
+                itemCount: feedCount + trailingSlots,
                 itemBuilder: (context, i) {
-                  final postIdx = SocialFeedLayout.postIndexAt(i, posts.length);
+                  if (i >= feedCount) {
+                    var slot = i - feedCount;
+                    if (loadingMore) {
+                      if (slot == 0) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        );
+                      }
+                      slot--;
+                    }
+                    if (showLoadMoreError) {
+                      if (slot == 0) {
+                        return SocialFeedLoadMoreErrorBanner(
+                          message: loadMoreError!,
+                          onRetry: () => notifier.retryLoadMore(),
+                        );
+                      }
+                      slot--;
+                    }
+                    return const SocialFeedEndBanner();
+                  }
+                  final postIdx = SocialFeedLayout.postIndexAt(
+                    i,
+                    posts.length,
+                    includeRoomStrips: showRoomStrips,
+                  );
                   if (postIdx != null) {
                     return ScrollPerf.item(
                       SocialInstagramPostCard(

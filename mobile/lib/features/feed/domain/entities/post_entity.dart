@@ -19,6 +19,11 @@ class PostEntity extends Equatable {
     this.fortuneCount = 0,
     this.postType,
     this.likedByMe = false,
+    this.shareCount = 0,
+    this.fortuneId,
+    this.visibility,
+    this.fortuneSlug,
+    this.fortuneDetail,
   });
 
   final String id;
@@ -39,8 +44,29 @@ class PostEntity extends Equatable {
   final String? postType;
   /// Oturumlu kullanıcı bu gönderiyi beğendi mi (API).
   final bool likedByMe;
+  final int shareCount;
+  final String? fortuneId;
+  final String? visibility;
+  final String? fortuneSlug;
+  /// Tam fal metni — API `detail` / `fortuneDetail` (özet `caption` yerine).
+  final String? fortuneDetail;
 
-  /// Fal / tarot içeriklerini hikâye şeridinde göstermemek için.
+  bool get isFortunePost =>
+      postType == 'fortune' ||
+      isAutoShare ||
+      (fortuneType != null && fortuneType!.isNotEmpty) ||
+      (fortuneId != null && fortuneId!.isNotEmpty);
+
+  /// Akış kartında gösterilecek fal gövdesi — tam metin öncelikli.
+  String? get displayFortuneBody {
+    final detail = fortuneDetail?.trim();
+    if (detail != null && detail.isNotEmpty) return detail;
+    final cap = caption?.trim();
+    if (cap != null && cap.isNotEmpty) return cap;
+    return null;
+  }
+
+  int get displayViewCount => viewsCount > 0 ? viewsCount : viewCount;
   bool get isFortuneContent {
     final t = caption?.toLowerCase() ?? '';
     return t.contains('fal') ||
@@ -65,6 +91,11 @@ class PostEntity extends Equatable {
     int? fortuneCount,
     String? postType,
     bool? likedByMe,
+    int? shareCount,
+    String? fortuneId,
+    String? visibility,
+    String? fortuneSlug,
+    String? fortuneDetail,
   }) {
     final nextLiked = isLiked ?? likedByMe;
     return PostEntity(
@@ -83,6 +114,11 @@ class PostEntity extends Equatable {
       fortuneCount: fortuneCount ?? this.fortuneCount,
       postType: postType ?? this.postType,
       likedByMe: nextLiked ?? this.likedByMe,
+      shareCount: shareCount ?? this.shareCount,
+      fortuneId: fortuneId ?? this.fortuneId,
+      visibility: visibility ?? this.visibility,
+      fortuneSlug: fortuneSlug ?? this.fortuneSlug,
+      fortuneDetail: fortuneDetail ?? this.fortuneDetail,
     );
   }
 
@@ -103,5 +139,10 @@ class PostEntity extends Equatable {
         fortuneCount,
         postType,
         likedByMe,
+        shareCount,
+        fortuneId,
+        visibility,
+        fortuneSlug,
+        fortuneDetail,
       ];
 }

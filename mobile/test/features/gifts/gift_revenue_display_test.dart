@@ -9,22 +9,29 @@ void main() {
       expect(GiftRevenueDisplay.liveBroadcasterNet(0), 0);
     });
 
-    test('estimateVoiceGift — %50 alıcı %50 site', () {
-      final r = GiftRevenueDisplay.estimateVoiceGift(
+    test('estimateVoiceGift — yayıncıya %50 alıcı %50 site', () {
+      final owner = GiftRevenueDisplay.estimateVoiceGift(
+        gross: 100,
+        receiverIsOwner: true,
+      );
+      expect(owner.receiverNet, 50);
+      expect(owner.siteAmount, 50);
+      expect(owner.ownerNet, 50);
+    });
+
+    test('estimateVoiceGift — misafire %35 alıcı %15 yayıncı %50 site', () {
+      final guest = GiftRevenueDisplay.estimateVoiceGift(
         gross: 100,
         receiverIsOwner: false,
       );
-      expect(r.receiverNet, 50);
-      expect(r.siteAmount, 50);
-      expect(r.ownerNet, 0);
+      expect(guest.receiverNet, 35);
+      expect(guest.ownerNet, 15);
+      expect(guest.siteAmount, 50);
+    });
 
-      final owner = GiftRevenueDisplay.estimateVoiceGift(
-        gross: 200,
-        receiverIsOwner: true,
-      );
-      expect(owner.receiverNet, 100);
-      expect(owner.siteAmount, 100);
-      expect(owner.ownerNet, 0);
+    test('publicGross her zaman brüt tutarı döner', () {
+      expect(GiftRevenueDisplay.publicGross(100), 100);
+      expect(GiftRevenueDisplay.voiceReceiverDisplayGross(100), 100);
     });
   });
 }

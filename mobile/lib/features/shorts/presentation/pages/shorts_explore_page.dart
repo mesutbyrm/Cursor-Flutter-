@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/performance/effects_perf.dart';
+import '../../../../core/performance/list_perf.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/premium_bottom_sheet.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
@@ -14,7 +16,9 @@ import '../../domain/entities/short_explore_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_explore_providers.dart';
 import '../providers/shorts_providers.dart';
+import '../utils/reverse_geocode_helper.dart';
 import '../utils/shorts_count_format.dart';
+import 'short_music_feed_page.dart';
 import '../widgets/shorts_premium_theme.dart';
 
 /// Keşfet — trend, sana özel, AI, konum, hashtag ve müzik.
@@ -71,6 +75,47 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
                 ),
               ),
               const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final service = await Geolocator.isLocationServiceEnabled();
+                  if (!service) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Konum servisi kapalı')),
+                      );
+                    }
+                    return;
+                  }
+                  var perm = await Geolocator.checkPermission();
+                  if (perm == LocationPermission.denied) {
+                    perm = await Geolocator.requestPermission();
+                  }
+                  if (perm == LocationPermission.denied ||
+                      perm == LocationPermission.deniedForever) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Konum izni gerekli')),
+                      );
+                    }
+                    return;
+                  }
+                  final pos = await Geolocator.getCurrentPosition();
+                  if (!context.mounted) return;
+                  final label = await reverseGeocodeLabel(
+                    pos.latitude,
+                    pos.longitude,
+                  );
+                  if (context.mounted) {
+                    Navigator.pop(
+                      context,
+                      '__gps__:${pos.latitude},${pos.longitude}:$label',
+                    );
+                  }
+                },
+                icon: const Icon(Icons.my_location_rounded),
+                label: const Text('GPS konumumu kullan'),
+              ),
+              const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
                 children: [
@@ -98,6 +143,22 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
     if (!mounted || picked == null) return;
     if (picked == '__clear__') {
       await ref.read(shortExploreLocationProvider.notifier).clear();
+    } else if (picked.startsWith('__gps__:')) {
+      final body = picked.substring('__gps__:'.length);
+      final parts = body.split(':');
+      final coords = parts.first.split(',');
+      if (coords.length == 2) {
+        final lat = double.tryParse(coords[0]);
+        final lng = double.tryParse(coords[1]);
+        final label = parts.length > 1 && parts[1].trim().isNotEmpty
+            ? parts.sublist(1).join(':')
+            : 'Konumum';
+        await ref.read(shortExploreLocationProvider.notifier).setLocation(
+              label,
+              lat: lat,
+              lng: lng,
+            );
+      }
     } else if (picked.isNotEmpty) {
       await ref.read(shortExploreLocationProvider.notifier).setLocation(picked);
     }
@@ -421,17 +482,34 @@ class _VideoGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 9 / 14,
-      ),
-      itemCount: videos.length,
-      itemBuilder: (context, i) => _VideoTile(video: videos[i]),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const crossAxisCount = 2;
+        const spacing = 10.0;
+        const aspect = 9 / 14;
+        final gridHeight = ListPerf.nestedGridHeight(
+          itemCount: videos.length,
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          childAspectRatio: aspect,
+          crossAxisExtent: constraints.maxWidth,
+        );
+        return SizedBox(
+          height: gridHeight,
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: spacing,
+              mainAxisSpacing: spacing,
+              childAspectRatio: aspect,
+            ),
+            itemCount: videos.length,
+            itemBuilder: (context, i) => _VideoTile(video: videos[i]),
+          ),
+        );
+      },
     );
   }
 }
@@ -474,7 +552,10 @@ class _MusicTile extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       animateIn: false,
       borderRadius: BorderRadius.circular(12),
-      onTap: () => context.push('/shorts/upload'),
+      onTap: () => context.push(
+        '/shorts/music/${Uri.encodeComponent(music.id)}'
+        '?title=${Uri.encodeComponent(music.title)}',
+      ),
       child: Row(
         children: [
           ClipRRect(
@@ -549,7 +630,8 @@ class _VideoTile extends StatelessWidget {
     final radius = compact ? 10.0 : 14.0;
     return HeroShortThumb(
       videoId: video.id,
-      child: GestureDetector(
+      child: RepaintBoundary(
+        child: GestureDetector(
         onTap: () => context.push('/shorts?videoId=${video.id}'),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(radius),
@@ -601,6 +683,7 @@ class _VideoTile extends StatelessWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

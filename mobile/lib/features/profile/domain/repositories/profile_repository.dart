@@ -6,10 +6,12 @@ import '../entities/profile_stats_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../entities/jeton_package_entity.dart';
 import '../entities/payment_config_entity.dart';
+import '../entities/payment_method_entity.dart';
 import '../entities/referral_info_entity.dart';
 
 abstract class ProfileRepository {
   Future<UserEntity> getUser(String id);
+  Future<ProfileExtendedEntity> getUserExtended(String id);
   Future<void> follow(String id);
   Future<void> unfollow(String id);
   Future<UserEntity> updateMe({
@@ -21,6 +23,7 @@ abstract class ProfileRepository {
     String? newPassword,
     String? birthDate,
     String? birthTime,
+    String? favoriteTeam,
   });
   Future<ProfileStatsEntity> myStats();
   Future<ProfileExtendedEntity> extendedProfile();
@@ -43,6 +46,7 @@ abstract class WalletRepository {
   Future<WalletBalances> balances({bool forceRefresh = false});
   Future<List<JetonPackageEntity>> jetonPackages();
   Future<PaymentConfigEntity> paymentConfig();
+  Future<List<PaymentMethodEntity>> paymentMethods();
   Future<void> submitPaymentRequest(Map<String, dynamic> body);
   Future<void> cancelPaymentRequest(String requestId);
   Future<List<CfcPaymentRequestEntity>> myPaymentRequests();

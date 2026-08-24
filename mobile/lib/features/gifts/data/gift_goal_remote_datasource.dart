@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import '../domain/gift_goal.dart';
@@ -18,10 +19,11 @@ class GiftGoalRemoteDataSource {
     required int targetAmount,
   }) async {
     final res = await _dio.safePost<dynamic>(
-      '/api/gifts/goals',
+      ApiEndpoints.giftsGoals,
       data: {
         'context': context,
         'contextId': contextId,
+        'roomId': contextId,
         'title': title,
         'targetAmount': targetAmount,
       },
@@ -36,7 +38,7 @@ class GiftGoalRemoteDataSource {
     String? status,
   }) async {
     final res = await _dio.safeGet<dynamic>(
-      '/api/gifts/goals',
+      ApiEndpoints.giftsGoals,
       query: {
         'context': context,
         'contextId': contextId,
@@ -63,5 +65,25 @@ class GiftGoalRemoteDataSource {
       return GiftGoal.fromJson(data);
     }
     return null;
+  }
+
+  /// Aktif hedefi sonlandır — uç yoksa sessizce yoksayılır.
+  Future<void> closeGoal(String goalId) async {
+    final id = goalId.trim();
+    if (id.isEmpty) return;
+    final paths = [
+      '${ApiEndpoints.giftsGoals}/$id',
+      '${ApiEndpoints.giftsGoals}/$id/close',
+    ];
+    for (final path in paths) {
+      try {
+        await _dio.safePatch<dynamic>(path, data: const {'status': 'ended'});
+        return;
+      } catch (_) {}
+      try {
+        await _dio.safePost<dynamic>(path, data: const {'action': 'close'});
+        return;
+      } catch (_) {}
+    }
   }
 }

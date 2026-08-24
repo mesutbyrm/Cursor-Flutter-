@@ -8,6 +8,7 @@ import '../../../live_psychics/presentation/controllers/psychics_list_controller
 import '../../domain/entities/daily_task_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../providers/profile_providers.dart';
+import 'profile_membership_helpers.dart';
 import 'profile_screen_state.dart';
 
 /// Oturum kullanıcısından minimum profil durumu — ek API yok.
@@ -23,15 +24,17 @@ ProfileScreenState buildProfileWalletState(
   ProfileScreenState base,
   WalletBalances? wallet,
 ) {
-  final membership = wallet?.membership?.trim();
-  final hasMembership = membership != null && membership.isNotEmpty;
+  final info = resolveProfileMembership(
+    rawMembership: wallet?.membership,
+    daysRemaining: wallet?.membershipDaysRemaining,
+  );
   return base.copyWith(
     wallet: wallet,
     jeton: wallet?.jeton ?? base.jeton,
     cfc: wallet?.cfc ?? base.cfc,
-    membership: hasMembership ? membership : null,
+    membership: info.displayMembership,
     membershipDays: wallet?.membershipDaysRemaining,
-    isVip: hasMembership,
+    isVip: info.isVip,
   );
 }
 

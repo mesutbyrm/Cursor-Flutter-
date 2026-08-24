@@ -25,23 +25,31 @@ import '../../features/fortune/presentation/pages/fortune_session_page.dart';
 import '../../features/fortune/presentation/pages/fortune_ready_readings_page.dart';
 
 import '../../features/admin/presentation/pages/admin_panel_page.dart';
+import '../../features/admin/presentation/pages/admin_voice_room_backgrounds_page.dart';
+import '../../features/admin/presentation/pages/admin_gift_collection_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_sub_pages.dart';
+import '../../features/admin_web/presentation/pages/admin_web_panel_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
+import '../../features/bana_ozel/domain/entities/bana_ozel_entities.dart';
+import '../../features/bana_ozel/presentation/pages/bana_ozel_page.dart';
+import '../../features/bana_ozel/presentation/pages/bana_ozel_result_page.dart';
 import '../../features/gifts/presentation/pages/gift_send_page.dart';
 import '../../features/live/domain/entities/live_broadcast_session.dart';
 import '../../features/live/domain/entities/live_broadcast_prep_args.dart';
 import '../../features/live/presentation/pages/live_broadcast_prep_page.dart';
 import '../../features/live/presentation/pages/live_broadcast_schedule_page.dart';
 import '../../features/live/presentation/pages/live_broadcast_type_page.dart';
-import '../../features/gifts/presentation/pages/gift_leaderboard_hub_page.dart';
 import '../../features/live/domain/entities/live_swipe_feed_args.dart';
 import '../../features/live/presentation/pages/live_broadcast_room_page.dart';
 import '../../features/live/presentation/pages/live_page.dart';
 import '../../features/live/presentation/pages/live_swipe_viewer_page.dart';
 import '../../features/social/presentation/pages/social_create_post_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
+import '../../features/social/presentation/pages/social_post_detail_page.dart';
+import '../../features/social/presentation/pages/story_viewer_page.dart';
+import '../../features/social/presentation/utils/story_viewer_args.dart';
 import '../../features/gifts/presentation/pages/gift_collection_page.dart';
 import '../../features/gifts/domain/admin_gift_type.dart';
 import '../../features/gifts/presentation/pages/admin_gift_management_page.dart';
@@ -52,9 +60,16 @@ import '../../features/live/presentation/pages/pk_moderation_page.dart';
 import '../../features/live/presentation/pages/pk_room_history_page.dart';
 import '../../features/gifts/presentation/pages/gift_hub_page.dart';
 import '../../features/gifts/presentation/pages/gift_leaderboard_center_page.dart';
+import '../../features/games/presentation/pages/games_hub_page.dart';
+import '../../features/games/presentation/pages/game_room_router_page.dart';
+import '../../features/games/presentation/game_center/pages/game_center_page.dart';
+import '../../features/games/presentation/game_center/pages/game_center_leaderboard_page.dart';
+import '../../features/games/presentation/game_center/pages/game_play_pages.dart';
+import '../../features/games/presentation/okey101/okey101_lobby_page.dart';
 import '../../features/shorts/presentation/pages/shorts_feed_page.dart';
 import '../../features/shorts/presentation/pages/shorts_explore_page.dart';
 import '../../features/shorts/presentation/pages/short_hashtag_page.dart';
+import '../../features/shorts/presentation/pages/short_music_feed_page.dart';
 import '../../features/shorts/presentation/studio/shorts_studio_page.dart';
 import '../../features/shorts/presentation/utils/short_studio_launch.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
@@ -63,12 +78,17 @@ import '../../features/messages/presentation/pages/dm_voice_call_page.dart';
 import '../../features/moderation/domain/entities/report_target.dart';
 import '../../features/moderation/presentation/pages/report_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
-import '../../features/profile/presentation/pages/invite_friends_page.dart';
+import '../../features/referral/presentation/pages/referral_earnings_page.dart';
+import '../../features/referral/presentation/pages/referral_invite_page.dart';
+import '../../features/referral/presentation/pages/referral_users_page.dart';
 import '../../features/membership/presentation/pages/premium_membership_page.dart';
 import '../../features/profile/presentation/pages/cfc_purchase_page.dart';
 import '../../features/profile/presentation/pages/jeton_purchase_page.dart';
 import '../../features/wallet/presentation/pages/wallet_center_page.dart';
+import '../../features/wallet/presentation/pages/withdrawal_page.dart';
 import '../../features/profile/presentation/pages/profile_about_page.dart';
+import '../../features/legal/domain/legal_document.dart';
+import '../../features/legal/presentation/pages/site_content_page.dart';
 import '../../features/profile/presentation/pages/profile_account_security_page.dart';
 import '../../features/profile/presentation/pages/profile_broadcast_history_page.dart';
 import '../../features/profile/presentation/pages/profile_broadcaster_stats_page.dart';
@@ -79,6 +99,7 @@ import '../../features/profile/presentation/pages/profile_equipment_page.dart';
 import '../../features/profile/presentation/pages/profile_follow_list_page.dart';
 import '../../features/profile/presentation/pages/profile_gifts_page.dart';
 import '../../features/profile/presentation/pages/growth_hub_page.dart';
+import '../../features/cosmetics/presentation/pages/profile_cosmetics_page.dart';
 import '../../features/profile/presentation/pages/profile_help_support_page.dart';
 import '../../features/profile/presentation/pages/profile_payment_notice_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
@@ -152,6 +173,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final path = state.uri.path;
       final loc = state.matchedLocation;
+      if (path == '/' || path == '/index' || path == '/home') {
+        return '/feed';
+      }
       final auth = ref.read(authControllerProvider);
 
       if (auth.isLoading) return null;
@@ -188,6 +212,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       return target;
     },
     routes: [
+      GoRoute(
+        path: '/sosyal',
+        redirect: (context, state) {
+          final postId = state.uri.queryParameters['post']?.trim();
+          if (postId != null && postId.isNotEmpty) {
+            return '/social/post/${Uri.encodeComponent(postId)}';
+          }
+          return '/social';
+        },
+      ),
       GoRoute(
         path: '/login',
         redirect: (context, state) => '/feed',
@@ -303,6 +337,36 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                           ),
                         ),
                   ),
+                  GoRoute(
+                    path: 'post/:postId',
+                    pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+                      key: state.pageKey,
+                      child: SocialPostDetailPage(
+                        postId: state.pathParameters['postId'] ?? '',
+                      ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'stories/view',
+                    pageBuilder: (context, state) {
+                      final args = state.extra;
+                      if (args is! StoryViewerArgs) {
+                        return AppPageTransitions.fadeSlide(
+                          key: state.pageKey,
+                          child: const Scaffold(
+                            body: Center(child: Text('Hikâye bulunamadı')),
+                          ),
+                        );
+                      }
+                      return AppPageTransitions.fadeSlide(
+                        key: state.pageKey,
+                        child: StoryViewerPage(
+                          ring: args.ring,
+                          initialIndex: args.initialIndex,
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ],
@@ -342,6 +406,32 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                           key: state.pageKey,
                           child: const FortuneReadyReadingsPage(),
                         ),
+                  ),
+                  GoRoute(
+                    path: 'bana-ozel',
+                    pageBuilder: (context, state) =>
+                        AppPageTransitions.fadeSlide(
+                          key: state.pageKey,
+                          child: BanaOzelPage(
+                            initialSlug: state.uri.queryParameters['slug'],
+                          ),
+                        ),
+                    routes: [
+                      GoRoute(
+                        path: 'result',
+                        pageBuilder: (context, state) {
+                          final result =
+                              state.extra as BanaOzelOpenResultEntity?;
+                          final child = result == null
+                              ? const BanaOzelPage()
+                              : BanaOzelResultPage(result: result);
+                          return AppPageTransitions.fadeSlide(
+                            key: state.pageKey,
+                            child: child,
+                          );
+                        },
+                      ),
+                    ],
                   ),
                   GoRoute(
                     path: 'history/:id',
@@ -487,6 +577,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const WalletCenterPage(),
       ),
       GoRoute(
+        path: '/withdraw',
+        builder: (context, state) => const WithdrawalPage(),
+      ),
+      GoRoute(
         path: '/premium-membership',
         builder: (context, state) => const PremiumMembershipPage(),
       ),
@@ -497,6 +591,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/panel',
         builder: (context, state) => const AdminPanelPage(),
+      ),
+      GoRoute(
+        path: '/admin/web',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminWebPanelPage(),
+        ),
       ),
       GoRoute(
         path: '/admin/users',
@@ -523,7 +624,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/invite-friends',
-        builder: (context, state) => const InviteFriendsPage(),
+        builder: (context, state) => const ReferralInvitePage(),
+      ),
+      GoRoute(
+        path: '/referral/users',
+        builder: (context, state) => const ReferralUsersPage(),
+      ),
+      GoRoute(
+        path: '/referral/earnings',
+        builder: (context, state) => const ReferralEarningsPage(),
       ),
       GoRoute(
         path: '/profile/qr',
@@ -568,17 +677,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ProfileGiftsPage(),
       ),
       GoRoute(
-        path: '/gifts/leaderboard',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const GiftLeaderboardHubPage(),
-        ),
-      ),
-      GoRoute(
         path: '/profile/growth',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const GrowthHubPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/profile/cosmetics',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const ProfileCosmeticsPage(),
         ),
       ),
       GoRoute(
@@ -605,6 +714,26 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/about',
         builder: (context, state) => const ProfileAboutPage(),
+      ),
+      GoRoute(
+        path: '/legal/:slug',
+        builder: (context, state) {
+          final slug = state.pathParameters['slug'] ?? '';
+          final title = state.extra as String? ??
+              kLegalDocuments
+                  .where((d) => d.slug == slug)
+                  .map((d) => d.title)
+                  .firstOrNull ??
+              'Yasal';
+          final doc = kLegalDocuments
+              .where((d) => d.slug == slug)
+              .firstOrNull;
+          return SiteContentPage(
+            slug: slug,
+            title: title,
+            fallbackUrl: doc?.fallbackUrl,
+          );
+        },
       ),
       GoRoute(
         path: '/profile/followers',
@@ -724,6 +853,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(
+        path: '/admin/collections',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminGiftCollectionHubPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/voice-backgrounds',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminVoiceRoomBackgroundsPage(),
+        ),
+      ),
+      GoRoute(
         path: '/pk/leaderboard',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
@@ -801,6 +944,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               ),
             ),
           ),
+          GoRoute(
+            path: 'music/:musicId',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: ShortMusicFeedPage(
+                musicId: state.pathParameters['musicId'] ?? '',
+                title: state.uri.queryParameters['title'],
+              ),
+            ),
+          ),
         ],
       ),
       GoRoute(
@@ -829,10 +982,79 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/games-hub',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const GamesHubPage(),
+        ),
+        routes: [
+          GoRoute(
+            path: 'lobby',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const GameCenterPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'leaderboard',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const GameCenterLeaderboardPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'wheel',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const WheelOfFortunePage(),
+            ),
+          ),
+          GoRoute(
+            path: 'okey101',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const Okey101LobbyPage(),
+            ),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/games-room/:id',
+        pageBuilder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          final title = state.uri.queryParameters['title'];
+          final gameHint = state.uri.queryParameters['game'];
+          return AppPageTransitions.fadeSlide(
+            key: state.pageKey,
+            child: GameRoomRouterPage(
+              roomId: id,
+              title: title,
+              gameHint: gameHint,
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/blog-hub',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const NativeFeatureHubPage(kind: NativeFeatureHubKind.blog),
+        ),
+      ),
+      GoRoute(
+        path: '/dreams-hub',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const NativeFeatureHubPage(kind: NativeFeatureHubKind.dreams),
+        ),
+      ),
+      GoRoute(
         path: '/search',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
-          child: const GlobalSearchPage(),
+          child: GlobalSearchPage(
+            initialQuery: state.uri.queryParameters['q'],
+          ),
         ),
       ),
       GoRoute(

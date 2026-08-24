@@ -7,8 +7,12 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
-import '../../../domain/entities/social_comment_entity.dart';
+import '../../../../search/domain/entities/search_user_entity.dart';
 import '../../providers/social_providers.dart';
+import '../../utils/social_feed_sync.dart';
+import '../../utils/social_user_profile_route.dart';
+import '../social_mention_picker_sheet.dart';
+import '../social_linked_caption_text.dart';
 
 /// Gönderi yorumları — GET/POST `/api/social/posts/:id/comments`.
 class SocialPostCommentsSheet extends ConsumerStatefulWidget {
@@ -61,36 +65,10 @@ class _SocialPostCommentsSheetState
     extends ConsumerState<SocialPostCommentsSheet> {
   final _controller = TextEditingController();
   var _sending = false;
-  List<SocialCommentEntity>? _items;
-  Object? _loadError;
-  var _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _reload();
-  }
 
   Future<void> _reload() async {
-    setState(() {
-      _loading = true;
-      _loadError = null;
-    });
-    try {
-      final list =
-          await ref.read(socialRepositoryProvider).fetchComments(widget.postId);
-      if (!mounted) return;
-      setState(() {
-        _items = list;
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loadError = e;
-        _loading = false;
-      });
-    }
+    ref.invalidate(postCommentsProvider(widget.postId));
+    await ref.read(postCommentsProvider(widget.postId).future);
   }
 
   @override
@@ -115,7 +93,11 @@ class _SocialPostCommentsSheetState
     setState(() => _sending = true);
     try {
       await ref.read(socialRepositoryProvider).addComment(widget.postId, text);
-      ref.read(socialNotifierProvider.notifier).bumpCommentCount(widget.postId);
+      syncSocialPostCommentAdded(
+        feed: ref.read(socialNotifierProvider.notifier),
+        invalidateDetail: (id) => ref.invalidate(postDetailProvider(id)),
+        postId: widget.postId,
+      );
       _controller.clear();
       await _reload();
       if (mounted) {
@@ -131,6 +113,34 @@ class _SocialPostCommentsSheetState
       }
     } finally {
       if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  void _insertMention(String username) {
+    final text = _controller.text;
+    final sel = _controller.selection;
+    final start = sel.isValid ? sel.start : text.length;
+    final end = sel.isValid ? sel.end : text.length;
+    final snippet = '@$username ';
+    final next = text.replaceRange(start, end, snippet);
+    _controller.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: start + snippet.length),
+    );
+  }
+
+  Future<void> _pickMention() async {
+    final picked = await showModalBottomSheet<SearchUserEntity>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF120A24),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => const SocialMentionPickerSheet(),
+    );
+    if (picked != null && mounted) {
+      _insertMention(picked.username);
     }
   }
 
@@ -188,7 +198,12 @@ class _SocialPostCommentsSheetState
                       onSubmitted: (_) => _send(),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    tooltip: 'Etiketle',
+                    onPressed: _sending ? null : _pickMention,
+                    icon: const Icon(Icons.alternate_email_rounded),
+                  ),
                   IconButton.filled(
                     onPressed: _sending ? null : _send,
                     icon: _sending
@@ -209,53 +224,74 @@ class _SocialPostCommentsSheetState
   }
 
   Widget _buildCommentsList(BuildContext context) {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_loadError != null) {
-      return Center(
-        child: Text(ApiException.userMessage(_loadError!)),
-      );
-    }
-    final items = _items ?? const [];
-    if (items.isEmpty) {
-      return Center(
-        child: Text(
-          widget.initialCount > 0
-              ? 'Yorumlar yüklenemedi veya gizli.'
-              : 'İlk yorumu sen yaz.',
-          style: TextStyle(color: context.colors.onSurfaceMuted),
-        ),
-      );
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: items.length,
-      separatorBuilder: (_, _) => const Divider(height: 20),
-      itemBuilder: (context, i) {
-        final c = items[i];
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            UserAvatar(url: c.author.avatarUrl, radius: 18),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
+    final commentsAsync = ref.watch(postCommentsProvider(widget.postId));
+    return commentsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text(ApiException.userMessage(e))),
+      data: (items) {
+        if (items.isEmpty) {
+          return Center(
+            child: Text(
+              widget.initialCount > 0
+                  ? 'Yorumlar yüklenemedi veya gizli.'
+                  : 'İlk yorumu sen yaz.',
+              style: TextStyle(color: context.colors.onSurfaceMuted),
+            ),
+          );
+        }
+        return RefreshIndicator(
+          onRefresh: _reload,
+          child: ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: items.length,
+            separatorBuilder: (_, _) => const Divider(height: 20),
+            itemBuilder: (context, i) {
+              final c = items[i];
+              void openAuthor() {
+                final id = c.author.id.trim();
+                if (id.isEmpty) return;
+                context.push(buildSocialUserProfileRoute(id));
+              }
+
+              return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    c.author.display,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                  GestureDetector(
+                    onTap: openAuthor,
+                    child: UserAvatar(url: c.author.avatarUrl, radius: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        GestureDetector(
+                          onTap: openAuthor,
+                          child: Text(
+                            c.author.display,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        SocialLinkedCaptionText(
+                          text: c.text,
+                          style: TextStyle(
+                            fontSize: 14,
+                            height: 1.35,
+                            color: context.colors.onSurface,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(c.text),
                 ],
-              ),
-            ),
-          ],
+              );
+            },
+          ),
         );
       },
     );

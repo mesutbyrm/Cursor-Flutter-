@@ -9,6 +9,7 @@ class VoiceRoomEntity extends Equatable {
     this.descTr,
     this.rulesTr,
     this.icon,
+    this.category,
     this.onlineCount = 0,
     this.userCount = 0,
     this.backgroundImageUrl,
@@ -20,6 +21,12 @@ class VoiceRoomEntity extends Equatable {
     this.recentUserAvatars = const [],
     this.isVip,
     this.roomType,
+    this.isLocked,
+    this.hasPassword,
+    this.seatCount,
+    this.maxUsers,
+    this.isPkLive = false,
+    this.isMusicPlaying = false,
   });
 
   final String id;
@@ -28,6 +35,8 @@ class VoiceRoomEntity extends Equatable {
   final String? descTr;
   final String? rulesTr;
   final String? icon;
+  /// Keşfet / `POST /rooms/create` — `chat`, `music`, `love`, …
+  final String? category;
   final int onlineCount;
   final int userCount;
   final String? backgroundImageUrl;
@@ -39,8 +48,22 @@ class VoiceRoomEntity extends Equatable {
   final List<String> recentUserAvatars;
   final bool? isVip;
   final String? roomType;
+  /// Sunucu: oda kilitli / şifre gerekli.
+  final bool? isLocked;
+  final bool? hasPassword;
+  /// Backend `seatCount` — koltuk haritası boyutu.
+  final int? seatCount;
+  final int? maxUsers;
+  final bool isPkLive;
+  final bool isMusicPlaying;
 
   int get displayOnline => onlineCount > 0 ? onlineCount : userCount;
+
+  bool get hasMusicActivity =>
+      isMusicPlaying ||
+      activeDjId != null ||
+      djUserIds.isNotEmpty ||
+      (category?.toLowerCase() == 'music');
 
   /// REST / Socket — yalnızca Prisma `id` (cuid); slug kullanılmaz.
   String get apiRoomKey => id.trim();
@@ -65,6 +88,7 @@ class VoiceRoomEntity extends Equatable {
         descTr: descTr,
         rulesTr: rulesTr,
         icon: icon,
+        category: category,
         backgroundImageUrl: backgroundImageUrl,
         ownerName: ownerName,
         ownerAvatarUrl: ownerAvatarUrl,
@@ -74,19 +98,36 @@ class VoiceRoomEntity extends Equatable {
         recentUserAvatars: recentUserAvatars,
         isVip: isVip,
         roomType: roomType,
+        isLocked: isLocked,
+        hasPassword: hasPassword,
+        seatCount: seatCount,
+        maxUsers: maxUsers,
+        isPkLive: isPkLive,
+        isMusicPlaying: isMusicPlaying,
       );
 
   VoiceRoomEntity copyWith({
     int? onlineCount,
     int? userCount,
+    bool? isLocked,
+    bool? hasPassword,
+    int? seatCount,
+    int? maxUsers,
+    String? category,
+    String? nameTr,
+    String? descTr,
+    String? rulesTr,
+    bool? isPkLive,
+    bool? isMusicPlaying,
   }) {
     return VoiceRoomEntity(
       id: id,
       slug: slug,
-      nameTr: nameTr,
-      descTr: descTr,
-      rulesTr: rulesTr,
+      nameTr: nameTr ?? this.nameTr,
+      descTr: descTr ?? this.descTr,
+      rulesTr: rulesTr ?? this.rulesTr,
       icon: icon,
+      category: category ?? this.category,
       onlineCount: onlineCount ?? this.onlineCount,
       userCount: userCount ?? this.userCount,
       backgroundImageUrl: backgroundImageUrl,
@@ -98,6 +139,12 @@ class VoiceRoomEntity extends Equatable {
       recentUserAvatars: recentUserAvatars,
       isVip: isVip,
       roomType: roomType,
+      isLocked: isLocked ?? this.isLocked,
+      hasPassword: hasPassword ?? this.hasPassword,
+      seatCount: seatCount ?? this.seatCount,
+      maxUsers: maxUsers ?? this.maxUsers,
+      isPkLive: isPkLive ?? this.isPkLive,
+      isMusicPlaying: isMusicPlaying ?? this.isMusicPlaying,
     );
   }
 
@@ -109,6 +156,7 @@ class VoiceRoomEntity extends Equatable {
         descTr,
         rulesTr,
         icon,
+        category,
         onlineCount,
         userCount,
         backgroundImageUrl,
@@ -120,5 +168,11 @@ class VoiceRoomEntity extends Equatable {
         recentUserAvatars,
         isVip,
         roomType,
+        isLocked,
+        hasPassword,
+        seatCount,
+        maxUsers,
+        isPkLive,
+        isMusicPlaying,
       ];
 }

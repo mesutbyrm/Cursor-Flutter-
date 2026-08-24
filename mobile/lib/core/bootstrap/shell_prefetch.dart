@@ -4,19 +4,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../features/messages/presentation/providers/conversations_list_notifier.dart';
 import '../../../features/messages/presentation/providers/messages_providers.dart';
-import '../../../features/notifications/presentation/providers/notifications_providers.dart';
 import '../../../features/profile/presentation/providers/profile_providers.dart';
 import '../../../features/shorts/domain/repositories/shorts_repository.dart';
 import '../../../features/shorts/presentation/providers/shorts_providers.dart';
 import 'startup_perf.dart';
+import '../../../features/notifications/presentation/providers/notifications_list_notifier.dart';
+import '../../../features/gifts/presentation/providers/gift_providers.dart';
+import '../../../features/gifts/presentation/providers/gift_catalog_index_provider.dart';
+import '../../../features/voice_hub/presentation/providers/voice_gift_providers.dart';
 import '../performance/voice_room_entry_perf.dart';
+import 'shell_header_badges_provider.dart';
 
 /// Ana kabuk açıldığında sık kullanılan verileri kademeli önceden yükler.
 ///
-/// Kademe 1 (T+0): bildirim, cüzdan, profil istatistikleri, TRTC ön ısıtma.
-/// Kademe 2 (T+450ms): sohbet listesi.
-/// Kademe 3 (T+900ms): shorts For You feed.
-/// Kademe 4 (T+1400ms): jeton paketleri.
+/// Kademe 1 (T+200ms): cüzdan + bildirim + profil (tek timer).
+/// Kademe 1b (T+600ms): hediye katalogları.
+/// Kademe 2 (T+1100ms): sohbet listesi.
+/// Kademe 3 (T+2200ms): shorts For You feed.
+/// Kademe 4 (T+3500ms): jeton paketleri.
 void prefetchShellData(
   WidgetRef ref, {
   Duration delay = StartupPerf.shellPrefetchDelay,
@@ -24,9 +29,26 @@ void prefetchShellData(
   unawaited(
     Future<void>.delayed(delay, () {
       VoiceRoomEntryPerf.prewarmShell();
-      ref.read(notificationsListProvider.future).ignore();
-      ref.read(walletBalancesProvider.future).ignore();
-      ref.read(profileStatsProvider.future).ignore();
+      enableShellHeaderBadges(ref);
+      unawaited(ref.read(notificationsListNotifierProvider.future));
+      unawaited(ref.read(profileStatsProvider.future));
+      try {
+        ref.read(walletBalancesProvider.notifier).refresh(force: false);
+      } catch (_) {}
+    }),
+  );
+
+  unawaited(
+    Future<void>.delayed(StartupPerf.shellPrefetchTier1bDelay, () {
+      final giftCached = ref.read(allGiftCatalogByIdProvider).isNotEmpty ||
+          ref.read(voiceRoomGiftCatalogProvider).valueOrNull?.isNotEmpty == true;
+      if (!giftCached) {
+        try {
+          ref.read(chatRoomGiftsRemoteProvider).fetchGiftTypes().ignore();
+          ref.read(liveStreamGiftCatalogProvider.future).ignore();
+          ref.read(voiceRoomGiftCatalogProvider.future).ignore();
+        } catch (_) {}
+      }
     }),
   );
 

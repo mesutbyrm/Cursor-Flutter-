@@ -12,6 +12,7 @@ class AuthSocialSection extends StatelessWidget {
   const AuthSocialSection({
     super.key,
     required this.onGoogle,
+    this.onApple,
     this.onTikTok,
     this.onGuest,
     this.busy = false,
@@ -19,6 +20,7 @@ class AuthSocialSection extends StatelessWidget {
   });
 
   final VoidCallback? onGoogle;
+  final VoidCallback? onApple;
   final VoidCallback? onTikTok;
   final VoidCallback? onGuest;
   final bool busy;
@@ -27,6 +29,7 @@ class AuthSocialSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tiktokEnabled = Env.hasTikTokLogin && onTikTok != null;
+    final appleEnabled = Env.hasAppleLogin && onApple != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -36,6 +39,14 @@ class AuthSocialSection extends StatelessWidget {
           onPressed: onGoogle,
           busy: busy,
         ),
+        if (appleEnabled) ...[
+          const SizedBox(height: 10),
+          _AuthGlassSocialButton(
+            icon: Icons.apple_rounded,
+            label: 'Apple ile devam et',
+            onPressed: busy ? null : onApple,
+          ),
+        ],
         // TikTok yalnızca gerçekten yapılandırıldığında görünür; aksi halde
         // kullanıcıya çalışmayan "yakında" butonu gösterilmez.
         if (tiktokEnabled) ...[

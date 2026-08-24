@@ -74,6 +74,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   : () => ref
                       .read(authControllerProvider.notifier)
                       .loginWithGoogle(),
+              onApple: formBusy
+                  ? null
+                  : () => ref
+                      .read(authControllerProvider.notifier)
+                      .loginWithApple(),
               onTikTok: formBusy
                   ? null
                   : () => ref

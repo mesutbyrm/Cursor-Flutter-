@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../../core/widgets/user_avatar.dart';
-import '../../../../../core/network/api_exception.dart';
 import '../../../../auth/domain/entities/user_entity.dart';
+import '../../../../auth/presentation/auth_navigation.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../social/domain/entities/social_story_ring_entity.dart';
-import '../../../../social/presentation/pages/story_viewer_page.dart';
 import '../../../../social/presentation/providers/social_providers.dart';
+import '../../../../social/presentation/utils/story_navigation.dart';
+import '../../../../social/presentation/widgets/story_create_sheet.dart';
 import '../../theme/home_approved_design.dart';
 
 /// Onaylı mockup — yatay hikâye halkaları.
@@ -24,8 +24,47 @@ class StoriesSection extends ConsumerWidget {
     final me = ref.watch(authControllerProvider).valueOrNull;
 
     return ringsAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      loading: () => SizedBox(
+        height: HomeApprovedDesign.storySize + 36,
+        child: LazyHorizontalListView(
+          padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+          itemCount: 5,
+          itemBuilder: (_, __) => Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Column(
+              children: [
+                Container(
+                  width: HomeApprovedDesign.storySize + 4,
+                  height: HomeApprovedDesign.storySize + 4,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: HomeApprovedDesign.surface.withValues(alpha: 0.55),
+                    border: Border.all(color: HomeApprovedDesign.border),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  width: 48,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: HomeApprovedDesign.surface.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      error: (_, __) => SizedBox(
+        height: HomeApprovedDesign.storySize + 36,
+        child: Center(
+          child: TextButton(
+            onPressed: () => ref.invalidate(socialStoryRingsProvider),
+            child: const Text('Hikâyeler yüklenemedi — tekrar dene'),
+          ),
+        ),
+      ),
       data: (rings) {
         final withStories = rings
             .where(
@@ -34,9 +73,9 @@ class StoriesSection extends ConsumerWidget {
                   (r.previewUrl?.trim().isNotEmpty ?? false),
             )
             .toList();
-        if (withStories.isEmpty) return const SizedBox.shrink();
+        final ownRing = rings.where((r) => r.isOwn).firstOrNull;
         final others =
-            withStories.where((r) => r.user.id != me?.id).toList();
+            withStories.where((r) => !r.isOwn).toList();
         return SizedBox(
           height: HomeApprovedDesign.storySize + 36,
           child: LazyHorizontalListView(
@@ -44,7 +83,7 @@ class StoriesSection extends ConsumerWidget {
             itemCount: 1 + others.length,
             itemBuilder: (context, index) {
               if (index == 0) {
-                return _OwnStoryChip(user: me);
+                return _OwnStoryChip(user: me, ownRing: ownRing);
               }
               final ring = others[index - 1];
               return Padding(
@@ -60,37 +99,34 @@ class StoriesSection extends ConsumerWidget {
 }
 
 class _OwnStoryChip extends ConsumerWidget {
-  const _OwnStoryChip({this.user});
+  const _OwnStoryChip({this.user, this.ownRing});
 
   final UserEntity? user;
+  final SocialStoryRingEntity? ownRing;
 
   Future<void> _addStory(BuildContext context, WidgetRef ref) async {
     final me = ref.read(authControllerProvider).valueOrNull;
     if (me == null) {
-      if (context.mounted) context.push('/login');
+      if (context.mounted) AuthNavigation.toLogin(context);
       return;
     }
-    final picked = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-    if (picked == null || !context.mounted) return;
-    try {
-      await ref.read(socialRepositoryProvider).createStoryImage(picked.path);
-      ref.invalidate(socialStoryRingsProvider);
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
-      }
-    }
+    await showStoryCreateSheet(context, ref);
+  }
+
+  void _openOwnStories(BuildContext context) {
+    final ring = ownRing;
+    if (ring == null || ring.stories.isEmpty) return;
+    openStoryViewer(context, ring.copyWith(isOwn: true));
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final hasStories = ownRing != null && ownRing!.stories.isNotEmpty;
     return GestureDetector(
-      onTap: () => _addStory(context, ref),
+      onTap: hasStories
+          ? () => _openOwnStories(context)
+          : () => _addStory(context, ref),
+      onLongPress: hasStories ? () => _addStory(context, ref) : null,
       child: SizedBox(
         width: HomeApprovedDesign.storySize + 4,
         child: Column(
@@ -103,8 +139,17 @@ class _OwnStoryChip extends ConsumerWidget {
                   height: HomeApprovedDesign.storySize + 4,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: HomeApprovedDesign.border, width: 2),
+                    border: Border.all(
+                      color: hasStories
+                          ? Colors.transparent
+                          : HomeApprovedDesign.border,
+                      width: 2,
+                    ),
+                    gradient: hasStories
+                        ? HomeApprovedDesign.storyRingGradient
+                        : null,
                   ),
+                  padding: hasStories ? const EdgeInsets.all(2.5) : null,
                   child: UserAvatar(url: user?.avatarUrl, radius: 32),
                 ),
                 Positioned(
@@ -148,12 +193,9 @@ class _StoryChip extends StatelessWidget {
         : ring.user.username;
     return GestureDetector(
       onTap: () {
-        if (ring.previewUrl != null && ring.previewUrl!.isNotEmpty) {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => StoryViewerPage(ring: ring),
-            ),
-          );
+        if (ring.previewUrl != null && ring.previewUrl!.isNotEmpty ||
+            ring.stories.isNotEmpty) {
+          openStoryViewer(context, ring);
         } else {
           context.push('/user/${ring.user.id}');
         }

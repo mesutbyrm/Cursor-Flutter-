@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import 'package:canlifal_social/core/network/api_exception.dart';
 
 import '../../../domain/entities/music_queue_item.dart';
 import '../providers/room_music_providers.dart';
@@ -113,7 +114,7 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
       if (!mounted || gen != _searchGen) return;
       setState(() {
         _searching = false;
-        _error = e.toString();
+        _error = ApiException.userMessage(e);
       });
     }
   }
@@ -298,10 +299,16 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
                     _selectedTitle = hit.title;
                     _submitting = true;
                   });
+                  final onSelected = widget.onSelected;
                   if (!widget.stayOpenOnSelect && context.mounted) {
                     Navigator.pop(context);
                   }
-                  widget.onSelected?.call(hit);
+                  if (onSelected != null) {
+                    final selected = hit;
+                    unawaited(
+                      Future<void>.microtask(() => onSelected(selected)),
+                    );
+                  }
                   if (widget.stayOpenOnSelect && mounted) {
                     setState(() => _submitting = false);
                   }

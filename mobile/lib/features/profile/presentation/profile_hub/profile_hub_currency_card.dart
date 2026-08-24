@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
+import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../../domain/entities/profile_extended_entity.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_screen_state.dart';
 import '../premium_2026/profile_theme.dart';
 import '../providers/profile_hub_providers.dart';
+import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_glass.dart';
 
 /// Jeton, elmas, beğeni, seri + seviye/XP kartı.
@@ -20,9 +24,19 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
     final extAsync = ref.watch(profileExtendedProvider);
     final ext = extAsync.valueOrNull ?? const ProfileExtendedEntity();
     final level = state.level;
+    final walletAsync = ref.watch(walletBalancesProvider);
+    final wallet = walletAsync.valueOrNull ?? state.wallet;
     final xpTarget = level.xpToNext > 0 ? level.xpToNext : 100;
     final xpProgress = (level.xp / xpTarget).clamp(0.0, 1.0);
-    final loading = extAsync.isLoading && extAsync.valueOrNull == null;
+    final levelLoading = extAsync.isLoading &&
+        extAsync.valueOrNull == null &&
+        level.xp <= 0 &&
+        level.level <= 1;
+    final walletLoading =
+        walletAsync.isLoading && walletAsync.valueOrNull == null;
+    final membershipInfo = ref.watch(profileMembershipInfoProvider);
+    final jeton = wallet?.jeton ?? state.jeton;
+    final cfc = wallet?.cfc ?? state.cfc;
 
     return ProfileGlass(
       padding: const EdgeInsets.all(16),
@@ -59,7 +73,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(99),
                       child: LinearProgressIndicator(
-                        value: loading ? null : xpProgress,
+                        value: levelLoading ? null : xpProgress,
                         minHeight: 6,
                         backgroundColor: Colors.white.withValues(alpha: 0.1),
                         color: ProfilePremiumTheme.neonPurple,
@@ -67,7 +81,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      loading
+                      levelLoading
                           ? '…'
                           : '${profileFormatCount(level.xp)} / ${profileFormatCount(xpTarget)} XP',
                       style: TextStyle(
@@ -88,22 +102,22 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                       child: _CurrencyCell(
                         icon: Icons.monetization_on_rounded,
                         color: const Color(0xFFFFD54F),
-                        label: 'Jeton',
-                        value: profileFormatCount(state.jeton),
+                        label: buildMembershipCurrencyJetonLabel(),
+                        value: profileFormatCount(jeton),
                         showPlus: true,
                         onPlus: () => openJetonStore(context, ref: ref),
-                        loading: loading,
+                        loading: walletLoading,
                       ),
                     ),
                     Expanded(
                       child: _CurrencyCell(
                         icon: Icons.diamond_rounded,
                         color: const Color(0xFF64B5F6),
-                        label: 'Elmas',
-                        value: profileFormatCount(state.cfc),
+                        label: buildMembershipHubCurrencyElmasLabel(),
+                        value: profileFormatCount(cfc),
                         showPlus: true,
                         onPlus: () => openCfcStore(context, ref: ref),
-                        loading: loading,
+                        loading: walletLoading,
                       ),
                     ),
                     Expanded(
@@ -112,7 +126,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                         color: const Color(0xFFFF4D9D),
                         label: 'Beğeni',
                         value: profileFormatCount(state.likes),
-                        loading: loading,
+                        loading: levelLoading,
                       ),
                     ),
                     Expanded(
@@ -121,7 +135,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                         color: ProfilePremiumTheme.neonPurple,
                         label: 'Günlük Seri',
                         value: profileFormatCount(ext.dailyStreak),
-                        loading: loading,
+                        loading: levelLoading,
                       ),
                     ),
                   ],
@@ -129,7 +143,109 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          _MembershipSummaryRow(info: membershipInfo),
         ],
+      ),
+    );
+  }
+}
+
+class _MembershipSummaryRow extends ConsumerWidget {
+  const _MembershipSummaryRow({required this.info});
+
+  final ProfileMembershipInfo info;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ui = ref.watch(membershipControllerProvider);
+    final catalogTier = catalogTierForMembership(info, ui.tiers);
+    final expiresAt =
+        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
+    final title = buildMembershipHubSectionTitle(
+      info: info,
+      expiresAt: expiresAt,
+    );
+    final subtitle = buildMembershipWalletHubSubtitle(
+      info: info,
+      tiers: ui.tiers,
+      packages: ui.apiPackages,
+      catalogTier: catalogTier,
+      daysRemaining: info.daysRemaining,
+      expiresAt: expiresAt,
+    );
+
+    final leadingAccent = resolveMembershipHubSummaryRowLeadingAccent(info: info);
+    final leadingColor = switch (leadingAccent) {
+      MembershipHubSummaryRowLeadingAccent.paid => ProfilePremiumTheme.neonPurple,
+      MembershipHubSummaryRowLeadingAccent.expired => Colors.orangeAccent,
+      MembershipHubSummaryRowLeadingAccent.standard => Colors.white54,
+    };
+    final leadingIcon = switch (leadingAccent) {
+      MembershipHubSummaryRowLeadingAccent.paid =>
+        Icons.workspace_premium_rounded,
+      MembershipHubSummaryRowLeadingAccent.expired => Icons.history_rounded,
+      MembershipHubSummaryRowLeadingAccent.standard => Icons.lock_open_rounded,
+    };
+
+    return Material(
+      color: Colors.white.withValues(alpha: 0.06),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: () => context.push('/premium-membership'),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Icon(
+                leadingIcon,
+                color: leadingColor,
+                size: 18,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.55),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                buildMembershipHubActionLabel(
+                  info: info,
+                  freeLabel: 'Yükselt',
+                ),
+                style: TextStyle(
+                  color: ProfilePremiumTheme.neonPurple.withValues(alpha: 0.95),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 16,
+                color: Colors.white.withValues(alpha: 0.45),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

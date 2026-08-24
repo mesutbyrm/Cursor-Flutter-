@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../../../../core/performance/list_perf.dart';
 import 'nearby_room_tile_card.dart';
 import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_ui_tokens.dart';
@@ -81,8 +82,12 @@ class NearbyRoomsList extends StatelessWidget {
           ),
         ),
         const SizedBox(height: VoiceRoomsUiTokens.gapMd),
-        ListView.builder(
-          shrinkWrap: true,
+        SizedBox(
+          height: ListPerf.nestedListHeight(
+            itemCount: rooms.length + (isLoadingMore ? 1 : 0),
+            itemExtent: 100,
+          ),
+          child: ListView.builder(
           physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(
             horizontal: VoiceRoomsUiTokens.padScreenH,
@@ -125,6 +130,7 @@ class NearbyRoomsList extends StatelessWidget {
               ),
             );
           },
+        ),
         ),
       ],
     );

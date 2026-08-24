@@ -21,11 +21,14 @@ class YoutubeVideoBackground extends ConsumerStatefulWidget {
     super.key,
     required this.roomKey,
     this.compact = false,
+    this.fillBackground = false,
   });
 
   final String roomKey;
   /// Koltuk altı şerit — tam genişlik, kenarlık/gölge yok.
   final bool compact;
+  /// Video isteğinde oda arka planında tam ekran YouTube.
+  final bool fillBackground;
 
   @override
   ConsumerState<YoutubeVideoBackground> createState() =>
@@ -42,7 +45,9 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
   var _loadFailed = false;
   var _endingHandled = false;
   var _disposed = false;
+  var _visualOnlyActive = false;
   Timer? _endingResetTimer;
+  Future<void>? _ensureWebViewFuture;
 
   @override
   void dispose() {
@@ -57,6 +62,24 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
 
   Future<void> _ensureWebView() async {
     if (_webView != null) return;
+    final pending = _ensureWebViewFuture;
+    if (pending != null) {
+      await pending;
+      return;
+    }
+    final future = _createWebView();
+    _ensureWebViewFuture = future;
+    try {
+      await future;
+    } finally {
+      if (identical(_ensureWebViewFuture, future)) {
+        _ensureWebViewFuture = null;
+      }
+    }
+  }
+
+  Future<void> _createWebView() async {
+    if (_webView != null || _disposed) return;
 
     late final PlatformWebViewControllerCreationParams params;
     if (WebViewPlatform.instance is WebKitWebViewPlatform) {
@@ -104,12 +127,15 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     final msg = message.message.trim();
     if (msg == 'ready') {
       _playerReady = true;
-      unawaited(_runCmd({'action': 'unmute', 'volume': 100}));
+      if (!_visualOnlyActive) {
+        unawaited(_runCmd({'action': 'unmute', 'volume': 100}));
+      }
       return;
     }
     if (msg == 'playing') {
-      // Oynatma başladı — muted-autoplay ihtimaline karşı unmute'u pekiştir.
-      unawaited(_runCmd({'action': 'unmute', 'volume': 100}));
+      if (!_visualOnlyActive) {
+        unawaited(_runCmd({'action': 'unmute', 'volume': 100}));
+      }
       return;
     }
     if (msg == 'ended') {
@@ -159,8 +185,10 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
   Future<void> _loadInitialVideo(
     String videoId,
     bool playing,
-    int startSec,
-  ) async {
+    int startSec, {
+    required bool visualOnly,
+  }) async {
+    _visualOnlyActive = visualOnly;
     await _ensureWebView();
     final ctrl = _controller;
     if (ctrl == null) return;
@@ -169,6 +197,7 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
       videoId: videoId,
       playing: playing,
       startSec: startSec,
+      visualOnly: visualOnly,
     );
 
     try {
@@ -189,6 +218,13 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
         'error': e.toString(),
         'stack': st.toString().split('\n').take(2).join(' '),
       });
+      if (visualOnly) {
+        unawaited(
+          ref
+              .read(voiceRoomLiveProvider(widget.roomKey).notifier)
+              .fallbackVideoToAudioOnly(),
+        );
+      }
     }
   }
 
@@ -199,18 +235,19 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     final playing = video.isPlaying;
     final sig = _playbackSig(videoId, playing);
     final startSec = (video.resolvedPositionMs() / 1000).floor();
+    final visualOnly = video.showsVideo;
 
     if (_loadedVideoId != videoId) {
       _loadedVideoId = videoId;
       _loadedPlaybackSig = sig;
       _lastSeekSec = startSec;
       _endingHandled = false;
-      await _loadInitialVideo(videoId, playing, startSec);
+      await _loadInitialVideo(videoId, playing, startSec, visualOnly: visualOnly);
       return;
     }
 
     if (_webView == null) {
-      await _loadInitialVideo(videoId, playing, startSec);
+      await _loadInitialVideo(videoId, playing, startSec, visualOnly: visualOnly);
       _loadedVideoId = videoId;
       _loadedPlaybackSig = sig;
       _lastSeekSec = startSec;
@@ -290,7 +327,9 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
 
     final web = _webView;
     if (web == null) {
-      if (video.audioOnly) return const SizedBox.shrink();
+      if (video.audioOnly) {
+        return const SizedBox(width: 1, height: 1);
+      }
       // Video henüz hazır değil — sınırlı yükseklikli şerit thumb (Column güvenli).
       final w = MediaQuery.sizeOf(context).width;
       return SizedBox(
@@ -300,23 +339,51 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
       );
     }
 
-    // Ses-only müzik: sabit boyutlu gizli WebView — 1px yükseklik klavye/
-    // layout değişiminde Android'de oynatmayı durduruyordu.
     if (video.audioOnly) {
-      return SizedBox(
-        width: 128,
-        height: 128,
-        child: Opacity(
-          opacity: 0.01,
-          child: IgnorePointer(child: web),
+      return RepaintBoundary(
+        child: IgnorePointer(
+          child: Opacity(
+            opacity: 0.01,
+            child: SizedBox(
+              width: 1,
+              height: 1,
+              child: web,
+            ),
+          ),
         ),
       );
     }
 
-    // Video isteği (!istek video): koltukların altında, kenarlardan sıfır
-    // tam genişlik şerit. Ortada yüzen kart / tam ekran kaplama yok.
+    // Video isteği (!istek video): arka planda tam ekran veya koltuk altı şerit.
     final width = MediaQuery.sizeOf(context).width;
     final stripHeight = (width * 9 / 16).clamp(140.0, 230.0);
+    final videoChild = RepaintBoundary(
+      child: IgnorePointer(
+        child: ClipRect(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (_loadFailed) _thumbFallback(video),
+              FittedBox(
+                fit: BoxFit.cover,
+                clipBehavior: Clip.hardEdge,
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: width,
+                  height: width * 9 / 16,
+                  child: web,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (widget.fillBackground && !widget.compact) {
+      return SizedBox.expand(child: videoChild);
+    }
+
     return RepaintBoundary(
       child: IgnorePointer(
         child: SizedBox(

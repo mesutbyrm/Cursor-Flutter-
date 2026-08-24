@@ -88,10 +88,10 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
     super.dispose();
   }
 
-  void _registerTap(Offset globalPos) {
-    _lastTap = globalPos;
+  void _registerTap(Offset? globalPos) {
+    if (globalPos != null) _lastTap = globalPos;
     widget.onDoubleTap?.call();
-    burstAt(globalPos, count: 8);
+    if (globalPos != null) burstAt(globalPos, count: 8);
   }
 
   @override
@@ -101,10 +101,13 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onTapDown: (d) => _registerTap(d.globalPosition),
+      onDoubleTap: () => _registerTap(_lastTap),
       onLongPress: widget.onLongPress,
-      child: IgnorePointer(
-        child: AnimatedBuilder(
+      child: Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: (d) => _lastTap = d.position,
+        child: IgnorePointer(
+          child: AnimatedBuilder(
           animation: _ctrl,
           builder: (context, _) {
             return Stack(
@@ -131,6 +134,7 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
               ],
             );
           },
+          ),
         ),
       ),
     );

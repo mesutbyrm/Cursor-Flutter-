@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../core/util/json_util.dart';
 import '../../../core/auth/staff_roles.dart';
+import '../../../core/auth/bot_account_guard.dart';
 
 /// Jeton + CFC — `GET /api/user/credits` (canlifal.com).
 class WalletBalances extends Equatable {
@@ -13,10 +14,22 @@ class WalletBalances extends Equatable {
     this.withdrawalLimit = 0,
     this.membership,
     this.membershipExpiresAt,
+    this.favoriteTeam,
+    this.teamRaw,
     this.fortuneAdCredits,
     this.canManagePayments,
     this.isAdminFlag,
     this.isStaffFlag,
+    this.isBotFlag,
+    this.accountType,
+    this.totalEarnedJeton,
+    this.pendingEarningsTl,
+    this.approvedEarningsTl,
+    this.withdrawableTl,
+    this.todayEarningsTl,
+    this.monthEarningsTl,
+    this.totalSentJeton,
+    this.totalReceivedJeton,
   });
 
   static const empty = WalletBalances();
@@ -29,10 +42,22 @@ class WalletBalances extends Equatable {
     int? withdrawalLimit,
     String? membership,
     String? membershipExpiresAt,
+    String? favoriteTeam,
+    Map<String, dynamic>? teamRaw,
     int? fortuneAdCredits,
     bool? canManagePayments,
     bool? isAdminFlag,
     bool? isStaffFlag,
+    bool? isBotFlag,
+    String? accountType,
+    int? totalEarnedJeton,
+    double? pendingEarningsTl,
+    double? approvedEarningsTl,
+    double? withdrawableTl,
+    double? todayEarningsTl,
+    double? monthEarningsTl,
+    int? totalSentJeton,
+    int? totalReceivedJeton,
   }) {
     return WalletBalances(
       jeton: jeton ?? this.jeton,
@@ -42,10 +67,22 @@ class WalletBalances extends Equatable {
       withdrawalLimit: withdrawalLimit ?? this.withdrawalLimit,
       membership: membership ?? this.membership,
       membershipExpiresAt: membershipExpiresAt ?? this.membershipExpiresAt,
+      favoriteTeam: favoriteTeam ?? this.favoriteTeam,
+      teamRaw: teamRaw ?? this.teamRaw,
       fortuneAdCredits: fortuneAdCredits ?? this.fortuneAdCredits,
       canManagePayments: canManagePayments ?? this.canManagePayments,
       isAdminFlag: isAdminFlag ?? this.isAdminFlag,
       isStaffFlag: isStaffFlag ?? this.isStaffFlag,
+      isBotFlag: isBotFlag ?? this.isBotFlag,
+      accountType: accountType ?? this.accountType,
+      totalEarnedJeton: totalEarnedJeton ?? this.totalEarnedJeton,
+      pendingEarningsTl: pendingEarningsTl ?? this.pendingEarningsTl,
+      approvedEarningsTl: approvedEarningsTl ?? this.approvedEarningsTl,
+      withdrawableTl: withdrawableTl ?? this.withdrawableTl,
+      todayEarningsTl: todayEarningsTl ?? this.todayEarningsTl,
+      monthEarningsTl: monthEarningsTl ?? this.monthEarningsTl,
+      totalSentJeton: totalSentJeton ?? this.totalSentJeton,
+      totalReceivedJeton: totalReceivedJeton ?? this.totalReceivedJeton,
     );
   }
 
@@ -71,6 +108,9 @@ class WalletBalances extends Equatable {
     ]);
     final fortuneAdCredits =
         rawCredits != null ? asInt(rawCredits) : null;
+    Map<String, dynamic>? teamRaw;
+    final teamNode = json['team'];
+    if (teamNode is Map) teamRaw = asJsonMap(teamNode);
     return WalletBalances(
       jeton: jeton,
       cfc: cfc,
@@ -82,11 +122,63 @@ class WalletBalances extends Equatable {
       membership: pick(json, ['membership'])?.toString(),
       membershipExpiresAt:
           pick(json, ['membershipExpiresAt', 'membership_expires_at'])?.toString(),
+      favoriteTeam:
+          pick(json, ['favoriteTeam', 'favorite_team', 'teamName'])?.toString(),
+      teamRaw: teamRaw,
       fortuneAdCredits: fortuneAdCredits,
       canManagePayments: pick(json, ['canManagePayments']) == true,
       isAdminFlag: pick(json, ['isAdmin']) == true,
       isStaffFlag: pick(json, ['isStaff']) == true,
+      isBotFlag: pick(json, ['isBot', 'is_bot']) == true,
+      accountType: pick(json, ['accountType', 'account_type'])?.toString(),
+      totalEarnedJeton: asInt(pick(json, [
+        'totalEarnedJeton',
+        'totalEarned',
+        'earningsJeton',
+        'lifetimeEarnings',
+      ])),
+      pendingEarningsTl: _asDouble(pick(json, [
+        'pendingEarnings',
+        'pendingBalance',
+        'pendingEarningsTl',
+      ])),
+      approvedEarningsTl: _asDouble(pick(json, [
+        'approvedEarnings',
+        'approvedBalance',
+        'approvedEarningsTl',
+      ])),
+      withdrawableTl: _asDouble(pick(json, [
+        'withdrawable',
+        'withdrawableBalance',
+        'withdrawableTl',
+      ])),
+      todayEarningsTl: _asDouble(pick(json, [
+        'todayEarnings',
+        'todayEarningsTl',
+        'dailyEarnings',
+      ])),
+      monthEarningsTl: _asDouble(pick(json, [
+        'monthEarnings',
+        'monthEarningsTl',
+        'monthlyEarnings',
+      ])),
+      totalSentJeton: asInt(pick(json, [
+        'totalSentJeton',
+        'sentJeton',
+        'giftsSentTotal',
+      ])),
+      totalReceivedJeton: asInt(pick(json, [
+        'totalReceivedJeton',
+        'receivedJeton',
+        'giftsReceivedTotal',
+      ])),
     );
+  }
+
+  static double? _asDouble(dynamic v) {
+    if (v == null) return null;
+    if (v is num) return v.toDouble();
+    return double.tryParse(v.toString());
   }
 
   final int jeton;
@@ -96,10 +188,33 @@ class WalletBalances extends Equatable {
   final int withdrawalLimit;
   final String? membership;
   final String? membershipExpiresAt;
+  final String? favoriteTeam;
+  final Map<String, dynamic>? teamRaw;
   final int? fortuneAdCredits;
   final bool? canManagePayments;
   final bool? isAdminFlag;
   final bool? isStaffFlag;
+  final bool? isBotFlag;
+  final String? accountType;
+  final int? totalEarnedJeton;
+  final double? pendingEarningsTl;
+  final double? approvedEarningsTl;
+  final double? withdrawableTl;
+  final double? todayEarningsTl;
+  final double? monthEarningsTl;
+  final int? totalSentJeton;
+  final int? totalReceivedJeton;
+
+  double? jetonToTl(int jetonAmount) {
+    final rate = jetonTlRate;
+    if (rate == null || rate <= 0) return null;
+    return jetonAmount * rate;
+  }
+
+  String formatTl(double? value) {
+    if (value == null) return '—';
+    return '${value.toStringAsFixed(2)} TL';
+  }
 
   /// Kalan üyelik günü (`membershipExpiresAt` ISO).
   int? get membershipDaysRemaining {
@@ -132,6 +247,13 @@ class WalletBalances extends Equatable {
       canManagePayments == true ||
       StaffRoles.isAdminOrManager(role: role);
 
+  bool get isBot => BotAccountGuard.fromJsonMap({
+        'role': role,
+        'isBot': isBotFlag,
+        'is_bot': isBotFlag,
+        'accountType': accountType,
+      });
+
   @override
   List<Object?> get props => [
         jeton,
@@ -140,9 +262,22 @@ class WalletBalances extends Equatable {
         jetonTlRate,
         withdrawalLimit,
         membership,
+        membershipExpiresAt,
+        favoriteTeam,
+        teamRaw,
         fortuneAdCredits,
         canManagePayments,
         isAdminFlag,
         isStaffFlag,
+        isBotFlag,
+        accountType,
+        totalEarnedJeton,
+        pendingEarningsTl,
+        approvedEarningsTl,
+        withdrawableTl,
+        todayEarningsTl,
+        monthEarningsTl,
+        totalSentJeton,
+        totalReceivedJeton,
       ];
 }

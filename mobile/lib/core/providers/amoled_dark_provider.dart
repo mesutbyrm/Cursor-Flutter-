@@ -16,5 +16,11 @@ class AmoledDarkNotifier extends Notifier<bool> {
     await ThemePreferences.saveAmoledDark(enabled);
   }
 
+  /// Sunucudan çekilen AMOLED tercihi.
+  Future<void> applyLocal(bool enabled) async {
+    if (state == enabled) return;
+    state = enabled;
+  }
+
   Future<void> toggle() => setEnabled(!state);
 }

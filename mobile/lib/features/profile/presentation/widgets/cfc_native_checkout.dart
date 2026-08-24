@@ -10,6 +10,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
 import '../../domain/entities/payment_config_entity.dart';
+import '../../domain/entities/payment_method_entity.dart';
 import '../../../admin/presentation/providers/admin_providers.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../providers/payment_requests_notifier.dart';
@@ -17,7 +18,7 @@ import '../providers/profile_providers.dart';
 
 enum CfcPaymentMethod { whatsapp, papara, bank_transfer }
 
-/// CFC yükleme — canlifal.com `POST /api/payment/requests`.
+/// CFC yükleme — canlifal.com `POST /api/payments/requests`.
 class CfcNativeCheckout extends ConsumerStatefulWidget {
   const CfcNativeCheckout({
     super.key,
@@ -50,6 +51,9 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
   @override
   Widget build(BuildContext context) {
     final cfg = widget.config;
+    final methodsAsync = ref.watch(paymentMethodsProvider);
+    final methods = _resolveMethods(methodsAsync);
+    _syncSelectedMethod(methods);
     final min = cfg.minCfcAmount;
     final rate = cfg.cfcRate > 0 ? cfg.cfcRate : CurrencyUsageInfo.cfcTlPerCoin;
     final amount = int.tryParse(_amountCtrl.text.trim()) ?? 0;
@@ -112,27 +116,17 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
         const SizedBox(height: 16),
         const Text('Ödeme yöntemi', style: TextStyle(fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
-        _MethodTile(
-          icon: Icons.chat_rounded,
-          label: 'WhatsApp',
-          subtitle: cfg.whatsappNumber.isEmpty ? 'Henüz ayarlanmadı' : cfg.whatsappNumber,
-          selected: _method == CfcPaymentMethod.whatsapp,
-          onTap: () => setState(() => _method = CfcPaymentMethod.whatsapp),
-        ),
-        _MethodTile(
-          icon: Icons.account_balance_wallet_rounded,
-          label: 'Papara',
-          subtitle: cfg.paparaAddress,
-          selected: _method == CfcPaymentMethod.papara,
-          onTap: () => setState(() => _method = CfcPaymentMethod.papara),
-        ),
-        _MethodTile(
-          icon: Icons.account_balance_rounded,
-          label: 'Havale / EFT',
-          subtitle: cfg.bankIban,
-          selected: _method == CfcPaymentMethod.bank_transfer,
-          onTap: () => setState(() => _method = CfcPaymentMethod.bank_transfer),
-        ),
+        for (final method in methods)
+          _MethodTile(
+            icon: _iconForMethod(method),
+            label: method.label,
+            subtitle: _subtitleForMethod(method, cfg),
+            selected: _method == _cfcMethodFromEntity(method),
+            recommended: method.recommended,
+            onTap: () => setState(
+              () => _method = _cfcMethodFromEntity(method),
+            ),
+          ),
         const SizedBox(height: 12),
         GlowPanel(
           padding: const EdgeInsets.all(14),
@@ -295,6 +289,64 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
       if (mounted) setState(() => _submitting = false);
     }
   }
+
+  List<PaymentMethodEntity> _resolveMethods(
+    AsyncValue<List<PaymentMethodEntity>> async,
+  ) {
+    return async.when(
+      data: (methods) {
+        final enabled = methods
+            .where(
+              (m) => m.enabled && PaymentMethodEntity.isKnownCheckoutMethod(m.id),
+            )
+            .toList(growable: false);
+        return enabled.isNotEmpty ? enabled : PaymentMethodEntity.defaults;
+      },
+      loading: () => PaymentMethodEntity.defaults,
+      error: (_, _) => PaymentMethodEntity.defaults,
+    );
+  }
+
+  void _syncSelectedMethod(List<PaymentMethodEntity> methods) {
+    final available = methods.map(_cfcMethodFromEntity).toSet();
+    if (available.contains(_method)) return;
+    final recommended = methods.where((m) => m.recommended).toList();
+    final pick = recommended.isNotEmpty ? recommended.first : methods.first;
+    final next = _cfcMethodFromEntity(pick);
+    if (next != _method) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _method = next);
+      });
+    }
+  }
+
+  static CfcPaymentMethod _cfcMethodFromEntity(PaymentMethodEntity method) {
+    return switch (PaymentMethodEntity.normalizeCheckoutMethodId(method.id)) {
+      'whatsapp' => CfcPaymentMethod.whatsapp,
+      'papara' => CfcPaymentMethod.papara,
+      _ => CfcPaymentMethod.bank_transfer,
+    };
+  }
+
+  static IconData _iconForMethod(PaymentMethodEntity method) {
+    return switch (PaymentMethodEntity.normalizeCheckoutMethodId(method.id)) {
+      'whatsapp' => Icons.chat_rounded,
+      'papara' => Icons.account_balance_wallet_rounded,
+      _ => Icons.account_balance_rounded,
+    };
+  }
+
+  static String _subtitleForMethod(
+    PaymentMethodEntity method,
+    PaymentConfigEntity cfg,
+  ) {
+    return switch (PaymentMethodEntity.normalizeCheckoutMethodId(method.id)) {
+      'whatsapp' =>
+        cfg.whatsappNumber.isEmpty ? 'Henüz ayarlanmadı' : cfg.whatsappNumber,
+      'papara' => cfg.paparaAddress,
+      _ => cfg.bankIban,
+    };
+  }
 }
 
 class _MethodTile extends StatelessWidget {
@@ -304,6 +356,7 @@ class _MethodTile extends StatelessWidget {
     required this.subtitle,
     required this.selected,
     required this.onTap,
+    this.recommended = false,
   });
 
   final IconData icon;
@@ -311,6 +364,7 @@ class _MethodTile extends StatelessWidget {
   final String subtitle;
   final bool selected;
   final VoidCallback onTap;
+  final bool recommended;
 
   @override
   Widget build(BuildContext context) {
@@ -334,7 +388,36 @@ class _MethodTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
+                      Row(
+                        children: [
+                          Text(
+                            label,
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                          if (recommended) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppThemeColors.diamondBlue
+                                    .withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Text(
+                                'Önerilen',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppThemeColors.diamondBlue,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                       Text(
                         subtitle,
                         maxLines: 1,

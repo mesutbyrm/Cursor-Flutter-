@@ -30,6 +30,18 @@ class YoutubeStreamResolver {
     'https://invidious.fdn.fr',
   ];
 
+  /// Üretim `canlifal.com`: ağır istemci çözümleme (explode/Piped) kapalı — IFrame oynatıcı.
+  @visibleForTesting
+  static bool get disableHeavyStreamResolve {
+    final base = Env.apiBaseUrl.trim().toLowerCase();
+    if (base.contains('127.0.0.1') ||
+        base.contains('localhost') ||
+        base.contains('.local')) {
+      return false;
+    }
+    return base.contains('canlifal.com');
+  }
+
   final Map<String, _StreamCacheEntry> _cache = {};
 
   bool needsResolve(String url) {
@@ -56,22 +68,8 @@ class YoutubeStreamResolver {
         u.endsWith('.opus');
   }
 
-  /// googlevideo → Android'de backend `/api/chat/youtube-audio` proxy.
-  static String wrapForMobilePlayback(String url) {
-    final trimmed = url.trim();
-    if (trimmed.isEmpty || !trimmed.startsWith('http')) return trimmed;
-    final lower = trimmed.toLowerCase();
-    if (lower.contains('/api/chat/youtube-audio')) return trimmed;
-    if (!lower.contains('googlevideo.com') &&
-        !lower.contains('youtube.com/api/')) {
-      return trimmed;
-    }
-    if (!kIsWeb && Platform.isAndroid) {
-      final base = Env.siteOrigin;
-      return '$base/api/chat/youtube-audio?url=${Uri.encodeComponent(trimmed)}';
-    }
-    return trimmed;
-  }
+  /// googlevideo — üretimde `?url=` proxy desteklenmiyor; doğrudan CDN kullan.
+  static String wrapForMobilePlayback(String url) => url.trim();
 
   static bool isYoutubePageUrl(String url) {
     final u = url.trim().toLowerCase();
@@ -189,6 +187,13 @@ class YoutubeStreamResolver {
     }
 
     final watchUrl = 'https://www.youtube.com/watch?v=$trimmed';
+
+    if (disableHeavyStreamResolve) {
+      final viaApi = await _resolveViaSiteApi(watchUrl);
+      if (viaApi != null) return wrapForMobilePlayback(viaApi);
+      return null;
+    }
+
     final results = await Future.wait<String?>([
       _resolveViaSiteApi(watchUrl),
       _resolveViaPipedParallel(trimmed),
@@ -297,6 +302,7 @@ class YoutubeStreamResolver {
     return null;
   }
 
+  /// Invidious üçüncü taraf API — canlifal `/api/v1` değil.
   Future<String?> _resolveViaInvidious(String host, String id) async {
     try {
       final res = await _dio.get<dynamic>(

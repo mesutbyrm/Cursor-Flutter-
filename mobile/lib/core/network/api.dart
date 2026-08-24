@@ -35,7 +35,7 @@ abstract final class Api {
     }
   }
 
-  /// `GET /api/v1/health` — splash / arka plan sağlık kontrolü.
+  /// `GET /api/warmup` — splash / arka plan sağlık kontrolü.
   static Future<bool> healthy() async {
     try {
       final r = await dio.get<Map<String, dynamic>>(ApiEndpoints.apiHealth);

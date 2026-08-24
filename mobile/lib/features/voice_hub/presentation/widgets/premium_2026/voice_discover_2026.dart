@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import 'package:canlifal_social/core/performance/list_perf.dart';
 
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../theme/voice_room_tokens.dart';
@@ -48,23 +49,40 @@ class VoiceDiscoverCategories2026 extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 1.55,
-          ),
-          itemCount: cats.length,
-          itemBuilder: (context, i) {
-            final c = cats[i];
-            final selected = selectedId == c.id;
-            return _CategoryCard(
-              def: c,
-              selected: selected,
-              onTap: () => onCategoryTap(c.id),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const crossAxisCount = 2;
+            const spacing = 10.0;
+            const aspectRatio = 1.55;
+            final gridHeight = ListPerf.nestedGridHeight(
+              itemCount: cats.length,
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: spacing,
+              crossAxisSpacing: spacing,
+              childAspectRatio: aspectRatio,
+              crossAxisExtent: constraints.maxWidth,
+            );
+            return SizedBox(
+              height: gridHeight,
+              child: GridView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: spacing,
+                  crossAxisSpacing: spacing,
+                  childAspectRatio: aspectRatio,
+                ),
+                itemCount: cats.length,
+                itemBuilder: (context, i) {
+                  final c = cats[i];
+                  final selected = selectedId == c.id;
+                  return _CategoryCard(
+                    def: c,
+                    selected: selected,
+                    onTap: () => onCategoryTap(c.id),
+                  );
+                },
+              ),
             );
           },
         ),

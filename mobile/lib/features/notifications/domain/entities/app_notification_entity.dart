@@ -10,6 +10,8 @@ class AppNotificationEntity extends Equatable {
     this.type,
     this.targetPath,
     this.targetId,
+    this.imageUrl,
+    this.senderId,
   });
 
   final String id;
@@ -20,8 +22,20 @@ class AppNotificationEntity extends Equatable {
   final String? type;
   final String? targetPath;
   final String? targetId;
+  final String? imageUrl;
+  final String? senderId;
 
   @override
-  List<Object?> get props =>
-      [id, title, body, read, createdAt, type, targetPath, targetId];
+  List<Object?> get props => [
+    id,
+    title,
+    body,
+    read,
+    createdAt,
+    type,
+    targetPath,
+    targetId,
+    imageUrl,
+    senderId,
+  ];
 }

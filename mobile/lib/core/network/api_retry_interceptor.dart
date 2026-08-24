@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 import 'connectivity/connectivity_service.dart';
 
-/// Idempotent GET — bağlantı/timeout hatalarında sınırlı yeniden deneme.
+/// Idempotent GET — bağlantı/timeout/429/5xx için kılavuz §7 yeniden deneme.
 class ApiRetryInterceptor extends Interceptor {
   ApiRetryInterceptor({
     required Dio Function() dioGetter,
@@ -13,8 +13,9 @@ class ApiRetryInterceptor extends Interceptor {
   final Dio Function() _dioGetter;
   final ConnectivityService? _connectivity;
 
-  static const _maxAttempts = 2;
-  static const _retryable = {
+  /// Kılavuz §7: en fazla 3 deneme.
+  static const _maxAttempts = 3;
+  static const _retryableTypes = {
     DioExceptionType.connectionTimeout,
     DioExceptionType.receiveTimeout,
     DioExceptionType.connectionError,
@@ -27,7 +28,6 @@ class ApiRetryInterceptor extends Interceptor {
       final isGet = options.method.toUpperCase() == 'GET';
       final forceRefresh = options.extra['forceRefresh'] == true;
       if (isGet && !forceRefresh) {
-        // GET cache katmanı stale dönebilir; ağ yokken devam.
         return handler.next(options);
       }
       if (!isGet) {
@@ -59,7 +59,7 @@ class ApiRetryInterceptor extends Interceptor {
     }
 
     options.extra['_retryAttempt'] = attempt;
-    await Future<void>.delayed(Duration(milliseconds: 400 * attempt));
+    await Future<void>.delayed(_backoffFor(err, attempt));
 
     try {
       final response = await _dioGetter().fetch<dynamic>(options);
@@ -69,11 +69,27 @@ class ApiRetryInterceptor extends Interceptor {
     }
   }
 
+  Duration _backoffFor(DioException err, int attempt) {
+    final code = err.response?.statusCode;
+    if (code == 429) {
+      final retryAfter = err.response?.headers.value('retry-after');
+      final sec = int.tryParse(retryAfter ?? '');
+      if (sec != null && sec > 0) {
+        return Duration(seconds: sec.clamp(1, 120));
+      }
+      return Duration(seconds: 15 * attempt.clamp(1, 4));
+    }
+    return Duration(milliseconds: 400 * (1 << (attempt - 1)).clamp(1, 8));
+  }
+
   bool _shouldRetry(RequestOptions options, DioException err) {
     if (options.extra['_authRetry'] == true) return false;
     if (options.method.toUpperCase() != 'GET') return false;
-    if (!_retryable.contains(err.type)) return false;
+
     final code = err.response?.statusCode;
+    if (code == 429) return true;
+    if (code != null && code >= 500) return true;
+    if (!_retryableTypes.contains(err.type)) return false;
     if (code != null && code >= 400 && code < 500) return false;
     return true;
   }

@@ -2,22 +2,23 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.335+338` |
-| Tarih (UTC) | 2026-06-23 11:02 |
-| Commit | [`20659f028d183cb8eb41dc1e254f738ca97443b6`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/20659f028d183cb8eb41dc1e254f738ca97443b6) |
-| İş akışı | [Run 28020528379](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/28020528379) |
+| Sürüm | `1.0.349+387` |
+| Tarih (UTC) | 2026-08-23 02:58 |
+| Commit | [`1600011e`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1600011e618463462de2be1dc06c852cd4031415) |
+| İş akışı | [Run 32613238291](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32613238291) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.335+338 (2026-06-22)
+## 1.0.349+385 (2026-08-23) — Kısa video hub şeritleri
 
-### Canlı Falcılar — randevu bildirimi regresyonu
+- **Ortak bileşen:** `ShortsHubStrip` — `GET /api/short-videos?tab=foryou` (keşfet yedek)
+- **Ana sayfa:** Trend videolar Canlı Falcılar'ın hemen üstünde
+- **Hub sayfaları:** Canlı Falcılar, Sesli Odalar, Canlı Yayınlar, Fal & Tarot, Bana Özel, Sosyal
+- **Tıklama:** `/shorts?videoId=` + görüntülenme kaydı; boşsa bölüm gizlenir
 
-- **Kök neden:** Push/API gövdesindeki `userId` yanlışlıkla `clientId` sayılıyordu; falcı kendi isteğinin danışanı sanılıp bildirim/dialog filtreleniyordu
-- `clientId` yalnızca açık `clientId` / `client_id` alanlarından okunuyor
-- Onaylı falcıda minimal push (clientId boş) yine gösteriliyor; danışanda gösterilmiyor
-- Bildirim listesinde falcı olmayan kullanıcı yine ilgili sayfaya yönlendiriliyor
+## 1.0.349+387 (2026-08-23) — CI sürüm sabitleme
 
+- **APK CI:** Metadata doğrulama derleme anı sürümünü kullanır; release gate **PASS**
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._

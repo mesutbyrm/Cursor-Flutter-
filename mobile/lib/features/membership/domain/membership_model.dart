@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'membership_package_entity.dart';
+
 /// Üyelik kademesi — UI kartları ve tablo için tek kaynak.
-enum MembershipTierId { basic, gold, premium, diamond }
+enum MembershipTierId { basic, gold, premium, diamond, svip }
 
 class MembershipTierModel {
   const MembershipTierModel({
@@ -14,7 +16,11 @@ class MembershipTierModel {
     required this.badgeIcon,
     required this.glow,
     this.popular = false,
+    this.isActivePlan = false,
+    this.durationDays = 30,
+    this.falDiscountPercent = 0,
     this.planId,
+    this.featureHighlights = const [],
   });
 
   final MembershipTierId id;
@@ -26,14 +32,22 @@ class MembershipTierModel {
   final IconData badgeIcon;
   final Color glow;
   final bool popular;
+  final bool isActivePlan;
+  final int durationDays;
+  final int falDiscountPercent;
 
   /// Backend plan kimliği (API varsa); yoksa [id.name].
   final String? planId;
+
+  /// Paket bazlı API `features[]` — özellik tablosu için.
+  final List<MembershipFeatureHighlightEntity> featureHighlights;
 
   String get wireId => id.name;
 
   String get resolvedPlanId =>
       (planId != null && planId!.trim().isNotEmpty) ? planId! : wireId;
+
+  String get durationLabel => '$durationDays gün';
 }
 
 /// Özellik tablosu hücresi.
@@ -59,7 +73,7 @@ class MembershipFeatureRow {
 
   final String label;
 
-  /// Sıra: Basic, Gold, Premium, Diamond
+  /// Sıra: Basic, Gold, Premium, Diamond, SVIP
   final List<MembershipFeatureValue> values;
 }
 
@@ -149,6 +163,16 @@ abstract final class MembershipCatalogData {
       badgeIcon: Icons.diamond_rounded,
       glow: Color(0xFF38BDF8),
     ),
+    MembershipTierModel(
+      id: MembershipTierId.svip,
+      title: 'SVIP',
+      subtitle: 'En üst düzey VIP',
+      monthlyTokens: 10000,
+      monthlyPriceTry: 3500,
+      accent: Color(0xFFFF2D7A),
+      badgeIcon: Icons.diamond_rounded,
+      glow: Color(0xFFB832FF),
+    ),
   ];
 
   /// Jeton alımında indirim yok — tüm kademelerde.
@@ -160,11 +184,13 @@ abstract final class MembershipCatalogData {
         MembershipFeatureText('1500'),
         MembershipFeatureText('3500'),
         MembershipFeatureText('7500'),
+        MembershipFeatureText('10000'),
       ],
     ),
     MembershipFeatureRow(
       label: 'Özel Rozet',
       values: [
+        MembershipFeatureBool(true),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
@@ -178,12 +204,14 @@ abstract final class MembershipCatalogData {
         MembershipFeatureText('Yok'),
         MembershipFeatureText('Yok'),
         MembershipFeatureText('Yok'),
+        MembershipFeatureText('Yok'),
       ],
     ),
     MembershipFeatureRow(
       label: 'Reklamsız Deneyim',
       values: [
         MembershipFeatureBool(false),
+        MembershipFeatureBool(true),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
@@ -196,6 +224,7 @@ abstract final class MembershipCatalogData {
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
+        MembershipFeatureBool(true),
       ],
     ),
     MembershipFeatureRow(
@@ -205,12 +234,14 @@ abstract final class MembershipCatalogData {
         MembershipFeatureBool(false),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
+        MembershipFeatureBool(true),
       ],
     ),
     MembershipFeatureRow(
       label: 'Öncelikli Destek',
       values: [
         MembershipFeatureBool(false),
+        MembershipFeatureBool(true),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
@@ -223,12 +254,14 @@ abstract final class MembershipCatalogData {
         MembershipFeatureBool(false),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
+        MembershipFeatureBool(true),
       ],
     ),
     MembershipFeatureRow(
       label: 'Canlı Yayında Öncelik',
       values: [
         MembershipFeatureBool(false),
+        MembershipFeatureBool(true),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
@@ -241,6 +274,7 @@ abstract final class MembershipCatalogData {
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
+        MembershipFeatureBool(true),
       ],
     ),
     MembershipFeatureRow(
@@ -250,12 +284,14 @@ abstract final class MembershipCatalogData {
         MembershipFeatureBool(false),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
+        MembershipFeatureBool(true),
       ],
     ),
     MembershipFeatureRow(
       label: 'Gönderi Görünürlüğü',
       values: [
         MembershipFeatureBool(false),
+        MembershipFeatureBool(true),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
@@ -268,11 +304,23 @@ abstract final class MembershipCatalogData {
         MembershipFeatureBool(false),
         MembershipFeatureBool(true),
         MembershipFeatureBool(true),
+        MembershipFeatureBool(true),
       ],
     ),
     MembershipFeatureRow(
       label: 'Özel İsim Rengi',
       values: [
+        MembershipFeatureBool(false),
+        MembershipFeatureBool(false),
+        MembershipFeatureBool(false),
+        MembershipFeatureBool(true),
+        MembershipFeatureBool(true),
+      ],
+    ),
+    MembershipFeatureRow(
+      label: 'SVIP Giriş Efekti',
+      values: [
+        MembershipFeatureBool(false),
         MembershipFeatureBool(false),
         MembershipFeatureBool(false),
         MembershipFeatureBool(false),

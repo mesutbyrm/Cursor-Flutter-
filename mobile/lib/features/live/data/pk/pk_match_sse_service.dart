@@ -20,12 +20,12 @@ class PkMatchSseService extends BaseSseService {
   String? _matchId;
   void Function(PkMatchSseEvent event)? _onEvent;
 
-  /// PK SSE her zaman games backend'e gider (`canlifalapi.abacusai.app`).
+  /// PK SSE ana backend'e gider (`canlifal.com`) — kılavuz §5 SSE.
   @override
   Dio connectionDio() => createPkSseDio();
 
   static Dio createPkSseDio() {
-    final base = Env.gamesApiBaseUrl.trim().replaceAll(RegExp(r'/+$'), '');
+    final base = Env.apiBaseUrl.trim().replaceAll(RegExp(r'/+$'), '');
     return Dio(
       BaseOptions(
         baseUrl: base.isNotEmpty ? base : Env.apiBaseUrl,

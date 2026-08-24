@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -6,21 +7,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/config/payment_defaults.dart';
-import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/navigation/wallet_navigation.dart';
+import '../../../../core/content/currency_usage_info.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/network/dio_provider.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
-import '../../../profile/data/jeton_packages_catalog.dart';
 import '../../../profile/domain/entities/jeton_package_entity.dart';
+import '../../../profile/domain/entities/payment_method_entity.dart';
 import '../../../profile/presentation/providers/payment_requests_notifier.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/jeton_checkout_flow.dart';
+import '../../../profile/presentation/widgets/payment_methods_summary_line.dart';
+import '../../domain/membership_catalog_merge.dart';
 import '../../domain/membership_model.dart';
+import '../../../profile/presentation/providers/profile_hub_providers.dart';
+import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../controllers/membership_controller.dart';
 import '../widgets/common_benefits.dart';
 import '../widgets/feature_table.dart';
 import '../widgets/membership_card.dart';
+import '../widgets/membership_checkout_sheet.dart';
+import '../widgets/membership_cfc_checkout_flow.dart';
+import '../widgets/membership_pending_payment_banner.dart';
+import '../widgets/membership_checkout_footer_hint.dart';
+import '../widgets/membership_payment_methods_summary.dart';
 import '../widgets/support_footer.dart';
 import '../widgets/token_package_card.dart';
 
@@ -33,6 +42,7 @@ class MembershipPage extends ConsumerWidget {
     final ui = ref.watch(membershipControllerProvider);
     final catalogAsync = ref.watch(membershipCatalogProvider);
     final padding = ResponsiveLayout.pagePadding(context);
+    final pendingRequests = ref.watch(paymentRequestsNotifierProvider);
 
     return Scaffold(
       backgroundColor: MembershipCatalogData.bg,
@@ -76,6 +86,7 @@ class MembershipPage extends ConsumerWidget {
                           0,
                         ),
                         child: _MembershipAppBar(
+                          info: ui.membershipInfo,
                           diamondLabel: ui.formattedDiamondBalance,
                           onBack: () => context.pop(),
                           onAddDiamonds: () => context.push('/jeton-store'),
@@ -93,10 +104,28 @@ class MembershipPage extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            if (ui.hasActivePaidMembership) ...[
+                            if (pendingRequests.valueOrNull
+                                    ?.any((r) =>
+                                        r.isMembershipCheckout && r.isPending) ==
+                                true) ...[
+                              const MembershipPendingPaymentBanner(),
+                            ],
+                            if (ui.isMembershipExpired) ...[
+                              _ExpiredMembershipBanner(
+                                info: ui.membershipInfo,
+                                expiresAt: ui.membershipExpiresAt,
+                                onRenew: () => _purchaseSelected(context, ref),
+                              ),
+                              const SizedBox(height: 16),
+                            ] else if (ui.hasActivePaidMembership) ...[
                               _ActiveBanner(
-                                tier: ui.currentMembership,
+                                info: ui.membershipInfo,
+                                catalogTier: catalogTierForMembership(
+                                  ui.membershipInfo,
+                                  ui.tiers,
+                                ),
                                 days: ui.daysRemaining,
+                                expiresAt: ui.membershipExpiresAt,
                                 onExtend: () => _purchaseSelected(context, ref),
                               ),
                               const SizedBox(height: 16),
@@ -112,6 +141,8 @@ class MembershipPage extends ConsumerWidget {
                                   final tier = ui.tiers[i];
                                   return MembershipCard(
                                     tier: tier,
+                                    membershipInfo: ui.membershipInfo,
+                                    apiPackages: ui.apiPackages,
                                     selected: ui.selectedTier == tier.id,
                                     animationIndex: i,
                                     onTap: () => ref
@@ -126,7 +157,7 @@ class MembershipPage extends ConsumerWidget {
                             ),
                             const SizedBox(height: 22),
                             Text(
-                              'Tüm Üyelik Özellikleri',
+                              buildMembershipPageFeaturesSectionTitle(),
                               style: GoogleFonts.plusJakartaSans(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
@@ -136,14 +167,20 @@ class MembershipPage extends ConsumerWidget {
                             const SizedBox(height: 12),
                             MembershipFeatureTable(
                               selectedTier: ui.selectedTier,
+                              tiers: ui.tiers,
                             ),
                             const SizedBox(height: 22),
                             _UpgradeBanner(
+                              info: ui.membershipInfo,
+                              catalogTier: catalogTierForMembership(
+                                ui.membershipInfo,
+                                ui.tiers,
+                              ),
                               onBuyTokens: () => context.push('/jeton-store'),
                             ),
                             const SizedBox(height: 22),
                             Text(
-                              'Jeton Paketleri',
+                              buildMembershipPageTokenPackagesSectionTitle(),
                               style: GoogleFonts.plusJakartaSans(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
@@ -152,7 +189,9 @@ class MembershipPage extends ConsumerWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Üyelik paketleri · jeton alımında indirim yok',
+                              buildMembershipPageTokenPackagesSubtitle(
+                                info: ui.membershipInfo,
+                              ),
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.5),
                                 fontWeight: FontWeight.w600,
@@ -164,13 +203,11 @@ class MembershipPage extends ConsumerWidget {
                               height: 220,
                               child: ListView.separated(
                                 scrollDirection: Axis.horizontal,
-                                itemCount:
-                                    MembershipCatalogData.tokenPackages.length,
+                                itemCount: ui.tokenPackages.length,
                                 separatorBuilder: (_, _) =>
                                     const SizedBox(width: 12),
                                 itemBuilder: (context, i) {
-                                  final pkg =
-                                      MembershipCatalogData.tokenPackages[i];
+                                  final pkg = ui.tokenPackages[i];
                                   return TokenPackageCard(
                                     package: pkg,
                                     selected:
@@ -199,7 +236,9 @@ class MembershipPage extends ConsumerWidget {
                                 ),
                               ),
                               child: Text(
-                                '${ui.selectedTierModel.title} Üyeliği Satın Al · ₺${ui.selectedTierModel.monthlyPriceTry}',
+                                buildMembershipPagePurchaseButtonLabel(
+                                  tier: ui.selectedTierModel,
+                                ),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w900,
                                   fontSize: 15,
@@ -207,19 +246,20 @@ class MembershipPage extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 10),
-                            Text(
-                              'Ödeme: WhatsApp ${PaymentDefaults.whatsapp} · '
-                              'Papara ${PaymentDefaults.papara}',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.white.withValues(alpha: 0.45),
-                                height: 1.35,
+                            const MembershipPaymentMethodsSummary(),
+                            const SizedBox(height: 28),
+                            MembershipCommonBenefits(
+                              membershipInfo: ui.membershipInfo,
+                              highlights: mergeMembershipCommonHighlights(
+                                catalogFeatures:
+                                    catalogAsync.valueOrNull?.features ??
+                                        const [],
+                                tierFeatures:
+                                    ui.selectedTierModel.featureHighlights,
                               ),
                             ),
                             const SizedBox(height: 28),
-                            const MembershipCommonBenefits(),
-                            const SizedBox(height: 28),
+                            const MembershipCheckoutFooterHint(),
                             const MembershipSupportFooter(),
                             const SizedBox(height: 24),
                           ],
@@ -242,60 +282,128 @@ class MembershipPage extends ConsumerWidget {
   ) async {
     final ui = ref.read(membershipControllerProvider);
     final tier = ui.selectedTierModel;
+    final apiPkg = ui.apiPackageFor(tier.wireId);
     final wallet = ref.read(walletBalancesProvider).valueOrNull;
-    final rate = wallet?.jetonTlRate ?? kDefaultJetonTlRate;
-    final priceJeton = rate > 0
-        ? (tier.monthlyPriceTry / rate).round()
-        : tier.monthlyPriceTry * 2;
+    final rate = wallet?.jetonTlRate ?? ui.jetonTlRate;
+    final priceJeton = apiPkg?.resolvedPriceJeton(
+          fallbackFromTry: tier.monthlyPriceTry,
+          jetonTlRate: rate,
+        ) ??
+        (rate > 0
+            ? (tier.monthlyPriceTry / rate).round()
+            : tier.monthlyPriceTry * 2);
+    final priceCfc = CurrencyUsageInfo.cfcForTl(tier.monthlyPriceTry);
+    void onPurchaseDone() {
+      ref.invalidate(paymentRequestsNotifierProvider);
+    }
 
-    if (wallet != null && priceJeton > 0 && wallet.jeton >= priceJeton) {
+    Future<bool> tryInstantPurchase({String? paymentMethod}) async {
       try {
-        await ref.read(dioProvider).safePost<Map<String, dynamic>>(
-          ApiEndpoints.membershipPurchase,
-          data: {'planId': tier.resolvedPlanId},
-        );
+        await ref.read(membershipRemoteProvider).purchaseMembership(
+              tier.resolvedPlanId,
+              paymentMethod: paymentMethod,
+            );
         await ref.read(membershipControllerProvider.notifier).refresh();
+        await refreshMembershipAfterPurchase(ref);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('${tier.title} üyeliği aktif')),
           );
         }
-        return;
+        return true;
       } on ApiException catch (e) {
-        if (!context.mounted) return;
+        if (!context.mounted) return false;
         final insufficient = e.message.contains('Yetersiz jeton') ||
+            e.message.contains('Yetersiz CFC') ||
             e.message.toLowerCase().contains('insufficient');
         if (!insufficient) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(e.message)),
           );
-          return;
+          return true;
         }
-      } catch (_) {}
+        if (e.message.contains('Yetersiz jeton') ||
+            e.message.toLowerCase().contains('insufficient_jeton')) {
+          await showInsufficientJetonDialog(
+            context,
+            message: e.message,
+            ref: ref,
+          );
+        }
+        return false;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    if (wallet != null && priceJeton > 0 && wallet.jeton >= priceJeton) {
+      if (await tryInstantPurchase()) return;
+    }
+
+    final cfcBal = wallet?.cfc ?? ui.cfcBalance;
+    if (cfcBal >= priceCfc && priceCfc > 0) {
+      if (await tryInstantPurchase(paymentMethod: 'cfc')) return;
     }
 
     if (!context.mounted) return;
 
+    List<PaymentMethodEntity> paymentMethods;
+    try {
+      paymentMethods = await ref.read(paymentMethodsProvider.future);
+    } catch (_) {
+      paymentMethods = PaymentMethodEntity.defaults;
+    }
+    paymentMethods = PaymentMethodEntity.checkoutMethods(paymentMethods);
+    final externalLabel = PaymentMethodsSummaryLine.externalCheckoutLabelFrom(
+      paymentMethods,
+    );
+
+    final choice = await showMembershipCheckoutSheet(
+      context,
+      tier: tier,
+      priceJeton: priceJeton,
+      priceCfc: priceCfc,
+      cfcBalance: cfcBal,
+      externalMethodsLabel: externalLabel,
+    );
+    if (!context.mounted || choice == null) return;
+
+    if (choice == MembershipCheckoutChoice.cfcPayment) {
+      if (cfcBal >= priceCfc) {
+        final ok = await submitMembershipCfcInstant(
+          context,
+          ref,
+          tier: tier,
+          priceCfc: priceCfc,
+          onDone: onPurchaseDone,
+        );
+        if (ok) return;
+      }
+      await openMembershipCfcCheckoutFlow(
+        context,
+        ref,
+        tier: tier,
+        onDone: onPurchaseDone,
+      );
+      return;
+    }
+
     final jetonPkg = JetonPackageEntity(
       id: 'membership_${tier.wireId}',
-      title: '${tier.title} Üyelik · 30 gün',
+      title: buildMembershipCheckoutPackageTitle(tier: tier),
       coins: priceJeton,
       priceTry: tier.monthlyPriceTry.toDouble(),
-      badge: ui.hasActivePaidMembership ? 'Uzat' : null,
+      badge: buildMembershipCheckoutPackageBadge(info: ui.membershipInfo),
     );
 
     openJetonCheckoutFlow(
       context,
       ref,
       package: jetonPkg,
-      priceText: '₺${tier.monthlyPriceTry} (${tier.monthlyTokens} jeton/ay)',
-      paymentNotes:
-          'Gold üyelik · ${tier.title} · 30 gün · ${tier.monthlyTokens} jeton',
-      onDone: () {
-        ref.invalidate(membershipCatalogProvider);
-        ref.refreshWalletCache(force: true);
-        ref.invalidate(paymentRequestsNotifierProvider);
-      },
+      priceText:
+          '₺${tier.monthlyPriceTry} (${tier.monthlyTokens} jeton · ${tier.durationLabel})',
+      paymentNotes: buildMembershipCheckoutPaymentNotes(tier: tier),
+      onDone: onPurchaseDone,
     );
   }
 }
@@ -370,17 +478,22 @@ class _GlowOrb extends StatelessWidget {
 
 class _MembershipAppBar extends StatelessWidget {
   const _MembershipAppBar({
+    required this.info,
     required this.diamondLabel,
     required this.onBack,
     required this.onAddDiamonds,
   });
 
+  final ProfileMembershipInfo info;
   final String diamondLabel;
   final VoidCallback onBack;
   final VoidCallback onAddDiamonds;
 
   @override
   Widget build(BuildContext context) {
+    final title = buildMembershipPageAppBarTitle(info: info);
+    final subtitle = buildMembershipPageAppBarSubtitle(info: info);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -397,7 +510,7 @@ class _MembershipAppBar extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                'Üyelikler 👑',
+                title,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   color: Colors.white,
@@ -407,7 +520,7 @@ class _MembershipAppBar extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Daha fazla ayrıcalık, daha fazla eğlence!',
+                subtitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.58),
@@ -476,19 +589,90 @@ class _MembershipAppBar extends StatelessWidget {
   }
 }
 
-class _ActiveBanner extends StatelessWidget {
-  const _ActiveBanner({
-    required this.tier,
-    required this.days,
-    required this.onExtend,
+class _ExpiredMembershipBanner extends StatelessWidget {
+  const _ExpiredMembershipBanner({
+    required this.info,
+    required this.onRenew,
+    this.expiresAt,
   });
 
-  final String tier;
+  final ProfileMembershipInfo info;
+  final String? expiresAt;
+  final VoidCallback onRenew;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = buildMembershipPageExpiredBannerText(
+      info: info,
+      expiresAt: expiresAt,
+    );
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onRenew,
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.25),
+            ),
+            color: const Color(0xFF3D2060).withValues(alpha: 0.65),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.timer_off_rounded,
+                color: Colors.white.withValues(alpha: 0.85),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.white54,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActiveBanner extends StatelessWidget {
+  const _ActiveBanner({
+    required this.info,
+    required this.days,
+    required this.onExtend,
+    this.catalogTier,
+    this.expiresAt,
+  });
+
+  final ProfileMembershipInfo info;
   final int days;
+  final MembershipTierModel? catalogTier;
+  final String? expiresAt;
   final VoidCallback onExtend;
 
   @override
   Widget build(BuildContext context) {
+    final bannerText = buildMembershipPageActiveBannerText(
+      info: info,
+      catalogTier: catalogTier,
+      daysRemaining: days,
+      expiresAt: expiresAt,
+    );
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -512,7 +696,7 @@ class _ActiveBanner extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '${tier.toUpperCase()} üyeliğiniz aktif · $days gün kaldı',
+                  bannerText,
                   style: const TextStyle(
                     color: MembershipCatalogData.gold,
                     fontWeight: FontWeight.w800,
@@ -533,12 +717,25 @@ class _ActiveBanner extends StatelessWidget {
 }
 
 class _UpgradeBanner extends StatelessWidget {
-  const _UpgradeBanner({required this.onBuyTokens});
+  const _UpgradeBanner({
+    required this.info,
+    required this.onBuyTokens,
+    this.catalogTier,
+  });
 
+  final ProfileMembershipInfo info;
+  final MembershipTierModel? catalogTier;
   final VoidCallback onBuyTokens;
 
   @override
   Widget build(BuildContext context) {
+    final title = buildMembershipPageUpgradeBannerTitle(info: info);
+    final subtitle = buildMembershipPageUpgradeBannerSubtitle(
+      info: info,
+      catalogTier: catalogTier,
+    );
+    final actionLabel = buildMembershipPageUpgradeBannerActionLabel();
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -596,7 +793,7 @@ class _UpgradeBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Üyeliğini Yükselt, Avantajları Katla!',
+                      title,
                       style: GoogleFonts.plusJakartaSans(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
@@ -606,7 +803,7 @@ class _UpgradeBanner extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Daha fazla jeton, daha fazla ayrıcalık ve özel içerikler seni bekliyor.',
+                      subtitle,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.68),
                         fontSize: 11.5,
@@ -637,10 +834,10 @@ class _UpgradeBanner extends StatelessWidget {
                         ],
                       ),
                     ),
-                    child: const Text(
-                      'Jeton\nSatın Al',
+                    child: Text(
+                      actionLabel,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
                         fontSize: 11,

@@ -4,6 +4,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/agency_entity.dart';
+import '../../domain/entities/agency_leaderboard_entry.dart';
 
 class AgencyRemoteDataSource {
   AgencyRemoteDataSource(this._dio);
@@ -47,6 +48,42 @@ class AgencyRemoteDataSource {
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.agencyTasks);
       return _parseTaskList(res.data);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// `GET /api/agency/leaderboard` — ajans sıralaması.
+  Future<List<AgencyLeaderboardEntry>> fetchLeaderboard({int limit = 20}) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.agencyLeaderboard,
+        query: {'limit': limit},
+      );
+      final body = res.data;
+      dynamic list;
+      if (body is List) {
+        list = body;
+      } else if (body is Map) {
+        final map = asJsonMap(body);
+        final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+        list = data['leaderboard'] ??
+            data['agencies'] ??
+            data['items'] ??
+            data['results'] ??
+            [];
+      } else {
+        list = const [];
+      }
+      if (list is! List) return const [];
+      final out = <AgencyLeaderboardEntry>[];
+      var i = 0;
+      for (final raw in list) {
+        if (raw is! Map) continue;
+        i++;
+        out.add(AgencyLeaderboardEntry.fromJson(asJsonMap(raw), i));
+      }
+      return out.where((e) => e.agencyId.isNotEmpty || e.name.isNotEmpty).toList();
     } catch (_) {
       return const [];
     }

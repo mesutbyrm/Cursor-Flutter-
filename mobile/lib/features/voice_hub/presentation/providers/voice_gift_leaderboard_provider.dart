@@ -1,17 +1,30 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
+import '../../../gifts/presentation/sync/gift_hourly_reset.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 
 /// Oturum içi hediye sıralaması — socket/poll olaylarından türetilir.
 class VoiceSessionGiftLeaderboard extends Notifier<List<GiftLeaderboardEntry>> {
   final _totals = <String, _Agg>{};
+  final _recordedIds = <String>{};
+  void Function()? _cancelHourlyReset;
 
   @override
-  List<GiftLeaderboardEntry> build() => const [];
+  List<GiftLeaderboardEntry> build() {
+    GiftHourlyReset.scheduleRepeating(
+      clear,
+      onCancel: (cancel) => _cancelHourlyReset = cancel,
+    );
+    ref.onDispose(() => _cancelHourlyReset?.call());
+    return const [];
+  }
 
   void seedFromApi(List<GiftLeaderboardEntry> entries) {
     _totals.clear();
+    _recordedIds.clear();
     for (final e in entries) {
       final id = e.userId ?? e.displayName;
       if (id.isEmpty) continue;
@@ -27,14 +40,18 @@ class VoiceSessionGiftLeaderboard extends Notifier<List<GiftLeaderboardEntry>> {
   }
 
   void record(LiveGiftEvent event) {
+    final eventId = event.id.trim();
+    if (eventId.isNotEmpty && !_recordedIds.add(eventId)) return;
+
     final id = event.senderId ?? event.senderName;
     final prev = _totals[id];
+    final gross = event.jetonAmount;
     _totals[id] = _Agg(
       userId: id,
       displayName: event.senderName,
       avatarUrl: prev?.avatarUrl,
-      totalCoins: (prev?.totalCoins ?? 0) + event.coinCost * event.quantity,
-      giftCount: (prev?.giftCount ?? 0) + event.quantity,
+      totalCoins: (prev?.totalCoins ?? 0) + gross,
+      giftCount: (prev?.giftCount ?? 0) + (event.quantity > 0 ? event.quantity : 1),
     );
     _publish();
   }
@@ -57,6 +74,7 @@ class VoiceSessionGiftLeaderboard extends Notifier<List<GiftLeaderboardEntry>> {
 
   void clear() {
     _totals.clear();
+    _recordedIds.clear();
     state = const [];
   }
 }

@@ -18,11 +18,14 @@ import '../../data/jeton_purchase_prefs.dart';
 import '../../data/services/payment_receipt_upload_service.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
+import '../../domain/entities/payment_method_entity.dart';
 import '../../../admin/presentation/providers/admin_providers.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../../notifications/presentation/providers/notifications_list_notifier.dart';
 import '../providers/payment_requests_notifier.dart';
+import '../providers/profile_hub_providers.dart';
 import '../providers/profile_providers.dart';
+import 'payment_methods_summary_line.dart';
 
 /// Jeton satın alma — mockup: ödeme yöntemi → WhatsApp / Papara / Havale.
 void openJetonCheckoutFlow(
@@ -66,6 +69,7 @@ class _JetonPaymentMethodPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final me = ref.watch(authControllerProvider).valueOrNull;
     final userLabel = me?.display ?? me?.username ?? 'Kullanıcı';
+    final methodsAsync = ref.watch(paymentMethodsProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0216),
@@ -92,29 +96,31 @@ class _JetonPaymentMethodPage extends ConsumerWidget {
               padding: EdgeInsets.symmetric(vertical: 12),
               child: _SectionDivider(label: 'Ödeme Yöntemleri'),
             ),
-            _MethodCard(
-              color: const Color(0xFF25D366),
-              icon: Icons.chat_rounded,
-              title: 'WhatsApp',
-              badge: 'Önerilen',
-              subtitle: 'Hızlı ve kolay ödeme',
-              onTap: () => _openDetail(context, ref, _JetonPayMethod.whatsapp),
+            Expanded(
+              child: methodsAsync.when(
+                loading: () => ListView(
+                  children: [
+                    for (final method in PaymentMethodEntity.defaults)
+                      _buildMethodCard(context, ref, method),
+                  ],
+                ),
+                error: (_, _) => ListView(
+                  children: [
+                    for (final method in PaymentMethodEntity.defaults)
+                      _buildMethodCard(context, ref, method),
+                  ],
+                ),
+                data: (methods) {
+                  final list = PaymentMethodEntity.checkoutMethods(methods);
+                  return ListView(
+                    children: [
+                      for (final method in list)
+                        _buildMethodCard(context, ref, method),
+                    ],
+                  );
+                },
+              ),
             ),
-            _MethodCard(
-              color: const Color(0xFF312E81),
-              icon: Icons.account_balance_wallet_rounded,
-              title: 'Papara',
-              subtitle: 'Papara ile ödeme',
-              onTap: () => _openDetail(context, ref, _JetonPayMethod.papara),
-            ),
-            _MethodCard(
-              color: const Color(0xFF1E3A5F),
-              icon: Icons.account_balance_rounded,
-              title: 'Havale / IBAN',
-              subtitle: 'Banka havalesi ile ödeme',
-              onTap: () => _openDetail(context, ref, _JetonPayMethod.bank),
-            ),
-            const Spacer(),
             const _TrustFooter(),
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -125,6 +131,55 @@ class _JetonPaymentMethodPage extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildMethodCard(
+    BuildContext context,
+    WidgetRef ref,
+    PaymentMethodEntity method,
+  ) {
+    final jetonMethod = _jetonMethodFromId(method.id);
+    if (jetonMethod == null) return const SizedBox.shrink();
+    final style = _methodStyle(jetonMethod);
+    return _MethodCard(
+      color: style.color,
+      icon: style.icon,
+      title: method.label,
+      badge: method.recommended ? 'Önerilen' : null,
+      subtitle: style.subtitle,
+      onTap: () => _openDetail(context, ref, jetonMethod),
+    );
+  }
+
+  static _JetonPayMethod? _jetonMethodFromId(String id) {
+    return switch (id.toLowerCase()) {
+      'whatsapp' => _JetonPayMethod.whatsapp,
+      'papara' => _JetonPayMethod.papara,
+      'bank_transfer' || 'bank' || 'havale' || 'iban' => _JetonPayMethod.bank,
+      _ => null,
+    };
+  }
+
+  static ({Color color, IconData icon, String subtitle}) _methodStyle(
+    _JetonPayMethod method,
+  ) {
+    return switch (method) {
+      _JetonPayMethod.whatsapp => (
+          color: const Color(0xFF25D366),
+          icon: Icons.chat_rounded,
+          subtitle: 'Hızlı ve kolay ödeme',
+        ),
+      _JetonPayMethod.papara => (
+          color: const Color(0xFF312E81),
+          icon: Icons.account_balance_wallet_rounded,
+          subtitle: 'Papara ile ödeme',
+        ),
+      _JetonPayMethod.bank => (
+          color: const Color(0xFF1E3A5F),
+          icon: Icons.account_balance_rounded,
+          subtitle: 'Banka havalesi ile ödeme',
+        ),
+    };
   }
 
   void _openDetail(BuildContext context, WidgetRef ref, _JetonPayMethod method) {
@@ -461,10 +516,20 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
     ref.invalidate(adminPaymentNotificationsProvider);
     ref.invalidate(notificationsListProvider);
     ref.invalidate(notificationsListNotifierProvider);
+    if (isMembership) {
+      await refreshMembershipAfterPurchase(ref);
+    }
   }
 
   Future<void> _showWaitDialog() async {
     final isMembership = widget.package.id.startsWith('membership_');
+    final tierName = isMembership
+        ? widget.package.title
+            .replaceAll(' Üyelik', '')
+            .split(' ·')
+            .first
+            .trim()
+        : '';
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -474,7 +539,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
           isMembership
               ? 'Talebiniz admin ekibine iletildi.\n\n'
                   'Onay süreci genellikle 5–10 dakika sürer. '
-                  'Onaylandığında Gold üyeliğiniz aktifleşir ve bildirim alırsınız.'
+                  'Onaylandığında $tierName üyeliğiniz aktifleşir ve bildirim alırsınız.'
               : 'Talebiniz admin ekibine iletildi.\n\n'
                   'Onay süreci genellikle 5–10 dakika sürer. '
                   'Onaylandığında jetonlar hesabınıza yansır ve bildirim alırsınız.',
@@ -698,11 +763,11 @@ class _MethodCard extends StatelessWidget {
   }
 }
 
-class _TrustFooter extends StatelessWidget {
+class _TrustFooter extends ConsumerWidget {
   const _TrustFooter();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -714,6 +779,13 @@ class _TrustFooter extends StatelessWidget {
           Text(
             'Tüm işlemleriniz güvence altında',
             style: TextStyle(fontSize: 12, color: const Color(0xFF25D366).withValues(alpha: 0.7)),
+          ),
+          const SizedBox(height: 8),
+          const PaymentMethodsSummaryLine(
+            prefix: 'Ödeme',
+            fontSize: 11,
+            textColor: Color(0xFF25D366),
+            showRecommended: false,
           ),
         ],
       ),

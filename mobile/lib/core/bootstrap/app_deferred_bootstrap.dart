@@ -31,26 +31,34 @@ Future<void> _run() async {
   }
 }
 
-/// OneSignal + Firebase + Sentry — soğuk açılışta runApp öncesi beklenmez.
+/// OneSignal + Firebase + Sentry — paralel; soğuk açılışta runApp öncesi beklenmez.
 Future<void> _initPushAndCrashReporting() async {
-  try {
-    await OneSignalBootstrap.init();
-    AppStartupLog.log('OneSignal init done (deferred)');
-  } catch (e) {
-    debugPrint('OneSignal deferred init failed: $e');
-  }
-  try {
-    await FirebaseBootstrap.init();
-    AppStartupLog.log('Firebase init done (deferred)');
-  } catch (e) {
-    debugPrint('Firebase deferred init failed: $e');
-  }
-  try {
-    await CrashReportingBootstrap.init();
-    AppStartupLog.log('Crash reporting init done (deferred)');
-  } catch (e) {
-    debugPrint('Crash reporting deferred init failed: $e');
-  }
+  await Future.wait<void>([
+    () async {
+      try {
+        await OneSignalBootstrap.init();
+        AppStartupLog.log('OneSignal init done (deferred)');
+      } catch (e) {
+        debugPrint('OneSignal deferred init failed: $e');
+      }
+    }(),
+    () async {
+      try {
+        await FirebaseBootstrap.init();
+        AppStartupLog.log('Firebase init done (deferred)');
+      } catch (e) {
+        debugPrint('Firebase deferred init failed: $e');
+      }
+    }(),
+    () async {
+      try {
+        await CrashReportingBootstrap.init();
+        AppStartupLog.log('Crash reporting init done (deferred)');
+      } catch (e) {
+        debugPrint('Crash reporting deferred init failed: $e');
+      }
+    }(),
+  ]);
 }
 
 Future<void> _probeApiHealth() async {

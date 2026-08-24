@@ -419,6 +419,30 @@ export function listStreamFortuneRequests(streamId: string) {
     });
 }
 
+export function hasPendingFortuneRequest(streamId: string, userId: string) {
+  const sid = streamId.trim();
+  const uid = userId.trim();
+  return [...streamFortuneRequests.values()].some(
+    (r) =>
+      r.streamId === sid &&
+      r.userId === uid &&
+      (r.status === "pending" || r.status === "reviewing"),
+  );
+}
+
+export function getPendingFortuneRequest(streamId: string, userId: string) {
+  const sid = streamId.trim();
+  const uid = userId.trim();
+  return (
+    [...streamFortuneRequests.values()].find(
+      (r) =>
+        r.streamId === sid &&
+        r.userId === uid &&
+        (r.status === "pending" || r.status === "reviewing"),
+    ) ?? null
+  );
+}
+
 export function getStreamFortuneRequest(requestId: string) {
   return streamFortuneRequests.get(requestId.trim()) ?? null;
 }

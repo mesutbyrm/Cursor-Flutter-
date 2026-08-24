@@ -11,6 +11,38 @@ part of 'chat_room_providers.dart';
 /// okuma/yazma erişir ve davranış birebir korunur. Public applyPresenceSnapshot
 /// bilerek ana sınıfta bırakıldı.
 extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
+  int? _extractOnlineCountFromPayload(Map<String, dynamic> payload) {
+    for (final key in const [
+      'onlineCount',
+      'onlineUsers',
+      'totalCount',
+      'count',
+      'participantCount',
+    ]) {
+      final v = payload[key];
+      if (v is num && v >= 0) return v.toInt();
+      if (v is String) {
+        final n = int.tryParse(v);
+        if (n != null && n >= 0) return n;
+      }
+    }
+    final nested = payload['room'];
+    if (nested is Map) {
+      return _extractOnlineCountFromPayload(Map<String, dynamic>.from(nested));
+    }
+    return null;
+  }
+
+  void _patchHubOnlineCountFromPayload(
+    Map<String, dynamic> payload, {
+    int? fallback,
+  }) {
+    final count = _extractOnlineCountFromPayload(payload) ?? fallback;
+    if (count != null && count >= 0) {
+      _patchHubPresenceCount(count);
+    }
+  }
+
   bool _markEntranceOnce(String raw) {
     final key = VoiceOfficialJoin.entranceDedupeKey(raw, roomName: _roomMeta.nameTr);
     if (_shownEntranceKeys.contains(key)) return false;
@@ -19,6 +51,20 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   }
 
   void _syncPresenceJoinAnnouncements(List<ChatRoomPresence> merged) {
+    if (!_entrancesArmed) {
+      final nextIds = merged.map((p) => p.id).where((id) => id.isNotEmpty).toSet();
+      _knownPresenceIds
+        ..clear()
+        ..addAll(nextIds);
+      for (final p in merged) {
+        if (p.id.isEmpty) continue;
+        final n = p.displayName.trim().isNotEmpty
+            ? p.displayName.trim()
+            : p.name.trim();
+        if (n.isNotEmpty) _lastKnownPresenceNames[p.id] = n;
+      }
+      return;
+    }
     final previous = _knownPresenceIds;
     final nextIds = merged.map((p) => p.id).where((id) => id.isNotEmpty).toSet();
     if (previous.isEmpty) {
@@ -95,17 +141,30 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       kind: ChatMessageKind.systemJoin,
       user: userRef,
     );
-    final banner = VoiceOfficialJoin.formatEntranceBanner(
-      line,
-      roomName: _roomMeta.nameTr,
-    );
-    if (banner.isEmpty || !_markEntranceOnce(banner)) return;
-    state = state.copyWith(enterBanner: banner);
-    _enterBannerTimer?.cancel();
-    _enterBannerTimer = Timer(const Duration(seconds: 10), () {
-      if (!_sessionActive) return;
-      state = state.copyWith(clearEnterBanner: true);
-    });
+    // Gold / VIP → koltuk altı; normal → yalnızca alt toast (realtime event).
+    if (VoiceOfficialJoin.isEntranceWorthy(
+      content: line,
+      membership: user.membership,
+      chatRole: user.chatRole,
+    )) {
+      final banner = VoiceStaffChatStyle.formatTierEntranceLine(
+        displayName: name,
+        user: userRef,
+        section: 'sesli odaya',
+      );
+      if (banner.isNotEmpty && _markEntranceOnce(banner)) {
+        ref.read(staffEntranceMarqueeProvider.notifier).enqueue(
+              banner,
+              roomName: _roomMeta.nameTr,
+            );
+        state = state.copyWith(enterBanner: banner);
+        _enterBannerTimer?.cancel();
+        _enterBannerTimer = Timer(const Duration(seconds: 5), () {
+          if (!_sessionActive) return;
+          state = state.copyWith(clearEnterBanner: true);
+        });
+      }
+    }
   }
 
   void _showStaffEnterBanner(String name, {ChatRoomUserRef? user}) {
@@ -115,9 +174,10 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       roomName: _roomMeta.nameTr,
     );
     if (!_markEntranceOnce(line)) return;
+    ref.read(staffEntranceMarqueeProvider.notifier).enqueue(line, roomName: _roomMeta.nameTr);
     state = state.copyWith(enterBanner: line);
     _enterBannerTimer?.cancel();
-    _enterBannerTimer = Timer(const Duration(seconds: 10), () {
+    _enterBannerTimer = Timer(const Duration(seconds: 5), () {
       if (!_sessionActive) return;
       state = state.copyWith(clearEnterBanner: true);
     });
@@ -146,15 +206,40 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   }) {
     final previous = state.presence;
     final withSelf = _mergeSelf(incoming);
+
+    // Otoriter kaynaklarda boş liste = gerçekten boş; hayalet kullanıcı tutma.
+    final trustEmpty = source == 'refresh' ||
+        source == 'poll' ||
+        source == 'join' ||
+        source == 'state_snapshot' ||
+        source == 'sse' ||
+        source == 'preload';
+
     if (withSelf.isEmpty && previous.isNotEmpty) {
-      VoiceRoomDebugLog.presenceUpdate(
-        roomId: _roomKey,
-        previousCount: previous.length,
-        incomingCount: 0,
-        mergedCount: previous.length,
-        source: '$source.keep_previous',
-      );
-      return previous;
+      if (!trustEmpty) {
+        VoiceRoomDebugLog.presenceUpdate(
+          roomId: _roomKey,
+          previousCount: previous.length,
+          incomingCount: 0,
+          mergedCount: previous.length,
+          source: '$source.keep_previous',
+        );
+        return previous;
+      }
+      // Boş poll/refresh yanıtı — odadayken hayalet silme / 0 sayım önlenir.
+      if ((source == 'refresh' || source == 'poll' || source == 'preload') &&
+          state.selfInRoom) {
+        VoiceRoomDebugLog.presenceUpdate(
+          roomId: _roomKey,
+          previousCount: previous.length,
+          incomingCount: 0,
+          mergedCount: previous.length,
+          source: '$source.keep_in_room',
+        );
+        return previous;
+      }
+      VoiceEventLog.presenceUpdate(roomId: _roomKey, count: withSelf.length);
+      return withSelf;
     }
     final prevById = <String, ChatRoomPresence>{
       for (final p in previous) p.id: p,
@@ -179,9 +264,9 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
               : (prev.chatRole ?? 'listener'),
           roleSymbol: p.roleSymbol ?? prev.roleSymbol,
           membership: p.membership ?? prev.membership,
-          seatIndex: p.seatIndex ?? prev.seatIndex,
-          isSpeaking: p.isSpeaking || prev.isSpeaking,
-          isMuted: p.isMuted,
+      seatIndex: p.seatIndex ?? prev.seatIndex,
+      isSpeaking: p.isSpeaking,
+      isMuted: p.isMuted,
         ),
       );
     }
@@ -200,7 +285,16 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         source: source,
       );
     }
-    return merged;
+    final deduped = dedupePresencesById(merged);
+    if (deduped.length != merged.length) {
+      VoiceRoomDebugLog.log('presence.dedupe', {
+        'room': _roomKey,
+        'before': merged.length,
+        'after': deduped.length,
+        'source': source,
+      });
+    }
+    return deduped;
   }
 
   void _detectMicChanges(List<ChatRoomPresence> next) {
@@ -220,12 +314,29 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   }
 
   void _patchHubPresenceCount(int count) {
+    if (count > _peakViewerCount) _peakViewerCount = count;
     if (_roomKey.isEmpty) return;
-    ref.read(voiceRoomsPresenceProvider.notifier).patchRoomCount(_roomKey, count);
-    final alt = _roomMeta.slug.trim();
-    if (alt.isNotEmpty && alt != _roomKey) {
-      ref.read(voiceRoomsPresenceProvider.notifier).patchRoomCount(alt, count);
+    state = state.copyWith(hubOnlineCount: count);
+    final patched = <String>{};
+    for (final key in _roomKeyAliases) {
+      final k = key.trim();
+      if (k.isEmpty || patched.contains(k)) continue;
+      patched.add(k);
+      ref.read(voiceRoomsPresenceProvider.notifier).patchRoomCount(k, count);
     }
+  }
+
+  Future<void> _refreshHubOnlineCountFromServer() async {
+    if (_presenceApiKey.isEmpty) return;
+    try {
+      final snapshot = await ref.read(chatRoomRemoteProvider).fetchRoomState(
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+          );
+      if (snapshot.onlineCount != null) {
+        _patchHubPresenceCount(snapshot.onlineCount!);
+      }
+    } catch (_) {}
   }
 
   Future<void> _broadcastStaffEntryIfNeeded() async {
@@ -264,9 +375,11 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         ).canModerate) {
       return;
     }
-    final name = user.displayName?.trim().isNotEmpty == true
-        ? user.displayName!.trim()
-        : user.username;
+    final name = user.display.trim().isNotEmpty
+        ? user.display.trim()
+        : (user.displayName?.trim().isNotEmpty == true
+            ? user.displayName!.trim()
+            : user.username);
     final symbol = self?.roleSymbol?.trim() ?? '';
     try {
       await ref.read(chatRoomRemoteProvider).postEntryAnnouncement(
@@ -293,8 +406,43 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       return;
     }
     VoiceRoomDebugLog.roomJoin(roomId: _roomKey, source: 'presence');
-    try {
-      final token = await ref.read(tokenStorageProvider).readAccess();
+    Object? lastError;
+    for (var attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) {
+        await Future<void>.delayed(Duration(milliseconds: 500 * attempt));
+      }
+      try {
+        await _joinPresenceAttempt();
+        return;
+      } on Object catch (e) {
+        lastError = e;
+        if (attempt < 2 && _isTransientPresenceJoinError(e)) {
+          VoiceRoomDebugLog.log('api.presence.join.retry', {
+            'room': _roomKey,
+            'attempt': attempt + 1,
+            'error': e.toString(),
+          });
+          continue;
+        }
+        break;
+      }
+    }
+    if (lastError != null) {
+      _handlePresenceJoinFailure(lastError);
+    }
+  }
+
+  bool _isTransientPresenceJoinError(Object e) {
+    final msg = ApiException.userMessage(e).toLowerCase();
+    return msg.contains('zaman aşımı') ||
+        msg.contains('timeout') ||
+        msg.contains('sunucu yanıt vermedi') ||
+        msg.contains('bağlantı kurulamadı') ||
+        msg.contains('bağlantınızı kontrol');
+  }
+
+  Future<void> _joinPresenceAttempt() async {
+    final token = await ref.read(tokenStorageProvider).readAccess();
       final hasJwt = token != null && token.isNotEmpty;
       VoiceRoomDebugLog.jwtStatus(hasToken: hasJwt, tokenLength: token?.length);
       ref.read(voiceRoomDiagnosticProvider.notifier).setJwt(hasJwt: hasJwt);
@@ -302,10 +450,18 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       final user = ref.read(authControllerProvider).valueOrNull;
       final nick = _effectiveNickname(user);
       _presenceNickname = nick;
+      final pendingPass = ref
+          .read(pendingRoomPasswordProvider.notifier)
+          .peek(_roomKey);
+      final joinSeat = peekJoinSeatIndexForPrivilegedUser();
       final joined = await ref.read(chatRoomRemoteProvider).joinPresence(
-            _roomKey,
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
             nickname: nick,
+            password: pendingPass,
+            seatIndex: joinSeat,
           );
+      ref.read(pendingRoomPasswordProvider.notifier).clear(_roomKey);
       final merged = _mergeSelf(joined);
       VoiceRoomDebugLog.log('api.presence.join.ok', {
         'count': merged.length,
@@ -321,27 +477,66 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       _knownPresenceIds
         ..clear()
         ..addAll(merged.map((p) => p.id).where((id) => id.isNotEmpty));
+      _entrancesArmed = true;
       ref
           .read(voiceRoomDiagnosticProvider.notifier)
           .setPresence(joined: true, count: merged.length);
-      _patchHubPresenceCount(merged.length);
-      unawaited(_tryAutoPrivilegedSeat());
+      _startPresenceHeartbeat();
+      unawaited(_refreshHubOnlineCountFromServer());
+      unawaited(refreshServerPermissions());
       unawaited(_broadcastStaffEntryIfNeeded());
-    } on Object catch (e) {
+  }
+
+  void _handlePresenceJoinFailure(Object e) {
       VoiceRoomDebugLog.log('api.presence.join.fail', {'error': e.toString()});
       ref.read(voiceRoomDiagnosticProvider.notifier).setPresence(joined: false);
       ref
           .read(voiceRoomDiagnosticProvider.notifier)
           .setError(ApiException.userMessage(e));
       final msg = ApiException.userMessage(e);
-      if (msg.toLowerCase().contains('yasak') ||
+      final lower = msg.toLowerCase();
+      if (lower.contains('şifre') ||
+          lower.contains('sifre') ||
+          lower.contains('password') ||
+          lower.contains('wrong password') ||
+          lower.contains('invalid password') ||
+          (e is ApiException && e.statusCode == 401)) {
+        ref.read(pendingRoomPasswordProvider.notifier).clear(_roomKey);
+        state = state.copyWith(
+          loading: false,
+          error: 'Oda şifresi hatalı. Şifreyi bilmeden giremezsiniz.',
+        );
+        return;
+      }
+      if (lower.contains('yasak') ||
           msg.contains('403') ||
-          msg.toLowerCase().contains('forbidden')) {
+          lower.contains('forbidden')) {
         state = state.copyWith(
           loading: false,
           error: 'Bu odadan yasaklandınız',
         );
         return;
+      }
+      // Oda kısmen çalışıyorsa (optimistic presence) kritik olmayan join
+      // hatalarını kalıcı banner yapma.
+      if (state.selfInRoom || state.presence.isNotEmpty || state.sseConnected) {
+        VoiceRoomDebugLog.log('api.presence.join.soft_fail', {'error': msg});
+        state = state.copyWith(loading: false, clearError: true);
+        return;
+      }
+      if (lower.contains('invalid type') || lower.contains('geçersiz alan')) {
+        state = state.copyWith(loading: false, clearError: true);
+        return;
+      }
+      if (lower.contains('sunucu hatası') ||
+          lower.contains('internal server') ||
+          msg.contains('500')) {
+        // Oda sahibi / katılımcı zaten içerideyse geçici 500 banner gösterme.
+        if (state.selfInRoom || state.presence.isNotEmpty) {
+          state = state.copyWith(loading: false, clearError: true);
+          unawaited(refreshServerPermissions());
+          return;
+        }
       }
       state = state.copyWith(
         loading: false,
@@ -349,26 +544,86 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
             ? 'Listede görünmek için tekrar giriş yapın.'
             : msg,
       );
-    }
   }
 
   Future<void> _leavePresence() async {
     if (_roomKey.isEmpty) return;
     // selfInRoom=true means join was acknowledged by backend; even if the
     // _presenceJoined flag wasn't set yet (race during room switch), still
-    // send DELETE to avoid the user appearing in the old room.
+    // send leave to avoid the user appearing in the old room.
     if (!_presenceJoined && !state.selfInRoom) return;
     _presenceJoined = false;
+    _presenceHeartbeat?.cancel();
+    _presenceHeartbeat = null;
     try {
-      await ref.read(chatRoomRemoteProvider).leavePresence(_roomKey);
+      await ref.read(chatRoomRemoteProvider).leavePresence(
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+          );
     } catch (_) {}
+  }
+
+  void _startPresenceHeartbeat() {
+    _presenceHeartbeat?.cancel();
+    _presenceHeartbeat = Timer.periodic(
+      ChatRoomRemoteDataSource.presenceHeartbeatInterval,
+      (_) {
+        if (!_sessionActive || !_presenceJoined || !state.selfInRoom) return;
+        unawaited(_presenceHeartbeatTick());
+      },
+    );
+  }
+
+  void _removeSelfFromPresenceOptimistic() {
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    if (userId == null || userId.isEmpty) return;
+    final remaining =
+        state.presence.where((p) => p.id != userId).toList(growable: false);
+    if (remaining.length == state.presence.length) return;
+    final hadHub = state.hubOnlineCount != null;
+    final nextCount = hadHub
+        ? (state.hubOnlineCount! - 1).clamp(0, 999999)
+        : remaining.length;
+    state = state.copyWith(
+      presence: remaining,
+      selfInRoom: false,
+      hubOnlineCount: hadHub ? nextCount : null,
+    );
+    if (hadHub) {
+      _patchHubPresenceCount(nextCount);
+    }
+    _knownPresenceIds.remove(userId);
+  }
+
+  Future<void> _leavePresenceWithSeatClear() async {
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    if (userId != null && userId.isNotEmpty) {
+      try {
+        await ref.read(chatRoomRemoteProvider).clearSeat(
+              roomKey: _roomKey,
+              alternateKey: _musicAlternateKey,
+              userId: userId,
+            );
+      } catch (_) {}
+    }
+    await _leavePresence();
   }
 
   Future<void> _presenceHeartbeatTick() async {
     if (_roomKey.isEmpty) return;
+    final last = _lastSseEventAt;
+    if (state.sseConnected &&
+        last != null &&
+        DateTime.now().difference(last) < const Duration(seconds: 45)) {
+      return;
+    }
     try {
+      VoiceEventLog.heartbeat(roomId: _roomKey);
       VoiceRoomDebugLog.log('api.presence.heartbeat', {'room': _roomKey});
-      await ref.read(chatRoomRemoteProvider).presenceHeartbeat(_roomKey);
+      await ref.read(chatRoomRemoteProvider).presenceHeartbeat(
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+          );
     } catch (e) {
       VoiceRoomDebugLog.log('api.presence.heartbeat.fail', {
         'error': e.toString(),
@@ -388,17 +643,27 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       }
     }
     if (raw is! List) return const [];
-    return raw
-        .whereType<Map>()
-        .map((e) => ChatRoomPresence.fromJson(Map<String, dynamic>.from(e)))
-        .where((u) => u.id.isNotEmpty)
-        .toList();
+    return dedupePresencesById(
+      raw
+          .whereType<Map>()
+          .map((e) {
+            final map = Map<String, dynamic>.from(e);
+            final canonical = canonicalPresenceIdFromJson(map);
+            if (canonical.isNotEmpty && map['id']?.toString() != canonical) {
+              map['id'] = canonical;
+            }
+            return ChatRoomPresence.fromJson(map);
+          })
+          .where((u) => u.id.isNotEmpty)
+          .toList(),
+    );
   }
 
   void _scanEntrancesFromMessages(
     List<ChatRoomMessage> previous,
     List<ChatRoomMessage> merged,
   ) {
+    if (!_entrancesArmed || previous.isEmpty) return;
     final prevIds = previous.map((m) => m.id).toSet();
     for (final m in merged) {
       if (prevIds.contains(m.id)) continue;
@@ -417,8 +682,20 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       )) {
         continue;
       }
-      if (_markEntranceOnce(m.content)) {
-        _showEnterBanner(m.content);
+      final displayName = m.user?.displayName.trim().isNotEmpty == true
+          ? m.user!.displayName.trim()
+          : m.content.trim();
+      final banner = m.user != null
+          ? VoiceStaffChatStyle.formatTierEntranceLine(
+              displayName: displayName,
+              user: m.user,
+            )
+          : VoiceOfficialJoin.formatEntranceBanner(
+              m.content,
+              roomName: _roomMeta.nameTr,
+            );
+      if (banner.isNotEmpty && _markEntranceOnce(banner)) {
+        _pushEntranceBanner(banner);
       }
     }
   }
@@ -428,12 +705,56 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       raw,
       roomName: _roomMeta.nameTr,
     );
-    if (formatted.isEmpty) return;
-    state = state.copyWith(enterBanner: formatted);
+    if (formatted.isEmpty || !_markEntranceOnce(formatted)) return;
+    _pushEntranceBanner(formatted);
+  }
+
+  void _pushEntranceBanner(String banner) {
+    ref.read(staffEntranceMarqueeProvider.notifier).enqueue(
+          banner,
+          roomName: _roomMeta.nameTr,
+        );
+    state = state.copyWith(enterBanner: banner);
     _enterBannerTimer?.cancel();
-    _enterBannerTimer = Timer(const Duration(seconds: 10), () {
+    _enterBannerTimer = Timer(const Duration(seconds: 5), () {
+      if (!_sessionActive) return;
       state = state.copyWith(clearEnterBanner: true);
     });
+  }
+
+  /// SSE `messages` — `[SYSTEM_JOIN]` / `[SYSTEM_VIP_JOIN:…]` giriş şeridi.
+  void _handleSystemJoinEntrance(ChatRoomMessage msg) {
+    final content = msg.content.trim();
+    if (content.isEmpty) return;
+    final user = msg.user;
+    final displayName = user?.displayName.trim().isNotEmpty == true
+        ? user!.displayName.trim()
+        : content;
+
+    if (VoiceStaffChatStyle.isStaffEntry(content: content, user: user)) {
+      _showStaffEnterBanner(displayName, user: user);
+      return;
+    }
+
+    if (!VoiceOfficialJoin.isEntranceWorthy(
+      content: content,
+      membership: user?.membership,
+      chatRole: user?.chatRole,
+    )) {
+      return;
+    }
+
+    final banner = user != null
+        ? VoiceStaffChatStyle.formatTierEntranceLine(
+            displayName: displayName,
+            user: user,
+          )
+        : VoiceOfficialJoin.formatEntranceBanner(
+            content,
+            roomName: _roomMeta.nameTr,
+          );
+    if (banner.isEmpty || !_markEntranceOnce(banner)) return;
+    _pushEntranceBanner(banner);
   }
 
   ChatRoomPresence? _resolvePresence(String target) {
@@ -448,5 +769,31 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       if (keys.any((key) => key == raw || key.contains(raw))) return user;
     }
     return null;
+  }
+
+  void _setPresenceMuted(String userId, bool muted) {
+    if (userId.isEmpty) return;
+    var changed = false;
+    final updated = state.presence.map((p) {
+      if (p.id != userId) return p;
+      if (p.isMuted == muted) return p;
+      changed = true;
+      return ChatRoomPresence(
+        id: p.id,
+        name: p.name,
+        nickname: p.nickname,
+        image: p.image,
+        chatRole: p.chatRole,
+        roleSymbol: p.roleSymbol,
+        membership: p.membership,
+        seatIndex: p.seatIndex,
+        isSpeaking: muted ? false : p.isSpeaking,
+        isMuted: muted,
+        micOn: muted ? false : p.micOn,
+      );
+    }).toList(growable: false);
+    if (changed) {
+      state = state.copyWith(presence: updated);
+    }
   }
 }

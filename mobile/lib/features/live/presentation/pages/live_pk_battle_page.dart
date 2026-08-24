@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
-import '../../../agora/presentation/agora_room_manager.dart';
+import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../voice_hub/domain/pk/pk_battle_mode.dart';
 import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/domain/pk/pk_battle_state.dart';
@@ -22,10 +22,16 @@ import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
+import '../../../gifts/presentation/sync/gift_event_listener.dart';
+import '../../../gifts/presentation/sync/gift_session_controller.dart';
+import '../../../gifts/presentation/sync/gift_session_state.dart';
+import '../../../gifts/presentation/engine/gift_engine_overlay.dart';
+import '../../../gifts/presentation/engine/gift_engine_seat_effects_overlay.dart';
+import '../../../gifts/presentation/engine/gift_feed_panel.dart';
+import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
 import '../providers/pk_room_providers.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import '../widgets/broadcast_room/live_pk_score_bar.dart';
-import '../widgets/premium_2026/live_gift_animation_stack.dart';
 
 /// Canlı yayın split-screen PK — sol kendi yayın, sağ rakip, jeton skorları.
 class LivePkBattlePage extends ConsumerStatefulWidget {
@@ -43,9 +49,9 @@ class LivePkBattlePage extends ConsumerStatefulWidget {
 }
 
 class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
-  final _agora = AgoraRoomManager();
+  final _trtc = TrtcRoomManager();
   var _lastGiftSideLeft = true;
-  var _agoraReady = false;
+  var _trtcReady = false;
   Timer? _pkPollTimer;
   String? _unifiedMatchId;
 
@@ -61,7 +67,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final streamId = _streamId;
     if (streamId == null || streamId.isEmpty) return;
 
-    await _initAgoraPreview();
+    await _initTrtcPreview();
 
     final remote = ref.read(pkBattleRemoteProvider.notifier);
     final unified = await ref.read(pkRoomRemoteProvider).activeForStream(streamId);
@@ -72,18 +78,6 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     } else {
       await remote.loadStreamBattle(streamId);
     }
-    remote.connectSocket(streamId: streamId, battleId: ref.read(pkBattleRemoteProvider)?.id);
-
-    ref.read(liveGiftSocketBridgeProvider).connect(
-      streamId: streamId,
-      onEvent: _onGift,
-      onPkBattle: (battle) {
-        final parsed = PkBattleRemote.fromJson(battle);
-        if (parsed.id.isEmpty) return;
-        ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(parsed);
-        ref.read(pkBattleProvider.notifier).applyRemoteBattle(parsed);
-      },
-    );
 
     ref.read(liveGiftControllerProvider).attach(
       streamId: streamId,
@@ -93,18 +87,17 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     _pollPk();
   }
 
-  Future<void> _initAgoraPreview() async {
-    final agora = widget.session.agora;
-    if (agora == null || !widget.session.isHost) return;
+  Future<void> _initTrtcPreview() async {
+    if (!widget.session.isHost) return;
     try {
-      await _agora.startPreviewOnly(appId: agora.appId);
-      if (mounted) setState(() => _agoraReady = true);
+      await _trtc.startPreviewOnly();
+      if (mounted) setState(() => _trtcReady = true);
     } catch (_) {}
   }
 
   void _pollPk() {
     _pkPollTimer?.cancel();
-    _pkPollTimer = Timer.periodic(const Duration(seconds: 3), (t) async {
+    _pkPollTimer = Timer.periodic(const Duration(seconds: 8), (t) async {
       if (!mounted) {
         t.cancel();
         return;
@@ -122,16 +115,13 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final toLeft = challengerId == null || event.senderId == challengerId;
     _lastGiftSideLeft = toLeft;
     ref.read(pkBattleProvider.notifier).applyGift(event, toLeft: toLeft);
-    ref.read(liveGiftRealtimeProvider).publishLocal(event);
   }
 
   @override
   void dispose() {
     _pkPollTimer?.cancel();
     ref.read(liveGiftControllerProvider).detach();
-    ref.read(liveGiftSocketBridgeProvider).disconnect();
-    ref.read(pkBattleRemoteProvider.notifier).disconnectSocket();
-    unawaited(_agora.dispose());
+    _trtc.dispose();
     super.dispose();
   }
 
@@ -193,12 +183,24 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   @override
   Widget build(BuildContext context) {
     final remote = ref.watch(pkBattleRemoteProvider);
+    final unifiedId = _unifiedMatchId;
+    final unifiedMatch = unifiedId != null && unifiedId.isNotEmpty
+        ? ref.watch(pkRoomProvider(unifiedId))
+        : null;
     final pk = ref.watch(pkBattleProvider);
-    final giftCtrl = ref.watch(liveGiftControllerProvider);
+    final streamId = _streamId ?? '';
+    final giftSession = streamId.isNotEmpty
+        ? ref.watch(giftSessionProvider(streamId))
+        : const GiftSessionState();
+    final activeGift = giftSession.activeAnimation;
 
-    final leftScore = remote?.challengerScore ?? pk.left.total;
-    final rightScore = remote?.opponentScore ?? pk.right.total;
-    final status = remote?.status ?? (pk.isActive ? 'active' : 'pending');
+    final leftScore = unifiedMatch?.leftScore ??
+        remote?.challengerScore ??
+        pk.left.total;
+    final rightScore = unifiedMatch?.rightScore ??
+        remote?.opponentScore ??
+        pk.right.total;
+    final status = unifiedMatch?.status ?? remote?.status ?? (pk.isActive ? 'active' : 'pending');
     final isHost = widget.session.isHost;
     final leftName = widget.session.streamerName ?? 'Sen';
     final rightName = widget.opponentStream?.streamerName ??
@@ -226,7 +228,13 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final rightWon = pkState.winner == PkBattleWinner.right;
     final showLoserFx = pkState.isFinished && pkState.winner != PkBattleWinner.tie;
 
-    return Scaffold(
+    return GiftEventListener(
+      sessionKey: streamId,
+      isHost: widget.session.isHost,
+      useVoiceRealtime: false,
+      useLiveRealtime: streamId.isNotEmpty,
+      liveStreamId: streamId.isEmpty ? null : streamId,
+      child: Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         fit: StackFit.expand,
@@ -296,7 +304,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                             accent: Colors.pinkAccent,
                             thumbnailUrl: widget.session.avatarUrl ??
                                 widget.session.coverImageUrl,
-                            agora: _agoraReady ? _agora : null,
+                            trtc: _trtcReady ? _trtc : null,
                             isLocal: true,
                           ),
                         ),
@@ -306,10 +314,6 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                             label: rightName,
                             accent: Colors.cyanAccent,
                             thumbnailUrl: widget.opponentStream?.thumbnailUrl,
-                            agora: _agoraReady && _agora.remoteUid != null
-                                ? _agora
-                                : null,
-                            remoteUid: _agora.remoteUid,
                             isLocal: false,
                           ),
                         ),
@@ -360,16 +364,19 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
             token: pk.reactionBurst,
             toLeft: _lastGiftSideLeft,
           ),
+          GiftEngineSeatEffectsOverlay(event: activeGift),
           Positioned.fill(
             child: IgnorePointer(
-              child: LiveGiftAnimationStack(
-                events: [
-                  if (giftCtrl.activeFullscreen != null) giftCtrl.activeFullscreen!,
-                  ...giftCtrl.fullscreenQueue,
-                ],
+              child: GiftEngineOverlay(
+                event: activeGift,
+                stage: GiftStageContext.liveStream,
+                onFinished: (id) => ref
+                    .read(giftSessionProvider(streamId).notifier)
+                    .dequeueAnimation(id),
               ),
             ),
           ),
+          if (streamId.isNotEmpty) GiftFeedPanel(sessionKey: streamId),
           PkWinnerCelebration(
             state: pkState,
             onRestart: () {
@@ -380,6 +387,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -389,25 +397,21 @@ class _PkVideoPane extends StatelessWidget {
     required this.label,
     required this.accent,
     this.thumbnailUrl,
-    this.agora,
-    this.remoteUid,
+    this.trtc,
     this.isLocal = false,
   });
 
   final String label;
   final Color accent;
   final String? thumbnailUrl;
-  final AgoraRoomManager? agora;
-  final int? remoteUid;
+  final TrtcRoomManager? trtc;
   final bool isLocal;
 
   @override
   Widget build(BuildContext context) {
     Widget videoChild;
-    if (isLocal && agora?.engine != null) {
-      videoChild = AgoraLocalVideoView(manager: agora!);
-    } else if (!isLocal && agora != null && remoteUid != null && remoteUid! > 0) {
-      videoChild = AgoraRemoteVideoView(manager: agora!, uid: remoteUid!);
+    if (isLocal && trtc != null) {
+      videoChild = TrtcLocalVideoView(manager: trtc!);
     } else if (thumbnailUrl != null && thumbnailUrl!.isNotEmpty) {
       videoChild = CanlifalNetworkImage(
         url: thumbnailUrl!,

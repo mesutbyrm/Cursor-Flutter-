@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../live/domain/pk/pk_status_helper.dart';
+
 /// Sunucu PK durumu — web ve Flutter ortak sözleşme.
 class PkBattleRemote extends Equatable {
   const PkBattleRemote({
@@ -18,6 +20,8 @@ class PkBattleRemote extends Equatable {
     this.opponentLiveStreamId,
     this.challengerId,
     this.opponentId,
+    this.targetUserId,
+    this.guestUserId,
     this.winnerId,
     this.challenger,
     this.opponent,
@@ -40,13 +44,15 @@ class PkBattleRemote extends Equatable {
   final String? opponentLiveStreamId;
   final String? challengerId;
   final String? opponentId;
+  final String? targetUserId;
+  final String? guestUserId;
   final String? winnerId;
   final PkParticipantRemote? challenger;
   final PkParticipantRemote? opponent;
   final PkResultRemote? result;
   final List<PkGiftRemote> recentGifts;
 
-  bool get isPending => status == 'pending';
+  bool get isPending => isPkInvitePendingStatus(status);
   bool get isActive => status == 'active';
   bool get isEnded =>
       status == 'ended' ||
@@ -55,13 +61,35 @@ class PkBattleRemote extends Equatable {
       status == 'completed' ||
       status == 'canceled';
 
+  /// API yanıtında `inviteId` ayrı gelebilir — respond path için.
+  String get effectiveId {
+    final inv = inviteId?.trim() ?? '';
+    if (inv.isNotEmpty) return inv;
+    return id.trim();
+  }
+
   factory PkBattleRemote.fromJson(Map<String, dynamic> json) {
     final giftsRaw = json['recentGifts'];
+    final invite = json['inviteId']?.toString().trim();
+    // API dokümanı §8: yanıtta `pkBattleId` birincil kimlik olabilir.
+    final rawId = (json['id'] ??
+            json['pkBattleId'] ??
+            json['battleId'] ??
+            json['inviteId'])
+        ?.toString()
+        .trim() ??
+        '';
+    final id = rawId.isNotEmpty ? rawId : (invite ?? '');
+    var status = json['status']?.toString() ?? 'pending';
+    // Sunucu accept sonrası "accepted" dönebilir — savaş aktif sayılır.
+    if (status == 'accepted' || status == 'accepted_invite') {
+      status = 'active';
+    }
     return PkBattleRemote(
-      id: (json['id'] ?? json['battleId'])?.toString() ?? '',
-      inviteId: json['inviteId']?.toString(),
+      id: id,
+      inviteId: invite?.isNotEmpty == true ? invite : null,
       battleType: json['battleType']?.toString() ?? 'voice_room',
-      status: json['status']?.toString() ?? 'pending',
+      status: status,
       challengerScore: _int(json['challengerScore'] ?? json['leftScore']),
       opponentScore: _int(json['opponentScore'] ?? json['rightScore']),
       secondsLeft: _int(json['secondsLeft'], fallback: 300),
@@ -70,12 +98,21 @@ class PkBattleRemote extends Equatable {
         fallback: 180,
       ),
       targetScore: _int(json['targetScore'], fallback: 150000),
-      voiceRoomId: json['voiceRoomId']?.toString(),
-      opponentVoiceRoomId: json['opponentVoiceRoomId']?.toString(),
+      voiceRoomId: (json['voiceRoomId'] ??
+              json['challengerRoomId'] ??
+              json['roomId'])
+          ?.toString(),
+      opponentVoiceRoomId: (json['opponentVoiceRoomId'] ??
+              json['targetRoomId'] ??
+              json['opponentRoomId'] ??
+              json['guestRoomId'])
+          ?.toString(),
       liveStreamId: json['liveStreamId']?.toString(),
       opponentLiveStreamId: json['opponentLiveStreamId']?.toString(),
-      challengerId: json['challengerId']?.toString(),
-      opponentId: json['opponentId']?.toString(),
+      challengerId: (json['challengerId'] ?? json['hostUserId'])?.toString(),
+      opponentId: (json['opponentId'] ?? json['opponentUserId'])?.toString(),
+      targetUserId: json['targetUserId']?.toString(),
+      guestUserId: json['guestUserId']?.toString(),
       winnerId: json['winnerId']?.toString(),
       challenger: json['challenger'] is Map
           ? PkParticipantRemote.fromJson(

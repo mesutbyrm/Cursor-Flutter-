@@ -8,6 +8,7 @@ import '../providers/fortune_access_providers.dart';
 enum FortuneAccessChoice {
   useAdCredit,
   payJeton,
+  payCfc,
   watchAdForCredit,
   cancel,
 }
@@ -45,7 +46,7 @@ Future<FortuneAccessChoice?> showFortuneAccessSheet({
               )
             else
               Text(
-                'Fal bakmak için $cost jeton veya reklam izleyebilirsin.',
+                'Fal bakmak için $cost jeton/CFC veya reklam izleyebilirsin.',
                 style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant),
               ),
             const SizedBox(height: 16),
@@ -59,27 +60,51 @@ Future<FortuneAccessChoice?> showFortuneAccessSheet({
               FilledButton.icon(
                 onPressed: () => Navigator.pop(ctx, FortuneAccessChoice.useAdCredit),
                 icon: const Icon(Icons.card_giftcard_rounded),
-                label: const Text('Reklam İzleyerek Ücretsiz Fal Bak'),
+                label: Text('Fal Hakkını Kullan ($cost)'),
               ),
               const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: () => Navigator.pop(ctx, FortuneAccessChoice.payJeton),
-                icon: const Icon(Icons.toll_rounded),
-                label: Text('$cost Jeton ile Hemen Bak'),
-              ),
+              if (state.hasEnoughJeton)
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.pop(ctx, FortuneAccessChoice.payJeton),
+                  icon: const Icon(Icons.toll_rounded),
+                  label: Text('$cost Jeton ile Hemen Bak'),
+                ),
+              if (state.hasEnoughCfc) ...[
+                if (state.hasEnoughJeton) const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.pop(ctx, FortuneAccessChoice.payCfc),
+                  icon: const Icon(Icons.diamond_rounded),
+                  label: Text('$cost CFC ile Hemen Bak'),
+                ),
+              ],
             ] else ...[
-              FilledButton.icon(
-                onPressed: () => Navigator.pop(ctx, FortuneAccessChoice.payJeton),
-                icon: const Icon(Icons.toll_rounded),
-                label: Text('$cost Jeton ile Hemen Bak'),
-              ),
+              if (state.hasEnoughJeton)
+                FilledButton.icon(
+                  onPressed: () => Navigator.pop(ctx, FortuneAccessChoice.payJeton),
+                  icon: const Icon(Icons.toll_rounded),
+                  label: Text('$cost Jeton ile Hemen Bak'),
+                ),
+              if (state.hasEnoughCfc) ...[
+                if (state.hasEnoughJeton) const SizedBox(height: 10),
+                FilledButton.icon(
+                  onPressed: () => Navigator.pop(ctx, FortuneAccessChoice.payCfc),
+                  icon: const Icon(Icons.diamond_rounded),
+                  label: Text('$cost CFC ile Hemen Bak'),
+                ),
+              ],
+              if (!state.hasEnoughJeton && !state.hasEnoughCfc)
+                FilledButton.icon(
+                  onPressed: () => Navigator.pop(ctx, FortuneAccessChoice.payJeton),
+                  icon: const Icon(Icons.toll_rounded),
+                  label: Text('$cost Jeton ile Hemen Bak'),
+                ),
               if (state.config.adsEnabled && state.canWatchMoreAds) ...[
                 const SizedBox(height: 10),
                 OutlinedButton.icon(
                   onPressed: () =>
                       Navigator.pop(ctx, FortuneAccessChoice.watchAdForCredit),
                   icon: const Icon(Icons.play_circle_outline_rounded),
-                  label: const Text('Reklam İzle ve 1 Fal Hakkı Kazan'),
+                  label: const Text('Reklam İzle (+10 CFC) ve Fal Aç'),
                 ),
               ],
             ],
@@ -135,6 +160,15 @@ Future<FortuneAccessChoice?> showInsufficientJetonSheet({
               },
               icon: const Icon(Icons.shopping_bag_outlined),
               label: const Text('Jeton Satın Al'),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                context.push('/profile/growth');
+              },
+              icon: const Icon(Icons.task_alt_rounded),
+              label: const Text('Görevler'),
             ),
             const SizedBox(height: 8),
             TextButton(
