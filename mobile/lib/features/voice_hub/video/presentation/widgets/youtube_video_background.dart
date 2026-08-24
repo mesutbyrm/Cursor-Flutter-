@@ -47,6 +47,7 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
   var _disposed = false;
   var _visualOnlyActive = false;
   Timer? _endingResetTimer;
+  Future<void>? _ensureWebViewFuture;
 
   @override
   void dispose() {
@@ -61,6 +62,24 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
 
   Future<void> _ensureWebView() async {
     if (_webView != null) return;
+    final pending = _ensureWebViewFuture;
+    if (pending != null) {
+      await pending;
+      return;
+    }
+    final future = _createWebView();
+    _ensureWebViewFuture = future;
+    try {
+      await future;
+    } finally {
+      if (identical(_ensureWebViewFuture, future)) {
+        _ensureWebViewFuture = null;
+      }
+    }
+  }
+
+  Future<void> _createWebView() async {
+    if (_webView != null || _disposed) return;
 
     late final PlatformWebViewControllerCreationParams params;
     if (WebViewPlatform.instance is WebKitWebViewPlatform) {

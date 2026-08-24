@@ -5,6 +5,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../../domain/pk/pk_duration_options.dart';
 import '../../domain/pk/pk_guest_user_resolver.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
@@ -38,7 +39,10 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _syncRoomPk());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(ref.read(voiceRoomsListNotifierProvider.notifier).refresh());
+      _syncRoomPk();
+    });
   }
 
   Future<void> _syncRoomPk() async {

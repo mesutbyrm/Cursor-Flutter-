@@ -27,16 +27,18 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
       loading: true,
       presence: const [],
       seatSlots: const [],
-      clearOwnerId: true,
+      ownerId: _roomMeta.ownerId,
       clearRoomTrtc: true,
       backendSyncReady: false,
     );
     _seedOptimisticSelfPresence();
 
     try {
-      await _joinPresence();
+      await Future.wait<void>([
+        _joinPresence(),
+        refreshServerPermissions(),
+      ], eagerError: false);
       await _ensureRoomsCatalogForCanonicalKey();
-      await refreshServerPermissions();
       _startSse();
       _schedulePoll(sseConnected: false, musicActive: false);
 
@@ -141,6 +143,10 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
       selfInRoom: true,
       loading: false,
     );
+    final joinSeat = peekJoinSeatIndexForPrivilegedUser();
+    if (joinSeat != null) {
+      _applyOptimisticSeat(userId: user.id, seatIndex: joinSeat);
+    }
   }
 
   Future<void> _loadInitialMessages() async {

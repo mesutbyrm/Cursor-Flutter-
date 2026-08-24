@@ -42,39 +42,39 @@ class VoiceRoomMentionSuggestions extends StatelessWidget {
           ).clamp(52, 220),
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 4),
-          itemCount: users.length,
-          separatorBuilder: (_, _) => Divider(
-            height: 1,
-            color: Colors.white.withValues(alpha: 0.08),
+            itemCount: users.length,
+            separatorBuilder: (_, _) => Divider(
+              height: 1,
+              color: Colors.white.withValues(alpha: 0.08),
+            ),
+            itemBuilder: (context, i) {
+              final user = users[i];
+              final handle = VoiceRoomMention.handleFor(user);
+              return ListTile(
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                leading: UserAvatar(url: user.image, radius: 16),
+                title: Text(
+                  user.displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+                subtitle: Text(
+                  '@$handle',
+                  style: TextStyle(
+                    color: VoiceRoomTokens.neonBlue.withValues(alpha: 0.9),
+                    fontSize: 11,
+                  ),
+                ),
+                onTap: () => onPick(user),
+              );
+            },
           ),
-          itemBuilder: (context, i) {
-            final user = users[i];
-            final handle = VoiceRoomMention.handleFor(user);
-            return ListTile(
-              dense: true,
-              visualDensity: VisualDensity.compact,
-              leading: UserAvatar(url: user.image, radius: 16),
-              title: Text(
-                user.displayName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-              subtitle: Text(
-                '@$handle',
-                style: TextStyle(
-                  color: VoiceRoomTokens.neonBlue.withValues(alpha: 0.9),
-                  fontSize: 11,
-                ),
-              ),
-              onTap: () => onPick(user),
-            );
-          },
-        ),
         ),
       ),
     );

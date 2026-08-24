@@ -224,18 +224,31 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
 
   /// Yabancı oda PK olaylarını global state'e yazma; davet hedefi istisnası.
   bool _shouldIngestBattle(PkBattleRemote battle) {
-    final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
-    if (activeKey.isEmpty) return true;
-
-    final room = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
-    if (room == null) return true;
-    if (pkBattleBelongsToRoom(battle, room)) return true;
-
-    if (!battle.isPending) return false;
-
     final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null) return false;
-    return isPkInviteTarget(battle, room, userId: user.id);
+
+    final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+    if (activeKey.isNotEmpty) {
+      final room = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
+      if (room != null) {
+        if (pkBattleBelongsToRoom(battle, room)) return true;
+        if (battle.isPending &&
+            user != null &&
+            isPkInviteTarget(battle, room, userId: user.id)) {
+          return true;
+        }
+      }
+    }
+
+    if (battle.isPending && user != null) {
+      for (final room in ref.read(myOwnedVoiceRoomsProvider)) {
+        if (isPkInviteTarget(battle, room, userId: user.id)) return true;
+        if (pkBattleBelongsToRoom(battle, room)) return true;
+      }
+    }
+
+    if (activeKey.isEmpty) return true;
+    if (!battle.isPending) return false;
+    return false;
   }
 
   void _apply(PkBattleRemote battle, String event) {

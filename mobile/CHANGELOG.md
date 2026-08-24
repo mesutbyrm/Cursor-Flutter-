@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.353+391 (2026-08-24) — Koltuk, müzik donması, PK daveti
+
+- **Koltuk:** Oda girişinde ownerId korunur; yetkili kullanıcıya anında optimistik koltuk; join + izinler paralel
+- **Müzik donması:** Videoda ikinci iframe kapatıldı; WebView mutex; oynatma 80–500ms gecikmeli
+- **PK daveti:** Sahip olunan odalar her zaman poll edilir (başka odadayken de); slug=username sahiplik
+- **PK liste:** Sahibi belli odalar displayOnline=0 olsa da listelenir; davet sayfasında oda listesi yenilenir
+
 ## 1.0.352+390 (2026-08-24) — Sesli oda müzik isteği + video kapat
 
 - **Müzik isteği:** Anında «isteniyor…» flash; `sending` kilidi kaldırıldı; video WebView 400ms gecikmeyle açılır (donma önleme)

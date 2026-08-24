@@ -7,6 +7,8 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
   void _syncRoomSongBloc() {
     final key = _live._roomKey;
     if (key.isEmpty) return;
+    // Videolu modda YoutubeVideoBackground tek oynatıcı — ikinci iframe açma (ANR).
+    if (_live.state.dj.nowPlaying?.isVideoRequest == true) return;
     _live._roomSongBlocSyncTimer?.cancel();
     _live._roomSongBlocSyncTimer = Timer(const Duration(milliseconds: 350), () {
       if (_live._roomKey.isEmpty) return;

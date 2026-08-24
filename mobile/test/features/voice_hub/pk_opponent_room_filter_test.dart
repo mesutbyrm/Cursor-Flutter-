@@ -35,12 +35,29 @@ void main() {
     onlineCount: 2,
   );
 
-  test('filterPkEligibleOpponentRooms hides empty and self rooms', () {
+  test('filterPkEligibleOpponentRooms hides self and ownerless empty rooms', () {
     final out = filterPkEligibleOpponentRooms(
       [self, eligible, emptyRoom, eligibleNoOwner],
       excludeRoomKey: 'room-a',
     );
-    expect(out.map((r) => r.id).toList(), ['room-b', 'room-d']);
+    expect(out.map((r) => r.id).toList(), ['room-b', 'room-d', 'room-c']);
+  });
+
+  test('isUserOwnedVoiceRoom matches ownerId or slug username', () {
+    const slugOwned = VoiceRoomEntity(
+      id: 'room-z',
+      slug: 'myuser',
+      nameTr: 'Slug Oda',
+      onlineCount: 1,
+    );
+    expect(
+      isUserOwnedVoiceRoom(slugOwned, userId: 'uid-1', username: 'myuser'),
+      isTrue,
+    );
+    expect(
+      isUserOwnedVoiceRoom(eligible, userId: 'owner-b', username: 'other'),
+      isTrue,
+    );
   });
 
   test('isPkInviteTarget matches opponent user id', () {

@@ -8,7 +8,9 @@ import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../data/datasources/pk_battle_remote_datasource.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
+import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_room_session_registry.dart';
@@ -101,6 +103,30 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     }
   }
 
+  Future<void> _pollOwnedRooms(
+    String userId,
+    String? username,
+    String activeKey,
+    PkBattleRemoteDataSource api,
+  ) async {
+    final owned = ref.read(myOwnedVoiceRoomsProvider);
+    final seen = <String>{};
+    for (final room in owned) {
+      final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+      if (key.isEmpty || !seen.add(key)) continue;
+      if (key == activeKey) continue;
+      final battle = await api.fetchRoomBattle(
+        key,
+        alternateRoomId: room.slug != key ? room.slug : null,
+      );
+      if (battle != null && !battle.isEnded) {
+        ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
+        _onBattleUpdate(battle);
+        if (battle.isPending || battle.isActive) return;
+      }
+    }
+  }
+
   Future<void> _pollPendingInvites() async {
     if (_showing || !mounted) return;
     final user = ref.read(authControllerProvider).valueOrNull;
@@ -132,25 +158,8 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         }
       }
 
-      // SSE bağlıyken yalnızca global davet listesi yedeklenir; oda poll atlanır.
-      if (inRoomSse) return;
-
-      final rooms = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
-      for (final room in rooms) {
-        if ((room.ownerId?.trim() ?? '') != user.id) continue;
-        final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-        if (key.isEmpty) continue;
-        if (inRoomSse && key == activeKey) continue;
-        final battle = await api.fetchRoomBattle(
-          key,
-          alternateRoomId: room.slug != key ? room.slug : null,
-        );
-        if (battle != null && !battle.isEnded) {
-          ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
-          _onBattleUpdate(battle);
-          if (battle.isPending || battle.isActive) return;
-        }
-      }
+      // Sahip olunan tüm odalar — başka odadayken SSE kaçırsa bile yakala.
+      await _pollOwnedRooms(user.id, user.username, activeKey, api);
     } catch (_) {}
   }
 

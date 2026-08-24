@@ -18,9 +18,23 @@ bool isPkEligibleOpponentRoom(
   final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
   if (key.isEmpty) return false;
   if (excludeRoomKey.isNotEmpty && key == excludeRoomKey) return false;
-  if (room.displayOnline <= 0) return false;
-  // ownerId boş olsa bile davet anında presence'tan çözülür.
+  // displayOnline gecikse bile sahibi belli odalar listelensin.
+  if (room.displayOnline <= 0 && (room.ownerId?.trim().isEmpty ?? true)) {
+    return false;
+  }
   return true;
+}
+
+/// Oda sahibi — ownerId veya slug = kullanıcı adı.
+bool isUserOwnedVoiceRoom(
+  VoiceRoomEntity room, {
+  required String userId,
+  String? username,
+}) {
+  final oid = room.ownerId?.trim() ?? '';
+  if (oid.isNotEmpty && oid == userId) return true;
+  final uname = username?.trim().toLowerCase() ?? '';
+  return uname.isNotEmpty && room.slug.trim().toLowerCase() == uname;
 }
 
 bool isPkChallengerRoom(PkBattleRemote battle, VoiceRoomEntity room) {
@@ -101,6 +115,7 @@ VoiceRoomEntity? pickPkInviteTargetRoom({
   required String userId,
   required List<VoiceRoomEntity> rooms,
   VoiceRoomEntity? activeRoom,
+  String? username,
 }) {
   if (userId.isEmpty || !battle.isPending) return null;
 
@@ -110,7 +125,13 @@ VoiceRoomEntity? pickPkInviteTargetRoom({
   }
 
   final owned = rooms
-      .where((r) => (r.ownerId?.trim() ?? '') == userId)
+      .where(
+        (r) => isUserOwnedVoiceRoom(
+          r,
+          userId: userId,
+          username: username,
+        ),
+      )
       .toList(growable: false);
 
   final candidates = <VoiceRoomEntity>[

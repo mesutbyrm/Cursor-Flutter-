@@ -56,7 +56,7 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
   }) {
     // Provider güncellemesi sheet/pop animasyonu sırasında gelirse oda ANR yapar.
     unawaited(
-      Future<void>.microtask(() {
+      Future<void>.microtask(() async {
         if (!_sessionActive || _roomKey.isEmpty) return;
         _markLocalMusicRequestGrace();
         ref
@@ -66,6 +66,9 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
         ref.read(voiceRoomUiProvider.notifier).ensureMusicAudible();
         _commitDjUi(dj);
         if (!shouldPlay) return;
+        // Oda UI çizimi bitsin, sonra WebView soğuk başlatma.
+        await Future<void>.delayed(const Duration(milliseconds: 80));
+        if (!_sessionActive || _roomKey.isEmpty) return;
         unawaited(_startDjPlaybackNonBlocking(dj, preferVideo: withVideo));
       }),
     );
@@ -80,10 +83,8 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
 
     final isVideo = preferVideo || dj.nowPlaying?.isVideoRequest == true;
     if (isVideo) {
-      // WebView ilk kurulumu UI thread'i kilitlemesin — sheet/oda çizimi bitsin.
-      await Future<void>.delayed(const Duration(milliseconds: 400));
+      await Future<void>.delayed(const Duration(milliseconds: 500));
       if (!_sessionActive || _roomKey.isEmpty) return;
-      _syncRoomVideo(dj);
     }
 
     if (!_sessionActive) return;

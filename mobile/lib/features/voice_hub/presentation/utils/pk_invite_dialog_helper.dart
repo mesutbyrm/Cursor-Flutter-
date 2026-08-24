@@ -30,11 +30,13 @@ VoiceRoomEntity? resolvePkInviteTargetRoom(
     activeRoom = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
   }
   final rooms = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
+  final user = ref.read(authControllerProvider).valueOrNull;
   return pickPkInviteTargetRoom(
     battle: battle,
     userId: userId,
     rooms: rooms,
     activeRoom: activeRoom,
+    username: user?.username,
   );
 }
 

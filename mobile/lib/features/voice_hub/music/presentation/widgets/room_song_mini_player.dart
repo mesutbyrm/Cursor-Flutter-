@@ -76,6 +76,13 @@ class _RoomSongMiniPlayerState extends State<RoomSongMiniPlayer> {
       _yt = null;
       return;
     }
+    if (widget.hidden && song.isVideoRequest) {
+      // Arka plan WebView zaten çalıyor — gizli ikinci iframe açma.
+      _boundVideoId = null;
+      await _yt?.close();
+      _yt = null;
+      return;
+    }
     if (!song.isVideoRequest) {
       _boundVideoId = null;
       await _yt?.close();
