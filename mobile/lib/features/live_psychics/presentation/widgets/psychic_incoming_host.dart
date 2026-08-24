@@ -214,6 +214,14 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
             if (!mounted) return;
             ref.read(psychicSessionCancelSignalProvider.notifier).signal(sessionId);
           },
+          onFailed: () {
+            if (!mounted) return;
+            _startPoll();
+            Future<void>.delayed(const Duration(seconds: 3), () {
+              if (!mounted) return;
+              unawaited(_sseService?.retryConnection());
+            });
+          },
         );
     if (mounted) _startPoll();
   }

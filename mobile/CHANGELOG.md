@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.358+396 (2026-08-24) — Canlı Falcılar bağlantı stabilitesi
+
+- **Oturum başlangıcı:** Oda kimliği backend'den gelene kadar kısa bekleme — erken TRTC join kopması azalır
+- **TRTC yeniden bağlanma:** Kanal değişiminde 800ms debounce — gereksiz kopma/yeniden giriş önlenir
+- **Oda SSE:** Kopunca otomatik 3 denemeye kadar yeniden bağlanma; uygulama ön plana gelince SSE yenileme
+- **Falcı timer:** Oturum açılınca süre otomatik başlar (manuel unutma engeli)
+- **Gelen çağrı SSE:** Max reconnect sonrası hızlı HTTP poll + otomatik SSE retry
+
 ## 1.0.357+395 (2026-08-24) — Müzik arama sheet geçişi
 
 - **Müzik arama:** Şarkı seçiminden sonra mod seçici sheet'i 150ms gecikmeyle açılır (üst üste sheet animasyonu ANR riski azalır)

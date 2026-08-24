@@ -20,8 +20,11 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 | Incoming SSE | `pending_sessions`, `connected.pendingSessions`, max 20 reconnect, 401 anında retry |
 | 120 sn uyarı | Danışan snackbar + «Uzat»; timer ≤120 sn kırmızı |
 | time_extended | `newMaxMinutes` / `remainingSeconds` SSE + oda JSON |
-| Oda SSE give-up | Max 20 reconnect, `onFailed`, HTTP poll yedek |
-| SSE failed UI | Görüşme banner + `retryRoomSse` |
+| Oda SSE give-up | Max 20 reconnect, `onFailed`, HTTP poll yedek + otomatik retry (1.0.358) |
+| SSE failed UI | Görüşme banner + `retryRoomSse` + arka plan otomatik yenileme (1.0.358) |
+| TRTC rejoin debounce | Kanal güncellemesinde 800ms debounce (1.0.358) |
+| Falcı timer otomatik | Oturum açılınca `start_timer` (1.0.358) |
+| Gelen çağrı SSE give-up | `onFailed` + 4sn poll + otomatik retry (1.0.358) |
 | Bekleme temizlik | Gereksiz room SSE disconnect kaldırıldı |
 | createSession sade | Kullanılmayan repo parametreleri kaldırıldı |
 | extendSession sade | `totalJeton` imzadan çıkarıldı |

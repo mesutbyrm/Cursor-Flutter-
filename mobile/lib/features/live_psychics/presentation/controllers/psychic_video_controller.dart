@@ -178,6 +178,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   String? _joinedTrtcRoom;
   var _rejoiningRtc = false;
   var _joiningRtc = false;
+  Timer? _rejoinRtcDebounce;
+  Timer? _sseAutoRetryTimer;
+  var _sseAutoRetryCount = 0;
+  static const _maxSseAutoRetry = 3;
 
   VoidCallback? _remoteVideoListener;
   VoidCallback? _remoteAudioListener;
@@ -251,10 +255,42 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     });
     await PsychicSessionStore.save(session);
     _startTimers();
-    await _syncRoomInfo();
+    await _waitForRoomBootstrap();
+    if (_disposed || state.leaving) return;
     await _joinRtc();
     await _connectRoomSse();
     _startChatPoll();
+  }
+
+  /// Oda kimliği backend'den gelene kadar kısa süre bekle — erken TRTC join kopmasına yol açar.
+  Future<void> _waitForRoomBootstrap() async {
+    for (var attempt = 0; attempt < 6; attempt++) {
+      await _syncRoomInfo();
+      if (_disposed || state.leaving) return;
+      final roomId = _activeTrtcRoomId();
+      if (roomId.isNotEmpty) return;
+      await Future<void>.delayed(Duration(milliseconds: 350 + attempt * 150));
+    }
+  }
+
+  void _scheduleRejoinRtc() {
+    _rejoinRtcDebounce?.cancel();
+    _rejoinRtcDebounce = Timer(const Duration(milliseconds: 800), () {
+      if (_disposed || state.leaving) return;
+      unawaited(_rejoinRtc());
+    });
+  }
+
+  void _scheduleSseAutoRetry() {
+    if (_disposed || state.leaving || _sseAutoRetryCount >= _maxSseAutoRetry) {
+      return;
+    }
+    _sseAutoRetryCount++;
+    _sseAutoRetryTimer?.cancel();
+    _sseAutoRetryTimer = Timer(const Duration(seconds: 2), () {
+      if (_disposed || state.leaving) return;
+      unawaited(retryRoomSse());
+    });
   }
 
   /// Falcı manuel olarak süreyi başlatır (kılavuz §11.1).
@@ -476,7 +512,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           (state.rtcReady || state.rtcError != null) &&
           !_joiningRtc &&
           !_rejoiningRtc) {
-        await _rejoinRtc();
+        _scheduleRejoinRtc();
       }
     }
   }
@@ -530,6 +566,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       _attachRemoteMediaListeners();
       state = state.copyWith(rtcReady: true, clearRtcError: true);
       _setPhase(PsychicSessionPhase.connected);
+      if (!session.isClient && !state.timerStarted) {
+        unawaited(_ensureTimerStarted());
+      }
     } catch (e) {
       _setPhase(PsychicSessionPhase.error);
       state = state.copyWith(rtcError: ApiException.userMessage(e));
@@ -585,6 +624,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           myUserId: user?.id,
           onConnected: () {
             if (_disposed) return;
+            _sseAutoRetryCount = 0;
+            _sseAutoRetryTimer?.cancel();
             if (!state.sseConnected || state.sseFailed) {
               state = state.copyWith(sseConnected: true, sseFailed: false);
               _chatPoll?.cancel();
@@ -598,6 +639,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
             _scheduleRoomPoll();
             _startChatPoll();
             _scheduleSignalPoll();
+            _scheduleSseAutoRetry();
           },
           onMessage: _onSseChatMessage,
           onRoomUpdate: _onSseRoomUpdate,
@@ -677,7 +719,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           (state.rtcReady || state.rtcError != null) &&
           !_joiningRtc &&
           !_rejoiningRtc) {
-        unawaited(_rejoinRtc());
+        _scheduleRejoinRtc();
       }
     }
   }
@@ -792,6 +834,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     );
     _setPhase(PsychicSessionPhase.connected);
     unawaited(_broadcastMediaState());
+    if (!session.isClient && !state.timerStarted) {
+      unawaited(_ensureTimerStarted());
+    }
     } catch (e) {
       PsychicEventLog.error('join', e, sessionId: session.sessionId);
       _setPhase(PsychicSessionPhase.error);
@@ -1114,6 +1159,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   void onAppResumed() {
     if (_disposed || state.leaving) return;
+    if (state.sseFailed || !state.sseConnected) {
+      unawaited(retryRoomSse());
+    }
     if (!state.rtcReady && state.rtcError == null) {
       unawaited(_rejoinRtc());
       return;
@@ -1132,6 +1180,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _ping?.cancel();
     _roomPoll?.cancel();
     _signalPoll?.cancel();
+    _rejoinRtcDebounce?.cancel();
+    _sseAutoRetryTimer?.cancel();
     unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
     unawaited(_trtcCoordinator?.leave());
     _trtcCoordinator?.dispose();

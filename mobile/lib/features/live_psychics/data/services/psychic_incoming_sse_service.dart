@@ -23,6 +23,7 @@ class PsychicIncomingSseService {
   void Function(PsychicRequestEntity request)? _onRequest;
   void Function(String sessionId)? _onSessionCancelled;
   void Function()? _onPresenceTick;
+  void Function()? _onFailed;
   var _stopped = false;
   var _streamActive = false;
   var _reconnectAttempt = 0;
@@ -35,6 +36,7 @@ class PsychicIncomingSseService {
     Future<bool> Function()? refreshTokens,
     void Function(String sessionId)? onSessionCancelled,
     void Function()? onPresenceTick,
+    void Function()? onFailed,
   }) async {
     _stopped = false;
     _accessToken = accessToken;
@@ -42,6 +44,14 @@ class PsychicIncomingSseService {
     _onRequest = onRequest;
     _onSessionCancelled = onSessionCancelled;
     _onPresenceTick = onPresenceTick;
+    _onFailed = onFailed;
+    await _openStream();
+  }
+
+  /// SSE yeniden bağlanmayı dene (give-up sonrası veya uygulama ön plana gelince).
+  Future<void> retryConnection() async {
+    if (_stopped) return;
+    _reconnectAttempt = 0;
     await _openStream();
   }
 
@@ -157,6 +167,8 @@ class PsychicIncomingSseService {
       if (kDebugMode) {
         debugPrint('PsychicIncomingSse: max reconnect attempts reached');
       }
+      _streamActive = false;
+      _onFailed?.call();
       return;
     }
     _reconnectTimer?.cancel();
