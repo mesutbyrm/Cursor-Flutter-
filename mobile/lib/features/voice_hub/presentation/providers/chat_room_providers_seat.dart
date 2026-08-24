@@ -410,6 +410,15 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     required String userId,
     required int seatIndex,
   }) {
+    ChatRoomPresence? occupant;
+    int? previousIndex;
+    for (final p in state.presence) {
+      if (p.id == userId) {
+        occupant = p;
+        previousIndex = p.seatIndex;
+        break;
+      }
+    }
     final next = state.presence.map((p) {
       if (p.id != userId) {
         // Aynı koltuktaki başka kullanıcıyı boşalt.
@@ -443,7 +452,16 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       );
     }).toList();
     if (!next.any((p) => p.id == userId)) return;
-    state = state.copyWith(presence: next);
+    final nextSlots = _patchSeatSlots(
+      state.seatSlots,
+      userId: userId,
+      newIndex: seatIndex,
+      previousIndex: previousIndex,
+      occupantName: occupant?.displayName,
+      occupantImage: occupant?.image,
+    );
+    final syncedPresence = _syncPresenceSeatIndexFromSlots(next, nextSlots);
+    state = state.copyWith(presence: syncedPresence, seatSlots: nextSlots);
   }
 
   Future<String?> clearUserSeat({required String userId}) async {

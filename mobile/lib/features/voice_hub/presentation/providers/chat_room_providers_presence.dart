@@ -611,23 +611,30 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
 
   Future<void> _presenceHeartbeatTick() async {
     if (_roomKey.isEmpty) return;
+    _presenceHeartbeatCount++;
     final last = _lastSseEventAt;
-    if (state.sseConnected &&
+    final sseRecentlyActive = state.sseConnected &&
         last != null &&
-        DateTime.now().difference(last) < const Duration(seconds: 45)) {
-      return;
+        DateTime.now().difference(last) < const Duration(seconds: 45);
+    if (!sseRecentlyActive) {
+      try {
+        VoiceEventLog.heartbeat(roomId: _roomKey);
+        VoiceRoomDebugLog.log('api.presence.heartbeat', {'room': _roomKey});
+        await ref.read(chatRoomRemoteProvider).presenceHeartbeat(
+              _presenceApiKey,
+              alternateKey: _presenceAlternateKey,
+            );
+      } catch (e) {
+        VoiceRoomDebugLog.log('api.presence.heartbeat.fail', {
+          'error': e.toString(),
+        });
+      }
     }
-    try {
-      VoiceEventLog.heartbeat(roomId: _roomKey);
-      VoiceRoomDebugLog.log('api.presence.heartbeat', {'room': _roomKey});
-      await ref.read(chatRoomRemoteProvider).presenceHeartbeat(
-            _presenceApiKey,
-            alternateKey: _presenceAlternateKey,
-          );
-    } catch (e) {
-      VoiceRoomDebugLog.log('api.presence.heartbeat.fail', {
-        'error': e.toString(),
-      });
+    // SSE bağlı görünse bile presence event gelmiyorsa üye listesini yenile.
+    final sseSilent = last == null ||
+        DateTime.now().difference(last) > const Duration(seconds: 20);
+    if (sseSilent || !state.sseConnected || _presenceHeartbeatCount % 4 == 0) {
+      unawaited(_preloadPresenceMembers());
     }
   }
 

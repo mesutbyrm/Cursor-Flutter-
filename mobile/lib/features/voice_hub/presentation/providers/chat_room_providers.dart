@@ -379,6 +379,7 @@ class VoiceRoomLiveController
     with VoiceRoomDjSyncMixin, VoiceRoomSseMixin {
   Timer? _poll;
   Timer? _presenceHeartbeat;
+  var _presenceHeartbeatCount = 0;
   Timer? _typingStopTimer;
   Timer? _enterBannerTimer;
   Timer? _musicRequestFlashTimer;

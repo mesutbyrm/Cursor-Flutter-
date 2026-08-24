@@ -91,18 +91,19 @@ class VoiceRoomNowPlayingBar extends ConsumerWidget {
                 ],
               ),
             ),
-            if (canControl)
-              IconButton(
-                tooltip: 'Müziği kapat',
-                visualDensity: VisualDensity.compact,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                padding: EdgeInsets.zero,
-                icon: const Icon(Icons.close_rounded,
-                    color: Color(0xFFFF6B6B), size: 22),
-                onPressed: () => unawaited(
-                  ref.read(voiceRoomLiveProvider(roomKey).notifier).stopMusic(),
-                ),
+            IconButton(
+              tooltip: 'Müziği kapat',
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              padding: EdgeInsets.zero,
+              icon: const Icon(Icons.close_rounded,
+                  color: Color(0xFFFF6B6B), size: 22),
+              onPressed: () => unawaited(
+                ref
+                    .read(voiceRoomLiveProvider(roomKey).notifier)
+                    .closeMusicPlayer(),
               ),
+            ),
           ],
         ),
       ),

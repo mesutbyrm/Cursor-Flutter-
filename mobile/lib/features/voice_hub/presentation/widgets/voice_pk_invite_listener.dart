@@ -41,7 +41,10 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
       _pollTick++;
       unawaited(_pollPendingInvites());
     });
-    Future.microtask(_pollPendingInvites);
+    Future.microtask(() async {
+      await ref.read(voiceRoomsProvider.future);
+      if (mounted) unawaited(_pollPendingInvites());
+    });
   }
 
   @override

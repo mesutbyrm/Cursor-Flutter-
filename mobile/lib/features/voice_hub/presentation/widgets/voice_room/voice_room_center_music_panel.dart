@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../providers/chat_room_providers.dart';
+import '../../providers/room_fragment_providers.dart';
 import '../../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../voice_room/voice_room_music_request_flash.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
@@ -13,21 +14,25 @@ class VoiceRoomCenterMusicPanel extends ConsumerWidget {
   const VoiceRoomCenterMusicPanel({
     super.key,
     required this.room,
-    required this.live,
+    required this.liveRoomKey,
     required this.canControlMusic,
     required this.canCloseMusic,
-    this.musicRequestFlash,
   });
 
   final VoiceRoomEntity room;
-  final VoiceRoomLiveState live;
+  final String liveRoomKey;
   final bool canControlMusic;
   final bool canCloseMusic;
-  final String? musicRequestFlash;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dj = live.dj;
+    final dj = ref.watch(voiceRoomMusicSliceProvider(liveRoomKey));
+    final flash = ref.watch(
+      voiceRoomLiveProvider(liveRoomKey).select((s) => s.musicRequestFlash),
+    );
+    final listenerCount = ref.watch(
+      voiceRoomLiveProvider(liveRoomKey).select((s) => s.onlineCountFor(room)),
+    );
     final musicSession = ref.watch(voiceRoomMusicSessionProvider);
     final sessionKey = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
 
@@ -36,7 +41,6 @@ class VoiceRoomCenterMusicPanel extends ConsumerWidget {
     final showPlayer = hasTrack &&
         !musicSession.dismissed &&
         !musicSession.userDismissedPlayer;
-    final flash = musicRequestFlash ?? live.musicRequestFlash;
 
     if (!showPlayer && (flash == null || flash.trim().isEmpty)) {
       return const SizedBox.shrink();
@@ -56,7 +60,7 @@ class VoiceRoomCenterMusicPanel extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: _AudioMusicSummary(
               dj: dj,
-              listenerCount: live.onlineCountFor(room),
+              listenerCount: listenerCount,
               onQueueTap: () => showRoomMusicQueueSheet(
                 context,
                 ref,

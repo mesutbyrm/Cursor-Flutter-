@@ -11,6 +11,7 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/voice_room_seat_slot.dart';
 import '../providers/chat_room_providers.dart';
+import '../providers/room_fragment_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../sheets/voice_room_moderation_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
@@ -45,11 +46,12 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(voiceRoomSpeakingSignatureProvider(liveKey));
+    final seatSlice = ref.watch(voiceRoomSeatSliceProvider(liveKey));
     final speakingIds = <String>{
-      for (final p in live.presence)
+      for (final p in seatSlice.presence)
         if (p.isSpeaking) p.id,
     };
-    if (!isMicMuted && user?.id != null) speakingIds.add(user!.id);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

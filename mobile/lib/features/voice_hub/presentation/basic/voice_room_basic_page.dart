@@ -95,6 +95,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   var _leaving = false;
   var _leaveSessionStarted = false;
   var _forcedExitHandled = false;
+  var _musicSearchOpen = false;
   final _messageCtrl = TextEditingController();
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
@@ -690,11 +691,13 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       final q = next.pendingMusicSearchQuery;
       if (q != null &&
           prev?.pendingMusicSearchQuery != q &&
-          mounted) {
+          mounted &&
+          !_musicSearchOpen) {
         final skipPayment = next.pendingMusicSearchSkipPayment;
         final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
         final dj = next.dj;
         ctrl.clearPendingMusicSearch();
+        _musicSearchOpen = true;
         unawaited(
           showMusicSearchPickerSheet(
             context,
@@ -729,7 +732,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                 },
               );
             },
-          ),
+          ).whenComplete(() => _musicSearchOpen = false),
         );
       }
 
@@ -903,10 +906,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   ),
                   VoiceRoomCenterMusicPanel(
                     room: room,
-                    live: live,
+                    liveRoomKey: _liveRoomKey,
                     canControlMusic: canControlMusic,
                     canCloseMusic: canCloseMusic,
-                    musicRequestFlash: live.musicRequestFlash,
                   ),
                   // Aktif hediye savaşı — canlı skor + geri sayım.
                   GiftBattleStrip(

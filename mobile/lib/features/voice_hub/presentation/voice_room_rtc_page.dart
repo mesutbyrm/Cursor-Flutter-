@@ -1090,6 +1090,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         _liveRoomKey.isNotEmpty ? _liveRoomKey : widget.room.id,
       ),
     );
+    ref.watch(voiceRoomMusicSliceProvider(_liveRoomKey));
     final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
     final roomErrorBanner =
         VoiceRoomErrorDisplay.bannerMessage(live.error, live: live);
@@ -1630,7 +1631,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         ),
                         VoiceRoomCenterMusicPanel(
                           room: room,
-                          live: live,
+                          liveRoomKey: _liveRoomKey,
                           canControlMusic: canControlMusic,
                           canCloseMusic: canCloseMusic,
                         ),
@@ -1791,7 +1792,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 VoiceRoomBottomDock(
                                   room: room,
                                   session: room,
-                                  live: live,
                                   canControlMusic: canControlMusic,
                                   canStopMusic: canCloseMusic,
                                 ),
@@ -2020,9 +2020,6 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
       for (final p in seatSlice.presence)
         if (p.isSpeaking) p.id,
     };
-    if (!micMuted && selfUserId != null) {
-      speakingIds.add(selfUserId!);
-    }
     return VoiceWebOwnerStage(
       roomKey: liveRoomKey,
       room: room,

@@ -7,6 +7,7 @@ import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../../providers/chat_room_providers.dart';
+import '../../providers/room_fragment_providers.dart';
 import '../../providers/voice_room_ui_provider.dart';
 import '../../utils/voice_room_responsive_metrics.dart';
 import 'voice_chat_cleared_banner.dart';
@@ -19,14 +20,12 @@ class VoiceRoomBottomDock extends ConsumerWidget {
     super.key,
     required this.room,
     required this.session,
-    required this.live,
     required this.canControlMusic,
     required this.canStopMusic,
   });
 
   final VoiceRoomEntity room;
   final VoiceRoomEntity session;
-  final VoiceRoomLiveState live;
   final bool canControlMusic;
   final bool canStopMusic;
 
@@ -42,10 +41,15 @@ class VoiceRoomBottomDock extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final m = VoiceRoomResponsiveMetrics.of(context);
-    final dj = live.dj;
-    final waiting = _waitingQueueItems(dj);
-    final flash = live.musicRequestFlash;
     final liveKey = session.liveKey;
+    final dj = ref.watch(voiceRoomMusicSliceProvider(liveKey));
+    final flash = ref.watch(
+      voiceRoomLiveProvider(liveKey).select((s) => s.musicRequestFlash),
+    );
+    final chatClearedNonce = ref.watch(
+      voiceRoomLiveProvider(liveKey).select((s) => s.chatClearedBannerNonce),
+    );
+    final waiting = _waitingQueueItems(dj);
     final ctrl = ref.read(voiceRoomLiveProvider(liveKey).notifier);
     final ui = ref.watch(voiceRoomUiProvider);
     final hasPlayer = dj.nowPlaying != null || dj.playing;
@@ -115,7 +119,7 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                   context,
                   ref,
                   liveKey: liveKey,
-                  dj: live.dj,
+                  dj: dj,
                   canControlMusic: canControlMusic,
                   canStopMusic: canStopMusic,
                 ),
@@ -124,9 +128,9 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                   child: _QueueStrip(waiting: waiting),
                 ),
               ),
-            if (live.chatClearedBannerNonce > 0)
+            if (chatClearedNonce > 0)
               VoiceChatClearedBanner(
-                key: ValueKey(live.chatClearedBannerNonce),
+                key: ValueKey(chatClearedNonce),
               ),
           ],
         ),
