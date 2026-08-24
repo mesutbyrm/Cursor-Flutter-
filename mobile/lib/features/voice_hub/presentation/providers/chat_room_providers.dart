@@ -2113,7 +2113,9 @@ class VoiceRoomLiveController
       }
     }
 
-    state = state.copyWith(sending: true, clearPendingMusicSearch: true);
+    _showMusicRequestFlashLine('⏳ «${hit.title}» isteniyor…');
+    ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
+
     try {
       final result = await ref.read(enqueueSongUseCaseProvider)(
             roomId: _roomKey,
@@ -2156,7 +2158,6 @@ class VoiceRoomLiveController
       if (!isQueuedOnly) {
         dj = _djWithQueuePlaybackFallback(dj);
       }
-      state = state.copyWith(sending: false);
       _applyMusicRequestUi(
         dj: dj,
         shouldPlay: shouldPlay && !isQueuedOnly,
@@ -2165,10 +2166,7 @@ class VoiceRoomLiveController
       _showMusicRequestFlashLine('✅ «${hit.title}» kuyruğa eklendi');
       return null;
     } catch (e) {
-      state = state.copyWith(
-        sending: false,
-        error: ApiException.userMessage(e),
-      );
+      state = state.copyWith(error: ApiException.userMessage(e));
       return ApiException.userMessage(e);
     }
   }

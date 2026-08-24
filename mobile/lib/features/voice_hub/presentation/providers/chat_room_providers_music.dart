@@ -80,6 +80,9 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
 
     final isVideo = preferVideo || dj.nowPlaying?.isVideoRequest == true;
     if (isVideo) {
+      // WebView ilk kurulumu UI thread'i kilitlemesin — sheet/oda çizimi bitsin.
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      if (!_sessionActive || _roomKey.isEmpty) return;
       _syncRoomVideo(dj);
     }
 

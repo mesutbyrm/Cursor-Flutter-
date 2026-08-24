@@ -67,6 +67,7 @@ import '../widgets/premium_2026/voice_online_gift_box.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../widgets/voice_room/voice_room_center_music_panel.dart';
 import '../widgets/voice_room/voice_room_music_background_layer.dart';
+import '../widgets/voice_room/voice_room_video_close_bar.dart';
 import '../widgets/voice_room/voice_room_music_queue_mini_card.dart';
 import '../widgets/voice_room/voice_room_side_action_rail.dart';
 import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
@@ -987,6 +988,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             ),
             ),
             VoiceGiftHudOverlays(sessionKey: sessionKey),
+            if (_liveRoomKey.isNotEmpty)
+              VoiceRoomVideoCloseBar(roomKey: _liveRoomKey),
             if (_liveRoomKey.isNotEmpty)
               BlocProvider.value(
                 value: ref.read(roomSongBlocProvider(_liveRoomKey)),

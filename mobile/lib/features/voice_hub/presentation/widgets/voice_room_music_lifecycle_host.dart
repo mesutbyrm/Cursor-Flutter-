@@ -29,8 +29,8 @@ class _VoiceRoomMusicLifecycleHostState
   }
 
   Future<void> _clearOrphanedMusicOnStartup() async {
+    // Yalnızca yetim audio_service oturumunu kes; dismissed bayrağı set etme.
     await ref.read(voiceRoomDjPlayerProvider).shutdown();
-    ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer();
   }
 
   @override

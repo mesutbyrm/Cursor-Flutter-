@@ -18,6 +18,7 @@ import '../pages/voice_music_hub_page.dart';
 import '../providers/chat_room_providers.dart';
 import '../sheets/music_mode_picker_sheet.dart';
 import '../theme/voice_room_tokens.dart';
+import '../utils/voice_music_submit.dart';
 import '../utils/voice_music_access.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/music_az_letter_bar.dart';
@@ -182,21 +183,17 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
     // Sheet kapanmadan provider güncellemesi tüm odayı yeniden çizer → ANR riski.
     if (mounted) Navigator.of(context).pop();
 
-    unawaited(
-      Future<void>.microtask(() async {
-        try {
-          final err = await notifier.submitSelectedSong(
-            hit,
-            withVideo: withVideo,
-          );
-          _showMusicResultSnack(
-            err ?? '«$songTitle» sıraya eklendi · $cost jeton',
-            isError: err != null,
-          );
-        } catch (e) {
-          _showMusicResultSnack(ApiException.userMessage(e), isError: true);
-        }
-      }),
+    deferVoiceMusicSubmit(
+      submit: () => notifier.submitSelectedSong(
+        hit,
+        withVideo: withVideo,
+      ),
+      onComplete: (err) {
+        _showMusicResultSnack(
+          err ?? '«$songTitle» sıraya eklendi · $cost jeton',
+          isError: err != null,
+        );
+      },
     );
   }
 

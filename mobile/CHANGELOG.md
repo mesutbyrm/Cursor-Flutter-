@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.352+390 (2026-08-24) — Sesli oda müzik isteği + video kapat
+
+- **Müzik isteği:** Anında «isteniyor…» flash; `sending` kilidi kaldırıldı; video WebView 400ms gecikmeyle açılır (donma önleme)
+- **Video kapat:** `VoiceRoomVideoCloseBar` — videolu müzikte herkese görünür kırmızı «Kapat» şeridi
+- **RoomVideoOverlay:** Kapat düğmesi tüm kullanıcılara açık (oynat/duraklat yalnızca yetkililer)
+- **Soğuk başlangıç:** Yalnızca yetim audio_service durdurulur; `dismissed` bayrağı set edilmez
+
 ## 1.0.351+389 (2026-08-23) — Sesli oda müzik durdurma
 
 - **Durdur / kapat:** Tüm kullanıcılar müzik şeridinden anında yerel çıkışı kapatabilir (ses + video)

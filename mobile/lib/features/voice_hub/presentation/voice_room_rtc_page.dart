@@ -99,6 +99,7 @@ import 'widgets/voice_room/voice_room_center_music_panel.dart';
 import 'widgets/voice_room/voice_room_music_queue_mini_card.dart';
 import 'widgets/voice_room/voice_room_side_action_rail.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
+import 'widgets/voice_room/voice_room_video_close_bar.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import 'sheets/voice_youtube_song_sheet.dart';
 import 'widgets/premium_2026/voice_pk_invite_banner.dart';
@@ -1889,6 +1890,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ),
                 ),
               ),
+            if (_liveRoomKey.isNotEmpty)
+              VoiceRoomVideoCloseBar(roomKey: _liveRoomKey),
             if (_liveRoomKey.isNotEmpty)
               BlocProvider.value(
                 value: ref.read(roomSongBlocProvider(_liveRoomKey)),

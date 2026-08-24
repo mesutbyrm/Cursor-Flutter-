@@ -28,7 +28,7 @@ class RoomVideoOverlay extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final video = ref.watch(roomVideoControllerProvider(roomKey));
-    if (!video.hasActiveVideo || !_canControl) {
+    if (!video.hasActiveVideo) {
       return const SizedBox.shrink();
     }
 
@@ -65,23 +65,25 @@ class RoomVideoOverlay extends ConsumerWidget {
                     ),
                   ),
                 ),
-                _ControlIcon(
-                  tooltip: video.isPlaying ? 'Duraklat' : 'Oynat',
-                  icon: video.isPlaying
-                      ? Icons.pause_rounded
-                      : Icons.play_arrow_rounded,
-                  onTap: () {
-                    VoiceRoomDebugLog.log('roomVideo.control', {
-                      'room': roomKey,
-                      'action': video.isPlaying ? 'pause' : 'play',
-                    });
-                    unawaited(
-                      video.isPlaying
-                          ? liveCtrl.pauseMusic()
-                          : liveCtrl.resumeMusic(),
-                    );
-                  },
-                ),
+                if (_canControl) ...[
+                  _ControlIcon(
+                    tooltip: video.isPlaying ? 'Duraklat' : 'Oynat',
+                    icon: video.isPlaying
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded,
+                    onTap: () {
+                      VoiceRoomDebugLog.log('roomVideo.control', {
+                        'room': roomKey,
+                        'action': video.isPlaying ? 'pause' : 'play',
+                      });
+                      unawaited(
+                        video.isPlaying
+                            ? liveCtrl.pauseMusic()
+                            : liveCtrl.resumeMusic(),
+                      );
+                    },
+                  ),
+                ],
                 _ControlIcon(
                   tooltip: 'Kapat',
                   icon: Icons.close_rounded,
@@ -92,12 +94,12 @@ class RoomVideoOverlay extends ConsumerWidget {
                       'action': 'close',
                     });
                     unawaited(() async {
-                      final err = await liveCtrl.stopMusic();
-                      if (err == null) videoCtrl.clear();
+                      await liveCtrl.closeMusicPlayer();
+                      videoCtrl.clear();
                     }());
                   },
                 ),
-                if (user != null)
+                if (user != null && _canControl)
                   Padding(
                     padding: const EdgeInsets.only(left: 4),
                     child: Text(
