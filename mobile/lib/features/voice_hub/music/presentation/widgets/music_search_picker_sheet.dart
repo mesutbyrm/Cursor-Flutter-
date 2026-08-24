@@ -305,8 +305,12 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
                   }
                   if (onSelected != null) {
                     final selected = hit;
+                    // Arama sheet kapanış animasyonu bitsin, sonra mod seçici açılsın (ANR önleme).
                     unawaited(
-                      Future<void>.microtask(() => onSelected(selected)),
+                      Future<void>.delayed(
+                        const Duration(milliseconds: 150),
+                        () => onSelected(selected),
+                      ),
                     );
                   }
                   if (widget.stayOpenOnSelect && mounted) {

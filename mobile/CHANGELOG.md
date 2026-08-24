@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.357+395 (2026-08-24) — Müzik arama sheet geçişi
+
+- **Müzik arama:** Şarkı seçiminden sonra mod seçici sheet'i 150ms gecikmeyle açılır (üst üste sheet animasyonu ANR riski azalır)
+
 ## 1.0.356+394 (2026-08-24) — Müzik isteği ANR düzeltmesi
 
 - **Müzik isteği:** Sheet kapanışından sonra 320ms gecikmeli gönderim; aynı frame'de provider/WebView güncellemesi engellendi
