@@ -5,6 +5,23 @@ import 'pk_battle_remote_models.dart';
 /// Hedef kullanıcı daveti kendi odasının PK kaydında görür; gönderildi ≠ alındı.
 bool shouldPollVoicePkForRoom(String roomKey) => roomKey.trim().isNotEmpty;
 
+/// Pending PK daveti bu kullanıcıya (hedef/guest/opponent) ait mi?
+bool isPendingPkForUser(PkBattleRemote battle, String userId) {
+  if (!battle.isPending) return false;
+  final uid = userId.trim();
+  if (uid.isEmpty) return false;
+  final ids = {
+    battle.targetUserId,
+    battle.guestUserId,
+    battle.opponentId,
+    battle.opponent?.userId,
+  }
+      .whereType<String>()
+      .map((e) => e.trim())
+      .where((e) => e.isNotEmpty);
+  return ids.contains(uid);
+}
+
 /// PK daveti için rakip oda — boş odalar ve sahipsiz odalar hariç.
 List<VoiceRoomEntity> filterPkEligibleOpponentRooms(
   List<VoiceRoomEntity> rooms, {

@@ -164,6 +164,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   late final TrtcRoomManager _trtc;
   TrtcLiveRoomCoordinator? _trtcCoordinator;
+  final localPreviewKey = GlobalKey(debugLabel: 'psychic-local-preview');
   final _seenChatIds = <String>{};
   String? _lastChatAfter;
   Timer? _tick;

@@ -268,4 +268,26 @@ void main() {
     expect(shouldPollVoicePkForRoom(''), isFalse);
     expect(shouldPollVoicePkForRoom('   '), isFalse);
   });
+
+  test('isPendingPkForUser matches target/guest/opponent, not challenger', () {
+    const battle = PkBattleRemote(
+      id: 'pk1',
+      battleType: 'voice_room',
+      status: 'pending',
+      challengerScore: 0,
+      opponentScore: 0,
+      secondsLeft: 300,
+      durationSeconds: 180,
+      targetScore: 1000,
+      challengerId: 'sender',
+      targetUserId: 'target',
+      guestUserId: 'guest',
+      opponentId: 'opp',
+    );
+    expect(isPendingPkForUser(battle, 'target'), isTrue);
+    expect(isPendingPkForUser(battle, 'guest'), isTrue);
+    expect(isPendingPkForUser(battle, 'opp'), isTrue);
+    expect(isPendingPkForUser(battle, 'sender'), isFalse);
+    expect(isPendingPkForUser(battle, ''), isFalse);
+  });
 }

@@ -6,7 +6,8 @@ import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../domain/entities/psychic_session_entity.dart';
 import '../controllers/psychic_video_controller.dart';
 
-/// Karşılıklı görüşme — uzak tam ekran + yerel PiP (kamera aç/kapa döngüsü yok).
+/// Karşılıklı görüşme — uzak tam ekran + yerel PiP.
+/// TRTC view, odaya girildikten sonra unmount edilmez (5 sn donma / native dispose).
 class PsychicVideoCallLayer extends StatelessWidget {
   const PsychicVideoCallLayer({
     super.key,
@@ -21,46 +22,9 @@ class PsychicVideoCallLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!state.rtcReady) {
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          const LiveRoomVideoBackground(),
-          Center(
-            child: ProfileGlass(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              borderRadius: 20,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (state.rtcError != null) ...[
-                    Text(
-                      state.rtcError!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: ctrl.retryRtc,
-                      child: const Text('Yeniden Bağlan'),
-                    ),
-                  ] else ...[
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Bağlantı kuruluyor…',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ],
-      );
+    final mediaLive = state.rtcReady || ctrl.trtc.inRoom;
+    if (!mediaLive) {
+      return _ConnectingOverlay(state: state, ctrl: ctrl);
     }
 
     return ValueListenableBuilder<String?>(
@@ -98,15 +62,98 @@ class PsychicVideoCallLayer extends StatelessWidget {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
-                      child: TrtcLocalVideoView(manager: ctrl.trtc),
+                      child: TrtcLocalVideoView(
+                        key: ctrl.localPreviewKey,
+                        manager: ctrl.trtc,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
+            if (!state.rtcReady)
+              const ColoredBox(
+                color: Color(0x66000000),
+                child: Center(
+                  child: CircularProgressIndicator(color: Colors.white70),
+                ),
+              ),
+            if (state.rtcError != null && !state.rtcReady)
+              Center(
+                child: ProfileGlass(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  borderRadius: 20,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        state.rtcError!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: ctrl.retryRtc,
+                        child: const Text('Yeniden Bağlan'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         );
       },
+    );
+  }
+}
+
+class _ConnectingOverlay extends StatelessWidget {
+  const _ConnectingOverlay({required this.state, required this.ctrl});
+
+  final PsychicVideoState state;
+  final PsychicVideoController ctrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const LiveRoomVideoBackground(),
+        Center(
+          child: ProfileGlass(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            borderRadius: 20,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (state.rtcError != null) ...[
+                  Text(
+                    state.rtcError!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: ctrl.retryRtc,
+                    child: const Text('Yeniden Bağlan'),
+                  ),
+                ] else ...[
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Bağlantı kuruluyor…',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

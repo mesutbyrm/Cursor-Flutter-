@@ -5,9 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
-import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../voice_hub/domain/pk/pk_battle_mode.dart';
-import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/domain/pk/pk_battle_state.dart';
 import '../../../voice_hub/domain/pk/pk_duration_options.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_provider.dart';
@@ -49,9 +47,7 @@ class LivePkBattlePage extends ConsumerStatefulWidget {
 }
 
 class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
-  final _trtc = TrtcRoomManager();
   var _lastGiftSideLeft = true;
-  var _trtcReady = false;
   Timer? _pkPollTimer;
   String? _unifiedMatchId;
 
@@ -67,8 +63,8 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final streamId = _streamId;
     if (streamId == null || streamId.isEmpty) return;
 
-    await _initTrtcPreview();
-
+    // Mevcut canlı yayın TRTC oturumuna ikinci motor bağlama — preview dispose
+    // yayın bağlantısını keser / native crash üretir.
     final remote = ref.read(pkBattleRemoteProvider.notifier);
     final unified = await ref.read(pkRoomRemoteProvider).activeForStream(streamId);
     if (unified != null) {
@@ -85,14 +81,6 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     );
 
     _pollPk();
-  }
-
-  Future<void> _initTrtcPreview() async {
-    if (!widget.session.isHost) return;
-    try {
-      await _trtc.startPreviewOnly();
-      if (mounted) setState(() => _trtcReady = true);
-    } catch (_) {}
   }
 
   void _pollPk() {
@@ -121,7 +109,6 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   void dispose() {
     _pkPollTimer?.cancel();
     ref.read(liveGiftControllerProvider).detach();
-    _trtc.dispose();
     super.dispose();
   }
 
@@ -304,8 +291,6 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                             accent: Colors.pinkAccent,
                             thumbnailUrl: widget.session.avatarUrl ??
                                 widget.session.coverImageUrl,
-                            trtc: _trtcReady ? _trtc : null,
-                            isLocal: true,
                           ),
                         ),
                         Container(width: 2, color: Colors.white24),
@@ -314,7 +299,6 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                             label: rightName,
                             accent: Colors.cyanAccent,
                             thumbnailUrl: widget.opponentStream?.thumbnailUrl,
-                            isLocal: false,
                           ),
                         ),
                       ],
@@ -397,22 +381,16 @@ class _PkVideoPane extends StatelessWidget {
     required this.label,
     required this.accent,
     this.thumbnailUrl,
-    this.trtc,
-    this.isLocal = false,
   });
 
   final String label;
   final Color accent;
   final String? thumbnailUrl;
-  final TrtcRoomManager? trtc;
-  final bool isLocal;
 
   @override
   Widget build(BuildContext context) {
     Widget videoChild;
-    if (isLocal && trtc != null) {
-      videoChild = TrtcLocalVideoView(manager: trtc!);
-    } else if (thumbnailUrl != null && thumbnailUrl!.isNotEmpty) {
+    if (thumbnailUrl != null && thumbnailUrl!.isNotEmpty) {
       videoChild = CanlifalNetworkImage(
         url: thumbnailUrl!,
         fit: BoxFit.cover,

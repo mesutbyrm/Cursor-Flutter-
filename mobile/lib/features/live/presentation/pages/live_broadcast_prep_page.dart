@@ -40,7 +40,7 @@ class LiveBroadcastPrepPage extends ConsumerStatefulWidget {
 class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
   final _title = TextEditingController();
   TrtcRoomManager _trtc = TrtcRoomManager();
-  Key _localPreviewKey = UniqueKey();
+  final _localPreviewKey = GlobalKey(debugLabel: 'prep-local-preview');
 
   var _micOn = true;
   var _cameraOn = true;
@@ -530,7 +530,6 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                               if (!mounted) return;
                               setState(() {
                                 _cameraOn = next;
-                                _localPreviewKey = UniqueKey();
                               });
                             },
                           ),

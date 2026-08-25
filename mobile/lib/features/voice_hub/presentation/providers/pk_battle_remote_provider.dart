@@ -240,6 +240,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     }
 
     if (battle.isPending && user != null) {
+      if (isPendingPkForUser(battle, user.id)) return true;
       for (final room in ref.read(myOwnedVoiceRoomsProvider)) {
         if (isPkInviteTarget(battle, room, userId: user.id)) return true;
         if (pkBattleBelongsToRoom(battle, room)) return true;

@@ -92,9 +92,9 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
           final messenger = ScaffoldMessenger.of(context);
           Navigator.of(context).pop();
           messenger.showSnackBar(
-            SnackBar(
+            const SnackBar(
               content: Text(
-                '${opponent.streamerName ?? opponent.title} kullanıcısına PK daveti gönderildi',
+                'PK daveti gönderildi. Rakip kabul edince PK başlayacak.',
               ),
             ),
           );

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.369+407 (2026-08-25) — PK ikinci TRTC motoru ve fal renderer korunumu
+
+- **Canlı PK sayfası:** Ayrı `TrtcRoomManager` + `dispose` kaldırıldı — yayın preview'sini native olarak kesmiyor
+- **Hazırlık kamerası:** UniqueKey remount yok; local preview `GlobalKey`
+- **Canlı fal:** TRTC view odaya girdikten sonra unmount edilmez; geçici kopmada overlay
+- **Sesli PK ingest:** Hedef/guest/opponent user id eşleşince pending davet düşmez
+
 ## 1.0.368+406 (2026-08-25) — TRTC reconnect race, sesli PK daveti, canlı PK crash
 
 - **Canlı fal 5 sn donma:** `onConnectionLost` artık hemen `leave+join` yapmıyor; Tencent SDK `onTryToReconnect` / `onConnectionRecovery` 8 sn grace ile bekleniyor. İki taraf bağımsız reconnect etmiyor.
