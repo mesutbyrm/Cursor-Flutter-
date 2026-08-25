@@ -12,15 +12,39 @@ abstract final class ApiBackendRouter {
 
   /// İstek path'ine göre hedef backend (gateway hariç).
   ///
-  /// Tüm üretim API trafiği ana backend'e gider (`https://canlifal.com`).
-  /// Eski ikinci-backend yolları (`/api/pk/*`, `/api/live/pk/active`,
-  /// `/api/live/guest/*`, `/api/games/rooms`, `/api/membership/*`) ana siteye
-  /// taşındı — bkz. `docs/BACKEND_API_REFERENCE.md` §3.
+  /// Çoğu üretim API trafiği ana backend'e gider (`https://canlifal.com`).
+  /// Sesli oda PK REST (`/api/chat/rooms/{id}/pk*`) games backend'dedir —
+  /// ana sitede GET stub (`null`) döner; kılavuz §9.3 ve `PK_VOICE_ROOM_PARITY.md`.
   ///
   /// §8 dokunulmayanlar (zaten ana backend): `/api/live/gift/send`,
   /// `/api/trtc/token`, `/api/trtc/usersig`.
   static ApiBackendKind resolve(String path, {String method = 'GET'}) {
+    final p = _normalizePath(path);
+    if (_isVoiceRoomPkPath(p)) return ApiBackendKind.game;
     return ApiBackendKind.main;
+  }
+
+  static String _normalizePath(String path) {
+    var p = path.trim();
+    final q = p.indexOf('?');
+    if (q >= 0) p = p.substring(0, q);
+    if (!p.startsWith('/')) p = '/$p';
+    return p;
+  }
+
+  /// Sesli oda PK — `GET/POST /api/chat/rooms/{roomId}/pk[...]`.
+  static bool _isVoiceRoomPkPath(String path) {
+    if (!path.startsWith('/api/chat/rooms/')) return false;
+    final segments =
+        path.split('/').where((segment) => segment.isNotEmpty).toList();
+    // api, chat, rooms, {roomId}, pk, ...
+    if (segments.length < 5) return false;
+    if (segments[0] != 'api' ||
+        segments[1] != 'chat' ||
+        segments[2] != 'rooms') {
+      return false;
+    }
+    return segments[4] == 'pk';
   }
 
   static bool get hasGatewayFallback => Env.gatewayApiBaseUrl.trim().isNotEmpty;

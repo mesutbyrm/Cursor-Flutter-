@@ -163,7 +163,17 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
 
       // Sahip olunan tüm odalar — başka odadayken SSE kaçırsa bile yakala.
       await _pollOwnedRooms(user.id, user.username, activeKey, api);
-    } catch (_) {}
+    } catch (e, st) {
+      PkEventLog.apiFailure(
+        method: 'GET',
+        url: 'pk_poll',
+        responseBody: e.toString(),
+      );
+      assert(() {
+        debugPrint('[PK] poll error: $e\n$st');
+        return true;
+      }());
+    }
   }
 
   @override

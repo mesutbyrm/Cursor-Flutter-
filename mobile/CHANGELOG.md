@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.360+398 (2026-08-25) — Sesli oda PK daveti yönlendirme
+
+- **PK REST games backend:** `/api/chat/rooms/{id}/pk*` istekleri `canlifalapi.abacusai.app`'e yönlendirildi (ana site GET stub `null` döndürüyordu; davet karşı odaya ulaşmıyordu).
+- **Kabul/red:** Sahte başarılı yanıt (synthetic accept/reject) kaldırıldı; yalnızca sunucu onayı sonrası UI güncellenir.
+- **Poll hata logu:** `VoicePkInviteListener` sessiz catch yerine debug log.
+
 ## 1.0.359+397 (2026-08-24) — Canlı Falcılar TRTC + bekleme
 
 - **TRTC kopma:** Koordinatör `onConnectionLost` / `onReconnected` UI ile senkron — otomatik yeniden bağlanma görünür

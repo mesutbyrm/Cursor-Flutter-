@@ -332,7 +332,7 @@ class PkBattleRemoteDataSource {
     String? alternateRoomId,
     required String action,
   }) async {
-    final synthesizedStatus = action == 'accept' ? 'active' : 'rejected';
+    ApiException? lastError;
     for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
       try {
         final res = await _dio.safePost<dynamic>(
@@ -342,24 +342,25 @@ class PkBattleRemoteDataSource {
         final battle = _parseBattle(res.data);
         if (battle != null) return battle;
       } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) {
-          // Kılavuz path başarısız — unified body denenir.
+        if (e.statusCode == 404 || e.statusCode == 405) {
+          lastError = e;
+          continue;
         }
+        rethrow;
       }
     }
-    final battle = await _postPkAction(
-      roomId: roomId,
-      alternateRoomId: alternateRoomId,
-      body: {'action': action, 'battleId': inviteId},
-    );
-    if (battle != null) return battle;
-    return PkBattleRemote.fromJson({
-      'id': inviteId,
-      'inviteId': inviteId,
-      'status': synthesizedStatus,
-      'battleType': 'voice_room',
-      'voiceRoomId': roomId,
-    });
+    try {
+      final battle = await _postPkAction(
+        roomId: roomId,
+        alternateRoomId: alternateRoomId,
+        body: {'action': action, 'battleId': inviteId},
+      );
+      if (battle != null) return battle;
+    } on ApiException catch (e) {
+      lastError = e;
+    }
+    if (lastError != null) throw lastError;
+    throw ApiException('PK daveti yanıtlanamadı ($action)');
   }
 
   /// `POST /api/chat/rooms/{roomId}/pk` — `{ action:'end', battleId }`.
