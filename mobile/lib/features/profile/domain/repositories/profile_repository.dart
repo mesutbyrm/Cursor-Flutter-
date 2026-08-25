@@ -37,8 +37,16 @@ abstract class ProfileRepository {
   Future<List<ProfileActivityItemEntity>> myActivity();
   Future<PagedResult<ProfileActivityItemEntity>> myActivityPage({int page});
   Future<void> markAllActivityRead();
-  Future<List<UserEntity>> followers(String userId);
-  Future<List<UserEntity>> following(String userId);
+  Future<List<UserEntity>> followers(
+    String userId, {
+    int page = 1,
+    int limit = 20,
+  });
+  Future<List<UserEntity>> following(
+    String userId, {
+    int page = 1,
+    int limit = 20,
+  });
 }
 
 abstract class WalletRepository {

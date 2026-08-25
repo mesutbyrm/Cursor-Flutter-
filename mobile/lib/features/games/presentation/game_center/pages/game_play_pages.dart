@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/widgets/discover_tab_layout.dart';
+import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../../domain/game_center_models.dart';
 import '../providers/game_center_providers.dart';
 
@@ -26,7 +28,7 @@ class _WheelOfFortunePageState extends ConsumerState<WheelOfFortunePage>
   final _prizes = const [5, 10, 25, 50, 100, 0, 15, 30];
   String? _result;
   bool _spinning = false;
-  bool _freeUsed = false;
+  bool _usedToday = false;
 
   @override
   void initState() {
@@ -43,18 +45,26 @@ class _WheelOfFortunePageState extends ConsumerState<WheelOfFortunePage>
     super.dispose();
   }
 
-  Future<void> _doSpin({required bool paid}) async {
-    if (_spinning) return;
-    if (paid) {
-      final balance = await ref.read(gameCenterJetonProvider.future);
-      if (!mounted) return;
-      if (balance < 10) {
-        showJetonAwareError(context, '10 jeton gerekli', ref: ref);
-        return;
+  int _indexForPrize(int jeton) {
+    final exact = _prizes.indexOf(jeton);
+    if (exact >= 0) return exact;
+    var best = 0;
+    var bestDiff = 1 << 30;
+    for (var i = 0; i < _prizes.length; i++) {
+      final diff = (_prizes[i] - jeton).abs();
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        best = i;
       }
-    } else if (_freeUsed) {
+    }
+    return best;
+  }
+
+  Future<void> _doSpin() async {
+    if (_spinning) return;
+    if (_usedToday) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ücretsiz çevirme hakkın bitti')),
+        const SnackBar(content: Text('Günlük çevirme hakkın bitti')),
       );
       return;
     }
@@ -62,32 +72,43 @@ class _WheelOfFortunePageState extends ConsumerState<WheelOfFortunePage>
     setState(() {
       _spinning = true;
       _result = null;
-      if (!paid) _freeUsed = true;
     });
 
-    final index = Random().nextInt(_prizes.length);
-    final turns = 4 + Random().nextDouble();
-    final target = turns + (index / _prizes.length);
+    try {
+      final outcome =
+          await ref.read(gameCenterRepositoryProvider).dailySpin();
+      if (!mounted) return;
+      if (outcome.alreadySpun) {
+        setState(() {
+          _spinning = false;
+          _usedToday = true;
+          _result = outcome.message ?? 'Bugünkü hakkın kullanıldı';
+        });
+        return;
+      }
 
-    _spin.reset();
-    await _spin.animateTo(target, curve: Curves.easeOutCubic);
-
-    final won = _prizes[index];
-    setState(() {
-      _spinning = false;
-      _result = won > 0 ? '$won Jeton kazandın!' : 'Bir dahaki sefere!';
-    });
-
-    await recordGameCenterResult(
-      ref,
-      GameResultPayload(
-        gameId: 'kader-carki',
-        score: won,
-        won: won > 0,
-        jetonDelta: won,
-        metadata: {'paid': paid},
-      ),
-    );
+      final won = outcome.jetonWon;
+      final index = _indexForPrize(won);
+      final turns = 4 + (index / _prizes.length);
+      _spin.reset();
+      await _spin.animateTo(turns + (index / _prizes.length), curve: Curves.easeOutCubic);
+      if (!mounted) return;
+      setState(() {
+        _spinning = false;
+        _usedToday = true;
+        _result = won > 0
+            ? (outcome.prizeLabel ?? '$won Jeton kazandın!')
+            : (outcome.message ?? 'Bir dahaki sefere!');
+      });
+      ref.invalidate(gameCenterJetonProvider);
+      ref.refreshWalletCache(force: true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _spinning = false;
+        _result = ApiException.userMessage(e);
+      });
+    }
   }
 
   @override
@@ -137,13 +158,8 @@ class _WheelOfFortunePageState extends ConsumerState<WheelOfFortunePage>
               ),
             const SizedBox(height: 24),
             FilledButton(
-              onPressed: _spinning ? null : () => _doSpin(paid: false),
-              child: const Text('ÜCRETSİZ ÇEVİR'),
-            ),
-            const SizedBox(height: 8),
-            FilledButton.tonal(
-              onPressed: _spinning ? null : () => _doSpin(paid: true),
-              child: const Text('10 JETON İLE ÇEVİR'),
+              onPressed: _spinning || _usedToday ? null : _doSpin,
+              child: Text(_usedToday ? 'BUGÜN ÇEVRİLDİ' : 'GÜNLÜK ÇEVİR'),
             ),
           ],
         ),

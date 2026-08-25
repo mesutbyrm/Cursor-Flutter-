@@ -7,6 +7,7 @@ import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_glass.dart';
 import '../premium_2026/profile_theme.dart';
+import 'profile_hub_error_banner.dart';
 
 /// En çok gönderilen hediyeler.
 class ProfileHubTopGiftsSection extends ConsumerWidget {
@@ -22,7 +23,10 @@ class ProfileHubTopGiftsSection extends ConsumerWidget {
         width: double.infinity,
         borderRadius: BorderRadius.all(Radius.circular(16)),
       ),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => ProfileHubSectionRetry(
+        message: 'Hediyeler yüklenemedi',
+        onRetry: () => ref.invalidate(giftsReceivedSummaryProvider),
+      ),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
         final top = items.take(5).toList();

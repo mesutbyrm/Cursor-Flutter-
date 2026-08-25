@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.370+408 (2026-08-25) — Sayfa denetimi P0/P1 (rozet, profil, yayıncı, hediye, çark)
+
+- **Yayıncı Ol:** Ana sayfa çipi ve `/yayinci-ol` artık yayın başlatma (`/live/type`); falcı başvurusu `/falci-ol` ayrı kaldı
+- **Profil tıklama:** Takipçi / izleyici listesi `/user/:id` profiline gider
+- **Giriş çıkmazı:** Misafir `/login` ve `/auth/login` yerine gerçek giriş ekranı (`exitGuestToLogin`)
+- **Keşfet:** Ana sayfa rozeti sesli oda keşfetine (`/voice-rooms`) açılır
+- **Hediye:** Merkez + kullanıcı profilinden `POST /api/gifts/send` ile doğrudan gönderim
+- **Kader çarkı:** Yerel rastgele yerine `POST /api/games/daily-spin`
+- **Profil:** Yayıncı paneli herkese açık; onaylı falcı paneli görünür; rozet/hediye hata satırı
+- **Takip listesi:** Sayfalama (`page/limit=20`)
+- **Darboğaz:** Ana sayfa yenileme yalnızca görünen bölümler; hediye poll 12 sn
+
 ## 1.0.369+407 (2026-08-25) — Ana sayfa hediye bandı kalktı, anlık üst geçiş
 
 - **Ana sayfa:** Arama altındaki hediye/ticker bandı kaldırıldı; hediyeler orada sıra sıra dönmez

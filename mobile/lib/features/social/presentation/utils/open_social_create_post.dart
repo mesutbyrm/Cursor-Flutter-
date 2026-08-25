@@ -18,7 +18,7 @@ Future<void> openSocialCreatePost(
         content: Text('Paylaşım için giriş yapın'),
       ),
     );
-    context.go('/login');
+    exitGuestToLogin(ref);
     return;
   }
   final created = await context.push<bool>('/social/create', extra: initialCaption);

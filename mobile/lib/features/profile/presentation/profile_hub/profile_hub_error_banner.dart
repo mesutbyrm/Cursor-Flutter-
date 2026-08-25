@@ -45,3 +45,52 @@ class ProfileHubErrorBanner extends ConsumerWidget {
     );
   }
 }
+
+class ProfileHubSectionRetry extends StatelessWidget {
+  const ProfileHubSectionRetry({
+    super.key,
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: Colors.red.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusMd),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                color: Colors.redAccent,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: onRetry,
+                child: const Text('Tekrar Dene'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

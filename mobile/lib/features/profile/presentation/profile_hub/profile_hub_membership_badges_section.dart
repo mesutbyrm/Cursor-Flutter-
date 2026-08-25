@@ -13,6 +13,7 @@ import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/profile_theme.dart';
 import '../providers/profile_hub_providers.dart';
 import '../widgets/premium/profile_glass.dart';
+import 'profile_hub_error_banner.dart';
 
 /// Üyelik rozetleri — `GET /api/membership-badges` yatay şerit.
 class ProfileHubMembershipBadgesSection extends ConsumerWidget {
@@ -32,7 +33,10 @@ class ProfileHubMembershipBadgesSection extends ConsumerWidget {
         width: double.infinity,
         borderRadius: BorderRadius.all(Radius.circular(16)),
       ),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => ProfileHubSectionRetry(
+        message: 'Üyelik rozetleri yüklenemedi',
+        onRetry: () => ref.invalidate(membershipBadgesCatalogProvider),
+      ),
       data: (badges) {
         if (badges.isEmpty) return const SizedBox.shrink();
         final unlocked =

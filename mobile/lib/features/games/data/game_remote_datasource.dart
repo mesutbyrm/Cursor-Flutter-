@@ -4,6 +4,7 @@ import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
+import '../domain/game_center_models.dart';
 import '../domain/game_models.dart';
 
 class GameRemoteDataSource {
@@ -241,6 +242,25 @@ class GameRemoteDataSource {
       ApiEndpoints.gameMiniScores,
       data: {'gameId': gameId, 'score': score},
     );
+  }
+
+  /// Kılavuz GameRepository `dailySpin` — `POST /api/games/daily-spin`.
+  Future<DailySpinResult> dailySpin() async {
+    try {
+      final res = await _dio.safePost<dynamic>(ApiEndpoints.gamesDailySpin);
+      return DailySpinResult.fromJson(_map(res.data));
+    } on ApiException catch (e) {
+      final msg = e.message.toLowerCase();
+      if (e.statusCode == 400 ||
+          e.statusCode == 409 ||
+          msg.contains('already') ||
+          msg.contains('bugün') ||
+          msg.contains('bugun') ||
+          msg.contains('zaten')) {
+        return DailySpinResult(alreadySpun: true, message: e.message);
+      }
+      rethrow;
+    }
   }
 
   Future<List<GameScoreItem>> fetchTournaments() async {

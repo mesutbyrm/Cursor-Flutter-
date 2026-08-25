@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/util/json_util.dart';
+
 /// Liderlik tablosu periyodu.
 enum LeaderboardPeriod {
   daily('daily', 'Günlük'),
@@ -109,6 +111,59 @@ class GameResultPayload extends Equatable {
 
   @override
   List<Object?> get props => [gameId, score, won, jetonDelta, metadata];
+}
+
+/// `POST /api/games/daily-spin` yanıtı.
+class DailySpinResult extends Equatable {
+  const DailySpinResult({
+    this.alreadySpun = false,
+    this.jetonWon = 0,
+    this.message,
+    this.prizeLabel,
+  });
+
+  factory DailySpinResult.fromJson(Map<String, dynamic> json) {
+    final nested = json['data'];
+    final map = nested is Map
+        ? {...json, ...Map<String, dynamic>.from(nested)}
+        : json;
+    final already = asBool(
+      pick(map, [
+        'alreadySpun',
+        'alreadyClaimed',
+        'claimed',
+        'spunToday',
+        'alreadySpinned',
+      ]),
+    );
+    final jeton = asInt(
+      pick(map, [
+        'jeton',
+        'credits',
+        'amount',
+        'prize',
+        'reward',
+        'jetonWon',
+        'coins',
+      ]),
+    );
+    final message = pick(map, ['message', 'error', 'detail'])?.toString();
+    final label = pick(map, ['prizeLabel', 'prizeName', 'label'])?.toString();
+    return DailySpinResult(
+      alreadySpun: already,
+      jetonWon: jeton,
+      message: message,
+      prizeLabel: label,
+    );
+  }
+
+  final bool alreadySpun;
+  final int jetonWon;
+  final String? message;
+  final String? prizeLabel;
+
+  @override
+  List<Object?> get props => [alreadySpun, jetonWon, message, prizeLabel];
 }
 
 /// Oyun merkezi statik katalog.

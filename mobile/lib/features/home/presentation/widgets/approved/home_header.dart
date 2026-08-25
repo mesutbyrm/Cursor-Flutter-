@@ -99,7 +99,7 @@ class _DiscoverBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/shorts'),
+      onTap: () => context.push('/voice-rooms'),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(

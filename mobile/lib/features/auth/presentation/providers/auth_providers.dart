@@ -7,7 +7,6 @@ import '../../../../core/theme/user_theme_sync_provider.dart';
 
 import '../../../../core/bootstrap/user_session_cleanup.dart';
 import '../../../../core/bootstrap/session_data_refresh.dart';
-import '../../../../core/bootstrap/user_session_cleanup.dart';
 import '../../../../core/bootstrap/app_startup_log.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/config/env.dart';
@@ -479,6 +478,11 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
 /// Misafir gezinme — oturum açmadan keşfet / feed (sınırlı).
 final guestModeProvider = StateProvider<bool>((ref) => false);
+
+/// Misafir oturumunu kapatır; `AuthGatewayHost` giriş ekranını gösterir.
+void exitGuestToLogin(WidgetRef ref) {
+  ref.read(guestModeProvider.notifier).state = false;
+}
 
 /// Kullanıcı tetiklemeli giriş/kayıt — arka plan oturum kontrolünden ayrı.
 final authUserActionBusyProvider = StateProvider<bool>((ref) => false);

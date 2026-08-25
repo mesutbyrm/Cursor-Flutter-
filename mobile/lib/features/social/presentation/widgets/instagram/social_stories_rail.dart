@@ -120,7 +120,7 @@ class _OwnStoryChip extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Hikâye eklemek için giriş yapın')),
         );
-        context.push('/login');
+        exitGuestToLogin(ref);
       }
       return;
     }

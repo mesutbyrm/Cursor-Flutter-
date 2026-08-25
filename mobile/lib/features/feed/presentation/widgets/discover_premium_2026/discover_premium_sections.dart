@@ -7,6 +7,7 @@ import '../../../../../core/config/env.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/ui/premium/premium.dart';
 import '../../../domain/discover_category.dart';
+import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/domain/entities/voice_room_sort.dart';
 import '../../../../vip_gold/domain/voice_room_access.dart';
@@ -95,7 +96,7 @@ class DiscoverPremiumVoicePanel extends ConsumerWidget {
     if (!Env.useNextAuth) {
       return PremiumEmptyHint(
         message: 'Sesli odalar için giriş yapın.',
-        onRetry: () => context.push('/login'),
+        onRetry: () => exitGuestToLogin(ref),
       );
     }
 

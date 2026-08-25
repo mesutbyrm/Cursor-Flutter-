@@ -1496,7 +1496,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 style: const TextStyle(fontSize: 12),
                               ),
                               trailing: TextButton(
-                                onPressed: () => context.push('/login'),
+                                onPressed: () => exitGuestToLogin(ref),
                                 child: const Text('Giriş yap'),
                               ),
                             ),

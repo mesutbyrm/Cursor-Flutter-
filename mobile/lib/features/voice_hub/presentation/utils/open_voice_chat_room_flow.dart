@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../../core/auth/bot_account_guard.dart';
@@ -24,7 +23,7 @@ import 'voice_room_category_catalog.dart';
 Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) async {
   final user = ref.read(authControllerProvider).valueOrNull;
   if (user == null) {
-    if (context.mounted) context.push('/login');
+    if (context.mounted) exitGuestToLogin(ref);
     return;
   }
 

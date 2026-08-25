@@ -29,7 +29,7 @@ void openNativeSitePath(BuildContext context, String path) {
     return;
   }
   if (p == '/yayinci-ol' || p == '/yayinci-panel') {
-    context.push('/falci-ol');
+    context.push('/live/type');
     return;
   }
   if (p == '/bana-ozel' || p.startsWith('/bana-ozel/')) {

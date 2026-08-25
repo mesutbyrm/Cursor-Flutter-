@@ -7,6 +7,7 @@ import '../../data/datasources/achievements_remote_datasource.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_glass.dart';
 import '../premium_2026/profile_theme.dart';
+import 'profile_hub_error_banner.dart';
 
 /// Son rozetler + sonraki rozet ilerlemesi.
 class ProfileHubBadgesSection extends ConsumerWidget {
@@ -22,7 +23,10 @@ class ProfileHubBadgesSection extends ConsumerWidget {
         width: double.infinity,
         borderRadius: BorderRadius.all(Radius.circular(16)),
       ),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (e, _) => ProfileHubSectionRetry(
+        message: 'Rozetler yüklenemedi',
+        onRetry: () => ref.invalidate(userAchievementsProvider),
+      ),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
         final unlocked = items.where((a) => a.unlocked).toList();

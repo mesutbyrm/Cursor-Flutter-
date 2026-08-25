@@ -11,6 +11,7 @@ import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
+import '../../../gifts/presentation/widgets/direct_gift_send_sheet.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_glass.dart';
 import '../widgets/user_profile_membership_badge.dart';
@@ -208,6 +209,35 @@ class UserProfilePage extends ConsumerWidget {
                       const SizedBox(height: 10),
                       Row(
                         children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => showDirectGiftSendSheet(
+                                context,
+                                ref,
+                                receiverUserId: userId,
+                                receiverName: user.display,
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size.fromHeight(52),
+                                foregroundColor: const Color(0xFFFFD54F),
+                                side: BorderSide(
+                                  color: const Color(0xFFFFD54F)
+                                      .withValues(alpha: 0.65),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: const Text(
+                                'Hediye',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: OutlinedButton(
                               onPressed: () => context.push('/chat/$userId'),

@@ -222,12 +222,20 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<void> markAllActivityRead() => _canlifal.markAllActivityRead();
 
   @override
-  Future<List<UserEntity>> followers(String userId) =>
-      _remote.followers(userId);
+  Future<List<UserEntity>> followers(
+    String userId, {
+    int page = 1,
+    int limit = 20,
+  }) =>
+      _remote.followers(userId, page: page, limit: limit);
 
   @override
-  Future<List<UserEntity>> following(String userId) =>
-      _remote.following(userId);
+  Future<List<UserEntity>> following(
+    String userId, {
+    int page = 1,
+    int limit = 20,
+  }) =>
+      _remote.following(userId, page: page, limit: limit);
 }
 
 class WalletRepositoryImpl implements WalletRepository {

@@ -216,7 +216,6 @@ class SettingsPage extends ConsumerWidget {
                       onTap: () async {
                         try {
                           await ref.read(authControllerProvider.notifier).logout();
-                          if (context.mounted) context.go('/auth/login');
                         } catch (e) {
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(

@@ -49,7 +49,7 @@ class _PsychicBecomeTellerPageState extends ConsumerState<PsychicBecomeTellerPag
                   title: 'Giriş gerekli',
                   message: 'Falcı başvurusu yapmak için hesabınıza giriş yapın.',
                   actionLabel: 'Giriş Yap',
-                  onAction: () => context.push('/auth/login'),
+                  onAction: () => exitGuestToLogin(ref),
                 );
               }
 

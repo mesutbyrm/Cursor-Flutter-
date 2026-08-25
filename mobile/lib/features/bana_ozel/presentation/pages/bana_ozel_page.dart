@@ -45,7 +45,7 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
         const SnackBar(content: Text('İçerik açmak için giriş yapın')),
       );
       setState(() => _pendingSlugAttempted = false);
-      context.push('/auth/login');
+      exitGuestToLogin(ref);
       return;
     }
     if (balance < item.jetonCost) {

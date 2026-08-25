@@ -19,11 +19,30 @@ void main() {
     test('maps teller specialBehavior to falci-ol', () {
       const button = HomePageButtonEntity(
         id: '2',
+        label: 'Falcı Ol',
+        linkUrl: '/falci-ol',
+        specialBehavior: 'teller',
+      );
+      expect(resolveHomePageButtonRoute(button), '/falci-ol');
+    });
+
+    test('maps Yayıncı Ol label to live type even if teller behavior', () {
+      const button = HomePageButtonEntity(
+        id: '2b',
         label: 'Yayıncı Ol',
         linkUrl: '/yayinci-ol',
         specialBehavior: 'teller',
       );
-      expect(resolveHomePageButtonRoute(button), '/falci-ol');
+      expect(resolveHomePageButtonRoute(button), '/live/type');
+    });
+
+    test('maps broadcaster specialBehavior to live type', () {
+      const button = HomePageButtonEntity(
+        id: '2c',
+        label: 'Canlı yayın',
+        specialBehavior: 'broadcaster',
+      );
+      expect(resolveHomePageButtonRoute(button), '/live/type');
     });
 
     test('falls back to href when no specialBehavior', () {

@@ -26,7 +26,7 @@ class HomeQuickActions extends ConsumerWidget {
     _QuickActionData(
       icon: Icons.sensors_rounded,
       label: 'Yayıncı Ol',
-      route: '/falci-ol',
+      route: '/live/type',
     ),
   ];
 

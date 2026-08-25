@@ -97,6 +97,10 @@ class ProfileHubLayout extends StatelessWidget {
         const ProfileHubServicesRow(),
         const SizedBox(height: 22),
         ProfileLazyContent(userId: userId),
+        if (state.isApprovedTeller) ...[
+          const SizedBox(height: 22),
+          const ProfileLazyTeller(),
+        ],
         if (showPublisher) ...[
           const SizedBox(height: 22),
           const ProfileLazyPublisher(),

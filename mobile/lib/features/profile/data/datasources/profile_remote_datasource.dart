@@ -360,7 +360,11 @@ class ProfileRemoteDataSource {
     return const [];
   }
 
-  Future<List<UserEntity>> followers(String userId) async {
+  Future<List<UserEntity>> followers(
+    String userId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
     for (final path in [
       ApiEndpoints.userPublicFollowers(userId),
       if (Env.useMobileAuth) ApiEndpoints.userFollowers,
@@ -369,16 +373,20 @@ class ProfileRemoteDataSource {
       try {
         final res = await _dio.safeGet<dynamic>(
           path,
-          query: const {'page': 1, 'limit': 50},
+          query: {'page': page, 'limit': limit},
         );
         final list = _parseUserList(res.data);
-        if (list.isNotEmpty) return list;
+        if (list.isNotEmpty || page == 1) return list;
       } catch (_) {}
     }
     return const [];
   }
 
-  Future<List<UserEntity>> following(String userId) async {
+  Future<List<UserEntity>> following(
+    String userId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
     for (final path in [
       if (Env.useMobileAuth) ApiEndpoints.userFollowing,
       ApiEndpoints.following(userId),
@@ -386,10 +394,10 @@ class ProfileRemoteDataSource {
       try {
         final res = await _dio.safeGet<dynamic>(
           path,
-          query: const {'page': 1, 'limit': 50},
+          query: {'page': page, 'limit': limit},
         );
         final list = _parseUserList(res.data);
-        if (list.isNotEmpty) return list;
+        if (list.isNotEmpty || page == 1) return list;
       } catch (_) {}
     }
     return const [];

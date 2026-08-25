@@ -91,4 +91,7 @@ class GameCenterRepositoryImpl implements GameCenterRepository {
     );
     return _games.autoMatch(game);
   }
+
+  @override
+  Future<DailySpinResult> dailySpin() => _games.dailySpin();
 }

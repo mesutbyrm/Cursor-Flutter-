@@ -100,7 +100,7 @@ void _pushWalletRoute(
           content: Text('Jeton ve CFC yüklemek için giriş yapın.'),
         ),
       );
-      context.push('/login');
+      exitGuestToLogin(ref);
       return;
     }
   }

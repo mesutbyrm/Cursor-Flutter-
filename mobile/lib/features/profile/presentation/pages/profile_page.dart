@@ -160,8 +160,7 @@ class _ProfileScrollBody extends ConsumerWidget {
     ProfileLoadPerf.prefetchOnOpen(ref, profileUser.id);
     final onLogout = () => ref.read(authControllerProvider.notifier).logout();
     final staff = ref.watch(staffAccessProvider);
-    final showPublisher =
-        staff.showAdminPanel || staff.canManagePayments;
+    const showPublisher = true;
 
     return ProfileRealtimeSync(
       child: _profileScroll(

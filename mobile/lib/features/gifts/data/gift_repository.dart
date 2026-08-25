@@ -219,4 +219,30 @@ class GiftRepository {
     } catch (_) {}
     return const [];
   }
+
+  /// Kılavuz §9.9 — `POST /api/gifts/send` `{giftId, receiverUserId, quantity?}`.
+  Future<Map<String, dynamic>> sendDirectGift({
+    required String giftId,
+    required String receiverUserId,
+    int quantity = 1,
+    String? roomType,
+    String? roomId,
+  }) async {
+    final data = <String, dynamic>{
+      'giftId': giftId.trim(),
+      'receiverUserId': receiverUserId.trim(),
+      'quantity': quantity < 1 ? 1 : quantity,
+    };
+    final type = roomType?.trim();
+    final room = roomId?.trim();
+    if (type != null && type.isNotEmpty) data['roomType'] = type;
+    if (room != null && room.isNotEmpty) data['roomId'] = room;
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.giftsSend,
+      data: data,
+    );
+    final body = _unwrap(res.data);
+    if (body is Map) return Map<String, dynamic>.from(body);
+    return const {};
+  }
 }

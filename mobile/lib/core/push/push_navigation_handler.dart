@@ -27,6 +27,8 @@ class PushNavigationHandler {
   static final List<Map<String, dynamic>> _bufferedFortunePayloads = [];
   static final List<Map<String, dynamic>> _bufferedTapPayloads = [];
 
+  static void Function()? onRequireLogin;
+
   static void install(
     GoRouter router, {
     void Function()? onReceived,
@@ -36,9 +38,11 @@ class PushNavigationHandler {
     void Function(PsychicSessionEndedPayload ended)? onSessionEndedData,
     VoiceRoomSwitchPreparer? onPrepareVoiceRoomSwitch,
     bool Function()? authenticated,
+    void Function()? requireLogin,
   }) {
     _router = router;
     isAuthenticated = authenticated;
+    onRequireLogin = requireLogin;
     prepareVoiceRoomSwitch = onPrepareVoiceRoomSwitch;
     onPushReceived = onReceived;
     onFortuneInvite = onFortuneInviteData;
@@ -201,7 +205,7 @@ class PushNavigationHandler {
         final route = _routePreviewForPending(entity);
         if (route != null) PostLoginNavigation.remember(route);
       }
-      router.go('/auth/login');
+      (onRequireLogin ?? () => router.go('/feed'))();
       return;
     }
 

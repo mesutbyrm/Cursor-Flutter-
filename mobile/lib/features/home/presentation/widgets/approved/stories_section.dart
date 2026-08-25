@@ -6,7 +6,6 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/domain/entities/user_entity.dart';
-import '../../../../auth/presentation/auth_navigation.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../social/domain/entities/social_story_ring_entity.dart';
 import '../../../../social/presentation/providers/social_providers.dart';
@@ -107,7 +106,7 @@ class _OwnStoryChip extends ConsumerWidget {
   Future<void> _addStory(BuildContext context, WidgetRef ref) async {
     final me = ref.read(authControllerProvider).valueOrNull;
     if (me == null) {
-      if (context.mounted) AuthNavigation.toLogin(context);
+      if (context.mounted) exitGuestToLogin(ref);
       return;
     }
     await showStoryCreateSheet(context, ref);

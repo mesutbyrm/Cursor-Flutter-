@@ -33,8 +33,6 @@ import '../../../gifts/domain/gift_leaderboard_entry.dart';
 import '../../../agency/domain/entities/agency_leaderboard_entry.dart';
 import '../../../agency/presentation/providers/agency_providers.dart';
 import '../../../platform/presentation/providers/platform_content_providers.dart';
-import '../../../profile/presentation/providers/profile_providers.dart';
-import '../../../feed/presentation/providers/platform_stats_providers.dart';
 import '../../domain/entities/home_football_match_entity.dart';
 import '../../domain/entities/home_broadcast_image_entity.dart';
 import '../../domain/entities/home_user_liker_entity.dart';
@@ -65,24 +63,11 @@ void invalidateHomeKeepAliveProviders(dynamic ref) {
   ref.invalidate(homeAdvisorsProvider);
   ref.invalidate(homeGamesProvider);
   ref.invalidate(homeDailyRewardsProvider);
-  ref.invalidate(homeTickerProvider);
   ref.invalidate(homeHomepageButtonsProvider);
-  ref.invalidate(homeFanClubsProvider);
-  ref.invalidate(homeCelebritiesProvider);
-  ref.invalidate(homeTrendTopicsProvider);
-  ref.invalidate(homeBlogRecentProvider);
   ref.invalidate(homeDisplayedPsychicsProvider);
-  ref.invalidate(homeGiftLeaderboardProvider);
-  ref.invalidate(homeFootballMatchesProvider);
-  ref.invalidate(homePkLeaderboardProvider);
   ref.invalidate(homeOnlineFalProvider);
-  ref.invalidate(homeAgencyLeaderboardProvider);
-  ref.invalidate(homeBroadcastImagesProvider);
-  ref.invalidate(homeUserLikersProvider);
-  ref.invalidate(homeActiveAdsProvider);
   ref.invalidate(homeFortuneRequestTypesProvider);
   ref.invalidate(homePopupsProvider);
-  ref.invalidate(platformStatsProvider);
   invalidateDiscoverLiveStreams(ref);
   invalidateDiscoverVoiceRooms(ref);
   ref.invalidate(homeLiveStreamsProvider);
@@ -361,32 +346,18 @@ Future<void> refreshHomeData(WidgetRef ref) async {
   ref.read(homeRemoteProvider).invalidateMobileHomeCache();
   await NetworkPerf.waitSilent([
     ref.refresh(homeBannersProvider.future),
-    ref.refresh(homeTickerProvider.future),
     ref.refresh(homeHomepageButtonsProvider.future),
     ref.refresh(homeTrendVideosProvider.future),
-    ref.refresh(homeTrendTopicsProvider.future),
-    ref.refresh(homeBlogRecentProvider.future),
     ref.refresh(homeLiveStreamsProvider.future),
     ref.refresh(homeVoiceRoomsProvider.future),
     ref.refresh(homeFortuneCardsProvider.future),
     ref.refresh(homeGamesProvider.future),
     ref.refresh(homeDailyRewardsProvider.future),
-    ref.refresh(homeFanClubsProvider.future),
-    ref.refresh(homeCelebritiesProvider.future),
     ref.refresh(homeDisplayedPsychicsProvider.future),
-    ref.refresh(homeGiftLeaderboardProvider.future),
-    ref.refresh(homeFootballMatchesProvider.future),
-    ref.refresh(homePkLeaderboardProvider.future),
+    ref.refresh(homeAdvisorsProvider.future),
     ref.refresh(homeOnlineFalProvider.future),
-    ref.refresh(homeAgencyLeaderboardProvider.future),
-    ref.refresh(homeBroadcastImagesProvider.future),
-    ref.refresh(homeUserLikersProvider.future),
-    ref.refresh(homeActiveAdsProvider.future),
     ref.refresh(homeFortuneRequestTypesProvider.future),
     ref.refresh(homePopupsProvider.future),
-    ref.refresh(platformStatsProvider.future),
-    ref.refresh(referralInfoProvider.future),
-    ref.refresh(userDailyTasksProvider.future),
     ref.refresh(socialStoryRingsProvider.future),
   ]).timeout(
     const Duration(seconds: 12),

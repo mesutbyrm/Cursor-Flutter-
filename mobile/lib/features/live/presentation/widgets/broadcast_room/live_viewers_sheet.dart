@@ -141,7 +141,7 @@ class _ViewerTile extends ConsumerWidget {
           ? null
           : () {
               Navigator.pop(context);
-              context.push('/profile/${viewer.id}');
+              context.push('/user/${viewer.id}');
             },
     );
   }

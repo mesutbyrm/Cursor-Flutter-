@@ -63,6 +63,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
       PushNavigationHandler.install(
         ref.read(goRouterProvider),
         authenticated: () => ref.read(authControllerProvider).valueOrNull != null,
+        requireLogin: () => exitGuestToLogin(ref),
         onReceived: _onPushReceived,
         onFortuneInviteData: (data) {
           final invite = parsePsychicIncomingLoose(data);

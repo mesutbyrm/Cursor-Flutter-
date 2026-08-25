@@ -5,6 +5,7 @@ import '../../../../core/images/canlifal_network_image.dart';
 import '../../domain/gift_mission.dart';
 import '../../domain/gift_sender_map.dart';
 import '../providers/gift_insights_providers.dart';
+import '../widgets/direct_gift_send_sheet.dart';
 
 /// Hediye Merkezi — günlük görevler, bana özel öneriler, gönderen haritası.
 class GiftHubPage extends ConsumerWidget {
@@ -33,6 +34,12 @@ class GiftHubPage extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(14),
           children: [
+            FilledButton.icon(
+              onPressed: () => showDirectGiftSendSheet(context, ref),
+              icon: const Icon(Icons.send_rounded),
+              label: const Text('Hediye gönder'),
+            ),
+            const SizedBox(height: 20),
             const _SectionTitle('Günlük Görevler', icon: Icons.task_alt_rounded),
             const SizedBox(height: 8),
             missions.when(

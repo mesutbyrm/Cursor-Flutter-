@@ -36,7 +36,9 @@ class SocialPostCommentsSheet extends ConsumerStatefulWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Yorum yazmak için giriş yapın')),
       );
-      context.go('/login');
+      ProviderScope.containerOf(context)
+          .read(guestModeProvider.notifier)
+          .state = false;
       return Future.value();
     }
     return showModalBottomSheet<void>(
@@ -86,7 +88,7 @@ class _SocialPostCommentsSheetState
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Yorum yazmak için giriş yapın')),
         );
-        context.go('/login');
+        exitGuestToLogin(ref);
       }
       return;
     }
