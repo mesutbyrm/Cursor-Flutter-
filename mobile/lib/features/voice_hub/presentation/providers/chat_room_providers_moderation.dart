@@ -44,13 +44,19 @@ extension VoiceRoomModerationControls on VoiceRoomLiveController {
         unawaited(_tryAutoPrivilegedSeat());
         return;
       }
-      if (_isClientRoomOwner()) {
-        state = state.copyWith(serverPermissions: _ownerPermissionsFallback());
+      final staff = ref.read(staffAccessProvider);
+      if (_isClientRoomOwner() || staff.isSiteAdmin || staff.isFounder) {
+        state = state.copyWith(
+          serverPermissions: perms ?? _ownerPermissionsFallback(),
+        );
+        _autoSeatAttempted = false;
         unawaited(_tryAutoPrivilegedSeat());
       }
     } catch (_) {
-      if (_isClientRoomOwner()) {
+      final staff = ref.read(staffAccessProvider);
+      if (_isClientRoomOwner() || staff.isSiteAdmin || staff.isFounder) {
         state = state.copyWith(serverPermissions: _ownerPermissionsFallback());
+        _autoSeatAttempted = false;
         unawaited(_tryAutoPrivilegedSeat());
       }
     }

@@ -109,6 +109,13 @@ class _AdminEntranceEffectsPageState
                       ),
                       const SizedBox(height: 8),
                       SwitchListTile(
+                        title: const Text('Premium giriş efekti'),
+                        value: settings.premiumEnabled,
+                        onChanged: (v) => notifier.update(
+                          settings.copyWith(premiumEnabled: v),
+                        ),
+                      ),
+                      SwitchListTile(
                         title: const Text('Gold giriş efekti'),
                         value: settings.goldEnabled,
                         onChanged: (v) =>

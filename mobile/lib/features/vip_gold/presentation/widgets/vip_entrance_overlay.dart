@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entrance_theme.dart';
 import '../../domain/vip_tier.dart';
+import '../../../../core/network/voice_event_log.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/entrance_effect_settings_provider.dart';
 import '../theme/vip_gold_tokens.dart';
 import 'vip_badge.dart';
@@ -16,12 +18,14 @@ class VipEntranceOverlay extends ConsumerStatefulWidget {
     super.key,
     required this.tier,
     required this.userName,
+    this.profileImageUrl,
     this.theme,
     this.onFinished,
   });
 
   final VipTier tier;
   final String userName;
+  final String? profileImageUrl;
   final EntranceTheme? theme;
   final VoidCallback? onFinished;
 
@@ -44,6 +48,8 @@ class VipEntranceOverlayState extends ConsumerState<VipEntranceOverlay>
 
   void _startPass() {
     final settings = ref.read(entranceEffectSettingsProvider);
+    final user = ref.read(authControllerProvider).valueOrNull;
+    VoiceEventLog.entryEffectStarted(userId: user?.id, tier: widget.tier.label);
     _ctrl?.dispose();
     _ctrl = AnimationController(
       vsync: this,
@@ -56,6 +62,9 @@ class VipEntranceOverlayState extends ConsumerState<VipEntranceOverlay>
           _startPass();
           return;
         }
+        VoiceEventLog.entryEffectFinished(
+          userId: ref.read(authControllerProvider).valueOrNull?.id,
+        );
         widget.onFinished?.call();
       });
   }
@@ -104,7 +113,14 @@ class VipEntranceOverlayState extends ConsumerState<VipEntranceOverlay>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (theme.logoUrl != null &&
+                          if (widget.profileImageUrl != null &&
+                              widget.profileImageUrl!.trim().isNotEmpty)
+                            CircleAvatar(
+                              radius: 36,
+                              backgroundImage:
+                                  NetworkImage(widget.profileImageUrl!),
+                            )
+                          else if (theme.logoUrl != null &&
                               theme.logoUrl!.isNotEmpty)
                             ClipOval(
                               child: CachedNetworkImage(

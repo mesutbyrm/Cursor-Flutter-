@@ -363,17 +363,40 @@ class PkBattleRemoteDataSource {
     throw ApiException('PK daveti yanıtlanamadı ($action)');
   }
 
-  /// `POST /api/chat/rooms/{roomId}/pk` — `{ action:'end', battleId }`.
+  /// `POST /api/chat/rooms/{roomId}/pk/{battleId}/end` veya `{ action:'end' }`.
   Future<PkBattleRemote?> endBattle(
     String battleId, {
     required String roomId,
     String? alternateRoomId,
-  }) =>
-      _postPkAction(
+  }) async {
+    ApiException? lastError;
+    for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
+      try {
+        final res = await _dio.safePost<dynamic>(
+          ApiEndpoints.chatRoomPkEnd(key, battleId),
+        );
+        final battle = _parseBattle(res.data);
+        if (battle != null) return battle;
+      } on ApiException catch (e) {
+        if (e.statusCode == 404 || e.statusCode == 405) {
+          lastError = e;
+          continue;
+        }
+        rethrow;
+      }
+    }
+    try {
+      return await _postPkAction(
         roomId: roomId,
         alternateRoomId: alternateRoomId,
         body: {'action': 'end', 'battleId': battleId},
       );
+    } on ApiException catch (e) {
+      lastError = e;
+    }
+    if (lastError != null) throw lastError;
+    return null;
+  }
 
   /// `POST /api/chat/rooms/{roomId}/pk` — `{ action:'cancel', battleId }`.
   Future<PkBattleRemote?> cancelBattle(

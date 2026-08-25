@@ -79,14 +79,21 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
           onConnected: () {
             _sse._markSseActivity();
             GiftSyncLog.sseConnected(roomKey);
-            if (!state.sseConnected) {
+            final wasConnected = state.sseConnected;
+            if (!wasConnected) {
+              VoiceEventLog.socketConnected(roomId: roomKey);
               state = state.copyWith(sseConnected: true, clearError: true);
+            } else {
+              VoiceEventLog.socketReconnected(roomId: roomKey);
             }
             ref.read(voiceRoomGiftRealtimeProvider).setSseActive(true);
             if (!state.selfInRoom || !_sse._presenceJoined) {
               unawaited(_sse._joinPresence());
             }
             unawaited(_sse._refreshSeatsFromBackend());
+            if (wasConnected) {
+              unawaited(_sse.resyncAfterSseReconnect());
+            }
             ref.read(voiceRoomDiagnosticProvider.notifier).setSse(true);
             if (!VoiceRoomBasicMode.enabled ||
                 VoiceRoomBasicMode.premiumEnabled) {

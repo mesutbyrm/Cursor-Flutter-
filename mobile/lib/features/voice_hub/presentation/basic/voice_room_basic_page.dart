@@ -44,9 +44,12 @@ import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
 import '../widgets/premium/voice_gift_stage_overlays.dart';
 import '../widgets/premium_2026/voice_cosmic_background.dart';
+import '../../../vip_gold/domain/entrance_theme.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../../cosmetics/presentation/widgets/cosmetic_entrance_overlay.dart';
+import '../../../vip_gold/presentation/providers/entrance_effect_gate_provider.dart';
+import '../../../vip_gold/presentation/providers/entrance_effect_settings_provider.dart';
 import '../../../vip_gold/presentation/providers/user_room_profile_provider.dart';
 import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'voice_room_basic_moderation_section.dart';
@@ -431,7 +434,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     if (_vipEntrancePlayed || !mounted) return;
     final cosmetic = ref.read(resolvedEntranceEffectProvider);
     final tier = ref.read(vipTierProvider);
-    if (cosmetic == null && !tier.hasEntranceFx) return;
+    final allowed = ref.read(entranceEffectAllowedProvider);
+    if (cosmetic == null && !allowed) return;
+    if (cosmetic == null && !tier.hasEntranceFx && !tier.hasPremiumFrame) {
+      return;
+    }
     _vipEntrancePlayed = true;
     if (mounted) setState(() => _showVipEntrance = true);
   }
@@ -1044,6 +1051,10 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   final name = user.displayName?.trim().isNotEmpty == true
                       ? user.displayName!.trim()
                       : user.username;
+                  final settings = ref.watch(entranceEffectSettingsProvider);
+                  final theme = settings.teamColorsEnabled
+                      ? ref.watch(myEntranceThemeProvider)
+                      : EntranceTheme.turkey;
                   final cosmetic = ref.watch(resolvedEntranceEffectProvider);
                   if (cosmetic != null) {
                     return CosmeticEntranceOverlay(
@@ -1056,7 +1067,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   }
                   return VipEntranceOverlay(
                     tier: ref.watch(vipTierProvider),
-                    theme: ref.watch(myEntranceThemeProvider),
+                    theme: theme,
+                    profileImageUrl: user.avatarUrl,
                     userName: name,
                     onFinished: () {
                       if (mounted) setState(() => _showVipEntrance = false);

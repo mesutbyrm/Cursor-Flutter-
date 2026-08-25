@@ -5,6 +5,7 @@ class EntranceEffectSettings {
     this.durationMs = 2400,
     this.passCount = 1,
     this.goldEnabled = true,
+    this.premiumEnabled = true,
     this.diamondEnabled = true,
     this.svipEnabled = true,
     this.adminEnabled = true,
@@ -15,6 +16,7 @@ class EntranceEffectSettings {
   final int durationMs;
   final int passCount;
   final bool goldEnabled;
+  final bool premiumEnabled;
   final bool diamondEnabled;
   final bool svipEnabled;
   final bool adminEnabled;
@@ -29,6 +31,7 @@ class EntranceEffectSettings {
     int? durationMs,
     int? passCount,
     bool? goldEnabled,
+    bool? premiumEnabled,
     bool? diamondEnabled,
     bool? svipEnabled,
     bool? adminEnabled,
@@ -39,6 +42,7 @@ class EntranceEffectSettings {
       durationMs: durationMs ?? this.durationMs,
       passCount: passCount ?? this.passCount,
       goldEnabled: goldEnabled ?? this.goldEnabled,
+      premiumEnabled: premiumEnabled ?? this.premiumEnabled,
       diamondEnabled: diamondEnabled ?? this.diamondEnabled,
       svipEnabled: svipEnabled ?? this.svipEnabled,
       adminEnabled: adminEnabled ?? this.adminEnabled,
@@ -51,6 +55,7 @@ class EntranceEffectSettings {
         'durationMs': durationMs,
         'passCount': passCount,
         'goldEnabled': goldEnabled,
+        'premiumEnabled': premiumEnabled,
         'diamondEnabled': diamondEnabled,
         'svipEnabled': svipEnabled,
         'adminEnabled': adminEnabled,
@@ -63,6 +68,7 @@ class EntranceEffectSettings {
       durationMs: (json['durationMs'] as num?)?.toInt().clamp(1200, 5000) ?? 2400,
       passCount: (json['passCount'] as num?)?.toInt().clamp(1, 3) ?? 1,
       goldEnabled: json['goldEnabled'] as bool? ?? true,
+      premiumEnabled: json['premiumEnabled'] as bool? ?? true,
       diamondEnabled: json['diamondEnabled'] as bool? ?? true,
       svipEnabled: json['svipEnabled'] as bool? ?? true,
       adminEnabled: json['adminEnabled'] as bool? ?? true,

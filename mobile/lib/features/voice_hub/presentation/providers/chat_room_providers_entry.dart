@@ -59,7 +59,14 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
           );
       _sessionJoinedAt = DateTime.now();
       _peakViewerCount = state.presence.length;
+      final user = ref.read(authControllerProvider).valueOrNull;
+      VoiceEventLog.membershipLoaded(tier: user?.role);
+      VoiceEventLog.roomThemeLoaded(
+        roomId: _roomKey,
+        theme: state.backgroundUrl,
+      );
     } catch (e) {
+      VoiceEventLog.joinFailed(roomId: _roomKey, error: e);
       VoiceEventLog.error('join', e);
       ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
             VoiceSessionPhase.error,
@@ -203,5 +210,26 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     player.onTrackComplete = () => unawaited(_onDjTrackComplete());
     _wireMusicControls();
     unawaited(_loadGiftLeaderboard());
+  }
+
+  /// SSE yeniden bağlandığında koltuk, presence, PK ve yetkileri senkronize et.
+  Future<void> resyncAfterSseReconnect() async {
+    if (_roomKey.isEmpty || !_sessionActive) return;
+    VoiceEventLog.socketReconnected(roomId: _roomKey);
+    try {
+      await Future.wait<void>([
+        refreshServerPermissions(),
+        _loadBackendSnapshot(),
+        ref.read(pkBattleRemoteProvider.notifier).loadRoomBattle(
+              _roomKey,
+              alternateRoomId: _musicAlternateKey,
+            ),
+      ], eagerError: false);
+      _autoSeatAttempted = false;
+      unawaited(_tryAutoPrivilegedSeat());
+      unawaited(_syncSpeakRequestPending());
+    } catch (e) {
+      VoiceEventLog.error('sse_resync', e);
+    }
   }
 }

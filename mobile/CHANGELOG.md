@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.365+403 (2026-08-25) — Sesli oda kapsamlı düzeltme (PK, SSE, giriş)
+
+- **SSE reconnect:** Yeniden bağlanınca koltuk, presence, PK ve yetkiler tam senkronize edilir
+- **PK bitir:** Önce `POST …/pk/{battleId}/end`, sonra `action:end` yedek yolu
+- **Admin koltuk:** Site admin için `refreshServerPermissions` + otomatik koltuk yeniden denemesi
+- **Giriş efekti:** Profil fotoğrafı + takım teması (backend `team` öncelikli); Premium/Gold/Diamond kademe kapıları
+- **Debug log:** `room_join_*`, `socket_*`, `presence_*`, `entry_effect_*` olayları
+
 ## 1.0.364+402 (2026-08-25) — PK oturum, admin koltuk, giriş efektleri
 
 - **PK daveti 401:** Games backend (`canlifalapi`) isteklerinde JWT süresi dolunca ana siteden token yenileme ve tekrar deneme

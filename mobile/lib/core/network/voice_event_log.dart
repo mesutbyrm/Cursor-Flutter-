@@ -45,12 +45,18 @@ abstract final class VoiceEventLog {
       });
 
   static void joinStart({required String roomId}) =>
-      log('join_start', {'roomId': roomId});
+      log('room_join_start', {'roomId': roomId});
 
   static void joinSuccess({required String roomId, int? presenceCount}) =>
-      log('join_success', {
+      log('room_join_success', {
         'roomId': roomId,
         if (presenceCount != null) 'presenceCount': presenceCount,
+      });
+
+  static void joinFailed({required String roomId, Object? error}) =>
+      log('room_join_failed', {
+        'roomId': roomId,
+        if (error != null) 'message': error.toString().split('\n').first,
       });
 
   static void leaveStart({required String roomId}) =>
@@ -58,6 +64,48 @@ abstract final class VoiceEventLog {
 
   static void leaveSuccess({required String roomId}) =>
       log('leave_success', {'roomId': roomId});
+
+  static void socketConnected({required String roomId}) =>
+      log('socket_connected', {'roomId': roomId});
+
+  static void socketDisconnected({required String roomId, String? reason}) =>
+      log('socket_disconnected', {
+        'roomId': roomId,
+        if (reason != null) 'reason': reason,
+      });
+
+  static void socketReconnected({required String roomId}) =>
+      log('socket_reconnected', {'roomId': roomId});
+
+  static void presenceRegistered({required String roomId, String? userId}) =>
+      log('presence_registered', {
+        'roomId': roomId,
+        if (userId != null) 'userId': userId,
+      });
+
+  static void presenceRemoved({required String roomId, String? userId}) =>
+      log('presence_removed', {
+        'roomId': roomId,
+        if (userId != null) 'userId': userId,
+      });
+
+  static void membershipLoaded({String? tier}) =>
+      log('membership_loaded', {if (tier != null) 'tier': tier});
+
+  static void roomThemeLoaded({String? roomId, String? theme}) =>
+      log('room_theme_loaded', {
+        if (roomId != null) 'roomId': roomId,
+        if (theme != null) 'theme': theme,
+      });
+
+  static void entryEffectStarted({String? userId, String? tier}) =>
+      log('entry_effect_started', {
+        if (userId != null) 'userId': userId,
+        if (tier != null) 'tier': tier,
+      });
+
+  static void entryEffectFinished({String? userId}) =>
+      log('entry_effect_finished', {if (userId != null) 'userId': userId});
 
   static void trtcConnecting({required String roomId}) =>
       log('trtc_connecting', {'roomId': roomId});

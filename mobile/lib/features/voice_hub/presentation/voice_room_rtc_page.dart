@@ -33,6 +33,8 @@ import '../../vip_gold/domain/vip_tier.dart';
 import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../cosmetics/presentation/widgets/cosmetic_entrance_overlay.dart';
+import '../../vip_gold/domain/entrance_theme.dart';
+import '../../vip_gold/presentation/providers/entrance_effect_settings_provider.dart';
 import '../../vip_gold/presentation/providers/user_room_profile_provider.dart';
 import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import '../../trtc/presentation/trtc_room_manager.dart';
@@ -1978,6 +1980,10 @@ class _VoiceRoomRtcVipEntrance extends ConsumerWidget {
         ? user.displayName!.trim()
         : user.username;
     final cosmetic = ref.watch(resolvedEntranceEffectProvider);
+    final settings = ref.watch(entranceEffectSettingsProvider);
+    final theme = settings.teamColorsEnabled
+        ? ref.watch(myEntranceThemeProvider)
+        : EntranceTheme.turkey;
     if (cosmetic != null) {
       return CosmeticEntranceOverlay(
         userName: name,
@@ -1987,7 +1993,8 @@ class _VoiceRoomRtcVipEntrance extends ConsumerWidget {
     }
     return VipEntranceOverlay(
       tier: ref.watch(vipTierProvider),
-      theme: ref.watch(myEntranceThemeProvider),
+      theme: theme,
+      profileImageUrl: user.avatarUrl,
       userName: name,
       onFinished: onFinished,
     );
