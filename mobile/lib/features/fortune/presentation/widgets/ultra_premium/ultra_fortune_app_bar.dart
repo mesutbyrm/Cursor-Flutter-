@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../../core/bootstrap/startup_perf.dart';
-import '../../../../messages/presentation/providers/messages_providers.dart';
-import '../../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../../inbox/presentation/inbox_routes.dart';
+import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
 import 'ultra_fortune_liquid_surface.dart';
 import 'ultra_fortune_tokens.dart';
 
@@ -128,13 +128,8 @@ class _FortuneAppBarBadgesGateState extends State<_FortuneAppBarBadgesGate> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _GlassIconButton(
-            icon: Icons.chat_bubble_outline_rounded,
-            onTap: () => context.push('/messages'),
-          ),
-          const SizedBox(width: 8),
-          _GlassIconButton(
-            icon: Icons.notifications_none_rounded,
-            onTap: () => context.push('/notifications'),
+            icon: Icons.inbox_rounded,
+            onTap: () => InboxRoutes.open(context),
           ),
         ],
       );
@@ -148,22 +143,15 @@ class _FortuneAppBarBadges extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unreadMessages = ref.watch(messagesUnreadCountProvider);
-    final unreadNotifications = ref.watch(notificationsUnreadCountProvider);
+    final unreadInbox = ref.watch(inboxUnreadCountProvider);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         _GlassIconButton(
-          icon: Icons.chat_bubble_outline_rounded,
-          badgeCount: unreadMessages,
-          onTap: () => context.push('/messages'),
-        ),
-        const SizedBox(width: 8),
-        _GlassIconButton(
-          icon: Icons.notifications_none_rounded,
-          badgeCount: unreadNotifications,
-          onTap: () => context.push('/notifications'),
+          icon: Icons.inbox_rounded,
+          badgeCount: unreadInbox,
+          onTap: () => InboxRoutes.open(context),
         ),
       ],
     );

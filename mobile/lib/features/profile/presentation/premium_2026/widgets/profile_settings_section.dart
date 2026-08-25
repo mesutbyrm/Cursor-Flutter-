@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/config/app_version.dart';
 import '../../../../../core/theme/app_palette.dart';
 import '../../../../../core/widgets/theme_mode_selector.dart';
+import '../../../../inbox/presentation/inbox_routes.dart';
 import '../../../../admin_web/presentation/providers/admin_web_access_provider.dart';
 import '../../widgets/premium/profile_glass.dart';
 import '../profile_membership_helpers.dart';
@@ -65,9 +66,9 @@ class ProfileSettingsSection extends StatelessWidget {
               ),
               Divider(height: 1, indent: 52, color: palette.divider),
               _SettingsRow(
-                icon: Icons.notifications_outlined,
-                label: 'Bildirimler',
-                onTap: () => context.push('/notifications'),
+                icon: Icons.inbox_rounded,
+                label: 'Gelen Kutusu',
+                onTap: () => InboxRoutes.open(context),
               ),
               const _AdminWebSettingsRow(),
             ],

@@ -17,6 +17,8 @@ import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/pk/pk_opponent_room_filter.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
+import '../../../../inbox/presentation/inbox_routes.dart';
+import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
 import 'package:canlifal_social/features/vip_gold/domain/voice_room_access.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/theme/vip_gold_tokens.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
@@ -182,6 +184,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     final avatar = ref.watch(
       authControllerProvider.select((a) => a.valueOrNull?.avatarUrl),
     );
+    final inboxUnread = ref.watch(inboxUnreadCountProvider);
     final popular = [...widget.rooms]
       ..sort((a, b) => b.displayOnline.compareTo(a.displayOnline));
     final live = widget.liveStreams.where((s) => s.isLive).toList();
@@ -196,7 +199,8 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
             avatarUrl: avatar,
             coins: coinBalance ?? 0,
             horizontalPad: metrics.horizontalPad,
-            onNotifications: () => context.push('/notifications'),
+            inboxUnread: inboxUnread,
+            onInbox: () => InboxRoutes.open(context),
             onCoins: () => openJetonStore(context, ref: ref),
           ),
         ),
@@ -522,7 +526,8 @@ class _DiscoverHeader extends StatelessWidget {
     required this.avatarUrl,
     required this.coins,
     required this.horizontalPad,
-    required this.onNotifications,
+    required this.inboxUnread,
+    required this.onInbox,
     required this.onCoins,
   });
 
@@ -530,7 +535,8 @@ class _DiscoverHeader extends StatelessWidget {
   final String? avatarUrl;
   final int coins;
   final double horizontalPad;
-  final VoidCallback onNotifications;
+  final int inboxUnread;
+  final VoidCallback onInbox;
   final VoidCallback onCoins;
 
   @override
@@ -632,8 +638,12 @@ class _DiscoverHeader extends StatelessWidget {
             ),
           ),
           IconButton(
-            onPressed: onNotifications,
-            icon: const Icon(Icons.notifications_none_rounded),
+            onPressed: onInbox,
+            icon: Badge(
+              isLabelVisible: inboxUnread > 0,
+              label: Text('$inboxUnread'),
+              child: const Icon(Icons.inbox_rounded),
+            ),
           ),
         ],
       ),

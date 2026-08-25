@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/theme/app_palette.dart';
 import '../../../../../core/widgets/theme_mode_selector.dart';
+import '../../../../inbox/presentation/inbox_routes.dart';
 import 'profile_glass.dart';
 
 class ProfileSettingsMenu extends StatelessWidget {
@@ -40,9 +41,9 @@ class ProfileSettingsMenu extends StatelessWidget {
         onTap: onSecurity ?? () {},
       ),
       (
-        icon: Icons.notifications_outlined,
-        label: 'Bildirim Ayarları',
-        onTap: onNotifications ?? () => context.push('/notifications'),
+        icon: Icons.inbox_rounded,
+        label: 'Gelen Kutusu',
+        onTap: onNotifications ?? () => InboxRoutes.open(context),
       ),
       (
         icon: Icons.bookmark_outline_rounded,

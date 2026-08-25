@@ -11,6 +11,8 @@ import '../../../../core/widgets/theme_mode_selector.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../fortune/presentation/widgets/fortune_auto_share_setting_tile.dart';
+import '../../../inbox/domain/inbox_tab.dart';
+import '../../../inbox/presentation/inbox_routes.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../widgets/premium/profile_glass.dart';
 
@@ -106,15 +108,21 @@ class SettingsPage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              const _SectionLabel('Bildirimler'),
+              const _SectionLabel('Gelen Kutusu'),
               ProfileGlass(
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
                     _SettingsTile(
+                      icon: Icons.inbox_rounded,
+                      label: 'Mesajlar ve sistem bildirimleri',
+                      onTap: () => InboxRoutes.open(context),
+                    ),
+                    const _Divider(),
+                    _SettingsTile(
                       icon: Icons.notifications_outlined,
-                      label: 'Bildirim Ayarları',
-                      onTap: () => context.push('/notifications'),
+                      label: 'Sistem bildirimleri',
+                      onTap: () => InboxRoutes.open(context, tab: InboxTab.system),
                     ),
                   ],
                 ),

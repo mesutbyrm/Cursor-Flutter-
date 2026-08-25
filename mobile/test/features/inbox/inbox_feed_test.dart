@@ -1,4 +1,5 @@
 import 'package:canlifal_social/features/inbox/domain/inbox_feed_entry.dart';
+import 'package:canlifal_social/features/inbox/presentation/inbox_routes.dart';
 import 'package:canlifal_social/features/inbox/domain/inbox_tab.dart';
 import 'package:canlifal_social/features/inbox/presentation/utils/inbox_notification_visual.dart';
 import 'package:canlifal_social/features/messages/domain/entities/message_entities.dart';
@@ -6,6 +7,13 @@ import 'package:canlifal_social/features/notifications/domain/entities/app_notif
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('InboxRoutes', () {
+    test('pathForTab builds query urls', () {
+      expect(InboxRoutes.pathForTab(), '/messages');
+      expect(InboxRoutes.pathForTab(InboxTab.system), '/messages?tab=system');
+    });
+  });
+
   group('InboxTab', () {
     test('fromQuery parses tab aliases', () {
       expect(InboxTab.fromQuery('system'), InboxTab.system);

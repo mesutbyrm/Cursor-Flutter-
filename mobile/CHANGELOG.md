@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.362+400 (2026-08-25) — Gelen kutusu navigasyon tamamlama
+
+- Tüm ekranlarda ayrı zil/mesaj ikonları kaldırıldı → tek **Gelen Kutusu** (`InboxRoutes`)
+- Fal, sesli oda, profil ayarları ve shell üst bar birleşik rozete geçirildi
+- Sesli oda app bar zil butonu artık gelen kutusuna yönlendiriyor
+- Ayarlar: "Mesajlar ve sistem bildirimleri" + "Sistem bildirimleri" kısayolları
+
 ## 1.0.361+399 (2026-08-25) — Birleşik gelen kutusu (TikTok tarzı)
 
 - **Gelen Kutusu:** Mesajlar ve sistem bildirimleri tek ekranda — `Tümü | Mesajlar | Sistem` sekmeleri.

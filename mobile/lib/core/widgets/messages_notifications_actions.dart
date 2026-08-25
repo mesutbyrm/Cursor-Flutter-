@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/inbox/presentation/inbox_routes.dart';
 import '../../features/inbox/presentation/providers/inbox_unread_providers.dart';
 
 import '../ui/premium/premium_icon_button.dart';
@@ -35,7 +36,7 @@ class MessagesNotificationsActions extends ConsumerWidget {
           size: iconSize,
           showBadge: unreadInbox > 0,
           badgeCount: unreadInbox,
-          onTap: () => context.push('/messages'),
+          onTap: () => InboxRoutes.open(context),
         ),
       ],
     );

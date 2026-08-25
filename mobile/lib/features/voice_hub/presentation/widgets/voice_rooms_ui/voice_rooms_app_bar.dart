@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/images/canlifal_network_image.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
-import '../../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../../inbox/presentation/inbox_routes.dart';
+import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
 import '../../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import 'voice_rooms_hero.dart';
 import 'voice_rooms_fx.dart';
@@ -21,7 +22,7 @@ class VoiceRoomsAppBar extends ConsumerWidget {
       ),
     );
     final vipLevel = ref.watch(vipTierProvider.select((t) => t.index + 1));
-    final notificationCount = ref.watch(notificationsUnreadCountProvider);
+    final inboxCount = ref.watch(inboxUnreadCountProvider);
     final avatarUrl = ref.watch(
       authControllerProvider.select((a) => a.valueOrNull?.avatarUrl),
     );
@@ -44,7 +45,7 @@ class VoiceRoomsAppBar extends ConsumerWidget {
             ),
             const SizedBox(width: VoiceRoomsUiTokens.gapMd),
             const Expanded(child: _TitleBlock()),
-            _ActionIcons(notificationCount: notificationCount),
+            _ActionIcons(inboxCount: inboxCount),
           ],
         ),
       ),
@@ -175,9 +176,9 @@ class _TitleBlock extends StatelessWidget {
 }
 
 class _ActionIcons extends StatelessWidget {
-  const _ActionIcons({required this.notificationCount});
+  const _ActionIcons({required this.inboxCount});
 
-  final int notificationCount;
+  final int inboxCount;
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +187,7 @@ class _ActionIcons extends StatelessWidget {
       children: [
         const _IconButton(iconKey: 'search'),
         const _IconButton(iconKey: 'trophy'),
-        _NotificationButton(count: notificationCount),
+        _InboxButton(count: inboxCount),
       ],
     );
   }
@@ -218,8 +219,8 @@ class _IconButton extends StatelessWidget {
   }
 }
 
-class _NotificationButton extends StatelessWidget {
-  const _NotificationButton({required this.count});
+class _InboxButton extends StatelessWidget {
+  const _InboxButton({required this.count});
 
   final int count;
 
@@ -228,7 +229,7 @@ class _NotificationButton extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {},
+        onTap: () => InboxRoutes.open(context),
         customBorder: const CircleBorder(),
         splashColor: VoiceRoomsUiTokens.purpleGlow.withValues(alpha: 0.2),
         child: Padding(

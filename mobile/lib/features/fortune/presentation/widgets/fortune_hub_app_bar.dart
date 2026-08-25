@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../messages/presentation/providers/messages_providers.dart';
-import '../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../inbox/presentation/inbox_routes.dart';
+import '../../../inbox/presentation/providers/inbox_unread_providers.dart';
 import 'fortune_hub_action_button.dart';
 import 'fortune_hub_gold_stars.dart';
 
@@ -19,8 +19,7 @@ class FortuneHubAppBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final top = MediaQuery.paddingOf(context).top;
-    final unreadMessages = ref.watch(messagesUnreadCountProvider);
-    final unreadNotifications = ref.watch(notificationsUnreadCountProvider);
+    final unreadInbox = ref.watch(inboxUnreadCountProvider);
 
     final titleStyle = GoogleFonts.playfairDisplay(
       fontSize: 22,
@@ -59,15 +58,9 @@ class FortuneHubAppBar extends ConsumerWidget {
               ),
             ),
             FortuneHubActionButton(
-              icon: Icons.chat_bubble_outline_rounded,
-              badgeCount: unreadMessages,
-              onTap: () => context.push('/messages'),
-            ),
-            const SizedBox(width: 8),
-            FortuneHubActionButton(
-              icon: Icons.notifications_none_rounded,
-              badgeCount: unreadNotifications,
-              onTap: () => context.push('/notifications'),
+              icon: Icons.inbox_rounded,
+              badgeCount: unreadInbox,
+              onTap: () => InboxRoutes.open(context),
             ),
           ],
         ),

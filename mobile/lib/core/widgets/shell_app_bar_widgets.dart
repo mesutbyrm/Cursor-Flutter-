@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../../features/inbox/presentation/inbox_routes.dart';
+import '../../features/inbox/presentation/providers/inbox_unread_providers.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart';
 import 'dual_balance_chips.dart';
 import 'user_avatar.dart';
@@ -68,17 +70,27 @@ class ShellProfileLeading extends ConsumerWidget {
   }
 }
 
-class ShellNotificationsButton extends StatelessWidget {
-  const ShellNotificationsButton({super.key});
+class ShellInboxButton extends ConsumerWidget {
+  const ShellInboxButton({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unread = ref.watch(inboxUnreadCountProvider);
     return IconButton(
-      tooltip: 'Bildirimler',
-      onPressed: () => context.push('/notifications'),
-      icon: const Icon(Icons.notifications_none_rounded),
+      tooltip: 'Gelen kutusu',
+      onPressed: () => InboxRoutes.open(context),
+      icon: Badge(
+        isLabelVisible: unread > 0,
+        label: Text('$unread'),
+        child: const Icon(Icons.inbox_rounded),
+      ),
     );
   }
+}
+
+/// Geriye dönük uyumluluk.
+class ShellNotificationsButton extends ShellInboxButton {
+  const ShellNotificationsButton({super.key});
 }
 
 /// Jeton bakiyesi; dokununca jeton mağazası.

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../inbox/presentation/inbox_routes.dart';
+import '../../../inbox/presentation/providers/inbox_unread_providers.dart';
 import '../premium_2026/profile_theme.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/widgets/profile_action_tile.dart';
@@ -13,7 +14,7 @@ class ProfileHubQuickMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unread = ref.watch(notificationsUnreadCountProvider);
+    final unread = ref.watch(inboxUnreadCountProvider);
     final visitors = ref.watch(profileVisitorBadgeProvider);
     final membershipInfo = ref.watch(profileMembershipInfoProvider);
     final membershipLabel = buildMembershipQuickMenuLabel(info: membershipInfo);
@@ -44,9 +45,9 @@ class ProfileHubQuickMenu extends ConsumerWidget {
         badge: null,
       ),
       (
-        icon: Icons.notifications_rounded,
-        label: 'Bildirimlerim',
-        onTap: () => context.push('/notifications'),
+        icon: Icons.inbox_rounded,
+        label: 'Gelen Kutusu',
+        onTap: () => InboxRoutes.open(context),
         badge: unread > 0 ? unread : null,
       ),
       (
