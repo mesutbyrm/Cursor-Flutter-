@@ -1,6 +1,7 @@
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../domain/gift_display_settings.dart';
 import '../../domain/gift_feed_item.dart';
+import '../../domain/homepage_gift_ticker.dart';
 
 /// Tek bir global hediye bildirimi — kuyruk öğesi.
 class GlobalGiftNotification {
@@ -16,6 +17,7 @@ class GlobalGiftNotification {
     this.receiverId,
     this.roomId,
     this.timestamp,
+    this.displayLabel,
   });
 
   factory GlobalGiftNotification.fromFeedItem(GiftFeedItem item) {
@@ -27,6 +29,24 @@ class GlobalGiftNotification {
       giftIcon: item.giftIcon,
       amount: item.amount,
       timestamp: item.at ?? DateTime.now(),
+      displayLabel: HomepageGiftTicker.composeAnnouncement(
+        senderName: item.senderName,
+        giftName: item.giftName,
+        receiverName: item.receiverName,
+        amount: item.amount,
+        giftIcon: item.giftIcon,
+      ),
+    );
+  }
+
+  factory GlobalGiftNotification.fromTicker(TickerGiftAnnouncement gift) {
+    return GlobalGiftNotification(
+      eventId: gift.eventId,
+      senderName: gift.senderName,
+      receiverName: gift.receiverName,
+      giftName: gift.giftName,
+      amount: gift.amount,
+      displayLabel: gift.announcementLabel,
     );
   }
 
@@ -47,6 +67,13 @@ class GlobalGiftNotification {
       giftIcon: event.giftIcon ?? event.iconUrl ?? event.giftImageUrl,
       amount: event.jetonAmount,
       timestamp: event.timestamp,
+      displayLabel: HomepageGiftTicker.composeAnnouncement(
+        senderName: event.senderName,
+        giftName: event.giftName,
+        receiverName: event.receiverName,
+        amount: event.jetonAmount,
+        giftIcon: event.giftIcon ?? event.iconUrl ?? event.giftImageUrl,
+      ),
     );
   }
 
@@ -72,6 +99,13 @@ class GlobalGiftNotification {
             json['timestamp']?.toString() ?? json['createdAt']?.toString() ?? '',
           ) ??
           DateTime.now(),
+      displayLabel: HomepageGiftTicker.composeAnnouncement(
+        senderName: (json['senderName'] ?? json['fromName'] ?? 'Biri').toString(),
+        giftName: (json['giftName'] ?? json['name'] ?? 'Hediye').toString(),
+        receiverName: json['receiverName']?.toString(),
+        amount: _asInt(json['amount'] ?? json['jeton'] ?? json['coinCost']),
+        giftIcon: (json['giftIcon'] ?? json['icon'] ?? json['iconUrl'])?.toString(),
+      ),
     );
   }
 
@@ -86,27 +120,26 @@ class GlobalGiftNotification {
   final int amount;
   final String? roomId;
   final DateTime? timestamp;
+  final String? displayLabel;
+
+  /// Aynı hediyeyi ticker + feed + bildirimden bir kez göstermek için.
+  String get semanticKey {
+    final sender = senderName.trim().toLowerCase();
+    final recv = (receiverName ?? '').trim().toLowerCase();
+    final gift = giftName.trim().toLowerCase();
+    return '$sender|$recv|$gift|$amount';
+  }
 
   String label(GiftDisplaySettings settings) {
-    final parts = <String>[];
-    if (settings.showSender) {
-      parts.add(senderName.trim().isEmpty ? 'Biri' : senderName.trim());
-    }
-    if (settings.showGiftIcon && (giftIcon?.isNotEmpty ?? false)) {
-      parts.add(giftIcon!.trim());
-    } else if (settings.showGiftName) {
-      parts.add(giftName.trim().isEmpty ? 'Hediye' : giftName.trim());
-    }
-    if (settings.showAmount && amount > 0) {
-      parts.add('×$amount');
-    }
-    if (settings.showReceiver &&
-        receiverName != null &&
-        receiverName!.trim().isNotEmpty) {
-      parts.add('→ ${receiverName!.trim()}');
-    }
-    if (parts.isEmpty) return '🎁 Hediye';
-    return parts.join('  ');
+    final custom = displayLabel?.trim() ?? '';
+    if (custom.isNotEmpty) return custom;
+    return HomepageGiftTicker.composeAnnouncement(
+      senderName: settings.showSender ? senderName : '',
+      giftName: settings.showGiftName ? giftName : 'Hediye',
+      receiverName: receiverName,
+      amount: settings.showAmount ? amount : 0,
+      giftIcon: settings.showGiftIcon ? giftIcon : null,
+    );
   }
 
   static String _syntheticId(GiftFeedItem item) =>

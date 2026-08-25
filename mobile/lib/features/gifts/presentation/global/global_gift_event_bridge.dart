@@ -7,12 +7,18 @@ import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../notifications/domain/entities/app_notification_entity.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../data/gift_insights_remote_datasource.dart';
-import '../../domain/gift_feed_item.dart';
+import '../../../voice_hub/domain/voice_official_join.dart';
 import '../../../voice_hub/presentation/providers/voice_room_session_registry.dart';
 import '../../../../core/room/room_event_scope.dart';
+import '../../domain/homepage_gift_ticker.dart';
 import '../providers/gift_display_settings_provider.dart';
 import 'global_gift_notification.dart';
 import 'global_gift_overlay_notifier.dart';
+
+/// Insights feed kapısı — ilk poll geçmişi overlay'e basmaz.
+final globalGiftFeedGateProvider = Provider<GlobalGiftFeedGate>((ref) {
+  return GlobalGiftFeedGate();
+});
 
 /// Merkezi hediye olayı — SSE bildirim + insights feed poll.
 class GlobalGiftEventBridge extends ConsumerStatefulWidget {
@@ -27,12 +33,11 @@ class GlobalGiftEventBridge extends ConsumerStatefulWidget {
 
 class _GlobalGiftEventBridgeState extends ConsumerState<GlobalGiftEventBridge> {
   Timer? _poll;
-  final _seenFeedIds = <String>{};
 
   @override
   void initState() {
     super.initState();
-    _poll = Timer.periodic(const Duration(seconds: 15), (_) {
+    _poll = Timer.periodic(const Duration(seconds: 8), (_) {
       unawaited(_pollInsightsFeed());
     });
     Future.microtask(_pollInsightsFeed);
@@ -49,21 +54,14 @@ class _GlobalGiftEventBridgeState extends ConsumerState<GlobalGiftEventBridge> {
     try {
       final ds = GiftInsightsRemoteDataSource(ref.read(dioProvider));
       final items = await ds.fetchFeed(limit: 8);
-      for (final item in items.reversed) {
-        _enqueueFeedItem(item);
+      final fresh = ref.read(globalGiftFeedGateProvider).takeNew(items);
+      // API yeniler önce; yeni gelenleri kronolojik oynat.
+      for (final item in fresh.reversed) {
+        ref
+            .read(globalGiftOverlayProvider.notifier)
+            .enqueue(GlobalGiftNotification.fromFeedItem(item));
       }
     } catch (_) {}
-  }
-
-  void _enqueueFeedItem(GiftFeedItem item) {
-    final id = item.id.trim();
-    if (id.isNotEmpty && !_seenFeedIds.add(id)) return;
-    if (_seenFeedIds.length > 400) {
-      _seenFeedIds.remove(_seenFeedIds.first);
-    }
-    ref
-        .read(globalGiftOverlayProvider.notifier)
-        .enqueue(GlobalGiftNotification.fromFeedItem(item));
   }
 
   @override
@@ -79,12 +77,27 @@ void handleNotificationGiftForGlobalOverlay(
   AppNotificationEntity notification,
 ) {
   final type = notification.type?.toLowerCase() ?? '';
-  if (!type.contains('gift') && !type.contains('hediye')) return;
+  final blob = '${notification.title} ${notification.body ?? ''}';
+  final isGift = type.contains('gift') ||
+      type.contains('hediye') ||
+      VoiceOfficialJoin.isHomeBannerGiftAnnouncement(blob);
+  if (!isGift) return;
+  final parsed = HomepageGiftTicker.tryParse(blob.trim());
+  if (parsed != null && parsed.senderName != 'Biri') {
+    ref
+        .read(globalGiftOverlayProvider.notifier)
+        .enqueue(GlobalGiftNotification.fromTicker(parsed));
+    return;
+  }
   ref.read(globalGiftOverlayProvider.notifier).enqueue(
         GlobalGiftNotification(
           eventId: notification.id,
           senderName: notification.title,
           giftName: notification.body ?? 'Hediye',
+          displayLabel: HomepageGiftTicker.composeAnnouncement(
+            senderName: notification.title,
+            giftName: notification.body ?? 'Hediye',
+          ),
         ),
       );
 }

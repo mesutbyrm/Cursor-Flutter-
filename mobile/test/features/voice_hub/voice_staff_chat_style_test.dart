@@ -88,5 +88,18 @@ void main() {
         isFalse,
       );
     });
+
+    test('homepage ticker gift line is a gift announcement', () {
+      expect(
+        VoiceOfficialJoin.isHomeBannerGiftAnnouncement(
+          '🎁 Admin -> 🌸 Pembe çiçek (299 Jeton) -> ilhamperisi 🎁',
+        ),
+        isTrue,
+      );
+      expect(
+        VoiceOfficialJoin.isHomeBannerGiftAnnouncement('Yeni fal kampanyası'),
+        isFalse,
+      );
+    });
   });
 }

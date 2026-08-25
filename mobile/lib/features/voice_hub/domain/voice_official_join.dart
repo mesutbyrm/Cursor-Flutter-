@@ -32,20 +32,28 @@ abstract final class VoiceOfficialJoin {
   }
 
   /// Büyük hediye duyurusu — sabit kart değil, kayan şerit.
+  static final _tickerGiftArrow = RegExp(
+    r'->.+\(\s*\d+\s*jeton\s*\)\s*->',
+    caseSensitive: false,
+  );
+
   static bool isHomeBannerGiftAnnouncement(
     String title, {
     String? subtitle,
   }) {
-    final combined = '$title ${subtitle ?? ''}'.trim().toLowerCase();
+    final combined = '$title ${subtitle ?? ''}'.trim();
     if (combined.isEmpty) return false;
-    return combined.contains('hediye etti') ||
-        combined.contains('hediye gönderdi') ||
-        combined.contains('gifted') ||
-        combined.contains('sent a gift') ||
-        (combined.contains('jeton') &&
-            (combined.contains('attı') ||
-                combined.contains('gönder') ||
-                combined.contains('hediye')));
+    if (combined.contains('🎁') && combined.contains('->')) return true;
+    if (_tickerGiftArrow.hasMatch(combined)) return true;
+    final lower = combined.toLowerCase();
+    return lower.contains('hediye etti') ||
+        lower.contains('hediye gönderdi') ||
+        lower.contains('gifted') ||
+        lower.contains('sent a gift') ||
+        (lower.contains('jeton') &&
+            (lower.contains('attı') ||
+                lower.contains('gönder') ||
+                lower.contains('hediye')));
   }
 
   /// Ana sayfada sabit kart olmamalı — giriş veya büyük hediye.

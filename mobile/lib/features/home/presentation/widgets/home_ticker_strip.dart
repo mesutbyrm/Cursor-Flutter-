@@ -5,8 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/home_providers.dart';
 import '../theme/home_approved_design.dart';
+import '../../../gifts/domain/homepage_gift_ticker.dart';
 
-/// Arama çubuğu altında kayan yazı — `GET /api/homepage-ticker`.
+/// Arama çubuğu altında kayan yazı — hediye duyuruları burada dönmez.
 class HomeTickerStrip extends ConsumerStatefulWidget {
   const HomeTickerStrip({super.key});
 
@@ -43,7 +44,8 @@ class _HomeTickerStripState extends ConsumerState<HomeTickerStrip> {
     return ticker.when(
       loading: () => const SizedBox(height: 4),
       error: (_, _) => const SizedBox.shrink(),
-      data: (lines) {
+      data: (rawLines) {
+        final lines = HomepageGiftTicker.newsLines(rawLines);
         if (lines.isEmpty) return const SizedBox.shrink();
         _ensureRotateTimer(lines.length);
         if (_index >= lines.length) _index = 0;

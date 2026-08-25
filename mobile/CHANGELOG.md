@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.368+406 (2026-08-25) — Ana sayfa hediye şeridi kaldırıldı
+
+- **Ana sayfa:** Canlı yayın / oda hediyeleri arama altındaki mor bantta sıra sıra dönmez
+- **Üst şerit:** Yeni hediye en üstte bir kez sağdan sola geçer (`Admin → hediye → alıcı`)
+- **Geçmiş replay yok:** Uygulama açılınca son hediyeler kuyruklanmaz; yalnızca yeni atılan gösterilir
+- **Ticker formatı:** `🎁 gönderen -> hediye (N Jeton) -> alıcı` satırları hediye olarak tanınır
+
 ## 1.0.367+405 (2026-08-25) — Presence çıkış + giriş/çıkış duyurusu
 
 - **Ghost presence düzeltmesi:** Odadan çıkarken backend `leave` artık `selfInRoom` sıfırlanmadan önce zorunlu gönderilir

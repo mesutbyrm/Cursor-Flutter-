@@ -11,6 +11,7 @@ class GlobalGiftQueue {
   GiftDisplaySettings _settings;
   final _pending = <GlobalGiftNotification>[];
   final _seenEventIds = <String>{};
+  final _seenSemantic = <String>{};
   GlobalGiftNotification? _active;
   Timer? _hideTimer;
   void Function(GlobalGiftNotification? active)? onActiveChanged;
@@ -31,8 +32,13 @@ class GlobalGiftQueue {
     final id = item.eventId.trim();
     if (id.isEmpty) return false;
     if (!_seenEventIds.add(id)) return false;
+    final semantic = item.semanticKey.trim();
+    if (semantic.isNotEmpty && !_seenSemantic.add(semantic)) return false;
     if (_seenEventIds.length > 500) {
       _seenEventIds.remove(_seenEventIds.first);
+    }
+    if (_seenSemantic.length > 500) {
+      _seenSemantic.remove(_seenSemantic.first);
     }
     if (_active == null) {
       _show(item);
