@@ -52,6 +52,10 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
 
   List<ChatRoomMessage> _computeVisible() {
     return widget.messages.where((m) {
+      if (m.kind == ChatMessageKind.systemJoin ||
+          m.kind == ChatMessageKind.systemLeave) {
+        return true;
+      }
       if (!VoiceChatMessageFilters.shouldShow(m)) return false;
       if (widget.hideOfficialJoinInChat &&
           m.kind == ChatMessageKind.systemJoin &&

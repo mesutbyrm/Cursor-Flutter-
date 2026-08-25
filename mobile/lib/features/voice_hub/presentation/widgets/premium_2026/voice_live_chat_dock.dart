@@ -262,7 +262,10 @@ class _Bubble extends StatelessWidget {
   Widget build(BuildContext context) {
     if (message.kind == ChatMessageKind.systemJoin ||
         message.kind == ChatMessageKind.systemLeave) {
-      return const SizedBox.shrink();
+      return ChatMessageWidget(
+        message: message,
+        onUserTap: onUserTap,
+      );
     }
 
     return ChatMessageWidget(

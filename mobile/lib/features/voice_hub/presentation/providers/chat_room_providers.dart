@@ -919,6 +919,8 @@ class VoiceRoomLiveController
     _leaveInFlight = true;
     _sessionActive = false;
     _entryBegun = false;
+    final forcePresenceLeave =
+        _presenceJoined || state.selfInRoom || _voiceJoined;
     final roomKey = _roomKey;
     final roomMeta = _roomMeta;
     final canControlMusic = _canControlMusic();
@@ -943,7 +945,7 @@ class VoiceRoomLiveController
           state = state.copyWith(selfInRoom: false, loading: false);
         },
         () async {
-          final backendLeave = _leavePresenceWithSeatClear()
+          final backendLeave = _leavePresenceWithSeatClear(force: forcePresenceLeave)
               .timeout(const Duration(seconds: 4))
               .catchError((_) {});
           if (awaitBackend) {
@@ -1028,6 +1030,11 @@ class VoiceRoomLiveController
         },
         () async {
           VoiceEventLog.leaveSuccess(roomId: roomKey);
+          final remaining = state.hubOnlineCount ?? state.presence.length;
+          _syncDiscoverPresenceCount(remaining);
+          unawaited(
+            ref.read(voiceRoomsListNotifierProvider.notifier).refresh(),
+          );
           ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
                 VoiceSessionPhase.disconnected,
               );
@@ -1410,6 +1417,7 @@ class VoiceRoomLiveController
             )
           : ChatRoomUserRef(id: userId, name: name),
     );
+    _pushEnterExitBanner('👋 $name → $_roomLabelForBanner odasından çıkış yaptı');
     final remaining = state.presence.where((p) => p.id != userId).toList();
     if (remaining.length == state.presence.length) return;
     _knownPresenceIds.remove(userId);

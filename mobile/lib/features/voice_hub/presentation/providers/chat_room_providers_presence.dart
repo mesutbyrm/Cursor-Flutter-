@@ -86,12 +86,14 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         final name = _lastKnownPresenceNames[id];
         if (name != null && name.isNotEmpty) {
           final line = '$name odadan çıkış yaptı.';
+          final banner = '👋 $name → $_roomLabelForBanner odasından çıkış yaptı';
           _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.leave, line);
           _appendSyntheticSystemMessage(
             line,
             kind: ChatMessageKind.systemLeave,
             user: ChatRoomUserRef(id: id, name: name),
           );
+          _pushEnterExitBanner(banner);
         }
       }
     }
@@ -131,7 +133,13 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         kind: ChatMessageKind.systemJoin,
         user: userRef,
       );
-      _showStaffEnterBanner(name, user: userRef);
+      _pushEnterExitBanner('👋 $name → $_roomLabelForBanner odasına giriş yaptı');
+      if (staffLine.isNotEmpty) {
+        ref.read(staffEntranceMarqueeProvider.notifier).enqueue(
+              staffLine,
+              roomName: _roomMeta.nameTr,
+            );
+      }
       return;
     }
     final line = '$name giriş yaptı';
@@ -141,28 +149,24 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       kind: ChatMessageKind.systemJoin,
       user: userRef,
     );
-    // Gold / VIP → koltuk altı; normal → yalnızca alt toast (realtime event).
+    final banner = '👋 $name → $_roomLabelForBanner odasına giriş yaptı';
+    _pushEnterExitBanner(banner);
+    // Gold / VIP → ek site geneli marquee (mevcut davranış).
     if (VoiceOfficialJoin.isEntranceWorthy(
       content: line,
       membership: user.membership,
       chatRole: user.chatRole,
     )) {
-      final banner = VoiceStaffChatStyle.formatTierEntranceLine(
+      final tierBanner = VoiceStaffChatStyle.formatTierEntranceLine(
         displayName: name,
         user: userRef,
         section: 'sesli odaya',
       );
-      if (banner.isNotEmpty && _markEntranceOnce(banner)) {
+      if (tierBanner.isNotEmpty) {
         ref.read(staffEntranceMarqueeProvider.notifier).enqueue(
-              banner,
+              tierBanner,
               roomName: _roomMeta.nameTr,
             );
-        state = state.copyWith(enterBanner: banner);
-        _enterBannerTimer?.cancel();
-        _enterBannerTimer = Timer(const Duration(seconds: 5), () {
-          if (!_sessionActive) return;
-          state = state.copyWith(clearEnterBanner: true);
-        });
       }
     }
   }
@@ -546,12 +550,12 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       );
   }
 
-  Future<void> _leavePresence() async {
+  Future<void> _leavePresence({bool force = false}) async {
     if (_roomKey.isEmpty) return;
     // selfInRoom=true means join was acknowledged by backend; even if the
     // _presenceJoined flag wasn't set yet (race during room switch), still
     // send leave to avoid the user appearing in the old room.
-    if (!_presenceJoined && !state.selfInRoom) return;
+    if (!force && !_presenceJoined && !state.selfInRoom) return;
     _presenceJoined = false;
     _presenceHeartbeat?.cancel();
     _presenceHeartbeat = null;
@@ -595,7 +599,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     _knownPresenceIds.remove(userId);
   }
 
-  Future<void> _leavePresenceWithSeatClear() async {
+  Future<void> _leavePresenceWithSeatClear({bool force = false}) async {
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     if (userId != null && userId.isNotEmpty) {
       try {
@@ -606,7 +610,43 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
             );
       } catch (_) {}
     }
-    await _leavePresence();
+    await _leavePresence(force: force);
+  }
+
+  void _pushEnterExitBanner(String line) {
+    final trimmed = line.trim();
+    if (trimmed.isEmpty) return;
+    if (!_markEntranceOnce(trimmed)) return;
+    ref.read(staffEntranceMarqueeProvider.notifier).enqueue(
+          trimmed,
+          roomName: _roomMeta.nameTr,
+        );
+    state = state.copyWith(enterBanner: trimmed);
+    _enterBannerTimer?.cancel();
+    _enterBannerTimer = Timer(const Duration(seconds: 5), () {
+      if (!_sessionActive) return;
+      state = state.copyWith(clearEnterBanner: true);
+    });
+  }
+
+  String get _roomLabelForBanner {
+    final name = _roomMeta.nameTr.trim();
+    return name.isNotEmpty ? name : 'sesli oda';
+  }
+
+  void _syncDiscoverPresenceCount(int count) {
+    if (_roomKey.isEmpty) return;
+    final patched = <String>{};
+    for (final key in _roomKeyAliases) {
+      final k = key.trim();
+      if (k.isEmpty || patched.contains(k)) continue;
+      patched.add(k);
+      ref.read(voiceRoomsPresenceProvider.notifier).patchRoomCount(k, count);
+    }
+    _patchCachedRoom(
+      (room) => room.copyWith(onlineCount: count, userCount: count),
+    );
+    _invalidateRoomCaches();
   }
 
   Future<void> _presenceHeartbeatTick() async {

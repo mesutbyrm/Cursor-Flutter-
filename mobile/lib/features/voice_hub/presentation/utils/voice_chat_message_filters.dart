@@ -2,12 +2,13 @@ import '../../domain/entities/chat_room_message.dart';
 import '../../domain/voice_music_sync.dart';
 import '../../domain/voice_official_join.dart';
 
-/// Sohbet listesinde gösterilmeyecek mesajlar — giriş/çıkış, komut, istek logları.
+/// Sohbet listesinde gösterilmeyecek mesajlar — komut, istek logları.
+/// Giriş/çıkış satırları sohbette gösterilir.
 abstract final class VoiceChatMessageFilters {
   static bool shouldShow(ChatRoomMessage message) {
     if (message.kind == ChatMessageKind.systemJoin ||
         message.kind == ChatMessageKind.systemLeave) {
-      return false;
+      return true;
     }
 
     final content = message.content.trim();
@@ -28,8 +29,7 @@ abstract final class VoiceChatMessageFilters {
     final lower = content.toLowerCase();
     if (lower.contains('odaya giriş') ||
         lower.contains('odadan ayrıldı') ||
-        lower.contains('katıldı!') ||
-        lower.contains('giriş yaptı')) {
+        lower.contains('katıldı!')) {
       return false;
     }
 

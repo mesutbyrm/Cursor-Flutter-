@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.367+405 (2026-08-25) — Presence çıkış + giriş/çıkış duyurusu
+
+- **Ghost presence düzeltmesi:** Odadan çıkarken backend `leave` artık `selfInRoom` sıfırlanmadan önce zorunlu gönderilir
+- **Keşfet sayacı:** Çıkışta oda çevrimiçi sayısı anında güncellenir + liste yenilenir
+- **Sohbet:** Giriş/çıkış satırları artık chat alanında görünür
+- **Üst şerit:** Her giriş/çıkışta sağdan sola kayan bant — `👋 İsim → Oda adı odasına/odasından giriş/çıkış yaptı`
+
 ## 1.0.366+404 (2026-08-25) — Merkezi görsel etkileşim (hediye, rozet, duyuru)
 
 - **visual_fx modülü:** Hediye, rozet, kampanya ve giriş efektleri için ortak katman
