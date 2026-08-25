@@ -298,6 +298,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     unawaited(_trtcConnectionLostSub?.cancel());
     _trtcConnectionLostSub = coordinator.onConnectionLost.listen((_) {
       if (_disposed || state.leaving) return;
+      // SDK geçici kopması — renderer'ı unmount etme (5 sn donma + çift reconnect).
+      if (_trtc.inRoom) return;
       _setPhase(PsychicSessionPhase.reconnecting);
       state = state.copyWith(rtcReady: false);
     });
@@ -546,11 +548,12 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   Future<void> _rejoinRtc() async {
     if (_disposed || state.leaving || _rejoiningRtc || _joiningRtc) return;
+    if (_trtcCoordinator?.isReconnecting == true) return;
     final roomId = _activeTrtcRoomId();
     if (roomId.isEmpty) return;
     if (_canonicalRoomChannel(_joinedTrtcRoom) ==
             _canonicalRoomChannel(roomId) &&
-        state.rtcReady) {
+        (_trtc.inRoom || state.rtcReady)) {
       return;
     }
 
@@ -1182,6 +1185,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (state.sseFailed || !state.sseConnected) {
       unawaited(retryRoomSse());
     }
+    if (_trtcCoordinator?.isReconnecting == true || _trtc.inRoom) return;
     if (!state.rtcReady && state.rtcError == null) {
       unawaited(_rejoinRtc());
       return;

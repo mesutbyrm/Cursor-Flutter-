@@ -19,6 +19,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
     required this.session,
     required this.trtc,
     required this.rtcReady,
+    this.localPreviewKey,
     this.onEndPk,
     this.onMuteOpponent,
   });
@@ -27,6 +28,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
   final LiveBroadcastSession session;
   final TrtcRoomManager trtc;
   final bool rtcReady;
+  final Key? localPreviewKey;
   final VoidCallback? onEndPk;
   final void Function(String opponentUserId, bool mute)? onMuteOpponent;
 
@@ -68,6 +70,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                 pane: layout.left,
                 trtc: trtc,
                 rtcReady: rtcReady,
+                localPreviewKey: localPreviewKey,
                 playbackUrl: layout.left.isLocalPane
                     ? null
                     : playbackFor(layout.left.streamId),
@@ -158,6 +161,7 @@ class _PkPane extends StatelessWidget {
     required this.trtc,
     required this.rtcReady,
     required this.accent,
+    this.localPreviewKey,
     this.playbackUrl,
     this.preferRemoteUserId,
     this.playbackAudible = false,
@@ -167,6 +171,7 @@ class _PkPane extends StatelessWidget {
   final TrtcRoomManager trtc;
   final bool rtcReady;
   final Color accent;
+  final Key? localPreviewKey;
   final String? playbackUrl;
   final String? preferRemoteUserId;
   final bool playbackAudible;
@@ -179,7 +184,7 @@ class _PkPane extends StatelessWidget {
         Widget video;
         final remoteId = preferRemoteUserId?.trim() ?? '';
         if (pane.isLocalPane && rtcReady) {
-          video = TrtcLocalVideoView(manager: trtc);
+          video = TrtcLocalVideoView(key: localPreviewKey, manager: trtc);
         } else if (remoteId.isNotEmpty &&
             rtcReady &&
             remoteIds.contains(remoteId)) {

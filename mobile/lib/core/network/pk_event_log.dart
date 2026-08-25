@@ -52,11 +52,14 @@ abstract final class PkEventLog {
         if (battleId != null) 'battleId': battleId,
       });
 
-  static void incomingRequest({String? matchId, String? inviteId}) =>
-      log('incoming_request', {
-        if (matchId != null) 'matchId': matchId,
-        if (inviteId != null) 'inviteId': inviteId,
-      });
+  static void incomingRequest({String? matchId, String? inviteId}) {
+    final data = {
+      if (matchId != null) 'matchId': matchId,
+      if (inviteId != null) 'inviteId': inviteId,
+    };
+    log('incoming_request', data);
+    log('PK_REQUEST_RECEIVED', data);
+  }
 
   static void acceptStart({String? matchId, String? inviteId}) =>
       log('accept_start', {
@@ -64,29 +67,41 @@ abstract final class PkEventLog {
         if (inviteId != null) 'inviteId': inviteId,
       });
 
-  static void acceptSuccess({String? matchId, String? battleId}) =>
-      log('accept_success', {
-        if (matchId != null) 'matchId': matchId,
-        if (battleId != null) 'battleId': battleId,
-      });
+  static void acceptSuccess({String? matchId, String? battleId}) {
+    final data = {
+      if (matchId != null) 'matchId': matchId,
+      if (battleId != null) 'battleId': battleId,
+    };
+    log('accept_success', data);
+    log('PK_REQUEST_ACCEPTED', data);
+  }
 
-  static void reject({String? matchId, String? inviteId}) =>
-      log('reject', {
-        if (matchId != null) 'matchId': matchId,
-        if (inviteId != null) 'inviteId': inviteId,
-      });
+  static void reject({String? matchId, String? inviteId}) {
+    final data = {
+      if (matchId != null) 'matchId': matchId,
+      if (inviteId != null) 'inviteId': inviteId,
+    };
+    log('reject', data);
+    log('PK_REQUEST_REJECTED', data);
+  }
 
-  static void connecting({String? roomId, String? streamId}) =>
-      log('connecting', {
-        if (roomId != null) 'roomId': roomId,
-        if (streamId != null) 'streamId': streamId,
-      });
+  static void connecting({String? roomId, String? streamId}) {
+    final data = {
+      if (roomId != null) 'roomId': roomId,
+      if (streamId != null) 'streamId': streamId,
+    };
+    log('connecting', data);
+    log('PK_SESSION_STARTED', data);
+  }
 
-  static void connected({String? roomId, String? streamId}) =>
-      log('connected', {
-        if (roomId != null) 'roomId': roomId,
-        if (streamId != null) 'streamId': streamId,
-      });
+  static void connected({String? roomId, String? streamId}) {
+    final data = {
+      if (roomId != null) 'roomId': roomId,
+      if (streamId != null) 'streamId': streamId,
+    };
+    log('connected', data);
+    log('PK_CONNECTION_CONNECTED', data);
+  }
 
   static void remoteJoined({required String userId}) =>
       log('remote_joined', {'userId': userId});
@@ -100,12 +115,15 @@ abstract final class PkEventLog {
         if (battleId != null) 'battleId': battleId,
       });
 
-  static void ended({String? matchId, String? battleId, String? reason}) =>
-      log('ended', {
-        if (matchId != null) 'matchId': matchId,
-        if (battleId != null) 'battleId': battleId,
-        if (reason != null) 'reason': reason,
-      });
+  static void ended({String? matchId, String? battleId, String? reason}) {
+    final data = {
+      if (matchId != null) 'matchId': matchId,
+      if (battleId != null) 'battleId': battleId,
+      if (reason != null) 'reason': reason,
+    };
+    log('ended', data);
+    log('PK_CONNECTION_DISCONNECTED', data);
+  }
 
   static void error(String phase, Object error) =>
       log('error', {

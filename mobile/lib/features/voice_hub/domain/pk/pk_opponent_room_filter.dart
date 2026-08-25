@@ -1,6 +1,10 @@
 import '../../../live/domain/entities/voice_room_entity.dart';
 import 'pk_battle_remote_models.dart';
 
+/// SSE bağlı olsa bile `GET /api/chat/rooms/{id}/pk` taranır.
+/// Hedef kullanıcı daveti kendi odasının PK kaydında görür; gönderildi ≠ alındı.
+bool shouldPollVoicePkForRoom(String roomKey) => roomKey.trim().isNotEmpty;
+
 /// PK daveti için rakip oda — boş odalar ve sahipsiz odalar hariç.
 List<VoiceRoomEntity> filterPkEligibleOpponentRooms(
   List<VoiceRoomEntity> rooms, {

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../trtc/domain/entities/trtc_credentials.dart';
+import '../../../trtc/domain/trtc_reconnect_gate.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../data/services/voice_room_debug_log.dart';
@@ -35,6 +36,8 @@ class VoiceRoomAudioCoordinator {
   var _reconnecting = false;
   var _reconnectSuspended = false;
   var _desiredMicOn = false;
+  Timer? _hardReconnectTimer;
+  final _gate = TrtcReconnectGate();
 
   VoidCallback? onReconnecting;
   VoidCallback? onReconnected;
@@ -44,21 +47,54 @@ class VoiceRoomAudioCoordinator {
   }
 
   void _bindConnectionLostHandler() {
-    _trtc.manager.onConnectionLost = () {
-      if (_reconnectSuspended || _reconnecting) return;
-      final channel = _lastRoomId?.trim();
-      if (channel == null || channel.isEmpty) return;
-      unawaited(_reconnectVoice());
+    _trtc.manager.onConnectionLost = _handleConnectionLost;
+    _trtc.manager.onTryToReconnect = () {
+      if (_reconnectSuspended) return;
+      _gate.onSdkTryToReconnect();
+      VoiceRoomDebugLog.log('audio.trtc.sdk.try_reconnect', {
+        'roomId': _lastRoomId,
+      });
     };
+    _trtc.manager.onConnectionRecovery = () {
+      if (_reconnectSuspended) return;
+      _hardReconnectTimer?.cancel();
+      _gate.onSdkRecovered();
+      VoiceRoomDebugLog.log('audio.trtc.sdk.recovered', {
+        'roomId': _lastRoomId,
+      });
+      onReconnected?.call();
+    };
+  }
+
+  void _handleConnectionLost() {
+    if (_reconnectSuspended || _reconnecting) return;
+    final channel = _lastRoomId?.trim();
+    if (channel == null || channel.isEmpty) return;
+    _gate.onSdkConnectionLost();
+    if (_gate.shouldHardReconnect) {
+      unawaited(_reconnectVoice());
+      return;
+    }
+    _hardReconnectTimer?.cancel();
+    final generation = _gate.generation;
+    _hardReconnectTimer = Timer(_gate.sdkGrace, () {
+      if (_reconnectSuspended || _reconnecting) return;
+      if (generation != _gate.generation) return;
+      if (_gate.shouldHardReconnect) {
+        unawaited(_reconnectVoice());
+      }
+    });
   }
 
   Future<void> _reconnectVoice() async {
     if (_reconnectSuspended || _reconnecting) return;
+    if (!_gate.shouldHardReconnect && _trtc.inChannel) return;
     final channel = _lastRoomId?.trim();
     final userId = _lastUserId;
     if (channel == null || channel.isEmpty) return;
 
     _reconnecting = true;
+    _gate.markHardReconnectStarted();
     _desiredMicOn = _trtc.micOn;
     onReconnecting?.call();
     VoiceRoomDebugLog.log('audio.trtc.reconnect.start', {
@@ -78,8 +114,10 @@ class VoiceRoomAudioCoordinator {
         await _trtc.setMicEnabled(false);
       }
       VoiceRoomDebugLog.log('audio.trtc.reconnect.ok', {'roomId': channel});
+      _gate.onHardReconnectFinished(success: true);
       onReconnected?.call();
     } catch (e, st) {
+      _gate.onHardReconnectFinished(success: false);
       VoiceRoomDebugLog.log('audio.trtc.reconnect.fail', {
         'roomId': channel,
         'error': e.toString(),
@@ -119,6 +157,8 @@ class VoiceRoomAudioCoordinator {
     _lastUserId = userId;
     _desiredMicOn = enableMic;
     _reconnectSuspended = false;
+    _gate.onJoinStarted();
+    _hardReconnectTimer?.cancel();
 
     final role = enableMic ? 'host' : 'audience';
     final prefetched = backendTrtc ??
@@ -171,6 +211,7 @@ class VoiceRoomAudioCoordinator {
       await _trtc.setMicEnabled(false);
     }
     _bindConnectionLostHandler();
+    _gate.onConnected();
     VoiceRoomDebugLog.log('audio.trtc.joined', {
       'roomId': channel,
       'mic': enableMic,
@@ -249,7 +290,11 @@ class VoiceRoomAudioCoordinator {
 
   Future<void> leave() async {
     _reconnectSuspended = true;
+    _hardReconnectTimer?.cancel();
+    _gate.onClosed();
     _trtc.manager.onConnectionLost = null;
+    _trtc.manager.onTryToReconnect = null;
+    _trtc.manager.onConnectionRecovery = null;
     await _micOp;
     final ds = _remote;
     final channel = _trtc.inChannel ? _lastRoomId : null;

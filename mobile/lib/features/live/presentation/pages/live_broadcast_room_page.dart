@@ -149,7 +149,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   final _chat = TextEditingController();
 
   final _heartsKey = GlobalKey<LiveFloatingHeartsOverlayState>();
-  Key _localPreviewKey = UniqueKey();
+  final _localPreviewKey = GlobalKey(debugLabel: 'live-local-preview');
   var _leaving = false;
   final _leaveCoordinator = RoomLeaveCoordinator();
   var _liveMusicSseAttached = false;
@@ -306,7 +306,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       _rtcReady = true;
       _rtcError = null;
       _phase = LiveSessionPhase.live;
-      _localPreviewKey = UniqueKey();
     });
     final streamId = widget.session.streamId?.trim() ?? '';
     if (widget.session.isHost) {
@@ -421,6 +420,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       };
       _trtcReconnectSub ??= _trtcCoordinator!.onConnectionLost.listen((_) {
         if (!mounted || _leaving) return;
+        if (_trtc.inRoom) return;
         setState(() => _phase = LiveSessionPhase.reconnecting);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -2201,6 +2201,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           session: s,
           trtc: _trtc,
           rtcReady: _rtcReady,
+          localPreviewKey: _localPreviewKey,
           onEndPk: s.isHost ? () => unawaited(_endActivePk(streamId)) : null,
         );
       }
@@ -2502,6 +2503,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       });
       ref.listen(liveVideoPkProvider(streamId), (prev, next) {
         final battle = next.battle;
+        final pkActive = next.status == 'active';
+        _trtcCoordinator?.setReconnectSuspended(pkActive);
+        if (pkActive && prev?.status != 'active') {
+          PkEventLog.connecting(streamId: streamId);
+          PkEventLog.connected(streamId: streamId);
+        }
+        if (prev?.status == 'active' && next.status != 'active') {
+          PkEventLog.ended(reason: next.status);
+        }
         if (battle != null) {
           _maybeShowPkInvite(streamId, battle);
         }
@@ -3149,12 +3159,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                         ),
                       ),
                       onRtcStateChanged: s.isHost
-                          ? () => setState(() => _localPreviewKey = UniqueKey())
+                          ? () => setState(() {})
                           : null,
                       onToggleCamera: s.isHost
                           ? () {
                               _trtc.setCameraEnabled(!_trtc.cameraOn);
-                              setState(() => _localPreviewKey = UniqueKey());
+                              setState(() {});
                             }
                           : null,
                       onSend: () {

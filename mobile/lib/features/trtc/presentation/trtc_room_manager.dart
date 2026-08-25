@@ -34,6 +34,7 @@ class TrtcRoomManager {
   bool _audioOnly = false;
   bool _notifiersDisposed = false;
   String? _localUserId;
+  String? _joinedStrRoomId;
 
   String? remoteAnchorUserId;
   final ValueNotifier<String?> remoteAnchorUserIdNotifier =
@@ -52,6 +53,12 @@ class TrtcRoomManager {
 
   /// Bağlantı koptuğunda çağrılır (yeniden bağlanma koordinatörde).
   VoidCallback? onConnectionLost;
+
+  /// SDK kendi yeniden bağlanma denemesine başladı — uygulama leave+join yapmasın.
+  VoidCallback? onTryToReconnect;
+
+  /// SDK buluta yeniden bağlandı.
+  VoidCallback? onConnectionRecovery;
 
   final ValueNotifier<int?> networkQuality = ValueNotifier<int?>(null);
 
@@ -163,12 +170,24 @@ class TrtcRoomManager {
       throw StateError('Mikrofon veya kamera izni verilmedi');
     }
 
+    if (_inRoom &&
+        _joinedStrRoomId == roomId &&
+        _isHost == isHost &&
+        _twoWayVideo == twoWayVideo &&
+        _audioOnly == audioOnly) {
+      _trtcLog('join_skip_same_room', {'roomId': roomId});
+      return;
+    }
+
     if (_inRoom) {
       await leave();
     }
 
     final other = _activeSession;
     if (other != null && other != this && other._inRoom) {
+      if (other._joinedStrRoomId == roomId) {
+        _trtcLog('join_kick_same_room_other_manager', {'roomId': roomId});
+      }
       await other.leave();
     }
 
@@ -239,6 +258,14 @@ class TrtcRoomManager {
       onConnectionLost: () {
         _trtcLog('connection_lost');
         onConnectionLost?.call();
+      },
+      onTryToReconnect: () {
+        _trtcLog('try_to_reconnect');
+        onTryToReconnect?.call();
+      },
+      onConnectionRecovery: () {
+        _trtcLog('connection_recovery');
+        onConnectionRecovery?.call();
       },
       onNetworkQuality: (local, remote) {
         networkQuality.value = local.quality.index;
@@ -322,6 +349,7 @@ class TrtcRoomManager {
     }
 
     _activeSession = this;
+    _joinedStrRoomId = roomId;
 
     if (audioOnly) {
       _cloud!.startLocalAudio(TRTCAudioQuality.speech);
@@ -498,8 +526,9 @@ class TrtcRoomManager {
   Future<void> leave() async {
     _trtcLog('leave', {'inRoom': _inRoom});
     stopPublishedMusic();
-    onConnectionLost = null;
+    // Callback'ler koordinatörün mülkiyetinde; leave sırasında sıfırlanmaz.
     networkQuality.value = null;
+    _joinedStrRoomId = null;
     remoteVideoAvailable.value = false;
     _expectedAnchorUserId = null;
     _clearRemoteAnchor();

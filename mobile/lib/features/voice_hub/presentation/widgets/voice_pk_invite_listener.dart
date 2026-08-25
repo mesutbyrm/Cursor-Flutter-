@@ -11,7 +11,6 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/datasources/pk_battle_remote_datasource.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
-import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_room_session_registry.dart';
 import '../utils/pk_invite_dialog_helper.dart';
@@ -106,18 +105,13 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     }
   }
 
-  Future<void> _pollOwnedRooms(
-    String userId,
-    String? username,
-    String activeKey,
-    PkBattleRemoteDataSource api,
-  ) async {
+  Future<void> _pollOwnedRooms(PkBattleRemoteDataSource api) async {
     final owned = ref.read(myOwnedVoiceRoomsProvider);
     final seen = <String>{};
     for (final room in owned) {
       final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
       if (key.isEmpty || !seen.add(key)) continue;
-      if (key == activeKey) continue;
+      if (!shouldPollVoicePkForRoom(key)) continue;
       final battle = await api.fetchRoomBattle(
         key,
         alternateRoomId: room.slug != key ? room.slug : null,
@@ -149,10 +143,8 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
       }
 
       final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
-      final inRoomSse = activeKey.isNotEmpty &&
-          ref.read(voiceRoomLiveProvider(activeKey)).sseConnected;
 
-      if (activeKey.isNotEmpty && !inRoomSse) {
+      if (shouldPollVoicePkForRoom(activeKey)) {
         final roomBattle = await api.fetchRoomBattle(activeKey);
         if (roomBattle != null && !roomBattle.isEnded) {
           ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(roomBattle);
@@ -162,7 +154,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
       }
 
       // Sahip olunan tüm odalar — başka odadayken SSE kaçırsa bile yakala.
-      await _pollOwnedRooms(user.id, user.username, activeKey, api);
+      await _pollOwnedRooms(api);
     } catch (e, st) {
       PkEventLog.apiFailure(
         method: 'GET',

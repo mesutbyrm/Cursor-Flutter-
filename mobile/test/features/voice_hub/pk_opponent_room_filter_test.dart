@@ -261,4 +261,11 @@ void main() {
     expect(isPkBattleLive(pending), isFalse);
     expect(isPkBattleLive(active), isTrue);
   });
+
+  test('shouldPollVoicePkForRoom polls active room even when SSE is up', () {
+    expect(shouldPollVoicePkForRoom('room-a'), isTrue);
+    expect(shouldPollVoicePkForRoom('  room-b  '), isTrue);
+    expect(shouldPollVoicePkForRoom(''), isFalse);
+    expect(shouldPollVoicePkForRoom('   '), isFalse);
+  });
 }

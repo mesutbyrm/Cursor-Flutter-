@@ -8,6 +8,7 @@ import '../data/datasources/trtc_remote_datasource.dart';
 import '../data/trtc_session_store.dart';
 import '../domain/entities/live_join_room_result.dart';
 import '../domain/entities/trtc_credentials.dart';
+import '../domain/trtc_reconnect_gate.dart';
 import 'trtc_room_manager.dart';
 
 typedef TrtcJoinRoomFn = Future<void> Function({
@@ -38,10 +39,12 @@ class TrtcLiveRoomCoordinator {
   static const heartbeatInterval = Duration(seconds: 10);
 
   Timer? _heartbeat;
+  Timer? _hardReconnectTimer;
   var _disposed = false;
   var _reconnecting = false;
   var _reconnectSuspended = false;
   var _micOnBeforeReconnect = true;
+  final _gate = TrtcReconnectGate();
 
   /// Dış join/rejoin sırasında heartbeat yeniden bağlanmasını durdur.
   void setReconnectSuspended(bool suspended) {
@@ -63,6 +66,7 @@ class TrtcLiveRoomCoordinator {
   void Function()? onReconnected;
 
   TrtcRoomManager get roomManager => _roomManager;
+  bool get isReconnecting => _reconnecting;
 
   Future<LiveJoinRoomResult> join({
     required String roomId,
@@ -75,6 +79,9 @@ class TrtcLiveRoomCoordinator {
     String? nickname,
     bool useCompoundJoin = true,
   }) async {
+    _disposed = false;
+    _gate.onJoinStarted();
+    _hardReconnectTimer?.cancel();
     _roomId = roomId.trim();
     _roomType = roomType;
     _userId = userId;
@@ -108,11 +115,13 @@ class TrtcLiveRoomCoordinator {
     }
 
     TrtcSessionStore.put(cred);
+    _gate.onConnecting();
     await _enterTrtc(cred);
     LiveEventLog.trtcJoin(
       streamId: _roomId!,
       role: _rtcRole,
     );
+    _gate.onConnected();
     _startHeartbeat();
     return compound ??
         LiveJoinRoomResult(
@@ -134,6 +143,8 @@ class TrtcLiveRoomCoordinator {
 
   Future<void> _enterTrtc(TrtcCredentials cred) async {
     _roomManager.onConnectionLost = _handleConnectionLost;
+    _roomManager.onTryToReconnect = _handleSdkTryToReconnect;
+    _roomManager.onConnectionRecovery = _handleSdkRecovery;
     await _joinRoomFn(
       credentials: cred,
       isHost: _isHost,
@@ -160,26 +171,64 @@ class TrtcLiveRoomCoordinator {
           'roomId': roomId,
           'error': ApiException.userMessage(e),
         });
-        if (!_reconnecting && !_reconnectSuspended) {
+        // Heartbeat REST hatası tek başına odayı kapatmaz; TRTC hâlâ bağlıysa bekle.
+        if (!_roomManager.inRoom &&
+            !_reconnecting &&
+            !_reconnectSuspended &&
+            _gate.shouldHardReconnect) {
           unawaited(reconnect());
         }
       }
     });
   }
 
+  void _handleSdkTryToReconnect() {
+    if (_disposed) return;
+    _gate.onSdkTryToReconnect();
+    LiveDebugLog.log('trtc.sdk.try_reconnect', {'roomId': _roomId});
+  }
+
+  void _handleSdkRecovery() {
+    if (_disposed) return;
+    _hardReconnectTimer?.cancel();
+    _gate.onSdkRecovered();
+    LiveDebugLog.log('trtc.sdk.recovered', {'roomId': _roomId});
+    onReconnected?.call();
+  }
+
   Future<void> _handleConnectionLost() async {
-    if (_disposed || _reconnecting) return;
+    if (_disposed || _reconnectSuspended) return;
+    _gate.onSdkConnectionLost();
     _connectionLostController.add(null);
-    await reconnect();
+    if (_gate.shouldHardReconnect) {
+      await reconnect();
+      return;
+    }
+    _hardReconnectTimer?.cancel();
+    final generation = _gate.generation;
+    _hardReconnectTimer = Timer(_gate.sdkGrace, () {
+      if (_disposed || _reconnectSuspended) return;
+      if (generation != _gate.generation) return;
+      if (_gate.phase == TrtcConnectionPhase.connected) return;
+      if (_roomManager.inRoom &&
+          _gate.phase != TrtcConnectionPhase.reconnecting) {
+        return;
+      }
+      if (_gate.shouldHardReconnect) {
+        unawaited(reconnect());
+      }
+    });
   }
 
   Future<void> reconnect() async {
     if (_disposed || _reconnecting || _reconnectSuspended) return;
+    if (!_gate.shouldHardReconnect && _roomManager.inRoom) return;
     final roomId = _roomId;
     final userId = _userId;
     if (roomId == null || userId == null) return;
 
     _reconnecting = true;
+    _gate.markHardReconnectStarted();
     _micOnBeforeReconnect = _roomManager.micOn;
     LiveDebugLog.log('trtc.reconnect.start', {'roomId': roomId});
 
@@ -189,9 +238,11 @@ class TrtcLiveRoomCoordinator {
       TrtcSessionStore.put(cred);
       await _enterTrtc(cred);
       _roomManager.setMicEnabled(_micOnBeforeReconnect);
+      _gate.onHardReconnectFinished(success: true);
       LiveDebugLog.log('trtc.reconnect.ok', {'roomId': roomId});
       onReconnected?.call();
     } catch (e) {
+      _gate.onHardReconnectFinished(success: false);
       LiveDebugLog.log('trtc.reconnect.fail', {
         'roomId': roomId,
         'error': ApiException.userMessage(e),
@@ -203,10 +254,14 @@ class TrtcLiveRoomCoordinator {
   }
 
   Future<void> leave() async {
+    _hardReconnectTimer?.cancel();
+    _gate.onClosed();
     _disposed = true;
     _heartbeat?.cancel();
     _heartbeat = null;
     _roomManager.onConnectionLost = null;
+    _roomManager.onTryToReconnect = null;
+    _roomManager.onConnectionRecovery = null;
 
     final roomId = _roomId;
     final roomType = _roomType;
@@ -231,9 +286,12 @@ class TrtcLiveRoomCoordinator {
 
   void dispose() {
     _disposed = true;
+    _hardReconnectTimer?.cancel();
     _heartbeat?.cancel();
     _connectionLostController.close();
     _roomManager.onConnectionLost = null;
+    _roomManager.onTryToReconnect = null;
+    _roomManager.onConnectionRecovery = null;
     unawaited(leave());
   }
 }

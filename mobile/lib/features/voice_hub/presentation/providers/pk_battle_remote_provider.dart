@@ -252,6 +252,22 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   }
 
   void _apply(PkBattleRemote battle, String event) {
+    final prev = state;
+    if (battle.isActive && prev?.isActive != true) {
+      PkEventLog.connecting(
+        roomId: battle.voiceRoomId,
+        streamId: battle.liveStreamId,
+      );
+      PkEventLog.connected(
+        roomId: battle.voiceRoomId,
+        streamId: battle.liveStreamId,
+      );
+    }
+    if (battle.isEnded &&
+        prev?.isEnded != true &&
+        event != 'pk:end') {
+      PkEventLog.ended(battleId: battle.effectiveId, reason: battle.status);
+    }
     state = battle;
     _syncPhase(battle, event);
     if (battle.isActive || battle.isEnded) {

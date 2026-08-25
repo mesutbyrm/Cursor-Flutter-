@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.368+406 (2026-08-25) — TRTC reconnect race, sesli PK daveti, canlı PK crash
+
+- **Canlı fal 5 sn donma:** `onConnectionLost` artık hemen `leave+join` yapmıyor; Tencent SDK `onTryToReconnect` / `onConnectionRecovery` 8 sn grace ile bekleniyor. İki taraf bağımsız reconnect etmiyor.
+- **Durum makinesi:** `TrtcReconnectGate` — idle → signaling → connecting → connected → reconnecting → disconnected → closed. Aynı oda için ikinci Peer/TRTC oturumu açılmıyor.
+- **Renderer korunumu:** Geçici kopmada `rtcReady` false yapılmıyor; video katmanı unmount edilmiyor.
+- **Sesli oda PK:** Aktif oda `GET /api/chat/rooms/{id}/pk` ile SSE bağlı olsa bile taranıyor. Gönderildi ≠ alındı; hedef `PK_REQUEST_RECEIVED` loglar.
+- **Canlı yayın PK crash:** Yerel TRTC PlatformView `GlobalKey` ile PK split'e taşınıyor; UniqueKey remount kaldırıldı. PK sırasında mevcut yayın `leave` edilmiyor, hard reconnect askıya alınıyor.
+- **API/event:** Yeni endpoint yok. Mevcut `PkEventLog` isimlerine teşhis alias'ları eklendi (`PK_REQUEST_RECEIVED` vb.).
+
 ## 1.0.367+405 (2026-08-25) — Presence çıkış + giriş/çıkış duyurusu
 
 - **Ghost presence düzeltmesi:** Odadan çıkarken backend `leave` artık `selfInRoom` sıfırlanmadan önce zorunlu gönderilir
