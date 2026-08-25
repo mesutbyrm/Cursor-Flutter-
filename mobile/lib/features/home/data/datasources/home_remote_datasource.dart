@@ -7,6 +7,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../../core/util/fortune_price_parser.dart';
 import '../models/mobile_compound_models.dart';
+import '../homepage_ticker_parser.dart';
 import 'mobile_compound_remote_datasource.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_blog_post_entity.dart';
@@ -51,56 +52,10 @@ class HomeRemoteDataSource {
   Future<List<String>> fetchHomepageTicker() async {
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.homepageTicker);
-      return _tickerLinesFromBody(res.data);
+      return HomepageTickerParser.linesFromBody(res.data);
     } catch (_) {
       return const [];
     }
-  }
-
-  List<String> _tickerLinesFromBody(dynamic body) {
-    final lines = <String>[];
-    void add(String? raw) {
-      final t = raw?.trim() ?? '';
-      if (t.isEmpty) return;
-      if (!lines.contains(t)) lines.add(t);
-    }
-
-    if (body is String) {
-      add(body);
-      return lines;
-    }
-    if (body is List) {
-      for (final item in body) {
-        if (item is String) {
-          add(item);
-        } else if (item is Map) {
-          final m = Map<String, dynamic>.from(item);
-          add(
-            (m['message'] ??
-                    m['text'] ??
-                    m['title'] ??
-                    m['content'] ??
-                    m['line'] ??
-                    m['ticker'])
-                ?.toString(),
-          );
-        }
-      }
-      return lines;
-    }
-    if (body is Map) {
-      final m = Map<String, dynamic>.from(body);
-      final nested = m['items'] ??
-          m['tickers'] ??
-          m['messages'] ??
-          m['data'] ??
-          m['lines'];
-      if (nested != null) return _tickerLinesFromBody(nested);
-      add(
-        (m['message'] ?? m['text'] ?? m['title'] ?? m['content'])?.toString(),
-      );
-    }
-    return lines;
   }
 
   Future<List<OnlineAdvisorEntity>> fetchOnlineAdvisors() async {

@@ -30,7 +30,7 @@ class TickerGiftAnnouncement {
 /// Homepage ticker hediye satırları — ana şeritte döndürülmez.
 abstract final class HomepageGiftTicker {
   static final _parse = RegExp(
-    r'^(?:🎁\s*)?(.+?)\s*->\s*(.+?)\s*\(\s*(\d+)\s*jeton\s*\)\s*->\s*(.+?)(?:\s*🎁)?\s*$',
+    r'^(?:🎁\s*)?(.+?)\s*(?:->|→)\s*(.+?)\s*\(\s*(\d+)\s*jeton\s*\)\s*(?:->|→)\s*(.+?)(?:\s*🎁)?\s*$',
     caseSensitive: false,
   );
 
@@ -163,5 +163,34 @@ class GlobalGiftFeedGate {
     if (id.isNotEmpty) return id;
     return '${item.senderName}|${item.receiverName}|${item.giftName}|${item.amount}'
         .toLowerCase();
+  }
+}
+
+/// Metin/id listesi — ilk poll geçmişi oynatmaz (`recent-big` vb.).
+class GlobalGiftIdGate {
+  final _seen = <String>{};
+  var seeded = false;
+
+  List<T> takeNew<T>(Iterable<T> items, String Function(T) idOf) {
+    final list = items.toList(growable: false);
+    if (!seeded) {
+      for (final item in list) {
+        final id = idOf(item).trim();
+        if (id.isNotEmpty) _seen.add(id);
+      }
+      seeded = true;
+      return <T>[];
+    }
+    final fresh = <T>[];
+    for (final item in list) {
+      final id = idOf(item).trim();
+      if (id.isEmpty) continue;
+      if (!_seen.add(id)) continue;
+      fresh.add(item);
+    }
+    while (_seen.length > 400) {
+      _seen.remove(_seen.first);
+    }
+    return fresh;
   }
 }

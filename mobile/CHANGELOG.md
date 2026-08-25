@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.369+407 (2026-08-25) — Ana sayfa hediye bandı kalktı, anlık üst geçiş
+
+- **Ana sayfa:** Arama altındaki hediye/ticker bandı kaldırıldı; hediyeler orada sıra sıra dönmez
+- **Üst şerit:** Yeni hediye `GET /api/gifts/recent-big` ile 4 sn’de en üstte bir kez geçer
+- **Tanıtım metni:** «Jeton alarak hediye atabilirsiniz» canlı hediye sanılmaz
+- **Ticker parse:** Üretim `customMessages` + ikon satırları okunur
+
 ## 1.0.368+406 (2026-08-25) — Ana sayfa hediye şeridi kaldırıldı
 
 - **Ana sayfa:** Canlı yayın / oda hediyeleri arama altındaki mor bantta sıra sıra dönmez

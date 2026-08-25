@@ -196,25 +196,27 @@ class GiftRepository {
 
   /// Site geneli büyük hediye şeridi — `GET /api/gifts/recent-big`.
   Future<List<Map<String, dynamic>>> fetchRecentBigGifts() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.giftsRecentBig);
-    final body = _unwrap(res.data);
-    if (body is List) {
-      return body
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-    }
-    if (body is Map) {
-      for (final key in ['gifts', 'events', 'items', 'data']) {
-        final v = body[key];
-        if (v is List) {
-          return v
-              .whereType<Map>()
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList();
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.giftsRecentBig);
+      final body = _unwrap(res.data);
+      if (body is List) {
+        return body
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+      if (body is Map) {
+        for (final key in ['gifts', 'events', 'items', 'data']) {
+          final v = body[key];
+          if (v is List) {
+            return v
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList();
+          }
         }
       }
-    }
+    } catch (_) {}
     return const [];
   }
 }

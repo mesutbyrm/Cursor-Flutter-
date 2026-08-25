@@ -17,15 +17,20 @@ class GiftFeedItem {
   factory GiftFeedItem.fromJson(Map<String, dynamic> json) {
     return GiftFeedItem(
       id: (pick(json, ['id', 'eventId']) ?? '').toString(),
-      senderName:
-          (pick(json, ['senderName', 'sender', 'fromName', 'from']) ?? '')
-              .toString(),
-      receiverName:
-          (pick(json, ['receiverName', 'receiver', 'toName', 'to']) ?? '')
-              .toString(),
-      giftName: (pick(json, ['giftName', 'gift', 'name']) ?? 'hediye').toString(),
+      senderName: jsonDisplayLabelOr(
+        pick(json, ['senderName', 'sender', 'fromName', 'from']),
+        '',
+      ),
+      receiverName: jsonDisplayLabelOr(
+        pick(json, ['receiverName', 'receiver', 'toName', 'to']),
+        '',
+      ),
+      giftName: jsonDisplayLabelOr(
+        pick(json, ['giftName', 'gift', 'name']),
+        'hediye',
+      ),
       giftIcon: pick(json, ['giftIcon', 'icon', 'iconUrl', 'image'])?.toString(),
-      amount: asInt(pick(json, ['amount', 'coins', 'quantity', 'count'])),
+      amount: asInt(pick(json, ['amount', 'coins', 'jeton', 'count', 'quantity'])),
       context: pick(json, ['context'])?.toString(),
       at: DateTime.tryParse(
           pick(json, ['at', 'createdAt', 'date', 'timestamp'])?.toString() ??

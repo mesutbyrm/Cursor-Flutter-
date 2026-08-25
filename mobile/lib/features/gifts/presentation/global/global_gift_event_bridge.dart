@@ -7,6 +7,7 @@ import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../notifications/domain/entities/app_notification_entity.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../data/gift_insights_remote_datasource.dart';
+import '../../data/gift_repository.dart';
 import '../../../voice_hub/domain/voice_official_join.dart';
 import '../../../voice_hub/presentation/providers/voice_room_session_registry.dart';
 import '../../../../core/room/room_event_scope.dart';
@@ -20,7 +21,11 @@ final globalGiftFeedGateProvider = Provider<GlobalGiftFeedGate>((ref) {
   return GlobalGiftFeedGate();
 });
 
-/// Merkezi hediye olayı — SSE bildirim + insights feed poll.
+final globalGiftRecentBigGateProvider = Provider<GlobalGiftIdGate>((ref) {
+  return GlobalGiftIdGate();
+});
+
+/// Merkezi hediye olayı — SSE bildirim + recent-big + insights feed.
 class GlobalGiftEventBridge extends ConsumerStatefulWidget {
   const GlobalGiftEventBridge({super.key, required this.child});
 
@@ -37,10 +42,10 @@ class _GlobalGiftEventBridgeState extends ConsumerState<GlobalGiftEventBridge> {
   @override
   void initState() {
     super.initState();
-    _poll = Timer.periodic(const Duration(seconds: 8), (_) {
-      unawaited(_pollInsightsFeed());
+    _poll = Timer.periodic(const Duration(seconds: 4), (_) {
+      unawaited(_pollGifts());
     });
-    Future.microtask(_pollInsightsFeed);
+    Future.microtask(_pollGifts);
   }
 
   @override
@@ -49,13 +54,39 @@ class _GlobalGiftEventBridgeState extends ConsumerState<GlobalGiftEventBridge> {
     super.dispose();
   }
 
+  Future<void> _pollGifts() async {
+    await Future.wait([
+      _pollRecentBig(),
+      _pollInsightsFeed(),
+    ]);
+  }
+
+  Future<void> _pollRecentBig() async {
+    if (!mounted) return;
+    try {
+      final items =
+          await GiftRepository(ref.read(dioProvider)).fetchRecentBigGifts();
+      final notifs = items
+          .map(GlobalGiftNotification.fromMap)
+          .where((n) => n.eventId.trim().isNotEmpty);
+      final fresh = ref.read(globalGiftRecentBigGateProvider).takeNew(
+            notifs,
+            (n) => n.eventId,
+          );
+      if (!mounted) return;
+      for (final item in fresh.reversed) {
+        ref.read(globalGiftOverlayProvider.notifier).enqueue(item);
+      }
+    } catch (_) {}
+  }
+
   Future<void> _pollInsightsFeed() async {
     if (!mounted) return;
     try {
       final ds = GiftInsightsRemoteDataSource(ref.read(dioProvider));
       final items = await ds.fetchFeed(limit: 8);
       final fresh = ref.read(globalGiftFeedGateProvider).takeNew(items);
-      // API yeniler önce; yeni gelenleri kronolojik oynat.
+      if (!mounted) return;
       for (final item in fresh.reversed) {
         ref
             .read(globalGiftOverlayProvider.notifier)

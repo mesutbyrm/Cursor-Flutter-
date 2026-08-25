@@ -31,9 +31,17 @@ abstract final class VoiceOfficialJoin {
         (lower.contains('joined') && lower.contains('room'));
   }
 
-  /// Büyük hediye duyurusu — sabit kart değil, kayan şerit.
+  /// Gerçek hediye atışı — tanıtım metinleri («Jeton alarak hediye…») değil.
   static final _tickerGiftArrow = RegExp(
     r'->.+\(\s*\d+\s*jeton\s*\)\s*->',
+    caseSensitive: false,
+  );
+  static final _unicodeGiftArrow = RegExp(
+    r'→.+\(\s*\d+\s*jeton\s*\)\s*→',
+    caseSensitive: false,
+  );
+  static final _giftVerb = RegExp(
+    r'hediye\s+(etti|gönderdi|attı)|gifted|sent a gift',
     caseSensitive: false,
   );
 
@@ -43,17 +51,21 @@ abstract final class VoiceOfficialJoin {
   }) {
     final combined = '$title ${subtitle ?? ''}'.trim();
     if (combined.isEmpty) return false;
-    if (combined.contains('🎁') && combined.contains('->')) return true;
-    if (_tickerGiftArrow.hasMatch(combined)) return true;
+    final hasArrow = combined.contains('->') || combined.contains('→');
+    if (combined.contains('🎁') && hasArrow) return true;
+    if (_tickerGiftArrow.hasMatch(combined) ||
+        _unicodeGiftArrow.hasMatch(combined)) {
+      return true;
+    }
     final lower = combined.toLowerCase();
-    return lower.contains('hediye etti') ||
-        lower.contains('hediye gönderdi') ||
-        lower.contains('gifted') ||
-        lower.contains('sent a gift') ||
-        (lower.contains('jeton') &&
-            (lower.contains('attı') ||
-                lower.contains('gönder') ||
-                lower.contains('hediye')));
+    if (_giftVerb.hasMatch(lower)) return true;
+    if (RegExp(r'\d+\s*jeton').hasMatch(lower) &&
+        (hasArrow ||
+            lower.contains('attı') ||
+            lower.contains('gönderdi'))) {
+      return true;
+    }
+    return false;
   }
 
   /// Ana sayfada sabit kart olmamalı — giriş veya büyük hediye.

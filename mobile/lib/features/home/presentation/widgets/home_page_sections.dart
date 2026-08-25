@@ -16,7 +16,6 @@ import 'home_fortune_request_types_section.dart';
 import 'home_games_section.dart';
 import 'home_online_fal_section.dart';
 import 'home_promo_popup_banner.dart';
-import 'home_ticker_strip.dart';
 import 'home_viewport_section.dart';
 import 'home_advisors_row.dart';
 import '../../../bana_ozel/presentation/widgets/home_bana_ozel_section.dart';
@@ -29,9 +28,6 @@ abstract final class HomePageSections {
   static List<Widget> slivers({required double bottomInset}) {
     return [
       const SliverToBoxAdapter(child: RepaintBoundary(child: HomeHeader())),
-      const SliverToBoxAdapter(
-        child: RepaintBoundary(child: HomeTickerStrip()),
-      ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeBannerDelay,

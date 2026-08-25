@@ -1,3 +1,4 @@
+import '../../../../core/util/json_util.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../domain/gift_display_settings.dart';
 import '../../domain/gift_feed_item.dart';
@@ -84,27 +85,53 @@ class GlobalGiftNotification {
             '')
         .toString()
         .trim();
+    final senderName = jsonDisplayLabelOr(
+      json['senderName'] ?? json['fromName'] ?? json['sender'] ?? json['from'],
+      'Biri',
+    );
+    final receiverName = jsonDisplayLabel(
+      json['receiverName'] ?? json['receiver'] ?? json['toName'] ?? json['to'],
+    );
+    final giftName = jsonDisplayLabelOr(
+      json['giftName'] ?? json['gift'] ?? json['name'],
+      'Hediye',
+    );
+    final giftMap = json['gift'];
+    final nestedIcon = giftMap is Map
+        ? (giftMap['icon'] ?? giftMap['iconUrl'] ?? giftMap['emoji'])
+        : null;
+    final nestedAmount = giftMap is Map
+        ? (giftMap['price'] ?? giftMap['jeton'] ?? giftMap['amount'])
+        : null;
+    final giftIcon = (json['giftIcon'] ??
+            json['icon'] ??
+            json['iconUrl'] ??
+            nestedIcon)
+        ?.toString();
+    final amount = _asInt(
+      json['amount'] ?? json['jeton'] ?? json['coinCost'] ?? nestedAmount,
+    );
     return GlobalGiftNotification(
       eventId: eventId.isNotEmpty ? eventId : _syntheticIdFromMap(json),
       giftId: json['giftId']?.toString(),
       senderId: json['senderId']?.toString(),
-      senderName: (json['senderName'] ?? json['fromName'] ?? 'Biri').toString(),
+      senderName: senderName,
       receiverId: json['receiverId']?.toString(),
-      receiverName: json['receiverName']?.toString(),
-      giftName: (json['giftName'] ?? json['name'] ?? 'Hediye').toString(),
-      giftIcon: (json['giftIcon'] ?? json['icon'] ?? json['iconUrl'])?.toString(),
-      amount: _asInt(json['amount'] ?? json['jeton'] ?? json['coinCost']),
+      receiverName: receiverName,
+      giftName: giftName,
+      giftIcon: giftIcon,
+      amount: amount,
       roomId: json['roomId']?.toString(),
       timestamp: DateTime.tryParse(
             json['timestamp']?.toString() ?? json['createdAt']?.toString() ?? '',
           ) ??
           DateTime.now(),
       displayLabel: HomepageGiftTicker.composeAnnouncement(
-        senderName: (json['senderName'] ?? json['fromName'] ?? 'Biri').toString(),
-        giftName: (json['giftName'] ?? json['name'] ?? 'Hediye').toString(),
-        receiverName: json['receiverName']?.toString(),
-        amount: _asInt(json['amount'] ?? json['jeton'] ?? json['coinCost']),
-        giftIcon: (json['giftIcon'] ?? json['icon'] ?? json['iconUrl'])?.toString(),
+        senderName: senderName,
+        giftName: giftName,
+        receiverName: receiverName,
+        amount: amount,
+        giftIcon: giftIcon,
       ),
     );
   }
