@@ -6,8 +6,7 @@ import '../../../../../core/bootstrap/shell_header_badges_provider.dart';
 import '../../../../../core/navigation/unread_badge_format.dart';
 import '../../../../../core/widgets/canlifal_logo.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
-import '../../../../messages/presentation/providers/messages_providers.dart';
-import '../../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../theme/home_approved_design.dart';
 
@@ -86,9 +85,7 @@ class _HomeHeaderBadges extends ConsumerWidget {
       children: const [
         _DiscoverBadge(),
         SizedBox(width: 10),
-        _NotificationBadge(),
-        SizedBox(width: 10),
-        _MessagesBadge(),
+        _InboxBadge(),
         SizedBox(width: 10),
         _HomeJetonPill(),
       ],
@@ -136,33 +133,17 @@ class _DiscoverBadge extends StatelessWidget {
   }
 }
 
-class _NotificationBadge extends ConsumerWidget {
-  const _NotificationBadge();
+class _InboxBadge extends ConsumerWidget {
+  const _InboxBadge();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final badgesReady = ref.watch(shellHeaderBadgesEnabledProvider);
-    final unreadNotif =
-        badgesReady ? ref.watch(notificationsUnreadCountProvider) : 0;
+    final unreadInbox =
+        badgesReady ? ref.watch(inboxUnreadCountProvider) : 0;
     return _IconBadge(
-      icon: Icons.notifications_none_rounded,
-      badge: unreadNotif,
-      onTap: () => context.push('/notifications'),
-    );
-  }
-}
-
-class _MessagesBadge extends ConsumerWidget {
-  const _MessagesBadge();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final badgesReady = ref.watch(shellHeaderBadgesEnabledProvider);
-    final unreadMsg =
-        badgesReady ? ref.watch(messagesUnreadCountProvider) : 0;
-    return _IconBadge(
-      icon: Icons.chat_bubble_outline_rounded,
-      badge: unreadMsg,
+      icon: Icons.inbox_rounded,
+      badge: unreadInbox,
       onTap: () => context.push('/messages'),
     );
   }

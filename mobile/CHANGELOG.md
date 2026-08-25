@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.361+399 (2026-08-25) — Birleşik gelen kutusu (TikTok tarzı)
+
+- **Gelen Kutusu:** Mesajlar ve sistem bildirimleri tek ekranda — `Tümü | Mesajlar | Sistem` sekmeleri.
+- **Sistem bildirimleri:** Canlı yayın, sesli oda, Canlı Falcılar, kazanç/ödeme ve diğer platform uyarıları kategori etiketiyle.
+- **Tek rozet:** Üst bar ve ana sayfada ayrı zil/mesaj ikonları yerine birleşik gelen kutusu rozeti.
+- **`/notifications`:** `/messages?tab=system` yönlendirmesi (geriye dönük uyum).
+
 ## 1.0.360+398 (2026-08-25) — Sesli oda PK daveti yönlendirme
 
 - **PK REST games backend:** `/api/chat/rooms/{id}/pk*` istekleri `canlifalapi.abacusai.app`'e yönlendirildi (ana site GET stub `null` döndürüyordu; davet karşı odaya ulaşmıyordu).

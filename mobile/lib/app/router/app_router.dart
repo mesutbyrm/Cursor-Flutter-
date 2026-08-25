@@ -73,11 +73,11 @@ import '../../features/shorts/presentation/pages/short_music_feed_page.dart';
 import '../../features/shorts/presentation/studio/shorts_studio_page.dart';
 import '../../features/shorts/presentation/utils/short_studio_launch.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
-import '../../features/messages/presentation/pages/conversations_page.dart';
 import '../../features/messages/presentation/pages/dm_voice_call_page.dart';
+import '../../features/inbox/domain/inbox_tab.dart';
+import '../../features/inbox/presentation/pages/inbox_page.dart';
 import '../../features/moderation/domain/entities/report_target.dart';
 import '../../features/moderation/presentation/pages/report_page.dart';
-import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/referral/presentation/pages/referral_earnings_page.dart';
 import '../../features/referral/presentation/pages/referral_invite_page.dart';
 import '../../features/referral/presentation/pages/referral_users_page.dart';
@@ -555,14 +555,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/messages',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const ConversationsPage(),
-        ),
+        pageBuilder: (context, state) {
+          final tab = InboxTab.fromQuery(state.uri.queryParameters['tab']);
+          return AppPageTransitions.fadeSlide(
+            key: state.pageKey,
+            child: InboxPage(initialTab: tab),
+          );
+        },
       ),
       GoRoute(
         path: '/notifications',
-        builder: (context, state) => const NotificationsPage(),
+        redirect: (_, state) {
+          final tab = state.uri.queryParameters['tab'];
+          if (tab != null && tab.isNotEmpty) {
+            return '/messages?tab=$tab';
+          }
+          return '/messages?tab=system';
+        },
       ),
       GoRoute(
         path: '/jeton-store',
