@@ -7,6 +7,7 @@ import '../providers/voice_gift_providers.dart';
 import '../utils/room_session_cache.dart';
 import '../providers/voice_seat_gift_flash_provider.dart';
 import 'voice_recent_gifts_provider.dart';
+import '../../../visual_fx/presentation/providers/voice_room_gift_display_provider.dart';
 import 'voice_seat_gift_totals_provider.dart';
 
 /// Aktif sesli oda oturumu — oda değişiminde eski bağlantıları kapatmak için.
@@ -54,6 +55,7 @@ void clearVoiceRoomLiveSession(Ref ref, String liveKey) {
     ref.read(voiceSeatGiftFlashProvider(key).notifier).clear();
   } catch (_) {}
   ref.read(voiceRecentGiftsProvider.notifier).clear();
+  ref.read(voiceRoomGiftDisplayProvider.notifier).resetForRoomChange();
   ref.invalidate(giftSessionProvider(key));
 }
 

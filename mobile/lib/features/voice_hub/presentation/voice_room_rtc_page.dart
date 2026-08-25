@@ -89,7 +89,7 @@ import 'widgets/voice_room/voice_room_spec_footer.dart';
 import 'widgets/voice_room/voice_room_music_background_layer.dart';
 import 'sheets/voice_room_commands_panel.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
-import 'widgets/premium_2026/voice_gift_announcement_ticker.dart';
+import '../../visual_fx/presentation/widgets/fx_voice_room_overlay_host.dart';
 import '../../gifts/presentation/sync/gift_event_listener.dart';
 import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
 import 'utils/kick_strike_ui.dart';
@@ -1560,6 +1560,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           child: Column(
                             children: [
                         Expanded(
+                          child: FxVoiceRoomOverlayHost(
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
@@ -1688,13 +1689,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         const Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: 8,
-                            vertical: 4,
-                          ),
-                          child: VoiceGiftAnnouncementTicker(),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8,
                             vertical: 2,
                           ),
                           child: LuckyGiftWinsTicker(),
@@ -1793,13 +1787,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             ),
                           ),
                         ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                            ],
-                          ),
-                        ),
                               if (!keyboardOpen)
                                 VoiceRoomBottomDock(
                                   room: room,
@@ -1807,6 +1794,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                   canControlMusic: canControlMusic,
                                   canStopMusic: canCloseMusic,
                                 ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                            ],
+                          ),
+                        ),
+                        ),
                             ],
                           ),
                         ),

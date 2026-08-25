@@ -210,6 +210,11 @@ class _AdminPanelPageState extends ConsumerState<AdminPanelPage> {
                           label: 'Giriş efektleri',
                           onTap: () => context.push('/admin/entrance-effects'),
                         ),
+                        _PanelItem(
+                          icon: Icons.celebration_rounded,
+                          label: 'Görsel efektler',
+                          onTap: () => context.push('/admin/visual-fx'),
+                        ),
                       ]),
                     ],
                   ],

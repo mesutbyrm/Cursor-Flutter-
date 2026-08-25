@@ -89,12 +89,13 @@ void handleNotificationGiftForGlobalOverlay(
       );
 }
 
-/// Oda/yayın hediye SSE'sinden global overlay'e (dev marquee yerine).
+/// Oda/yayın hediye SSE'sinden global overlay'e — yalnızca 1000+ jeton.
 void enqueueGlobalGiftFromLiveEvent(
   WidgetRef ref,
   LiveGiftEvent event, {
   String? sessionKey,
 }) {
+  if (event.jetonAmount < 1000) return;
   if (sessionKey != null && sessionKey.isNotEmpty) {
     final active = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
     final aliases = ref.read(voiceRoomActiveKeyAliasesProvider);
@@ -106,6 +107,8 @@ void enqueueGlobalGiftFromLiveEvent(
         )) {
       return;
     }
+    // Sesli odada büyük hediye FxBigGiftBanner ile gösterilir.
+    return;
   }
   ref
       .read(globalGiftOverlayProvider.notifier)

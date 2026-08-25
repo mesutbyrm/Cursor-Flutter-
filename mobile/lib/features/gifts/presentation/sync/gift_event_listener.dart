@@ -11,7 +11,7 @@ import '../../../voice_hub/presentation/providers/voice_recent_gifts_provider.da
 import '../../../voice_hub/presentation/providers/chat_room_providers.dart';
 import '../../../voice_hub/presentation/providers/voice_gift_combo_tracker.dart';
 import '../../../voice_hub/presentation/providers/voice_gift_leaderboard_provider.dart';
-import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
+import '../../../visual_fx/presentation/providers/voice_room_gift_display_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../voice_hub/presentation/providers/voice_room_session_registry.dart';
@@ -139,13 +139,8 @@ class _GiftEventListenerState extends ConsumerState<GiftEventListener> {
         );
       }
       ref.read(voiceRecentGiftsProvider.notifier).record(enriched);
-      if (widget.useVoiceRealtime && enriched.jetonAmount >= 1000) {
-        ref.read(staffEntranceMarqueeProvider.notifier).enqueueBigGift(
-              senderName: enriched.senderName,
-              receiverName: enriched.receiverName,
-              jeton: enriched.jetonAmount,
-              giftName: enriched.giftName,
-            );
+      if (widget.useVoiceRealtime) {
+        ref.read(voiceRoomGiftDisplayProvider.notifier).onGiftEvent(enriched);
       }
       if (widget.useVoiceRealtime && widget.sessionKey.isNotEmpty) {
         ref

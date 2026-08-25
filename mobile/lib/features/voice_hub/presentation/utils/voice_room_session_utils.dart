@@ -6,6 +6,7 @@ import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_gift_providers.dart';
 import '../providers/voice_recent_gifts_provider.dart';
+import '../../../visual_fx/presentation/providers/voice_room_gift_display_provider.dart';
 import '../providers/voice_room_audio_providers.dart';
 import '../providers/voice_room_session_registry.dart';
 
@@ -27,6 +28,7 @@ Future<void> teardownVoiceRoomBeforeSwitch(
   ref.read(pkBattleRemoteProvider.notifier).clear();
   ref.read(voiceRoomGiftRealtimeProvider).stop();
   ref.read(voiceRecentGiftsProvider.notifier).clear();
+  ref.read(voiceRoomGiftDisplayProvider.notifier).resetForRoomChange();
   ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
 
   try {

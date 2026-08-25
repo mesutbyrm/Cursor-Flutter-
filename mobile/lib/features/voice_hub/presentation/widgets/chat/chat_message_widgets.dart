@@ -8,6 +8,7 @@ import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
 import 'package:canlifal_social/features/cosmetics/presentation/providers/cosmetics_providers.dart';
 import 'package:canlifal_social/features/cosmetics/presentation/widgets/cosmetic_chat_bubble.dart';
+import '../../../../visual_fx/presentation/widgets/fx_authority_badge.dart';
 import '../../../domain/entities/chat_room_message.dart';
 import '../../theme/voice_room_tokens.dart';
 import '../../utils/voice_staff_chat_style.dart';
@@ -135,6 +136,14 @@ class _ChatMessageBody extends ConsumerWidget {
                     color: Colors.white,
                   ),
                   children: [
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: FxMembershipBadgeChip(tier: VipTier.fromMembership(user?.membership)),
+                    ),
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: FxAuthorityBadge(rank: rank),
+                    ),
                     TextSpan(
                       text: '$name ',
                       style: TextStyle(
@@ -208,16 +217,26 @@ class _StaffChatLine extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12.5,
-                    color: _accent,
-                    shadows: VoiceStaffChatStyle.nameGlow(_accent),
-                  ),
+                Row(
+                  children: [
+                    FxMembershipBadgeChip(
+                      tier: VipTier.fromMembership(user?.membership),
+                    ),
+                    FxAuthorityBadge(rank: rank),
+                    Expanded(
+                      child: Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12.5,
+                          color: _accent,
+                          shadows: VoiceStaffChatStyle.nameGlow(_accent),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text(
