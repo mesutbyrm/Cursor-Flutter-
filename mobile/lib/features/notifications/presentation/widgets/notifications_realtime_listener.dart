@@ -71,6 +71,7 @@ class _NotificationsRealtimeListenerState
   void _onNotification(AppNotificationEntity notification) {
     ref.read(notificationsListNotifierProvider.notifier).prepend(notification);
     ref.invalidate(notificationsListProvider);
+    ref.invalidate(notificationsUnreadApiProvider);
     handleNotificationGiftForGlobalOverlay(ref, notification);
     final type = notification.type?.toLowerCase() ?? '';
     if (type.contains('pk')) {

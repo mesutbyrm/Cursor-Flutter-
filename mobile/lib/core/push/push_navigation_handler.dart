@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/live_psychics/presentation/providers/psychic_push_payload.dart';
+import '../../features/inbox/domain/inbox_tab.dart';
+import '../../features/inbox/presentation/inbox_routes.dart';
 import '../../features/notifications/domain/entities/app_notification_entity.dart';
 import '../../features/notifications/domain/notification_action.dart';
 import '../../features/voice_hub/presentation/utils/voice_room_nav_paths.dart';
@@ -252,6 +254,6 @@ class PushNavigationHandler {
       }
       if (type.contains('follow')) return '/user/${n.targetId}';
     }
-    return null;
+    return InboxRoutes.pathForTab(InboxTab.system);
   }
 }

@@ -443,7 +443,7 @@ void main() {
     expect(lastLocation, '/feed/post/post-42');
   });
 
-  testWidgets('unknown notification falls back to feed', (tester) async {
+  testWidgets('unknown notification falls back to inbox system tab', (tester) async {
     late String? lastLocation;
     final router = GoRouter(
       initialLocation: '/',
@@ -452,6 +452,13 @@ void main() {
           path: '/',
           builder: (_, _) {
             lastLocation = '/';
+            return const SizedBox.shrink();
+          },
+        ),
+        GoRoute(
+          path: '/messages',
+          builder: (_, state) {
+            lastLocation = state.uri.toString();
             return const SizedBox.shrink();
           },
         ),
@@ -477,6 +484,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(lastLocation, '/feed');
+    expect(lastLocation, '/messages?tab=system');
   });
 }

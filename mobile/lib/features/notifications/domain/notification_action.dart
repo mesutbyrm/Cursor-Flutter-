@@ -1,6 +1,8 @@
 import 'package:go_router/go_router.dart';
 
 import '../../voice_hub/presentation/utils/voice_room_nav_paths.dart';
+import '../../inbox/domain/inbox_tab.dart';
+import '../../inbox/presentation/inbox_routes.dart';
 import 'entities/app_notification_entity.dart';
 
 typedef VoiceRoomSwitchPreparer = Future<void> Function(
@@ -90,7 +92,7 @@ Future<void> _navigateFromNotificationImpl(
     await pushPath(router, route);
     return;
   }
-  await pushPath(router, '/feed');
+  await pushPath(router, InboxRoutes.pathForTab(InboxTab.system));
 }
 
 void _pushInAppPathSync(GoRouter router, String path) {
@@ -112,22 +114,28 @@ Future<void> _pushInAppPathAsync(
 
 void _applyInAppPath(GoRouter router, String path) {
   var p = path.startsWith('/') ? path : '/$path';
-  if (p == '/' || p == '/index' || p == '/home') {
+  final uri = Uri.parse(p);
+  final basePath = uri.path;
+  final withQuery = uri.hasQuery ? '$basePath?${uri.query}' : basePath;
+
+  if (basePath == '/' || basePath == '/index' || basePath == '/home') {
     router.go('/feed');
     return;
   }
   const tabRoots = {'/feed', '/live', '/social', '/messages', '/profile'};
-  if (tabRoots.contains(p) || p == '/canli-falcilar' || p == '/voice-rooms') {
-    router.go(p);
+  if (tabRoots.contains(basePath) ||
+      basePath == '/canli-falcilar' ||
+      basePath == '/voice-rooms') {
+    router.go(withQuery);
     return;
   }
-  if (p.startsWith('/voice-room/') ||
-      p.startsWith('/live/') ||
-      p.startsWith('/chat/')) {
-    router.go(p);
+  if (basePath.startsWith('/voice-room/') ||
+      basePath.startsWith('/live/') ||
+      basePath.startsWith('/chat/')) {
+    router.go(withQuery);
     return;
   }
-  router.push(p);
+  router.push(withQuery);
 }
 
 String? _shortVideoIdFromPath(String path) {

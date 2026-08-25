@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.363+401 (2026-08-25) — Gelen kutusu push ve anlık rozet
+
+- Bilinmeyen bildirim tıklaması → Gelen Kutusu **Sistem** sekmesi (feed yerine)
+- Push oturum önizlemesi sistem bildirimleri için gelen kutusuna yönlendirir
+- SSE yeni bildirimde okunmamış rozet anında güncellenir
+- `InboxPage` sekme değişimi (redirect `/notifications` uyumu)
+
 ## 1.0.362+400 (2026-08-25) — Gelen kutusu navigasyon tamamlama
 
 - Tüm ekranlarda ayrı zil/mesaj ikonları kaldırıldı → tek **Gelen Kutusu** (`InboxRoutes`)

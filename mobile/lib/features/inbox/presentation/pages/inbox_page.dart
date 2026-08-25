@@ -60,6 +60,14 @@ class _InboxPageState extends ConsumerState<InboxPage> {
   }
 
   @override
+  void didUpdateWidget(covariant InboxPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialTab != widget.initialTab && _tab != widget.initialTab) {
+      setState(() => _tab = widget.initialTab);
+    }
+  }
+
+  @override
   void dispose() {
     _search.dispose();
     _scroll.removeListener(_onScroll);
