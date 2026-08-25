@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.366+404 (2026-08-25) — Merkezi görsel etkileşim (hediye, rozet, duyuru)
+
+- **visual_fx modülü:** Hediye, rozet, kampanya ve giriş efektleri için ortak katman
+- **1000+ jeton banner:** Sesli odada üst bölgede tek seferlik büyük hediye bildirimi (`gift_event_id` dedupe)
+- **Son 3 hediye:** Koltuk altı rotasyon şeridi — 3 sn, kuyruk max 3; backend işlemini geciktirmez
+- **Global overlay:** Küçük hediyeler artık site genelinde gösterilmez; sesli odada FxBigGiftBanner kullanılır
+- **Kampanya kutusu:** `GET /api/popups` — sesli oda sağ üst, tıklanınca güvenli route
+- **Yetki/üyelik rozetleri:** Sohbette [ADMIN]/[GOLD]/[DIAMOND] mini chip'ler
+- **Admin:** `/admin/visual-fx` hub — giriş/hediye yönetimi linkleri + canlı önizleme
+
 ## 1.0.365+403 (2026-08-25) — Sesli oda kapsamlı düzeltme (PK, SSE, giriş)
 
 - **SSE reconnect:** Yeniden bağlanınca koltuk, presence, PK ve yetkiler tam senkronize edilir
