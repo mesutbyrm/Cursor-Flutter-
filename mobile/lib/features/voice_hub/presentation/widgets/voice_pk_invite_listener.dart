@@ -30,14 +30,12 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   final Set<String> _seenRejections = {};
   var _showing = false;
   Timer? _pollTimer;
-  var _pollTick = 0;
 
   @override
   void initState() {
     super.initState();
     _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted || _showing) return;
-      _pollTick++;
       unawaited(_pollPendingInvites());
     });
     Future.microtask(() async {
