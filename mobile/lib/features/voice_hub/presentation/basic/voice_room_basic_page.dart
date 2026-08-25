@@ -382,7 +382,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       room: room,
       selfPresence: selfPresence,
       server: live.serverPermissions,
-      staffSiteAdmin: ref.read(staffAccessProvider).isFounder,
+      staffSiteAdmin: ref.read(staffAccessProvider).isSiteAdmin,
       walletRole: ref.read(staffAccessProvider).siteRole ??
           ref.read(walletBalancesProvider).valueOrNull?.role,
     );
@@ -591,7 +591,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       room: room,
       selfPresence: self,
       server: live.serverPermissions,
-      staffSiteAdmin: ref.read(staffAccessProvider).isFounder,
+      staffSiteAdmin: ref.read(staffAccessProvider).isSiteAdmin,
       walletRole: ref.read(staffAccessProvider).siteRole ??
           ref.read(walletBalancesProvider).valueOrNull?.role,
     );
@@ -788,7 +788,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             room: room,
             selfPresence: selfPresence,
             server: next.serverPermissions,
-            staffSiteAdmin: ref.read(staffAccessProvider).isFounder,
+            staffSiteAdmin: ref.read(staffAccessProvider).isSiteAdmin,
             walletRole: ref.read(staffAccessProvider).siteRole ??
                 ref.read(walletBalancesProvider).valueOrNull?.role,
           );

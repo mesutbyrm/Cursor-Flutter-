@@ -136,6 +136,96 @@ abstract final class TeamCatalog {
       primary: Color(0xFFDC2626),
       secondary: Color(0xFFFFFFFF),
     ),
+    _TeamOption(
+      key: 'sivasspor',
+      label: 'Sivasspor',
+      primary: Color(0xFFDC2626),
+      secondary: Color(0xFFFFFFFF),
+    ),
+    _TeamOption(
+      key: 'konyaspor',
+      label: 'Konyaspor',
+      primary: Color(0xFF166534),
+      secondary: Color(0xFFFFFFFF),
+    ),
+    _TeamOption(
+      key: 'alanyaspor',
+      label: 'Alanyaspor',
+      primary: Color(0xFFFF6B00),
+      secondary: Color(0xFF0F172A),
+    ),
+    _TeamOption(
+      key: 'gaziantep',
+      label: 'Gaziantep FK',
+      primary: Color(0xFFDC2626),
+      secondary: Color(0xFF000000),
+    ),
+    _TeamOption(
+      key: 'kayserispor',
+      label: 'Kayserispor',
+      primary: Color(0xFFFFD700),
+      secondary: Color(0xFFDC2626),
+    ),
+    _TeamOption(
+      key: 'goztepe',
+      label: 'Göztepe',
+      primary: Color(0xFFFFD700),
+      secondary: Color(0xFFDC2626),
+    ),
+    _TeamOption(
+      key: 'rizespor',
+      label: 'Çaykur Rizespor',
+      primary: Color(0xFF166534),
+      secondary: Color(0xFF0F172A),
+    ),
+    _TeamOption(
+      key: 'eyupspor',
+      label: 'Eyüpspor',
+      primary: Color(0xFF7C3AED),
+      secondary: Color(0xFFFFD700),
+    ),
+    _TeamOption(
+      key: 'kasımpasa',
+      label: 'Kasımpaşa',
+      primary: Color(0xFF1E3A8A),
+      secondary: Color(0xFFFFFFFF),
+    ),
+    _TeamOption(
+      key: 'adana',
+      label: 'Adana Demirspor',
+      primary: Color(0xFF1E40AF),
+      secondary: Color(0xFFDC2626),
+    ),
+    _TeamOption(
+      key: 'hatayspor',
+      label: 'Hatayspor',
+      primary: Color(0xFF7F1D1D),
+      secondary: Color(0xFFFFFFFF),
+    ),
+    _TeamOption(
+      key: 'ankaragucu',
+      label: 'Ankaragücü',
+      primary: Color(0xFF1E3A8A),
+      secondary: Color(0xFFFFD700),
+    ),
+    _TeamOption(
+      key: 'genclerbirligi',
+      label: 'Gençlerbirliği',
+      primary: Color(0xFFDC2626),
+      secondary: Color(0xFF000000),
+    ),
+    _TeamOption(
+      key: 'boluspor',
+      label: 'Boluspor',
+      primary: Color(0xFFDC2626),
+      secondary: Color(0xFFFFFFFF),
+    ),
+    _TeamOption(
+      key: 'samsunspor',
+      label: 'Samsunspor',
+      primary: Color(0xFFDC2626),
+      secondary: Color(0xFFFFFFFF),
+    ),
   ];
 
   static List<String> get labels => options.map((o) => o.label).toList();
@@ -248,6 +338,134 @@ abstract final class TeamCatalog {
   }
 }
 
+/// İl / şehir renkleri — profil `city` veya `favoriteCity` ile eşleşir.
+abstract final class CityCatalog {
+  static const options = <_CityOption>[
+    _CityOption(
+      key: 'istanbul',
+      label: 'İstanbul',
+      primary: Color(0xFF7C3AED),
+      secondary: Color(0xFFFFD700),
+      flagEmoji: '🏙️',
+    ),
+    _CityOption(
+      key: 'ankara',
+      label: 'Ankara',
+      primary: Color(0xFFDC2626),
+      secondary: Color(0xFFFFFFFF),
+      flagEmoji: '🏛️',
+    ),
+    _CityOption(
+      key: 'izmir',
+      label: 'İzmir',
+      primary: Color(0xFF0EA5E9),
+      secondary: Color(0xFFFFD700),
+      flagEmoji: '🌊',
+    ),
+    _CityOption(
+      key: 'bursa',
+      label: 'Bursa',
+      primary: Color(0xFF166534),
+      secondary: Color(0xFFFFFFFF),
+      flagEmoji: '🌳',
+    ),
+    _CityOption(
+      key: 'antalya',
+      label: 'Antalya',
+      primary: Color(0xFFFF6B00),
+      secondary: Color(0xFF0F172A),
+      flagEmoji: '☀️',
+    ),
+    _CityOption(
+      key: 'adana',
+      label: 'Adana',
+      primary: Color(0xFFDC2626),
+      secondary: Color(0xFFFFFFFF),
+      flagEmoji: '🌶️',
+    ),
+    _CityOption(
+      key: 'gaziantep',
+      label: 'Gaziantep',
+      primary: Color(0xFF7F1D1D),
+      secondary: Color(0xFFFFD700),
+      flagEmoji: '🥙',
+    ),
+    _CityOption(
+      key: 'konya',
+      label: 'Konya',
+      primary: Color(0xFF166534),
+      secondary: Color(0xFFFFFFFF),
+      flagEmoji: '🕌',
+    ),
+    _CityOption(
+      key: 'trabzon',
+      label: 'Trabzon',
+      primary: Color(0xFF6B0F1A),
+      secondary: Color(0xFF5BC2E7),
+      flagEmoji: '⚓',
+    ),
+    _CityOption(
+      key: 'eskisehir',
+      label: 'Eskişehir',
+      primary: Color(0xFF7C3AED),
+      secondary: Color(0xFFFFFFFF),
+      flagEmoji: '🎓',
+    ),
+    _CityOption(
+      key: 'diyarbakir',
+      label: 'Diyarbakır',
+      primary: Color(0xFF166534),
+      secondary: Color(0xFFFFFFFF),
+      flagEmoji: '🏰',
+    ),
+    _CityOption(
+      key: 'samsun',
+      label: 'Samsun',
+      primary: Color(0xFFDC2626),
+      secondary: Color(0xFFFFFFFF),
+      flagEmoji: '🌾',
+    ),
+  ];
+
+  static EntranceTheme resolve({String? favoriteCity}) {
+    final norm = TeamCatalog._normalize(favoriteCity);
+    if (norm.isEmpty) return EntranceTheme.turkey;
+    for (final o in options) {
+      if (norm == o.key || norm == TeamCatalog._normalize(o.label)) {
+        return EntranceTheme(
+          primary: o.primary,
+          secondary: o.secondary,
+          teamName: o.label,
+          flagEmoji: o.flagEmoji,
+        );
+      }
+    }
+    return EntranceTheme(
+      primary: EntranceTheme.turkey.primary,
+      secondary: EntranceTheme.turkey.secondary,
+      teamName: favoriteCity?.trim(),
+      flagEmoji: EntranceTheme.turkey.flagEmoji,
+      isDefaultTurkey: true,
+    );
+  }
+}
+
+class _CityOption {
+  const _CityOption({
+    required this.key,
+    required this.label,
+    required this.primary,
+    required this.secondary,
+    this.flagEmoji,
+  });
+
+  final String key;
+  final String label;
+  final Color primary;
+  final Color secondary;
+  final String? flagEmoji;
+}
+
 class _TeamOption {
   const _TeamOption({
     required this.key,
@@ -289,5 +507,17 @@ EntranceTheme entranceThemeFromUserJson(Map<String, dynamic>? json) {
   final teamMap = teamRaw is Map ? Map<String, dynamic>.from(teamRaw) : null;
   final favorite = pick(json, ['favoriteTeam', 'favorite_team', 'teamName'])
       ?.toString();
-  return TeamCatalog.resolve(favoriteTeam: favorite, teamJson: teamMap);
+  final teamTheme = TeamCatalog.resolve(
+    favoriteTeam: favorite,
+    teamJson: teamMap,
+  );
+  if (!teamTheme.isDefaultTurkey || favorite != null) {
+    return teamTheme;
+  }
+  final city = pick(json, ['favoriteCity', 'favorite_city', 'city', 'cityName'])
+      ?.toString();
+  if (city != null && city.trim().isNotEmpty) {
+    return CityCatalog.resolve(favoriteCity: city);
+  }
+  return teamTheme;
 }

@@ -205,6 +205,11 @@ class _AdminPanelPageState extends ConsumerState<AdminPanelPage> {
                           label: 'Sohbet odası görselleri',
                           onTap: () => context.push('/admin/voice-backgrounds'),
                         ),
+                        _PanelItem(
+                          icon: Icons.auto_awesome_rounded,
+                          label: 'Giriş efektleri',
+                          onTap: () => context.push('/admin/entrance-effects'),
+                        ),
                       ]),
                     ],
                   ],

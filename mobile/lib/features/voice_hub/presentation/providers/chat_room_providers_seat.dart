@@ -18,7 +18,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     }
 
     final staff = ref.read(staffAccessProvider);
-    if (staff.isFounder) {
+    if (staff.isFounder || staff.isSiteAdmin) {
       return VoiceRoomSeatPriority.tierAdmin;
     }
 

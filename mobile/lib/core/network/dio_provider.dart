@@ -109,10 +109,12 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
         final refreshPath = _refreshPath();
         final already = e.requestOptions.extra['_authRetry'] == true;
         final backend = e.requestOptions.extra['apiBackend'];
-        final isMainOrigin =
-            backend == null || backend == ApiBackendKind.main.label;
+        // JWT yenileme ana sitede yapılır; games PK vb. aynı Bearer ile tekrar dener.
+        final canRefreshAuth = backend == null ||
+            backend == ApiBackendKind.main.label ||
+            backend == ApiBackendKind.game.label;
         if (!already &&
-            isMainOrigin &&
+            canRefreshAuth &&
             e.response?.statusCode == 401 &&
             e.requestOptions.path != refreshPath &&
             e.requestOptions.path != ApiEndpoints.authLogout) {

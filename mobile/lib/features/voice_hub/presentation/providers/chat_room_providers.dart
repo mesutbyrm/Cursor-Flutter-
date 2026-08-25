@@ -647,6 +647,25 @@ class VoiceRoomLiveController
   @override
   VoiceRoomLiveState build(String roomKey) {
     final room = _roomMeta;
+    ref.listen(staffAccessProvider, (prev, next) {
+      if (!state.selfInRoom) return;
+      final wasPrivileged =
+          prev?.isSiteAdmin == true || prev?.isFounder == true;
+      final nowPrivileged = next.isSiteAdmin || next.isFounder;
+      if (!wasPrivileged && nowPrivileged) {
+        _autoSeatAttempted = false;
+        unawaited(_tryAutoPrivilegedSeat());
+      }
+    });
+    ref.listen(walletBalancesProvider, (prev, next) {
+      if (!state.selfInRoom) return;
+      final wasAdmin = prev?.valueOrNull?.isAdmin == true;
+      final nowAdmin = next.valueOrNull?.isAdmin == true;
+      if (!wasAdmin && nowAdmin) {
+        _autoSeatAttempted = false;
+        unawaited(_tryAutoPrivilegedSeat());
+      }
+    });
     _roomKeepAliveLink = ref.keepAlive();
     ref.onDispose(() {
       if (_sessionActive) {
@@ -2318,7 +2337,7 @@ class VoiceRoomLiveController
       room: _roomMeta,
       selfPresence: self,
       server: state.serverPermissions,
-      staffSiteAdmin: ref.read(staffAccessProvider).isFounder,
+      staffSiteAdmin: ref.read(staffAccessProvider).isSiteAdmin,
       walletRole: ref.read(staffAccessProvider).siteRole ??
           ref.read(walletBalancesProvider).valueOrNull?.role,
     );

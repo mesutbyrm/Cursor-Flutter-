@@ -44,5 +44,15 @@ void main() {
       });
       expect(theme.primary, const Color(0xFF000000));
     });
+
+    test('maps city to regional colors', () {
+      final izmir = CityCatalog.resolve(favoriteCity: 'İzmir');
+      expect(izmir.teamName, 'İzmir');
+      expect(izmir.primary, const Color(0xFF0EA5E9));
+    });
+
+    test('team catalog includes expanded super lig clubs', () {
+      expect(TeamCatalog.options.length, greaterThanOrEqualTo(18));
+    });
   });
 }

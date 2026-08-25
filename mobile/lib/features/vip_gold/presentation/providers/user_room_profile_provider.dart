@@ -41,11 +41,20 @@ final userRoomProfileProvider = Provider<UserRoomProfile>((ref) {
   final tier = VipTier.fromMembership(membership);
   final favoriteTeam = ext?.favoriteTeam ?? balances?.favoriteTeam;
   final teamRaw = ext?.teamRaw ?? balances?.teamRaw;
+  final favoriteCity = ext?.city;
 
-  final theme = TeamCatalog.resolve(
-    favoriteTeam: favoriteTeam,
-    teamJson: teamRaw,
-  );
+  EntranceTheme theme;
+  if (teamRaw != null && teamRaw.isNotEmpty ||
+      (favoriteTeam != null && favoriteTeam.trim().isNotEmpty)) {
+    theme = TeamCatalog.resolve(
+      favoriteTeam: favoriteTeam,
+      teamJson: teamRaw,
+    );
+  } else if (favoriteCity != null && favoriteCity.trim().isNotEmpty) {
+    theme = CityCatalog.resolve(favoriteCity: favoriteCity);
+  } else {
+    theme = TeamCatalog.resolve(favoriteTeam: favoriteTeam, teamJson: teamRaw);
+  }
 
   return UserRoomProfile(
     tier: tier,

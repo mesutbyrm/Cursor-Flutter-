@@ -25,6 +25,7 @@ import '../../features/fortune/presentation/pages/fortune_session_page.dart';
 import '../../features/fortune/presentation/pages/fortune_ready_readings_page.dart';
 
 import '../../features/admin/presentation/pages/admin_panel_page.dart';
+import '../../features/admin/presentation/pages/admin_entrance_effects_page.dart';
 import '../../features/admin/presentation/pages/admin_voice_room_backgrounds_page.dart';
 import '../../features/admin/presentation/pages/admin_gift_collection_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
@@ -873,6 +874,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const AdminVoiceRoomBackgroundsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/entrance-effects',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminEntranceEffectsPage(),
         ),
       ),
       GoRoute(

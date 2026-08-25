@@ -2,14 +2,16 @@ import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entrance_theme.dart';
 import '../../domain/vip_tier.dart';
+import '../providers/entrance_effect_settings_provider.dart';
 import '../theme/vip_gold_tokens.dart';
 import 'vip_badge.dart';
 
-/// Özel giriş animasyonu — odaya katılımda tam ekran FX (takım renkleri destekli).
-class VipEntranceOverlay extends StatefulWidget {
+/// Özel giriş animasyonu — sağdan sola kayan tam ekran FX (takım renkleri destekli).
+class VipEntranceOverlay extends ConsumerStatefulWidget {
   const VipEntranceOverlay({
     super.key,
     required this.tier,
@@ -24,29 +26,43 @@ class VipEntranceOverlay extends StatefulWidget {
   final VoidCallback? onFinished;
 
   @override
-  State<VipEntranceOverlay> createState() => VipEntranceOverlayState();
+  ConsumerState<VipEntranceOverlay> createState() => VipEntranceOverlayState();
 }
 
-class VipEntranceOverlayState extends State<VipEntranceOverlay>
+class VipEntranceOverlayState extends ConsumerState<VipEntranceOverlay>
     with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
+  AnimationController? _ctrl;
+  var _pass = 0;
 
   EntranceTheme get _theme => widget.theme ?? EntranceTheme.turkey;
 
   @override
   void initState() {
     super.initState();
+    _startPass();
+  }
+
+  void _startPass() {
+    final settings = ref.read(entranceEffectSettingsProvider);
+    _ctrl?.dispose();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2400),
+      duration: settings.animationDuration,
     )..forward().then((_) {
-        if (mounted) widget.onFinished?.call();
+        final maxPass = settings.passCount.clamp(1, 3);
+        if (!mounted) return;
+        if (_pass + 1 < maxPass) {
+          _pass++;
+          _startPass();
+          return;
+        }
+        widget.onFinished?.call();
       });
   }
 
   @override
   void dispose() {
-    _ctrl.dispose();
+    _ctrl?.dispose();
     super.dispose();
   }
 
@@ -55,12 +71,16 @@ class VipEntranceOverlayState extends State<VipEntranceOverlay>
     if (!widget.tier.hasEntranceFx) return const SizedBox.shrink();
 
     final theme = _theme;
+    final ctrl = _ctrl;
+    if (ctrl == null) return const SizedBox.shrink();
 
     return IgnorePointer(
       child: AnimatedBuilder(
-        animation: _ctrl,
+        animation: ctrl,
         builder: (context, _) {
-          final t = Curves.easeOutCubic.transform(_ctrl.value);
+          final t = Curves.easeOutCubic.transform(ctrl.value);
+          final slideX = (1 - t) * MediaQuery.sizeOf(context).width * 0.55;
+          final wobble = math.sin(t * math.pi * 3) * 8 * (1 - t);
           return Stack(
             fit: StackFit.expand,
             children: [
@@ -69,77 +89,81 @@ class VipEntranceOverlayState extends State<VipEntranceOverlay>
               ),
               CustomPaint(
                 painter: _ParticlePainter(
-                  phase: _ctrl.value,
+                  phase: ctrl.value,
                   accent: theme.primary,
                 ),
                 size: Size.infinite,
               ),
               Center(
-                child: Opacity(
-                  opacity: (1 - (t - 0.5).abs() * 2).clamp(0.0, 1.0),
-                  child: Transform.scale(
-                    scale: 0.7 + t * 0.35,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (theme.logoUrl != null && theme.logoUrl!.isNotEmpty)
-                          ClipOval(
-                            child: CachedNetworkImage(
-                              imageUrl: theme.logoUrl!,
-                              width: 56,
-                              height: 56,
-                              fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) => Icon(
-                                Icons.sports_soccer_rounded,
-                                size: 56,
-                                color: theme.iconColor,
+                child: Transform.translate(
+                  offset: Offset(slideX + wobble, 0),
+                  child: Opacity(
+                    opacity: (1 - (t - 0.5).abs() * 2).clamp(0.0, 1.0),
+                    child: Transform.scale(
+                      scale: 0.7 + t * 0.35,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (theme.logoUrl != null &&
+                              theme.logoUrl!.isNotEmpty)
+                            ClipOval(
+                              child: CachedNetworkImage(
+                                imageUrl: theme.logoUrl!,
+                                width: 56,
+                                height: 56,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) => Icon(
+                                  Icons.sports_soccer_rounded,
+                                  size: 56,
+                                  color: theme.iconColor,
+                                ),
+                              ),
+                            )
+                          else if (theme.flagEmoji != null)
+                            Text(
+                              theme.flagEmoji!,
+                              style: const TextStyle(fontSize: 48),
+                            )
+                          else
+                            Icon(
+                              Icons.flight_land_rounded,
+                              size: 64,
+                              color: theme.iconColor,
+                              shadows: [
+                                Shadow(
+                                  color: theme.glowColor,
+                                  blurRadius: 18,
+                                ),
+                              ],
+                            ),
+                          const SizedBox(height: 12),
+                          ShaderMask(
+                            shaderCallback: (b) =>
+                                theme.titleGradient.createShader(b),
+                            child: Text(
+                              widget.userName,
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
                               ),
                             ),
-                          )
-                        else if (theme.flagEmoji != null)
+                          ),
+                          const SizedBox(height: 8),
                           Text(
-                            theme.flagEmoji!,
-                            style: const TextStyle(fontSize: 48),
-                          )
-                        else
-                          Icon(
-                            Icons.flight_land_rounded,
-                            size: 64,
-                            color: theme.iconColor,
-                            shadows: [
-                              Shadow(
-                                color: theme.glowColor,
-                                blurRadius: 18,
-                              ),
-                            ],
-                          ),
-                        const SizedBox(height: 12),
-                        ShaderMask(
-                          shaderCallback: (b) =>
-                              theme.titleGradient.createShader(b),
-                          child: Text(
-                            widget.userName,
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
+                            theme.teamName != null
+                                ? '${theme.teamName} taraftarı odaya giriş yaptı'
+                                : 'odaya giriş yaptı',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          theme.teamName != null
-                              ? '${theme.teamName} taraftarı odaya giriş yaptı'
-                              : 'odaya giriş yaptı',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        VipBadge(tier: widget.tier, animate: true),
-                      ],
+                          const SizedBox(height: 14),
+                          VipBadge(tier: widget.tier, animate: true),
+                        ],
+                      ),
                     ),
                   ),
                 ),

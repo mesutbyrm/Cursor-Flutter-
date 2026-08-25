@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.364+402 (2026-08-25) — PK oturum, admin koltuk, giriş efektleri
+
+- **PK daveti 401:** Games backend (`canlifalapi`) isteklerinde JWT süresi dolunca ana siteden token yenileme ve tekrar deneme
+- **Admin otomatik koltuk:** `staffSiteAdmin` artık `isSiteAdmin` kullanıyor; cüzdan/admin rolü yüklenince koltuk yeniden denenir
+- **Giriş efektleri:** Sağdan sola kayan Gold/Diamond animasyon; 18+ takım + 12 şehir renk kataloğu
+- **Admin panel:** Giriş efekti hızı, süre, geçiş sayısı ve üyelik kademesi ayarları (`/admin/entrance-effects`)
+
 ## 1.0.363+401 (2026-08-25) — Gelen kutusu push ve anlık rozet
 
 - Bilinmeyen bildirim tıklaması → Gelen Kutusu **Sistem** sekmesi (feed yerine)
