@@ -23,6 +23,11 @@ import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 import '../../domain/watch_ad_reward.dart';
 
+Never _throwLast(Object error) {
+  if (error is ApiException) throw error;
+  throw ApiException(ApiException.userMessage(error));
+}
+
 class ProfileRemoteDataSource {
   ProfileRemoteDataSource(this._dio, this._compound);
 
@@ -189,6 +194,7 @@ class ProfileRemoteDataSource {
   }
 
   Future<ProfileStatsEntity> myStats() async {
+    Object? lastError;
     for (final path in [
       ApiEndpoints.userStats,
       ApiEndpoints.userStatistics,
@@ -197,8 +203,11 @@ class ProfileRemoteDataSource {
       try {
         final res = await _dio.safeGet<Map<String, dynamic>>(path);
         return ProfileStatsEntity.fromJson(res.data ?? {});
-      } catch (_) {}
+      } catch (e) {
+        lastError = e;
+      }
     }
+    if (lastError != null) _throwLast(lastError);
     return const ProfileStatsEntity();
   }
 
@@ -217,11 +226,12 @@ class ProfileRemoteDataSource {
         lastError = e;
       }
     }
-    if (lastError != null) throw ApiException.userMessage(lastError);
+    if (lastError != null) _throwLast(lastError);
     return const ProfileExtendedEntity();
   }
 
   Future<ProfileUserStatisticsEntity> userStatistics() async {
+    Object? lastError;
     for (final path in [
       ApiEndpoints.userStatistics,
       ApiEndpoints.userStats,
@@ -233,8 +243,11 @@ class ProfileRemoteDataSource {
         if (body is Map) {
           return ProfileUserStatisticsEntity.fromJson(asJsonMap(body));
         }
-      } catch (_) {}
+      } catch (e) {
+        lastError = e;
+      }
     }
+    if (lastError != null) _throwLast(lastError);
     return const ProfileUserStatisticsEntity();
   }
 
@@ -339,14 +352,12 @@ class ProfileRemoteDataSource {
         lastError = e;
       }
     }
-    if (lastError != null) {
-      if (lastError is ApiException) throw lastError;
-      throw ApiException(ApiException.userMessage(lastError));
-    }
+    if (lastError != null) _throwLast(lastError);
     return const [];
   }
 
   Future<List<BroadcastHistoryItemEntity>> broadcastHistory() async {
+    Object? lastError;
     for (final path in [
       ApiEndpoints.userBroadcastHistory,
       ApiEndpoints.meBroadcastHistory,
@@ -360,12 +371,16 @@ class ProfileRemoteDataSource {
         return raw
             .map((e) => BroadcastHistoryItemEntity.fromJson(asJsonMap(e)))
             .toList();
-      } catch (_) {}
+      } catch (e) {
+        lastError = e;
+      }
     }
+    if (lastError != null) _throwLast(lastError);
     return const [];
   }
 
   Future<List<ProfileActivityItemEntity>> myActivity() async {
+    Object? lastError;
     for (final path in [ApiEndpoints.userActivity, ApiEndpoints.meActivity]) {
       try {
         final res = await _dio.safeGet<Map<String, dynamic>>(path);
@@ -376,8 +391,11 @@ class ProfileRemoteDataSource {
         return raw
             .map((e) => ProfileActivityItemEntity.fromJson(asJsonMap(e)))
             .toList();
-      } catch (_) {}
+      } catch (e) {
+        lastError = e;
+      }
     }
+    if (lastError != null) _throwLast(lastError);
     return const [];
   }
 
@@ -386,6 +404,7 @@ class ProfileRemoteDataSource {
     int page = 1,
     int limit = 20,
   }) async {
+    Object? lastError;
     for (final path in [
       ApiEndpoints.userPublicFollowers(userId),
       if (Env.useMobileAuth) ApiEndpoints.userFollowers,
@@ -398,8 +417,11 @@ class ProfileRemoteDataSource {
         );
         final list = parseProfileUserList(res.data);
         if (list.isNotEmpty || page == 1) return list;
-      } catch (_) {}
+      } catch (e) {
+        lastError = e;
+      }
     }
+    if (lastError != null) _throwLast(lastError);
     return const [];
   }
 
@@ -408,6 +430,7 @@ class ProfileRemoteDataSource {
     int page = 1,
     int limit = 20,
   }) async {
+    Object? lastError;
     for (final path in [
       if (Env.useMobileAuth) ApiEndpoints.userFollowing,
       ApiEndpoints.following(userId),
@@ -419,8 +442,11 @@ class ProfileRemoteDataSource {
         );
         final list = parseProfileUserList(res.data);
         if (list.isNotEmpty || page == 1) return list;
-      } catch (_) {}
+      } catch (e) {
+        lastError = e;
+      }
     }
+    if (lastError != null) _throwLast(lastError);
     return const [];
   }
 }

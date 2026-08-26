@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.388+426 (2026-08-26) — Sayfa denetimi P19 (istatistik, takip, arama, yorum)
+
+- **Kazanç / istatistik:** `GET /api/user/stats` hatası artık sıfır gibi gizlenmez; tekrar dene çalışır
+- **Takipçi / takip:** `GET /api/user/followers` ve `following` hatası boş liste gibi görünmez
+- **İşlemler / yayın geçmişi:** `GET /api/user/activity` ve yayın geçmişi hatası tekrar dene ile görünür
+- **Arama:** `GET /api/search` zinciri tüm yollar düşünce boş sonuç yerine hata gösterir
+- **Görevler:** `GET /api/daily-missions` hatası büyüme merkezinde uyarılır
+- **Kısa video yorumları:** `GET /api/short-videos/{id}/comments` hatasında kullanıcı mesajı + tekrar dene
+
 ## 1.0.387+425 (2026-08-26) — Sayfa denetimi P18 (hediye özeti, oyun merkezi retry)
 
 - **Hediyelerim:** `GET /api/user/received-gifts` hatası artık boş liste gibi gizlenmez; profil / hediye sayfasında tekrar dene görünür

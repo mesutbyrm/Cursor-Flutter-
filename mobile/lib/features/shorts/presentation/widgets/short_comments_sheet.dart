@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/content/content_guard.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/ui/premium/premium_bottom_sheet.dart';
 import '../../../../core/providers/auth_selectors.dart';
 import '../../../moderation/domain/entities/report_target.dart';
@@ -307,9 +308,19 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
     }
     if (_loadError != null) {
       return Center(
-        child: Text(
-          _loadError.toString(),
-          style: const TextStyle(color: Colors.white54),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              ApiException.userMessage(_loadError!),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white54),
+            ),
+            TextButton(
+              onPressed: _loadComments,
+              child: const Text('Tekrar dene'),
+            ),
+          ],
         ),
       );
     }

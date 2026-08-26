@@ -167,4 +167,16 @@ void main() {
     expect(ApiEndpoints.homeGames, '/api/games');
     expect(ApiEndpoints.gameLeaderboard, '/api/games/leaderboard');
   });
+
+  test('kılavuz istatistik, takip, arama ve yorum uçları', () {
+    expect(ApiEndpoints.userStats, '/api/user/stats');
+    expect(ApiEndpoints.userActivity, '/api/user/activity');
+    expect(ApiEndpoints.userFollowers, '/api/user/followers');
+    expect(ApiEndpoints.dailyMissions, '/api/daily-missions');
+    expect(ApiEndpoints.searchAll('ali'), '/api/search?q=ali');
+    expect(
+      ApiEndpoints.shortVideoComments('v1'),
+      '/api/short-videos/v1/comments',
+    );
+  });
 }

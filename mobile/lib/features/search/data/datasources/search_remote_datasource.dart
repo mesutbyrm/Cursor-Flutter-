@@ -39,6 +39,7 @@ class SearchRemoteDataSource {
     final q = query.trim();
     if (q.length < 2) return const [];
 
+    Object? lastError;
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.searchAll(q),
@@ -46,7 +47,9 @@ class SearchRemoteDataSource {
       );
       final parsed = _parseList(res.data);
       if (parsed != null && parsed.isNotEmpty) return parsed;
-    } catch (_) {}
+    } catch (e) {
+      lastError = e;
+    }
 
     try {
       final res = await _dio.safeGet<dynamic>(
@@ -55,9 +58,21 @@ class SearchRemoteDataSource {
       );
       final parsed = _parseList(res.data);
       if (parsed != null && parsed.isNotEmpty) return parsed;
-    } catch (_) {}
+    } catch (e) {
+      lastError = e;
+    }
 
-    return searchUsers(q);
+    try {
+      final users = await searchUsers(q);
+      if (users.isNotEmpty) return users;
+    } catch (e) {
+      lastError = e;
+    }
+    if (lastError != null) {
+      if (lastError is ApiException) throw lastError;
+      throw ApiException(ApiException.userMessage(lastError));
+    }
+    return const [];
   }
 
   List<SearchUserEntity>? _parseList(dynamic body) {

@@ -4,6 +4,7 @@ import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../../../core/pagination/paged_result.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
@@ -216,12 +217,20 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<PagedResult<BroadcastHistoryItemEntity>> broadcastHistoryPage({
     int page = 1,
   }) async {
+    PagedResult<BroadcastHistoryItemEntity>? emptyOk;
     try {
       final site = await _canlifal.broadcastHistory(page: page);
       if (site.items.isNotEmpty) return site;
+      emptyOk = site;
     } catch (_) {}
-    final items = await _remote.broadcastHistory();
-    return PagedResult(items: items, hasMore: false);
+    try {
+      final items = await _remote.broadcastHistory();
+      return PagedResult(items: items, hasMore: false);
+    } catch (e) {
+      if (emptyOk != null) return emptyOk;
+      if (e is ApiException) rethrow;
+      throw ApiException(ApiException.userMessage(e));
+    }
   }
 
   @override
@@ -234,12 +243,20 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<PagedResult<ProfileActivityItemEntity>> myActivityPage({
     int page = 1,
   }) async {
+    PagedResult<ProfileActivityItemEntity>? emptyOk;
     try {
       final site = await _canlifal.fetchActivity(page: page);
       if (site.items.isNotEmpty) return site;
+      emptyOk = site;
     } catch (_) {}
-    final items = await _remote.myActivity();
-    return PagedResult(items: items, hasMore: false);
+    try {
+      final items = await _remote.myActivity();
+      return PagedResult(items: items, hasMore: false);
+    } catch (e) {
+      if (emptyOk != null) return emptyOk;
+      if (e is ApiException) rethrow;
+      throw ApiException(ApiException.userMessage(e));
+    }
   }
 
   @override

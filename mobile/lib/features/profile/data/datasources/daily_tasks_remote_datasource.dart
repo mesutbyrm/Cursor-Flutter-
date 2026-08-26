@@ -12,6 +12,7 @@ class DailyTasksRemoteDataSource {
   final Dio _dio;
 
   Future<List<DailyTaskEntity>> fetchDailyTasks() async {
+    Object? lastError;
     for (final path in [
       ApiEndpoints.userDailyTasks,
       ApiEndpoints.dailyMissions,
@@ -25,7 +26,13 @@ class DailyTasksRemoteDataSource {
               .where((t) => t.id.isNotEmpty)
               .toList();
         }
-      } catch (_) {}
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (lastError != null) {
+      if (lastError is ApiException) throw lastError;
+      throw ApiException(ApiException.userMessage(lastError));
     }
     return const [];
   }

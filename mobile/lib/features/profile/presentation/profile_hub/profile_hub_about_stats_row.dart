@@ -12,6 +12,7 @@ import '../../../membership/presentation/widgets/membership_status_pill.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../providers/profile_hub_providers.dart';
 import '../providers/profile_providers.dart';
+import 'profile_hub_error_banner.dart';
 import '../widgets/premium/profile_glass.dart';
 import '../premium_2026/profile_theme.dart';
 
@@ -37,11 +38,17 @@ class ProfileHubAboutStatsRow extends ConsumerWidget {
       builder: (context, c) {
         final wide = c.maxWidth >= 600;
         final about = _AboutCard(user: user, ext: ext, loading: extAsync.isLoading);
-        final statistics = _StatisticsCard(
-          stats: stats,
-          detail: detail,
-          loading: statsAsync.isLoading,
-        );
+        final statistics = statsAsync.hasError
+            ? ProfileHubSectionRetry(
+                message: 'İstatistikler yüklenemedi',
+                onRetry: () =>
+                    ref.invalidate(profileUserStatisticsProvider),
+              )
+            : _StatisticsCard(
+                stats: stats,
+                detail: detail,
+                loading: statsAsync.isLoading,
+              );
         if (wide) {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,

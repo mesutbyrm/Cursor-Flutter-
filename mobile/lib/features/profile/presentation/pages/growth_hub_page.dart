@@ -84,6 +84,7 @@ class GrowthHubPage extends ConsumerWidget {
       rewardsAsync,
       walletAsync,
       referralAsync,
+      serverTasksAsync,
     ].where((value) => value.hasError).length;
 
     return DiscoverSubPage(
