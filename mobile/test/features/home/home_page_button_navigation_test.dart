@@ -156,6 +156,7 @@ void main() {
       ApiEndpoints.videoStreamPkBattle('s1'),
       '/api/video-streams/s1/pk-battle',
     );
+    expect(ApiEndpoints.videoStreamPk, '/api/video-streams/pk');
     expect(
       ApiEndpoints.videoStreamCoBroadcast('s1'),
       '/api/video-streams/s1/co-broadcast',

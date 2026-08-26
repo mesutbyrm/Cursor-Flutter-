@@ -143,10 +143,7 @@ class LiveStreamExtrasDataSource {
       lastError = e;
     }
     if (lastError is ApiException) throw lastError;
-    if (lastError != null) {
-      throw ApiException(ApiException.userMessage(lastError));
-    }
-    return null;
+    throw ApiException(ApiException.userMessage(lastError));
   }
 
   Map<String, dynamic>? _unwrapBattle(dynamic body) {
