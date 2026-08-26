@@ -20,6 +20,7 @@ class NativeFeatureItem extends Equatable {
     this.imageUrl,
     this.metricLabel,
     this.badge,
+    this.body,
   });
 
   final String id;
@@ -30,6 +31,7 @@ class NativeFeatureItem extends Equatable {
   final String? imageUrl;
   final String? metricLabel;
   final String? badge;
+  final String? body;
 
   @override
   List<Object?> get props => [
@@ -41,5 +43,6 @@ class NativeFeatureItem extends Equatable {
     imageUrl,
     metricLabel,
     badge,
+    body,
   ];
 }

@@ -59,13 +59,28 @@ class NativeFeatureDetailPage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                item.subtitle,
-                style: TextStyle(
-                  height: 1.4,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+              if (item.subtitle.trim().isNotEmpty)
+                Text(
+                  item.subtitle,
+                  style: TextStyle(
+                    height: 1.4,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
+              if (item.body != null && item.body!.trim().isNotEmpty) ...[
+                const SizedBox(height: 16),
+                SelectableText(
+                  item.body!,
+                  style: const TextStyle(height: 1.5, fontSize: 16),
+                ),
+              ],
+              if (kind == NativeFeatureHubKind.celebrities) ...[
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () => _followCelebrity(context, ref),
+                  child: const Text('Takip et'),
+                ),
+              ],
               if (kind == NativeFeatureHubKind.fanClub) ...[
                 const SizedBox(height: 20),
                 FilledButton(
@@ -78,6 +93,23 @@ class NativeFeatureDetailPage extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  Future<void> _followCelebrity(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref
+          .read(dioProvider)
+          .safePost<dynamic>(ApiEndpoints.celebrityFollow(id));
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Takip edildi')));
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
+    }
   }
 
   Future<void> _joinFanClub(BuildContext context, WidgetRef ref) async {

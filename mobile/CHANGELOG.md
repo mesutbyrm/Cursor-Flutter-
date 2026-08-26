@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.372+410 (2026-08-26) — Sayfa denetimi P3 (falcı şeridi, blog metin, ünlü takip)
+
+- **Ana sayfa:** Çift falcı şeridi kalktı; yalnızca Canlı Falcılar (`PsychicsHomeSection`) kaldı
+- **Yenileme:** `GET /api/advisors/online` ana sayfa yenileme/SSE invalidation’dan çıktı
+- **Blog detay:** HTML gövde düz metin olarak gösterilir (`content` / `body`)
+- **Ünlü detay:** `POST /api/celebrities/{id}/follow` ile takip
+
 ## 1.0.371+409 (2026-08-26) — Sayfa denetimi P2 (hub detay, gizlilik, yayın, profil)
 
 - **Blog / ünlü / fan kulübü:** Hub kartları kendi listesine dönmez; `/blog/:slug`, `/celebrities/:id`, `/fan-club/:id` detay sayfaları

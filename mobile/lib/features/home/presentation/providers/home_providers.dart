@@ -60,7 +60,6 @@ void invalidateHomeKeepAliveProviders(dynamic ref) {
   ref.invalidate(homeBannersProvider);
   ref.invalidate(homeFortuneCardsProvider);
   ref.invalidate(homeTrendVideosProvider);
-  ref.invalidate(homeAdvisorsProvider);
   ref.invalidate(homeGamesProvider);
   ref.invalidate(homeDailyRewardsProvider);
   ref.invalidate(homeHomepageButtonsProvider);
@@ -117,9 +116,9 @@ final homeTickerProvider = FutureProvider<List<String>>((ref) async {
   for (final line in news) {
     marquee.enqueue(line);
   }
-  final gifts = ref.read(homepageGiftTickerGateProvider).takeNewGiftAnnouncements(
-        lines,
-      );
+  final gifts = ref
+      .read(homepageGiftTickerGateProvider)
+      .takeNewGiftAnnouncements(lines);
   final overlay = ref.read(globalGiftOverlayProvider.notifier);
   for (final gift in gifts) {
     overlay.enqueue(GlobalGiftNotification.fromTicker(gift));
@@ -127,20 +126,23 @@ final homeTickerProvider = FutureProvider<List<String>>((ref) async {
   return news;
 });
 
-final homeFortuneCardsProvider =
-    FutureProvider<List<HomeFortuneCardEntity>>((ref) async {
+final homeFortuneCardsProvider = FutureProvider<List<HomeFortuneCardEntity>>((
+  ref,
+) async {
   _keepHomeCacheAlive(ref);
   return ref.watch(homeRemoteProvider).fetchHomepageFortuneCards();
 });
 
-final homeAdvisorsProvider =
-    FutureProvider<List<OnlineAdvisorEntity>>((ref) async {
+final homeAdvisorsProvider = FutureProvider<List<OnlineAdvisorEntity>>((
+  ref,
+) async {
   _keepHomeCacheAlive(ref);
   return ref.watch(homeRepositoryProvider).fetchOnlineAdvisors();
 });
 
-final homeLiveStreamsProvider =
-    FutureProvider<List<LiveStreamEntity>>((ref) async {
+final homeLiveStreamsProvider = FutureProvider<List<LiveStreamEntity>>((
+  ref,
+) async {
   _keepHomeCacheAlive(ref);
   final cached = ref.watch(liveStreamsListNotifierProvider).valueOrNull;
   if (cached != null && cached.isNotEmpty) {
@@ -150,50 +152,54 @@ final homeLiveStreamsProvider =
   return all.where((s) => s.isLive).take(12).toList();
 });
 
-final homeVoiceRoomsProvider =
-    FutureProvider<List<VoiceRoomEntity>>((ref) async {
+final homeVoiceRoomsProvider = FutureProvider<List<VoiceRoomEntity>>((
+  ref,
+) async {
   _keepHomeCacheAlive(ref);
   // Notifier her güncellendiğinde future'ı yeniden tetikleme — ana sayfa donmasını önler.
   return ref.read(voiceRoomsListNotifierProvider.future);
 });
 
 /// Ana sayfa sesli odalar — API listesi (dolu önce). SSE sayımı widget'ta tek sefer senkronize edilir.
-final homeLiveVoiceRoomsProvider = Provider<AsyncValue<List<VoiceRoomEntity>>>(
-  (ref) {
-    final roomsAsync = ref.watch(homeVoiceRoomsProvider);
+final homeLiveVoiceRoomsProvider = Provider<AsyncValue<List<VoiceRoomEntity>>>((
+  ref,
+) {
+  final roomsAsync = ref.watch(homeVoiceRoomsProvider);
 
-    return roomsAsync.when(
-      loading: () => const AsyncValue.loading(),
-      error: (e, st) => AsyncValue.error(e, st),
-      data: (rooms) {
-        final live = rooms.where((r) => !r.isVipGoldRoom).toList();
-        final sorted = sortVoiceRoomsByPopularity(live).take(12).toList();
-        return AsyncValue.data(sorted);
-      },
-    );
-  },
-);
+  return roomsAsync.when(
+    loading: () => const AsyncValue.loading(),
+    error: (e, st) => AsyncValue.error(e, st),
+    data: (rooms) {
+      final live = rooms.where((r) => !r.isVipGoldRoom).toList();
+      final sorted = sortVoiceRoomsByPopularity(live).take(12).toList();
+      return AsyncValue.data(sorted);
+    },
+  );
+});
 
 final homeGamesProvider = FutureProvider<List<HomeGameEntity>>((ref) async {
   _keepHomeCacheAlive(ref);
   return ref.watch(homeRepositoryProvider).fetchGames();
 });
 
-final homeDailyRewardsProvider =
-    FutureProvider<List<DailyRewardEntity>>((ref) async {
+final homeDailyRewardsProvider = FutureProvider<List<DailyRewardEntity>>((
+  ref,
+) async {
   _keepHomeCacheAlive(ref);
   return ref.watch(homeRepositoryProvider).fetchDailyRewards();
 });
 
-final homeTrendVideosProvider =
-    FutureProvider<List<HomeTrendVideoEntity>>((ref) async {
+final homeTrendVideosProvider = FutureProvider<List<HomeTrendVideoEntity>>((
+  ref,
+) async {
   _keepHomeCacheAlive(ref);
   return ref.watch(homeRepositoryProvider).fetchTrendVideos();
 });
 
 /// `GET /api/homepage-buttons` — banner altı hızlı erişim.
-final homeHomepageButtonsProvider =
-    FutureProvider<List<HomePageButtonEntity>>((ref) async {
+final homeHomepageButtonsProvider = FutureProvider<List<HomePageButtonEntity>>((
+  ref,
+) async {
   _keepHomeCacheAlive(ref);
   return ref.watch(homeRemoteProvider).fetchHomepageButtons();
 });
@@ -207,71 +213,77 @@ final homeFanClubsProvider = FutureProvider<List<HomeFanClubItem>>((ref) async {
 });
 
 /// `GET /api/celebrities` — ana sayfa ünlüler şeridi.
-final homeCelebritiesProvider = FutureProvider<List<HomeFanClubItem>>((ref) async {
+final homeCelebritiesProvider = FutureProvider<List<HomeFanClubItem>>((
+  ref,
+) async {
   _keepHomeCacheAlive(ref);
   return ref.watch(homeRemoteProvider).fetchCelebrities();
 });
 
 /// `GET /api/trends` — trend konu etiketleri.
-final homeTrendTopicsProvider =
-    FutureProvider<List<HomeTrendTopicEntity>>((ref) async {
+final homeTrendTopicsProvider = FutureProvider<List<HomeTrendTopicEntity>>((
+  ref,
+) async {
   _keepHomeCacheAlive(ref);
   return ref.watch(homeRemoteProvider).fetchTrendingTopics();
 });
 
 /// `GET /api/blog/recent` — blog önizleme kartları.
-final homeBlogRecentProvider =
-    FutureProvider<List<HomeBlogPostEntity>>((ref) async {
+final homeBlogRecentProvider = FutureProvider<List<HomeBlogPostEntity>>((
+  ref,
+) async {
   _keepHomeCacheAlive(ref);
   return ref.watch(homeRemoteProvider).fetchBlogRecent();
 });
 
 /// Haftalık hediye liderleri — `GET /api/leaderboards`.
-final homeGiftLeaderboardProvider =
-    FutureProvider<List<GiftLeaderboardEntry>>((ref) async {
+final homeGiftLeaderboardProvider = FutureProvider<List<GiftLeaderboardEntry>>((
+  ref,
+) async {
   _keepHomeCacheAlive(ref);
   final ds = LeaderboardRemoteDataSource(ref.watch(dioProvider));
-  return ds.fetchGlobalGiftLeaderboard(
-    period: GiftLeaderboardPeriod.weekly,
-  );
+  return ds.fetchGlobalGiftLeaderboard(period: GiftLeaderboardPeriod.weekly);
 });
 
 /// Canlı futbol maçları — `GET /api/football`.
 final homeFootballMatchesProvider =
     FutureProvider<List<HomeFootballMatchEntity>>((ref) async {
-  _keepHomeCacheAlive(ref);
-  final raw =
-      await ref.watch(platformContentRemoteDataSourceProvider).fetchFootball();
-  return raw
-      .map(HomeFootballMatchEntity.fromJson)
-      .where((m) => m.hasTeams)
-      .take(8)
-      .toList();
-});
+      _keepHomeCacheAlive(ref);
+      final raw = await ref
+          .watch(platformContentRemoteDataSourceProvider)
+          .fetchFootball();
+      return raw
+          .map(HomeFootballMatchEntity.fromJson)
+          .where((m) => m.hasTeams)
+          .take(8)
+          .toList();
+    });
 
 /// Yayın arka plan görselleri — `GET /api/broadcast-images`.
 final homeBroadcastImagesProvider =
     FutureProvider<List<HomeBroadcastImageEntity>>((ref) async {
-  _keepHomeCacheAlive(ref);
-  final raw = await ref
-      .watch(platformContentRemoteDataSourceProvider)
-      .fetchBroadcastImages();
-  return raw
-      .map(HomeBroadcastImageEntity.fromJson)
-      .where((e) => e.isValid)
-      .take(10)
-      .toList();
-});
+      _keepHomeCacheAlive(ref);
+      final raw = await ref
+          .watch(platformContentRemoteDataSourceProvider)
+          .fetchBroadcastImages();
+      return raw
+          .map(HomeBroadcastImageEntity.fromJson)
+          .where((e) => e.isValid)
+          .take(10)
+          .toList();
+    });
 
 /// Profil beğenenler — `GET /api/user/likers` (giriş gerekli).
-final homeUserLikersProvider =
-    FutureProvider<List<HomeUserLikerEntity>>((ref) async {
+final homeUserLikersProvider = FutureProvider<List<HomeUserLikerEntity>>((
+  ref,
+) async {
   _keepHomeCacheAlive(ref);
   if (ref.read(authControllerProvider).valueOrNull == null) {
     return const [];
   }
-  final raw =
-      await ref.watch(platformContentRemoteDataSourceProvider).fetchUserLikers();
+  final raw = await ref
+      .watch(platformContentRemoteDataSourceProvider)
+      .fetchUserLikers();
   return raw
       .map(HomeUserLikerEntity.fromJson)
       .where((e) => e.isValid)
@@ -291,24 +303,32 @@ final homeActiveAdsProvider = FutureProvider<List<PlatformAd>>((ref) async {
 /// Site popup duyuruları — `GET /api/popups`.
 final homePopupsProvider = FutureProvider<List<PlatformPopup>>((ref) async {
   _keepHomeCacheAlive(ref);
-  final popups =
-      await ref.watch(platformContentRemoteDataSourceProvider).fetchPopups();
-  return popups.where((p) => p.id.isNotEmpty && p.title.trim().isNotEmpty).take(3).toList();
+  final popups = await ref
+      .watch(platformContentRemoteDataSourceProvider)
+      .fetchPopups();
+  return popups
+      .where((p) => p.id.isNotEmpty && p.title.trim().isNotEmpty)
+      .take(3)
+      .toList();
 });
 
 /// Fal istek türleri — `GET /api/fortune-request-types`.
 final homeFortuneRequestTypesProvider =
     FutureProvider<List<FortuneRequestType>>((ref) async {
-  _keepHomeCacheAlive(ref);
-  return ref.watch(platformContentRemoteDataSourceProvider).fetchFortuneRequestTypes();
-});
+      _keepHomeCacheAlive(ref);
+      return ref
+          .watch(platformContentRemoteDataSourceProvider)
+          .fetchFortuneRequestTypes();
+    });
 
 /// Online fal bölümleri — `GET /api/online-fal`.
-final homeOnlineFalProvider =
-    FutureProvider<List<HomeOnlineFalEntity>>((ref) async {
+final homeOnlineFalProvider = FutureProvider<List<HomeOnlineFalEntity>>((
+  ref,
+) async {
   _keepHomeCacheAlive(ref);
-  final raw =
-      await ref.watch(platformContentRemoteDataSourceProvider).fetchOnlineFal();
+  final raw = await ref
+      .watch(platformContentRemoteDataSourceProvider)
+      .fetchOnlineFal();
   return raw
       .map(HomeOnlineFalEntity.fromJson)
       .where((s) => s.isValid)
@@ -319,24 +339,24 @@ final homeOnlineFalProvider =
 /// Ajans liderlik tablosu — `GET /api/agency/leaderboard`.
 final homeAgencyLeaderboardProvider =
     FutureProvider<List<AgencyLeaderboardEntry>>((ref) async {
-  _keepHomeCacheAlive(ref);
-  return ref.read(agencyRemoteProvider).fetchLeaderboard(limit: 10);
-});
+      _keepHomeCacheAlive(ref);
+      return ref.read(agencyRemoteProvider).fetchLeaderboard(limit: 10);
+    });
 
 /// Haftalık PK liderleri — `GET /api/pk/leaderboard`.
-final homePkLeaderboardProvider =
-    FutureProvider<List<PkLeaderboardEntry>>((ref) async {
+final homePkLeaderboardProvider = FutureProvider<List<PkLeaderboardEntry>>((
+  ref,
+) async {
   _keepHomeCacheAlive(ref);
-  return ref.read(pkRoomRemoteProvider).leaderboard(
-        period: 'weekly',
-        metric: 'score',
-        limit: 10,
-      );
+  return ref
+      .read(pkRoomRemoteProvider)
+      .leaderboard(period: 'weekly', metric: 'score', limit: 10);
 });
 
 /// Canlı falcılar — yalnızca `GET /api/fortune-tellers` (online öncelikli).
-final homeDisplayedPsychicsProvider =
-    FutureProvider<List<PsychicEntity>>((ref) async {
+final homeDisplayedPsychicsProvider = FutureProvider<List<PsychicEntity>>((
+  ref,
+) async {
   _keepHomeCacheAlive(ref);
   return ref.watch(homeOnlinePsychicsProvider.future);
 });
@@ -354,13 +374,9 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(homeGamesProvider.future),
     ref.refresh(homeDailyRewardsProvider.future),
     ref.refresh(homeDisplayedPsychicsProvider.future),
-    ref.refresh(homeAdvisorsProvider.future),
     ref.refresh(homeOnlineFalProvider.future),
     ref.refresh(homeFortuneRequestTypesProvider.future),
     ref.refresh(homePopupsProvider.future),
     ref.refresh(socialStoryRingsProvider.future),
-  ]).timeout(
-    const Duration(seconds: 12),
-    onTimeout: () {},
-  );
+  ]).timeout(const Duration(seconds: 12), onTimeout: () {});
 }

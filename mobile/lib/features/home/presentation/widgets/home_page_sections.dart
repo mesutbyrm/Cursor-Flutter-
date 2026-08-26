@@ -17,7 +17,6 @@ import 'home_games_section.dart';
 import 'home_online_fal_section.dart';
 import 'home_promo_popup_banner.dart';
 import 'home_viewport_section.dart';
-import 'home_advisors_row.dart';
 import '../../../bana_ozel/presentation/widgets/home_bana_ozel_section.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 
@@ -71,12 +70,6 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homePsychicsSectionDelay,
           child: PsychicsHomeSection(),
-        ),
-      ),
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homePsychicsSectionDelay,
-          child: HomeAdvisorsRow(),
         ),
       ),
       const SliverToBoxAdapter(

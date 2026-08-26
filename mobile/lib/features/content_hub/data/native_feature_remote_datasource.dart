@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/dio_provider.dart';
+import '../../../core/util/html_plain_text.dart';
 import '../../../core/util/json_util.dart';
 import '../domain/native_feature_item.dart';
 
@@ -224,7 +225,7 @@ class NativeFeatureRemoteDataSource {
     final id =
         pick(json, ['id', '_id', 'slug', 'key'])?.toString() ??
         json.hashCode.toString();
-    final title =
+    final titleRaw =
         jsonDisplayLabel(
           pick(json, [
             'title',
@@ -236,7 +237,8 @@ class NativeFeatureRemoteDataSource {
           ]),
         ) ??
         'Canlifal';
-    final subtitle =
+    final title = _plainOrFallback(titleRaw, 'Canlifal');
+    final subtitleRaw =
         jsonDisplayLabel(
           pick(json, [
             'description',
@@ -250,6 +252,7 @@ class NativeFeatureRemoteDataSource {
           keys: const ['description', 'summary', 'excerpt', 'name', 'title'],
         ) ??
         _subtitleFor(json);
+    final subtitle = _plainOrFallback(subtitleRaw, 'Canlifal.com verisi');
     final slug = pick(json, ['slug'])?.toString();
     final routeRaw = pick(json, ['route', 'path', 'url'])?.toString();
     final route = nativeFeatureSafeRoute(
@@ -268,6 +271,16 @@ class NativeFeatureRemoteDataSource {
       'logoUrl',
     ])?.toString();
     final metric = _metricLabel(json);
+    final bodyRaw = pick(json, [
+      'content',
+      'body',
+      'html',
+      'contentHtml',
+      'text',
+    ])?.toString();
+    final body = bodyRaw == null || bodyRaw.trim().isEmpty
+        ? null
+        : htmlToPlainText(bodyRaw);
     return NativeFeatureItem(
       id: id,
       title: title,
@@ -277,7 +290,13 @@ class NativeFeatureRemoteDataSource {
       imageUrl: image != null && image.startsWith('http') ? image : null,
       metricLabel: metric,
       badge: badge ?? pick(json, ['badge', 'status', 'tag'])?.toString(),
+      body: body != null && body.isNotEmpty && body != subtitle ? body : null,
     );
+  }
+
+  String _plainOrFallback(String raw, String fallback) {
+    final plain = htmlToPlainText(raw);
+    return plain.isEmpty ? fallback : plain;
   }
 
   String _subtitleFor(Map<String, dynamic> json) {
