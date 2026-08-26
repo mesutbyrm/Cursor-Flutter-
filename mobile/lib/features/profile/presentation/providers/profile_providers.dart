@@ -251,6 +251,21 @@ final userFollowingProvider =
   return ref.watch(profileRemoteProvider).following(userId);
 });
 
+final blockedUsersProvider = FutureProvider<List<UserEntity>>((ref) async {
+  return ref.watch(profileRemoteProvider).blockedUsers();
+});
+
+final userFollowStatusProvider =
+    FutureProvider.family<bool, String>((ref, userId) async {
+  if (userId.trim().isEmpty) return false;
+  try {
+    return await ref.watch(profileRemoteProvider).followStatus(userId);
+  } catch (_) {
+    final user = await ref.watch(userProfileProvider(userId).future);
+    return user.isFollowing;
+  }
+});
+
 /// Yayın ekipmanı tercihleri (oturum boyunca).
 final equipmentSettingsProvider =
     NotifierProvider<EquipmentSettingsNotifier, EquipmentSettings>(

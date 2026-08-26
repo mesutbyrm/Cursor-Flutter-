@@ -8,6 +8,7 @@ import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/ui/premium_2026/premium_2026.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
@@ -149,36 +150,7 @@ class UserProfilePage extends ConsumerWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: FilledButton(
-                              onPressed: () async {
-                                final repo = ref.read(profileRepositoryProvider);
-                                if (user.isFollowing) {
-                                  await repo.unfollow(user.id);
-                                } else {
-                                  await repo.follow(user.id);
-                                }
-                                ref.invalidate(userProfileProvider(userId));
-                                ref.invalidate(
-                                    shortVideoProfileStatsProvider(userId));
-                              },
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size.fromHeight(52),
-                                backgroundColor: user.isFollowing
-                                    ? context.colors.surfaceContainer
-                                    : AppThemeColors.accentPink,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: Text(
-                                user.isFollowing ? 'Takibi bırak' : 'Takip et',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
+                            child: _FollowButton(userId: userId, user: user),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -312,6 +284,49 @@ class UserProfilePage extends ConsumerWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _FollowButton extends ConsumerWidget {
+  const _FollowButton({required this.userId, required this.user});
+
+  final String userId;
+  final UserEntity user;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(userFollowStatusProvider(userId));
+    final following = status.valueOrNull ?? user.isFollowing;
+    return FilledButton(
+      onPressed: () async {
+        final repo = ref.read(profileRepositoryProvider);
+        if (following) {
+          await repo.unfollow(user.id);
+        } else {
+          await repo.follow(user.id);
+        }
+        ref.invalidate(userFollowStatusProvider(userId));
+        ref.invalidate(userProfileProvider(userId));
+        ref.invalidate(shortVideoProfileStatsProvider(userId));
+      },
+      style: FilledButton.styleFrom(
+        minimumSize: const Size.fromHeight(52),
+        backgroundColor: following
+            ? context.colors.surfaceContainer
+            : AppThemeColors.accentPink,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+      child: Text(
+        following ? 'Takibi bırak' : 'Takip et',
+        style: const TextStyle(
+          fontWeight: FontWeight.w800,
+          fontSize: 15,
+        ),
       ),
     );
   }

@@ -10,6 +10,7 @@ import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../features/content_hub/domain/native_feature_item.dart';
 import '../../features/content_hub/presentation/pages/content_hub_page.dart';
+import '../../features/content_hub/presentation/pages/native_feature_detail_page.dart';
 import '../../features/content_hub/presentation/pages/native_feature_hub_page.dart';
 import '../../features/favorites/presentation/pages/favorites_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
@@ -106,6 +107,7 @@ import '../../features/profile/presentation/pages/profile_help_support_page.dart
 import '../../features/profile/presentation/pages/profile_payment_notice_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/profile_visitors_page.dart';
+import '../../features/profile/presentation/pages/blocked_users_page.dart';
 import '../../features/profile/presentation/pages/settings_page.dart';
 import '../../features/debug/presentation/api_monitor_page.dart';
 import '../../features/profile/presentation/pages/active_devices_page.dart';
@@ -142,8 +144,9 @@ import '../../core/navigation/app_page_transitions.dart';
 import '../../core/network/loading_timeout.dart';
 
 /// Push / global modal sheet'ler için kök navigator (oturum değişince yenilenir).
-GlobalKey<NavigatorState> rootNavigatorKey =
-    GlobalKey<NavigatorState>(debugLabel: 'root-nav-0');
+GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(
+  debugLabel: 'root-nav-0',
+);
 
 void resetRootNavigatorKey(int session) {
   rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root-nav-$session');
@@ -190,7 +193,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           guest: ref.read(guestModeProvider),
         );
         if (target != null) {
-          AppStartupLog.route('/splash', target, reason: 'legacy splash → auth');
+          AppStartupLog.route(
+            '/splash',
+            target,
+            reason: 'legacy splash → auth',
+          );
         }
         return target;
       }
@@ -224,14 +231,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return '/social';
         },
       ),
-      GoRoute(
-        path: '/login',
-        redirect: (context, state) => '/feed',
-      ),
-      GoRoute(
-        path: '/register',
-        redirect: (context, state) => '/feed',
-      ),
+      GoRoute(path: '/login', redirect: (context, state) => '/feed'),
+      GoRoute(path: '/register', redirect: (context, state) => '/feed'),
       GoRoute(
         path: '/auth/forgot-password',
         pageBuilder: (context, state) => AppPageTransitions.none(
@@ -243,9 +244,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/auth/reset-password',
         pageBuilder: (context, state) => AppPageTransitions.none(
           key: state.pageKey,
-          child: ResetPasswordPage(
-            token: state.uri.queryParameters['token'],
-          ),
+          child: ResetPasswordPage(token: state.uri.queryParameters['token']),
         ),
       ),
       GoRoute(
@@ -341,12 +340,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   ),
                   GoRoute(
                     path: 'post/:postId',
-                    pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-                      key: state.pageKey,
-                      child: SocialPostDetailPage(
-                        postId: state.pathParameters['postId'] ?? '',
-                      ),
-                    ),
+                    pageBuilder: (context, state) =>
+                        AppPageTransitions.fadeSlide(
+                          key: state.pageKey,
+                          child: SocialPostDetailPage(
+                            postId: state.pathParameters['postId'] ?? '',
+                          ),
+                        ),
                   ),
                   GoRoute(
                     path: 'stories/view',
@@ -709,6 +709,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/settings/devices',
         builder: (context, state) => const ActiveDevicesPage(),
       ),
+      GoRoute(
+        path: '/settings/blocked-users',
+        builder: (context, state) => const BlockedUsersPage(),
+      ),
       if (kDebugMode)
         GoRoute(
           path: '/debug/api-monitor',
@@ -730,15 +734,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/legal/:slug',
         builder: (context, state) {
           final slug = state.pathParameters['slug'] ?? '';
-          final title = state.extra as String? ??
+          final title =
+              state.extra as String? ??
               kLegalDocuments
                   .where((d) => d.slug == slug)
                   .map((d) => d.title)
                   .firstOrNull ??
               'Yasal';
-          final doc = kLegalDocuments
-              .where((d) => d.slug == slug)
-              .firstOrNull;
+          final doc = kLegalDocuments.where((d) => d.slug == slug).firstOrNull;
           return SiteContentPage(
             slug: slug,
             title: title,
@@ -964,9 +967,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'hashtag/:name',
             pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
               key: state.pageKey,
-              child: ShortHashtagPage(
-                name: state.pathParameters['name'] ?? '',
-              ),
+              child: ShortHashtagPage(name: state.pathParameters['name'] ?? ''),
             ),
           ),
           GoRoute(
@@ -991,10 +992,30 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/celebrities/:id',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: NativeFeatureDetailPage(
+            kind: NativeFeatureHubKind.celebrities,
+            id: state.pathParameters['id'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
         path: '/fan-club-hub',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const NativeFeatureHubPage(kind: NativeFeatureHubKind.fanClub),
+        ),
+      ),
+      GoRoute(
+        path: '/fan-club/:id',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: NativeFeatureDetailPage(
+            kind: NativeFeatureHubKind.fanClub,
+            id: state.pathParameters['id'] ?? '',
+          ),
         ),
       ),
       GoRoute(
@@ -1067,6 +1088,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/blog/:slug',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: NativeFeatureDetailPage(
+            kind: NativeFeatureHubKind.blog,
+            id: state.pathParameters['slug'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
         path: '/dreams-hub',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
@@ -1077,9 +1108,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/search',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
-          child: GlobalSearchPage(
-            initialQuery: state.uri.queryParameters['q'],
-          ),
+          child: GlobalSearchPage(initialQuery: state.uri.queryParameters['q']),
         ),
       ),
       GoRoute(
@@ -1148,10 +1177,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   final id = state.pathParameters['id'] ?? '';
                   return AppPageTransitions.fadeSlide(
                     key: state.pageKey,
-                    child: PsychicWaitingRoute(
-                      psychicId: id,
-                      session: session,
-                    ),
+                    child: PsychicWaitingRoute(psychicId: id, session: session),
                   );
                 },
               ),
@@ -1176,10 +1202,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   final id = state.pathParameters['id'] ?? '';
                   return AppPageTransitions.fadeSlide(
                     key: state.pageKey,
-                    child: PsychicSessionRoute(
-                      psychicId: id,
-                      session: session,
-                    ),
+                    child: PsychicSessionRoute(psychicId: id, session: session),
                   );
                 },
               ),

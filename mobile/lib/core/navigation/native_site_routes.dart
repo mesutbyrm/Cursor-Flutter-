@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+/// Yalnızca `/live` ana sekme; `/live/type` gibi alt yollar ayrı kalır.
+bool isLiveHubOnlyPath(String path) {
+  final p = path.trim();
+  return p == '/live' || p == '/live/';
+}
+
 /// Site yolu → native Flutter route (WebView yok).
 void openNativeSitePath(BuildContext context, String path) {
   final p = path.trim();
   if (p.isEmpty) return;
 
   if (p.startsWith('/auth/reset-password') || p.startsWith('/sifre-sifirla')) {
-    final uri = Uri.tryParse(p.startsWith('http') ? p : 'https://canlifal.com$p');
+    final uri = Uri.tryParse(
+      p.startsWith('http') ? p : 'https://canlifal.com$p',
+    );
     final token = uri?.queryParameters['token'];
     context.push(
       token != null && token.isNotEmpty
@@ -44,8 +52,12 @@ void openNativeSitePath(BuildContext context, String path) {
     context.push(p.startsWith('/') ? p : '/$p');
     return;
   }
-  if (p == '/live' || p.startsWith('/live')) {
+  if (isLiveHubOnlyPath(p)) {
     context.go('/live');
+    return;
+  }
+  if (p.startsWith('/live')) {
+    context.push(p.startsWith('/') ? p : '/$p');
     return;
   }
   if (p.contains('sohbet') || p.contains('voice')) {
@@ -60,16 +72,27 @@ void openNativeSitePath(BuildContext context, String path) {
     context.push('/ajans-ol');
     return;
   }
-  if (p == '/fan-club-hub' ||
-      p == '/fan-club' ||
-      p.contains('fan-club') ||
-      p.contains('fanclub')) {
+  if (p == '/fan-club-hub' || p == '/fan-club') {
     context.push('/fan-club-hub');
     return;
   }
-  if (p == '/celebrities-hub' ||
-      p.startsWith('/unluler') ||
-      p.startsWith('/celebrities')) {
+  if (p.startsWith('/fan-club/')) {
+    context.push(p);
+    return;
+  }
+  if (p.contains('fanclub') && !p.startsWith('/fan-club/')) {
+    context.push('/fan-club-hub');
+    return;
+  }
+  if (p == '/celebrities-hub' || p.startsWith('/unluler')) {
+    context.push('/celebrities-hub');
+    return;
+  }
+  if (p.startsWith('/celebrities/')) {
+    context.push(p);
+    return;
+  }
+  if (p.startsWith('/celebrities')) {
     context.push('/celebrities-hub');
     return;
   }
@@ -85,7 +108,15 @@ void openNativeSitePath(BuildContext context, String path) {
     context.push(p.startsWith('/') ? p : '/$p');
     return;
   }
-  if (p == '/blog-hub' || p.startsWith('/blog')) {
+  if (p == '/blog-hub') {
+    context.push('/blog-hub');
+    return;
+  }
+  if (p.startsWith('/blog/')) {
+    context.push(p);
+    return;
+  }
+  if (p.startsWith('/blog')) {
     context.push('/blog-hub');
     return;
   }

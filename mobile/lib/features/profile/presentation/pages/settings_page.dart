@@ -93,18 +93,10 @@ class SettingsPage extends ConsumerWidget {
               const _SectionLabel('Gizlilik'),
               ProfileGlass(
                 padding: EdgeInsets.zero,
-                child: Column(
-                  children: [
-                    _PrivacyToggle(
-                      label: 'Profilimi herkese açık göster',
-                      initial: true,
-                    ),
-                    const _Divider(),
-                    _PrivacyToggle(
-                      label: 'Çevrimiçi durumumu göster',
-                      initial: true,
-                    ),
-                  ],
+                child: _SettingsTile(
+                  icon: Icons.block_rounded,
+                  label: 'Engellenen kullanıcılar',
+                  onTap: () => context.push('/settings/blocked-users'),
                 ),
               ),
               const SizedBox(height: 20),
@@ -290,32 +282,6 @@ class _SettingsTile extends StatelessWidget {
           ? Text(trailing!, style: TextStyle(color: context.colors.onSurfaceMuted))
           : Icon(Icons.chevron_right_rounded, color: context.colors.onSurfaceMuted),
       onTap: onTap,
-    );
-  }
-}
-
-class _PrivacyToggle extends StatefulWidget {
-  const _PrivacyToggle({required this.label, required this.initial});
-
-  final String label;
-  final bool initial;
-
-  @override
-  State<_PrivacyToggle> createState() => _PrivacyToggleState();
-}
-
-class _PrivacyToggleState extends State<_PrivacyToggle> {
-  late var _value = widget.initial;
-
-  @override
-  Widget build(BuildContext context) {
-    return SwitchListTile(
-      title: Text(
-        widget.label,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
-      value: _value,
-      onChanged: (v) => setState(() => _value = v),
     );
   }
 }

@@ -22,6 +22,60 @@ class NativeFeatureRemoteDataSource {
     };
   }
 
+  Future<NativeFeatureItem?> fetchDetail(
+    NativeFeatureHubKind kind,
+    String id,
+  ) async {
+    final key = id.trim();
+    if (key.isEmpty) return null;
+    return switch (kind) {
+      NativeFeatureHubKind.blog => _fetchOne(
+        ApiEndpoints.blogPost(key),
+        fallbackIcon: Icons.article_rounded,
+        fallbackRoute: '/blog/$key',
+      ),
+      NativeFeatureHubKind.celebrities => _fetchOne(
+        ApiEndpoints.celebrity(key),
+        fallbackIcon: Icons.star_rounded,
+        fallbackRoute: '/celebrities/$key',
+      ),
+      NativeFeatureHubKind.fanClub => _fetchFanClub(key),
+      NativeFeatureHubKind.dreams => _fetchOne(
+        ApiEndpoints.dreams,
+        fallbackIcon: Icons.nights_stay_rounded,
+        fallbackRoute: '/fortune/ruya-tabiri',
+      ),
+      _ => null,
+    };
+  }
+
+  Future<NativeFeatureItem?> _fetchFanClub(String id) async {
+    final clubs = await _fetchFanClubs();
+    for (final c in clubs) {
+      if (c.id == id || c.route.endsWith('/$id')) return c;
+    }
+    return NativeFeatureItem(
+      id: id,
+      title: 'Fan kulübü',
+      subtitle: 'Kulüp detayı',
+      route: '/fan-club/$id',
+      icon: Icons.favorite_rounded,
+    );
+  }
+
+  Future<NativeFeatureItem?> _fetchOne(
+    String path, {
+    required IconData fallbackIcon,
+    required String fallbackRoute,
+  }) async {
+    final items = await _fetchPath(
+      path,
+      fallbackIcon: fallbackIcon,
+      fallbackRoute: fallbackRoute,
+    );
+    return items.isEmpty ? null : items.first;
+  }
+
   Future<List<NativeFeatureItem>> _fetchGames() async {
     final items = <NativeFeatureItem>[];
     items.addAll(
@@ -198,7 +252,12 @@ class NativeFeatureRemoteDataSource {
         _subtitleFor(json);
     final slug = pick(json, ['slug'])?.toString();
     final routeRaw = pick(json, ['route', 'path', 'url'])?.toString();
-    final route = _safeRoute(routeRaw, fallbackRoute, slug);
+    final route = nativeFeatureSafeRoute(
+      routeRaw: routeRaw,
+      fallbackRoute: fallbackRoute,
+      slug: slug,
+      id: id,
+    );
     final image = pick(json, [
       'imageUrl',
       'image',
@@ -219,18 +278,6 @@ class NativeFeatureRemoteDataSource {
       metricLabel: metric,
       badge: badge ?? pick(json, ['badge', 'status', 'tag'])?.toString(),
     );
-  }
-
-  String _safeRoute(String? route, String fallback, String? slug) {
-    final raw = route?.trim();
-    if (raw != null && raw.startsWith('/') && raw.length < 80) return raw;
-    if (fallback == '/blog-hub' && slug != null && slug.isNotEmpty) {
-      return '/blog/$slug';
-    }
-    if (fallback == '/dreams-hub' && slug != null && slug.isNotEmpty) {
-      return '/ruya/$slug';
-    }
-    return fallback;
   }
 
   String _subtitleFor(Map<String, dynamic> json) {
@@ -272,4 +319,34 @@ class NativeFeatureRemoteDataSource {
     }
     return out;
   }
+}
+
+/// Hub kartı tıklama yolu — kendi hub'ına dönmez.
+String nativeFeatureSafeRoute({
+  required String? routeRaw,
+  required String fallbackRoute,
+  String? slug,
+  required String id,
+}) {
+  final raw = routeRaw?.trim();
+  if (raw != null &&
+      raw.startsWith('/') &&
+      raw.length < 80 &&
+      raw != fallbackRoute) {
+    return raw;
+  }
+  final key = (slug != null && slug.isNotEmpty) ? slug : id;
+  if (fallbackRoute == '/blog-hub' && key.isNotEmpty) {
+    return '/blog/$key';
+  }
+  if (fallbackRoute == '/celebrities-hub' && key.isNotEmpty) {
+    return '/celebrities/$key';
+  }
+  if (fallbackRoute == '/fan-club-hub' && key.isNotEmpty) {
+    return '/fan-club/$key';
+  }
+  if (fallbackRoute == '/dreams-hub') {
+    return '/fortune/ruya-tabiri';
+  }
+  return fallbackRoute;
 }

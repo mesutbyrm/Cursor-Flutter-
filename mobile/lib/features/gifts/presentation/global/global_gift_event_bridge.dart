@@ -36,20 +36,43 @@ class GlobalGiftEventBridge extends ConsumerStatefulWidget {
       _GlobalGiftEventBridgeState();
 }
 
-class _GlobalGiftEventBridgeState extends ConsumerState<GlobalGiftEventBridge> {
+class _GlobalGiftEventBridgeState extends ConsumerState<GlobalGiftEventBridge>
+    with WidgetsBindingObserver {
   Timer? _poll;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _startPoll();
+    Future.microtask(_pollGifts);
+  }
+
+  void _startPoll() {
+    _poll?.cancel();
     _poll = Timer.periodic(const Duration(seconds: 12), (_) {
       unawaited(_pollGifts());
     });
-    Future.microtask(_pollGifts);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _startPoll();
+      unawaited(_pollGifts());
+      return;
+    }
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      _poll?.cancel();
+      _poll = null;
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _poll?.cancel();
     super.dispose();
   }

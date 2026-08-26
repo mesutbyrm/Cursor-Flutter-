@@ -6,6 +6,7 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../fortune/presentation/services/ad_reward_celebration.dart';
 import '../../domain/native_feature_item.dart';
 import '../providers/native_feature_hub_providers.dart';
 
@@ -37,6 +38,17 @@ class NativeFeatureHubPage extends ConsumerWidget {
           children: [
             _HeroCard(spec: spec),
             const SizedBox(height: 16),
+            if (kind == NativeFeatureHubKind.adRewards) ...[
+              FilledButton.icon(
+                onPressed: () => AdRewardCelebration.watchAndCelebrate(
+                  context: context,
+                  ref: ref,
+                ),
+                icon: const Icon(Icons.play_circle_fill_rounded),
+                label: const Text('Reklam izle, ödül kazan'),
+              ),
+              const SizedBox(height: 18),
+            ],
             if (kind != NativeFeatureHubKind.adRewards) ...[
               _RemoteItemsSection(items: remoteItems),
               const SizedBox(height: 18),
@@ -122,18 +134,6 @@ class NativeFeatureHubPage extends ConsumerWidget {
               Icons.auto_awesome_rounded,
               '/fortune/ruya-tabiri',
             ),
-            _HubItem(
-              'Rüya sözlüğü',
-              'Sembol ve anlam listesi için native liste fazına hazır.',
-              Icons.auto_stories_rounded,
-              '/dreams-hub',
-            ),
-            _HubItem(
-              'Rüya trendleri',
-              'Popüler rüyalar ve haftalık raporlar.',
-              Icons.trending_up_rounded,
-              '/dreams-hub',
-            ),
           ]),
         ],
       ),
@@ -145,18 +145,6 @@ class NativeFeatureHubPage extends ConsumerWidget {
             'Canlifal.com blog API uçları mobilde tanımlandı. Native liste/detay ekranı için giriş noktası ve kategori ayrımı hazır.',
         sections: [
           _HubSection('İçerik', [
-            _HubItem(
-              'Son yazılar',
-              'Blog/recent sözleşmesiyle native liste fazına hazır.',
-              Icons.article_rounded,
-              '/blog-hub',
-            ),
-            _HubItem(
-              'Burç blogları',
-              'Burç ve astroloji yazıları.',
-              Icons.star_rounded,
-              '/blog-hub',
-            ),
             _HubItem(
               'Fal rehberleri',
               'Fal deneyimini destekleyen içerikler.',
@@ -175,12 +163,6 @@ class NativeFeatureHubPage extends ConsumerWidget {
         sections: [
           _HubSection('Keşfet', [
             _HubItem(
-              'Ünlü listesi',
-              'Ünlü profilleri ve takip akışı.',
-              Icons.person_search_rounded,
-              '/celebrities-hub',
-            ),
-            _HubItem(
               'Sosyal akış',
               'Ünlü ve topluluk paylaşımlarını sosyal akışta takip et.',
               Icons.dynamic_feed_rounded,
@@ -197,12 +179,6 @@ class NativeFeatureHubPage extends ConsumerWidget {
             'Fan kulübü web sistemi için native giriş. Kulübe katılma, post ve anket endpointleri tanımlandı; ana sayfa fan kartları buraya bağlandı.',
         sections: [
           _HubSection('Kulüp aksiyonları', [
-            _HubItem(
-              'Fan kulüpleri',
-              'Kulüp listesi ve üyelik akışı için merkez.',
-              Icons.groups_rounded,
-              '/fan-club-hub',
-            ),
             _HubItem(
               'Davet et',
               'Arkadaşlarını kulüplere davet et.',
@@ -267,9 +243,9 @@ class _RemoteItemsSection extends StatelessWidget {
         if (list.isEmpty) {
           return _InfoCard(
             icon: Icons.info_outline_rounded,
-            title: 'API listesi boş döndü',
+            title: 'Şu an içerik yok',
             message:
-                'Bu web modülü için native giriş hazır. Backend liste döndürdüğünde kartlar burada otomatik görünecek.',
+                'Bu bölüm için sunucudan kayıt gelmedi. Aşağıdaki kısayollar çalışır; liste dolunca kartlar burada görünür.',
           );
         }
         return Column(

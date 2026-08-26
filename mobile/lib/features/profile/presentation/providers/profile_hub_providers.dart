@@ -174,7 +174,7 @@ class ProfileAvatarService {
   }
 
   Future<void> saveAvatarUrl(String url) async {
-    await _repo.updateMe(avatarUrl: url);
+    await _repo.updateProfile(avatarUrl: url);
   }
 
   Future<void> deleteAvatar() async {

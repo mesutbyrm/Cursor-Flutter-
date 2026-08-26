@@ -113,7 +113,7 @@ class AppBottomNavHost extends ConsumerWidget {
                   case 1:
                     router.go('/social');
                   case 2:
-                    AppBottomNavHost.showCreateSheet(context, router);
+                    router.go('/live');
                   case 3:
                     router.go('/fortune');
                   case 4:
@@ -167,7 +167,7 @@ class AppBottomNavHost extends ConsumerWidget {
             activeTab: tab,
             onHome: () => router.go('/feed'),
             onSocial: () => router.go('/social'),
-            onCreate: () => AppBottomNavHost.showCreateSheet(context, router),
+            onCreate: () => router.go('/live'),
             onCreateLongPress: () =>
                 AppBottomNavHost.showCreateSheet(context, router),
             onFortune: () => router.go('/fortune'),

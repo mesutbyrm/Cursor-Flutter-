@@ -94,24 +94,20 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
           (_avatarUrlCtrl.text.trim().isEmpty
               ? null
               : _avatarUrlCtrl.text.trim());
-      await ref.read(profileRepositoryProvider).updateMe(
+      await ref.read(profileRepositoryProvider).updateProfile(
             displayName: _displayCtrl.text.trim(),
-            username: _usernameCtrl.text.trim(),
             bio: _bioCtrl.text.trim(),
             avatarUrl: avatar,
+            city: _cityCtrl.text.trim().isEmpty ? null : _cityCtrl.text.trim(),
+            zodiacSign:
+                _zodiacCtrl.text.trim().isEmpty ? null : _zodiacCtrl.text.trim(),
             favoriteTeam: _favoriteTeam,
           );
-      try {
-        await ref.read(profileRemoteProvider).updateProfile(
-              displayName: _displayCtrl.text.trim(),
-              bio: _bioCtrl.text.trim(),
-              avatarUrl: avatar,
-              city: _cityCtrl.text.trim().isEmpty ? null : _cityCtrl.text.trim(),
-              zodiacSign:
-                  _zodiacCtrl.text.trim().isEmpty ? null : _zodiacCtrl.text.trim(),
-              favoriteTeam: _favoriteTeam,
-            );
-      } catch (_) {}
+      final username = _usernameCtrl.text.trim();
+      final current = ref.read(authControllerProvider).valueOrNull?.username;
+      if (username.isNotEmpty && username != current) {
+        await ref.read(profileRepositoryProvider).updateMe(username: username);
+      }
       await ref.read(authControllerProvider.notifier).refreshMe(force: true);
       ref.invalidate(profileExtendedProvider);
       ref.invalidate(profileUserStatisticsProvider);

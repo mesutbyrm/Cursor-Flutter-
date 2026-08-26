@@ -96,8 +96,8 @@ class ProfileRemoteDataSource {
   Future<void> follow(String userId) async {
     Object? lastError;
     for (final path in [
-      ApiEndpoints.follow(userId),
       ApiEndpoints.userFollow(userId),
+      ApiEndpoints.follow(userId),
     ]) {
       try {
         await _dio.safePost(path);
@@ -106,7 +106,22 @@ class ProfileRemoteDataSource {
         lastError = e;
       }
     }
-    throw ApiException.userMessage(lastError ?? 'Takip edilemedi');
+    final err = lastError;
+    if (err is ApiException) throw err;
+    throw ApiException(ApiException.userMessage(err ?? 'Takip edilemedi'));
+  }
+
+  /// Kılavuz §9.2 — `GET /api/user/{userId}/follow-status`.
+  Future<bool> followStatus(String userId) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.userFollowStatus(userId),
+    );
+    return parseFollowStatusBody(res.data);
+  }
+
+  Future<List<UserEntity>> blockedUsers() async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.userBlocked);
+    return parseProfileUserList(res.data);
   }
 
   Future<void> unfollow(String userId) async {
@@ -128,7 +143,8 @@ class ProfileRemoteDataSource {
     String? birthTime,
     String? favoriteTeam,
   }) async {
-    final onlyPasswordChange = currentPassword != null &&
+    final onlyPasswordChange =
+        currentPassword != null &&
         newPassword != null &&
         displayName == null &&
         bio == null &&
@@ -141,10 +157,7 @@ class ProfileRemoteDataSource {
     if (currentPassword != null && newPassword != null) {
       await _dio.safePost<dynamic>(
         ApiEndpoints.authChangePassword,
-        data: {
-          'currentPassword': currentPassword,
-          'newPassword': newPassword,
-        },
+        data: {'currentPassword': currentPassword, 'newPassword': newPassword},
       );
       if (onlyPasswordChange) {
         final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.me);
@@ -162,10 +175,7 @@ class ProfileRemoteDataSource {
           'displayName': displayName,
         },
         'bio': ?bio,
-        if (avatarUrl != null) ...{
-          'image': avatarUrl,
-          'avatarUrl': avatarUrl,
-        },
+        if (avatarUrl != null) ...{'image': avatarUrl, 'avatarUrl': avatarUrl},
         'username': ?username,
         if (birthDate != null && birthDate.isNotEmpty) 'birthDate': birthDate,
         if (birthTime != null && birthTime.isNotEmpty) 'birthTime': birthTime,
@@ -235,12 +245,14 @@ class ProfileRemoteDataSource {
         if (body is Map) {
           final m = asJsonMap(body);
           final data = m['data'] is Map ? asJsonMap(m['data']) : m;
-          final streak = asInt(pick(data, [
-            'dailyStreak',
-            'loginStreak',
-            'currentStreak',
-            'streak',
-          ]));
+          final streak = asInt(
+            pick(data, [
+              'dailyStreak',
+              'loginStreak',
+              'currentStreak',
+              'streak',
+            ]),
+          );
           if (streak > 0) return streak;
         }
       } catch (_) {}
@@ -269,7 +281,10 @@ class ProfileRemoteDataSource {
     final res = await _dio.safePatch<Map<String, dynamic>>(
       ApiEndpoints.userSiteProfile,
       data: {
-        if (displayName != null) ...{'name': displayName, 'displayName': displayName},
+        if (displayName != null) ...{
+          'name': displayName,
+          'displayName': displayName,
+        },
         'bio': ?bio,
         if (avatarUrl != null) ...{'image': avatarUrl, 'avatarUrl': avatarUrl},
         'phone': ?phone,
@@ -291,11 +306,13 @@ class ProfileRemoteDataSource {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.meProfileVisitors);
       final data = res.data;
       if (data is Map) {
-        final total = data['total'] ??
+        final total =
+            data['total'] ??
             data['count'] ??
             (data['data'] is Map ? (data['data'] as Map)['total'] : null);
         if (total is num) return total.toInt();
-        final list = (data['data'] as List?) ??
+        final list =
+            (data['data'] as List?) ??
             (data['visitors'] as List?) ??
             (data['items'] as List?);
         if (list != null) return list.length;
@@ -375,7 +392,7 @@ class ProfileRemoteDataSource {
           path,
           query: {'page': page, 'limit': limit},
         );
-        final list = _parseUserList(res.data);
+        final list = parseProfileUserList(res.data);
         if (list.isNotEmpty || page == 1) return list;
       } catch (_) {}
     }
@@ -396,26 +413,11 @@ class ProfileRemoteDataSource {
           path,
           query: {'page': page, 'limit': limit},
         );
-        final list = _parseUserList(res.data);
+        final list = parseProfileUserList(res.data);
         if (list.isNotEmpty || page == 1) return list;
       } catch (_) {}
     }
     return const [];
-  }
-
-  List<UserEntity> _parseUserList(dynamic body) {
-    if (body is List) {
-      return asJsonList(body)
-          .map((e) => UserDto.fromApiMap(asJsonMap(e)).toEntity())
-          .where((u) => u.id.isNotEmpty)
-          .toList();
-    }
-    if (body is! Map) return const [];
-    final data = body['data'] is Map ? asJsonMap(body['data']) : asJsonMap(body);
-    final raw =
-        data['followers'] ?? data['following'] ?? data['users'] ?? data['items'];
-    if (raw is! List) return const [];
-    return raw.map((e) => UserDto.fromApiMap(asJsonMap(e)).toEntity()).toList();
   }
 }
 
@@ -443,10 +445,7 @@ class WalletRemoteDataSource {
     for (final path in [ApiEndpoints.me, ApiEndpoints.userCredits]) {
       try {
         final res = await _dio
-            .safeGet<Map<String, dynamic>>(
-              path,
-              forceRefresh: forceRefresh,
-            )
+            .safeGet<Map<String, dynamic>>(path, forceRefresh: forceRefresh)
             .timeout(const Duration(seconds: 18));
         final body = res.data ?? {};
         final err = body['error'];
@@ -586,11 +585,11 @@ class WalletRemoteDataSource {
   static const _paymentTimeout = Duration(seconds: 45);
 
   Options _paymentPostOptions() => Options(
-        contentType: 'application/json',
-        receiveTimeout: _paymentTimeout,
-        sendTimeout: const Duration(seconds: 25),
-        headers: const {'Accept': 'application/json'},
-      );
+    contentType: 'application/json',
+    receiveTimeout: _paymentTimeout,
+    sendTimeout: const Duration(seconds: 25),
+    headers: const {'Accept': 'application/json'},
+  );
 
   Future<Response<dynamic>> _postPaymentRequest(
     String path,
@@ -628,7 +627,8 @@ class WalletRemoteDataSource {
 
   Future<void> submitPaymentRequest(Map<String, dynamic> body) async {
     final access = await _tokens.readAccess();
-    final hasJwt = access != null &&
+    final hasJwt =
+        access != null &&
         access.isNotEmpty &&
         access != TokenStorage.sessionCookieMarker;
     PaymentDebugLog.log('jwtStatus', {
@@ -641,9 +641,7 @@ class WalletRemoteDataSource {
       );
     }
 
-    final paths = <String>[
-      ApiEndpoints.paymentRequests,
-    ];
+    final paths = <String>[ApiEndpoints.paymentRequests];
 
     ApiException? lastError;
     for (final path in paths) {
@@ -738,11 +736,13 @@ class WalletRemoteDataSource {
             if (body['senderInfo'] != null) 'senderInfo': body['senderInfo'],
           },
         )
-        .catchError((Object _) => Response<dynamic>(
-              requestOptions: RequestOptions(
-                path: ApiEndpoints.adminPaymentNotifications,
-              ),
-            ));
+        .catchError(
+          (Object _) => Response<dynamic>(
+            requestOptions: RequestOptions(
+              path: ApiEndpoints.adminPaymentNotifications,
+            ),
+          ),
+        );
   }
 
   /// Bekleyen ödeme talebini iptal — `PATCH /api/payments/requests`.
@@ -798,7 +798,8 @@ class WalletRemoteDataSource {
     var hasMore = items.length >= limit;
     final body = res.data;
     if (body is Map) {
-      final pag = body['pagination'] ??
+      final pag =
+          body['pagination'] ??
           (body['data'] is Map ? asJsonMap(body['data'])['pagination'] : null);
       if (pag is Map) {
         final pm = asJsonMap(pag);
@@ -882,9 +883,7 @@ class WalletRemoteDataSource {
     if (!Env.useNextAuth) {
       return ReferralInfoEntity(shareUrl: '${Env.siteOrigin}/davet');
     }
-    final res = await _dio.safeGet<Map<String, dynamic>>(
-      ApiEndpoints.referral,
-    );
+    final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.referral);
     final body = res.data ?? {};
     final err = body['error'];
     if (err != null) {
@@ -899,7 +898,8 @@ List<JetonPackageEntity> _parseJetonPackages(Map<String, dynamic> body) {
   final out = <JetonPackageEntity>[];
   var i = 0;
   for (final m in raw) {
-    final id = pick(m, ['id', 'sku', 'key', 'packageId', 'slug'])?.toString() ??
+    final id =
+        pick(m, ['id', 'sku', 'key', 'packageId', 'slug'])?.toString() ??
         'pkg_$i';
     final coins = asInt(
       pick(m, [
@@ -928,13 +928,20 @@ List<JetonPackageEntity> _parseJetonPackages(Map<String, dynamic> body) {
         'priceTl',
       ]),
     );
-    if (coins <= 0 && priceTry == null && pick(m, ['priceLabel', 'fiyatMetni']) == null) {
+    if (coins <= 0 &&
+        priceTry == null &&
+        pick(m, ['priceLabel', 'fiyatMetni']) == null) {
       i++;
       continue;
     }
-    final title = pick(m, ['title', 'name', 'label', 'baslik', 'description'])
-            ?.toString()
-            .trim() ??
+    final title =
+        pick(m, [
+          'title',
+          'name',
+          'label',
+          'baslik',
+          'description',
+        ])?.toString().trim() ??
         (coins > 0 ? '$coins jeton' : 'Paket');
     final priceLabel = pick(m, [
       'priceLabel',
@@ -1013,10 +1020,18 @@ ReferralInfoEntity _parseReferral(Map<String, dynamic> body) {
     'referral',
     'davetKodu',
   ])?.toString();
-  final headline = pick(body, ['headline', 'title', 'message', 'aciklama'])
-      ?.toString();
-  final rewardHint =
-      pick(body, ['reward', 'rewardHint', 'odul', 'bonusText'])?.toString();
+  final headline = pick(body, [
+    'headline',
+    'title',
+    'message',
+    'aciklama',
+  ])?.toString();
+  final rewardHint = pick(body, [
+    'reward',
+    'rewardHint',
+    'odul',
+    'bonusText',
+  ])?.toString();
   final invited = asInt(
     pick(body, [
       'invitedCount',
@@ -1046,4 +1061,51 @@ ReferralInfoEntity _parseReferral(Map<String, dynamic> body) {
     invitedCount: invited > 0 ? invited : null,
     rewardHint: rewardHint?.isNotEmpty == true ? rewardHint : null,
   );
+}
+
+bool parseFollowStatusBody(dynamic body) {
+  if (body is Map) {
+    final map = asJsonMap(body);
+    if (map['data'] is bool || map['data'] is num || map['data'] is String) {
+      return _followFlag(map['data']);
+    }
+    final nested = map['data'] is Map ? asJsonMap(map['data']) : map;
+    if (_followFlag(pick(nested, ['isFollowing', 'following', 'followed']))) {
+      return true;
+    }
+    final status = pick(nested, ['status'])?.toString().toLowerCase().trim();
+    return status == 'following' || status == 'followed';
+  }
+  return _followFlag(body);
+}
+
+bool _followFlag(dynamic value) {
+  if (asBool(value)) return true;
+  final raw = value?.toString().toLowerCase().trim();
+  return raw == 'following' || raw == 'followed';
+}
+
+List<UserEntity> parseProfileUserList(dynamic body) {
+  if (body is List) {
+    return asJsonList(body)
+        .map((e) => UserDto.fromApiMap(asJsonMap(e)).toEntity())
+        .where((u) => u.id.isNotEmpty)
+        .toList();
+  }
+  if (body is! Map) return const [];
+  final map = asJsonMap(body);
+  if (map['data'] is List) return parseProfileUserList(map['data']);
+  final nested = map['data'] is Map ? asJsonMap(map['data']) : map;
+  for (final key in const [
+    'followers',
+    'following',
+    'users',
+    'items',
+    'blocked',
+    'blockedUsers',
+  ]) {
+    final raw = nested[key] ?? map[key];
+    if (raw is List) return parseProfileUserList(raw);
+  }
+  return const [];
 }

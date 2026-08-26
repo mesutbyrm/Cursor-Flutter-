@@ -71,6 +71,30 @@ class ProfileRepositoryImpl implements ProfileRepository {
       );
 
   @override
+  Future<UserEntity> updateProfile({
+    String? displayName,
+    String? bio,
+    String? avatarUrl,
+    String? phone,
+    String? birthDate,
+    String? birthTime,
+    String? zodiacSign,
+    String? city,
+    String? favoriteTeam,
+  }) =>
+      _remote.updateProfile(
+        displayName: displayName,
+        bio: bio,
+        avatarUrl: avatarUrl,
+        phone: phone,
+        birthDate: birthDate,
+        birthTime: birthTime,
+        zodiacSign: zodiacSign,
+        city: city,
+        favoriteTeam: favoriteTeam,
+      );
+
+  @override
   Future<ProfileStatsEntity> myStats() async {
     final results = await NetworkPerf.parallel<Object?>([
       () async {

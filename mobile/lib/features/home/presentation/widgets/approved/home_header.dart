@@ -165,7 +165,7 @@ class _HomeJetonPill extends ConsumerWidget {
     final jeton = walletJeton ?? authJeton ?? 0;
     return _CoinPill(
       balance: jeton,
-      onTap: () => context.push('/jeton-store'),
+      onTap: () => context.push('/wallet'),
       onAdd: () => context.push('/jeton-store'),
     );
   }

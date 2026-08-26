@@ -25,6 +25,17 @@ abstract class ProfileRepository {
     String? birthTime,
     String? favoriteTeam,
   });
+  Future<UserEntity> updateProfile({
+    String? displayName,
+    String? bio,
+    String? avatarUrl,
+    String? phone,
+    String? birthDate,
+    String? birthTime,
+    String? zodiacSign,
+    String? city,
+    String? favoriteTeam,
+  });
   Future<ProfileStatsEntity> myStats();
   Future<ProfileExtendedEntity> extendedProfile();
   Future<ProfileUserStatisticsEntity> userStatistics();

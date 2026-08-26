@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.371+409 (2026-08-26) — Sayfa denetimi P2 (hub detay, gizlilik, yayın, profil)
+
+- **Blog / ünlü / fan kulübü:** Hub kartları kendi listesine dönmez; `/blog/:slug`, `/celebrities/:id`, `/fan-club/:id` detay sayfaları
+- **Fan kulübü:** Detayda `POST /api/fan-clubs/{id}/join`
+- **Reklam ödülü:** `/ad-rewards` ekranında reklam izle (`POST /api/user/watch-ad`)
+- **Gizlilik:** Sahte herkese açık / çevrimiçi anahtarları kalktı; engellenenler `GET /api/user/blocked`
+- **Alt menü Yayın:** dokunuş canlı sekmeye, uzun basış yayın açma sayfasına
+- **Jeton:** bakiye `/wallet`, artı `/jeton-store`
+- **Profil kayıt:** kılavuz `PATCH /api/user/profile`; kullanıcı adı değişince ayrıca `PATCH /api/me`
+- **Takip:** `GET /api/user/{id}/follow-status` + `POST /api/user/{id}/follow`
+- **Hediye poll:** arka planda durur; `/live/type` yayın listesine sıkışmaz
+
 ## 1.0.370+408 (2026-08-25) — Sayfa denetimi P0/P1 (rozet, profil, yayıncı, hediye, çark)
 
 - **Yayıncı Ol:** Ana sayfa çipi ve `/yayinci-ol` artık yayın başlatma (`/live/type`); falcı başvurusu `/falci-ol` ayrı kaldı

@@ -59,7 +59,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
   }
 
   void _onYayinTap(BuildContext context) {
-    ShellUi.showCreateSheet(context, GoRouter.of(context));
+    _goBranch(2);
   }
 
   void _onYayinLongPress(BuildContext context) {
