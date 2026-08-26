@@ -172,7 +172,14 @@ class _RelatedPosts extends ConsumerWidget {
         padding: EdgeInsets.symmetric(vertical: 12),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: TextButton(
+          onPressed: () =>
+              ref.invalidate(nativeFeatureRelatedProvider((kind: kind, id: id))),
+          child: const Text('Gönderiler yüklenemedi — Tekrar dene'),
+        ),
+      ),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
         return Column(

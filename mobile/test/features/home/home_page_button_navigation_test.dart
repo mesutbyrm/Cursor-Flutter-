@@ -1,8 +1,8 @@
-import 'package:flutter_test/flutter_test.dart';
-
+import 'package:canlifal_social/core/network/api_endpoints.dart';
 import 'package:canlifal_social/features/bana_ozel/domain/entities/bana_ozel_entities.dart';
 import 'package:canlifal_social/features/home/domain/entities/home_page_button_entity.dart';
 import 'package:canlifal_social/features/home/presentation/navigation/home_page_button_navigation.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('resolveHomePageButtonRoute', () {
@@ -64,5 +64,10 @@ void main() {
     test('share opens social create', () {
       expect(BanaOzelTodayTask.share.routePath, '/social/create');
     });
+  });
+
+  test('kılavuz ana sayfa buton ve liderlik uçları', () {
+    expect(ApiEndpoints.homepageButtons, '/api/homepage-buttons');
+    expect(ApiEndpoints.leaderboards, '/api/leaderboards');
   });
 }

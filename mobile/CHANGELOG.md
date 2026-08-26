@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.378+416 (2026-08-26) — Sayfa denetimi P9 (homepage buton taşması, retry)
+
+- **Ana sayfa:** `GET /api/homepage-buttons` 4. butondan sonrası artık görünür (taşan şerit)
+- **Ünlü / fan kulübü:** gönderi listesi hatasında tekrar dene
+- **Canlı istatistikler / hediye liderleri / aktif cihazlar:** hata satırında tekrar dene
+
 ## 1.0.377+415 (2026-08-26) — Sayfa denetimi P8 (günlük sandık, zar, oyun retry)
 
 - **Hazine sandığı:** yerel rastgele jeton yok; `POST /api/games/daily-reward`, yoksa kılavuz `POST /api/daily-login` / `POST /api/daily-rewards`

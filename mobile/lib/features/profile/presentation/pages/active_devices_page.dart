@@ -26,8 +26,11 @@ class ActiveDevicesPage extends ConsumerWidget {
           subtitle: 'Hesabınıza bağlı oturumlar',
           body: sessions.when(
             loading: () => const Center(child: DiscoverAccentLoader()),
-            error: (e, _) => Center(
-              child: Text(ApiException.userMessage(e)),
+            error: (e, _) => DiscoverEmptyState(
+              icon: Icons.error_outline_rounded,
+              message: ApiException.userMessage(e),
+              action: () => ref.invalidate(activeSessionsProvider),
+              actionLabel: 'Tekrar dene',
             ),
             data: (rows) {
               if (rows.isEmpty) {

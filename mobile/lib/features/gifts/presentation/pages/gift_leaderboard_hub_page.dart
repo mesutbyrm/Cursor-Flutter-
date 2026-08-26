@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../data/leaderboard_remote_datasource.dart';
@@ -88,7 +89,20 @@ class _PeriodLeaderboard extends ConsumerWidget {
     final async = ref.watch(globalGiftLeaderboardProvider(period));
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Yüklenemedi: $e')),
+      error: (e, _) => Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(ApiException.userMessage(e)),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () =>
+                  ref.invalidate(globalGiftLeaderboardProvider(period)),
+              child: const Text('Tekrar dene'),
+            ),
+          ],
+        ),
+      ),
       data: (entries) {
         if (entries.isEmpty) {
           return Center(

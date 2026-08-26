@@ -12,6 +12,7 @@ import 'approved/stories_section.dart';
 import 'approved/voice_room_section.dart';
 import 'home_banner_carousel.dart';
 import 'home_deferred_section.dart';
+import 'home_homepage_buttons_row.dart';
 import 'home_fortune_request_types_section.dart';
 import 'home_games_section.dart';
 import 'home_online_fal_section.dart';
@@ -41,6 +42,9 @@ abstract final class HomePageSections {
       ),
       const SliverToBoxAdapter(
         child: RepaintBoundary(child: HomeQuickActions()),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeHomepageButtonsRow(),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(

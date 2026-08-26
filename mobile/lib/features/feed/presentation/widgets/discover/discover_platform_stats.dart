@@ -19,7 +19,13 @@ class DiscoverPlatformStats extends ConsumerWidget {
 
     return stats.when(
       loading: () => const _StatsSkeleton(),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: TextButton(
+          onPressed: () => ref.invalidate(platformStatsProvider),
+          child: const Text('İstatistikler yüklenemedi — Tekrar dene'),
+        ),
+      ),
       data: (data) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
