@@ -35,31 +35,39 @@ class LiveFortuneRequestDataSource {
     final id = streamId.trim();
     if (id.isEmpty) return const [];
 
+    Object? lastError;
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.videoStreamFortuneRequests(id),
       );
       return _parseList(res.data);
     } catch (e) {
+      lastError = e;
       LiveDebugLog.log('fal.request.fetch.fail', {
         'streamId': id,
         'primary': ApiEndpoints.videoStreamFortuneRequests(id),
         'error': ApiException.userMessage(e),
       });
-      try {
-        final res = await _dio.safeGet<dynamic>(
-          ApiEndpoints.liveFalRequests,
-          query: {'streamId': id},
-        );
-        return _parseList(res.data);
-      } catch (e2) {
-        LiveDebugLog.log('fal.request.fetch.fallback.fail', {
-          'streamId': id,
-          'error': ApiException.userMessage(e2),
-        });
-        return const [];
-      }
     }
+
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.liveFalRequests,
+        query: {'streamId': id},
+      );
+      return _parseList(res.data);
+    } catch (e) {
+      lastError = e;
+      LiveDebugLog.log('fal.request.fetch.fallback.fail', {
+        'streamId': id,
+        'error': ApiException.userMessage(e),
+      });
+    }
+
+    if (lastError is ApiException) throw lastError;
+    throw ApiException(
+      ApiException.userMessage(lastError ?? 'Fal talepleri yüklenemedi.'),
+    );
   }
 
   Future<LiveFortuneRequestEntity> createRequest({
@@ -207,8 +215,14 @@ class LiveFortuneRequestDataSource {
       final body = res.data;
       if (body is Map) return Map<String, dynamic>.from(body);
       return null;
-    } catch (_) {
-      return null;
+    } on ApiException catch (e) {
+      // Aktif istek yok.
+      if (e.statusCode == 404) return null;
+      LiveDebugLog.log('fal.request.myStatus.fail', {
+        'streamId': id,
+        'error': e.message,
+      });
+      rethrow;
     }
   }
 

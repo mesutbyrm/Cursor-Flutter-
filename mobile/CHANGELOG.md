@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.399+437 (2026-08-26) — Sayfa denetimi P30 (canlı fal kuyruk / durum)
+
+- **Yayıncı fal kuyruğu:** `GET /api/video-streams/{id}/fortune-requests` (yedek `/api/live/fal-requests`) ikisi de düşerse boş liste yerine hata; «Tekrar dene» çalışır
+- **İzleyici fal durumu:** `GET …/fortune-requests/my-status` ağ/5xx hatasında «Durum yüklenemedi — tekrar»; 404 = aktif istek yok
+
 ## 1.0.398+436 (2026-08-26) — Sayfa denetimi P29 (seans iptal, süre, burç)
 
 - **Bekleme iptali:** `PATCH /api/fortune-tellers/sessions/{id}` `{action: cancel}` başarısızsa ekranda kalınır; snackbar
