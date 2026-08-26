@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../../core/network/api_exception.dart';
-import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
@@ -712,25 +711,54 @@ class TreasureChestPage extends ConsumerStatefulWidget {
 
 class _TreasureChestPageState extends ConsumerState<TreasureChestPage> {
   bool _opened = false;
+  bool _loading = false;
   int _reward = 0;
+  String? _message;
 
   Future<void> _open() async {
-    if (_opened) return;
-    _reward = 20 + Random().nextInt(81);
-    setState(() => _opened = true);
-    await recordGameCenterResult(
-      ref,
-      GameResultPayload(
-        gameId: 'hazine-sandigi',
-        score: _reward,
-        won: true,
-        jetonDelta: _reward,
-      ),
-    );
+    if (_opened || _loading) return;
+    setState(() {
+      _loading = true;
+      _message = null;
+    });
+    try {
+      final outcome =
+          await ref.read(gameCenterRepositoryProvider).dailyReward();
+      if (!mounted) return;
+      if (outcome.alreadySpun) {
+        setState(() {
+          _loading = false;
+          _opened = true;
+          _reward = 0;
+          _message = outcome.message ?? 'Bugünkü sandık hakkın kullanıldı';
+        });
+        return;
+      }
+      setState(() {
+        _loading = false;
+        _opened = true;
+        _reward = outcome.jetonWon;
+        _message = outcome.jetonWon > 0
+            ? (outcome.prizeLabel ?? '${outcome.jetonWon} Jeton kazandın!')
+            : (outcome.message ?? 'Bir dahaki sefere!');
+      });
+      ref.invalidate(gameCenterJetonProvider);
+      ref.refreshWalletCache(force: true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final label = _opened
+        ? (_message ??
+            (_reward > 0 ? '$_reward Jeton kazandın!' : 'Yarın tekrar gel'))
+        : 'Sandığı aç ve ödülünü al';
     return DiscoverSubPage(
       title: 'Günlük Hazine Sandığı',
       body: Center(
@@ -744,13 +772,18 @@ class _TreasureChestPageState extends ConsumerState<TreasureChestPage> {
             ),
             const SizedBox(height: 20),
             Text(
-              _opened ? '$_reward Jeton kazandın!' : 'Sandığı aç ve ödülünü al',
+              label,
+              textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 24),
             FilledButton(
-              onPressed: _opened ? null : _open,
-              child: Text(_opened ? 'Yarın tekrar gel' : 'Sandığı Aç'),
+              onPressed: _opened || _loading ? null : _open,
+              child: Text(
+                _loading
+                    ? 'Açılıyor...'
+                    : (_opened ? 'Yarın tekrar gel' : 'Sandığı Aç'),
+              ),
             ),
           ],
         ),
@@ -771,15 +804,8 @@ class _LuckyDicePageState extends ConsumerState<LuckyDicePage> {
   int? _d2;
 
   Future<void> _roll() async {
-    final balance = await ref.read(gameCenterJetonProvider.future);
-    if (!mounted) return;
-    if (balance < 5) {
-      showJetonAwareError(context, '5 jeton gerekli', ref: ref);
-      return;
-    }
     final a = 1 + Random().nextInt(6);
     final b = 1 + Random().nextInt(6);
-    final win = (a + b) * 5;
     setState(() {
       _d1 = a;
       _d2 = b;
@@ -788,14 +814,13 @@ class _LuckyDicePageState extends ConsumerState<LuckyDicePage> {
       ref,
       GameResultPayload(
         gameId: 'sansli-zar',
-        score: win,
-        jetonDelta: win - 5,
+        score: a + b,
         metadata: {'dice': [a, b]},
       ),
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('+$win jeton (5 jeton harcandı)')),
+      SnackBar(content: Text('Attığın: $a + $b = ${a + b}')),
     );
   }
 
@@ -818,7 +843,7 @@ class _LuckyDicePageState extends ConsumerState<LuckyDicePage> {
             const SizedBox(height: 24),
             FilledButton(
               onPressed: _roll,
-              child: const Text('Zar At (5 Jeton)'),
+              child: const Text('Zar At'),
             ),
           ],
         ),

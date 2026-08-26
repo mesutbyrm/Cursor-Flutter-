@@ -246,8 +246,32 @@ class GameRemoteDataSource {
 
   /// Kılavuz GameRepository `dailySpin` — `POST /api/games/daily-spin`.
   Future<DailySpinResult> dailySpin() async {
+    return _postDailyClaim(ApiEndpoints.gamesDailySpin);
+  }
+
+  /// GameRepository `dailyReward` — önce `/api/games/daily-reward`,
+  /// sonra kılavuz `POST /api/daily-login`, son olarak `POST /api/daily-rewards`.
+  Future<DailySpinResult> dailyReward() async {
+    ApiException? last;
+    for (final path in [
+      ApiEndpoints.gamesDailyReward,
+      ApiEndpoints.dailyLogin,
+      ApiEndpoints.homeDailyRewards,
+    ]) {
+      try {
+        return await _postDailyClaim(path);
+      } on ApiException catch (e) {
+        last = e;
+        if (e.statusCode == 404 || e.statusCode == 405) continue;
+        rethrow;
+      }
+    }
+    throw last ?? ApiException('Günlük ödül alınamadı');
+  }
+
+  Future<DailySpinResult> _postDailyClaim(String path) async {
     try {
-      final res = await _dio.safePost<dynamic>(ApiEndpoints.gamesDailySpin);
+      final res = await _dio.safePost<dynamic>(path);
       return DailySpinResult.fromJson(_map(res.data));
     } on ApiException catch (e) {
       final msg = e.message.toLowerCase();

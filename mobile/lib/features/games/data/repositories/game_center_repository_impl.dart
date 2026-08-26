@@ -94,4 +94,7 @@ class GameCenterRepositoryImpl implements GameCenterRepository {
 
   @override
   Future<DailySpinResult> dailySpin() => _games.dailySpin();
+
+  @override
+  Future<DailySpinResult> dailyReward() => _games.dailyReward();
 }

@@ -18,4 +18,6 @@ abstract interface class GameCenterRepository {
   Future<GameRoomItem?> autoMatchLiveRoom(String gameId);
 
   Future<DailySpinResult> dailySpin();
+
+  Future<DailySpinResult> dailyReward();
 }

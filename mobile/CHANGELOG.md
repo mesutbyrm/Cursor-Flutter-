@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.377+415 (2026-08-26) — Sayfa denetimi P8 (günlük sandık, zar, oyun retry)
+
+- **Hazine sandığı:** yerel rastgele jeton yok; `POST /api/games/daily-reward`, yoksa kılavuz `POST /api/daily-login` / `POST /api/daily-rewards`
+- **Şanslı zar:** sahte jeton kazancı/harcaması kalktı; skor sunucuya yazılır
+- **Ana sayfa oyunlar:** yükleme hatasında tekrar dene
+
 ## 1.0.376+414 (2026-08-26) — Sayfa denetimi P7 (çevrimiçi, beğenenler, istatistik)
 
 - **Çevrimiçi:** kılavuz `GET /api/users/online` tam liste (`/cevrimici`)

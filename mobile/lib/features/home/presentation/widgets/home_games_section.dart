@@ -55,7 +55,18 @@ class HomeGamesSection extends ConsumerWidget {
               ),
             ),
           ),
-          error: (_, _) => const SizedBox.shrink(),
+          error: (_, _) => Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: HomeApprovedDesign.hPad,
+            ),
+            child: TextButton(
+              onPressed: () {
+                ref.invalidate(homeGamesProvider);
+                ref.invalidate(homeDailyRewardsProvider);
+              },
+              child: const Text('Oyunlar yüklenemedi — Tekrar dene'),
+            ),
+          ),
           data: (gameItems) {
             final rewardItems = rewards.valueOrNull ?? const <DailyRewardEntity>[];
             final merged = <_GameTile>[

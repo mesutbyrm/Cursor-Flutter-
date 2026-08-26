@@ -793,6 +793,8 @@ abstract final class ApiEndpoints {
   static const usersOnline = '/api/users/online';
 
   static const gamesDailySpin = '/api/games/daily-spin';
+  /// GameRepository `dailyReward` — `POST /api/games/daily-reward`.
+  static const gamesDailyReward = '/api/games/daily-reward';
 
   static const gamesQuests = '/api/games/quests';
 
