@@ -161,4 +161,10 @@ void main() {
       '/api/video-streams/s1/co-broadcast',
     );
   });
+
+  test('kılavuz alınan hediyeler ve oyun uçları', () {
+    expect(ApiEndpoints.userReceivedGifts, '/api/user/received-gifts');
+    expect(ApiEndpoints.homeGames, '/api/games');
+    expect(ApiEndpoints.gameLeaderboard, '/api/games/leaderboard');
+  });
 }
