@@ -4,13 +4,13 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
-import '../../../profile/presentation/providers/payment_requests_notifier.dart';
 import '../../../profile/presentation/widgets/payment_methods_summary_line.dart';
 import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
 import '../widgets/wallet_balance_header.dart';
@@ -70,7 +70,14 @@ class WalletCenterPage extends ConsumerWidget {
           body: wallet.isLoading && cached == null
               ? const Center(child: DiscoverAccentLoader())
               : wallet.hasError && cached == null
-                  ? Center(child: Text(wallet.error.toString()))
+                  ? DiscoverEmptyState(
+                      icon: Icons.account_balance_wallet_outlined,
+                      message: ApiException.userMessage(wallet.error!),
+                      actionLabel: 'Tekrar dene',
+                      action: () => ref
+                          .read(walletBalancesProvider.notifier)
+                          .refresh(force: true),
+                    )
                   : ListView(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
               children: [

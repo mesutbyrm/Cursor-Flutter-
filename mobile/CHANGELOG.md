@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.384+422 (2026-08-26) — Sayfa denetimi P15 (cüzdan, shorts, burç retry)
+
+- **Cüzdan merkezi:** `GET /api/wallet` hatasında kullanıcı mesajı + tekrar dene
+- **Kısa video akışı:** hata metni kullanıcı mesajı (`GET /api/short-videos`)
+- **Profil:** `/api/me` yüklenemezse kullanıcı mesajı + tekrar dene
+- **Günlük burç:** yorum yüklenemezse tekrar dene
+
 ## 1.0.383+421 (2026-08-26) — Sayfa denetimi P14 (cüzdan, referans, CMS, sohbet retry)
 
 - **Para çekme:** geçmiş talepler hatasında tekrar dene (`POST /api/withdrawals` geçmişi)

@@ -127,4 +127,10 @@ void main() {
     expect(ApiEndpoints.giftsTypes, '/api/gifts/types');
     expect(ApiEndpoints.tournaments, '/api/tournaments');
   });
+
+  test('kılavuz cüzdan ve shorts uçları', () {
+    expect(ApiEndpoints.wallet, '/api/wallet');
+    expect(ApiEndpoints.shortVideos, '/api/short-videos');
+    expect(ApiEndpoints.me, '/api/me');
+  });
 }

@@ -45,14 +45,22 @@ class _HoroscopeSheet extends ConsumerStatefulWidget {
 }
 
 class _HoroscopeSheetState extends ConsumerState<_HoroscopeSheet> {
-  late final Future<String?> _future;
+  late Future<String?> _future;
 
   @override
   void initState() {
     super.initState();
-    _future = ref
-        .read(homeRemoteProvider)
-        .fetchDailyHoroscope(widget.apiSign);
+    _future = _fetch();
+  }
+
+  Future<String?> _fetch() {
+    return ref.read(homeRemoteProvider).fetchDailyHoroscope(widget.apiSign);
+  }
+
+  void _retry() {
+    setState(() {
+      _future = _fetch();
+    });
   }
 
   @override
@@ -102,14 +110,22 @@ class _HoroscopeSheetState extends ConsumerState<_HoroscopeSheet> {
                   );
                 }
                 final text = snap.data?.trim();
-                if (text == null || text.isEmpty) {
-                  return const Text(
-                    'Günlük yorum şu an yüklenemedi. Detaylı burç falına geçebilirsin.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      height: 1.45,
-                      color: HomeApprovedDesign.textSecondary,
-                    ),
+                if (snap.hasError || text == null || text.isEmpty) {
+                  return Column(
+                    children: [
+                      const Text(
+                        'Günlük yorum şu an yüklenemedi. Detaylı burç falına geçebilirsin.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.45,
+                          color: HomeApprovedDesign.textSecondary,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _retry,
+                        child: const Text('Tekrar dene'),
+                      ),
+                    ],
                   );
                 }
                 return Text(
