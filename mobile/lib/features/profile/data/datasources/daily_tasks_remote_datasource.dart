@@ -38,6 +38,7 @@ class DailyTasksRemoteDataSource {
   }
 
   Future<bool> claimTask(String taskId) async {
+    Object? lastError;
     for (final path in [
       ApiEndpoints.userDailyTasks,
       ApiEndpoints.dailyMissions,
@@ -52,8 +53,15 @@ class DailyTasksRemoteDataSource {
         } on ApiException catch (e) {
           final msg = e.message.toLowerCase();
           if (msg.contains('zaten') || msg.contains('already')) return true;
-        } catch (_) {}
+          lastError = e;
+        } catch (e) {
+          lastError = e;
+        }
       }
+    }
+    if (lastError != null) {
+      if (lastError is ApiException) throw lastError;
+      throw ApiException(ApiException.userMessage(lastError));
     }
     return false;
   }

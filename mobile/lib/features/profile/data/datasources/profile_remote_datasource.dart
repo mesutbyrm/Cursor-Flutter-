@@ -499,6 +499,8 @@ class WalletRemoteDataSource {
   }
 
   Future<int> watchAdCredit() async {
+    Object lastError = const ApiException('Reklam ödülü kaydedilemedi.');
+    int? grantedWithoutAmount;
     try {
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.userWatchAd,
@@ -506,15 +508,21 @@ class WalletRemoteDataSource {
       );
       final amount = parseWatchAdRewardAmount(res.data);
       if (amount > 0) return amount;
-    } catch (_) {}
+      grantedWithoutAmount = amount;
+    } catch (e) {
+      lastError = e;
+    }
     try {
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.adsReward,
         data: const {'platform': 'mobile', 'source': 'growth_hub'},
       );
       return parseWatchAdRewardAmount(res.data);
-    } catch (_) {}
-    return 0;
+    } catch (e) {
+      lastError = e;
+    }
+    if (grantedWithoutAmount != null) return grantedWithoutAmount;
+    _throwLast(lastError);
   }
 
   /// Site ödeme ayarları — API dolu alanları korur, yalnız boş alanları tamamlar.

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.396+434 (2026-08-26) — Sayfa denetimi P27 (reklam ödülü, görev teslimi)
+
+- **Reklam ödülü:** `POST /api/user/watch-ad` / `POST /api/ads/reward` hatası artık sahte 10 CFC kutlaması göstermez; snackbar
+- **Ana sayfa:** büyüme teaser’ı reklam ödül POST’unu izlemeden tetiklemez
+- **Günlük görev:** teslim hatası sessizce görev rotasına gitmez; snackbar
+- **Canlı fal değerlendirme:** `POST /api/room/{id}/review` hatası kullanıcı mesajı
+
 ## 1.0.395+433 (2026-08-26) — Sayfa denetimi P26 (falcı çevrimiçi, üyelik)
 
 - **Falcı paneli:** `POST /api/fortune-tellers/toggle-online` hatası sessizce yutulmaz; snackbar

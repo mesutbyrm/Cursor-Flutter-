@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_review_sheet.dart';
 import 'package:flutter/material.dart';
@@ -96,6 +97,45 @@ void main() {
 
       expect(result, isFalse);
       expect(repo.lastReviewSessionId, isNull);
+    });
+
+    testWidgets('shows API error when review POST fails', (tester) async {
+      final repo = FakeLivePsychicsRepository(
+        submitReviewError: const ApiException('Değerlendirme kaydedilemedi'),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            livePsychicsRepositoryProvider.overrideWithValue(repo),
+          ],
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: ElevatedButton(
+                  onPressed: () {
+                    showPsychicReviewSheet(
+                      context,
+                      sessionId: 'sess_fail',
+                      tellerId: 'teller_fail',
+                      tellerName: 'Ayşe',
+                    );
+                  },
+                  child: const Text('Aç'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Aç'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Gönder'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Değerlendirme kaydedilemedi'), findsOneWidget);
+      expect(find.text('Değerlendirmeniz kaydedildi'), findsNothing);
     });
   });
 }

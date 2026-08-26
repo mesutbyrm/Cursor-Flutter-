@@ -401,8 +401,9 @@ class LivePsychicsRemoteDataSource {
         data: payload,
       );
       return true;
-    } catch (_) {
-      return false;
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(ApiException.userMessage(e));
     }
   }
 

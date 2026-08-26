@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/cfc_reward_overlay.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/services/rewarded_ad_service.dart';
@@ -49,7 +50,14 @@ class FortuneFullscreenAdGate {
       amount = await ref.read(watchAdCreditProvider.future);
       if (amount <= 0) amount = fallbackAmount;
       ref.invalidate(walletBalancesProvider);
-    } catch (_) {}
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+      return;
+    }
 
     if (context.mounted) {
       await CfcRewardOverlay.show(context, amount: amount);

@@ -249,4 +249,16 @@ void main() {
     expect(ApiEndpoints.membershipPackages, '/api/memberships/packages');
     expect(ApiEndpoints.membershipsCatalog, '/api/memberships');
   });
+
+  test('kılavuz reklam ödülü, günlük giriş ve görev uçları', () {
+    expect(ApiEndpoints.userWatchAd, '/api/user/watch-ad');
+    expect(ApiEndpoints.adsReward, '/api/ads/reward');
+    expect(ApiEndpoints.dailyLogin, '/api/daily-login');
+    expect(ApiEndpoints.dailyMissions, '/api/daily-missions');
+    expect(ApiEndpoints.userDailyTasks, '/api/user/daily-tasks');
+    expect(
+      ApiEndpoints.liveFortuneRoomReview('sess1'),
+      '/api/room/sess1/review',
+    );
+  });
 }

@@ -69,19 +69,12 @@ class HomeGrowthTeasersSection extends ConsumerWidget {
 
       final ads = ref.watch(homeActiveAdsProvider);
       if (ads case AsyncData(:final value) when value.isNotEmpty) {
-        final reward = ref.watch(watchAdCreditProvider);
-        final subtitle = reward.when(
-          loading: () => 'Reklam izle, jeton kazan',
-          error: (_, _) => 'Günlük reklam ödülü',
-          data: (jeton) => jeton > 0
-              ? 'Bugün +$jeton jeton kazanabilirsin'
-              : 'Reklam izle, jeton kazan',
-        );
+        // POST /api/user/watch-ad yalnızca reklam izlendikten sonra atılır.
         cards.add(
           _GrowthCardData(
             emoji: '📺',
             title: 'Jeton Kazan',
-            subtitle: subtitle,
+            subtitle: 'Reklam izle, jeton kazan',
             accent: const Color(0xFFFF8A3D),
             icon: Icons.play_circle_rounded,
             route: '/profile/growth',

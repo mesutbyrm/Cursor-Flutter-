@@ -16,6 +16,7 @@ class FakeLivePsychicsRepository implements LivePsychicsRepository {
     this.psychicResult,
     PsychicRespondResult? respondResult,
     this.submitReviewResult = true,
+    this.submitReviewError,
   }) {
     if (respondResult != null) this.respondResult = respondResult;
   }
@@ -25,6 +26,7 @@ class FakeLivePsychicsRepository implements LivePsychicsRepository {
   PsychicEntity? psychicResult;
   PsychicRespondResult respondResult = const PsychicRespondResult(success: true);
   bool submitReviewResult;
+  Object? submitReviewError;
   String? lastRespondAction;
   String? lastRespondSessionId;
   String? lastReviewSessionId;
@@ -118,6 +120,8 @@ class FakeLivePsychicsRepository implements LivePsychicsRepository {
     lastReviewTellerId = tellerId;
     lastReviewRating = rating;
     lastReviewComment = comment;
+    final err = submitReviewError;
+    if (err != null) throw err;
     return submitReviewResult;
   }
 

@@ -229,18 +229,28 @@ class GrowthHubPage extends ConsumerWidget {
     DailyTaskEntity? daily,
   ) async {
     if (daily != null && daily.completed && !daily.claimed) {
-      final ok = await ref.read(dailyTasksRemoteProvider).claimTask(daily.id);
-      if (ok) {
-        ref.invalidate(userDailyTasksProvider);
-        ref.refreshWalletCache(force: true);
+      try {
+        final ok = await ref.read(dailyTasksRemoteProvider).claimTask(daily.id);
+        if (ok) {
+          ref.invalidate(userDailyTasksProvider);
+          ref.refreshWalletCache(force: true);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${task.rewardLabel} ödülü alındı')),
+            );
+          }
+          return;
+        }
+      } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${task.rewardLabel} ödülü alındı')),
+            SnackBar(content: Text(ApiException.userMessage(e))),
           );
         }
         return;
       }
     }
+    if (!context.mounted) return;
     _openTask(context, task.route);
   }
 
