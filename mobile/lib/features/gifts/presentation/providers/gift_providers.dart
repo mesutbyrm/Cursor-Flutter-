@@ -80,7 +80,7 @@ final streamGiftLeaderboardProvider = FutureProvider.autoDispose
     .family<List<GiftLeaderboardEntry>, String>((ref, streamId) async {
       if (streamId.isEmpty) return const [];
       try {
-        return ref.watch(giftRepositoryProvider).fetchLeaderboard(streamId);
+        return await ref.watch(giftRepositoryProvider).fetchLeaderboard(streamId);
       } catch (_) {
         return const [];
       }
