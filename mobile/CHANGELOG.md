@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.390+428 (2026-08-26) — Sayfa denetimi P21 (duyuru, fal türü, falcı, liderlik)
+
+- **Duyurular:** `GET /api/announcements` hatası artık boş liste gibi gizlenmez; duyuru merkezinde tekrar dene
+- **Fal türleri:** `GET /api/fortune-request-types` hatası ana sayfa / fal hub’da tekrar dene ile görünür
+- **Falcı profili:** yorum, ödül, hediye ve oturum geçmişi API hatası boş bölüm gibi görünmez
+- **Hediye liderliği:** `GET /api/leaderboards` tüm yollar düşünce gerçek hata + tekrar dene
+
 ## 1.0.389+427 (2026-08-26) — Sayfa denetimi P20 (rozet, çerçeve, başarımlar)
 
 - **Üyelik rozetleri:** `GET /api/membership-badges` hatası artık boş katalog gibi gizlenmez; profilde tekrar dene

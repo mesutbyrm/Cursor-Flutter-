@@ -8,14 +8,18 @@ import 'live_fortune_request_provider.dart';
 /// API kataloğu + yerel yedek — canlı fal formu tür listesi.
 final liveFortuneTypeOptionsProvider =
     FutureProvider.autoDispose<List<PsychicFortuneType>>((ref) async {
-  final remote = await ref.watch(fortuneRequestTypesProvider.future);
-  if (remote.isEmpty) return psychicFortuneTypes;
-  return remote
-      .map(
-        (FortuneRequestType t) =>
-            PsychicFortuneType(key: t.key, label: t.label),
-      )
-      .toList();
+  try {
+    final remote = await ref.watch(fortuneRequestTypesProvider.future);
+    if (remote.isEmpty) return psychicFortuneTypes;
+    return remote
+        .map(
+          (FortuneRequestType t) =>
+              PsychicFortuneType(key: t.key, label: t.label),
+        )
+        .toList();
+  } catch (_) {
+    return psychicFortuneTypes;
+  }
 });
 
 /// İzleyicinin aktif fal isteği durumu.

@@ -185,4 +185,19 @@ void main() {
     expect(ApiEndpoints.profileFrames, '/api/profile-frames');
     expect(ApiEndpoints.userAchievements, '/api/user/achievements');
   });
+
+  test('kılavuz duyuru, falcı hediye/yorum ve liderlik uçları', () {
+    expect(ApiEndpoints.announcements, '/api/announcements');
+    expect(ApiEndpoints.fortuneRequestTypes, '/api/fortune-request-types');
+    expect(
+      ApiEndpoints.fortuneTellerReviews('t1'),
+      '/api/fortune-tellers/t1/reviews',
+    );
+    expect(
+      ApiEndpoints.fortuneTellerGifts('t1'),
+      '/api/fortune-tellers/gifts?tellerId=t1',
+    );
+    expect(ApiEndpoints.fortuneTellerSession, '/api/fortune-tellers/session');
+    expect(ApiEndpoints.leaderboards, '/api/leaderboards');
+  });
 }

@@ -294,89 +294,79 @@ class LivePsychicsRemoteDataSource {
   Future<List<PsychicReviewEntity>> fetchReviews(String tellerId) async {
     final key = tellerId.trim();
     if (key.isEmpty) return const [];
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerReviews(key));
-      final body = res.data;
-      if (body is Map) {
-        final map = asJsonMap(body);
-        final items = PsychicModel.itemsFromBody(
-          map,
-          keys: const ['reviews', 'items', 'data'],
-        );
-        return items
-            .map(PsychicModel.reviewFromJson)
-            .where((r) => r.id.isNotEmpty)
-            .toList(growable: false);
-      }
-      if (body is List) {
-        return body
-            .whereType<Map>()
-            .map((e) => PsychicModel.reviewFromJson(e))
-            .where((r) => r.id.isNotEmpty)
-            .toList(growable: false);
-      }
-    } catch (_) {}
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerReviews(key));
+    final body = res.data;
+    if (body is Map) {
+      final map = asJsonMap(body);
+      final items = PsychicModel.itemsFromBody(
+        map,
+        keys: const ['reviews', 'items', 'data'],
+      );
+      return items
+          .map(PsychicModel.reviewFromJson)
+          .where((r) => r.id.isNotEmpty)
+          .toList(growable: false);
+    }
+    if (body is List) {
+      return body
+          .whereType<Map>()
+          .map((e) => PsychicModel.reviewFromJson(e))
+          .where((r) => r.id.isNotEmpty)
+          .toList(growable: false);
+    }
     return const [];
   }
 
   Future<List<PsychicAwardEntity>> fetchAwards(String tellerId) async {
     final key = tellerId.trim();
     if (key.isEmpty) return const [];
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerAwards(key));
-      final items = PsychicModel.itemsFromBody(
-        res.data,
-        keys: const ['awards', 'items', 'data', 'results'],
-      );
-      return items
-          .map((m) => PsychicAwardEntity(
-                id: m['id']?.toString() ?? '',
-                tellerId: key,
-                awardType: m['awardType']?.toString() ?? '',
-                title: m['title']?.toString() ?? '',
-                startDate: PsychicModel.parseDate(m['startDate']),
-                endDate: PsychicModel.parseDate(m['endDate']),
-                createdAt: PsychicModel.parseDate(m['createdAt']),
-              ))
-          .where((a) => a.id.isNotEmpty)
-          .toList(growable: false);
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerAwards(key));
+    final items = PsychicModel.itemsFromBody(
+      res.data,
+      keys: const ['awards', 'items', 'data', 'results'],
+    );
+    return items
+        .map((m) => PsychicAwardEntity(
+              id: m['id']?.toString() ?? '',
+              tellerId: key,
+              awardType: m['awardType']?.toString() ?? '',
+              title: m['title']?.toString() ?? '',
+              startDate: PsychicModel.parseDate(m['startDate']),
+              endDate: PsychicModel.parseDate(m['endDate']),
+              createdAt: PsychicModel.parseDate(m['createdAt']),
+            ))
+        .where((a) => a.id.isNotEmpty)
+        .toList(growable: false);
   }
 
   Future<List<PsychicGiftEntity>> fetchGifts(String tellerId) async {
     final key = tellerId.trim();
     if (key.isEmpty) return const [];
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerGifts(key));
-      final items = PsychicModel.itemsFromBody(
-        res.data,
-        keys: const ['gifts', 'items', 'data', 'results'],
-      );
-      return items
-          .map((m) => PsychicGiftEntity(
-                senderId: m['senderId']?.toString() ??
-                    m['userId']?.toString() ??
-                    '',
-                senderName: m['senderName']?.toString() ??
-                    m['name']?.toString() ??
-                    'Kullanıcı',
-                giftCount: asInt(m['giftCount'] ?? m['count']),
-                senderImage:
-                    m['senderImage']?.toString() ?? m['image']?.toString(),
-                totalJeton: asInt(
-                  m['totalJeton'] ??
-                      m['jeton'] ??
-                      m['amount'] ??
-                      m['totalAmount'],
-                ),
-              ))
-          .where((g) => g.senderId.isNotEmpty)
-          .toList(growable: false);
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerGifts(key));
+    final items = PsychicModel.itemsFromBody(
+      res.data,
+      keys: const ['gifts', 'items', 'data', 'results'],
+    );
+    return items
+        .map((m) => PsychicGiftEntity(
+              senderId: m['senderId']?.toString() ??
+                  m['userId']?.toString() ??
+                  '',
+              senderName: m['senderName']?.toString() ??
+                  m['name']?.toString() ??
+                  'Kullanıcı',
+              giftCount: asInt(m['giftCount'] ?? m['count']),
+              senderImage:
+                  m['senderImage']?.toString() ?? m['image']?.toString(),
+              totalJeton: asInt(
+                m['totalJeton'] ??
+                    m['jeton'] ??
+                    m['amount'] ??
+                    m['totalAmount'],
+              ),
+            ))
+        .where((g) => g.senderId.isNotEmpty)
+        .toList(growable: false);
   }
 
   Future<bool> submitReview({
@@ -554,22 +544,18 @@ class LivePsychicsRemoteDataSource {
   Future<List<PsychicSessionHistoryEntity>> fetchRecentSessions({
     int limit = 20,
   }) async {
-    try {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.fortuneTellerSession,
-        query: {'limit': limit},
-      );
-      final items = PsychicModel.itemsFromBody(
-        res.data,
-        keys: const ['sessions', 'items', 'data', 'results'],
-      );
-      return items
-          .map(PsychicModel.sessionHistoryFromJson)
-          .where((s) => s.sessionId.isNotEmpty)
-          .toList(growable: false);
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.fortuneTellerSession,
+      query: {'limit': limit},
+    );
+    final items = PsychicModel.itemsFromBody(
+      res.data,
+      keys: const ['sessions', 'items', 'data', 'results'],
+    );
+    return items
+        .map(PsychicModel.sessionHistoryFromJson)
+        .where((s) => s.sessionId.isNotEmpty)
+        .toList(growable: false);
   }
 
   Future<List<PsychicSessionStatusResult>> fetchActiveSessions() async {

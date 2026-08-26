@@ -159,8 +159,12 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
       forceRefresh: forceRefresh,
       maxAge: const Duration(minutes: 5),
       fetch: () async {
-        final entries = await _remote.fetchActiveSpeakers();
-        return VoiceRoomsDiscoverMapper.speakersFromLeaderboard(entries);
+        try {
+          final entries = await _remote.fetchActiveSpeakers();
+          return VoiceRoomsDiscoverMapper.speakersFromLeaderboard(entries);
+        } catch (_) {
+          return const <ActiveSpeakerItem>[];
+        }
       },
       encode: (items) => {
         'items': items

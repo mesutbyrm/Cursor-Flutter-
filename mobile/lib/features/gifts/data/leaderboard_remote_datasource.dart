@@ -1,9 +1,15 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../domain/gift_leaderboard_entry.dart';
+
+Never _throwLast(Object error) {
+  if (error is ApiException) throw error;
+  throw ApiException(ApiException.userMessage(error));
+}
 
 enum GiftLeaderboardPeriod {
   session('session', 'Bu yayın'),
@@ -41,6 +47,8 @@ class LeaderboardRemoteDataSource {
     GiftLeaderboardPeriod period = GiftLeaderboardPeriod.weekly,
     String type = 'gifts',
   }) async {
+    Object? lastError;
+    var anySuccess = false;
     for (final path in [ApiEndpoints.leaderboards, ApiEndpoints.leaderboard]) {
       try {
         final res = await _dio.safeGet<dynamic>(
@@ -52,9 +60,12 @@ class LeaderboardRemoteDataSource {
             'category': 'gifts',
           },
         );
+        anySuccess = true;
         final list = _parseEntries(res.data);
         if (list.isNotEmpty) return list;
-      } catch (_) {}
+      } catch (e) {
+        lastError = e;
+      }
       try {
         final res = await _dio.safePost<dynamic>(
           path,
@@ -64,10 +75,14 @@ class LeaderboardRemoteDataSource {
             'range': period.apiValue,
           },
         );
+        anySuccess = true;
         final list = _parseEntries(res.data);
         if (list.isNotEmpty) return list;
-      } catch (_) {}
+      } catch (e) {
+        lastError = e;
+      }
     }
+    if (!anySuccess && lastError != null) _throwLast(lastError);
     return const [];
   }
 

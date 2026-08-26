@@ -42,17 +42,13 @@ class PlatformContentRemoteDataSource {
 
   /// `GET /api/announcements` — site duyuruları (kılavuz §9.13).
   Future<List<PlatformPopup>> fetchAnnouncements() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.announcements);
-      return _parseList(res.data, PlatformPopup.fromJson, keys: [
-        'announcements',
-        'items',
-        'data',
-        'banners',
-      ]).where((p) => p.title.trim().isNotEmpty).toList();
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.announcements);
+    return _parseList(res.data, PlatformPopup.fromJson, keys: [
+      'announcements',
+      'items',
+      'data',
+      'banners',
+    ]).where((p) => p.title.trim().isNotEmpty).toList();
   }
 
   Future<bool> claimAdReward({String? adId, String? placement}) async {
@@ -74,17 +70,13 @@ class PlatformContentRemoteDataSource {
   }
 
   Future<List<FortuneRequestType>> fetchFortuneRequestTypes() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneRequestTypes);
-      return _parseList(res.data, FortuneRequestType.fromJson, keys: [
-        'types',
-        'items',
-        'data',
-        'fortuneRequestTypes',
-      ]);
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneRequestTypes);
+    return _parseList(res.data, FortuneRequestType.fromJson, keys: [
+      'types',
+      'items',
+      'data',
+      'fortuneRequestTypes',
+    ]);
   }
 
   /// `GET /api/broadcast-images` — yayın arka plan görselleri.
