@@ -96,6 +96,8 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   }
 
   Future<void> refresh() async {
+    Object? lastError;
+
     // 1) Ana backend — GET /api/video-streams/{id}/pk-battle
     try {
       final api = ref.read(pkBattleRemoteDataSourceProvider);
@@ -117,7 +119,11 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
         _syncLiveSocketBattle();
         return;
       }
-    } catch (_) {}
+    } on ApiException catch (e) {
+      if (e.statusCode != 404) lastError = e;
+    } catch (e) {
+      lastError = e;
+    }
 
     // 2) Birleşik PK — yalnızca aktif maç (pending davet burada işlenmez).
     try {
@@ -137,26 +143,48 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
         ref.read(pkRoomProvider(unified.id).notifier).adopt(unified);
         return;
       }
-    } catch (_) {}
+    } on ApiException catch (e) {
+      if (e.statusCode != 404) lastError = e;
+    } catch (e) {
+      lastError = e;
+    }
 
     _sseActive = false;
 
     // 3) Eski video-stream PK yolu (geriye dönük).
-    final battle = await _remote.fetchPkBattle(arg);
-    if (battle == null && state.battle == null) {
-      _stopPolling();
-      state = state.copyWith(clearBattle: true, clearUnifiedMatchId: true);
+    try {
+      final battle = await _remote.fetchPkBattle(arg);
+      if (battle != null) {
+        final status = battle['status']?.toString() ?? '';
+        state = state.copyWith(
+          battle: battle,
+          clearUnifiedMatchId: true,
+          clearError: true,
+        );
+        _syncLiveSocketBattle();
+        if (status == 'active') _startPolling();
+        return;
+      }
+    } on ApiException catch (e) {
+      if (e.statusCode != 404) lastError = e;
+    } catch (e) {
+      lastError = e;
+    }
+
+    _stopPolling();
+    if (lastError != null && state.battle == null) {
+      state = state.copyWith(
+        error: ApiException.userMessage(lastError),
+        clearBattle: true,
+        clearUnifiedMatchId: true,
+      );
       return;
     }
-    final status = battle?['status']?.toString() ?? '';
     state = state.copyWith(
-      battle: battle,
-      clearBattle: battle == null,
-      clearUnifiedMatchId: battle == null,
+      clearBattle: true,
+      clearUnifiedMatchId: true,
       clearError: true,
     );
-    _syncLiveSocketBattle();
-    if (battle != null && status == 'active') _startPolling();
   }
 
   /// Kabul sonrası veya SSE'den — ana backend PK durumunu yeniler.

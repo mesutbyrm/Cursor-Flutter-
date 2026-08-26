@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/live_guest_list_snapshot.dart';
@@ -116,6 +117,7 @@ class LiveStreamExtrasDataSource {
   }
 
   Future<Map<String, dynamic>?> fetchPkBattle(String streamId) async {
+    Object? lastError;
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.videoStreamPk,
@@ -123,16 +125,28 @@ class LiveStreamExtrasDataSource {
       );
       final battle = _unwrapBattle(res.data);
       if (battle != null) return battle;
-    } catch (_) {}
+    } on ApiException catch (e) {
+      if (e.statusCode != 404) lastError = e;
+    } catch (e) {
+      lastError = e;
+    }
 
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.videoStreamPkBattle(streamId),
       );
       return _unwrapBattle(res.data);
-    } catch (_) {
-      return null;
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return null;
+      lastError = e;
+    } catch (e) {
+      lastError = e;
     }
+    if (lastError is ApiException) throw lastError;
+    if (lastError != null) {
+      throw ApiException(ApiException.userMessage(lastError));
+    }
+    return null;
   }
 
   Map<String, dynamic>? _unwrapBattle(dynamic body) {
