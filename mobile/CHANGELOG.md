@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.380+418 (2026-08-26) — Sayfa denetimi P11 (müzik, PK, yorum, kazanç retry)
+
+- **Kısa video müzik:** `GET /api/short-videos/music` hatasında tekrar dene (çekerek yenileme çalışır)
+- **PK geçmişi / davet:** `GET /api/pk/history` ve oda listesi hatasında tekrar dene
+- **Sosyal yorumlar:** `GET /api/social/posts/{id}/comments` hatasında tekrar dene
+- **Yayın istatistikleri / kazanç:** `GET /api/user/stats` hatası artık gizlenmez; tekrar dene
+- **Okey 101:** oda yükleme hatasında gövdede tekrar dene
+
 ## 1.0.379+417 (2026-08-26) — Sayfa denetimi P10 (rozet, falcı, izleyici retry)
 
 - **Büyüme merkezi:** `GET /api/user/achievements` hatasında tekrar dene

@@ -79,4 +79,14 @@ void main() {
       '/api/video-streams/abc/viewers',
     );
   });
+
+  test('kılavuz müzik, PK geçmiş, yorum ve istatistik uçları', () {
+    expect(ApiEndpoints.shortVideosMusic, '/api/short-videos/music');
+    expect(ApiEndpoints.pkHistory, '/api/pk/history');
+    expect(
+      ApiEndpoints.socialPostComments('post-1'),
+      '/api/social/posts/post-1/comments',
+    );
+    expect(ApiEndpoints.userStats, '/api/user/stats');
+  });
 }

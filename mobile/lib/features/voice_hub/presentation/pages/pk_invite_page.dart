@@ -184,7 +184,23 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
       appBar: AppBar(title: const Text('PK Daveti')),
       body: roomsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(ApiException.userMessage(e))),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(ApiException.userMessage(e), textAlign: TextAlign.center),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () => ref.invalidate(voiceRoomsProvider),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Tekrar dene'),
+                ),
+              ],
+            ),
+          ),
+        ),
         data: (rooms) {
           final others = filterPkEligibleOpponentRooms(
             rooms,

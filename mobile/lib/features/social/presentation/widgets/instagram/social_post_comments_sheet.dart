@@ -229,7 +229,22 @@ class _SocialPostCommentsSheetState
     final commentsAsync = ref.watch(postCommentsProvider(widget.postId));
     return commentsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text(ApiException.userMessage(e))),
+      error: (e, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(ApiException.userMessage(e), textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: _reload,
+                child: const Text('Tekrar dene'),
+              ),
+            ],
+          ),
+        ),
+      ),
       data: (items) {
         if (items.isEmpty) {
           return Center(

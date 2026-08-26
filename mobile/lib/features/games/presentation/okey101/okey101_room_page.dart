@@ -74,7 +74,29 @@ class _Okey101RoomPageState extends ConsumerState<Okey101RoomPage> {
       ),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(ApiException.userMessage(e))),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  ApiException.userMessage(e),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () => ref
+                      .read(gameRoomControllerProvider(widget.roomId).notifier)
+                      .refresh(),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Tekrar dene'),
+                ),
+              ],
+            ),
+          ),
+        ),
         data: (snapshot) {
           final game = parseOkey101FromRoomRaw(snapshot.raw);
           if (game == null) {

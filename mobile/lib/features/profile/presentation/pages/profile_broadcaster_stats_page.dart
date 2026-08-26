@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/providers/platform_stats_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../feed/presentation/widgets/discover/discover_platform_stats.dart';
+import '../profile_hub/profile_hub_error_banner.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_glass.dart';
 
@@ -31,7 +33,10 @@ class ProfileBroadcasterStatsPage extends ConsumerWidget {
             children: [
               mine.when(
                 loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
+                error: (e, _) => ProfileHubSectionRetry(
+                  message: ApiException.userMessage(e),
+                  onRetry: () => ref.invalidate(profileStatsProvider),
+                ),
                 data: (s) => ProfileGlass(
                   padding: const EdgeInsets.all(16),
                   child: Column(

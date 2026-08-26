@@ -28,6 +28,8 @@ class ProfileEarningsPage extends ConsumerWidget {
             error: (e, _) => DiscoverEmptyState(
               icon: Icons.error_outline_rounded,
               message: ApiException.userMessage(e),
+              action: () => ref.invalidate(profileStatsProvider),
+              actionLabel: 'Tekrar dene',
             ),
             data: (s) => ListView(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),

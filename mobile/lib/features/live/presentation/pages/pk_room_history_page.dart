@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../domain/pk/pk_room_models.dart';
 import '../providers/pk_room_providers.dart';
 
@@ -25,9 +26,26 @@ class PkRoomHistoryPage extends ConsumerWidget {
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(
-          child: Text('Geçmiş yüklenemedi.',
-              style: TextStyle(color: Color(0x99FFFFFF))),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  ApiException.userMessage(e),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Color(0x99FFFFFF)),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () => ref.invalidate(pkHistoryProvider),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Tekrar dene'),
+                ),
+              ],
+            ),
+          ),
         ),
         data: (rows) {
           if (rows.isEmpty) {

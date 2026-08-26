@@ -20,7 +20,23 @@ class PkHistoryPage extends ConsumerWidget {
       appBar: AppBar(title: const Text('PK Geçmişi')),
       body: history.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(ApiException.userMessage(e))),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(ApiException.userMessage(e), textAlign: TextAlign.center),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () => ref.invalidate(pkHistoryProvider(battleType)),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Tekrar dene'),
+                ),
+              ],
+            ),
+          ),
+        ),
         data: (items) {
           if (items.isEmpty) {
             return const Center(child: Text('Henüz PK geçmişi yok'));
