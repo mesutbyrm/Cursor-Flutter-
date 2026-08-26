@@ -98,13 +98,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
   @override
   Future<ProfileStatsEntity> myStats() async {
     final results = await NetworkPerf.parallel<Object?>([
-      () async {
-        try {
-          return await _remote.myStats();
-        } catch (_) {
-          return const ProfileStatsEntity();
-        }
-      }(),
+      _remote.myStats(),
       () async {
         try {
           return await _remote.mySiteProfile();

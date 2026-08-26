@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.401+439 (2026-08-26) — Sayfa denetimi P32 (profil istatistik)
+
+- **Kazanç / yayın istatistik:** `GET /api/user/stats` hatası boş sıfırlar gibi gizlenmez; «Tekrar dene» çalışır (takipçi/yayın geçmişi yedekleri fail-open kalır)
+
 ## 1.0.400+438 (2026-08-26) — Sayfa denetimi P31 (bildirim listesi, oyun jeton)
 
 - **Gelen kutusu:** `GET /api/notifications` hatası artık boş «bildirimin yok» gibi gizlenmez; Yenile çalışır

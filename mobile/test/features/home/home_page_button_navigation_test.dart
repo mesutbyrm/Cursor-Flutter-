@@ -170,6 +170,8 @@ void main() {
 
   test('kılavuz istatistik, takip, arama ve yorum uçları', () {
     expect(ApiEndpoints.userStats, '/api/user/stats');
+    expect(ApiEndpoints.userStatistics, '/api/user/statistics');
+    expect(ApiEndpoints.meStats, '/api/users/me/stats');
     expect(ApiEndpoints.userActivity, '/api/user/activity');
     expect(ApiEndpoints.userFollowers, '/api/user/followers');
     expect(ApiEndpoints.dailyMissions, '/api/daily-missions');
