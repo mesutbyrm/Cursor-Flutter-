@@ -274,4 +274,13 @@ void main() {
       '/api/room/sess1/tip',
     );
   });
+
+  test('kılavuz seans iptal, oda PATCH ve günlük burç uçları', () {
+    expect(
+      ApiEndpoints.fortuneTellerSessionPatch('sess1'),
+      '/api/fortune-tellers/sessions/sess1',
+    );
+    expect(ApiEndpoints.liveFortuneRoom('sess1'), '/api/room/sess1');
+    expect(ApiEndpoints.horoscopeDaily, '/api/horoscope/daily');
+  });
 }

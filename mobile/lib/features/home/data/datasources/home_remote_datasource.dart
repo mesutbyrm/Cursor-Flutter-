@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/images/canlifal_image_urls.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../../core/util/fortune_price_parser.dart';
@@ -198,8 +199,9 @@ class HomeRemoteDataSource {
         data: {'zodiacSign': zodiacSign},
       );
       return _horoscopeTextFromBody(res.data);
-    } catch (_) {
-      return null;
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(ApiException.userMessage(e));
     }
   }
 

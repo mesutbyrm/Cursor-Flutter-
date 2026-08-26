@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.398+436 (2026-08-26) — Sayfa denetimi P29 (seans iptal, süre, burç)
+
+- **Bekleme iptali:** `PATCH /api/fortune-tellers/sessions/{id}` `{action: cancel}` başarısızsa ekranda kalınır; snackbar
+- **Canlı fal oda:** `PATCH /api/room/{id}` süre başlat/uzat/ekle hataları snackbar (`ping` yedek kanal fail-open)
+- **Günlük burç:** `POST /api/horoscope/daily` hatası tekrar dene ile görünür
+
 ## 1.0.397+435 (2026-08-26) — Sayfa denetimi P28 (favori, bildirim, seans)
 
 - **Favori falcı:** `POST /api/favorite-tellers` hatası kalp düğmesinde görünür; başarılı çıkarma artık hata sanılmaz

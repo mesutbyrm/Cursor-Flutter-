@@ -96,7 +96,20 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
               onPressed: () async {
                 final choice = await ctrl.openExtendSheet(context);
                 if (!context.mounted || choice == null) return;
-                await ctrl.extendSession(choice);
+                try {
+                  final ok = await ctrl.extendSession(choice);
+                  if (!context.mounted) return;
+                  if (!ok) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Süre uzatılamadı')),
+                    );
+                  }
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(ApiException.userMessage(e))),
+                  );
+                }
               },
             ),
           ),
@@ -516,17 +529,26 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                           icon: Icons.play_arrow_rounded,
                           label: 'Başlat',
                           onTap: () async {
-                            final ok = await ctrl.startTimer();
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  ok
-                                      ? 'Seans süresi başlatıldı'
-                                      : 'Süre başlatılamadı',
+                            try {
+                              final ok = await ctrl.startTimer();
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    ok
+                                        ? 'Seans süresi başlatıldı'
+                                        : 'Süre başlatılamadı',
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(ApiException.userMessage(e)),
+                                ),
+                              );
+                            }
                           },
                         ),
                       if (!session.isClient)
@@ -536,17 +558,26 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                           onTap: () async {
                             final choice = await ctrl.openExtendSheet(context);
                             if (choice == null || !context.mounted) return;
-                            final ok = await ctrl.tellerAddTime(choice);
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  ok
-                                      ? '${choice.minutes} dakika eklendi'
-                                      : 'Süre eklenemedi',
+                            try {
+                              final ok = await ctrl.tellerAddTime(choice);
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    ok
+                                        ? '${choice.minutes} dakika eklendi'
+                                        : 'Süre eklenemedi',
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(ApiException.userMessage(e)),
+                                ),
+                              );
+                            }
                           },
                         ),
                       if (session.isClient) ...[
@@ -581,17 +612,26 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                           onTap: () async {
                             final choice = await ctrl.openExtendSheet(context);
                             if (choice == null || !context.mounted) return;
-                            final ok = await ctrl.extendSession(choice);
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  ok
-                                      ? '${choice.minutes} dakika eklendi'
-                                      : 'Süre uzatılamadı',
+                            try {
+                              final ok = await ctrl.extendSession(choice);
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    ok
+                                        ? '${choice.minutes} dakika eklendi'
+                                        : 'Süre uzatılamadı',
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(ApiException.userMessage(e)),
+                                ),
+                              );
+                            }
                           },
                         ),
                       ],

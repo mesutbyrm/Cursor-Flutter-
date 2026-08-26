@@ -728,8 +728,9 @@ class LivePsychicsRemoteDataSource {
         data: const {'action': 'cancel'},
       );
       return true;
-    } catch (_) {
-      return false;
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(ApiException.userMessage(e));
     }
   }
 
@@ -855,8 +856,10 @@ class LivePsychicsRemoteDataSource {
         return map['data'] is Map ? asJsonMap(map['data']) : map;
       }
       return <String, dynamic>{};
-    } catch (_) {
-      return null;
+    } catch (e) {
+      if (act == 'ping') return null;
+      if (e is ApiException) rethrow;
+      throw ApiException(ApiException.userMessage(e));
     }
   }
 

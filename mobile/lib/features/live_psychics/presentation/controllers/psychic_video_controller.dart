@@ -316,17 +316,22 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (_disposed || state.leaving || state.timerStarted || session.isClient) {
       return false;
     }
-    await _ensureTimerStarted();
+    await _ensureTimerStarted(silent: false);
     return state.timerStarted;
   }
 
-  Future<void> _ensureTimerStarted() async {
+  Future<void> _ensureTimerStarted({bool silent = true}) async {
     if (_disposed || state.leaving || state.timerStarted) return;
-    final result = await ref
-        .read(livePsychicsRepositoryProvider)
-        .roomAction(session.sessionId, 'start_timer');
-    if (_disposed || result == null) return;
-    await _syncRoomInfo();
+    try {
+      final result = await ref
+          .read(livePsychicsRepositoryProvider)
+          .roomAction(session.sessionId, 'start_timer');
+      if (_disposed || result == null) return;
+      await _syncRoomInfo();
+    } catch (e) {
+      if (silent) return;
+      rethrow;
+    }
   }
 
   void _startTimers() {
@@ -1025,11 +1030,13 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     final choice = await openExtendSheet(context);
     if (_disposed || state.leaving) return;
     if (choice != null) {
-      final ok = await extendSession(choice);
-      if (ok && !_disposed && !state.leaving) {
-        _startTimers();
-        return;
-      }
+      try {
+        final ok = await extendSession(choice);
+        if (ok && !_disposed && !state.leaving) {
+          _startTimers();
+          return;
+        }
+      } catch (_) {}
     }
     if (state.remaining.inSeconds > 0) {
       _startTimers();

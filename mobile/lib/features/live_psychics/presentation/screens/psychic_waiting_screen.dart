@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:canlifal_social/app/router/app_router.dart';
+import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/ui/premium/live_badge.dart';
 import 'package:canlifal_social/core/ui/premium_2026/cosmic_galaxy_background.dart';
@@ -184,9 +185,13 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     state = state.copyWith(phase: PsychicWaitingPhase.expired, closed: true);
     _poll?.cancel();
     _timeout?.cancel();
-    unawaited(
-      ref.read(livePsychicsRepositoryProvider).cancelSession(session.sessionId),
-    );
+    unawaited(() async {
+      try {
+        await ref
+            .read(livePsychicsRepositoryProvider)
+            .cancelSession(session.sessionId);
+      } catch (_) {}
+    }());
     await PsychicSessionStore.clear();
     invalidateWalletCacheFromRef(ref);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
@@ -195,7 +200,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   }
 
   Future<void> cancel(BuildContext context) async {
-    if (state.closed) return;
+    if (state.closed || state.cancelling) return;
 
     final confirmed = await showPsychicCloseDialog(
       context,
@@ -206,13 +211,28 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     );
     if (!confirmed) return;
 
+    state = state.copyWith(cancelling: true);
+    try {
+      await ref
+          .read(livePsychicsRepositoryProvider)
+          .cancelSession(session.sessionId);
+    } catch (e) {
+      if (!state.closed) {
+        state = state.copyWith(cancelling: false);
+      }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+      return;
+    }
+    if (state.closed) return;
+
     ref
         .read(psychicSessionCancelSignalProvider.notifier)
         .signal(session.sessionId);
     await _exitImmediate();
-    unawaited(
-      ref.read(livePsychicsRepositoryProvider).cancelSession(session.sessionId),
-    );
   }
 
   Future<void> _exitImmediate() async {
@@ -462,7 +482,7 @@ class _PsychicWaitingScreenState extends ConsumerState<PsychicWaitingScreen>
                             SizedBox(
                               width: double.infinity,
                               child: FilledButton.icon(
-                                onPressed: waiting.closed
+                                onPressed: waiting.closed || waiting.cancelling
                                     ? null
                                     : () => ref
                                         .read(
@@ -478,10 +498,19 @@ class _PsychicWaitingScreenState extends ConsumerState<PsychicWaitingScreen>
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                 ),
-                                icon: const Icon(Icons.close_rounded, size: 18),
-                                label: const Text(
-                                  'İptal Et',
-                                  style: TextStyle(fontWeight: FontWeight.w800),
+                                icon: waiting.cancelling
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Icon(Icons.close_rounded, size: 18),
+                                label: Text(
+                                  waiting.cancelling ? 'İptal ediliyor…' : 'İptal Et',
+                                  style: const TextStyle(fontWeight: FontWeight.w800),
                                 ),
                               ),
                             ),
@@ -499,9 +528,11 @@ class _PsychicWaitingScreenState extends ConsumerState<PsychicWaitingScreen>
                     shape: const CircleBorder(),
                     clipBehavior: Clip.antiAlias,
                     child: IconButton(
-                      onPressed: () => ref
-                          .read(psychicWaitingControllerProvider(session).notifier)
-                          .cancel(context),
+                      onPressed: waiting.cancelling
+                          ? null
+                          : () => ref
+                              .read(psychicWaitingControllerProvider(session).notifier)
+                              .cancel(context),
                       icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
                     ),
                   ),
