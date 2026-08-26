@@ -38,7 +38,10 @@ class PsychicsHomeSection extends ConsumerWidget {
         actionLabel: 'Tümünü Gör >',
         onAction: () => context.push('/canli-falcilar'),
         errorMessage: 'Falcılar yüklenemedi',
-        onRetry: () => ref.invalidate(homeOnlinePsychicsProvider),
+        onRetry: () {
+          ref.invalidate(homeOnlinePsychicsProvider);
+          ref.invalidate(homeDisplayedPsychicsProvider);
+        },
       ),
       data: (list) {
         if (list.isEmpty) {

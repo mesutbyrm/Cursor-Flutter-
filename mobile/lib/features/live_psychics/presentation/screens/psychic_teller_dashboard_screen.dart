@@ -18,6 +18,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/controllers/
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_async_views.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_invite_diagnostic_card.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_recent_sessions_panel.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_rtc_session_report_card.dart';
@@ -29,6 +30,7 @@ class PsychicTellerDashboardState {
     this.loading = true,
     this.togglingOnline = false,
     this.processingId,
+    this.loadError,
   });
 
   final PsychicEntity? profile;
@@ -36,6 +38,7 @@ class PsychicTellerDashboardState {
   final bool loading;
   final bool togglingOnline;
   final String? processingId;
+  final String? loadError;
 
   PsychicTellerDashboardState copyWith({
     PsychicEntity? profile,
@@ -43,7 +46,9 @@ class PsychicTellerDashboardState {
     bool? loading,
     bool? togglingOnline,
     String? processingId,
+    String? loadError,
     bool clearProcessing = false,
+    bool clearLoadError = false,
   }) {
     return PsychicTellerDashboardState(
       profile: profile ?? this.profile,
@@ -52,6 +57,7 @@ class PsychicTellerDashboardState {
       togglingOnline: togglingOnline ?? this.togglingOnline,
       processingId:
           clearProcessing ? null : (processingId ?? this.processingId),
+      loadError: clearLoadError ? null : (loadError ?? this.loadError),
     );
   }
 }
@@ -134,17 +140,28 @@ class PsychicTellerDashboardController
   }
 
   Future<void> refresh() async {
-    state = state.copyWith(loading: true);
-    var approved = ref.read(approvedPsychicProvider);
-    if (!approved.checked || approved.profile == null) {
-      await ref.read(approvedPsychicProvider.notifier).refresh();
-      approved = ref.read(approvedPsychicProvider);
+    state = state.copyWith(loading: true, clearLoadError: true);
+    try {
+      var approved = ref.read(approvedPsychicProvider);
+      if (!approved.checked || approved.profile == null) {
+        await ref.read(approvedPsychicProvider.notifier).refresh();
+        approved = ref.read(approvedPsychicProvider);
+      }
+      var profile = approved.profile ??
+          await ref.read(livePsychicsRepositoryProvider).fetchMyProfile();
+      profile = await _profileWithServerOnline(profile);
+      state = state.copyWith(
+        profile: profile,
+        loading: false,
+        clearLoadError: true,
+      );
+      await _pollRequests();
+    } catch (e) {
+      state = state.copyWith(
+        loading: false,
+        loadError: ApiException.userMessage(e),
+      );
     }
-    var profile = approved.profile ??
-        await ref.read(livePsychicsRepositoryProvider).fetchMyProfile();
-    profile = await _profileWithServerOnline(profile);
-    state = state.copyWith(profile: profile, loading: false);
-    await _pollRequests();
   }
 
   Future<void> _pollRequests() async {
@@ -288,6 +305,9 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
     final dashProfile = ref.watch(
       psychicTellerDashboardProvider.select((s) => s.profile),
     );
+    final loadError = ref.watch(
+      psychicTellerDashboardProvider.select((s) => s.loadError),
+    );
     final approved = ref.watch(approvedPsychicProvider);
     final profile = dashProfile ?? approved.profile;
 
@@ -295,6 +315,23 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
         profile == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (loadError != null && (profile == null || !profile.isUsable)) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF0D0618),
+        appBar: AppBar(
+          title: const Text('Falcı Paneli'),
+          backgroundColor: Colors.transparent,
+        ),
+        body: CosmicGalaxyBackground(
+          child: PsychicErrorView(
+            message: loadError,
+            onRetry: () =>
+                ref.read(psychicTellerDashboardProvider.notifier).refresh(),
+          ),
+        ),
       );
     }
 

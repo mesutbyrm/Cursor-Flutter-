@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.393+431 (2026-08-26) — Sayfa denetimi P24 (falcı listesi, falcı profilim, seviye)
+
+- **Canlı falcılar:** `GET /api/fortune-tellers` hatası artık boş liste gibi gizlenmez; liste / ana sayfa tekrar dene
+- **Falcı paneli:** `GET /api/fortune-tellers/my-profile` 5xx hatası “henüz falcı değilsiniz” sanılmaz; tekrar dene (404/403 = falcı değil)
+- **Seviye / XP:** `GET /api/me` seviye bilgisi yüklenemezse büyüme merkezinde uyarı
+
 ## 1.0.392+430 (2026-08-26) — Sayfa denetimi P23 (izleyici, içerik hub, fal kartı, günlük ödül)
 
 - **Yayın izleyicileri:** `GET /api/video-streams/{id}/viewers` hatası boş liste gibi gizlenmez; tekrar dene

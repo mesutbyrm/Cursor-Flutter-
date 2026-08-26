@@ -226,4 +226,10 @@ void main() {
     expect(ApiEndpoints.dreams, '/api/dreams');
     expect(ApiEndpoints.blog, '/api/blog');
   });
+
+  test('kılavuz falcı listesi, profilim ve seviye uçları', () {
+    expect(ApiEndpoints.fortuneTellers, '/api/fortune-tellers');
+    expect(ApiEndpoints.fortuneTellerMyProfile, '/api/fortune-tellers/my-profile');
+    expect(ApiEndpoints.me, '/api/me');
+  });
 }

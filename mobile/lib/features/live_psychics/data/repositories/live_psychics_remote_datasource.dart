@@ -30,6 +30,8 @@ class LivePsychicsRemoteDataSource {
     String? specialty,
     String? sort,
   }) async {
+    Object? lastError;
+    var anySuccess = false;
     final params = <String, dynamic>{
       'page': page,
       'limit': limit,
@@ -46,6 +48,7 @@ class LivePsychicsRemoteDataSource {
         ApiEndpoints.fortuneTellers,
         query: params,
       );
+      anySuccess = true;
       final items = PsychicModel.itemsFromBody(
         res.data,
         keys: const ['tellers', 'items', 'data', 'results'],
@@ -56,7 +59,9 @@ class LivePsychicsRemoteDataSource {
             .where((p) => p.id.isNotEmpty)
             .toList(growable: false);
       }
-    } catch (_) {}
+    } catch (e) {
+      lastError = e;
+    }
     if (onlineOnly == true) {
       try {
         final fallbackParams = <String, dynamic>{
@@ -73,6 +78,7 @@ class LivePsychicsRemoteDataSource {
           ApiEndpoints.fortuneTellers,
           query: fallbackParams,
         );
+        anySuccess = true;
         final items = PsychicModel.itemsFromBody(
           res.data,
           keys: const ['tellers', 'items', 'data', 'results'],
@@ -84,7 +90,13 @@ class LivePsychicsRemoteDataSource {
               .where((p) => p.isOnline)
               .toList(growable: false);
         }
-      } catch (_) {}
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (!anySuccess && lastError != null) {
+      if (lastError is ApiException) throw lastError;
+      throw ApiException(ApiException.userMessage(lastError));
     }
     return const [];
   }
@@ -100,7 +112,12 @@ class LivePsychicsRemoteDataSource {
     if (uid.isEmpty) return null;
     final uname = username?.trim().toLowerCase() ?? '';
     for (var page = 1; page <= maxPages; page++) {
-      final batch = await fetchPsychics(page: page, limit: pageLimit);
+      final List<PsychicEntity> batch;
+      try {
+        batch = await fetchPsychics(page: page, limit: pageLimit);
+      } catch (_) {
+        break;
+      }
       if (batch.isEmpty) break;
       for (final t in batch) {
         final tellerUid = t.userId?.trim() ?? '';
@@ -143,8 +160,9 @@ class LivePsychicsRemoteDataSource {
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerMyProfile);
       return PsychicModel.psychicFromMyProfileBody(res.data);
-    } catch (_) {
-      return null;
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 403) return null;
+      rethrow;
     }
   }
 

@@ -92,14 +92,12 @@ class DailyTasksRemoteDataSource {
   }
 
   Future<UserLevelEntity> fetchUserLevel() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.me);
-      final body = res.data;
-      if (body is Map) {
-        return UserLevelEntity.fromJson(Map<String, dynamic>.from(body));
-      }
-    } catch (_) {}
-    return const UserLevelEntity();
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.me);
+    final body = res.data;
+    if (body is Map) {
+      return UserLevelEntity.fromJson(Map<String, dynamic>.from(body));
+    }
+    throw const ApiException('Seviye bilgisi alınamadı');
   }
 
   List<Map<String, dynamic>> _extractList(dynamic body) {

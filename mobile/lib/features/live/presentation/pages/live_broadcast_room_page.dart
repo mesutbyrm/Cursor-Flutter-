@@ -794,16 +794,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final hostId = s.hostUserId?.trim();
     PsychicEntity? psychic;
     if (hostId != null && hostId.isNotEmpty) {
-      psychic = await ref.read(livePsychicsRepositoryProvider).fetchPsychic(hostId);
-      if (psychic == null) {
-        final list = await ref.read(livePsychicsRepositoryProvider).fetchPsychics();
-        for (final p in list) {
-          if (p.userId == hostId || p.id == hostId) {
-            psychic = p;
-            break;
+      try {
+        psychic =
+            await ref.read(livePsychicsRepositoryProvider).fetchPsychic(hostId);
+        if (psychic == null) {
+          final list =
+              await ref.read(livePsychicsRepositoryProvider).fetchPsychics();
+          for (final p in list) {
+            if (p.userId == hostId || p.id == hostId) {
+              psychic = p;
+              break;
+            }
           }
         }
-      }
+      } catch (_) {}
     }
     if (!mounted) return;
     if (psychic == null) {
