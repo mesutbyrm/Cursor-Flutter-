@@ -70,4 +70,13 @@ void main() {
     expect(ApiEndpoints.homepageButtons, '/api/homepage-buttons');
     expect(ApiEndpoints.leaderboards, '/api/leaderboards');
   });
+
+  test('kılavuz online-fal, rozet ve izleyici uçları', () {
+    expect(ApiEndpoints.onlineFal, '/api/online-fal');
+    expect(ApiEndpoints.userAchievements, '/api/user/achievements');
+    expect(
+      ApiEndpoints.videoStreamViewers('abc'),
+      '/api/video-streams/abc/viewers',
+    );
+  });
 }

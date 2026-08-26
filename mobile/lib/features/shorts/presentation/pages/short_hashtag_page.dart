@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
@@ -60,7 +61,29 @@ class _ShortHashtagPageState extends ConsumerState<ShortHashtagPage> {
             ref.read(shortHashtagFeedProvider(widget.name).notifier).refresh(),
         child: feed.when(
           loading: () => const PremiumShortGridSkeleton(count: 8),
-          error: (e, _) => Center(child: Text('$e')),
+          error: (e, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.5,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(ApiException.userMessage(e)),
+                      const SizedBox(height: 12),
+                      TextButton(
+                        onPressed: () => ref
+                            .read(shortHashtagFeedProvider(widget.name).notifier)
+                            .refresh(),
+                        child: const Text('Tekrar dene'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
           data: (state) {
             final list = state.videos;
             if (list.isEmpty) {

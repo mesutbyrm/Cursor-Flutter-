@@ -18,7 +18,15 @@ class HomeOnlineFalSection extends ConsumerWidget {
     final sections = ref.watch(homeOnlineFalProvider);
     return sections.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: HomeApprovedDesign.hPad,
+        ),
+        child: TextButton(
+          onPressed: () => ref.invalidate(homeOnlineFalProvider),
+          child: const Text('Online fal yüklenemedi — Tekrar dene'),
+        ),
+      ),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
         return Column(

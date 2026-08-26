@@ -30,7 +30,20 @@ class ReferralUsersPage extends ConsumerWidget {
         },
         child: users.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text(ApiException.userMessage(e))),
+          error: (e, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              const SizedBox(height: 120),
+              Center(child: Text(ApiException.userMessage(e))),
+              const SizedBox(height: 12),
+              Center(
+                child: TextButton(
+                  onPressed: () => ref.invalidate(referralUsersProvider),
+                  child: const Text('Tekrar dene'),
+                ),
+              ),
+            ],
+          ),
           data: (list) {
             if (list.isEmpty) {
               return ListView(

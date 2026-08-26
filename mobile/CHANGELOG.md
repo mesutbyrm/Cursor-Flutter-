@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.379+417 (2026-08-26) — Sayfa denetimi P10 (rozet, falcı, izleyici retry)
+
+- **Büyüme merkezi:** `GET /api/user/achievements` hatasında tekrar dene
+- **Ana sayfa Online Fal:** `GET /api/online-fal` hatasında tekrar dene
+- **Falcı profili / yayın izleyicileri / hashtag / referanslar:** hata satırında tekrar dene (çekerek yenileme artık çalışır)
+
 ## 1.0.378+416 (2026-08-26) — Sayfa denetimi P9 (homepage buton taşması, retry)
 
 - **Ana sayfa:** `GET /api/homepage-buttons` 4. butondan sonrası artık görünür (taşan şerit)

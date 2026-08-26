@@ -27,6 +27,7 @@ import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../membership/domain/membership_model.dart';
 import '../premium_2026/profile_membership_helpers.dart';
+import '../profile_hub/profile_hub_error_banner.dart';
 import '../widgets/premium/profile_glass.dart';
 
 class GrowthHubPage extends ConsumerWidget {
@@ -181,7 +182,11 @@ class GrowthHubPage extends ConsumerWidget {
                       );
                     },
                     loading: () => const SizedBox.shrink(),
-                    error: (_, _) => const SizedBox.shrink(),
+                    error: (_, _) => ProfileHubSectionRetry(
+                      message: 'Sunucu rozetleri yüklenemedi',
+                      onRetry: () =>
+                          ref.invalidate(userAchievementsProvider),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   _RoadmapHintCard(

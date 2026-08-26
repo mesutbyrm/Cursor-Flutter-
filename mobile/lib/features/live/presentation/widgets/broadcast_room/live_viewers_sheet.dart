@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../domain/entities/live_stream_viewer.dart';
@@ -51,7 +52,20 @@ Future<void> showLiveViewersSheet(
               Expanded(
                 child: async.when(
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Yüklenemedi: $e')),
+                  error: (e, _) => Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(ApiException.userMessage(e)),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: () =>
+                              ref.invalidate(liveStreamViewersProvider(streamId)),
+                          child: const Text('Tekrar dene'),
+                        ),
+                      ],
+                    ),
+                  ),
                   data: (viewers) {
                     if (viewers.isEmpty) {
                       return const Center(

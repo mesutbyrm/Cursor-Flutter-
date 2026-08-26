@@ -56,7 +56,20 @@ class PsychicProfileScreen extends ConsumerWidget {
             SafeArea(
               child: psychicAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text(ApiException.userMessage(e))),
+                error: (e, _) => Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(ApiException.userMessage(e)),
+                      const SizedBox(height: 12),
+                      TextButton(
+                        onPressed: () =>
+                            ref.invalidate(psychicDetailProvider(psychicId)),
+                        child: const Text('Tekrar dene'),
+                      ),
+                    ],
+                  ),
+                ),
                 data: (psychic) {
                   if (psychic == null) {
                     return const Center(child: Text('Falcı bulunamadı.'));
