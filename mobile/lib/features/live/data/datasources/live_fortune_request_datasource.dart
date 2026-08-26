@@ -65,9 +65,7 @@ class LiveFortuneRequestDataSource {
     }
 
     if (lastError is ApiException) throw lastError;
-    throw ApiException(
-      ApiException.userMessage(lastError ?? 'Fal talepleri yüklenemedi.'),
-    );
+    throw ApiException(ApiException.userMessage(lastError));
   }
 
   Future<LiveFortuneRequestEntity> createRequest({

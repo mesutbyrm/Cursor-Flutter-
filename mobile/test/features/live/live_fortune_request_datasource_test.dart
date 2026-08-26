@@ -13,7 +13,7 @@ void main() {
     test('returns kılavuz list on success', () async {
       final paths = <String>[];
       final dio = _dioWithAdapter(
-        _FakeAdapter((options, _, __) {
+        _FakeAdapter((options, _, _) {
           paths.add(options.path);
           return _jsonResponse(200, {
             'requests': [
@@ -34,7 +34,7 @@ void main() {
     test('falls back then throws last error when both paths fail', () async {
       final paths = <String>[];
       final dio = _dioWithAdapter(
-        _FakeAdapter((options, _, __) {
+        _FakeAdapter((options, _, _) {
           paths.add(options.path);
           return _jsonResponse(500, {'error': 'down'});
         }),
@@ -55,7 +55,7 @@ void main() {
 
     test('uses fallback list when kılavuz path fails', () async {
       final dio = _dioWithAdapter(
-        _FakeAdapter((options, _, __) {
+        _FakeAdapter((options, _, _) {
           if (options.path == ApiEndpoints.videoStreamFortuneRequests('s1')) {
             return _jsonResponse(500, {'error': 'primary'});
           }
@@ -75,7 +75,7 @@ void main() {
   group('LiveFortuneRequestDataSource.fetchMyStatus', () {
     test('returns body map on success', () async {
       final dio = _dioWithAdapter(
-        _FakeAdapter((options, _, __) {
+        _FakeAdapter((options, _, _) {
           expect(
             options.path,
             ApiEndpoints.videoStreamFortuneMyStatus('s1'),
@@ -92,7 +92,7 @@ void main() {
 
     test('treats 404 as no active request', () async {
       final dio = _dioWithAdapter(
-        _FakeAdapter((_, __, ___) => _jsonResponse(404, {'error': 'none'})),
+        _FakeAdapter((_, _, _) => _jsonResponse(404, {'error': 'none'})),
       );
       final ds = LiveFortuneRequestDataSource(dio);
 
@@ -101,7 +101,7 @@ void main() {
 
     test('throws on 5xx so retry UI can run', () async {
       final dio = _dioWithAdapter(
-        _FakeAdapter((_, __, ___) => _jsonResponse(503, {'error': 'busy'})),
+        _FakeAdapter((_, _, _) => _jsonResponse(503, {'error': 'busy'})),
       );
       final ds = LiveFortuneRequestDataSource(dio);
 
