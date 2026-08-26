@@ -89,7 +89,7 @@ class LiveFortuneRequestsNotifier
         HapticFeedback.heavyImpact();
       }
     } catch (e) {
-      state = state.copyWith(loading: false, error: e.toString());
+      state = state.copyWith(loading: false, error: ApiException.userMessage(e));
     }
   }
 
@@ -152,7 +152,7 @@ class LiveFortuneRequestsNotifier
       );
       _upsert(row);
     } catch (e) {
-      state = state.copyWith(error: e.toString());
+      state = state.copyWith(error: ApiException.userMessage(e));
     }
   }
 

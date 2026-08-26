@@ -67,6 +67,22 @@ class LiveFortuneViewerRail extends ConsumerWidget {
                 color: Colors.white.withValues(alpha: 0.85),
               ),
             ),
+          ] else if (statusAsync.hasError) ...[
+            const SizedBox(height: 6),
+            TextButton(
+              onPressed: () =>
+                  ref.invalidate(liveFortuneMyStatusProvider(streamId)),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text(
+                'Durum yüklenemedi — tekrar',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 10),
+              ),
+            ),
           ],
           const SizedBox(height: 8),
           FilledButton(

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/datasources/live_stream_extras_datasource.dart';
+import '../../../../core/network/api_exception.dart';
 import 'live_providers.dart';
 
 class CoBroadcastState {
@@ -48,7 +49,7 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
       final invites = await _remote.fetchCoBroadcastInvites();
       state = state.copyWith(invites: invites, loading: false);
     } catch (e) {
-      state = state.copyWith(loading: false, error: '$e');
+      state = state.copyWith(loading: false, error: ApiException.userMessage(e));
     }
   }
 
@@ -62,7 +63,7 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
         loading: false,
       );
     } catch (e) {
-      state = state.copyWith(loading: false, error: '$e');
+      state = state.copyWith(loading: false, error: ApiException.userMessage(e));
     }
   }
 

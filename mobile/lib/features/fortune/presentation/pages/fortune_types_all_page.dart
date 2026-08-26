@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_palette.dart';
 import '../navigation/fortune_card_navigation.dart';
 import '../providers/fortune_types_display_provider.dart';
@@ -46,23 +47,33 @@ class FortuneTypesAllPage extends ConsumerWidget {
               height: double.infinity,
             ),
           ),
-          error: (_, __) => Center(
+          error: (e, _) => Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Fal türleri yüklenemedi'),
+                Text(ApiException.userMessage(e)),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => invalidateFortuneTypesDisplay(ref),
-                  child: const Text('Tekrar Dene'),
+                  child: const Text('Tekrar dene'),
                 ),
               ],
             ),
           ),
           data: (list) {
             if (list.isEmpty) {
-              return const Center(
-                child: Text('Şu anda fal türleri bulunamadı'),
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Şu anda fal türleri bulunamadı'),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => invalidateFortuneTypesDisplay(ref),
+                      child: const Text('Tekrar dene'),
+                    ),
+                  ],
+                ),
               );
             }
             return GridView.builder(

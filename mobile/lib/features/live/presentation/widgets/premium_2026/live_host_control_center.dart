@@ -174,6 +174,38 @@ class _FortuneTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(liveFortuneRequestsProvider(streamId));
+    if (state.loading && state.requests.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+    if (state.error != null && state.requests.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                state.error!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: () => ref
+                    .read(liveFortuneRequestsProvider(streamId).notifier)
+                    .refresh(),
+                child: const Text('Tekrar dene'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     final grouped = _groupByPriority(state.requests);
     if (state.requests.isEmpty) {
       return const Center(
@@ -394,7 +426,18 @@ class _PkTab extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        if (battle == null)
+        if (pk.error != null && battle == null) ...[
+          Text(
+            pk.error!,
+            style: const TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: () =>
+                ref.read(liveVideoPkProvider(streamId).notifier).refresh(),
+            child: const Text('Tekrar dene'),
+          ),
+        ] else if (battle == null)
           const Text('Aktif PK daveti yok', style: TextStyle(color: Colors.white54))
         else ...[
           Text('Durum: ${pk.status}', style: const TextStyle(color: Colors.white)),
@@ -441,6 +484,31 @@ class _GuestsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final co = ref.watch(coBroadcastProvider);
+    if (co.error != null &&
+        co.joinRequests.isEmpty &&
+        co.coBroadcasters.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                co.error!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: () =>
+                    ref.read(coBroadcastProvider.notifier).refreshStream(streamId),
+                child: const Text('Tekrar dene'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     final requests = co.joinRequests;
     final guests = co.coBroadcasters;
     final itemCount = 1 + requests.length + 1 + guests.length;

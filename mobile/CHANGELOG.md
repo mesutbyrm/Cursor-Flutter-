@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.386+424 (2026-08-26) — Sayfa denetimi P17 (canlı fal, PK, ortak yayın retry)
+
+- **Yayıncı fal istekleri:** `GET /api/video-streams/{id}/fortune-requests` hatası artık boş liste gibi görünmez; tekrar dene
+- **İzleyici fal durumu:** `GET …/fortune-requests/my-status` hatasında tekrar
+- **Ortak yayın:** konuk listesi hatasında kullanıcı mesajı + tekrar dene
+- **Canlı PK:** davet/aksiyon hatasında kullanıcı mesajı + tekrar dene
+- **Fal türleri:** boş/hata durumunda tekrar dene (`GET /api/fortune-request-types`)
+
 ## 1.0.385+423 (2026-08-26) — Sayfa denetimi P16 (falcı panel, destekçi, admin retry)
 
 - **Falcı paneli:** ödül / hediye listesi hatasında tekrar dene

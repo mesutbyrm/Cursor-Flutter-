@@ -141,4 +141,24 @@ void main() {
     );
     expect(ApiEndpoints.giftsInsightsMeBadge, '/api/gifts/insights/me/badge');
   });
+
+  test('kılavuz canlı fal, PK ve ortak yayın uçları', () {
+    expect(
+      ApiEndpoints.videoStreamFortuneRequests('s1'),
+      '/api/video-streams/s1/fortune-requests',
+    );
+    expect(
+      ApiEndpoints.videoStreamFortuneMyStatus('s1'),
+      '/api/video-streams/s1/fortune-requests/my-status',
+    );
+    expect(ApiEndpoints.fortuneRequestTypes, '/api/fortune-request-types');
+    expect(
+      ApiEndpoints.videoStreamPkBattle('s1'),
+      '/api/video-streams/s1/pk-battle',
+    );
+    expect(
+      ApiEndpoints.videoStreamCoBroadcast('s1'),
+      '/api/video-streams/s1/co-broadcast',
+    );
+  });
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/bot_account_guard.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/auth/bot_account_provider.dart';
 import '../../data/datasources/live_stream_extras_datasource.dart';
 import '../../data/pk/pk_room_remote_datasource.dart';
@@ -229,7 +230,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       );
       state = state.copyWith(battle: battle, loading: false);
     } catch (e) {
-      state = state.copyWith(loading: false, error: '$e');
+      state = state.copyWith(loading: false, error: ApiException.userMessage(e));
     }
   }
 
@@ -273,7 +274,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       );
       state = state.copyWith(battle: battle, loading: false);
     } catch (e) {
-      state = state.copyWith(loading: false, error: '$e');
+      state = state.copyWith(loading: false, error: ApiException.userMessage(e));
     }
   }
 }
