@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../core/network/api_endpoints.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import '../../agency/data/datasources/agency_remote_datasource.dart';
@@ -41,11 +42,16 @@ class RolePanelResolver {
     final userId = user.id.trim();
     if (userId.isEmpty) return null;
 
-    var agency = await _agency.fetchMyAgency();
-    if (_usableAgency(agency)) return agency;
+    Object? loadError;
+    try {
+      final agency = await _agency.fetchMyAgency();
+      if (_usableAgency(agency)) return agency;
+    } catch (e) {
+      loadError = e;
+    }
 
     for (final path in [ApiEndpoints.me, ApiEndpoints.userSiteProfile]) {
-      agency = await _agencyFromPath(path);
+      final agency = await _agencyFromPath(path);
       if (_usableAgency(agency)) return agency;
     }
 
@@ -73,6 +79,10 @@ class RolePanelResolver {
       );
     }
 
+    if (loadError != null) {
+      if (loadError is ApiException) throw loadError;
+      throw ApiException(ApiException.userMessage(loadError));
+    }
     return null;
   }
 

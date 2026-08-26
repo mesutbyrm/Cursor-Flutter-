@@ -208,30 +208,18 @@ class GameRemoteDataSource {
   }
 
   Future<List<GameScoreItem>> fetchHistory() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.gameHistory);
-      return _scores(res.data);
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.gameHistory);
+    return _scores(res.data);
   }
 
   Future<List<GameScoreItem>> fetchMiniScores() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.gameMiniScores);
-      return _scores(res.data);
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.gameMiniScores);
+    return _scores(res.data);
   }
 
   Future<List<GameScoreItem>> fetchProfileScores() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.gameProfile);
-      return _scores(res.data);
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.gameProfile);
+    return _scores(res.data);
   }
 
   Future<void> saveMiniScore({

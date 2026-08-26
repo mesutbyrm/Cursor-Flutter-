@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.394+432 (2026-08-26) — Sayfa denetimi P25 (mesaj, ajans, oyun skor)
+
+- **Gelen kutusu:** `GET /api/messages` hatası artık boş sohbet listesi gibi gizlenmez; yenile çalışır
+- **Ajans paneli:** `GET /api/agency/my` 5xx hatası “ajans yok” sanılmaz; tekrar dene (404/403 = ajans değil)
+- **Oyun merkezi:** mini skor / geçmiş / profil skor API hatası skor şeridinde görünür
+
 ## 1.0.393+431 (2026-08-26) — Sayfa denetimi P24 (falcı listesi, falcı profilim, seviye)
 
 - **Canlı falcılar:** `GET /api/fortune-tellers` hatası artık boş liste gibi gizlenmez; liste / ana sayfa tekrar dene

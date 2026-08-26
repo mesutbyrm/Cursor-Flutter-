@@ -232,4 +232,12 @@ void main() {
     expect(ApiEndpoints.fortuneTellerMyProfile, '/api/fortune-tellers/my-profile');
     expect(ApiEndpoints.me, '/api/me');
   });
+
+  test('kılavuz mesaj, ajans profilim ve oyun skor uçları', () {
+    expect(ApiEndpoints.messages, '/api/messages');
+    expect(ApiEndpoints.messagesConversations, '/api/messages/conversations');
+    expect(ApiEndpoints.agencyMy, '/api/agency/my');
+    expect(ApiEndpoints.gameMiniScores, '/api/games/mini-scores');
+    expect(ApiEndpoints.gameHistory, '/api/games/history');
+  });
 }

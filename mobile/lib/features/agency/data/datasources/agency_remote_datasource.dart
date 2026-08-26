@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/agency_entity.dart';
@@ -21,8 +22,9 @@ class AgencyRemoteDataSource {
       final agency = data['agency'] ?? data['myAgency'] ?? data['liveAgency'] ?? data['agencyProfile'] ?? data['profile'] ?? data;
       if (agency is! Map) return null;
       return _mapAgency(asJsonMap(agency));
-    } catch (_) {
-      return null;
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 403) return null;
+      rethrow;
     }
   }
 

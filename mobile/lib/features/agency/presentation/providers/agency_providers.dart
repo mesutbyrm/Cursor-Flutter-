@@ -18,11 +18,13 @@ class ApprovedAgencyState {
     this.agency,
     this.loading = false,
     this.checked = false,
+    this.loadError,
   });
 
   final AgencyEntity? agency;
   final bool loading;
   final bool checked;
+  final String? loadError;
 
   bool get isApprovedAgency => agency?.isUsable == true;
 
@@ -30,12 +32,15 @@ class ApprovedAgencyState {
     AgencyEntity? agency,
     bool? loading,
     bool? checked,
+    String? loadError,
     bool clearAgency = false,
+    bool clearLoadError = false,
   }) {
     return ApprovedAgencyState(
       agency: clearAgency ? null : (agency ?? this.agency),
       loading: loading ?? this.loading,
       checked: checked ?? this.checked,
+      loadError: clearLoadError ? null : (loadError ?? this.loadError),
     );
   }
 }
@@ -66,13 +71,22 @@ class ApprovedAgencyNotifier extends Notifier<ApprovedAgencyState> {
       state = const ApprovedAgencyState(checked: true);
       return;
     }
-    state = state.copyWith(loading: true);
-    final agency = await ref.read(rolePanelResolverProvider).resolveAgency(user);
-    state = ApprovedAgencyState(
-      agency: agency,
-      loading: false,
-      checked: true,
-    );
+    state = state.copyWith(loading: true, clearLoadError: true);
+    try {
+      final agency = await ref.read(rolePanelResolverProvider).resolveAgency(user);
+      state = ApprovedAgencyState(
+        agency: agency,
+        loading: false,
+        checked: true,
+      );
+    } catch (e) {
+      state = ApprovedAgencyState(
+        agency: state.agency,
+        loading: false,
+        checked: true,
+        loadError: ApiException.userMessage(e),
+      );
+    }
   }
 }
 
@@ -130,14 +144,19 @@ class AgencyDashboardNotifier extends AutoDisposeNotifier<AgencyDashboardState> 
   }
 
   Future<void> refresh() async {
-    final approved = ref.read(approvedAgencyProvider);
+    var approved = ref.read(approvedAgencyProvider);
     var agency = approved.agency;
     if (agency == null) {
       await ref.read(approvedAgencyProvider.notifier).refresh();
-      agency = ref.read(approvedAgencyProvider).agency;
+      approved = ref.read(approvedAgencyProvider);
+      agency = approved.agency;
     }
     if (agency == null || !agency.isUsable) {
-      state = AgencyDashboardState(agency: agency, loading: false);
+      state = AgencyDashboardState(
+        agency: agency,
+        loading: false,
+        error: approved.loadError,
+      );
       return;
     }
 

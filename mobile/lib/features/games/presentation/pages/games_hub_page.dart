@@ -37,6 +37,24 @@ class GamesHubPage extends ConsumerWidget {
           children: [
             _Hero(),
             const SizedBox(height: 16),
+            if (leaderboard.hasError ||
+                miniScores.hasError ||
+                tournaments.hasError) ...[
+              _ErrorCard(
+                message: ApiException.userMessage(
+                  leaderboard.error ??
+                      miniScores.error ??
+                      tournaments.error ??
+                      'Skorlar yüklenemedi',
+                ),
+                onRetry: () {
+                  ref.invalidate(gameLeaderboardProvider);
+                  ref.invalidate(gameMiniScoresProvider);
+                  ref.invalidate(gameTournamentsProvider);
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
             _ScoreStrip(
               leaderboard: leaderboard.valueOrNull ?? const [],
               miniScores: miniScores.valueOrNull ?? const [],

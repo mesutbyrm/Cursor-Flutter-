@@ -19,6 +19,8 @@ class MessagesRemoteDataSource {
     final paths = Env.useMobileAuth
         ? [ApiEndpoints.messages, ApiEndpoints.messagesConversations]
         : [ApiEndpoints.messagesConversations, ApiEndpoints.messages];
+    Object? lastError;
+    var anySuccess = false;
     for (final path in paths) {
       try {
         final res = await _dio.safeGet<dynamic>(
@@ -26,8 +28,10 @@ class MessagesRemoteDataSource {
           forceRefresh: forceRefresh,
         );
         final parsed = _parseConversations(res.data);
-        if (parsed != null && parsed.isNotEmpty) return parsed;
-        if (parsed != null) return parsed;
+        if (parsed != null) {
+          anySuccess = true;
+          return parsed;
+        }
       } on ApiException catch (e) {
         if (e.statusCode == 401) {
           throw const ApiException(
@@ -35,7 +39,14 @@ class MessagesRemoteDataSource {
             statusCode: 401,
           );
         }
-      } catch (_) {}
+        lastError = e;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (!anySuccess && lastError != null) {
+      if (lastError is ApiException) throw lastError;
+      throw ApiException(ApiException.userMessage(lastError));
     }
     return const [];
   }

@@ -25,17 +25,36 @@ class AgencyDashboardScreen extends ConsumerWidget {
     }
 
     if (agency == null || !agency.isUsable) {
+      final loadError = approved.loadError ?? dash.error;
       return Scaffold(
         appBar: AppBar(title: const Text('Ajans Panel')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text(
-              agency == null
-                  ? 'Ajans profili bulunamadı. Başvurunuz onaylandıktan sonra panel açılır.'
-                  : 'Başvuru durumu: ${agency.applicationStatus ?? "bilinmiyor"}. Onay bekleniyor.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: context.colors.onSurfaceMuted),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  loadError ??
+                      (agency == null
+                          ? 'Ajans profili bulunamadı. Başvurunuz onaylandıktan sonra panel açılır.'
+                          : 'Başvuru durumu: ${agency.applicationStatus ?? "bilinmiyor"}. Onay bekleniyor.'),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: context.colors.onSurfaceMuted),
+                ),
+                if (loadError != null) ...[
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () async {
+                      await ref.read(approvedAgencyProvider.notifier).refresh();
+                      await ref
+                          .read(agencyDashboardProvider.notifier)
+                          .refresh();
+                    },
+                    child: const Text('Tekrar dene'),
+                  ),
+                ],
+              ],
             ),
           ),
         ),
