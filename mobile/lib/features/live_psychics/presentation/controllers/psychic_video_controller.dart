@@ -904,13 +904,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (t.isEmpty || state.sendingChat) return;
     state = state.copyWith(sendingChat: true);
     try {
-      final ok = await ref
+      await ref
           .read(livePsychicsRepositoryProvider)
           .sendMessage(session.sessionId, t);
-      if (!ok && !_disposed) {
-        state = state.copyWith(sendingChat: false);
-        return;
-      }
       unawaited(_pollChat());
     } finally {
       if (!_disposed) state = state.copyWith(sendingChat: false);

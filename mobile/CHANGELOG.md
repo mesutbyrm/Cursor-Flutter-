@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.397+435 (2026-08-26) — Sayfa denetimi P28 (favori, bildirim, seans)
+
+- **Favori falcı:** `POST /api/favorite-tellers` hatası kalp düğmesinde görünür; başarılı çıkarma artık hata sanılmaz
+- **Bildirimler:** `PATCH /api/notifications` `{markAll: true}` başarısızsa “hepsi okundu” denmez; snackbar
+- **Canlı fal sohbet:** `POST /api/room/{id}/messages` hatası snackbar
+- **Bahşiş:** seans `POST /api/room/{id}/tip` ve profil bahşişi hatası kullanıcı mesajı
+
 ## 1.0.396+434 (2026-08-26) — Sayfa denetimi P27 (reklam ödülü, görev teslimi)
 
 - **Reklam ödülü:** `POST /api/user/watch-ad` / `POST /api/ads/reward` hatası artık sahte 10 CFC kutlaması göstermez; snackbar

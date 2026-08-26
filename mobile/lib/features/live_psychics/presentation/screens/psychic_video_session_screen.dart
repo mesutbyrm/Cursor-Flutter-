@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_close_dialog.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
@@ -49,6 +50,22 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
       ref
           .read(psychicVideoControllerProvider(widget.session).notifier)
           .onAppResumed();
+    }
+  }
+
+  Future<void> _sendChat(
+    PsychicVideoController ctrl,
+    TextEditingController chat,
+  ) async {
+    final text = chat.text;
+    chat.clear();
+    try {
+      await ctrl.sendChat(text);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
     }
   }
 
@@ -461,8 +478,7 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                             ),
                           ),
                           onSubmitted: (_) {
-                            ctrl.sendChat(chat.text);
-                            chat.clear();
+                            _sendChat(ctrl, chat);
                           },
                         ),
                       ),
@@ -471,8 +487,7 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                         onPressed: state.sendingChat
                             ? null
                             : () {
-                                ctrl.sendChat(chat.text);
-                                chat.clear();
+                                _sendChat(ctrl, chat);
                               },
                         icon: const Icon(Icons.send_rounded),
                       ),
@@ -540,7 +555,8 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                           label: 'Bahşiş',
                           onTap: () async {
                             final amount = await ctrl.openTipSheet(context);
-                            if (amount != null) {
+                            if (amount == null || !context.mounted) return;
+                            try {
                               final ok = await ctrl.sendTip(amount);
                               if (!ok && context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -549,6 +565,13 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                                   ),
                                 );
                               }
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(ApiException.userMessage(e)),
+                                ),
+                              );
                             }
                           },
                         ),

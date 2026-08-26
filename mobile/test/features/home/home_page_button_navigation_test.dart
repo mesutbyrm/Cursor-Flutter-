@@ -261,4 +261,17 @@ void main() {
       '/api/room/sess1/review',
     );
   });
+
+  test('kılavuz favori falcı, bildirim ve seans yazma uçları', () {
+    expect(ApiEndpoints.favoriteTellers, '/api/favorite-tellers');
+    expect(ApiEndpoints.notifications, '/api/notifications');
+    expect(
+      ApiEndpoints.liveFortuneRoomMessages('sess1'),
+      '/api/room/sess1/messages',
+    );
+    expect(
+      ApiEndpoints.liveFortuneRoomTip('sess1'),
+      '/api/room/sess1/tip',
+    );
+  });
 }

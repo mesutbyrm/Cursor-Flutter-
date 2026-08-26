@@ -132,23 +132,32 @@ class NotificationsRemoteDataSource {
   }
 
   Future<void> markAllRead() async {
-    final bodies = [
-      const {'markAll': true},
-      const {'readAll': true},
-      const {'markAllRead': true},
+    Object? lastError;
+    const bodies = [
+      {'markAll': true},
+      {'readAll': true},
+      {'markAllRead': true},
     ];
-    for (final body in bodies) {
-      try {
-        await _dio.safePost<dynamic>(ApiEndpoints.notifications, data: body);
-        return;
-      } catch (_) {}
-    }
     for (final body in bodies) {
       try {
         await _dio.safePatch<dynamic>(ApiEndpoints.notifications, data: body);
         return;
-      } catch (_) {}
+      } catch (e) {
+        lastError = e;
+      }
     }
+    for (final body in bodies) {
+      try {
+        await _dio.safePost<dynamic>(ApiEndpoints.notifications, data: body);
+        return;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (lastError is ApiException) throw lastError;
+    throw ApiException(
+      ApiException.userMessage(lastError ?? 'Bildirimler okundu işaretlenemedi'),
+    );
   }
 
   Future<void> clearPaymentNotifications() async {

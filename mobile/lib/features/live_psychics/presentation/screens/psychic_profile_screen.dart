@@ -206,24 +206,26 @@ class PsychicProfileScreen extends ConsumerWidget {
       return;
     }
 
-    final ok = await ref.read(livePsychicsRepositoryProvider).sendTip(
-          amount: amount,
-          tellerId: psychic.id,
-          tellerUserId: psychic.userId,
+    try {
+      final ok = await ref.read(livePsychicsRepositoryProvider).sendTip(
+            amount: amount,
+            tellerId: psychic.id,
+            tellerUserId: psychic.userId,
+          );
+      if (!context.mounted) return;
+      if (ok) {
+        await ref.refreshWalletCache();
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$amount jeton bahşiş gönderildi — teşekkürler!'),
+          ),
         );
-    if (!context.mounted) return;
-
-    if (ok) {
-      await ref.refreshWalletCache();
+      }
+    } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$amount jeton bahşiş gönderildi — teşekkürler!'),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bahşiş gönderilemedi')),
+        SnackBar(content: Text(ApiException.userMessage(e))),
       );
     }
   }

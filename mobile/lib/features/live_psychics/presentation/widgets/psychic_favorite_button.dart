@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../providers/psychic_favorites_provider.dart';
 
 /// Favori falcı kalp düğmesi.
@@ -26,13 +27,14 @@ class PsychicFavoriteButton extends ConsumerWidget {
       onPressed: loading
           ? null
           : () async {
-              final ok = await ref
-                  .read(psychicFavoritesProvider.notifier)
-                  .toggle(tellerId);
-              if (!context.mounted) return;
-              if (!ok) {
+              try {
+                await ref
+                    .read(psychicFavoritesProvider.notifier)
+                    .toggle(tellerId);
+              } catch (e) {
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Favori güncellenemedi')),
+                  SnackBar(content: Text(ApiException.userMessage(e))),
                 );
               }
             },

@@ -56,7 +56,10 @@ Future<void> markAllNotificationsRead(WidgetRef ref) async {
   ref.read(notificationsListNotifierProvider.notifier).markAllReadLocally();
   try {
     await ref.read(notificationsRepositoryProvider).markAllRead();
-  } catch (_) {}
+  } catch (_) {
+    await ref.read(notificationsListNotifierProvider.notifier).refresh();
+    rethrow;
+  }
   ref.invalidate(notificationsListProvider);
   ref.invalidate(notificationsListNotifierProvider);
   ref.invalidate(notificationsUnreadApiProvider);

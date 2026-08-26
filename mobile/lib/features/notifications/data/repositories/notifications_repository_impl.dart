@@ -188,21 +188,19 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
         return;
       } catch (_) {}
     }
-    try {
-      await _remote.markRead(id);
-    } catch (_) {}
+    await _remote.markRead(id);
   }
 
   @override
   Future<void> markAllRead() async {
     await _invalidateCache();
-    await _NotificationReadMemory.markAllReadBeforeNow();
     if (Env.useMobileAuth) {
-      await _canlifal.markAllActivityRead();
+      try {
+        await _canlifal.markAllActivityRead();
+      } catch (_) {}
     }
-    try {
-      await _remote.markAllRead();
-    } catch (_) {}
+    await _remote.markAllRead();
+    await _NotificationReadMemory.markAllReadBeforeNow();
   }
 
   @override

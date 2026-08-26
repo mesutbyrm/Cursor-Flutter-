@@ -469,8 +469,9 @@ class LivePsychicsRemoteDataSource {
         }
       }
       return true;
-    } catch (_) {
-      return false;
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(ApiException.userMessage(e));
     }
   }
 
@@ -894,8 +895,9 @@ class LivePsychicsRemoteDataSource {
         data: {'content': message},
       );
       return true;
-    } catch (_) {
-      return false;
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(ApiException.userMessage(e));
     }
   }
 
@@ -937,8 +939,9 @@ class LivePsychicsRemoteDataSource {
           data: {'amount': amount},
         );
         return true;
-      } catch (_) {
-        return false;
+      } catch (e) {
+        if (e is ApiException) rethrow;
+        throw ApiException(ApiException.userMessage(e));
       }
     }
 
@@ -959,8 +962,9 @@ class LivePsychicsRemoteDataSource {
         data: body,
       );
       return true;
-    } catch (_) {
-      return false;
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(ApiException.userMessage(e));
     }
   }
 }

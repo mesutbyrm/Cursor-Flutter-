@@ -83,12 +83,19 @@ class _InboxSystemNotificationsPanelState
   }
 
   Future<void> _markAllRead() async {
-    await markAllNotificationsRead(ref);
-    await _refresh();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tüm sistem bildirimleri okundu')),
-    );
+    try {
+      await markAllNotificationsRead(ref);
+      await _refresh();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tüm sistem bildirimleri okundu')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
   }
 
   Future<void> _onNotificationTap(
