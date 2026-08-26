@@ -40,7 +40,25 @@ class UserShortsVideosSection extends ConsumerWidget {
             padding: EdgeInsets.all(24),
             child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
           ),
-          error: (_, _) => const SizedBox.shrink(),
+          error: (_, _) => Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                const Text(
+                  'Videolar yüklenemedi',
+                  style: TextStyle(color: Colors.white54),
+                ),
+                TextButton(
+                  onPressed: () => ref.invalidate(
+                    userShortVideosProvider(
+                      (userId: userId, tab: ShortUserVideosTab.videos),
+                    ),
+                  ),
+                  child: const Text('Tekrar dene'),
+                ),
+              ],
+            ),
+          ),
           data: (list) {
             if (list.isEmpty) return const SizedBox.shrink();
             return Column(

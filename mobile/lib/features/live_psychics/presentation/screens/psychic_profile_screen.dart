@@ -436,15 +436,9 @@ class _ProfileBody extends ConsumerWidget {
               ),
             ),
           ),
-          error: (e, _) => Padding(
-            padding: const EdgeInsets.only(top: 20),
-            child: Text(
-              'Yorumlar yüklenemedi',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white.withValues(alpha: 0.5),
-              ),
-            ),
+          error: (e, _) => _SectionRetry(
+            message: 'Yorumlar yüklenemedi',
+            onRetry: () => ref.invalidate(psychicReviewsProvider(psychic.id)),
           ),
           data: (reviews) {
             if (reviews.isEmpty) return const SizedBox.shrink();
@@ -518,15 +512,9 @@ class _ProfileBody extends ConsumerWidget {
         ),
         awardsAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (e, _) => Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Text(
-              'Ödüller yüklenemedi',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white.withValues(alpha: 0.5),
-              ),
-            ),
+          error: (e, _) => _SectionRetry(
+            message: 'Ödüller yüklenemedi',
+            onRetry: () => ref.invalidate(psychicAwardsProvider(psychic.id)),
           ),
           data: (awards) {
             if (awards.isEmpty) return const SizedBox.shrink();
@@ -573,15 +561,9 @@ class _ProfileBody extends ConsumerWidget {
         ),
         giftsAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (e, _) => Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Text(
-              'Hediyeler yüklenemedi',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white.withValues(alpha: 0.5),
-              ),
-            ),
+          error: (e, _) => _SectionRetry(
+            message: 'Hediyeler yüklenemedi',
+            onRetry: () => ref.invalidate(psychicGiftsProvider(psychic.id)),
           ),
           data: (gifts) {
             if (gifts.isEmpty) return const SizedBox.shrink();
@@ -667,6 +649,35 @@ class _Pill extends StatelessWidget {
           fontWeight: FontWeight.w700,
           color: foreground,
         ),
+      ),
+    );
+  }
+}
+
+class _SectionRetry extends StatelessWidget {
+  const _SectionRetry({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Column(
+        children: [
+          Text(
+            message,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.5),
+            ),
+          ),
+          TextButton(
+            onPressed: onRetry,
+            child: const Text('Tekrar dene'),
+          ),
+        ],
       ),
     );
   }

@@ -328,9 +328,20 @@ class ShortsProfileVideoGrid extends ConsumerWidget {
         child: CircularProgressIndicator(strokeWidth: 2),
       ),
       error: (_, _) => Center(
-        child: Text(
-          'Videolar yüklenemedi',
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Videolar yüklenemedi',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+            ),
+            TextButton(
+              onPressed: () => ref.invalidate(
+                userShortVideosProvider((userId: userId, tab: tab)),
+              ),
+              child: const Text('Tekrar dene'),
+            ),
+          ],
         ),
       ),
       data: (list) {

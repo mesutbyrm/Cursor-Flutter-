@@ -115,7 +115,12 @@ class _VideosTab extends ConsumerWidget {
 
     return videosAsync.when(
       loading: () => const _ContentSkeleton(),
-      error: (_, _) => const _EmptyMessage('Videolar yüklenemedi'),
+      error: (_, _) => _EmptyMessage(
+        'Videolar yüklenemedi',
+        onRetry: () => ref.invalidate(
+          userShortVideosProvider((userId: userId, tab: ShortUserVideosTab.videos)),
+        ),
+      ),
       data: (videos) {
         if (videos.isEmpty) {
           return const _EmptyMessage('Henüz video yok');
@@ -139,7 +144,12 @@ class _ShortsLikedTab extends ConsumerWidget {
 
     return videosAsync.when(
       loading: () => const _ContentSkeleton(),
-      error: (_, _) => const _EmptyMessage('Beğenilen videolar yüklenemedi'),
+      error: (_, _) => _EmptyMessage(
+        'Beğenilen videolar yüklenemedi',
+        onRetry: () => ref.invalidate(
+          userShortVideosProvider((userId: userId, tab: ShortUserVideosTab.liked)),
+        ),
+      ),
       data: (videos) {
         if (videos.isEmpty) {
           return const _EmptyMessage('Henüz beğenilen video yok');
@@ -163,7 +173,12 @@ class _ShortsSavedTab extends ConsumerWidget {
 
     return videosAsync.when(
       loading: () => const _ContentSkeleton(),
-      error: (_, _) => const _EmptyMessage('Kaydedilen videolar yüklenemedi'),
+      error: (_, _) => _EmptyMessage(
+        'Kaydedilen videolar yüklenemedi',
+        onRetry: () => ref.invalidate(
+          userShortVideosProvider((userId: userId, tab: ShortUserVideosTab.saved)),
+        ),
+      ),
       data: (videos) {
         if (videos.isEmpty) {
           return const _EmptyMessage('Henüz kaydedilen video yok');
@@ -181,7 +196,10 @@ class _FortunesTab extends ConsumerWidget {
 
     return history.when(
       loading: () => const _ContentSkeleton(),
-      error: (_, _) => const _EmptyMessage('Fallar yüklenemedi'),
+      error: (_, _) => _EmptyMessage(
+        'Fallar yüklenemedi',
+        onRetry: () => ref.read(fortuneHistoryProvider.notifier).refresh(),
+      ),
       data: (items) {
         if (items.isEmpty) {
           return const _EmptyMessage('Henüz fal kaydı yok');
@@ -322,7 +340,11 @@ class _LiveStreamsTab extends ConsumerWidget {
 
     return history.when(
       loading: () => const _ContentSkeleton(),
-      error: (_, _) => const _EmptyMessage('Yayın geçmişi yüklenemedi'),
+      error: (_, _) => _EmptyMessage(
+        'Yayın geçmişi yüklenemedi',
+        onRetry: () =>
+            ref.read(broadcastHistoryNotifierProvider.notifier).refresh(),
+      ),
       data: (items) {
         if (items.isEmpty) {
           return const _EmptyMessage('Henüz canlı yayın yok');
@@ -464,7 +486,10 @@ class _WatchedTab extends ConsumerWidget {
 
     return watched.when(
       loading: () => const _ContentSkeleton(),
-      error: (_, _) => const _EmptyMessage('İzleme geçmişi yüklenemedi'),
+      error: (_, _) => _EmptyMessage(
+        'İzleme geçmişi yüklenemedi',
+        onRetry: () => ref.invalidate(viewedShortsProvider),
+      ),
       data: (videos) => _ShortsGrid(videos: videos),
     );
   }
@@ -477,7 +502,10 @@ class _FavoritesTab extends ConsumerWidget {
 
     return favorites.when(
       loading: () => const _ContentSkeleton(),
-      error: (_, _) => const _EmptyMessage('Favoriler yüklenemedi'),
+      error: (_, _) => _EmptyMessage(
+        'Favoriler yüklenemedi',
+        onRetry: () => ref.invalidate(userFavoritesProvider),
+      ),
       data: (items) {
         if (items.isEmpty) {
           return const _EmptyMessage('Henüz favori yok');
@@ -544,7 +572,10 @@ class _DraftsTab extends ConsumerWidget {
 
     return draftsAsync.when(
       loading: () => const _ContentSkeleton(),
-      error: (_, _) => const _EmptyMessage('Taslaklar yüklenemedi'),
+      error: (_, _) => _EmptyMessage(
+        'Taslaklar yüklenemedi',
+        onRetry: () => ref.invalidate(shortSavedDraftsProvider(userId)),
+      ),
       data: (drafts) {
         if (drafts.isEmpty) {
           return ProfileGlass(
@@ -722,21 +753,32 @@ class _ContentSkeleton extends StatelessWidget {
 }
 
 class _EmptyMessage extends StatelessWidget {
-  const _EmptyMessage(this.text);
+  const _EmptyMessage(this.text, {this.onRetry});
 
   final String text;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 28),
       child: Center(
-        child: Text(
-          text,
-          style: TextStyle(
-            color: context.colors.onSurfaceMuted,
-            fontWeight: FontWeight.w600,
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              text,
+              style: TextStyle(
+                color: context.colors.onSurfaceMuted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (onRetry != null)
+              TextButton(
+                onPressed: onRetry,
+                child: const Text('Tekrar dene'),
+              ),
+          ],
         ),
       ),
     );

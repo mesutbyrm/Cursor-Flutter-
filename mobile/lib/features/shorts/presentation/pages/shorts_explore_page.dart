@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/effects_perf.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
@@ -215,7 +216,10 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('$e', style: const TextStyle(color: Colors.white54)),
+                    Text(
+                      ApiException.userMessage(e),
+                      style: const TextStyle(color: Colors.white54),
+                    ),
                     const SizedBox(height: 12),
                     FilledButton(
                       onPressed: () =>

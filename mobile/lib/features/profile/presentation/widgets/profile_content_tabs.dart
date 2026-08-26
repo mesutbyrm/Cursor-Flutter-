@@ -29,9 +29,20 @@ class _VideosTab extends ConsumerWidget {
         padding: EdgeInsets.all(24),
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (_, _) => const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text('Videolar yüklenemedi'),
+      error: (_, _) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Videolar yüklenemedi'),
+            TextButton(
+              onPressed: () => ref.invalidate(
+                userShortVideosProvider((userId: userId, tab: ShortUserVideosTab.videos)),
+              ),
+              child: const Text('Tekrar dene'),
+            ),
+          ],
+        ),
       ),
       data: (videos) {
         if (videos.isEmpty) {
@@ -151,7 +162,20 @@ class _FortuneTab extends ConsumerWidget {
       ),
       error: (e, _) => Padding(
         padding: const EdgeInsets.all(16),
-        child: Text('Fallar yüklenemedi', style: TextStyle(color: context.colors.onSurfaceMuted)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Fallar yüklenemedi',
+              style: TextStyle(color: context.colors.onSurfaceMuted),
+            ),
+            TextButton(
+              onPressed: () =>
+                  ref.read(fortuneHistoryProvider.notifier).refresh(),
+              child: const Text('Tekrar dene'),
+            ),
+          ],
+        ),
       ),
       data: (items) {
         if (items.isEmpty) {
@@ -227,9 +251,18 @@ class _WatchedTab extends ConsumerWidget {
         padding: EdgeInsets.all(24),
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (e, _) => const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text('İzleme geçmişi yüklenemedi'),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('İzleme geçmişi yüklenemedi'),
+            TextButton(
+              onPressed: () => ref.invalidate(viewedShortsProvider),
+              child: const Text('Tekrar dene'),
+            ),
+          ],
+        ),
       ),
       data: (videos) {
         if (videos.isEmpty) {

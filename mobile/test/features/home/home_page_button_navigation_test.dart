@@ -101,4 +101,21 @@ void main() {
     expect(ApiEndpoints.gameRooms, '/api/games/rooms');
     expect(ApiEndpoints.giftsTypes, '/api/gifts/types');
   });
+
+  test('kılavuz falcı, shorts, paylaşım ve PK liderlik uçları', () {
+    expect(
+      ApiEndpoints.fortuneTellerReviews('t1'),
+      '/api/fortune-tellers/t1/reviews',
+    );
+    expect(
+      ApiEndpoints.fortuneTellerAwards('t1'),
+      '/api/fortune-tellers/awards?tellerId=t1',
+    );
+    expect(
+      ApiEndpoints.shortVideosByUser('u1'),
+      '/api/short-videos/user/u1',
+    );
+    expect(ApiEndpoints.userPosts('u1'), '/api/users/u1/posts');
+    expect(ApiEndpoints.pkLeaderboard, '/api/pk/leaderboard');
+  });
 }

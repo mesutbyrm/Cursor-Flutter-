@@ -39,9 +39,22 @@ class _UserPostsTikTokGridState extends ConsumerState<UserPostsTikTokGrid> {
       ),
       error: (e, _) => Padding(
         padding: const EdgeInsets.all(16),
-        child: Text(
-          'Paylaşımlar yüklenemedi',
-          style: TextStyle(color: context.colors.onSurfaceMuted.withValues(alpha: 0.9)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Paylaşımlar yüklenemedi',
+              style: TextStyle(
+                color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
+              ),
+            ),
+            TextButton(
+              onPressed: () => ref.invalidate(
+                userSocialPostsNotifierProvider(widget.userId),
+              ),
+              child: const Text('Tekrar dene'),
+            ),
+          ],
         ),
       ),
       data: (posts) {

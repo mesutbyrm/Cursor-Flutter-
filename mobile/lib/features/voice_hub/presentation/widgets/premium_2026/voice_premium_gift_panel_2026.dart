@@ -243,7 +243,18 @@ class _VoicePremiumGiftPanel2026State
                     ),
                   ),
                   error: (e, _) => Center(
-                    child: Text(ApiException.userMessage(e)),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(ApiException.userMessage(e)),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: () =>
+                              ref.invalidate(voiceRoomGiftTypesProvider),
+                          child: const Text('Tekrar dene'),
+                        ),
+                      ],
+                    ),
                   ),
                   data: (list) {
                     final filtered = _displayGifts(list);

@@ -55,12 +55,21 @@ class PsychicRecentSessionsPanel extends ConsumerWidget {
                 ),
               ),
             ),
-            error: (_, _) => Text(
-              'Oturum geçmişi yüklenemedi.',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.white.withValues(alpha: 0.65),
-              ),
+            error: (_, _) => Column(
+              children: [
+                Text(
+                  'Oturum geçmişi yüklenemedi.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.65),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      ref.invalidate(psychicRecentSessionsProvider),
+                  child: const Text('Tekrar dene'),
+                ),
+              ],
             ),
             data: (sessions) {
               if (sessions.isEmpty) {

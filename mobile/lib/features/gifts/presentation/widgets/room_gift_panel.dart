@@ -34,9 +34,19 @@ class RoomGiftPanel extends ConsumerWidget {
       loading: () => Center(child: CircularProgressIndicator()),
       error: (e, _) => Padding(
         padding: const EdgeInsets.all(24),
-        child: Text(
-          ApiException.userMessage(e),
-          textAlign: TextAlign.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              ApiException.userMessage(e),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => ref.invalidate(voiceRoomGiftTypesProvider),
+              child: const Text('Tekrar dene'),
+            ),
+          ],
         ),
       ),
       data: (list) {

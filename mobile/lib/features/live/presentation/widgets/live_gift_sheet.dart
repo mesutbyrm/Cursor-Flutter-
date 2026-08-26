@@ -48,7 +48,18 @@ Future<void> showLiveGiftPicker(
                 ),
                 error: (e, _) => Padding(
                   padding: const EdgeInsets.all(24),
-                  child: Text(ApiException.userMessage(e)),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(ApiException.userMessage(e)),
+                      const SizedBox(height: 12),
+                      TextButton(
+                        onPressed: () =>
+                            ref.invalidate(liveGiftTypesProvider),
+                        child: const Text('Tekrar dene'),
+                      ),
+                    ],
+                  ),
                 ),
                 data: (list) {
                   if (list.isEmpty) {

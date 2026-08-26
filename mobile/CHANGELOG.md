@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.382+420 (2026-08-26) — Sayfa denetimi P13 (falcı, profil içerik, PK, hediye retry)
+
+- **Falcı profili:** yorum / ödül / hediye ve oturum geçmişi hatasında tekrar dene
+- **Profil içerikleri:** kısa video, fal, yayın, izleme, favori, taslak ve paylaşımlar hatasında tekrar dene
+- **PK liderlik:** `GET /api/pk/leaderboard` hatasında tekrar dene
+- **Hediye panelleri (yayın / sesli oda):** katalog hatasında tekrar dene
+- **Keşfet shorts:** hata metni kullanıcı mesajı
+
 ## 1.0.381+419 (2026-08-26) — Sayfa denetimi P12 (profil, üyelik, fal, oyun, hediye retry)
 
 - **Kullanıcı profili:** `GET /api/users/{id}` hatasında tekrar dene

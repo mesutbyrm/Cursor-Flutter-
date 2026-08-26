@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/images/canlifal_network_image.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../domain/pk/pk_leaderboard_models.dart';
 import '../providers/pk_room_providers.dart';
 
@@ -81,9 +82,27 @@ class _PkLeaderboardPageState extends ConsumerState<PkLeaderboardPage> {
           Expanded(
             child: board.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const Center(
-                child: Text('Liderlik yüklenemedi.',
-                    style: TextStyle(color: Color(0x99FFFFFF))),
+              error: (e, _) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        ApiException.userMessage(e),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Color(0x99FFFFFF)),
+                      ),
+                      const SizedBox(height: 12),
+                      FilledButton.icon(
+                        onPressed: () =>
+                            ref.invalidate(pkLeaderboardProvider(key)),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Tekrar dene'),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               data: (rows) => rows.isEmpty
                   ? const Center(
