@@ -68,6 +68,7 @@ class LiveStreamExtrasDataSource {
 
     // API dokümanı §8: POST /api/video-streams/pk — { opponentStreamId, durationMinutes }
     if (normalized == 'create' && targetStreamId != null) {
+      Object? lastError;
       try {
         final res = await _dio.safePost<dynamic>(
           ApiEndpoints.videoStreamPk,
@@ -80,7 +81,9 @@ class LiveStreamExtrasDataSource {
         );
         final battle = _unwrapBattle(res.data);
         if (battle != null) return battle;
-      } catch (_) {}
+      } catch (e) {
+        lastError = e;
+      }
 
       // Kılavuz §9.4 yedek: POST …/{streamId}/pk-battle
       try {
@@ -93,7 +96,13 @@ class LiveStreamExtrasDataSource {
         );
         final battle = _unwrapBattle(res.data);
         if (battle != null) return battle;
-      } catch (_) {}
+      } catch (e) {
+        lastError = e;
+      }
+      if (lastError is ApiException) throw lastError;
+      if (lastError != null) {
+        throw ApiException(ApiException.userMessage(lastError));
+      }
       return null;
     }
 
@@ -237,6 +246,12 @@ class LiveStreamExtrasDataSource {
 
   Future<({List<Map<String, dynamic>> coBroadcasters, List<Map<String, dynamic>> joinRequests})>
       fetchCoBroadcastSnapshot(String streamId) async {
+    const empty = (
+      coBroadcasters: <Map<String, dynamic>>[],
+      joinRequests: <Map<String, dynamic>>[],
+    );
+    Object? lastError;
+
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.liveGuestList,
@@ -274,17 +289,35 @@ class LiveStreamExtrasDataSource {
           }
         }
       }
-    } catch (_) {}
+    } on ApiException catch (e) {
+      if (e.statusCode != 404) lastError = e;
+    } catch (e) {
+      lastError = e;
+    }
 
-    final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.videoStreamCoBroadcast(streamId),
-    );
-    return (
-      coBroadcasters: _listFromBody(res.data,
-          keys: ['coBroadcasters', 'items', 'data', 'guests']),
-      joinRequests: _listFromBody(res.data,
-          keys: ['joinRequests', 'pendingRequests', 'requests']),
-    );
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.videoStreamCoBroadcast(streamId),
+      );
+      return (
+        coBroadcasters: _listFromBody(res.data,
+            keys: ['coBroadcasters', 'items', 'data', 'guests']),
+        joinRequests: _listFromBody(res.data,
+            keys: ['joinRequests', 'pendingRequests', 'requests']),
+      );
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) {
+        if (lastError == null) return empty;
+        if (lastError is ApiException) throw lastError;
+        throw ApiException(ApiException.userMessage(lastError));
+      }
+      lastError = e;
+    } catch (e) {
+      lastError = e;
+    }
+
+    if (lastError is ApiException) throw lastError;
+    throw ApiException(ApiException.userMessage(lastError));
   }
 
   Future<Map<String, dynamic>?> coBroadcastAction({

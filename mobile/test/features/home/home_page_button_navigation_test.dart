@@ -161,6 +161,7 @@ void main() {
       ApiEndpoints.videoStreamCoBroadcast('s1'),
       '/api/video-streams/s1/co-broadcast',
     );
+    expect(ApiEndpoints.liveGuestList, '/api/live/guest/list');
   });
 
   test('kılavuz alınan hediyeler ve oyun uçları', () {

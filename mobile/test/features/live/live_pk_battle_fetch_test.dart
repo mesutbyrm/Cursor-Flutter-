@@ -58,6 +58,78 @@ void main() {
       );
     });
   });
+
+  group('LiveStreamExtrasDataSource.pkAction create', () {
+    test('returns kılavuz battle on success', () async {
+      final paths = <String>[];
+      final dio = _dioWithAdapter(
+        _FakeAdapter((options, _, _) {
+          paths.add('${options.method} ${options.path}');
+          return _jsonResponse(200, {
+            'id': 'pk_new',
+            'status': 'pending',
+          });
+        }),
+      );
+      final ds = LiveStreamExtrasDataSource(dio);
+
+      final battle = await ds.pkAction(
+        streamId: 's1',
+        action: 'create',
+        targetStreamId: 's2',
+      );
+
+      expect(battle?['id'], 'pk_new');
+      expect(paths, ['POST ${ApiEndpoints.videoStreamPk}']);
+    });
+
+    test('falls back to pk-battle when primary create fails', () async {
+      final paths = <String>[];
+      final dio = _dioWithAdapter(
+        _FakeAdapter((options, _, _) {
+          paths.add(options.path);
+          if (options.path == ApiEndpoints.videoStreamPk) {
+            return _jsonResponse(500, {'error': 'primary'});
+          }
+          return _jsonResponse(200, {
+            'id': 'pk_fb',
+            'status': 'pending',
+          });
+        }),
+      );
+      final ds = LiveStreamExtrasDataSource(dio);
+
+      final battle = await ds.pkAction(
+        streamId: 's1',
+        action: 'create',
+        targetStreamId: 's2',
+      );
+
+      expect(battle?['id'], 'pk_fb');
+      expect(paths, [
+        ApiEndpoints.videoStreamPk,
+        ApiEndpoints.videoStreamPkBattle('s1'),
+      ]);
+    });
+
+    test('throws on 5xx so host PK create retry can run', () async {
+      final dio = _dioWithAdapter(
+        _FakeAdapter((_, _, _) => _jsonResponse(503, {'error': 'busy'})),
+      );
+      final ds = LiveStreamExtrasDataSource(dio);
+
+      await expectLater(
+        ds.pkAction(
+          streamId: 's1',
+          action: 'create',
+          targetStreamId: 's2',
+        ),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 503),
+        ),
+      );
+    });
+  });
 }
 
 Dio _dioWithAdapter(HttpClientAdapter adapter) {

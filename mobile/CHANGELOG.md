@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.403+441 (2026-08-26) — Sayfa denetimi P34 (ortak yayın, PK başlat)
+
+- **Yayıncı misafirler:** `GET /api/live/guest/list` ve `GET /api/video-streams/{id}/co-broadcast` 5xx/ağ hatası artık «misafir yok» gibi gizlenmez; «Tekrar dene» çalışır (404 = boş)
+- **PK başlat:** `POST /api/video-streams/pk` ve yedek `POST …/pk-battle` ikisi de düşerse sessiz null yerine hata; yayıncı PK sekmesinde görünür
+
 ## 1.0.402+440 (2026-08-26) — Sayfa denetimi P33 (canlı PK durumu)
 
 - **Yayıncı PK:** `GET /api/video-streams/{id}/pk-battle` 5xx/ağ hatası artık «Aktif PK daveti yok» gibi gizlenmez; «Tekrar dene» çalışır (404 = aktif PK yok)
