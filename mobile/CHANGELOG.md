@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.395+433 (2026-08-26) — Sayfa denetimi P26 (falcı çevrimiçi, üyelik)
+
+- **Falcı paneli:** `POST /api/fortune-tellers/toggle-online` hatası sessizce yutulmaz; snackbar
+- **Üyelik:** `GET /api/memberships` / `packages` 5xx hatasında tekrar dene (404 yerel katalog yedeği)
+
 ## 1.0.394+432 (2026-08-26) — Sayfa denetimi P25 (mesaj, ajans, oyun skor)
 
 - **Gelen kutusu:** `GET /api/messages` hatası artık boş sohbet listesi gibi gizlenmez; yenile çalışır

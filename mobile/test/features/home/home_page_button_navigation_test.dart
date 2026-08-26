@@ -240,4 +240,13 @@ void main() {
     expect(ApiEndpoints.gameMiniScores, '/api/games/mini-scores');
     expect(ApiEndpoints.gameHistory, '/api/games/history');
   });
+
+  test('kılavuz falcı çevrimiçi ve üyelik katalog uçları', () {
+    expect(
+      ApiEndpoints.fortuneTellerToggleOnline,
+      '/api/fortune-tellers/toggle-online',
+    );
+    expect(ApiEndpoints.membershipPackages, '/api/memberships/packages');
+    expect(ApiEndpoints.membershipsCatalog, '/api/memberships');
+  });
 }

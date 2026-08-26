@@ -181,10 +181,10 @@ class PsychicTellerDashboardController
     final profile = state.profile;
     if (profile == null) return;
     state = state.copyWith(togglingOnline: true);
-    final ok = await ref.read(livePsychicsRepositoryProvider).setOnline(
-          online: !profile.isOnline,
-        );
-    if (ok) {
+    try {
+      await ref.read(livePsychicsRepositoryProvider).setOnline(
+            online: !profile.isOnline,
+          );
       state = state.copyWith(
         profile: PsychicEntity(
           id: profile.id,
@@ -202,8 +202,9 @@ class PsychicTellerDashboardController
         ),
         togglingOnline: false,
       );
-    } else {
+    } catch (e) {
       state = state.copyWith(togglingOnline: false);
+      rethrow;
     }
   }
 
@@ -426,9 +427,20 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                     child: _ProfileHeader(
                       profile: profile,
                       toggling: togglingOnline,
-                      onToggleOnline: () => ref
-                          .read(psychicTellerDashboardProvider.notifier)
-                          .toggleOnline(),
+                      onToggleOnline: () async {
+                        try {
+                          await ref
+                              .read(psychicTellerDashboardProvider.notifier)
+                              .toggleOnline();
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(ApiException.userMessage(e)),
+                            ),
+                          );
+                        }
+                      },
                     ),
                   );
                 }
@@ -762,7 +774,7 @@ class _ProfileHeader extends StatelessWidget {
 
   final PsychicEntity profile;
   final bool toggling;
-  final VoidCallback onToggleOnline;
+  final Future<void> Function() onToggleOnline;
 
   @override
   Widget build(BuildContext context) {
@@ -801,7 +813,7 @@ class _ProfileHeader extends StatelessWidget {
           ),
           Switch.adaptive(
             value: profile.isOnline,
-            onChanged: toggling ? null : (_) => onToggleOnline(),
+            onChanged: toggling ? null : (_) => unawaited(onToggleOnline()),
           ),
         ],
       ),

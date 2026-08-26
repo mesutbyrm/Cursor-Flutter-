@@ -180,15 +180,11 @@ class LivePsychicsRemoteDataSource {
   }
 
   Future<bool> setOnline({required bool online}) async {
-    try {
-      await _dio.safePost<dynamic>(
-        ApiEndpoints.fortuneTellerToggleOnline,
-        data: {'isOnline': online},
-      );
-      return true;
-    } catch (_) {
-      return false;
-    }
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.fortuneTellerToggleOnline,
+      data: {'isOnline': online},
+    );
+    return true;
   }
 
   Future<Map<String, dynamic>?> fetchOnlineStatus() async {

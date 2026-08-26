@@ -15,15 +15,31 @@ class MembershipRemoteDataSource {
   final Dio _dio;
 
   Future<MembershipCatalogEntity> loadCatalog(WalletBalances wallet) async {
+    Object? lastError;
+    var anySuccess = false;
+    var notFound = false;
     for (final path in [
       ApiEndpoints.membershipPackages,
       ApiEndpoints.membershipsCatalog,
     ]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);
+        anySuccess = true;
         final parsed = _parseResponse(res.data, wallet);
         if (parsed != null) return parsed;
-      } catch (_) {}
+      } on ApiException catch (e) {
+        if (e.statusCode == 404 || e.statusCode == 405) {
+          notFound = true;
+          continue;
+        }
+        lastError = e;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (!anySuccess && lastError != null && !notFound) {
+      if (lastError is ApiException) throw lastError;
+      throw ApiException(ApiException.userMessage(lastError));
     }
     return _fallbackCatalog(wallet);
   }
