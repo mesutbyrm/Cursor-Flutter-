@@ -89,4 +89,16 @@ void main() {
     );
     expect(ApiEndpoints.userStats, '/api/user/stats');
   });
+
+  test('kılavuz profil, üyelik, fal, oyun ve hediye uçları', () {
+    expect(ApiEndpoints.userProfile('u1'), '/api/users/u1');
+    expect(ApiEndpoints.membershipsCatalog, '/api/memberships');
+    expect(ApiEndpoints.userActivity, '/api/user/activity');
+    expect(ApiEndpoints.searchAll('ali'), '/api/search?q=ali');
+    expect(ApiEndpoints.userFortunes, '/api/user/fortunes');
+    expect(ApiEndpoints.userFortuneDetail('f1'), '/api/user/fortunes/f1');
+    expect(ApiEndpoints.gameLeaderboard, '/api/games/leaderboard');
+    expect(ApiEndpoints.gameRooms, '/api/games/rooms');
+    expect(ApiEndpoints.giftsTypes, '/api/gifts/types');
+  });
 }

@@ -619,6 +619,10 @@ class _LiveRoomLauncher extends ConsumerWidget {
     return DiscoverSubPage(
       title: title,
       subtitle: prizeLabel,
+      onRefresh: () async {
+        ref.invalidate(gameCenterLiveRoomsProvider);
+        await ref.read(gameCenterLiveRoomsProvider.future);
+      },
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -659,7 +663,23 @@ class _LiveRoomLauncher extends ConsumerWidget {
           Expanded(
             child: rooms.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, _) => const Center(child: Text('Odalar yüklenemedi')),
+              error: (e, _) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      ApiException.userMessage(e),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () =>
+                          ref.invalidate(gameCenterLiveRoomsProvider),
+                      child: const Text('Tekrar dene'),
+                    ),
+                  ],
+                ),
+              ),
               data: (list) {
                 final filtered = list
                     .where((r) => r.gameId.contains(gameId.split('-').first))

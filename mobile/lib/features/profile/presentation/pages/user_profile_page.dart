@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/ui/premium_2026/premium_2026.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
@@ -39,6 +40,10 @@ class UserProfilePage extends ConsumerWidget {
     return DiscoverSubPage(
       title: 'Profil',
       subtitle: 'Kısa videolar ve paylaşımlar',
+      onRefresh: () async {
+        ref.invalidate(userProfileProvider(userId));
+        await ref.read(userProfileProvider(userId).future);
+      },
       actions: [
         DiscoverIconButton(
           icon: Icons.flag_outlined,
@@ -57,7 +62,9 @@ class UserProfilePage extends ConsumerWidget {
         loading: () => const DiscoverAccentLoader(),
         error: (e, _) => DiscoverEmptyState(
           icon: Icons.person_off_outlined,
-          message: e.toString(),
+          message: ApiException.userMessage(e),
+          action: () => ref.invalidate(userProfileProvider(userId)),
+          actionLabel: 'Tekrar dene',
         ),
         data: (user) {
           return CustomScrollView(

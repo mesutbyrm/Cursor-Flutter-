@@ -151,6 +151,7 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
                       onSelect: (g) => setState(() => _selected = g),
                       onQty: (q) => setState(() => _qty = q),
                       onSend: _send,
+                      onRetry: () => ref.invalidate(liveGiftCatalogProvider),
                     ),
                     leaderboard.when(
                       loading: () =>
@@ -209,6 +210,7 @@ class _GiftsTab extends StatelessWidget {
     required this.onSelect,
     required this.onQty,
     required this.onSend,
+    required this.onRetry,
   });
 
   final AsyncValue<List<GiftEntity>> gifts;
@@ -220,6 +222,7 @@ class _GiftsTab extends StatelessWidget {
   final ValueChanged<LiveVideoGiftType> onSelect;
   final ValueChanged<int> onQty;
   final VoidCallback onSend;
+  final VoidCallback onRetry;
 
   List<GiftEntity> _filter(List<GiftEntity> all) {
     bool isFortune(GiftEntity g) {
@@ -244,7 +247,19 @@ class _GiftsTab extends StatelessWidget {
       loading: () => const Center(
         child: CircularProgressIndicator(strokeWidth: 2, color: AppThemeColors.accentPink),
       ),
-      error: (_, _) => const Center(child: Text('Hediyeler yüklenemedi')),
+      error: (e, _) => Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(ApiException.userMessage(e), textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: onRetry,
+              child: const Text('Tekrar dene'),
+            ),
+          ],
+        ),
+      ),
       data: (catalog) {
         final mobile = catalog
             .where((g) => g.platform != GiftPlatform.web)

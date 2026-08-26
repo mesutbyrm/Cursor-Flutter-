@@ -106,7 +106,21 @@ class _LiveGiftPanelState extends ConsumerState<LiveGiftPanel> {
                   height: 120,
                   child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
                 ),
-                error: (_, _) => const Text('Hediyeler yüklenemedi'),
+                error: (e, _) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(ApiException.userMessage(e)),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () =>
+                            ref.invalidate(liveGiftTypesProvider),
+                        child: const Text('Tekrar dene'),
+                      ),
+                    ],
+                  ),
+                ),
                 data: (all) {
                   final featured = LiveGiftCatalog.featuredFrom(all);
                   if (_selected == null && featured.isNotEmpty) {

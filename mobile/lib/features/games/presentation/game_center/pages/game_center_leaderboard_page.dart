@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/widgets/discover_tab_layout.dart';
@@ -63,7 +64,27 @@ class _GameCenterLeaderboardPageState
           Expanded(
             child: data.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, _) => const Center(child: Text('Liste yüklenemedi')),
+              error: (e, _) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        ApiException.userMessage(e),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      FilledButton.icon(
+                        onPressed: () =>
+                            ref.invalidate(gameCenterLeaderboardProvider(_period)),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Tekrar dene'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               data: (entries) {
                 if (entries.isEmpty) {
                   return const Center(

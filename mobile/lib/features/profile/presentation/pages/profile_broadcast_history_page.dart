@@ -66,6 +66,8 @@ class _ProfileBroadcastHistoryPageState
             error: (e, _) => DiscoverEmptyState(
               icon: Icons.error_outline_rounded,
               message: ApiException.userMessage(e),
+              action: _refresh,
+              actionLabel: 'Tekrar dene',
             ),
             data: (items) {
               if (items.isEmpty) {

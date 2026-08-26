@@ -61,10 +61,23 @@ class MembershipPage extends ConsumerWidget {
               error: (e, _) => Center(
                 child: Padding(
                   padding: padding,
-                  child: Text(
-                    ApiException.userMessage(e),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white70),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        ApiException.userMessage(e),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: () => ref
+                            .read(membershipControllerProvider.notifier)
+                            .refresh(),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Tekrar dene'),
+                      ),
+                    ],
                   ),
                 ),
               ),

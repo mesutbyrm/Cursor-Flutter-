@@ -134,10 +134,22 @@ class _GlobalSearchPageState extends ConsumerState<GlobalSearchPage> {
       error: (e, _) => Center(
         child: Padding(
           padding: ResponsiveLayout.pagePadding(context),
-          child: Text(
-            ApiException.userMessage(e),
-            textAlign: TextAlign.center,
-            style: TextStyle(color: palette.textSecondary),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                ApiException.userMessage(e),
+                textAlign: TextAlign.center,
+                style: TextStyle(color: palette.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: () =>
+                    ref.read(userSearchProvider.notifier).refresh(),
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Tekrar dene'),
+              ),
+            ],
           ),
         ),
       ),

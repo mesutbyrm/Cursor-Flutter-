@@ -58,7 +58,22 @@ class FortuneDetailPage extends ConsumerWidget {
                 error: (e, _) => Center(
                   child: Padding(
                     padding: ResponsiveLayout.pagePadding(context),
-                    child: Text(ApiException.userMessage(e)),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          ApiException.userMessage(e),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        FilledButton.icon(
+                          onPressed: () =>
+                              ref.invalidate(fortuneDetailProvider(fortuneId)),
+                          icon: const Icon(Icons.refresh_rounded),
+                          label: const Text('Tekrar dene'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 data: (f) {

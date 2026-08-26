@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.381+419 (2026-08-26) — Sayfa denetimi P12 (profil, üyelik, fal, oyun, hediye retry)
+
+- **Kullanıcı profili:** `GET /api/users/{id}` hatasında tekrar dene
+- **Üyelikler:** `GET /api/memberships` hatasında tekrar dene
+- **İşlemler / yayın geçmişi / kim baktı:** API hatasında tekrar dene
+- **Arama:** `GET /api/search` hatasında tekrar dene
+- **Fal detay / favoriler:** `GET /api/user/fortunes` hatasında tekrar dene
+- **Oyun liderlik / açık odalar:** `GET /api/games/leaderboard` ve oda listesi hatasında tekrar dene
+- **Hediye paneli / geçmiş / liderlik:** katalog ve listeler hatasında tekrar dene
+
 ## 1.0.380+418 (2026-08-26) — Sayfa denetimi P11 (müzik, PK, yorum, kazanç retry)
 
 - **Kısa video müzik:** `GET /api/short-videos/music` hatasında tekrar dene (çekerek yenileme çalışır)

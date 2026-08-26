@@ -88,11 +88,18 @@ class ProfileVisitorsPage extends ConsumerWidget {
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Kim Baktı',
+          onRefresh: () async {
+            ref.invalidate(profileVisitorsProvider);
+            ref.invalidate(profileStatsProvider);
+            await ref.read(profileVisitorsProvider.future);
+          },
           body: async.when(
             loading: () => const Center(child: DiscoverAccentLoader()),
             error: (e, _) => DiscoverEmptyState(
               icon: Icons.error_outline_rounded,
               message: ApiException.userMessage(e),
+              action: () => ref.invalidate(profileVisitorsProvider),
+              actionLabel: 'Tekrar dene',
             ),
             data: (visitors) => CustomScrollView(
               slivers: [

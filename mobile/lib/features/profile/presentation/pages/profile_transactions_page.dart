@@ -73,12 +73,16 @@ class _ProfileTransactionsPageState
             error: (e, _) => DiscoverEmptyState(
               icon: Icons.error_outline_rounded,
               message: ApiException.userMessage(e),
+              action: _refresh,
+              actionLabel: 'Tekrar dene',
             ),
             data: (payRows) => activity.when(
               loading: () => const Center(child: DiscoverAccentLoader()),
               error: (e, _) => DiscoverEmptyState(
                 icon: Icons.error_outline_rounded,
                 message: ApiException.userMessage(e),
+                action: _refresh,
+                actionLabel: 'Tekrar dene',
               ),
               data: (actRows) {
                 if (payRows.isEmpty && actRows.isEmpty) {

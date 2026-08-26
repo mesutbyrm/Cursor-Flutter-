@@ -96,10 +96,22 @@ class _FortuneHistoryTab extends ConsumerWidget {
       error: (e, _) => Center(
         child: Padding(
           padding: ResponsiveLayout.pagePadding(context),
-          child: Text(
-            ApiException.userMessage(e),
-            textAlign: TextAlign.center,
-            style: TextStyle(color: palette.textSecondary),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                ApiException.userMessage(e),
+                textAlign: TextAlign.center,
+                style: TextStyle(color: palette.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: () =>
+                    ref.read(fortuneHistoryProvider.notifier).refresh(),
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Tekrar dene'),
+              ),
+            ],
           ),
         ),
       ),
@@ -223,9 +235,23 @@ class _SavedFavoritesTab extends ConsumerWidget {
     return favorites.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
-        child: Text(
-          ApiException.userMessage(e),
-          textAlign: TextAlign.center,
+        child: Padding(
+          padding: ResponsiveLayout.pagePadding(context),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                ApiException.userMessage(e),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: () => ref.invalidate(userFavoritesProvider),
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Tekrar dene'),
+              ),
+            ],
+          ),
         ),
       ),
       data: (items) {

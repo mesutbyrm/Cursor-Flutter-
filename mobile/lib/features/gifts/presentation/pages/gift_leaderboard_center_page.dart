@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../domain/gift_leaderboard_entry.dart';
 import '../providers/gift_insights_providers.dart';
 
@@ -101,8 +102,28 @@ class GiftLeaderboardCenterPage extends ConsumerWidget {
             child: data.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(
-                child: Text('Yüklenemedi',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6))),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        ApiException.userMessage(e),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      FilledButton.icon(
+                        onPressed: () =>
+                            ref.invalidate(giftLeaderboardProvider(filter)),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Tekrar dene'),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               data: (entries) {
                 if (entries.isEmpty) {
