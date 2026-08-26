@@ -67,6 +67,7 @@ void invalidateHomeKeepAliveProviders(dynamic ref) {
   ref.invalidate(homeOnlineFalProvider);
   ref.invalidate(homeFortuneRequestTypesProvider);
   ref.invalidate(homePopupsProvider);
+  ref.invalidate(homeAnnouncementsProvider);
   invalidateDiscoverLiveStreams(ref);
   invalidateDiscoverVoiceRooms(ref);
   ref.invalidate(homeLiveStreamsProvider);
@@ -324,6 +325,19 @@ final homePopupsProvider = FutureProvider<List<PlatformPopup>>((ref) async {
       .toList();
 });
 
+/// Site duyuruları — kılavuz `GET /api/announcements`.
+final homeAnnouncementsProvider = FutureProvider<List<PlatformPopup>>((
+  ref,
+) async {
+  _keepHomeCacheAlive(ref);
+  final items = await ref
+      .watch(platformContentRemoteDataSourceProvider)
+      .fetchAnnouncements();
+  return items
+      .where((p) => p.title.trim().isNotEmpty)
+      .toList();
+});
+
 /// Fal istek türleri — `GET /api/fortune-request-types`.
 final homeFortuneRequestTypesProvider =
     FutureProvider<List<FortuneRequestType>>((ref) async {
@@ -389,6 +403,7 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(homeOnlineFalProvider.future),
     ref.refresh(homeFortuneRequestTypesProvider.future),
     ref.refresh(homePopupsProvider.future),
+    ref.refresh(homeAnnouncementsProvider.future),
     ref.refresh(socialStoryRingsProvider.future),
   ]).timeout(const Duration(seconds: 12), onTimeout: () {});
 }

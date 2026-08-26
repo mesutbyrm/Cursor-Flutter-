@@ -16,7 +16,7 @@ final searchRepositoryProvider = Provider<SearchRepository>((ref) {
   return SearchRepositoryImpl(ref.watch(searchRemoteProvider));
 });
 
-/// Debounced kullanıcı araması — `GET /api/users/search`.
+/// Debounced kullanıcı araması — kılavuz `GET /api/search` (+ advanced / users).
 final userSearchProvider =
     AsyncNotifierProvider<UserSearchNotifier, List<SearchUserEntity>>(
   UserSearchNotifier.new,

@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.375+413 (2026-08-26) — Sayfa denetimi P6 (duyuru, reklam ödül, arama)
+
+- **Duyurular:** kılavuz `GET /api/announcements` ana sayfa şeridi + `/duyurular` listesi
+- **Reklam ödülü:** `POST /api/user/watch-ad` başarısızsa `POST /api/ads/reward`
+- **Arama:** kılavuz `GET /api/search`, boşsa `GET /api/search/advanced?type=user`
+
 ## 1.0.374+412 (2026-08-26) — Sayfa denetimi P5 (rüya detay, reciprocal lookup, futbol)
 
 - **Hediye gönder:** kullanıcı adı yazınca alıcı çözülür; reciprocal ipucu profil dışında da görünür

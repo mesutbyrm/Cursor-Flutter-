@@ -7,37 +7,57 @@ import '../../../platform/data/models/platform_popup.dart';
 import '../providers/home_providers.dart';
 import '../theme/home_approved_design.dart';
 
-/// Site duyurusu — `GET /api/popups` ilk aktif kayıt (modal dışı şerit).
+/// Site duyurusu — `GET /api/popups`, yoksa kılavuz `GET /api/announcements`.
 class HomePromoPopupBanner extends ConsumerWidget {
   const HomePromoPopupBanner({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final popups = ref.watch(homePopupsProvider);
+    final announcements = ref.watch(homeAnnouncementsProvider);
     return popups.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => announcements.when(
+        loading: () => const SizedBox.shrink(),
+        error: (_, _) => const SizedBox.shrink(),
+        data: (items) => _bannerFrom(context, items),
+      ),
       data: (items) {
-        if (items.isEmpty) return const SizedBox.shrink();
-        final popup = items.first;
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(
-            HomeApprovedDesign.hPad,
-            0,
-            HomeApprovedDesign.hPad,
-            8,
-          ),
-          child: _PromoCard(popup: popup),
+        if (items.isNotEmpty) return _bannerFrom(context, items);
+        return announcements.when(
+          loading: () => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
+          data: (fallback) => _bannerFrom(context, fallback),
         );
       },
+    );
+  }
+
+  Widget _bannerFrom(BuildContext context, List<PlatformPopup> items) {
+    if (items.isEmpty) return const SizedBox.shrink();
+    final popup = items.first;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        HomeApprovedDesign.hPad,
+        0,
+        HomeApprovedDesign.hPad,
+        8,
+      ),
+      child: _PromoCard(
+        popup: popup,
+        onOpenAll: items.length > 1
+            ? () => openNativeSitePath(context, '/duyurular')
+            : null,
+      ),
     );
   }
 }
 
 class _PromoCard extends StatelessWidget {
-  const _PromoCard({required this.popup});
+  const _PromoCard({required this.popup, this.onOpenAll});
 
   final PlatformPopup popup;
+  final VoidCallback? onOpenAll;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +71,13 @@ class _PromoCard extends StatelessWidget {
           final url = popup.actionUrl?.trim();
           if (url != null && url.isNotEmpty) {
             openNativeSitePath(context, url);
+            return;
           }
+          if (onOpenAll != null) {
+            onOpenAll!();
+            return;
+          }
+          openNativeSitePath(context, '/duyurular');
         },
         child: Container(
           decoration: BoxDecoration(

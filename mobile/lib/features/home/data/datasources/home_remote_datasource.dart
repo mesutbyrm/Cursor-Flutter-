@@ -37,6 +37,7 @@ class HomeRemoteDataSource {
     }
     for (final path in [
       ApiEndpoints.homeBanners,
+      ApiEndpoints.announcements,
       ApiEndpoints.socialAnnouncements,
     ]) {
       try {

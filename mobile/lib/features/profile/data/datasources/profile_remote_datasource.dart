@@ -21,6 +21,7 @@ import '../../domain/entities/payment_method_entity.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
+import '../../domain/watch_ad_reward.dart';
 
 class ProfileRemoteDataSource {
   ProfileRemoteDataSource(this._dio, this._compound);
@@ -469,30 +470,21 @@ class WalletRemoteDataSource {
   }
 
   Future<int> watchAdCredit() async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.userWatchAd,
-      data: const {'platform': 'mobile', 'source': 'growth_hub'},
-    );
-    final body = res.data;
-    if (body is Map) {
-      final map = _unwrap(body);
-      final credited = asInt(
-        pick(map, [
-          'creditsEarned',
-          'credit',
-          'credits',
-          'reward',
-          'amount',
-          'jeton',
-          'cfc',
-        ]),
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.userWatchAd,
+        data: const {'platform': 'mobile', 'source': 'growth_hub'},
       );
-      if (credited > 0) return credited;
-      final balance = asInt(
-        pick(map, ['newBalance', 'balance', 'jetonBalance', 'cfcBalance']),
+      final amount = parseWatchAdRewardAmount(res.data);
+      if (amount > 0) return amount;
+    } catch (_) {}
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.adsReward,
+        data: const {'platform': 'mobile', 'source': 'growth_hub'},
       );
-      if (balance > 0) return balance;
-    }
+      return parseWatchAdRewardAmount(res.data);
+    } catch (_) {}
     return 0;
   }
 

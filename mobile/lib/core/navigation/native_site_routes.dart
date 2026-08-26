@@ -96,6 +96,12 @@ void openNativeSitePath(BuildContext context, String path) {
     context.push('/celebrities-hub');
     return;
   }
+  if (p == '/duyurular' ||
+      p == '/announcements' ||
+      p.startsWith('/announcements')) {
+    context.push('/duyurular');
+    return;
+  }
   if (p == '/futbol' || p.startsWith('/football')) {
     context.push('/futbol');
     return;

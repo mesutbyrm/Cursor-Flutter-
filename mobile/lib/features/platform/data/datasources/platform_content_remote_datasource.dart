@@ -40,6 +40,21 @@ class PlatformContentRemoteDataSource {
     }
   }
 
+  /// `GET /api/announcements` — site duyuruları (kılavuz §9.13).
+  Future<List<PlatformPopup>> fetchAnnouncements() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.announcements);
+      return _parseList(res.data, PlatformPopup.fromJson, keys: [
+        'announcements',
+        'items',
+        'data',
+        'banners',
+      ]).where((p) => p.title.trim().isNotEmpty).toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
   Future<bool> claimAdReward({String? adId, String? placement}) async {
     final body = <String, dynamic>{};
     if (adId != null && adId.trim().isNotEmpty) body['adId'] = adId.trim();

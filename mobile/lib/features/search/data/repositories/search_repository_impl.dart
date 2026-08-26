@@ -9,5 +9,5 @@ class SearchRepositoryImpl implements SearchRepository {
 
   @override
   Future<List<SearchUserEntity>> searchUsers(String query) =>
-      _remote.searchUsers(query);
+      _remote.searchAll(query);
 }
