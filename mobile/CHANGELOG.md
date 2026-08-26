@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.389+427 (2026-08-26) — Sayfa denetimi P20 (rozet, çerçeve, başarımlar)
+
+- **Üyelik rozetleri:** `GET /api/membership-badges` hatası artık boş katalog gibi gizlenmez; profilde tekrar dene
+- **Profil çerçevesi:** `GET /api/profile-frames` hatasında kozmetik sayfasında tekrar dene
+- **Başarımlar:** `GET /api/user/achievements` hatası boş rozet listesi gibi görünmez
+- **Kısa video istatistik:** kullanıcı profilinde sayaç yüklenemezse tekrar dene
+
 ## 1.0.388+426 (2026-08-26) — Sayfa denetimi P19 (istatistik, takip, arama, yorum)
 
 - **Kazanç / istatistik:** `GET /api/user/stats` hatası artık sıfır gibi gizlenmez; tekrar dene çalışır

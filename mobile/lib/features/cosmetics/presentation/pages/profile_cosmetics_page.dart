@@ -60,6 +60,9 @@ class _ProfileCosmeticsPageState extends ConsumerState<ProfileCosmeticsPage>
   Widget build(BuildContext context) {
     final tier = ref.watch(vipTierProvider);
     final canCustomize = tier.index >= VipTier.gold.index;
+    final frames = ref.watch(profileFramesCatalogProvider);
+    final badges = ref.watch(membershipBadgesCatalogProvider);
+    final catalogFailed = frames.hasError || badges.hasError;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -69,6 +72,28 @@ class _ProfileCosmeticsPageState extends ConsumerState<ProfileCosmeticsPage>
           body: canCustomize
               ? Column(
                   children: [
+                    if (catalogFailed)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'Sunucu kataloğu yüklenemedi; yerel liste gösteriliyor.',
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                ref.invalidate(profileFramesCatalogProvider);
+                                ref.invalidate(
+                                  membershipBadgesCatalogProvider,
+                                );
+                              },
+                              child: const Text('Tekrar dene'),
+                            ),
+                          ],
+                        ),
+                      ),
                     CosmeticProfilePreviewPanel(
                       activeSlot: _slots[_tabs.index],
                     ),

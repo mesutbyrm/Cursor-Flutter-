@@ -179,4 +179,10 @@ void main() {
       '/api/short-videos/v1/comments',
     );
   });
+
+  test('kılavuz rozet, çerçeve ve başarım uçları', () {
+    expect(ApiEndpoints.membershipBadges, '/api/membership-badges');
+    expect(ApiEndpoints.profileFrames, '/api/profile-frames');
+    expect(ApiEndpoints.userAchievements, '/api/user/achievements');
+  });
 }

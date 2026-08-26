@@ -41,24 +41,20 @@ class AchievementsRemoteDataSource {
   final Dio _dio;
 
   Future<List<AchievementEntity>> fetchAchievements() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.userAchievements);
-      final body = res.data;
-      List<dynamic> raw = [];
-      if (body is List) {
-        raw = body;
-      } else if (body is Map) {
-        raw = asJsonList(
-          pick(asJsonMap(body), ['achievements', 'items', 'data']) ?? [],
-        );
-      }
-      return raw
-          .whereType<Map>()
-          .map((e) => AchievementEntity.fromJson(Map<String, dynamic>.from(e)))
-          .where((a) => a.id.isNotEmpty)
-          .toList();
-    } catch (_) {
-      return const [];
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.userAchievements);
+    final body = res.data;
+    List<dynamic> raw = [];
+    if (body is List) {
+      raw = body;
+    } else if (body is Map) {
+      raw = asJsonList(
+        pick(asJsonMap(body), ['achievements', 'items', 'data']) ?? [],
+      );
     }
+    return raw
+        .whereType<Map>()
+        .map((e) => AchievementEntity.fromJson(Map<String, dynamic>.from(e)))
+        .where((a) => a.id.isNotEmpty)
+        .toList();
   }
 }

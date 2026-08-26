@@ -14,32 +14,27 @@ class CosmeticsRemoteDataSource {
   final Dio _dio;
 
   Future<List<CosmeticItem>> fetchProfileFrames() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.profileFrames);
-      return _parseCatalog(res.data, defaultSlot: CosmeticSlot.profileFrame);
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.profileFrames);
+    return _parseCatalog(res.data, defaultSlot: CosmeticSlot.profileFrame);
   }
 
   Future<List<CosmeticItem>> fetchMembershipBadges() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.membershipBadges);
-      final list = _unwrapList(res.data);
-      return list.map((json) {
-        return CosmeticItem(
-          id: json['id']?.toString() ?? '',
-          slot: CosmeticSlot.badge,
-          name: json['name']?.toString() ?? 'Rozet',
-          effectKind: CosmeticEffectKind.imageOverlay,
-          previewUrl: json['imageUrl']?.toString(),
-          assetUrl: json['imageUrl']?.toString(),
-          requiredTier: VipTier.fromMembership(json['tier']?.toString()),
-        );
-      }).where((c) => c.id.isNotEmpty).toList();
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.membershipBadges);
+    final list = _unwrapList(res.data);
+    return list
+        .map((json) {
+          return CosmeticItem(
+            id: json['id']?.toString() ?? '',
+            slot: CosmeticSlot.badge,
+            name: json['name']?.toString() ?? 'Rozet',
+            effectKind: CosmeticEffectKind.imageOverlay,
+            previewUrl: json['imageUrl']?.toString(),
+            assetUrl: json['imageUrl']?.toString(),
+            requiredTier: VipTier.fromMembership(json['tier']?.toString()),
+          );
+        })
+        .where((c) => c.id.isNotEmpty)
+        .toList();
   }
 
   List<CosmeticItem> _parseCatalog(

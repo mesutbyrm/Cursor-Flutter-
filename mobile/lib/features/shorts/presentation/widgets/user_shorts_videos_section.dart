@@ -25,7 +25,14 @@ class UserShortsVideosSection extends ConsumerWidget {
       children: [
         stats.when(
           loading: () => const SizedBox.shrink(),
-          error: (_, _) => const SizedBox.shrink(),
+          error: (_, _) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: TextButton(
+              onPressed: () =>
+                  ref.invalidate(shortVideoProfileStatsProvider(userId)),
+              child: const Text('İstatistik yüklenemedi — Tekrar dene'),
+            ),
+          ),
           data: (s) => Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
