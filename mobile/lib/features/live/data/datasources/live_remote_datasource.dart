@@ -842,23 +842,19 @@ class LiveRemoteDataSource {
   }
 
   Future<List<Map<String, dynamic>>> fetchStreamViewers(String streamId) async {
-    try {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.videoStreamViewers(streamId),
-      );
-      final body = res.data;
-      dynamic list = body;
-      if (body is Map) {
-        list = pick(Map<String, dynamic>.from(body), ['viewers', 'items', 'data']) ?? body;
-      }
-      if (list is! List) return const [];
-      return list
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-    } catch (_) {
-      return const [];
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.videoStreamViewers(streamId),
+    );
+    final body = res.data;
+    dynamic list = body;
+    if (body is Map) {
+      list = pick(Map<String, dynamic>.from(body), ['viewers', 'items', 'data']) ?? body;
     }
+    if (list is! List) return const [];
+    return list
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
   }
 
   String? _extractStreamId(dynamic body) {

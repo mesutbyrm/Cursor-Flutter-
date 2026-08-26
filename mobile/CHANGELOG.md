@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.392+430 (2026-08-26) — Sayfa denetimi P23 (izleyici, içerik hub, fal kartı, günlük ödül)
+
+- **Yayın izleyicileri:** `GET /api/video-streams/{id}/viewers` hatası boş liste gibi gizlenmez; tekrar dene
+- **İçerik hub:** rüya / blog / ünlü / fan kulübü / oyun listesi API hatasında tekrar dene
+- **Fal vitrin:** `GET /api/homepage-fortune-cards` hatası ana sayfa Fal & Tarot bölümünde görünür
+- **Günlük ödül:** `GET /api/daily-rewards` hatası büyüme merkezinde uyarılır
+- **Ana sayfa butonları:** `GET /api/homepage-buttons` ağ hatasında hızlı erişim statik yedekle kalır; hata yutulmaz
+
 ## 1.0.391+429 (2026-08-26) — Sayfa denetimi P22 (futbol, kişiler, ajans, turnuva, yayın hediyesi)
 
 - **Futbol merkezi:** `GET /api/football` hatası artık boş maç listesi gibi gizlenmez; tekrar dene

@@ -13,6 +13,7 @@ import '../../providers/live_host_dashboard_provider.dart';
 import '../../providers/live_video_pk_provider.dart';
 import '../../providers/live_stream_engagement_provider.dart';
 import '../../providers/live_stream_viewers_provider.dart';
+import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../widgets/broadcast_room/live_moderation_sheet.dart';
 import 'live_host_dashboard_chart.dart';
@@ -805,13 +806,30 @@ class _EngagementTabState extends ConsumerState<_EngagementTab> {
         _sectionTitle('Çekiliş'),
         FilledButton.icon(
           onPressed: () async {
-            final viewers = await ref.read(liveStreamViewersProvider(widget.streamId).future);
-            final names = viewers.map((v) => v.displayName).where((n) => n.isNotEmpty).toList();
-            final winner = ref.read(liveStreamEngagementProvider.notifier).pickGiveawayWinner(names);
-            if (!context.mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(winner != null ? 'Kazanan: $winner' : 'İzleyici yok')),
-            );
+            try {
+              final viewers =
+                  await ref.read(liveStreamViewersProvider(widget.streamId).future);
+              final names = viewers
+                  .map((v) => v.displayName)
+                  .where((n) => n.isNotEmpty)
+                  .toList();
+              final winner = ref
+                  .read(liveStreamEngagementProvider.notifier)
+                  .pickGiveawayWinner(names);
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    winner != null ? 'Kazanan: $winner' : 'İzleyici yok',
+                  ),
+                ),
+              );
+            } catch (e) {
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(ApiException.userMessage(e))),
+              );
+            }
           },
           icon: const Icon(Icons.casino_rounded),
           label: const Text('Rastgele kazanan seç'),

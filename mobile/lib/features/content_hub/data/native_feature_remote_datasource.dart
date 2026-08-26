@@ -2,10 +2,16 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_endpoints.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/html_plain_text.dart';
 import '../../../core/util/json_util.dart';
 import '../domain/native_feature_item.dart';
+
+Never _throwLast(Object error) {
+  if (error is ApiException) throw error;
+  throw ApiException(ApiException.userMessage(error));
+}
 
 class NativeFeatureRemoteDataSource {
   NativeFeatureRemoteDataSource(this._dio);
@@ -109,66 +115,87 @@ class NativeFeatureRemoteDataSource {
   }
 
   Future<List<NativeFeatureItem>> _fetchGames() async {
+    Object? lastError;
     final items = <NativeFeatureItem>[];
-    items.addAll(
-      await _fetchPath(
+    for (final call in [
+      () => _fetchPath(
         ApiEndpoints.homeGames,
         fallbackIcon: Icons.sports_esports_rounded,
         fallbackRoute: '/games-hub',
       ),
-    );
-    items.addAll(
-      await _fetchPath(
+      () => _fetchPath(
         ApiEndpoints.tournaments,
         fallbackIcon: Icons.emoji_events_rounded,
         fallbackRoute: '/games-hub',
         badge: 'Turnuva',
       ),
-    );
+    ]) {
+      try {
+        items.addAll(await call());
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (items.isEmpty && lastError != null) _throwLast(lastError);
     return _dedupe(items);
   }
 
   Future<List<NativeFeatureItem>> _fetchDreams() async {
+    Object? lastError;
     final items = <NativeFeatureItem>[];
-    items.addAll(
-      await _fetchPath(
+    for (final call in [
+      () => _fetchPath(
         ApiEndpoints.dreams,
         fallbackIcon: Icons.nights_stay_rounded,
         fallbackRoute: '/dreams-hub',
       ),
-    );
-    items.addAll(
-      await _fetchPath(
+      () => _fetchPath(
         ApiEndpoints.dreamSymbols,
         fallbackIcon: Icons.auto_stories_rounded,
         fallbackRoute: '/dreams-hub',
         badge: 'Sözlük',
       ),
-    );
-    items.addAll(
-      await _fetchPath(
+      () => _fetchPath(
         ApiEndpoints.dreamContest,
         fallbackIcon: Icons.how_to_vote_rounded,
         fallbackRoute: '/dreams-hub',
         badge: 'Yarışma',
       ),
-    );
+    ]) {
+      try {
+        items.addAll(await call());
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (items.isEmpty && lastError != null) _throwLast(lastError);
     return _dedupe(items);
   }
 
   Future<List<NativeFeatureItem>> _fetchBlog() async {
-    final recent = await _fetchPath(
-      ApiEndpoints.blogRecent,
-      fallbackIcon: Icons.article_rounded,
-      fallbackRoute: '/blog-hub',
-      badge: 'Yeni',
-    );
-    if (recent.isNotEmpty) return _dedupe(recent);
-    return _fetchPath(
-      ApiEndpoints.blog,
-      fallbackIcon: Icons.menu_book_rounded,
-      fallbackRoute: '/blog-hub',
-    );
+    Object? lastError;
+    try {
+      final recent = await _fetchPath(
+        ApiEndpoints.blogRecent,
+        fallbackIcon: Icons.article_rounded,
+        fallbackRoute: '/blog-hub',
+        badge: 'Yeni',
+      );
+      if (recent.isNotEmpty) return _dedupe(recent);
+    } catch (e) {
+      lastError = e;
+    }
+    try {
+      return await _fetchPath(
+        ApiEndpoints.blog,
+        fallbackIcon: Icons.menu_book_rounded,
+        fallbackRoute: '/blog-hub',
+      );
+    } catch (e) {
+      lastError = e;
+    }
+    if (lastError != null) _throwLast(lastError);
+    return const [];
   }
 
   Future<List<NativeFeatureItem>> _fetchCelebrities() {
@@ -193,23 +220,19 @@ class NativeFeatureRemoteDataSource {
     required String fallbackRoute,
     String? badge,
   }) async {
-    try {
-      final res = await _dio.safeGet<dynamic>(path);
-      final rows = _itemsFromBody(res.data);
-      return rows
-          .map(
-            (json) => _mapItem(
-              json,
-              fallbackIcon: fallbackIcon,
-              fallbackRoute: fallbackRoute,
-              badge: badge,
-            ),
-          )
-          .where((item) => item.title.trim().isNotEmpty)
-          .toList();
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(path);
+    final rows = _itemsFromBody(res.data);
+    return rows
+        .map(
+          (json) => _mapItem(
+            json,
+            fallbackIcon: fallbackIcon,
+            fallbackRoute: fallbackRoute,
+            badge: badge,
+          ),
+        )
+        .where((item) => item.title.trim().isNotEmpty)
+        .toList();
   }
 
   List<Map<String, dynamic>> _itemsFromBody(dynamic body) {

@@ -214,4 +214,16 @@ void main() {
       '/api/video-streams/s1/gifts/leaderboard',
     );
   });
+
+  test('kılavuz izleyici, fal kartı, günlük ödül ve içerik hub uçları', () {
+    expect(
+      ApiEndpoints.videoStreamViewers('s1'),
+      '/api/video-streams/s1/viewers',
+    );
+    expect(ApiEndpoints.homepageFortuneCards, '/api/homepage-fortune-cards');
+    expect(ApiEndpoints.homeDailyRewards, '/api/daily-rewards');
+    expect(ApiEndpoints.homepageButtons, '/api/homepage-buttons');
+    expect(ApiEndpoints.dreams, '/api/dreams');
+    expect(ApiEndpoints.blog, '/api/blog');
+  });
 }

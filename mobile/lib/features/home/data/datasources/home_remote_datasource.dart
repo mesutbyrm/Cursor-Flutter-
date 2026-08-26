@@ -103,21 +103,17 @@ class HomeRemoteDataSource {
     if (compound != null && compound.homepageButtons.isNotEmpty) {
       return compound.homepageButtons;
     }
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.homepageButtons);
-      final items = _itemsFromBody(
-        res.data,
-        keys: const ['buttons', 'homepageButtons', 'items', 'data'],
-      );
-      final buttons = items
-          .map(_mapHomepageButton)
-          .where((b) => b.id.isNotEmpty && b.isActive)
-          .toList();
-      buttons.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-      return buttons;
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.homepageButtons);
+    final items = _itemsFromBody(
+      res.data,
+      keys: const ['buttons', 'homepageButtons', 'items', 'data'],
+    );
+    final buttons = items
+        .map(_mapHomepageButton)
+        .where((b) => b.id.isNotEmpty && b.isActive)
+        .toList();
+    buttons.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    return buttons;
   }
 
   /// `GET /api/trends` — trend konular.
@@ -208,13 +204,9 @@ class HomeRemoteDataSource {
   }
 
   Future<List<DailyRewardEntity>> fetchDailyRewards() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.homeDailyRewards);
-      final items = _itemsFromBody(res.data);
-      return items.map(_mapDailyReward).where((r) => r.id.isNotEmpty).toList();
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.homeDailyRewards);
+    final items = _itemsFromBody(res.data);
+    return items.map(_mapDailyReward).where((r) => r.id.isNotEmpty).toList();
   }
 
   Future<List<HomeTrendVideoEntity>> fetchTrendVideos() async {
@@ -691,17 +683,13 @@ class HomeRemoteDataSource {
     if (compound != null && compound.fortuneCards.isNotEmpty) {
       return compound.fortuneCards;
     }
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.homepageFortuneCards);
-      final items = _itemsFromBody(res.data, keys: const ['cards', 'items']);
-      if (items.isEmpty) return const [];
-      return items
-          .map((j) => _mapHomeFortuneCard(j))
-          .where((c) => c.title.isNotEmpty)
-          .toList();
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.homepageFortuneCards);
+    final items = _itemsFromBody(res.data, keys: const ['cards', 'items']);
+    if (items.isEmpty) return const [];
+    return items
+        .map((j) => _mapHomeFortuneCard(j))
+        .where((c) => c.title.isNotEmpty)
+        .toList();
   }
 
   HomeFortuneCardEntity _mapHomeFortuneCard(Map<String, dynamic> m) {
