@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/images/canlifal_network_image.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../domain/gift_collection.dart';
 import '../../domain/supporter_badge.dart';
@@ -56,14 +57,22 @@ class GiftCollectionPage extends ConsumerWidget {
                   ? const SizedBox.shrink()
                   : _BadgeHeader(badge: b),
               loading: () => const _Loading(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (e, _) => _RetryLine(
+                message: ApiException.userMessage(e),
+                onRetry: () => ref.invalidate(
+                  supporterBadgeProvider(_isSelf ? null : userId),
+                ),
+              ),
             ),
             if (!_isSelf && collection != null) ...[
               const SizedBox(height: 18),
               collection.when(
                 data: (c) => _CollectionSection(collection: c),
                 loading: () => const _Loading(),
-                error: (_, __) => const SizedBox.shrink(),
+                error: (e, _) => _RetryLine(
+                  message: ApiException.userMessage(e),
+                  onRetry: () => ref.invalidate(giftCollectionProvider(uid)),
+                ),
               ),
             ],
             if (!_isSelf && album != null) ...[
@@ -71,7 +80,10 @@ class GiftCollectionPage extends ConsumerWidget {
               album.when(
                 data: (a) => _AlbumSection(album: a),
                 loading: () => const _Loading(),
-                error: (_, __) => const SizedBox.shrink(),
+                error: (e, _) => _RetryLine(
+                  message: ApiException.userMessage(e),
+                  onRetry: () => ref.invalidate(giftAlbumProvider(uid)),
+                ),
               ),
             ],
           ],
@@ -328,4 +340,31 @@ class _Loading extends StatelessWidget {
         padding: EdgeInsets.all(24),
         child: Center(child: CircularProgressIndicator()),
       );
+}
+
+class _RetryLine extends StatelessWidget {
+  const _RetryLine({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        children: [
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0x99FFFFFF), fontSize: 13),
+          ),
+          TextButton(
+            onPressed: onRetry,
+            child: const Text('Tekrar dene'),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.385+423 (2026-08-26) — Sayfa denetimi P16 (falcı panel, destekçi, admin retry)
+
+- **Falcı paneli:** ödül / hediye listesi hatasında tekrar dene
+- **Destekçi profili:** rozet / koleksiyon / albüm hatası artık gizlenmez; tekrar dene
+- **Profil admin kartı:** bekleyen ödeme talepleri hatasında tekrar dene
+
 ## 1.0.384+422 (2026-08-26) — Sayfa denetimi P15 (cüzdan, shorts, burç retry)
 
 - **Cüzdan merkezi:** `GET /api/wallet` hatasında kullanıcı mesajı + tekrar dene

@@ -133,4 +133,12 @@ void main() {
     expect(ApiEndpoints.shortVideos, '/api/short-videos');
     expect(ApiEndpoints.me, '/api/me');
   });
+
+  test('kılavuz falcı ödül ve destekçi rozet uçları', () {
+    expect(
+      ApiEndpoints.fortuneTellerAwards('t1'),
+      '/api/fortune-tellers/awards?tellerId=t1',
+    );
+    expect(ApiEndpoints.giftsInsightsMeBadge, '/api/gifts/insights/me/badge');
+  });
 }

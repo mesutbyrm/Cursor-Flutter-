@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/network/api_endpoints.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/network/dio_provider.dart';
 import '../../../../../core/theme/app_theme_colors.dart';
@@ -228,12 +227,21 @@ class _ProfileAdminPaymentQueue extends ConsumerWidget {
       ),
       error: (e, _) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text(
-          ApiException.userMessage(e),
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.orange.shade200,
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              ApiException.userMessage(e),
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.orange.shade200,
+              ),
+            ),
+            TextButton(
+              onPressed: () => ref.invalidate(adminPaymentRequestsProvider),
+              child: const Text('Tekrar dene'),
+            ),
+          ],
         ),
       ),
       data: (rows) {

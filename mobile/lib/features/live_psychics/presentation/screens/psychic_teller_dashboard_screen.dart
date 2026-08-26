@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:canlifal_social/core/widgets/user_avatar.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
@@ -626,10 +627,16 @@ class _TellerStatsPanel extends ConsumerWidget {
 
     return awards.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (e, _) => _MiniRetry(
+        message: ApiException.userMessage(e),
+        onRetry: () => ref.invalidate(psychicAwardsProvider(tellerId)),
+      ),
       data: (awardList) => gifts.when(
         loading: () => const SizedBox.shrink(),
-        error: (_, _) => const SizedBox.shrink(),
+        error: (e, _) => _MiniRetry(
+          message: ApiException.userMessage(e),
+          onRetry: () => ref.invalidate(psychicGiftsProvider(tellerId)),
+        ),
         data: (giftList) {
           if (awardList.isEmpty && giftList.isEmpty) {
             return const SizedBox.shrink();
@@ -825,6 +832,36 @@ class _PendingTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MiniRetry extends StatelessWidget {
+  const _MiniRetry({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        children: [
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.6),
+            ),
+          ),
+          TextButton(
+            onPressed: onRetry,
+            child: const Text('Tekrar dene'),
+          ),
+        ],
       ),
     );
   }
