@@ -7,10 +7,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
-import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
-import '../../domain/wallet_balances.dart';
 import '../../domain/withdrawal_request.dart';
 import '../providers/wallet_extended_providers.dart';
 
@@ -151,7 +149,17 @@ class _WithdrawalPageState extends ConsumerState<WithdrawalPage> {
               const SizedBox(height: 10),
               history.when(
                 loading: () => const Center(child: DiscoverAccentLoader()),
-                error: (e, _) => Text(ApiException.userMessage(e)),
+                error: (e, _) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(ApiException.userMessage(e)),
+                    TextButton(
+                      onPressed: () =>
+                          ref.invalidate(withdrawalHistoryProvider),
+                      child: const Text('Tekrar dene'),
+                    ),
+                  ],
+                ),
                 data: (items) => items.isEmpty
                     ? Text(
                         'Henüz çekim talebi yok.',

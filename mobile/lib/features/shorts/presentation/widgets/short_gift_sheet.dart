@@ -49,6 +49,7 @@ class _ShortGiftSheetState extends ConsumerState<_ShortGiftSheet> {
   }
 
   Future<void> _load() async {
+    if (mounted) setState(() => _loading = true);
     try {
       final ds = LiveGiftsRemoteDataSource(ref.read(dioProvider));
       var list = await ds.fetchGiftTypesFromGiftsApi(
@@ -154,9 +155,17 @@ class _ShortGiftSheetState extends ConsumerState<_ShortGiftSheet> {
                 child: Center(child: CircularProgressIndicator()),
               )
             else if (_gifts.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(24),
-                child: Text('Hediye listesi yüklenemedi.'),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    const Text('Hediye listesi yüklenemedi.'),
+                    TextButton(
+                      onPressed: _load,
+                      child: const Text('Tekrar dene'),
+                    ),
+                  ],
+                ),
               )
             else
               SizedBox(

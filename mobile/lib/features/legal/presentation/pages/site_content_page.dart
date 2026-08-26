@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/site_page_providers.dart';
@@ -39,7 +40,7 @@ class _SiteContentPageState extends ConsumerState<SiteContentPage> {
           title: widget.title,
           body: pageAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, __) => _errorBody(),
+            error: (e, _) => _errorBody(message: ApiException.userMessage(e)),
             data: (page) {
               if (page == null || page.html.trim().isEmpty) {
                 return _errorBody();
@@ -92,7 +93,7 @@ class _SiteContentPageState extends ConsumerState<SiteContentPage> {
       ..loadHtmlString(wrapped);
   }
 
-  Widget _errorBody() {
+  Widget _errorBody({String? message}) {
     final url = widget.fallbackUrl;
     return Center(
       child: Padding(
@@ -103,12 +104,26 @@ class _SiteContentPageState extends ConsumerState<SiteContentPage> {
             const Icon(Icons.cloud_off_rounded, size: 48),
             const SizedBox(height: 12),
             Text(
-              'Sayfa yüklenemedi.',
+              message == null || message.trim().isEmpty
+                  ? 'Sayfa yüklenemedi.'
+                  : message,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium,
             ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () {
+                setState(() {
+                  _controller = null;
+                  _loading = true;
+                });
+                ref.invalidate(sitePageProvider(widget.slug));
+              },
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Tekrar dene'),
+            ),
             if (url != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               FilledButton.icon(
                 onPressed: () => launchUrl(
                   Uri.parse(url),

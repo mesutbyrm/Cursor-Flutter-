@@ -118,4 +118,13 @@ void main() {
     expect(ApiEndpoints.userPosts('u1'), '/api/users/u1/posts');
     expect(ApiEndpoints.pkLeaderboard, '/api/pk/leaderboard');
   });
+
+  test('kılavuz çekim, referans, site CMS ve mesaj uçları', () {
+    expect(ApiEndpoints.withdrawals, '/api/withdrawals');
+    expect(ApiEndpoints.referral, '/api/referral');
+    expect(ApiEndpoints.sitePage('kvkk'), '/api/site-pages/kvkk');
+    expect(ApiEndpoints.messages, '/api/messages');
+    expect(ApiEndpoints.giftsTypes, '/api/gifts/types');
+    expect(ApiEndpoints.tournaments, '/api/tournaments');
+  });
 }

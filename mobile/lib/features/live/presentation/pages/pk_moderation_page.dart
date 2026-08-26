@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../providers/pk_room_providers.dart';
 
@@ -42,9 +43,11 @@ class PkModerationPage extends ConsumerWidget {
       ),
       body: bans.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Text(ApiException.userMessage(e),
-              style: const TextStyle(color: Color(0x99FFFFFF))),
+        error: (e, _) => DiscoverEmptyState(
+          icon: Icons.error_outline_rounded,
+          message: ApiException.userMessage(e),
+          action: () => ref.invalidate(pkBansProvider),
+          actionLabel: 'Tekrar dene',
         ),
         data: (rows) => RefreshIndicator(
           onRefresh: () async => ref.invalidate(pkBansProvider),

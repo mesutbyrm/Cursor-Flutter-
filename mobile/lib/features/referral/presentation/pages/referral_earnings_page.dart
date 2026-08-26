@@ -38,7 +38,16 @@ class ReferralEarningsPage extends ConsumerWidget {
           children: [
             earnings.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Text(ApiException.userMessage(e)),
+              error: (e, _) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(ApiException.userMessage(e)),
+                  TextButton(
+                    onPressed: () => ref.invalidate(referralEarningsProvider),
+                    child: const Text('Tekrar dene'),
+                  ),
+                ],
+              ),
               data: (s) => GlowPanel(
                 borderRadius: 18,
                 padding: const EdgeInsets.all(16),
@@ -66,7 +75,16 @@ class ReferralEarningsPage extends ConsumerWidget {
                 padding: EdgeInsets.all(24),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (e, _) => Text(ApiException.userMessage(e)),
+              error: (e, _) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(ApiException.userMessage(e)),
+                  TextButton(
+                    onPressed: () => ref.invalidate(referralLedgerProvider),
+                    child: const Text('Tekrar dene'),
+                  ),
+                ],
+              ),
               data: (items) {
                 if (items.isEmpty) {
                   return Text(

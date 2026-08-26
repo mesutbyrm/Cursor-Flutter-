@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../domain/entities/message_entities.dart';
@@ -103,7 +104,13 @@ class _ChatMessagesListPaneState extends ConsumerState<ChatMessagesListPane> {
     if (error != null && msgs == null) {
       return DiscoverEmptyState(
         icon: Icons.chat_bubble_outline,
-        message: error.toString(),
+        message: ApiException.userMessage(error),
+        action: () => ref
+            .read(
+              chatMessagesListNotifierProvider(widget.conversationId).notifier,
+            )
+            .refresh(),
+        actionLabel: 'Tekrar dene',
       );
     }
     if (msgs == null) {

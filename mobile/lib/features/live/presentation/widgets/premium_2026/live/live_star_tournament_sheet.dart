@@ -52,22 +52,16 @@ class _LiveStarTournamentSheet extends ConsumerWidget {
                 padding: EdgeInsets.all(24),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (e, _) => Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  ApiException.userMessage(e),
-                  style: const TextStyle(color: Colors.white70),
-                ),
+              error: (e, _) => _TournamentRetry(
+                message: ApiException.userMessage(e),
+                onRetry: () => ref.invalidate(gameTournamentsProvider),
               ),
               data: (list) {
                 if (list.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text(
-                      'Şu an açık turnuva yok. Yakında yenileri eklenecek.',
-                      style: TextStyle(color: Colors.white70),
-                      textAlign: TextAlign.center,
-                    ),
+                  return _TournamentRetry(
+                    message:
+                        'Şu an açık turnuva yok. Yakında yenileri eklenecek.',
+                    onRetry: () => ref.invalidate(gameTournamentsProvider),
                   );
                 }
                 return ConstrainedBox(
@@ -85,6 +79,33 @@ class _LiveStarTournamentSheet extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _TournamentRetry extends StatelessWidget {
+  const _TournamentRetry({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Text(
+            message,
+            style: const TextStyle(color: Colors.white70),
+            textAlign: TextAlign.center,
+          ),
+          TextButton(
+            onPressed: onRetry,
+            child: const Text('Tekrar dene'),
+          ),
+        ],
       ),
     );
   }

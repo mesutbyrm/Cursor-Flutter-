@@ -16,7 +16,6 @@ import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
 import '../../../membership/presentation/widgets/membership_store_teaser_banner.dart';
-import '../premium_2026/profile_membership_helpers.dart';
 import '../widgets/cfc_balance_header.dart';
 import '../widgets/cfc_native_checkout.dart';
 import '../widgets/pending_payment_banner.dart';
@@ -116,9 +115,19 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                     child: CfcBalanceHeader(cfc: b.cfc),
                   ),
                   loading: () => const SizedBox.shrink(),
-                  error: (e, _) => Text(
-                    ApiException.userMessage(e),
-                    style: TextStyle(color: context.colors.onSurfaceMuted),
+                  error: (e, _) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        ApiException.userMessage(e),
+                        style: TextStyle(color: context.colors.onSurfaceMuted),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            ref.refreshWalletCache(force: true),
+                        child: const Text('Tekrar dene'),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -157,7 +166,18 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                     padding: EdgeInsets.all(16),
                     child: Center(child: CircularProgressIndicator()),
                   ),
-                  error: (e, _) => Text(ApiException.userMessage(e)),
+                  error: (e, _) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(ApiException.userMessage(e)),
+                      TextButton(
+                        onPressed: () => ref
+                            .read(paymentRequestsNotifierProvider.notifier)
+                            .refresh(),
+                        child: const Text('Tekrar dene'),
+                      ),
+                    ],
+                  ),
                   data: (rows) {
                     final cfcRows = rows.where((r) => r.isCfc).toList();
                     if (cfcRows.isEmpty) {

@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.383+421 (2026-08-26) — Sayfa denetimi P14 (cüzdan, referans, CMS, sohbet retry)
+
+- **Para çekme:** geçmiş talepler hatasında tekrar dene (`POST /api/withdrawals` geçmişi)
+- **Referans kazancı:** özet ve defter hatasında tekrar dene (`GET /api/referral`)
+- **CFC yükleme:** cüzdan bakiyesi ve ödeme talepleri hatasında tekrar dene (`GET /api/wallet`)
+- **Yıldız turnuvası:** liste boş/hata durumunda tekrar dene
+- **Kısa video hediyesi:** katalog yüklenemezse tekrar dene (`GET /api/gifts/types`)
+- **Site CMS:** `GET /api/site-pages/{slug}` hatasında uygulama içi tekrar dene
+- **Özel mesajlar:** hata metni kullanıcı mesajı + tekrar dene
+- **PK moderasyon:** ban listesi hatasında tekrar dene
+
 ## 1.0.382+420 (2026-08-26) — Sayfa denetimi P13 (falcı, profil içerik, PK, hediye retry)
 
 - **Falcı profili:** yorum / ödül / hediye ve oturum geçmişi hatasında tekrar dene
