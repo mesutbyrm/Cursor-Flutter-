@@ -552,11 +552,16 @@ class GameCenterLoadingBody extends StatelessWidget {
   }
 }
 
-/// Oyun listesi boşken gösterilen durum.
+/// Oyun listesi boşken veya yüklenemezken gösterilen durum.
 class GameCenterEmptyState extends StatelessWidget {
-  const GameCenterEmptyState({super.key, required this.message});
+  const GameCenterEmptyState({
+    super.key,
+    required this.message,
+    this.onRetry,
+  });
 
   final String message;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -585,6 +590,13 @@ class GameCenterEmptyState extends StatelessWidget {
               height: 1.4,
             ),
           ),
+          if (onRetry != null) ...[
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: onRetry,
+              child: const Text('Tekrar dene'),
+            ),
+          ],
         ],
       ),
     );

@@ -23,9 +23,19 @@ class _ShortsSafeSettingsSheet extends ConsumerWidget {
           padding: EdgeInsets.all(32),
           child: Center(child: CircularProgressIndicator()),
         ),
-        error: (_, __) => const Padding(
-          padding: EdgeInsets.all(24),
-          child: Text('Ayarlar yüklenemedi.'),
+        error: (_, _) => Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Ayarlar yüklenemedi.'),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => ref.invalidate(shortsSafeSettingsProvider),
+                child: const Text('Tekrar dene'),
+              ),
+            ],
+          ),
         ),
         data: (s) => Column(
           mainAxisSize: MainAxisSize.min,

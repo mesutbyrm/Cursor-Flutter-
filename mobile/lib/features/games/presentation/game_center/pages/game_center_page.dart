@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/widgets/discover_tab_layout.dart';
 import '../../../domain/game_center_models.dart';
@@ -107,8 +108,9 @@ class GameCenterPage extends ConsumerWidget {
             const GameCenterSectionHeader(title: 'Oyun kataloğu'),
             catalog.when(
               loading: () => const GameCenterLoadingBody(),
-              error: (_, __) => const GameCenterEmptyState(
-                message: 'Oyun listesi yüklenemedi. Tekrar dene.',
+              error: (e, _) => GameCenterEmptyState(
+                message: ApiException.userMessage(e),
+                onRetry: () => ref.invalidate(gameCatalogProvider),
               ),
               data: (items) {
                 if (items.isEmpty) {
@@ -133,10 +135,18 @@ class GameCenterPage extends ConsumerWidget {
               },
             ),
             const SizedBox(height: 16),
-            _LeaderboardTeaser(
-              entries: leaderboard.valueOrNull ?? const [],
-              isLoading: leaderboard.isLoading,
-              onTap: () => context.push('/games-hub/leaderboard'),
+            leaderboard.when(
+              loading: () => const GameCenterLoadingBody(),
+              error: (e, _) => GameCenterEmptyState(
+                message: ApiException.userMessage(e),
+                onRetry: () => ref.invalidate(
+                  gameCenterLeaderboardProvider(LeaderboardPeriod.weekly),
+                ),
+              ),
+              data: (entries) => _LeaderboardTeaser(
+                entries: entries,
+                onTap: () => context.push('/games-hub/leaderboard'),
+              ),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
@@ -182,7 +192,9 @@ class GameCenterPage extends ConsumerWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Oyun başlatılamadı: $e')),
+        SnackBar(
+          content: Text('Oyun başlatılamadı: ${ApiException.userMessage(e)}'),
+        ),
       );
     }
   }
@@ -211,17 +223,14 @@ class GameCenterPage extends ConsumerWidget {
 class _LeaderboardTeaser extends StatelessWidget {
   const _LeaderboardTeaser({
     required this.entries,
-    required this.isLoading,
     required this.onTap,
   });
 
   final List<LeaderboardEntry> entries;
-  final bool isLoading;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) return const GameCenterLoadingBody();
     final top = entries.take(3).toList();
     if (top.isEmpty) {
       return const GameCenterEmptyState(

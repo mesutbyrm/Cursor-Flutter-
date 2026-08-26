@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.387+425 (2026-08-26) — Sayfa denetimi P18 (hediye özeti, oyun merkezi retry)
+
+- **Hediyelerim:** `GET /api/user/received-gifts` hatası artık boş liste gibi gizlenmez; profil / hediye sayfasında tekrar dene görünür
+- **Oyun Merkezi:** katalog ve liderlik hatasında gerçek “Tekrar dene” düğmesi (`GET /api/games`, `GET /api/games/leaderboard`)
+- **Oyun başlat:** oda oluşturma hatası kullanıcı mesajı
+- **Ayarlar:** fal otomatik paylaşım ve shorts güvenlik tercihi yüklenemezse tekrar dene
+
 ## 1.0.386+424 (2026-08-26) — Sayfa denetimi P17 (canlı fal, PK, ortak yayın retry)
 
 - **Yayıncı fal istekleri:** `GET /api/video-streams/{id}/fortune-requests` hatası artık boş liste gibi görünmez; tekrar dene

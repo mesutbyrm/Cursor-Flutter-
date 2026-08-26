@@ -17,9 +17,13 @@ class FortuneAutoShareSettingTile extends ConsumerWidget {
         title: Text('Fal Sonuçlarımı Otomatik Paylaş'),
         subtitle: Text('Yükleniyor…'),
       ),
-      error: (_, _) => const ListTile(
-        title: Text('Fal Sonuçlarımı Otomatik Paylaş'),
-        subtitle: Text('Tercih okunamadı'),
+      error: (_, _) => ListTile(
+        title: const Text('Fal Sonuçlarımı Otomatik Paylaş'),
+        subtitle: const Text('Tercih okunamadı'),
+        trailing: TextButton(
+          onPressed: () => ref.invalidate(fortuneAutoShareModeProvider),
+          child: const Text('Tekrar dene'),
+        ),
       ),
       data: (mode) => ListTile(
         leading: const Icon(Icons.auto_awesome_outlined),

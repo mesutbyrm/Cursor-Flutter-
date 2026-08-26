@@ -56,6 +56,18 @@ class GiftReceivedSummaryEntity {
     );
   }
 
+  /// `GET /api/user/received-gifts` gövdesi. Liste yoksa `null` (yedek path dene).
+  static List<GiftReceivedSummaryEntity>? tryParseList(dynamic body) {
+    if (body is! Map) return null;
+    final map = asJsonMap(body);
+    final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+    final raw = data['summary'] ?? data['gifts'] ?? data['items'] ?? data;
+    if (raw is! List) return null;
+    return raw
+        .map((e) => GiftReceivedSummaryEntity.fromJson(asJsonMap(e)))
+        .toList();
+  }
+
   final String name;
   final String icon;
   final int count;
