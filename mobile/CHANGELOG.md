@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.376+414 (2026-08-26) — Sayfa denetimi P7 (çevrimiçi, beğenenler, istatistik)
+
+- **Çevrimiçi:** kılavuz `GET /api/users/online` tam liste (`/cevrimici`)
+- **Seni beğenenler:** `GET /api/user/likers` tam liste (`/likers`); ana şerit «Tümü» artık profil çıkmazı değil
+- **Canlı istatistikler:** çevrimiçi / oyun / sosyal / yayın / ses / fal kartları ilgili sayfaya gider; son giriş chip’i profile açılır
+- **İçerik hub:** Çevrimiçi ve Seni beğenenler kısayolları
+
 ## 1.0.375+413 (2026-08-26) — Sayfa denetimi P6 (duyuru, reklam ödül, arama)
 
 - **Duyurular:** kılavuz `GET /api/announcements` ana sayfa şeridi + `/duyurular` listesi

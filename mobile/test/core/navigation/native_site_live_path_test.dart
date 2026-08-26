@@ -9,4 +9,14 @@ void main() {
     expect(isLiveHubOnlyPath('/live/prep'), isFalse);
     expect(isLiveHubOnlyPath('/yayinci-ol'), isFalse);
   });
+
+  test('çevrimiçi ve beğenenler site yolları hub’a gider', () {
+    expect(peopleHubRouteForPath('/cevrimici'), '/cevrimici');
+    expect(peopleHubRouteForPath('/online'), '/cevrimici');
+    expect(peopleHubRouteForPath('/users/online'), '/cevrimici');
+    expect(peopleHubRouteForPath('/online-users/now'), '/cevrimici');
+    expect(peopleHubRouteForPath('/likers'), '/likers');
+    expect(peopleHubRouteForPath('/user/likers'), '/likers');
+    expect(peopleHubRouteForPath('/social'), isNull);
+  });
 }

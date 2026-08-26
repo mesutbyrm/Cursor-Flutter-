@@ -7,6 +7,21 @@ bool isLiveHubOnlyPath(String path) {
   return p == '/live' || p == '/live/';
 }
 
+/// Site / iç yollar → çevrimiçi veya beğenenler hub.
+String? peopleHubRouteForPath(String path) {
+  final p = path.trim();
+  if (p == '/cevrimici' ||
+      p == '/online' ||
+      p == '/users/online' ||
+      p.startsWith('/online-users')) {
+    return '/cevrimici';
+  }
+  if (p == '/likers' || p.startsWith('/user/likers')) {
+    return '/likers';
+  }
+  return null;
+}
+
 /// Site yolu → native Flutter route (WebView yok).
 void openNativeSitePath(BuildContext context, String path) {
   final p = path.trim();
@@ -100,6 +115,11 @@ void openNativeSitePath(BuildContext context, String path) {
       p == '/announcements' ||
       p.startsWith('/announcements')) {
     context.push('/duyurular');
+    return;
+  }
+  final peopleHub = peopleHubRouteForPath(p);
+  if (peopleHub != null) {
+    context.push(peopleHub);
     return;
   }
   if (p == '/futbol' || p.startsWith('/football')) {

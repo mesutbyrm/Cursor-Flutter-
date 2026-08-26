@@ -61,7 +61,7 @@ class _HomeSocialStripSectionState extends ConsumerState<HomeSocialStripSection>
 
     void openFull() {
       if (tab == _SocialTab.likers) {
-        context.push('/profile');
+        context.push('/likers');
       } else {
         context.push('/social');
       }
@@ -72,7 +72,7 @@ class _HomeSocialStripSectionState extends ConsumerState<HomeSocialStripSection>
         HomeSectionTitle(
           emoji: tab == _SocialTab.likers ? '❤️' : '👋',
           title: tab == _SocialTab.likers ? 'Seni Beğenenler' : 'Son Girişler',
-          actionLabel: tab == _SocialTab.likers ? 'Profil >' : 'Sosyal >',
+          actionLabel: tab == _SocialTab.likers ? 'Tümü >' : 'Sosyal >',
           onAction: openFull,
         ),
         if (showTabs)

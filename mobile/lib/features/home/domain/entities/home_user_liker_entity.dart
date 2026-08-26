@@ -14,15 +14,24 @@ class HomeUserLikerEntity {
     final name = pick(user, ['displayName', 'name', 'username'])?.toString() ??
         pick(json, ['displayName', 'name', 'username'])?.toString() ??
         '';
+    final rawId = pick(user, ['id', 'userId', '_id'])?.toString() ??
+        pick(json, ['id', 'userId', '_id'])?.toString() ??
+        '';
     return HomeUserLikerEntity(
-      id: pick(user, ['id', 'userId', '_id'])?.toString() ??
-          pick(json, ['id', 'userId', '_id'])?.toString() ??
-          name.hashCode.toString(),
-      displayName: name,
+      id: rawId.isNotEmpty ? rawId : name.hashCode.toString(),
+      displayName: name.trim().isNotEmpty
+          ? name
+          : (rawId.isNotEmpty ? 'Kullanıcı' : ''),
       avatarUrl: pick(user, ['avatarUrl', 'avatar', 'image'])?.toString() ??
           pick(json, ['avatarUrl', 'avatar', 'image'])?.toString(),
-      timeLabel: pick(json, ['timeLabel', 'time', 'likedAt', 'createdAt'])
-          ?.toString(),
+      timeLabel: pick(json, [
+        'timeLabel',
+        'time',
+        'likedAt',
+        'createdAt',
+        'lastSeen',
+        'onlineAt',
+      ])?.toString(),
     );
   }
 

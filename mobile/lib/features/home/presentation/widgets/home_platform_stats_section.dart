@@ -54,6 +54,7 @@ class _HomePlatformStatsSectionState extends ConsumerState<HomePlatformStatsSect
                           color: HomeApprovedDesign.purple,
                           label: 'Çevrimiçi',
                           value: _format(data.onlineUsers),
+                          onTap: () => context.push('/cevrimici'),
                         ),
                       ),
                     if (data.onlineUsers > 0 && data.onLive > 0)
@@ -65,6 +66,7 @@ class _HomePlatformStatsSectionState extends ConsumerState<HomePlatformStatsSect
                           color: HomeApprovedDesign.liveRed,
                           label: 'Canlı',
                           value: _format(data.onLive),
+                          onTap: () => context.push('/live'),
                         ),
                       ),
                     if (data.onLive > 0 && data.inVoiceChat > 0)
@@ -76,6 +78,7 @@ class _HomePlatformStatsSectionState extends ConsumerState<HomePlatformStatsSect
                           color: const Color(0xFF4DA6FF),
                           label: 'Sesli',
                           value: _format(data.inVoiceChat),
+                          onTap: () => context.push('/voice-rooms'),
                         ),
                       ),
                   ],
@@ -173,6 +176,7 @@ class _HomePlatformStatsSectionState extends ConsumerState<HomePlatformStatsSect
           color: const Color(0xFFFF8A3D),
           label: 'Oyunlarda',
           value: _format(data.inGames),
+          route: '/games-hub',
         ),
       if (data.inSocial > 0)
         _StatTileData(
@@ -180,6 +184,7 @@ class _HomePlatformStatsSectionState extends ConsumerState<HomePlatformStatsSect
           color: const Color(0xFFFF4D8D),
           label: 'Sosyalde',
           value: _format(data.inSocial),
+          route: '/social',
         ),
       if (data.fortuneActive > 0)
         _StatTileData(
@@ -187,6 +192,7 @@ class _HomePlatformStatsSectionState extends ConsumerState<HomePlatformStatsSect
           color: const Color(0xFF9B5CFF),
           label: 'Fal Baktıran',
           value: _format(data.fortuneActive),
+          route: '/fortune',
         ),
       if (data.browsing > 0)
         _StatTileData(
@@ -212,16 +218,18 @@ class _StripPill extends StatelessWidget {
     required this.color,
     required this.label,
     required this.value,
+    this.onTap,
   });
 
   final IconData icon;
   final Color color;
   final String label;
   final String value;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final pill = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
@@ -261,6 +269,15 @@ class _StripPill extends StatelessWidget {
         ],
       ),
     );
+    if (onTap == null) return pill;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: pill,
+      ),
+    );
   }
 }
 
@@ -270,12 +287,14 @@ class _StatTileData {
     required this.color,
     required this.label,
     required this.value,
+    this.route,
   });
 
   final IconData icon;
   final Color color;
   final String label;
   final String value;
+  final String? route;
 }
 
 class _GridTile extends StatelessWidget {
@@ -285,7 +304,7 @@ class _GridTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final card = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         color: tile.color.withValues(alpha: 0.1),
@@ -321,6 +340,16 @@ class _GridTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+    final route = tile.route;
+    if (route == null || route.isEmpty) return card;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push(route),
+        borderRadius: BorderRadius.circular(12),
+        child: card,
       ),
     );
   }

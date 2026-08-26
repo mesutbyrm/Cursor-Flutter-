@@ -44,6 +44,30 @@ abstract final class ContentHubCatalog {
           path: '/fan-club',
           icon: Icons.groups_rounded,
         ),
+        ContentLink(
+          title: 'Çevrimiçi',
+          subtitle: 'Şu anda sitede olanlar',
+          path: '/cevrimici',
+          icon: Icons.circle_rounded,
+        ),
+        ContentLink(
+          title: 'Seni beğenenler',
+          subtitle: 'Profil beğenileri',
+          path: '/likers',
+          icon: Icons.favorite_rounded,
+        ),
+        ContentLink(
+          title: 'Duyurular',
+          subtitle: 'Site duyuruları',
+          path: '/duyurular',
+          icon: Icons.campaign_rounded,
+        ),
+        ContentLink(
+          title: 'Futbol',
+          subtitle: 'Canlı skorlar',
+          path: '/futbol',
+          icon: Icons.sports_soccer_rounded,
+        ),
       ],
     ),
   ];

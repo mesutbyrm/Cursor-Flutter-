@@ -79,6 +79,7 @@ import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/messages/presentation/pages/dm_voice_call_page.dart';
 import '../../features/home/presentation/pages/announcements_hub_page.dart';
 import '../../features/home/presentation/pages/football_hub_page.dart';
+import '../../features/home/presentation/pages/people_hub_page.dart';
 import '../../features/inbox/domain/inbox_tab.dart';
 import '../../features/inbox/presentation/pages/inbox_page.dart';
 import '../../features/moderation/domain/entities/report_target.dart';
@@ -1128,6 +1129,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const AnnouncementsHubPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/cevrimici',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const PeopleHubPage(kind: PeopleHubKind.online),
+        ),
+      ),
+      GoRoute(
+        path: '/likers',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const PeopleHubPage(kind: PeopleHubKind.likers),
         ),
       ),
       GoRoute(

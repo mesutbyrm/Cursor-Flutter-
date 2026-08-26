@@ -148,6 +148,17 @@ class PlatformContentRemoteDataSource {
     ]);
   }
 
+  /// `GET /api/users/online` — çevrimiçi kullanıcılar (kılavuz §9.2).
+  Future<List<Map<String, dynamic>>> fetchOnlineUsers() async {
+    return _fetchJsonList(ApiEndpoints.usersOnline, keys: const [
+      'users',
+      'online',
+      'items',
+      'data',
+      'onlineUsers',
+    ]);
+  }
+
   Future<List<Map<String, dynamic>>> _fetchJsonList(
     String path, {
     List<String> keys = const ['items', 'data'],

@@ -304,6 +304,30 @@ final homeUserLikersProvider = FutureProvider<List<HomeUserLikerEntity>>((
       .toList();
 });
 
+/// Çevrimiçi kullanıcılar — kılavuz `GET /api/users/online`.
+final onlineUsersHubProvider =
+    FutureProvider.autoDispose<List<HomeUserLikerEntity>>((ref) async {
+      final raw = await ref
+          .watch(platformContentRemoteDataSourceProvider)
+          .fetchOnlineUsers();
+      return raw
+          .map(HomeUserLikerEntity.fromJson)
+          .where((e) => e.isValid)
+          .toList();
+    });
+
+/// Profil beğenenler (tam liste) — `GET /api/user/likers`.
+final likersHubProvider =
+    FutureProvider.autoDispose<List<HomeUserLikerEntity>>((ref) async {
+      final raw = await ref
+          .watch(platformContentRemoteDataSourceProvider)
+          .fetchUserLikers();
+      return raw
+          .map(HomeUserLikerEntity.fromJson)
+          .where((e) => e.isValid)
+          .toList();
+    });
+
 /// Aktif reklamlar — `GET /api/ads/active` (giriş gerekli).
 final homeActiveAdsProvider = FutureProvider<List<PlatformAd>>((ref) async {
   _keepHomeCacheAlive(ref);

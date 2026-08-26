@@ -55,6 +55,7 @@ class _StatsGrid extends StatelessWidget {
         value: stats.onlineUsers,
         title: 'Kişi Sayısı',
         subtitle: 'Şu anda çevrimiçi',
+        route: '/cevrimici',
       ),
       _StatItem(
         icon: Icons.sports_esports_rounded,
@@ -62,6 +63,7 @@ class _StatsGrid extends StatelessWidget {
         value: stats.inGames,
         title: 'Oyunlarda',
         subtitle: 'Oyun oynayanlar',
+        route: '/games-hub',
       ),
       _StatItem(
         icon: Icons.people_rounded,
@@ -69,6 +71,7 @@ class _StatsGrid extends StatelessWidget {
         value: stats.inSocial,
         title: 'Sosyalde',
         subtitle: 'Sohbet edenler',
+        route: '/social',
       ),
       _StatItem(
         icon: Icons.sensors_rounded,
@@ -76,6 +79,7 @@ class _StatsGrid extends StatelessWidget {
         value: stats.onLive,
         title: 'Canlı Yayında',
         subtitle: 'Yayında olanlar',
+        route: '/live',
       ),
       _StatItem(
         icon: Icons.mic_rounded,
@@ -83,6 +87,7 @@ class _StatsGrid extends StatelessWidget {
         value: stats.inVoiceChat,
         title: 'Sesli Sohbetlerde',
         subtitle: 'Sesli sohbette olanlar',
+        route: '/voice-rooms',
       ),
       _StatItem(
         icon: Icons.auto_awesome_rounded,
@@ -90,6 +95,7 @@ class _StatsGrid extends StatelessWidget {
         value: stats.fortuneActive,
         title: 'Fal Baktıranlar',
         subtitle: 'Fal baktıran kullanıcılar',
+        route: '/fortune',
       ),
       _StatItem(
         icon: Icons.directions_walk_rounded,
@@ -118,7 +124,10 @@ class _StatsGrid extends StatelessWidget {
           runSpacing: spacing,
           children: [
             for (final item in items)
-              SizedBox(width: tileW, child: _StatCard(item: item)),
+              SizedBox(
+                width: tileW,
+                child: _StatCard(item: item),
+              ),
           ],
         );
       },
@@ -133,6 +142,7 @@ class _StatItem {
     required this.value,
     required this.title,
     required this.subtitle,
+    this.route,
   });
 
   final IconData icon;
@@ -140,6 +150,7 @@ class _StatItem {
   final int value;
   final String title;
   final String subtitle;
+  final String? route;
 }
 
 class _StatCard extends StatelessWidget {
@@ -170,7 +181,7 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final card = Container(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -231,6 +242,16 @@ class _StatCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+    final route = item.route;
+    if (route == null || route.isEmpty) return card;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push(route),
+        borderRadius: BorderRadius.circular(16),
+        child: card,
       ),
     );
   }
@@ -325,7 +346,8 @@ class _RecentLoginChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final id = login.user.id.trim();
+    final chip = SizedBox(
       width: 88,
       child: Column(
         children: [
@@ -392,6 +414,11 @@ class _RecentLoginChip extends StatelessWidget {
           ),
         ],
       ),
+    );
+    if (id.isEmpty) return chip;
+    return GestureDetector(
+      onTap: () => context.push('/user/$id'),
+      child: chip,
     );
   }
 }
