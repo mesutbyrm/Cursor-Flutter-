@@ -34,7 +34,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     if (ProfileRemoteDataSource.looksLikeUsernameKey(id)) {
       try {
         final user = await _canlifal.lookupByUsername(id);
-        return _remote.userExtended(user.id);
+        return await _remote.userExtended(user.id);
       } catch (_) {}
     }
     return _remote.userExtended(id);

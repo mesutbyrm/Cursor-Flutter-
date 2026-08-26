@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
-import '../../../auth/domain/entities/user_entity.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/profile_providers.dart';
 
