@@ -192,10 +192,8 @@ class NativeFeatureRemoteDataSource {
         fallbackRoute: '/blog-hub',
       );
     } catch (e) {
-      lastError = e;
+      _throwLast(lastError ?? e);
     }
-    if (lastError != null) _throwLast(lastError);
-    return const [];
   }
 
   Future<List<NativeFeatureItem>> _fetchCelebrities() {
