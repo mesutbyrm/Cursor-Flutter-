@@ -283,4 +283,11 @@ void main() {
     expect(ApiEndpoints.liveFortuneRoom('sess1'), '/api/room/sess1');
     expect(ApiEndpoints.horoscopeDaily, '/api/horoscope/daily');
   });
+
+  test('kılavuz bildirim listesi ve cüzdan/jeton uçları', () {
+    expect(ApiEndpoints.notifications, '/api/notifications');
+    expect(ApiEndpoints.wallet, '/api/wallet');
+    expect(ApiEndpoints.me, '/api/me');
+    expect(ApiEndpoints.userCredits, '/api/user/credits');
+  });
 }

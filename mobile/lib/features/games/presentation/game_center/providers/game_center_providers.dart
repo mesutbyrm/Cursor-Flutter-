@@ -50,5 +50,9 @@ Future<void> refreshGameCenter(WidgetRef ref) async {
   for (final period in LeaderboardPeriod.values) {
     ref.invalidate(gameCenterLeaderboardProvider(period));
   }
-  await ref.read(gameCenterJetonProvider.future);
+  try {
+    await ref.read(gameCenterJetonProvider.future);
+  } catch (_) {
+    // Çip hata durumu gösterir; sayfa yenilemesi diğer listeler için sürer.
+  }
 }

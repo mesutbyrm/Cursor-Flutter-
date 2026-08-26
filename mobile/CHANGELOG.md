@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.400+438 (2026-08-26) — Sayfa denetimi P31 (bildirim listesi, oyun jeton)
+
+- **Gelen kutusu:** `GET /api/notifications` hatası artık boş «bildirimin yok» gibi gizlenmez; Yenile çalışır
+- **Oyun merkezi:** cüzdan/jeton bakiyesi yüklenemezse sahte 0 gösterilmez; çipe dokununca tekrar dener
+
 ## 1.0.399+437 (2026-08-26) — Sayfa denetimi P30 (canlı fal kuyruk / durum)
 
 - **Yayıncı fal kuyruğu:** `GET /api/video-streams/{id}/fortune-requests` (yedek `/api/live/fal-requests`) ikisi de düşerse boş liste yerine hata; «Tekrar dene» çalışır

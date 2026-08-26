@@ -58,14 +58,8 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       }
     }
 
-    final pair = await NetworkPerf.parallel([
-      () async {
-        try {
-          return await _remote.list();
-        } catch (_) {
-          return <AppNotificationEntity>[];
-        }
-      }(),
+    final pair = await NetworkPerf.parallel<Object>([
+      _remote.list(),
       () async {
         if (!Env.useMobileAuth) return <ProfileActivityItemEntity>[];
         try {

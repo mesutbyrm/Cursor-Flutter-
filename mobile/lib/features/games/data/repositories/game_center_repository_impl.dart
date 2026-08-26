@@ -16,12 +16,8 @@ class GameCenterRepositoryImpl implements GameCenterRepository {
 
   @override
   Future<int> fetchJetonBalance() async {
-    try {
-      final balances = await _wallet.balances();
-      return balances.jeton;
-    } catch (_) {
-      return 0;
-    }
+    final balances = await _wallet.balances();
+    return balances.jeton;
   }
 
   @override

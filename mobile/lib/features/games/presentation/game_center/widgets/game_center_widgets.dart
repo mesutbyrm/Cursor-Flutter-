@@ -14,11 +14,15 @@ class GameCenterJetonChip extends StatelessWidget {
     super.key,
     required this.balance,
     this.isLoading = false,
+    this.hasError = false,
+    this.onRetry,
     this.onTopUp,
   });
 
   final int balance;
   final bool isLoading;
+  final bool hasError;
+  final VoidCallback? onRetry;
   final VoidCallback? onTopUp;
 
   @override
@@ -28,14 +32,18 @@ class GameCenterJetonChip extends StatelessWidget {
       color: context.colors.surface.withValues(alpha: 0.85),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
-        onTap: onTopUp ?? () => context.push('/jeton-store'),
+        onTap: hasError
+            ? (onRetry ?? () => context.push('/jeton-store'))
+            : (onTopUp ?? () => context.push('/jeton-store')),
         borderRadius: BorderRadius.circular(20),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: context.coinGold.withValues(alpha: 0.45),
+              color: hasError
+                  ? context.colors.error.withValues(alpha: 0.55)
+                  : context.coinGold.withValues(alpha: 0.45),
             ),
           ),
           child: Row(
@@ -51,6 +59,15 @@ class GameCenterJetonChip extends StatelessWidget {
                     width: 48,
                     height: 14,
                     borderRadius: BorderRadius.circular(6),
+                  ),
+                )
+              else if (hasError)
+                Text(
+                  '—',
+                  style: TextStyle(
+                    color: context.colors.error,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
                   ),
                 )
               else

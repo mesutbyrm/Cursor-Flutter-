@@ -31,7 +31,11 @@ class GameCenterPage extends ConsumerWidget {
       actions: [
         GameCenterJetonChip(
           balance: jeton.valueOrNull ?? 0,
-          isLoading: jeton.isLoading,
+          isLoading: jeton.isLoading && !jeton.hasError,
+          hasError: jeton.hasError,
+          onRetry: jeton.hasError
+              ? () => ref.invalidate(gameCenterJetonProvider)
+              : null,
         ),
         const SizedBox(width: 8),
         IconButton(
