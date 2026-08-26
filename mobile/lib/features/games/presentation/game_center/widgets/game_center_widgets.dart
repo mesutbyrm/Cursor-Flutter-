@@ -42,7 +42,7 @@ class GameCenterJetonChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: hasError
-                  ? context.colors.error.withValues(alpha: 0.55)
+                  ? context.liveRed.withValues(alpha: 0.55)
                   : context.coinGold.withValues(alpha: 0.45),
             ),
           ),
@@ -65,7 +65,7 @@ class GameCenterJetonChip extends StatelessWidget {
                 Text(
                   '—',
                   style: TextStyle(
-                    color: context.colors.error,
+                    color: context.liveRed,
                     fontWeight: FontWeight.w900,
                     fontSize: 15,
                   ),
