@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:canlifal_social/core/performance/list_perf.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../domain/entities/agency_entity.dart';
 import '../providers/agency_providers.dart';
@@ -60,6 +61,18 @@ class AgencyDashboardScreen extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
             _AgencyHeader(agency: agency),
+            if (dash.error != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                dash.error!,
+                style: TextStyle(color: context.colors.onSurfaceMuted),
+              ),
+              TextButton(
+                onPressed: () =>
+                    ref.read(agencyDashboardProvider.notifier).refresh(),
+                child: const Text('Tekrar dene'),
+              ),
+            ],
             const SizedBox(height: 16),
             _StatGrid(
               memberCount: agency.memberCount > 0

@@ -155,27 +155,23 @@ class PlatformContentRemoteDataSource {
     String path, {
     List<String> keys = const ['items', 'data'],
   }) async {
-    try {
-      final res = await _dio.safeGet<dynamic>(path);
-      final body = res.data;
-      dynamic list;
-      if (body is Map) {
-        final map = Map<String, dynamic>.from(body);
-        if (map['success'] == true && map['data'] != null) {
-          return _fetchJsonListFromDynamic(map['data'], keys: keys);
-        }
-        for (final key in keys) {
-          final candidate = map[key];
-          if (candidate is List) return asJsonList(candidate);
-        }
-        list = map['data'];
-      } else {
-        list = body;
+    final res = await _dio.safeGet<dynamic>(path);
+    final body = res.data;
+    dynamic list;
+    if (body is Map) {
+      final map = Map<String, dynamic>.from(body);
+      if (map['success'] == true && map['data'] != null) {
+        return _fetchJsonListFromDynamic(map['data'], keys: keys);
       }
-      return _fetchJsonListFromDynamic(list, keys: keys);
-    } catch (_) {
-      return const [];
+      for (final key in keys) {
+        final candidate = map[key];
+        if (candidate is List) return asJsonList(candidate);
+      }
+      list = map['data'];
+    } else {
+      list = body;
     }
+    return _fetchJsonListFromDynamic(list, keys: keys);
   }
 
   List<Map<String, dynamic>> _fetchJsonListFromDynamic(

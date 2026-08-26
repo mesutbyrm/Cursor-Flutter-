@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.391+429 (2026-08-26) — Sayfa denetimi P22 (futbol, kişiler, ajans, turnuva, yayın hediyesi)
+
+- **Futbol merkezi:** `GET /api/football` hatası artık boş maç listesi gibi gizlenmez; tekrar dene
+- **Çevrimiçi / beğenenler:** `GET /api/users/online` ve `GET /api/user/likers` hatasında tekrar dene çalışır
+- **Online fal:** `GET /api/online-fal` yüklenemezse ana sayfada tekrar dene
+- **Ajans paneli:** üye / kazanç / görev listesi hatasında tekrar dene (`GET /api/agency/members`, `earnings`, `tasks`)
+- **Yıldız turnuvası:** `GET /api/tournaments` hatası boş liste gibi görünmez
+- **Yayın hediye sıralaması:** `GET /api/video-streams/{id}/gifts/leaderboard` hatasında tekrar dene
+- **Favori falcılar:** `GET /api/favorite-tellers` listesi yüklenemezse falcı listesinde hata görünür
+
 ## 1.0.390+428 (2026-08-26) — Sayfa denetimi P21 (duyuru, fal türü, falcı, liderlik)
 
 - **Duyurular:** `GET /api/announcements` hatası artık boş liste gibi gizlenmez; duyuru merkezinde tekrar dene

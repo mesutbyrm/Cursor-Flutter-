@@ -79,11 +79,7 @@ final liveGiftTypesLegacyProvider =
 final streamGiftLeaderboardProvider = FutureProvider.autoDispose
     .family<List<GiftLeaderboardEntry>, String>((ref, streamId) async {
       if (streamId.isEmpty) return const [];
-      try {
-        return await ref.watch(giftRepositoryProvider).fetchLeaderboard(streamId);
-      } catch (_) {
-        return const [];
-      }
+      return ref.watch(giftRepositoryProvider).fetchLeaderboard(streamId);
     });
 
 final reciprocalGiftHintProvider = FutureProvider.autoDispose

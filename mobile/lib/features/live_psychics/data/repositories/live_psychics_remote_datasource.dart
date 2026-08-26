@@ -393,40 +393,38 @@ class LivePsychicsRemoteDataSource {
   }
 
   Future<List<PsychicEntity>> fetchFavoritePsychics() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.favoriteTellers);
-      final items = PsychicModel.itemsFromBody(
-        res.data,
-        keys: const [
-          'favorites',
-          'tellers',
-          'items',
-          'data',
-          'results',
-        ],
-      );
-      if (items.isNotEmpty) {
-        return items
-            .map(PsychicModel.psychicFromJson)
-            .where((p) => p.id.isNotEmpty)
-            .toList(growable: false);
-      }
-      final body = res.data;
-      if (body is List) {
-        return body
-            .whereType<Map>()
-            .map((e) {
-              final map = Map<String, dynamic>.from(e);
-              final nested = map['teller'] ?? map['fortuneTeller'];
-              if (nested is Map) {
-                return PsychicModel.psychicFromJson(nested);
-              }
-              return PsychicModel.psychicFromJson(map);
-            })
-            .where((p) => p.id.isNotEmpty)
-            .toList(growable: false);
-      }
-    } catch (_) {}
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.favoriteTellers);
+    final items = PsychicModel.itemsFromBody(
+      res.data,
+      keys: const [
+        'favorites',
+        'tellers',
+        'items',
+        'data',
+        'results',
+      ],
+    );
+    if (items.isNotEmpty) {
+      return items
+          .map(PsychicModel.psychicFromJson)
+          .where((p) => p.id.isNotEmpty)
+          .toList(growable: false);
+    }
+    final body = res.data;
+    if (body is List) {
+      return body
+          .whereType<Map>()
+          .map((e) {
+            final map = Map<String, dynamic>.from(e);
+            final nested = map['teller'] ?? map['fortuneTeller'];
+            if (nested is Map) {
+              return PsychicModel.psychicFromJson(nested);
+            }
+            return PsychicModel.psychicFromJson(map);
+          })
+          .where((p) => p.id.isNotEmpty)
+          .toList(growable: false);
+    }
     return const [];
   }
 

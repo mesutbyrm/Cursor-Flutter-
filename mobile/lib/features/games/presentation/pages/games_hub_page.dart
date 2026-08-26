@@ -94,7 +94,7 @@ class GamesHubPage extends ConsumerWidget {
     ref.invalidate(gameLeaderboardProvider);
     ref.invalidate(gameMiniScoresProvider);
     ref.invalidate(gameTournamentsProvider);
-    await NetworkPerf.parallel([
+    await NetworkPerf.waitSilent([
       ref.read(gameCatalogProvider.future),
       ref.read(gameRoomsProvider.future),
       ref.read(gameLeaderboardProvider.future),

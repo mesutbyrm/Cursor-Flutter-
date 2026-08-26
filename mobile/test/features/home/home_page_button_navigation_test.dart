@@ -200,4 +200,18 @@ void main() {
     expect(ApiEndpoints.fortuneTellerSession, '/api/fortune-tellers/session');
     expect(ApiEndpoints.leaderboards, '/api/leaderboards');
   });
+
+  test('kılavuz futbol, kişiler, ajans ve favori falcı uçları', () {
+    expect(ApiEndpoints.football, '/api/football');
+    expect(ApiEndpoints.usersOnline, '/api/users/online');
+    expect(ApiEndpoints.userLikers, '/api/user/likers');
+    expect(ApiEndpoints.agencyMembers, '/api/agency/members');
+    expect(ApiEndpoints.agencyEarnings, '/api/agency/earnings');
+    expect(ApiEndpoints.agencyLeaderboard, '/api/agency/leaderboard');
+    expect(ApiEndpoints.favoriteTellers, '/api/favorite-tellers');
+    expect(
+      ApiEndpoints.videoStreamGiftLeaderboard('s1'),
+      '/api/video-streams/s1/gifts/leaderboard',
+    );
+  });
 }

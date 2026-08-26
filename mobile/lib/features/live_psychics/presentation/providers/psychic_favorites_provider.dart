@@ -10,9 +10,13 @@ class PsychicFavoritesController extends AsyncNotifier<Set<String>> {
   Future<Set<String>> build() async {
     final authed = ref.watch(authControllerProvider).valueOrNull;
     if (authed == null) return const {};
-    final list =
-        await ref.read(livePsychicsRepositoryProvider).fetchFavoritePsychics();
-    return list.map((p) => p.id).toSet();
+    try {
+      final list =
+          await ref.read(livePsychicsRepositoryProvider).fetchFavoritePsychics();
+      return list.map((p) => p.id).toSet();
+    } catch (_) {
+      return const {};
+    }
   }
 
   Future<bool> toggle(String tellerId) async {

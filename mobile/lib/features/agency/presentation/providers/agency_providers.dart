@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/datasources/agency_remote_datasource.dart';
@@ -88,6 +89,7 @@ class AgencyDashboardState {
     this.tasks = const [],
     this.loading = true,
     this.lastApiLog,
+    this.error,
   });
 
   final AgencyEntity? agency;
@@ -96,6 +98,7 @@ class AgencyDashboardState {
   final List<AgencyTaskEntity> tasks;
   final bool loading;
   final String? lastApiLog;
+  final String? error;
 
   AgencyDashboardState copyWith({
     AgencyEntity? agency,
@@ -104,6 +107,8 @@ class AgencyDashboardState {
     List<AgencyTaskEntity>? tasks,
     bool? loading,
     String? lastApiLog,
+    String? error,
+    bool clearError = false,
   }) {
     return AgencyDashboardState(
       agency: agency ?? this.agency,
@@ -112,6 +117,7 @@ class AgencyDashboardState {
       tasks: tasks ?? this.tasks,
       loading: loading ?? this.loading,
       lastApiLog: lastApiLog ?? this.lastApiLog,
+      error: clearError ? null : (error ?? this.error),
     );
   }
 }
@@ -135,20 +141,28 @@ class AgencyDashboardNotifier extends AutoDisposeNotifier<AgencyDashboardState> 
       return;
     }
 
-    state = state.copyWith(loading: true, agency: agency);
+    state = state.copyWith(loading: true, agency: agency, clearError: true);
     final remote = ref.read(agencyRemoteProvider);
-    final members = await remote.fetchMembers();
-    final earnings = await remote.fetchEarnings();
-    final tasks = await remote.fetchTasks();
-    state = AgencyDashboardState(
-      agency: agency,
-      members: members,
-      earnings: earnings,
-      tasks: tasks,
-      loading: false,
-      lastApiLog:
-          'GET /api/agency/my · ${members.length} üye · ${earnings.length} kazanç',
-    );
+    try {
+      final members = await remote.fetchMembers();
+      final earnings = await remote.fetchEarnings();
+      final tasks = await remote.fetchTasks();
+      state = AgencyDashboardState(
+        agency: agency,
+        members: members,
+        earnings: earnings,
+        tasks: tasks,
+        loading: false,
+        lastApiLog:
+            'GET /api/agency/my · ${members.length} üye · ${earnings.length} kazanç',
+      );
+    } catch (e) {
+      state = AgencyDashboardState(
+        agency: agency,
+        loading: false,
+        error: ApiException.userMessage(e),
+      );
+    }
   }
 }
 

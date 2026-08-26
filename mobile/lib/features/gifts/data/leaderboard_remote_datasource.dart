@@ -30,17 +30,13 @@ class LeaderboardRemoteDataSource {
     String streamId, {
     GiftLeaderboardPeriod period = GiftLeaderboardPeriod.session,
   }) async {
-    try {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.videoStreamGiftLeaderboard(streamId),
-        query: period == GiftLeaderboardPeriod.session
-            ? null
-            : {'period': period.apiValue, 'range': period.apiValue},
-      );
-      return _parseEntries(res.data);
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.videoStreamGiftLeaderboard(streamId),
+      query: period == GiftLeaderboardPeriod.session
+          ? null
+          : {'period': period.apiValue, 'range': period.apiValue},
+    );
+    return _parseEntries(res.data);
   }
 
   Future<List<GiftLeaderboardEntry>> fetchGlobalGiftLeaderboard({

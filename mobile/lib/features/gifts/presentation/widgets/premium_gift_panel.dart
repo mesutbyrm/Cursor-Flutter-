@@ -156,7 +156,25 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
                     leaderboard.when(
                       loading: () =>
                           const TopGiftersLeaderboard(entries: [], loading: true),
-                      error: (_, _) => const TopGiftersLeaderboard(entries: []),
+                      error: (e, _) => Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              ApiException.userMessage(e),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            TextButton(
+                              onPressed: () => ref.invalidate(
+                                streamGiftLeaderboardProvider(widget.streamId),
+                              ),
+                              child: const Text('Tekrar dene'),
+                            ),
+                          ],
+                        ),
+                      ),
                       data: (list) => SingleChildScrollView(
                         padding: const EdgeInsets.all(16),
                         child: TopGiftersLeaderboard(entries: list),

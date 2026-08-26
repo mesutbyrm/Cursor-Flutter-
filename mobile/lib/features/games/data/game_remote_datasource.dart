@@ -288,12 +288,8 @@ class GameRemoteDataSource {
   }
 
   Future<List<GameScoreItem>> fetchTournaments() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.tournaments);
-      return _scores(res.data);
-    } catch (_) {
-      return const [];
-    }
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.tournaments);
+    return _scores(res.data);
   }
 
   Future<void> joinTournament(String tournamentId) async {
