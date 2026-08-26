@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,6 +9,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/gift_entity.dart';
+import '../../domain/gift_reciprocal.dart';
 import '../providers/gift_providers.dart';
 
 /// Profil / hediye merkezi — kılavuz §9.9 `POST /api/gifts/send`.
@@ -59,17 +62,63 @@ class _DirectGiftSendSheetState extends ConsumerState<DirectGiftSendSheet> {
   GiftEntity? _selected;
   var _sending = false;
   String? _error;
+  String? _resolvedUserId;
+  Timer? _lookupTimer;
 
   @override
   void initState() {
     super.initState();
     _userCtrl = TextEditingController(text: widget.receiverName ?? '');
+    if (!_hasPresetReceiver) {
+      _userCtrl.addListener(_scheduleLookup);
+    }
   }
 
   @override
   void dispose() {
+    _lookupTimer?.cancel();
+    _userCtrl.removeListener(_scheduleLookup);
     _userCtrl.dispose();
     super.dispose();
+  }
+
+  bool get _hasPresetReceiver =>
+      widget.receiverUserId?.trim().isNotEmpty == true;
+
+  String? get _reciprocalUserId {
+    final preset = widget.receiverUserId?.trim() ?? '';
+    if (preset.isNotEmpty) return preset;
+    final looked = _resolvedUserId?.trim() ?? '';
+    return looked.isEmpty ? null : looked;
+  }
+
+  void _scheduleLookup() {
+    _lookupTimer?.cancel();
+    final query = giftReceiverLookupQuery(_userCtrl.text);
+    if (query.length < 2) {
+      if (_resolvedUserId != null) {
+        setState(() => _resolvedUserId = null);
+      }
+      return;
+    }
+    _lookupTimer = Timer(const Duration(milliseconds: 450), () {
+      unawaited(_lookupReceiver(query));
+    });
+  }
+
+  Future<void> _lookupReceiver(String query) async {
+    try {
+      final user = await ref
+          .read(canlifalUserApiProvider)
+          .lookupByUsername(query);
+      if (!mounted) return;
+      if (giftReceiverLookupQuery(_userCtrl.text) != query) return;
+      setState(() => _resolvedUserId = user.id);
+    } catch (_) {
+      if (!mounted) return;
+      if (giftReceiverLookupQuery(_userCtrl.text) != query) return;
+      setState(() => _resolvedUserId = null);
+    }
   }
 
   bool get _canSend =>
@@ -85,7 +134,9 @@ class _DirectGiftSendSheetState extends ConsumerState<DirectGiftSendSheet> {
   Future<String> _resolveReceiverId() async {
     final preset = widget.receiverUserId?.trim() ?? '';
     if (preset.isNotEmpty) return preset;
-    final query = _userCtrl.text.trim().replaceFirst(RegExp(r'^@'), '');
+    final looked = _resolvedUserId?.trim() ?? '';
+    if (looked.isNotEmpty) return looked;
+    final query = giftReceiverLookupQuery(_userCtrl.text);
     if (query.isEmpty) {
       throw const ApiException('Alıcı kullanıcı adı gerekli');
     }
@@ -144,7 +195,8 @@ class _DirectGiftSendSheetState extends ConsumerState<DirectGiftSendSheet> {
   @override
   Widget build(BuildContext context) {
     final catalog = ref.watch(liveGiftCatalogProvider);
-    final knownReceiver = widget.receiverUserId?.trim().isNotEmpty == true;
+    final knownReceiver = _hasPresetReceiver;
+    final reciprocalId = _reciprocalUserId;
     final title = knownReceiver && widget.receiverName != null
         ? 'Hediye gönder — ${widget.receiverName}'
         : 'Hediye gönder';
@@ -179,8 +231,7 @@ class _DirectGiftSendSheetState extends ConsumerState<DirectGiftSendSheet> {
                 fontSize: 18,
               ),
             ),
-            if (knownReceiver)
-              _ReciprocalBanner(userId: widget.receiverUserId!),
+            if (reciprocalId != null) _ReciprocalBanner(userId: reciprocalId),
             if (!knownReceiver) ...[
               const SizedBox(height: 12),
               TextField(
@@ -203,9 +254,21 @@ class _DirectGiftSendSheetState extends ConsumerState<DirectGiftSendSheet> {
               child: catalog.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(
-                  child: Text(
-                    ApiException.userMessage(e),
-                    style: const TextStyle(color: Colors.white70),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        ApiException.userMessage(e),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 10),
+                      TextButton(
+                        onPressed: () =>
+                            ref.invalidate(liveGiftCatalogProvider),
+                        child: const Text('Tekrar dene'),
+                      ),
+                    ],
                   ),
                 ),
                 data: (gifts) {

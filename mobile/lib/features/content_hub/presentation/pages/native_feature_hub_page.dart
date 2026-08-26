@@ -18,7 +18,6 @@ class NativeFeatureHubPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final spec = _spec(kind);
-    final remoteItems = ref.watch(nativeFeatureItemsProvider(kind));
     return DiscoverSubPage(
       title: spec.title,
       subtitle: spec.subtitle,
@@ -50,7 +49,7 @@ class NativeFeatureHubPage extends ConsumerWidget {
               const SizedBox(height: 18),
             ],
             if (kind != NativeFeatureHubKind.adRewards) ...[
-              _RemoteItemsSection(items: remoteItems),
+              _RemoteItemsSection(kind: kind),
               const SizedBox(height: 18),
             ],
             for (final section in spec.sections) ...[
@@ -101,7 +100,7 @@ class NativeFeatureHubPage extends ConsumerWidget {
               'Turnuvalar',
               'Haftalık turnuvalar ve rekabet akışı.',
               Icons.workspace_premium_rounded,
-              '/games-hub',
+              '/games-hub/leaderboard',
             ),
           ]),
           _HubSection('Web parite kapsamı', [
@@ -109,13 +108,13 @@ class NativeFeatureHubPage extends ConsumerWidget {
               'Çok oyunculu oyunlar',
               'XOX, Tombala, Tavla, Okey, Pişti, Connect4 ve diğer oda tabanlı oyunlar.',
               Icons.groups_rounded,
-              '/games-hub',
+              '/games-hub/lobby',
             ),
             _HubItem(
               'Mini oyunlar',
               '2048, Anagram, Sudoku, Slot, Quiz ve skor kaydetme akışı.',
               Icons.extension_rounded,
-              '/games-hub',
+              '/games-hub/lobby',
             ),
           ]),
         ],
@@ -221,13 +220,14 @@ class NativeFeatureHubPage extends ConsumerWidget {
   }
 }
 
-class _RemoteItemsSection extends StatelessWidget {
-  const _RemoteItemsSection({required this.items});
+class _RemoteItemsSection extends ConsumerWidget {
+  const _RemoteItemsSection({required this.kind});
 
-  final AsyncValue<List<NativeFeatureItem>> items;
+  final NativeFeatureHubKind kind;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final items = ref.watch(nativeFeatureItemsProvider(kind));
     return items.when(
       loading: () => const Padding(
         padding: EdgeInsets.symmetric(vertical: 16),
@@ -238,6 +238,7 @@ class _RemoteItemsSection extends StatelessWidget {
         title: 'Canlı veri alınamadı',
         message:
             'Bu bölüm için canlifal.com API yanıtı geçici olarak alınamadı. Aşağıdaki native aksiyonlar çalışmaya devam eder.',
+        onRetry: () => ref.invalidate(nativeFeatureItemsProvider(kind)),
       ),
       data: (list) {
         if (list.isEmpty) {
@@ -246,6 +247,7 @@ class _RemoteItemsSection extends StatelessWidget {
             title: 'Şu an içerik yok',
             message:
                 'Bu bölüm için sunucudan kayıt gelmedi. Aşağıdaki kısayollar çalışır; liste dolunca kartlar burada görünür.',
+            onRetry: () => ref.invalidate(nativeFeatureItemsProvider(kind)),
           );
         }
         return Column(
@@ -372,11 +374,13 @@ class _InfoCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
+    this.onRetry,
   });
 
   final IconData icon;
   final String title;
   final String message;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -403,6 +407,13 @@ class _InfoCard extends StatelessWidget {
                       height: 1.3,
                     ),
                   ),
+                  if (onRetry != null) ...[
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: onRetry,
+                      child: const Text('Tekrar dene'),
+                    ),
+                  ],
                 ],
               ),
             ),

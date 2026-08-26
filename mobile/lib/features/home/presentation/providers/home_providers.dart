@@ -259,6 +259,18 @@ final homeFootballMatchesProvider =
           .toList();
     });
 
+/// Futbol merkezi — kılavuz `GET /api/football` (ana sayfa şeridinden daha uzun liste).
+final footballHubMatchesProvider =
+    FutureProvider.autoDispose<List<HomeFootballMatchEntity>>((ref) async {
+      final raw = await ref
+          .watch(platformContentRemoteDataSourceProvider)
+          .fetchFootball();
+      return raw
+          .map(HomeFootballMatchEntity.fromJson)
+          .where((m) => m.hasTeams)
+          .toList();
+    });
+
 /// Yayın arka plan görselleri — `GET /api/broadcast-images`.
 final homeBroadcastImagesProvider =
     FutureProvider<List<HomeBroadcastImageEntity>>((ref) async {

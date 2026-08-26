@@ -77,6 +77,7 @@ import '../../features/shorts/presentation/studio/shorts_studio_page.dart';
 import '../../features/shorts/presentation/utils/short_studio_launch.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/messages/presentation/pages/dm_voice_call_page.dart';
+import '../../features/home/presentation/pages/football_hub_page.dart';
 import '../../features/inbox/domain/inbox_tab.dart';
 import '../../features/inbox/presentation/pages/inbox_page.dart';
 import '../../features/moderation/domain/entities/report_target.dart';
@@ -1102,6 +1103,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const NativeFeatureHubPage(kind: NativeFeatureHubKind.dreams),
+        ),
+      ),
+      GoRoute(
+        path: '/dreams/:id',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: NativeFeatureDetailPage(
+            kind: NativeFeatureHubKind.dreams,
+            id: state.pathParameters['id'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/futbol',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const FootballHubPage(),
         ),
       ),
       GoRoute(

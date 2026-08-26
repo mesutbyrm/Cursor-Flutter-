@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.374+412 (2026-08-26) — Sayfa denetimi P5 (rüya detay, reciprocal lookup, futbol)
+
+- **Hediye gönder:** kullanıcı adı yazınca alıcı çözülür; reciprocal ipucu profil dışında da görünür
+- **Hediye katalog hatası:** tekrar dene
+- **Rüya merkezi:** kartlar `GET /api/dreams` detayına (`/dreams/:id`) gider; yorum CTA’sı durur
+- **Futbol:** ana sayfa «Tümü» arama çıkmazı yerine `GET /api/football` listesi
+- **Hub / oyun / hediyelerim:** API hatasında tekrar dene
+
 ## 1.0.373+411 (2026-08-26) — Sayfa denetimi P4 (hediye reciprocal, öneri, oyun poll)
 
 - **Hediye gönder:** kılavuz `GET /api/gifts/check-reciprocal` karşılıklı geçmiş ipucu

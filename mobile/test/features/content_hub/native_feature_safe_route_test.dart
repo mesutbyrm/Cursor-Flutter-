@@ -34,14 +34,23 @@ void main() {
       );
     });
 
-    test('rüya kartı fal yorumuna gider', () {
+    test('rüya kartı detay yoluna gider', () {
       expect(
         nativeFeatureSafeRoute(
           routeRaw: null,
           fallbackRoute: '/dreams-hub',
           id: 'ruya-1',
         ),
-        '/fortune/ruya-tabiri',
+        '/dreams/ruya-1',
+      );
+      expect(
+        nativeFeatureSafeRoute(
+          routeRaw: '/dreams-hub',
+          fallbackRoute: '/dreams-hub',
+          slug: 'ay-isigi',
+          id: 'ignored',
+        ),
+        '/dreams/ay-isigi',
       );
     });
 

@@ -43,6 +43,8 @@ class _ProfileGiftsPageState extends ConsumerState<ProfileGiftsPage> {
             error: (e, _) => DiscoverEmptyState(
               icon: Icons.error_outline_rounded,
               message: ApiException.userMessage(e),
+              action: () => ref.invalidate(giftsReceivedSummaryProvider),
+              actionLabel: 'Tekrar dene',
             ),
             data: (items) {
               if (items.isEmpty) {

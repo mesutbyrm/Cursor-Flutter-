@@ -55,14 +55,20 @@ class GamesHubPage extends ConsumerWidget {
             ),
             catalog.when(
               loading: () => const _LoadingCard(),
-              error: (e, _) => _ErrorCard(message: ApiException.userMessage(e)),
+              error: (e, _) => _ErrorCard(
+                message: ApiException.userMessage(e),
+                onRetry: () => ref.invalidate(gameCatalogProvider),
+              ),
               data: (items) => _CatalogGrid(items: items),
             ),
             const SizedBox(height: 18),
             const _SectionTitle(title: 'Açık odalar'),
             rooms.when(
               loading: () => const _LoadingCard(),
-              error: (e, _) => _ErrorCard(message: ApiException.userMessage(e)),
+              error: (e, _) => _ErrorCard(
+                message: ApiException.userMessage(e),
+                onRetry: () => ref.invalidate(gameRoomsProvider),
+              ),
               data: (items) {
                 if (items.isEmpty) {
                   return const _EmptyCard(
@@ -433,13 +439,28 @@ class _LoadingCard extends StatelessWidget {
 }
 
 class _ErrorCard extends StatelessWidget {
-  const _ErrorCard({required this.message});
+  const _ErrorCard({required this.message, this.onRetry});
 
   final String message;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
-    return _EmptyCard(message: message);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(message),
+            if (onRetry != null) ...[
+              const SizedBox(height: 8),
+              TextButton(onPressed: onRetry, child: const Text('Tekrar dene')),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 

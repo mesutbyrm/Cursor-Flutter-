@@ -1,5 +1,9 @@
 import '../../../core/util/json_util.dart';
 
+/// Kullanıcı adı alanından alıcı sorgusu (`@ali` → `ali`).
+String giftReceiverLookupQuery(String raw) =>
+    raw.trim().replaceFirst(RegExp(r'^@'), '');
+
 /// Kılavuz §9.9 `GET /api/gifts/check-reciprocal` yanıtı.
 class ReciprocalGiftHint {
   const ReciprocalGiftHint({required this.isMutual, this.message});

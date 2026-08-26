@@ -30,11 +30,25 @@ class NativeFeatureDetailPage extends ConsumerWidget {
         NativeFeatureHubKind.blog => 'Yazı',
         NativeFeatureHubKind.celebrities => 'Ünlü',
         NativeFeatureHubKind.fanClub => 'Fan kulübü',
+        NativeFeatureHubKind.dreams => 'Rüya',
         _ => 'Detay',
       },
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(ApiException.userMessage(e))),
+        error: (e, _) => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(ApiException.userMessage(e)),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () =>
+                    ref.invalidate(nativeFeatureDetailProvider((kind: kind, id: id))),
+                child: const Text('Tekrar dene'),
+              ),
+            ],
+          ),
+        ),
         data: (item) {
           if (item == null) {
             return const Center(child: Text('İçerik bulunamadı'));
@@ -74,6 +88,13 @@ class NativeFeatureDetailPage extends ConsumerWidget {
                 SelectableText(
                   item.body!,
                   style: const TextStyle(height: 1.5, fontSize: 16),
+                ),
+              ],
+              if (kind == NativeFeatureHubKind.dreams) ...[
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () => context.push('/fortune/ruya-tabiri'),
+                  child: const Text('Rüya yorumu al'),
                 ),
               ],
               if (kind == NativeFeatureHubKind.celebrities) ...[

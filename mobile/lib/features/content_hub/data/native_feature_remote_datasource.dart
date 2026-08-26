@@ -41,11 +41,7 @@ class NativeFeatureRemoteDataSource {
         fallbackRoute: '/celebrities/$key',
       ),
       NativeFeatureHubKind.fanClub => _fetchFanClub(key),
-      NativeFeatureHubKind.dreams => _fetchOne(
-        ApiEndpoints.dreams,
-        fallbackIcon: Icons.nights_stay_rounded,
-        fallbackRoute: '/fortune/ruya-tabiri',
-      ),
+      NativeFeatureHubKind.dreams => _fetchDreamDetail(key),
       _ => null,
     };
   }
@@ -69,6 +65,20 @@ class NativeFeatureRemoteDataSource {
       ),
       _ => Future.value(const <NativeFeatureItem>[]),
     };
+  }
+
+  Future<NativeFeatureItem?> _fetchDreamDetail(String id) async {
+    final items = await _fetchDreams();
+    for (final item in items) {
+      if (item.id == id || item.route.endsWith('/$id')) return item;
+    }
+    return NativeFeatureItem(
+      id: id,
+      title: 'Rüya',
+      subtitle: 'Rüya yorumu',
+      route: '/dreams/$id',
+      icon: Icons.nights_stay_rounded,
+    );
   }
 
   Future<NativeFeatureItem?> _fetchFanClub(String id) async {
@@ -385,8 +395,8 @@ String nativeFeatureSafeRoute({
   if (fallbackRoute == '/fan-club-hub' && key.isNotEmpty) {
     return '/fan-club/$key';
   }
-  if (fallbackRoute == '/dreams-hub') {
-    return '/fortune/ruya-tabiri';
+  if (fallbackRoute == '/dreams-hub' && key.isNotEmpty) {
+    return '/dreams/$key';
   }
   return fallbackRoute;
 }

@@ -39,4 +39,10 @@ void main() {
     expect(ApiEndpoints.celebrityPosts('c1'), '/api/celebrities/c1/posts');
     expect(ApiEndpoints.fanClubPosts('f1'), '/api/fan-clubs/f1/posts');
   });
+
+  test('alıcı kullanıcı adı @ işaretini düşürür', () {
+    expect(giftReceiverLookupQuery(' @Ali '), 'Ali');
+    expect(giftReceiverLookupQuery('mesut'), 'mesut');
+    expect(giftReceiverLookupQuery(''), '');
+  });
 }
