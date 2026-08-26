@@ -24,3 +24,13 @@ final nativeFeatureDetailProvider = FutureProvider.autoDispose
           .watch(nativeFeatureRemoteProvider)
           .fetchDetail(args.kind, args.id);
     });
+
+final nativeFeatureRelatedProvider = FutureProvider.autoDispose
+    .family<List<NativeFeatureItem>, ({NativeFeatureHubKind kind, String id})>((
+      ref,
+      args,
+    ) {
+      return ref
+          .watch(nativeFeatureRemoteProvider)
+          .fetchRelated(args.kind, args.id);
+    });

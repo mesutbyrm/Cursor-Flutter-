@@ -15,6 +15,7 @@ Future<void> showDirectGiftSendSheet(
   WidgetRef ref, {
   String? receiverUserId,
   String? receiverName,
+  String? initialGiftId,
 }) {
   final authed = ref.read(authControllerProvider).valueOrNull;
   if (authed == null) {
@@ -31,6 +32,7 @@ Future<void> showDirectGiftSendSheet(
     builder: (ctx) => DirectGiftSendSheet(
       receiverUserId: receiverUserId,
       receiverName: receiverName,
+      initialGiftId: initialGiftId,
     ),
   );
 }
@@ -40,10 +42,12 @@ class DirectGiftSendSheet extends ConsumerStatefulWidget {
     super.key,
     this.receiverUserId,
     this.receiverName,
+    this.initialGiftId,
   });
 
   final String? receiverUserId;
   final String? receiverName;
+  final String? initialGiftId;
 
   @override
   ConsumerState<DirectGiftSendSheet> createState() =>
@@ -68,6 +72,16 @@ class _DirectGiftSendSheetState extends ConsumerState<DirectGiftSendSheet> {
     super.dispose();
   }
 
+  bool get _canSend =>
+      _selected != null || (widget.initialGiftId?.trim().isNotEmpty ?? false);
+
+  String get _sendLabel {
+    final gift = _selected;
+    if (gift != null) return '${gift.name} gönder';
+    if (widget.initialGiftId?.trim().isNotEmpty == true) return 'Gönder';
+    return 'Hediye seç';
+  }
+
   Future<String> _resolveReceiverId() async {
     final preset = widget.receiverUserId?.trim() ?? '';
     if (preset.isNotEmpty) return preset;
@@ -75,8 +89,9 @@ class _DirectGiftSendSheetState extends ConsumerState<DirectGiftSendSheet> {
     if (query.isEmpty) {
       throw const ApiException('Alıcı kullanıcı adı gerekli');
     }
-    final user =
-        await ref.read(canlifalUserApiProvider).lookupByUsername(query);
+    final user = await ref
+        .read(canlifalUserApiProvider)
+        .lookupByUsername(query);
     if (user.id.isEmpty) {
       throw const ApiException('Kullanıcı bulunamadı');
     }
@@ -84,7 +99,19 @@ class _DirectGiftSendSheetState extends ConsumerState<DirectGiftSendSheet> {
   }
 
   Future<void> _send() async {
-    final gift = _selected;
+    var gift = _selected;
+    if (gift == null) {
+      final id = widget.initialGiftId?.trim() ?? '';
+      if (id.isNotEmpty) {
+        final list = ref.read(liveGiftCatalogProvider).valueOrNull ?? const [];
+        for (final g in list) {
+          if (g.id == id) {
+            gift = g;
+            break;
+          }
+        }
+      }
+    }
     if (gift == null || _sending) return;
     setState(() {
       _sending = true;
@@ -92,16 +119,15 @@ class _DirectGiftSendSheetState extends ConsumerState<DirectGiftSendSheet> {
     });
     try {
       final receiverId = await _resolveReceiverId();
-      await ref.read(giftRepositoryProvider).sendDirectGift(
-            giftId: gift.id,
-            receiverUserId: receiverId,
-          );
+      await ref
+          .read(giftRepositoryProvider)
+          .sendDirectGift(giftId: gift.id, receiverUserId: receiverId);
       ref.refreshWalletCache(force: true);
       if (!mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${gift.name} gönderildi')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('${gift.name} gönderildi')));
     } catch (e) {
       final message = ApiException.userMessage(e);
       if (!mounted) return;
@@ -153,6 +179,8 @@ class _DirectGiftSendSheetState extends ConsumerState<DirectGiftSendSheet> {
                 fontSize: 18,
               ),
             ),
+            if (knownReceiver)
+              _ReciprocalBanner(userId: widget.receiverUserId!),
             if (!knownReceiver) ...[
               const SizedBox(height: 12),
               TextField(
@@ -193,14 +221,15 @@ class _DirectGiftSendSheetState extends ConsumerState<DirectGiftSendSheet> {
                     itemCount: gifts.length,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      childAspectRatio: 0.78,
-                    ),
+                          crossAxisCount: 4,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          childAspectRatio: 0.78,
+                        ),
                     itemBuilder: (context, i) {
                       final g = gifts[i];
-                      final selected = _selected?.id == g.id;
+                      final selected =
+                          (_selected?.id ?? widget.initialGiftId) == g.id;
                       return InkWell(
                         onTap: () => setState(() => _selected = g),
                         borderRadius: BorderRadius.circular(12),
@@ -219,7 +248,8 @@ class _DirectGiftSendSheetState extends ConsumerState<DirectGiftSendSheet> {
                           child: Column(
                             children: [
                               Expanded(
-                                child: g.iconUrl != null && g.iconUrl!.isNotEmpty
+                                child:
+                                    g.iconUrl != null && g.iconUrl!.isNotEmpty
                                     ? CanlifalNetworkImage(
                                         url: g.iconUrl!,
                                         fit: BoxFit.contain,
@@ -264,20 +294,49 @@ class _DirectGiftSendSheetState extends ConsumerState<DirectGiftSendSheet> {
             ],
             const SizedBox(height: 10),
             FilledButton(
-              onPressed: _selected == null || _sending ? null : _send,
+              onPressed: !_canSend || _sending ? null : _send,
               child: _sending
                   ? const SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(
-                      _selected == null
-                          ? 'Hediye seç'
-                          : '${_selected!.name} gönder',
-                    ),
+                  : Text(_sendLabel),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReciprocalBanner extends ConsumerWidget {
+  const _ReciprocalBanner({required this.userId});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(reciprocalGiftHintProvider(userId));
+    final hint = async.valueOrNull;
+    if (hint == null || !hint.show) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0x332E7D32),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0x6666BB6A)),
+        ),
+        child: Text(
+          hint.message ?? 'Karşılıklı hediye geçmişiniz var',
+          style: const TextStyle(
+            color: Color(0xFFC8E6C9),
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+          ),
         ),
       ),
     );

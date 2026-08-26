@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.373+411 (2026-08-26) — Sayfa denetimi P4 (hediye reciprocal, öneri, oyun poll)
+
+- **Hediye gönder:** kılavuz `GET /api/gifts/check-reciprocal` karşılıklı geçmiş ipucu
+- **Hediye merkezi:** öneri kartı tıklanınca gönderim açılır; hata satırında tekrar dene
+- **Ünlü / fan kulübü:** gönderi listesi (`/posts`)
+- **Oyun odası:** 5 sn poll uygulama arka plandayken durur
+
 ## 1.0.372+410 (2026-08-26) — Sayfa denetimi P3 (falcı şeridi, blog metin, ünlü takip)
 
 - **Ana sayfa:** Çift falcı şeridi kalktı; yalnızca Canlı Falcılar (`PsychicsHomeSection`) kaldı

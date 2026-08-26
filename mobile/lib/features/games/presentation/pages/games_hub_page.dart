@@ -117,7 +117,7 @@ class _Hero extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(
             child: Text(
-              'Webdeki oyunlar Flutter içinde listelenir; oda oluşturma, katılma, skor tabloları ve oda durumu 5 sn polling ile takip edilir.',
+              'Webdeki oyunlar Flutter içinde listelenir; oda oluşturma, katılma ve skor tabloları bağlanır. Oda durumu uygulama açıkken 5 sn’de bir yenilenir.',
               style: const TextStyle(
                 color: Colors.white,
                 height: 1.35,

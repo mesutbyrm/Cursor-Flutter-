@@ -50,6 +50,27 @@ class NativeFeatureRemoteDataSource {
     };
   }
 
+  Future<List<NativeFeatureItem>> fetchRelated(
+    NativeFeatureHubKind kind,
+    String id,
+  ) async {
+    final key = id.trim();
+    if (key.isEmpty) return const [];
+    return switch (kind) {
+      NativeFeatureHubKind.celebrities => _fetchPath(
+        ApiEndpoints.celebrityPosts(key),
+        fallbackIcon: Icons.article_outlined,
+        fallbackRoute: '/social',
+      ),
+      NativeFeatureHubKind.fanClub => _fetchPath(
+        ApiEndpoints.fanClubPosts(key),
+        fallbackIcon: Icons.forum_outlined,
+        fallbackRoute: '/social',
+      ),
+      _ => Future.value(const <NativeFeatureItem>[]),
+    };
+  }
+
   Future<NativeFeatureItem?> _fetchFanClub(String id) async {
     final clubs = await _fetchFanClubs();
     for (final c in clubs) {

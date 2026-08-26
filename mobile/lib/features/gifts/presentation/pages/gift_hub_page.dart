@@ -40,20 +40,30 @@ class GiftHubPage extends ConsumerWidget {
               label: const Text('Hediye gönder'),
             ),
             const SizedBox(height: 20),
-            const _SectionTitle('Günlük Görevler', icon: Icons.task_alt_rounded),
+            const _SectionTitle(
+              'Günlük Görevler',
+              icon: Icons.task_alt_rounded,
+            ),
             const SizedBox(height: 8),
             missions.when(
               data: (list) => list.isEmpty
                   ? const _Empty('Aktif görev yok.')
                   : Column(
-                      children: [for (final m in list) _MissionCard(mission: m)],
+                      children: [
+                        for (final m in list) _MissionCard(mission: m),
+                      ],
                     ),
               loading: () => const _Loading(),
-              error: (_, __) => const _Empty('Görevler yüklenemedi.'),
+              error: (_, __) => _ErrorRetry(
+                text: 'Görevler yüklenemedi.',
+                onRetry: () => ref.invalidate(giftMissionsProvider),
+              ),
             ),
             const SizedBox(height: 20),
-            const _SectionTitle('Sana Özel Öneriler',
-                icon: Icons.auto_awesome_rounded),
+            const _SectionTitle(
+              'Sana Özel Öneriler',
+              icon: Icons.auto_awesome_rounded,
+            ),
             const SizedBox(height: 8),
             recs.when(
               data: (list) => list.isEmpty
@@ -67,20 +77,30 @@ class GiftHubPage extends ConsumerWidget {
                         itemBuilder: (_, i) {
                           final r = list[i];
                           return _RecCard(
-                            name: r.name,
-                            iconUrl: r.iconUrl,
-                            price: r.price,
-                            reason: r.reason,
+                            rec: r,
+                            onTap: () => showDirectGiftSendSheet(
+                              context,
+                              ref,
+                              initialGiftId: r.giftId.trim().isEmpty
+                                  ? null
+                                  : r.giftId,
+                            ),
                           );
                         },
                       ),
                     ),
               loading: () => const _Loading(),
-              error: (_, __) => const _Empty('Öneriler yüklenemedi.'),
+              error: (_, __) => _ErrorRetry(
+                text: 'Öneriler yüklenemedi.',
+                onRetry: () =>
+                    ref.invalidate(giftRecommendationsProvider(null)),
+              ),
             ),
             const SizedBox(height: 20),
-            const _SectionTitle('Gönderen Haritası',
-                icon: Icons.public_rounded),
+            const _SectionTitle(
+              'Gönderen Haritası',
+              icon: Icons.public_rounded,
+            ),
             const SizedBox(height: 8),
             map.when(
               data: (m) => m.points.isEmpty
@@ -92,7 +112,10 @@ class GiftHubPage extends ConsumerWidget {
                       ],
                     ),
               loading: () => const _Loading(),
-              error: (_, __) => const _Empty('Harita yüklenemedi.'),
+              error: (_, __) => _ErrorRetry(
+                text: 'Harita yüklenemedi.',
+                onRetry: () => ref.invalidate(giftSenderMapProvider(_mapKey)),
+              ),
             ),
           ],
         ),
@@ -120,9 +143,9 @@ class _MissionCardState extends ConsumerState<_MissionCard> {
           .claimMission(widget.mission.id);
       ref.invalidate(giftMissionsProvider);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ödül alındı! 🎁')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Ödül alındı! 🎁')));
       }
     } catch (_) {
       if (mounted) {
@@ -145,7 +168,9 @@ class _MissionCardState extends ConsumerState<_MissionCard> {
         color: const Color(0xFF1A1030),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: m.completed ? const Color(0x5566E36F) : const Color(0x22FFFFFF),
+          color: m.completed
+              ? const Color(0x5566E36F)
+              : const Color(0x22FFFFFF),
         ),
       ),
       child: Column(
@@ -166,8 +191,11 @@ class _MissionCardState extends ConsumerState<_MissionCard> {
               if (m.reward > 0)
                 Row(
                   children: [
-                    const Icon(Icons.card_giftcard_rounded,
-                        color: Color(0xFFFFD54F), size: 14),
+                    const Icon(
+                      Icons.card_giftcard_rounded,
+                      color: Color(0xFFFFD54F),
+                      size: 14,
+                    ),
                     const SizedBox(width: 3),
                     Text(
                       m.rewardLabel ?? '${m.reward}',
@@ -235,18 +263,23 @@ class _MissionCardState extends ConsumerState<_MissionCard> {
                         width: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Ödülü Al',
-                        style: TextStyle(fontWeight: FontWeight.w900)),
+                    : const Text(
+                        'Ödülü Al',
+                        style: TextStyle(fontWeight: FontWeight.w900),
+                      ),
               ),
             ),
           ] else if (m.claimed)
             const Padding(
               padding: EdgeInsets.only(top: 6),
-              child: Text('✓ Ödül alındı',
-                  style: TextStyle(
-                      color: Color(0xFF66E36F),
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700)),
+              child: Text(
+                '✓ Ödül alındı',
+                style: TextStyle(
+                  color: Color(0xFF66E36F),
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
         ],
       ),
@@ -255,50 +288,59 @@ class _MissionCardState extends ConsumerState<_MissionCard> {
 }
 
 class _RecCard extends StatelessWidget {
-  const _RecCard({
-    required this.name,
-    required this.iconUrl,
-    required this.price,
-    required this.reason,
-  });
+  const _RecCard({required this.rec, required this.onTap});
 
-  final String name;
-  final String? iconUrl;
-  final int price;
-  final String? reason;
+  final GiftRecommendation rec;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 100,
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1030),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x33B388FF)),
-      ),
-      child: Column(
-        children: [
-          Expanded(
-            child: iconUrl != null && iconUrl!.isNotEmpty
-                ? CanlifalNetworkImage(url: iconUrl!, fit: BoxFit.contain)
-                : const Icon(Icons.card_giftcard_rounded,
-                    color: Color(0xFFB388FF), size: 34),
+        child: Container(
+          width: 100,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1030),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0x33B388FF)),
           ),
-          const SizedBox(height: 4),
-          Text(
-            name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Colors.white, fontSize: 11),
-          ),
-          if (price > 0)
-            Text('$price',
-                style: const TextStyle(
+          child: Column(
+            children: [
+              Expanded(
+                child: rec.iconUrl != null && rec.iconUrl!.isNotEmpty
+                    ? CanlifalNetworkImage(
+                        url: rec.iconUrl!,
+                        fit: BoxFit.contain,
+                      )
+                    : const Icon(
+                        Icons.card_giftcard_rounded,
+                        color: Color(0xFFB388FF),
+                        size: 34,
+                      ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                rec.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white, fontSize: 11),
+              ),
+              if (rec.price > 0)
+                Text(
+                  '${rec.price}',
+                  style: const TextStyle(
                     color: Color(0xFFFFE082),
                     fontSize: 10.5,
-                    fontWeight: FontWeight.w800)),
-        ],
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -317,7 +359,9 @@ class _MapRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ratio = maxTotal <= 0 ? 0.0 : (point.total / maxTotal).clamp(0.0, 1.0);
+    final ratio = maxTotal <= 0
+        ? 0.0
+        : (point.total / maxTotal).clamp(0.0, 1.0);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -339,8 +383,9 @@ class _MapRow extends StatelessWidget {
                 value: ratio,
                 minHeight: 10,
                 backgroundColor: const Color(0x22FFFFFF),
-                valueColor:
-                    const AlwaysStoppedAnimation<Color>(Color(0xFFFF7043)),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  Color(0xFFFF7043),
+                ),
               ),
             ),
           ),
@@ -388,16 +433,36 @@ class _Empty extends StatelessWidget {
   final String text;
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text(text, style: const TextStyle(color: Color(0x99FFFFFF))),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Text(text, style: const TextStyle(color: Color(0x99FFFFFF))),
+  );
+}
+
+class _ErrorRetry extends StatelessWidget {
+  const _ErrorRetry({required this.text, required this.onRetry});
+
+  final String text;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        children: [
+          Text(text, style: const TextStyle(color: Color(0x99FFFFFF))),
+          TextButton(onPressed: onRetry, child: const Text('Tekrar dene')),
+        ],
+      ),
+    );
+  }
 }
 
 class _Loading extends StatelessWidget {
   const _Loading();
   @override
   Widget build(BuildContext context) => const Padding(
-        padding: EdgeInsets.all(20),
-        child: Center(child: CircularProgressIndicator()),
-      );
+    padding: EdgeInsets.all(20),
+    child: Center(child: CircularProgressIndicator()),
+  );
 }

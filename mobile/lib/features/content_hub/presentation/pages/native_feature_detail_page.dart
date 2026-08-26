@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../../core/navigation/native_site_routes.dart';
 import '../../domain/native_feature_item.dart';
 import '../providers/native_feature_hub_providers.dart';
 
@@ -88,6 +90,11 @@ class NativeFeatureDetailPage extends ConsumerWidget {
                   child: const Text('Kulübe katıl'),
                 ),
               ],
+              if (kind == NativeFeatureHubKind.celebrities ||
+                  kind == NativeFeatureHubKind.fanClub) ...[
+                const SizedBox(height: 24),
+                _RelatedPosts(kind: kind, id: id),
+              ],
             ],
           );
         },
@@ -127,5 +134,64 @@ class NativeFeatureDetailPage extends ConsumerWidget {
         context,
       ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
     }
+  }
+}
+
+class _RelatedPosts extends ConsumerWidget {
+  const _RelatedPosts({required this.kind, required this.id});
+
+  final NativeFeatureHubKind kind;
+  final String id;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(nativeFeatureRelatedProvider((kind: kind, id: id)));
+    return async.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (items) {
+        if (items.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              kind == NativeFeatureHubKind.celebrities
+                  ? 'Paylaşımlar'
+                  : 'Kulüp gönderileri',
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+            ),
+            const SizedBox(height: 10),
+            for (final item in items.take(12))
+              Card(
+                child: ListTile(
+                  title: Text(
+                    item.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: item.subtitle.trim().isEmpty
+                      ? null
+                      : Text(
+                          item.subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () {
+                    if (item.route == '/social' || item.route == '/feed') {
+                      context.go(item.route);
+                      return;
+                    }
+                    openNativeSitePath(context, item.route);
+                  },
+                ),
+              ),
+          ],
+        );
+      },
+    );
   }
 }

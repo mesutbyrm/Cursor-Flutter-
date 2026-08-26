@@ -8,6 +8,7 @@ import '../../domain/gift_playable_filter.dart';
 import '../../domain/gift_entity.dart';
 import '../../domain/gift_leaderboard_entry.dart';
 import '../../domain/gift_platform.dart';
+import '../../domain/gift_reciprocal.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 
 final giftRepositoryProvider = Provider<GiftRepository>((ref) {
@@ -34,7 +35,9 @@ final liveGiftCatalogProvider = FutureProvider<List<GiftEntity>>((ref) async {
 });
 
 /// Sesli oda hediye listesi — CMS katalog (admin panelinden eklenen hediyeler dahil).
-final voiceRoomGiftCatalogProvider = FutureProvider<List<GiftEntity>>((ref) async {
+final voiceRoomGiftCatalogProvider = FutureProvider<List<GiftEntity>>((
+  ref,
+) async {
   ref.keepAlive();
   final repo = ref.watch(giftRepositoryProvider);
   final general = await ref.watch(liveGiftCatalogProvider.future);
@@ -50,7 +53,9 @@ final voiceRoomGiftCatalogProvider = FutureProvider<List<GiftEntity>>((ref) asyn
 });
 
 /// Canlı yayın hediye listesi.
-final liveStreamGiftCatalogProvider = FutureProvider<List<GiftEntity>>((ref) async {
+final liveStreamGiftCatalogProvider = FutureProvider<List<GiftEntity>>((
+  ref,
+) async {
   ref.keepAlive();
   final repo = ref.watch(giftRepositoryProvider);
   final general = await ref.watch(liveGiftCatalogProvider.future);
@@ -67,16 +72,30 @@ final liveStreamGiftCatalogProvider = FutureProvider<List<GiftEntity>>((ref) asy
 
 final liveGiftTypesLegacyProvider =
     FutureProvider.autoDispose<List<LiveVideoGiftType>>((ref) async {
-  final catalog = await ref.watch(liveGiftCatalogProvider.future);
-  return catalog.map(LiveVideoGiftType.fromGift).toList();
-});
+      final catalog = await ref.watch(liveGiftCatalogProvider.future);
+      return catalog.map(LiveVideoGiftType.fromGift).toList();
+    });
 
 final streamGiftLeaderboardProvider = FutureProvider.autoDispose
     .family<List<GiftLeaderboardEntry>, String>((ref, streamId) async {
-  if (streamId.isEmpty) return const [];
-  try {
-    return ref.watch(giftRepositoryProvider).fetchLeaderboard(streamId);
-  } catch (_) {
-    return const [];
-  }
-});
+      if (streamId.isEmpty) return const [];
+      try {
+        return ref.watch(giftRepositoryProvider).fetchLeaderboard(streamId);
+      } catch (_) {
+        return const [];
+      }
+    });
+
+final reciprocalGiftHintProvider = FutureProvider.autoDispose
+    .family<ReciprocalGiftHint?, String>((ref, userId) async {
+      if (userId.trim().isEmpty) return null;
+      try {
+        final map = await ref
+            .watch(giftRepositoryProvider)
+            .checkReciprocal(userId);
+        final hint = parseReciprocalGiftHint(map);
+        return hint.show ? hint : null;
+      } catch (_) {
+        return null;
+      }
+    });

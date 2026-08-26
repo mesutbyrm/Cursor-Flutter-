@@ -7,6 +7,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../data/game_remote_datasource.dart';
 import '../../domain/game_models.dart';
 import '../../domain/game_move_dedupe.dart';
+import '../../domain/game_room_poll.dart';
 import '../../domain/game_state_parser.dart';
 
 final gameRemoteProvider = Provider<GameRemoteDataSource>((ref) {
@@ -58,10 +59,12 @@ class GameRoomController
       _cachedGameType = null;
     });
     Future.microtask(() => refresh());
-    _poll = Timer.periodic(
-      const Duration(seconds: 5),
-      (_) => refresh(silent: true),
-    );
+    _poll = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!gameRoomPollAllowed(WidgetsBinding.instance.lifecycleState)) {
+        return;
+      }
+      refresh(silent: true);
+    });
     return const AsyncValue.loading();
   }
 
@@ -81,8 +84,7 @@ class GameRoomController
       return false;
     }
 
-    _cachedGameType =
-        GameStateParser.gameType(snapshot.raw) ?? _cachedGameType;
+    _cachedGameType = GameStateParser.gameType(snapshot.raw) ?? _cachedGameType;
     return true;
   }
 
@@ -108,15 +110,14 @@ class GameRoomController
 
   Future<void> sendMove(Map<String, dynamic> move) async {
     final previous = state.valueOrNull;
-    final gameType = _cachedGameType ??
+    final gameType =
+        _cachedGameType ??
         GameStateParser.gameType(previous?.raw) ??
         move['gameType']?.toString();
     try {
-      final snap = await ref.read(gameRemoteProvider).sendMove(
-            roomId: arg,
-            move: move,
-            gameType: gameType,
-          );
+      final snap = await ref
+          .read(gameRemoteProvider)
+          .sendMove(roomId: arg, move: move, gameType: gameType);
       if (_acceptSnapshot(snap)) {
         state = AsyncValue.data(snap);
       }
@@ -140,7 +141,8 @@ final gameRoomControllerProvider = NotifierProvider.autoDispose
     );
 
 /// Foreground'a dönünce oyun state reconcile.
-mixin GameRoomLifecycleMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
+mixin GameRoomLifecycleMixin<T extends ConsumerStatefulWidget>
+    on ConsumerState<T> {
   String get lifecycleRoomId;
 
   @override
