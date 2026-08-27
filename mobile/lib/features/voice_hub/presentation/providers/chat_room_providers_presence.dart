@@ -187,101 +187,48 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     });
   }
 
-  List<ChatRoomPresence> _mergeSelf(List<ChatRoomPresence> list) {
-    final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null) return list;
-    if (list.any((p) => p.id == user.id)) return list;
-    return [
-      ...list,
-      ChatRoomPresence(
-        id: user.id,
-        name: user.display,
-        nickname: user.username,
-        image: user.avatarUrl,
-        chatRole: user.role ?? 'listener',
-        roleSymbol: _roleSymbolForUser(user),
-      ),
-    ];
-  }
-
   List<ChatRoomPresence> _mergePresenceStable(
     List<ChatRoomPresence> incoming, {
     required String source,
   }) {
     final previous = state.presence;
-    final withSelf = _mergeSelf(incoming);
+    final pollSource =
+        source == 'refresh' || source == 'poll' || source == 'preload';
 
-    // Otoriter kaynaklarda boş liste = gerçekten boş; hayalet kullanıcı tutma.
-    final trustEmpty = source == 'refresh' ||
-        source == 'poll' ||
-        source == 'join' ||
-        source == 'state_snapshot' ||
-        source == 'sse' ||
-        source == 'preload';
-
-    if (withSelf.isEmpty && previous.isNotEmpty) {
-      if (!trustEmpty) {
-        VoiceRoomDebugLog.presenceUpdate(
-          roomId: _roomKey,
-          previousCount: previous.length,
-          incomingCount: 0,
-          mergedCount: previous.length,
-          source: '$source.keep_previous',
-        );
-        return previous;
-      }
-      // Boş poll/refresh yanıtı — odadayken hayalet silme / 0 sayım önlenir.
-      if ((source == 'refresh' || source == 'poll' || source == 'preload') &&
-          state.selfInRoom) {
-        VoiceRoomDebugLog.presenceUpdate(
-          roomId: _roomKey,
-          previousCount: previous.length,
-          incomingCount: 0,
-          mergedCount: previous.length,
-          source: '$source.keep_in_room',
-        );
-        return previous;
-      }
-      VoiceEventLog.presenceUpdate(roomId: _roomKey, count: withSelf.length);
-      return withSelf;
-    }
-    final prevById = <String, ChatRoomPresence>{
-      for (final p in previous) p.id: p,
-    };
-    final merged = <ChatRoomPresence>[];
-    for (final p in withSelf) {
-      final prev = prevById[p.id];
-      if (prev == null) {
-        merged.add(p);
-        continue;
-      }
-      merged.add(
-        ChatRoomPresence(
-          id: p.id,
-          name: p.name.trim().isNotEmpty ? p.name : prev.name,
-          nickname: (p.nickname?.trim().isNotEmpty == true)
-              ? p.nickname
-              : prev.nickname,
-          image: (p.image?.trim().isNotEmpty == true) ? p.image : prev.image,
-          chatRole: (p.chatRole?.trim().isNotEmpty == true)
-              ? p.chatRole!
-              : (prev.chatRole ?? 'listener'),
-          roleSymbol: p.roleSymbol ?? prev.roleSymbol,
-          membership: p.membership ?? prev.membership,
-      seatIndex: p.seatIndex ?? prev.seatIndex,
-      isSpeaking: p.isSpeaking,
-      isMuted: p.isMuted,
-        ),
+    if (pollSource && state.sseConnected) {
+      VoiceRoomDebugLog.presenceUpdate(
+        roomId: _roomKey,
+        previousCount: previous.length,
+        incomingCount: incoming.length,
+        mergedCount: previous.length,
+        source: '$source.skip_sse',
       );
+      return previous;
     }
+
+    if (pollSource && incoming.isEmpty && previous.isNotEmpty) {
+      VoiceRoomDebugLog.presenceUpdate(
+        roomId: _roomKey,
+        previousCount: previous.length,
+        incomingCount: 0,
+        mergedCount: previous.length,
+        source: '$source.keep_fetch_empty',
+      );
+      return previous;
+    }
+
+    final replaced = replacePresenceSnapshot(
+      previous: previous,
+      incoming: incoming,
+    );
     VoiceRoomDebugLog.presenceUpdate(
       roomId: _roomKey,
       previousCount: previous.length,
-      incomingCount: withSelf.length,
-      mergedCount: merged.length,
-      source: source,
+      incomingCount: incoming.length,
+      mergedCount: replaced.length,
+      source: isPresenceReplaceSource(source) ? source : '$source.replace',
     );
-    final seatCount = merged.where((p) => p.seatIndex != null).length;
+    final seatCount = replaced.where((p) => p.seatIndex != null).length;
     if (seatCount > 0) {
       VoiceRoomDebugLog.seatUpdate(
         roomId: _roomKey,
@@ -289,16 +236,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         source: source,
       );
     }
-    final deduped = dedupePresencesById(merged);
-    if (deduped.length != merged.length) {
-      VoiceRoomDebugLog.log('presence.dedupe', {
-        'room': _roomKey,
-        'before': merged.length,
-        'after': deduped.length,
-        'source': source,
-      });
-    }
-    return deduped;
+    return replaced;
   }
 
   void _detectMicChanges(List<ChatRoomPresence> next) {
@@ -466,17 +404,18 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
             seatIndex: joinSeat,
           );
       ref.read(pendingRoomPasswordProvider.notifier).clear(_roomKey);
-      final merged = _mergeSelf(joined);
       VoiceRoomDebugLog.log('api.presence.join.ok', {
-        'count': merged.length,
+        'count': joined.length,
         'roomId': _roomKey,
       });
       _presenceJoined = true;
+      final merged = _mergePresenceStable(joined, source: 'join');
       state = state.copyWith(
-        presence: _mergePresenceStable(merged, source: 'join'),
+        presence: merged,
         selfInRoom: true,
         loading: false,
         clearError: true,
+        hubOnlineCount: merged.length,
       );
       _knownPresenceIds
         ..clear()
@@ -486,7 +425,6 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
           .read(voiceRoomDiagnosticProvider.notifier)
           .setPresence(joined: true, count: merged.length);
       _startPresenceHeartbeat();
-      unawaited(_refreshHubOnlineCountFromServer());
       unawaited(refreshServerPermissions());
       unawaited(_broadcastStaffEntryIfNeeded());
   }
@@ -584,18 +522,12 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     final remaining =
         state.presence.where((p) => p.id != userId).toList(growable: false);
     if (remaining.length == state.presence.length) return;
-    final hadHub = state.hubOnlineCount != null;
-    final nextCount = hadHub
-        ? (state.hubOnlineCount! - 1).clamp(0, 999999)
-        : remaining.length;
     state = state.copyWith(
       presence: remaining,
       selfInRoom: false,
-      hubOnlineCount: hadHub ? nextCount : null,
+      hubOnlineCount: remaining.length,
     );
-    if (hadHub) {
-      _patchHubPresenceCount(nextCount);
-    }
+    _patchHubPresenceCount(remaining.length);
     _knownPresenceIds.remove(userId);
   }
 
@@ -652,29 +584,28 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   Future<void> _presenceHeartbeatTick() async {
     if (_roomKey.isEmpty) return;
     _presenceHeartbeatCount++;
-    final last = _lastSseEventAt;
-    final sseRecentlyActive = state.sseConnected &&
-        last != null &&
-        DateTime.now().difference(last) < const Duration(seconds: 45);
-    if (!sseRecentlyActive) {
-      try {
-        VoiceEventLog.heartbeat(roomId: _roomKey);
-        VoiceRoomDebugLog.log('api.presence.heartbeat', {'room': _roomKey});
-        await ref.read(chatRoomRemoteProvider).presenceHeartbeat(
-              _presenceApiKey,
-              alternateKey: _presenceAlternateKey,
-            );
-      } catch (e) {
-        VoiceRoomDebugLog.log('api.presence.heartbeat.fail', {
-          'error': e.toString(),
-        });
-      }
+    try {
+      VoiceEventLog.heartbeat(roomId: _roomKey);
+      VoiceRoomDebugLog.log('api.presence.heartbeat', {
+        'room': _roomKey,
+        'tick': _presenceHeartbeatCount,
+      });
+      await ref.read(chatRoomRemoteProvider).presenceHeartbeat(
+            _presenceApiKey,
+            alternateKey: _presenceAlternateKey,
+          );
+    } catch (e) {
+      VoiceRoomDebugLog.log('api.presence.heartbeat.fail', {
+        'error': e.toString(),
+      });
     }
-    // SSE bağlı görünse bile presence event gelmiyorsa üye listesini yenile.
+    final last = _lastSseEventAt;
     final sseSilent = last == null ||
-        DateTime.now().difference(last) > const Duration(seconds: 20);
-    if (sseSilent || !state.sseConnected || _presenceHeartbeatCount % 4 == 0) {
+        DateTime.now().difference(last) > const Duration(seconds: 45);
+    if (!state.sseConnected) {
       unawaited(_preloadPresenceMembers());
+    } else if (sseSilent) {
+      unawaited(resyncAfterSseReconnect());
     }
   }
 

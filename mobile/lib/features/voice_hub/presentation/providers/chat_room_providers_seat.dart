@@ -163,7 +163,6 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       } catch (_) {
         final err = await assignSeat(seatIndex: seatIndex);
         if (err == null) {
-          _applyOptimisticSeat(userId: user.id, seatIndex: seatIndex);
           _autoSeatAttempted = true;
           return;
         }
@@ -334,29 +333,6 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
             .read(voiceSeatRestServiceProvider)
             .takeSeat(_roomKey, seatIndex, userId: userId);
       }
-      if (selfId != null && selfId.isNotEmpty) {
-        ChatRoomPresence? occupant;
-        for (final p in state.presence) {
-          if (p.id == selfId) {
-            occupant = p;
-            break;
-          }
-        }
-        _applyOptimisticSeat(userId: selfId, seatIndex: seatIndex);
-        final nextSlots = _patchSeatSlots(
-          state.seatSlots,
-          userId: selfId,
-          newIndex: seatIndex,
-          previousIndex: occupant?.seatIndex,
-          occupantName: occupant?.displayName,
-          occupantImage: occupant?.image,
-        );
-        final nextPresence = _syncPresenceSeatIndexFromSlots(
-          state.presence,
-          nextSlots,
-        );
-        state = state.copyWith(seatSlots: nextSlots, presence: nextPresence);
-      }
       unawaited(_refreshSeatsFromBackend());
       return null;
     } catch (e) {
@@ -404,64 +380,6 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     } catch (e) {
       return ApiException.userMessage(e);
     }
-  }
-
-  void _applyOptimisticSeat({
-    required String userId,
-    required int seatIndex,
-  }) {
-    ChatRoomPresence? occupant;
-    int? previousIndex;
-    for (final p in state.presence) {
-      if (p.id == userId) {
-        occupant = p;
-        previousIndex = p.seatIndex;
-        break;
-      }
-    }
-    final next = state.presence.map((p) {
-      if (p.id != userId) {
-        // Aynı koltuktaki başka kullanıcıyı boşalt.
-        if (p.seatIndex == seatIndex) {
-          return ChatRoomPresence(
-            id: p.id,
-            name: p.name,
-            nickname: p.nickname,
-            image: p.image,
-            chatRole: p.chatRole,
-            roleSymbol: p.roleSymbol,
-            membership: p.membership,
-            seatIndex: null,
-            isSpeaking: p.isSpeaking,
-            isMuted: p.isMuted,
-          );
-        }
-        return p;
-      }
-      return ChatRoomPresence(
-        id: p.id,
-        name: p.name,
-        nickname: p.nickname,
-        image: p.image,
-        chatRole: p.chatRole,
-        roleSymbol: p.roleSymbol,
-        membership: p.membership,
-        seatIndex: seatIndex,
-        isSpeaking: p.isSpeaking,
-        isMuted: p.isMuted,
-      );
-    }).toList();
-    if (!next.any((p) => p.id == userId)) return;
-    final nextSlots = _patchSeatSlots(
-      state.seatSlots,
-      userId: userId,
-      newIndex: seatIndex,
-      previousIndex: previousIndex,
-      occupantName: occupant?.displayName,
-      occupantImage: occupant?.image,
-    );
-    final syncedPresence = _syncPresenceSeatIndexFromSlots(next, nextSlots);
-    state = state.copyWith(presence: syncedPresence, seatSlots: nextSlots);
   }
 
   Future<String?> clearUserSeat({required String userId}) async {

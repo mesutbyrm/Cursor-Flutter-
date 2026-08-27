@@ -4,44 +4,44 @@ part of 'chat_room_providers.dart';
 
 /// Backend senkronizasyonu — GET /state, GET /seats, SSE `room_event`.
 extension VoiceRoomBackendSync on VoiceRoomLiveController {
-  /// Odaya giriş sırası: join → state → seats (SSE ve TRTC ayrı adımlarda).
+  /// Odaya giriş sırası: GET /state → presence → SSE → GET /seats.
   Future<void> _loadBackendSnapshot() async {
+    await _fetchAndApplyRoomState();
+    await _fetchAndApplySeats();
+    state = state.copyWith(backendSyncReady: true, loading: false);
+    unawaited(_tryAutoPrivilegedSeat());
+  }
+
+  Future<void> _fetchAndApplyRoomState() async {
     if (_roomKey.isEmpty) return;
     VoiceRoomDebugLog.log('api.state.fetch', {'room': _roomKey});
     final remote = ref.read(chatRoomRemoteProvider);
-    VoiceRoomStateSnapshot? snapshot;
-    List<VoiceRoomSeatSlot> seats = const [];
     try {
-      final results = await Future.wait<Object?>([
-        remote
-            .fetchRoomState(_roomKey, alternateKey: _musicAlternateKey)
-            .then<Object?>((value) => value)
-            .catchError((Object e) {
-          VoiceRoomDebugLog.log('api.state.fail', {'error': e.toString()});
-          return null;
-        }),
-        remote
-            .fetchSeats(
-              _roomKey,
-              alternateKey: _musicAlternateKey,
-              targetSeatCount: state.roomSeatCount ?? _roomMeta.seatCount,
-            )
-            .catchError((Object e) {
-          VoiceRoomDebugLog.log('api.seats.fail', {'error': e.toString()});
-          return <VoiceRoomSeatSlot>[];
-        }),
-      ], eagerError: false);
-      snapshot = results[0] as VoiceRoomStateSnapshot?;
-      seats = (results[1] as List<VoiceRoomSeatSlot>?) ?? const [];
-      if (snapshot != null) {
-        _applyStateSnapshot(snapshot);
-        VoiceRoomDebugLog.log('api.state.ok', {
-          'room': _roomKey,
-          'participants': snapshot.participants.length,
-          'owner': snapshot.ownerId,
-        });
-      }
-      if (seats.isNotEmpty) {
+      final snapshot = await remote.fetchRoomState(
+        _roomKey,
+        alternateKey: _musicAlternateKey,
+      );
+      _applyStateSnapshot(snapshot);
+      VoiceRoomDebugLog.log('api.state.ok', {
+        'room': _roomKey,
+        'participants': snapshot.participants.length,
+        'owner': snapshot.ownerId,
+      });
+    } on Object catch (e) {
+      VoiceRoomDebugLog.log('api.state.fail', {'error': e.toString()});
+    }
+  }
+
+  Future<void> _fetchAndApplySeats() async {
+    if (_roomKey.isEmpty) return;
+    final remote = ref.read(chatRoomRemoteProvider);
+    try {
+      final seats = await remote.fetchSeats(
+        _roomKey,
+        alternateKey: _musicAlternateKey,
+        targetSeatCount: state.roomSeatCount ?? _roomMeta.seatCount,
+      );
+      if (shouldApplyCanonicalSeats(seats)) {
         final nextPresence = _syncPresenceSeatIndexFromSlots(
           state.presence,
           seats,
@@ -53,11 +53,8 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         'count': seats.length,
       });
     } on Object catch (e) {
-      VoiceRoomDebugLog.log('api.snapshot.fail', {'error': e.toString()});
+      VoiceRoomDebugLog.log('api.seats.fail', {'error': e.toString()});
     }
-
-    state = state.copyWith(backendSyncReady: true, loading: false);
-    unawaited(_tryAutoPrivilegedSeat());
   }
 
   void _applyStateSnapshot(VoiceRoomStateSnapshot snapshot) {
@@ -65,22 +62,23 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     _knownPresenceIds
       ..clear()
       ..addAll(participants.map((p) => p.id).where((id) => id.isNotEmpty));
-    final mergedPresence = participants.isEmpty
-        ? state.presence
-        : _mergePresenceStable(participants, source: 'state_snapshot');
+    final mergedPresence =
+        _mergePresenceStable(participants, source: 'state_snapshot');
     state = state.copyWith(
       presence: mergedPresence,
       seatSlots: snapshot.seats.isNotEmpty ? snapshot.seats : state.seatSlots,
       ownerId: snapshot.ownerId,
       roomTrtc: snapshot.trtc,
       serverPermissions: snapshot.me ?? state.serverPermissions,
-      selfInRoom: true,
+      selfInRoom: _selfListedIn(mergedPresence),
       clearError: true,
       roomSeatCount: snapshot.seatCount ?? state.roomSeatCount,
       roomMaxUsers: snapshot.maxUsers ?? state.roomMaxUsers,
     );
     if (snapshot.onlineCount != null) {
       _patchHubPresenceCount(snapshot.onlineCount!);
+    } else {
+      _patchHubPresenceCount(mergedPresence.length);
     }
     if (snapshot.trtc != null) {
       ref.read(voiceRoomDiagnosticProvider.notifier).setTrtc(
@@ -111,6 +109,13 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
 
   void _handleRoomEvent(Map<String, dynamic> payload) {
     _markSseActivity();
+    if (!roomEventMatchesActiveRoom(
+      payload,
+      _roomKey,
+      alternateRoomId: _musicAlternateKey,
+    )) {
+      return;
+    }
     final event = (payload['event'] ?? payload['type'] ?? '')
         .toString()
         .toLowerCase()
@@ -184,10 +189,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     final next = [...state.presence, user];
     _knownPresenceIds.add(userId);
     state = state.copyWith(presence: next, sseConnected: true);
-    _patchHubOnlineCountFromPayload(payload);
-    if (_extractOnlineCountFromPayload(payload) == null) {
-      unawaited(_refreshHubOnlineCountFromServer());
-    }
+    _patchHubOnlineCountFromPayload(payload, fallback: next.length);
     _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.join, '$name odaya katıldı');
   }
 
@@ -408,12 +410,13 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
           state.seatSlots.any((s) => (s.userId?.trim().isNotEmpty ?? false));
       final incomingOccupied =
           seats.any((s) => (s.userId?.trim().isNotEmpty ?? false));
-      // Geçici boş yanıt koltuktan düşmeyi tetiklemesin.
-      if (seats.isEmpty || (hadOccupied && !incomingOccupied)) {
+      // Uzunluk 0 = muhtemel hata; dolu dizi (hepsi boş olsa bile) canonical.
+      if (!shouldApplyCanonicalSeats(seats)) {
         VoiceRoomDebugLog.log('sse.seat_update.skip_empty', {
           'room': _roomKey,
           'hadOccupied': hadOccupied,
           'incomingCount': seats.length,
+          'incomingOccupied': incomingOccupied,
         });
         return;
       }

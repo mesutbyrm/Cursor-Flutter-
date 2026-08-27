@@ -183,15 +183,18 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             state = state.copyWith(
               presence: merged,
               sseConnected: true,
-              selfInRoom: true,
+              selfInRoom: _sse._selfListedIn(merged),
+              hubOnlineCount: merged.length,
               clearError: true,
             );
             ref.read(voiceRoomDiagnosticProvider.notifier).setSse(true);
             ref
                 .read(voiceRoomDiagnosticProvider.notifier)
                 .setPresence(joined: true, count: merged.length);
-            unawaited(_sse._refreshHubOnlineCountFromServer());
-            if (!wasSse) _sse._schedulePoll();
+            if (!wasSse) {
+              // SSE bağlandı — REST presence poll durur.
+              _sse._poll?.cancel();
+            }
           },
           onUserJoin: _sse._handleSseUserJoin,
           onUserLeave: _sse._handleSseUserLeave,

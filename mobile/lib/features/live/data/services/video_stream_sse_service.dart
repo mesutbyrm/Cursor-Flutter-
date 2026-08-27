@@ -46,6 +46,7 @@ class VideoStreamSseService {
   String? _streamId;
   Future<String?> Function()? _accessToken;
   var _stopped = false;
+  var _paused = false;
   var _reconnectAttempt = 0;
   String? _lastEventId;
 
@@ -60,6 +61,7 @@ class VideoStreamSseService {
   void Function(Map<String, dynamic> user)? _onUserJoined;
   void Function(String userId)? _onUserLeft;
   void Function(String userId, bool isModerator)? _onModeratorUpdated;
+  void Function(Map<String, dynamic> payload)? _onGuest;
   static const _fortuneEventTypes = {
     'fal_request',
     'live_fal_request',
@@ -90,10 +92,12 @@ class VideoStreamSseService {
     void Function(Map<String, dynamic> user)? onUserJoined,
     void Function(String userId)? onUserLeft,
     void Function(String userId, bool isModerator)? onModeratorUpdated,
+    void Function(Map<String, dynamic> payload)? onGuest,
   }) async {
     final id = streamId.trim();
-    final same = !_stopped && _streamId == id && _bytesSub != null;
+    final same = !_stopped && !_paused && _streamId == id && _bytesSub != null;
     _stopped = false;
+    _paused = false;
     _streamId = id;
     _accessToken = accessToken;
     _onConnected = onConnected;
@@ -108,6 +112,7 @@ class VideoStreamSseService {
     _onUserJoined = onUserJoined;
     _onUserLeft = onUserLeft;
     _onModeratorUpdated = onModeratorUpdated;
+    _onGuest = onGuest;
     if (same) return;
     LiveDebugLog.log('stream.sse.connect', {'streamId': id});
     await _openStream();
@@ -116,7 +121,7 @@ class VideoStreamSseService {
   Future<void> _openStream() async {
     await _closeStreamOnly();
     final id = _streamId;
-    if (id == null || id.isEmpty || _stopped) return;
+    if (id == null || id.isEmpty || _stopped || _paused) return;
 
     final token = _accessToken != null ? await _accessToken!() : null;
     final headers = <String, dynamic>{
@@ -170,21 +175,35 @@ class VideoStreamSseService {
   }
 
   void _scheduleReconnect() {
-    if (_stopped || _streamId == null) return;
+    if (_stopped || _paused || _streamId == null) return;
     if (_reconnectAttempt >= SseReconnectPolicy.maxAttempts) return;
     _reconnectTimer?.cancel();
     _reconnectAttempt++;
     final delay = SseReconnectPolicy.delayForAttempt(_reconnectAttempt);
     GiftSyncLog.sseReconnect(_streamId!, _reconnectAttempt, delay.inMilliseconds);
     _reconnectTimer = Timer(delay, () {
-      if (!_stopped) unawaited(_openStream());
+      if (!_stopped && !_paused) unawaited(_openStream());
     });
   }
 
   /// Anında yeniden bağlan.
   Future<void> reconnectNow() async {
-    if (_stopped || _streamId == null) return;
+    if (_stopped || _paused || _streamId == null) return;
     _reconnectTimer?.cancel();
+    _reconnectAttempt = 0;
+    await _openStream();
+  }
+
+  Future<void> pauseForBackground() async {
+    if (_stopped || _streamId == null) return;
+    _paused = true;
+    await _closeStreamOnly();
+  }
+
+  Future<void> resumeFromBackground() async {
+    if (!_paused) return;
+    _paused = false;
+    if (_stopped || _streamId == null) return;
     _reconnectAttempt = 0;
     await _openStream();
   }
@@ -302,6 +321,16 @@ class VideoStreamSseService {
         final removedId = map['userId']?.toString() ?? '';
         if (removedId.isNotEmpty) _onModeratorUpdated?.call(removedId, false);
         return;
+      case 'guest':
+      case 'guest_joined':
+      case 'guestJoined':
+      case 'GUEST_JOINED':
+      case 'guest_left':
+      case 'guestLeft':
+      case 'GUEST_LEFT':
+      case 'guest_update':
+        _onGuest?.call(map);
+        return;
       default:
         final typeLower = type.toLowerCase();
         if (_fortuneEventTypes.contains(typeLower)) {
@@ -324,6 +353,7 @@ class VideoStreamSseService {
 
   Future<void> disconnect() async {
     _stopped = true;
+    _paused = false;
     _streamId = null;
     _accessToken = null;
     _onConnected = null;
@@ -338,6 +368,7 @@ class VideoStreamSseService {
     _onUserJoined = null;
     _onUserLeft = null;
     _onModeratorUpdated = null;
+    _onGuest = null;
     await _closeStreamOnly();
     LiveDebugLog.log('stream.sse.disconnect');
   }
@@ -346,7 +377,7 @@ class VideoStreamSseService {
     _heartbeatWatchdog?.cancel();
     _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 5), (_) {
       final last = _lastEventAt;
-      if (last == null || _stopped) return;
+      if (last == null || _stopped || _paused) return;
       if (DateTime.now().difference(last) >
           const Duration(seconds: 45)) {
         if (kDebugMode) {

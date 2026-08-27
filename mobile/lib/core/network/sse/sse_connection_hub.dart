@@ -19,6 +19,7 @@ class SseConnectionHub {
 
   final Map<String, _VoiceRoomLease> _voiceRooms = {};
   final Map<String, _VideoStreamLease> _videoStreams = {};
+  var _backgroundPaused = false;
 
   void bindGiftsRemote(LiveGiftsRemoteDataSource giftsRemote) {
     _giftsRemote = giftsRemote;
@@ -119,10 +120,12 @@ class SseConnectionHub {
       await lease.service.disconnect();
     }
     _videoStreams.clear();
+    _backgroundPaused = false;
   }
 
   /// İnternet geri gelince aktif SSE bağlantılarını yeniden kur.
   Future<void> reconnectAllActive() async {
+    if (_backgroundPaused) return;
     for (final lease in _voiceRooms.values) {
       if (lease.refCount > 0) {
         await lease.service.reconnectNow();
@@ -134,6 +137,36 @@ class SseConnectionHub {
       }
     }
   }
+
+  /// Uygulama arka plan — lease'ler kalır, bağlantı kapanır (duplicate yok).
+  Future<void> pauseAllForBackground() async {
+    _backgroundPaused = true;
+    for (final lease in _voiceRooms.values) {
+      await lease.service.pauseForBackground();
+    }
+    for (final lease in _videoStreams.values) {
+      await lease.service.pauseForBackground();
+    }
+  }
+
+  /// Ön plan — mevcut lease'leri yeniden bağla; yeni connection açma.
+  Future<void> resumeAllFromBackground() async {
+    if (!_backgroundPaused) return;
+    _backgroundPaused = false;
+    for (final lease in _voiceRooms.values) {
+      if (lease.refCount > 0) {
+        await lease.service.resumeFromBackground();
+      }
+    }
+    for (final lease in _videoStreams.values) {
+      if (lease.refCount > 0) {
+        await lease.service.resumeFromBackground();
+      }
+    }
+  }
+
+  int get activeVoiceRoomCount => _voiceRooms.length;
+  int get activeVideoStreamCount => _videoStreams.length;
 }
 
 class _VoiceRoomLease {

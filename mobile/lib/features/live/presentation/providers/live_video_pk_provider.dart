@@ -10,7 +10,6 @@ import '../../domain/pk/pk_room_models.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import 'live_providers.dart';
-import 'live_namespace_providers.dart';
 import 'pk_room_providers.dart';
 
 class LiveVideoPkState {
@@ -184,14 +183,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   }
 
   void _syncLiveSocketBattle() {
-    final battleId = state.unifiedMatchId ??
-        state.battle?['id']?.toString() ??
-        state.battle?['battleId']?.toString();
-    if (battleId == null || battleId.isEmpty) return;
-    ref.read(liveNamespaceSocketProvider).updateRooms(
-          streamId: arg,
-          battleId: battleId,
-        );
+    // Socket.IO kaldırıldı — PK skorları stream SSE `pk` olayından gelir.
   }
 
   Future<void> create({String? opponentStreamId, String? targetStreamId}) async {

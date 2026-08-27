@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.370+408 (2026-08-27) — Faz 1: SSE tek kanal + oda single source of truth
+
+- **Socket.IO kaldırıldı:** Canlı yayın `/live` namespace ve global PK socket bağlanmaz; PK/misafir/hediye stream SSE
+- **Oda SoT:** Presence replace (A,B + C → A,B,C; LEAVE B → A,C); boş snapshot hayalet tutmaz
+- **Join sırası:** GET /state → presence → SSE → mesajlar → GET /seats → TRTC
+- **Optimistic koltuk yok:** POST sonrası yalnızca backend GET /seats
+- **SSE lifecycle:** oda çıkışında force-release; arka plan pause / ön plan aynı lease ile resume
+- **Üye sayısı:** canonical liste veya backend `onlineCount`; poll ile merge yok
+
 ## 1.0.369+407 (2026-08-25) — Ana sayfa hediye bandı kalktı, anlık üst geçiş
 
 - **Ana sayfa:** Arama altındaki hediye/ticker bandı kaldırıldı; hediyeler orada sıra sıra dönmez

@@ -253,11 +253,16 @@ class VoiceRoomLiveState {
 
   bool get isAnyoneTyping => typingUsers.isNotEmpty;
 
-  /// Sunucu `onlineCount` — öncelik hub; yoksa presence listesi (0 göstermeyi önler).
+  /// Canonical üye sayısı — oda içinde katalog kartı kullanılmaz.
   int onlineCountFor(VoiceRoomEntity room) {
+    if (backendSyncReady || selfInRoom) {
+      return resolveRoomOnlineCount(
+        backendCount: hubOnlineCount,
+        participantCount: presence.length,
+      );
+    }
     if (hubOnlineCount != null) return hubOnlineCount!;
     if (presence.isNotEmpty) return presence.length;
-    if (backendSyncReady) return 0;
     if (room.displayOnline > 0) return room.displayOnline;
     if (room.onlineCount > 0) return room.onlineCount;
     return 0;
@@ -438,6 +443,12 @@ class VoiceRoomLiveController
     final nick = user?.username.trim();
     if (nick != null && nick.isNotEmpty) return nick;
     return null;
+  }
+
+  bool _selfListedIn(List<ChatRoomPresence> members) {
+    final selfId = ref.read(authControllerProvider).valueOrNull?.id;
+    if (selfId == null || selfId.isEmpty) return state.selfInRoom;
+    return members.any((p) => p.id == selfId);
   }
 
   /// SSE / moderation payload — isim önce, kullanıcı adı yedek.
@@ -678,7 +689,7 @@ class VoiceRoomLiveController
         unawaited(_leaveVoiceSession());
         unawaited(_leavePresenceWithSeatClear());
         unawaited(_stopTyping());
-        ref.read(sseConnectionHubProvider).releaseVoiceRoom(_sseReleaseKey);
+        ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(_sseReleaseKey);
         ref.read(voiceRoomGiftRealtimeProvider).stop();
         ref.read(pkBattleRemoteProvider.notifier).clear();
         unawaited(() async {
@@ -843,7 +854,7 @@ class VoiceRoomLiveController
       state = state.copyWith(
         presence: merged,
         sseConnected: true,
-        selfInRoom: true,
+        selfInRoom: _selfListedIn(merged),
       );
       ref
           .read(voiceRoomDiagnosticProvider.notifier)
@@ -993,7 +1004,7 @@ class VoiceRoomLiveController
           );
         },
         () async {
-          ref.read(sseConnectionHubProvider).releaseVoiceRoom(_sseReleaseKey);
+          ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(_sseReleaseKey);
           ref.read(voiceRoomGiftRealtimeProvider).stop();
           ref.read(voiceRoomGiftRealtimeProvider).setSseActive(false);
           ref.read(voiceRoomGiftRealtimeProvider).resetDedupeState();
@@ -1369,12 +1380,13 @@ class VoiceRoomLiveController
     state = state.copyWith(
       presence: merged,
       sseConnected: true,
-      selfInRoom: true,
+      selfInRoom: _selfListedIn(merged),
+      hubOnlineCount: merged.length,
     );
     ref
         .read(voiceRoomDiagnosticProvider.notifier)
         .setPresence(joined: true, count: merged.length);
-    unawaited(_refreshHubOnlineCountFromServer());
+    _patchHubOnlineCountFromPayload(payload, fallback: merged.length);
   }
 
   void _handleSseUserLeave(Map<String, dynamic> payload) {
@@ -1422,12 +1434,11 @@ class VoiceRoomLiveController
     if (remaining.length == state.presence.length) return;
     _knownPresenceIds.remove(userId);
     _lastKnownPresenceNames.remove(userId);
-    state = state.copyWith(presence: remaining);
+    state = state.copyWith(
+      presence: remaining,
+      selfInRoom: _selfListedIn(remaining),
+    );
     _patchHubOnlineCountFromPayload(payload, fallback: remaining.length);
-    if (_extractOnlineCountFromPayload(payload) == null &&
-        state.hubOnlineCount == null) {
-      _patchHubPresenceCount(remaining.length);
-    }
     ref
         .read(voiceRoomDiagnosticProvider.notifier)
         .setPresence(joined: true, count: remaining.length);
@@ -1516,7 +1527,8 @@ class VoiceRoomLiveController
     final merged = _mergePresenceStable(current, source: 'socket_snapshot');
     state = state.copyWith(
       presence: merged,
-      selfInRoom: true,
+      selfInRoom: _selfListedIn(merged),
+      hubOnlineCount: merged.length,
     );
     ref
         .read(voiceRoomDiagnosticProvider.notifier)
@@ -1527,20 +1539,14 @@ class VoiceRoomLiveController
     _poll?.cancel();
     _pollTick = 0;
     final sse = sseConnected ?? state.sseConnected;
-    final active = musicActive ??
-        (state.dj.playing || state.dj.nowPlaying != null);
-    // SSE varken mesaj poll zaten kapalı; DJ yokken daha seyrek yenile.
-    final interval = sse
-        ? (active ? 90 : 180)
-        : 8;
-    _poll = Timer.periodic(Duration(seconds: interval), (_) {
+    // SSE tek realtime kanalı — bağlıyken presence/mesaj poll yok.
+    if (sse) return;
+    _poll = Timer.periodic(const Duration(seconds: 8), (_) {
       if (_pollPaused) return;
       _pollTick++;
-      final djActive = state.dj.playing || state.dj.nowPlaying != null;
-      if (sse && !djActive && _pollTick % 3 != 0) return;
-      // SSE sağlıklıyken DJ/queue REST poll yapma — yalnızca SSE kopunca.
-      final fullDj = !sse && djActive;
-      unawaited(refresh(includeDj: fullDj));
+      final djActive = musicActive ??
+          (state.dj.playing || state.dj.nowPlaying != null);
+      unawaited(refresh(includeDj: djActive && _pollTick % 2 == 0));
     });
   }
 
@@ -1652,13 +1658,14 @@ class VoiceRoomLiveController
                 roomMuted: state.roomMuted,
               );
             }),
-          remote.fetchPresencePage(
-            _presenceApiKey,
-            alternateKey: _presenceAlternateKey,
-          ).catchError((Object e) {
-            refreshError ??= e;
-            return ChatRoomPresencePage(users: state.presence);
-          }),
+          if (!state.sseConnected)
+            remote.fetchPresencePage(
+              _presenceApiKey,
+              alternateKey: _presenceAlternateKey,
+            ).catchError((Object e) {
+              refreshError ??= e;
+              return ChatRoomPresencePage(users: state.presence);
+            }),
         ]);
         final msgResult = results[0]! as ({
           List<ChatRoomMessage> messages,
@@ -1686,13 +1693,15 @@ class VoiceRoomLiveController
         }
         myNickname = msgResult.myNickname ?? myNickname;
         if (msgResult.roomMuted != null) roomMuted = msgResult.roomMuted!;
-        presence = _mergePresenceStable(
-          (results[1]! as ChatRoomPresencePage).users,
-          source: 'refresh',
-        );
-        final onlineCount = (results[1]! as ChatRoomPresencePage).onlineCount;
-        if (onlineCount != null && onlineCount >= 0) {
-          _patchHubPresenceCount(onlineCount);
+        if (results.length > 1 && results[1] is ChatRoomPresencePage) {
+          presence = _mergePresenceStable(
+            (results[1]! as ChatRoomPresencePage).users,
+            source: 'refresh',
+          );
+          final onlineCount = (results[1]! as ChatRoomPresencePage).onlineCount;
+          if (onlineCount != null && onlineCount >= 0) {
+            _patchHubPresenceCount(onlineCount);
+          }
         }
       } else if (state.sseConnected) {
         try {
@@ -1786,7 +1795,6 @@ class VoiceRoomLiveController
         final sig = _djPlaybackSignature(dj, muted: ui.effectiveMusicMuted);
         playDjInBackground = sig != _lastDjPlaybackSignature;
       }
-      presence = _mergeSelf(presence);
       final previousMessages = state.messages;
       final messages =
           _filterClearedMessages(_mergeMessages(previousMessages, fetchedMsgs));
@@ -3154,10 +3162,11 @@ class VoiceRoomLiveController
       final list = await ref
           .read(chatRoomRemoteProvider)
           .joinPresence(_roomKey, nickname: nick);
-      final merged = _mergeSelf(list);
+      final merged = _mergePresenceStable(list, source: 'join');
       state = state.copyWith(
         presence: merged,
-        selfInRoom: true,
+        selfInRoom: _selfListedIn(merged),
+        hubOnlineCount: merged.length,
         clearError: true,
       );
       return null;

@@ -4,8 +4,7 @@ part of 'chat_room_providers.dart';
 
 /// Oda girişi, bootstrap ve ilk yükleme — [VoiceRoomLiveController]'dan ayrıldı.
 extension VoiceRoomEntryControls on VoiceRoomLiveController {
-  /// Odaya giriş — sıra: presence join → GET state → GET seats → SSE → UI.
-  /// TRTC sayfa tarafında `backendSyncReady` + `roomTrtc` ile bağlanır.
+  /// Contract: auth → state → presence → SSE → messages → seats → TRTC.
   Future<void> _beginRoomSession() async {
     if (_entryBegun) return;
     _entryBegun = true;
@@ -13,6 +12,9 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     _sseStarted = false;
     _sseAttachedRoomKey = null;
     _sessionActive = true;
+    _knownPresenceIds.clear();
+    _lastKnownPresenceNames.clear();
+    _shownEntranceKeys.clear();
     registerVoiceRoomLiveSession(ref, _presenceApiKey, aliases: _roomKeyAliases);
     VoiceEventLog.joinStart(roomId: _roomKey);
     ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
@@ -30,25 +32,28 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
       ownerId: _roomMeta.ownerId,
       clearRoomTrtc: true,
       backendSyncReady: false,
+      sseConnected: false,
+      selfInRoom: false,
+      clearHubOnlineCount: true,
     );
-    _seedOptimisticSelfPresence();
 
     try {
+      await _ensureRoomsCatalogForCanonicalKey();
+      await _fetchAndApplyRoomState();
       await Future.wait<void>([
         _joinPresence(),
         refreshServerPermissions(),
       ], eagerError: false);
-      await _ensureRoomsCatalogForCanonicalKey();
       _startSse();
-      _schedulePoll(sseConnected: false, musicActive: false);
-
-      await _loadBackendSnapshot();
-      _maybeUpgradeSseRoomKey();
+      _schedulePoll(sseConnected: state.sseConnected);
       await Future.wait<void>([
         _loadInitialMessages(),
         _preloadPkStatus(),
         _preloadGiftCatalog(),
       ], eagerError: false);
+      await _fetchAndApplySeats();
+      state = state.copyWith(backendSyncReady: true, loading: false);
+      unawaited(_tryAutoPrivilegedSeat());
       await _bootstrapRoomData();
       VoiceEventLog.joinSuccess(
         roomId: _roomKey,
@@ -127,33 +132,6 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
         _patchHubPresenceCount(page.onlineCount!);
       }
     } catch (_) {}
-  }
-
-  void _seedOptimisticSelfPresence() {
-    final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null || _roomKey.isEmpty) return;
-    if (state.presence.any((p) => p.id == user.id)) {
-      state = state.copyWith(selfInRoom: true, loading: false);
-      return;
-    }
-    final self = ChatRoomPresence(
-      id: user.id,
-      name: user.display,
-      nickname: user.username,
-      image: user.avatarUrl,
-      chatRole: user.role ?? 'listener',
-      roleSymbol: _roleSymbolForUser(user),
-    );
-    final merged = [...state.presence, self];
-    state = state.copyWith(
-      presence: merged,
-      selfInRoom: true,
-      loading: false,
-    );
-    final joinSeat = peekJoinSeatIndexForPrivilegedUser();
-    if (joinSeat != null) {
-      _applyOptimisticSeat(userId: user.id, seatIndex: joinSeat);
-    }
   }
 
   Future<void> _loadInitialMessages() async {

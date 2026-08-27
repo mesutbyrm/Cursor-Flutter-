@@ -52,6 +52,25 @@ void main() {
       const state = VoiceRoomLiveState(loading: false);
       expect(state.onlineCountFor(room), 42);
     });
+
+    test('after sync empty presence is 0 not catalog count', () {
+      const state = VoiceRoomLiveState(
+        loading: false,
+        backendSyncReady: true,
+      );
+      expect(state.onlineCountFor(room), 0);
+    });
+
+    test('in-room uses presence length when hub unset', () {
+      const state = VoiceRoomLiveState(
+        loading: false,
+        selfInRoom: true,
+        presence: [
+          ChatRoomPresence(id: 'a', name: 'A'),
+        ],
+      );
+      expect(state.onlineCountFor(room), 1);
+    });
   });
 
   group('sessionKeyMatchesActiveRoom', () {

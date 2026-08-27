@@ -23,6 +23,7 @@ abstract class BaseSseService {
   Future<String?> Function()? _accessToken;
   Future<bool> Function()? _refreshTokens;
   var _stopped = true;
+  var _paused = false;
   var _reconnectAttempt = 0;
   String? _lastEventId;
   DateTime? _lastEventAt;
@@ -77,6 +78,7 @@ abstract class BaseSseService {
     Future<bool> Function()? refreshTokens,
   }) async {
     _stopped = false;
+    _paused = false;
     _accessToken = accessToken;
     _refreshTokens = refreshTokens;
     await _openStream();
@@ -84,6 +86,7 @@ abstract class BaseSseService {
 
   Future<void> disconnect() async {
     _stopped = true;
+    _paused = false;
     _accessToken = null;
     _refreshTokens = null;
     await _closeStreamOnly();
@@ -92,9 +95,28 @@ abstract class BaseSseService {
     );
   }
 
+  /// Arka plan — bağlantıyı kapat, callback/lease koru.
+  Future<void> pauseForBackground() async {
+    if (_stopped || _accessToken == null) return;
+    _paused = true;
+    await _closeStreamOnly();
+    status.emit(
+      const SseConnectionStatus(phase: SseConnectionPhase.idle),
+    );
+  }
+
+  /// Ön plan — aynı aboneliği yeniden aç (yeni lease yok).
+  Future<void> resumeFromBackground() async {
+    if (!_paused) return;
+    _paused = false;
+    if (_stopped || _accessToken == null) return;
+    _reconnectAttempt = 0;
+    await _openStream();
+  }
+
   /// Ağ geri geldiğinde veya manuel yenileme — backoff sıfırlanır.
   Future<void> reconnectNow() async {
-    if (_stopped || _accessToken == null) return;
+    if (_stopped || _paused || _accessToken == null) return;
     _reconnectAttempt = 0;
     await _openStream();
   }
@@ -106,7 +128,7 @@ abstract class BaseSseService {
 
   Future<void> _openStream() async {
     await _closeStreamOnly();
-    if (_stopped) return;
+    if (_stopped || _paused) return;
 
     status.emit(
       SseConnectionStatus(
@@ -239,7 +261,7 @@ abstract class BaseSseService {
     _heartbeatWatchdog?.cancel();
     _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 5), (_) {
       final last = _lastEventAt;
-      if (last == null || _stopped) return;
+      if (last == null || _stopped || _paused) return;
       if (DateTime.now().difference(last) > heartbeatTimeout) {
         if (kDebugMode) {
           debugPrint('$runtimeType: heartbeat timeout — reconnecting');
@@ -250,7 +272,7 @@ abstract class BaseSseService {
   }
 
   void _scheduleReconnect() {
-    if (_stopped) return;
+    if (_stopped || _paused) return;
     _reconnectTimer?.cancel();
     _reconnectAttempt++;
     if (SseReconnectPolicy.shouldGiveUp(_reconnectAttempt)) {

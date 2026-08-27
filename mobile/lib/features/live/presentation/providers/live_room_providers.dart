@@ -15,7 +15,6 @@ import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/utils/live_chat_guard.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
-import '../../data/services/live_namespace_socket_service.dart';
 import 'live_providers.dart';
 import 'live_stream_engagement_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -36,7 +35,6 @@ import 'live_broadcast_settings_provider.dart';
 import 'live_gift_leaderboard_provider.dart';
 import 'live_room_interaction_provider.dart';
 import 'live_video_pk_provider.dart';
-import 'live_namespace_providers.dart';
 import 'co_broadcast_provider.dart';
 import 'live_guest_grid_provider.dart';
 import 'pk_room_providers.dart';
@@ -98,7 +96,6 @@ class LiveRoomState {
 class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String> {
   Timer? _poll;
   final Set<String> _seenIds = {};
-  LiveNamespaceSocketService? _liveSocket;
   var _tearDownDone = false;
   var _swipeSuspended = false;
 
@@ -110,10 +107,6 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
     final streamId = arg;
     _poll?.cancel();
     _poll = null;
-    try {
-      _liveSocket?.disconnect();
-    } catch (_) {}
-    _liveSocket = null;
     ref.read(liveGiftRealtimeProvider).setSseActive(false);
     ref.read(liveGiftRealtimeProvider).stop();
     ref.read(liveGiftRealtimeProvider).resetDedupeState();
@@ -130,10 +123,6 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
     _swipeSuspended = true;
     _poll?.cancel();
     _poll = null;
-    try {
-      _liveSocket?.disconnect();
-    } catch (_) {}
-    _liveSocket = null;
     ref.read(liveGiftRealtimeProvider).setSseActive(false);
     ref.read(liveGiftRealtimeProvider).stop();
     ref.read(sseConnectionHubProvider).releaseVideoStream(arg);
@@ -343,75 +332,32 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
           state = state.copyWith(fortuneAnsweredNotice: notice);
         }
       },
+      onGuest: (payload) => unawaited(_applyGuestSse(streamId, payload)),
     );
-
-    _startLiveNamespaceSocket(streamId);
   }
 
-  void _startLiveNamespaceSocket(String streamId) {
-    final storage = ref.read(tokenStorageProvider);
-    _liveSocket = ref.read(liveNamespaceSocketProvider);
-    final pkState = ref.read(liveVideoPkProvider(streamId));
-    final battleId = pkState.unifiedMatchId ??
-        pkState.battle?['id']?.toString() ??
-        pkState.battle?['battleId']?.toString();
-
-    _liveSocket!.connect(
-      accessToken: storage.readAccess,
-      streamId: streamId,
-      battleId: battleId,
-      onPkScoreUpdate: (payload) {
-        final battle = payload['battle'] ?? payload['match'] ?? payload;
-        if (battle is Map) {
-          ref
-              .read(liveVideoPkProvider(streamId).notifier)
-              .applyRemoteBattle(Map<String, dynamic>.from(battle));
-        }
-      },
-      onPkInvite: (payload) {
-        ref.invalidate(pkPendingInvitesProvider);
-        ref.invalidate(livePkStreamsProvider);
-        ref.read(livePkInviteSignalProvider.notifier).bump();
-        final battle = payload['battle'] ?? payload['match'] ?? payload;
-        if (battle is Map) {
-          ref
-              .read(liveVideoPkProvider(streamId).notifier)
-              .applyRemoteBattle(Map<String, dynamic>.from(battle));
-        }
-        LiveDebugLog.log('live.ns.pk_invite', payload);
-      },
-      onGuestJoined: (guest) async {
-        LiveDebugLog.log('live.ns.guest_joined', guest);
-        await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
-        final co = ref.read(coBroadcastProvider).coBroadcasters;
-        final layout = resolveGuestLayout(guestCount: co.length);
-        ref.read(liveBroadcastSettingsProvider.notifier)
-          ..toggleCoBroadcast(true)
-          ..toggleGuests(true)
-          ..setGuestLayout(layout);
-        ref.read(liveGuestGridProvider.notifier)
-          ..setLayout(layout)
-          ..syncCoBroadcasters(co);
-      },
-      onGuestLeft: (_) async {
-        await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
-        final co = ref.read(coBroadcastProvider).coBroadcasters;
-        ref.read(liveGuestGridProvider.notifier).syncCoBroadcasters(co);
-      },
-      onGift: (payload) {
-        dispatchGiftSsePayloadRef(
-          ref: ref,
-          sessionKey: streamId,
-          payload: payload,
-          giftsRemote: ref.read(liveGiftsRemoteProvider),
-          voiceRealtime: false,
-        );
-      },
-      onReconnect: () {
-        ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
-        ref.read(liveVideoPkProvider(streamId).notifier).refresh();
-      },
-    );
+  Future<void> _applyGuestSse(
+    String streamId,
+    Map<String, dynamic> payload,
+  ) async {
+    final type = (payload['type'] ?? payload['event'] ?? '')
+        .toString()
+        .toLowerCase();
+    LiveDebugLog.log('stream.sse.guest', payload);
+    await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
+    final co = ref.read(coBroadcastProvider).coBroadcasters;
+    if (type.contains('left')) {
+      ref.read(liveGuestGridProvider.notifier).syncCoBroadcasters(co);
+      return;
+    }
+    final layout = resolveGuestLayout(guestCount: co.length);
+    ref.read(liveBroadcastSettingsProvider.notifier)
+      ..toggleCoBroadcast(true)
+      ..toggleGuests(true)
+      ..setGuestLayout(layout);
+    ref.read(liveGuestGridProvider.notifier)
+      ..setLayout(layout)
+      ..syncCoBroadcasters(co);
   }
 
   void _mergeMessages(List<LiveStreamChatMessage> incoming) {

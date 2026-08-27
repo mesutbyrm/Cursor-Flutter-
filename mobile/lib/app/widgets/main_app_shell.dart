@@ -25,6 +25,7 @@ import '../../features/voice_hub/presentation/widgets/staff_entrance_marquee_hos
 import '../../features/voice_hub/presentation/widgets/global_site_marquee_listener.dart';
 import '../router/app_router.dart';
 import '../../core/network/sse/connectivity_sse_reconnect_provider.dart';
+import '../../core/network/sse/sse_hub_provider.dart';
 import '../../core/sse_client_provider.dart';
 import '../../core/widgets/offline_status_banner.dart';
 import '../../features/gifts/presentation/providers/gift_catalog_version_watcher.dart';
@@ -51,6 +52,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
   var _listenerAttached = false;
   Timer? _realtimeTimer;
   SseClientLifecycleBinding? _sseLifecycle;
+  SseHubLifecycleBinding? _sseHubLifecycle;
 
   @override
   void initState() {
@@ -62,6 +64,8 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
       _attachRouter(ref.read(goRouterProvider));
       _sseLifecycle = ref.read(sseClientLifecycleProvider);
       _sseLifecycle?.attach();
+      _sseHubLifecycle = ref.read(sseHubLifecycleProvider);
+      _sseHubLifecycle?.attach();
     });
     _realtimeTimer = Timer(StartupPerf.shellRealtimeDelay, () {
       if (!mounted) return;
@@ -74,6 +78,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
   void dispose() {
     _realtimeTimer?.cancel();
     _sseLifecycle?.dispose();
+    _sseHubLifecycle?.dispose();
     _detachRouter();
     super.dispose();
   }
