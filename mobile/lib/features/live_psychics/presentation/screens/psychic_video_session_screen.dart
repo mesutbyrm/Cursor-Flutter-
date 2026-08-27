@@ -45,10 +45,14 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    final ctrl = ref.read(psychicVideoControllerProvider(widget.session).notifier);
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      ctrl.onAppPaused();
+      return;
+    }
     if (state == AppLifecycleState.resumed) {
-      ref
-          .read(psychicVideoControllerProvider(widget.session).notifier)
-          .onAppResumed();
+      ctrl.onAppResumed();
     }
   }
 

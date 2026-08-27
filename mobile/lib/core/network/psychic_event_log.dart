@@ -70,6 +70,31 @@ abstract final class PsychicEventLog {
   static void trtcJoin({required String sessionId, required String role}) =>
       log('trtc_join', {'sessionId': sessionId, 'role': role});
 
+  static void trtcState({
+    required String sessionId,
+    required String connectionState,
+    String? roomId,
+    String? trtcRoomId,
+    String? userId,
+    String? errorCode,
+    String? errorMessage,
+    bool? inRoom,
+    bool? online,
+    int? joinResult,
+  }) =>
+      log('trtc_state', {
+        'sessionId': sessionId,
+        'connectionState': connectionState,
+        if (roomId != null) 'roomId': roomId,
+        if (trtcRoomId != null) 'trtcRoomId': trtcRoomId,
+        if (userId != null) 'userId': userId,
+        if (errorCode != null) 'errorCode': errorCode,
+        if (errorMessage != null) 'errorMessage': errorMessage,
+        if (inRoom != null) 'inRoom': inRoom,
+        if (online != null) 'online': online,
+        if (joinResult != null) 'joinResult': joinResult,
+      });
+
   static void localAudio({required bool enabled, required String sessionId}) =>
       log('local_audio', {'enabled': enabled, 'sessionId': sessionId});
 

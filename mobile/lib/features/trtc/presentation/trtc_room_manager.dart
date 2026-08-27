@@ -13,11 +13,14 @@ import 'package:tencent_rtc_sdk/tx_device_manager.dart';
 
 import '../../voice_hub/data/services/voice_room_debug_log.dart';
 import '../domain/entities/trtc_credentials.dart';
+import 'trtc_operation_gate.dart';
 
 /// Tencent TRTC oda oturumu — canlı yayın ve sesli sohbet.
 class TrtcRoomManager {
   /// Tek `TRTCCloud.sharedInstance()` — eşzamanlı çoklu manager oturumu engelle.
   static TrtcRoomManager? _activeSession;
+  final _opGate = TrtcOperationGate();
+  String? _joinedStrRoomId;
 
   TRTCCloud? _cloud;
   TXDeviceManager? _device;
@@ -59,6 +62,9 @@ class TrtcRoomManager {
   bool get inRoom => _inRoom;
   /// Agora uyumluluk — `inChannel` yerine.
   bool get inChannel => _inRoom;
+  /// Son başarılı `enterRoom` strRoomId — token `effectiveStrRoomId`.
+  String? get joinedStrRoomId => _joinedStrRoomId;
+  bool get operationInFlight => _opGate.isBusy;
 
   final ValueNotifier<List<String>> remoteUserIdsNotifier =
       ValueNotifier<List<String>>([]);
@@ -139,6 +145,24 @@ class TrtcRoomManager {
     bool audioOnly = false,
     String? expectedAnchorUserId,
     bool twoWayVideo = false,
+  }) {
+    return _opGate.run(
+      () => _joinUnlocked(
+        credentials: credentials,
+        isHost: isHost,
+        audioOnly: audioOnly,
+        expectedAnchorUserId: expectedAnchorUserId,
+        twoWayVideo: twoWayVideo,
+      ),
+    );
+  }
+
+  Future<void> _joinUnlocked({
+    required TrtcCredentials credentials,
+    required bool isHost,
+    bool audioOnly = false,
+    String? expectedAnchorUserId,
+    bool twoWayVideo = false,
   }) async {
     if (!isSupported) {
       throw StateError('TRTC yalnızca Android/iOS üzerinde desteklenir');
@@ -164,7 +188,7 @@ class TrtcRoomManager {
     }
 
     if (_inRoom) {
-      await leave();
+      await _leaveUnlocked();
     }
 
     final other = _activeSession;
@@ -259,9 +283,13 @@ class TrtcRoomManager {
           _setRemoteAnchor(userId);
           _tryBindPendingRemoteView(userId);
         } else if (remoteAnchorUserId == userId) {
+          // Kısa unavailable = encoder boşluğu; oda kopuşu değil.
+          // 1:1 görüşmede view'i sökmek donma + sahte rejoin yaratır.
           remoteVideoAvailable.value = false;
-          stopRemoteView(userId);
-          _clearRemoteAnchor();
+          if (!_twoWayVideo) {
+            stopRemoteView(userId);
+            _clearRemoteAnchor();
+          }
         }
       },
       onUserAudioAvailable: (userId, available) {
@@ -322,6 +350,7 @@ class TrtcRoomManager {
     }
 
     _activeSession = this;
+    _joinedStrRoomId = roomId;
 
     if (audioOnly) {
       _cloud!.startLocalAudio(TRTCAudioQuality.speech);
@@ -495,7 +524,9 @@ class TrtcRoomManager {
     _device?.switchCamera(_cameraOn);
   }
 
-  Future<void> leave() async {
+  Future<void> leave() => _opGate.run(_leaveUnlocked);
+
+  Future<void> _leaveUnlocked() async {
     _trtcLog('leave', {'inRoom': _inRoom});
     stopPublishedMusic();
     onConnectionLost = null;
@@ -515,7 +546,7 @@ class TrtcRoomManager {
         _cloud!.exitRoom();
         try {
           await _exitRoomCompleter!.future.timeout(
-            const Duration(milliseconds: 500),
+            const Duration(seconds: 2),
             onTimeout: () {},
           );
         } catch (_) {}
@@ -527,6 +558,7 @@ class TrtcRoomManager {
       }
     }
     _inRoom = false;
+    _joinedStrRoomId = null;
     _previewOnly = false;
     _audioOnly = false;
     _isHost = false;

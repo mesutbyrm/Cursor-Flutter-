@@ -56,7 +56,14 @@ class TrtcCredentials extends Equatable {
     );
   }
 
-  bool matchesRoom(String id) => roomId == id.trim();
+  /// Token `roomId` veya backend `trtcRoomId` ile eşleşir — takma ad kaybı yok.
+  bool matchesRoom(String id) {
+    final needle = id.trim();
+    if (needle.isEmpty) return false;
+    if (roomId.trim() == needle) return true;
+    final trtc = trtcRoomId?.trim() ?? '';
+    return trtc.isNotEmpty && trtc == needle;
+  }
 
   bool get isValid => sdkAppId > 0 && userSig.isNotEmpty && userId.isNotEmpty;
 

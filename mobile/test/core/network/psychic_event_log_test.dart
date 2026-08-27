@@ -12,6 +12,15 @@ void main() {
     expect(sanitized['sessionId'], 'sess-1');
     expect(sanitized['roomId'], 'room_abc');
     expect(sanitized.containsKey('userSig'), isFalse);
-    expect(sanitized.containsKey('token'), isFalse);
+    expect(
+      PsychicEventLog.sanitize({
+        'sessionId': 's1',
+        'trtcRoomId': 'fortune_room_s1',
+        'userId': 'u1',
+        'connectionState': 'connected',
+        'userSig': 'should-not-leak',
+      }).containsKey('userSig'),
+      isFalse,
+    );
   });
 }

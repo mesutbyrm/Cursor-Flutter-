@@ -14,10 +14,13 @@ import 'package:canlifal_social/core/network/token_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
 import 'package:canlifal_social/features/live/presentation/providers/live_beauty_provider.dart';
+import 'package:canlifal_social/features/trtc/data/trtc_session_store.dart';
 import 'package:canlifal_social/features/trtc/presentation/providers/trtc_providers.dart';
-import 'package:canlifal_social/features/trtc/presentation/trtc_live_room_coordinator.dart';
 import 'package:canlifal_social/features/trtc/presentation/trtc_room_manager.dart';
+import 'package:canlifal_social/core/network/connectivity/connectivity_service.dart';
 import 'package:canlifal_social/features/live_psychics/domain/psychic_session_phase.dart';
+import 'package:canlifal_social/features/live_psychics/domain/psychic_trtc_connection.dart';
+import 'package:canlifal_social/features/live_psychics/domain/psychic_trtc_identity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_extend_sheet.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_tip_sheet.dart';
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
@@ -156,6 +159,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       : session = session,
         super(PsychicVideoState(remaining: Duration(minutes: session.durationMinutes))) {
     _trtc = ref.read(trtcRoomManagerProvider);
+    _trtcConn.sessionId = session.sessionId;
+    _watchNetwork();
     _bootstrap();
   }
 
@@ -163,7 +168,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   PsychicSessionEntity session;
 
   late final TrtcRoomManager _trtc;
-  TrtcLiveRoomCoordinator? _trtcCoordinator;
+  final _trtcConn = PsychicTrtcConnection();
+  final _remoteBind = PsychicTrtcListenerBind();
   final _seenChatIds = <String>{};
   String? _lastChatAfter;
   Timer? _tick;
@@ -175,14 +181,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   var _remoteEndHandled = false;
   final _seenSignalIds = <String>{};
   final _seenTipEventIds = <String>{};
-  String? _joinedTrtcRoom;
-  var _rejoiningRtc = false;
-  var _joiningRtc = false;
-  Timer? _rejoinRtcDebounce;
   Timer? _sseAutoRetryTimer;
   var _sseAutoRetryCount = 0;
   static const _maxSseAutoRetry = 3;
-  StreamSubscription<void>? _trtcConnectionLostSub;
+  StreamSubscription<bool>? _onlineSub;
 
   VoidCallback? _remoteVideoListener;
   VoidCallback? _remoteAudioListener;
@@ -196,6 +198,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   void _attachRemoteMediaListeners() {
+    if (!_remoteBind.tryAttach()) return;
     _remoteVideoListener ??= () {
       if (_disposed) return;
       final map = Map<String, bool>.from(_trtc.remoteVideoByUser.value);
@@ -225,6 +228,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   void _detachRemoteMediaListeners() {
+    if (!_remoteBind.tryDetach()) return;
     if (_remoteVideoListener != null) {
       _trtc.remoteVideoByUser.removeListener(_remoteVideoListener!);
     }
@@ -238,11 +242,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   bool get cameraOn => _trtc.cameraOn;
 
   String get channelId {
-    final fromRoom = state.room?.roomId?.trim();
-    final raw = (fromRoom != null && fromRoom.isNotEmpty)
-        ? fromRoom
-        : session.trtcRoomId;
-    return raw.trim();
+    final locked = _trtcConn.joinedTrtcRoomId?.trim();
+    if (locked != null && locked.isNotEmpty) return locked;
+    return session.sessionId.trim();
   }
 
   Future<void> _bootstrap() async {
@@ -263,23 +265,66 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _startChatPoll();
   }
 
-  /// Oda kimliği backend'den gelene kadar kısa süre bekle — erken TRTC join kopmasına yol açar.
+  /// Peer kimliği için oda bilgisi — TRTC join sessionId ile kilitlenir.
   Future<void> _waitForRoomBootstrap() async {
     for (var attempt = 0; attempt < 6; attempt++) {
       await _syncRoomInfo();
       if (_disposed || state.leaving) return;
-      final roomId = _activeTrtcRoomId();
-      if (roomId.isNotEmpty) return;
+      final peer = session.remotePeerIdFor(room: state.room);
+      if (peer.isNotEmpty) return;
       await Future<void>.delayed(Duration(milliseconds: 350 + attempt * 150));
     }
   }
 
-  void _scheduleRejoinRtc() {
-    _rejoinRtcDebounce?.cancel();
-    _rejoinRtcDebounce = Timer(const Duration(milliseconds: 800), () {
+  void _watchNetwork() {
+    unawaited(_onlineSub?.cancel());
+    _onlineSub = ref.read(connectivityServiceProvider).onlineStream.listen((online) {
       if (_disposed || state.leaving) return;
-      unawaited(_rejoinRtc());
+      PsychicEventLog.trtcState(
+        sessionId: session.sessionId,
+        connectionState: _trtcConn.phase.name,
+        roomId: _trtcConn.tokenRequestRoomId,
+        trtcRoomId: _trtcConn.joinedTrtcRoomId,
+        userId: _trtcConn.joinedUserId,
+        inRoom: _trtc.inRoom,
+        online: online,
+      );
+      if (!online) return;
+      unawaited(
+        _reconnectTrtc(PsychicTrtcReconnectReason.networkRecovered),
+      );
     });
+  }
+
+  void _wireTrtcCallbacks() {
+    _trtc.onConnectionLost = () {
+      if (_disposed || state.leaving) return;
+      PsychicEventLog.trtcState(
+        sessionId: session.sessionId,
+        connectionState: 'connection_lost',
+        roomId: _trtcConn.tokenRequestRoomId,
+        trtcRoomId: _trtcConn.joinedTrtcRoomId,
+        userId: _trtcConn.joinedUserId,
+        inRoom: _trtc.inRoom,
+        errorCode: 'connection_lost',
+      );
+      _setPhase(PsychicSessionPhase.reconnecting);
+      state = state.copyWith(rtcReady: false);
+      unawaited(
+        _reconnectTrtc(PsychicTrtcReconnectReason.connectionLost),
+      );
+    };
+  }
+
+  void _logSkipRejoin(String incomingRoomId) {
+    PsychicEventLog.trtcState(
+      sessionId: session.sessionId,
+      connectionState: 'skip_alias_rejoin',
+      roomId: incomingRoomId,
+      trtcRoomId: _trtcConn.joinedTrtcRoomId,
+      userId: _trtcConn.joinedUserId,
+      inRoom: _trtc.inRoom,
+    );
   }
 
   void _scheduleSseAutoRetry() {
@@ -292,23 +337,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       if (_disposed || state.leaving) return;
       unawaited(retryRoomSse());
     });
-  }
-
-  void _wireTrtcCoordinator(TrtcLiveRoomCoordinator coordinator) {
-    unawaited(_trtcConnectionLostSub?.cancel());
-    _trtcConnectionLostSub = coordinator.onConnectionLost.listen((_) {
-      if (_disposed || state.leaving) return;
-      _setPhase(PsychicSessionPhase.reconnecting);
-      state = state.copyWith(rtcReady: false);
-    });
-    coordinator.onReconnected = () {
-      if (_disposed || state.leaving) return;
-      _joinedTrtcRoom = _activeTrtcRoomId();
-      state = state.copyWith(rtcReady: true, clearRtcError: true);
-      _setPhase(PsychicSessionPhase.connected);
-      unawaited(_syncRoomInfo());
-      unawaited(_broadcastMediaState());
-    };
   }
 
   /// Falcı manuel olarak süreyi başlatır (kılavuz §11.1).
@@ -510,97 +538,31 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       remaining: remaining,
     );
 
-    final newRoomId = room.roomId;
-    if (newRoomId != null && newRoomId.isNotEmpty) {
+    if (room.tellerUserId != null || room.clientId != null) {
       session = session.copyWith(
         tellerUserId: room.tellerUserId ?? session.tellerUserId,
         clientId: room.clientId ?? session.clientId,
-        trtcRoomIdOverride: newRoomId,
       );
       unawaited(PsychicSessionStore.save(session));
     }
 
-    // Yalnızca gerçekten farklı bir KANALA geçildiyse yeniden bağlan. Ham oda
-    // kimliği null'dan gerçek değere dönse bile normalize kanal aynıysa
-    // (room_{sessionId}) gereksiz yeniden bağlanma yapıp gecikme yaratma.
-    if (newRoomId != null && newRoomId.isNotEmpty) {
-      final joined = _joinedTrtcRoom;
-      if (joined != null &&
-          _canonicalRoomChannel(newRoomId) != _canonicalRoomChannel(joined) &&
-          (state.rtcReady || state.rtcError != null) &&
-          !_joiningRtc &&
-          !_rejoiningRtc) {
-        _scheduleRejoinRtc();
+    final incomingRoomId = room.roomId;
+    if (incomingRoomId != null &&
+        incomingRoomId.isNotEmpty &&
+        _trtcConn.joinedTrtcRoomId != null) {
+      if (PsychicTrtcIdentity.isAliasDrift(
+            sessionId: session.sessionId,
+            joinedTrtcRoom: _trtcConn.joinedTrtcRoomId,
+            incomingRoomId: incomingRoomId,
+          ) ||
+          PsychicTrtcIdentity.sameChannel(
+            incomingRoomId,
+            session.sessionId,
+            sessionId: session.sessionId,
+          )) {
+        _logSkipRejoin(incomingRoomId);
       }
     }
-  }
-
-  String _canonicalRoomChannel(String? raw) {
-    final id = raw?.trim() ?? '';
-    if (id.isEmpty) return session.sessionId.trim();
-    final base = session.sessionId.trim();
-    if (id == base || id == 'room_$base') return base;
-    if (id.startsWith('room_')) return id.substring(5);
-    return id;
-  }
-
-  Future<void> _rejoinRtc() async {
-    if (_disposed || state.leaving || _rejoiningRtc || _joiningRtc) return;
-    final roomId = _activeTrtcRoomId();
-    if (roomId.isEmpty) return;
-    if (_canonicalRoomChannel(_joinedTrtcRoom) ==
-            _canonicalRoomChannel(roomId) &&
-        state.rtcReady) {
-      return;
-    }
-
-    _rejoiningRtc = true;
-    _trtcCoordinator?.setReconnectSuspended(true);
-    _joinedTrtcRoom = null;
-    _setPhase(PsychicSessionPhase.reconnecting);
-    state = state.copyWith(rtcReady: false, clearRtcError: true);
-    try {
-      final user = await _waitForAuth();
-      if (user == null) {
-        state = state.copyWith(rtcError: 'Oturum için giriş gerekli');
-        return;
-      }
-      if (_trtc.inRoom) {
-        await _trtc.leave();
-      }
-      await _trtcCoordinator?.leave();
-      _trtcCoordinator?.dispose();
-      _trtcCoordinator = createTrtcLiveRoomCoordinator(ref);
-      _wireTrtcCoordinator(_trtcCoordinator!);
-      await _trtcCoordinator!.join(
-        roomId: roomId,
-        roomType: 'stream',
-        userId: user.id,
-        isHost: !session.isClient,
-        twoWayVideo: true,
-        expectedAnchorUserId: session.remotePeerIdFor(room: state.room),
-      );
-      _joinedTrtcRoom = roomId;
-      ref.read(liveBeautyProvider.notifier).bindRtc(trtc: _trtc);
-      _attachRemoteMediaListeners();
-      state = state.copyWith(rtcReady: true, clearRtcError: true);
-      _setPhase(PsychicSessionPhase.connected);
-      if (!session.isClient && !state.timerStarted) {
-        unawaited(_ensureTimerStarted());
-      }
-    } catch (e) {
-      _setPhase(PsychicSessionPhase.error);
-      state = state.copyWith(rtcError: ApiException.userMessage(e));
-    } finally {
-      _trtcCoordinator?.setReconnectSuspended(false);
-      _rejoiningRtc = false;
-    }
-  }
-
-  String _activeTrtcRoomId() {
-    final fromRoom = state.room?.roomId?.trim();
-    if (fromRoom != null && fromRoom.isNotEmpty) return fromRoom;
-    return session.trtcRoomId.trim();
   }
 
   Future<void> _sendPing() async {
@@ -730,16 +692,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           ? false
           : state.lowTimeWarningPending,
     );
-    if (info.roomId != null && info.roomId!.isNotEmpty) {
-      final newRoomId = info.roomId!;
-      final joined = _joinedTrtcRoom;
-      if (joined != null &&
-          _canonicalRoomChannel(newRoomId) != _canonicalRoomChannel(joined) &&
-          (state.rtcReady || state.rtcError != null) &&
-          !_joiningRtc &&
-          !_rejoiningRtc) {
-        _scheduleRejoinRtc();
-      }
+    if (info.roomId != null &&
+        info.roomId!.isNotEmpty &&
+        _trtcConn.joinedTrtcRoomId != null) {
+      _logSkipRejoin(info.roomId!);
     }
   }
 
@@ -779,95 +735,209 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       state = state.copyWith(rtcError: 'Video bu cihazda desteklenmiyor');
       return;
     }
+    await _joinTrtc(user: user);
+  }
 
-    final trtcRoomId = _activeTrtcRoomId();
-    if (trtcRoomId.isEmpty) {
+  String _tokenRequestRoomId() {
+    final locked = _trtcConn.tokenRequestRoomId?.trim();
+    if (locked != null && locked.isNotEmpty) return locked;
+    return session.sessionId.trim();
+  }
+
+  Future<void> _joinTrtc({required UserEntity user}) async {
+    if (!_trtcConn.tryBeginJoin()) return;
+    _setPhase(PsychicSessionPhase.joining);
+    final requestRoomId = _tokenRequestRoomId();
+    if (requestRoomId.isEmpty) {
+      _trtcConn.markJoinFailed();
       state = state.copyWith(rtcError: 'Oda bilgisi alınamadı. Tekrar deneyin.');
       return;
     }
-
-    await _joinTrtc(user: user, roomId: trtcRoomId);
-  }
-
-  Future<void> _joinTrtc({
-    required UserEntity user,
-    required String roomId,
-  }) async {
-    if (_joiningRtc || _rejoiningRtc) return;
-    _joiningRtc = true;
-    _setPhase(PsychicSessionPhase.joining);
-    _trtcCoordinator?.setReconnectSuspended(true);
     try {
-    PsychicEventLog.joinStart(
-      sessionId: session.sessionId,
-      roomId: roomId,
-    );
-    LiveDebugLog.log('psychic.trtc.join.request', {
-      'sessionId': session.sessionId,
-      'roomId': roomId,
-      'userId': user.id,
-    });
+      PsychicEventLog.joinStart(
+        sessionId: session.sessionId,
+        roomId: requestRoomId,
+      );
+      LiveDebugLog.log('psychic.trtc.join.request', {
+        'sessionId': session.sessionId,
+        'roomId': requestRoomId,
+        'userId': user.id,
+      });
 
-    await _trtcCoordinator?.leave();
-    _trtcCoordinator?.dispose();
-    _trtcCoordinator = createTrtcLiveRoomCoordinator(ref);
-    _wireTrtcCoordinator(_trtcCoordinator!);
+      if (_trtc.inRoom &&
+          _trtcConn.alreadyJoined(
+            sessionId: session.sessionId,
+            trtcRoomId: _trtc.joinedStrRoomId,
+            inRoom: true,
+          )) {
+        _wireTrtcCallbacks();
+        _attachRemoteMediaListeners();
+        _trtcConn.markConnected(
+          sessionId: session.sessionId,
+          tokenRequestRoomId: requestRoomId,
+          joinedTrtcRoomId: _trtc.joinedStrRoomId ?? requestRoomId,
+          joinedUserId: user.id,
+          remoteUserId: session.remotePeerIdFor(room: state.room),
+        );
+        state = state.copyWith(
+          rtcReady: true,
+          rtcBackend: PsychicRtcBackend.trtc,
+          clearRtcError: true,
+        );
+        _setPhase(PsychicSessionPhase.connected);
+        return;
+      }
 
-    if (_trtc.inRoom) {
-      await _trtc.leave();
-    }
+      if (_trtc.inRoom) {
+        final existing = _trtc.joinedStrRoomId;
+        if (existing != null &&
+            existing.isNotEmpty &&
+            !PsychicTrtcIdentity.sameChannel(
+              existing,
+              requestRoomId,
+              sessionId: session.sessionId,
+            )) {
+          await _trtc.leave();
+        }
+      }
 
-    await _trtcCoordinator!.join(
-      roomId: roomId,
-      roomType: 'stream',
-      userId: user.id,
-      isHost: !session.isClient,
-      twoWayVideo: true,
-      expectedAnchorUserId: session.remotePeerIdFor(room: state.room),
-    );
-    PsychicEventLog.trtcJoin(
-      sessionId: session.sessionId,
-      role: session.isClient ? 'client' : 'host',
-    );
+      final creds = await ref.read(trtcRemoteProvider).fetchToken(
+            roomId: requestRoomId,
+            role: session.isClient ? 'audience' : 'host',
+            userId: user.id,
+          );
+      if (!creds.isValid) {
+        throw StateError('TRTC token geçersiz');
+      }
+      TrtcSessionStore.put(creds);
 
-    _joinedTrtcRoom = roomId;
-    ref.read(liveBeautyProvider.notifier).bindRtc(trtc: _trtc);
-    _attachRemoteMediaListeners();
-    PsychicEventLog.joinSuccess(sessionId: session.sessionId, roomId: roomId);
-    PsychicEventLog.localAudio(enabled: _trtc.micOn, sessionId: session.sessionId);
-    PsychicEventLog.localVideo(enabled: _trtc.cameraOn, sessionId: session.sessionId);
-    LiveDebugLog.log('psychic.trtc.join.ok', {
-      'sessionId': session.sessionId,
-      'roomId': roomId,
-    });
-    PsychicRtcSessionReport.record('join_ok', {
-      'sessionId': session.sessionId,
-      'roomId': roomId,
-      'micOn': _trtc.micOn,
-      'cameraOn': _trtc.cameraOn,
-      'isClient': session.isClient,
-    });
-    state = state.copyWith(
-      rtcReady: true,
-      rtcBackend: PsychicRtcBackend.trtc,
-      clearRtcError: true,
-    );
-    _setPhase(PsychicSessionPhase.connected);
-    unawaited(_broadcastMediaState());
-    if (!session.isClient && !state.timerStarted) {
-      unawaited(_ensureTimerStarted());
-    }
+      PsychicEventLog.trtcState(
+        sessionId: session.sessionId,
+        connectionState: 'token_ok',
+        roomId: requestRoomId,
+        trtcRoomId: creds.effectiveStrRoomId,
+        userId: creds.userId,
+      );
+
+      await _trtc.join(
+        credentials: creds,
+        isHost: !session.isClient,
+        twoWayVideo: true,
+        expectedAnchorUserId: session.remotePeerIdFor(room: state.room),
+      );
+      _wireTrtcCallbacks();
+      PsychicEventLog.trtcJoin(
+        sessionId: session.sessionId,
+        role: session.isClient ? 'client' : 'host',
+      );
+
+      _trtcConn.markConnected(
+        sessionId: session.sessionId,
+        tokenRequestRoomId: requestRoomId,
+        joinedTrtcRoomId: creds.effectiveStrRoomId,
+        joinedUserId: creds.userId,
+        remoteUserId: session.remotePeerIdFor(room: state.room),
+      );
+      ref.read(liveBeautyProvider.notifier).bindRtc(trtc: _trtc);
+      _attachRemoteMediaListeners();
+      PsychicEventLog.joinSuccess(
+        sessionId: session.sessionId,
+        roomId: creds.effectiveStrRoomId,
+      );
+      PsychicEventLog.trtcState(
+        sessionId: session.sessionId,
+        connectionState: _trtcConn.phase.name,
+        roomId: requestRoomId,
+        trtcRoomId: creds.effectiveStrRoomId,
+        userId: creds.userId,
+        inRoom: _trtc.inRoom,
+        joinResult: 1,
+      );
+      PsychicEventLog.localAudio(enabled: _trtc.micOn, sessionId: session.sessionId);
+      PsychicEventLog.localVideo(enabled: _trtc.cameraOn, sessionId: session.sessionId);
+      LiveDebugLog.log('psychic.trtc.join.ok', {
+        'sessionId': session.sessionId,
+        'roomId': requestRoomId,
+        'trtcRoomId': creds.effectiveStrRoomId,
+      });
+      PsychicRtcSessionReport.record('join_ok', {
+        'sessionId': session.sessionId,
+        'roomId': requestRoomId,
+        'trtcRoomId': creds.effectiveStrRoomId,
+        'micOn': _trtc.micOn,
+        'cameraOn': _trtc.cameraOn,
+        'isClient': session.isClient,
+      });
+      state = state.copyWith(
+        rtcReady: true,
+        rtcBackend: PsychicRtcBackend.trtc,
+        clearRtcError: true,
+      );
+      _setPhase(PsychicSessionPhase.connected);
+      unawaited(_broadcastMediaState());
+      if (!session.isClient && !state.timerStarted) {
+        unawaited(_ensureTimerStarted());
+      }
     } catch (e) {
       PsychicEventLog.error('join', e, sessionId: session.sessionId);
+      PsychicEventLog.trtcState(
+        sessionId: session.sessionId,
+        connectionState: 'error',
+        roomId: requestRoomId,
+        trtcRoomId: _trtcConn.joinedTrtcRoomId,
+        userId: user.id,
+        errorMessage: ApiException.userMessage(e),
+        inRoom: _trtc.inRoom,
+      );
+      _trtcConn.markJoinFailed();
       _setPhase(PsychicSessionPhase.error);
       state = state.copyWith(rtcError: ApiException.userMessage(e));
-    } finally {
-      _trtcCoordinator?.setReconnectSuspended(false);
-      _joiningRtc = false;
     }
   }
 
-  Future<void> retryRtc() => _rejoinRtc();
+  Future<void> _reconnectTrtc(PsychicTrtcReconnectReason reason) async {
+    if (_disposed || state.leaving) return;
+    if (!_trtcConn.tryBeginReconnect(reason, inRoom: _trtc.inRoom)) {
+      return;
+    }
+    _setPhase(PsychicSessionPhase.reconnecting);
+    state = state.copyWith(rtcReady: false, clearRtcError: true);
+    PsychicEventLog.trtcState(
+      sessionId: session.sessionId,
+      connectionState: 'reconnecting',
+      roomId: _trtcConn.tokenRequestRoomId,
+      trtcRoomId: _trtcConn.joinedTrtcRoomId,
+      userId: _trtcConn.joinedUserId,
+      inRoom: _trtc.inRoom,
+      errorCode: reason.name,
+    );
+    try {
+      await _trtc.leave();
+      final user = await _waitForAuth();
+      if (user == null) {
+        _trtcConn.markReconnectFinished();
+        state = state.copyWith(rtcError: 'Oturum için giriş gerekli');
+        return;
+      }
+      _trtcConn.markReconnectFinished();
+      await _joinTrtc(user: user);
+    } catch (e) {
+      _trtcConn.markReconnectFinished();
+      _trtcConn.markJoinFailed();
+      _setPhase(PsychicSessionPhase.error);
+      state = state.copyWith(rtcError: ApiException.userMessage(e));
+    }
+  }
+
+  Future<void> retryRtc() async {
+    if (_disposed || state.leaving) return;
+    if (_trtc.inRoom && state.rtcReady) return;
+    if (_trtc.inRoom) {
+      await _reconnectTrtc(PsychicTrtcReconnectReason.connectionLost);
+      return;
+    }
+    await _joinRtc();
+  }
 
   Future<void> _handleRemoteSessionEnded(PsychicSessionStatus status) async {
     if (_disposed || state.leaving || _remoteEndHandled) return;
@@ -1090,13 +1160,13 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     final repo = ref.read(livePsychicsRepositoryProvider);
     final sse = ref.read(psychicRoomSseServiceProvider);
 
-    // 1) RTC'yi HEMEN kapat — ekranın kapanması backend'e bağlı kalmasın.
-    //    (Önceki sürümde ardışık ağ çağrıları takılırsa seans "kapanmıyordu".)
-    unawaited(() async {
-      try {
-        await _trtcCoordinator?.leave();
-      } catch (_) {}
-    }());
+    // 1) RTC'yi kapat — exitRoom bitmeden yeni enterRoom yok (gate).
+    _trtcConn.tryBeginLeave();
+    try {
+      await _trtc.leave().timeout(const Duration(seconds: 2));
+    } catch (_) {}
+    _trtcConn.markLeft();
+    TrtcSessionStore.clear();
 
     // 2) Karşı tarafı bilgilendir + navigasyonu tetikle — ağ temizliğini bekleme.
     if (peerEndedMessage != null) {
@@ -1177,40 +1247,54 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     }
   }
 
+  void onAppPaused() {
+    if (_disposed || state.leaving) return;
+    PsychicEventLog.trtcState(
+      sessionId: session.sessionId,
+      connectionState: 'app_paused',
+      roomId: _trtcConn.tokenRequestRoomId,
+      trtcRoomId: _trtcConn.joinedTrtcRoomId,
+      userId: _trtcConn.joinedUserId,
+      inRoom: _trtc.inRoom,
+    );
+  }
+
   void onAppResumed() {
     if (_disposed || state.leaving) return;
     if (state.sseFailed || !state.sseConnected) {
       unawaited(retryRoomSse());
     }
-    if (!state.rtcReady && state.rtcError == null) {
-      unawaited(_rejoinRtc());
-      return;
-    }
-    if (state.rtcReady && !_trtc.inRoom) {
-      unawaited(_rejoinRtc());
+    PsychicEventLog.trtcState(
+      sessionId: session.sessionId,
+      connectionState: 'app_resumed',
+      roomId: _trtcConn.tokenRequestRoomId,
+      trtcRoomId: _trtcConn.joinedTrtcRoomId,
+      userId: _trtcConn.joinedUserId,
+      inRoom: _trtc.inRoom,
+    );
+    if (!_trtc.inRoom) {
+      unawaited(
+        _reconnectTrtc(PsychicTrtcReconnectReason.appResumedNotInRoom),
+      );
     }
   }
 
   @override
   void dispose() {
     _disposed = true;
+    _trtcConn.markDisposed();
     _detachRemoteMediaListeners();
     _tick?.cancel();
     _chatPoll?.cancel();
     _ping?.cancel();
     _roomPoll?.cancel();
     _signalPoll?.cancel();
-    _rejoinRtcDebounce?.cancel();
     _sseAutoRetryTimer?.cancel();
-    unawaited(_trtcConnectionLostSub?.cancel());
-    _trtcConnectionLostSub = null;
+    unawaited(_onlineSub?.cancel());
+    _onlineSub = null;
+    _trtc.onConnectionLost = null;
     unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
-    unawaited(_trtcCoordinator?.leave());
-    _trtcCoordinator?.dispose();
-    _trtcCoordinator = null;
-    if (_trtc.inRoom) {
-      unawaited(_trtc.leave());
-    }
+    unawaited(_trtc.leave());
     super.dispose();
   }
 }

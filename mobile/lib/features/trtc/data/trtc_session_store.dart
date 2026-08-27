@@ -11,7 +11,7 @@ abstract final class TrtcSessionStore {
   static void put(TrtcCredentials credentials) {
     _credentials = credentials;
     _storedAt = DateTime.now();
-    _roomId = credentials.roomId;
+    _roomId = credentials.effectiveStrRoomId;
   }
 
   static TrtcCredentials? peek({String? roomId, Duration ttl = defaultTtl}) {

@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.371+409 (2026-08-27) — Faz 2: Psychic TRTC 5 sn freeze kök nedeni
+
+- **Yanlış canlı-yayın stack kaldırıldı:** Psychic artık `POST /api/live/join-room` + 10 sn live heartbeat kullanmaz
+- **Token:** yalnızca `POST /api/trtc/token` (kılavuz §9.13); token client’ta üretilmez
+- **trtcRoomId drift:** SSE/`GET /room` takma adları (`room_`, `fortune_room_`) rejoin tetiklemez
+- **Tek engine:** paylaşılan `TrtcRoomManager` + join/leave tek kuyruk; duplicate listener yok
+- **Reconnect:** yalnızca gerçek `onConnectionLost` / ağ dönüşü / odada değilken resume; SSE veya remote A/V değil
+
 ## 1.0.370+408 (2026-08-27) — Faz 1: SSE tek kanal + oda single source of truth
 
 - **Socket.IO kaldırıldı:** Canlı yayın `/live` namespace ve global PK socket bağlanmaz; PK/misafir/hediye stream SSE

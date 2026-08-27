@@ -21,6 +21,34 @@ void main() {
     expect(cred.role, 'host');
   });
 
+  test('TrtcCredentials.matchesRoom includes trtcRoomId', () {
+    const cred = TrtcCredentials(
+      sdkAppId: 1,
+      userId: 'u1',
+      userSig: 'sig',
+      roomId: 'sess-1',
+      trtcRoomId: 'fortune_room_sess-1',
+    );
+    expect(cred.matchesRoom('sess-1'), isTrue);
+    expect(cred.matchesRoom('fortune_room_sess-1'), isTrue);
+    expect(cred.matchesRoom('other'), isFalse);
+    expect(cred.effectiveStrRoomId, 'fortune_room_sess-1');
+  });
+
+  test('TrtcSessionStore peek matches effectiveStrRoomId', () {
+    const cred = TrtcCredentials(
+      sdkAppId: 1,
+      userId: 'u1',
+      userSig: 'sig',
+      roomId: 'sess-1',
+      trtcRoomId: 'fortune_room_sess-1',
+    );
+    TrtcSessionStore.put(cred);
+    expect(TrtcSessionStore.peek(roomId: 'fortune_room_sess-1'), cred);
+    expect(TrtcSessionStore.peek(roomId: 'sess-1'), cred);
+    expect(TrtcSessionStore.peek(roomId: 'other-room'), isNull);
+  });
+
   test('LiveJoinRoomResult parses compound join-room payload', () {
     final result = LiveJoinRoomResult.fromJson({
       'room': {
@@ -56,6 +84,7 @@ void main() {
     );
     TrtcSessionStore.put(cred);
     expect(TrtcSessionStore.peek(roomId: 'room-a'), cred);
+    expect(TrtcSessionStore.peek(roomId: 'fortune_room_a'), isNull);
     expect(TrtcSessionStore.take(roomId: 'room-a'), cred);
     expect(TrtcSessionStore.peek(), isNull);
   });

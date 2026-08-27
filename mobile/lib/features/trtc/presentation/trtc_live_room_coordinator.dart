@@ -19,6 +19,9 @@ typedef TrtcJoinRoomFn = Future<void> Function({
 });
 
 /// Canlı oda TRTC oturumu — join-room, 10 sn heartbeat, yeniden bağlanma.
+///
+/// Yalnızca canlı yayın (`/api/live/*`). Psychic 1:1 görüşmesi bu sınıfı
+/// kullanmaz — `POST /api/trtc/token` + paylaşılan TrtcRoomManager.
 class TrtcLiveRoomCoordinator {
   TrtcLiveRoomCoordinator({
     required LiveRoomRemoteDataSource liveRoom,

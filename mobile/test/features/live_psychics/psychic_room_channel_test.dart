@@ -1,40 +1,41 @@
+import 'package:canlifal_social/features/live_psychics/domain/psychic_trtc_identity.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Mirrors [PsychicVideoController._canonicalRoomChannel] for regression tests.
-String canonicalPsychicRoomChannel({
-  required String sessionId,
-  String? raw,
-}) {
-  final id = raw?.trim() ?? '';
-  if (id.isEmpty) return sessionId.trim();
-  final base = sessionId.trim();
-  if (id == base || id == 'room_$base') return base;
-  if (id.startsWith('room_')) return id.substring(5);
-  return id;
-}
-
 void main() {
-  group('canonicalPsychicRoomChannel', () {
+  group('canonicalPsychicRoomChannel (PsychicTrtcIdentity)', () {
     const sessionId = 'sess-abc';
 
-    test('empty raw falls back to session id', () {
+    test('empty raw core is empty; session alias still matches', () {
+      expect(PsychicTrtcIdentity.core(null), '');
       expect(
-        canonicalPsychicRoomChannel(sessionId: sessionId, raw: null),
-        sessionId,
+        PsychicTrtcIdentity.sameChannel(null, sessionId, sessionId: sessionId),
+        isTrue,
       );
     });
 
     test('room_ prefix normalizes to same channel', () {
       expect(
-        canonicalPsychicRoomChannel(sessionId: sessionId, raw: 'room_$sessionId'),
-        sessionId,
+        PsychicTrtcIdentity.sameChannel(
+          'room_$sessionId',
+          sessionId,
+          sessionId: sessionId,
+        ),
+        isTrue,
       );
     });
 
     test('distinct backend room id stays distinct', () {
       expect(
-        canonicalPsychicRoomChannel(sessionId: sessionId, raw: 'room_xyz'),
+        PsychicTrtcIdentity.core('room_xyz'),
         'xyz',
+      );
+      expect(
+        PsychicTrtcIdentity.sameChannel(
+          'room_xyz',
+          sessionId,
+          sessionId: sessionId,
+        ),
+        isFalse,
       );
     });
   });
