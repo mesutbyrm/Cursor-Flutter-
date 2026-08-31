@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-08-24 04:33 UTC
+Oluşturulma: 2026-08-31 10:12 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -30,8 +30,8 @@ Base: `main`
 
 | PR | Head | Base | Not |
 |----|------|------|-----|
-| #244 | dependabot/npm_and_yarn/site/canlifal-jeton-web/npm_and_yarn-f433e91868 | main | draft=false | chore(deps): bump next from 14.2.35 to 15.5.18 in /site/canlifal-jeton-web in the npm_and_yarn group across 1 directory |
-| #244 | dependabot/npm_and_yarn/site/canlifal-jeton-web/npm_and_yarn-f433e91868 | main | draft=false | chore(deps): bump next from 14.2.35 to 15.5.18 in /site/canlifal-jeton-web in the npm_and_yarn group across 1 directory |
+| #356 | dependabot/npm_and_yarn/api/npm_and_yarn-ec809458b8 | main | draft=false | chore(deps): bump the npm_and_yarn group across 2 directories with 9 updates |
+| #356 | dependabot/npm_and_yarn/api/npm_and_yarn-ec809458b8 | main | draft=false | chore(deps): bump the npm_and_yarn group across 2 directories with 9 updates |
 
 ## Aktif / korunan dallar
 
