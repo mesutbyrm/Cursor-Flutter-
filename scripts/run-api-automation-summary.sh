@@ -24,6 +24,14 @@ run "M5 API smoke" "bash '$ROOT/scripts/m5-api-smoke.sh'"
 run "M7 song-request" "bash '$ROOT/scripts/m7-on-jeton.sh'"
 run "Psychic falcı probe" "bash '$ROOT/scripts/probe-psychic-teller.sh'"
 
+echo "── API release gate (madde 3–8) ──"
+if bash "$ROOT/scripts/acceptance-tests/api-release-gate.sh" 2>&1 | grep -E '^\✅|^\⏭️|^\❌|Özet' | tail -10; then
+  echo ""
+else
+  echo "(gate çıktısı alınamadı)"
+  echo ""
+fi
+
 echo "── Cihaz (kullanıcı — sonra) ──"
 echo "  Giriş: bash scripts/user-test-start.sh"
 echo "  Psychic P0: bash scripts/psychic-p0-all.sh"

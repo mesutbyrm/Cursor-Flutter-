@@ -115,6 +115,9 @@ case "${1:-}" in
   unit|psychic-test)
     exec bash "$ROOT/scripts/run-psychic-unit-tests.sh"
     ;;
+  prep|non-device)
+    exec bash "$ROOT/scripts/run-non-device-release-prep.sh"
+    ;;
   ""|help|-h|--help)
     show_menu
     ;;

@@ -1,9 +1,9 @@
 # M5 API smoke raporu
 
-**Tarih:** 2026-09-07 18:37 UTC  
+**Tarih:** 2026-09-07 18:48 UTC  
 **APK:** `1.0.371+409`  
 **Oda:** `cmoohrbr` → `cmoohrbrx00a4nt08zlkdjyil`  
-**Hesap:** `cursor.test.1786235468@mailinator.com` — jeton 99470→99450
+**Hesap:** `cursor.test.1786235468@mailinator.com` — jeton 99360→99340
 
 | Geçti | Atlandı | Başarısız |
 |-------|---------|-----------|
@@ -13,7 +13,7 @@
 
 | Test | Durum | Detay |
 |------|--------|-------|
-| Jeton | PASS | jeton=99470 |
+| Jeton | PASS | jeton=99360 |
 | Oda çözümleme | PASS | cmoohrbr → cmoohrbrx00a4nt08zlkdjyil |
 | Test1-2 song-request | PASS | HTTP 200 jeton -20 |
 | Müzik kuyruğu | PASS | nowPlaying veya queue dolu |

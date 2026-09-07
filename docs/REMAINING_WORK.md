@@ -85,6 +85,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — non-device prep)
+
+- `run-non-device-release-prep.sh` — API + gate + unit + P2 tek komut
+- `run-api-automation-summary.sh` — release gate özeti eklendi
+- RELEASE_GATE_CLOSURE Gate 3 SKIP notu
+
 ## Oturum günlüğü (2026-09-07 — cihaz dışı devam)
 
 - Kullanıcı: cihaz testleri sonraya bırakıldı

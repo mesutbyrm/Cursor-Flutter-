@@ -35,7 +35,8 @@
 | P0-j | Danışan jeton (admin top-up) | ✅ **~100000** jeton (2026-09-07) |
 | API otomasyon | M5 smoke + M7 song-request | ✅ PASS=6, HTTP 200 |
 | Falcı probe | Host falcı listesinde | ⚠️ değil — onaylı falcı gerekir |
-| P0 | Psychic TRTC 2-cihaz kabul (T+5s freeze) | **OPEN** — `user-test-start.sh` |
+| API Gate 3 (acceptance) | Host → SKIP, TRTC | ⏭️ `ACCEPTANCE_TELLER_*` ile tam PASS mümkün |
+| P0 | Psychic TRTC 2-cihaz kabul (T+5s freeze) | **OPEN** — kullanıcı testi **sonra** |
 | P1 | Voice/gift/PK/müzik 2-cihaz checklist | Bekliyor (P0 sonrası) |
 | P2 | `bana_ozel_hub_section_test` overflow | ✅ Düzeltildi (CHANGELOG); CI 1081 pass — bloker değil |
 

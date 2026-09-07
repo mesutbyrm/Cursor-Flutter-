@@ -51,7 +51,10 @@ bash scripts/on-release-ready-candidate.sh # P0+P1 sonrası RELEASE adayı
 bash scripts/on-p0-fail.sh                 # P0 FAIL hotfix kaydı
 bash scripts/record-user-test-result.sh p0 PASS  # sonuç kaydı
 bash scripts/release-remaining-status.sh   # P0-j/P0/P1/P2 canlı özet
+bash scripts/run-non-device-release-prep.sh  # cihaz dışı tek komut
 bash scripts/run-api-automation-summary.sh # M5/M7 otomatik API özeti (cihaz ayrı)
+bash scripts/run-psychic-unit-tests.sh     # Psychic Flutter unit
+bash scripts/p2-play-store-prep.sh         # P2 backlog
 bash scripts/probe-psychic-teller.sh       # falcı listesi kontrolü (Psychic P0)
 bash scripts/psychic-p0-all.sh            # Önkoşul + checklist (tek akış)
 bash scripts/p1-platform-checklist.sh     # P1 (P0 PASS sonrası)

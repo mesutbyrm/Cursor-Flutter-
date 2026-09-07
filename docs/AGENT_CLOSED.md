@@ -23,6 +23,7 @@ Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Cihaz tes
 | API Gate 3 (host → SKIP, TRTC) | ✅ cihaz dışı düzeltme |
 | Psychic unit test betiği | ✅ `run-psychic-unit-tests.sh` |
 | P2 hazırlık betiği | ✅ `p2-play-store-prep.sh` |
+| Non-device prep (tek komut) | ✅ `run-non-device-release-prep.sh` |
 
 ---
 
