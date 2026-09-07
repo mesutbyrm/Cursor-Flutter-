@@ -25,16 +25,14 @@ Kod hatası değilse, GitHub **faturalandırma / harcama limiti** yüzünden Act
 
 ## Kullanıcı testi (Psychic P0 — öncelik)
 
-Agent işi bitti; release için **2 telefon** Psychic TRTC testi gerekir:
+Agent işi bitti. **Önce jeton**, sonra 2 telefon:
 
 ```bash
-bash scripts/user-handoff.sh              # Özet + hesaplar + APK
-bash scripts/psychic-p0-prereqs.sh          # APK + giriş + jeton uyarısı
-bash scripts/psychic-p0-checklist.sh      # T+5s donma tablosu
-bash scripts/print-live-psychics-e2e-checklist.sh  # Tam E2E (P0 sonrası)
+bash scripts/psychic-p0-all.sh       # Tek akış (jeton + checklist)
+bash scripts/user-handoff.sh         # Tam özet
 ```
 
-Detay: [`docs/KULLANICI_TEST_KILAVUZU.md`](docs/KULLANICI_TEST_KILAVUZU.md)
+Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · [`docs/KULLANICI_TEST_KILAVUZU.md`](docs/KULLANICI_TEST_KILAVUZU.md)
 
 ## Hızlı başlangıç (geliştirici)
 

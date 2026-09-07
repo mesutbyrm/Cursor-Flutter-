@@ -5,6 +5,8 @@
 > **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 **Son güncelleme:** 2026-09-07 — sürüm `1.0.371+409`, release gate **FINAL PASS** (run `34146919509`)  
+**Agent durumu:** **KAPALI** — kod/CI/docs tamam; kalan yalnızca kullanıcı cihaz testi  
+**Tek komut:** `bash scripts/psychic-p0-all.sh` · Rehber: [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md)  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Release:** `docs/RELEASE_CHECKLIST.md` | **Psychic P0:** `docs/LIVE_PSYCHICS_REMAINING.md` | **Tüm MD indeks:** [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 ---
@@ -29,7 +31,8 @@
 
 | # | İş | Referans |
 |---|-----|----------|
-| **P0** | Psychic TRTC 2-cihaz (T+5s donma yok) | `LIVE_PSYCHICS_REMAINING.md` § P0 |
+| **P0-j** | Danışan jeton (admin) | jeton=0 probe — `admin-jeton-cheatsheet.sh` |
+| **P0** | Psychic TRTC 2-cihaz (T+5s donma yok) | [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) · `psychic-p0-all.sh` |
 | P1 | Voice / gift / PK / müzik 2-cihaz | `RELEASE_CHECKLIST.md` |
 | P2 | Stage 8 / Play Store closed test | `STAGE8_FINAL_ACCEPTANCE_REPORT.md` |
 
@@ -78,6 +81,12 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-09-07 devam 8 — agent kapanış)
+
+- `scripts/psychic-p0-all.sh` — jeton + prereqs + checklist tek akış
+- RELEASE_GATE_CLOSURE: P0-j jeton satırı; FAZ13, AGENTS, APK_DOWNLOAD güncellendi
+- **Agent işi kapandı** — kullanıcı: admin jeton → `psychic-p0-all.sh` → PASS/FAIL
 
 ## Oturum günlüğü (2026-09-07 devam 7)
 
