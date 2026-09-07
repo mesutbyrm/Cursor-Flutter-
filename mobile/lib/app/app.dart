@@ -9,6 +9,7 @@ import '../core/bootstrap/mobile_config_gate.dart';
 import '../core/bootstrap/startup_perf.dart';
 import '../core/bootstrap/root_overlay_purge.dart';
 import '../core/l10n/app_localizations_config.dart';
+import '../core/economy/presentation/providers/economy_providers.dart';
 import '../core/providers/theme_mode_provider.dart';
 import '../core/providers/amoled_dark_provider.dart';
 import '../core/push/push_lifecycle_listener.dart';
@@ -65,6 +66,8 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
         ref.read(shellSessionProvider.notifier).state = session;
       }
     });
+
+    unawaited(ref.read(currencyBrandingProvider.future));
   }
 
   @override

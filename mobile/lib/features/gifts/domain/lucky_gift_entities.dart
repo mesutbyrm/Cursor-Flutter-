@@ -136,6 +136,7 @@ class LuckyGiftSpinResult extends Equatable {
     this.icon,
     this.isWin = false,
     this.newBalance,
+    this.currency = 'cfc',
   });
 
   factory LuckyGiftSpinResult.fromJson(Map<String, dynamic> json) {
@@ -152,6 +153,9 @@ class LuckyGiftSpinResult extends Equatable {
       icon: pick(result, ['icon'])?.toString(),
       isWin: result['isWin'] == true,
       newBalance: asInt(pick(json, ['newBalance'])),
+      currency: pick(json, ['currency'])?.toString() ??
+          pick(result, ['currency'])?.toString() ??
+          'cfc',
     );
   }
 
@@ -166,6 +170,7 @@ class LuckyGiftSpinResult extends Equatable {
   final String? icon;
   final bool isWin;
   final int? newBalance;
+  final String currency;
 
   Color resolveColor() => parseHexColor(color);
 
@@ -182,6 +187,7 @@ class LuckyGiftSpinResult extends Equatable {
         icon,
         isWin,
         newBalance,
+        currency,
       ];
 }
 

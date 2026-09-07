@@ -1,23 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../fortune/presentation/widgets/fortune_mystic_background.dart';
 import '../../../fortune/presentation/widgets/fortune_mystic_title_bar.dart';
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_tokens.dart';
 import '../../domain/entities/bana_ozel_entities.dart';
 
 /// Bana Özel sonuç — `POST /api/bana-ozel/open`.
-class BanaOzelResultPage extends StatelessWidget {
+class BanaOzelResultPage extends ConsumerWidget {
   const BanaOzelResultPage({super.key, required this.result});
 
   final BanaOzelOpenResultEntity result;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final serif = GoogleFonts.playfairDisplay;
     const gold = Color(0xFFD4AF37);
+    final locale = Localizations.localeOf(context);
+    final jetonName = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+    final cfcName = economyCurrencyLabel(ref, key: 'cfc', locale: locale);
+    final paymentLine = result.paymentSummary(
+      jetonName: jetonName,
+      cfcName: cfcName,
+    );
 
     return Scaffold(
       backgroundColor: UltraFortuneTokens.deepNight,
@@ -32,9 +41,9 @@ class BanaOzelResultPage extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                 children: [
-                  if (result.jetonSpent > 0)
+                  if (paymentLine.isNotEmpty)
                     Text(
-                      '${result.jetonSpent} jeton harcandı · Bakiye: ${result.jetonBalance}',
+                      paymentLine,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: gold.withValues(alpha: 0.85),

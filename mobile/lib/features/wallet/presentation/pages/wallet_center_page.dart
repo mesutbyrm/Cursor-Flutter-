@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
@@ -15,6 +16,7 @@ import '../../../profile/presentation/widgets/payment_methods_summary_line.dart'
 import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
 import '../widgets/wallet_balance_header.dart';
 import '../widgets/wallet_earnings_section.dart';
+import '../widgets/economy_wallet_transactions_section.dart';
 import '../../domain/wallet_balances.dart';
 
 /// Cüzdan merkezi — Jeton, CFC ve Premium üyelik tek giriş.
@@ -65,8 +67,10 @@ class WalletCenterPage extends ConsumerWidget {
         child: DiscoverSubPage(
           title: 'Cüzdanım',
           subtitle: pageSubtitle,
-          onRefresh: () =>
-              ref.read(walletBalancesProvider.notifier).refresh(force: true),
+          onRefresh: () async {
+            await ref.read(walletBalancesProvider.notifier).refresh(force: true);
+            ref.invalidate(economyWalletProvider);
+          },
           body: wallet.isLoading && cached == null
               ? const Center(child: DiscoverAccentLoader())
               : wallet.hasError && cached == null
@@ -84,6 +88,8 @@ class WalletCenterPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 20),
                 WalletEarningsSection(balances: balances),
+                const SizedBox(height: 16),
+                const EconomyWalletTransactionsSection(),
                 const SizedBox(height: 16),
                 _HubCard(
                   icon: Icons.account_balance_wallet_rounded,

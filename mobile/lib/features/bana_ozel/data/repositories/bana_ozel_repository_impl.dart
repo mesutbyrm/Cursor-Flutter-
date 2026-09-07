@@ -13,6 +13,7 @@ class BanaOzelRepositoryImpl implements BanaOzelRepository {
   @override
   Future<BanaOzelOpenResultEntity> openItem({
     required BanaOzelItemEntity item,
+    bool useAd = false,
   }) =>
-      _remote.openItem(item: item);
+      _remote.openItem(item: item, useAd: useAd);
 }

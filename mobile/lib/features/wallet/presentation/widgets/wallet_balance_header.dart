@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
+import '../../../../core/economy/presentation/widgets/branded_dual_balance_chips.dart';
 import '../../../../core/widgets/dual_balance_chips.dart';
 
 /// CFC + Jeton + kısa yönlendirme — CFC yükle / Premium üyelik.
@@ -71,7 +72,7 @@ class WalletBalanceHeader extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 12),
-        DualBalanceChips(jeton: jeton, cfc: cfc),
+        BrandedDualBalanceChips(jeton: jeton, cfc: cfc),
         if (showMembershipBanner) ...[
           const SizedBox(height: 12),
           Material(

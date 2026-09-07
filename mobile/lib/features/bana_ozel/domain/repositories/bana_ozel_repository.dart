@@ -5,5 +5,6 @@ abstract class BanaOzelRepository {
 
   Future<BanaOzelOpenResultEntity> openItem({
     required BanaOzelItemEntity item,
+    bool useAd = false,
   });
 }
