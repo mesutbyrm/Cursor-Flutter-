@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
@@ -28,6 +29,7 @@ class HomeGamesSection extends ConsumerWidget {
       gameCenterLeaderboardProvider(LeaderboardPeriod.weekly),
     );
     final formatter = NumberFormat.decimalPattern('tr');
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -164,7 +166,7 @@ class HomeGamesSection extends ConsumerWidget {
                           const SizedBox(height: 4),
                           Text(
                             jeton.when(
-                              data: (b) => '${formatter.format(b)} Jeton',
+                              data: (b) => '${formatter.format(b)} $jetonLabel',
                               loading: () => 'Yakında yeni oyunlar',
                               error: (_, _) => 'Liderlik tablosu ve ödüller',
                             ),

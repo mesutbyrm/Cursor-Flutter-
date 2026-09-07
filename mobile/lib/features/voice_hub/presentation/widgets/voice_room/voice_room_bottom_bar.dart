@@ -1,11 +1,13 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 
-class VoiceRoomBottomBar extends StatelessWidget {
+class VoiceRoomBottomBar extends ConsumerWidget {
   const VoiceRoomBottomBar({
     super.key,
     required this.controller,
@@ -32,8 +34,9 @@ class VoiceRoomBottomBar extends StatelessWidget {
   final VoidCallback? onGiftTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return ClipRRect(
       child: BackdropFilter(
@@ -105,7 +108,7 @@ class VoiceRoomBottomBar extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    '💎 $coinBalance Jeton',
+                    '💎 $coinBalance $jetonLabel',
                     style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 12,

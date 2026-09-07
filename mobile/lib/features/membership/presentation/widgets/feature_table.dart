@@ -2,11 +2,13 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../domain/membership_model.dart';
 import '../../domain/membership_package_entity.dart';
 
-class MembershipFeatureTable extends StatelessWidget {
+class MembershipFeatureTable extends ConsumerWidget {
   const MembershipFeatureTable({
     super.key,
     required this.selectedTier,
@@ -30,7 +32,8 @@ class MembershipFeatureTable extends StatelessWidget {
   int get _selectedCol => selectedTier.index.clamp(0, _columnCount - 1);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 420;
@@ -74,7 +77,7 @@ class MembershipFeatureTable extends StatelessWidget {
                         selectedCol: _selectedCol,
                         headers: _headers,
                       ),
-                      ..._effectiveFeatureRows()
+                      ..._effectiveFeatureRows(jetonLabel)
                           .asMap()
                           .entries
                           .map(
@@ -100,17 +103,26 @@ class MembershipFeatureTable extends StatelessWidget {
     );
   }
 
-  List<MembershipFeatureRow> _effectiveFeatureRows() {
+  List<MembershipFeatureRow> _effectiveFeatureRows(String jetonLabel) {
     final source = tiers;
     if (source == null || source.isEmpty) {
-      return MembershipCatalogData.featureRows;
+      final rows = List<MembershipFeatureRow>.from(
+        MembershipCatalogData.featureRows,
+      );
+      if (rows.isNotEmpty) {
+        rows[0] = MembershipFeatureRow(
+          label: _tokenRowLabel(source ?? const [], jetonLabel: jetonLabel),
+          values: rows[0].values,
+        );
+      }
+      return rows;
     }
     final rows = List<MembershipFeatureRow>.from(
       MembershipCatalogData.featureRows,
     );
     if (rows.isEmpty) return rows;
     rows[0] = MembershipFeatureRow(
-      label: _tokenRowLabel(source),
+      label: _tokenRowLabel(source, jetonLabel: jetonLabel),
       values: [
         for (final t in source)
           MembershipFeatureText('${t.monthlyTokens}'),
@@ -186,14 +198,17 @@ class MembershipFeatureTable extends StatelessWidget {
     return const MembershipFeatureBool(false);
   }
 
-  static String _tokenRowLabel(List<MembershipTierModel> tiers) {
-    if (tiers.isEmpty) return 'Aylık Jeton';
+  static String _tokenRowLabel(
+    List<MembershipTierModel> tiers, {
+    required String jetonLabel,
+  }) {
+    if (tiers.isEmpty) return 'Aylık $jetonLabel';
     final days = tiers.first.durationDays;
     final sameDuration = tiers.every((t) => t.durationDays == days);
     if (sameDuration && days > 0 && days != 30) {
-      return 'Jeton ($days gün)';
+      return '$jetonLabel ($days gün)';
     }
-    return 'Aylık Jeton';
+    return 'Aylık $jetonLabel';
   }
 }
 

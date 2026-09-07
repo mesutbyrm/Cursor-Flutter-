@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_glass.dart';
@@ -26,6 +27,7 @@ class ProfileHubTopGiftsSection extends ConsumerWidget {
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
         final top = items.take(5).toList();
+        final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
         return ProfileGlass(
           padding: const EdgeInsets.all(16),
@@ -72,7 +74,7 @@ class ProfileHubTopGiftsSection extends ConsumerWidget {
                             ),
                             if (gift.coins > 0)
                               Text(
-                                '${profileFormatCount(gift.coins)} jeton',
+                                '${profileFormatCount(gift.coins)} $jetonLabel',
                                 style: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.45),
                                   fontSize: 10,

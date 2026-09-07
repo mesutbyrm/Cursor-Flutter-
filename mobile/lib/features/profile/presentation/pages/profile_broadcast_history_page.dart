@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
@@ -53,6 +54,7 @@ class _ProfileBroadcastHistoryPageState
   @override
   Widget build(BuildContext context) {
     final history = ref.watch(broadcastHistoryNotifierProvider);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -128,7 +130,7 @@ class _ProfileBroadcastHistoryPageState
                                 ),
                               ),
                               Text(
-                                '${item.giftCount} hediye · ${item.coinsEarned} jeton',
+                                '${item.giftCount} hediye · ${item.coinsEarned} $jetonLabel',
                                 style: const TextStyle(fontSize: 12),
                               ),
                             ],

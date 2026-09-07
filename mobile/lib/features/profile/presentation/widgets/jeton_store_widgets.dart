@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../data/jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
@@ -230,7 +232,7 @@ class JetonGoldMemberBanner extends StatelessWidget {
   }
 }
 
-class JetonPackageTile extends StatelessWidget {
+class JetonPackageTile extends ConsumerWidget {
   const JetonPackageTile({
     super.key,
     required this.package,
@@ -247,9 +249,10 @@ class JetonPackageTile extends StatelessWidget {
   final bool selected;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final popular = package.badge?.toLowerCase().contains('popüler') == true ||
         package.badge?.toLowerCase().contains('popular') == true;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return ProGlassCard(
       onTap: onTap,
@@ -302,7 +305,7 @@ class JetonPackageTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${package.coins} jeton',
+                    '${package.coins} $jetonLabel',
                     style: TextStyle(
                       color: AppThemeColors.coinGold,
                       fontWeight: FontWeight.w900,

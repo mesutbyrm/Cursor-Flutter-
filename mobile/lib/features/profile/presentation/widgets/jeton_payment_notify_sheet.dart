@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
@@ -112,7 +113,7 @@ class _JetonPaymentNotifySheetState
       ? 'whatsapp'
       : 'bank_transfer';
 
-  JetonPackageEntity _buildPackage(double priceTry) {
+  JetonPackageEntity _buildPackage(double priceTry, String jetonLabel) {
     final existing = _package;
     if (existing != null) {
       return JetonPackageEntity(
@@ -128,7 +129,7 @@ class _JetonPaymentNotifySheetState
     final coins = (priceTry / rate).round().clamp(1, 999999);
     return JetonPackageEntity(
       id: 'notify_$coins',
-      title: '$coins Jeton',
+      title: '$coins $jetonLabel',
       coins: coins,
       priceTry: priceTry,
     );
@@ -147,7 +148,8 @@ class _JetonPaymentNotifySheetState
 
     setState(() => _submitting = true);
     try {
-      final pkg = _buildPackage(priceTry);
+      final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+      final pkg = _buildPackage(priceTry, jetonLabel);
       final notes = _notesCtrl.text.trim();
       final body = buildJetonPaymentRequest(
         package: pkg,
@@ -270,6 +272,7 @@ class _JetonPaymentNotifySheetState
   }
 
   Widget _buildForm() {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return SingleChildScrollView(
       key: const ValueKey('form'),
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
@@ -330,7 +333,7 @@ class _JetonPaymentNotifySheetState
                 children: [
                   for (final p in kFallbackJetonPackages)
                     ActionChip(
-                      label: Text('${p.coins} jeton'),
+                      label: Text('${p.coins} $jetonLabel'),
                       backgroundColor: _package?.coins == p.coins
                           ? AppThemeColors.accentPurple.withValues(alpha: 0.35)
                           : const Color(0xFF1A1030),

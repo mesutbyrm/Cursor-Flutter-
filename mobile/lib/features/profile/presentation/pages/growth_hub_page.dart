@@ -55,6 +55,7 @@ class GrowthHubPage extends ConsumerWidget {
       daysRemaining: wallet?.membershipDaysRemaining,
     );
     final hasPremium = membershipInfo.hasActiveSubscription;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final progress = GrowthProgressEntity.fromSignals(
       stats: stats,
       dailyRewards: rewards,
@@ -62,6 +63,7 @@ class GrowthHubPage extends ConsumerWidget {
       cfc: wallet?.cfc ?? 0,
       invitedCount: referral?.invitedCount ?? 0,
       hasPremium: hasPremium,
+      jetonLabel: jetonLabel,
     );
     final serverLevel = serverLevelAsync.valueOrNull;
     final displayLevel = serverLevel != null && serverLevel.level > 0

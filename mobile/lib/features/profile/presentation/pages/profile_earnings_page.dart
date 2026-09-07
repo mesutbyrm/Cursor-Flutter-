@@ -3,6 +3,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
@@ -15,6 +16,7 @@ class ProfileEarningsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = ref.watch(profileStatsProvider);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -35,7 +37,7 @@ class ProfileEarningsPage extends ConsumerWidget {
                 _EarningCard(
                   icon: Icons.card_giftcard_rounded,
                   label: 'Hediyelerden kazanç',
-                  value: '${s.earningsJeton} jeton',
+                  value: '${s.earningsJeton} $jetonLabel',
                   hint: '${s.giftsReceivedCount} hediye alındı',
                 ),
                 const SizedBox(height: 12),
@@ -43,7 +45,7 @@ class ProfileEarningsPage extends ConsumerWidget {
                   icon: Icons.check_circle_outline_rounded,
                   label: 'Onaylı yüklemeler',
                   value: '${s.approvedTopUpTotal} birim',
-                  hint: 'CFC / jeton talepleri',
+                  hint: 'CFC / $jetonLabel talepleri',
                 ),
                 const SizedBox(height: 12),
                 _EarningCard(

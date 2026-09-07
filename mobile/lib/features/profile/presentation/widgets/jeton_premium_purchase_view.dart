@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/payment_defaults.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
@@ -402,6 +403,7 @@ class _JetonPremiumPurchaseViewState
     final amounts = _parseAmounts();
     final methodsAsync = ref.watch(paymentMethodsProvider);
     final paymentMethods = _resolvePaymentMethods(methodsAsync);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return ResponsiveConstrained(
       child: Padding(
@@ -412,6 +414,7 @@ class _JetonPremiumPurchaseViewState
             _BalanceCard(
               jeton: displayJeton,
               loading: wallet.isLoading && displayJeton == null,
+              jetonLabel: jetonLabel,
             ),
             const MembershipPendingPaymentBanner(),
             const MembershipStoreTeaserBanner(store: MembershipStoreKind.jeton),
@@ -427,7 +430,7 @@ class _JetonPremiumPurchaseViewState
             const _SectionTitle('Tutar Belirle'),
             const SizedBox(height: 4),
             Text(
-              '1 Jeton = ₺${kJetonPurchaseTlRate.toStringAsFixed(2)}',
+              '1 $jetonLabel = ₺${kJetonPurchaseTlRate.toStringAsFixed(2)}',
               style: TextStyle(
                 fontSize: 12,
                 color: context.colors.onSurfaceMuted,
@@ -448,7 +451,7 @@ class _JetonPremiumPurchaseViewState
                 const SizedBox(width: 12),
                 Expanded(
                   child: _AmountField(
-                    label: 'Jeton Miktarı',
+                    label: '$jetonLabel Miktarı',
                     controller: _jetonCtrl,
                     icon: Icons.monetization_on_outlined,
                     keyboardType: TextInputType.number,
@@ -476,6 +479,7 @@ class _JetonPremiumPurchaseViewState
                     return _PresetCard(
                       tl: tl,
                       jeton: (tl / kJetonPurchaseTlRate).round(),
+                      jetonLabel: jetonLabel,
                       selected: _selectedPresetTl == tl,
                       onTap: () => _applyPreset(tl),
                     );
@@ -629,10 +633,15 @@ class _PaymentWarningCard extends StatelessWidget {
 }
 
 class _BalanceCard extends StatelessWidget {
-  const _BalanceCard({this.jeton, this.loading = false});
+  const _BalanceCard({
+    this.jeton,
+    this.loading = false,
+    required this.jetonLabel,
+  });
 
   final int? jeton;
   final bool loading;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -670,7 +679,7 @@ class _BalanceCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Mevcut Jeton',
+                  'Mevcut $jetonLabel',
                   style: TextStyle(
                     color: context.colors.onSurfaceMuted,
                     fontSize: 13,
@@ -756,12 +765,14 @@ class _PresetCard extends StatelessWidget {
   const _PresetCard({
     required this.tl,
     required this.jeton,
+    required this.jetonLabel,
     required this.selected,
     required this.onTap,
   });
 
   final double tl;
   final int jeton;
+  final String jetonLabel;
   final bool selected;
   final VoidCallback onTap;
 
@@ -794,7 +805,7 @@ class _PresetCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '$jeton jeton',
+              '$jeton $jetonLabel',
               style: TextStyle(
                 fontSize: 11,
                 color: context.colors.onSurfaceMuted,

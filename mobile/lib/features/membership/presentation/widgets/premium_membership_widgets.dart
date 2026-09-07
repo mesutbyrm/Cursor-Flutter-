@@ -95,25 +95,30 @@ class PremiumMembershipHeader extends StatelessWidget {
   }
 }
 
-class PremiumFeatureGrid extends StatelessWidget {
+class PremiumFeatureGrid extends ConsumerWidget {
   const PremiumFeatureGrid({super.key});
 
   static const _items = [
-    (Icons.auto_awesome_rounded, 'Bonus Jeton'),
+    (Icons.auto_awesome_rounded, 'bonus'),
     (Icons.diamond_rounded, 'Özel Rozet'),
     (Icons.headset_mic_rounded, 'Öncelikli Destek'),
     (Icons.flare_rounded, 'İndirimli Fal'),
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final labels = _items.map((e) {
+      if (e.$2 == 'bonus') return (e.$1, 'Bonus $jetonLabel');
+      return e;
+    }).toList();
     return LayoutBuilder(
       builder: (context, constraints) {
         final cols = constraints.maxWidth >= 400 ? 2 : 1;
         const spacing = 10.0;
         final aspect = cols == 1 ? 4.5 : 2.8;
         final gridHeight = ListPerf.nestedGridHeight(
-          itemCount: _items.length,
+          itemCount: labels.length,
           crossAxisCount: cols,
           mainAxisSpacing: spacing,
           crossAxisSpacing: spacing,
@@ -128,7 +133,7 @@ class PremiumFeatureGrid extends StatelessWidget {
             mainAxisSpacing: spacing,
             crossAxisSpacing: spacing,
             childAspectRatio: aspect,
-            children: _items
+            children: labels
                 .map(
                   (e) => _FeatureBadge(icon: e.$1, label: e.$2),
                 )

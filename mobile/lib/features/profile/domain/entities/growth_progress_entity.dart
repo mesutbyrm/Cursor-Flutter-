@@ -21,6 +21,7 @@ class GrowthProgressEntity extends Equatable {
     int cfc = 0,
     int invitedCount = 0,
     bool hasPremium = false,
+    String jetonLabel = 'Jeton',
   }) {
     final claimedRewards = dailyRewards.where((r) => r.claimed).length;
     final xp = (stats.likes * 2) +
@@ -49,11 +50,11 @@ class GrowthProgressEntity extends Equatable {
           id: 'daily-login',
           title: 'Günlük giriş ödülünü topla',
           description: dailyReward?.description ??
-              'Her gün giriş yap, seri devam ettikçe Jeton fırsatlarını kaçırma.',
+              'Her gün giriş yap, seri devam ettikçe $jetonLabel fırsatlarını kaçırma.',
           current: dailyReward?.claimed == true ? 1 : 0,
           target: 1,
           rewardLabel: dailyReward != null && dailyReward.rewardJeton > 0
-              ? '+${dailyReward.rewardJeton} Jeton'
+              ? '+${dailyReward.rewardJeton} $jetonLabel'
               : '+50 XP',
           route: dailyReward?.route ?? '/feed',
           icon: '🎁',
@@ -108,13 +109,13 @@ class GrowthProgressEntity extends Equatable {
           route: '/profile/gifts',
           icon: '💎',
         ),
-        const GrowthTaskEntity(
+        GrowthTaskEntity(
           id: 'watch-ad-credit',
           title: 'Reklam izleyerek ödül kazan',
           description: 'Web’deki reklamla kredi akışını mobil görev merkezinden başlat.',
           current: 0,
           target: 1,
-          rewardLabel: 'Kredi/Jeton',
+          rewardLabel: 'Kredi/$jetonLabel',
           route: '/ad-rewards',
           icon: '▶️',
         ),

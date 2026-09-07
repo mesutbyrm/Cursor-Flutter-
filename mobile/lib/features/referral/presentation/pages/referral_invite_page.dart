@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
@@ -77,7 +78,7 @@ class ReferralInvitePage extends ConsumerWidget {
   }
 }
 
-class _InviteContent extends StatelessWidget {
+class _InviteContent extends ConsumerWidget {
   const _InviteContent({required this.stats});
 
   final dynamic stats;
@@ -114,7 +115,8 @@ class _InviteContent extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final shareText = [
       if (stats.headline != null && stats.headline!.trim().isNotEmpty)
         stats.headline!.trim(),
@@ -171,7 +173,7 @@ class _InviteContent extends StatelessWidget {
               ),
               _StatRow(
                 label: 'Toplam kazanç',
-                value: '${stats.totalEarnings} Jeton',
+                value: '${stats.totalEarnings} $jetonLabel',
               ),
               const SizedBox(height: 10),
               SelectableText(

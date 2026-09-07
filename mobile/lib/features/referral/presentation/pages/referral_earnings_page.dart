@@ -19,6 +19,7 @@ class ReferralEarningsPage extends ConsumerWidget {
     final earnings = ref.watch(referralEarningsProvider);
     final ledger = ref.watch(referralLedgerProvider);
     final economy = ref.watch(referralEconomyProvider);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return Scaffold(
       appBar: AppBar(
@@ -53,13 +54,13 @@ class ReferralEarningsPage extends ConsumerWidget {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    _EarningTile('Toplam kazanç', s.totalEarnings),
-                    _EarningTile('Bu ay', s.monthEarnings),
-                    _EarningTile('Bekleyen', s.pendingEarnings),
-                    _EarningTile('Kullanılabilir', s.availableEarnings),
-                    _EarningTile('İptal edilen', s.reversedEarnings),
-                    _EarningTile('Limit (aylık)', s.monthlyLimit),
-                    _EarningTile('Limit (ömür boyu)', s.lifetimeLimit),
+                    _EarningTile('Toplam kazanç', s.totalEarnings, jetonLabel: jetonLabel),
+                    _EarningTile('Bu ay', s.monthEarnings, jetonLabel: jetonLabel),
+                    _EarningTile('Bekleyen', s.pendingEarnings, jetonLabel: jetonLabel),
+                    _EarningTile('Kullanılabilir', s.availableEarnings, jetonLabel: jetonLabel),
+                    _EarningTile('İptal edilen', s.reversedEarnings, jetonLabel: jetonLabel),
+                    _EarningTile('Limit (aylık)', s.monthlyLimit, jetonLabel: jetonLabel),
+                    _EarningTile('Limit (ömür boyu)', s.lifetimeLimit, jetonLabel: jetonLabel),
                   ],
                 ),
               ),
@@ -150,7 +151,7 @@ class ReferralEarningsPage extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  '+${e.referralCommission} Jeton',
+                                  '+${e.referralCommission} $jetonLabel',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w800,
                                     color: AppTheme.accent.withValues(alpha: 0.95),
@@ -178,10 +179,11 @@ class ReferralEarningsPage extends ConsumerWidget {
 }
 
 class _EarningTile extends StatelessWidget {
-  const _EarningTile(this.label, this.amount);
+  const _EarningTile(this.label, this.amount, {required this.jetonLabel});
 
   final String label;
   final int amount;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -191,7 +193,7 @@ class _EarningTile extends StatelessWidget {
         children: [
           Expanded(child: Text(label)),
           Text(
-            '$amount Jeton',
+            '$amount $jetonLabel',
             style: const TextStyle(fontWeight: FontWeight.w800),
           ),
         ],
