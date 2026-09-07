@@ -68,7 +68,7 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
           SnackBar(
             content: Text(insufficient.message),
             action: SnackBarAction(
-              label: 'Jeton al',
+              label: economyJetonBuyActionLabel(ref),
               onPressed: () => context.push('/jeton-store'),
             ),
           ),

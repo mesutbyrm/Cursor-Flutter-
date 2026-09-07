@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/quick_action_tile.dart';
@@ -9,11 +10,11 @@ import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import 'branch_role_actions.dart';
 
 /// Sosyal sekmesi — davet, jeton, akış ve sesli odalar.
-class SocialBranchQuickActions extends StatelessWidget {
+class SocialBranchQuickActions extends ConsumerWidget {
   const SocialBranchQuickActions({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return QuickActionsSection(
       sectionIcon: Icons.bolt_rounded,
       sectionTitle: 'Hızlı işlemler',
@@ -42,7 +43,7 @@ class SocialBranchQuickActions extends StatelessWidget {
         [
           QuickActionTile(
             icon: Icons.monetization_on_rounded,
-            label: 'Jeton\nyükle',
+            label: economyJetonTopUpTileLabel(ref),
             gradient: [
               const Color(0xFF5C4020).withValues(alpha: 0.85),
               const Color(0xFF2A1C10).withValues(alpha: 0.9),
@@ -76,11 +77,11 @@ class SocialBranchQuickActions extends StatelessWidget {
 }
 
 /// Canlı → Yayınlar sekmesi üstü.
-class LiveStreamsBranchQuickActions extends StatelessWidget {
+class LiveStreamsBranchQuickActions extends ConsumerWidget {
   const LiveStreamsBranchQuickActions({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return QuickActionsSection(
       sectionIcon: Icons.live_tv_rounded,
       sectionTitle: 'Hızlı işlemler',
@@ -98,7 +99,7 @@ class LiveStreamsBranchQuickActions extends StatelessWidget {
           ),
           QuickActionTile(
             icon: Icons.monetization_on_rounded,
-            label: 'Jeton\nyükle',
+            label: economyJetonTopUpTileLabel(ref),
             gradient: [
               const Color(0xFF5C4020).withValues(alpha: 0.85),
               const Color(0xFF2A1C10).withValues(alpha: 0.9),
@@ -141,11 +142,11 @@ class LiveStreamsBranchQuickActions extends StatelessWidget {
 }
 
 /// Mesajlar listesi üstü.
-class MessagesBranchQuickActions extends StatelessWidget {
+class MessagesBranchQuickActions extends ConsumerWidget {
   const MessagesBranchQuickActions({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return QuickActionsSection(
       sectionIcon: Icons.chat_rounded,
       sectionTitle: 'Hızlı işlemler',
@@ -163,7 +164,7 @@ class MessagesBranchQuickActions extends StatelessWidget {
           ),
           QuickActionTile(
             icon: Icons.monetization_on_rounded,
-            label: 'Jeton\nyükle',
+            label: economyJetonTopUpTileLabel(ref),
             gradient: [
               const Color(0xFF5C4020).withValues(alpha: 0.85),
               const Color(0xFF2A1C10).withValues(alpha: 0.9),
@@ -202,11 +203,11 @@ class MessagesBranchQuickActions extends StatelessWidget {
 }
 
 /// Canlı → Sohbet (sesli odalar) sekmesi üstü.
-class LiveVoiceBranchQuickActions extends StatelessWidget {
+class LiveVoiceBranchQuickActions extends ConsumerWidget {
   const LiveVoiceBranchQuickActions({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return QuickActionsSection(
       sectionIcon: Icons.headset_mic_rounded,
       sectionTitle: 'Hızlı işlemler',
@@ -215,7 +216,7 @@ class LiveVoiceBranchQuickActions extends StatelessWidget {
         [
           QuickActionTile(
             icon: Icons.monetization_on_rounded,
-            label: 'Jeton\nyükle',
+            label: economyJetonTopUpTileLabel(ref),
             gradient: [
               const Color(0xFF5C4020).withValues(alpha: 0.85),
               const Color(0xFF2A1C10).withValues(alpha: 0.9),
@@ -311,7 +312,7 @@ class ProfileBranchQuickActions extends ConsumerWidget {
           ),
           QuickActionTile(
             icon: Icons.monetization_on_rounded,
-            label: 'Jeton\nyükle',
+            label: economyJetonTopUpTileLabel(ref),
             gradient: [
               const Color(0xFF5C4020).withValues(alpha: 0.85),
               const Color(0xFF2A1C10).withValues(alpha: 0.9),

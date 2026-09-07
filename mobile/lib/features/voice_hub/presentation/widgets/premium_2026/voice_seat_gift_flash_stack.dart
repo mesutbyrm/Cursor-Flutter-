@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../live/domain/entities/live_gift_catalog.dart';
 import '../../providers/voice_seat_gift_flash_provider.dart';
 
@@ -35,6 +36,7 @@ class VoiceSeatGiftFlashStack extends ConsumerWidget {
       userId: userId,
       displayName: displayName,
     );
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -43,7 +45,7 @@ class VoiceSeatGiftFlashStack extends ConsumerWidget {
         for (final f in flashes)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: _FlashRow(flash: f),
+            child: _FlashRow(flash: f, jetonLabel: jetonLabel),
           ),
       ],
     );
@@ -51,9 +53,10 @@ class VoiceSeatGiftFlashStack extends ConsumerWidget {
 }
 
 class _FlashRow extends StatelessWidget {
-  const _FlashRow({required this.flash});
+  const _FlashRow({required this.flash, required this.jetonLabel});
 
   final VoiceSeatGiftFlash flash;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +95,7 @@ class _FlashRow extends StatelessWidget {
             ),
             if (flash.jeton > 0)
               Text(
-                '${flash.jeton} Jeton',
+                '${flash.jeton} $jetonLabel',
                 style: TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w700,

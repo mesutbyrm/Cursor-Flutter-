@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/widgets/cached_cover_image.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -14,11 +15,11 @@ import '../../../live/presentation/utils/open_live_stream.dart';
 import '../../../voice_hub/presentation/utils/navigate_to_voice_room.dart';
 
 /// Ana sayfa hızlı işlemler (davet, jeton).
-class FeedQuickActions extends StatelessWidget {
+class FeedQuickActions extends ConsumerWidget {
   const FeedQuickActions({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: GlowPanel(
@@ -47,7 +48,7 @@ class FeedQuickActions extends StatelessWidget {
                   ),
                   QuickActionTile(
                     icon: Icons.monetization_on_rounded,
-                    label: 'Jeton\nyükle',
+                    label: economyJetonTopUpTileLabel(ref),
                     gradient: [
                       const Color(0xFF5C4020).withValues(alpha: 0.85),
                       const Color(0xFF2A1C10).withValues(alpha: 0.9),

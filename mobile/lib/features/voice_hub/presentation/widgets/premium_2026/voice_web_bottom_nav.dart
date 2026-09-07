@@ -1,11 +1,13 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../theme/voice_room_tokens.dart';
 
 /// Web alt navigasyon — Ana Sayfa, Hoparlör, merkez mikrofon, Jeton, Ayarlar.
-class VoiceWebBottomNav extends StatelessWidget {
+class VoiceWebBottomNav extends ConsumerWidget {
   const VoiceWebBottomNav({
     super.key,
     required this.micOn,
@@ -28,7 +30,8 @@ class VoiceWebBottomNav extends StatelessWidget {
   final VoidCallback onSettings;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonTopUpLabel = economyJetonTopUpShortLabel(ref);
     final bottom = MediaQuery.paddingOf(context).bottom;
 
     return Container(
@@ -65,7 +68,7 @@ class VoiceWebBottomNav extends StatelessWidget {
               ),
               _NavItem(
                 icon: Icons.monetization_on_rounded,
-                label: 'Jeton Yükle',
+                label: jetonTopUpLabel,
                 color: AppThemeColors.diamondBlue,
                 onTap: onCoins,
               ),

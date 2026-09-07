@@ -1,12 +1,14 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../theme/voice_room_tokens.dart';
 
 /// Alt aksiyon çubuğu — Sohbet, Davet, Mikrofon, Müzik, Jeton Al.
-class VoiceLiveBottomBar2026 extends StatelessWidget {
+class VoiceLiveBottomBar2026 extends ConsumerWidget {
   const VoiceLiveBottomBar2026({
     super.key,
     required this.micOn,
@@ -31,7 +33,8 @@ class VoiceLiveBottomBar2026 extends StatelessWidget {
   final VoidCallback? onSettings;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonActionLabel = economyJetonBuyActionLabel(ref);
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Padding(
       padding: EdgeInsets.fromLTRB(12, 0, 12, bottom + 8),
@@ -75,7 +78,7 @@ class VoiceLiveBottomBar2026 extends StatelessWidget {
                 ),
                 _SideAction(
                   icon: Icons.diamond_rounded,
-                  label: 'Jeton Al',
+                  label: jetonActionLabel,
                   color: AppThemeColors.diamondBlue,
                   onTap: onJetonStore,
                 ),

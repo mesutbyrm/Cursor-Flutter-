@@ -101,3 +101,20 @@ String economyCurrencyLabel(
   final loc = locale ?? const Locale('tr');
   return brand.labelForLocale(loc);
 }
+
+/// Hızlı işlem karosu: «Jeton\nyükle».
+String economyJetonTopUpTileLabel(WidgetRef ref, {Locale? locale}) {
+  final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return '$label\nyükle';
+}
+
+/// Tek satır: «Jeton Yükle» / «Jeton Al».
+String economyJetonTopUpShortLabel(WidgetRef ref, {Locale? locale}) {
+  final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return '$label Yükle';
+}
+
+String economyJetonBuyActionLabel(WidgetRef ref, {Locale? locale}) {
+  final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return '$label Al';
+}

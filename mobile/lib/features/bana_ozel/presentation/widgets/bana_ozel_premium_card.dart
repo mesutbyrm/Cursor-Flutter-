@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import 'package:canlifal_social/core/ui/premium/premium_skeleton.dart';
 import '../../../fortune/presentation/widgets/fortune_type_cover_image.dart';
 import '../../../home/presentation/theme/home_approved_design.dart';
@@ -188,7 +190,7 @@ class _BanaOzelPremiumCardState extends State<BanaOzelPremiumCard> {
   }
 }
 
-class _PriceBadge extends StatelessWidget {
+class _PriceBadge extends ConsumerWidget {
   const _PriceBadge({
     required this.jetonCost,
     required this.affordable,
@@ -198,7 +200,8 @@ class _PriceBadge extends StatelessWidget {
   final bool affordable;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.55),
@@ -211,7 +214,7 @@ class _PriceBadge extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Text(
-          '$jetonCost Jeton',
+          '$jetonCost $jetonLabel',
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w800,
