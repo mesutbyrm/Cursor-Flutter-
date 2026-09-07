@@ -21,6 +21,17 @@ Agent'a kopyala-yapıştır: **`Psychic P0 PASS`** veya **`Psychic P0 FAIL`**
 
 ---
 
+## Test hesapları (P0)
+
+| Rol | E-posta | Şifre |
+|-----|---------|-------|
+| Danışan | `cursor.test.1786235468@mailinator.com` | `CursorTest!1786235468` |
+| Falcı | `cursor.host.1786235468@mailinator.com` | `CursorTest!1786235468` |
+
+Doğrula: `bash scripts/print-p0-live-status.sh`
+
+---
+
 ## Kayıtlar
 
 _(Henüz kayıt yok — P0 cihaz testi sonrası doldurulacak.)_

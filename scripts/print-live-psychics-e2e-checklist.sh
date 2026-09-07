@@ -16,6 +16,9 @@ cat <<EOF
 Bu liste: P0 PASS sonrası tam akış (P1+)
 
 İki cihaz veya danışan + falcı hesabı gerekir.
+  Danışan: cursor.test.1786235468@mailinator.com
+  Falcı:   cursor.host.1786235468@mailinator.com
+  Şifre:   CursorTest!1786235468
 APK: ${APK_URL}
 
 [ ] 0. TRTC freeze (P0 — zorunlu)

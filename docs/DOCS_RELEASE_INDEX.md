@@ -22,7 +22,7 @@
 | [`AGENT_CLOSED.md`](AGENT_CLOSED.md) | Agent kapalı — özet durum |
 | [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md) | **Agent kapalı — kullanıcı tek sayfa rehber** |
 | [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) | **2 telefon hızlı başlangıç (jeton → P0)** |
-| [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md) | Falcı listesi probe — host vs onaylı falcı |
+| [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md) | Falcı probe — host onaylı (`Cursor Host Test`) |
 | [`P1_DEVICE_START.md`](P1_DEVICE_START.md) | P0 sonrası genel platform 2-cihaz |
 | [`P2_PLAY_STORE_START.md`](P2_PLAY_STORE_START.md) | Play Store / Stage 8 backlog (P0+P1 sonrası) |
 | [`LATEST_APK_BUILD.md`](LATEST_APK_BUILD.md) | Son CI derlemesi |
@@ -44,7 +44,9 @@ bash scripts/print-user-test-quick-ref.sh    # 1 sayfa terminal özeti
 bash scripts/print-p0-live-status.sh       # jeton + falcı tek ekran
 bash scripts/validate-pre-device-handoff.sh  # cihaz öncesi API+jeton doğrulama
 bash scripts/agent-closure-status.sh      # agent kapalı + canlı durum
-bash scripts/list-production-tellers.sh   # üretim falcı listesi (8)
+bash scripts/user-test-start.sh ready         # pre-device doğrulama (validate)
+bash scripts/open-approved-teller.sh        # host → onaylı falcı aç/doğrula
+bash scripts/list-production-tellers.sh   # üretim falcı listesi (9)
 bash scripts/on-p0-pass.sh                 # P0 PASS sonrası P1
 bash scripts/on-p1-pass.sh                 # P1 PASS sonrası özet
 bash scripts/on-release-ready-candidate.sh # P0+P1 sonrası RELEASE adayı

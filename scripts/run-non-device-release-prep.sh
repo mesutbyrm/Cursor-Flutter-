@@ -25,6 +25,7 @@ run_step() {
 }
 
 run_step "P0 canlı durum" "bash '$ROOT/scripts/print-p0-live-status.sh'"
+run_step "Falcı doğrula (idempotent)" "bash '$ROOT/scripts/open-approved-teller.sh' 2>&1 | tail -6"
 run_step "API otomasyon özeti" "bash '$ROOT/scripts/run-api-automation-summary.sh'"
 run_step "API release gate (madde 3–8)" "bash '$ROOT/scripts/acceptance-tests/api-release-gate.sh' 2>&1 | tail -12"
 run_step "Psychic Flutter unit" "bash '$ROOT/scripts/run-psychic-unit-tests.sh'"

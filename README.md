@@ -25,7 +25,7 @@ Kod hatası değilse, GitHub **faturalandırma / harcama limiti** yüzünden Act
 
 ## Kullanıcı testi (Psychic P0 — öncelik)
 
-Agent **kapalı** — [`docs/AGENT_CLOSED.md`](docs/AGENT_CLOSED.md). Jeton ✅ · onaylı **falcı** gerekir:
+Agent **kapalı** — [`docs/AGENT_CLOSED.md`](docs/AGENT_CLOSED.md). Jeton ✅ · host falcı ✅ — yalnızca **2 telefon P0** kaldı:
 
 ```bash
 bash scripts/validate-pre-device-handoff.sh

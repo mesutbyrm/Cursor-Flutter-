@@ -24,9 +24,9 @@ fi
 cat <<'EOF'
 Manuel onay (siz doğruladınız mı?):
 
-  [ ] Psychic P0 PASS — T+5s donma yok, 2 telefon
+  [ ] Psychic P0 PASS — T+5s donma yok, 2 telefon (danışan + falcı)
   [ ] P1 PASS — voice, hediye, PK, müzik, oturum izolasyonu
-  [ ] Onaylı falcı hesabı ile Psychic test edildi
+  [ ] Falcı: cursor.host.* ile test edildi (onaylı ✅)
 
 Agent'a bildirin (kopyala-yapıştır):
   P0 PASS + P1 PASS — RELEASE READY adayı
