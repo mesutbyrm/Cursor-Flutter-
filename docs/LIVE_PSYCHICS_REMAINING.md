@@ -66,6 +66,8 @@ Kod main'de; **P0 kapatılmadı**. İki fiziksel cihaz (danışan + falcı veya 
 
 Sonuç raporu: `Psychic P0 PASS` veya `FAIL` + ekran kaydı / logcat.
 
+Checklist yazdır: `bash scripts/psychic-p0-checklist.sh`
+
 ---
 
 ## Kalan — testler

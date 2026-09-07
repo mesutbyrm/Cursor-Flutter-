@@ -32,6 +32,7 @@ concurrency:
 jobs:
   cleanup:
     name: Close stale PRs and delete merged branches
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -63,7 +64,8 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout -B main origin/main
           git add docs/GITHUB_CLEANUP_REPORT.md
           git commit -m "chore(ci): GitHub cleanup report [skip ci]"
-          git pull --rebase origin main
           git push origin main

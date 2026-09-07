@@ -29,6 +29,10 @@ fi
 echo "--- Son özellikler (CHANGELOG) ---"
 "${ROOT}/scripts/extract-changelog-head.sh" 2>/dev/null || true
 echo ""
+echo "--- Kalan (agent bitti — cihaz testi) ---"
+echo "Psychic P0: bash scripts/psychic-p0-checklist.sh"
+echo "Detay: docs/LIVE_PSYCHICS_REMAINING.md · docs/RELEASE_CHECKLIST.md"
+echo ""
 
 RUN_JSON=$(gh run list --repo "$REPO" --workflow=build-apk.yml --branch=main --limit=1 --json status,conclusion,url,displayTitle,createdAt 2>/dev/null || echo '[]')
 echo "--- GitHub Actions (son main derlemesi) ---"
