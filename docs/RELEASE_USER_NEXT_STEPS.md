@@ -1,18 +1,18 @@
-# Release — kullanıcı sonraki adımlar (agent kapalı)
+# Release — kullanıcı sonraki adımlar
 
 
-> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+> **Güncel (2026-09-07):** **`1.0.371+409`** · **RELEASE READY: NO** · Cihaz sonucu **sonra** · Agent P2 prep **devam**
 
-Agent tarafı **tamamlandı**. Kalan iş yalnızca **cihaz kabul testleri** (siz).
+**İki hat:** Cihaz testi sonraya bırakıldı; agent Play Store / P1 checklist hazırlığına devam eder.
 
 ---
 
 ## Tek giriş
 
 ```bash
-bash scripts/basla.sh
-bash scripts/kalan-isler.sh
-bash scripts/agent-closure-status.sh          # aynı — canlı durum + yol haritası
+bash scripts/kalan-isler-agent.sh    # agent · şimdi
+bash scripts/cihaz-sonra.sh            # cihaz · sonra
+bash scripts/kalan-isler.sh            # durum tablosu
 ```
 
 ---
@@ -21,12 +21,14 @@ bash scripts/agent-closure-status.sh          # aynı — canlı durum + yol har
 
 | # | İş | Durum | Komut |
 |---|-----|--------|-------|
+| A | **Agent P2 prep** | ▶ devam | `kalan-isler-agent.sh` · `p2-prep-now.sh` |
+| A2 | Keystore / AAB CI | ⏳ secret sizde | `play-keystore-secrets-cheatsheet.sh` |
 | 0 | Jeton (danışan) | ✅ ~98k | `psychic-p0-prereqs.sh` |
-| 0b | Falcı hesabı | ✅ host onaylı | `probe-psychic-teller.sh` · [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md) |
-| 1 | **Psychic P0** | ⏳ OPEN | `p0-go.sh` → `user-test-start.sh p0` — 2 telefon |
-| 2 | **P1 platform** | ⏸ P0 sonrası | `p1-go.sh` · `p1-platform-checklist.sh` |
+| 0b | Falcı hesabı | ✅ host onaylı | `probe-psychic-teller.sh` |
+| 1 | **Psychic P0** | ⏸ sonuç sonra | `cihaz-sonra.sh` → `user-test-start.sh p0` |
+| 2 | **P1 platform** | ⏸ sonuç sonra | `p1-prep-now.sh` (checklist şimdi) |
 | 3 | M5 cihaz (müzik) | ⏸ | [`M5_DEVICE_TEST_CHECKLIST.md`](M5_DEVICE_TEST_CHECKLIST.md) |
-| 4 | Play Store P2 | ⏸ backlog | [`P2_PLAY_STORE_START.md`](P2_PLAY_STORE_START.md) |
+| 4 | Play Store P2 | ▶ agent prep | [`PLAY_STORE_AGENT_CHECKLIST.md`](PLAY_STORE_AGENT_CHECKLIST.md) |
 
 ---
 

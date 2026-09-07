@@ -80,8 +80,11 @@ Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-ra
 |-------|--------|
 | **Agent paralel (şimdi)** | `bash scripts/kalan-isler-agent.sh` |
 | **Cihaz (sonra)** | `bash scripts/cihaz-sonra.sh` |
-| **Play Console checklist** | `bash scripts/play-store-checklist.sh` |
+| **P2 Play Store prep** | `bash scripts/p2-prep-now.sh` |
 | **AAB readiness** | `bash scripts/play-aab-readiness.sh` |
+| **Play Console checklist** | `bash scripts/play-store-checklist.sh` |
+| **Keystore secret rehberi** | `bash scripts/play-keystore-secrets-cheatsheet.sh` |
+| **Play Console App access** | `bash scripts/print-play-console-app-access.sh` |
 | **P1 checklist ön** | `bash scripts/p1-prep-now.sh` |
 | **Tek komut başlangıç** | `bash scripts/basla.sh` |
 | **Kalan işler** | `bash scripts/kalan-isler.sh` |

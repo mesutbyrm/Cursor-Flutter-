@@ -22,6 +22,7 @@
 |-------|--------|
 | `.github/workflows/ci.yml` | API build + dart analyze + flutter test + FAZ0 |
 | `.github/workflows/build-apk.yml` | Release gate + APK + apk-latest + `LATEST_APK_BUILD.md` |
+| `.github/workflows/build-aab.yml` | Play Store AAB (manuel, keystore secret) |
 | `.github/workflows/build-debug-apk.yml` | Debug APK (CI sonrası) |
 | `.github/workflows/codeql.yml` | Güvenlik analizi |
 | `.github/workflows/github-cleanup.yml` | Birleşmiş `cursor/*` dal temizliği |

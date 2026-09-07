@@ -47,6 +47,8 @@ bash scripts/kalan-isler.sh         # durum tablosu
 bash scripts/p2-prep-now.sh         # Play Store hazırlık
 bash scripts/play-aab-readiness.sh  # AAB öncesi
 bash scripts/play-store-checklist.sh # Console checklist
+bash scripts/play-keystore-secrets-cheatsheet.sh  # GitHub keystore
+bash scripts/print-play-console-app-access.sh   # App access metni
 bash scripts/p1-prep-now.sh         # P1 checklist (ön)
 bash scripts/basla.sh               # canlı durum
 ```

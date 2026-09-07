@@ -156,6 +156,12 @@ case "${1:-}" in
   play-checklist|play-store)
     exec bash "$ROOT/scripts/play-store-checklist.sh"
     ;;
+  keystore|secrets)
+    exec bash "$ROOT/scripts/play-keystore-secrets-cheatsheet.sh"
+    ;;
+  app-access|play-access)
+    exec bash "$ROOT/scripts/print-play-console-app-access.sh"
+    ;;
   aab-ready|aab-readiness)
     exec bash "$ROOT/scripts/play-aab-readiness.sh"
     ;;
