@@ -61,15 +61,15 @@
 
 ---
 
-## P0 — Müzik (FAZ 6 bloker)
+## P0 — Müzik (FAZ 6)
 
-M1–M12 `[x]` | M5 `[ ]` | M7 `[~]` jeton
+M1–M12 `[x]` | M5 API smoke `[x]` | M5 cihaz `[ ]` | M7 API `[x]` | M7 cihaz `[ ]`
 
 ---
 
 ## FAZ 0 audit
 
-A1–A8 `[x]` | A9 `[ ]` M5 PASS
+A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
@@ -83,6 +83,12 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-09-07 — falcı probe)
+
+- `probe-psychic-teller.sh` — host falcı listesinde değil (8 falcı); örnek isimler
+- `PSYCHIC_TELLER_STATUS.md` — cihaz testi falcı rehberi
+- prereqs/checklist/handoff/release-status entegrasyonu
 
 ## Oturum günlüğü (2026-09-07 — API otomasyon + kalan işler)
 

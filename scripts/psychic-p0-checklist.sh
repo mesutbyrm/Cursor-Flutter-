@@ -23,6 +23,13 @@ if [[ -x "${ROOT}/scripts/psychic-p0-prereqs.sh" ]]; then
 ✅ Önkoşullar OK (APK + giriş + jeton)
 "
   fi
+  if echo "$PREREQ_OUT" | grep -q 'Falcı listesinde DEĞİL'; then
+    PREREQ_NOTE="${PREREQ_NOTE}
+⚠️  Host hesabı falcı listesinde değil — onaylı falcı hesabı veya admin onayı gerekir
+    bash scripts/probe-psychic-teller.sh
+    docs/PSYCHIC_TELLER_STATUS.md
+"
+  fi
 fi
 
 cat <<EOF

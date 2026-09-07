@@ -22,6 +22,8 @@ echo ""
 
 ok=0
 warn=0
+jeton_warn=0
+teller_warn=0
 
 # APK HTTP
 code=$(curl -sS -o /dev/null -w '%{http_code}' -L "$APK_URL" || echo "000")
@@ -40,6 +42,7 @@ if bootstrap_user_token; then
   if [[ "$jeton" =~ ^[0-9]+$ ]] && [[ "$jeton" -lt 100 ]]; then
     echo "⚠️  Danışan jeton=$jeton — Psychic seans için admin panelden jeton ekleyin"
     echo "    Rehber: docs/M5_M7_JETON_BLOCKER.md · bash scripts/admin-jeton-cheatsheet.sh"
+    jeton_warn=1
     warn=$((warn + 1))
   else
     echo "✅ Danışan jeton=$jeton"
@@ -57,12 +60,28 @@ else
 fi
 
 echo ""
+echo "── Falcı listesi (Psychic seans) ──"
+if [[ -x "${ROOT}/scripts/probe-psychic-teller.sh" ]]; then
+  PROBE=$("${ROOT}/scripts/probe-psychic-teller.sh" 2>&1 || true)
+  echo "$PROBE" | grep -E '^(──|✅|⚠️|❌|  |Falcı probe)' || true
+  if echo "$PROBE" | grep -q 'Falcı listesinde DEĞİL'; then
+    teller_warn=1
+    warn=$((warn + 1))
+  fi
+fi
+
+echo ""
 echo "── Sonraki adım (2 telefon) ──"
 echo "  bash scripts/psychic-p0-checklist.sh"
 echo "  bash scripts/user-handoff.sh"
 echo ""
-if [[ "$warn" -gt 0 ]]; then
-  echo "Jeton düşükse seans oluşturulamaz; önce admin jeton, sonra P0."
+if [[ "$jeton_warn" -gt 0 ]]; then
+  echo "Jeton düşük — seans oluşturulamaz; önce admin jeton, sonra P0."
+  exit 0
+fi
+if [[ "$teller_warn" -gt 0 ]]; then
+  echo "Jeton OK — falcı uyarısı var; onaylı falcı hesabı ile P0 deneyin."
+  echo "  docs/PSYCHIC_TELLER_STATUS.md · bash scripts/probe-psychic-teller.sh"
   exit 0
 fi
 echo "Önkoşullar hazır — cihaz testine geçilebilir."

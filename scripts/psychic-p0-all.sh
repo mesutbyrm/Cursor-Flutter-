@@ -12,7 +12,7 @@ PREREQ=$("$ROOT/scripts/psychic-p0-prereqs.sh" 2>&1) || true
 echo "$PREREQ"
 echo ""
 
-if echo "$PREREQ" | grep -q 'jeton=0'; then
+if echo "$PREREQ" | grep -q 'jeton=0\|Jeton düşük'; then
   echo "── Admin jeton (zorunlu) ──"
   "$ROOT/scripts/admin-jeton-cheatsheet.sh" | head -25
   echo ""

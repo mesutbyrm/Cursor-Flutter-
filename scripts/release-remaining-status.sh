@@ -18,7 +18,7 @@ echo ""
 # --- P0-j: jeton ---
 echo "── P0-j · Danışan jeton (bloker) ──"
 PREREQ=$("$ROOT/scripts/psychic-p0-prereqs.sh" 2>&1) || true
-echo "$PREREQ" | grep -E '^(✅|⚠️|❌)' || true
+echo "$PREREQ" | grep -E '^(✅|⚠️|❌).*(APK|Danışan|jeton|Falcı/host)' || true
 if echo "$PREREQ" | grep -q 'jeton=0'; then
   echo "Durum: ❌ OPEN — admin panel veya ACCEPTANCE_ADMIN_* secret"
   echo "  bash scripts/admin-jeton-cheatsheet.sh"
@@ -34,10 +34,20 @@ echo ""
 echo "── P0 · Psychic TRTC 2-cihaz (T+5s donma) ──"
 if [[ "$P0J" == "OPEN" ]]; then
   echo "Durum: ⏸ BEKLEMEDE — önce P0-j (jeton)"
+elif [[ -x "${ROOT}/scripts/probe-psychic-teller.sh" ]]; then
+  PROBE_LINE=$("${ROOT}/scripts/probe-psychic-teller.sh" 2>&1 | grep -E 'Falcı listesinde|listed —' | head -1 || true)
+  if echo "$PROBE_LINE" | grep -q 'listed —'; then
+    echo "Durum: ⏳ OPEN — 2 telefon manuel test (falcı listede ✅)"
+  elif echo "$PROBE_LINE" | grep -q 'DEĞİL'; then
+    echo "Durum: ⏳ OPEN — 2 telefon (⚠️ host falcı listesinde değil — onaylı falcı)"
+  else
+    echo "Durum: ⏳ OPEN — 2 telefon manuel test"
+  fi
 else
   echo "Durum: ⏳ OPEN — 2 telefon manuel test"
 fi
 echo "  bash scripts/psychic-p0-all.sh"
+echo "  bash scripts/probe-psychic-teller.sh"
 echo "  docs/PSYCHIC_P0_START.md"
 echo "  Sonuç: Psychic P0 PASS veya FAIL"
 echo ""
