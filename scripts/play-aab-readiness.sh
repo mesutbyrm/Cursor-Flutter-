@@ -73,5 +73,7 @@ if [[ "$warn" -eq 0 ]]; then
   exit 0
 fi
 echo "⏳ $warn madde eksik — Play yükleme öncesi tamamlayın"
+echo "   CI: bash scripts/print-ci-aab-steps.sh"
+echo "   Secret: bash scripts/play-keystore-secrets-cheatsheet.sh"
 echo "   Örnek: cp mobile/android/key.properties.example mobile/android/key.properties"
 exit 0

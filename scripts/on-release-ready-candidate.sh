@@ -49,12 +49,14 @@ Manuel onay (siz doğruladınız mı?):
 Agent'a bildirin (kopyala-yapıştır):
   P0 PASS + P1 PASS — RELEASE READY adayı
 
-Sonraki (P2 backlog):
-  bash scripts/p2-prep-go.sh
-  bash scripts/p2-prep-all.sh
+Sonraki (P2 yükleme günü):
+  bash scripts/print-play-upload-day-checklist.sh
   bash scripts/p2-go.sh
   bash scripts/print-ci-aab-steps.sh
+  bash scripts/print-release-blockers.sh
   bash scripts/build-play-aab.sh   # keystore secret gerekir
+
+Agent prep (şimdi): bash scripts/print-agent-prep-status.sh
 
 EOF
 

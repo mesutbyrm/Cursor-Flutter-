@@ -59,8 +59,9 @@ bash scripts/print-play-data-safety-summary.sh  # Data safety özeti
 bash scripts/print-play-content-rating-summary.sh  # IARC özeti
 bash scripts/print-play-store-listing.sh      # Store listing taslak
 bash scripts/print-ci-aab-steps.sh            # GitHub Actions AAB
+bash scripts/print-agent-prep-status.sh       # Agent prep envanter
 bash scripts/print-go-commands.sh             # GO / prep indeks
-bash scripts/print-play-target-audience-summary.sh  # Target audience + ads
+bash scripts/print-play-upload-day-checklist.sh  # Yükleme günü (P0+P1 sonrası)
 bash scripts/p1-prep-now.sh         # P1 checklist (ön)
 bash scripts/basla.sh               # canlı durum
 ```

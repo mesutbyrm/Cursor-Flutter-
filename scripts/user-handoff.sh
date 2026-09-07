@@ -41,3 +41,6 @@ Rehberler:
 EOF
 
 bash "$ROOT/scripts/print-build-status.sh" 2>/dev/null | head -12
+
+echo ""
+bash "$ROOT/scripts/print-release-blockers.sh" 2>/dev/null | head -22 || true

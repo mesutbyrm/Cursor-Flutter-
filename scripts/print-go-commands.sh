@@ -32,8 +32,12 @@ Agent P2 (şimdi):
   bash scripts/print-play-console-prep-index.sh
 
 Yükleme günü (P0+P1 PASS):
+  bash scripts/print-play-upload-day-checklist.sh
   bash scripts/p2-go.sh
   bash scripts/print-ci-aab-steps.sh
+
+Agent prep envanter:
+  bash scripts/print-agent-prep-status.sh
 
 Sonuç kaydı:
   bash scripts/record-user-test-result.sh p0 PASS|FAIL

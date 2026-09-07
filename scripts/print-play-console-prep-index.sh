@@ -8,6 +8,8 @@ cat <<'EOF'
 Tam prep:     bash scripts/p2-prep-all.sh
 P2 GO:        bash scripts/p2-prep-go.sh
 GO indeks:    bash scripts/print-go-commands.sh
+Agent prep:   bash scripts/print-agent-prep-status.sh
+Upload günü:  bash scripts/print-play-upload-day-checklist.sh
 Checklist:    bash scripts/play-store-checklist.sh
 AAB readiness: bash scripts/play-aab-readiness.sh
 
