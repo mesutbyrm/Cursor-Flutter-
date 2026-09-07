@@ -30,8 +30,10 @@
 ## Script
 
 ```bash
+bash scripts/psychic-p0-prereqs.sh        # APK + giriş + jeton (P0 öncesi)
 bash scripts/user-handoff.sh           # Kullanıcı devir özeti (Psychic P0)
 bash scripts/print-build-status.sh      # Özet
+bash scripts/psychic-p0-checklist.sh    # Psychic P0 tablosu
 bash scripts/print-live-psychics-e2e-checklist.sh  # Tam E2E (P0 sonrası)
 ```
 
