@@ -18,28 +18,30 @@ show_menu() {
 
 APK: ${APK_URL}
 
-Sıra: P0-j ✅ → **P0 OPEN** → P1 → P2
+Sıra: P0-j ✅ · cihaz testi **SONRA** · agent P1/P2 prep **ŞİMDİ**
 
-★ ÖNERİLEN (başla):
-  bash scripts/basla.sh                       # tek komut: canlı durum + devir teslim
-  bash scripts/kalan-isler.sh                 # kalan işler + canlı durum
-  bash scripts/p0-go.sh                       # P0 GO (jeton + falcı + hesaplar)
+★ ÖNERİLEN:
+  bash scripts/kalan-isler-agent.sh            # agent paralel (cihaz sonra)
+  bash scripts/cihaz-sonra.sh                  # cihaz testi (sonuç sonra)
 
 Komutlar:
-  0) bash scripts/kalan-isler.sh              # yol haritası (★)
-  1) bash scripts/p0-go.sh                    # P0 GO (★)
-  2) bash scripts/validate-pre-device-handoff.sh   # user-test-start.sh device-ready
-  3) bash scripts/user-test-start.sh p0       # P0 checklist
-  4) bash scripts/on-p0-pass.sh | on-p0-fail.sh
-  5) bash scripts/p1-go.sh                    # P0 PASS sonrası
-  6) bash scripts/p1-platform-checklist.sh
-  7) bash scripts/on-p1-pass.sh
-  8) bash scripts/p2-go.sh                    # Play Store backlog
-  9) bash scripts/on-release-ready-candidate.sh
- 10) bash scripts/psychic-p0-prereqs.sh
- 11) bash scripts/probe-psychic-teller.sh
- 12) bash scripts/open-approved-teller.sh
- 13) bash scripts/run-non-device-release-prep.sh
+  0) bash scripts/kalan-isler-agent.sh         # agent · şimdi
+  1) bash scripts/cihaz-sonra.sh               # cihaz · sonra
+  2) bash scripts/p2-prep-now.sh               # Play Store hazırlık
+  3) bash scripts/p1-prep-now.sh               # P1 checklist ön
+  4) bash scripts/basla.sh                     # canlı durum
+  5) bash scripts/p0-go.sh
+  6) bash scripts/validate-pre-device-handoff.sh
+  7) bash scripts/user-test-start.sh p0
+  8) bash scripts/on-p0-pass.sh | on-p0-fail.sh
+  9) bash scripts/p1-go.sh
+ 10) bash scripts/on-p1-pass.sh
+ 11) bash scripts/p2-go.sh
+ 12) bash scripts/on-release-ready-candidate.sh
+ 13) bash scripts/psychic-p0-prereqs.sh
+ 14) bash scripts/probe-psychic-teller.sh
+ 15) bash scripts/open-approved-teller.sh
+ 16) bash scripts/run-non-device-release-prep.sh
 
 Rehberler:
   docs/KALAN_ISLER.md               ← kalan işler (statik özet)
@@ -138,6 +140,18 @@ case "${1:-}" in
     ;;
   kalan|remaining|kalan-isler)
     exec bash "$ROOT/scripts/kalan-isler.sh"
+    ;;
+  agent|kalan-agent|agent-kalan)
+    exec bash "$ROOT/scripts/kalan-isler-agent.sh"
+    ;;
+  cihaz-sonra|later|sonra)
+    exec bash "$ROOT/scripts/cihaz-sonra.sh"
+    ;;
+  p1-prep|p1prep)
+    exec bash "$ROOT/scripts/p1-prep-now.sh"
+    ;;
+  p2-prep|p2prep)
+    exec bash "$ROOT/scripts/p2-prep-now.sh"
     ;;
   p2-go|p2go)
     exec bash "$ROOT/scripts/p2-go.sh"

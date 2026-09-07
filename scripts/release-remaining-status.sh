@@ -95,16 +95,16 @@ echo ""
 # --- Agent ---
 echo "── Agent ──"
 echo "Kod/CI/docs: ✅ TAMAM · RELEASE READY: NO"
+echo "Cihaz testi: ⏸ SONRA · Agent paralel: bash scripts/kalan-isler-agent.sh"
 echo "Canlı durum: bash scripts/kalan-isler.sh"
 echo "Hızlı özet: bash scripts/print-kalan-isler.sh · bash scripts/print-user-test-quick-ref.sh"
 echo "APK: ${APK_URL}"
 echo ""
 echo "Sonraki adım:"
 if [[ "$P0J" == "OPEN" ]]; then
-  echo "  1) Admin jeton → bash scripts/user-test-start.sh"
+  echo "  1) Admin jeton → bash scripts/admin-jeton-cheatsheet.sh"
 else
-  echo "  0) bash scripts/basla.sh  (tek komut — canlı durum + devir teslim)"
-  echo "  1) bash scripts/p0-go.sh  (veya: user-test-start.sh p0)"
-  echo "  2) Doğrulama: bash scripts/validate-pre-device-handoff.sh"
-  echo "  3) Sonuç: bash scripts/on-p0-pass.sh  veya  on-p0-fail.sh"
+  echo "  Agent (şimdi): bash scripts/kalan-isler-agent.sh"
+  echo "  Cihaz (sonra): bash scripts/cihaz-sonra.sh"
+  echo "  P2 hazırlık:   bash scripts/p2-prep-now.sh"
 fi

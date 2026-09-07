@@ -3,7 +3,16 @@
 
 > **Sürüm:** `1.0.371+409` · **RELEASE READY: NO** · Canlı durum: `bash scripts/kalan-isler.sh`
 
-Agent tarafı **tamam** (kod, CI, API, falcı onayı). Kalan yalnızca **cihaz testleri**.
+Agent tarafı **tamam** (kod, CI, API, falcı onayı). **Cihaz testi sonuçları sonra** — agent **P1/P2 hazırlığına** devam eder.
+
+---
+
+## İki paralel hat
+
+| Hat | Durum | Komut |
+|-----|--------|--------|
+| **Cihaz** (P0→P1) | ⏸ sonuç sonra | `bash scripts/cihaz-sonra.sh` |
+| **Agent** (P1/P2 prep) | ▶ devam | `bash scripts/kalan-isler-agent.sh` |
 
 ---
 
@@ -12,9 +21,9 @@ Agent tarafı **tamam** (kod, CI, API, falcı onayı). Kalan yalnızca **cihaz t
 | # | İş | Durum | Komut |
 |---|-----|--------|--------|
 | P0-j | Danışan jeton | ✅ ~98k | — |
-| **P0** | Psychic TRTC, 2 telefon | ⏳ **OPEN** | `bash scripts/p0-go.sh` |
-| P1 | Platform, 2 telefon | ⏸ P0 sonrası | `bash scripts/p1-go.sh` |
-| P2 | Play Store / AAB | ⏸ P0+P1 sonrası | `bash scripts/p2-go.sh` |
+| **P0** | Psychic TRTC, 2 telefon | ⏸ **sonra** | `bash scripts/cihaz-sonra.sh` |
+| P1 | Platform, 2 telefon | ⏸ sonuç sonra | `bash scripts/p1-prep-now.sh` |
+| P2 | Play Store / AAB | ▶ agent prep | `bash scripts/p2-prep-now.sh` |
 
 ---
 
@@ -32,15 +41,12 @@ APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/c
 ## Komutlar (sırayla)
 
 ```bash
-bash scripts/basla.sh                # tek komut başlangıç (canlı durum)
-bash scripts/kalan-isler.sh          # canlı durum + tablo
-bash scripts/p0-go.sh                # P0 GO
-bash scripts/user-test-start.sh p0   # checklist
-bash scripts/on-p0-pass.sh           # P0 PASS
-bash scripts/p1-go.sh                # P1 GO
-bash scripts/on-p1-pass.sh           # P1 PASS
-bash scripts/on-release-ready-candidate.sh
-bash scripts/p2-go.sh
+bash scripts/kalan-isler-agent.sh   # agent paralel (şimdi)
+bash scripts/cihaz-sonra.sh         # cihaz (sonra)
+bash scripts/kalan-isler.sh         # durum tablosu
+bash scripts/p2-prep-now.sh         # Play Store hazırlık
+bash scripts/p1-prep-now.sh         # P1 checklist (ön)
+bash scripts/basla.sh               # canlı durum
 ```
 
 FAIL: `bash scripts/on-p0-fail.sh "T+5s donma"`
