@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../membership/presentation/controllers/membership_controller.dart';
@@ -37,6 +38,9 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
     final membershipInfo = ref.watch(profileMembershipInfoProvider);
     final jeton = wallet?.jeton ?? state.jeton;
     final cfc = wallet?.cfc ?? state.cfc;
+    final locale = Localizations.localeOf(context);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc', locale: locale);
 
     return ProfileGlass(
       padding: const EdgeInsets.all(16),
@@ -102,7 +106,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                       child: _CurrencyCell(
                         icon: Icons.monetization_on_rounded,
                         color: const Color(0xFFFFD54F),
-                        label: buildMembershipCurrencyJetonLabel(),
+                        label: jetonLabel,
                         value: profileFormatCount(jeton),
                         showPlus: true,
                         onPlus: () => openJetonStore(context, ref: ref),
@@ -113,7 +117,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                       child: _CurrencyCell(
                         icon: Icons.diamond_rounded,
                         color: const Color(0xFF64B5F6),
-                        label: buildMembershipHubCurrencyElmasLabel(),
+                        label: cfcLabel,
                         value: profileFormatCount(cfc),
                         showPlus: true,
                         onPlus: () => openCfcStore(context, ref: ref),

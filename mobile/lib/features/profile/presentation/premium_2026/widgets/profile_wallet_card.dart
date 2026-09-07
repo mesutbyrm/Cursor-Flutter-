@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
@@ -55,6 +56,9 @@ class ProfileWalletCard extends ConsumerWidget {
         buildMembershipWalletSubscriptionStatRowLabel(info: info);
     final subscriptionsTileLabel =
         buildMembershipWalletSubscriptionsTileLabel(info: info);
+    final locale = Localizations.localeOf(context);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc', locale: locale);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -72,7 +76,7 @@ class ProfileWalletCard extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: _BalanceBlock(
-                        label: buildMembershipCurrencyJetonLabel(),
+                        label: jetonLabel,
                         value: profileFormatCount(state.jeton),
                         icon: Icons.monetization_on_rounded,
                         color: AppThemeColors.coinGold,
@@ -81,7 +85,7 @@ class ProfileWalletCard extends ConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _BalanceBlock(
-                        label: buildMembershipCurrencyCfcLabel(),
+                        label: cfcLabel,
                         value: profileFormatCount(state.cfc),
                         icon: Icons.diamond_rounded,
                         color: AppThemeColors.diamondBlue,
