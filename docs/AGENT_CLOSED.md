@@ -29,6 +29,7 @@ Mobil kod, CI, API otomasyon ve **P2 prep betik paketi tamam**. **Cihaz testi so
 | P2 agent prep | ✅ `p2-prep-go.sh` · `p2-prep-all.sh` · Console print · `build-aab.yml` |
 | Paralel giriş | ✅ `devam-et.sh` · `print-paralel-mod.sh` · `print-release-blockers.sh` |
 | Agent prep paketi | ✅ `agent-prep-tamam.sh` · upload day checklist · tüm print betikleri |
+| Hızlı durum | ✅ `agent-bitti.sh` · `devam-et.sh` (--full · --api) |
 | Kalan işler doc | ✅ `docs/KALAN_ISLER.md` |
 
 ---
@@ -37,7 +38,7 @@ Mobil kod, CI, API otomasyon ve **P2 prep betik paketi tamam**. **Cihaz testi so
 
 | # | İş | Komut |
 |---|-----|--------|
-| 0 | Tek komut başlangıç | `bash scripts/basla.sh` |
+| 0 | Tek komut başlangıç | `bash scripts/kullanici-sonraki.sh` |
 | 1 | Canlı durum + yol haritası | `bash scripts/kalan-isler.sh` |
 | 2 | Pre-device doğrulama | `bash scripts/validate-pre-device-handoff.sh` |
 | 3 | Psychic P0 (2 telefon) | `bash scripts/p0-go.sh` → `user-test-start.sh p0` |

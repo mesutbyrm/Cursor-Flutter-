@@ -12,7 +12,7 @@ Agent tarafı **tamam** (kod, CI, API, falcı, P2 prep betikleri). **Cihaz + key
 | Hat | Durum | Komut |
 |-----|--------|--------|
 | **Cihaz** (P0→P1) | ⏸ sonuç sonra | `bash scripts/cihaz-sonra.sh` |
-| **Agent** (P1/P2 prep) | ✅ tamam | `bash scripts/agent-prep-tamam.sh` |
+| **Agent** (P1/P2 prep) | ✅ tamam | `bash scripts/agent-bitti.sh` |
 
 ---
 
@@ -42,6 +42,7 @@ APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/c
 
 ```bash
 bash scripts/kullanici-sonraki.sh         # ★ kullanıcı kalan adımlar
+bash scripts/agent-bitti.sh               # agent ✅ bitti (hızlı durum)
 bash scripts/agent-prep-tamam.sh          # agent prep doğrula
 bash scripts/print-release-blockers.sh      # RELEASE READY engelleri
 bash scripts/print-paralel-mod.sh   # paralel mod tek ekran
