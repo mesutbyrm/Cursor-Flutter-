@@ -39,7 +39,14 @@ Tüm sürümler: https://github.com/mesutbyrm/Cursor-Flutter-/releases
 
 ## Psychic TRTC cihaz testi (P0 — kullanıcı)
 
-Agent işleri bitti; production için 2-cihaz kabul gerekir: `bash scripts/psychic-p0-checklist.sh` · `docs/LIVE_PSYCHICS_REMAINING.md`
+Agent işleri bitti. Sıra: **jeton → 2 telefon → T+5s donma testi**
+
+```bash
+bash scripts/psychic-p0-all.sh       # Önkoşul + checklist (jeton=0 ise admin adımları)
+bash scripts/user-handoff.sh         # Tam özet
+```
+
+Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md)
 
 ## Kurulum
 

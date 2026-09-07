@@ -122,4 +122,4 @@ Kullanıcı GitHub’da **Watch → Releases** ile e-posta alabilir.
 
 ### Release handoff
 
-Güncel sürüm, gate durumu ve kalan iş: [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md) · Kullanıcı: `bash scripts/user-handoff.sh` · Psychic P0: `bash scripts/psychic-p0-checklist.sh` · `[skip ci]` push CI/APK atlar.
+Güncel sürüm ve kalan iş: [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md) · Kullanıcı: `bash scripts/user-handoff.sh` veya `bash scripts/psychic-p0-all.sh` · Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · `[skip ci]` push CI/APK atlar.

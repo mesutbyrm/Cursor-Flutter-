@@ -31,6 +31,7 @@
 ## Script
 
 ```bash
+bash scripts/psychic-p0-all.sh            # Önkoşul + checklist (tek akış)
 bash scripts/psychic-p0-prereqs.sh        # APK + giriş + jeton (P0 öncesi)
 bash scripts/user-handoff.sh           # Kullanıcı devir özeti (Psychic P0)
 bash scripts/print-build-status.sh      # Özet

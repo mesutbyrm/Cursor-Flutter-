@@ -64,6 +64,7 @@ Genel platform: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) P1
 ## Tek komut özeti
 
 ```bash
+bash scripts/psychic-p0-all.sh    # Önkoşul + jeton uyarısı + checklist
 bash scripts/user-handoff.sh
 ```
 
