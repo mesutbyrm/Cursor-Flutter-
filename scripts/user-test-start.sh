@@ -25,7 +25,9 @@ Sıra: P0-j ✅ · cihaz testi **SONRA** · agent P1/P2 prep **ŞİMDİ**
   bash scripts/cihaz-sonra.sh                  # cihaz testi (sonuç sonra)
 
 Komutlar:
-  0) bash scripts/kalan-isler-agent.sh         # agent · şimdi
+  0) bash scripts/kalan-isler-agent.sh         # agent · şimdi (= devam-et)
+  0b) bash scripts/devam-et.sh                 # agent · devam et alias
+  0c) bash scripts/print-paralel-mod.sh        # paralel mod özet
   1) bash scripts/cihaz-sonra.sh               # cihaz · sonra
   2) bash scripts/p2-prep-all.sh               # Play Store hazırlık (tam)
   2b) bash scripts/p2-prep-go.sh               # P2 prep GO (özet)
@@ -142,8 +144,14 @@ case "${1:-}" in
   kalan|remaining|kalan-isler)
     exec bash "$ROOT/scripts/kalan-isler.sh"
     ;;
-  agent|kalan-agent|agent-kalan)
+  agent|kalan-agent|agent-kalan|devam-et|devam)
     exec bash "$ROOT/scripts/kalan-isler-agent.sh"
+    ;;
+  paralel|paralel-mod|mod)
+    exec bash "$ROOT/scripts/print-paralel-mod.sh"
+    ;;
+  p1-prep-go|p1prepgo)
+    exec bash "$ROOT/scripts/p1-prep-go.sh"
     ;;
   cihaz-sonra|later|sonra)
     exec bash "$ROOT/scripts/cihaz-sonra.sh"

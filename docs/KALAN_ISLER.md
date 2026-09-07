@@ -12,7 +12,7 @@ Agent tarafı **tamam** (kod, CI, API, falcı onayı). **Cihaz testi sonuçları
 | Hat | Durum | Komut |
 |-----|--------|--------|
 | **Cihaz** (P0→P1) | ⏸ sonuç sonra | `bash scripts/cihaz-sonra.sh` |
-| **Agent** (P1/P2 prep) | ▶ devam | `bash scripts/kalan-isler-agent.sh` |
+| **Agent** (P1/P2 prep) | ▶ devam | `bash scripts/devam-et.sh` |
 
 ---
 
@@ -22,8 +22,8 @@ Agent tarafı **tamam** (kod, CI, API, falcı onayı). **Cihaz testi sonuçları
 |---|-----|--------|--------|
 | P0-j | Danışan jeton | ✅ ~98k | — |
 | **P0** | Psychic TRTC, 2 telefon | ⏸ **sonra** | `bash scripts/cihaz-sonra.sh` |
-| P1 | Platform, 2 telefon | ⏸ sonuç sonra | `bash scripts/p1-prep-now.sh` |
-| P2 | Play Store / AAB | ▶ agent prep | `bash scripts/p2-prep-all.sh` |
+| P1 | Platform, 2 telefon | ⏸ sonuç sonra | `bash scripts/p1-prep-go.sh` |
+| P2 | Play Store / AAB | ▶ agent prep | `bash scripts/p2-prep-go.sh` |
 
 ---
 
@@ -41,10 +41,12 @@ APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/c
 ## Komutlar (sırayla)
 
 ```bash
-bash scripts/kalan-isler-agent.sh   # agent paralel (şimdi)
+bash scripts/devam-et.sh            # agent devam (= kalan-isler-agent)
+bash scripts/print-paralel-mod.sh   # paralel mod tek ekran
 bash scripts/cihaz-sonra.sh         # cihaz (sonra)
 bash scripts/kalan-isler.sh         # durum tablosu
-bash scripts/p2-prep-go.sh                # P2 agent GO (özet)
+bash scripts/p1-prep-go.sh          # P1 checklist GO
+bash scripts/p2-prep-go.sh          # P2 agent GO (özet)
 bash scripts/p2-prep-all.sh         # Play Store hazırlık (tam)
 bash scripts/p2-prep-now.sh         # Play Store özet
 bash scripts/play-aab-readiness.sh  # AAB öncesi

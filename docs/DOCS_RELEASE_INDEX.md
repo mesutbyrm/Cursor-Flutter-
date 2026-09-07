@@ -65,7 +65,9 @@ bash scripts/print-play-content-rating-summary.sh  # IARC
 bash scripts/print-play-store-listing.sh      # Store listing
 bash scripts/print-ci-aab-steps.sh            # CI AAB
 bash scripts/print-play-console-prep-index.sh # Prep indeks
-bash scripts/p1-prep-now.sh                   # P1 checklist ön
+bash scripts/devam-et.sh                    # agent devam
+bash scripts/print-paralel-mod.sh           # paralel özet
+bash scripts/p1-prep-go.sh                  # P1 checklist GO
 bash scripts/kalan-isler.sh                 # kalan işler + yol haritası
 bash scripts/p0-go.sh                       # P0 GO ekranı
 bash scripts/p1-go.sh                       # P1 GO (P0 PASS sonrası)

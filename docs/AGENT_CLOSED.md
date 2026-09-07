@@ -25,7 +25,9 @@ Mobil kod, CI ve API otomasyon **tamam**. **Cihaz testi sonucu sonra** — agent
 | Non-device prep (tek komut) | ✅ `run-non-device-release-prep.sh` |
 | P0 GO ekranı | ✅ `p0-go.sh` |
 | P1/P2 GO + yol haritası | ✅ `p1-go.sh` · `p2-go.sh` · `kalan-isler.sh` |
+| P1 prep GO | ✅ `p1-prep-go.sh` |
 | P2 agent prep | ✅ `p2-prep-go.sh` · `p2-prep-all.sh` · Console print · `build-aab.yml` |
+| Paralel giriş | ✅ `devam-et.sh` · `print-paralel-mod.sh` |
 | Kalan işler doc | ✅ `docs/KALAN_ISLER.md` |
 
 ---

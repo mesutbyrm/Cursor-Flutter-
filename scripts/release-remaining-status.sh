@@ -76,9 +76,9 @@ echo ""
 
 # --- P1 ---
 echo "── P1 · Platform 2-cihaz (voice/gift/PK/müzik) ──"
-echo "Durum: ⏸ P0 PASS sonrası"
-echo "  bash scripts/p1-go.sh"
-echo "  bash scripts/p1-platform-checklist.sh"
+echo "Durum: ⏸ P0 sonucu sonra · checklist şimdi: bash scripts/p1-prep-go.sh"
+echo "  bash scripts/p1-prep-go.sh"
+echo "  bash scripts/p1-prep-now.sh"
 echo "  docs/P1_DEVICE_START.md"
 echo "  docs/M5_DEVICE_TEST_CHECKLIST.md (müzik/voice)"
 echo ""
@@ -106,7 +106,8 @@ echo "Sonraki adım:"
 if [[ "$P0J" == "OPEN" ]]; then
   echo "  1) Admin jeton → bash scripts/admin-jeton-cheatsheet.sh"
 else
-  echo "  Agent (şimdi): bash scripts/kalan-isler-agent.sh"
+  echo "  Agent (şimdi): bash scripts/devam-et.sh"
+  echo "  Özet:          bash scripts/print-paralel-mod.sh"
   echo "  Cihaz (sonra): bash scripts/cihaz-sonra.sh"
   echo "  P2 hazırlık:   bash scripts/p2-prep-all.sh"
 fi

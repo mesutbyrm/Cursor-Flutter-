@@ -79,6 +79,9 @@ Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-ra
 | Görev | Komut |
 |-------|--------|
 | **Agent paralel (şimdi)** | `bash scripts/kalan-isler-agent.sh` |
+| **Devam et** | `bash scripts/devam-et.sh` |
+| **Paralel mod özet** | `bash scripts/print-paralel-mod.sh` |
+| **P1 prep GO** | `bash scripts/p1-prep-go.sh` |
 | **Cihaz (sonra)** | `bash scripts/cihaz-sonra.sh` |
 | **P2 prep GO** | `bash scripts/p2-prep-go.sh` |
 | **P2 Play Store prep (tam)** | `bash scripts/p2-prep-all.sh` |

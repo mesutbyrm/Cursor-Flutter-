@@ -6,6 +6,8 @@
 ## Komutlar
 
 ```bash
+bash scripts/p2-prep-go.sh              # P2 agent GO (özet)
+bash scripts/p1-prep-go.sh              # P1 checklist GO
 bash scripts/p2-prep-all.sh             # tam (AAB + app access + FGS + keystore)
 bash scripts/play-aab-readiness.sh      # keystore + Gradle + Sign-In
 bash scripts/play-store-checklist.sh    # Console adımları
