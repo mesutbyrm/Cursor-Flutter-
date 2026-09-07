@@ -90,7 +90,8 @@ echo "APK: ${APK_URL}"
 echo ""
 echo "Sonraki adım:"
 if [[ "$P0J" == "OPEN" ]]; then
-  echo "  1) Admin jeton → bash scripts/psychic-p0-all.sh"
+  echo "  1) Admin jeton → bash scripts/user-test-start.sh"
 else
-  echo "  1) bash scripts/psychic-p0-all.sh (2 telefon)"
+  echo "  1) bash scripts/user-test-start.sh  (veya: psychic-p0-all.sh)"
+  echo "  2) Sonuç: bash scripts/record-user-test-result.sh p0 PASS|FAIL"
 fi

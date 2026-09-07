@@ -19,6 +19,7 @@
 | [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md) | Psychic P0 freeze + E2E |
 | [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) | **2 telefon hızlı başlangıç (jeton → P0)** |
 | [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md) | Falcı listesi probe — host vs onaylı falcı |
+| [`USER_DEVICE_TEST_LOG.md`](USER_DEVICE_TEST_LOG.md) | Kullanıcı PASS/FAIL günlüğü (record script) |
 | [`P1_DEVICE_START.md`](P1_DEVICE_START.md) | P0 sonrası genel platform 2-cihaz |
 | [`P2_PLAY_STORE_START.md`](P2_PLAY_STORE_START.md) | Play Store / Stage 8 backlog (P0+P1 sonrası) |
 | [`LATEST_APK_BUILD.md`](LATEST_APK_BUILD.md) | Son CI derlemesi |
@@ -35,6 +36,7 @@
 
 ```bash
 bash scripts/user-test-start.sh           # cihaz testi tek giriş (P0/P1)
+bash scripts/record-user-test-result.sh p0 PASS  # sonuç kaydı
 bash scripts/release-remaining-status.sh   # P0-j/P0/P1/P2 canlı özet
 bash scripts/run-api-automation-summary.sh # M5/M7 otomatik API özeti (cihaz ayrı)
 bash scripts/probe-psychic-teller.sh       # falcı listesi kontrolü (Psychic P0)

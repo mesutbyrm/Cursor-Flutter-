@@ -25,14 +25,14 @@ Kod hatası değilse, GitHub **faturalandırma / harcama limiti** yüzünden Act
 
 ## Kullanıcı testi (Psychic P0 — öncelik)
 
-Agent işi bitti. **Önce jeton**, sonra 2 telefon:
+Agent işi bitti. Jeton ✅ · **Onaylı falcı hesabı** gerekir (host listede değil):
 
 ```bash
-bash scripts/psychic-p0-all.sh       # Tek akış (jeton + checklist)
-bash scripts/user-handoff.sh         # Tam özet
+bash scripts/user-test-start.sh        # Tek menü girişi
+bash scripts/record-user-test-result.sh p0 PASS   # sonuç kaydı
 ```
 
-Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · [`docs/KULLANICI_TEST_KILAVUZU.md`](docs/KULLANICI_TEST_KILAVUZU.md)
+Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · Falcı: [`docs/PSYCHIC_TELLER_STATUS.md`](docs/PSYCHIC_TELLER_STATUS.md)
 
 ## Hızlı başlangıç (geliştirici)
 

@@ -33,7 +33,9 @@
 | ID | Madde | Durum |
 |----|-------|-------|
 | P0-j | Danışan jeton (admin top-up) | ✅ **~100000** jeton (2026-09-07) |
-| P0 | Psychic TRTC 2-cihaz kabul (T+5s freeze) | **OPEN** — `psychic-p0-all.sh` |
+| API otomasyon | M5 smoke + M7 song-request | ✅ PASS=6, HTTP 200 |
+| Falcı probe | Host falcı listesinde | ⚠️ değil — onaylı falcı gerekir |
+| P0 | Psychic TRTC 2-cihaz kabul (T+5s freeze) | **OPEN** — `user-test-start.sh` |
 | P1 | Voice/gift/PK/müzik 2-cihaz checklist | Bekliyor (P0 sonrası) |
 | P2 | `bana_ozel_hub_section_test` overflow | ✅ Düzeltildi (CHANGELOG); CI 1081 pass — bloker değil |
 

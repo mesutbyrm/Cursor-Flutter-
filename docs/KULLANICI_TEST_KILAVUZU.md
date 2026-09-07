@@ -5,7 +5,7 @@
 
 **Sürüm:** `1.0.371+409` · **Son release gate:** [FINAL PASS](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509)
 
-**Teknik bilgi gerekmez.** Önce jeton, sonra Psychic TRTC (2 telefon). Hızlı rehber: [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md)
+**Teknik bilgi gerekmez.** Tek giriş: `bash scripts/user-test-start.sh` · Psychic TRTC (2 telefon): [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md)
 
 ---
 

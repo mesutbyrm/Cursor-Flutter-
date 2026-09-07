@@ -39,14 +39,14 @@ Tüm sürümler: https://github.com/mesutbyrm/Cursor-Flutter-/releases
 
 ## Psychic TRTC cihaz testi (P0 — kullanıcı)
 
-Agent işleri bitti. Sıra: **jeton → 2 telefon → T+5s donma testi**
+Agent işleri bitti. Sıra: **onaylı falcı + 2 telefon → T+5s donma testi**
 
 ```bash
-bash scripts/psychic-p0-all.sh       # Önkoşul + checklist (jeton=0 ise admin adımları)
-bash scripts/user-handoff.sh         # Tam özet
+bash scripts/user-test-start.sh
+bash scripts/record-user-test-result.sh p0 PASS   # veya FAIL "not"
 ```
 
-Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md)
+Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · [`docs/PSYCHIC_TELLER_STATUS.md`](docs/PSYCHIC_TELLER_STATUS.md)
 
 ## Kurulum
 

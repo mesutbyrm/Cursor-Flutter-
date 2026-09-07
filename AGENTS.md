@@ -78,13 +78,16 @@ Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-ra
 
 | Görev | Komut |
 |-------|--------|
+| **Cihaz testi giriş** | `bash scripts/user-test-start.sh` |
 | Tek akış (jeton + checklist) | `bash scripts/psychic-p0-all.sh` |
+| Falcı listesi kontrolü | `bash scripts/probe-psychic-teller.sh` |
 | Özet handoff | `bash scripts/user-handoff.sh` |
+| Sonuç kaydı | `bash scripts/record-user-test-result.sh p0 PASS` |
 | Önkoşul (APK, giriş, jeton) | `bash scripts/psychic-p0-prereqs.sh` |
 | Admin jeton | `bash scripts/admin-jeton-cheatsheet.sh` |
 | Derleme durumu | `bash scripts/print-build-status.sh` |
 
-Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · Takip: [`docs/REMAINING_WORK.md`](docs/REMAINING_WORK.md) (Agent: **KAPALI**)
+Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · Falcı: [`docs/PSYCHIC_TELLER_STATUS.md`](docs/PSYCHIC_TELLER_STATUS.md) · Takip: [`docs/REMAINING_WORK.md`](docs/REMAINING_WORK.md) (Agent: **KAPALI**)
 
 Kullanıcı **`Psychic P0 PASS`** yazana kadar `RELEASE READY: NO`. PASS → checklist güncelle; FAIL → freeze hotfix.
 
@@ -138,4 +141,4 @@ Kullanıcı GitHub’da **Watch → Releases** ile e-posta alabilir.
 
 ### Release handoff
 
-Güncel sürüm ve kalan iş: [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md) · Kullanıcı: `bash scripts/user-handoff.sh` veya `bash scripts/psychic-p0-all.sh` · Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · `[skip ci]` push CI/APK atlar.
+Güncel sürüm ve kalan iş: [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md) · Kullanıcı: `bash scripts/user-test-start.sh` · Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · `[skip ci]` push CI/APK atlar.

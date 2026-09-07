@@ -27,6 +27,7 @@ Komutlar:
   4) bash scripts/psychic-p0-all.sh             # P0 checklist (2 telefon)
   5) bash scripts/p1-platform-checklist.sh    # P0 PASS sonrası
   6) bash scripts/user-handoff.sh               # tam devir özeti
+  7) bash scripts/record-user-test-result.sh p0 PASS   # sonuç kaydı
 
 Rehberler:
   docs/PSYCHIC_P0_START.md
@@ -61,6 +62,10 @@ case "${1:-}" in
     ;;
   api)
     exec bash "$ROOT/scripts/run-api-automation-summary.sh"
+    ;;
+  record)
+    shift
+    exec bash "$ROOT/scripts/record-user-test-result.sh" "$@"
     ;;
   ""|help|-h|--help)
     show_menu

@@ -84,6 +84,11 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — test sonuç kaydı)
+
+- `record-user-test-result.sh` — P0/P1 PASS/FAIL → `USER_DEVICE_TEST_LOG.md`
+- AGENTS/README/APK_DOWNLOAD/release-status güncellendi
+
 ## Oturum günlüğü (2026-09-07 — kullanıcı test girişi)
 
 - `user-test-start.sh` — P0/P1 tek menü girişi
