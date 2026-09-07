@@ -39,7 +39,10 @@
 ## Script
 
 ```bash
-bash scripts/user-test-start.sh           # cihaz testi tek giriş (P0/P1)
+bash scripts/kalan-isler.sh                 # kalan işler + canlı durum
+bash scripts/user-handoff.sh                # devir teslim (canlı jeton + falcı)
+bash scripts/print-kalan-isler.sh           # statik 1 sayfa özet
+bash scripts/user-test-start.sh             # cihaz testi tek giriş (P0/P1)
 bash scripts/print-full-user-checklist.sh  # P0+P1 birleşik yazdır
 bash scripts/print-user-test-quick-ref.sh    # 1 sayfa terminal özeti
 bash scripts/print-p0-live-status.sh       # jeton + falcı tek ekran

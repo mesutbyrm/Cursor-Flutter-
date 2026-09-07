@@ -22,7 +22,7 @@
 
 | Rol | E-posta | Şifre | Not |
 |-----|---------|-------|-----|
-| Danışan | `cursor.test.1786235468@mailinator.com` | `CursorTest!1786235468` | Jeton ~100k ✅ |
+| Danışan | `cursor.test.1786235468@mailinator.com` | `CursorTest!1786235468` | Jeton ~98k ✅ |
 | Falcı | `cursor.host.1786235468@mailinator.com` | `CursorTest!1786235468` | Onaylı falcı ✅ (`Cursor Host Test`) |
 
 Psychic P0: **danışan + falcı** yukarıdaki iki hesap — aynı şifre.
@@ -71,7 +71,7 @@ Sesli oda, müzik, PK vb. — [`P1_DEVICE_START.md`](P1_DEVICE_START.md) · [`RE
 | Kullanıcı A | `cursor.test.1786235468@mailinator.com` | `CursorTest!1786235468` |
 | Host (yayıncı) | `cursor.host.1786235468@mailinator.com` | `CursorTest!1786235468` |
 
-Jeton: danışan **~100k** ✅ (`bash scripts/psychic-p0-prereqs.sh`)
+Jeton: danışan **~98k** ✅ (`bash scripts/psychic-p0-prereqs.sh`)
 
 ---
 

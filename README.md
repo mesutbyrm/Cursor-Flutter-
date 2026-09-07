@@ -28,6 +28,7 @@ Kod hatası değilse, GitHub **faturalandırma / harcama limiti** yüzünden Act
 Agent **kapalı** — [`docs/AGENT_CLOSED.md`](docs/AGENT_CLOSED.md). Jeton ✅ · host falcı ✅ — yalnızca **2 telefon P0** kaldı:
 
 ```bash
+bash scripts/basla.sh                       # tek komut: canlı durum + devir teslim
 bash scripts/kalan-isler.sh                 # kalan işler özeti
 bash scripts/p0-go.sh
 bash scripts/user-test-start.sh p0

@@ -87,7 +87,7 @@ Genişletilmiş kontrol listesi için `scripts/run-acceptance-tests.sh` kullanı
 - **Secret hatalıysa** otomatik olarak aynı dokümante hesaplara düşülür (uyarı loglanır)
 - Admin/teller secret yoksa ilgili maddeler `SKIP` olur
 - **Gate 3:** Host (`cursor.host.*`) onaylı falcı — session + TRTC **PASS**; `bash scripts/probe-psychic-teller.sh` · `bash scripts/open-approved-teller.sh`
-- **Jeton (M5/M7):** danışan ~100k (2026-09-07) — P0-j kapandı
+- **Jeton (M5/M7):** danışan ~98k (2026-09-07) — P0-j kapandı
 - Secret varken ve API testi başarısızsa APK **engellenir**
 - Canlı yayın testi geçici stream oluşturur ve işlem sonunda siler
 - Jeton testi gerçek ödeme yapmaz; `POST /api/payment/requests` + admin listesi doğrulanır

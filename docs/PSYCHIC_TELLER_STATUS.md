@@ -12,7 +12,7 @@
 | Hesap | Falcı listesinde | Psychic P0 |
 |-------|------------------|------------|
 | `cursor.host.1786235468@mailinator.com` | ✅ Evet (`Cursor Host Test`) | **Falcı telefonu** — aynı şifre |
-| `cursor.test.1786235468@mailinator.com` | — (danışan) | Jeton OK (~100k) |
+| `cursor.test.1786235468@mailinator.com` | — (danışan) | Jeton OK (~98k) |
 
 **tellerId:** `cmtrllf67004omm08mnp8psba` · **userId:** `cmsyoxo48006emo085hxfy9l7` · **status:** `approved`
 

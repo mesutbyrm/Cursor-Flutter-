@@ -32,6 +32,7 @@ APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/c
 ## Komutlar (sırayla)
 
 ```bash
+bash scripts/basla.sh                # tek komut başlangıç (canlı durum)
 bash scripts/kalan-isler.sh          # canlı durum + tablo
 bash scripts/p0-go.sh                # P0 GO
 bash scripts/user-test-start.sh p0   # checklist

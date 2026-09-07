@@ -56,7 +56,7 @@ Kaynak: `docs/STAGE5_REAL_E2E_ACCEPTANCE_REPORT.md`
 | Slug (API listesi) | `canlfal-` |
 | Komut | `!istek Sanatçı - Şarkı` |
 | APK | `1.0.371+409` veya üzeri (`apk-latest`) |
-| Hesap | `ACCEPTANCE_USER_*` — **≥10 jeton** (2026-09-07: ~100k ✅) |
+| Hesap | `ACCEPTANCE_USER_*` — **≥10 jeton** (2026-09-07: ~98k ✅) |
 | Oda sahibi (üretim) | `admin` (`cmokscu2y0000pnko11nctqw5`) |
 
 Detay: `docs/VOICE_ROOM_KEY_RESOLUTION.md`
