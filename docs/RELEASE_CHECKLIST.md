@@ -43,6 +43,9 @@ Son release gate: [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-
 
 APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
 
+**Önkoşul:** `bash scripts/psychic-p0-prereqs.sh` — danışan **jeton > 0** (probe 2026-09-07: jeton=0 → seans 400). Jeton: `bash scripts/admin-jeton-cheatsheet.sh`
+
+- [ ] Önkoşul OK (APK HTTP 200, giriş, jeton yeterli)
 - [ ] T0–T+60s: çift yönlü A/V, **T+5s donma yok**
 - [ ] WiFi ↔ mobil data — kontrollü reconnect
 - [ ] Oturum A→B→A — duplicate stream yok

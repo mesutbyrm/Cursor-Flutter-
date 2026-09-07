@@ -5,17 +5,21 @@
 > **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 **Son güncelleme:** 2026-09-07 · APK `1.0.371+409`  
-**Durum:** Jeton yüklü (≈9600); M7 + API smoke ✅. **M5 cihaz** + **Psychic P0** kullanıcı testinde.
+**Durum (probe 2026-09-07):** Test danışan **jeton=0**, credits≈190 — otomatik jeton kazanımı yok. **Psychic P0 + M5/M7** admin jeton gerektirir.
 
 ---
 
 ## Ne engelleniyor?
 
-| Madde | Gereksinim | Şu an |
-|-------|------------|--------|
-| **M5** | Cihazda `!istek` → song-request **200** + müzik | Jeton yok → 400 |
-| **M7** | Üretim `song-request` HTTP **200** JSON dump | Jeton yok → 400 |
+| Madde | Gereksinim | Şu an (2026-09-07 probe) |
+|-------|------------|---------------------------|
+| **Psychic P0** | Danışan seans oluşturma (jeton) | jeton=0 → HTTP 400 |
+| **M5** | Cihazda `!istek` → song-request **200** + müzik | jeton=0 → 400 |
+| **M7** | Üretim `song-request` HTTP **200** JSON dump | jeton=0 → 400 |
 | **m5-preflight** | Jeton ≥10 | FAIL (jeton=0) |
+| **API gate 3** | Session + TRTC token API | SKIP (jeton=0; falcı API OK) |
+
+Önkoşul kontrolü: `bash scripts/psychic-p0-prereqs.sh`
 
 Üretimde `skipPayment` **yok sayılır** — her istek **10 jeton** gerektirir.
 
@@ -37,10 +41,11 @@ bash scripts/admin-jeton-cheatsheet.sh   # user id + adımlar
 
 1. [canlifal.com](https://canlifal.com) admin paneline girin
 2. Kullanıcı: `cursor.test.1786235468@mailinator.com` (veya `cursorusr1786235468`)
-3. **≥50 jeton** ekleyin (M5 + M7 + yedek)
-4. Doğrula ve M7 probe:
+3. **≥500 jeton** ekleyin (Psychic 10 dk seans + M5/M7 + yedek; minimum deneme için ≥100)
+4. Doğrula:
 
 ```bash
+bash scripts/psychic-p0-prereqs.sh         # jeton + giriş (Psychic P0 öncesi)
 bash scripts/after-admin-jeton.sh          # jeton ekledikten hemen sonra (önerilen)
 bash scripts/wait-for-jeton.sh 10 3600     # otomatik bekleme + M7 + m5-preflight
 bash scripts/m5-preflight.sh               # jeton + API + unit

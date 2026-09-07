@@ -9,7 +9,7 @@ source "$ROOT/scripts/acceptance-tests/lib.sh"
 apply_acceptance_credential_defaults
 
 echo "╔══════════════════════════════════════════════════════════╗"
-echo "║  Admin jeton cheatsheet — M5/M7 test hesabı              ║"
+echo "║  Admin jeton cheatsheet — Psychic P0 / M5 / M7 test hesabı   ║"
 echo "╚══════════════════════════════════════════════════════════╝"
 echo ""
 echo "E-posta:    $DEFAULT_ACCEPTANCE_USER_EMAIL"
@@ -36,13 +36,15 @@ else
   echo "Giriş:      başarısız — TEST_ACCOUNTS.md"
 fi
 
+echo "Önerilen: ≥500 jeton (Psychic 10 dk seans + müzik testleri)"
 echo ""
 echo "── Admin panel adımları ──"
 echo "1. https://canlifal.com/admin → Kullanıcılar"
 echo "2. $DEFAULT_ACCEPTANCE_USER_EMAIL ara"
-echo "3. Jeton ekle: ≥50 (M5+M7+yedek)"
+echo "3. Jeton ekle: ≥500 (Psychic P0 + M5/M7 + yedek; min. deneme ≥100)"
 echo ""
 echo "── Doğrulama ──"
+echo "bash scripts/psychic-p0-prereqs.sh   # Psychic P0 öncesi"
 echo "bash scripts/after-admin-jeton.sh    # jeton ekledikten hemen sonra (tek tur)"
 echo "bash scripts/wait-for-jeton.sh 10 3600  # otomatik bekleme"
 echo "bash scripts/m7-on-jeton.sh"

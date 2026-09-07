@@ -57,6 +57,14 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 
 Kod main'de; **P0 kapatılmadı**. İki fiziksel cihaz (danışan + falcı veya iki hesap):
 
+**Önkoşul (2026-09-07 probe):** Danışan hesabında **jeton > 0** — aksi halde seans oluşturulamaz.
+
+```bash
+bash scripts/psychic-p0-prereqs.sh    # APK + giriş + jeton uyarısı
+bash scripts/admin-jeton-cheatsheet.sh   # jeton=0 ise admin adımları
+bash scripts/psychic-p0-checklist.sh     # yazdırılabilir tablo
+```
+
 | Zaman | Beklenen |
 |-------|----------|
 | T0 | Join — her iki tarafta video+audio |

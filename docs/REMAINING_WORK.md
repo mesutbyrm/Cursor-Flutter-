@@ -78,6 +78,13 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 
 ---
 
+## Oturum günlüğü (2026-09-07 devam 6)
+
+- Jeton probe: danışan jeton=0 — Psychic P0 bloker (credits≠jeton)
+- M5_M7_JETON_BLOCKER, LIVE_PSYCHICS, RELEASE_CHECKLIST güncellendi
+- psychic-p0-checklist: otomatik jeton uyarısı + hesaplar
+- admin-jeton-cheatsheet: Psychic P0, ≥500 jeton önerisi
+
 ## Oturum günlüğü (2026-09-07 devam 5)
 
 - `psychic-p0-prereqs.sh`: APK HTTP, giriş, jeton uyarısı
