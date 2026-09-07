@@ -12,8 +12,8 @@ fi
 cat <<EOF
 === Canlı Falcılar — Manuel E2E Checklist (${VERSION}) ===
 
-ÖNCE: Psychic P0 (T+5s TRTC donma) — bash scripts/psychic-p0-checklist.sh
-Bu liste: P0 PASS sonrası tam akış (P1)
+ÖNCE: Psychic P0 (T+5s TRTC donma) — bash scripts/user-test-start.sh p0
+Bu liste: P0 PASS sonrası tam akış (P1+)
 
 İki cihaz veya danışan + falcı hesabı gerekir.
 APK: ${APK_URL}

@@ -32,7 +32,7 @@ Raporlar:
 |---|---------|--------|
 | 1 | `flutter analyze` sıfır hata | Flutter |
 | 2 | `flutter test` tamamı geçer | Flutter |
-| 3 | Canlı falcı görüntülü görüşme (session + Agora token) | API |
+| 3 | Canlı falcı görüntülü görüşme (session + Agora token) | API — **onaylı falcı** (`ACCEPTANCE_TELLER_*`); host listede değilse FAIL/SKIP |
 | 4 | Canlı yayın fal isteği (stream + istek + yayıncı listesi) | API |
 | 5 | Jeton satın alma bildirimi admin paneline düşer | API |
 | 6 | SSE bağlantıları (`/api/chat/rooms/{id}/stream`) | API |
@@ -86,6 +86,8 @@ Genişletilmiş kontrol listesi için `scripts/run-acceptance-tests.sh` kullanı
 - **Secret yoksa** release gate dokümante test hesaplarını kullanır (`scripts/acceptance-tests/defaults.sh`)
 - **Secret hatalıysa** otomatik olarak aynı dokümante hesaplara düşülür (uyarı loglanır)
 - Admin/teller secret yoksa ilgili maddeler `SKIP` olur
+- **Gate 3:** `cursor.host.*` falcı listesinde değil — `ACCEPTANCE_TELLER_*` veya onaylı falcı hesabı; `bash scripts/probe-psychic-teller.sh`
+- **Jeton (M5/M7):** danışan ~100k (2026-09-07) — P0-j kapandı
 - Secret varken ve API testi başarısızsa APK **engellenir**
 - Canlı yayın testi geçici stream oluşturur ve işlem sonunda siler
 - Jeton testi gerçek ödeme yapmaz; `POST /api/payment/requests` + admin listesi doğrulanır

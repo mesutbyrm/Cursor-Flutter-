@@ -27,7 +27,8 @@ Komutlar:
   4) bash scripts/psychic-p0-all.sh             # P0 checklist (2 telefon)
   5) bash scripts/p1-platform-checklist.sh    # P0 PASS sonrası
   6) bash scripts/record-user-test-result.sh p0 PASS
-  7) bash scripts/user-handoff.sh               # tam devir özeti
+  7) bash scripts/on-p0-pass.sh              # P0 PASS → P1 checklist
+  8) bash scripts/on-p1-pass.sh              # P1 PASS → RELEASE adayı
 
 Rehberler:
   docs/RELEASE_USER_NEXT_STEPS.md   ← agent kapalı, tek sayfa
@@ -54,6 +55,18 @@ case "${1:-}" in
     ;;
   p0)
     exec bash "$ROOT/scripts/psychic-p0-all.sh"
+    ;;
+  p0-pass)
+    shift
+    exec bash "$ROOT/scripts/on-p0-pass.sh" "$@"
+    ;;
+  p0-fail)
+    shift
+    exec bash "$ROOT/scripts/on-p0-fail.sh" "$@"
+    ;;
+  p1-pass)
+    shift
+    exec bash "$ROOT/scripts/on-p1-pass.sh" "$@"
     ;;
   p1)
     exec bash "$ROOT/scripts/p1-platform-checklist.sh"

@@ -67,8 +67,9 @@ Test bittikten sonra:
 
 ```bash
 bash scripts/record-user-test-result.sh p0 PASS
-# veya
-bash scripts/record-user-test-result.sh p0 FAIL "T+5s donma"
+bash scripts/on-p0-pass.sh                    # P0 PASS → P1 checklist
+bash scripts/on-p1-pass.sh                    # P1 PASS → RELEASE adayı
+bash scripts/on-p0-fail.sh "T+5s donma"       # P0 FAIL → hotfix
 ```
 
 Agent'a tek satır: **`Psychic P0 PASS`** veya **`Psychic P0 FAIL`**

@@ -84,6 +84,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — PASS/FAIL akış betikleri)
+
+- `on-p0-pass.sh` / `on-p0-fail.sh` / `on-p1-pass.sh` — test sonrası otomatik adımlar
+- `faz0-handoff.sh` → user-test-start yönlendirmesi
+- ACCEPTANCE_TESTS gate 3 falcı notu
+
 ## Oturum günlüğü (2026-09-07 — agent kapanış rehberi)
 
 - `RELEASE_USER_NEXT_STEPS.md` — kullanıcı tek sayfa (agent kapalı)
