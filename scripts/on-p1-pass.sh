@@ -3,9 +3,18 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+LOG="${ROOT}/docs/USER_DEVICE_TEST_LOG.md"
+# shellcheck source=device-test-log-lib.sh
+source "$ROOT/scripts/device-test-log-lib.sh"
 
 echo "=== P1 PASS — RELEASE adayı ==="
 echo ""
+
+if ! device_test_log_has_pass "Psychic P0" "$LOG"; then
+  echo "⚠️  Psychic P0 PASS kaydı yok — yine de P1 kaydediliyor"
+  echo "   Öneri: önce bash scripts/on-p0-pass.sh"
+  echo ""
+fi
 
 bash "$ROOT/scripts/record-user-test-result.sh" p1 PASS "${1:-}"
 

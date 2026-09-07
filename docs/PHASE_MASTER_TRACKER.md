@@ -5,7 +5,7 @@
 > **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 **Son güncelleme:** 2026-09-07 — APK **`1.0.371+409`** · Release gate **FINAL PASS** ([Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509))  
-**Canlı checklist:** [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md) · [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) · `bash scripts/user-test-start.sh`  
+**Canlı checklist:** [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md) · `bash scripts/kalan-isler.sh` · [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md)  
 **Jeton (P0-j):** ✅ kapandı (~100k, 2026-09-07) · **Falcı:** host onaylı listede ✅ — [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md)  
 **Faz testleri:** CI 1081+ pass (`docs/PHASE_TEST_REPORT.md` tarihsel)
 

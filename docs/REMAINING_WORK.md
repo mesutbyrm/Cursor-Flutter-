@@ -84,6 +84,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — rehber senkron kalan-isler)
+
+- PSYCHIC_P0_START, faz0-handoff, user-handoff, on-p1-pass
+- PHASE_MASTER, KULLANICI_TEST, TEST_ACCOUNTS → kalan-isler / p0-go
+- psychic-p0-all: PASS/FAIL komutları + kalan-isler yönlendirme
+
 ## Oturum günlüğü (2026-09-07 — device-test-log + giriş noktaları)
 
 - `device-test-log-lib.sh` — P0/P1 PASS log satırı kontrolü

@@ -5,7 +5,7 @@
 
 **Sürüm:** `1.0.371+409` · **Son release gate:** [FINAL PASS](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509)
 
-**Teknik bilgi gerekmez.** Hızlı özet: [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md) · Menü: `bash scripts/user-test-start.sh`
+**Teknik bilgi gerekmez.** Özet: [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md) · **`bash scripts/kalan-isler.sh`**
 
 ---
 

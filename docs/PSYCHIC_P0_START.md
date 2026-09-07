@@ -7,6 +7,15 @@ Tek manuel bloker: **Canlı falcı TRTC** — T+5 saniyede A/V donması olmamal�
 
 ---
 
+## 0. GO ekranı (önerilen)
+
+```bash
+bash scripts/kalan-isler.sh    # tüm kalan işler
+bash scripts/p0-go.sh          # jeton + falcı + hesaplar
+```
+
+---
+
 ## 1. Jeton (zorunlu)
 
 Probe (2026-09-07): danışan `cursor.test.*` hesabında **jeton≈100000** — P0-j kapandı.
@@ -71,9 +80,12 @@ Agent'a tek satır:
 
 ---
 
-## 5. P0 sonrası (P1)
+## 5. P1 sonrası
 
 ```bash
+bash scripts/p1-go.sh
+bash scripts/on-p1-pass.sh
+bash scripts/p2-go.sh
 bash scripts/print-live-psychics-e2e-checklist.sh   # Tam falcı E2E
 ```
 
@@ -84,9 +96,11 @@ Genel platform: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) P1
 ## Tek komut özeti
 
 ```bash
-bash scripts/user-test-start.sh       # menü (önerilen)
-bash scripts/psychic-p0-all.sh        # P0 akışı
-bash scripts/record-user-test-result.sh p0 PASS
+bash scripts/kalan-isler.sh
+bash scripts/p0-go.sh
+bash scripts/user-test-start.sh p0
+bash scripts/on-p0-pass.sh              # PASS
+bash scripts/on-p0-fail.sh "not"        # FAIL
 ```
 
 Tam rehber: [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md)
