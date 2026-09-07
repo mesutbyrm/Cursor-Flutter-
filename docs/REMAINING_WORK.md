@@ -6,7 +6,7 @@
 
 **Son güncelleme:** 2026-09-07 — sürüm `1.0.371+409`, release gate **FINAL PASS** (run `34146919509`)  
 **Agent durumu:** **API otomasyon tamam** — M5/M7 PASS; **cihaz testleri kullanıcıda (sonra)**  
-**Tek komut:** `bash scripts/release-remaining-status.sh` · API özet: `bash scripts/run-api-automation-summary.sh`  
+**Tek komut:** `bash scripts/user-test-start.sh` · durum: `bash scripts/release-remaining-status.sh`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Release:** `docs/RELEASE_CHECKLIST.md` | **Psychic P0:** `docs/LIVE_PSYCHICS_REMAINING.md` | **Tüm MD indeks:** [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 ---
@@ -83,6 +83,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-09-07 — kullanıcı test girişi)
+
+- `user-test-start.sh` — P0/P1 tek menü girişi
+- Birincil doc senkron: jeton ✅, falcı uyarısı (PHASE_MASTER, FAZ13, TEST_ACCOUNTS, KULLANICI_TEST)
+- `run-api-automation-summary.sh` — falcı probe eklendi
 
 ## Oturum günlüğü (2026-09-07 — falcı probe)
 

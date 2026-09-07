@@ -43,9 +43,9 @@ Son release gate: [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-
 
 APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
 
-**Önkoşul:** `bash scripts/psychic-p0-all.sh` (jeton=0 ise admin adımlarını gösterir)
+**Önkoşul:** `bash scripts/psychic-p0-all.sh`
 
-- [ ] Önkoşul OK (APK HTTP 200, giriş, jeton yeterli)
+- [ ] Jeton OK (~100k) + falcı probe (`probe-psychic-teller.sh`) — onaylı falcı hesabı
 - [ ] T0–T+60s: çift yönlü A/V, **T+5s donma yok**
 - [ ] WiFi ↔ mobil data — kontrollü reconnect
 - [ ] Oturum A→B→A — duplicate stream yok

@@ -18,11 +18,20 @@
 
 ---
 
-## Adım 2 — Host hesabı onayı ✅ (tamamlandı)
+## Adım 2 — Hesaplar ve falcı uyarısı
 
-`cursor.host.1786235468@mailinator.com` hesabı **onaylandı** — canlı yayın API testi geçti.
+| Rol | E-posta | Şifre | Not |
+|-----|---------|-------|-----|
+| Danışan | `cursor.test.1786235468@mailinator.com` | `CursorTest!1786235468` | Jeton ~100k ✅ |
+| Host (canlı yayın) | `cursor.host.1786235468@mailinator.com` | `CursorTest!1786235468` | Canlı yayın onaylı — **Psychic falcı listesinde değil** |
 
----
+Psychic P0 için **falcı telefonu:** admin panelde **onaylı falcı hesabı** kullanın.
+
+```bash
+bash scripts/probe-psychic-teller.sh    # falcı listede mi?
+```
+
+Detay: [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md)
 
 ## Adım 3 — Psychic TRTC (öncelik — 2 telefon)
 

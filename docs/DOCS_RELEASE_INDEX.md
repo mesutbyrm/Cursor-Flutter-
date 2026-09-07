@@ -34,6 +34,7 @@
 ## Script
 
 ```bash
+bash scripts/user-test-start.sh           # cihaz testi tek giriş (P0/P1)
 bash scripts/release-remaining-status.sh   # P0-j/P0/P1/P2 canlı özet
 bash scripts/run-api-automation-summary.sh # M5/M7 otomatik API özeti (cihaz ayrı)
 bash scripts/probe-psychic-teller.sh       # falcı listesi kontrolü (Psychic P0)

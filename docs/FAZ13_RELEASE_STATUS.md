@@ -23,4 +23,4 @@
 **İndir:** https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
 
 - **Checklist:** [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) · Psychic: [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) · [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md)
-- **Jeton bloker:** danışan jeton=0 (2026-09-07 probe) — admin gerekli
+- **Jeton:** ✅ P0-j kapandı (~100k) · **Falcı:** [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md)

@@ -43,7 +43,7 @@ Kaynak: `docs/STAGE5_REAL_E2E_ACCEPTANCE_REPORT.md`
 | Rol | E-posta | Kullanıcı ID (örnek) |
 |-----|---------|----------------------|
 | TEST_USER_A | cursor.test.1786235468@mailinator.com | cmsyoxjh80066mo08fo7nv5o6 |
-| TEST_USER_B | cursor.host.1786235468@mailinator.com | (host — jeton=0, Ağu 2026) |
+| TEST_USER_B | cursor.host.1786235468@mailinator.com | Canlı yayın host — **falcı listesinde değil** (Psychic P0 için onaylı falcı) |
 
 ---
 
@@ -56,7 +56,7 @@ Kaynak: `docs/STAGE5_REAL_E2E_ACCEPTANCE_REPORT.md`
 | Slug (API listesi) | `canlfal-` |
 | Komut | `!istek Sanatçı - Şarkı` |
 | APK | `1.0.371+409` veya üzeri (`apk-latest`) |
-| Hesap | `ACCEPTANCE_USER_*` — **≥10 jeton** gerekli (credits≠jeton; test hesabı credits≈140+, jeton=0) |
+| Hesap | `ACCEPTANCE_USER_*` — **≥10 jeton** (2026-09-07: ~100k ✅) |
 | Oda sahibi (üretim) | `admin` (`cmokscu2y0000pnko11nctqw5`) |
 
 Detay: `docs/VOICE_ROOM_KEY_RESOLUTION.md`
