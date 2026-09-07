@@ -19,7 +19,7 @@
 | **m5-preflight** | Jeton + voice seat API | ✅ geçti |
 | **M5 cihaz** | Test 1–10 Android | ⏳ kullanıcı (sonra) |
 | **Psychic P0 cihaz** | T+5s TRTC | ⏳ kullanıcı (sonra) |
-| **API gate 3** | Session accept + token | ⚠️ respond=403 — host falcı listesinde değil; cihazda onaylı falcı hesabı gerekir |
+| **API gate 3** | Session accept + TRTC | ✅ PASS (host listede, 2026-09-07) |
 
 Önkoşul kontrolü: `bash scripts/psychic-p0-prereqs.sh`
 

@@ -15,12 +15,12 @@ Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Cihaz tes
 | Faz 2 Psychic TRTC freeze fix (kod) | ✅ |
 | Release gate CI (1–9) | ✅ [34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509) |
 | Release 502 / metadata fix | ✅ |
-| P0-j jeton | ✅ ~100k |
+| P0-j jeton | ✅ ~99k |
 | M5 API smoke | ✅ 6/2/0 |
 | M7 song-request | ✅ HTTP 200 |
 | m5-preflight | ✅ |
-| Dokümantasyon + handoff betikleri | ✅ |
-| API Gate 3 (host → SKIP, TRTC) | ✅ cihaz dışı düzeltme |
+| Host → onaylı falcı | ✅ `open-approved-teller.sh` · listede |
+| API Gate 3 (session + TRTC) | ✅ PASS (host listede) |
 | Psychic unit test betiği | ✅ `run-psychic-unit-tests.sh` |
 | P2 hazırlık betiği | ✅ `p2-play-store-prep.sh` |
 | Non-device prep (tek komut) | ✅ `run-non-device-release-prep.sh` |
@@ -37,7 +37,7 @@ Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Cihaz tes
 | 3 | P1 platform | `bash scripts/on-p0-pass.sh` |
 | 4 | Sonuç | `bash scripts/on-p1-pass.sh` |
 
-**Falcı:** Host listede değil — `bash scripts/list-production-tellers.sh`
+**Falcı:** `cursor.host.*` — onaylı, listede ✅ · `bash scripts/probe-psychic-teller.sh`
 
 **1 sayfa:** [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md) · `bash scripts/print-user-test-quick-ref.sh`
 

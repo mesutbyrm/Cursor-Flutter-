@@ -5,8 +5,8 @@
 > **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 **Son güncelleme:** 2026-09-07 — sürüm `1.0.371+409`, release gate **FINAL PASS** (run `34146919509`)  
-**Agent durumu:** **API otomasyon tamam** — cihaz testleri **kullanıcı sonra** (P0 → P1)  
-**Agent devam:** Gate 3 düzeltmesi, psychic unit test betiği, P2 hazırlık (cihaz dışı)  
+**Agent durumu:** **API otomasyon tamam** — host onaylı falcı ✅ · Gate 3 PASS · cihaz P0/P1 **kullanıcı sonra**  
+**Agent devam:** doc senkron, release-remaining-status probe düzeltmesi  
 **Tek komut:** `bash scripts/user-test-start.sh` · durum: `bash scripts/release-remaining-status.sh`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Release:** `docs/RELEASE_CHECKLIST.md` | **Psychic P0:** `docs/LIVE_PSYCHICS_REMAINING.md` | **Tüm MD indeks:** [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
@@ -84,6 +84,13 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-09-07 — host onaylı falcı + doc senkron)
+
+- `open-approved-teller.sh` — host başvuru/onay; probe ✅ (9 falcı)
+- Gate 3 teller resolve pipe fix → **PASS** (session + TRTC)
+- Doc senkron: AGENT_CLOSED, USER_TEST_QUICK_REF, PSYCHIC_P0_START, RELEASE_GATE_CLOSURE
+- `release-remaining-status.sh` — probe grep `listede` düzeltmesi
 
 ## Oturum günlüğü (2026-09-07 — non-device prep)
 

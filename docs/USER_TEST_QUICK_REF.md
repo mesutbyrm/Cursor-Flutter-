@@ -12,9 +12,9 @@ https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlif
 | Rol | E-posta | Şifre |
 |-----|---------|-------|
 | Danışan | `cursor.test.1786235468@mailinator.com` | `CursorTest!1786235468` |
-| Falcı | **Onaylı falcı** (host değil) | admin panel |
+| Falcı | `cursor.host.1786235468@mailinator.com` | `CursorTest!1786235468` |
 
-`bash scripts/list-production-tellers.sh`
+Host = onaylı falcı (`Cursor Host Test`). Doğrula: `bash scripts/probe-psychic-teller.sh`
 
 ## Komut sırası
 

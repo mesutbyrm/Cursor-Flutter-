@@ -22,8 +22,8 @@ bash scripts/agent-closure-status.sh          # canlı durum özeti
 | # | İş | Durum | Komut |
 |---|-----|--------|-------|
 | 0 | Jeton (danışan) | ✅ ~100k | `psychic-p0-prereqs.sh` |
-| 0b | Falcı hesabı | ⚠️ host listede değil | `list-production-tellers.sh` · [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md) |
-| 1 | **Psychic P0** | ⏳ OPEN | `user-test-start.sh p0` — onaylı falcı + 2 telefon |
+| 0b | Falcı hesabı | ✅ host onaylı | `probe-psychic-teller.sh` · [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md) |
+| 1 | **Psychic P0** | ⏳ OPEN | `user-test-start.sh p0` — host + danışan, 2 telefon |
 | 2 | **P1 platform** | ⏸ P0 sonrası | `p1-platform-checklist.sh` |
 | 3 | M5 cihaz (müzik) | ⏸ | [`M5_DEVICE_TEST_CHECKLIST.md`](M5_DEVICE_TEST_CHECKLIST.md) |
 | 4 | Play Store P2 | ⏸ backlog | [`P2_PLAY_STORE_START.md`](P2_PLAY_STORE_START.md) |
@@ -55,10 +55,9 @@ https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlif
 | Rol | E-posta | Şifre |
 |-----|---------|-------|
 | Danışan | `cursor.test.1786235468@mailinator.com` | `CursorTest!1786235468` |
-| Host (canlı yayın) | `cursor.host.1786235468@mailinator.com` | `CursorTest!1786235468` |
-| **Falcı (Psychic P0)** | Admin onaylı falcı — listeden | [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md) |
+| Falcı (Psychic P0) | `cursor.host.1786235468@mailinator.com` | `CursorTest!1786235468` |
 
-Üretim falcı listesi: `bash scripts/list-production-tellers.sh`
+Üretim falcı listesi: `bash scripts/list-production-tellers.sh` (9 falcı)
 
 ---
 

@@ -35,11 +35,11 @@ echo "── P0 · Psychic TRTC 2-cihaz (T+5s donma) ──"
 if [[ "$P0J" == "OPEN" ]]; then
   echo "Durum: ⏸ BEKLEMEDE — önce P0-j (jeton)"
 elif [[ -x "${ROOT}/scripts/probe-psychic-teller.sh" ]]; then
-  PROBE_LINE=$("${ROOT}/scripts/probe-psychic-teller.sh" 2>&1 | grep -E 'Falcı listesinde|listed —' | head -1 || true)
-  if echo "$PROBE_LINE" | grep -q 'listed —'; then
-    echo "Durum: ⏳ OPEN — 2 telefon manuel test (falcı listede ✅)"
+  PROBE_LINE=$("${ROOT}/scripts/probe-psychic-teller.sh" 2>&1 | grep -E 'Falcı listesinde|Falcı probe:' | head -1 || true)
+  if echo "$PROBE_LINE" | grep -qE 'Falcı listesinde|listede —'; then
+    echo "Durum: ⏳ OPEN — 2 telefon manuel test (host falcı listede ✅)"
   elif echo "$PROBE_LINE" | grep -q 'DEĞİL'; then
-    echo "Durum: ⏳ OPEN — 2 telefon (⚠️ host falcı listesinde değil — onaylı falcı)"
+    echo "Durum: ⏳ OPEN — 2 telefon (⚠️ falcı listede değil — bash scripts/open-approved-teller.sh)"
   else
     echo "Durum: ⏳ OPEN — 2 telefon manuel test"
   fi
@@ -64,6 +64,11 @@ if [[ -f "${ROOT}/docs/M5_API_SMOKE_REPORT.md" ]] && grep -qE 'PASS=6|\| 6 \| 2 
   echo "  M5 API smoke: ✅ PASS=6 SKIP=2"
 else
   echo "  M5: bash scripts/m5-api-smoke.sh"
+fi
+if [[ -f "${ROOT}/docs/ACCEPTANCE_TEST_REPORT.md" ]] && grep -qE '\| 3 \|.*PASS' "${ROOT}/docs/ACCEPTANCE_TEST_REPORT.md" 2>/dev/null; then
+  echo "  API Gate 3 (Psychic): ✅ PASS (session + TRTC)"
+else
+  echo "  Gate 3: bash scripts/acceptance-tests/api-release-gate.sh"
 fi
 echo "  Özet: bash scripts/run-api-automation-summary.sh"
 echo ""

@@ -23,11 +23,12 @@ Detay: [`M5_M7_JETON_BLOCKER.md`](M5_M7_JETON_BLOCKER.md)
 
 ## 1.5 Falcı hesabı (Psychic P0)
 
-Host (`cursor.host.*`) **falcı listesinde değil**. Falcı telefonu için admin onaylı hesap kullanın.
+Host (`cursor.host.*`) **onaylı falcı** — aynı şifre ile falcı telefonunda giriş.
 
 ```bash
 bash scripts/probe-psychic-teller.sh           # listede mi?
-bash scripts/list-production-tellers.sh        # 8 üretim falcısı
+bash scripts/open-approved-teller.sh           # aç/doğrula
+bash scripts/list-production-tellers.sh        # 9 falcı (host dahil)
 ```
 
 Detay: [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md)
@@ -41,9 +42,9 @@ https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlif
 | Rol | E-posta | Şifre |
 |-----|---------|-------|
 | Danışan | `cursor.test.1786235468@mailinator.com` | `CursorTest!1786235468` |
-| Falcı | **Onaylı falcı** (admin panel) | hesaba göre |
+| Falcı | `cursor.host.1786235468@mailinator.com` | `CursorTest!1786235468` |
 
-> **Falcı notu:** `cursor.host.*` canlı yayın içindir; falcı listesinde değildir. `bash scripts/list-production-tellers.sh` — 8 üretim falcısı. Psychic P0 falcı telefonu listeden bir hesap olmalı — [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md).
+> **Falcı:** `Cursor Host Test` — tellerId `cmtrllf67004omm08mnp8psba` · [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md).
 
 ---
 

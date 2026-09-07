@@ -29,6 +29,6 @@ for i, t in enumerate(items, 1):
     uid = str(t.get('userId') or t.get('user', {}).get('id') or '')[:22]
     print(f'| {i} | {name} | \`{tid}\` | \`{uid}\` |')
 print()
-print('Psychic P0 falcı telefonu: yukarıdaki hesaplardan birinin giriş bilgisi gerekir.')
-print('Host (cursor.host.*) bu listede değil — bash scripts/probe-psychic-teller.sh')
+print('Psychic P0 falcı telefonu: cursor.host.* (Cursor Host Test) veya yukarıdaki hesaplardan biri.')
+print('Doğrula: bash scripts/probe-psychic-teller.sh · bash scripts/open-approved-teller.sh')
 "

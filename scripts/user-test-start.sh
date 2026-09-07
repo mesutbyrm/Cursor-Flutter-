@@ -41,7 +41,7 @@ Rehberler:
   docs/USER_TEST_QUICK_REF.md       ← 1 sayfa özet
   docs/RELEASE_USER_NEXT_STEPS.md   ← agent kapalı, tek sayfa
   docs/PSYCHIC_P0_START.md
-  docs/PSYCHIC_TELLER_STATUS.md   ← host falcı listesinde değilse okuyun
+  docs/PSYCHIC_TELLER_STATUS.md   ← falcı durumu / open-approved-teller
   docs/P1_DEVICE_START.md
   docs/KULLANICI_TEST_KILAVUZU.md
 
