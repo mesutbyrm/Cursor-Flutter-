@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# P2 — GO ekranı: P0+P1 PASS sonrası Play Store / AAB backlog.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+LOG="${ROOT}/docs/USER_DEVICE_TEST_LOG.md"
+
+VERSION="?"
+if [[ -f "${ROOT}/mobile/pubspec.yaml" ]]; then
+  VERSION=$(grep -E '^version:' "${ROOT}/mobile/pubspec.yaml" | head -1 | sed 's/version:[[:space:]]*//')
+fi
+
+echo "╔══════════════════════════════════════════════════════════════════╗"
+echo "║  P2 GO — Play Store / Stage 8 (${VERSION})                        ║"
+echo "╚══════════════════════════════════════════════════════════════════╝"
+echo ""
+
+p0_ok=0 p1_ok=0
+if [[ -f "$LOG" ]] && grep -qE '^## .* — Psychic P0 \*\*PASS\*\*' "$LOG" 2>/dev/null; then
+  echo "✅ Psychic P0 PASS kaydı var"
+  p0_ok=1
+else
+  echo "⏳ Psychic P0 PASS yok — önce: bash scripts/on-p0-pass.sh"
+fi
+if [[ -f "$LOG" ]] && grep -qE '^## .* — P1 Platform \*\*PASS\*\*' "$LOG" 2>/dev/null; then
+  echo "✅ P1 Platform PASS kaydı var"
+  p1_ok=1
+else
+  echo "⏸ P1 PASS yok — P0 sonrası: bash scripts/on-p1-pass.sh"
+fi
+echo ""
+
+bash "$ROOT/scripts/p2-play-store-prep.sh" 2>&1 | tail -12
+
+cat <<'EOF'
+
+── Play Console (kullanıcı) ──
+  docs/PLAY_STORE_PRODUCTION_ACCESS.md
+  docs/P2_PLAY_STORE_START.md
+
+Test hesapları (Play Console App Access):
+  Danışan: cursor.test.1786235468@mailinator.com
+  Host:    cursor.host.1786235468@mailinator.com
+
+EOF
+
+if [[ "$p0_ok" -eq 1 && "$p1_ok" -eq 1 ]]; then
+  echo "✅ P0+P1 PASS — RELEASE adayı kontrol listesi:"
+  echo "   bash scripts/on-release-ready-candidate.sh"
+  echo "   bash scripts/build-play-aab.sh   # CI keystore secret gerekir"
+else
+  echo "Önce cihaz testleri: bash scripts/kalan-isler.sh"
+fi

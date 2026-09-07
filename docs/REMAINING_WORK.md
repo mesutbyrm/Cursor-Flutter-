@@ -5,9 +5,8 @@
 > **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 **Son güncelleme:** 2026-09-07 — sürüm `1.0.371+409`, release gate **FINAL PASS** (run `34146919509`)  
-**Agent durumu:** **API otomasyon tamam** — host onaylı falcı ✅ · Gate 3 PASS · cihaz P0/P1 **kullanıcı sonra**  
-**Agent devam:** doc senkron, release-remaining-status probe düzeltmesi  
-**Tek komut:** `bash scripts/user-test-start.sh` · durum: `bash scripts/release-remaining-status.sh`  
+**Agent durumu:** **API otomasyon tamam** — cihaz P0 → P1 → P2 **kullanıcı**  
+**Tek komut:** `bash scripts/kalan-isler.sh` · P0: `p0-go.sh` · P1: `p1-go.sh` · P2: `p2-go.sh`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Release:** `docs/RELEASE_CHECKLIST.md` | **Psychic P0:** `docs/LIVE_PSYCHICS_REMAINING.md` | **Tüm MD indeks:** [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 ---
@@ -35,9 +34,9 @@
 | # | İş | Referans |
 |---|-----|----------|
 | **P0-j** | Danışan jeton (admin) | ✅ **100000** jeton (2026-09-07) |
-| **P0** | Psychic TRTC 2-cihaz (T+5s donma yok) | ⏳ **OPEN** — `user-test-start.sh p0` |
-| P1 | Voice / gift / PK / müzik 2-cihaz | [`P1_DEVICE_START.md`](P1_DEVICE_START.md) · `p1-platform-checklist.sh` |
-| P2 | Stage 8 / Play Store closed test | `PLAY_STORE_PRODUCTION_ACCESS.md` |
+| **P0** | Psychic TRTC 2-cihaz (T+5s donma yok) | ⏳ **OPEN** — `bash scripts/p0-go.sh` |
+| P1 | Voice / gift / PK / müzik 2-cihaz | ⏸ P0 sonrası — `bash scripts/p1-go.sh` |
+| P2 | Stage 8 / Play Store closed test | ⏸ P0+P1 — `bash scripts/p2-go.sh` |
 
 **Otomatik işler tamam** — kalan yalnızca cihaz kabul testleri.
 
@@ -84,6 +83,13 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-09-07 — kalan işler yol haritası)
+
+- `kalan-isler.sh` — P0→P1→P2 tablo + release-remaining-status
+- `p2-go.sh` — Play Store backlog GO ekranı
+- p1-go: yanlış P0 PASS grep düzeltmesi (log satırı `## … **PASS**`)
+- user-test-start: `kalan` · `p2-go` kısayolları
 
 ## Oturum günlüğü (2026-09-07 — P1 GO + AGENTS senkron)
 

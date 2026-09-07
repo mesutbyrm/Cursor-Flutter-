@@ -46,6 +46,7 @@ elif [[ -x "${ROOT}/scripts/probe-psychic-teller.sh" ]]; then
 else
   echo "Durum: ⏳ OPEN — 2 telefon manuel test"
 fi
+echo "  bash scripts/p0-go.sh"
 echo "  bash scripts/user-test-start.sh p0"
 echo "  bash scripts/validate-pre-device-handoff.sh"
 echo "  bash scripts/probe-psychic-teller.sh"
@@ -76,6 +77,7 @@ echo ""
 # --- P1 ---
 echo "── P1 · Platform 2-cihaz (voice/gift/PK/müzik) ──"
 echo "Durum: ⏸ P0 PASS sonrası"
+echo "  bash scripts/p1-go.sh"
 echo "  bash scripts/p1-platform-checklist.sh"
 echo "  docs/P1_DEVICE_START.md"
 echo "  docs/M5_DEVICE_TEST_CHECKLIST.md (müzik/voice)"
@@ -84,6 +86,7 @@ echo ""
 # --- P2 ---
 echo "── P2 · Play Store / Stage 8 ──"
 echo "Durum: ⏸ backlog (P0+P1 sonrası)"
+echo "  bash scripts/p2-go.sh"
 echo "  docs/P2_PLAY_STORE_START.md"
 echo "  docs/PLAY_STORE_PRODUCTION_ACCESS.md"
 echo "  docs/STAGE8_FINAL_ACCEPTANCE_REPORT.md"
@@ -92,7 +95,7 @@ echo ""
 # --- Agent ---
 echo "── Agent ──"
 echo "Kod/CI/docs: ✅ TAMAM · RELEASE READY: NO"
-echo "Canlı durum: bash scripts/p0-go.sh"
+echo "Canlı durum: bash scripts/kalan-isler.sh"
 echo "Hızlı özet: bash scripts/print-user-test-quick-ref.sh"
 echo "APK: ${APK_URL}"
 echo ""

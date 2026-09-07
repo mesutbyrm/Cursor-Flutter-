@@ -43,7 +43,7 @@ Son release gate: [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-
 
 APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
 
-**Önkoşul:** `bash scripts/user-test-start.sh` veya `psychic-p0-all.sh`
+**Önkoşul:** `bash scripts/p0-go.sh`
 
 - [x] Jeton OK (~99k) + falcı probe ✅ (`cursor.host.*` listede)
 - [ ] T0–T+60s: çift yönlü A/V, **T+5s donma yok**
@@ -70,10 +70,13 @@ Detay: `docs/LIVE_PSYCHICS_REMAINING.md` § P0 freeze kabul
 Kullanıcı test akışı:
 
 ```bash
-bash scripts/validate-pre-device-handoff.sh
+bash scripts/kalan-isler.sh                  # tüm kalan işler özeti
+bash scripts/p0-go.sh
 bash scripts/user-test-start.sh p0
 bash scripts/on-p0-pass.sh
+bash scripts/p1-go.sh
 bash scripts/on-p1-pass.sh
+bash scripts/p2-go.sh
 bash scripts/on-release-ready-candidate.sh
 ```
 

@@ -18,7 +18,7 @@ echo ""
 echo "APK: $APK_URL"
 echo ""
 
-if [[ -f "$LOG" ]] && grep -qE 'Psychic P0.*PASS' "$LOG" 2>/dev/null; then
+if [[ -f "$LOG" ]] && grep -qE '^## .* — Psychic P0 \*\*PASS\*\*' "$LOG" 2>/dev/null; then
   echo "✅ Psychic P0 PASS kaydı bulundu (USER_DEVICE_TEST_LOG.md)"
 else
   echo "⚠️  Psychic P0 PASS kaydı yok — önce:"

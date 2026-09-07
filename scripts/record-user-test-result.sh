@@ -81,7 +81,7 @@ fi
   fi
   echo ""
   if [[ "$result" == "PASS" && "$phase_label" == "Psychic P0" ]]; then
-    echo "Sonraki: \`bash scripts/p1-platform-checklist.sh\` · \`docs/P1_DEVICE_START.md\`"
+    echo "Sonraki: \`bash scripts/p1-go.sh\` · \`docs/P1_DEVICE_START.md\`"
   elif [[ "$result" == "PASS" && "$phase_label" == "P1 Platform" ]]; then
     echo "Sonraki: RELEASE READY adayı — agent checklist günceller."
   elif [[ "$result" == "FAIL" ]]; then

@@ -37,8 +37,9 @@ Komutlar:
  10) bash scripts/on-p0-fail.sh "not"        # P0 FAIL → hotfix kaydı
  11) bash scripts/on-p1-pass.sh              # P1 PASS → RELEASE adayı
  12) bash scripts/on-release-ready-candidate.sh  # P0+P1 sonrası
- 13) bash scripts/run-psychic-unit-tests.sh     # Flutter unit (cihaz yok)
+  13) bash scripts/run-psychic-unit-tests.sh     # Flutter unit (cihaz yok)
  14) bash scripts/p2-play-store-prep.sh          # P2 backlog özeti
+ 15) bash scripts/kalan-isler.sh                 # kalan işler yol haritası
 
 Rehberler:
   docs/USER_TEST_QUICK_REF.md       ← 1 sayfa özet
@@ -133,6 +134,12 @@ case "${1:-}" in
     ;;
   prep|non-device)
     exec bash "$ROOT/scripts/run-non-device-release-prep.sh"
+    ;;
+  kalan|remaining|kalan-isler)
+    exec bash "$ROOT/scripts/kalan-isler.sh"
+    ;;
+  p2-go|p2go)
+    exec bash "$ROOT/scripts/p2-go.sh"
     ;;
   ""|help|-h|--help)
     show_menu
