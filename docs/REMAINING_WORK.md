@@ -1,7 +1,7 @@
 # Kalan işler — canlı takip listesi
 
-**Son güncelleme:** 2026-08-20 11:42 UTC — env setup tamam, jeton≈9580, tüm otomatik kapılar PASS  
-**Master:** `docs/PHASE_MASTER_TRACKER.md` | **Test:** `docs/PHASE_TEST_REPORT.md` (15 PASS)
+**Son güncelleme:** 2026-09-07 — sürüm `1.0.371+409`, release gate **FINAL PASS** (run `34146919509`)  
+**Master:** `docs/PHASE_MASTER_TRACKER.md` | **Release:** `docs/RELEASE_CHECKLIST.md` | **Psychic P0:** `docs/LIVE_PSYCHICS_REMAINING.md`
 
 ---
 
@@ -9,27 +9,26 @@
 
 | Alan | Durum | Not |
 |------|--------|-----|
-| FAZ 0 | `[~]` | A1–A8 ✅; A9 M5/jeton |
-| FAZ 1–11 | `[x]` otomatik | 15 PASS — `PHASE_TEST_REPORT.md` |
-| FAZ 12 | `[~]` | Otomatik kapılar ✅; cihaz 25 senaryo |
-| FAZ 13 | `[~]` | CI APK ✅ |
-| APK `1.0.291+327` | `[x]` | apk-latest (CI bekleniyor) |
-| Sesli oda P0–P2 | `[x]` | koltuk-ses, mod popup, giriş şeridi |
-| P0 müzik kod | `[x]` | M5/M7 manuel |
-| P0 PK kod | `[x]` | M5/M7 manuel (bildirim + davet) |
+| Faz 1 SSE SoT | `[x]` | main — Socket.IO kapalı, presence replace |
+| Faz 2 Psychic TRTC | `[x]` kod | Token-only join; **P0 cihaz testi OPEN** |
+| Release gate CI | `[x]` | apk-latest + metadata PASS |
+| Release 502 fix | `[x]` | `814f8758` |
+| docs/LATEST_APK_BUILD | `[x]` | Run `34146919509` |
+| **Manuel testler** | `[ ]` | **En son — kullanıcı** (Psychic P0 öncelik) |
+| FAZ 0–13 otomatik | `[x]` | Geçmiş faz testleri CI'da |
+| APK `1.0.371+409` | `[x]` | apk-latest güncel |
 
 ---
 
-## Tek manuel bloker (tüm fazlar)
+## Tek manuel bloker (release için)
 
-| # | İş | Çözüm |
-|---|-----|--------|
-| B1 | Jeton ≥10 | `bash scripts/admin-jeton-cheatsheet.sh` |
-| B2 | M7 HTTP 200 | `bash scripts/m7-on-jeton.sh` |
-| B3 | M5 cihaz | `bash scripts/m5-device-prep.sh` |
-| B4 | FAZ12 E2E | 25 senaryo Android |
+| # | İş | Referans |
+|---|-----|----------|
+| **P0** | Psychic TRTC 2-cihaz (T+5s donma yok) | `LIVE_PSYCHICS_REMAINING.md` § P0 |
+| P1 | Voice / gift / PK / müzik 2-cihaz | `RELEASE_CHECKLIST.md` |
+| P2 | Stage 8 / Play Store closed test | `STAGE8_FINAL_ACCEPTANCE_REPORT.md` |
 
-**Sıralı ilerleme:** `bash scripts/faz0-sequential.sh` → `docs/FAZ0_SEQUENTIAL_PROGRESS.md`
+**Otomatik işler tamam** — kalan yalnızca cihaz kabul testleri.
 
 ---
 

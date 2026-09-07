@@ -22,7 +22,8 @@ jobs:
     name: Debug APK
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
+      (github.event.workflow_run.conclusion == 'success' &&
+       !contains(github.event.workflow_run.head_commit.message || '', '[skip ci]'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
     defaults:
@@ -36,7 +37,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'

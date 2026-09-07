@@ -1,5 +1,9 @@
 # CanliFal — Release Report
 
+> **Güncel durum (2026-09-07):** Sürüm **`1.0.371+409`**, release gate **FINAL PASS**.  
+> Canlı checklist: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) · Gate özeti: [`RELEASE_GATE_CLOSURE.md`](RELEASE_GATE_CLOSURE.md)  
+> **RELEASE READY: NO** — Psychic P0 cihaz testi bekleniyor (testler en son).
+
 **Date:** 2026-08-04  
 **App version:** `1.0.125+159` (`mobile/pubspec.yaml`)  
 **Target:** `https://canlifal.com` production parity
