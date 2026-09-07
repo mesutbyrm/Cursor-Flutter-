@@ -1,7 +1,7 @@
 # Canlifal Flutter — Performans Optimizasyon Özeti
 
 
-> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · Psychic P0 cihaz · [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md)
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md)
 
 **Program:** FAZ 3–18 (2026-08-22 → 2026-08-23) — **TAMAMLANDI**  
 **Başlangıç sürümü:** `1.0.336+372`  

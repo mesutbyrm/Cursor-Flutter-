@@ -78,6 +78,14 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 
 ---
 
+## Oturum günlüğü (2026-09-07 devam 3)
+
+- `scripts/user-handoff.sh` — kullanıcı devir özeti (Psychic P0, hesaplar, APK)
+- `print-build-status.sh` → user-handoff yönlendirmesi
+- Kök parity banner: **RELEASE READY: NO** hizalandı
+- `RELEASE_GATE_CLOSURE`: bana_ozel P2 bloker değil (CI pass)
+- `site/canlifal-jeton-web/*` banner
+
 ## Oturum günlüğü (2026-09-07 devam 2)
 
 - **213 MD banner:** `docs/**`, kök parity, `mobile/docs/*` — commit `8db37eea`

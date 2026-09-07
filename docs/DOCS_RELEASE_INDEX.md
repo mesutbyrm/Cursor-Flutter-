@@ -30,6 +30,7 @@
 ## Script
 
 ```bash
+bash scripts/user-handoff.sh           # Kullanıcı devir özeti (Psychic P0)
 bash scripts/print-build-status.sh      # Özet
 bash scripts/psychic-p0-checklist.sh    # Psychic P0 tablosu
 ```

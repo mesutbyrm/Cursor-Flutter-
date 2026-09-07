@@ -1,5 +1,9 @@
 # BASELINE_TEST_REPORT — site/canlifal-jeton-web
 
+
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`../../docs/DOCS_RELEASE_INDEX.md`](../../docs/DOCS_RELEASE_INDEX.md)
+
 **Tarih:** 2026-08-24  
 **PR:** [#244](https://github.com/mesutbyrm/Cursor-Flutter-/pull/244)  
 **Base branch:** `main` @ `3e2f872b`  
