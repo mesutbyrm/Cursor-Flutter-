@@ -36,7 +36,7 @@ if [[ -f "$ANDROID/key.properties" ]]; then
 elif [[ -n "${ANDROID_KEYSTORE_BASE64:-}" ]]; then
   check ok "ANDROID_KEYSTORE_BASE64 (CI ortam)"
 else
-  check fail "Release keystore yok — key.properties veya CI secret"
+  check fail "Release keystore yok — key.properties, CI secret veya Actions: Build release AAB"
 fi
 
 if [[ -f "$ANDROID/app/release.keystore" ]]; then

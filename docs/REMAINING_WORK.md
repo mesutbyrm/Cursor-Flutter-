@@ -4,8 +4,8 @@
 
 > **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
-**Son güncelleme:** 2026-09-07 — sürüm `1.0.371+409`, release gate **FINAL PASS** (run `34146919509`)  
-**Agent durumu:** **API otomasyon tamam** — cihaz P0 → P1 → P2 **kullanıcı**  
+**Son güncelleme:** 2026-09-07 — sürüm `1.0.371+409` · **Cihaz testi SONRA** · **Agent P2 prep devam**  
+**Agent paralel:** `bash scripts/kalan-isler-agent.sh` · **Cihaz sonra:** `bash scripts/cihaz-sonra.sh`  
 **Tek komut:** `bash scripts/kalan-isler.sh` · P0: `p0-go.sh` · P1: `p1-go.sh` · P2: `p2-go.sh`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Release:** `docs/RELEASE_CHECKLIST.md` | **Psychic P0:** `docs/LIVE_PSYCHICS_REMAINING.md` | **Tüm MD indeks:** [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 

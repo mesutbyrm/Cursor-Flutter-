@@ -35,8 +35,9 @@ cat <<'EOF'
   [ ] Production access başvurusu (14 gün closed test sonrası)
 
 ── AAB üretimi ──
-  bash scripts/build-play-aab.sh
-  Çıktı: mobile/build/app/outputs/bundle/release/app-release.aab
+  CI: GitHub Actions → Build release AAB (ANDROID_KEYSTORE_* secrets)
+  Yerel: bash scripts/build-play-aab.sh
+  App access metni: bash scripts/print-play-console-app-access.sh
 
 ── CI secret (GitHub) ──
   ANDROID_KEYSTORE_BASE64

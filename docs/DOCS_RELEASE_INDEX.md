@@ -27,6 +27,7 @@
 | [`P1_DEVICE_START.md`](P1_DEVICE_START.md) | P0 sonrası genel platform 2-cihaz |
 | [`P2_PLAY_STORE_START.md`](P2_PLAY_STORE_START.md) | Play Store / Stage 8 backlog (P0+P1 sonrası) |
 | [`PLAY_STORE_AGENT_CHECKLIST.md`](PLAY_STORE_AGENT_CHECKLIST.md) | Play Store agent prep (şimdi) |
+| [`PLAY_CONSOLE_APP_ACCESS.md`](PLAY_CONSOLE_APP_ACCESS.md) | Play Console App access metni |
 | [`LATEST_APK_BUILD.md`](LATEST_APK_BUILD.md) | Son CI derlemesi |
 | [`FAZ13_RELEASE_STATUS.md`](FAZ13_RELEASE_STATUS.md) | Faz 13 release |
 | [`GITHUB_ACTIONS_CI.md`](GITHUB_ACTIONS_CI.md) | CI/APK iş akışları |
@@ -54,6 +55,8 @@ bash scripts/basla.sh                       # tek komut başlangıç
 bash scripts/kalan-isler-agent.sh           # agent paralel (cihaz sonra)
 bash scripts/cihaz-sonra.sh                   # cihaz testi sonraya
 bash scripts/p2-prep-now.sh                   # Play Store hazırlık
+bash scripts/play-aab-readiness.sh            # AAB öncesi kontrol
+bash scripts/play-store-checklist.sh          # Console checklist
 bash scripts/p1-prep-now.sh                   # P1 checklist ön
 bash scripts/kalan-isler.sh                 # kalan işler + yol haritası
 bash scripts/p0-go.sh                       # P0 GO ekranı

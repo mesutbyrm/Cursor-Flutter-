@@ -8,8 +8,9 @@
 ```bash
 bash scripts/play-aab-readiness.sh      # keystore + Gradle + Sign-In
 bash scripts/play-store-checklist.sh    # Console adımları
+bash scripts/print-play-console-app-access.sh  # App access metni
 bash scripts/p2-prep-now.sh             # özet
-bash scripts/build-play-aab.sh          # AAB (keystore gerekir)
+bash scripts/build-play-aab.sh          # AAB yerel (keystore gerekir)
 ```
 
 ## CI secret (GitHub Actions)
@@ -22,6 +23,11 @@ bash scripts/build-play-aab.sh          # AAB (keystore gerekir)
 | `ANDROID_KEY_PASSWORD` | Key şifresi |
 
 Yerel: `cp mobile/android/key.properties.example mobile/android/key.properties`
+
+## AAB CI workflow
+
+GitHub → **Actions** → **Build release AAB** → Run workflow (dal `main`)  
+Artifact: `canlifal-release-aab` · Workflow: `.github/workflows/build-aab.yml`
 
 ## Play Console test hesapları
 
