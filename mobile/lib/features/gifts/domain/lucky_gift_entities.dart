@@ -174,6 +174,23 @@ class LuckyGiftSpinResult extends Equatable {
 
   Color resolveColor() => parseHexColor(color);
 
+  /// Legacy alan adları CFC taşıyabilir — birim `currency` alanından okunur.
+  String get currencyKeyForDisplay {
+    switch (currency.toLowerCase()) {
+      case 'jeton':
+        return 'jeton';
+      case 'cfc':
+      case 'credits':
+        return 'cfc';
+      default:
+        return 'cfc';
+    }
+  }
+
+  int get betAmount => betJetons;
+  int get wonAmount => wonJetons;
+  int get netAmount => netJetons;
+
   @override
   List<Object?> get props => [
         rewardId,

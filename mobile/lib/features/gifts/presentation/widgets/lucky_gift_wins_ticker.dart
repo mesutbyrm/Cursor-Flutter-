@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/lucky_gift_entities.dart';
 import '../providers/lucky_gift_providers.dart';
@@ -19,7 +20,7 @@ class LuckyGiftWinsTicker extends ConsumerWidget {
       error: (_, __) => const SizedBox.shrink(),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
-        final line = _formatLine(items.first);
+        final line = _formatLine(ref, items.first);
         return SizedBox(
           height: height,
           child: DecoratedBox(
@@ -47,13 +48,14 @@ class LuckyGiftWinsTicker extends ConsumerWidget {
     );
   }
 
-  String _formatLine(LuckyGiftHistoryEntry e) {
+  String _formatLine(WidgetRef ref, LuckyGiftHistoryEntry e) {
     final user = (e.userName ?? 'Biri').trim();
     final gift = (e.giftName ?? 'Talih Kutusu').trim();
+    final currencyLabel = economyCurrencyLabel(ref, key: 'cfc');
     if (e.isJackpot) {
-      return '🎰 JACKPOT! $user — $gift ×${e.multiplier} → ${e.wonJetons} jeton!';
+      return '🎰 JACKPOT! $user — $gift ×${e.multiplier} → ${e.wonJetons} $currencyLabel!';
     }
-    return '🍀 $user — $gift ×${e.multiplier} → ${e.wonJetons} jeton';
+    return '🍀 $user — $gift ×${e.multiplier} → ${e.wonJetons} $currencyLabel';
   }
 }
 

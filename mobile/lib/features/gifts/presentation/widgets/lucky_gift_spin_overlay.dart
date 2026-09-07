@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../domain/lucky_gift_entities.dart';
 
 /// Spin sonucu — çark/kutu açılış animasyonu + ödül gösterimi.
@@ -30,7 +32,7 @@ Future<void> showLuckyGiftSpinOverlay(
   );
 }
 
-class _LuckyGiftSpinOverlay extends StatefulWidget {
+class _LuckyGiftSpinOverlay extends ConsumerStatefulWidget {
   const _LuckyGiftSpinOverlay({
     required this.result,
     this.giftName,
@@ -40,10 +42,11 @@ class _LuckyGiftSpinOverlay extends StatefulWidget {
   final String? giftName;
 
   @override
-  State<_LuckyGiftSpinOverlay> createState() => _LuckyGiftSpinOverlayState();
+  ConsumerState<_LuckyGiftSpinOverlay> createState() =>
+      _LuckyGiftSpinOverlayState();
 }
 
-class _LuckyGiftSpinOverlayState extends State<_LuckyGiftSpinOverlay>
+class _LuckyGiftSpinOverlayState extends ConsumerState<_LuckyGiftSpinOverlay>
     with SingleTickerProviderStateMixin {
   late final AnimationController _spin;
   bool _revealed = false;
@@ -73,6 +76,11 @@ class _LuckyGiftSpinOverlayState extends State<_LuckyGiftSpinOverlay>
     final r = widget.result;
     final color = r.resolveColor();
     final gift = widget.giftName?.trim();
+    final currencyLabel = economyCurrencyLabel(
+      ref,
+      key: r.currencyKeyForDisplay,
+      locale: Localizations.localeOf(context),
+    );
 
     return Material(
       color: Colors.transparent,
@@ -152,7 +160,7 @@ class _LuckyGiftSpinOverlayState extends State<_LuckyGiftSpinOverlay>
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '${r.wonJetons} jeton kazandınız',
+                    '${r.wonAmount} $currencyLabel kazandınız',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -160,12 +168,12 @@ class _LuckyGiftSpinOverlayState extends State<_LuckyGiftSpinOverlay>
                     ),
                   ),
                   Text(
-                    r.netJetons >= 0
-                        ? 'Net +${r.netJetons} jeton'
-                        : 'Net ${r.netJetons} jeton',
+                    r.netAmount >= 0
+                        ? 'Net +${r.netAmount} $currencyLabel'
+                        : 'Net ${r.netAmount} $currencyLabel',
                     style: TextStyle(
                       fontSize: 13,
-                      color: r.netJetons >= 0
+                      color: r.netAmount >= 0
                           ? const Color(0xFF86EFAC)
                           : const Color(0xFFFCA5A5),
                     ),

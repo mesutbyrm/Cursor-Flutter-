@@ -9,6 +9,7 @@ import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../theme/home_approved_design.dart';
+import 'home_header_balance_chips.dart';
 
 /// Onaylı mockup — logo, arama, bildirim, mesaj, jeton.
 class HomeHeader extends StatelessWidget {
@@ -87,7 +88,7 @@ class _HomeHeaderBadges extends ConsumerWidget {
         SizedBox(width: 10),
         _InboxBadge(),
         SizedBox(width: 10),
-        _HomeJetonPill(),
+        _HomeBalanceChips(),
       ],
     );
   }
@@ -149,25 +150,13 @@ class _InboxBadge extends ConsumerWidget {
   }
 }
 
-/// Rozetler — jeton oturum cache + cüzdan API.
-class _HomeJetonPill extends ConsumerWidget {
-  const _HomeJetonPill();
+/// Rozetler — jeton + CFC (markalı, kompakt).
+class _HomeBalanceChips extends StatelessWidget {
+  const _HomeBalanceChips();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final badgesReady = ref.watch(shellHeaderBadgesEnabledProvider);
-    final walletJeton = badgesReady
-        ? ref.watch(walletBalancesProvider.select((w) => w.valueOrNull?.jeton))
-        : null;
-    final authJeton = ref.watch(
-      authControllerProvider.select((a) => a.valueOrNull?.coinBalance),
-    );
-    final jeton = walletJeton ?? authJeton ?? 0;
-    return _CoinPill(
-      balance: jeton,
-      onTap: () => context.push('/jeton-store'),
-      onAdd: () => context.push('/jeton-store'),
-    );
+  Widget build(BuildContext context) {
+    return const HomeHeaderBalanceChips();
   }
 }
 
